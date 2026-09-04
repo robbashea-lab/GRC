@@ -12,9 +12,10 @@ import DashboardScopeSelector from "@/components/DashboardScopeSelector";
 
 // Kinds that still have a dedicated list page — anything not in this map is filtered
 // out of dashboard link-outs (Exceptions and Assets were removed from the sidebar).
+// Findings and Tasks are no longer top-level nav, but the underlying record pages still work.
 const KIND_ROUTE = {
   review: "/reviews", finding: "/findings", risk: "/risks", policy: "/policies",
-  vendor: "/vendors", task: "/tasks",
+  vendor: "/vendors", task: "/action-items",
 };
 
 // Attach owner / unassigned + optional extra filters so click-through from a scoped dashboard preserves context.

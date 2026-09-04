@@ -36,6 +36,17 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 ### v6
 - **Session Invalidation on password reset** — JWTs now carry `iat`; `password_changed_at` on user rejects any JWT issued before the reset; all rows in `db.sessions` for the user are deleted on reset (Emergent Google OAuth cookies); reset response returns `sessions_revoked`
 
+### v14 (Action Items unified work queue — merge Tasks + Findings nav) — Sep 2026
+- **Sidebar**: removed "Findings" and "Tasks"; added **"Action Items"** (`/action-items`). Underlying `/findings` and `/tasks` list routes are preserved for internal linking (Dashboard, related-record navigation, RecordDrawer flows).
+- **ActionItems.jsx** — a **unified work view** that merges three existing collections without creating duplicates:
+  - **Tasks** → surfaced as-is with Type = "General Task" (source: Manual / linked Finding)
+  - **Open Findings** (`status ∈ {open, in_remediation}`) → Type = "Finding Remediation" (severity → priority)
+  - **Assigned Reviews** (`status ∉ {completed, cancelled}`) → Type = "Review" (never duplicated; row opens the Review drawer)
+- **Quick views**: My Actions · All Open · Findings · Reviews · Due Soon · Overdue · Completed — each with a live count.
+- **Row click** opens the appropriate drawer (`tasks`, `findings`, `reviews`) — same detail pages, no new records created.
+- **Overdue is computed** (due < now AND status ∉ closed). Client contributors default to **My Actions**; internal admins default to **All Open**.
+- **Dashboard `KIND_ROUTE`** updated so task briefs now link to `/action-items` (findings still open the Finding list page). No double-counting: Reviews appear once (native) and once as an actionable row inside Action Items — dashboard KPI still uses backend-computed sets, so counts are consistent.
+
 ### v13 (Settings architecture: My Account · Client Settings · Platform Administration) — Sep 2026
 - **Every user gets `/account`** (`MyAccount.jsx`): Profile (name/job_title/phone; email + role read-only), Security (password change for local auth; SSO message for Google users; MFA + sessions UI on backlog), Notifications (weekly digest opt-out toggle).
 - **Sidebar footer profile dropdown** replaces the plain logout icon — `My Account`, notifications, `Sign out`.
