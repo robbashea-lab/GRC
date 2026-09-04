@@ -2,11 +2,13 @@
 // Buckets: critical | high | moderate | duesoon | success | info | neutral
 const TONE_BY_STATUS = {
   // Reviews
+  upcoming: "info",
   planned: "neutral",
   in_progress: "info",
   blocked: "moderate",
   completed: "success",
   overdue: "critical",
+  cancelled: "neutral",
   // Findings / Tasks
   open: "high",
   in_remediation: "moderate",

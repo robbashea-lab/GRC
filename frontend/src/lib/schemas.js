@@ -3,14 +3,15 @@
 export const SCHEMAS = {
   reviews: {
     title: "Reviews",
-    subtitle: "Reusable review workflow — asset, software, access, vendor, policy, risk, vulnerability, BCP/DR, incident, awareness.",
+    subtitle: "Authoritative schedule and historical record of your GRC review obligations. Completed reviews are preserved and the next occurrence is auto-scheduled.",
     columns: [
       { key: "title", label: "Title", primary: true },
       { key: "review_type", label: "Type" },
       { key: "status", label: "Status", badge: true },
-      { key: "due_date", label: "Due", date: true },
-      { key: "recurrence", label: "Recurs" },
-      { key: "next_review_date", label: "Next", date: true },
+      { key: "owner_id", label: "Owner", user: true },
+      { key: "due_date", label: "Due date", date: true },
+      { key: "recurrence", label: "Recurrence" },
+      { key: "next_review_date", label: "Next due", date: true },
     ],
     fields: [
       { name: "title", label: "Title", required: true },
@@ -22,24 +23,27 @@ export const SCHEMAS = {
         { value: "bcp_dr", label: "BCP / DR" }, { value: "incident", label: "Incident Response" },
         { value: "awareness", label: "Security Awareness" },
       ]},
-      { name: "status", label: "Status", type: "select", options: [
-        { value: "planned", label: "Planned" }, { value: "in_progress", label: "In progress" },
-        { value: "blocked", label: "Blocked" }, { value: "completed", label: "Completed" },
-        { value: "overdue", label: "Overdue" },
+      { name: "status", label: "Status", type: "select", default: "upcoming", options: [
+        { value: "upcoming", label: "Upcoming" },
+        { value: "in_progress", label: "In progress" },
+        { value: "completed", label: "Completed" },
+        { value: "cancelled", label: "Cancelled" },
       ]},
       { name: "period", label: "Period (e.g. Q1 2026)" },
       { name: "due_date", label: "Due date", type: "date" },
       { name: "owner_id", label: "Owner", type: "user" },
       { name: "reviewer_id", label: "Reviewer", type: "user" },
-      { name: "recurrence", label: "Recurrence", type: "select", options: [
+      { name: "recurrence", label: "Recurrence", type: "select", default: "none", options: [
         { value: "none", label: "One-time" }, { value: "monthly", label: "Monthly" },
         { value: "quarterly", label: "Quarterly" }, { value: "semiannual", label: "Semi-annual" },
-        { value: "annual", label: "Annual" },
+        { value: "annual", label: "Annual" }, { value: "custom", label: "Custom (days)" },
       ]},
+      { name: "custom_recurrence_days", label: "Custom interval (days)", type: "number", showIf: { recurrence: "custom" } },
       { name: "next_review_date", label: "Next review date", type: "date" },
       { name: "completion_date", label: "Completion date", type: "date" },
       { name: "scope", label: "Scope", type: "textarea" },
-      { name: "notes", label: "Notes / findings", type: "textarea" },
+      { name: "notes", label: "Notes", type: "textarea" },
+      { name: "follow_up", label: "Follow-up actions", type: "textarea" },
     ],
   },
   findings: {

@@ -168,12 +168,15 @@ class ReviewIn(BaseModel):
     due_date: Optional[str] = None
     owner_id: Optional[str] = None
     reviewer_id: Optional[str] = None
-    status: Optional[str] = "planned"  # planned, in_progress, blocked, completed, overdue
+    status: Optional[str] = "upcoming"  # upcoming, in_progress, completed, cancelled (overdue is computed)
     scope: Optional[str] = None
     notes: Optional[str] = None
-    recurrence: Optional[str] = "none"  # none, monthly, quarterly, semiannual, annual
+    recurrence: Optional[str] = "none"  # none, monthly, quarterly, semiannual, annual, custom
+    custom_recurrence_days: Optional[int] = None
     next_review_date: Optional[str] = None
     completion_date: Optional[str] = None
+    parent_review_id: Optional[str] = None
+    follow_up: Optional[str] = None
 
 
 class FindingIn(BaseModel):
@@ -704,7 +707,7 @@ async def dashboard(client_id: Optional[str] = Query(None), user: Dict = Depends
     tasks = await db.tasks.find(scope, {"_id": 0}).sort("due_date", 1).to_list(1000)
     exceptions = await db.exceptions.find(scope, {"_id": 0}).to_list(500)
 
-    def is_overdue(item, date_field="due_date", closed_statuses=("completed", "done", "closed", "remediated", "retired")):
+    def is_overdue(item, date_field="due_date", closed_statuses=("completed", "done", "closed", "remediated", "retired", "cancelled")):
         d = item.get(date_field)
         return bool(d and d < now_iso and item.get("status") not in closed_statuses)
 
@@ -717,7 +720,7 @@ async def dashboard(client_id: Optional[str] = Query(None), user: Dict = Depends
 
     upcoming_reviews = [r for r in reviews
                         if r.get("due_date") and now_iso <= r["due_date"] <= horizon
-                        and r.get("status") != "completed"]
+                        and r.get("status") not in ("completed", "cancelled")]
     upcoming_tasks_30 = [t for t in tasks if t.get("due_date") and now_iso <= t["due_date"] <= horizon and t.get("status") != "done"]
     policies_due_30 = [p for p in policies if p.get("next_review_date") and now_iso <= p["next_review_date"] <= horizon]
     due_next_30_count = len(upcoming_reviews) + len(upcoming_tasks_30) + len(policies_due_30)
@@ -771,7 +774,7 @@ async def dashboard(client_id: Optional[str] = Query(None), user: Dict = Depends
     your_actions = (
         [{**_brief(x, "finding", "finding_id"), "action": "Respond"} for x in mine(findings, ("open", "in_remediation"))]
         + [{**_brief(x, "task", "task_id"), "action": "Continue"} for x in mine(tasks, ("open", "in_progress", "blocked"))]
-        + [{**_brief(x, "review", "review_id"), "action": "Start review"} for x in mine(reviews, ("planned", "in_progress", "overdue", "blocked"))]
+        + [{**_brief(x, "review", "review_id"), "action": "Start review"} for x in mine(reviews, ("upcoming", "in_progress"))]
     )
     your_actions.sort(key=lambda x: x.get("due_date") or "9999")
     your_actions = your_actions[:8]
@@ -882,6 +885,9 @@ async def seed():
     r_acme = await ensure_user("readonly@acme.demo", "Ravi Kumar", "client_readonly", [acme["client_id"]], "Demo@2026")
     c_glob = await ensure_user("contributor@globex.demo", "Chen Wei", "client_contributor", [globex["client_id"]], "Demo@2026")
 
+    # Migration: normalize legacy review statuses (planned/blocked/overdue → upcoming)
+    await db.reviews.update_many({"status": {"$in": ["planned", "blocked", "overdue"]}}, {"$set": {"status": "upcoming"}})
+
     # Seed data only once
     if await db.reviews.count_documents({}) > 0:
         return
@@ -899,23 +905,23 @@ async def seed():
         reviews += [
             mk("reviews", "rev", "review_id", title=f"Quarterly Access Review — {tenant['name']}",
                review_type="access", client_id=tenant["client_id"], period="Q1", due_date=isod(-3),
-               owner_id=own, reviewer_id=pa_uid, status="overdue", scope="All privileged accounts",
+               owner_id=own, reviewer_id=pa_uid, status="upcoming", scope="All privileged accounts",
                recurrence="quarterly", next_review_date=isod(90)),
             mk("reviews", "rev", "review_id", title=f"Vendor Review — Primary SaaS providers",
                review_type="vendor", client_id=tenant["client_id"], due_date=isod(12), owner_id=own,
                status="in_progress", recurrence="annual"),
             mk("reviews", "rev", "review_id", title="Patch & Vulnerability Review",
                review_type="vulnerability", client_id=tenant["client_id"], due_date=isod(21),
-               owner_id=own, status="planned", recurrence="monthly"),
+               owner_id=own, status="upcoming", recurrence="monthly"),
             mk("reviews", "rev", "review_id", title="Policy Review — Information Security Policy",
                review_type="policy", client_id=tenant["client_id"], due_date=isod(45),
-               owner_id=own, status="planned", recurrence="annual"),
+               owner_id=own, status="upcoming", recurrence="annual"),
             mk("reviews", "rev", "review_id", title="BCP / DR Tabletop Exercise",
                review_type="bcp_dr", client_id=tenant["client_id"], due_date=isod(60),
-               owner_id=own, status="planned", recurrence="semiannual"),
+               owner_id=own, status="upcoming", recurrence="semiannual"),
             mk("reviews", "rev", "review_id", title="Security Awareness Training Review",
                review_type="awareness", client_id=tenant["client_id"], due_date=isod(-10),
-               owner_id=own, status="overdue", recurrence="quarterly"),
+               owner_id=own, status="upcoming", recurrence="quarterly"),
         ]
     await db.reviews.insert_many(reviews)
 
@@ -1219,7 +1225,7 @@ async def cron_overdue_reminders(request: Request):
 
 async def _send_overdue_digest():
     now_iso = _now()
-    reviews = await db.reviews.find({"status": {"$nin": ["completed"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(5000)
+    reviews = await db.reviews.find({"status": {"$nin": ["completed", "cancelled"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(5000)
     findings = await db.findings.find({"status": {"$in": ["open", "in_remediation"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(5000)
     # Group by owner
     by_owner: Dict[str, Dict[str, List]] = {}
@@ -1249,6 +1255,121 @@ async def reminders_send_now(user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Forbidden")
     await _send_overdue_digest()
     return {"ok": True}
+
+
+# ---------------- Reviews: recurrence helpers + complete endpoint ----------------
+_RECUR_MONTHS = {"monthly": 1, "quarterly": 3, "semiannual": 6, "annual": 12}
+
+
+def _shift_iso(base_iso: str, months: int = 0, days: int = 0) -> str:
+    try:
+        d = datetime.fromisoformat(base_iso)
+    except Exception:
+        d = datetime.now(timezone.utc)
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=timezone.utc)
+    if months:
+        # calendar-aware month math
+        month0 = d.month - 1 + months
+        year = d.year + month0 // 12
+        month = month0 % 12 + 1
+        # clamp day to end-of-month
+        import calendar as _cal
+        last_day = _cal.monthrange(year, month)[1]
+        day = min(d.day, last_day)
+        d = d.replace(year=year, month=month, day=day)
+    if days:
+        d = d + timedelta(days=days)
+    return d.isoformat()
+
+
+def _next_due_for_recurrence(base_due_iso: str, recurrence: str, custom_days: Optional[int] = None) -> Optional[str]:
+    if not base_due_iso or recurrence in (None, "none", ""):
+        return None
+    if recurrence in _RECUR_MONTHS:
+        return _shift_iso(base_due_iso, months=_RECUR_MONTHS[recurrence])
+    if recurrence == "custom" and custom_days and custom_days > 0:
+        return _shift_iso(base_due_iso, days=int(custom_days))
+    return None
+
+
+class ReviewCompleteIn(BaseModel):
+    completion_notes: Optional[str] = None
+    completion_date: Optional[str] = None
+    spawn_next: Optional[bool] = True
+
+
+@api.post("/reviews/{review_id}/complete")
+async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = Depends(get_current_user)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    review = await db.reviews.find_one({"review_id": review_id}, {"_id": 0})
+    if not review:
+        raise HTTPException(404, "Review not found")
+    if not _can_access_client(user, review["client_id"]):
+        raise HTTPException(403, "Forbidden")
+    if review.get("status") == "completed":
+        raise HTTPException(400, "Review already completed")
+
+    completion_iso = body.completion_date or _now()
+    updates = {
+        "status": "completed",
+        "completion_date": completion_iso,
+        "updated_at": _now(),
+    }
+    if body.completion_notes:
+        # Append rather than overwrite so history isn't lost.
+        existing_notes = (review.get("notes") or "").rstrip()
+        stamp = f"\n\n— Completed by {user.get('name') or user['email']} on {completion_iso[:10]} —\n{body.completion_notes}"
+        updates["notes"] = (existing_notes + stamp).strip()
+
+    await db.reviews.update_one({"review_id": review_id}, {"$set": updates})
+    await audit(user, "complete", "review", review_id, review.get("client_id"),
+                meta={"recurrence": review.get("recurrence")})
+
+    spawned = None
+    recurrence = review.get("recurrence") or "none"
+    if body.spawn_next and recurrence not in (None, "none", ""):
+        base = review.get("next_review_date") or review.get("due_date")
+        next_due = _next_due_for_recurrence(base, recurrence, review.get("custom_recurrence_days"))
+        if next_due:
+            new_id = _uid("rev")
+            spawned = {
+                "review_id": new_id,
+                "title": review["title"],
+                "review_type": review.get("review_type"),
+                "client_id": review["client_id"],
+                "status": "upcoming",
+                "recurrence": recurrence,
+                "custom_recurrence_days": review.get("custom_recurrence_days"),
+                "owner_id": review.get("owner_id"),
+                "reviewer_id": review.get("reviewer_id"),
+                "scope": review.get("scope"),
+                "period": review.get("period"),
+                "due_date": next_due,
+                "next_review_date": _next_due_for_recurrence(next_due, recurrence, review.get("custom_recurrence_days")),
+                "parent_review_id": review_id,
+                "created_at": _now(),
+                "updated_at": _now(),
+                "created_by": user["user_id"],
+            }
+            await db.reviews.insert_one(spawned)
+            spawned.pop("_id", None)
+            await db.reviews.update_one({"review_id": review_id}, {"$set": {"next_occurrence_id": new_id}})
+            await audit(user, "spawn-next", "review", new_id, review["client_id"],
+                        meta={"parent_review_id": review_id})
+            if spawned.get("owner_id") and spawned["owner_id"] != user["user_id"]:
+                await create_notification(
+                    user_id=spawned["owner_id"],
+                    title=f"Next {spawned.get('review_type') or 'review'} scheduled: {spawned['title']}",
+                    kind="review_scheduled",
+                    entity_type="reviews",
+                    entity_id=new_id,
+                    client_id=spawned["client_id"],
+                )
+
+    updated = await db.reviews.find_one({"review_id": review_id}, {"_id": 0})
+    return {"review": updated, "spawned": spawned}
 
 
 # ---------------- Quick actions: Review → Finding, Finding → Task ----------------
@@ -1416,7 +1537,7 @@ async def create_baseline(body: BaselineIn, user: Dict = Depends(get_current_use
             "title": rv.get("title") or "Review",
             "review_type": rv.get("review_type") or "asset",
             "client_id": body.client_id,
-            "status": "planned",
+            "status": "upcoming",
             "recurrence": rv.get("recurrence") or "quarterly",
             "owner_id": user["user_id"],
             "due_date": (datetime.now(timezone.utc) + timedelta(days=due_days)).isoformat(),
@@ -1687,7 +1808,7 @@ async def _build_board_report(client_id: str, user: Dict) -> bytes:
     now_iso = _now()
     horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
     overdue_reviews = await db.reviews.find(
-        {"client_id": client_id, "status": {"$nin": ["completed"]}, "due_date": {"$lt": now_iso}},
+        {"client_id": client_id, "status": {"$nin": ["completed", "cancelled"]}, "due_date": {"$lt": now_iso}},
         {"_id": 0}).sort("due_date", 1).to_list(50)
     upcoming = await db.reviews.find(
         {"client_id": client_id, "due_date": {"$gte": now_iso, "$lte": horizon}},

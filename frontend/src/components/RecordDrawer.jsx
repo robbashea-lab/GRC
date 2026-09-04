@@ -129,6 +129,21 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     } catch (e) { toast.error(formatError(e)); }
   }
 
+  async function completeReview() {
+    if (!confirm(`Mark "${record.title}" as complete? This will spawn the next occurrence if recurring.`)) return;
+    try {
+      const { data } = await api.post(`/reviews/${record[idField]}/complete`, { spawn_next: true });
+      toast.success(data.spawned ? "Review completed · next occurrence scheduled" : "Review completed");
+      if (data.review) {
+        record.status = data.review.status;
+        record.completion_date = data.review.completion_date;
+        record.next_occurrence_id = data.review.next_occurrence_id;
+        setForm((p) => ({ ...p, status: data.review.status, completion_date: data.review.completion_date }));
+      }
+      onSaved?.();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
   async function quickCreateTask() {
     try {
       await api.post(`/findings/${record[idField]}/create-task`, {});
@@ -219,10 +234,41 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {tab === "overview" && (
             <div className="space-y-4">
-              {isEdit && kind === "reviews" && canWrite && (
-                <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Raise a finding from this review</div>
-                  <Button size="sm" variant="outline" onClick={quickCreateFinding} data-testid="quick-create-finding">Create finding</Button>
+              {isEdit && kind === "reviews" && (
+                <div className="border border-line bg-surface-subtle rounded-md p-3 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm text-ink-primary">
+                      <Zap className="h-4 w-4 text-brand-charcoal" /> Review actions
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {canWrite && record?.status !== "completed" && record?.status !== "cancelled" && (
+                        <Button size="sm" onClick={completeReview} data-testid="review-complete">
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark complete
+                        </Button>
+                      )}
+                      {canWrite && (
+                        <Button size="sm" variant="outline" onClick={quickCreateFinding} data-testid="quick-create-finding">
+                          Raise finding
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {(record?.parent_review_id || record?.next_occurrence_id) && (
+                    <div className="pt-2 border-t border-line text-xs text-ink-secondary space-y-1" data-testid="review-lineage">
+                      {record?.parent_review_id && (
+                        <div>
+                          <span className="font-mono text-ink-help mr-1">previous:</span>
+                          <span className="font-mono">{record.parent_review_id}</span>
+                        </div>
+                      )}
+                      {record?.next_occurrence_id && (
+                        <div>
+                          <span className="font-mono text-ink-help mr-1">next:</span>
+                          <span className="font-mono">{record.next_occurrence_id}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               {isEdit && kind === "findings" && canWrite && (
@@ -287,7 +333,12 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
                 </div>
               )}
 
-              {schema.map((f) => (
+              {schema.map((f) => {
+                if (f.showIf) {
+                  const [k, v] = Object.entries(f.showIf)[0];
+                  if (form[k] !== v) return null;
+                }
+                return (
                 <div key={f.name} className="space-y-1.5">
                   <Label className="text-xs text-slate-600">{f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}</Label>
                   {f.type === "textarea" ? (
@@ -311,7 +362,8 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
                     <Input type={f.type || "text"} value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} data-testid={`field-${f.name}`} className="text-sm" />
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

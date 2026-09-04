@@ -13,13 +13,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays } from "lucide-react";
+import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
   vendors: "vendor_id", assets: "asset_id", tasks: "task_id", exceptions: "exception_id",
 };
+
+// Tab definitions for reviews — order matters (displayed as segmented control)
+const REVIEW_TABS = [
+  { id: "upcoming", label: "Upcoming" },
+  { id: "overdue", label: "Overdue" },
+  { id: "in_progress", label: "In progress" },
+  { id: "completed", label: "Completed" },
+  { id: "all", label: "All" },
+];
+
+// Reviews are the historical record — delete is admin-only from the ... menu.
+function isReviewOverdue(row) {
+  if (!row?.due_date) return false;
+  if (row.status === "completed" || row.status === "cancelled") return false;
+  return new Date(row.due_date).getTime() < Date.now();
+}
 
 export default function RecordListPage({ kind }) {
   const schema = SCHEMAS[kind];
@@ -30,6 +46,7 @@ export default function RecordListPage({ kind }) {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [reviewTab, setReviewTab] = useState("upcoming");
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [checked, setChecked] = useState(new Set());
@@ -42,6 +59,12 @@ export default function RecordListPage({ kind }) {
   const canDelete = ["super_admin", "platform_admin"].includes(user?.role);
   const idField = ID_FIELD[kind];
   const ownerField = kind === "tasks" ? "assignee_id" : "owner_id";
+  const isReviews = kind === "reviews";
+  const userMap = useMemo(() => {
+    const m = {};
+    users.forEach((u) => { m[u.user_id] = u.name || u.email; });
+    return m;
+  }, [users]);
 
   const load = async () => {
     if (!currentClientId) return;
@@ -67,11 +90,38 @@ export default function RecordListPage({ kind }) {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     return rows.filter((r) => {
-      if (statusFilter !== "all" && r.status && r.status !== statusFilter) return false;
+      if (isReviews) {
+        const overdue = isReviewOverdue(r);
+        if (reviewTab === "upcoming") {
+          if (r.status !== "upcoming") return false;
+          if (overdue) return false; // overdue upcoming go to Overdue tab
+        } else if (reviewTab === "overdue") {
+          if (!overdue) return false;
+        } else if (reviewTab === "in_progress") {
+          if (r.status !== "in_progress") return false;
+        } else if (reviewTab === "completed") {
+          if (r.status !== "completed" && r.status !== "cancelled") return false;
+        }
+      } else if (statusFilter !== "all" && r.status && r.status !== statusFilter) {
+        return false;
+      }
       if (!s) return true;
       return JSON.stringify(r).toLowerCase().includes(s);
     });
-  }, [rows, q, statusFilter]);
+  }, [rows, q, statusFilter, reviewTab, isReviews]);
+
+  const reviewTabCounts = useMemo(() => {
+    if (!isReviews) return {};
+    const c = { upcoming: 0, overdue: 0, in_progress: 0, completed: 0, all: rows.length };
+    rows.forEach((r) => {
+      const overdue = isReviewOverdue(r);
+      if (overdue) c.overdue += 1;
+      if (r.status === "upcoming" && !overdue) c.upcoming += 1;
+      if (r.status === "in_progress") c.in_progress += 1;
+      if (r.status === "completed" || r.status === "cancelled") c.completed += 1;
+    });
+    return c;
+  }, [rows, isReviews]);
 
   const allChecked = filtered.length > 0 && filtered.every((r) => checked.has(r[idField]));
   const someChecked = checked.size > 0 && !allChecked;
@@ -83,6 +133,15 @@ export default function RecordListPage({ kind }) {
     const n = new Set(checked);
     n.has(id) ? n.delete(id) : n.add(id);
     setChecked(n);
+  }
+
+  async function markComplete(row) {
+    if (!confirm(`Mark "${row.title}" as complete? This will spawn the next occurrence if recurring.`)) return;
+    try {
+      const { data } = await api.post(`/reviews/${row[idField]}/complete`, { spawn_next: true });
+      toast.success(data.spawned ? "Review completed · next occurrence scheduled" : "Review completed");
+      load();
+    } catch (e) { toast.error(formatError(e)); }
   }
 
   async function remove(row) {
@@ -146,14 +205,34 @@ export default function RecordListPage({ kind }) {
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input data-testid={`${kind}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 h-9 w-72 text-sm" />
         </div>
-        {statusOptions.length > 0 && (
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        {isReviews ? (
+          <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="reviews-tabs">
+            {REVIEW_TABS.map((t) => {
+              const active = reviewTab === t.id;
+              const count = reviewTabCounts[t.id] ?? 0;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setReviewTab(t.id)}
+                  data-testid={`reviews-tab-${t.id}`}
+                  className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
+                >
+                  {t.label}
+                  <span className={`ml-1.5 font-mono text-[10px] ${active ? "text-ink-onDarkMuted" : "text-ink-help"}`}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          statusOptions.length > 0 && (
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )
         )}
         <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
@@ -256,7 +335,9 @@ export default function RecordListPage({ kind }) {
             <tbody>
               {loading && <tr><td colSpan={schema.columns.length + 2} className="tbl-cell text-center py-8 text-slate-400">Loading…</td></tr>}
               {!loading && filtered.length === 0 && <tr><td colSpan={schema.columns.length + 2} className="tbl-cell text-center py-8 text-slate-400">No records.</td></tr>}
-              {!loading && filtered.map((row, i) => (
+              {!loading && filtered.map((row, i) => {
+                const overdueReview = isReviews && isReviewOverdue(row);
+                return (
                 <tr
                   key={row[idField] || `row-${i}`}
                   className="row-hover cursor-pointer"
@@ -272,20 +353,63 @@ export default function RecordListPage({ kind }) {
                   </td>
                   {schema.columns.map((c) => (
                     <td key={`${row[idField] || i}-${c.key}`} className={`tbl-cell ${c.primary ? "font-medium text-slate-900" : ""}`}>
-                      {c.badge ? <StatusBadge value={row[c.key]} /> :
+                      {c.badge ? (
+                        overdueReview && c.key === "status"
+                          ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
+                          : <StatusBadge value={row[c.key]} testid={`${kind}-status-${i}`} />
+                      ) :
+                       c.user ? (row[c.key] ? <span className="text-slate-700">{userMap[row[c.key]] || row[c.key]}</span> : <span className="text-slate-300">—</span>) :
                        c.date ? (row[c.key] ? <span className="font-mono text-slate-600">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-slate-300">—</span>) :
                        (row[c.key] || <span className="text-slate-300">—</span>)}
                     </td>
                   ))}
                   <td className="tbl-cell text-right" onClick={(e) => e.stopPropagation()}>
-                    {canDelete && (
-                      <button data-testid={`${kind}-delete-${i}`} onClick={() => remove(row)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          data-testid={`${kind}-row-menu-${i}`}
+                          className="p-1 rounded hover:bg-surface-subtle text-ink-help"
+                          aria-label="Row actions"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => { setSelected(row); setOpen(true); }}
+                          data-testid={`${kind}-row-open-${i}`}
+                          className="text-sm"
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-2" /> Open / edit
+                        </DropdownMenuItem>
+                        {isReviews && canWrite && row.status !== "completed" && row.status !== "cancelled" && (
+                          <DropdownMenuItem
+                            onClick={() => markComplete(row)}
+                            data-testid={`${kind}-row-complete-${i}`}
+                            className="text-sm"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Mark complete
+                          </DropdownMenuItem>
+                        )}
+                        {canDelete && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => remove(row)}
+                              data-testid={`${kind}-delete-${i}`}
+                              className="text-sm text-semantic-critical focus:text-semantic-critical"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                              {isReviews && <span className="ml-auto text-[10px] font-mono text-ink-help">admin</span>}
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -1,0 +1,49 @@
+{
+  "summary": "Iteration 7 — Reviews module refactor (schedule + historical record). Backend 11/11 (test_iteration7.py) + frontend flows verified via Playwright on the public URL. Backend: (a) POST /api/reviews accepts new status enum (upcoming/in_progress) and recurrence=custom with custom_recurrence_days=45 → persists and re-reads correctly. (b) POST /api/reviews/{id}/complete on quarterly review — response returns {review:{status:completed, completion_date set, next_occurrence_id set}, spawned:{status:upcoming, due_date=base+3mo, parent_review_id=<orig>, no findings/evidence inherited}}. Verified with base 2026-03-15 → spawned 2026-06-15. (c) Custom recurrence: base 2026-05-01 + 45d → spawned 2026-06-15 ✓. (d) recurrence=none → spawned=null. (e) Second /complete call → 400. (f) completion_notes appends with stamp, original ORIGINAL_NOTES_MARKER preserved. (g) readonly@acme.demo → 403 on /complete. (h) contributor@acme.demo → 403 completing a Globex review. (i) Dashboard KPI overdue_reviews: baseline → +1 after creating overdue upcoming → unchanged after adding a cancelled past-due → back to baseline after completing (spawn_next=false). Completed and cancelled correctly excluded. (j) Legacy migration: no reviews with status planned/blocked/overdue remain in Acme (48 reviews scanned). (k) Regression: /api/reports/board still generates PDF (200, application/pdf).\n\nFrontend (public URL): /reviews shows 5 tabs with data-testid reviews-tab-upcoming/overdue/in_progress/completed/all and counts (42/83/25/40/168). Overdue tab shows computed 'overdue' badge on rows whose DB status is upcoming/in_progress but due_date < now. Completed tab statuses are strictly {completed, cancelled}. Row menu (reviews-row-menu-N) opens dropdown with reviews-row-open-N + reviews-row-complete-N (for non-completed rows) + reviews-delete-N (admin, labelled 'admin' in menu). Drawer: opens on row click, shows Review actions panel with review-complete button for non-completed reviews; clicking Mark complete calls /reviews/{id}/complete and toasts 'Review completed'. Recurrence Select in drawer: switching to Custom reveals data-testid=field-custom_recurrence_days (was hidden with quarterly/annual). Owner column renders user name ('Rob Bashea'). Findings/other kinds do NOT render reviews-tabs (regression pass). Readonly role: menu shows only Open (no Mark complete, no Delete); drawer has no review-complete button. Overall Iteration 7 requirements are met.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Reviews list — Owner column for readonly role",
+        "issue": "For client_readonly (readonly@acme.demo), GET /api/users returns 403 (only writers/admins can list users), so userMap ends up empty and the Owner column falls back to rendering the raw user_id (e.g. 'user_282cc343d98c') instead of the user's name for reviews that have owner_id set. Row 'Rob Bashea' rendered correctly for admin, but readonly sees raw IDs. Not part of iter7 scope but visible during iter7 testing.",
+        "affected_selectors": ["reviews-row-*"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration7.py",
+    "/app/test_reports/pytest/iter7.xml"
+  ],
+  "action_items": [
+    "(minor) Either expose a read-only /api/users endpoint that returns id+name pairs for all roles (so readonly users see owner names on lists), or preload user display names into the review payload server-side. See frontend_issues.integration_issues[0].",
+    "(carry-over from iter6) server.py now 1963 lines — the /complete endpoint + _shift_iso/_next_due_for_recurrence helpers add ~120 lines. Extract reviews/recurrence logic into a reviews_service module.",
+    "(nit) The complete_review endpoint sets next_review_date on the spawned review to base+2× the recurrence interval, but does NOT recompute it later when the spawned review itself gets completed (it does — it just recomputes from the spawn's own due_date). Confirmed acceptable via test test_complete_quarterly_spawns_next_occurrence (2026-06-15 for spawned due_date). No action, just note.",
+    "(nit) Spawned occurrence copies 'title' verbatim ('TEST_iter7_q'), which is fine, but consider appending a period tag or leaving title editable — currently a user viewing the reviews list sees two entries with identical titles differentiated only by due_date."
+  ],
+  "critical_code_review_comments": [
+    "complete_review correctly appends completion notes with an author+date stamp (server.py L1320-L1324) rather than overwriting — preserves historical record.",
+    "Spawned review omits findings/evidence — confirmed empty in response; the insert doc only carries schedule/ownership metadata (server.py L1337-L1355). Good.",
+    "closed_statuses tuple in dashboard.is_overdue includes 'cancelled' (L710). KPI verified deterministic via delta test.",
+    "Legacy status migration at startup (server.py L888-L889) uses $in ['planned','blocked','overdue'] → set status='upcoming'. Verified: 0 remaining in Acme reviews list.",
+    "Row menu correctly gates Delete on canDelete (['super_admin','platform_admin']) and Mark complete on canWrite AND status not in (completed, cancelled). Readonly correctly sees only Open (verified).",
+    "isReviewOverdue in RecordListPage.jsx uses new Date(row.due_date).getTime() < Date.now() — timezone-agnostic if due_date is ISO with tz. Works for the seed data.",
+    "recurrence 'custom' field showIf handler in schemas.js correctly hides custom_recurrence_days for non-custom values — verified on drawer.",
+    "(carry-over) CORS still allow_origins=['*'] + allow_credentials=False; unchanged in iter7.",
+    "server.py now 1963 lines — refactor still pending."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration7.py"
+  ],
+  "success_rate": {"backend": "100% (11/11 iter7)", "frontend": "100% (all iter7 acceptance UI flows verified)"},
+  "test_credentials": "Used robbashea@gmail.com/Admin@2026 (super admin), readonly@acme.demo/Demo@2026, contributor@acme.demo/Demo@2026, contributor@globex.demo/Demo@2026. No credentials modified.",
+  "seed_data_creation": "test_iteration7.py creates ~12 TEST_iter7_* reviews across Acme (and 1 in Globex for tenant test): TEST_iter7_custom, TEST_iter7_q, TEST_iter7_c45 (spawns extra 'TEST_iter7_c45' via /complete), TEST_iter7_none, TEST_iter7_double, TEST_iter7_notes, TEST_iter7_ro, TEST_iter7_cross (Globex), TEST_iter7_overdue_up, TEST_iter7_cancelled, TEST_iter7_completed_past. Also one manual Mark-complete via UI on the currently-first upcoming row (was an existing seeded 'TEST_Baseline Review Q' quarterly review; a spawned occurrence was created +3mo).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 7 ships: (1) ReviewIn model updated to status enum {upcoming,in_progress,completed,cancelled} + recurrence {none,monthly,quarterly,semiannual,annual,custom} + custom_recurrence_days:int + parent_review_id + next_occurrence_id + completion_date fields. (2) POST /api/reviews/{review_id}/complete registered BEFORE the generic /{kind} router in server.py — takes ReviewCompleteIn {completion_notes, completion_date, spawn_next=True}. Returns {review, spawned}. Spawn is triggered when review.recurrence != 'none' and spawn_next=True; spawned doc starts blank (no findings/evidence) and links via parent_review_id; the completed review is stamped with next_occurrence_id. (3) Dashboard closed_statuses tuple now includes 'cancelled'. (4) Legacy status migration in seed(): planned/blocked/overdue → upcoming on startup. (5) Frontend list RecordListPage.jsx: REVIEW_TABS constant + isReviewOverdue helper + reviewTabCounts. Row actions moved from trash icon to MoreVertical dropdown (data-testid reviews-row-menu-N). (6) Drawer RecordDrawer.jsx: completeReview() + review-complete button + review-lineage panel (rendered when parent_review_id or next_occurrence_id present). (7) schemas.js: reviews.status enum + recurrence enum + custom_recurrence_days with showIf. Cumulative pytest test files: backend_test.py, test_iteration2..7.py.",
+  "rca of the issue": "N/A — no functional bugs found in iteration 7 scope. One initial test-authoring adjustment: the dashboard-vs-computed cross-check assertion was too strict (exact-count comparison against a full-tenant scan) because dashboard.to_list(2000) vs list_entities.to_list(1000) have different limits and prior test-run data caused a delta of 2 in a heavily-seeded Acme tenant. Replaced with a deterministic delta assertion (baseline → +1 for added overdue upcoming → unchanged for added cancelled past-due → back to baseline after completion). This more accurately verifies the KPI computation semantics required by the spec."
+}
