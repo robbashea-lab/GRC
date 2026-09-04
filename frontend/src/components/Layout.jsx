@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Check, Sparkles, CalendarDays, Users, ArrowLeft
+  LogOut, Check, Sparkles, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import {
@@ -25,11 +25,13 @@ const CLIENT_NAV = [
   { to: "/evidence", label: "Evidence", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/onboarding", label: "Onboarding", icon: Sparkles, testid: "nav-onboarding" },
   { to: "/audit", label: "Audit Log", icon: ScrollText, testid: "nav-audit" },
+  { to: "/client-settings", label: "Client Settings", icon: Settings2, testid: "nav-client-settings", adminOnly: true },
 ];
 
 // Platform-level modules (visible to internal admins on the Client Directory).
 const PLATFORM_NAV = [
   { to: "/clients", label: "Clients", icon: Users, testid: "nav-clients" },
+  { to: "/admin/users", label: "Administration", icon: UserCog, testid: "nav-admin-users" },
 ];
 
 function OrgSelector({ isInternal, atDirectory }) {
@@ -117,7 +119,7 @@ function Sidebar() {
         <OrgSelector isInternal={isInternal} atDirectory={atDirectory} />
       </div>
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto" data-testid={atDirectory ? "sidebar-platform" : "sidebar-client"}>
-        {items.map((n) => (
+        {items.filter((n) => !n.adminOnly || isInternal).map((n) => (
           <NavLink
             key={n.to}
             to={n.to}
@@ -131,24 +133,38 @@ function Sidebar() {
         ))}
       </nav>
       <div className="px-3 py-3 border-t border-brand-metallic-3">
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="h-8 w-8 rounded-full bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-medium">
-            {user?.name?.[0] || user?.email?.[0]?.toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-xs text-ink-onDark truncate">{user?.name || user?.email}</div>
-            <div className="text-[10px] text-ink-onDarkMuted font-mono uppercase tracking-wider">{(user?.role || "").replace("_", " ")}</div>
-          </div>
-          <NotificationBell />
-          <button
-            data-testid="logout-button"
-            onClick={async () => { await logout(); nav("/login"); }}
-            className="p-1.5 rounded hover:bg-brand-metallic-2 text-ink-onDarkMuted hover:text-ink-onDark"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              data-testid="profile-menu-trigger"
+              className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-brand-metallic-2 transition-colors text-left"
+            >
+              <div className="h-8 w-8 rounded-full bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-medium">
+                {user?.name?.[0] || user?.email?.[0]?.toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs text-ink-onDark truncate">{user?.name || user?.email}</div>
+                <div className="text-[10px] text-ink-onDarkMuted font-mono uppercase tracking-wider">{(user?.role || "").replace("_", " ")}</div>
+              </div>
+              <ChevronsUpDown className="h-3.5 w-3.5 text-ink-onDarkMuted" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="top" className="w-56">
+            <DropdownMenuItem onClick={() => nav("/account")} data-testid="profile-menu-account" className="text-sm">
+              <UserCircle2 className="h-3.5 w-3.5 mr-2" /> My Account
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1"><NotificationBell /></div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              data-testid="logout-button"
+              onClick={async () => { await logout(); nav("/login"); }}
+              className="text-sm text-semantic-critical focus:text-semantic-critical"
+            >
+              <LogOut className="h-3.5 w-3.5 mr-2" /> Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );

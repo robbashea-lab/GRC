@@ -14,6 +14,9 @@ import AuditLog from "@/pages/AuditLog";
 import Onboarding from "@/pages/Onboarding";
 import Calendar from "@/pages/Calendar";
 import ClientDirectory from "@/pages/ClientDirectory";
+import MyAccount from "@/pages/MyAccount";
+import PlatformAdmin from "@/pages/PlatformAdmin";
+import ClientSettings from "@/pages/ClientSettings";
 import "@/App.css";
 
 function Protected({ children }) {
@@ -63,6 +66,9 @@ function AppRouter() {
       >
         <Route index element={<LandingRoute />} />
         <Route path="clients" element={<InternalOnly><ClientDirectory /></InternalOnly>} />
+        <Route path="admin/users" element={<InternalOnly><PlatformAdmin /></InternalOnly>} />
+        <Route path="account" element={<MyAccount />} />
+        <Route path="client-settings" element={<InternalOnly><ClientSettings /></InternalOnly>} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />

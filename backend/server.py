@@ -411,7 +411,10 @@ async def login(body: LoginIn, response: Response):
     u = await db.users.find_one({"email": email})
     if not u or not u.get("password_hash") or not verify_password(body.password, u["password_hash"]):
         raise HTTPException(401, "Invalid credentials")
+    if u.get("status") == "disabled":
+        raise HTTPException(403, "This account has been disabled. Contact your administrator.")
     token = create_access_token(u["user_id"], email)
+    await db.users.update_one({"user_id": u["user_id"]}, {"$set": {"last_login_at": _now()}})
     _set_auth_cookie(response, token)
     u.pop("password_hash", None)
     u.pop("_id", None)
@@ -493,6 +496,254 @@ async def logout(response: Response, user: Dict = Depends(get_current_user)):
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("session_token", path="/")
     return {"ok": True}
+
+
+# ---------------- My Account (self-service) ----------------
+class MeProfileIn(BaseModel):
+    name: Optional[str] = None
+    job_title: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class MePasswordIn(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class MePreferencesIn(BaseModel):
+    weekly_digest_optout: Optional[bool] = None
+
+
+@api.patch("/me")
+async def update_me(body: MeProfileIn, user: Dict = Depends(get_current_user)):
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return user
+    updates["updated_at"] = _now()
+    await db.users.update_one({"user_id": user["user_id"]}, {"$set": updates})
+    await audit(user, "update", "user", user["user_id"], meta={"self": True, "fields": list(updates.keys())})
+    fresh = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0})
+    return fresh
+
+
+@api.patch("/me/password")
+async def update_me_password(body: MePasswordIn, user: Dict = Depends(get_current_user)):
+    if user.get("auth_provider") == "google" and not user.get("password_hash"):
+        raise HTTPException(400, "Authentication is managed by your identity provider")
+    full = await db.users.find_one({"user_id": user["user_id"]})
+    if not full or not full.get("password_hash"):
+        raise HTTPException(400, "No local password to change")
+    if not verify_password(body.current_password, full["password_hash"]):
+        raise HTTPException(400, "Current password is incorrect")
+    if len(body.new_password) < 8:
+        raise HTTPException(400, "New password must be at least 8 characters")
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"password_hash": hash_password(body.new_password), "password_changed_at": _now()}},
+    )
+    revoked = await db.sessions.delete_many({"user_id": user["user_id"]})
+    await audit(user, "password_change", "user", user["user_id"], meta={"self": True})
+    return {"ok": True, "sessions_revoked": revoked.deleted_count}
+
+
+@api.patch("/me/preferences")
+async def update_me_preferences(body: MePreferencesIn, user: Dict = Depends(get_current_user)):
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return {"ok": True}
+    updates["updated_at"] = _now()
+    await db.users.update_one({"user_id": user["user_id"]}, {"$set": updates})
+    return {"ok": True}
+
+
+# ---------------- User administration ----------------
+class UserCreateIn(BaseModel):
+    email: EmailStr
+    name: str
+    role: str  # super_admin, platform_admin, client_contributor, client_readonly
+    client_ids: List[str] = []
+    password: Optional[str] = None  # if not provided, admin can trigger reset separately
+
+
+class UserPatchIn(BaseModel):
+    name: Optional[str] = None
+    role: Optional[str] = None
+    client_ids: Optional[List[str]] = None
+    status: Optional[str] = None  # active | disabled | invited
+
+
+def _admin_can_manage_role(actor: Dict, target_role: str) -> bool:
+    """Only super_admin can assign super_admin; platform_admin can assign platform_admin/client_* roles."""
+    actor_role = actor.get("role")
+    if actor_role == "super_admin":
+        return True
+    if actor_role == "platform_admin":
+        return target_role in ("platform_admin", "client_contributor", "client_readonly")
+    return False
+
+
+def _admin_can_manage_user(actor: Dict, target: Dict, client_scope: Optional[str] = None) -> bool:
+    """Client-scoped: platform admins can manage users of clients they belong to; super_admin manages all."""
+    actor_role = actor.get("role")
+    if actor_role == "super_admin":
+        return True
+    if actor_role != "platform_admin":
+        return False
+    # platform_admin: must share at least one client with target OR be scoped to a client they can access
+    if client_scope and not _can_access_client(actor, client_scope):
+        return False
+    actor_clients = set(actor.get("client_ids") or [])
+    target_clients = set(target.get("client_ids") or [])
+    return bool(actor_clients & target_clients) or (client_scope in actor_clients if client_scope else False)
+
+
+@api.post("/users")
+async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current_user)):
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Only admins can create users")
+    if not _admin_can_manage_role(user, body.role):
+        raise HTTPException(403, f"You cannot assign role '{body.role}'")
+    email = body.email.lower()
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        raise HTTPException(400, "Email already exists")
+    # Platform admin can only invite into clients they can access.
+    if user.get("role") == "platform_admin":
+        for cid in body.client_ids:
+            if not _can_access_client(user, cid):
+                raise HTTPException(403, f"You cannot assign client {cid}")
+    uid = _uid("user")
+    status = "active" if body.password else "invited"
+    doc = {
+        "user_id": uid,
+        "email": email,
+        "name": body.name,
+        "role": body.role,
+        "client_ids": body.client_ids,
+        "status": status,
+        "created_at": _now(),
+        "created_by": user["user_id"],
+    }
+    if body.password:
+        if len(body.password) < 8:
+            raise HTTPException(400, "Password must be at least 8 characters")
+        doc["password_hash"] = hash_password(body.password)
+    await db.users.insert_one(doc)
+    await audit(user, "invite", "user", uid, meta={"email": email, "role": body.role, "client_ids": body.client_ids})
+    # If no password given, generate a password-reset token so the invitee can set their own.
+    invite_link = None
+    if not body.password:
+        raw = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw.encode()).hexdigest()
+        await db.password_resets.insert_one({
+            "user_id": uid, "token_hash": token_hash,
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+            "used": False, "created_at": _now(),
+        })
+        base = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
+        if base:
+            invite_link = f"{base}/reset-password?token={raw}"
+            # Fire-and-forget invitation email; failures don't block user creation.
+            try:
+                from html import escape as _esc
+                html = (
+                    f'<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">'
+                    f'<h2>Welcome to Northstar GRC</h2>'
+                    f'<p>Hi {_esc(body.name)}, {_esc(user.get("name") or user.get("email"))} has invited you to join Northstar GRC.</p>'
+                    f'<p><a href="{_esc(invite_link)}" style="background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block">Set your password</a></p>'
+                    f'<p style="color:#94a3b8;font-size:12px">This link expires in 7 days. We never ask for passwords or codes by email.</p>'
+                    f'</div>'
+                )
+                await send_email(to=email, subject="You're invited to Northstar GRC", html=html)
+            except Exception:
+                pass
+    doc.pop("password_hash", None)
+    doc.pop("_id", None)
+    out = await db.users.find_one({"user_id": uid}, {"_id": 0, "password_hash": 0})
+    return {"user": out, "invite_link": invite_link}
+
+
+@api.patch("/users/{user_id}")
+async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depends(get_current_user)):
+    target = await db.users.find_one({"user_id": user_id})
+    if not target:
+        raise HTTPException(404, "User not found")
+    if not _admin_can_manage_user(user, target):
+        raise HTTPException(403, "Not authorized to manage this user")
+    updates: Dict = {}
+    if body.name is not None:
+        updates["name"] = body.name
+    if body.role is not None:
+        if not _admin_can_manage_role(user, body.role):
+            raise HTTPException(403, f"You cannot assign role '{body.role}'")
+        updates["role"] = body.role
+    if body.client_ids is not None:
+        if user.get("role") == "platform_admin":
+            # Platform admin cannot add clients they themselves cannot access.
+            for cid in body.client_ids:
+                if not _can_access_client(user, cid):
+                    raise HTTPException(403, f"You cannot assign client {cid}")
+        updates["client_ids"] = body.client_ids
+    if body.status is not None:
+        if body.status not in ("active", "invited", "disabled"):
+            raise HTTPException(400, "Invalid status")
+        updates["status"] = body.status
+    # Guardrail: users cannot demote or disable themselves via this endpoint.
+    if user_id == user["user_id"] and ("role" in updates or updates.get("status") == "disabled"):
+        raise HTTPException(400, "You cannot change your own role or disable yourself")
+    if not updates:
+        target.pop("password_hash", None); target.pop("_id", None)
+        return target
+    updates["updated_at"] = _now()
+    await db.users.update_one({"user_id": user_id}, {"$set": updates})
+    # If disabling: revoke all sessions.
+    if updates.get("status") == "disabled":
+        await db.sessions.delete_many({"user_id": user_id})
+        await db.users.update_one({"user_id": user_id}, {"$set": {"password_changed_at": _now()}})
+    await audit(user, "update", "user", user_id, meta={"fields": list(updates.keys()), "new": {k: v for k, v in updates.items() if k != "updated_at"}})
+    fresh = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+    return fresh
+
+
+@api.get("/users/{user_id}/open_assignments")
+async def user_open_assignments(user_id: str, user: Dict = Depends(get_current_user)):
+    """Preview open records this user still owns — used before disabling/removing them."""
+    target = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+    if not target:
+        raise HTTPException(404, "User not found")
+    if user.get("role") not in ("super_admin", "platform_admin") and user["user_id"] != user_id:
+        raise HTTPException(403, "Not authorized")
+    findings = await db.findings.count_documents({"owner_id": user_id, "status": {"$in": ["open", "in_remediation"]}})
+    reviews = await db.reviews.count_documents({"$or": [{"owner_id": user_id}, {"reviewer_id": user_id}], "status": {"$nin": ["completed", "cancelled"]}})
+    tasks = await db.tasks.count_documents({"$or": [{"assignee_id": user_id}, {"owner_id": user_id}], "status": {"$nin": ["done", "cancelled"]}})
+    risks = await db.risks.count_documents({"owner_id": user_id, "status": {"$ne": "closed"}, "impact": "high"})
+    return {"findings": findings, "reviews": reviews, "tasks": tasks, "significant_risks": risks}
+
+
+@api.post("/users/{user_id}/resend-invite")
+async def admin_resend_invite(user_id: str, user: Dict = Depends(get_current_user)):
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Not authorized")
+    target = await db.users.find_one({"user_id": user_id})
+    if not target:
+        raise HTTPException(404, "User not found")
+    if not _admin_can_manage_user(user, target):
+        raise HTTPException(403, "Not authorized to manage this user")
+    raw = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw.encode()).hexdigest()
+    await db.password_resets.update_many({"user_id": user_id, "used": False}, {"$set": {"used": True, "used_at": _now()}})
+    await db.password_resets.insert_one({
+        "user_id": user_id, "token_hash": token_hash,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        "used": False, "created_at": _now(),
+    })
+    base = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
+    invite_link = f"{base}/reset-password?token={raw}" if base else None
+    await audit(user, "resend_invite", "user", user_id)
+    return {"ok": True, "invite_link": invite_link}
+
+
+# ---------------- Auth logout end ----------------
 
 
 @api.get("/auth/me")

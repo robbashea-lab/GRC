@@ -36,6 +36,15 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 ### v6
 - **Session Invalidation on password reset** — JWTs now carry `iat`; `password_changed_at` on user rejects any JWT issued before the reset; all rows in `db.sessions` for the user are deleted on reset (Emergent Google OAuth cookies); reset response returns `sessions_revoked`
 
+### v13 (Settings architecture: My Account · Client Settings · Platform Administration) — Sep 2026
+- **Every user gets `/account`** (`MyAccount.jsx`): Profile (name/job_title/phone; email + role read-only), Security (password change for local auth; SSO message for Google users; MFA + sessions UI on backlog), Notifications (weekly digest opt-out toggle).
+- **Sidebar footer profile dropdown** replaces the plain logout icon — `My Account`, notifications, `Sign out`.
+- **Platform Administration** (`/admin/users`, super_admin + platform_admin only, added to `PLATFORM_NAV`): full Users table with invite, change role, edit client access, resend invite (7-day token), disable/re-enable, orphaned-assignment warning before disable.
+- **Client Settings** (`/client-settings`, added to `CLIENT_NAV` with `adminOnly`, hidden for client users): Users & Access scoped to `currentClient` — invite into this client only, change role, remove from this client. No cross-tenant client dropdown anywhere.
+- **Backend endpoints added**: `PATCH /api/me`, `PATCH /api/me/password` (revokes other sessions + audit), `PATCH /api/me/preferences`, `POST /api/users` (invitation-token flow w/ optional email), `PATCH /api/users/{id}` (role/clients/status guardrails: users can't self-elevate or self-disable; platform_admin can't grant super_admin or assign clients they don't have), `GET /api/users/{id}/open_assignments` (orphan preview), `POST /api/users/{id}/resend-invite`. Login guard: `status="disabled"` → 403. `last_login_at` stamped on login.
+- **Verified**: admin invites new contributor (status=invited, 7-day invite link generated); contributor gets **403** on POST/PATCH `/users`; admin **cannot** self-disable (400); disabling a user revokes sessions and updates `password_changed_at`; local password change with wrong current password → 400; orphan preview returns per-user counts.
+- **Explicit backlog (do not treat as bugs)**: MFA enrollment UI, active-session listing/revocation UI, secure email-change verification flow, Roles/Permissions matrix screen, dedicated Client Approver role. Server-side capability model is ready for these but not surfaced yet.
+
 ### v12 (Slim client nav — remove standalone Exceptions & Assets modules) — Sep 2026
 - **Removed** `/exceptions` and `/assets` routes from `App.js`; wildcard redirects surface these deep links back to the landing route.
 - **Removed** "Exceptions" and "Assets" nav items from `CLIENT_NAV` in `Layout.jsx`; dropped now-unused `ShieldOff` / `Server` icon imports. Final client sidebar: Dashboard · Calendar · Reviews · Findings · Risks · Policies · Vendors · Tasks · Evidence · Onboarding · Audit Log.
