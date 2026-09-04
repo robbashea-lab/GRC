@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import api, { formatError, API } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil } from "lucide-react";
+import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 const ID_FIELD = {
@@ -41,6 +42,8 @@ export default function RecordListPage({ kind }) {
   const schema = SCHEMAS[kind];
   const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,9 +90,51 @@ export default function RecordListPage({ kind }) {
 
   const statusOptions = useMemo(() => schema.fields.find((x) => x.name === "status")?.options || [], [schema]);
 
+  // Carried-scope filters from URL (?owner=<uid>|__me__ &unassigned=1 &severity=critical,high &status=open)
+  const urlFilters = useMemo(() => {
+    const p = new URLSearchParams(location.search);
+    const rawOwner = p.get("owner") || "";
+    let owner = rawOwner;
+    if (owner === "__me__") owner = user?.user_id || "";
+    return {
+      rawOwner,
+      owner,
+      unassigned: p.get("unassigned") === "1",
+      severities: (p.get("severity") || "").split(",").map((s) => s.trim()).filter(Boolean),
+      status: p.get("status") || "",
+    };
+  }, [location.search, user]);
+
+  const hasUrlFilters = urlFilters.owner || urlFilters.unassigned || urlFilters.severities.length > 0 || urlFilters.status;
+  const carriedScopeLabel = useMemo(() => {
+    if (!hasUrlFilters) return "";
+    const parts = [];
+    if (urlFilters.owner) {
+      const name = urlFilters.rawOwner === "__me__"
+        ? (user?.name || user?.email || "You")
+        : (userMap[urlFilters.owner] || urlFilters.owner);
+      parts.push(`Owner: ${name}`);
+    }
+    if (urlFilters.unassigned) parts.push("Unassigned");
+    if (urlFilters.severities.length) parts.push(`Severity: ${urlFilters.severities.join(" / ")}`);
+    if (urlFilters.status) parts.push(`Status: ${urlFilters.status}`);
+    return parts.join(" · ");
+  }, [hasUrlFilters, urlFilters, userMap, user]);
+
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     return rows.filter((r) => {
+      // URL-carried filters (from the scoped dashboard). These are additive.
+      if (urlFilters.owner) {
+        const rOwner = r[ownerField] || r.owner_id || r.assignee_id;
+        if (rOwner !== urlFilters.owner) return false;
+      }
+      if (urlFilters.unassigned) {
+        if (r[ownerField] || r.owner_id || r.assignee_id) return false;
+      }
+      if (urlFilters.severities.length && !urlFilters.severities.includes(r.severity)) return false;
+      if (urlFilters.status && r.status !== urlFilters.status) return false;
+
       if (isReviews) {
         const overdue = isReviewOverdue(r);
         if (reviewTab === "upcoming") {
@@ -108,7 +153,7 @@ export default function RecordListPage({ kind }) {
       if (!s) return true;
       return JSON.stringify(r).toLowerCase().includes(s);
     });
-  }, [rows, q, statusFilter, reviewTab, isReviews]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField]);
 
   const reviewTabCounts = useMemo(() => {
     if (!isReviews) return {};
@@ -205,6 +250,23 @@ export default function RecordListPage({ kind }) {
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input data-testid={`${kind}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 h-9 w-72 text-sm" />
         </div>
+        {hasUrlFilters && (
+          <div
+            className="inline-flex items-center gap-2 px-2.5 h-9 rounded-md border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-medium"
+            data-testid="carried-scope-chip"
+          >
+            <Filter className="h-3 w-3" />
+            <span>{carriedScopeLabel}</span>
+            <button
+              onClick={() => navigate(location.pathname, { replace: true })}
+              aria-label="Clear filter"
+              className="ml-1 hover:text-semantic-critical"
+              data-testid="clear-carried-scope"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
         {isReviews ? (
           <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="reviews-tabs">
             {REVIEW_TABS.map((t) => {

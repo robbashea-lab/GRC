@@ -1,18 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api, { API } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge, { toneFor } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { AlertOctagon, ShieldAlert, Clock, CalendarClock, FileDown, ArrowUpRight, Activity, ListTodo, Eye } from "lucide-react";
+import { AlertOctagon, ShieldAlert, Clock, CalendarClock, FileDown, ArrowUpRight, Activity, ListTodo, Eye, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import DashboardScopeSelector from "@/components/DashboardScopeSelector";
 
 const KIND_ROUTE = {
   review: "/reviews", finding: "/findings", risk: "/risks", policy: "/policies",
   vendor: "/vendors", asset: "/assets", task: "/tasks", exception: "/exceptions",
 };
+
+// Attach owner / unassigned + optional extra filters so click-through from a scoped dashboard preserves context.
+function withScopeParams(path, scope, extras = {}) {
+  const params = new URLSearchParams();
+  if (scope && scope.kind === "unassigned") params.set("unassigned", "1");
+  else if (scope && (scope.kind === "mine" || scope.kind === "user")) {
+    params.set("owner", scope.user_id || "__me__");
+  }
+  Object.entries(extras || {}).forEach(([k, v]) => { if (v) params.set(k, v); });
+  return params.toString() ? `${path}?${params.toString()}` : path;
+}
 
 function KpiCard({ label, value, hint, icon: Icon, tone = "neutral", testid, to }) {
   const rails = { critical: "before:bg-semantic-critical", duesoon: "before:bg-semantic-duesoon", high: "before:bg-semantic-critical", info: "before:bg-semantic-info", neutral: "before:bg-line" };
@@ -82,23 +94,42 @@ export default function Dashboard() {
   const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
   const [data, setData] = useState(null);
+  // Default scope per role: client contributors → their own work; everyone else → the org view.
+  const [scope, setScope] = useState(() => (
+    user?.role === "client_contributor" ? { kind: "mine" } : { kind: "org" }
+  ));
 
   useEffect(() => {
     if (!currentClientId) return;
     (async () => {
-      const { data } = await api.get("/dashboard", { params: { client_id: currentClientId } });
+      const params = { client_id: currentClientId, scope: scope.kind };
+      if (scope.kind === "user" && scope.user_id) params.user_id = scope.user_id;
+      const { data } = await api.get("/dashboard", { params });
       setData(data);
     })();
-  }, [currentClientId]);
+  }, [currentClientId, scope]);
 
   if (!data) return <div className="p-8 text-sm text-ink-muted">Loading dashboard…</div>;
 
   const isClient = ["client_contributor", "client_readonly"].includes(user?.role);
-  const actionsTitle = isClient ? "Your Actions" : "Client Actions";
+  const actionsTitle = (() => {
+    if (scope.kind === "unassigned") return "Unassigned Actions";
+    if (scope.kind === "mine") return "Your Actions";
+    if (scope.kind === "user") {
+      const who = data.target_user?.name || data.target_user?.email || "This person";
+      return `${who}'s Actions`;
+    }
+    return isClient ? "Your Actions" : "Client Actions";
+  })();
+
+  const clientSubtitle = scope.kind === "org"
+    ? `${currentClient?.name || "All clients"} · Current GRC program status, priorities, and upcoming activity`
+    : `${currentClient?.name || "All clients"} · ${data.scope_label || ""}`;
 
   async function downloadBoardReport() {
     try {
       const token = localStorage.getItem("grc_token");
+      // Board Report always reflects the entire organization, never a person filter.
       const resp = await fetch(`${API}/reports/board?client_id=${encodeURIComponent(currentClientId)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!resp.ok) throw new Error(`Report failed (${resp.status})`);
       const blob = await resp.blob();
@@ -106,7 +137,7 @@ export default function Dashboard() {
       const a = document.createElement("a"); a.href = url;
       a.download = `board-report-${(currentClient?.name || "client").replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.pdf`;
       a.click(); URL.revokeObjectURL(url);
-      toast.success("Board report downloaded");
+      toast.success("Board report downloaded (organization-wide)");
     } catch (e) { toast.error(e.message || "Report failed"); }
   }
 
@@ -114,21 +145,45 @@ export default function Dashboard() {
     <div>
       <PageHeader
         title="GRC Program Overview"
-        subtitle={`${currentClient?.name || "All clients"} · Current GRC program status, priorities, and upcoming activity`}
+        subtitle={clientSubtitle}
         action={
-          <Button variant="outline" onClick={downloadBoardReport} data-testid="download-board-report">
-            <FileDown className="h-4 w-4 mr-1" /> Board Report PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <DashboardScopeSelector clientId={currentClientId} value={scope} onChange={setScope} />
+            <Button variant="outline" onClick={downloadBoardReport} data-testid="download-board-report">
+              <FileDown className="h-4 w-4 mr-1" /> Board Report PDF
+            </Button>
+          </div>
         }
       />
+
+      {scope.kind !== "org" && (
+        <div className="px-8 pt-4">
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-medium"
+            data-testid="active-scope-chip"
+          >
+            <span className="text-[10px] font-mono uppercase tracking-widest">Viewing</span>
+            <span className="text-ink-help">·</span>
+            <span>{data.scope_label || "Filtered"}</span>
+            <button
+              onClick={() => setScope({ kind: "org" })}
+              className="ml-1 hover:text-semantic-critical"
+              aria-label="Clear dashboard scope"
+              data-testid="clear-scope"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="p-8 space-y-6">
         {/* Row 1 — Priority summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard testid="kpi-overdue" to="/reviews" label="Overdue Actions" value={data.kpis.overdue_actions} hint="Past due and still requiring action" icon={Clock} tone="critical" />
-          <KpiCard testid="kpi-critical" to="/findings" label="Critical / High Findings" value={data.kpis.critical_high_findings} hint="Highest-priority findings requiring attention" icon={AlertOctagon} tone="critical" />
-          <KpiCard testid="kpi-risks" to="/risks" label="Significant Risks" value={data.kpis.significant_risks} hint="Open risks requiring continued attention" icon={ShieldAlert} tone="high" />
-          <KpiCard testid="kpi-due-30" to="/calendar" label="Due in Next 30 Days" value={data.kpis.due_next_30} hint="Upcoming reviews and actions" icon={CalendarClock} tone="duesoon" />
+          <KpiCard testid="kpi-overdue" to={withScopeParams("/reviews", scope)} label="Overdue Actions" value={data.kpis.overdue_actions} hint="Past due and still requiring action" icon={Clock} tone="critical" />
+          <KpiCard testid="kpi-critical" to={withScopeParams("/findings", scope, { severity: "critical,high", status: "open" })} label="Critical / High Findings" value={data.kpis.critical_high_findings} hint="Highest-priority findings requiring attention" icon={AlertOctagon} tone="critical" />
+          <KpiCard testid="kpi-risks" to={withScopeParams("/risks", scope)} label="Significant Risks" value={data.kpis.significant_risks} hint="Open risks requiring continued attention" icon={ShieldAlert} tone="high" />
+          <KpiCard testid="kpi-due-30" to={scope.kind !== "org" ? withScopeParams("/tasks", scope) : "/calendar"} label="Due in Next 30 Days" value={data.kpis.due_next_30} hint="Upcoming reviews and actions" icon={CalendarClock} tone="duesoon" />
         </div>
 
         {/* Row 2 — Needs Your Attention */}

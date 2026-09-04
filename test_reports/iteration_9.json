@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 9 (Dashboard scope selector + carried-scope URL filters) — Backend: 17/17 pytest passing (members endpoint role scoping, dashboard scope=org/mine/user/unassigned, permission matrix, comment-non-attribution). Frontend: e2e verified in Playwright — contributor defaults to My Work with chip, super_admin defaults to Entire Organization, scope popover shows correct options per role (unassigned hidden for contributor, visible for admin), people-list filtered to client members (4 for Acme), scope selection updates subtitle/chip/panel title correctly, unassigned selection shows 'Unassigned Actions' panel, KPI cards carry scope into list pages (owner=__me__, severity=critical,high, status=open), carried-scope-chip renders on RecordListPage with dismiss, sidebar navigation does NOT persist scope, Board Report PDF is always organization-wide (URL has no scope params, toast says '(organization-wide)'), clear-scope resets to org.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "RecordListPage carried-scope-chip", "issue": "When owner=__me__ is carried, chip renders raw user_id ('Owner: user_a20bcfa09ca5') instead of resolved user name ('Owner: <Your Name>'). Backend member data is available; chip should resolve the id to a display name per the spec ('Owner: <Your Name> · Severity: ...').", "selector": "[data-testid=carried-scope-chip]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "active-scope-chip", "issues": ["Rendered text has no space between 'Viewing' label and the scope description ('ViewingYour assigned work', 'ViewingUnassigned records', 'ViewingGRC items assigned to Alicia Rivera'). Add a separator/whitespace between the label pill and value."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_iteration9.py", "/app/test_reports/pytest/iter9.xml"],
+  "action_items": [
+    "Resolve owner user_id to display name in RecordListPage carried-scope-chip (fetch/lookup member name so chip reads 'Owner: <Name>' instead of 'Owner: user_xxx').",
+    "Insert visual whitespace/separator between 'Viewing' label and scope description text in the active-scope chip."
+  ],
+  "critical_code_review_comments": [
+    "server.py is 2292 lines — consider splitting into modules (dashboard, clients, reviews, findings) for maintainability (>700 line guideline).",
+    "Dashboard scope resolution correctly relies only on _PRIMARY_OWNER_FIELDS; verified via comment-non-attribution test.",
+    "Members endpoint orphaned-user leak correctly gated to internal admins; contributors/read-only excluded.",
+    "Login response nests user under `user` key while some earlier iterations may expect flat shape — confirmed consistent with helpers."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration9.py"],
+  "success_rate": {"backend": "100%", "frontend": "~95% (2 cosmetic issues)"},
+  "test_credentials": "Used credentials from /app/memory/test_credentials.md — super_admin robbashea@gmail.com/Admin@2026, contributor@acme.demo/Demo@2026, readonly@acme.demo/Demo@2026, contributor@globex.demo/Demo@2026.",
+  "seed_data_creation": "Test created and cleaned up 1 scratch finding ('TEST_iter9 unassigned finding') to prove comments do not attribute ownership. Cleanup ran in finally-block.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend fully green. Only frontend polish items remain: (1) resolve carried-scope-chip owner id to name on RecordListPage.jsx (needs a lookup via /api/clients/{cid}/members or /api/users), and (2) add whitespace in active-scope-chip render on Dashboard.jsx. Everything else (permission matrix, scope filtering, panel titles, click-through URLs, sidebar non-persistence, board report org-wide, unassigned hidden for contributors, people list membership) is verified working.",
+  "rca_of_the_issue": "Owner name unresolved in carried-scope-chip: RecordListPage parses URL param owner=__me__ but displays the resolved user.user_id directly without a name lookup, resulting in 'Owner: user_xxx'. Fix: when rendering the chip, if a member list (from /api/clients/{cid}/members) is available, map owner_id → member.name; fallback to current user's name when owner=__me__."
+}

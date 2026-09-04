@@ -600,6 +600,38 @@ async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depend
     return doc
 
 
+@api.get("/clients/{client_id}/members")
+async def client_members(client_id: str, user: Dict = Depends(get_current_user)):
+    """Users associated with the tenant. Client users see only their client members; internal admins additionally see 'orphaned' users who still own records but are not formal members."""
+    if not _can_access_client(user, client_id):
+        raise HTTPException(403, "Forbidden")
+    members = await db.users.find({"client_ids": client_id}, {"_id": 0, "password_hash": 0}).to_list(1000)
+    known_ids = {u["user_id"] for u in members}
+    if user.get("role") in ("super_admin", "platform_admin"):
+        owner_ids: set = set()
+        for coll in ("reviews", "findings", "risks", "tasks", "policies", "vendors", "assets", "exceptions"):
+            for field in ("owner_id", "assignee_id"):
+                docs = await db[coll].find(
+                    {"client_id": client_id, field: {"$nin": [None, ""]}},
+                    {field: 1, "_id": 0},
+                ).to_list(20000)
+                for d in docs:
+                    v = d.get(field)
+                    if v:
+                        owner_ids.add(v)
+        orphan_ids = owner_ids - known_ids
+        if orphan_ids:
+            orphans = await db.users.find(
+                {"user_id": {"$in": list(orphan_ids)}},
+                {"_id": 0, "password_hash": 0},
+            ).to_list(500)
+            for u in orphans:
+                u["orphaned"] = True
+            members.extend(orphans)
+    members.sort(key=lambda u: (u.get("name") or u.get("email") or "").lower())
+    return members
+
+
 # ---------------- Client Directory (portfolio view for internal users) ----------------
 @api.get("/clients/directory")
 async def clients_directory(
@@ -882,20 +914,101 @@ async def list_users(user: Dict = Depends(get_current_user)):
 
 
 # ---------------- Dashboard ----------------
+_PRIMARY_OWNER_FIELDS = {
+    "reviews": ("owner_id", "reviewer_id"),
+    "findings": ("owner_id",),
+    "risks": ("owner_id",),
+    "tasks": ("assignee_id", "owner_id"),
+    "policies": ("owner_id", "approver_id"),
+    "vendors": ("owner_id",),
+    "assets": ("owner_id",),
+    "exceptions": ("owner_id", "approver_id"),
+}
+
+
+def _owner_match(item: Dict, kind: str, uid: str) -> bool:
+    for f in _PRIMARY_OWNER_FIELDS.get(kind, ("owner_id", "assignee_id")):
+        if item.get(f) == uid:
+            return True
+    return False
+
+
+def _is_unassigned(item: Dict, kind: str) -> bool:
+    for f in _PRIMARY_OWNER_FIELDS.get(kind, ("owner_id", "assignee_id")):
+        if item.get(f):
+            return False
+    return True
+
+
 @api.get("/dashboard")
-async def dashboard(client_id: Optional[str] = Query(None), user: Dict = Depends(get_current_user)):
-    scope = _scope_filter(user, client_id)
+async def dashboard(
+    client_id: Optional[str] = Query(None),
+    scope: Optional[str] = Query("org"),  # org | mine | user | unassigned
+    user_id: Optional[str] = Query(None),
+    user: Dict = Depends(get_current_user),
+):
+    scope = (scope or "org").lower()
+    if scope not in ("org", "mine", "user", "unassigned"):
+        raise HTTPException(400, "Invalid scope")
+
+    # Resolve target user for the person filter.
+    target_uid: Optional[str] = None
+    target_user: Optional[Dict] = None
+    if scope == "mine":
+        target_uid = user["user_id"]
+        target_user = {"user_id": user["user_id"], "name": user.get("name"), "email": user.get("email")}
+    elif scope == "user":
+        if not user_id:
+            raise HTTPException(400, "user_id required for scope=user")
+        target = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+        if not target:
+            raise HTTPException(404, "User not found")
+        # Enforce: target must be a member of the client being viewed (or be an internal admin).
+        if client_id:
+            if target.get("role") not in ("super_admin", "platform_admin"):
+                if client_id not in (target.get("client_ids") or []):
+                    raise HTTPException(403, "User is not a member of this client")
+        # Client users may only view assignments for members of their own client, and only themselves
+        # unless their role explicitly permits viewing others (contributor/read-only can see themselves).
+        if user.get("role") in ("client_contributor", "client_readonly") and user_id != user["user_id"]:
+            raise HTTPException(403, "Not authorized to view another user's assignments")
+        target_uid = user_id
+        target_user = target
+    elif scope == "unassigned":
+        # Only internal admins can view unassigned records portfolio-wide.
+        if user.get("role") not in ("super_admin", "platform_admin"):
+            raise HTTPException(403, "Unassigned view is restricted to internal admins")
+
+    scope_filter = _scope_filter(user, client_id)
     now_iso = _now()
     horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
 
     # Fetch minimal working sets once, filter in Python — saves round-trips.
-    reviews = await db.reviews.find(scope, {"_id": 0}).sort("due_date", 1).to_list(2000)
-    findings = await db.findings.find(scope, {"_id": 0}).sort("created_at", -1).to_list(2000)
-    risks = await db.risks.find(scope, {"_id": 0}).sort("created_at", -1).to_list(2000)
-    policies = await db.policies.find(scope, {"_id": 0}).to_list(1000)
-    vendors = await db.vendors.find(scope, {"_id": 0}).to_list(1000)
-    tasks = await db.tasks.find(scope, {"_id": 0}).sort("due_date", 1).to_list(1000)
-    exceptions = await db.exceptions.find(scope, {"_id": 0}).to_list(500)
+    reviews = await db.reviews.find(scope_filter, {"_id": 0}).sort("due_date", 1).to_list(2000)
+    findings = await db.findings.find(scope_filter, {"_id": 0}).sort("created_at", -1).to_list(2000)
+    risks = await db.risks.find(scope_filter, {"_id": 0}).sort("created_at", -1).to_list(2000)
+    policies = await db.policies.find(scope_filter, {"_id": 0}).to_list(1000)
+    vendors = await db.vendors.find(scope_filter, {"_id": 0}).to_list(1000)
+    tasks = await db.tasks.find(scope_filter, {"_id": 0}).sort("due_date", 1).to_list(1000)
+    exceptions = await db.exceptions.find(scope_filter, {"_id": 0}).to_list(500)
+
+    # Apply person / unassigned filter to each collection so all downstream KPIs are naturally scoped.
+    if scope == "unassigned":
+        reviews = [r for r in reviews if _is_unassigned(r, "reviews") and r.get("status") not in ("completed", "cancelled")]
+        findings = [f for f in findings if _is_unassigned(f, "findings") and f.get("status") in ("open", "in_remediation")]
+        risks = [r for r in risks if _is_unassigned(r, "risks") and r.get("status") != "closed"]
+        tasks = [t for t in tasks if _is_unassigned(t, "tasks") and t.get("status") not in ("done", "cancelled")]
+        policies = [p for p in policies if _is_unassigned(p, "policies")]
+        vendors = [v for v in vendors if _is_unassigned(v, "vendors")]
+        exceptions = [e for e in exceptions if _is_unassigned(e, "exceptions")]
+    elif target_uid:
+        reviews = [r for r in reviews if _owner_match(r, "reviews", target_uid)]
+        findings = [f for f in findings if _owner_match(f, "findings", target_uid)]
+        risks = [r for r in risks if _owner_match(r, "risks", target_uid)]
+        tasks = [t for t in tasks if _owner_match(t, "tasks", target_uid)]
+        policies = [p for p in policies if _owner_match(p, "policies", target_uid)]
+        vendors = [v for v in vendors if _owner_match(v, "vendors", target_uid)]
+        exceptions = [e for e in exceptions if _owner_match(e, "exceptions", target_uid)]
 
     def is_overdue(item, date_field="due_date", closed_statuses=("completed", "done", "closed", "remediated", "retired", "cancelled")):
         d = item.get(date_field)
@@ -957,14 +1070,19 @@ async def dashboard(client_id: Optional[str] = Query(None), user: Dict = Depends
         or (f.get("due_date") and f["due_date"] <= horizon14)
     ][:8]
 
-    # Your Actions — items owned/assigned to me and still open
-    me = user["user_id"]
-    def mine(items, open_statuses):
-        return [i for i in items if (i.get("owner_id") == me or i.get("assignee_id") == me) and i.get("status") in open_statuses]
+    # Your Actions — items owned/assigned to the scope target (defaults to viewer for org/unassigned).
+    # When the dashboard is scoped to a user (mine/user), all collections above are already pre-filtered
+    # to that person's assignments, so this becomes their action queue. For scope=unassigned we return
+    # an empty list because there is no owner to attribute actions to.
+    actions_uid = target_uid if target_uid else user["user_id"]
+    def mine(items, open_statuses, kind):
+        if scope == "unassigned":
+            return []
+        return [i for i in items if _owner_match(i, kind, actions_uid) and i.get("status") in open_statuses]
     your_actions = (
-        [{**_brief(x, "finding", "finding_id"), "action": "Respond"} for x in mine(findings, ("open", "in_remediation"))]
-        + [{**_brief(x, "task", "task_id"), "action": "Continue"} for x in mine(tasks, ("open", "in_progress", "blocked"))]
-        + [{**_brief(x, "review", "review_id"), "action": "Start review"} for x in mine(reviews, ("upcoming", "in_progress"))]
+        [{**_brief(x, "finding", "finding_id"), "action": "Respond"} for x in mine(findings, ("open", "in_remediation"), "findings")]
+        + [{**_brief(x, "task", "task_id"), "action": "Continue"} for x in mine(tasks, ("open", "in_progress", "blocked"), "tasks")]
+        + [{**_brief(x, "review", "review_id"), "action": "Start review"} for x in mine(reviews, ("upcoming", "in_progress"), "reviews")]
     )
     your_actions.sort(key=lambda x: x.get("due_date") or "9999")
     your_actions = your_actions[:8]
@@ -1006,6 +1124,17 @@ async def dashboard(client_id: Optional[str] = Query(None), user: Dict = Depends
     activity_scope = {"client_id": {"$in": (user.get("client_ids") or [])}} if user.get("role") not in ("super_admin", "platform_admin") else ({"client_id": client_id} if client_id else {})
     logs = await db.audit_logs.find({**activity_scope, "action": {"$nin": ["update"]}}, {"_id": 0}).sort("at", -1).limit(10).to_list(10)
 
+    # Human-friendly scope label used by the dashboard header.
+    if scope == "org":
+        scope_label = None
+    elif scope == "unassigned":
+        scope_label = "Unassigned records"
+    elif scope == "mine":
+        scope_label = "Your assigned work"
+    else:
+        who = (target_user or {}).get("name") or (target_user or {}).get("email") or "user"
+        scope_label = f"GRC items assigned to {who}"
+
     return {
         "kpis": {
             # legacy keys (kept for regression)
@@ -1018,6 +1147,12 @@ async def dashboard(client_id: Optional[str] = Query(None), user: Dict = Depends
             "critical_high_findings": len(critical_high),
             "due_next_30": due_next_30_count,
         },
+        "scope": scope,
+        "scope_label": scope_label,
+        "target_user": (
+            {"user_id": target_user.get("user_id"), "name": target_user.get("name"), "email": target_user.get("email")}
+            if target_user else None
+        ),
         "needs_attention": needs,
         "priority_findings": priority_findings,
         "your_actions": your_actions,
