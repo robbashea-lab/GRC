@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-heading: 'Outfit', 'Cabinet Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: rgb(248 250 252); /* slate-50 */
+  color: rgb(15 23 42); /* slate-900 */
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+.font-mono, code, kbd, pre, .mono {
+  font-family: var(--font-mono);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 222 47% 11%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
+
+/* Custom scrollbar for the app */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(203 213 225); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(148 163 184); }
+
+/* Compact table utility */
+.tbl-cell { @apply px-3 py-1.5 text-xs text-slate-700 border-b border-slate-100; }
+.tbl-head { @apply px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 bg-slate-50 border-b border-slate-200 text-left; }
+.row-hover:hover { @apply bg-slate-50; }
+
+/* Sidebar link */
+.side-link { @apply flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition; }
+.side-link.active { @apply bg-slate-800 text-white; }
+
+/* Drawer/sheet content */
+.drawer-tab { @apply px-3 py-2 text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-900; }
+.drawer-tab.active { @apply border-slate-900 text-slate-900; }

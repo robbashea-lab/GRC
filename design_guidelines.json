@@ -1,0 +1,98 @@
+{
+  "persona": {
+    "name": "E1: The Anti-AI Designer",
+    "archetype": "Swiss & High-Contrast / Modern Clean B2B SaaS (Linear, Stripe, Notion inspired)",
+    "description": "High-density, highly disciplined B2B SaaS platform design with neutral stone/zinc tones, crisp 1px borders, subtle ambient shadows, compact information-dense tables, and prominent multi-tenant organization context."
+  },
+  "theme": {
+    "mode": "light",
+    "support_dark_toggle": true,
+    "forbidden_colors": ["#1B93A4", "#7351B7"],
+    "forbidden_fonts": ["Space Grotesk", "Inter for headings"]
+  },
+  "typography": {
+    "headline_font": "Cabinet Grotesk, Outfit, or Manrope",
+    "body_font": "IBM Plex Sans or Work Sans",
+    "mono_font": "JetBrains Mono or IBM Plex Mono",
+    "font_family_css": "font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif; font-heading: 'Cabinet Grotesk', 'Outfit', sans-serif; font-mono: 'JetBrains Mono', monospace;",
+    "hierarchy": {
+      "h1_hero_dashboard": "text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100",
+      "h2_section": "text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100",
+      "h3_card": "text-sm font-medium tracking-tight text-slate-800 dark:text-slate-200",
+      "body_standard": "text-xs md:text-sm text-slate-600 dark:text-slate-400 leading-normal",
+      "table_cell_text": "text-xs font-normal text-slate-700 dark:text-slate-300",
+      "overline_label": "text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500"
+    }
+  },
+  "color_palette": {
+    "background_app": "bg-slate-50 dark:bg-slate-950",
+    "background_card": "bg-white dark:bg-slate-900",
+    "sidebar_background": "bg-slate-900 dark:bg-slate-950 text-slate-200",
+    "border_subtle": "border-slate-200 dark:border-slate-800",
+    "border_medium": "border-slate-300 dark:border-slate-700",
+    "text_primary": "text-slate-900 dark:text-slate-100",
+    "text_muted": "text-slate-500 dark:text-slate-400",
+    "primary_button": "bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900",
+    "status_badge_colors": {
+      "critical_high_risk": "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800/60",
+      "medium_warning": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60",
+      "low_info": "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800/60",
+      "success_approved": "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60",
+      "in_review_neutral": "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+    }
+  },
+  "layout_and_navigation": {
+    "sidebar": {
+      "width": "w-64",
+      "collapsed_width": "w-16",
+      "style": "fixed left-0 top-0 bottom-0 z-40 bg-slate-900 text-slate-300 border-r border-slate-800 flex flex-col justify-between",
+      "client_selector": "Prominent, un-missable tenant selector dropdown at top of sidebar with org logo avatar, environment badge (e.g. Production/Staging), tenant switcher modal/dropdown, and tenant role indicator (e.g., Super Admin, Client Read-Only)."
+    },
+    "header": {
+      "style": "h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 px-6 flex items-center justify-between",
+      "elements": ["Breadcrumbs with clickable links", "Global Search bar / Cmd+K trigger", "Notifications popover with unread count badge", "User Profile / Role selector"]
+    },
+    "dashboard_grid": {
+      "mode": "MODE B: High Density Command-Center Grid",
+      "kpi_strip": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6",
+      "kpi_focus": "Overdue Reviews, Open Findings, Significant Risks, Upcoming Reviews (Avoid compliance percentage gauges as centerpiece!)",
+      "main_grid": "grid grid-cols-1 lg:grid-cols-12 gap-6"
+    }
+  },
+  "tables_and_data_density": {
+    "row_height": "h-9 (36px compact mode) or h-10 for standard rows",
+    "cell_padding": "px-3 py-1.5",
+    "features": [
+      "Fixed sticky header with subtle bottom border",
+      "Inline quick edit dropdowns for status/owner/due date",
+      "Bulk row action bar (Assign, Review, Export, Delete)",
+      "Saved views bar (e.g. 'My Overdue Reviews', 'Critical Findings', 'All Risks')",
+      "Search, multi-select filters, column toggle",
+      "Row click opens detail drawer / slide-over panel"
+    ]
+  },
+  "record_detail_views": {
+    "pattern": "Slide-over drawer or tabbed full page detail with tabs: Overview, Workflow/Remediation, Evidence/Documents, Related Items, Comments, Activity History",
+    "relationship_links": "Clickable chips connecting Reviews -> Findings -> Remediation Tasks -> Risks -> Policies -> Vendors/Assets"
+  },
+  "components_and_ui": {
+    "shadcn_primitives": [
+      "Table", "Tabs", "Sheet (Drawer)", "Dialog", "DropdownMenu", "Select", "Badge",
+      "Sonner (Toasts)", "Calendar", "Checkbox", "Avatar", "Command", "Popover", "Tooltip"
+    ],
+    "evidence_upload": "Drag-and-drop zone with version history, file preview, uploader info, and approval status badge",
+    "toasts": "Use Sonner component at bottom-right for action feedback"
+  },
+  "testing_and_accessibility": {
+    "data_testid_rule": "ALL interactive components, buttons, tabs, tenant selectors, inputs, badges, and row links MUST include concise kebab-case data-testid attributes (e.g. data-testid=\"org-selector-trigger\", data-testid=\"reviews-table-row-1\", data-testid=\"create-review-button\")."
+  },
+  "instructions_to_main_agent": [
+    "Follow the React .js component structure under /app/frontend/src/.",
+    "Do not use generic centered or card-heavy Bootstrap layouts. Use Linear/Stripe-inspired compact borders, subtle background tints, and crisp typographic hierarchy.",
+    "Ensure tenant isolation and client context switcher is prominently visible in the persistent left sidebar.",
+    "Avoid making compliance percentage gauges the centerpiece of the dashboard. Focus on actionable items: Overdue Reviews, Open Findings, Significant Risks, Upcoming Reviews.",
+    "Every tabbed view or drawer MUST support responsive fallback for mobile viewport while maintaining high desktop data density.",
+    "Always use data-testid attributes on all interactive elements.",
+    "Use Lucide-React or Phosphor Icons for crisp B2B SaaS iconography."
+  ]
+}
