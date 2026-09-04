@@ -693,25 +693,147 @@ async def list_users(user: Dict = Depends(get_current_user)):
 async def dashboard(client_id: Optional[str] = Query(None), user: Dict = Depends(get_current_user)):
     scope = _scope_filter(user, client_id)
     now_iso = _now()
-    overdue_reviews = await db.reviews.count_documents({**scope, "status": {"$nin": ["completed"]}, "due_date": {"$lt": now_iso}})
-    open_findings = await db.findings.count_documents({**scope, "status": {"$in": ["open", "in_remediation"]}})
-    critical_findings = await db.findings.count_documents({**scope, "severity": {"$in": ["high", "critical"]}, "status": {"$in": ["open", "in_remediation"]}})
-    significant_risks = await db.risks.count_documents({**scope, "impact": {"$in": ["high"]}, "status": {"$nin": ["closed"]}})
-    # Upcoming reviews (next 30 days)
     horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
-    upcoming = await db.reviews.find({**scope, "due_date": {"$gte": now_iso, "$lte": horizon}}, {"_id": 0}).sort("due_date", 1).limit(10).to_list(10)
-    recent_findings = await db.findings.find({**scope, "status": {"$in": ["open", "in_remediation"]}}, {"_id": 0}).sort("created_at", -1).limit(8).to_list(8)
-    top_risks = await db.risks.find({**scope, "status": {"$nin": ["closed"]}}, {"_id": 0}).sort("created_at", -1).limit(6).to_list(6)
+
+    # Fetch minimal working sets once, filter in Python — saves round-trips.
+    reviews = await db.reviews.find(scope, {"_id": 0}).sort("due_date", 1).to_list(2000)
+    findings = await db.findings.find(scope, {"_id": 0}).sort("created_at", -1).to_list(2000)
+    risks = await db.risks.find(scope, {"_id": 0}).sort("created_at", -1).to_list(2000)
+    policies = await db.policies.find(scope, {"_id": 0}).to_list(1000)
+    vendors = await db.vendors.find(scope, {"_id": 0}).to_list(1000)
+    tasks = await db.tasks.find(scope, {"_id": 0}).sort("due_date", 1).to_list(1000)
+    exceptions = await db.exceptions.find(scope, {"_id": 0}).to_list(500)
+
+    def is_overdue(item, date_field="due_date", closed_statuses=("completed", "done", "closed", "remediated", "retired")):
+        d = item.get(date_field)
+        return bool(d and d < now_iso and item.get("status") not in closed_statuses)
+
+    overdue_reviews = [r for r in reviews if is_overdue(r)]
+    overdue_findings = [f for f in findings if is_overdue(f)]
+    overdue_tasks = [t for t in tasks if is_overdue(t)]
+    open_findings = [f for f in findings if f.get("status") in ("open", "in_remediation")]
+    critical_high = [f for f in open_findings if f.get("severity") in ("high", "critical")]
+    significant_risks = [r for r in risks if r.get("impact") == "high" and r.get("status") != "closed"]
+
+    upcoming_reviews = [r for r in reviews
+                        if r.get("due_date") and now_iso <= r["due_date"] <= horizon
+                        and r.get("status") != "completed"]
+    upcoming_tasks_30 = [t for t in tasks if t.get("due_date") and now_iso <= t["due_date"] <= horizon and t.get("status") != "done"]
+    policies_due_30 = [p for p in policies if p.get("next_review_date") and now_iso <= p["next_review_date"] <= horizon]
+    due_next_30_count = len(upcoming_reviews) + len(upcoming_tasks_30) + len(policies_due_30)
+
+    def _brief(item, kind, id_field, title_field="title"):
+        return {
+            "id": item.get(id_field), "kind": kind,
+            "title": item.get(title_field), "status": item.get("status"),
+            "severity": item.get("severity"), "priority": item.get("priority"),
+            "due_date": item.get("due_date"),
+            "owner_id": item.get("owner_id") or item.get("assignee_id"),
+            "review_type": item.get("review_type"),
+        }
+
+    # Needs Your Attention — prioritized composite
+    needs: List[Dict] = []
+    # Priority 1: critical findings (overdue first)
+    crit_overdue = [f for f in critical_high if is_overdue(f) and f.get("severity") == "critical"]
+    crit_other = [f for f in critical_high if f.get("severity") == "critical" and f not in crit_overdue]
+    high_overdue = [f for f in critical_high if is_overdue(f) and f.get("severity") == "high"]
+    high_other = [f for f in critical_high if f.get("severity") == "high" and f not in high_overdue]
+    for f in crit_overdue + crit_other:
+        needs.append({**_brief(f, "finding", "finding_id"), "priority_tone": "critical", "action": "View finding"})
+    for r in overdue_reviews:
+        needs.append({**_brief(r, "review", "review_id"), "priority_tone": "critical", "action": "Start review"})
+    for f in high_overdue + high_other:
+        needs.append({**_brief(f, "finding", "finding_id"), "priority_tone": "high", "action": "View finding"})
+    for t in overdue_tasks:
+        needs.append({**_brief(t, "task", "task_id"), "priority_tone": "high", "action": "Continue"})
+    for p in policies:
+        if p.get("status") == "in_review":
+            needs.append({**_brief(p, "policy", "policy_id"), "priority_tone": "info", "action": "Approve"})
+    for e in exceptions:
+        if e.get("status") == "requested":
+            needs.append({**_brief(e, "exception", "exception_id"), "priority_tone": "info", "action": "Review"})
+    needs = needs[:10]
+
+    # Priority Findings — critical/high/overdue/due-soon
+    horizon14 = (datetime.now(timezone.utc) + timedelta(days=14)).isoformat()
+    priority_findings = [
+        _brief(f, "finding", "finding_id") for f in open_findings
+        if f.get("severity") in ("high", "critical")
+        or is_overdue(f)
+        or (f.get("due_date") and f["due_date"] <= horizon14)
+    ][:8]
+
+    # Your Actions — items owned/assigned to me and still open
+    me = user["user_id"]
+    def mine(items, open_statuses):
+        return [i for i in items if (i.get("owner_id") == me or i.get("assignee_id") == me) and i.get("status") in open_statuses]
+    your_actions = (
+        [{**_brief(x, "finding", "finding_id"), "action": "Respond"} for x in mine(findings, ("open", "in_remediation"))]
+        + [{**_brief(x, "task", "task_id"), "action": "Continue"} for x in mine(tasks, ("open", "in_progress", "blocked"))]
+        + [{**_brief(x, "review", "review_id"), "action": "Start review"} for x in mine(reviews, ("planned", "in_progress", "overdue", "blocked"))]
+    )
+    your_actions.sort(key=lambda x: x.get("due_date") or "9999")
+    your_actions = your_actions[:8]
+
+    # Upcoming & Watch — future obligations that don't need action yet
+    watch: List[Dict] = []
+    horizon60 = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
+    horizon90 = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
+    for p in policies:
+        d = p.get("next_review_date")
+        if d and now_iso <= d <= horizon90:
+            watch.append({"id": p["policy_id"], "kind": "policy", "title": f"Policy review · {p['title']}", "due_date": d, "status": p.get("status")})
+    for v in vendors:
+        d = v.get("contract_end")
+        if d and now_iso <= d <= horizon90:
+            watch.append({"id": v["vendor_id"], "kind": "vendor", "title": f"Vendor contract end · {v['name']}", "due_date": d, "status": v.get("status")})
+    for r in reviews:
+        d = r.get("next_review_date")
+        if d and horizon <= d <= horizon90 and r.get("recurrence") not in (None, "none"):
+            watch.append({"id": r["review_id"], "kind": "review", "title": f"Next {r.get('review_type','')} review · {r['title']}", "due_date": d, "status": r.get("status")})
+    for e in exceptions:
+        d = e.get("expires_at")
+        if d and now_iso <= d <= horizon60 and e.get("status") == "approved":
+            watch.append({"id": e["exception_id"], "kind": "exception", "title": f"Exception expires · {e['title']}", "due_date": d, "status": e.get("status")})
+    watch.sort(key=lambda x: x.get("due_date") or "9999")
+    watch = watch[:8]
+
+    # Program Status
+    program_status = [
+        {"area": "Reviews", "detail": f"{len(overdue_reviews)} overdue"},
+        {"area": "Findings", "detail": f"{len(overdue_findings)} overdue · {len(critical_high)} critical/high"},
+        {"area": "Risks", "detail": f"{len(significant_risks)} significant"},
+        {"area": "Policies", "detail": f"{len([p for p in policies if p.get('next_review_date') and p['next_review_date'] <= horizon])} reviews due"},
+        {"area": "Vendors", "detail": f"{len([v for v in vendors if v.get('status') == 'under_review'])} under review"},
+        {"area": "Tasks", "detail": f"{len([t for t in tasks if t.get('status') in ('open','in_progress','blocked')])} open"},
+    ]
+
+    # Recent activity — from audit_logs, filtered to meaningful entities
+    activity_scope = {"client_id": {"$in": (user.get("client_ids") or [])}} if user.get("role") not in ("super_admin", "platform_admin") else ({"client_id": client_id} if client_id else {})
+    logs = await db.audit_logs.find({**activity_scope, "action": {"$nin": ["update"]}}, {"_id": 0}).sort("at", -1).limit(10).to_list(10)
+
     return {
         "kpis": {
-            "overdue_reviews": overdue_reviews,
-            "open_findings": open_findings,
-            "critical_findings": critical_findings,
-            "significant_risks": significant_risks,
+            # legacy keys (kept for regression)
+            "overdue_reviews": len(overdue_reviews),
+            "open_findings": len(open_findings),
+            "critical_findings": len(critical_high),
+            "significant_risks": len(significant_risks),
+            # new keys
+            "overdue_actions": len(overdue_reviews) + len(overdue_findings) + len(overdue_tasks),
+            "critical_high_findings": len(critical_high),
+            "due_next_30": due_next_30_count,
         },
-        "upcoming_reviews": upcoming,
-        "recent_findings": recent_findings,
-        "top_risks": top_risks,
+        "needs_attention": needs,
+        "priority_findings": priority_findings,
+        "your_actions": your_actions,
+        "watch_items": watch,
+        "program_status": program_status,
+        "recent_activity": logs,
+        "upcoming_reviews": [_brief(r, "review", "review_id") for r in upcoming_reviews[:8]],
+        "recent_findings": [_brief(f, "finding", "finding_id") for f in open_findings[:8]],
+        "top_risks": [_brief(r, "risk", "risk_id") for r in significant_risks[:6]],
     }
 
 
