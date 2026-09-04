@@ -237,11 +237,19 @@ class RiskIn(BaseModel):
 class PolicyIn(BaseModel):
     title: str
     client_id: str
-    version: str = "1.0"
-    status: str = "draft"  # draft, in_review, approved, retired
+    version: Optional[str] = None  # No fabricated default until verified.
+    status: str = "draft"  # draft, in_review, approved, retired, needs_verification, needs_creation, not_applicable
+    presence: Optional[str] = None  # reported_existing, verified_existing, reported_missing, needs_confirmation, not_applicable
+    category: Optional[str] = None  # Core Governance, Security Operations, Business Resilience, ...
+    applicability_rationale: Optional[str] = None  # required when presence == not_applicable
+    onboarding_note: Optional[str] = None  # short client note captured during onboarding
+    is_client_reported: Optional[bool] = None  # true if presence came from a client onboarding response
+    verified_at: Optional[str] = None
+    verified_by: Optional[str] = None
     owner_id: Optional[str] = None
     approver_id: Optional[str] = None
     approved_at: Optional[str] = None
+    last_reviewed_at: Optional[str] = None
     next_review_date: Optional[str] = None
     summary: Optional[str] = None
 
@@ -295,6 +303,8 @@ class TaskIn(BaseModel):
     description: Optional[str] = None
     finding_id: Optional[str] = None
     review_id: Optional[str] = None
+    policy_id: Optional[str] = None  # link back to Policy Register row (for onboarding-generated tasks)
+    source: Optional[str] = None  # e.g. "GRC Program Onboarding"
 
 
 class ExceptionIn(BaseModel):
@@ -2591,9 +2601,12 @@ async def create_baseline(body: BaselineIn, user: Dict = Depends(get_current_use
     if not _can_access_client(user, body.client_id):
         raise HTTPException(403, "Forbidden for this client")
     created = {"policies": 0, "risks": 0, "reviews": 0}
+    # NOTE: The Policies list is retained here for legacy callers only. The new
+    # "Policies & Governance Documents" onboarding step writes via
+    # POST /api/onboarding/policy-responses which distinguishes reported vs verified.
     for title in body.policies:
         doc = {"policy_id": _uid("pol"), "title": title, "client_id": body.client_id,
-               "version": "1.0", "status": "draft", "owner_id": user["user_id"],
+               "status": "draft", "owner_id": user["user_id"],
                "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"]}
         await db.policies.insert_one(doc)
         created["policies"] += 1
@@ -2621,6 +2634,259 @@ async def create_baseline(body: BaselineIn, user: Dict = Depends(get_current_use
         created["reviews"] += 1
     await audit(user, "baseline", "client", body.client_id, body.client_id, meta=created)
     return {"ok": True, "created": created}
+
+
+# ---------------- Policies & Governance onboarding ----------------
+# Client-reported presence (what the client says) is deliberately kept separate
+# from lifecycle status (draft/in_review/approved/etc.) and from verified metadata
+# (version/owner/approval date/etc.). The GRC team verifies later — a client's
+# "Yes" is never treated as evidence of a verified, approved policy.
+
+POLICY_LIBRARY: List[Dict[str, Any]] = [
+    # Core Governance
+    {"category": "Core Governance", "name": "Information Security Policy", "applicability": "common_baseline"},
+    {"category": "Core Governance", "name": "Risk Management Policy", "applicability": "common_baseline"},
+    {"category": "Core Governance", "name": "Access Control & Identity Management Policy", "applicability": "common_baseline"},
+    {"category": "Core Governance", "name": "Acceptable Use Policy", "applicability": "common_baseline"},
+    {"category": "Core Governance", "name": "Change Management Policy", "applicability": "common_baseline"},
+    {"category": "Core Governance", "name": "Vendor / Third-Party Risk Management Policy", "applicability": "common_baseline"},
+    {"category": "Core Governance", "name": "Data Classification & Handling Policy", "applicability": "common_baseline"},
+    {"category": "Core Governance", "name": "Data Retention & Secure Disposal Policy", "applicability": "common_baseline"},
+    # Security Operations
+    {"category": "Security Operations", "name": "Vulnerability & Patch Management Policy", "applicability": "common_baseline"},
+    {"category": "Security Operations", "name": "Configuration Management Policy", "applicability": "common_baseline"},
+    {"category": "Security Operations", "name": "Security Awareness & Training Policy", "applicability": "common_baseline"},
+    {"category": "Security Operations", "name": "Backup & Restoration Policy", "applicability": "common_baseline"},
+    {"category": "Security Operations", "name": "Cryptography & Key Management Policy", "applicability": "common_baseline"},
+    {"category": "Security Operations", "name": "Logging & Monitoring Policy", "applicability": "common_baseline"},
+    # Business Resilience / Incident Management
+    {"category": "Business Resilience", "name": "Incident Response Plan", "applicability": "common_baseline"},
+    {"category": "Business Resilience", "name": "Business Continuity Plan", "applicability": "common_baseline"},
+    {"category": "Business Resilience", "name": "Disaster Recovery Plan", "applicability": "common_baseline"},
+    {"category": "Business Resilience", "name": "Business Impact Analysis", "applicability": "common_baseline"},
+    # Physical / Workforce / Technology
+    {"category": "Physical, Workforce & Technology", "name": "Physical & Environmental Security Policy", "applicability": "consider_based_on_applicability"},
+    {"category": "Physical, Workforce & Technology", "name": "Remote Work / Telework Policy", "applicability": "consider_based_on_applicability"},
+    {"category": "Physical, Workforce & Technology", "name": "Mobile Device / BYOD Policy", "applicability": "consider_based_on_applicability"},
+    {"category": "Physical, Workforce & Technology", "name": "Cloud Security Policy", "applicability": "consider_based_on_applicability"},
+    {"category": "Physical, Workforce & Technology", "name": "Secure Development / SDLC Policy", "applicability": "consider_based_on_applicability"},
+    # Privacy / Data Protection
+    {"category": "Privacy & Data Protection", "name": "Privacy / Data Protection Policy", "applicability": "common_baseline"},
+]
+
+
+class OnboardingPolicyResponse(BaseModel):
+    name: str  # matches POLICY_LIBRARY entry (case-insensitive)
+    category: Optional[str] = None
+    response: str  # yes | no | unsure | na
+    note: Optional[str] = None
+    applicability_rationale: Optional[str] = None  # required when response == na
+
+
+class OnboardingPoliciesIn(BaseModel):
+    client_id: str
+    responses: List[OnboardingPolicyResponse]
+
+
+def _presence_for_response(resp: str) -> str:
+    m = {"yes": "reported_existing", "no": "reported_missing",
+         "unsure": "needs_confirmation", "na": "not_applicable"}
+    return m.get(resp, "needs_confirmation")
+
+
+def _lifecycle_for_response(resp: str) -> str:
+    m = {"yes": "needs_verification", "no": "needs_creation",
+         "unsure": "needs_verification", "na": "not_applicable"}
+    return m.get(resp, "needs_verification")
+
+
+@api.get("/onboarding/policy-library")
+async def onboarding_policy_library(
+    client_id: str = Query(...),
+    user: Dict = Depends(get_current_user),
+):
+    """Return the categorized policy library plus, for each library item,
+    the current Policy Register row for this client (if one already exists).
+    The frontend uses this to preselect the last known response so the
+    onboarding step is idempotent and never duplicates records."""
+    if not _can_access_client(user, client_id):
+        raise HTTPException(403, "Forbidden for this client")
+    # Load all existing policies for this tenant once.
+    existing = await db.policies.find({"client_id": client_id}, {"_id": 0}).to_list(1000)
+    by_name = {(p.get("title") or "").strip().lower(): p for p in existing}
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for item in POLICY_LIBRARY:
+        row = {**item}
+        match = by_name.get(item["name"].strip().lower())
+        if match:
+            row["existing_policy_id"] = match.get("policy_id")
+            row["current_presence"] = match.get("presence")
+            row["current_status"] = match.get("status")
+            row["last_onboarding_note"] = match.get("onboarding_note")
+            row["applicability_rationale"] = match.get("applicability_rationale")
+        grouped.setdefault(item["category"], []).append(row)
+    return {
+        "categories": [
+            {"name": name, "items": items}
+            for name, items in grouped.items()
+        ],
+    }
+
+
+@api.post("/onboarding/policy-responses")
+async def onboarding_policy_responses(body: OnboardingPoliciesIn, user: Dict = Depends(get_current_user)):
+    """Convert client-reported responses into Policy Register rows + optional Action Items.
+    Never fabricates version/owner/approval_date/last_review/next_review — those stay blank
+    until the GRC team verifies. Never duplicates: matches by title (case-insensitive)."""
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    if not _can_access_client(user, body.client_id):
+        raise HTTPException(403, "Forbidden for this client")
+
+    # Preload existing policies for tenant to avoid duplicates.
+    existing = await db.policies.find({"client_id": body.client_id}, {"_id": 0}).to_list(2000)
+    existing_by_name = {(p.get("title") or "").strip().lower(): p for p in existing}
+    # Preload open onboarding-sourced tasks per policy_id to avoid duplicate action items.
+    open_tasks = await db.tasks.find(
+        {"client_id": body.client_id, "source": "GRC Program Onboarding",
+         "status": {"$nin": ["done"]}}, {"_id": 0}
+    ).to_list(2000)
+    task_by_policy = {t.get("policy_id"): t for t in open_tasks if t.get("policy_id")}
+
+    counters = {"policies_created": 0, "policies_updated": 0, "tasks_created": 0}
+    results: List[Dict[str, Any]] = []
+    now = _now()
+
+    for r in body.responses:
+        resp = (r.response or "").lower().strip()
+        if resp not in ("yes", "no", "unsure", "na"):
+            continue
+        if resp == "na" and not (r.applicability_rationale or "").strip():
+            raise HTTPException(400, f"Rationale is required when marking '{r.name}' as Not Applicable")
+        presence = _presence_for_response(resp)
+        lifecycle = _lifecycle_for_response(resp)
+        title_key = r.name.strip().lower()
+        existing_row = existing_by_name.get(title_key)
+
+        if existing_row:
+            update = {
+                "presence": presence,
+                "onboarding_note": r.note or existing_row.get("onboarding_note"),
+                "applicability_rationale": (r.applicability_rationale or existing_row.get("applicability_rationale")) if resp == "na" else existing_row.get("applicability_rationale"),
+                "category": r.category or existing_row.get("category"),
+                "is_client_reported": True,
+                "updated_at": now,
+            }
+            # Only bump lifecycle status when the client hasn't verified yet, so we don't
+            # trample a Verified/Approved policy just because a client re-runs onboarding.
+            if existing_row.get("status") in (None, "", "draft", "needs_verification", "needs_creation", "not_applicable"):
+                update["status"] = lifecycle
+            await db.policies.update_one({"policy_id": existing_row["policy_id"]}, {"$set": update})
+            counters["policies_updated"] += 1
+            pol_id = existing_row["policy_id"]
+            prev_presence = existing_row.get("presence")
+        else:
+            pol_id = _uid("pol")
+            doc = {
+                "policy_id": pol_id,
+                "title": r.name,
+                "client_id": body.client_id,
+                "category": r.category,
+                "presence": presence,
+                "status": lifecycle,
+                "onboarding_note": r.note or None,
+                "applicability_rationale": (r.applicability_rationale or None) if resp == "na" else None,
+                "is_client_reported": True,
+                # Deliberately no version / owner / approver / approved_at / next_review_date —
+                # those are populated only by /policies/{id}/verify.
+                "created_at": now,
+                "updated_at": now,
+                "created_by": user["user_id"],
+            }
+            await db.policies.insert_one(doc)
+            counters["policies_created"] += 1
+            prev_presence = None
+
+        await audit(user, "onboarding-response", "policy", pol_id, body.client_id,
+                    meta={"response": resp, "presence": presence, "prev_presence": prev_presence,
+                          "note": (r.note or None), "rationale": (r.applicability_rationale or None)})
+
+        # Create Action Item where appropriate. Idempotent per policy_id.
+        task_id = None
+        if resp in ("no", "unsure") and pol_id not in task_by_policy:
+            if resp == "no":
+                task_title = f"Develop and approve {r.name}"
+                task_desc = f"Onboarding recorded '{r.name}' as missing. Draft, review, and approve the document, then verify metadata on the Policy Register."
+            else:
+                task_title = f"Confirm whether {r.name} exists"
+                task_desc = f"Onboarding recorded '{r.name}' as unconfirmed. Follow up with the client to determine whether the document exists, then either verify metadata or mark it missing."
+            task_id = _uid("tsk")
+            await db.tasks.insert_one({
+                "task_id": task_id,
+                "title": task_title,
+                "description": task_desc,
+                "client_id": body.client_id,
+                "status": "open",
+                "priority": "medium",
+                # Owner + due date are deliberately left blank per onboarding rules.
+                "policy_id": pol_id,
+                "source": "GRC Program Onboarding",
+                "created_at": now,
+                "updated_at": now,
+                "created_by": user["user_id"],
+            })
+            counters["tasks_created"] += 1
+            await audit(user, "create", "task", task_id, body.client_id,
+                        meta={"source": "GRC Program Onboarding", "policy_id": pol_id})
+
+        results.append({
+            "policy_id": pol_id, "name": r.name, "response": resp,
+            "presence": presence, "status": lifecycle,
+            "task_created": task_id,
+        })
+
+    return {"ok": True, "counters": counters, "results": results}
+
+
+class PolicyVerifyIn(BaseModel):
+    version: Optional[str] = None
+    owner_id: Optional[str] = None
+    approver_id: Optional[str] = None
+    approved_at: Optional[str] = None
+    last_reviewed_at: Optional[str] = None
+    next_review_date: Optional[str] = None
+    summary: Optional[str] = None
+    # If provided, override lifecycle status (e.g. approved). Default keeps existing status.
+    status: Optional[str] = None
+
+
+@api.post("/policies/{policy_id}/verify")
+async def policy_verify(policy_id: str, body: PolicyVerifyIn, user: Dict = Depends(get_current_user)):
+    """Move a client-reported policy from 'Reported Existing' → 'Verified Existing' and
+    populate the verified metadata. Only Platform / Super admins may verify."""
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Only platform admins can verify policies")
+    p = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(404, "Policy not found")
+    if not _can_access_client(user, p["client_id"]):
+        raise HTTPException(403, "Forbidden for this client")
+    update: Dict[str, Any] = {
+        "presence": "verified_existing",
+        "verified_at": _now(),
+        "verified_by": user["user_id"],
+        "updated_at": _now(),
+    }
+    for k in ("version", "owner_id", "approver_id", "approved_at", "last_reviewed_at",
+              "next_review_date", "summary", "status"):
+        v = getattr(body, k, None)
+        if v not in (None, ""):
+            update[k] = v
+    await db.policies.update_one({"policy_id": policy_id}, {"$set": update})
+    await audit(user, "verify", "policy", policy_id, p["client_id"],
+                meta={"prev_presence": p.get("presence"), "verified_fields": [k for k in update.keys() if k not in ("updated_at", "verified_at", "verified_by")]})
+    fresh = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+    return fresh
 
 
 # ---------------- Notifications ----------------

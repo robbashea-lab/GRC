@@ -30,6 +30,14 @@ const TONE_BY_STATUS = {
   in_review: "info",
   approved: "success",
   retired: "neutral",
+  needs_verification: "moderate",
+  needs_creation: "high",
+  // Policy presence (client-reported vs verified)
+  reported_existing: "info",
+  verified_existing: "success",
+  reported_missing: "high",
+  needs_confirmation: "moderate",
+  not_applicable: "neutral",
   // Vendor lifecycle
   active: "success",
   under_review: "info",

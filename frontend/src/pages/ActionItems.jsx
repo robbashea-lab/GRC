@@ -88,7 +88,7 @@ export default function ActionItems() {
           priority: t.priority || "medium",
           owner_id: t.assignee_id || t.owner_id,
           due_date: t.due_date, status: t.status || "open",
-          source: t.linked_finding_id ? `Finding` : "Manual",
+          source: t.source || (t.linked_finding_id ? "Finding" : "Manual"),
           closed: closedTask,
         });
       }

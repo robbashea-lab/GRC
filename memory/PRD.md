@@ -11,6 +11,16 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 - Emails via Emergent Resend; PDFs via reportlab.
 
 ## Implemented (Feb 2026)
+### v20 (Policies & Governance Onboarding · Presence vs Verified) — Sep 2026
+- **Onboarding step 1 renamed** "Policies & Governance Documents" and rewritten as an inventory of what the client says they have (not a builder of drafts). Segmented Yes/No/Unsure/N/A control per item; optional per-row note; required rationale for N/A.
+- **POLICY_LIBRARY** — 24 items grouped into 5 categories (Core Governance, Security Operations, Business Resilience, Physical/Workforce/Technology, Privacy & Data Protection). Items tagged `common_baseline` or `consider_based_on_applicability`.
+- **Backend endpoints** — `GET /api/onboarding/policy-library` returns categorized library preloaded with any existing Policy Register match (`current_presence`, `existing_policy_id`). `POST /api/onboarding/policy-responses` writes/updates Policy rows without ever duplicating and creates linked Tasks for `no`/`unsure`. `POST /api/policies/{id}/verify` moves a reported-existing policy to `verified_existing` and populates version/owner/approval date/etc. Platform-admin-only.
+- **Presence vs Lifecycle** — `PolicyIn` gained `presence` (reported_existing / verified_existing / reported_missing / needs_confirmation / not_applicable), `category`, `applicability_rationale`, `onboarding_note`, `is_client_reported`, `verified_at/by`, `last_reviewed_at`. `status` extended with `needs_verification`, `needs_creation`, `not_applicable`. Version/owner/dates are **never fabricated** by onboarding.
+- **Tasks** now carry `policy_id` + `source` (e.g. "GRC Program Onboarding"). Onboarding is idempotent — resubmitting same responses updates existing rows and does not spawn duplicate tasks. `ActionItems.jsx` now honors `t.source` so the origin badge shows correctly.
+- **Policies list columns** updated to Policy/Document | Presence | Status | Version | Owner | Last review | Next review with tone-mapped presence badges.
+- **Tenant isolation & RBAC verified**: contributor@acme.demo cannot POST onboarding responses for a Globex client_id (403); only super/platform admins can call `/policies/{id}/verify`.
+- Tested: 5/5 backend pytest passing, iteration_11 frontend flows green (rationale enforcement, idempotence, verify workflow, Policies list rendering, action-items origin).
+
 ### v19 (Risk & Vendor Detail Tabs · Schedule Vendor Review · Assurance Expiry Alerts) — Sep 2026
 - **RecordDrawer.jsx** fully refactored with `TABS_BY_KIND` mapping. Non-generic kinds get bespoke tabs; other kinds keep the 5 generic tabs (overview/related/evidence/comments/activity).
 - **Risk drawer — 6 tabs**: Overview (Risk actions panel: `risk-mark-reviewed`, `risk-accept`), Assessment (1–5 likelihood/impact selects with live `risk-live-score` badge), Treatment (treatment select, acceptance rationale, compensating controls, mitigation notes, acceptance history card), Related (linked findings/evidence), Review History (last/next review + reversed `rating_history` timeline), Activity.
