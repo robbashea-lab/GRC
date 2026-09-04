@@ -1,0 +1,46 @@
+{
+  "summary": "Iteration 3 (Northstar GRC) — full backend + frontend E2E for Notifications, Policy Approvals, CSV Exports, and Evidence-in-Drawer. 47/47 pytest tests passed (16 new iter3 + 31 regression). Backend verified: GET /api/notifications returns {items,unread}; @mention in comment ('@contributor@acme.demo') creates a mention-type notification for the target user with title containing 'mentioned'; /api/reviews/{id}/create-finding with owner_id != caller creates finding_assigned notification for the owner; /api/findings/{id}/create-task with assignee_id != caller creates task_assigned notification; /api/notifications/{nid}/read + /api/notifications/read-all zero the unread count. Policy approval endpoints: POST /policies/{id}/submit-review flips status draft→in_review with approval_history entry {action:'submitted'}; approve with {comment:'LGTM'} sets status='approved', approved_at, approver_id and pushes history {action:'approved',comment:'LGTM'}; reject with {reason:'X'} moves status back to 'draft' and pushes {action:'rejected',reason:'X'}. RBAC: client_readonly cannot submit-review (403), client_readonly cannot approve (403), client_contributor cannot approve or reject (403). CSV exports: /api/export/reviews, /api/export/findings, /api/export/exceptions all return Content-Type text/csv, Content-Disposition attachment; header row includes review_id,title,status,review_type,recurrence,due_date for reviews. Evidence linked to record: POST /api/evidence with linked_type='review'+linked_id creates and GET /api/evidence?client_id=&linked_type=review&linked_id= returns it. Regression: /api/dashboard, /api/related, baseline, exceptions, quick actions, cron/overdue-reminders and reminders/send-now all still green. Frontend Playwright verified: sidebar notification-bell visible with notification-unread-count badge; opening dropdown shows notification-mark-all which clears unread (badge disappears); /reviews and /findings both have export-*-button and clicking export-reviews-button triggers a browser download of reviews-YYYY-MM-DD.csv; opening a review row's drawer exposes tab-evidence with drawer-evidence-dropzone + drawer-evidence-input; created a draft policy and drove full approval workflow via UI: policy-submit-review -> in_review, policy-approve, policy-reject/policy-reject-reason/policy-reject-confirm sends back to draft, then submit + approve again succeeds with toast 'Policy approved'. Notification items list populated (3 items visible after actions).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "RecordDrawer Policy — approval history rendering", "issues": ["After approve/reject/resubmit cycles the drawer's Approval History block does not always show newly-appended entries until the drawer is closed and reopened. The local `record` prop is not refetched after policyAction — consider awaiting a refetch of the single policy in policyAction() and setting the drawer's local record so history renders live."]},
+      {"screen": "RecordDrawer date fields (carried over from iter2)", "issues": ["Approved on / Next review date <input type=date> still receive full ISO strings — slice to YYYY-MM-DD to remove the console warning."]},
+      {"screen": "New policy creation drawer", "issues": ["Status field is a required-looking Select but not defaulted to 'draft'. A newly-saved policy without a chosen status becomes ''/unknown, which hides all approval buttons (they only render when status==='draft'). Suggest defaulting status to 'draft' on the client (or on the backend POST /api/policies) so submit-review is always available for freshly created policies."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_iteration2.py",
+    "/app/backend/tests/test_iteration3.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(minor UX) Refetch policy record after policyAction() so approval_history renders new entries without reopening the drawer.",
+    "(minor UX) Default policy.status to 'draft' when creating a new policy from the drawer (or on backend POST /api/policies) so policy-submit-review is visible immediately after save.",
+    "(cosmetic, iter2 carry-over) Slice ISO datetime -> YYYY-MM-DD when binding to <input type=\"date\">.",
+    "(a11y, iter2 carry-over) Add DialogDescription/aria-describedby to Sheet/Dialog content."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1355 lines. Extract notifications, policy-approval, and export/CSV into their own modules; the file is well past the recommended 700-line threshold.",
+    "Notifications list endpoint has no pagination — capped at 50 with sort by created_at desc and no cursor. If a user accumulates >50, older ones are silently invisible.",
+    "@mention regex `@[\\w.+\\-@]+` matches @email but also generic tokens. Users are matched by exact case-insensitive email OR name equality only; this means '@rob' won't match name 'Rob Bashea' (multi-word). Consider matching by name prefix or by explicit user_id after client-side autocomplete for reliable mentions.",
+    "Policy approval endpoints hard-code role check `('super_admin','platform_admin')` — the RBAC scheme is duplicated across approve/reject. Extract a small helper `_can_approve_policy(user)` for DRY.",
+    "CSV export loads up to 10 000 rows into memory before streaming a single chunk (`iter([output.getvalue()])`). For very large clients this defeats StreamingResponse. Consider a real generator yielding row-by-row.",
+    "CSV export writes list/dict fields via `str(v)` which produces Python-repr strings inside CSV cells (e.g., \"['a','b']\") — messy for spreadsheets. Serialize with JSON or join with a delimiter.",
+    "POST /api/policies (generic entity create) does not default `status` — see UI bug above. Add a per-kind defaults map or a Pydantic post-init default.",
+    "CORS still `allow_origins=['*']` with `allow_credentials=False`; login endpoint's Set-Cookie is dead code under these settings (frontend uses Bearer). Remove the misleading cookie or switch to credentialed CORS with explicit origins (called out in iter2 too).",
+    "No brute-force lockout on /api/auth/login (playbook item, called out iter2). Tech debt."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration3.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "See /app/memory/test_credentials.md — used robbashea@gmail.com/Admin@2026, contributor@acme.demo/Demo@2026, readonly@acme.demo/Demo@2026.",
+  "seed_data_creation": "Backend test suite left TEST_-prefixed data: TEST_iter3_finding, TEST_iter3_task, TEST_iter3_policy_A/_reject/_rbac/_rbac2/_rbac3, TEST_iter3_ev.txt (evidence). UI test also created TEST_UI_policy_iter3_v2 and TEST_UI_pol_draft_ready. All prefixed TEST_ for easy pruning.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 3 shipped notifications (mention/finding_assigned/task_assigned/policy_review/policy_approved/policy_rejected), policy approval workflow with approval_history + RBAC, CSV export /api/export/{kind}, and drawer evidence tab. Regression + new tests total 47 in /app/backend/tests/ and all pass. Cumulative pytest count: 47. Frontend testids of interest: notification-bell, notification-unread-count, notification-mark-all, notification-item-<id>, export-<kind>-button, tab-evidence, drawer-evidence-dropzone, drawer-evidence-input, drawer-evidence-item-<i>, policy-submit-review, policy-approve, policy-reject, policy-reject-reason, policy-reject-confirm. Known minor gaps documented in design_issues + action_items; nothing blocking.",
+  "rca of the issue": "N/A — no functional issues detected."
+}

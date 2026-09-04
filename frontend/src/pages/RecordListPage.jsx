@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import api, { formatError } from "@/lib/api";
+import api, { formatError, API } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
@@ -9,7 +9,7 @@ import { SCHEMAS } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RecordListPage({ kind }) {
@@ -70,17 +70,45 @@ export default function RecordListPage({ kind }) {
     catch (e) { toast.error(formatError(e)); }
   }
 
+  async function exportCsv() {
+    try {
+      const token = localStorage.getItem("grc_token");
+      const resp = await fetch(`${API}/export/${kind}?client_id=${encodeURIComponent(currentClientId)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!resp.ok) throw new Error(`Export failed (${resp.status})`);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${kind}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV downloaded");
+    } catch (e) { toast.error(e.message || "Export failed"); }
+  }
+
   return (
     <div>
       <PageHeader
         title={schema.title}
         subtitle={`${currentClient?.name || ""} · ${schema.subtitle}`}
         action={
-          canWrite && (
-            <Button data-testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> New {kind.slice(0, -1)}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={exportCsv}
+              disabled={!currentClientId || rows.length === 0}
+              data-testid={`export-${kind}-button`}
+            >
+              <Download className="h-4 w-4 mr-1" /> Export CSV
             </Button>
-          )
+            {canWrite && (
+              <Button data-testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }}>
+                <Plus className="h-4 w-4 mr-1" /> New {kind.slice(0, -1)}
+              </Button>
+            )}
+          </div>
         }
       />
       <div className="px-8 py-4 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">

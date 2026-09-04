@@ -114,7 +114,7 @@ export const SCHEMAS = {
     fields: [
       { name: "title", label: "Title", required: true },
       { name: "version", label: "Version" },
-      { name: "status", label: "Status", type: "select", options: [
+      { name: "status", label: "Status", type: "select", default: "draft", options: [
         { value: "draft", label: "Draft" }, { value: "in_review", label: "In review" },
         { value: "approved", label: "Approved" }, { value: "retired", label: "Retired" },
       ]},

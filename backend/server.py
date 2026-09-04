@@ -18,6 +18,9 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Any, Dict
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, Path
+from fastapi.responses import StreamingResponse
+import csv
+import io
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr
@@ -271,6 +274,31 @@ async def audit(user: Dict, action: str, entity_type: str, entity_id: str, clien
     })
 
 
+# ---------------- Notifications helpers (defined early so they're in scope everywhere) ----------------
+ID_FIELD_MAP = {
+    "reviews": "review_id", "findings": "finding_id", "risks": "risk_id",
+    "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id",
+    "tasks": "task_id", "exceptions": "exception_id",
+}
+
+
+async def create_notification(*, user_id: str, title: str, kind: str,
+                              entity_type: Optional[str] = None, entity_id: Optional[str] = None,
+                              client_id: Optional[str] = None) -> None:
+    doc = {
+        "notification_id": _uid("ntf"),
+        "user_id": user_id,
+        "title": title,
+        "kind": kind,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "client_id": client_id,
+        "read": False,
+        "created_at": _now(),
+    }
+    await db.notifications.insert_one(doc)
+
+
 # ---------------- Tenant scoping ----------------
 def _can_access_client(user: Dict, client_id: str) -> bool:
     role = user.get("role")
@@ -506,6 +534,30 @@ async def create_comment(body: CommentIn, user: Dict = Depends(get_current_user)
            "created_at": _now()}
     await db.comments.insert_one(doc)
     doc.pop("_id", None)
+    # Detect @mentions and notify — supports @email and @name (case-insensitive).
+    import re as _re
+    mentioned = set(m.lstrip("@").lower() for m in _re.findall(r"@[\w.+\-@]+", body.body or ""))
+    if mentioned:
+        parent = None
+        try:
+            parent_coll = body.entity_type if body.entity_type.endswith("s") else body.entity_type + "s"
+            id_field = ID_FIELD_MAP.get(parent_coll)
+            if id_field:
+                parent = await db[parent_coll].find_one({id_field: body.entity_id}, {"_id": 0})
+        except Exception:
+            parent = None
+        users_cur = db.users.find({}, {"_id": 0, "password_hash": 0})
+        async for u in users_cur:
+            keys = {(u.get("email") or "").lower(), (u.get("name") or "").lower()}
+            if keys & mentioned:
+                await create_notification(
+                    user_id=u["user_id"],
+                    title=f"{user.get('name') or user['email']} mentioned you on a {body.entity_type[:-1] if body.entity_type.endswith('s') else body.entity_type}",
+                    kind="mention",
+                    entity_type=body.entity_type,
+                    entity_id=body.entity_id,
+                    client_id=(parent or {}).get("client_id"),
+                )
     return doc
 
 
@@ -996,6 +1048,16 @@ async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict
     await db.findings.insert_one(doc)
     doc.pop("_id", None)
     await audit(user, "create", "finding", fid, review["client_id"], meta={"from_review": review_id})
+    # Notify finding owner (if not self)
+    if doc.get("owner_id") and doc["owner_id"] != user["user_id"]:
+        await create_notification(
+            user_id=doc["owner_id"],
+            title=f"New finding assigned: {doc['title']}",
+            kind="finding_assigned",
+            entity_type="findings",
+            entity_id=fid,
+            client_id=doc["client_id"],
+        )
     return doc
 
 
@@ -1027,6 +1089,15 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
         await db.findings.update_one({"finding_id": finding_id}, {"$set": {"status": "in_remediation", "updated_at": _now()}})
     doc.pop("_id", None)
     await audit(user, "create", "task", tid, finding["client_id"], meta={"from_finding": finding_id})
+    if doc.get("assignee_id") and doc["assignee_id"] != user["user_id"]:
+        await create_notification(
+            user_id=doc["assignee_id"],
+            title=f"New remediation task: {doc['title']}",
+            kind="task_assigned",
+            entity_type="tasks",
+            entity_id=tid,
+            client_id=doc["client_id"],
+        )
     return doc
 
 
@@ -1126,6 +1197,140 @@ async def create_baseline(body: BaselineIn, user: Dict = Depends(get_current_use
         created["reviews"] += 1
     await audit(user, "baseline", "client", body.client_id, body.client_id, meta=created)
     return {"ok": True, "created": created}
+
+
+# ---------------- Notifications ----------------
+
+
+@api.get("/notifications")
+async def list_notifications(user: Dict = Depends(get_current_user)):
+    docs = await db.notifications.find({"user_id": user["user_id"]}, {"_id": 0}).sort("created_at", -1).limit(50).to_list(50)
+    unread = await db.notifications.count_documents({"user_id": user["user_id"], "read": False})
+    return {"items": docs, "unread": unread}
+
+
+@api.post("/notifications/{nid}/read")
+async def read_notification(nid: str, user: Dict = Depends(get_current_user)):
+    await db.notifications.update_one({"notification_id": nid, "user_id": user["user_id"]}, {"$set": {"read": True}})
+    return {"ok": True}
+
+
+@api.post("/notifications/read-all")
+async def read_all_notifications(user: Dict = Depends(get_current_user)):
+    await db.notifications.update_many({"user_id": user["user_id"], "read": False}, {"$set": {"read": True}})
+    return {"ok": True}
+
+
+# ---------------- Policy approval workflow ----------------
+class PolicyApproveIn(BaseModel):
+    comment: Optional[str] = None
+
+
+class PolicyRejectIn(BaseModel):
+    reason: str
+
+
+async def _policy_history_push(policy_id: str, entry: Dict[str, Any]) -> None:
+    entry = {"at": _now(), **entry}
+    await db.policies.update_one({"policy_id": policy_id},
+                                 {"$push": {"approval_history": entry},
+                                  "$set": {"updated_at": _now()}})
+
+
+@api.post("/policies/{policy_id}/submit-review")
+async def policy_submit(policy_id: str, user: Dict = Depends(get_current_user)):
+    p = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(404, "Not found")
+    if not _can_access_client(user, p["client_id"]) or not _writable(user):
+        raise HTTPException(403, "Forbidden")
+    await db.policies.update_one({"policy_id": policy_id}, {"$set": {"status": "in_review", "updated_at": _now()}})
+    await _policy_history_push(policy_id, {"action": "submitted",
+                                           "by": user["user_id"], "by_email": user["email"]})
+    await audit(user, "submit-review", "policy", policy_id, p["client_id"])
+    if p.get("approver_id"):
+        await create_notification(user_id=p["approver_id"],
+                                  title=f"Policy submitted for your approval: {p['title']}",
+                                  kind="policy_review", entity_type="policies",
+                                  entity_id=policy_id, client_id=p["client_id"])
+    return await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+
+
+@api.post("/policies/{policy_id}/approve")
+async def policy_approve(policy_id: str, body: PolicyApproveIn, user: Dict = Depends(get_current_user)):
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Only platform-level roles can approve policies")
+    p = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(404, "Not found")
+    await db.policies.update_one({"policy_id": policy_id}, {"$set": {
+        "status": "approved", "approver_id": user["user_id"],
+        "approved_at": _now(), "updated_at": _now(),
+    }})
+    await _policy_history_push(policy_id, {"action": "approved",
+                                           "by": user["user_id"], "by_email": user["email"],
+                                           "comment": body.comment})
+    await audit(user, "approve", "policy", policy_id, p["client_id"])
+    if p.get("owner_id"):
+        await create_notification(user_id=p["owner_id"],
+                                  title=f"Policy approved: {p['title']}",
+                                  kind="policy_approved", entity_type="policies",
+                                  entity_id=policy_id, client_id=p["client_id"])
+    return await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+
+
+@api.post("/policies/{policy_id}/reject")
+async def policy_reject(policy_id: str, body: PolicyRejectIn, user: Dict = Depends(get_current_user)):
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Only platform-level roles can reject policies")
+    p = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(404, "Not found")
+    await db.policies.update_one({"policy_id": policy_id}, {"$set": {"status": "draft", "updated_at": _now()}})
+    await _policy_history_push(policy_id, {"action": "rejected",
+                                           "by": user["user_id"], "by_email": user["email"],
+                                           "reason": body.reason})
+    await audit(user, "reject", "policy", policy_id, p["client_id"], meta={"reason": body.reason})
+    if p.get("owner_id"):
+        await create_notification(user_id=p["owner_id"],
+                                  title=f"Policy sent back to draft: {p['title']}",
+                                  kind="policy_rejected", entity_type="policies",
+                                  entity_id=policy_id, client_id=p["client_id"])
+    return await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+
+
+# ---------------- CSV export ----------------
+@api.get("/export/{kind}")
+async def export_csv(kind: str = Path(..., pattern=KIND_REGEX),
+                     client_id: Optional[str] = Query(None),
+                     user: Dict = Depends(get_current_user)):
+    q = _scope_filter(user, client_id)
+    docs = await db[_coll_for(kind)].find(q, {"_id": 0}).sort("created_at", -1).to_list(10000)
+    # Column order: id + core fields first, then everything else
+    id_field = ID_FIELD_MAP.get(kind, "id")
+    preferred = [id_field, "title", "name", "status", "severity", "criticality", "priority",
+                 "review_type", "recurrence", "due_date", "next_review_date", "client_id",
+                 "owner_id", "reviewer_id", "created_at", "updated_at"]
+    seen: List[str] = []
+    for d in docs:
+        for k in d.keys():
+            if k not in seen:
+                seen.append(k)
+    ordered = [c for c in preferred if c in seen] + [c for c in seen if c not in preferred]
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=ordered, extrasaction="ignore")
+    writer.writeheader()
+    for d in docs:
+        row = {}
+        for k in ordered:
+            v = d.get(k, "")
+            row[k] = v if not isinstance(v, (list, dict)) else str(v)
+        writer.writerow(row)
+    output.seek(0)
+    filename = f"{kind}-{datetime.now(timezone.utc).strftime('%Y%m%d')}.csv"
+    return StreamingResponse(iter([output.getvalue()]),
+                             media_type="text/csv; charset=utf-8",
+                             headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # Register routers LAST so all @api.* and @entity_router.* routes are attached.

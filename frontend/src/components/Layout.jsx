@@ -6,6 +6,7 @@ import {
   Building2, Server, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
   LogOut, Check, ShieldOff, Sparkles
 } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator
@@ -107,6 +108,7 @@ function Sidebar() {
             <div className="text-xs text-white truncate">{user?.name || user?.email}</div>
             <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">{(user?.role || "").replace("_", " ")}</div>
           </div>
+          <NotificationBell />
           <button
             data-testid="logout-button"
             onClick={async () => { await logout(); nav("/login"); }}

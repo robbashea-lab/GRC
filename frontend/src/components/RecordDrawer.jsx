@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import api, { formatError } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
-import { X, ArrowUpRight, Zap } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { X, ArrowUpRight, Zap, UploadCloud, Download, Trash2, CheckCircle2, XCircle, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
   vendors: "vendor_id", assets: "asset_id", tasks: "task_id", exceptions: "exception_id",
 };
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
 
 export default function RecordDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved }) {
   const [form, setForm] = useState({});
@@ -24,15 +34,23 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   const [newComment, setNewComment] = useState("");
   const [activity, setActivity] = useState([]);
   const [related, setRelated] = useState({});
+  const [evidenceItems, setEvidenceItems] = useState([]);
+  const [dragOver, setDragOver] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const inputRef = useRef(null);
+  const { user } = useAuth();
   const isEdit = !!record;
   const idField = ID_FIELD[kind];
+  const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
+  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
+  const singular = kind.slice(0, -1);
 
   useEffect(() => {
     if (open) {
       const base = {};
       schema.forEach((f) => {
         let v = record?.[f.name] ?? f.default ?? "";
-        // <input type="date"> requires yyyy-MM-dd; incoming values may be full ISO strings.
         if (f.type === "date" && typeof v === "string" && v.length > 10) v = v.slice(0, 10);
         base[f.name] = v;
       });
@@ -43,8 +61,9 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         loadComments();
         loadActivity();
         loadRelated();
+        loadEvidence();
       } else {
-        setComments([]); setActivity([]); setRelated({});
+        setComments([]); setActivity([]); setRelated({}); setEvidenceItems([]);
       }
     }
     // eslint-disable-next-line
@@ -68,11 +87,16 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       setRelated(data);
     } catch (e) { void e; }
   }
+  async function loadEvidence() {
+    try {
+      const { data } = await api.get("/evidence", { params: { client_id: record.client_id, linked_type: singular, linked_id: record[idField] } });
+      setEvidenceItems(data);
+    } catch (e) { void e; }
+  }
 
   async function save() {
     setSaving(true);
     try {
-      // Coerce __none__ into null for user selects
       const clean = {};
       Object.entries(form).forEach(([k, v]) => { clean[k] = v === "__none__" ? null : v; });
       if (isEdit) {
@@ -84,11 +108,8 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       }
       onSaved?.();
       onOpenChange(false);
-    } catch (e) {
-      toast.error(formatError(e));
-    } finally {
-      setSaving(false);
-    }
+    } catch (e) { toast.error(formatError(e)); }
+    finally { setSaving(false); }
   }
 
   async function submitComment() {
@@ -104,8 +125,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     try {
       await api.post(`/reviews/${record[idField]}/create-finding`, { title: `Finding from: ${record.title}`, severity: "medium" });
       toast.success("Finding created and linked to this review");
-      onSaved?.();
-      loadRelated();
+      onSaved?.(); loadRelated();
     } catch (e) { toast.error(formatError(e)); }
   }
 
@@ -113,15 +133,63 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     try {
       await api.post(`/findings/${record[idField]}/create-task`, {});
       toast.success("Remediation task created and finding moved to In Remediation");
-      // Optimistically reflect the status flip in this drawer's header + form
       if (record) record.status = "in_remediation";
-      setForm((prev) => ({ ...prev, status: "in_remediation" }));
-      onSaved?.();
-      loadRelated();
+      setForm((p) => ({ ...p, status: "in_remediation" }));
+      onSaved?.(); loadRelated();
     } catch (e) { toast.error(formatError(e)); }
   }
 
+  // ---- Policy approval workflow ----
+  async function policyAction(action, body = {}) {
+    try {
+      const { data } = await api.post(`/policies/${record[idField]}/${action}`, body);
+      toast.success(`Policy ${action === "submit-review" ? "sent for review" : action + "d"}`);
+      if (data) {
+        // Mutate current record so header + history render fresh values live.
+        if (data.status) { record.status = data.status; setForm((p) => ({ ...p, status: data.status })); }
+        if (data.approval_history) record.approval_history = data.approval_history;
+        if (data.approved_at) record.approved_at = data.approved_at;
+        if (data.approver_id) record.approver_id = data.approver_id;
+      }
+      onSaved?.(); loadActivity();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+  async function submitReject() {
+    if (!rejectReason.trim()) return;
+    await policyAction("reject", { reason: rejectReason });
+    setRejectOpen(false); setRejectReason("");
+  }
+
+  // ---- Evidence upload/download in drawer ----
+  async function uploadFiles(files) {
+    for (const f of files) {
+      try {
+        const b64 = await fileToBase64(f);
+        await api.post("/evidence", {
+          filename: f.name, client_id: record.client_id, content_base64: b64,
+          mime_type: f.type, linked_type: singular, linked_id: record[idField],
+        });
+        toast.success(`Uploaded ${f.name}`);
+      } catch (e) { toast.error(formatError(e)); }
+    }
+    loadEvidence();
+  }
+  async function downloadEv(ev) {
+    const { data } = await api.get(`/evidence/${ev.evidence_id}/download`);
+    const a = document.createElement("a");
+    a.href = data.content_base64.startsWith("data:") ? data.content_base64 : `data:${data.mime_type};base64,${data.content_base64}`;
+    a.download = data.filename; a.click();
+  }
+  async function deleteEv(ev) {
+    if (!confirm(`Delete "${ev.filename}"?`)) return;
+    try { await api.delete(`/evidence/${ev.evidence_id}`); loadEvidence(); }
+    catch (e) { toast.error(formatError(e)); }
+  }
+
   const relatedTotal = Object.values(related).reduce((a, b) => a + (b?.length || 0), 0);
+  const evidenceCount = evidenceItems.length;
+  const isPolicy = kind === "policies";
+  const status = form.status || record?.status;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -129,19 +197,19 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         <SheetHeader className="px-6 py-4 border-b border-slate-200">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400">{kind.slice(0, -1)}</div>
-              <SheetTitle className="font-heading text-xl">
-                {isEdit ? (record.title || record.name) : `New ${kind.slice(0, -1)}`}
-              </SheetTitle>
-              {isEdit && record.status && <div className="mt-2"><StatusBadge value={record.status} /></div>}
+              <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400">{singular}</div>
+              <SheetTitle className="font-heading text-xl">{isEdit ? (record.title || record.name) : `New ${singular}`}</SheetTitle>
+              {isEdit && status && <div className="mt-2"><StatusBadge value={status} /></div>}
             </div>
             <button onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-slate-100" data-testid="drawer-close"><X className="h-4 w-4" /></button>
           </div>
           {isEdit && (
-            <div className="flex gap-1 mt-3 -mb-3">
-              {["overview", "related", "comments", "activity"].map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`drawer-tab ${tab === t ? "active" : ""}`} data-testid={`tab-${t}`}>
-                  {t === "related" ? `Related${relatedTotal ? ` (${relatedTotal})` : ""}` : t[0].toUpperCase() + t.slice(1)}
+            <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto">
+              {["overview", "related", "evidence", "comments", "activity"].map((t) => (
+                <button key={t} onClick={() => setTab(t)} className={`drawer-tab whitespace-nowrap ${tab === t ? "active" : ""}`} data-testid={`tab-${t}`}>
+                  {t === "related" ? `Related${relatedTotal ? ` (${relatedTotal})` : ""}` :
+                   t === "evidence" ? `Evidence${evidenceCount ? ` (${evidenceCount})` : ""}` :
+                   t[0].toUpperCase() + t.slice(1)}
                 </button>
               ))}
             </div>
@@ -151,18 +219,74 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {tab === "overview" && (
             <div className="space-y-4">
-              {isEdit && kind === "reviews" && (
+              {isEdit && kind === "reviews" && canWrite && (
                 <div className="border border-emerald-200 bg-emerald-50/50 rounded-md p-3 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-emerald-800"><Zap className="h-4 w-4" /> Raise a finding from this review</div>
                   <Button size="sm" variant="outline" onClick={quickCreateFinding} data-testid="quick-create-finding">Create finding</Button>
                 </div>
               )}
-              {isEdit && kind === "findings" && (
+              {isEdit && kind === "findings" && canWrite && (
                 <div className="border border-blue-200 bg-blue-50/50 rounded-md p-3 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-blue-800"><Zap className="h-4 w-4" /> Assign remediation work</div>
                   <Button size="sm" variant="outline" onClick={quickCreateTask} data-testid="quick-create-task">Create remediation task</Button>
                 </div>
               )}
+              {isEdit && isPolicy && (
+                <div className="border border-slate-200 bg-slate-50/50 rounded-md p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-slate-800">Approval workflow</div>
+                    <StatusBadge value={status || "draft"} />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {status === "draft" && canWrite && (
+                      <Button size="sm" variant="outline" onClick={() => policyAction("submit-review")} data-testid="policy-submit-review">
+                        <Send className="h-3.5 w-3.5 mr-1" /> Submit for review
+                      </Button>
+                    )}
+                    {status === "in_review" && isPlatformAdmin && (
+                      <>
+                        <Button size="sm" onClick={() => policyAction("approve")} data-testid="policy-approve">
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setRejectOpen(true)} data-testid="policy-reject">
+                          <XCircle className="h-3.5 w-3.5 mr-1" /> Send back
+                        </Button>
+                      </>
+                    )}
+                    {status === "approved" && canWrite && (
+                      <Button size="sm" variant="outline" onClick={() => policyAction("submit-review")}>
+                        <Send className="h-3.5 w-3.5 mr-1" /> Submit new revision
+                      </Button>
+                    )}
+                  </div>
+                  {rejectOpen && (
+                    <div className="pt-2 space-y-2">
+                      <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Reason for sending back to draft…" data-testid="policy-reject-reason" className="text-sm" />
+                      <div className="flex gap-2 justify-end">
+                        <Button size="sm" variant="outline" onClick={() => setRejectOpen(false)}>Cancel</Button>
+                        <Button size="sm" onClick={submitReject} data-testid="policy-reject-confirm">Send back</Button>
+                      </div>
+                    </div>
+                  )}
+                  {record?.approval_history?.length > 0 && (
+                    <div className="pt-2 border-t border-slate-200">
+                      <div className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1">History</div>
+                      <ul className="space-y-1.5">
+                        {record.approval_history.map((h, i) => (
+                          <li key={i} className="text-xs text-slate-700 flex items-center gap-2">
+                            <span className="font-mono text-slate-400">{new Date(h.at).toLocaleString()}</span>
+                            <span className="font-medium">{h.by_email}</span>
+                            <span className="text-slate-500">{h.action}</span>
+                            {h.reason && <span className="text-red-600 italic">"{h.reason}"</span>}
+                            {h.comment && <span className="italic">"{h.comment}"</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {schema.map((f) => (
                 <div key={f.name} className="space-y-1.5">
                   <Label className="text-xs text-slate-600">{f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}</Label>
@@ -215,6 +339,41 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
             </div>
           )}
 
+          {tab === "evidence" && (
+            <div className="space-y-4">
+              {canWrite && (
+                <div
+                  data-testid="drawer-evidence-dropzone"
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadFiles(Array.from(e.dataTransfer.files)); }}
+                  onClick={() => inputRef.current?.click()}
+                  className={`rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition ${dragOver ? "border-slate-900 bg-slate-100" : "border-slate-300 hover:bg-slate-50"}`}
+                >
+                  <UploadCloud className="h-6 w-6 mx-auto text-slate-500 mb-1" />
+                  <div className="text-sm font-medium text-slate-900">Drop files here to attach</div>
+                  <div className="text-xs text-slate-500 mt-0.5">They will be linked to this {singular}.</div>
+                  <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => uploadFiles(Array.from(e.target.files || []))} data-testid="drawer-evidence-input" />
+                </div>
+              )}
+              <ul className="divide-y divide-slate-100 border border-slate-200 rounded-md">
+                {evidenceItems.length === 0 && <li className="p-4 text-center text-slate-400 text-sm">No evidence attached yet.</li>}
+                {evidenceItems.map((ev, i) => (
+                  <li key={ev.evidence_id} className="flex items-center justify-between px-3 py-2 hover:bg-slate-50" data-testid={`drawer-evidence-item-${i}`}>
+                    <div className="min-w-0">
+                      <div className="text-sm text-slate-900 font-medium truncate">{ev.filename}</div>
+                      <div className="text-[11px] text-slate-500 font-mono">{ev.uploaded_by_email} · {new Date(ev.created_at).toLocaleString()}</div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => downloadEv(ev)} className="p-1 rounded hover:bg-slate-100 text-slate-500" title="Download"><Download className="h-3.5 w-3.5" /></button>
+                      {isPlatformAdmin && <button onClick={() => deleteEv(ev)} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {tab === "comments" && (
             <div className="space-y-4">
               <div className="space-y-3">
@@ -230,7 +389,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
                 ))}
               </div>
               <div className="space-y-2 pt-2 border-t border-slate-200">
-                <Textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment…" data-testid="comment-input" className="text-sm" />
+                <Textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment… use @email to mention" data-testid="comment-input" className="text-sm" />
                 <Button onClick={submitComment} data-testid="comment-submit" size="sm">Post comment</Button>
               </div>
             </div>
