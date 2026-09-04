@@ -11,6 +11,16 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 - Emails via Emergent Resend; PDFs via reportlab.
 
 ## Implemented (Feb 2026)
+### v19 (Risk & Vendor Detail Tabs · Schedule Vendor Review · Assurance Expiry Alerts) — Sep 2026
+- **RecordDrawer.jsx** fully refactored with `TABS_BY_KIND` mapping. Non-generic kinds get bespoke tabs; other kinds keep the 5 generic tabs (overview/related/evidence/comments/activity).
+- **Risk drawer — 6 tabs**: Overview (Risk actions panel: `risk-mark-reviewed`, `risk-accept`), Assessment (1–5 likelihood/impact selects with live `risk-live-score` badge), Treatment (treatment select, acceptance rationale, compensating controls, mitigation notes, acceptance history card), Related (linked findings/evidence), Review History (last/next review + reversed `rating_history` timeline), Activity.
+- **Vendor drawer — 8 tabs**: Overview, Data & Access (chip toggles for `data_types` + `data_relationship`, business owner select, vendor contact fields), Security Assurance (`assurance_status`, `assurance_expires_at`, dedicated evidence dropzone for SOC 2 / ISO / DPA), Reviews (frequency/last/next + `vendor-schedule-review` button + linked-reviews list), Action Items (findings + tasks linked via related endpoint), Risks (`related_risk_ids` resolved to full rows), Contract (start/renewal/expiration/auto-renewal), Activity.
+- **Backend `POST /api/vendors/{vendor_id}/schedule-review`**: creates a `review_type=vendor` Review with recurrence prefilled from `vendor.review_frequency` (biennial → custom 730d), owner defaulted to `business_owner_id`, `next_review_date` computed via `_next_due_for_recurrence`, updates `vendor.next_review`, writes an audit log, and notifies the owner. New Pydantic model `VendorScheduleReviewIn`.
+- **Backend `VendorIn`** gained `assurance_expires_at` (ISO date) — the SOC 2 / ISO / DPA renewal cutoff surfaced on Dashboard + weekly digest.
+- **Dashboard `assurance_alerts`**: new endpoint payload key populated by `_assurance_alerts_for(vendors, 60d)` — includes vendors expiring within 60 days OR flagged (`missing/expired/expiring/requested`), sorted overdue-first. `Dashboard.jsx` renders `panel-assurance-alerts`.
+- **Weekly digest** (`_send_weekly_digest`): added `assurance` bucket per user (only vendors they own via `business_owner_id`) — rendered as its own section in the Monday HTML.
+- Tested end-to-end: 6/6 pytest passing, all Playwright tab flows green, weekly digest `emails_sent=4/errors=0`, Assurance Expiry Alerts renders on Dashboard.
+
 ### v1
 - Multi-tenant auth, roles, tenant scoping, client org selector
 - CRUD for Reviews / Findings / Risks / Policies / Vendors / Assets / Tasks

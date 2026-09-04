@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge, { toneFor } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { AlertOctagon, ShieldAlert, Clock, CalendarClock, FileDown, ArrowUpRight, Activity, ListTodo, Eye, X } from "lucide-react";
+import { AlertOctagon, ShieldAlert, Clock, CalendarClock, FileDown, ArrowUpRight, Activity, ListTodo, Eye, X, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import DashboardScopeSelector from "@/components/DashboardScopeSelector";
@@ -322,6 +322,38 @@ export default function Dashboard() {
             )}
           </Panel>
         </div>
+
+        {/* Row 4b — Vendor Assurance Expiry Alerts */}
+        {(data.assurance_alerts?.length || 0) > 0 && (
+          <Panel
+            testid="panel-assurance-alerts"
+            title="Assurance Expiry Alerts"
+            subtitle="SOC 2 / ISO / DPA renewals within 60 days or vendors flagged for attention"
+            icon={ShieldCheck}
+            action={<SeeAll to="/vendors" testid="see-all-assurance" />}
+          >
+            <table className="w-full">
+              <thead><tr>
+                <th className="tbl-head">Vendor</th>
+                <th className="tbl-head">Criticality</th>
+                <th className="tbl-head">Assurance</th>
+                <th className="tbl-head">Renewal / Expiry</th>
+              </tr></thead>
+              <tbody>
+                {data.assurance_alerts.map((v, i) => (
+                  <tr key={v.vendor_id} className="row-hover" data-testid={`assurance-row-${i}`}>
+                    <td className="tbl-cell font-medium text-ink-primary">
+                      <Link to="/vendors" className="hover:text-link">{v.name}</Link>
+                    </td>
+                    <td className="tbl-cell capitalize text-ink-secondary text-xs">{v.criticality || "—"}</td>
+                    <td className="tbl-cell">{v.assurance_status ? <StatusBadge value={v.assurance_status} /> : <span className="text-ink-disabled">—</span>}</td>
+                    <td className="tbl-cell"><DateCell iso={v.assurance_expires_at} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Panel>
+        )}
 
         {/* Row 5 — Program status + Recent activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

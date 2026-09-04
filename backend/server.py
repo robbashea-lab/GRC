@@ -270,6 +270,7 @@ class VendorIn(BaseModel):
     contract_end: Optional[str] = None  # legacy
     auto_renewal: Optional[str] = None  # yes / no / unknown
     assurance_status: Optional[str] = None  # current, expiring, expired, requested, missing, under_review
+    assurance_expires_at: Optional[str] = None  # ISO date — next SOC2/ISO/DPA renewal cutoff
     notes: Optional[str] = None
     related_risk_ids: Optional[List[str]] = None
 
@@ -1458,7 +1459,40 @@ async def dashboard(
         "upcoming_reviews": [_brief(r, "review", "review_id") for r in upcoming_reviews[:8]],
         "recent_findings": [_brief(f, "finding", "finding_id") for f in open_findings[:8]],
         "top_risks": [_brief(r, "risk", "risk_id") for r in significant_risks[:6]],
+        "assurance_alerts": _assurance_alerts_for(vendors),
     }
+
+
+_ASSURANCE_ISSUE_STATUSES = ("expired", "expiring", "missing", "requested")
+
+
+def _assurance_alerts_for(vendors: List[Dict], within_days: int = 60) -> List[Dict]:
+    """Vendors whose SOC2/ISO/DPA assurance is expiring within `within_days`
+    OR whose assurance_status flags a concern (missing/expired/requested).
+    Returned sorted by soonest-expiring first."""
+    horizon = (datetime.now(timezone.utc) + timedelta(days=within_days)).isoformat()
+    now_iso = _now()
+    out: List[Dict] = []
+    for v in vendors:
+        if (v.get("status") or "active") in ("inactive", "offboarding", "terminated"):
+            continue
+        expires_at = v.get("assurance_expires_at")
+        status_flag = (v.get("assurance_status") or "").lower() in _ASSURANCE_ISSUE_STATUSES
+        expiring_soon = bool(expires_at and expires_at <= horizon)
+        overdue = bool(expires_at and expires_at < now_iso)
+        if not (expiring_soon or status_flag):
+            continue
+        out.append({
+            "vendor_id": v.get("vendor_id"),
+            "name": v.get("name"),
+            "criticality": v.get("criticality"),
+            "assurance_status": v.get("assurance_status"),
+            "assurance_expires_at": expires_at,
+            "business_owner_id": v.get("business_owner_id"),
+            "overdue": overdue,
+        })
+    out.sort(key=lambda x: (0 if x.get("overdue") else 1, x.get("assurance_expires_at") or "9999"))
+    return out[:8]
 
 
 # ---------------- Startup: seed ----------------
@@ -1973,6 +2007,72 @@ async def risk_accept(risk_id: str, body: RiskAcceptIn, user: Dict = Depends(get
     return await db.risks.find_one({"risk_id": risk_id}, {"_id": 0})
 
 
+class VendorScheduleReviewIn(BaseModel):
+    due_date: Optional[str] = None  # ISO date
+    owner_id: Optional[str] = None
+    reviewer_id: Optional[str] = None
+    recurrence: Optional[str] = None  # if omitted, fall back to vendor.review_frequency
+    title: Optional[str] = None
+    scope: Optional[str] = None
+
+
+_VENDOR_FREQ_TO_RECUR = {
+    "quarterly": "quarterly", "semiannual": "semiannual", "annual": "annual",
+    "biennial": "custom", "as_needed": "none", "custom": "custom", "monthly": "monthly",
+}
+
+
+@api.post("/vendors/{vendor_id}/schedule-review")
+async def vendor_schedule_review(vendor_id: str, body: VendorScheduleReviewIn, user: Dict = Depends(get_current_user)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    vendor = await db.vendors.find_one({"vendor_id": vendor_id}, {"_id": 0})
+    if not vendor:
+        raise HTTPException(404, "Vendor not found")
+    if not _can_access_client(user, vendor["client_id"]):
+        raise HTTPException(403, "Forbidden")
+    freq = (body.recurrence or _VENDOR_FREQ_TO_RECUR.get(vendor.get("review_frequency") or "annual", "annual"))
+    custom_days = 730 if (vendor.get("review_frequency") == "biennial" and freq == "custom") else None
+    # Default due date: user-provided > vendor.next_review > +1 year from today
+    due_iso = body.due_date or vendor.get("next_review") or (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+    if due_iso and len(due_iso) == 10:
+        due_iso = f"{due_iso}T00:00:00+00:00"
+    rev_id = _uid("rev")
+    doc = {
+        "review_id": rev_id,
+        "title": body.title or f"Vendor review · {vendor.get('name')}",
+        "review_type": "vendor",
+        "client_id": vendor["client_id"],
+        "status": "upcoming",
+        "recurrence": freq,
+        "custom_recurrence_days": custom_days,
+        "owner_id": body.owner_id or vendor.get("business_owner_id") or user["user_id"],
+        "reviewer_id": body.reviewer_id,
+        "scope": body.scope or f"Assurance & risk review for {vendor.get('name')}",
+        "due_date": due_iso,
+        "next_review_date": _next_due_for_recurrence(due_iso, freq, custom_days),
+        "vendor_id": vendor_id,
+        "created_at": _now(),
+        "updated_at": _now(),
+        "created_by": user["user_id"],
+    }
+    await db.reviews.insert_one(doc)
+    await db.vendors.update_one({"vendor_id": vendor_id},
+                                {"$set": {"next_review": due_iso, "updated_at": _now()}})
+    await audit(user, "schedule-review", "vendor", vendor_id, vendor["client_id"], meta={"review_id": rev_id})
+    if doc["owner_id"] and doc["owner_id"] != user["user_id"]:
+        await create_notification(
+            user_id=doc["owner_id"],
+            title=f"Vendor review scheduled: {vendor.get('name')}",
+            kind="review_scheduled",
+            entity_type="reviews",
+            entity_id=rev_id,
+            client_id=vendor["client_id"],
+        )
+    doc.pop("_id", None)
+    return {"review": doc, "vendor_id": vendor_id}
+
+
 @api.post("/risks/{risk_id}/mark-reviewed")
 async def risk_mark_reviewed(risk_id: str, user: Dict = Depends(get_current_user)):
     if not _writable(user):
@@ -2058,6 +2158,7 @@ def _weekly_html(user_name: str, buckets: Dict[str, Dict[str, List[Dict]]], app_
             + [row(x, "Task", tone) for x in items_map.get("tasks", [])]
             + [row(x, "Finding", tone) for x in items_map.get("findings", [])]
             + [row(x, "Risk", tone) for x in items_map.get("risks", [])]
+            + [row(x, "Vendor assurance", tone) for x in items_map.get("vendors", [])]
         )
         return (
             f'<h3 style="margin:18px 0 8px 0;font-family:Arial,sans-serif;font-size:14px;color:#0f172a">{escape(title)} <span style="color:#94a3b8;font-weight:normal">· {total}</span></h3>'
@@ -2072,7 +2173,8 @@ def _weekly_html(user_name: str, buckets: Dict[str, Dict[str, List[Dict]]], app_
     overdue_total = sum(len(v) for v in buckets["overdue"].values())
     duesoon_total = sum(len(v) for v in buckets["due_soon"].values())
     reassess_total = sum(len(v) for v in buckets.get("reassess", {}).values())
-    total = overdue_total + duesoon_total + reassess_total
+    assurance_total = sum(len(v) for v in buckets.get("assurance", {}).values())
+    total = overdue_total + duesoon_total + reassess_total + assurance_total
     dashboard_link = f'{app_base_url}/dashboard' if app_base_url else "https://app.example.com/dashboard"
     return (
         f'<table role="presentation" width="100%" style="max-width:640px;margin:auto">'
@@ -2082,6 +2184,7 @@ def _weekly_html(user_name: str, buckets: Dict[str, Dict[str, List[Dict]]], app_
         f'{section("Overdue", buckets["overdue"], "overdue")}'
         f'{section("Due in the next 7 days", buckets["due_soon"], "duesoon")}'
         f'{section("Risks to reassess (>12 months since last review)", buckets.get("reassess", {}), "duesoon")}'
+        f'{section("Vendor assurance expiring in the next 60 days", buckets.get("assurance", {}), "duesoon")}'
         f'<p style="margin:20px 0 0 0;font-size:13px;color:#475569">Open your dashboard: <a href="{escape(dashboard_link)}" style="color:#0f172a;text-decoration:underline">{escape(dashboard_link)}</a></p>'
         f'<p style="margin:12px 0 0 0;font-size:11px;color:#94a3b8">Sent by Northstar GRC. We never ask for passwords or codes by email. To stop receiving this digest, ask your admin to update your notification preferences.</p>'
         f'</td></tr></table>'
@@ -2160,10 +2263,30 @@ async def _send_weekly_digest() -> Dict:
         for r in stale_risks:
             r["due_date"] = r.get("last_reviewed") or r.get("date_identified") or r.get("created_at")
 
+        # Vendor assurance expiring in the next 60 days for vendors this user owns.
+        sixty_out = (now_dt + timedelta(days=60)).isoformat()
+        vendors_owned = await db.vendors.find({
+            "business_owner_id": uid,
+            "status": {"$nin": ["inactive", "offboarding", "terminated"]},
+        }, {"_id": 0, "vendor_id": 1, "name": 1, "assurance_status": 1,
+             "assurance_expires_at": 1, "criticality": 1}).to_list(200)
+        assurance_alerts: List[Dict] = []
+        for v in vendors_owned:
+            expires_at = v.get("assurance_expires_at")
+            status_flag = (v.get("assurance_status") or "").lower() in _ASSURANCE_ISSUE_STATUSES
+            expiring_soon = bool(expires_at and expires_at <= sixty_out)
+            if not (expiring_soon or status_flag):
+                continue
+            v = {**v}
+            v["title"] = f"{v.get('name')} · {v.get('assurance_status') or 'assurance review'}"
+            v["due_date"] = expires_at
+            assurance_alerts.append(v)
+
         buckets = {
             "overdue": {"reviews": reviews_od, "tasks": tasks_od, "findings": findings_od},
             "due_soon": {"reviews": reviews_ds, "tasks": tasks_ds, "findings": findings_ds},
             "reassess": {"risks": stale_risks},
+            "assurance": {"vendors": assurance_alerts},
         }
         total = sum(len(v) for section in buckets.values() for v in section.values())
         if total == 0:
