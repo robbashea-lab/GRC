@@ -10,9 +10,11 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import DashboardScopeSelector from "@/components/DashboardScopeSelector";
 
+// Kinds that still have a dedicated list page — anything not in this map is filtered
+// out of dashboard link-outs (Exceptions and Assets were removed from the sidebar).
 const KIND_ROUTE = {
   review: "/reviews", finding: "/findings", risk: "/risks", policy: "/policies",
-  vendor: "/vendors", asset: "/assets", task: "/tasks", exception: "/exceptions",
+  vendor: "/vendors", task: "/tasks",
 };
 
 // Attach owner / unassigned + optional extra filters so click-through from a scoped dashboard preserves context.
@@ -105,7 +107,16 @@ export default function Dashboard() {
       const params = { client_id: currentClientId, scope: scope.kind };
       if (scope.kind === "user" && scope.user_id) params.user_id = scope.user_id;
       const { data } = await api.get("/dashboard", { params });
-      setData(data);
+      // Filter out kinds whose modules were removed from the sidebar (Exceptions, Assets)
+      // so dashboard rows never link to a route that no longer exists.
+      const keep = (arr) => (arr || []).filter((x) => x?.kind in KIND_ROUTE);
+      setData({
+        ...data,
+        needs_attention: keep(data.needs_attention),
+        your_actions: keep(data.your_actions),
+        watch_items: keep(data.watch_items),
+        priority_findings: keep(data.priority_findings),
+      });
     })();
   }, [currentClientId, scope]);
 

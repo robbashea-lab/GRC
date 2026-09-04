@@ -36,6 +36,13 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 ### v6
 - **Session Invalidation on password reset** — JWTs now carry `iat`; `password_changed_at` on user rejects any JWT issued before the reset; all rows in `db.sessions` for the user are deleted on reset (Emergent Google OAuth cookies); reset response returns `sessions_revoked`
 
+### v12 (Slim client nav — remove standalone Exceptions & Assets modules) — Sep 2026
+- **Removed** `/exceptions` and `/assets` routes from `App.js`; wildcard redirects surface these deep links back to the landing route.
+- **Removed** "Exceptions" and "Assets" nav items from `CLIENT_NAV` in `Layout.jsx`; dropped now-unused `ShieldOff` / `Server` icon imports. Final client sidebar: Dashboard · Calendar · Reviews · Findings · Risks · Policies · Vendors · Tasks · Evidence · Onboarding · Audit Log.
+- **Dashboard link safety**: `KIND_ROUTE` no longer maps `asset`/`exception`; the dashboard useEffect filters `needs_attention` / `your_actions` / `watch_items` / `priority_findings` to only include kinds that still have a list page, so no dashboard row can link to a dead route.
+- **Preserved**: `review_type` still includes `"asset"` (Asset Inventory Review) and Findings/Evidence continue to link to reviews of any type. Backend `exceptions` and `assets` collections remain intact (no destructive migration) — future risk-acceptance work can attach to Findings/Risks without a rebuild.
+- **Verified live**: contributor sidebar shows 0 Assets / 0 Exceptions and 10 kept items; direct navigation to `/assets` and `/exceptions` bounces to `/dashboard`; Reviews page renders normally with the "Asset" review type still selectable in the schema.
+
 ### v11 (Baseline → GRC Program Onboarding, auto-scoped to active client) — Sep 2026
 - **Renamed** sidebar "Baseline" → **"Onboarding"**; page title "Baseline Assessment" → **"GRC Program Onboarding"** with subtitle "Establish the client's initial GRC program, identify existing capabilities and gaps, and create the appropriate ongoing review schedule."
 - **Removed the tenant-selection step** from the wizard. Onboarding now operates against `currentClientId` from `OrgContext` and never lists other tenants (previously showed `clients.map(...)` inside the first step).

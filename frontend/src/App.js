@@ -68,10 +68,8 @@ function AppRouter() {
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />
         <Route path="findings" element={<RecordListPage kind="findings" />} />
         <Route path="risks" element={<RecordListPage kind="risks" />} />
-        <Route path="exceptions" element={<RecordListPage kind="exceptions" />} />
         <Route path="policies" element={<RecordListPage kind="policies" />} />
         <Route path="vendors" element={<RecordListPage kind="vendors" />} />
-        <Route path="assets" element={<RecordListPage kind="assets" />} />
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />
         <Route path="evidence" element={<Evidence />} />
         <Route path="onboarding" element={<Onboarding />} />

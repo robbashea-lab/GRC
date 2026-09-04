@@ -59,7 +59,7 @@ export default function Evidence() {
 
   return (
     <div>
-      <PageHeader title="Evidence & Documents" subtitle={`${currentClient?.name || ""} · Drag and drop artifacts, linked to reviews, findings, policies, vendors and assets.`} />
+      <PageHeader title="Evidence & Documents" subtitle={`${currentClient?.name || ""} · Drag and drop artifacts, linked to reviews, findings, policies and vendors.`} />
       <div className="p-8 space-y-6">
         <div
           data-testid="evidence-dropzone"

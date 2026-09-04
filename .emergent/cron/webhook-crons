@@ -6,4 +6,5 @@ WEBHOOK_ENV_FILE=/app/backend/.env
 CRON_API_URL=https://ea.int.apis.emergentagent.com
 
 0 13 * * * root CRON_NAME=overdue-reminders METHOD=POST ENDPOINT_URL_B64=aHR0cHM6Ly81YzkyOGJmMC01MTFhLTQ0ZGMtYmRmNy1hNGVhZjE4NmVjNDkucHJldmlldy5lbWVyZ2VudGFnZW50LmNvbS9hcGkvY3Jvbi9vdmVyZHVlLXJlbWluZGVycw== /bin/sh /app/.emergent/cron/dispatch_webhook.sh >> /var/log/webhook-cron.log 2>&1
+0 8 * * 1 root CRON_NAME=weekly-my-work METHOD=POST ENDPOINT_URL_B64=aHR0cHM6Ly81YzkyOGJmMC01MTFhLTQ0ZGMtYmRmNy1hNGVhZjE4NmVjNDkucHJldmlldy5lbWVyZ2VudGFnZW50LmNvbS9hcGkvY3Jvbi93ZWVrbHktbXktd29yaw== /bin/sh /app/.emergent/cron/dispatch_webhook.sh >> /var/log/webhook-cron.log 2>&1
 * * * * * root JOB_ID=e06c4efa-6a9a-4799-8154-de6e1fa34195 CRON_API_URL=https://ea.int.apis.emergentagent.com /bin/sh /app/.emergent/cron/watch_crons.sh >> /var/log/webhook-cron.log 2>&1
