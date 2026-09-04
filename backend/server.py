@@ -17,7 +17,7 @@ from html import escape
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 from datetime import datetime, timezone, timedelta
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Tuple
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, Path
 from fastapi.responses import StreamingResponse
@@ -933,6 +933,20 @@ async def clients_directory(
     include_archived: bool = Query(False),
     user: Dict = Depends(get_current_user),
 ):
+    """Portfolio operations dashboard endpoint.
+
+    Returns:
+    - `clients`: per-tenant row with GRC lead, program status, non-overlapping due-window
+      counts, critical/high open, unassigned, next major item.
+    - `portfolio`: aggregate cards — past_due / due_30d / due_31_90d / critical_high /
+      unassigned / clients_requiring_attention.
+    - `attention_queue`: top ~15 prioritized items across the portfolio.
+    - `team_workload`: per GRC-lead operational load.
+
+    Non-overlap: an item counted in Past Due is never in Due 30d; Due 30d never in 31–90.
+    De-duplication: a Task whose `finding_id` links to a Finding is not counted separately
+    for critical/high or past-due purposes — the underlying Finding is the source of truth.
+    """
     role = user.get("role")
     if role not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Client directory is restricted to internal admins")
@@ -940,27 +954,45 @@ async def clients_directory(
     q: Dict = {}
     if not include_archived:
         q["status"] = {"$ne": "archived"}
+    # Restrict Platform Admins to the clients they're explicitly authorized for
+    # when their user record has a client_ids scope. Super admins always see all.
+    if role == "platform_admin" and user.get("client_ids"):
+        q["client_id"] = {"$in": user["client_ids"]}
     clients = await db.clients.find(q, {"_id": 0}).to_list(500)
     client_ids = [c["client_id"] for c in clients]
+    empty_portfolio = {
+        "total_clients": 0, "clients_requiring_attention": 0,
+        "past_due": 0, "due_30d": 0, "due_31_90d": 0,
+        "critical_high_open": 0, "unassigned": 0,
+        # Legacy keys kept so existing UI callers don't crash mid-deploy.
+        "action_required": 0, "needs_attention": 0,
+        "total_overdue_reviews": 0, "total_critical_high": 0,
+        "total_significant_risks": 0, "upcoming_reviews_30d": 0,
+    }
     if not client_ids:
-        return {"clients": [], "portfolio": {"total_clients": 0, "action_required": 0, "needs_attention": 0,
-                                              "total_overdue_reviews": 0, "total_critical_high": 0,
-                                              "total_significant_risks": 0, "upcoming_reviews_30d": 0}}
+        return {"clients": [], "portfolio": empty_portfolio, "attention_queue": [], "team_workload": []}
 
-    now_iso = _now()
-    horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+    now_dt = datetime.now(timezone.utc)
+    now_iso = now_dt.isoformat()
+    horizon_30 = (now_dt + timedelta(days=30)).isoformat()
+    horizon_90 = (now_dt + timedelta(days=90)).isoformat()
 
-    # Fetch all relevant docs in bulk, then bucket by client_id.
+    # Bulk fetch — one query per collection, then bucket by client_id.
     reviews = await db.reviews.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(10000)
     findings = await db.findings.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(10000)
     risks = await db.risks.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(10000)
     tasks = await db.tasks.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(10000)
-    # Only meaningful audit actions for last-activity (exclude noisy updates + logins).
     activity_logs = await db.audit_logs.find(
         {"client_id": {"$in": client_ids},
          "action": {"$nin": ["login", "logout", "view", "list"]}},
         {"_id": 0, "client_id": 1, "at": 1, "action": 1, "entity_type": 1, "user_email": 1, "user_name": 1}
     ).sort("at", -1).to_list(50000)
+
+    users_for_names = await db.users.find(
+        {}, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1}
+    ).to_list(500)
+    user_by_id = {u["user_id"]: u for u in users_for_names}
+    client_by_id = {c["client_id"]: c for c in clients}
 
     by_client_last_activity: Dict[str, Dict] = {}
     for log in activity_logs:
@@ -968,9 +1000,13 @@ async def clients_directory(
         if cid and cid not in by_client_last_activity:
             by_client_last_activity[cid] = log
 
-    closed_review = ("completed", "cancelled")
-    closed_finding = ("closed", "remediated")
-    closed_task = ("done", "cancelled")
+    CLOSED_REVIEW = ("completed", "cancelled")
+    CLOSED_FINDING = ("closed", "remediated")
+    CLOSED_TASK = ("done", "cancelled")
+    CLOSED_RISK = ("closed", "retired")
+    HIGH_TASK_PRIORITY = ("immediate", "critical", "high")
+    SIG_REVIEW_TYPES = ("risk", "risk_assessment", "vendor", "policy", "access", "penetration_test",
+                        "bcp_dr", "incident_response", "awareness")
 
     def by_cid(items):
         d: Dict[str, List] = {cid: [] for cid in client_ids}
@@ -979,44 +1015,227 @@ async def clients_directory(
             if cid in d:
                 d[cid].append(x)
         return d
-
     reviews_by = by_cid(reviews)
     findings_by = by_cid(findings)
     risks_by = by_cid(risks)
     tasks_by = by_cid(tasks)
 
+    # Helpers scoped to a single client.
+    def _due_bucket(due: Optional[str]) -> Optional[str]:
+        if not due:
+            return None
+        if due < now_iso:
+            return "past_due"
+        if due <= horizon_30:
+            return "due_30d"
+        if due <= horizon_90:
+            return "due_31_90d"
+        return None
+
+    def _priority_rank(row: Dict[str, Any]) -> int:
+        """Lower = higher priority."""
+        sev = (row.get("severity") or row.get("risk_level") or row.get("priority") or "").lower()
+        overdue = row.get("due_date") and row["due_date"] < now_iso
+        crit = sev in ("critical", "immediate")
+        high = sev in ("high",)
+        if crit and overdue: return 0
+        if crit:              return 1
+        if high and overdue: return 2
+        if overdue:           return 3
+        if crit or high:      return 4
+        due = row.get("due_date")
+        if due and due <= (now_dt + timedelta(days=7)).isoformat(): return 5
+        if due and due <= horizon_30: return 6
+        return 9
+
+    all_attention: List[Dict[str, Any]] = []
     rows: List[Dict] = []
-    portfolio_action = portfolio_attn = 0
-    portfolio_overdue_r = portfolio_crit = portfolio_sig = portfolio_up30 = 0
+    port_pd = port_30 = port_3190 = port_crit = port_unassigned = 0
+    port_action = port_attn = 0
+    workload_map: Dict[str, Dict[str, int]] = {}
+
+    def _bump_workload(uid: Optional[str], key: str, delta: int = 1, client_id: Optional[str] = None):
+        if not uid:
+            return
+        w = workload_map.setdefault(uid, {
+            "user_id": uid, "clients": set(), "past_due": 0, "due_30d": 0,
+            "critical_high": 0, "open_actions": 0,
+        })
+        w[key] += delta
+        if client_id:
+            w["clients"].add(client_id)
 
     for c in clients:
         cid = c["client_id"]
+        client_status = (c.get("status") or "active").lower()
+        is_archived_or_inactive = client_status in ("archived", "inactive")
         rs = reviews_by.get(cid, [])
         fs = findings_by.get(cid, [])
         ks = risks_by.get(cid, [])
         ts = tasks_by.get(cid, [])
 
-        overdue_reviews = [r for r in rs if r.get("due_date") and r["due_date"] < now_iso and r.get("status") not in closed_review]
-        overdue_tasks = [t for t in ts if t.get("due_date") and t["due_date"] < now_iso and t.get("status") not in closed_task]
-        overdue_findings = [f for f in fs if f.get("due_date") and f["due_date"] < now_iso and f.get("status") not in closed_finding]
-        open_findings = [f for f in fs if f.get("status") in ("open", "in_remediation")]
-        crit_high_open = [f for f in open_findings if f.get("severity") in ("critical", "high")]
-        crit_open = [f for f in crit_high_open if f.get("severity") == "critical"]
-        sig_risks = [r for r in ks if r.get("impact") == "high" and r.get("status") != "closed"]
-        upcoming_r_30 = [r for r in rs if r.get("due_date") and now_iso <= r["due_date"] <= horizon and r.get("status") not in closed_review]
-        open_actions = len(overdue_reviews) + len(overdue_tasks) + len(overdue_findings) + len(crit_high_open) + len([f for f in open_findings if f.get("status") == "open"])
+        # ------- Bucketize each entity into non-overlapping due windows -------
+        pd: List[Dict] = []
+        d30: List[Dict] = []
+        d3190: List[Dict] = []
 
-        client_status = (c.get("status") or "active").lower()
-        if client_status in ("archived", "inactive", "onboarding"):
-            program_status = client_status
+        def _push(entity_type: str, r: Dict, closed_set: Tuple[str, ...], due_field: str = "due_date"):
+            if r.get("status") in closed_set:
+                return
+            due = r.get(due_field)
+            bucket = _due_bucket(due)
+            if bucket is None:
+                return
+            row = {
+                "entity_type": entity_type,
+                "client_id": cid,
+                "client_name": c.get("name"),
+                "id": r.get("review_id") or r.get("finding_id") or r.get("risk_id") or r.get("task_id"),
+                "title": r.get("title"),
+                "due_date": due,
+                "owner_id": r.get("owner_id") or r.get("assignee_id"),
+                "status": r.get("status"),
+                "severity": r.get("severity"),
+                "risk_level": r.get("risk_level"),
+                "priority": r.get("priority"),
+                "review_type": r.get("review_type"),
+                "raw": r,
+            }
+            if bucket == "past_due":   pd.append(row)
+            elif bucket == "due_30d":  d30.append(row)
+            else:                       d3190.append(row)
+
+        for r in rs: _push("review",  r, CLOSED_REVIEW)
+        for f in fs: _push("finding", f, CLOSED_FINDING)
+        # Only count risks that actually carry an actionable review/reassessment date.
+        for r in ks: _push("risk",   r, CLOSED_RISK, due_field="next_review")
+        # Deduplicate: a task linked to a finding is remediation work for that finding.
+        # We prefer the finding as the source of truth for counts.
+        for t in ts:
+            if t.get("finding_id"):
+                continue
+            _push("task", t, CLOSED_TASK)
+
+        # ------- Critical / High Open (severity-based, no due-date requirement) -------
+        crit_high_findings = [
+            f for f in fs
+            if f.get("status") not in CLOSED_FINDING and (f.get("severity") or "").lower() in ("critical", "high")
+        ]
+        crit_high_risks = [
+            r for r in ks
+            if r.get("status") not in CLOSED_RISK and (r.get("risk_level") or "").lower() in ("critical", "high")
+        ]
+        crit_high_tasks = [
+            t for t in ts
+            if not t.get("finding_id") and t.get("status") not in CLOSED_TASK
+            and (t.get("priority") or "").lower() in HIGH_TASK_PRIORITY
+        ]
+        crit_high_open = len(crit_high_findings) + len(crit_high_risks) + len(crit_high_tasks)
+
+        # ------- Unassigned actionable records -------
+        unassigned_items: List[Dict] = []
+        for r in rs:
+            if r.get("status") not in CLOSED_REVIEW and not r.get("owner_id"):
+                unassigned_items.append({"entity_type": "review", "id": r.get("review_id"),
+                                          "title": r.get("title"), "due_date": r.get("due_date")})
+        for t in ts:
+            if t.get("finding_id"):  continue
+            if t.get("status") not in CLOSED_TASK and not (t.get("assignee_id") or t.get("owner_id")):
+                unassigned_items.append({"entity_type": "task", "id": t.get("task_id"),
+                                          "title": t.get("title"), "due_date": t.get("due_date")})
+        for f in fs:
+            if f.get("status") not in CLOSED_FINDING and not f.get("owner_id"):
+                unassigned_items.append({"entity_type": "finding", "id": f.get("finding_id"),
+                                          "title": f.get("title"), "due_date": f.get("due_date")})
+        for k in ks:
+            if k.get("status") not in CLOSED_RISK and not k.get("owner_id"):
+                unassigned_items.append({"entity_type": "risk", "id": k.get("risk_id"),
+                                          "title": k.get("title"), "due_date": k.get("next_review")})
+
+        # ------- Next major item — earliest upcoming significant Review -------
+        upcoming_major = [
+            r for r in rs
+            if r.get("status") not in CLOSED_REVIEW and r.get("due_date")
+            and r["due_date"] >= now_iso
+            and (r.get("review_type") or "").lower() in SIG_REVIEW_TYPES
+        ]
+        upcoming_major.sort(key=lambda r: r["due_date"])
+        next_major = None
+        if upcoming_major:
+            top = upcoming_major[0]
+            next_major = {"title": top.get("title"), "due_date": top.get("due_date"),
+                          "review_type": top.get("review_type"), "review_id": top.get("review_id")}
+
+        # ------- Program status (rule-driven) -------
+        overdue_reviews = [r for r in pd if r["entity_type"] == "review"]
+        critical_overdue = any(
+            (b.get("severity") == "critical" or b.get("risk_level") == "critical" or b.get("priority") == "immediate")
+            for b in pd
+        )
+        if is_archived_or_inactive:
+            program_status = client_status  # archived/inactive shown verbatim
+        elif client_status == "onboarding":
+            program_status = "onboarding"
+        elif critical_overdue or len(pd) >= 3 or crit_high_open >= 3:
+            program_status = "action_required"
+        elif pd or crit_high_open or d30 or len(unassigned_items):
+            program_status = "needs_attention"
         else:
-            # Computed operational health.
-            if crit_open or (overdue_reviews and len(overdue_reviews) >= 3) or (overdue_findings and any(f.get("severity") in ("critical", "high") for f in overdue_findings)):
-                program_status = "action_required"
-            elif open_actions > 0 or crit_high_open or sig_risks or upcoming_r_30:
-                program_status = "needs_attention"
-            else:
-                program_status = "healthy"
+            program_status = "healthy"
+
+        # ------- Portfolio + workload accumulation (skip archived by default) -------
+        contributes = not is_archived_or_inactive
+        if contributes:
+            port_pd += len(pd)
+            port_30 += len(d30)
+            port_3190 += len(d3190)
+            port_crit += crit_high_open
+            port_unassigned += len(unassigned_items)
+            if program_status == "action_required": port_action += 1
+            elif program_status == "needs_attention": port_attn += 1
+
+            # Team workload accumulation (real ownership only).
+            grc_lead = c.get("assigned_owner_id")
+            if grc_lead:
+                workload_map.setdefault(grc_lead, {
+                    "user_id": grc_lead, "clients": set(), "past_due": 0, "due_30d": 0,
+                    "critical_high": 0, "open_actions": 0,
+                })["clients"].add(cid)
+            for b in pd:
+                _bump_workload(b.get("owner_id"), "past_due", 1, cid)
+            for b in d30:
+                _bump_workload(b.get("owner_id"), "due_30d", 1, cid)
+            for f in crit_high_findings:
+                _bump_workload(f.get("owner_id"), "critical_high", 1, cid)
+            for r in crit_high_risks:
+                _bump_workload(r.get("owner_id"), "critical_high", 1, cid)
+            for t in ts:
+                if t.get("finding_id"):  continue
+                if t.get("status") not in CLOSED_TASK:
+                    _bump_workload(t.get("assignee_id") or t.get("owner_id"), "open_actions", 1, cid)
+
+            # Attention queue candidates — score each item.
+            for b in pd + d30:
+                all_attention.append({**b, "rank": _priority_rank(b)})
+            # Critical/High open items without a due date still deserve to surface.
+            for f in crit_high_findings:
+                if _due_bucket(f.get("due_date")) is None:
+                    all_attention.append({
+                        "entity_type": "finding", "client_id": cid, "client_name": c.get("name"),
+                        "id": f.get("finding_id"), "title": f.get("title"),
+                        "due_date": f.get("due_date"), "owner_id": f.get("owner_id"),
+                        "status": f.get("status"), "severity": f.get("severity"),
+                        "rank": _priority_rank(f),
+                    })
+            for r in crit_high_risks:
+                if _due_bucket(r.get("next_review")) is None:
+                    all_attention.append({
+                        "entity_type": "risk", "client_id": cid, "client_name": c.get("name"),
+                        "id": r.get("risk_id"), "title": r.get("title"),
+                        "due_date": r.get("next_review"), "owner_id": r.get("owner_id"),
+                        "status": r.get("status"), "risk_level": r.get("risk_level"),
+                        "rank": _priority_rank(r),
+                    })
 
         last = by_client_last_activity.get(cid)
         rows.append({
@@ -1026,15 +1245,30 @@ async def clients_directory(
             "environment": c.get("environment"),
             "logo_url": c.get("logo_url"),
             "primary_contact": c.get("primary_contact"),
-            "assigned_owner_id": c.get("assigned_owner_id"),
+            "grc_lead_id": c.get("assigned_owner_id"),
+            "grc_lead": (
+                {"user_id": c["assigned_owner_id"],
+                 "name": user_by_id.get(c["assigned_owner_id"], {}).get("name"),
+                 "email": user_by_id.get(c["assigned_owner_id"], {}).get("email")}
+                if c.get("assigned_owner_id") else None
+            ),
+            "assigned_owner_id": c.get("assigned_owner_id"),  # legacy alias
             "client_status": client_status,
             "program_status": program_status,
-            "open_actions": open_actions,
-            "open_findings": len(open_findings),
-            "significant_risks": len(sig_risks),
-            "upcoming_reviews": len(upcoming_r_30),
+            "past_due": len(pd),
+            "due_30d": len(d30),
+            "due_31_90d": len(d3190),
+            "critical_high_open": crit_high_open,
+            "unassigned": len(unassigned_items),
+            "next_major_item": next_major,
+            # Legacy counts kept for backward compat with any existing UI reads.
+            "open_actions": len(pd) + len(d30),
+            "open_findings": len([f for f in fs if f.get("status") in ("open", "in_remediation")]),
+            "significant_risks": len(crit_high_risks),
+            "upcoming_reviews": len([r for r in rs if r.get("status") not in CLOSED_REVIEW
+                                     and r.get("due_date") and now_iso <= r["due_date"] <= horizon_30]),
             "overdue_reviews": len(overdue_reviews),
-            "critical_high_findings": len(crit_high_open),
+            "critical_high_findings": len(crit_high_findings),
             "last_activity": (
                 {"at": last.get("at"), "action": last.get("action"),
                  "entity_type": last.get("entity_type"),
@@ -1044,30 +1278,79 @@ async def clients_directory(
             "created_at": c.get("created_at"),
         })
 
-        if program_status == "action_required":
-            portfolio_action += 1
-        elif program_status == "needs_attention":
-            portfolio_attn += 1
-        portfolio_overdue_r += len(overdue_reviews)
-        portfolio_crit += len(crit_high_open)
-        portfolio_sig += len(sig_risks)
-        portfolio_up30 += len(upcoming_r_30)
-
-    # Sort: action_required first, then needs_attention, then rest; then by name.
+    # Sort clients: Action Required → Needs Attention → Onboarding → Healthy → Inactive → Archived.
     order = {"action_required": 0, "needs_attention": 1, "onboarding": 2, "healthy": 3, "inactive": 4, "archived": 5}
     rows.sort(key=lambda r: (order.get(r["program_status"], 9), (r["name"] or "").lower()))
 
+    # Trim + shape the attention queue.
+    all_attention.sort(key=lambda x: (x["rank"], x.get("due_date") or "9999"))
+    attention_queue: List[Dict] = []
+    for a in all_attention[:15]:
+        owner = user_by_id.get(a.get("owner_id"))
+        overdue = bool(a.get("due_date") and a["due_date"] < now_iso)
+        sev = (a.get("severity") or a.get("risk_level") or a.get("priority") or "").lower()
+        priority_bucket = ("critical" if sev in ("critical", "immediate")
+                           else "high" if sev == "high"
+                           else "overdue" if overdue else "due_soon")
+        attention_queue.append({
+            "priority": priority_bucket,
+            "client_id": a.get("client_id"),
+            "client_name": a.get("client_name"),
+            "entity_type": a.get("entity_type"),
+            "entity_id": a.get("id"),
+            "title": a.get("title"),
+            "owner_id": a.get("owner_id"),
+            "owner_name": (owner.get("name") or owner.get("email")) if owner else None,
+            "due_date": a.get("due_date"),
+            "status": a.get("status"),
+            "overdue": overdue,
+        })
+
+    # Serialize team workload — resolve names, convert client sets to counts + ids.
+    team_workload: List[Dict] = []
+    for uid, w in workload_map.items():
+        u = user_by_id.get(uid) or {}
+        # Only surface internal team members (admins) — client users aren't "team".
+        if u.get("role") not in ("super_admin", "platform_admin"):
+            continue
+        client_ids_owned = sorted(w.get("clients") or [])
+        team_workload.append({
+            "user_id": uid,
+            "name": u.get("name") or u.get("email") or uid,
+            "email": u.get("email"),
+            "role": u.get("role"),
+            "clients": len(client_ids_owned),
+            "client_ids": client_ids_owned,
+            "past_due": w.get("past_due", 0),
+            "due_30d": w.get("due_30d", 0),
+            "critical_high": w.get("critical_high", 0),
+            "open_actions": w.get("open_actions", 0),
+        })
+    team_workload.sort(key=lambda t: (-t["past_due"], -t["critical_high"], -t["due_30d"]))
+
+    portfolio = {
+        "total_clients": len(rows),
+        "clients_requiring_attention": port_action + port_attn,
+        "past_due": port_pd,
+        "due_30d": port_30,
+        "due_31_90d": port_3190,
+        "critical_high_open": port_crit,
+        "unassigned": port_unassigned,
+        # Legacy keys kept for older UI callers.
+        "action_required": port_action,
+        "needs_attention": port_attn,
+        "total_overdue_reviews": sum(r["overdue_reviews"] for r in rows),
+        "total_critical_high": sum(r["critical_high_findings"] for r in rows),
+        "total_significant_risks": sum(r["significant_risks"] for r in rows),
+        "upcoming_reviews_30d": sum(r["upcoming_reviews"] for r in rows),
+        "generated_at": now_iso,
+    }
+
     return {
         "clients": rows,
-        "portfolio": {
-            "total_clients": len(rows),
-            "action_required": portfolio_action,
-            "needs_attention": portfolio_attn,
-            "total_overdue_reviews": portfolio_overdue_r,
-            "total_critical_high": portfolio_crit,
-            "total_significant_risks": portfolio_sig,
-            "upcoming_reviews_30d": portfolio_up30,
-        },
+        "portfolio": portfolio,
+        "attention_queue": attention_queue,
+        "team_workload": team_workload,
     }
 
 

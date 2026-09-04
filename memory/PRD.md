@@ -11,6 +11,18 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 - Emails via Emergent Resend; PDFs via reportlab.
 
 ## Implemented (Feb 2026)
+### v21 (GRC Portfolio Overview) — Sep 2026
+- **/clients page rebuilt** as an operational portfolio console. Header renamed **GRC Portfolio Overview** with sub-sections: 6 summary cards → Needs Attention Across Clients → Client Portfolio → Team Workload.
+- **Six new summary cards**: Past Due · Due Next 30 Days · Due 31–90 Days · Critical / High Open · Unassigned · Clients Requiring Attention (X of Y). Each card is clickable and opens a portfolio-scoped drill dialog (`drill-dialog`) except the last which scrolls to and filters the client table.
+- **Non-overlapping due windows** and **de-duplication** enforced server-side: a task with a `finding_id` never double-counts against its parent finding; risks only surface if they carry a `next_review` date; archived/inactive clients are excluded from totals unless `include_archived=true`.
+- **Attention Queue** — top ~15 items across the portfolio, ranked by `_priority_rank` (critical+overdue → critical → high+overdue → overdue → critical/high → due ≤7d → due ≤30d). Emits Priority | Client | Item | Type | Owner | Due | Status | Action columns.
+- **Client Portfolio table** columns updated to: Client · GRC Lead · Program Status · Past Due · Due 30d · Critical/High · Unassigned · Next Major Item · Actions. Every metric cell is a hyperlink that switches into that client's workspace and navigates to `/action-items`. Next Major Item is computed from the earliest significant upcoming Review (vendor/policy/access/risk_assessment/pen_test/bcp_dr/incident_response/awareness).
+- **Rule-driven Program Status**: `action_required` when a critical item is overdue OR 3+ past-due OR 3+ critical/high open. `needs_attention` when any past-due, critical/high, due-soon, or unassigned exists. Otherwise `healthy` (or `onboarding`/`archived`/`inactive` for those explicit client statuses).
+- **Team Workload** — per-user (super/platform admins only) counts of Clients led, Past Due, Due 30d, Critical/High, Open Actions. Counts use **explicit assignment** only, never activity history. Metric cells drill into filtered client portfolio.
+- **Filters** — filter tabs (All / Assigned to Me / Action Required / Needs Attention / Past Due / Critical / High / Onboarding / Archived) + GRC Lead dropdown + Include-archived toggle. Search extended to match GRC Lead name.
+- **Performance** — single bulk query per collection, in-memory bucketing per client. Legacy keys retained on `/clients/directory` response so no callers break.
+- Verified via curl end-to-end: portfolio.past_due=13, due_30d=17, due_31_90d=13, critical_high_open=9, unassigned=29, attention_queue=15 items, team_workload=2 admins.
+
 ### v20 (Policies & Governance Onboarding · Presence vs Verified) — Sep 2026
 - **Onboarding step 1 renamed** "Policies & Governance Documents" and rewritten as an inventory of what the client says they have (not a builder of drafts). Segmented Yes/No/Unsure/N/A control per item; optional per-row note; required rationale for N/A.
 - **POLICY_LIBRARY** — 24 items grouped into 5 categories (Core Governance, Security Operations, Business Resilience, Physical/Workforce/Technology, Privacy & Data Protection). Items tagged `common_baseline` or `consider_based_on_applicability`.
