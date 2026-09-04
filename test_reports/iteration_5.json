@@ -1,0 +1,48 @@
+{
+  "summary": "Iteration 5 (Northstar GRC) — full backend + frontend E2E for password reset (forgot + reset), bulk set-due-date, and calendar drag-to-reschedule. Cumulative pytest: 80/80 passing (16 new iter5 + 64 iter1-4 regression). Backend verified: POST /api/auth/forgot-password with known email robbashea@gmail.com returns {ok:true} and inserts a doc in db.password_resets; POST with unknown email returns {ok:true} and does NOT create a row (no user-enumeration). POST /api/auth/reset-password with invalid token -> 400, with new_password <8 -> 400. Happy path: generated a valid token for contributor@acme.demo, called /reset-password with new_password 'BrandNew2026!' -> {ok:true}; login with old 'Demo@2026' -> 401; login with new password -> 200; replay same token -> 400. Contributor password restored to 'Demo@2026' at end of test (verified via login 200). POST /api/bulk action='set-due-date' with two review ids and payload {due_date:'2027-06-15T09:00:00Z'} returns {ok:true,count:2}; subsequent GET /api/reviews confirms both records have the new due_date. Empty payload returns 400 'Missing due_date'. client_readonly bulk set-due-date returns 403. Regression on /api/bulk close/set-status/set-owner/delete all still 200; PATCH /api/reviews/{id} still updates due_date (used by drag-drop). Regression: /api/dashboard, /api/calendar, /api/reports/board (PDF), /api/notifications, /api/export/reviews, /api/exceptions create+patch all still green. Frontend Playwright verified: /forgot-password renders forgot-email + forgot-submit; submitting with robbashea@gmail.com shows forgot-sent-message. Login page has 'Forgot?' link data-testid=forgot-password-link that navigates to /forgot-password. /reset-password without ?token= renders reset-no-token amber banner. /reset-password?token=<valid> renders reset-password + reset-password-confirm + reset-submit; submitting valid matching passwords navigates to /login and login with the new password succeeds (then password restored). Reviews list: selecting 2 rows shows bulk-action-bar with bulk-set-due-date button; clicking opens a Radix dropdown containing bulk-due-date-input (type=date) and bulk-due-date-apply; picking 2027-08-20 and Apply completes without error. Calendar (contributor@acme.demo with Acme selected) shows 8 review chips on Sept 2026; performed synthetic HTML5 drag from cal-item-review-rev_91655bafeefb (in cal-day-2026-09-01) onto cal-day-2026-08-31; chip appears in target cell, toast 'Rescheduled to 2026-08-31' shown, and GET /api/reviews confirms the review's due_date is now 2026-08-31T09:00:00.000Z. Also observed the calendar now has a '+3 more' overflow indicator (previously flagged in iter4).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Calendar — client picker", "issues": ["When contributor has multiple tenants (or a fresh session), the Calendar page renders '0 chips' until a client is selected in the sidebar client picker. Consider auto-selecting the user's primary/only tenant on first load (was blank 'Select…' initially in one test run)."]},
+      {"screen": "Reset password success UX", "issues": ["After a successful reset the app immediately navigates to /login but does not carry the user's email into the login form; consider pre-filling email from the JWT sub / decoded token or a query param so the user only types the new password."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_iteration2.py",
+    "/app/backend/tests/test_iteration3.py",
+    "/app/backend/tests/test_iteration4.py",
+    "/app/backend/tests/test_iteration5.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/iter5.xml"
+  ],
+  "action_items": [
+    "(nit) Auto-select the user's primary tenant on Calendar/Reviews initial load if a client_id has not been chosen yet.",
+    "(nit) After successful password reset, pre-fill the login form email so the user does not have to retype it.",
+    "(carry-over) server.py is 1688 lines — extract bulk / calendar / board-report / auth-recovery modules."
+  ],
+  "critical_code_review_comments": [
+    "server.py grew to 1688 lines (was 1609 in iter4). Password-reset endpoints and set-due-date branch are correctly placed but bulk router now has 6 action branches — good candidate to extract into a bulk_actions.py module with a per-action registry.",
+    "/api/auth/forgot-password uses secrets.token_urlsafe(32) + sha256(token) stored as token_hash — good. Expiration is 2h (documented in email body). No index on password_resets.token_hash — add a unique index to make lookup constant-time as the collection grows.",
+    "Reset tokens are single-use (used=true flag) and enforced (verified). Consider also invalidating any prior unused tokens for the same user_id when a new one is issued, and expiring tokens on password change through login flow.",
+    "/api/auth/reset-password does NOT invalidate existing sessions/cookies for that user. If an attacker had an active JWT cookie they'd retain it after the victim resets. Add a users.password_changed_at stamp and reject JWTs issued before it.",
+    "/api/bulk set-due-date accepts payload.due_date as a raw string and writes it verbatim — no ISO 8601 validation. Frontend sends YYYY-MM-DD from <input type=date> while other flows send full ISO. Recommend server-side normalization to consistent ISO string with tz.",
+    "Frontend calendar dnd calls PATCH /{kind}/{id} with { due_date: 'YYYY-MM-DDT09:00:00.000Z' } — hardcoded 09:00 clobbers original hh:mm. If a review had 14:30, it becomes 09:00 after drag. Preserve original time-of-day on reschedule.",
+    "Frontend ForgotPassword always shows the emerald 'Check your inbox' banner regardless of whether an email was actually sent (Resend can 422 in preview per iteration note) — that's correct for anti-enumeration UX but worth an internal /health-style admin toggle to surface send failures for legitimate ops.",
+    "(carry-over from iter4) app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=False) still contradicts login's Set-Cookie flow.",
+    "(carry-over) No brute-force lockout on /api/auth/login.",
+    "(carry-over) No GET /api/{kind}/{id} single-item read endpoint; tests must list+filter."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration5.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "See /app/memory/test_credentials.md — used robbashea@gmail.com/Admin@2026, contributor@acme.demo/Demo@2026 (temporarily 'BrandNew2026!' and 'FrontEnd2026!' during reset tests; RESTORED to 'Demo@2026' at end — verified with a 200 login), readonly@acme.demo/Demo@2026.",
+  "seed_data_creation": "Iter5 backend tests created TEST_iter5_* records in reviews and exceptions (all TEST_ prefixed): TEST_iter5_bulk_due_1/_2/_bad/_ro, TEST_iter5_reg_close/_setstatus/_setowner/_del, TEST_iter5_patch, TEST_iter5_exc. Also inserted 2 password_resets rows for contributor (both marked used=true) and 1 for robbashea@gmail.com (unused, will auto-expire in 2h).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 5 shipped: POST /api/auth/forgot-password + /api/auth/reset-password (secrets.token_urlsafe + sha256, db.password_resets, 2h expiry, single-use, no-enumeration); new bulk action 'set-due-date' with payload.due_date required; frontend adds ForgotPassword.jsx (forgot-email/forgot-submit/forgot-sent-message), ResetPassword.jsx (reset-password/reset-password-confirm/reset-submit/reset-no-token), Login has forgot-password-link, RecordListPage has bulk-set-due-date + bulk-due-date-input + bulk-due-date-apply, Calendar.jsx has HTML5 drag-and-drop that PATCHes /{kind}/{id} with due_date=YYYY-MM-DDT09:00:00.000Z (hardcoded 09:00 — see review comment). Cumulative pytest: 80. To generate a fresh reset token for future manual E2E: import secrets, hashlib; from datetime import datetime, timezone, timedelta; from pymongo import MongoClient; raw=secrets.token_urlsafe(32); h=hashlib.sha256(raw.encode()).hexdigest(); c=MongoClient('mongodb://localhost:27017')['grc_platform']; u=c.users.find_one({'email':'contributor@acme.demo'}); c.password_resets.insert_one({'user_id':u['user_id'],'token_hash':h,'expires_at':(datetime.now(timezone.utc)+timedelta(hours=1)).isoformat(),'used':False,'created_at':datetime.now(timezone.utc).isoformat()}); print(raw); — ALWAYS restore contributor password back to Demo@2026 with bcrypt.hashpw at the end.",
+  "rca of the issue": "N/A — no functional issues detected. During test authoring: (1) ReviewIn requires review_type + client_id so first _create_review call failed with 500 — added review_type='control' and acme_cid to payload. (2) EmailStr rejects .invalid TLD so unknown-email forgot test was returning 422 — switched to nobody-xxxx@example.com. (3) Exceptions DELETE returned 403 for contributor (admin-only) — tolerated 403 in cleanup assertion."
+}

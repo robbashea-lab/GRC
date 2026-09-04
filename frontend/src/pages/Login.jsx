@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,7 +87,10 @@ export default function Login() {
               <Input data-testid="email-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div>
-              <Label className="text-xs">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Password</Label>
+                <Link to="/forgot-password" data-testid="forgot-password-link" className="text-[11px] text-slate-500 hover:text-slate-900 underline">Forgot?</Link>
+              </div>
               <Input data-testid="password-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <Button data-testid="submit-auth" type="submit" disabled={loading} className="w-full">

@@ -1,11 +1,11 @@
 # Northstar GRC — Product Requirements
 
 ## Original problem
-Desktop-first multi-tenant B2B GRC platform (Linear/Stripe/Notion-inspired). Roles: Super Admin, Platform Admin, Client Contributor, Client Read-Only. Tenant isolation, audit log, @mention comments, evidence uploads, reusable Review workflow, connected Findings/Tasks/Risks, Policies with 2-step approval + history, Vendors, Assets, Exceptions register, Baseline wizard, overdue email reminders, notifications inbox, CSV/PDF exports, calendar view, bulk actions.
+Desktop-first multi-tenant B2B GRC platform (Linear/Stripe/Notion-inspired). Roles: Super Admin, Platform Admin, Client Contributor, Client Read-Only. Tenant isolation, audit log, @mention comments, evidence uploads, reusable Review workflow, connected Findings/Tasks/Risks, Policies with 2-step approval + history, Vendors, Assets, Exceptions register, Baseline wizard, overdue email reminders, notifications inbox, CSV/PDF exports, calendar with drag-to-reschedule, bulk actions incl. change due date, self-service password reset.
 
 ## Architecture
-- Backend FastAPI + MongoDB (motor). server.py mounts api + entity_router LAST so all literal /api/* routes take precedence.
-- Auth: JWT bearer in localStorage + Emergent Google OAuth.
+- Backend FastAPI + MongoDB (motor). server.py mounts api + entity_router at end.
+- Auth: JWT bearer + Emergent Google OAuth + self-serve password reset (token-based, 2h TTL, single-use, sha256-hashed).
 - Frontend React 19 + react-router 7 + shadcn/ui + sonner + lucide-react.
 - Scheduled tasks: `.emergent/crons.yml` — daily 13:00 UTC overdue-reminders.
 - Emails via Emergent Resend; PDFs via reportlab.
@@ -14,38 +14,35 @@ Desktop-first multi-tenant B2B GRC platform (Linear/Stripe/Notion-inspired). Rol
 ### v1
 - Multi-tenant auth, roles, tenant scoping, client org selector
 - CRUD for Reviews / Findings / Risks / Policies / Vendors / Assets / Tasks
-- Evidence uploads (base64), comments, audit log
-- Command Center dashboard focused on overdue reviews / open findings / critical findings / significant risks
+- Evidence uploads (base64), comments, audit log, command-center dashboard
 
 ### v2
-- Baseline Assessment wizard (`/onboarding`)
-- Quick actions Review→Finding + Finding→Task
-- Related-items tab, Exceptions Register, Overdue Reminders (Resend + cron)
+- Baseline Assessment wizard, quick actions (Review→Finding, Finding→Task)
+- Related-items tab, Exceptions Register, Overdue Reminders + cron
 
 ### v3
-- Notifications inbox with @mentions and auto-notifications
-- Policy approval workflow (submit/approve/reject) with history + RBAC
-- CSV exports per record kind
-- Evidence tab inside every record drawer
+- Notifications inbox (@mentions + auto-assignment), Policy approvals with history
+- CSV exports per record kind, Evidence tab inside every drawer
 
 ### v4
-- **Bulk Actions** — checkboxes + bulk bar with close / set-status / set-owner (assignee for tasks) / delete (admin only); tenant + role checks on every id
-- **Calendar View** — `/calendar` month grid combining reviews, findings and tasks with prev/next/today; `/api/calendar` returns date-bucketed items
-- **Board Report PDF** — one-page executive PDF via `GET /api/reports/board?client_id=` using reportlab; Command Center has one-click download
+- Bulk actions (close / set-status / set-owner / delete) with RBAC + tenant scoping
+- Calendar month grid, Board Report PDF (executive one-pager)
 
-## Test coverage
-- 47+ backend pytest tests plus new iter4 suite; 100% frontend E2E across iterations 1-3
+### v5
+- **Password Reset** — POST /auth/forgot-password + /auth/reset-password, secure token flow with email link, /forgot-password and /reset-password pages, "Forgot?" link on Login
+- **Bulk Set Due Date** — new bulk action + UI popover with date picker
+- **Drag-To-Reschedule** — draggable calendar chips, drop on any day to PATCH due_date, optimistic UI with revert-on-error
 
 ## P1 backlog
-- Notification pagination + real-time push (SSE)
 - Vendor Portal (guest link for due-diligence questionnaires)
-- Password reset + brute-force lockout
+- Notifications pagination + real-time push (SSE)
+- Brute-force lockout on /auth/login
 - Extract server.py into modules
 
 ## P2 backlog
-- SLA countdowns and calendar drag-to-reschedule
+- SLA countdowns & calendar drag-to-resize
 - Slack/Teams webhooks
-- CSV export streaming row-by-row + JSON-serialize nested cells
+- CSV streaming row-by-row + JSON serialization of nested cells
 - Custom permissions matrix per role/tenant
 
 ## Test credentials

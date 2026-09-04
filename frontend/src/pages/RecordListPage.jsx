@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X } from "lucide-react";
+import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
 const ID_FIELD = {
@@ -35,6 +35,8 @@ export default function RecordListPage({ kind }) {
   const [checked, setChecked] = useState(new Set());
   const [ownerPicker, setOwnerPicker] = useState(false);
   const [pickedOwner, setPickedOwner] = useState("");
+  const [dueDatePickerOpen, setDueDatePickerOpen] = useState(false);
+  const [pickedDueDate, setPickedDueDate] = useState("");
 
   const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
   const canDelete = ["super_admin", "platform_admin"].includes(user?.role);
@@ -210,6 +212,36 @@ export default function RecordListPage({ kind }) {
             <button onClick={() => confirm(`Delete ${checked.size} record(s)?`) && bulk("delete")} data-testid="bulk-delete" className="inline-flex items-center gap-1 rounded-md border border-red-500 bg-red-500/90 hover:bg-red-500 px-2.5 h-8 text-xs text-white">
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
+          )}
+          {canWrite && schema.fields.some((f) => f.name === "due_date") && (
+            <DropdownMenu open={dueDatePickerOpen} onOpenChange={(v) => { setDueDatePickerOpen(v); if (v) setPickedDueDate(""); }}>
+              <DropdownMenuTrigger asChild>
+                <button data-testid="bulk-set-due-date" className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 h-8 text-xs text-white">
+                  <CalendarDays className="h-3.5 w-3.5" /> Set due date
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="p-3 w-64">
+                <DropdownMenuLabel className="text-xs px-0 pt-0">Pick a new due date</DropdownMenuLabel>
+                <div className="mt-2 space-y-2">
+                  <Input
+                    type="date"
+                    value={pickedDueDate}
+                    onChange={(e) => setPickedDueDate(e.target.value)}
+                    data-testid="bulk-due-date-input"
+                    className="text-sm h-9"
+                  />
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    disabled={!pickedDueDate}
+                    onClick={() => { bulk("set-due-date", { due_date: pickedDueDate }); setDueDatePickerOpen(false); }}
+                    data-testid="bulk-due-date-apply"
+                  >
+                    Apply to {checked.size} record(s)
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <div className="ml-auto">
             <button onClick={() => setChecked(new Set())} className="p-1 rounded hover:bg-slate-800 text-slate-300" data-testid="bulk-clear"><X className="h-4 w-4" /></button>

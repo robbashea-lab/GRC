@@ -7,6 +7,8 @@ import os
 import re
 import uuid
 import logging
+import secrets
+import hashlib
 import bcrypt
 import jwt
 import httpx
@@ -264,6 +266,15 @@ class GoogleSessionIn(BaseModel):
     session_id: str
 
 
+class ForgotIn(BaseModel):
+    email: EmailStr
+
+
+class ResetIn(BaseModel):
+    token: str
+    new_password: str
+
+
 # ---------------- Audit ----------------
 async def audit(user: Dict, action: str, entity_type: str, entity_id: str, client_id: Optional[str] = None, meta: Optional[Dict] = None):
     await db.audit_logs.insert_one({
@@ -370,6 +381,72 @@ async def login(body: LoginIn, response: Response):
     return {"user": u, "access_token": token}
 
 
+# ---------------- Password reset ----------------
+@api.post("/auth/forgot-password")
+async def forgot_password(body: ForgotIn):
+    email = body.email.lower()
+    u = await db.users.find_one({"email": email}, {"_id": 0})
+    # Always return ok to avoid user-enumeration.
+    if not u or not u.get("password_hash"):
+        return {"ok": True}
+    raw = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw.encode()).hexdigest()
+    # Invalidate any prior unused tokens for this user so a leaked older link becomes unusable.
+    await db.password_resets.update_many(
+        {"user_id": u["user_id"], "used": False},
+        {"$set": {"used": True, "used_at": _now(), "superseded": True}},
+    )
+    await db.password_resets.insert_one({
+        "user_id": u["user_id"],
+        "token_hash": token_hash,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat(),
+        "used": False,
+        "created_at": _now(),
+    })
+    base = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
+    if not base:
+        return {"ok": True}
+    link = f"{base}/reset-password?token={raw}"
+    from html import escape as _esc
+    name = _esc(u.get("name") or email)
+    safe_link = _esc(link)
+    html = (
+        '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">'
+        f'<h2 style="margin:0 0 12px 0;color:#0f172a">Reset your Northstar GRC password</h2>'
+        f'<p style="color:#334155;font-size:14px">Hi {name}, we received a request to reset your password. '
+        f'Use the link below within the next 2 hours to choose a new one.</p>'
+        f'<p style="margin:20px 0"><a href="{safe_link}" '
+        'style="background:#0f172a;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:6px;font-size:14px;display:inline-block">Choose a new password</a></p>'
+        f'<p style="color:#64748b;font-size:12px">If the button doesn\'t work, open this link: <br />'
+        f'<span style="word-break:break-all">{safe_link}</span></p>'
+        f'<p style="color:#94a3b8;font-size:12px;margin-top:24px">If you did not request this, you can safely ignore this email. '
+        'We never ask for passwords or codes by email.</p>'
+        '</div>'
+    )
+    await send_email(to=email, subject="Reset your Northstar GRC password", html=html)
+    return {"ok": True}
+
+
+@api.post("/auth/reset-password")
+async def reset_password_endpoint(body: ResetIn):
+    if len(body.new_password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters")
+    token_hash = hashlib.sha256(body.token.encode()).hexdigest()
+    rec = await db.password_resets.find_one({"token_hash": token_hash, "used": False}, {"_id": 0})
+    if not rec:
+        raise HTTPException(400, "Invalid or expired reset link")
+    exp = rec["expires_at"]
+    if isinstance(exp, str):
+        exp = datetime.fromisoformat(exp)
+    if exp.tzinfo is None:
+        exp = exp.replace(tzinfo=timezone.utc)
+    if exp < datetime.now(timezone.utc):
+        raise HTTPException(400, "Invalid or expired reset link")
+    await db.users.update_one({"user_id": rec["user_id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
+    await db.password_resets.update_one({"token_hash": token_hash}, {"$set": {"used": True, "used_at": _now()}})
+    return {"ok": True}
+
+
 @api.post("/auth/logout")
 async def logout(response: Response, user: Dict = Depends(get_current_user)):
     response.delete_cookie("access_token", path="/")
@@ -384,7 +461,6 @@ async def me(user: Dict = Depends(get_current_user)):
 
 @api.post("/auth/google/session")
 async def google_session(body: GoogleSessionIn, response: Response):
-    """Exchange Emergent Google OAuth session_id for a session."""
     async with httpx.AsyncClient(timeout=15) as hx:
         r = await hx.get(
             "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
@@ -1398,6 +1474,11 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     elif body.action == "assign":
         v = payload.get("assignee_id") or payload.get("owner_id")
         updates = {"assignee_id": (None if v in (None, "", "__none__") else v)}
+    elif body.action == "set-due-date":
+        v = payload.get("due_date")
+        if not v:
+            raise HTTPException(400, "Missing due_date")
+        updates = {"due_date": v}
     elif body.action == "update":
         updates = {k: v for k, v in payload.items() if k not in (id_field, "client_id", "created_at", "created_by")}
     else:
@@ -1440,6 +1521,7 @@ async def calendar_view(client_id: Optional[str] = Query(None),
                 "severity": it.get("severity"), "priority": it.get("priority"),
                 "owner_id": it.get("owner_id") or it.get("assignee_id"),
                 "review_type": it.get("review_type"),
+                "due_date_iso": it.get("due_date"),
             })
         return out
     return {
