@@ -1,46 +1,68 @@
-const MAP = {
-  // reviews
-  planned: "bg-slate-100 text-slate-700 border-slate-200",
-  in_progress: "bg-blue-50 text-blue-700 border-blue-200",
-  blocked: "bg-amber-50 text-amber-700 border-amber-200",
-  completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  overdue: "bg-red-50 text-red-700 border-red-200",
-  // findings/tasks
-  open: "bg-red-50 text-red-700 border-red-200",
-  in_remediation: "bg-amber-50 text-amber-700 border-amber-200",
-  remediated: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  closed: "bg-slate-100 text-slate-500 border-slate-200",
-  accepted: "bg-violet-50 text-violet-700 border-violet-200",
-  done: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  // severity/criticality
-  low: "bg-slate-100 text-slate-700 border-slate-200",
-  medium: "bg-blue-50 text-blue-700 border-blue-200",
-  high: "bg-amber-50 text-amber-700 border-amber-200",
-  critical: "bg-red-50 text-red-700 border-red-200",
-  // risks
-  identified: "bg-slate-100 text-slate-700 border-slate-200",
-  assessed: "bg-blue-50 text-blue-700 border-blue-200",
-  treated: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  // policies
-  draft: "bg-slate-100 text-slate-700 border-slate-200",
-  in_review: "bg-blue-50 text-blue-700 border-blue-200",
-  approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  retired: "bg-slate-100 text-slate-500 border-slate-200",
-  // vendors
-  active: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  under_review: "bg-amber-50 text-amber-700 border-amber-200",
-  terminated: "bg-slate-100 text-slate-500 border-slate-200",
+// Semantic status mapping — text label ALWAYS included; color only reinforces meaning.
+// Buckets: critical | high | moderate | duesoon | success | info | neutral
+const TONE_BY_STATUS = {
+  // Reviews
+  planned: "neutral",
+  in_progress: "info",
+  blocked: "moderate",
+  completed: "success",
+  overdue: "critical",
+  // Findings / Tasks
+  open: "high",
+  in_remediation: "moderate",
+  remediated: "success",
+  closed: "neutral",
+  accepted: "info",
+  done: "success",
+  // Severity / criticality
+  low: "neutral",
+  medium: "info",
+  high: "high",
+  critical: "critical",
+  // Risk lifecycle
+  identified: "neutral",
+  assessed: "info",
+  treated: "success",
+  // Policy lifecycle
+  draft: "neutral",
+  in_review: "info",
+  approved: "success",
+  retired: "neutral",
+  // Vendor lifecycle
+  active: "success",
+  under_review: "info",
+  terminated: "neutral",
+  // Exceptions
+  requested: "info",
+  expired: "moderate",
+  revoked: "neutral",
 };
 
-export default function StatusBadge({ value, testid }) {
+const CLASS_BY_TONE = {
+  critical: "pill pill-critical",
+  high: "pill pill-high",
+  moderate: "pill pill-moderate",
+  duesoon: "pill pill-duesoon",
+  success: "pill pill-success",
+  info: "pill pill-info",
+  neutral: "pill pill-neutral",
+};
+
+export function toneFor(value) {
+  return TONE_BY_STATUS[value] || "neutral";
+}
+
+export default function StatusBadge({ value, tone, testid }) {
   if (!value) return null;
-  const cls = MAP[value] || "bg-slate-100 text-slate-700 border-slate-200";
+  const bucket = tone || toneFor(value);
+  const cls = CLASS_BY_TONE[bucket] || CLASS_BY_TONE.neutral;
+  const label = String(value).replace(/_/g, " ");
   return (
     <span
       data-testid={testid || `badge-${value}`}
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${cls}`}
+      className={cls}
     >
-      {String(value).replace(/_/g, " ")}
+      {label}
     </span>
   );
 }

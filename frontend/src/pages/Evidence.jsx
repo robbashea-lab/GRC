@@ -67,7 +67,7 @@ export default function Evidence() {
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(Array.from(e.dataTransfer.files)); }}
           onClick={() => inputRef.current?.click()}
-          className={`rounded-lg border-2 border-dashed p-10 text-center cursor-pointer transition ${dragOver ? "border-slate-900 bg-slate-100" : "border-slate-300 bg-white hover:bg-slate-50"}`}
+          className={`rounded-lg border-2 border-dashed p-10 text-center cursor-pointer transition ${dragOver ? "border-brand-charcoal bg-surface-subtle" : "border-line-strong bg-surface-card hover:bg-surface-app"}`}
         >
           <UploadCloud className="h-8 w-8 mx-auto text-slate-500 mb-2" />
           <div className="text-sm font-medium text-slate-900">Drop files here or click to upload</div>

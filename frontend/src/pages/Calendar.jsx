@@ -9,9 +9,9 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 const KIND_COLOR = {
-  review: "bg-blue-100 text-blue-800 border-blue-200",
-  finding: "bg-red-100 text-red-800 border-red-200",
-  task: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  review: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
+  finding: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
+  task: "bg-semantic-success-bg text-semantic-success border-semantic-success-border",
 };
 
 function monthGrid(anchor) {
@@ -141,11 +141,11 @@ export default function Calendar() {
       <div className="p-8 space-y-4">
         <div className="flex items-center justify-between">
           <div className="text-lg font-heading font-semibold text-slate-900" data-testid="cal-month-label">{monthLabel}</div>
-          <div className="flex items-center gap-3 text-xs text-slate-600">
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" /> Reviews</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" /> Findings</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Tasks</span>
-            {busy && <span className="text-slate-500">Saving…</span>}
+          <div className="flex items-center gap-3 text-xs text-ink-secondary">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-semantic-info" /> Reviews</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-semantic-critical" /> Findings</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-semantic-success" /> Tasks</span>
+            {busy && <span className="text-ink-muted">Saving…</span>}
           </div>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">

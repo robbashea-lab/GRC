@@ -4,23 +4,102 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================
+   Design tokens — single source of truth for brand + semantics
+   =========================================================== */
 :root {
   --font-heading: 'Outfit', 'Cabinet Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Brand */
+  --color-brand-charcoal: #293039;      /* primary */
+  --color-brand-charcoal-hover: #1F252C;
+  --color-brand-charcoal-active: #161A20;
+  --color-brand-metallic: #3E4852;      /* secondary dark surface / active nav */
+  --color-brand-metallic-2: #333C46;    /* nav hover / org selector */
+  --color-brand-metallic-3: #454F5B;    /* org selector border */
+  --color-brand-lime: #A3DB33;          /* accent — sparing */
+
+  /* Neutral canvas */
+  --color-bg-app: #F7F9FA;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-subtle: #F1F3F6;           /* table headers, subtle tab strips */
+  --color-border: #E4E8ED;
+  --color-border-strong: #D5DAE1;
+  --color-input-border: #8C949E;
+
+  /* Text */
+  --color-text-primary: #293039;
+  --color-text-secondary: #4A545E;
+  --color-text-muted: #666D74;
+  --color-text-help: #8C949E;
+  --color-text-disabled: #A8ABB3;
+  --color-text-on-dark: #FFFFFF;
+  --color-text-on-dark-2: #C3C9D0;
+  --color-text-on-dark-muted: #98A1AB;
+
+  /* Sidebar */
+  --color-sidebar-bg: var(--color-brand-charcoal);
+  --color-sidebar-text: #C3C9D0;
+  --color-sidebar-icon: #98A1AB;
+  --color-sidebar-hover-bg: #333C46;
+  --color-sidebar-hover-text: #E4E8ED;
+  --color-sidebar-active-bg: var(--color-brand-metallic);
+  --color-sidebar-active-text: #FFFFFF;
+
+  /* Interactive */
+  --color-link: #2A55C8;
+  --color-link-hover: #1F4AC4;
+  --color-focus-ring: #4172F4;
+  --color-selected-bg: #EFF4FF;
+  --color-selected-rail: #2A55C8;
+
+  /* Semantic — Critical / Overdue */
+  --color-critical: #B42318;
+  --color-critical-bg: #FEF3F2;
+  --color-critical-border: #FECDCA;
+
+  /* Moderate */
+  --color-moderate: #B45309;
+  --color-moderate-bg: #FFFAEB;
+  --color-moderate-text: #93370D;
+  --color-moderate-border: #FDDCAB;
+
+  /* Due Soon / Amber */
+  --color-duesoon: #A16207;
+  --color-duesoon-bg: #FEFAE7;
+  --color-duesoon-text: #75600C;
+  --color-duesoon-border: #F0E0A6;
+
+  /* Success */
+  --color-success: #05603A;
+  --color-success-bg: #ECFDF3;
+  --color-success-border: #A6E9C5;
+
+  /* Info */
+  --color-info: #1849A9;
+  --color-info-bg: #EFF4FF;
+  --color-info-border: #B8CCF7;
+
+  /* Neutral / Low / Closed */
+  --color-neutral: #4A545E;
+  --color-neutral-bg: #F1F3F6;
+  --color-neutral-border: #D5DAE1;
+
+  /* AI (reserved) */
+  --color-ai: #6C32F3;
 }
 
-html, body, #root {
-  height: 100%;
-}
+html, body, #root { height: 100%; }
 
 body {
   margin: 0;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: rgb(248 250 252); /* slate-50 */
-  color: rgb(15 23 42); /* slate-900 */
+  background: var(--color-bg-app);
+  color: var(--color-text-primary);
 }
 
 h1, h2, h3, h4, .font-heading {
@@ -28,31 +107,33 @@ h1, h2, h3, h4, .font-heading {
   letter-spacing: -0.01em;
 }
 
-.font-mono, code, kbd, pre, .mono {
-  font-family: var(--font-mono);
-}
+.font-mono, code, kbd, pre, .mono { font-family: var(--font-mono); }
 
+a { color: var(--color-link); }
+a:hover { color: var(--color-link-hover); }
+
+/* Shadcn HSL tokens mapped to our brand palette */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --background: 210 22% 97%;                       /* #F7F9FA */
+    --foreground: 214 15% 19%;                       /* #293039 */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 214 15% 19%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 222 47% 11%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
+    --popover-foreground: 214 15% 19%;
+    --primary: 214 15% 19%;                          /* #293039 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 15% 96%;                        /* #F1F3F6 */
+    --secondary-foreground: 214 15% 19%;
+    --muted: 216 15% 96%;
+    --muted-foreground: 214 8% 43%;                  /* #666D74 */
+    --accent: 216 15% 96%;
+    --accent-foreground: 214 15% 19%;
+    --destructive: 4 76% 40%;                        /* #B42318 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 20% 91%;                           /* #E4E8ED */
+    --input: 213 20% 91%;
+    --ring: 222 89% 61%;                             /* #4172F4 focus ring */
     --radius: 0.5rem;
   }
 }
@@ -60,23 +141,103 @@ h1, h2, h3, h4, .font-heading {
 @layer base {
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
 }
 
-/* Custom scrollbar for the app */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgb(203 213 225); border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: rgb(148 163 184); }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-input-border); }
 
-/* Compact table utility */
-.tbl-cell { @apply px-3 py-1.5 text-xs text-slate-700 border-b border-slate-100; }
-.tbl-head { @apply px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 bg-slate-50 border-b border-slate-200 text-left; }
-.row-hover:hover { @apply bg-slate-50; }
+/* Compact table utilities */
+.tbl-cell {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border);
+}
+.tbl-head {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+.row-hover:hover { background: var(--color-bg-app); }
 
-/* Sidebar link */
-.side-link { @apply flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition; }
-.side-link.active { @apply bg-slate-800 text-white; }
+/* Sidebar links */
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--color-sidebar-text);
+  transition: background-color .15s ease, color .15s ease;
+  position: relative;
+}
+.side-link:hover {
+  background: var(--color-sidebar-hover-bg);
+  color: var(--color-sidebar-hover-text);
+}
+.side-link.active {
+  background: var(--color-sidebar-active-bg);
+  color: var(--color-sidebar-active-text);
+}
+.side-link.active::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-brand-lime);
+}
 
-/* Drawer/sheet content */
-.drawer-tab { @apply px-3 py-2 text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-900; }
-.drawer-tab.active { @apply border-slate-900 text-slate-900; }
+/* Drawer tabs */
+.drawer-tab {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.drawer-tab:hover { color: var(--color-text-primary); }
+.drawer-tab.active {
+  border-color: var(--color-text-primary);
+  color: var(--color-text-primary);
+}
+
+/* Status pill — neutral base, semantic classes below add color */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  height: 20px;
+  white-space: nowrap;
+}
+.pill-critical    { background: var(--color-critical);       color: #FFFFFF;                    border-color: var(--color-critical); }
+.pill-high        { background: var(--color-critical-bg);    color: var(--color-critical);      border-color: var(--color-critical-border); }
+.pill-moderate    { background: var(--color-moderate-bg);    color: var(--color-moderate-text); border-color: var(--color-moderate-border); }
+.pill-duesoon     { background: var(--color-duesoon-bg);     color: var(--color-duesoon-text);  border-color: var(--color-duesoon-border); }
+.pill-success     { background: var(--color-success-bg);     color: var(--color-success);       border-color: var(--color-success-border); }
+.pill-info        { background: var(--color-info-bg);        color: var(--color-info);          border-color: var(--color-info-border); }
+.pill-neutral     { background: var(--color-neutral-bg);     color: var(--color-neutral);       border-color: var(--color-neutral-border); }

@@ -160,18 +160,18 @@ export default function RecordListPage({ kind }) {
 
       {/* Bulk action bar */}
       {checked.size > 0 && (
-        <div className="mx-8 mt-4 rounded-lg border border-slate-900 bg-slate-900 text-white px-4 py-2.5 flex items-center gap-3" data-testid="bulk-action-bar">
-          <div className="text-sm"><span className="font-heading font-semibold text-white" data-testid="bulk-selected-count">{checked.size}</span> selected</div>
-          <div className="h-4 w-px bg-slate-700" />
+        <div className="mx-8 mt-4 rounded-lg border border-brand-charcoal bg-brand-charcoal text-ink-onDark px-4 py-2.5 flex items-center gap-3" data-testid="bulk-action-bar">
+          <div className="text-sm"><span className="font-heading font-semibold text-ink-onDark" data-testid="bulk-selected-count">{checked.size}</span> selected</div>
+          <div className="h-4 w-px bg-brand-metallic-3" />
           {canWrite && (
-            <button onClick={() => bulk("close")} data-testid="bulk-close" className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 h-8 text-xs text-white">
+            <button onClick={() => bulk("close")} data-testid="bulk-close" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
               <CheckCircle2 className="h-3.5 w-3.5" /> Close
             </button>
           )}
           {canWrite && (
             <DropdownMenu open={ownerPicker} onOpenChange={setOwnerPicker}>
               <DropdownMenuTrigger asChild>
-                <button data-testid="bulk-set-owner" className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 h-8 text-xs text-white">
+                <button data-testid="bulk-set-owner" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
                   <UserPlus className="h-3.5 w-3.5" /> Set {ownerField === "assignee_id" ? "assignee" : "owner"}
                 </button>
               </DropdownMenuTrigger>
@@ -195,7 +195,7 @@ export default function RecordListPage({ kind }) {
           {statusOptions.length > 0 && canWrite && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button data-testid="bulk-set-status" className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 h-8 text-xs text-white">
+                <button data-testid="bulk-set-status" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
                   <MoreHorizontal className="h-3.5 w-3.5" /> Set status
                 </button>
               </DropdownMenuTrigger>
@@ -209,34 +209,22 @@ export default function RecordListPage({ kind }) {
             </DropdownMenu>
           )}
           {canDelete && (
-            <button onClick={() => confirm(`Delete ${checked.size} record(s)?`) && bulk("delete")} data-testid="bulk-delete" className="inline-flex items-center gap-1 rounded-md border border-red-500 bg-red-500/90 hover:bg-red-500 px-2.5 h-8 text-xs text-white">
+            <button onClick={() => confirm(`Delete ${checked.size} record(s)?`) && bulk("delete")} data-testid="bulk-delete" className="inline-flex items-center gap-1 rounded-md border border-semantic-critical bg-semantic-critical hover:bg-semantic-critical/90 px-2.5 h-8 text-xs text-white">
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
           )}
           {canWrite && schema.fields.some((f) => f.name === "due_date") && (
             <DropdownMenu open={dueDatePickerOpen} onOpenChange={(v) => { setDueDatePickerOpen(v); if (v) setPickedDueDate(""); }}>
               <DropdownMenuTrigger asChild>
-                <button data-testid="bulk-set-due-date" className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 h-8 text-xs text-white">
+                <button data-testid="bulk-set-due-date" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
                   <CalendarDays className="h-3.5 w-3.5" /> Set due date
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="p-3 w-64">
                 <DropdownMenuLabel className="text-xs px-0 pt-0">Pick a new due date</DropdownMenuLabel>
                 <div className="mt-2 space-y-2">
-                  <Input
-                    type="date"
-                    value={pickedDueDate}
-                    onChange={(e) => setPickedDueDate(e.target.value)}
-                    data-testid="bulk-due-date-input"
-                    className="text-sm h-9"
-                  />
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    disabled={!pickedDueDate}
-                    onClick={() => { bulk("set-due-date", { due_date: pickedDueDate }); setDueDatePickerOpen(false); }}
-                    data-testid="bulk-due-date-apply"
-                  >
+                  <Input type="date" value={pickedDueDate} onChange={(e) => setPickedDueDate(e.target.value)} data-testid="bulk-due-date-input" className="text-sm h-9" />
+                  <Button size="sm" className="w-full bg-brand-charcoal hover:bg-brand-charcoal-hover" disabled={!pickedDueDate} onClick={() => { bulk("set-due-date", { due_date: pickedDueDate }); setDueDatePickerOpen(false); }} data-testid="bulk-due-date-apply">
                     Apply to {checked.size} record(s)
                   </Button>
                 </div>
@@ -244,7 +232,7 @@ export default function RecordListPage({ kind }) {
             </DropdownMenu>
           )}
           <div className="ml-auto">
-            <button onClick={() => setChecked(new Set())} className="p-1 rounded hover:bg-slate-800 text-slate-300" data-testid="bulk-clear"><X className="h-4 w-4" /></button>
+            <button onClick={() => setChecked(new Set())} className="p-1 rounded hover:bg-brand-metallic-2 text-ink-onDarkMuted" data-testid="bulk-clear"><X className="h-4 w-4" /></button>
           </div>
         </div>
       )}
@@ -291,7 +279,7 @@ export default function RecordListPage({ kind }) {
                   ))}
                   <td className="tbl-cell text-right" onClick={(e) => e.stopPropagation()}>
                     {canDelete && (
-                      <button data-testid={`${kind}-delete-${i}`} onClick={() => remove(row)} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600">
+                      <button data-testid={`${kind}-delete-${i}`} onClick={() => remove(row)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     )}

@@ -29,19 +29,21 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-sm bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm p-6">
+    <div className="min-h-screen bg-brand-charcoal text-ink-onDark flex items-center justify-center p-6">
+      <div className="w-full max-w-sm bg-surface-card text-ink-primary rounded-xl border border-line p-6">
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-8 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold font-heading">◱</div>
+            <div className="relative h-8 w-8 rounded-md bg-brand-charcoal text-ink-onDark flex items-center justify-center font-bold font-heading">
+              ◱<span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
+            </div>
             <div className="font-heading font-semibold tracking-tight">Northstar GRC</div>
           </div>
           <h2 className="text-xl font-heading font-semibold tracking-tight">Choose a new password</h2>
-          <p className="text-xs text-slate-500 mt-1">At least 8 characters. Mix letters, numbers and a symbol.</p>
+          <p className="text-xs text-ink-muted mt-1">At least 8 characters. Mix letters, numbers and a symbol.</p>
         </div>
         {!token ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 text-amber-800 text-sm p-3" data-testid="reset-no-token">
-            This link is missing a reset token. Please request a new one from the <Link className="underline" to="/forgot-password">forgot-password page</Link>.
+          <div className="rounded-md border border-semantic-moderate-border bg-semantic-moderate-bg text-semantic-moderate-text text-sm p-3" data-testid="reset-no-token">
+            This link is missing a reset token. Please request a new one from the <Link className="underline text-link" to="/forgot-password">forgot-password page</Link>.
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-3">
@@ -53,7 +55,7 @@ export default function ResetPassword() {
               <Label className="text-xs">Confirm new password</Label>
               <Input data-testid="reset-password-confirm" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} required minLength={8} />
             </div>
-            <Button data-testid="reset-submit" type="submit" disabled={loading} className="w-full">
+            <Button data-testid="reset-submit" type="submit" disabled={loading} className="w-full bg-brand-charcoal hover:bg-brand-charcoal-hover">
               {loading ? "…" : "Set new password"}
             </Button>
           </form>

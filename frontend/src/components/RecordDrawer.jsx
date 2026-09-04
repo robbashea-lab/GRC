@@ -220,14 +220,14 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
           {tab === "overview" && (
             <div className="space-y-4">
               {isEdit && kind === "reviews" && canWrite && (
-                <div className="border border-emerald-200 bg-emerald-50/50 rounded-md p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-emerald-800"><Zap className="h-4 w-4" /> Raise a finding from this review</div>
+                <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Raise a finding from this review</div>
                   <Button size="sm" variant="outline" onClick={quickCreateFinding} data-testid="quick-create-finding">Create finding</Button>
                 </div>
               )}
               {isEdit && kind === "findings" && canWrite && (
-                <div className="border border-blue-200 bg-blue-50/50 rounded-md p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-blue-800"><Zap className="h-4 w-4" /> Assign remediation work</div>
+                <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Assign remediation work</div>
                   <Button size="sm" variant="outline" onClick={quickCreateTask} data-testid="quick-create-task">Create remediation task</Button>
                 </div>
               )}
