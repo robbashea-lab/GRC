@@ -21,6 +21,11 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depend
 from fastapi.responses import StreamingResponse
 import csv
 import io
+from reportlab.lib.pagesizes import LETTER
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors as rl_colors
+from reportlab.lib.units import inch
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr
@@ -1334,6 +1339,258 @@ async def export_csv(kind: str = Path(..., pattern=KIND_REGEX),
 
 
 # Register routers LAST so all @api.* and @entity_router.* routes are attached.
+# NOTE: generic entity router has /{kind} which matches literal segments too, so
+# it MUST be registered AFTER all literal /api/... endpoints below.
+
+
+# ---------------- Bulk actions ----------------
+CLOSE_STATUS = {
+    "findings": "closed", "tasks": "done", "reviews": "completed",
+    "risks": "closed", "exceptions": "revoked", "policies": "retired",
+    "vendors": "terminated", "assets": "under_review",
+}
+
+
+class BulkIn(BaseModel):
+    kind: str
+    ids: List[str]
+    action: str  # close | set-status | set-owner | assign | update | delete
+    payload: Optional[Dict[str, Any]] = None
+
+
+@app.post("/api/bulk")
+async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
+    if body.kind not in ENTITY_MAP:
+        raise HTTPException(404, "Unknown entity")
+    if not body.ids:
+        raise HTTPException(400, "No records selected")
+    entity_type, _M, id_field, _p = ENTITY_MAP[body.kind]
+    coll = db[body.kind]
+    docs = await coll.find({id_field: {"$in": body.ids}}, {"_id": 0}).to_list(len(body.ids) + 1)
+    if not docs:
+        raise HTTPException(404, "No records found")
+    for d in docs:
+        if not _can_access_client(user, d["client_id"]):
+            raise HTTPException(403, "Forbidden for one or more records")
+
+    if body.action == "delete":
+        if user.get("role") not in ("super_admin", "platform_admin"):
+            raise HTTPException(403, "Destructive action restricted")
+        await coll.delete_many({id_field: {"$in": body.ids}})
+        for d in docs:
+            await audit(user, "bulk-delete", entity_type, d[id_field], d["client_id"])
+        return {"ok": True, "count": len(docs)}
+
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+
+    payload = body.payload or {}
+    if body.action == "close":
+        updates = {"status": CLOSE_STATUS.get(body.kind, "closed")}
+    elif body.action == "set-status":
+        if "status" not in payload:
+            raise HTTPException(400, "Missing status")
+        updates = {"status": payload["status"]}
+    elif body.action == "set-owner":
+        owner_field = "assignee_id" if body.kind == "tasks" else "owner_id"
+        v = payload.get("owner_id") or payload.get("assignee_id")
+        updates = {owner_field: (None if v in (None, "", "__none__") else v)}
+    elif body.action == "assign":
+        v = payload.get("assignee_id") or payload.get("owner_id")
+        updates = {"assignee_id": (None if v in (None, "", "__none__") else v)}
+    elif body.action == "update":
+        updates = {k: v for k, v in payload.items() if k not in (id_field, "client_id", "created_at", "created_by")}
+    else:
+        raise HTTPException(400, "Unknown bulk action")
+
+    if not updates:
+        raise HTTPException(400, "No fields to update")
+    updates["updated_at"] = _now()
+    await coll.update_many({id_field: {"$in": body.ids}}, {"$set": updates})
+    for d in docs:
+        await audit(user, f"bulk-{body.action}", entity_type, d[id_field], d["client_id"], meta=updates)
+    return {"ok": True, "count": len(docs), "updates": updates}
+
+
+# ---------------- Calendar ----------------
+@app.get("/api/calendar")
+async def calendar_view(client_id: Optional[str] = Query(None),
+                        start: Optional[str] = Query(None),
+                        end: Optional[str] = Query(None),
+                        user: Dict = Depends(get_current_user)):
+    scope = _scope_filter(user, client_id)
+    date_q: Dict[str, Any] = {"$exists": True, "$ne": None}
+    if start:
+        date_q["$gte"] = start
+    if end:
+        date_q["$lte"] = end
+    reviews = await db.reviews.find({**scope, "due_date": date_q}, {"_id": 0}).to_list(5000)
+    findings = await db.findings.find({**scope, "due_date": date_q}, {"_id": 0}).to_list(5000)
+    tasks = await db.tasks.find({**scope, "due_date": date_q}, {"_id": 0}).to_list(5000)
+    # Group by yyyy-mm-dd for easier client rendering
+    def bucket(items, kind, title_key):
+        out: Dict[str, List] = {}
+        for it in items:
+            d = (it.get("due_date") or "")[:10]
+            if not d:
+                continue
+            out.setdefault(d, []).append({
+                "id": it.get(kind + "_id"), "kind": kind,
+                "title": it.get(title_key), "status": it.get("status"),
+                "severity": it.get("severity"), "priority": it.get("priority"),
+                "owner_id": it.get("owner_id") or it.get("assignee_id"),
+                "review_type": it.get("review_type"),
+            })
+        return out
+    return {
+        "reviews": bucket(reviews, "review", "title"),
+        "findings": bucket(findings, "finding", "title"),
+        "tasks": bucket(tasks, "task", "title"),
+    }
+
+
+# ---------------- Board Report (PDF) ----------------
+async def _build_board_report(client_id: str, user: Dict) -> bytes:
+    client = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
+    if not client:
+        raise HTTPException(404, "Client not found")
+    now_iso = _now()
+    horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+    overdue_reviews = await db.reviews.find(
+        {"client_id": client_id, "status": {"$nin": ["completed"]}, "due_date": {"$lt": now_iso}},
+        {"_id": 0}).sort("due_date", 1).to_list(50)
+    upcoming = await db.reviews.find(
+        {"client_id": client_id, "due_date": {"$gte": now_iso, "$lte": horizon}},
+        {"_id": 0}).sort("due_date", 1).to_list(50)
+    open_findings = await db.findings.find(
+        {"client_id": client_id, "status": {"$in": ["open", "in_remediation"]}},
+        {"_id": 0}).sort("severity", -1).to_list(50)
+    critical_findings = [f for f in open_findings if f.get("severity") in ("high", "critical")]
+    top_risks = await db.risks.find(
+        {"client_id": client_id, "status": {"$nin": ["closed"]}, "impact": {"$in": ["high"]}},
+        {"_id": 0}).sort("created_at", -1).to_list(50)
+    approvals_cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    recent_approvals = await db.policies.find(
+        {"client_id": client_id, "approved_at": {"$gte": approvals_cutoff}}, {"_id": 0}).sort("approved_at", -1).to_list(20)
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=LETTER, topMargin=0.5 * inch,
+                            bottomMargin=0.5 * inch, leftMargin=0.6 * inch, rightMargin=0.6 * inch)
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="Mini", fontName="Helvetica", fontSize=8, textColor=rl_colors.HexColor("#64748B")))
+    styles.add(ParagraphStyle(name="Section", fontName="Helvetica-Bold", fontSize=11,
+                              textColor=rl_colors.HexColor("#0F172A"), spaceBefore=10, spaceAfter=4))
+    styles["Title"].fontSize = 18
+    styles["Title"].textColor = rl_colors.HexColor("#0F172A")
+    styles["Title"].alignment = 0
+
+    story: List = []
+    story.append(Paragraph("Northstar GRC — Board Report", styles["Title"]))
+    story.append(Paragraph(f"{client['name']} · {datetime.now(timezone.utc).strftime('%d %B %Y')}", styles["Mini"]))
+    story.append(Spacer(1, 8))
+
+    # KPIs
+    kpi_data = [
+        ["Overdue reviews", "Open findings", "High/critical findings", "Significant risks"],
+        [str(len(overdue_reviews)), str(len(open_findings)), str(len(critical_findings)), str(len(top_risks))],
+    ]
+    kpi_table = Table(kpi_data, colWidths=[1.7 * inch] * 4)
+    kpi_table.setStyle(TableStyle([
+        ("FONT", (0, 0), (-1, 0), "Helvetica", 8),
+        ("TEXTCOLOR", (0, 0), (-1, 0), rl_colors.HexColor("#64748B")),
+        ("FONT", (0, 1), (-1, 1), "Helvetica-Bold", 20),
+        ("TEXTCOLOR", (0, 1), (-1, 1), rl_colors.HexColor("#0F172A")),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+        ("TOPPADDING", (0, 1), (-1, 1), 0),
+        ("LINEBELOW", (0, 1), (-1, 1), 0.5, rl_colors.HexColor("#E2E8F0")),
+    ]))
+    story.append(kpi_table)
+    story.append(Spacer(1, 8))
+
+    def rows(items, cols):
+        rowset = [cols[0]]
+        for it in items[:8]:
+            rowset.append([str(it.get(k) or "—")[:60] for k in cols[1]])
+        return rowset
+
+    def section(title, headers, keys, items, widths):
+        story.append(Paragraph(title, styles["Section"]))
+        if not items:
+            story.append(Paragraph("None.", styles["Mini"]))
+            return
+        data = [headers] + [[str(it.get(k) or "—")[:80] if k != "due_date" and k != "approved_at" else
+                             (str(it.get(k) or "")[:10] or "—") for k in keys] for it in items[:8]]
+        t = Table(data, colWidths=widths, repeatRows=1)
+        t.setStyle(TableStyle([
+            ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 8),
+            ("BACKGROUND", (0, 0), (-1, 0), rl_colors.HexColor("#F8FAFC")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), rl_colors.HexColor("#64748B")),
+            ("FONT", (0, 1), (-1, -1), "Helvetica", 8.5),
+            ("TEXTCOLOR", (0, 1), (-1, -1), rl_colors.HexColor("#0F172A")),
+            ("LINEBELOW", (0, 0), (-1, -1), 0.25, rl_colors.HexColor("#E2E8F0")),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 4),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ]))
+        story.append(t)
+
+    section("Overdue reviews",
+            ["Title", "Type", "Due", "Status"],
+            ["title", "review_type", "due_date", "status"],
+            overdue_reviews,
+            [3.2 * inch, 1.2 * inch, 1.0 * inch, 1.1 * inch])
+
+    section("Critical / high findings",
+            ["Finding", "Severity", "Due", "Status"],
+            ["title", "severity", "due_date", "status"],
+            critical_findings or open_findings,
+            [3.2 * inch, 1.0 * inch, 1.0 * inch, 1.3 * inch])
+
+    section("Significant risks (high impact)",
+            ["Risk", "Category", "Likelihood", "Impact", "Status"],
+            ["title", "category", "likelihood", "impact", "status"],
+            top_risks,
+            [2.6 * inch, 1.0 * inch, 1.0 * inch, 0.7 * inch, 1.2 * inch])
+
+    section("Policy approvals — last 90 days",
+            ["Policy", "Version", "Approved on", "Status"],
+            ["title", "version", "approved_at", "status"],
+            recent_approvals,
+            [3.2 * inch, 0.7 * inch, 1.3 * inch, 1.3 * inch])
+
+    section("Upcoming reviews — next 30 days",
+            ["Title", "Type", "Due"],
+            ["title", "review_type", "due_date"],
+            upcoming,
+            [3.6 * inch, 1.3 * inch, 1.6 * inch])
+
+    story.append(Spacer(1, 10))
+    story.append(Paragraph(
+        f"Generated by {user.get('name') or user.get('email')} · {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} · Confidential",
+        styles["Mini"]))
+
+    doc.build(story)
+    return buf.getvalue()
+
+
+@app.get("/api/reports/board")
+async def reports_board(client_id: str = Query(...), user: Dict = Depends(get_current_user)):
+    if not _can_access_client(user, client_id):
+        raise HTTPException(403, "Forbidden")
+    pdf_bytes = await _build_board_report(client_id, user)
+    client = await db.clients.find_one({"client_id": client_id}, {"_id": 0}) or {}
+    slug = re.sub(r"[^a-zA-Z0-9]+", "-", (client.get("name") or "client")).strip("-").lower()
+    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    filename = f"board-report-{slug}-{date_str}.pdf"
+    await audit(user, "generate", "board-report", client_id, client_id)
+    return StreamingResponse(iter([pdf_bytes]), media_type="application/pdf",
+                             headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+# Actually mount the routers now — after all literal routes are declared.
 app.include_router(api)
 app.include_router(entity_router)
 

@@ -1,0 +1,52 @@
+{
+  "summary": "Iteration 4 (Northstar GRC) — full backend + frontend E2E for Bulk Actions, Calendar view, and Board Report PDF. 64/64 pytest tests pass (17 new iter4 + 47 regression from iter1/2/3). Backend verified: POST /api/bulk reaches its handler (not shadowed by /{kind} entity router since app.include_router is now at end of file); RBAC — super_admin can close+delete, client_readonly gets 403 on any bulk write, client_contributor gets 403 on action='delete' (destructive), super_admin delete returns {ok:true,count>=1} and record is removed. CLOSE_STATUS mapping verified end-to-end: reviews->completed, tasks->done, findings->closed, policies->retired, exceptions->revoked. Bulk set-status with {status:'in_progress'} updates all selected review ids. Bulk set-owner sets owner_id on reviews and assignee_id on tasks (owner_field switches correctly). Cross-tenant scoping: Acme contributor passing a Globex review id in ids[] returns 403. GET /api/calendar?client_id= returns {reviews,findings,tasks} each a map keyed by yyyy-mm-dd -> [{id,kind,title,status,...}]; start/end ISO filter narrows results (verified with a review moved to 2027-03-15 shows only in the 2027-03 window and not in 2025-01 window). GET /api/reports/board?client_id= returns Content-Type application/pdf, body starts with %PDF and >2KB for super_admin; returns 403 for a Globex contributor trying to fetch Acme’s report. Regression: /api/dashboard, /api/reviews list/CRUD, /api/exceptions CRUD, /api/export/{kind} CSV, /api/policies submit-review/approve/reject, /api/reviews/{id}/create-finding, /api/findings/{id}/create-task, /api/notifications GET+read, /api/comments @mention, /api/evidence upload+list+linked — all still green. Frontend Playwright verified: sidebar shows nav-calendar between Dashboard and Reviews; /calendar renders 42 day cells with cal-day-YYYY-MM-DD testids, cal-month-label 'September 2026', cal-prev advances the label, cal-today returns to current month, and 14 cal-item-<kind>-<id> entries render inside day cells. Dashboard has download-board-report button; clicking triggers a real download named board-report-Acme-Corp-2026-09-04.pdf and shows toast 'Board report downloaded'. Reviews page has reviews-select-all header checkbox + reviews-select-<i> row checkboxes (45 rows). Selecting two rows shows bulk-action-bar with bulk-selected-count=2 and buttons bulk-close, bulk-set-owner, bulk-set-status, bulk-delete (visible for admin), bulk-clear. Clicking bulk-close closed both rows and toast '2 record(s) updated' appeared. bulk-clear collapses the bar.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "RecordListPage — bulk-action-bar contrast", "issues": ["The dark slate-900 bar with white/secondary buttons works but 'Close' and 'Set owner/status' 'secondary' buttons on a slate-900 background render as light-gray-on-light-gray inside the bar; consider using an outline-on-dark variant to boost contrast."]},
+      {"screen": "Calendar — day-cell overflow", "issues": ["With ~14 items on the current month view, day cells with multiple items truncate but do not show a '+N more' indicator. Consider a footer link 'Show N more' when items > cell height."]},
+      {"screen": "Board Report filename", "issues": ["Frontend produces board-report-<ClientName>-YYYY-MM-DD.pdf while the backend Content-Disposition header uses board-report-YYYYMMDD.pdf (no client). The user-visible name comes from the frontend blob download (good); consider aligning backend Content-Disposition to also include the client slug so a direct-URL fetch yields the same filename."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_iteration2.py",
+    "/app/backend/tests/test_iteration3.py",
+    "/app/backend/tests/test_iteration4.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/iter4.xml"
+  ],
+  "action_items": [
+    "(minor UX) Consider a '+N more' overflow indicator on Calendar day cells when items exceed visible height.",
+    "(minor UX) Align backend Content-Disposition filename for /api/reports/board with the frontend blob-download name (include client slug + ISO date).",
+    "(minor UX) Improve contrast of secondary buttons inside the dark bulk-action-bar (outline-on-dark or brighter variant).",
+    "(carry-over from iter3) Refetch policy record after policyAction() so approval_history renders new entries without reopening drawer.",
+    "(carry-over from iter3) Default policy.status to 'draft' when creating a new policy.",
+    "(carry-over from iter2/iter3) Slice ISO datetime -> YYYY-MM-DD when binding to <input type=date>."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1609 lines — well past the 700-line threshold. Extract bulk, calendar, board-report, notifications, and export modules; also move CORS registration to be before route handlers (currently added AFTER include_router which still works for FastAPI but is unusual).",
+    "There is NO GET /api/{kind}/{id} single-item read endpoint in the generic entity_router — only list, create, patch, delete. This forces frontend and tests to fetch the full list to read one item. Add a `@entity_router.get('/{kind}/{item_id}')` for cheaper single-doc reads (used heavily by drawers and now by bulk verification flows).",
+    "/api/bulk validates cross-tenant scoping with a for-loop that raises 403 on the FIRST offending doc but the response wording ('Forbidden for one or more records') is generic — good defense but consider returning which id was rejected to help legitimate multi-tenant admins debug bad selections.",
+    "/api/bulk action='update' allows arbitrary $set of any field except id/client_id/created_at/created_by. Consider a per-kind allow-list; today a bulk update could mutate approval_history, approver_id, resolved_at, etc.",
+    "/api/calendar returns up to 5000 docs per collection with no pagination and no explicit index guidance. If reviews/findings/tasks grow, a compound index on (client_id, due_date) is warranted.",
+    "_build_board_report loads every review/finding/task/risk/exception into memory. For very large clients this is fine short-term but should be capped or paginated.",
+    "PDF Content-Disposition uses filename=board-report-YYYYMMDD.pdf while frontend uses board-report-<client>-YYYY-MM-DD.pdf; align these.",
+    "app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=False) still contradicts login’s Set-Cookie path (dead-code) — see iter2/3 comments.",
+    "No brute-force lockout on /api/auth/login — playbook item, still unfixed tech debt.",
+    "@mention regex matches too broadly (called out in iter3); still open.",
+    "CSV export still buffers whole result before streaming (called out iter3); still open."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration4.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "See /app/memory/test_credentials.md — used robbashea@gmail.com/Admin@2026, contributor@acme.demo/Demo@2026, readonly@acme.demo/Demo@2026, contributor@globex.demo/Demo@2026.",
+  "seed_data_creation": "Iter4 backend tests created TEST_iter4_* records in reviews/findings/tasks/policies/exceptions (all TEST_ prefixed for cleanup): TEST_iter4_bulk_close_1/_2, TEST_iter4_bulk_ro, TEST_iter4_bulk_deldeny, TEST_iter4_bulk_delok (deleted), TEST_iter4_bulk_task/_task_owner, TEST_iter4_bulk_finding, TEST_iter4_bulk_policy, TEST_iter4_bulk_exc, TEST_iter4_setstatus_1/_2, TEST_iter4_setowner_1, TEST_iter4_bulk_globex (Globex tenant), TEST_iter4_bulk_acme, TEST_iter4_cal_narrow (due_date 2027-03-15).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 4 shipped: POST /api/bulk (kind, ids, action ∈ {close,set-status,set-owner,assign,update,delete}, optional payload) with RBAC + cross-tenant scoping; GET /api/calendar?client_id=&start=&end= returning {reviews,findings,tasks} maps keyed by yyyy-mm-dd; GET /api/reports/board?client_id= returning PDF via reportlab. Frontend added Calendar page (/calendar) with nav-calendar, cal-prev/next/today, cal-month-label, cal-day-YYYY-MM-DD, cal-item-<kind>-<id>; RecordListPage now has <kind>-select-all + <kind>-select-<i> checkboxes + a bulk-action-bar with bulk-selected-count / bulk-close / bulk-set-owner (dropdown of bulk-owner-<uid>) / bulk-set-status (dropdown of bulk-status-<value>) / bulk-delete (admins) / bulk-clear. Dashboard has download-board-report button. Cumulative pytest: 64. IMPORTANT: entity_router does NOT expose GET /api/{kind}/{id} — use list+filter to verify single-doc state in tests.",
+  "rca of the issue": "N/A — no functional issues detected. Note during test authoring I initially used GET /api/reviews/{id} (405 Method Not Allowed) — fixed by adding a _get_one list-filter helper. Also confirmed the endpoint-ordering fix (include_router at end of server.py) works: /api/bulk and /api/calendar are reachable and not shadowed by the /{kind} generic list route."
+}

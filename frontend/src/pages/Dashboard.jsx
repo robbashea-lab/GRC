@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import api from "@/lib/api";
+import api, { API } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
-import { AlertOctagon, CalendarClock, ShieldAlert, Clock, ArrowUpRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertOctagon, CalendarClock, ShieldAlert, Clock, ArrowUpRight, FileDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 function KpiCard({ label, value, hint, icon: Icon, tone = "slate", testid }) {
   const tones = {
@@ -39,11 +41,33 @@ export default function Dashboard() {
 
   if (!data) return <div className="p-8 text-sm text-slate-500">Loading dashboard…</div>;
 
+  async function downloadBoardReport() {
+    try {
+      const token = localStorage.getItem("grc_token");
+      const resp = await fetch(`${API}/reports/board?client_id=${encodeURIComponent(currentClientId)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!resp.ok) throw new Error(`Report failed (${resp.status})`);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `board-report-${(currentClient?.name || "client").replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Board report downloaded");
+    } catch (e) { toast.error(e.message || "Report failed"); }
+  }
+
   return (
     <div>
       <PageHeader
         title="Command Center"
         subtitle={`${currentClient?.name || "All clients"} · Operational GRC health, not vanity gauges.`}
+        action={
+          <Button variant="outline" onClick={downloadBoardReport} data-testid="download-board-report">
+            <FileDown className="h-4 w-4 mr-1" /> Board Report PDF
+          </Button>
+        }
       />
       <div className="p-8 space-y-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

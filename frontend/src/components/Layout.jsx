@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, Server, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Check, ShieldOff, Sparkles
+  LogOut, Check, ShieldOff, Sparkles, CalendarDays
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import {
@@ -14,6 +14,7 @@ import {
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true, testid: "nav-dashboard" },
+  { to: "/calendar", label: "Calendar", icon: CalendarDays, testid: "nav-calendar" },
   { to: "/reviews", label: "Reviews", icon: ClipboardCheck, testid: "nav-reviews" },
   { to: "/findings", label: "Findings", icon: AlertOctagon, testid: "nav-findings" },
   { to: "/risks", label: "Risks", icon: ShieldAlert, testid: "nav-risks" },

@@ -1,52 +1,52 @@
 # Northstar GRC — Product Requirements
 
 ## Original problem
-Desktop-first multi-tenant B2B GRC platform (Linear/Stripe/Notion-inspired). Roles: Super Admin, Platform Admin, Client Contributor, Client Read-Only. Tenant isolation, audit log, comments with @mentions, evidence uploads, reusable Review workflow, Findings→Tasks→Risks, Policies with 2-step approval + history, Vendors, Assets, Exceptions register, Baseline assessment wizard, Overdue email reminders, Notifications inbox, CSV exports.
+Desktop-first multi-tenant B2B GRC platform (Linear/Stripe/Notion-inspired). Roles: Super Admin, Platform Admin, Client Contributor, Client Read-Only. Tenant isolation, audit log, @mention comments, evidence uploads, reusable Review workflow, connected Findings/Tasks/Risks, Policies with 2-step approval + history, Vendors, Assets, Exceptions register, Baseline wizard, overdue email reminders, notifications inbox, CSV/PDF exports, calendar view, bulk actions.
 
 ## Architecture
-- Backend FastAPI + MongoDB (motor). `server.py` mounts `api` router + generic entity `/{kind}` router last so literal routes win.
+- Backend FastAPI + MongoDB (motor). server.py mounts api + entity_router LAST so all literal /api/* routes take precedence.
 - Auth: JWT bearer in localStorage + Emergent Google OAuth.
 - Frontend React 19 + react-router 7 + shadcn/ui + sonner + lucide-react.
 - Scheduled tasks: `.emergent/crons.yml` — daily 13:00 UTC overdue-reminders.
-- Emails via Emergent Resend (safety-checked HTML digest).
+- Emails via Emergent Resend; PDFs via reportlab.
 
 ## Implemented (Feb 2026)
 ### v1
-- Multi-tenant auth (JWT + Google), roles, tenant scoping
-- Client org selector persisted per user
-- CRUD for Reviews, Findings, Risks, Policies, Vendors, Assets, Tasks
-- Evidence upload (base64) with drag-and-drop
-- Comments + Audit log
-- Command Center dashboard (overdue reviews, open findings, critical findings, significant risks)
+- Multi-tenant auth, roles, tenant scoping, client org selector
+- CRUD for Reviews / Findings / Risks / Policies / Vendors / Assets / Tasks
+- Evidence uploads (base64), comments, audit log
+- Command Center dashboard focused on overdue reviews / open findings / critical findings / significant risks
 
 ### v2
-- Baseline Assessment wizard (`/onboarding`) that bulk-seeds policies + risks + review calendar
-- Quick actions: Review → Finding, Finding → Task (auto-flips finding to `in_remediation`)
-- Related-items tab on every drawer
-- Exceptions Register (linked to risks/findings)
-- Overdue Reminders (Resend + cron + manual trigger)
+- Baseline Assessment wizard (`/onboarding`)
+- Quick actions Review→Finding + Finding→Task
+- Related-items tab, Exceptions Register, Overdue Reminders (Resend + cron)
 
 ### v3
-- Notifications inbox — @mention notifications on comments, auto-notify on finding/task assignment, policy state changes; bell + unread badge in sidebar; mark-read + mark-all
-- Policy approval workflow — submit-review → approve/reject; approval_history logged and rendered in drawer; RBAC (only platform admins approve/reject)
-- CSV exports — `/api/export/{kind}` streaming CSV with sensible column order; per-page "Export CSV" button
-- Evidence in Drawer — every record drawer has an Evidence tab with drag-and-drop upload, download, delete; linked_type/linked_id auto-set
+- Notifications inbox with @mentions and auto-notifications
+- Policy approval workflow (submit/approve/reject) with history + RBAC
+- CSV exports per record kind
+- Evidence tab inside every record drawer
+
+### v4
+- **Bulk Actions** — checkboxes + bulk bar with close / set-status / set-owner (assignee for tasks) / delete (admin only); tenant + role checks on every id
+- **Calendar View** — `/calendar` month grid combining reviews, findings and tasks with prev/next/today; `/api/calendar` returns date-bucketed items
+- **Board Report PDF** — one-page executive PDF via `GET /api/reports/board?client_id=` using reportlab; Command Center has one-click download
 
 ## Test coverage
-- 47/47 backend pytest tests, 100% frontend E2E across iterations 1–3
+- 47+ backend pytest tests plus new iter4 suite; 100% frontend E2E across iterations 1-3
 
-## P1 backlog (still open)
-- CSV export: stream row-by-row and JSON-serialize list/dict cells cleanly
-- Notifications: pagination + real-time (SSE/WebSocket) push
-- Custom permissions matrix per role/tenant
-- Password reset flow + brute-force lockout on /login
-- Extract server.py into modules (notifications, approvals, exports, cron)
+## P1 backlog
+- Notification pagination + real-time push (SSE)
+- Vendor Portal (guest link for due-diligence questionnaires)
+- Password reset + brute-force lockout
+- Extract server.py into modules
 
 ## P2 backlog
-- SLA countdowns and calendar view
-- Slack/Teams webhook notifications
-- Vendor/asset relationship UX to findings/evidence
-- Bulk actions on tables (multi-select + assign/close)
+- SLA countdowns and calendar drag-to-reschedule
+- Slack/Teams webhooks
+- CSV export streaming row-by-row + JSON-serialize nested cells
+- Custom permissions matrix per role/tenant
 
 ## Test credentials
 See `/app/memory/test_credentials.md`

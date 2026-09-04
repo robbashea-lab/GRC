@@ -10,6 +10,7 @@ import RecordListPage from "@/pages/RecordListPage";
 import Evidence from "@/pages/Evidence";
 import AuditLog from "@/pages/AuditLog";
 import Onboarding from "@/pages/Onboarding";
+import Calendar from "@/pages/Calendar";
 import "@/App.css";
 
 function Protected({ children }) {
@@ -39,6 +40,7 @@ function AppRouter() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="calendar" element={<Calendar />} />
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />
         <Route path="findings" element={<RecordListPage kind="findings" />} />
         <Route path="risks" element={<RecordListPage kind="risks" />} />
