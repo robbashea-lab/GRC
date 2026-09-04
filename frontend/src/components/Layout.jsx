@@ -1,10 +1,10 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, Server, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Check, ShieldOff, Sparkles, CalendarDays
+  LogOut, Check, ShieldOff, Sparkles, CalendarDays, Users, ArrowLeft
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import {
@@ -12,8 +12,9 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 
-const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true, testid: "nav-dashboard" },
+// Client-scoped modules (visible only inside a tenant workspace).
+const CLIENT_NAV = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testid: "nav-dashboard" },
   { to: "/calendar", label: "Calendar", icon: CalendarDays, testid: "nav-calendar" },
   { to: "/reviews", label: "Reviews", icon: ClipboardCheck, testid: "nav-reviews" },
   { to: "/findings", label: "Findings", icon: AlertOctagon, testid: "nav-findings" },
@@ -28,8 +29,14 @@ const NAV = [
   { to: "/audit", label: "Audit Log", icon: ScrollText, testid: "nav-audit" },
 ];
 
-function OrgSelector() {
+// Platform-level modules (visible to internal admins on the Client Directory).
+const PLATFORM_NAV = [
+  { to: "/clients", label: "Clients", icon: Users, testid: "nav-clients" },
+];
+
+function OrgSelector({ isInternal, atDirectory }) {
   const { clients, currentClient, switchClient } = useOrg();
+  const navigate = useNavigate();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -39,11 +46,15 @@ function OrgSelector() {
         >
           <div className="flex items-center gap-2 min-w-0">
             <div className="h-7 w-7 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-bold border border-brand-metallic-3">
-              {currentClient?.name?.[0] || "•"}
+              {atDirectory ? "◇" : (currentClient?.name?.[0] || "•")}
             </div>
             <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wider text-ink-onDarkMuted font-mono">Client Org</div>
-              <div className="text-sm text-ink-onDark font-medium truncate">{currentClient?.name || "Select…"}</div>
+              <div className="text-[10px] uppercase tracking-wider text-ink-onDarkMuted font-mono">
+                {atDirectory ? "Platform" : "Client Org"}
+              </div>
+              <div className="text-sm text-ink-onDark font-medium truncate">
+                {atDirectory ? "All Clients" : (currentClient?.name || "Select…")}
+              </div>
             </div>
           </div>
           <ChevronsUpDown className="h-4 w-4 text-ink-onDarkMuted shrink-0" />
@@ -56,16 +67,28 @@ function OrgSelector() {
           <DropdownMenuItem
             key={c.client_id}
             data-testid={`org-option-${c.client_id}`}
-            onClick={() => switchClient(c.client_id)}
+            onClick={() => { switchClient(c.client_id); if (atDirectory) navigate("/dashboard"); }}
             className="flex items-center justify-between text-sm"
           >
             <div className="flex flex-col">
               <span className="font-medium">{c.name}</span>
-              <span className="text-[11px] text-ink-muted">{c.industry} · {c.environment}</span>
+              <span className="text-[11px] text-ink-muted">{c.industry || "—"} · {c.status || c.environment}</span>
             </div>
-            {currentClient?.client_id === c.client_id && <Check className="h-4 w-4 text-semantic-success" />}
+            {!atDirectory && currentClient?.client_id === c.client_id && <Check className="h-4 w-4 text-semantic-success" />}
           </DropdownMenuItem>
         ))}
+        {isInternal && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => navigate("/clients")}
+              data-testid="org-view-all-clients"
+              className="text-sm font-medium"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 mr-2" /> View all clients
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -74,6 +97,12 @@ function OrgSelector() {
 function Sidebar() {
   const { user, logout } = useAuth();
   const nav = useNavigate();
+  const location = useLocation();
+  const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
+  const atDirectory = location.pathname.startsWith("/clients");
+  // Platform-level view for internal admins on the Client Directory route.
+  const items = atDirectory && isInternal ? PLATFORM_NAV : CLIENT_NAV;
+
   return (
     <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
       <div className="px-4 py-4 border-b border-brand-metallic-3">
@@ -87,10 +116,10 @@ function Sidebar() {
             <div className="text-[10px] text-ink-onDarkMuted uppercase tracking-widest font-mono">Program Ops</div>
           </div>
         </div>
-        <OrgSelector />
+        <OrgSelector isInternal={isInternal} atDirectory={atDirectory} />
       </div>
-      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-        {NAV.map((n) => (
+      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto" data-testid={atDirectory ? "sidebar-platform" : "sidebar-client"}>
+        {items.map((n) => (
           <NavLink
             key={n.to}
             to={n.to}

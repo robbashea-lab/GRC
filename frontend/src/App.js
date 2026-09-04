@@ -13,12 +13,30 @@ import Evidence from "@/pages/Evidence";
 import AuditLog from "@/pages/AuditLog";
 import Onboarding from "@/pages/Onboarding";
 import Calendar from "@/pages/Calendar";
+import ClientDirectory from "@/pages/ClientDirectory";
 import "@/App.css";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-8 text-slate-500 text-sm">Loading…</div>;
   if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+// Internal users (super_admin, platform_admin) land on Client Directory.
+// Client users land directly in their tenant Dashboard.
+function LandingRoute() {
+  const { user } = useAuth();
+  const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
+  return <Navigate to={isInternal ? "/clients" : "/dashboard"} replace />;
+}
+
+// Client Directory is restricted to internal admins.
+function InternalOnly({ children }) {
+  const { user } = useAuth();
+  if (!["super_admin", "platform_admin"].includes(user?.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
   return children;
 }
 
@@ -43,7 +61,9 @@ function AppRouter() {
           </Protected>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route index element={<LandingRoute />} />
+        <Route path="clients" element={<InternalOnly><ClientDirectory /></InternalOnly>} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />
         <Route path="findings" element={<RecordListPage kind="findings" />} />

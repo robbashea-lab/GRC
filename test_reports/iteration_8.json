@@ -1,0 +1,53 @@
+{
+  "summary": "Iteration 8 — Client Directory (portfolio view for internal admins). Backend 18/18 passing (test_iteration8.py). Frontend: routing, sidebar, portfolio strip, filter chips, search, include-archived toggle, row menu items, and metric-cell deep links all pass. TWO HIGH-priority frontend bugs found: (a) client name click and row-menu 'Open workspace' navigate to '/' which for super_admin re-routes to /clients (via LandingRoute) — user never enters /dashboard, sidebar stays 'PLATFORM / All Clients'; (b) 'Add Client' button not rendered at all because ClientDirectory passes prop `actions` while PageHeader destructures `action` (singular), so canCreate admins cannot open the Add Client dialog from the page.\n\nBackend detail: GET /api/clients/directory returns 200 for super_admin + platform_admin with clients[] + portfolio{total_clients, action_required, needs_attention, total_overdue_reviews, total_critical_high, total_significant_risks, upcoming_reviews_30d}; 403 for client_contributor and client_readonly. Row shape includes all required fields (client_id, name, industry, program_status, open_actions, open_findings, significant_risks, upcoming_reviews, last_activity, client_status). GET /api/clients hides archived by default and shows them with ?include_archived=true. PATCH /api/clients/{id} updates name/industry/status/primary_contact/assigned_owner_id/logo_url for admins; 403 for contributor/readonly. POST /api/clients defaults status=onboarding with created_at/updated_at; 403 for contributor/readonly. program_status computed: active + no data → healthy; add high-severity open finding → needs_attention; add critical open finding → action_required. last_activity reflects auditable actions (verified by creating a review). Tenant isolation regression verified (Acme contributor 403 on Globex GET/POST /reviews and PATCH /clients).\n\nFrontend detail (via public URL): (1) super_admin logs in → /clients, sidebar shows only nav-clients (data-testid=nav-clients present, nav-dashboard absent), org selector reads 'Platform / All Clients'. (2) contributor and readonly → /dashboard on login, /clients redirects to /dashboard. (3) portfolio-strip renders exactly 6 cards. (4) All 7 filter chips present (all/action_required/needs_attention/healthy/onboarding/assigned_to_me/archived). (5) Search filters rows client-side by name/industry/primary_contact (verified: 'acme' → 1 row from 2). (6) include-archived toggle triggers a fresh request to /api/clients/directory?include_archived=true (verified via network interception). (7) Row '...' menu opens with Open workspace + View activity + Archive client items (data-testids all present for admin). (8) Metric cell click for open_actions navigates to /tasks with client context (verified). (9) Sidebar 'View all clients' item (data-testid=org-view-all-clients) appears in org selector and navigates back to /clients.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "PageHeader / ClientDirectory",
+        "issue": "Add Client button never renders — ClientDirectory.jsx passes prop `actions` but PageHeader.jsx destructures `action` (singular). data-testid=add-client-button is not in the DOM for super_admin/platform_admin, so the Add Client dialog cannot be opened from the page. Fix: rename to `action` in ClientDirectory (or add `actions` support in PageHeader). Also `eyebrow` prop is unused by PageHeader — the eyebrow line is hardcoded to 'GRC Console'.",
+        "selector": "[data-testid=add-client-button]",
+        "priority": "HIGH"
+      },
+      {
+        "component": "ClientDirectory.enterWorkspace",
+        "issue": "Clicking the client name (data-testid=client-open-<cid>) and the row-menu 'Open client workspace' item call enterWorkspace(row) with default target='/'. Route '/' hits <LandingRoute> which for super_admin/platform_admin redirects back to /clients — the user never enters /dashboard and the sidebar keeps showing 'Platform / All Clients'. Spec requires: switch client + navigate to /dashboard. Fix: change default `target = \"/dashboard\"` (line ~162). Metric cells work because they pass explicit /tasks|/findings|/risks|/reviews targets.",
+        "selector": "[data-testid^=client-open-], [data-testid^=client-menu-open-]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration8.py",
+    "/app/test_reports/pytest/iter8.xml"
+  ],
+  "action_items": [
+    "HIGH: /app/frontend/src/pages/ClientDirectory.jsx line ~184 — rename the PageHeader prop from `actions=` to `action=` so the Add Client button renders. Alternatively update PageHeader to accept `actions` (and also to accept/render the `eyebrow` prop).",
+    "HIGH: /app/frontend/src/pages/ClientDirectory.jsx line ~162 — change `function enterWorkspace(row, target = \"/\")` to default `target = \"/dashboard\"` so clicking the client name / row-menu 'Open workspace' actually opens the tenant Dashboard for super_admin & platform_admin (currently they bounce back to /clients via LandingRoute).",
+    "(nit) /app/frontend/src/components/PageHeader.jsx does not accept the `eyebrow` prop passed by ClientDirectory (line 170) — the eyebrow line is hardcoded to 'GRC Console'. Either accept the prop or remove the pass-through."
+  ],
+  "critical_code_review_comments": [
+    "Directory endpoint correctly guarded (server.py L610-L611): non-admin roles get 403 before touching data.",
+    "list_clients now filters archived by default (server.py L557-L558) — verified via test.",
+    "PATCH /api/clients only allows super_admin/platform_admin (server.py L587-L589) — good.",
+    "program_status computation is deterministic and matches spec (server.py L682-L692): client_status archived/inactive/onboarding pass through; otherwise critical-open OR 3+ overdue reviews OR crit/high overdue findings ⇒ action_required; else attention markers ⇒ needs_attention; else healthy.",
+    "Directory pre-fetches reviews/findings/risks/tasks/audit in bulk and buckets by client_id — O(N) not O(N*clients). Good.",
+    "server.py grew to 2157 lines — carry-over refactor debt (client-directory helper could move to its own module).",
+    "Route order: GET /clients/directory declared AFTER GET /clients — safe because FastAPI matches on exact path, not prefix.",
+    "Frontend: MetricCell renders a real <button> only when value>0 — good UX (no accidental navigation on 0). data-testid still points to the container.",
+    "Frontend: PageHeader prop mismatch (`actions` vs `action`) is a silent-fail because React drops unknown props. Consider PropTypes/TS.",
+    "Frontend: enterWorkspace default target='/' assumes '/' lands on Dashboard, but LandingRoute always sends super_admin to /clients — the two components have inconsistent assumptions about where '/' lands."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration8.py"
+  ],
+  "success_rate": {"backend": "100% (18/18)", "frontend": "~80% — routing/UI structure pass, but 2 HIGH bugs (Add Client button missing, name click doesn't enter workspace)"},
+  "test_credentials": "Used robbashea@gmail.com/Admin@2026, platform.admin@grc.demo/Demo@2026, contributor@acme.demo/Demo@2026, readonly@acme.demo/Demo@2026, contributor@globex.demo/Demo@2026. No credentials modified.",
+  "seed_data_creation": "test_iteration8.py creates ~3 scratch clients (TEST_iter8_created_*, TEST_iter8_scratch_*) and archives them at end. Also creates 2 TEST_iter8 findings on the scratch client (deleted at end) and 1 TEST_iter8_activity review (deleted at end).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 8 adds Client Directory (GET /api/clients/directory + PATCH /api/clients/{id} + include_archived on list_clients + status/primary_contact/assigned_owner_id/logo_url on Client). Frontend /clients page in ClientDirectory.jsx. Two known frontend bugs (see action_items). Backend fully green. Once frontend fixes land, verify: (1) Add Client button visible in header + dialog opens + submission persists + new row shows Onboarding chip. (2) Clicking client name lands on /dashboard with correct 'Client Org' in sidebar. (3) Row-menu 'Open client workspace' also lands on /dashboard.",
+  "rca of the issue": "Bug 1 (Add Client button missing): PageHeader.jsx accepts prop name `action` but ClientDirectory.jsx passes `actions`. React silently drops unknown props → the button element is never rendered in the DOM (verified via query_selector returning None and via screenshot of empty header actions area). Bug 2 (name click doesn't enter workspace): enterWorkspace(row, target='/') is called for the name button and row-menu Open item; the '/' route hits <LandingRoute> which redirects super_admin/platform_admin back to /clients — closing the loop and never reaching /dashboard. Metric-cell buttons pass explicit targets like /tasks and therefore work correctly. Both bugs are single-line frontend fixes."
+}

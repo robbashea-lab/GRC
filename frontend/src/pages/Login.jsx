@@ -39,9 +39,11 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "login") await login(email, password);
-      else await register(email, password, name);
-      nav("/");
+      const u = mode === "login"
+        ? await login(email, password)
+        : await register(email, password, name);
+      const isInternal = ["super_admin", "platform_admin"].includes(u?.role);
+      nav(isInternal ? "/clients" : "/dashboard");
     } catch (err) {
       toast.error(formatError(err));
     } finally { setLoading(false); }

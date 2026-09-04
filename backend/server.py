@@ -158,6 +158,20 @@ class ClientIn(BaseModel):
     name: str
     industry: Optional[str] = None
     environment: Optional[str] = "Production"
+    status: Optional[str] = "onboarding"  # onboarding, active, inactive, archived
+    primary_contact: Optional[str] = None
+    assigned_owner_id: Optional[str] = None
+    logo_url: Optional[str] = None
+
+
+class ClientPatchIn(BaseModel):
+    name: Optional[str] = None
+    industry: Optional[str] = None
+    environment: Optional[str] = None
+    status: Optional[str] = None
+    primary_contact: Optional[str] = None
+    assigned_owner_id: Optional[str] = None
+    logo_url: Optional[str] = None
 
 
 class ReviewIn(BaseModel):
@@ -534,9 +548,14 @@ async def google_session(body: GoogleSessionIn, response: Response):
 
 # ---------------- Clients (tenants) ----------------
 @api.get("/clients")
-async def list_clients(user: Dict = Depends(get_current_user)):
+async def list_clients(
+    include_archived: bool = Query(False),
+    user: Dict = Depends(get_current_user),
+):
     role = user.get("role")
-    q = {} if role in ("super_admin", "platform_admin") else {"client_id": {"$in": user.get("client_ids") or []}}
+    q: Dict = {} if role in ("super_admin", "platform_admin") else {"client_id": {"$in": user.get("client_ids") or []}}
+    if not include_archived:
+        q["status"] = {"$ne": "archived"}
     docs = await db.clients.find(q, {"_id": 0}).to_list(500)
     return docs
 
@@ -546,12 +565,183 @@ async def create_client(body: ClientIn, user: Dict = Depends(get_current_user)):
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Only platform admins can create clients")
     cid = _uid("cli")
-    doc = {"client_id": cid, "name": body.name, "industry": body.industry,
-           "environment": body.environment, "created_at": _now()}
+    doc = {
+        "client_id": cid,
+        "name": body.name,
+        "industry": body.industry,
+        "environment": body.environment or "Production",
+        "status": body.status or "onboarding",
+        "primary_contact": body.primary_contact,
+        "assigned_owner_id": body.assigned_owner_id,
+        "logo_url": body.logo_url,
+        "created_at": _now(),
+        "updated_at": _now(),
+    }
     await db.clients.insert_one(doc)
-    await audit(user, "create", "client", cid, cid)
+    await audit(user, "create", "client", cid, cid, meta={"name": body.name})
     doc.pop("_id", None)
     return doc
+
+
+@api.patch("/clients/{client_id}")
+async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depends(get_current_user)):
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Only platform admins can edit clients")
+    existing = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(404, "Client not found")
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return existing
+    updates["updated_at"] = _now()
+    await db.clients.update_one({"client_id": client_id}, {"$set": updates})
+    await audit(user, "update", "client", client_id, client_id, meta=updates)
+    doc = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
+    return doc
+
+
+# ---------------- Client Directory (portfolio view for internal users) ----------------
+@api.get("/clients/directory")
+async def clients_directory(
+    include_archived: bool = Query(False),
+    user: Dict = Depends(get_current_user),
+):
+    role = user.get("role")
+    if role not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Client directory is restricted to internal admins")
+
+    q: Dict = {}
+    if not include_archived:
+        q["status"] = {"$ne": "archived"}
+    clients = await db.clients.find(q, {"_id": 0}).to_list(500)
+    client_ids = [c["client_id"] for c in clients]
+    if not client_ids:
+        return {"clients": [], "portfolio": {"total_clients": 0, "action_required": 0, "needs_attention": 0,
+                                              "total_overdue_reviews": 0, "total_critical_high": 0,
+                                              "total_significant_risks": 0, "upcoming_reviews_30d": 0}}
+
+    now_iso = _now()
+    horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+
+    # Fetch all relevant docs in bulk, then bucket by client_id.
+    reviews = await db.reviews.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(10000)
+    findings = await db.findings.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(10000)
+    risks = await db.risks.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(10000)
+    tasks = await db.tasks.find({"client_id": {"$in": client_ids}}, {"_id": 0}).to_list(10000)
+    # Only meaningful audit actions for last-activity (exclude noisy updates + logins).
+    activity_logs = await db.audit_logs.find(
+        {"client_id": {"$in": client_ids},
+         "action": {"$nin": ["login", "logout", "view", "list"]}},
+        {"_id": 0, "client_id": 1, "at": 1, "action": 1, "entity_type": 1, "user_email": 1, "user_name": 1}
+    ).sort("at", -1).to_list(50000)
+
+    by_client_last_activity: Dict[str, Dict] = {}
+    for log in activity_logs:
+        cid = log.get("client_id")
+        if cid and cid not in by_client_last_activity:
+            by_client_last_activity[cid] = log
+
+    closed_review = ("completed", "cancelled")
+    closed_finding = ("closed", "remediated")
+    closed_task = ("done", "cancelled")
+
+    def by_cid(items):
+        d: Dict[str, List] = {cid: [] for cid in client_ids}
+        for x in items:
+            cid = x.get("client_id")
+            if cid in d:
+                d[cid].append(x)
+        return d
+
+    reviews_by = by_cid(reviews)
+    findings_by = by_cid(findings)
+    risks_by = by_cid(risks)
+    tasks_by = by_cid(tasks)
+
+    rows: List[Dict] = []
+    portfolio_action = portfolio_attn = 0
+    portfolio_overdue_r = portfolio_crit = portfolio_sig = portfolio_up30 = 0
+
+    for c in clients:
+        cid = c["client_id"]
+        rs = reviews_by.get(cid, [])
+        fs = findings_by.get(cid, [])
+        ks = risks_by.get(cid, [])
+        ts = tasks_by.get(cid, [])
+
+        overdue_reviews = [r for r in rs if r.get("due_date") and r["due_date"] < now_iso and r.get("status") not in closed_review]
+        overdue_tasks = [t for t in ts if t.get("due_date") and t["due_date"] < now_iso and t.get("status") not in closed_task]
+        overdue_findings = [f for f in fs if f.get("due_date") and f["due_date"] < now_iso and f.get("status") not in closed_finding]
+        open_findings = [f for f in fs if f.get("status") in ("open", "in_remediation")]
+        crit_high_open = [f for f in open_findings if f.get("severity") in ("critical", "high")]
+        crit_open = [f for f in crit_high_open if f.get("severity") == "critical"]
+        sig_risks = [r for r in ks if r.get("impact") == "high" and r.get("status") != "closed"]
+        upcoming_r_30 = [r for r in rs if r.get("due_date") and now_iso <= r["due_date"] <= horizon and r.get("status") not in closed_review]
+        open_actions = len(overdue_reviews) + len(overdue_tasks) + len(overdue_findings) + len(crit_high_open) + len([f for f in open_findings if f.get("status") == "open"])
+
+        client_status = (c.get("status") or "active").lower()
+        if client_status in ("archived", "inactive", "onboarding"):
+            program_status = client_status
+        else:
+            # Computed operational health.
+            if crit_open or (overdue_reviews and len(overdue_reviews) >= 3) or (overdue_findings and any(f.get("severity") in ("critical", "high") for f in overdue_findings)):
+                program_status = "action_required"
+            elif open_actions > 0 or crit_high_open or sig_risks or upcoming_r_30:
+                program_status = "needs_attention"
+            else:
+                program_status = "healthy"
+
+        last = by_client_last_activity.get(cid)
+        rows.append({
+            "client_id": cid,
+            "name": c["name"],
+            "industry": c.get("industry"),
+            "environment": c.get("environment"),
+            "logo_url": c.get("logo_url"),
+            "primary_contact": c.get("primary_contact"),
+            "assigned_owner_id": c.get("assigned_owner_id"),
+            "client_status": client_status,
+            "program_status": program_status,
+            "open_actions": open_actions,
+            "open_findings": len(open_findings),
+            "significant_risks": len(sig_risks),
+            "upcoming_reviews": len(upcoming_r_30),
+            "overdue_reviews": len(overdue_reviews),
+            "critical_high_findings": len(crit_high_open),
+            "last_activity": (
+                {"at": last.get("at"), "action": last.get("action"),
+                 "entity_type": last.get("entity_type"),
+                 "actor": last.get("user_name") or last.get("user_email")}
+                if last else None
+            ),
+            "created_at": c.get("created_at"),
+        })
+
+        if program_status == "action_required":
+            portfolio_action += 1
+        elif program_status == "needs_attention":
+            portfolio_attn += 1
+        portfolio_overdue_r += len(overdue_reviews)
+        portfolio_crit += len(crit_high_open)
+        portfolio_sig += len(sig_risks)
+        portfolio_up30 += len(upcoming_r_30)
+
+    # Sort: action_required first, then needs_attention, then rest; then by name.
+    order = {"action_required": 0, "needs_attention": 1, "onboarding": 2, "healthy": 3, "inactive": 4, "archived": 5}
+    rows.sort(key=lambda r: (order.get(r["program_status"], 9), (r["name"] or "").lower()))
+
+    return {
+        "clients": rows,
+        "portfolio": {
+            "total_clients": len(rows),
+            "action_required": portfolio_action,
+            "needs_attention": portfolio_attn,
+            "total_overdue_reviews": portfolio_overdue_r,
+            "total_critical_high": portfolio_crit,
+            "total_significant_risks": portfolio_sig,
+            "upcoming_reviews_30d": portfolio_up30,
+        },
+    }
 
 
 # ---------------- Generic list/create/update/delete factory ----------------
@@ -855,12 +1045,16 @@ async def seed():
     # Tenants
     acme = await db.clients.find_one({"name": "Acme Corp"}, {"_id": 0})
     if not acme:
-        acme = {"client_id": _uid("cli"), "name": "Acme Corp", "industry": "Manufacturing", "environment": "Production", "created_at": _now()}
+        acme = {"client_id": _uid("cli"), "name": "Acme Corp", "industry": "Manufacturing", "environment": "Production", "status": "active", "created_at": _now()}
         await db.clients.insert_one(acme)
     globex = await db.clients.find_one({"name": "Globex Ltd"}, {"_id": 0})
     if not globex:
-        globex = {"client_id": _uid("cli"), "name": "Globex Ltd", "industry": "Fintech", "environment": "Production", "created_at": _now()}
+        globex = {"client_id": _uid("cli"), "name": "Globex Ltd", "industry": "Fintech", "environment": "Production", "status": "active", "created_at": _now()}
         await db.clients.insert_one(globex)
+
+    # Backfill status for legacy tenants (any client without a status → active).
+    await db.clients.update_many({"status": {"$in": [None, ""]}}, {"$set": {"status": "active"}})
+    await db.clients.update_many({"status": {"$exists": False}}, {"$set": {"status": "active"}})
 
     async def ensure_user(email, name, role, client_ids, password=None):
         u = await db.users.find_one({"email": email})
