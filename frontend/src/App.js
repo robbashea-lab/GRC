@@ -19,6 +19,7 @@ import PlatformAdmin from "@/pages/PlatformAdmin";
 import ClientSettings from "@/pages/ClientSettings";
 import ActionItems from "@/pages/ActionItems";
 import RiskRegister from "@/pages/RiskRegister";
+import VendorRegister from "@/pages/VendorRegister";
 import "@/App.css";
 
 function Protected({ children }) {
@@ -77,7 +78,7 @@ function AppRouter() {
         <Route path="findings" element={<RecordListPage kind="findings" />} />
         <Route path="risks" element={<RiskRegister />} />
         <Route path="policies" element={<RecordListPage kind="policies" />} />
-        <Route path="vendors" element={<RecordListPage kind="vendors" />} />
+        <Route path="vendors" element={<VendorRegister />} />
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />
         <Route path="action-items" element={<ActionItems />} />
         <Route path="evidence" element={<Evidence />} />

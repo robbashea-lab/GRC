@@ -249,11 +249,29 @@ class PolicyIn(BaseModel):
 class VendorIn(BaseModel):
     name: str
     client_id: str
+    service: Optional[str] = None  # short description of what they provide
+    category: Optional[str] = "SaaS"
     criticality: str = "medium"  # low, medium, high, critical
-    status: str = "active"  # active, under_review, terminated
+    status: str = "active"  # onboarding, under_review, active, offboarding, inactive
+    data_types: Optional[List[str]] = None
+    data_relationship: Optional[List[str]] = None  # stores/processes/transmits/accesses/hosts/none
+    business_owner_id: Optional[str] = None
+    contact_name: Optional[str] = None
     contact_email: Optional[str] = None
-    services: Optional[str] = None
-    contract_end: Optional[str] = None
+    contact_phone: Optional[str] = None
+    website: Optional[str] = None
+    services: Optional[str] = None  # legacy free-text; kept for backwards compat
+    review_frequency: Optional[str] = "annual"  # quarterly, semiannual, annual, biennial, as_needed, custom
+    last_review: Optional[str] = None
+    next_review: Optional[str] = None
+    contract_start: Optional[str] = None
+    contract_renewal: Optional[str] = None
+    contract_expiration: Optional[str] = None
+    contract_end: Optional[str] = None  # legacy
+    auto_renewal: Optional[str] = None  # yes / no / unknown
+    assurance_status: Optional[str] = None  # current, expiring, expired, requested, missing, under_review
+    notes: Optional[str] = None
+    related_risk_ids: Optional[List[str]] = None
 
 
 class AssetIn(BaseModel):
