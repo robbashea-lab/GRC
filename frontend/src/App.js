@@ -18,6 +18,7 @@ import MyAccount from "@/pages/MyAccount";
 import PlatformAdmin from "@/pages/PlatformAdmin";
 import ClientSettings from "@/pages/ClientSettings";
 import ActionItems from "@/pages/ActionItems";
+import RiskRegister from "@/pages/RiskRegister";
 import "@/App.css";
 
 function Protected({ children }) {
@@ -74,7 +75,7 @@ function AppRouter() {
         <Route path="calendar" element={<Calendar />} />
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />
         <Route path="findings" element={<RecordListPage kind="findings" />} />
-        <Route path="risks" element={<RecordListPage kind="risks" />} />
+        <Route path="risks" element={<RiskRegister />} />
         <Route path="policies" element={<RecordListPage kind="policies" />} />
         <Route path="vendors" element={<RecordListPage kind="vendors" />} />
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />

@@ -210,13 +210,28 @@ class RiskIn(BaseModel):
     title: str
     client_id: str
     category: Optional[str] = "operational"
-    likelihood: str = "medium"  # low, medium, high
-    impact: str = "medium"  # low, medium, high
-    status: str = "identified"  # identified, assessed, treated, accepted, closed
+    # Legacy string ratings (kept for backwards compat with existing records).
+    likelihood: Optional[str] = None
+    impact: Optional[str] = None
+    # New numeric 1-5 ratings — drive risk_score and risk_level.
+    likelihood_score: Optional[int] = None
+    impact_score: Optional[int] = None
+    risk_score: Optional[int] = None
+    risk_level: Optional[str] = None
+    status: str = "open"  # open, in_progress, accepted, escalated, closed
+    treatment: Optional[str] = None  # mitigate, accept, transfer, avoid, monitor
     owner_id: Optional[str] = None
     description: Optional[str] = None
-    treatment: Optional[str] = None
+    impact_description: Optional[str] = None
+    source: Optional[str] = None
+    date_identified: Optional[str] = None
+    last_reviewed: Optional[str] = None
+    next_review: Optional[str] = None
     accepted: Optional[bool] = False
+    accepted_by: Optional[str] = None
+    acceptance_date: Optional[str] = None
+    acceptance_rationale: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class PolicyIn(BaseModel):
@@ -1614,6 +1629,29 @@ async def root():
 entity_router = APIRouter(prefix="/api")
 
 
+def _risk_level_from_score(score: Optional[int]) -> Optional[str]:
+    if score is None:
+        return None
+    if score >= 15:
+        return "critical"
+    if score >= 10:
+        return "high"
+    if score >= 5:
+        return "moderate"
+    return "low"
+
+
+def _apply_risk_scoring(doc: Dict) -> Dict:
+    """When numeric likelihood_score and impact_score are present on a risk,
+    compute the derived risk_score and risk_level so they cannot drift out of sync."""
+    ls = doc.get("likelihood_score")
+    is_ = doc.get("impact_score")
+    if isinstance(ls, int) and isinstance(is_, int) and 1 <= ls <= 5 and 1 <= is_ <= 5:
+        doc["risk_score"] = ls * is_
+        doc["risk_level"] = _risk_level_from_score(doc["risk_score"])
+    return doc
+
+
 @entity_router.get("/{kind}")
 async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Optional[str] = Query(None), user: Dict = Depends(get_current_user)):
     q = _scope_filter(user, client_id)
@@ -1629,6 +1667,10 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
     parsed = Model(**(body or {})).model_dump()
     if not _can_access_client(user, parsed["client_id"]):
         raise HTTPException(403, "Forbidden for this client")
+    if kind == "risks":
+        parsed = _apply_risk_scoring(parsed)
+        if not parsed.get("date_identified"):
+            parsed["date_identified"] = _now()
     new_id = _uid(prefix)
     doc = {id_field: new_id, **parsed, "created_at": _now(), "updated_at": _now(),
            "created_by": user["user_id"]}
@@ -1650,6 +1692,31 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(403, "Forbidden")
     body = body or {}
     body.pop(id_field, None)
+    if kind == "risks":
+        # Merge with existing so partial patches still compute a consistent score.
+        merged = {**existing, **body}
+        # Track rating history when likelihood/impact numeric values actually change.
+        prev_ls, prev_is = existing.get("likelihood_score"), existing.get("impact_score")
+        new_ls = body.get("likelihood_score", prev_ls)
+        new_is = body.get("impact_score", prev_is)
+        if (new_ls, new_is) != (prev_ls, prev_is) and (isinstance(new_ls, int) or isinstance(new_is, int)):
+            history = list(existing.get("rating_history") or [])
+            history.append({
+                "at": _now(),
+                "by": user["user_id"],
+                "by_name": user.get("name") or user.get("email"),
+                "prev_likelihood": prev_ls,
+                "prev_impact": prev_is,
+                "new_likelihood": new_ls,
+                "new_impact": new_is,
+                "prev_score": existing.get("risk_score"),
+            })
+            body["rating_history"] = history
+            body["last_reviewed"] = _now()
+        computed = _apply_risk_scoring(merged)
+        for k in ("risk_score", "risk_level"):
+            if k in computed:
+                body[k] = computed[k]
     body["updated_at"] = _now()
     await db[_coll_for(kind)].update_one({id_field: item_id}, {"$set": body})
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})

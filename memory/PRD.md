@@ -36,6 +36,14 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 ### v6
 - **Session Invalidation on password reset** — JWTs now carry `iat`; `password_changed_at` on user rejects any JWT issued before the reset; all rows in `db.sessions` for the user are deleted on reset (Emergent Google OAuth cookies); reset response returns `sessions_revoked`
 
+### v15 (Risk Register — 5×5 matrix, computed score/level, rating history) — Sep 2026
+- **`/risks` route** now renders a dedicated `RiskRegister.jsx` instead of the generic list page. Page header reads "Risk Register" with the client name + subtitle.
+- **Backend RiskIn** extended with numeric `likelihood_score` / `impact_score` (1-5), `risk_score`, `risk_level`, and structured fields: `treatment` (mitigate/accept/transfer/avoid/monitor), `source`, `impact_description`, `date_identified`, `last_reviewed`, `next_review`, `accepted_by/date/rationale`, `notes`. Status vocabulary: `open`, `in_progress`, `accepted`, `escalated`, `closed`. Legacy string fields preserved for existing rows.
+- **`_apply_risk_scoring`** helper computes `risk_score = L × I` and `risk_level` (Critical ≥15, High ≥10, Moderate ≥5, else Low) on every risk create/update — users cannot save contradictory ratings.
+- **Rating history**: PATCH to a risk that changes L/I appends an entry to `rating_history[]` (prev/new values + actor + timestamp) and stamps `last_reviewed`. `date_identified` auto-set on create. Verified: L3×I4→12 (high); PATCH L→5 → score 20 (critical) with history_len=1 and last_reviewed set. Min (1×1=1, low) and max (5×5=25, critical) both compute correctly.
+- **Frontend**: summary strip (Open · High/Critical · Accepted · Due for Review), quick views (All Active / High-Critical / Mine / Accepted / Due for Review / Closed), search, table columns (ID · Risk · Category · Likelihood · Impact · Score · Level · Owner · Status · Last reviewed) sorted by level then score, CSV export, **Risk Scale & Matrix** modal (full 5×5 heat map with numeric scores + threshold key), **New Risk** dialog with live score/level preview and a Scale shortcut.
+- Existing RecordDrawer still handles risk edit — no drawer changes required. Tenant isolation, RBAC, and audit logging inherited from generic entity router.
+
 ### v14 (Action Items unified work queue — merge Tasks + Findings nav) — Sep 2026
 - **Sidebar**: removed "Findings" and "Tasks"; added **"Action Items"** (`/action-items`). Underlying `/findings` and `/tasks` list routes are preserved for internal linking (Dashboard, related-record navigation, RecordDrawer flows).
 - **ActionItems.jsx** — a **unified work view** that merges three existing collections without creating duplicates:
