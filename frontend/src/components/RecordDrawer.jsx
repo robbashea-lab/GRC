@@ -154,6 +154,42 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     } catch (e) { toast.error(formatError(e)); }
   }
 
+  async function raiseAsRisk() {
+    if (record?.risk_id) { toast.info("A risk is already linked to this finding"); return; }
+    if (!confirm(`Raise a risk from "${record.title}"? Likelihood/impact will default from the finding severity — you can refine on the Risk Register.`)) return;
+    try {
+      const { data } = await api.post(`/findings/${record[idField]}/raise-risk`);
+      toast.success(`Risk raised · Score ${data.risk?.risk_score} · Level ${data.risk?.risk_level}`);
+      if (record) record.risk_id = data.risk?.risk_id;
+      onSaved?.();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
+  async function markRiskReviewed() {
+    try {
+      const { data } = await api.post(`/risks/${record[idField]}/mark-reviewed`);
+      toast.success("Marked as reviewed · next review in 12 months");
+      if (record) { record.last_reviewed = data.last_reviewed; record.next_review = data.next_review; }
+      setForm((p) => ({ ...p, last_reviewed: data.last_reviewed, next_review: data.next_review }));
+      onSaved?.();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
+  async function acceptRisk() {
+    const rationale = prompt("Acceptance rationale (required):");
+    if (!rationale) return;
+    const expiry = prompt("Review / expiry date (YYYY-MM-DD, optional):") || "";
+    try {
+      const body = { rationale };
+      if (expiry) body.expiry_date = new Date(expiry).toISOString();
+      const { data } = await api.post(`/risks/${record[idField]}/accept`, body);
+      toast.success("Risk accepted");
+      if (record) Object.assign(record, data);
+      setForm((p) => ({ ...p, status: "accepted", treatment: "accept" }));
+      onSaved?.();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
   // ---- Policy approval workflow ----
   async function policyAction(action, body = {}) {
     try {
@@ -272,9 +308,27 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
                 </div>
               )}
               {isEdit && kind === "findings" && canWrite && (
-                <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Assign remediation work</div>
-                  <Button size="sm" variant="outline" onClick={quickCreateTask} data-testid="quick-create-task">Create remediation task</Button>
+                <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Finding actions</div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={quickCreateTask} data-testid="quick-create-task">Create remediation task</Button>
+                    <Button size="sm" variant="outline" onClick={raiseAsRisk} data-testid="finding-raise-risk" disabled={!!record?.risk_id}>
+                      {record?.risk_id ? "Linked to risk" : "Raise as risk"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {isEdit && kind === "risks" && canWrite && (
+                <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap" data-testid="risk-actions-panel">
+                  <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Risk actions</div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Mark reviewed</Button>
+                    {record?.status !== "accepted" && (
+                      <Button size="sm" onClick={acceptRisk} data-testid="risk-accept" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+                        Accept risk
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
               {isEdit && isPolicy && (

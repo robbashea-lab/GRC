@@ -1285,7 +1285,16 @@ async def dashboard(
     overdue_tasks = [t for t in tasks if is_overdue(t)]
     open_findings = [f for f in findings if f.get("status") in ("open", "in_remediation")]
     critical_high = [f for f in open_findings if f.get("severity") in ("high", "critical")]
-    significant_risks = [r for r in risks if r.get("impact") == "high" and r.get("status") != "closed"]
+    significant_risks = [r for r in risks if (r.get("impact") == "high" or (r.get("risk_level") in ("high", "critical"))) and r.get("status") != "closed"]
+
+    # Risks needing reassessment: last_reviewed older than 12 months, or never reviewed and identified >12 months ago.
+    twelve_months_ago = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat()
+    def _stale(r):
+        if r.get("status") in ("closed",):
+            return False
+        lr = r.get("last_reviewed") or r.get("date_identified") or r.get("created_at")
+        return bool(lr and lr < twelve_months_ago)
+    stale_risks = [r for r in risks if _stale(r)]
 
     upcoming_reviews = [r for r in reviews
                         if r.get("due_date") and now_iso <= r["due_date"] <= horizon
@@ -1319,6 +1328,9 @@ async def dashboard(
         needs.append({**_brief(f, "finding", "finding_id"), "priority_tone": "high", "action": "View finding"})
     for t in overdue_tasks:
         needs.append({**_brief(t, "task", "task_id"), "priority_tone": "high", "action": "Continue"})
+    # Stale risks: not reviewed in >12 months → surface for reassessment.
+    for r in stale_risks[:5]:
+        needs.append({**_brief(r, "risk", "risk_id"), "priority_tone": "info", "action": "Mark reviewed"})
     for p in policies:
         if p.get("status") == "in_review":
             needs.append({**_brief(p, "policy", "policy_id"), "priority_tone": "info", "action": "Approve"})
@@ -1902,6 +1914,105 @@ async def reminders_send_now(user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Forbidden")
     await _send_overdue_digest()
     return {"ok": True}
+
+
+# ---------------- Risks: quick actions ----------------
+_SEV_TO_L = {"critical": 5, "high": 4, "medium": 3, "moderate": 3, "low": 2}
+_SEV_TO_I = {"critical": 5, "high": 4, "medium": 3, "moderate": 3, "low": 2}
+
+
+class RiskAcceptIn(BaseModel):
+    rationale: str
+    expiry_date: Optional[str] = None  # ISO date, becomes next_review
+    approver_id: Optional[str] = None
+    compensating_controls: Optional[str] = None
+
+
+@api.post("/risks/{risk_id}/accept")
+async def risk_accept(risk_id: str, body: RiskAcceptIn, user: Dict = Depends(get_current_user)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    risk = await db.risks.find_one({"risk_id": risk_id}, {"_id": 0})
+    if not risk:
+        raise HTTPException(404, "Risk not found")
+    if not _can_access_client(user, risk["client_id"]):
+        raise HTTPException(403, "Forbidden")
+    updates = {
+        "status": "accepted",
+        "treatment": "accept",
+        "accepted": True,
+        "accepted_by": body.approver_id or user["user_id"],
+        "acceptance_date": _now(),
+        "acceptance_rationale": body.rationale,
+        "next_review": body.expiry_date,
+        "last_reviewed": _now(),
+        "updated_at": _now(),
+    }
+    if body.compensating_controls:
+        updates["compensating_controls"] = body.compensating_controls
+    await db.risks.update_one({"risk_id": risk_id}, {"$set": updates})
+    await audit(user, "accept", "risk", risk_id, risk["client_id"], meta={"expiry": body.expiry_date})
+    return await db.risks.find_one({"risk_id": risk_id}, {"_id": 0})
+
+
+@api.post("/risks/{risk_id}/mark-reviewed")
+async def risk_mark_reviewed(risk_id: str, user: Dict = Depends(get_current_user)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    risk = await db.risks.find_one({"risk_id": risk_id}, {"_id": 0})
+    if not risk:
+        raise HTTPException(404, "Risk not found")
+    if not _can_access_client(user, risk["client_id"]):
+        raise HTTPException(403, "Forbidden")
+    # Push out next review 12 months from today by default.
+    next_review = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+    await db.risks.update_one({"risk_id": risk_id},
+                              {"$set": {"last_reviewed": _now(), "next_review": next_review, "updated_at": _now()}})
+    await audit(user, "mark_reviewed", "risk", risk_id, risk["client_id"])
+    return await db.risks.find_one({"risk_id": risk_id}, {"_id": 0})
+
+
+@api.post("/findings/{finding_id}/raise-risk")
+async def finding_raise_risk(finding_id: str, user: Dict = Depends(get_current_user)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    finding = await db.findings.find_one({"finding_id": finding_id}, {"_id": 0})
+    if not finding:
+        raise HTTPException(404, "Finding not found")
+    if not _can_access_client(user, finding["client_id"]):
+        raise HTTPException(403, "Forbidden")
+    if finding.get("risk_id"):
+        raise HTTPException(400, "Risk already linked to this finding")
+    sev = (finding.get("severity") or "medium").lower()
+    ls = _SEV_TO_L.get(sev, 3)
+    is_ = _SEV_TO_I.get(sev, 3)
+    short_id = finding_id.split("_")[-1][-6:].upper()
+    new_risk_id = _uid("rsk")
+    risk_doc = {
+        "risk_id": new_risk_id,
+        "title": f"Risk raised from finding: {finding.get('title')}",
+        "client_id": finding["client_id"],
+        "category": "Compliance",
+        "likelihood_score": ls,
+        "impact_score": is_,
+        "risk_score": ls * is_,
+        "risk_level": _risk_level_from_score(ls * is_),
+        "status": "open",
+        "treatment": "mitigate",
+        "owner_id": finding.get("owner_id"),
+        "description": finding.get("description"),
+        "source": f"Finding {short_id}",
+        "related_finding_ids": [finding_id],
+        "date_identified": _now(),
+        "created_at": _now(),
+        "updated_at": _now(),
+        "created_by": user["user_id"],
+    }
+    await db.risks.insert_one(risk_doc)
+    await db.findings.update_one({"finding_id": finding_id}, {"$set": {"risk_id": new_risk_id, "updated_at": _now()}})
+    await audit(user, "raise-risk", "risk", new_risk_id, finding["client_id"], meta={"from_finding": finding_id})
+    risk_doc.pop("_id", None)
+    return {"risk": risk_doc}
 
 
 # ---------------- Weekly "My Work" digest ----------------
