@@ -1,0 +1,8 @@
+crons:
+  - name: overdue-reminders
+    description: "Emails daily digests of overdue reviews and findings to owners"
+    cron: "0 13 * * *"
+    endpoint: "{{BASE_URL}}/api/cron/overdue-reminders"
+    method: POST
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    enabled: true

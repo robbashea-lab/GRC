@@ -9,6 +9,7 @@ import Dashboard from "@/pages/Dashboard";
 import RecordListPage from "@/pages/RecordListPage";
 import Evidence from "@/pages/Evidence";
 import AuditLog from "@/pages/AuditLog";
+import Onboarding from "@/pages/Onboarding";
 import "@/App.css";
 
 function Protected({ children }) {
@@ -41,11 +42,13 @@ function AppRouter() {
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />
         <Route path="findings" element={<RecordListPage kind="findings" />} />
         <Route path="risks" element={<RecordListPage kind="risks" />} />
+        <Route path="exceptions" element={<RecordListPage kind="exceptions" />} />
         <Route path="policies" element={<RecordListPage kind="policies" />} />
         <Route path="vendors" element={<RecordListPage kind="vendors" />} />
         <Route path="assets" element={<RecordListPage kind="assets" />} />
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />
         <Route path="evidence" element={<Evidence />} />
+        <Route path="onboarding" element={<Onboarding />} />
         <Route path="audit" element={<AuditLog />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

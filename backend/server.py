@@ -4,11 +4,16 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
 import os
+import re
 import uuid
 import logging
 import bcrypt
 import jwt
 import httpx
+import ipaddress
+from html import escape
+from html.parser import HTMLParser
+from urllib.parse import urlparse
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Any, Dict
 
@@ -211,6 +216,26 @@ class TaskIn(BaseModel):
     review_id: Optional[str] = None
 
 
+class ExceptionIn(BaseModel):
+    title: str
+    client_id: str
+    status: str = "requested"  # requested, approved, expired, revoked
+    justification: Optional[str] = None
+    owner_id: Optional[str] = None
+    approver_id: Optional[str] = None
+    expires_at: Optional[str] = None
+    risk_id: Optional[str] = None
+    finding_id: Optional[str] = None
+    compensating_controls: Optional[str] = None
+
+
+class BaselineIn(BaseModel):
+    client_id: str
+    policies: List[str] = []      # list of policy titles to seed
+    risks: List[str] = []         # list of risk titles to seed
+    reviews: List[Dict[str, Any]] = []  # [{title, review_type, recurrence, due_days}]
+
+
 class EvidenceIn(BaseModel):
     filename: str
     client_id: str
@@ -402,6 +427,7 @@ ENTITY_MAP = {
     "vendors": ("vendor", VendorIn, "vendor_id", "ven"),
     "assets": ("asset", AssetIn, "asset_id", "ast"),
     "tasks": ("task", TaskIn, "task_id", "tsk"),
+    "exceptions": ("exception", ExceptionIn, "exception_id", "exc"),
 }
 
 
@@ -409,7 +435,7 @@ def _coll_for(kind: str) -> str:
     return kind  # collection name equals plural
 
 
-KIND_REGEX = "^(reviews|findings|risks|policies|vendors|assets|tasks)$"
+KIND_REGEX = "^(reviews|findings|risks|policies|vendors|assets|tasks|exceptions)$"
 # Generic entity routes are registered at the END of the file so literal routes
 # like /dashboard, /audit-logs, /users, /evidence, /comments take precedence.
 
@@ -717,8 +743,6 @@ async def root():
     return {"service": "grc-platform", "status": "ok"}
 
 
-app.include_router(api)
-
 # ---------------- Generic entity routes (registered last, so literals win) ----------------
 entity_router = APIRouter(prefix="/api")
 
@@ -779,7 +803,335 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     return {"ok": True}
 
 
+# ---------------- Email (Resend via Emergent proxy) ----------------
+EMAIL_BASE_URL = "https://integrations.emergentagent.com"
+_SHORTENERS = ("bit.ly", "tinyurl.com", "t.co", "is.gd", "cutt.ly", "goo.gl", "rebrand.ly")
+_CRED_ASK = ("reply with your password", "reply with the code", "send your password", "cvv",
+             "send us your password", "enter your password below", "confirm your card number",
+             "your full card number", "seed phrase", "recovery phrase", "verify your card",
+             "social security number", "confirm your bank details")
+_HOSTISH = re.compile(r"\b(?:https?://)?((?:[a-z0-9-]+\.)+[a-z]{2,})", re.I)
+
+
+def _host_ok(host: str) -> bool:
+    if not host or "xn--" in host:
+        return False
+    try:
+        ipaddress.ip_address(host)
+        return False
+    except ValueError:
+        pass
+    return not any(host == s or host.endswith("." + s) for s in _SHORTENERS)
+
+
+def _same_site(shown: str, real: str) -> bool:
+    return shown == real or real.endswith("." + shown) or shown.endswith("." + real)
+
+
+class _EmailScan(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.tags, self.urls, self.anchors = set(), [], []
+        self._href, self._text = None, []
+
+    def handle_starttag(self, tag, attrs):
+        self.tags.add(tag.lower())
+        self.urls += [v for k, v in attrs if k.lower() in ("href", "src") and v]
+        if tag.lower() == "a":
+            self._href = dict((k.lower(), v) for k, v in attrs).get("href")
+            self._text = []
+
+    def handle_data(self, data):
+        if self._href is not None:
+            self._text.append(data)
+
+    def handle_endtag(self, tag):
+        if tag.lower() == "a" and self._href is not None:
+            self.anchors.append((self._href, "".join(self._text)))
+            self._href, self._text = None, []
+
+
+def _assert_safe_email(subject: str, html: str) -> None:
+    scan = _EmailScan()
+    scan.feed(html)
+    if scan.tags & {"form", "input", "textarea", "select"}:
+        raise ValueError("No forms or input fields in email (G2)")
+    body = f"{subject}\n{html}".lower()
+    for p in _CRED_ASK:
+        if p in body:
+            raise ValueError(f"Email asks the recipient for credentials: {p!r} (G2)")
+    for url in scan.urls:
+        low = url.strip().lower()
+        if low.startswith(("mailto:", "tel:", "cid:", "#")):
+            continue
+        if not low.startswith("https://"):
+            raise ValueError(f"Email links/assets must be absolute https: {url!r} (G3)")
+        host = urlparse(low).hostname or ""
+        if not _host_ok(host) or urlparse(low).username is not None:
+            raise ValueError(f"Shortened, numeric-host or credential-bearing URL: {url!r} (G3)")
+    for href, text in scan.anchors:
+        real = urlparse(href.strip().lower()).hostname or ""
+        if not real:
+            continue
+        for m in _HOSTISH.finditer(text):
+            if not _same_site(m.group(1).lower(), real):
+                raise ValueError(f"Anchor text {m.group(1)!r} ≠ real link host {real!r} (G3)")
+
+
+async def send_email(*, to: str, subject: str, html: str) -> Optional[str]:
+    _assert_safe_email(subject, html)
+    email_key = os.environ.get("EMERGENT_EMAIL_KEY")
+    from_name = os.environ.get("EMAIL_FROM_NAME", "Northstar GRC")
+    if not email_key:
+        logging.warning("EMERGENT_EMAIL_KEY not set; skipping email to %s", to)
+        return None
+    payload = {"to": [to], "subject": subject, "html": html, "from_name": from_name}
+    reply_to = os.environ.get("EMAIL_REPLY_TO")
+    if reply_to:
+        payload["contact_email"] = reply_to
+    try:
+        async with httpx.AsyncClient(timeout=30) as hx:
+            resp = await hx.post(
+                f"{EMAIL_BASE_URL}/api/v1/email/send",
+                headers={"X-Email-Key": email_key},
+                json=payload,
+            )
+        resp.raise_for_status()
+        return resp.json().get("id")
+    except Exception as e:
+        logging.error("Email send error: %s", e)
+        return None
+
+
+def _digest_html(user_name: str, overdue_reviews: List[Dict], overdue_findings: List[Dict]) -> str:
+    def row(item, kind):
+        title = escape(item.get("title", ""))
+        due = escape(item.get("due_date", "")[:10] if item.get("due_date") else "—")
+        return f'<tr><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:13px">{escape(kind)}</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:13px">{title}</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:13px;color:#b91c1c">{due}</td></tr>'
+    rows = "".join([row(r, "Review") for r in overdue_reviews] + [row(f, "Finding") for f in overdue_findings])
+    total = len(overdue_reviews) + len(overdue_findings)
+    return (
+        f'<table role="presentation" width="100%" style="max-width:640px;margin:auto">'
+        f'<tr><td style="padding:24px;font-family:Arial,sans-serif">'
+        f'<h2 style="margin:0 0 8px 0;font-family:Arial,sans-serif;color:#0f172a">Overdue in your GRC program</h2>'
+        f'<p style="margin:0 0 16px 0;color:#475569;font-size:14px">Hi {escape(user_name)}, you have {total} overdue item(s) that need attention.</p>'
+        f'<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #e5e7eb">'
+        f'<thead><tr style="background:#f8fafc"><th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Type</th><th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Title</th><th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Due</th></tr></thead>'
+        f'<tbody>{rows}</tbody></table>'
+        f'<p style="margin:16px 0 0 0;font-size:12px;color:#94a3b8">Sent by Northstar GRC. We never ask for passwords or codes by email.</p>'
+        f'</td></tr></table>'
+    )
+
+
+# ---------------- Cron: overdue reminders ----------------
+@app.post("/api/cron/overdue-reminders")
+async def cron_overdue_reminders(request: Request):
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    secret = os.environ.get("WEBHOOK_CRON_SECRET", "")
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer ") or auth[7:] != secret:
+        raise HTTPException(401, "Unauthorized")
+    import asyncio
+    asyncio.create_task(_send_overdue_digest())
+    return {"ok": True}
+
+
+async def _send_overdue_digest():
+    now_iso = _now()
+    reviews = await db.reviews.find({"status": {"$nin": ["completed"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(5000)
+    findings = await db.findings.find({"status": {"$in": ["open", "in_remediation"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(5000)
+    # Group by owner
+    by_owner: Dict[str, Dict[str, List]] = {}
+    for r in reviews:
+        oid = r.get("owner_id")
+        if not oid:
+            continue
+        by_owner.setdefault(oid, {"reviews": [], "findings": []})["reviews"].append(r)
+    for f in findings:
+        oid = f.get("owner_id")
+        if not oid:
+            continue
+        by_owner.setdefault(oid, {"reviews": [], "findings": []})["findings"].append(f)
+    for owner_id, buckets in by_owner.items():
+        u = await db.users.find_one({"user_id": owner_id}, {"_id": 0})
+        if not u or not u.get("email"):
+            continue
+        html = _digest_html(u.get("name") or u["email"], buckets["reviews"], buckets["findings"])
+        total = len(buckets["reviews"]) + len(buckets["findings"])
+        await send_email(to=u["email"], subject=f"Northstar GRC: {total} overdue item(s) need attention", html=html)
+
+
+# Manual trigger for testing (admin only)
+@api.post("/reminders/send-now")
+async def reminders_send_now(user: Dict = Depends(get_current_user)):
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Forbidden")
+    await _send_overdue_digest()
+    return {"ok": True}
+
+
+# ---------------- Quick actions: Review → Finding, Finding → Task ----------------
+@api.post("/reviews/{review_id}/create-finding")
+async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict = Depends(get_current_user)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    review = await db.reviews.find_one({"review_id": review_id}, {"_id": 0})
+    if not review:
+        raise HTTPException(404, "Review not found")
+    if not _can_access_client(user, review["client_id"]):
+        raise HTTPException(403, "Forbidden")
+    fid = _uid("fnd")
+    doc = {
+        "finding_id": fid,
+        "title": body.get("title") or f"Finding from: {review['title']}",
+        "client_id": review["client_id"],
+        "severity": body.get("severity", "medium"),
+        "status": "open",
+        "description": body.get("description") or "",
+        "owner_id": body.get("owner_id") or review.get("owner_id"),
+        "due_date": body.get("due_date"),
+        "review_id": review_id,
+        "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"],
+    }
+    await db.findings.insert_one(doc)
+    doc.pop("_id", None)
+    await audit(user, "create", "finding", fid, review["client_id"], meta={"from_review": review_id})
+    return doc
+
+
+@api.post("/findings/{finding_id}/create-task")
+async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict = Depends(get_current_user)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    finding = await db.findings.find_one({"finding_id": finding_id}, {"_id": 0})
+    if not finding:
+        raise HTTPException(404, "Finding not found")
+    if not _can_access_client(user, finding["client_id"]):
+        raise HTTPException(403, "Forbidden")
+    tid = _uid("tsk")
+    doc = {
+        "task_id": tid,
+        "title": body.get("title") or f"Remediate: {finding['title']}",
+        "client_id": finding["client_id"],
+        "status": "open",
+        "priority": body.get("priority", finding.get("severity", "medium")),
+        "assignee_id": body.get("assignee_id") or finding.get("owner_id"),
+        "due_date": body.get("due_date") or finding.get("due_date"),
+        "description": body.get("description") or finding.get("remediation_plan"),
+        "finding_id": finding_id,
+        "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"],
+    }
+    await db.tasks.insert_one(doc)
+    # link back on the finding
+    if finding.get("status") == "open":
+        await db.findings.update_one({"finding_id": finding_id}, {"$set": {"status": "in_remediation", "updated_at": _now()}})
+    doc.pop("_id", None)
+    await audit(user, "create", "task", tid, finding["client_id"], meta={"from_finding": finding_id})
+    return doc
+
+
+@api.get("/related")
+async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(get_current_user)):
+    """Return records related to the given entity across collections."""
+    out: Dict[str, List] = {"reviews": [], "findings": [], "tasks": [], "risks": [], "exceptions": [], "evidence": []}
+    if entity_type == "reviews":
+        out["findings"] = await db.findings.find({"review_id": entity_id}, {"_id": 0}).to_list(200)
+    elif entity_type == "findings":
+        out["tasks"] = await db.tasks.find({"finding_id": entity_id}, {"_id": 0}).to_list(200)
+        f = await db.findings.find_one({"finding_id": entity_id}, {"_id": 0})
+        if f and f.get("review_id"):
+            r = await db.reviews.find_one({"review_id": f["review_id"]}, {"_id": 0})
+            if r:
+                out["reviews"] = [r]
+        if f and f.get("risk_id"):
+            r = await db.risks.find_one({"risk_id": f["risk_id"]}, {"_id": 0})
+            if r:
+                out["risks"] = [r]
+        out["exceptions"] = await db.exceptions.find({"finding_id": entity_id}, {"_id": 0}).to_list(50)
+    elif entity_type == "risks":
+        out["findings"] = await db.findings.find({"risk_id": entity_id}, {"_id": 0}).to_list(200)
+        out["exceptions"] = await db.exceptions.find({"risk_id": entity_id}, {"_id": 0}).to_list(50)
+    elif entity_type == "tasks":
+        t = await db.tasks.find_one({"task_id": entity_id}, {"_id": 0})
+        if t and t.get("finding_id"):
+            f = await db.findings.find_one({"finding_id": t["finding_id"]}, {"_id": 0})
+            if f:
+                out["findings"] = [f]
+    out["evidence"] = await db.evidence.find({"linked_type": entity_type[:-1], "linked_id": entity_id}, {"_id": 0, "content_base64": 0}).to_list(200)
+    return out
+
+
+# ---------------- Baseline assessment ----------------
+BASELINE_TEMPLATES = {
+    "policies": [
+        "Information Security Policy", "Access Control Policy", "Acceptable Use Policy",
+        "Incident Response Plan", "Business Continuity Plan", "Vendor Management Policy",
+        "Data Classification & Handling Policy", "Change Management Policy",
+    ],
+    "risks": [
+        "Ransomware disruption to core systems", "Phishing leading to account compromise",
+        "Third-party vendor outage", "Insider misuse of privileged access",
+        "Data loss due to unencrypted device", "Regulatory non-compliance",
+    ],
+    "review_templates": [
+        {"title": "Quarterly Access Review", "review_type": "access", "recurrence": "quarterly", "due_days": 30},
+        {"title": "Vendor Risk Review", "review_type": "vendor", "recurrence": "annual", "due_days": 45},
+        {"title": "Patch & Vulnerability Review", "review_type": "vulnerability", "recurrence": "monthly", "due_days": 15},
+        {"title": "Policy Review — Information Security Policy", "review_type": "policy", "recurrence": "annual", "due_days": 60},
+        {"title": "BCP / DR Tabletop Exercise", "review_type": "bcp_dr", "recurrence": "semiannual", "due_days": 90},
+        {"title": "Security Awareness Training Review", "review_type": "awareness", "recurrence": "quarterly", "due_days": 30},
+    ],
+}
+
+
+@api.get("/baseline/templates")
+async def baseline_templates(user: Dict = Depends(get_current_user)):
+    return BASELINE_TEMPLATES
+
+
+@api.post("/baseline")
+async def create_baseline(body: BaselineIn, user: Dict = Depends(get_current_user)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    if not _can_access_client(user, body.client_id):
+        raise HTTPException(403, "Forbidden for this client")
+    created = {"policies": 0, "risks": 0, "reviews": 0}
+    for title in body.policies:
+        doc = {"policy_id": _uid("pol"), "title": title, "client_id": body.client_id,
+               "version": "1.0", "status": "draft", "owner_id": user["user_id"],
+               "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"]}
+        await db.policies.insert_one(doc)
+        created["policies"] += 1
+    for title in body.risks:
+        doc = {"risk_id": _uid("rsk"), "title": title, "client_id": body.client_id,
+               "category": "operational", "likelihood": "medium", "impact": "medium",
+               "status": "identified", "owner_id": user["user_id"],
+               "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"]}
+        await db.risks.insert_one(doc)
+        created["risks"] += 1
+    for rv in body.reviews:
+        due_days = int(rv.get("due_days", 30))
+        doc = {
+            "review_id": _uid("rev"),
+            "title": rv.get("title") or "Review",
+            "review_type": rv.get("review_type") or "asset",
+            "client_id": body.client_id,
+            "status": "planned",
+            "recurrence": rv.get("recurrence") or "quarterly",
+            "owner_id": user["user_id"],
+            "due_date": (datetime.now(timezone.utc) + timedelta(days=due_days)).isoformat(),
+            "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"],
+        }
+        await db.reviews.insert_one(doc)
+        created["reviews"] += 1
+    await audit(user, "baseline", "client", body.client_id, body.client_id, meta=created)
+    return {"ok": True, "created": created}
+
+
+# Register routers LAST so all @api.* and @entity_router.* routes are attached.
+app.include_router(api)
 app.include_router(entity_router)
+
 
 app.add_middleware(
     CORSMiddleware,

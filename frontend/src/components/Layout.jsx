@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, Server, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Check
+  LogOut, Check, ShieldOff, Sparkles
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -16,11 +16,13 @@ const NAV = [
   { to: "/reviews", label: "Reviews", icon: ClipboardCheck, testid: "nav-reviews" },
   { to: "/findings", label: "Findings", icon: AlertOctagon, testid: "nav-findings" },
   { to: "/risks", label: "Risks", icon: ShieldAlert, testid: "nav-risks" },
+  { to: "/exceptions", label: "Exceptions", icon: ShieldOff, testid: "nav-exceptions" },
   { to: "/policies", label: "Policies", icon: FileText, testid: "nav-policies" },
   { to: "/vendors", label: "Vendors", icon: Building2, testid: "nav-vendors" },
   { to: "/assets", label: "Assets", icon: Server, testid: "nav-assets" },
   { to: "/tasks", label: "Tasks", icon: ListChecks, testid: "nav-tasks" },
   { to: "/evidence", label: "Evidence", icon: FolderArchive, testid: "nav-evidence" },
+  { to: "/onboarding", label: "Baseline", icon: Sparkles, testid: "nav-onboarding" },
   { to: "/audit", label: "Audit Log", icon: ScrollText, testid: "nav-audit" },
 ];
 

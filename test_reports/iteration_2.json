@@ -1,0 +1,39 @@
+{
+  "summary": "Iteration 2 (Northstar GRC) — full backend + frontend E2E for new features. 31/31 pytest tests passed (11 new + 20 regression). Backend verified: /api/baseline/templates shape (8 policies, 6 risks, 6 review_templates with title/review_type/recurrence/due_days); /api/baseline POST creates policies/risks/reviews and returns {ok, created:{...}}; /api/exceptions full CRUD (GET/POST/PATCH/DELETE) plus cross-tenant 403; /api/reviews/{id}/create-finding links finding.review_id; /api/findings/{id}/create-task links task.finding_id and flips finding.status from 'open' -> 'in_remediation'; /api/related returns object with reviews/findings/tasks/risks/exceptions/evidence keys and populates findings after Review->Finding; /api/cron/overdue-reminders returns 401 without auth, 401 with wrong secret, 200 with Bearer WEBHOOK_CRON_SECRET; /api/reminders/send-now 200 for super_admin, 403 for client_readonly. Regression suite (auth, clients, dashboard, reviews CRUD, generic entities GET/POST for findings/risks/policies/vendors/assets/tasks, evidence upload/list/download/delete, comments, audit-logs, tenant isolation, readonly role) all still green. Frontend Playwright E2E verified: sidebar has nav-exceptions and nav-onboarding; /exceptions renders with create-exceptions-button; /onboarding renders all 5 steps (tenant/policies/risks/reviews/review), Select-based onboarding-tenant works and onboarding-next advances through all steps, onboarding-create appears on the final step; opening a review row shows quick-create-finding which creates a finding + toast; opening a finding row shows quick-create-task which creates a task, shows toast 'Remediation task created and finding moved to In Remediation'; tab-related lists related reviews (1) and tasks (1) after quick actions.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "RecordDrawer date fields", "issues": ["Console warning: '<input type=date> value \"2026-10-04T15:33:34.381725+00:00\" does not conform to the required format yyyy-MM-dd' — date fields are being fed full ISO strings from the backend; slice to first 10 chars before binding to <input type=\"date\">."]},
+      {"screen": "RecordDrawer status after quick action", "issues": ["After clicking quick-create-task, the toast correctly says 'finding moved to In Remediation' but the drawer header still shows the old 'open' badge until reopened. Consider refetching the record (or optimistically updating) after quickCreateTask so the badge flips to in_remediation immediately."]},
+      {"screen": "Radix Dialog", "issues": ["Console warning: 'Missing Description or aria-describedby for DialogContent' on drawer/dialog — a11y-only, add DialogDescription or aria-describedby."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_iteration2.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(cosmetic) Slice ISO datetime -> yyyy-MM-dd when binding to <input type=\"date\"> in RecordDrawer to remove console warning.",
+    "(minor UX) After quickCreateTask, refetch/patch the drawer's local record so the finding status badge updates from 'open' to 'in_remediation' without reopening.",
+    "(a11y) Add DialogDescription / aria-describedby to Sheet/Dialog content to silence Radix warning."
+  ],
+  "critical_code_review_comments": [
+    "server.py has grown to 1149 lines. Split into modules (auth, entities, quick_actions, baseline, email/cron) before it becomes unmaintainable.",
+    "CORS uses allow_origins=['*'] with allow_credentials=False; the login endpoint still calls set_cookie which cannot be sent cross-site under these CORS settings. Frontend uses Bearer token so functionally fine, but remove/document the misleading Set-Cookie or switch to credentialed CORS with explicit origins.",
+    "cron/overdue-reminders launches asyncio.create_task(_send_overdue_digest()) with no error trapping around the fire-and-forget task; unhandled exceptions inside will be swallowed. Wrap the coroutine body in try/except with logging.",
+    "review->create-finding and finding->create-task accept body as Dict[str, Any] without a Pydantic model; add a small model to validate severity/priority enums and prevent typos silently persisting.",
+    "_send_overdue_digest joins by owner_id but skips items with no owner. Consider a fallback (e.g., notify tenant admins) so ownerless overdue items aren't invisible.",
+    "No rate-limit / brute-force lockout on /api/auth/login (playbook recommends N-fail lockout). Not blocking but should be logged as tech debt."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration2.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "See /app/memory/test_credentials.md — used robbashea@gmail.com/Admin@2026, readonly@acme.demo/Demo@2026, contributor@globex.demo/Demo@2026. WEBHOOK_CRON_SECRET read from /app/backend/.env.",
+  "seed_data_creation": "Test data prefixed with 'TEST_' created by the baseline POST test (2 policies, 1 risk, 1 review) and by quick-action tests (findings, tasks). Left in DB intentionally as it exercises Related and downstream flows; can be pruned by name prefix if needed.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 2 shipped baseline, exceptions, quick-actions (review->finding, finding->task), related endpoint, cron overdue-reminders, manual reminders/send-now. All 31 pytest tests pass and full frontend flow verified. Regression file /app/backend/tests/backend_test.py + new /app/backend/tests/test_iteration2.py = 31 tests; reuse for future iterations. Only remaining items are cosmetic/a11y (date input format, drawer status refresh after quick action, DialogDescription).",
+  "rca of the issue": "N/A — no functional issues detected."
+}

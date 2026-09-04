@@ -203,4 +203,27 @@ export const SCHEMAS = {
       { name: "description", label: "Description", type: "textarea" },
     ],
   },
+  exceptions: {
+    title: "Exceptions",
+    subtitle: "Risk acceptances and control exceptions with expiry, linked to risks and findings.",
+    columns: [
+      { key: "title", label: "Exception", primary: true },
+      { key: "status", label: "Status", badge: true },
+      { key: "expires_at", label: "Expires", date: true },
+    ],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "status", label: "Status", type: "select", options: [
+        { value: "requested", label: "Requested" }, { value: "approved", label: "Approved" },
+        { value: "expired", label: "Expired" }, { value: "revoked", label: "Revoked" },
+      ]},
+      { name: "owner_id", label: "Owner", type: "user" },
+      { name: "approver_id", label: "Approver", type: "user" },
+      { name: "expires_at", label: "Expiry date", type: "date" },
+      { name: "risk_id", label: "Linked risk ID" },
+      { name: "finding_id", label: "Linked finding ID" },
+      { name: "justification", label: "Business justification", type: "textarea" },
+      { name: "compensating_controls", label: "Compensating controls", type: "textarea" },
+    ],
+  },
 };

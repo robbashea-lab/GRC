@@ -8,12 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import api, { formatError } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
-import { X } from "lucide-react";
+import { X, ArrowUpRight, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
-/**
- * Reusable slide-over drawer for creating & editing records.
- * schema: array of { name, label, type: 'text'|'textarea'|'date'|'select', options?: [{value,label}], required? }
- */
+const ID_FIELD = {
+  reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
+  vendors: "vendor_id", assets: "asset_id", tasks: "task_id", exceptions: "exception_id",
+};
+
 export default function RecordDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -21,29 +23,32 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [activity, setActivity] = useState([]);
+  const [related, setRelated] = useState({});
   const isEdit = !!record;
+  const idField = ID_FIELD[kind];
 
   useEffect(() => {
     if (open) {
       const base = {};
-      schema.forEach((f) => (base[f.name] = record?.[f.name] ?? f.default ?? ""));
+      schema.forEach((f) => {
+        let v = record?.[f.name] ?? f.default ?? "";
+        // <input type="date"> requires yyyy-MM-dd; incoming values may be full ISO strings.
+        if (f.type === "date" && typeof v === "string" && v.length > 10) v = v.slice(0, 10);
+        base[f.name] = v;
+      });
       base.client_id = record?.client_id || clientId;
       setForm(base);
       setTab("overview");
       if (isEdit) {
         loadComments();
         loadActivity();
+        loadRelated();
       } else {
-        setComments([]); setActivity([]);
+        setComments([]); setActivity([]); setRelated({});
       }
     }
     // eslint-disable-next-line
   }, [open, record]);
-
-  const idField = {
-    reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
-    vendors: "vendor_id", assets: "asset_id", tasks: "task_id",
-  }[kind];
 
   async function loadComments() {
     try {
@@ -57,15 +62,24 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       setActivity(data.filter((a) => a.entity_id === record[idField]).slice(0, 30));
     } catch (e) { void e; }
   }
+  async function loadRelated() {
+    try {
+      const { data } = await api.get("/related", { params: { entity_type: kind, entity_id: record[idField] } });
+      setRelated(data);
+    } catch (e) { void e; }
+  }
 
   async function save() {
     setSaving(true);
     try {
+      // Coerce __none__ into null for user selects
+      const clean = {};
+      Object.entries(form).forEach(([k, v]) => { clean[k] = v === "__none__" ? null : v; });
       if (isEdit) {
-        await api.patch(`/${kind}/${record[idField]}`, form);
+        await api.patch(`/${kind}/${record[idField]}`, clean);
         toast.success("Saved");
       } else {
-        await api.post(`/${kind}`, form);
+        await api.post(`/${kind}`, clean);
         toast.success("Created");
       }
       onSaved?.();
@@ -86,6 +100,29 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     } catch (e) { toast.error(formatError(e)); }
   }
 
+  async function quickCreateFinding() {
+    try {
+      await api.post(`/reviews/${record[idField]}/create-finding`, { title: `Finding from: ${record.title}`, severity: "medium" });
+      toast.success("Finding created and linked to this review");
+      onSaved?.();
+      loadRelated();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
+  async function quickCreateTask() {
+    try {
+      await api.post(`/findings/${record[idField]}/create-task`, {});
+      toast.success("Remediation task created and finding moved to In Remediation");
+      // Optimistically reflect the status flip in this drawer's header + form
+      if (record) record.status = "in_remediation";
+      setForm((prev) => ({ ...prev, status: "in_remediation" }));
+      onSaved?.();
+      loadRelated();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
+  const relatedTotal = Object.values(related).reduce((a, b) => a + (b?.length || 0), 0);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col" data-testid={`${kind}-drawer`}>
@@ -102,9 +139,9 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
           </div>
           {isEdit && (
             <div className="flex gap-1 mt-3 -mb-3">
-              {["overview", "comments", "activity"].map((t) => (
+              {["overview", "related", "comments", "activity"].map((t) => (
                 <button key={t} onClick={() => setTab(t)} className={`drawer-tab ${tab === t ? "active" : ""}`} data-testid={`tab-${t}`}>
-                  {t[0].toUpperCase() + t.slice(1)}
+                  {t === "related" ? `Related${relatedTotal ? ` (${relatedTotal})` : ""}` : t[0].toUpperCase() + t.slice(1)}
                 </button>
               ))}
             </div>
@@ -114,6 +151,18 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {tab === "overview" && (
             <div className="space-y-4">
+              {isEdit && kind === "reviews" && (
+                <div className="border border-emerald-200 bg-emerald-50/50 rounded-md p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-emerald-800"><Zap className="h-4 w-4" /> Raise a finding from this review</div>
+                  <Button size="sm" variant="outline" onClick={quickCreateFinding} data-testid="quick-create-finding">Create finding</Button>
+                </div>
+              )}
+              {isEdit && kind === "findings" && (
+                <div className="border border-blue-200 bg-blue-50/50 rounded-md p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-blue-800"><Zap className="h-4 w-4" /> Assign remediation work</div>
+                  <Button size="sm" variant="outline" onClick={quickCreateTask} data-testid="quick-create-task">Create remediation task</Button>
+                </div>
+              )}
               {schema.map((f) => (
                 <div key={f.name} className="space-y-1.5">
                   <Label className="text-xs text-slate-600">{f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}</Label>
@@ -127,7 +176,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
                       </SelectContent>
                     </Select>
                   ) : f.type === "user" ? (
-                    <Select value={form[f.name] || ""} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
+                    <Select value={form[f.name] || "__none__"} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
                       <SelectTrigger data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Assign…" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Unassigned</SelectItem>
@@ -138,6 +187,30 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
                     <Input type={f.type || "text"} value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} data-testid={`field-${f.name}`} className="text-sm" />
                   )}
                 </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "related" && (
+            <div className="space-y-5">
+              {relatedTotal === 0 && <div className="text-sm text-slate-500">No related records yet.</div>}
+              {Object.entries(related).map(([k, list]) => (
+                (list && list.length > 0) ? (
+                  <div key={k}>
+                    <Link to={`/${k}`} className="text-[10px] font-mono uppercase tracking-widest text-slate-500 hover:text-slate-900 flex items-center gap-1">{k} <ArrowUpRight className="h-3 w-3" /></Link>
+                    <ul className="mt-1.5 space-y-1.5">
+                      {list.map((it) => (
+                        <li key={it[ID_FIELD[k]] || it.evidence_id} className="border border-slate-200 rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-slate-50" data-testid={`related-${k}-item`}>
+                          <div className="min-w-0">
+                            <div className="text-slate-900 font-medium truncate">{it.title || it.name || it.filename}</div>
+                            <div className="text-[11px] text-slate-500 font-mono">{it[ID_FIELD[k]] || it.evidence_id}</div>
+                          </div>
+                          {it.status && <StatusBadge value={it.status} />}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null
               ))}
             </div>
           )}
