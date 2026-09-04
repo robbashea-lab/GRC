@@ -25,7 +25,7 @@ const CLIENT_NAV = [
   { to: "/assets", label: "Assets", icon: Server, testid: "nav-assets" },
   { to: "/tasks", label: "Tasks", icon: ListChecks, testid: "nav-tasks" },
   { to: "/evidence", label: "Evidence", icon: FolderArchive, testid: "nav-evidence" },
-  { to: "/onboarding", label: "Baseline", icon: Sparkles, testid: "nav-onboarding" },
+  { to: "/onboarding", label: "Onboarding", icon: Sparkles, testid: "nav-onboarding" },
   { to: "/audit", label: "Audit Log", icon: ScrollText, testid: "nav-audit" },
 ];
 

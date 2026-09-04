@@ -6,24 +6,25 @@ import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import { CheckCircle2, ChevronRight, ChevronLeft, Sparkles, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const STEPS = ["Tenant", "Policies", "Risks", "Reviews", "Review & create"];
+// Tenant selection happens BEFORE entering onboarding (Client Directory → workspace).
+// This wizard always operates against the currently active client organization.
+const STEPS = ["Policies", "Risks", "Reviews", "Review & create"];
 
 export default function Onboarding() {
-  const { clients, currentClientId, switchClient } = useOrg();
+  const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
   const nav = useNavigate();
   const [step, setStep] = useState(0);
   const [templates, setTemplates] = useState(null);
-  const [selectedClient, setSelectedClient] = useState(currentClientId || "");
   const [policies, setPolicies] = useState([]);
   const [risks, setRisks] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const canRun = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
+  const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
 
   useEffect(() => {
     (async () => {
@@ -44,29 +45,67 @@ export default function Onboarding() {
   };
 
   async function create() {
-    if (!selectedClient) { toast.error("Pick a client tenant"); return; }
+    // The active client is the ONLY tenant this wizard can write to. Backend also
+    // re-verifies authorization via _can_access_client, so a tampered request is rejected.
+    if (!currentClientId) { toast.error("No active client selected"); return; }
     setSubmitting(true);
     try {
-      const { data } = await api.post("/baseline", { client_id: selectedClient, policies, risks, reviews });
-      toast.success(`Baseline created: ${data.created.policies} policies · ${data.created.risks} risks · ${data.created.reviews} reviews`);
-      switchClient(selectedClient);
-      nav("/");
+      const { data } = await api.post("/baseline", {
+        client_id: currentClientId,
+        policies, risks, reviews,
+      });
+      toast.success(`Onboarding complete: ${data.created.policies} policies · ${data.created.risks} risks · ${data.created.reviews} reviews`);
+      nav("/dashboard");
     } catch (e) {
       toast.error(formatError(e));
     } finally { setSubmitting(false); }
   }
 
   if (!canRun) {
-    return <div className="p-8"><PageHeader title="Baseline Assessment" subtitle="You need contributor access to run this wizard." /></div>;
+    return <div className="p-8"><PageHeader title="GRC Program Onboarding" subtitle="You need contributor access to run this wizard." /></div>;
   }
+
+  // Internal admins landing here without a client selected: guide them back to Clients.
+  if (!currentClientId) {
+    return (
+      <div>
+        <PageHeader
+          title="GRC Program Onboarding"
+          subtitle="Establish the client's initial GRC program, identify existing capabilities and gaps, and create the appropriate ongoing review schedule."
+        />
+        <div className="p-8 max-w-xl">
+          <div className="bg-surface-card border border-line rounded-lg p-6 text-center">
+            <Building2 className="h-8 w-8 text-ink-help mx-auto mb-3" />
+            <h2 className="text-base font-heading font-semibold text-ink-primary mb-1">Select a client organization first</h2>
+            <p className="text-sm text-ink-muted mb-4">Onboarding always operates within an active client workspace. Choose the client whose program you want to establish.</p>
+            {isInternal && (
+              <Button onClick={() => nav("/clients")} data-testid="onboarding-goto-clients">Open Client Directory</Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!templates) return <div className="p-8 text-sm text-slate-500">Loading templates…</div>;
 
   return (
     <div>
       <PageHeader
-        title="Baseline Assessment"
-        subtitle="Spin up a starter GRC program for a client — policies, risks and a recurring review calendar in one go."
+        title="GRC Program Onboarding"
+        subtitle="Establish the client's initial GRC program, identify existing capabilities and gaps, and create the appropriate ongoing review schedule."
       />
+      <div className="px-8 pt-4">
+        <div
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-line bg-surface-card text-sm text-ink-primary"
+          data-testid="onboarding-active-tenant"
+        >
+          <Building2 className="h-3.5 w-3.5 text-ink-secondary" />
+          <span className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Active client</span>
+          <span className="text-ink-help">·</span>
+          <span className="font-medium">{currentClient?.name || "Loading…"}</span>
+        </div>
+      </div>
       <div className="p-8 max-w-4xl">
         <ol className="flex items-center gap-2 mb-8 text-xs font-mono uppercase tracking-widest">
           {STEPS.map((s, i) => (
@@ -80,19 +119,6 @@ export default function Onboarding() {
 
         <div className="bg-white border border-slate-200 rounded-lg p-6">
           {step === 0 && (
-            <div className="space-y-4" data-testid="onboarding-step-tenant">
-              <h2 className="text-lg font-heading font-semibold">Which client are we onboarding?</h2>
-              <p className="text-sm text-slate-500">The baseline templates below will be created inside this tenant. You can edit or remove anything after.</p>
-              <Select value={selectedClient} onValueChange={setSelectedClient}>
-                <SelectTrigger data-testid="onboarding-tenant" className="w-96"><SelectValue placeholder="Choose tenant" /></SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => <SelectItem key={c.client_id} value={c.client_id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {step === 1 && (
             <div className="space-y-4" data-testid="onboarding-step-policies">
               <h2 className="text-lg font-heading font-semibold">Starter policies</h2>
               <p className="text-sm text-slate-500">Pick the policies that should exist in draft form so owners can adopt them.</p>
@@ -107,7 +133,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 1 && (
             <div className="space-y-4" data-testid="onboarding-step-risks">
               <h2 className="text-lg font-heading font-semibold">Starter risk register</h2>
               <p className="text-sm text-slate-500">Seed the risk register with typical enterprise risks. You can tune likelihood/impact per client after.</p>
@@ -122,7 +148,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <div className="space-y-4" data-testid="onboarding-step-reviews">
               <h2 className="text-lg font-heading font-semibold">Recurring review calendar</h2>
               <p className="text-sm text-slate-500">These reviews will be scheduled with a first due date, then repeat automatically at the cadence shown.</p>
@@ -140,9 +166,9 @@ export default function Onboarding() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             <div className="space-y-4" data-testid="onboarding-step-review">
-              <h2 className="text-lg font-heading font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-emerald-500" /> Ready to create baseline</h2>
+              <h2 className="text-lg font-heading font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-emerald-500" /> Ready to establish {currentClient?.name}'s program</h2>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div className="border border-slate-200 rounded-md p-3">
                   <div className="text-[11px] font-mono uppercase tracking-widest text-slate-500">Policies</div>
@@ -157,7 +183,7 @@ export default function Onboarding() {
                   <div className="text-2xl font-heading">{reviews.length}</div>
                 </div>
               </div>
-              <p className="text-xs text-slate-500">Client tenant: <span className="font-medium text-slate-700">{clients.find((c) => c.client_id === selectedClient)?.name}</span></p>
+              <p className="text-xs text-slate-500">These records will be created in <span className="font-medium text-slate-700">{currentClient?.name}</span>.</p>
             </div>
           )}
 
@@ -166,12 +192,12 @@ export default function Onboarding() {
               <ChevronLeft className="h-4 w-4 mr-1" /> Back
             </Button>
             {step < STEPS.length - 1 ? (
-              <Button onClick={() => setStep(step + 1)} disabled={step === 0 && !selectedClient} data-testid="onboarding-next">
+              <Button onClick={() => setStep(step + 1)} data-testid="onboarding-next">
                 Next <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
               <Button onClick={create} disabled={submitting} data-testid="onboarding-create">
-                <CheckCircle2 className="h-4 w-4 mr-1" /> {submitting ? "Creating…" : "Create baseline"}
+                <CheckCircle2 className="h-4 w-4 mr-1" /> {submitting ? "Creating…" : `Complete onboarding for ${currentClient?.name || "client"}`}
               </Button>
             )}
           </div>

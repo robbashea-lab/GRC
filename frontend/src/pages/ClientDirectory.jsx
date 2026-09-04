@@ -451,7 +451,7 @@ function AddClientDialog({ open, onOpenChange, onCreated }) {
       <DialogContent className="max-w-lg" data-testid="add-client-dialog">
         <DialogHeader>
           <DialogTitle>Add client organization</DialogTitle>
-          <DialogDescription>Create a new tenant. You can complete baseline configuration after creation.</DialogDescription>
+          <DialogDescription>Create a new tenant. You can walk through GRC Program Onboarding right after creation.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3.5 py-2">
           <div>

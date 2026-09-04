@@ -36,6 +36,14 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 ### v6
 - **Session Invalidation on password reset** — JWTs now carry `iat`; `password_changed_at` on user rejects any JWT issued before the reset; all rows in `db.sessions` for the user are deleted on reset (Emergent Google OAuth cookies); reset response returns `sessions_revoked`
 
+### v11 (Baseline → GRC Program Onboarding, auto-scoped to active client) — Sep 2026
+- **Renamed** sidebar "Baseline" → **"Onboarding"**; page title "Baseline Assessment" → **"GRC Program Onboarding"** with subtitle "Establish the client's initial GRC program, identify existing capabilities and gaps, and create the appropriate ongoing review schedule."
+- **Removed the tenant-selection step** from the wizard. Onboarding now operates against `currentClientId` from `OrgContext` and never lists other tenants (previously showed `clients.map(...)` inside the first step).
+- **Active tenant chip** shown at the top of the page (informational, non-editable): `ACTIVE CLIENT · <Client Name>`.
+- **Wizard steps**: `Policies → Risks → Reviews → Review & create` (4 steps instead of 5).
+- **Empty-state guard**: internal admins landing on `/onboarding` without a selected client see a friendly "Select a client first" panel with a button to the Client Directory.
+- **Tenant isolation regression verified**: contributor's `GET /api/clients` returns ONLY Acme; the DOM contains no "Globex" reference; contributor `POST /api/baseline` with a spoofed Globex `client_id` → **403** (server-side `_can_access_client` guard).
+
 ### v10 (Weekly "My Work" digest email) — Sep 2026
 - **New cron `weekly-my-work`** in `.emergent/crons.yml` — Mondays 08:00 UTC → `POST /api/cron/weekly-my-work` (bearer-auth via `WEBHOOK_CRON_SECRET`; acks 2xx in <200ms and enqueues the send loop as an asyncio task).
 - **Personalized digest**: for every non-opted-out user we compute their **primary-owned** open items grouped into Overdue and Due-in-next-7-days across `reviews` (owner/reviewer), `tasks` (assignee/owner) and `findings` (owner). Users with zero items are silently skipped — no noise emails.
