@@ -38,6 +38,9 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   const [dragOver, setDragOver] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [acceptOpen, setAcceptOpen] = useState(false);
+  const [acceptForm, setAcceptForm] = useState({ rationale: "", expiry_date: "", approver_id: "", compensating_controls: "" });
+  const [approverQuery, setApproverQuery] = useState("");
   const inputRef = useRef(null);
   const { user } = useAuth();
   const isEdit = !!record;
@@ -175,17 +178,22 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     } catch (e) { toast.error(formatError(e)); }
   }
 
-  async function acceptRisk() {
-    const rationale = prompt("Acceptance rationale (required):");
-    if (!rationale) return;
-    const expiry = prompt("Review / expiry date (YYYY-MM-DD, optional):") || "";
+  async function acceptRisk() { setAcceptOpen(true); }
+
+  async function submitAcceptRisk() {
+    if (!acceptForm.rationale.trim()) { toast.error("Rationale is required"); return; }
     try {
-      const body = { rationale };
-      if (expiry) body.expiry_date = new Date(expiry).toISOString();
+      const body = {
+        rationale: acceptForm.rationale,
+        approver_id: acceptForm.approver_id || undefined,
+        compensating_controls: acceptForm.compensating_controls || undefined,
+      };
+      if (acceptForm.expiry_date) body.expiry_date = new Date(acceptForm.expiry_date).toISOString();
       const { data } = await api.post(`/risks/${record[idField]}/accept`, body);
       toast.success("Risk accepted");
       if (record) Object.assign(record, data);
       setForm((p) => ({ ...p, status: "accepted", treatment: "accept" }));
+      setAcceptOpen(false);
       onSaved?.();
     } catch (e) { toast.error(formatError(e)); }
   }
@@ -523,6 +531,87 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
           )}
         </div>
       </SheetContent>
+
+      {/* Accept Risk dialog — proper approver picker + expiry date */}
+      {kind === "risks" && (
+        <Sheet open={acceptOpen} onOpenChange={setAcceptOpen}>
+          <SheetContent side="right" className="w-full sm:max-w-md p-0" data-testid="accept-risk-dialog">
+            <SheetHeader className="px-6 py-4 border-b border-line">
+              <SheetTitle>Accept risk</SheetTitle>
+            </SheetHeader>
+            <div className="p-6 space-y-4">
+              <div>
+                <Label className="text-xs text-ink-secondary">Rationale <span className="text-semantic-critical">*</span></Label>
+                <Textarea
+                  data-testid="accept-rationale"
+                  value={acceptForm.rationale}
+                  onChange={(e) => setAcceptForm({ ...acceptForm, rationale: e.target.value })}
+                  placeholder="Why is management accepting this risk?"
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-ink-secondary">Approver</Label>
+                <div className="relative">
+                  <Input
+                    value={approverQuery || (users.find((u) => u.user_id === acceptForm.approver_id)?.name || users.find((u) => u.user_id === acceptForm.approver_id)?.email || "")}
+                    onChange={(e) => { setApproverQuery(e.target.value); setAcceptForm({ ...acceptForm, approver_id: "" }); }}
+                    placeholder="Search users…"
+                    className="text-sm"
+                    data-testid="accept-approver-search"
+                  />
+                  {approverQuery && !acceptForm.approver_id && (
+                    <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-surface-card border border-line rounded-md shadow-lg" data-testid="approver-suggestions">
+                      {users
+                        .filter((u) => (u.name || u.email || "").toLowerCase().includes(approverQuery.toLowerCase()))
+                        .slice(0, 8)
+                        .map((u) => (
+                          <button
+                            key={u.user_id}
+                            onClick={() => { setAcceptForm({ ...acceptForm, approver_id: u.user_id }); setApproverQuery(""); }}
+                            data-testid={`approver-option-${u.user_id}`}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle"
+                          >
+                            <div className="text-ink-primary">{u.name || u.email}</div>
+                            <div className="text-[11px] text-ink-help">{(u.role || "").replace("_", " ")}</div>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-ink-secondary">Review / expiry date</Label>
+                <Input
+                  type="date"
+                  data-testid="accept-expiry"
+                  value={acceptForm.expiry_date}
+                  onChange={(e) => setAcceptForm({ ...acceptForm, expiry_date: e.target.value })}
+                  className="text-sm"
+                />
+                <div className="text-[11px] text-ink-help mt-1">The risk will reappear in "Due for Review" as this date approaches.</div>
+              </div>
+              <div>
+                <Label className="text-xs text-ink-secondary">Compensating controls (optional)</Label>
+                <Textarea
+                  data-testid="accept-controls"
+                  value={acceptForm.compensating_controls}
+                  onChange={(e) => setAcceptForm({ ...acceptForm, compensating_controls: e.target.value })}
+                  rows={2}
+                  className="text-sm"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setAcceptOpen(false)}>Cancel</Button>
+                <Button size="sm" onClick={submitAcceptRisk} data-testid="accept-submit" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+                  Accept risk
+                </Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </Sheet>
   );
 }

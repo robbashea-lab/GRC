@@ -422,7 +422,20 @@ export default function RecordListPage({ kind }) {
                       ) :
                        c.user ? (row[c.key] ? <span className="text-slate-700">{userMap[row[c.key]] || row[c.key]}</span> : <span className="text-slate-300">—</span>) :
                        c.date ? (row[c.key] ? <span className="font-mono text-slate-600">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-slate-300">—</span>) :
-                       (row[c.key] || <span className="text-slate-300">—</span>)}
+                       (
+                         <span className="inline-flex items-center gap-2">
+                           <span>{row[c.key] || <span className="text-slate-300">—</span>}</span>
+                           {c.primary && kind === "findings" && row.risk_id && (
+                             <span
+                               className="inline-flex items-center px-1.5 py-0 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-[10px] font-mono uppercase tracking-widest"
+                               data-testid={`finding-risk-chip-${i}`}
+                               title={`Linked to risk ${row.risk_id}`}
+                             >
+                               → Risk
+                             </span>
+                           )}
+                         </span>
+                       )}
                     </td>
                   ))}
                   <td className="tbl-cell text-right" onClick={(e) => e.stopPropagation()}>

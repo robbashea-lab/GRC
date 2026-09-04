@@ -2039,6 +2039,7 @@ def _weekly_html(user_name: str, buckets: Dict[str, Dict[str, List[Dict]]], app_
             [row(x, "Review", tone) for x in items_map.get("reviews", [])]
             + [row(x, "Task", tone) for x in items_map.get("tasks", [])]
             + [row(x, "Finding", tone) for x in items_map.get("findings", [])]
+            + [row(x, "Risk", tone) for x in items_map.get("risks", [])]
         )
         return (
             f'<h3 style="margin:18px 0 8px 0;font-family:Arial,sans-serif;font-size:14px;color:#0f172a">{escape(title)} <span style="color:#94a3b8;font-weight:normal">· {total}</span></h3>'
@@ -2052,15 +2053,17 @@ def _weekly_html(user_name: str, buckets: Dict[str, Dict[str, List[Dict]]], app_
 
     overdue_total = sum(len(v) for v in buckets["overdue"].values())
     duesoon_total = sum(len(v) for v in buckets["due_soon"].values())
-    total = overdue_total + duesoon_total
+    reassess_total = sum(len(v) for v in buckets.get("reassess", {}).values())
+    total = overdue_total + duesoon_total + reassess_total
     dashboard_link = f'{app_base_url}/dashboard' if app_base_url else "https://app.example.com/dashboard"
     return (
         f'<table role="presentation" width="100%" style="max-width:640px;margin:auto">'
         f'<tr><td style="padding:24px;font-family:Arial,sans-serif">'
         f'<h2 style="margin:0 0 4px 0;font-family:Arial,sans-serif;color:#0f172a;font-size:20px">Your GRC work this week</h2>'
-        f'<p style="margin:0 0 16px 0;color:#475569;font-size:14px">Good morning {escape(user_name)}. You have <strong>{total}</strong> item(s) that need attention this week: <strong>{overdue_total}</strong> overdue and <strong>{duesoon_total}</strong> due in the next 7 days.</p>'
+        f'<p style="margin:0 0 16px 0;color:#475569;font-size:14px">Good morning {escape(user_name)}. You have <strong>{total}</strong> item(s) that need attention this week: <strong>{overdue_total}</strong> overdue, <strong>{duesoon_total}</strong> due in the next 7 days, and <strong>{reassess_total}</strong> risk(s) to reassess.</p>'
         f'{section("Overdue", buckets["overdue"], "overdue")}'
         f'{section("Due in the next 7 days", buckets["due_soon"], "duesoon")}'
+        f'{section("Risks to reassess (>12 months since last review)", buckets.get("reassess", {}), "duesoon")}'
         f'<p style="margin:20px 0 0 0;font-size:13px;color:#475569">Open your dashboard: <a href="{escape(dashboard_link)}" style="color:#0f172a;text-decoration:underline">{escape(dashboard_link)}</a></p>'
         f'<p style="margin:12px 0 0 0;font-size:11px;color:#94a3b8">Sent by Northstar GRC. We never ask for passwords or codes by email. To stop receiving this digest, ask your admin to update your notification preferences.</p>'
         f'</td></tr></table>'
@@ -2127,9 +2130,22 @@ async def _send_weekly_digest() -> Dict:
             "due_date": {"$gte": now_iso, "$lte": horizon_iso},
         }, {"_id": 0, "finding_id": 1, "title": 1, "due_date": 1, "status": 1, "severity": 1}).sort("due_date", 1).to_list(50)
 
+        # Reassess digest: risks owned by this user with last_reviewed (fallback to date_identified)
+        # older than 12 months and still open.
+        twelve_months_ago = (now_dt - timedelta(days=365)).isoformat()
+        candidate_risks = await db.risks.find({
+            "owner_id": uid,
+            "status": {"$nin": ["closed"]},
+        }, {"_id": 0, "risk_id": 1, "title": 1, "risk_level": 1, "last_reviewed": 1, "date_identified": 1, "created_at": 1}).to_list(200)
+        stale_risks = [r for r in candidate_risks
+                       if (r.get("last_reviewed") or r.get("date_identified") or r.get("created_at") or "") < twelve_months_ago]
+        for r in stale_risks:
+            r["due_date"] = r.get("last_reviewed") or r.get("date_identified") or r.get("created_at")
+
         buckets = {
             "overdue": {"reviews": reviews_od, "tasks": tasks_od, "findings": findings_od},
             "due_soon": {"reviews": reviews_ds, "tasks": tasks_ds, "findings": findings_ds},
+            "reassess": {"risks": stale_risks},
         }
         total = sum(len(v) for section in buckets.values() for v in section.values())
         if total == 0:
