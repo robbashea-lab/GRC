@@ -6,3 +6,11 @@ crons:
     method: POST
     # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
     enabled: true
+  - name: weekly-my-work
+    description: "Monday 8am UTC: emails each assignee a digest of overdue and due-soon items"
+    # Day-of-week is numeric 0-6 with 0=Sunday, so Monday is 1.
+    cron: "0 8 * * 1"
+    endpoint: "{{BASE_URL}}/api/cron/weekly-my-work"
+    method: POST
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    enabled: true

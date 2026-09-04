@@ -1586,6 +1586,165 @@ async def reminders_send_now(user: Dict = Depends(get_current_user)):
     return {"ok": True}
 
 
+# ---------------- Weekly "My Work" digest ----------------
+def _weekly_html(user_name: str, buckets: Dict[str, Dict[str, List[Dict]]], app_base_url: str) -> str:
+    """buckets = {'overdue': {...}, 'due_soon': {...}} where each inner dict has
+    'reviews' / 'tasks' / 'findings' lists."""
+    def row(item, kind, tone):
+        title = escape(item.get("title") or item.get("name") or "")
+        due = escape(item.get("due_date", "")[:10] if item.get("due_date") else "—")
+        color = "#b91c1c" if tone == "overdue" else "#b45309"
+        return (
+            f'<tr>'
+            f'<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:13px;color:#0f172a">{escape(kind)}</td>'
+            f'<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:13px;color:#0f172a">{title}</td>'
+            f'<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:13px;color:{color};white-space:nowrap">{due}</td>'
+            f'</tr>'
+        )
+
+    def section(title: str, items_map: Dict[str, List[Dict]], tone: str) -> str:
+        total = sum(len(v) for v in items_map.values())
+        if total == 0:
+            return ""
+        rows = "".join(
+            [row(x, "Review", tone) for x in items_map.get("reviews", [])]
+            + [row(x, "Task", tone) for x in items_map.get("tasks", [])]
+            + [row(x, "Finding", tone) for x in items_map.get("findings", [])]
+        )
+        return (
+            f'<h3 style="margin:18px 0 8px 0;font-family:Arial,sans-serif;font-size:14px;color:#0f172a">{escape(title)} <span style="color:#94a3b8;font-weight:normal">· {total}</span></h3>'
+            f'<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #e5e7eb">'
+            f'<thead><tr style="background:#f8fafc">'
+            f'<th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Type</th>'
+            f'<th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Title</th>'
+            f'<th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Due</th>'
+            f'</tr></thead><tbody>{rows}</tbody></table>'
+        )
+
+    overdue_total = sum(len(v) for v in buckets["overdue"].values())
+    duesoon_total = sum(len(v) for v in buckets["due_soon"].values())
+    total = overdue_total + duesoon_total
+    dashboard_link = f'{app_base_url}/dashboard' if app_base_url else "https://app.example.com/dashboard"
+    return (
+        f'<table role="presentation" width="100%" style="max-width:640px;margin:auto">'
+        f'<tr><td style="padding:24px;font-family:Arial,sans-serif">'
+        f'<h2 style="margin:0 0 4px 0;font-family:Arial,sans-serif;color:#0f172a;font-size:20px">Your GRC work this week</h2>'
+        f'<p style="margin:0 0 16px 0;color:#475569;font-size:14px">Good morning {escape(user_name)}. You have <strong>{total}</strong> item(s) that need attention this week: <strong>{overdue_total}</strong> overdue and <strong>{duesoon_total}</strong> due in the next 7 days.</p>'
+        f'{section("Overdue", buckets["overdue"], "overdue")}'
+        f'{section("Due in the next 7 days", buckets["due_soon"], "duesoon")}'
+        f'<p style="margin:20px 0 0 0;font-size:13px;color:#475569">Open your dashboard: <a href="{escape(dashboard_link)}" style="color:#0f172a;text-decoration:underline">{escape(dashboard_link)}</a></p>'
+        f'<p style="margin:12px 0 0 0;font-size:11px;color:#94a3b8">Sent by Northstar GRC. We never ask for passwords or codes by email. To stop receiving this digest, ask your admin to update your notification preferences.</p>'
+        f'</td></tr></table>'
+    )
+
+
+async def _send_weekly_digest() -> Dict:
+    """Iterate all users; for each, compute their primary-owned overdue + due-soon items and email
+    a personalized digest. Skips users with no open work or opted out via weekly_digest_optout."""
+    now_dt = datetime.now(timezone.utc)
+    now_iso = now_dt.isoformat()
+    horizon_iso = (now_dt + timedelta(days=7)).isoformat()
+    closed_review = ("completed", "cancelled")
+    closed_task = ("done", "cancelled")
+    open_finding = ("open", "in_remediation")
+
+    users = await db.users.find(
+        {"weekly_digest_optout": {"$ne": True}},
+        {"_id": 0, "password_hash": 0},
+    ).to_list(5000)
+
+    app_base_url = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
+    stats = {"users_considered": len(users), "emails_sent": 0, "users_empty": 0, "errors": 0}
+
+    for u in users:
+        uid = u.get("user_id")
+        email = u.get("email")
+        if not uid or not email:
+            continue
+
+        reviews_od = await db.reviews.find({
+            "$or": [{"owner_id": uid}, {"reviewer_id": uid}],
+            "status": {"$nin": list(closed_review)},
+            "due_date": {"$lt": now_iso},
+        }, {"_id": 0, "review_id": 1, "title": 1, "due_date": 1, "status": 1}).sort("due_date", 1).to_list(50)
+
+        reviews_ds = await db.reviews.find({
+            "$or": [{"owner_id": uid}, {"reviewer_id": uid}],
+            "status": {"$nin": list(closed_review)},
+            "due_date": {"$gte": now_iso, "$lte": horizon_iso},
+        }, {"_id": 0, "review_id": 1, "title": 1, "due_date": 1, "status": 1}).sort("due_date", 1).to_list(50)
+
+        tasks_od = await db.tasks.find({
+            "$or": [{"assignee_id": uid}, {"owner_id": uid}],
+            "status": {"$nin": list(closed_task)},
+            "due_date": {"$lt": now_iso},
+        }, {"_id": 0, "task_id": 1, "title": 1, "due_date": 1, "status": 1}).sort("due_date", 1).to_list(50)
+
+        tasks_ds = await db.tasks.find({
+            "$or": [{"assignee_id": uid}, {"owner_id": uid}],
+            "status": {"$nin": list(closed_task)},
+            "due_date": {"$gte": now_iso, "$lte": horizon_iso},
+        }, {"_id": 0, "task_id": 1, "title": 1, "due_date": 1, "status": 1}).sort("due_date", 1).to_list(50)
+
+        findings_od = await db.findings.find({
+            "owner_id": uid,
+            "status": {"$in": list(open_finding)},
+            "due_date": {"$lt": now_iso},
+        }, {"_id": 0, "finding_id": 1, "title": 1, "due_date": 1, "status": 1, "severity": 1}).sort("due_date", 1).to_list(50)
+
+        findings_ds = await db.findings.find({
+            "owner_id": uid,
+            "status": {"$in": list(open_finding)},
+            "due_date": {"$gte": now_iso, "$lte": horizon_iso},
+        }, {"_id": 0, "finding_id": 1, "title": 1, "due_date": 1, "status": 1, "severity": 1}).sort("due_date", 1).to_list(50)
+
+        buckets = {
+            "overdue": {"reviews": reviews_od, "tasks": tasks_od, "findings": findings_od},
+            "due_soon": {"reviews": reviews_ds, "tasks": tasks_ds, "findings": findings_ds},
+        }
+        total = sum(len(v) for section in buckets.values() for v in section.values())
+        if total == 0:
+            stats["users_empty"] += 1
+            continue
+
+        try:
+            html = _weekly_html(u.get("name") or email, buckets, app_base_url)
+            overdue_total = sum(len(v) for v in buckets["overdue"].values())
+            subject = (
+                f"Northstar GRC: {overdue_total} overdue and {total - overdue_total} due-soon this week"
+                if overdue_total else f"Northstar GRC: {total} item(s) due this week"
+            )
+            await send_email(to=email, subject=subject, html=html)
+            stats["emails_sent"] += 1
+        except Exception as e:
+            stats["errors"] += 1
+            logging.error("weekly digest failed for %s: %s", email, e)
+
+    logging.info("weekly digest: %s", stats)
+    return stats
+
+
+@app.post("/api/cron/weekly-my-work")
+async def cron_weekly_my_work(request: Request):
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    secret = os.environ.get("WEBHOOK_CRON_SECRET", "")
+    auth = request.headers.get("Authorization", "")
+    if not secret or not auth.startswith("Bearer ") or auth[7:] != secret:
+        raise HTTPException(401, "Unauthorized")
+    import asyncio
+    asyncio.create_task(_send_weekly_digest())
+    return {"ok": True}
+
+
+# Manual trigger for testing (admin only). Runs synchronously so the response includes stats.
+@api.post("/reminders/send-weekly-now")
+async def reminders_send_weekly_now(user: Dict = Depends(get_current_user)):
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Forbidden")
+    stats = await _send_weekly_digest()
+    return {"ok": True, "stats": stats}
+
+
 # ---------------- Reviews: recurrence helpers + complete endpoint ----------------
 _RECUR_MONTHS = {"monthly": 1, "quarterly": 3, "semiannual": 6, "annual": 12}
 

@@ -36,6 +36,13 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 ### v6
 - **Session Invalidation on password reset** — JWTs now carry `iat`; `password_changed_at` on user rejects any JWT issued before the reset; all rows in `db.sessions` for the user are deleted on reset (Emergent Google OAuth cookies); reset response returns `sessions_revoked`
 
+### v10 (Weekly "My Work" digest email) — Sep 2026
+- **New cron `weekly-my-work`** in `.emergent/crons.yml` — Mondays 08:00 UTC → `POST /api/cron/weekly-my-work` (bearer-auth via `WEBHOOK_CRON_SECRET`; acks 2xx in <200ms and enqueues the send loop as an asyncio task).
+- **Personalized digest**: for every non-opted-out user we compute their **primary-owned** open items grouped into Overdue and Due-in-next-7-days across `reviews` (owner/reviewer), `tasks` (assignee/owner) and `findings` (owner). Users with zero items are silently skipped — no noise emails.
+- **Email template** built server-side (table-based inline CSS, dashboard deep link, no forms/inputs) and shipped through the existing Emergent-managed Resend helper (`send_email` + `_assert_safe_email` gate).
+- **Opt-out**: `users.weekly_digest_optout = true` skips the send. No UI yet — admins can toggle in Mongo or via existing user PATCH; a preferences UI is on the backlog.
+- **Manual trigger** for testing: `POST /api/reminders/send-weekly-now` (super_admin / platform_admin) returns real stats (`users_considered`, `emails_sent`, `users_empty`, `errors`). Verified live: 4 emails sent, 1 empty, 0 errors.
+
 ### v9 (Dashboard View selector — Entire Org / My Work / Person / Unassigned) — Sep 2026
 - **`GET /api/dashboard`** gained `scope` (`org` | `mine` | `user` | `unassigned`) and `user_id` query params. The endpoint pre-filters `reviews / findings / risks / tasks / policies / vendors / exceptions` by the target user against **primary assignment fields only** (`_PRIMARY_OWNER_FIELDS`: `owner_id`, `assignee_id`, `reviewer_id`, `approver_id`) so every downstream KPI/panel naturally recomputes without duplicated logic. Response gained `scope`, `scope_label`, `target_user`.
 - **RBAC on scope**: `scope=user` viewing another user is 403 for client_contributor / client_readonly; `scope=unassigned` is restricted to `super_admin` / `platform_admin`; `scope=user` also verifies the target is a member of the currently viewed client.
