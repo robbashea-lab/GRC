@@ -114,7 +114,9 @@ class TestResetPassword:
             # Happy path
             r = requests.post(f"{API}/auth/reset-password", json={"token": raw, "new_password": "BrandNew2026!"}, timeout=30)
             assert r.status_code == 200, r.text
-            assert r.json() == {"ok": True}
+            body = r.json()
+            assert body.get("ok") is True
+            assert "sessions_revoked" in body  # iter6 contract
 
             # Login old password fails
             r_old = _login("contributor@acme.demo", "Demo@2026")

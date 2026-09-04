@@ -69,8 +69,9 @@ def verify_password(p: str, h: str) -> bool:
 
 # ---------------- JWT ----------------
 def create_access_token(user_id: str, email: str) -> str:
+    now = datetime.now(timezone.utc)
     payload = {"sub": user_id, "email": email, "type": "access",
-               "exp": datetime.now(timezone.utc) + timedelta(days=7)}
+               "iat": now, "exp": now + timedelta(days=7)}
     return jwt.encode(payload, _jwt_secret(), algorithm=JWT_ALGORITHM)
 
 
@@ -80,6 +81,25 @@ async def _get_user_from_token(token: str) -> Optional[Dict]:
         if payload.get("type") != "access":
             return None
         user = await db.users.find_one({"user_id": payload["sub"]}, {"_id": 0, "password_hash": 0})
+        if not user:
+            return None
+        # Invalidate tokens issued before the last password change.
+        pca = user.get("password_changed_at")
+        if pca:
+            if isinstance(pca, str):
+                try:
+                    pca_dt = datetime.fromisoformat(pca)
+                except ValueError:
+                    pca_dt = None
+            else:
+                pca_dt = pca
+            iat = payload.get("iat")
+            if pca_dt and iat is not None:
+                if pca_dt.tzinfo is None:
+                    pca_dt = pca_dt.replace(tzinfo=timezone.utc)
+                iat_dt = datetime.fromtimestamp(int(iat), tz=timezone.utc)
+                if iat_dt <= pca_dt:
+                    return None
         return user
     except jwt.PyJWTError:
         return None
@@ -442,9 +462,13 @@ async def reset_password_endpoint(body: ResetIn):
         exp = exp.replace(tzinfo=timezone.utc)
     if exp < datetime.now(timezone.utc):
         raise HTTPException(400, "Invalid or expired reset link")
-    await db.users.update_one({"user_id": rec["user_id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
+    await db.users.update_one({"user_id": rec["user_id"]},
+                              {"$set": {"password_hash": hash_password(body.new_password),
+                                        "password_changed_at": _now()}})
     await db.password_resets.update_one({"token_hash": token_hash}, {"$set": {"used": True, "used_at": _now()}})
-    return {"ok": True}
+    # Kill all existing OAuth sessions for this user so any stolen cookie stops working.
+    sessions_del = await db.sessions.delete_many({"user_id": rec["user_id"]})
+    return {"ok": True, "sessions_revoked": sessions_del.deleted_count}
 
 
 @api.post("/auth/logout")
@@ -697,6 +721,8 @@ async def seed():
     await db.clients.create_index("client_id", unique=True)
     for coll in ["reviews", "findings", "risks", "policies", "vendors", "assets", "tasks", "evidence"]:
         await db[coll].create_index("client_id")
+    await db.password_resets.create_index("token_hash", unique=True)
+    await db.sessions.create_index("session_token", unique=True)
 
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@example.com").lower()
     admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
