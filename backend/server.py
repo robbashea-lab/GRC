@@ -307,6 +307,20 @@ class TaskIn(BaseModel):
     source: Optional[str] = None  # e.g. "GRC Program Onboarding"
 
 
+class ContactIn(BaseModel):
+    client_id: str
+    role: Optional[str] = None
+    grc_roles: Optional[List[str]] = None
+    name: Optional[str] = None
+    title: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linked_user_id: Optional[str] = None
+    status: Optional[str] = "active"
+    notes: Optional[str] = None
+    not_applicable: Optional[bool] = False
+
+
 class RequirementIn(BaseModel):
     title: str
     client_id: str
@@ -1381,6 +1395,7 @@ ENTITY_MAP = {
     "tasks": ("task", TaskIn, "task_id", "tsk"),
     "exceptions": ("exception", ExceptionIn, "exception_id", "exc"),
     "requirements": ("requirement", RequirementIn, "requirement_id", "req"),
+    "contacts": ("contact", ContactIn, "contact_id", "cnt"),
 }
 
 
@@ -1388,7 +1403,7 @@ def _coll_for(kind: str) -> str:
     return kind  # collection name equals plural
 
 
-KIND_REGEX = "^(reviews|findings|risks|policies|vendors|assets|tasks|exceptions|requirements)$"
+KIND_REGEX = "^(reviews|findings|risks|policies|vendors|assets|tasks|exceptions|requirements|contacts)$"
 # Generic entity routes are registered at the END of the file so literal routes
 # like /dashboard, /audit-logs, /users, /evidence, /comments take precedence.
 

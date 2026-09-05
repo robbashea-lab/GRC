@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 
 const STEPS = [
   { key: "policies", label: "Policies & Governance Documents", icon: ShieldCheck },
-  { key: "requirements", label: "Requirements & Obligations", icon: ClipboardList },
+  { key: "requirements", label: "Compliance & Requirements", icon: ClipboardList },
   { key: "contacts", label: "Key Roles & Contacts", icon: Users2 },
   { key: "assessments", label: "Existing Assessments / Known Issues", icon: FileSearch },
   { key: "reviews", label: "Recurring Reviews", icon: CalendarClock },
@@ -447,10 +447,10 @@ function RequirementsStep({ lib, responses, setResp, openCats, setOpenCats, summ
   return (
     <div className="space-y-4" data-testid="onboarding-step-requirements">
       <div>
-        <h2 className="text-lg font-heading font-semibold">Requirements & Obligations</h2>
+        <h2 className="text-lg font-heading font-semibold">Compliance & Requirements</h2>
         <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-          Identify the legal, regulatory, contractual, assurance, insurance, and other governance requirements the
-          client currently believes apply. This is an initial applicability inventory — not a formal legal determination.
+          Identify the frameworks, regulatory requirements, contractual commitments, insurance requirements, and other
+          obligations the client currently believes apply. This is an initial applicability inventory - not a formal legal determination.
         </p>
       </div>
       <div className="space-y-3">
@@ -762,7 +762,7 @@ function SummaryStep({ client, policySummary, reqSummary, contactSummary, assess
 
       {/* Requirements */}
       <section data-testid="summary-requirements">
-        <h3 className="text-sm font-heading font-semibold text-slate-800 mb-2">Requirements & Obligations</h3>
+        <h3 className="text-sm font-heading font-semibold text-slate-800 mb-2">Compliance & Requirements</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <SummaryTile label="Applicable" count={reqSummary.counts.applicable} tone="emerald" testid="tile-req-applicable" />
           <SummaryTile label="Potentially" count={reqSummary.counts.potentially_applicable} tone="amber" testid="tile-req-potentially" />

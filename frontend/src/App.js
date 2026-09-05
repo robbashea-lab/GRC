@@ -85,6 +85,7 @@ function AppRouter() {
         <Route path="risks" element={<RiskRegister />} />
         <Route path="policies" element={<RecordListPage kind="policies" />} />
         <Route path="requirements" element={<RecordListPage kind="requirements" />} />
+        <Route path="contacts" element={<RecordListPage kind="contacts" />} />
         <Route path="vendors" element={<VendorRegister />} />
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />
         <Route path="action-items" element={<ActionItems />} />
