@@ -856,6 +856,68 @@ function SummaryStep({ client, policySummary, reqSummary, contactSummary, assess
         </ul>
         <p className="text-[11px] text-slate-500 mt-3">Records with matching titles will be <em>updated</em>, not duplicated. Contacts do not create platform accounts.</p>
       </section>
+
+      <OnboardingHistoryTimeline />
     </div>
+  );
+}
+
+function OnboardingHistoryTimeline() {
+  const { currentClientId } = useOrg();
+  const [open, setOpen] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (!open || !currentClientId || history.length) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get("/onboarding/state", { params: { client_id: currentClientId } });
+        setHistory(data.onboarding_history || []);
+      } catch (e) { void e; }
+      finally { setLoading(false); }
+    })();
+  }, [open, currentClientId, history.length]);
+
+  const groups = useMemo(() => {
+    const g = {};
+    history.forEach((h) => {
+      const day = (h.at || "").slice(0, 10) || "unknown";
+      (g[day] ||= []).push(h);
+    });
+    return Object.entries(g).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [history]);
+
+  return (
+    <section className="border-t border-slate-200 pt-5" data-testid="onboarding-history-section">
+      <button onClick={() => setOpen(!open)} data-testid="onboarding-history-toggle"
+        className="flex items-center gap-2 text-sm font-heading font-semibold text-slate-800 hover:text-slate-900">
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition ${open ? "" : "-rotate-90"}`} />
+        Onboarding history {history.length > 0 && <span className="text-[11px] text-slate-500 font-mono">({history.length} entries)</span>}
+      </button>
+      {open && (
+        <div className="mt-3 pl-6 border-l-2 border-slate-100 space-y-4" data-testid="onboarding-history-timeline">
+          {loading && <div className="text-xs text-slate-400">Loading history...</div>}
+          {!loading && history.length === 0 && <div className="text-xs text-slate-400">No prior onboarding activity for this client.</div>}
+          {!loading && groups.map(([day, items]) => (
+            <div key={day}>
+              <div className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">
+                {day === "unknown" ? "Unknown" : new Date(day).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+              </div>
+              <ul className="space-y-1 text-xs text-slate-700">
+                {items.map((h, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="font-mono text-slate-400 shrink-0">{h.at ? new Date(h.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-"}</span>
+                    <span className="font-medium text-slate-800">{h.user_name || h.user_email || "unknown"}</span>
+                    <span className="text-slate-500">{(h.action || "").replace(/-/g, " ")}</span>
+                    {h.entity_type && <span className="text-slate-400">on {h.entity_type}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

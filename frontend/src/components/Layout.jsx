@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
   LogOut, Check, Sparkles, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
-  ClipboardList,
+  ClipboardList, ShieldCheck, Lock,
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import {
@@ -35,6 +35,9 @@ const PLATFORM_NAV = [
   { to: "/clients", label: "Clients", icon: Users, testid: "nav-clients" },
   { section: "Administration" },
   { to: "/admin/users", label: "Users & Access", icon: UserCog, testid: "nav-admin-users" },
+  { to: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck, testid: "nav-admin-roles" },
+  { to: "/admin/security", label: "Security & Auth", icon: Lock, testid: "nav-admin-security" },
+  { to: "/admin/audit", label: "Platform Audit Log", icon: ScrollText, testid: "nav-admin-audit" },
 ];
 
 function OrgSelector({ isInternal, atPlatform }) {

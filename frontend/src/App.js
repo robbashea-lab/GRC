@@ -16,6 +16,9 @@ import Calendar from "@/pages/Calendar";
 import ClientDirectory from "@/pages/ClientDirectory";
 import MyAccount from "@/pages/MyAccount";
 import PlatformAdmin from "@/pages/PlatformAdmin";
+import AdminRoles from "@/pages/AdminRoles";
+import AdminSecurity from "@/pages/AdminSecurity";
+import AdminAudit from "@/pages/AdminAudit";
 import ClientSettings from "@/pages/ClientSettings";
 import ActionItems from "@/pages/ActionItems";
 import RiskRegister from "@/pages/RiskRegister";
@@ -70,6 +73,9 @@ function AppRouter() {
         <Route index element={<LandingRoute />} />
         <Route path="clients" element={<InternalOnly><ClientDirectory /></InternalOnly>} />
         <Route path="admin/users" element={<InternalOnly><PlatformAdmin /></InternalOnly>} />
+        <Route path="admin/roles" element={<InternalOnly><AdminRoles /></InternalOnly>} />
+        <Route path="admin/security" element={<InternalOnly><AdminSecurity /></InternalOnly>} />
+        <Route path="admin/audit" element={<InternalOnly><AdminAudit /></InternalOnly>} />
         <Route path="account" element={<MyAccount />} />
         <Route path="client-settings" element={<InternalOnly><ClientSettings /></InternalOnly>} />
         <Route path="dashboard" element={<Dashboard />} />

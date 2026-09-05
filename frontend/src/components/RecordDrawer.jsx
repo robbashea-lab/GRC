@@ -56,6 +56,13 @@ const TABS_BY_KIND = {
     { id: "contract", label: "Contract" },
     { id: "activity", label: "Activity" },
   ],
+  requirements: [
+    { id: "overview", label: "Overview" },
+    { id: "applicability", label: "Applicability" },
+    { id: "verification", label: "Verification" },
+    { id: "related", label: "Related" },
+    { id: "activity", label: "Activity" },
+  ],
 };
 const DEFAULT_TABS = ["overview", "related", "evidence", "comments", "activity"];
 
@@ -1097,6 +1104,28 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       if (tab === "actions_tab") return renderVendorActionItems();
       if (tab === "risks_tab") return renderVendorRisks();
       if (tab === "contract") return renderVendorContract();
+    }
+    if (kind === "requirements") {
+      if (tab === "applicability") return (
+        <div className="space-y-4">
+          {renderFieldsByNames(["applicability", "rationale"])}
+          <div className="border border-line rounded-md p-3 bg-surface-subtle text-xs">
+            <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help mb-1">Guidance</div>
+            <div className="text-ink-secondary">Applicable = confirmed applies. Potentially = likely but needs confirmation. Needs Review = undetermined. Not Applicable = confirmed does not apply and requires a rationale.</div>
+          </div>
+        </div>
+      );
+      if (tab === "verification") return (
+        <div className="space-y-4">
+          {renderFieldsByNames(["status", "owner_id", "next_review_date", "source", "note"])}
+          {record?.is_client_reported && (
+            <div className="border border-semantic-info-border bg-semantic-info-bg rounded-md p-3 text-xs text-semantic-info">
+              Client-reported during GRC Program Onboarding. The GRC team should verify and set the next review date above.
+            </div>
+          )}
+        </div>
+      );
+      if (tab === "related") return renderRelated();
     }
     // Default kinds
     if (tab === "related") return renderRelated();
