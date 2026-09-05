@@ -29,13 +29,15 @@ const CLIENT_NAV = [
   { to: "/client-settings", label: "Client Settings", icon: Settings2, testid: "nav-client-settings", adminOnly: true },
 ];
 
-// Platform-level modules (visible to internal admins on the Client Directory).
+// Platform-level modules (visible to internal admins in the platform context).
+// Anything mounted below /clients, /admin, or /platform is considered "platform" scope.
 const PLATFORM_NAV = [
   { to: "/clients", label: "Clients", icon: Users, testid: "nav-clients" },
-  { to: "/admin/users", label: "Administration", icon: UserCog, testid: "nav-admin-users" },
+  { section: "Administration" },
+  { to: "/admin/users", label: "Users & Access", icon: UserCog, testid: "nav-admin-users" },
 ];
 
-function OrgSelector({ isInternal, atDirectory }) {
+function OrgSelector({ isInternal, atPlatform }) {
   const { clients, currentClient, switchClient } = useOrg();
   const navigate = useNavigate();
   return (
@@ -47,14 +49,14 @@ function OrgSelector({ isInternal, atDirectory }) {
         >
           <div className="flex items-center gap-2 min-w-0">
             <div className="h-7 w-7 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-bold border border-brand-metallic-3">
-              {atDirectory ? "◇" : (currentClient?.name?.[0] || "•")}
+              {atPlatform ? "◇" : (currentClient?.name?.[0] || "•")}
             </div>
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wider text-ink-onDarkMuted font-mono">
-                {atDirectory ? "Platform" : "Client Org"}
+                {atPlatform ? "Platform" : "Client Org"}
               </div>
               <div className="text-sm text-ink-onDark font-medium truncate">
-                {atDirectory ? "All Clients" : (currentClient?.name || "Select…")}
+                {atPlatform ? "All Clients" : (currentClient?.name || "Select…")}
               </div>
             </div>
           </div>
@@ -62,23 +64,23 @@ function OrgSelector({ isInternal, atDirectory }) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel className="text-xs">Switch client organization</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs">{atPlatform ? "Enter a client workspace" : "Switch client organization"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {clients.map((c) => (
           <DropdownMenuItem
             key={c.client_id}
             data-testid={`org-option-${c.client_id}`}
-            onClick={() => { switchClient(c.client_id); if (atDirectory) navigate("/dashboard"); }}
+            onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}
             className="flex items-center justify-between text-sm"
           >
             <div className="flex flex-col">
               <span className="font-medium">{c.name}</span>
               <span className="text-[11px] text-ink-muted">{c.industry || "—"} · {c.status || c.environment}</span>
             </div>
-            {!atDirectory && currentClient?.client_id === c.client_id && <Check className="h-4 w-4 text-semantic-success" />}
+            {!atPlatform && currentClient?.client_id === c.client_id && <Check className="h-4 w-4 text-semantic-success" />}
           </DropdownMenuItem>
         ))}
-        {isInternal && (
+        {isInternal && !atPlatform && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -100,9 +102,10 @@ function Sidebar() {
   const nav = useNavigate();
   const location = useLocation();
   const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
-  const atDirectory = location.pathname.startsWith("/clients");
-  // Platform-level view for internal admins on the Client Directory route.
-  const items = atDirectory && isInternal ? PLATFORM_NAV : CLIENT_NAV;
+  // Platform context covers portfolio, administration, and any future /platform/* routes.
+  // Client Workspace context covers everything else (dashboard, calendar, reviews, etc.).
+  const atPlatform = ["/clients", "/admin", "/platform"].some((p) => location.pathname.startsWith(p));
+  const items = atPlatform && isInternal ? PLATFORM_NAV : CLIENT_NAV;
 
   return (
     <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
@@ -114,23 +117,29 @@ function Sidebar() {
           </div>
           <div>
             <div className="text-ink-onDark text-sm font-semibold font-heading tracking-tight">Northstar GRC</div>
-            <div className="text-[10px] text-ink-onDarkMuted uppercase tracking-widest font-mono">Program Ops</div>
+            <div className="text-[10px] text-ink-onDarkMuted uppercase tracking-widest font-mono">{atPlatform ? "Platform Ops" : "Program Ops"}</div>
           </div>
         </div>
-        <OrgSelector isInternal={isInternal} atDirectory={atDirectory} />
+        <OrgSelector isInternal={isInternal} atPlatform={atPlatform} />
       </div>
-      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto" data-testid={atDirectory ? "sidebar-platform" : "sidebar-client"}>
-        {items.filter((n) => !n.adminOnly || isInternal).map((n) => (
-          <NavLink
-            key={n.to}
-            to={n.to}
-            end={n.end}
-            data-testid={n.testid}
-            className={({ isActive }) => `side-link ${isActive ? "active" : ""}`}
-          >
-            <n.icon className="h-4 w-4 shrink-0" style={{ color: "inherit" }} />
-            <span>{n.label}</span>
-          </NavLink>
+      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto" data-testid={atPlatform ? "sidebar-platform" : "sidebar-client"}>
+        {items.filter((n) => !n.adminOnly || isInternal).map((n, i) => (
+          n.section ? (
+            <div key={`sec-${i}`} className="pt-3 pb-1 px-2 text-[10px] uppercase tracking-widest font-mono text-ink-onDarkMuted">
+              {n.section}
+            </div>
+          ) : (
+            <NavLink
+              key={n.to}
+              to={n.to}
+              end={n.end}
+              data-testid={n.testid}
+              className={({ isActive }) => `side-link ${isActive ? "active" : ""}`}
+            >
+              <n.icon className="h-4 w-4 shrink-0" style={{ color: "inherit" }} />
+              <span>{n.label}</span>
+            </NavLink>
+          )
         ))}
       </nav>
       <div className="px-3 py-3 border-t border-brand-metallic-3">
