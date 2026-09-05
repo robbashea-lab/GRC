@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
@@ -14,13 +14,63 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil, Filter } from "lucide-react";
+import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil, Filter, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
   vendors: "vendor_id", assets: "asset_id", tasks: "task_id", exceptions: "exception_id",
 };
+
+// Default sort per module. Falls back to `due_date` desc if module missing.
+const DEFAULT_SORT = {
+  reviews: { by: "due_date", dir: "asc" },
+  tasks: { by: "due_date", dir: "asc" },
+  findings: { by: "severity", dir: "desc" },
+  risks: { by: "risk_level", dir: "desc" },
+  policies: { by: "next_review", dir: "asc" },
+  vendors: { by: "next_review", dir: "asc" },
+  exceptions: { by: "expires_on", dir: "asc" },
+};
+
+const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+
+// Human-friendly due-date helper. Returns { primary, secondary, tone }.
+// `closed` records get neutral treatment (no "overdue" callout).
+function formatDue(iso, closed = false) {
+  if (!iso) return { primary: "—", secondary: "", tone: "neutral" };
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { primary: "—", secondary: "", tone: "neutral" };
+  const primary = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  if (closed) return { primary, secondary: "", tone: "neutral" };
+  const now = new Date();
+  const midnightToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const midnightDue = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const days = Math.round((midnightDue - midnightToday) / 86400000);
+  let secondary = "";
+  let tone = "neutral";
+  if (days < 0) { secondary = `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue`; tone = "critical"; }
+  else if (days === 0) { secondary = "today"; tone = "duesoon"; }
+  else if (days <= 7) { secondary = `in ${days} day${days === 1 ? "" : "s"}`; tone = "duesoon"; }
+  else if (days <= 30) { secondary = `in ${days} days`; tone = "info"; }
+  else { secondary = `in ${days} days`; tone = "neutral"; }
+  return { primary, secondary, tone };
+}
+
+function DueCell({ iso, closed = false }) {
+  const { primary, secondary, tone } = formatDue(iso, closed);
+  const toneCls = {
+    critical: "text-semantic-critical", duesoon: "text-semantic-duesoon-text",
+    info: "text-ink-secondary", neutral: "text-ink-secondary",
+  }[tone] || "text-ink-secondary";
+  if (primary === "—") return <span className="text-slate-300">—</span>;
+  return (
+    <span className="inline-flex flex-col leading-tight">
+      <span className={`font-mono text-xs ${toneCls}`}>{primary}</span>
+      {secondary && <span className={`text-[10px] ${toneCls} opacity-80`}>{secondary}</span>}
+    </span>
+  );
+}
 
 // Tab definitions for reviews — order matters (displayed as segmented control)
 const REVIEW_TABS = [
@@ -44,12 +94,45 @@ export default function RecordListPage({ kind }) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [reviewTab, setReviewTab] = useState("upcoming");
+  // URL-backed filter/sort state so back-nav restores what the user had.
+  const q = params.get("q") || "";
+  const statusFilter = params.get("status") || "all";
+  const reviewTab = params.get("tab") || "upcoming";
+  const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
+  const sortBy = params.get("sortBy") || defaultSort.by;
+  const sortDir = params.get("sortDir") || defaultSort.dir;
+
+  function setParam(key, value) {
+    const next = new URLSearchParams(params);
+    if (value == null || value === "" || value === "all" || value === "upcoming") next.delete(key);
+    else next.set(key, value);
+    setParams(next, { replace: true });
+  }
+  const setQ = (v) => setParam("q", v);
+  const setStatusFilter = (v) => setParam("status", v);
+  const setReviewTab = (v) => setParam("tab", v);
+  function toggleSort(nextBy) {
+    const next = new URLSearchParams(params);
+    if (sortBy === nextBy) {
+      // Same column → flip direction
+      const nd = sortDir === "asc" ? "desc" : "asc";
+      if (nd === defaultSort.dir && nextBy === defaultSort.by) { next.delete("sortBy"); next.delete("sortDir"); }
+      else { next.set("sortBy", nextBy); next.set("sortDir", nd); }
+    } else {
+      // New column → sensible starting direction
+      const dateFields = ["due_date", "next_review", "expires_on", "created_at", "updated_at"];
+      const nd = dateFields.includes(nextBy) ? "asc" : "desc";
+      if (nextBy === defaultSort.by && nd === defaultSort.dir) { next.delete("sortBy"); next.delete("sortDir"); }
+      else { next.set("sortBy", nextBy); next.set("sortDir", nd); }
+    }
+    setParams(next, { replace: true });
+  }
+
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [checked, setChecked] = useState(new Set());
@@ -123,7 +206,7 @@ export default function RecordListPage({ kind }) {
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return rows.filter((r) => {
+    const passed = rows.filter((r) => {
       // URL-carried filters (from the scoped dashboard). These are additive.
       if (urlFilters.owner) {
         const rOwner = r[ownerField] || r.owner_id || r.assignee_id;
@@ -153,7 +236,42 @@ export default function RecordListPage({ kind }) {
       if (!s) return true;
       return JSON.stringify(r).toLowerCase().includes(s);
     });
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField]);
+    // Sort — always float overdue reviews to the top when viewing "All" / non-overdue tabs.
+    const dir = sortDir === "asc" ? 1 : -1;
+    const key = sortBy;
+    const isUserKey = (schema.columns.find((c) => c.key === key) || {}).user;
+    const sorted = [...passed].sort((a, b) => {
+      if (isReviews && reviewTab !== "overdue") {
+        const oa = isReviewOverdue(a), ob = isReviewOverdue(b);
+        if (oa !== ob) return oa ? -1 : 1; // overdue first, always
+      }
+      const va = a?.[key], vb = b?.[key];
+      const na = va == null || va === "";
+      const nb = vb == null || vb === "";
+      if (na && nb) return 0;
+      if (na) return 1;   // nulls last
+      if (nb) return -1;
+      // severity/risk_level: rank-based
+      if (key === "severity" || key === "risk_level" || key === "criticality" || key === "priority") {
+        const ra = SEVERITY_RANK[va] || 0;
+        const rb = SEVERITY_RANK[vb] || 0;
+        return (ra - rb) * dir;
+      }
+      // date-like keys
+      if (/(_date|_review|_on|created_at|updated_at)$/.test(key)) {
+        return (new Date(va) - new Date(vb)) * dir;
+      }
+      // user id → display name
+      if (isUserKey) {
+        const la = (userMap[va] || String(va)).toLowerCase();
+        const lb = (userMap[vb] || String(vb)).toLowerCase();
+        return la.localeCompare(lb) * dir;
+      }
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
+      return String(va).localeCompare(String(vb)) * dir;
+    });
+    return sorted;
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap]);
 
   const reviewTabCounts = useMemo(() => {
     if (!isReviews) return {};
@@ -245,7 +363,7 @@ export default function RecordListPage({ kind }) {
           </div>
         }
       />
-      <div className="px-8 py-4 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">
+      <div className="sticky top-0 z-20 px-8 py-4 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input data-testid={`${kind}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 h-9 w-72 text-sm" />
@@ -390,7 +508,23 @@ export default function RecordListPage({ kind }) {
                     data-testid={`${kind}-select-all`}
                   />
                 </th>
-                {schema.columns.map((c) => <th key={c.key} className="tbl-head">{c.label}</th>)}
+                {schema.columns.map((c) => {
+                  const isActive = sortBy === c.key;
+                  const Icon = isActive ? (sortDir === "asc" ? ArrowUp : ArrowDown) : ChevronsUpDown;
+                  return (
+                    <th key={c.key} className="tbl-head">
+                      <button
+                        type="button"
+                        onClick={() => toggleSort(c.key)}
+                        className={`inline-flex items-center gap-1 hover:text-ink-primary ${isActive ? "text-ink-primary" : ""}`}
+                        data-testid={`${kind}-sort-${c.key}`}
+                      >
+                        {c.label}
+                        <Icon className={`h-3 w-3 ${isActive ? "opacity-100" : "opacity-40"}`} />
+                      </button>
+                    </th>
+                  );
+                })}
                 <th className="tbl-head w-10"></th>
               </tr>
             </thead>
@@ -413,14 +547,25 @@ export default function RecordListPage({ kind }) {
                       data-testid={`${kind}-select-${i}`}
                     />
                   </td>
-                  {schema.columns.map((c) => (
+                  {schema.columns.map((c) => {
+                    const isDueLike = c.date && /(_date|_review|_on)$/.test(c.key);
+                    const closed = row.status === "completed" || row.status === "cancelled" || row.status === "closed";
+                    return (
                     <td key={`${row[idField] || i}-${c.key}`} className={`tbl-cell ${c.primary ? "font-medium text-slate-900" : ""}`}>
                       {c.badge ? (
                         overdueReview && c.key === "status"
                           ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
                           : <StatusBadge value={row[c.key]} testid={`${kind}-status-${i}`} />
                       ) :
-                       c.user ? (row[c.key] ? <span className="text-slate-700">{userMap[row[c.key]] || row[c.key]}</span> : <span className="text-slate-300">—</span>) :
+                       c.user ? (
+                         row[c.key]
+                           ? <span className="text-slate-700">{userMap[row[c.key]] || row[c.key]}</span>
+                           : <span
+                               className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-[10px] font-mono uppercase tracking-wider"
+                               data-testid={`${kind}-unassigned-${i}`}
+                             >Unassigned</span>
+                       ) :
+                       isDueLike ? <DueCell iso={row[c.key]} closed={closed} /> :
                        c.date ? (row[c.key] ? <span className="font-mono text-slate-600">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-slate-300">—</span>) :
                        (
                          <span className="inline-flex items-center gap-2">
@@ -437,7 +582,8 @@ export default function RecordListPage({ kind }) {
                          </span>
                        )}
                     </td>
-                  ))}
+                  );
+                  })}
                   <td className="tbl-cell text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
