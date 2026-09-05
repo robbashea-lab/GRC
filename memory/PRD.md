@@ -11,6 +11,16 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 - Emails via Emergent Resend; PDFs via reportlab.
 
 ## Implemented (Feb 2026)
+### v34 (Login redesign — from marketing landing to secure GRC portal) — Feb 2026
+- **Marketing content removed**: three feature blocks (Stay Ahead / Manage Risk / Work Together), the "Simplify your GRC program" tagline, italicized closing statement, and self-registration mode are all gone.
+- **Split-screen enterprise console**: left 58% is a dark charcoal brand environment (SVG grid @ 5.5% opacity, dual radial lime glow, oversized `GRC` monogram at 1.8% opacity, vertical lime accent line, minimal `GRC OPERATIONS · Secure GRC workspace · Governance · Risk · Compliance` label stack, iVenture footer). Right 42% is the auth pane on the same dark charcoal for a cohesive one-designed-system feel — no floating white card.
+- **Sign-in card**: `Secure Client Access` mono eyebrow in lime, `Sign in` heading, `Access your iVenture GRC workspace.` subtitle. Google SSO button preserved, `or with email` divider, email + password inputs with password visibility toggle (`toggle-password`), `Forgot password?` link, and a lime primary CTA (`Sign in →`) as the intentional accent moment.
+- **Security cue**: `🔒 Secure access · Authorized users only` (`data-testid=security-cue`).
+- **Invitation-only footer note**: `Need access? Contact your iVenture representative.` — replaces the removed self-registration workflow.
+- **Auth logic untouched**: `login`, `googleSignIn` (Emergent OAuth), `/forgot-password` route, session/MFA/tenant/RBAC flow all unchanged. `register` still exists in `AuthContext` but is no longer exposed on the login screen.
+- **Responsive**: left brand pane hides < lg breakpoint; a compact mobile brand header replaces it so the sign-in form remains prioritized.
+- Verified: all new test IDs render (`env-identifier`, `security-cue`, `need-access-note`, `toggle-password`), `switch-register` count=0, email login submits and lands on `/clients` for super_admin (post-redirect confirmed).
+
 ### v33 (P1 Usability Refinement — Clickable rows, URL-persisted filters, Sticky filter row, Ownership clarity, Sorting, Due-date readability) — Feb 2026
 - **URL-persisted filter state** in `RecordListPage.jsx` — search `q`, `status`, review `tab`, and column `sortBy`/`sortDir` all live in the query string via `useSearchParams`. Back-navigation from a drawer/detail preserves the previous list state exactly; filters are shareable and reload-safe. Default values (e.g. `tab=upcoming`) are omitted from the URL so a clean list state stays clean.
 - **Sticky filter row** — the search + tabs + status pill row uses `sticky top-0 z-20 bg-white/95 backdrop-blur` so filters stay accessible while scrolling long Reviews / Action Items / Risks / Policies / Vendors / Findings registers.
