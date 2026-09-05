@@ -4,13 +4,13 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Check, Sparkles, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
+  LogOut, Sparkles, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
   ClipboardList, ShieldCheck, Lock,
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 // Client-scoped modules (visible only inside a tenant workspace).
@@ -39,63 +39,59 @@ const PLATFORM_NAV = [
   { to: "/admin/audit", label: "Audit Log", icon: ScrollText, testid: "nav-admin-audit" },
 ];
 
-function OrgSelector({ isInternal, atPlatform }) {
-  const { clients, currentClient, switchClient } = useOrg();
+function ContextHeader({ isInternal, atPlatform }) {
+  // Contextual sidebar header. In Platform context, a static "All Clients"
+  // banner. In Client Workspace context (internal users only), a "← All
+  // Clients" button that returns to the Portfolio Overview. Client users see
+  // just their tenant chip — they cannot navigate out.
+  const { currentClient } = useOrg();
   const navigate = useNavigate();
+
+  if (atPlatform) {
+    return (
+      <div
+        data-testid="context-header-platform"
+        className="w-full flex items-center gap-2 rounded-md border border-brand-metallic-3 bg-brand-metallic-2 px-3 py-2.5"
+      >
+        <div className="h-7 w-7 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-bold border border-brand-metallic-3">
+          ◇
+        </div>
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-ink-onDarkMuted font-mono">Platform</div>
+          <div className="text-sm text-ink-onDark font-medium truncate">All Clients</div>
+        </div>
+      </div>
+    );
+  }
+
+  const initial = currentClient?.name?.[0] || "•";
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <div className="space-y-2">
+      {isInternal && (
         <button
-          data-testid="org-selector-trigger"
-          className="w-full flex items-center justify-between gap-2 rounded-md border border-brand-metallic-3 bg-brand-metallic-2 hover:bg-brand-metallic px-3 py-2.5 text-left transition-colors"
+          type="button"
+          onClick={() => navigate("/clients")}
+          data-testid="return-to-portfolio"
+          className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-brand-metallic-3 bg-brand-charcoal hover:bg-brand-metallic-2 text-[11px] font-mono uppercase tracking-widest text-ink-onDarkMuted hover:text-ink-onDark transition-colors"
         >
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="h-7 w-7 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-bold border border-brand-metallic-3">
-              {atPlatform ? "◇" : (currentClient?.name?.[0] || "•")}
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wider text-ink-onDarkMuted font-mono">
-                {atPlatform ? "Platform" : "Client Org"}
-              </div>
-              <div className="text-sm text-ink-onDark font-medium truncate">
-                {atPlatform ? "All Clients" : (currentClient?.name || "Select…")}
-              </div>
-            </div>
-          </div>
-          <ChevronsUpDown className="h-4 w-4 text-ink-onDarkMuted shrink-0" />
+          <ArrowLeft className="h-3 w-3" /> All Clients
         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel className="text-xs">{atPlatform ? "Enter a client workspace" : "Switch client organization"}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {clients.map((c) => (
-          <DropdownMenuItem
-            key={c.client_id}
-            data-testid={`org-option-${c.client_id}`}
-            onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}
-            className="flex items-center justify-between text-sm"
-          >
-            <div className="flex flex-col">
-              <span className="font-medium">{c.name}</span>
-              <span className="text-[11px] text-ink-muted">{c.industry || "—"} · {c.status || c.environment}</span>
-            </div>
-            {!atPlatform && currentClient?.client_id === c.client_id && <Check className="h-4 w-4 text-semantic-success" />}
-          </DropdownMenuItem>
-        ))}
-        {isInternal && !atPlatform && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => navigate("/clients")}
-              data-testid="org-view-all-clients"
-              className="text-sm font-medium"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 mr-2" /> View all clients
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      )}
+      <div
+        data-testid="context-header-client"
+        className="w-full flex items-center gap-2 rounded-md border border-brand-metallic-3 bg-brand-metallic-2 px-3 py-2.5"
+      >
+        <div className="h-7 w-7 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-bold border border-brand-metallic-3">
+          {initial}
+        </div>
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-ink-onDarkMuted font-mono">Client Org</div>
+          <div className="text-sm text-ink-onDark font-medium truncate">
+            {currentClient?.name || "Select a client…"}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -122,7 +118,7 @@ function Sidebar() {
             <div className="text-[10px] text-ink-onDarkMuted uppercase tracking-widest font-mono">{atPlatform ? "Platform Ops" : "Program Ops"}</div>
           </div>
         </div>
-        <OrgSelector isInternal={isInternal} atPlatform={atPlatform} />
+        <ContextHeader isInternal={isInternal} atPlatform={atPlatform} />
       </div>
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto" data-testid={atPlatform ? "sidebar-platform" : "sidebar-client"}>
         {items.filter((n) => !n.adminOnly || isInternal).map((n, i) => (

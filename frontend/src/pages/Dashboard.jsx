@@ -368,7 +368,7 @@ export default function Dashboard() {
             </ul>
           </Panel>
 
-          <Panel testid="panel-recent" title="Recent Activity" icon={Activity} action={<SeeAll to="/audit" testid="see-all-audit" />}>
+          <Panel testid="panel-recent" title="Recent Activity" icon={Activity} action={isClient ? null : <SeeAll to={`/admin/audit?client=${currentClientId}`} testid="see-all-audit" />}>
             {data.recent_activity.length === 0 ? <Empty>No recent activity.</Empty> : (
               <ul className="divide-y divide-line">
                 {data.recent_activity.map((a) => (
