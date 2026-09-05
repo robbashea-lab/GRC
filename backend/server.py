@@ -579,6 +579,7 @@ class MePasswordIn(BaseModel):
 
 class MePreferencesIn(BaseModel):
     weekly_digest_optout: Optional[bool] = None
+    favorite_client_ids: Optional[List[str]] = None
 
 
 @api.patch("/me")
@@ -618,9 +619,51 @@ async def update_me_preferences(body: MePreferencesIn, user: Dict = Depends(get_
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if not updates:
         return {"ok": True}
+    # Filter favorite_client_ids to only tenants the user is authorized for.
+    if "favorite_client_ids" in updates:
+        role = user.get("role")
+        if role in ("super_admin", "platform_admin"):
+            authorized = {c["client_id"] for c in await db.clients.find(
+                {"status": {"$ne": "archived"}}, {"_id": 0, "client_id": 1}).to_list(1000)}
+            if role == "platform_admin":
+                authorized &= set(user.get("client_ids") or [])
+        else:
+            authorized = set(user.get("client_ids") or [])
+        updates["favorite_client_ids"] = [c for c in updates["favorite_client_ids"] if c in authorized]
     updates["updated_at"] = _now()
     await db.users.update_one({"user_id": user["user_id"]}, {"$set": updates})
-    return {"ok": True}
+    fresh = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0})
+    return {"ok": True, "user": fresh}
+
+
+@api.post("/me/favorites/{client_id}")
+async def add_favorite_client(client_id: str, user: Dict = Depends(get_current_user)):
+    """Toggle-on: add a client to the current user's Favorites. Server-side
+    verifies the caller is authorized for that tenant AND the client exists +
+    is not archived — prevents polluting the profile with arbitrary strings."""
+    if not _can_access_client(user, client_id):
+        raise HTTPException(403, "Not authorized for this client")
+    exists = await db.clients.find_one(
+        {"client_id": client_id, "status": {"$ne": "archived"}},
+        {"_id": 0, "client_id": 1},
+    )
+    if not exists:
+        raise HTTPException(404, "Client not found")
+    await db.users.update_one({"user_id": user["user_id"]},
+                              {"$addToSet": {"favorite_client_ids": client_id},
+                               "$set": {"updated_at": _now()}})
+    fresh = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0})
+    return {"ok": True, "favorite_client_ids": fresh.get("favorite_client_ids") or []}
+
+
+@api.delete("/me/favorites/{client_id}")
+async def remove_favorite_client(client_id: str, user: Dict = Depends(get_current_user)):
+    """Toggle-off: remove a client from the current user's Favorites."""
+    await db.users.update_one({"user_id": user["user_id"]},
+                              {"$pull": {"favorite_client_ids": client_id},
+                               "$set": {"updated_at": _now()}})
+    fresh = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0})
+    return {"ok": True, "favorite_client_ids": fresh.get("favorite_client_ids") or []}
 
 
 # ---------------- User administration ----------------

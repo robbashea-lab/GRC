@@ -17,6 +17,7 @@ import {
 import {
   Plus, Search, MoreVertical, Building2, ArrowRight, ShieldAlert, AlertOctagon,
   CalendarClock, Archive, ExternalLink, ScrollText, UserX, Users2, Clock, X,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -145,7 +146,7 @@ function MetricCell({ value, tone, onClick, testid }) {
 
 export default function ClientDirectory() {
   const nav = useNavigate();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { switchClient, refresh: refreshOrg } = useOrg();
   const [rows, setRows] = useState([]);
   const [portfolio, setPortfolio] = useState(null);
@@ -161,6 +162,21 @@ export default function ClientDirectory() {
   const [drillOpen, setDrillOpen] = useState(null); // { scope, title, rows }
 
   const canCreate = ["super_admin", "platform_admin"].includes(user?.role);
+
+  const favoriteIds = useMemo(
+    () => new Set(user?.favorite_client_ids || []),
+    [user?.favorite_client_ids]
+  );
+
+  async function toggleFavorite(clientId, currentlyFav) {
+    try {
+      const url = `/me/favorites/${clientId}`;
+      const { data } = currentlyFav ? await api.delete(url) : await api.post(url);
+      if (data?.favorite_client_ids && setUser) {
+        setUser({ ...user, favorite_client_ids: data.favorite_client_ids });
+      }
+    } catch (e) { toast.error(formatError(e)); }
+  }
 
   async function load() {
     setLoading(true);
@@ -251,6 +267,16 @@ export default function ClientDirectory() {
             </Button>
           )
         }
+      />
+
+      {/* Quick Client Access — compact directory for immediate workspace entry */}
+      <QuickClientAccess
+        clients={rows}
+        currentUser={user}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={toggleFavorite}
+        onOpenClient={(c) => enterWorkspace(c)}
+        onViewAll={() => document.querySelector('[data-testid="client-portfolio-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
       />
 
       {/* Portfolio alert cards */}
@@ -414,22 +440,35 @@ export default function ClientDirectory() {
               {!loading && filtered.length === 0 && (
                 <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">No clients match this filter.</td></tr>
               )}
-              {!loading && filtered.map((r, i) => (
+              {!loading && filtered.map((r, i) => {
+                const isFav = favoriteIds.has(r.client_id);
+                return (
                 <tr key={r.client_id} className="row-hover" data-testid={`client-row-${i}`}>
                   <td className="tbl-cell">
-                    <button onClick={() => enterWorkspace(r)} className="flex items-center gap-3 min-w-0 text-left group"
-                      data-testid={`client-open-${r.client_id}`}>
-                      <Avatar name={r.name} logoUrl={r.logo_url} />
-                      <div className="min-w-0">
-                        <div className="font-medium text-ink-primary group-hover:text-brand-charcoal-hover truncate flex items-center gap-1.5">
-                          {r.name}
-                          <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help" />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(r.client_id, isFav); }}
+                        className={`p-1 rounded hover:bg-surface-subtle transition ${isFav ? "text-amber-500" : "text-ink-help hover:text-ink-secondary"}`}
+                        aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+                        data-testid={`row-fav-${r.client_id}`}
+                      >
+                        <Star className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
+                      </button>
+                      <button onClick={() => enterWorkspace(r)} className="flex items-center gap-3 min-w-0 text-left group"
+                        data-testid={`client-open-${r.client_id}`}>
+                        <Avatar name={r.name} logoUrl={r.logo_url} />
+                        <div className="min-w-0">
+                          <div className="font-medium text-ink-primary group-hover:text-brand-charcoal-hover truncate flex items-center gap-1.5">
+                            {r.name}
+                            <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help" />
+                          </div>
+                          <div className="text-[11px] text-ink-help truncate">
+                            {r.industry || "—"}{r.primary_contact ? ` · ${r.primary_contact}` : ""}
+                          </div>
                         </div>
-                        <div className="text-[11px] text-ink-help truncate">
-                          {r.industry || "—"}{r.primary_contact ? ` · ${r.primary_contact}` : ""}
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   </td>
                   <td className="tbl-cell">
                     {r.grc_lead ? (
@@ -460,7 +499,8 @@ export default function ClientDirectory() {
                     <ClientRowMenu row={r} index={i} onOpen={() => enterWorkspace(r)} onArchived={load} canEdit={canCreate} />
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -599,7 +639,7 @@ function ClientRowMenu({ row, index, onOpen, onArchived, canEdit }) {
     try { await api.patch(`/clients/${row.client_id}`, { status: "active" }); toast.success(`${row.name} restored`); onArchived?.(); }
     catch (e) { toast.error(formatError(e)); }
   }
-  function viewActivity() { switchClient(row.client_id); nav("/audit"); }
+  function viewActivity() { nav(`/admin/audit?client=${row.client_id}`); }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -706,5 +746,147 @@ function AddClientDialog({ open, onOpenChange, users, onCreated }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+const QUICK_TABS = [
+  { id: "all", label: "All Clients" },
+  { id: "favorites", label: "Favorites" },
+  { id: "assigned", label: "Assigned to Me" },
+];
+const QUICK_LIMIT = 10;
+
+function QuickClientAccess({ clients, currentUser, favoriteIds, onToggleFavorite, onOpenClient, onViewAll }) {
+  const [tab, setTab] = useState("all");
+  const [search, setSearch] = useState("");
+
+  // Only show active/non-archived clients in quick access.
+  const active = useMemo(
+    () => (clients || []).filter((c) => c.client_status !== "archived"),
+    [clients]
+  );
+
+  const scoped = useMemo(() => {
+    if (tab === "favorites") return active.filter((c) => favoriteIds.has(c.client_id));
+    if (tab === "assigned") return active.filter((c) => c.grc_lead_id === currentUser?.user_id);
+    return active;
+  }, [active, tab, favoriteIds, currentUser?.user_id]);
+
+  const searched = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    const list = s
+      ? scoped.filter((c) => (
+          (c.name || "").toLowerCase().includes(s) ||
+          (c.industry || "").toLowerCase().includes(s) ||
+          (c.grc_lead?.name || "").toLowerCase().includes(s) ||
+          (c.grc_lead?.email || "").toLowerCase().includes(s)
+        ))
+      : scoped;
+    return [...list].sort((a, b) => (a.name || "").trim().localeCompare((b.name || "").trim()));
+  }, [scoped, search]);
+
+  const hasSearch = !!search.trim();
+  const visible = hasSearch ? searched.slice(0, 20) : searched.slice(0, QUICK_LIMIT);
+  const hiddenCount = Math.max(0, searched.length - visible.length);
+  const emptyLabel = tab === "favorites"
+    ? "You haven't favorited any clients yet. Tap the star on any client to add them here."
+    : tab === "assigned"
+      ? "No clients are currently assigned to you as GRC Lead."
+      : "No authorized clients to display.";
+
+  return (
+    <div className="px-8 pt-4" data-testid="quick-client-access">
+      <div className="bg-surface-card border border-line rounded-lg p-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-medium text-ink-primary">Clients</h2>
+            <div className="inline-flex items-center rounded-md border border-line bg-surface-subtle p-0.5 gap-0.5" data-testid="quick-tabs">
+              {QUICK_TABS.map((t) => {
+                const active = tab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setTab(t.id)}
+                    data-testid={`quick-tab-${t.id}`}
+                    className={`px-2.5 h-7 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-card"}`}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="relative flex-1 max-w-sm">
+            <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search clients…"
+              className="pl-8 h-8 text-sm"
+              data-testid="quick-search"
+            />
+          </div>
+        </div>
+
+        {visible.length === 0 ? (
+          <div className="text-xs text-ink-help py-4 text-center" data-testid="quick-empty">
+            {emptyLabel}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2" data-testid="quick-list">
+            {visible.map((c) => {
+              const isFav = favoriteIds.has(c.client_id);
+              const tone = PROGRAM_TONES[c.program_status] || PROGRAM_TONES.healthy;
+              return (
+                <div
+                  key={c.client_id}
+                  className="group flex items-center gap-2 px-2.5 py-2 border border-line rounded-md bg-surface hover:border-brand-charcoal hover:bg-surface-subtle transition cursor-pointer min-w-0"
+                  onClick={() => onOpenClient(c)}
+                  data-testid={`quick-client-${c.client_id}`}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onToggleFavorite(c.client_id, isFav); }}
+                    className={`p-1 rounded hover:bg-surface-card transition ${isFav ? "text-amber-500" : "text-ink-help hover:text-ink-secondary"}`}
+                    aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+                    data-testid={`quick-fav-${c.client_id}`}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
+                  </button>
+                  <div className="h-7 w-7 rounded-md bg-brand-charcoal text-ink-onDark flex items-center justify-center text-[11px] font-semibold border border-brand-metallic-3 shrink-0">
+                    {(c.name || "?").trim().slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-ink-primary font-medium truncate group-hover:text-brand-charcoal-hover">
+                      {c.name}
+                    </div>
+                    <div className="text-[11px] text-ink-help truncate flex items-center gap-1.5">
+                      {c.industry || "—"}
+                      <span className="text-ink-disabled">·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                        {tone.label}
+                      </span>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help shrink-0" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {hiddenCount > 0 && (
+          <div className="mt-3 text-right">
+            <button
+              onClick={onViewAll}
+              className="text-xs text-link hover:text-link-hover"
+              data-testid="quick-view-all"
+            >
+              View all {searched.length} clients →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
