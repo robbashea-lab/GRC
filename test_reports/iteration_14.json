@@ -1,0 +1,54 @@
+{
+  "summary": "Iteration 14 — backend route-extraction refactor + Compliance Profile tab + contact-invite toast. Backend pytest 7/7 passing against the preview backend. Verified: (a) GET /api/clients/directory (super_admin) returns clients[]/portfolio{}/attention_queue[]/team_workload[] with all pre-refactor fields (client_id, name, program_status, past_due, due_30d, due_31_90d, critical_high_open, unassigned + portfolio aggregates); (b) GET /api/clients/directory as contributor@acme.demo => 403; (c) GET /api/baseline/templates returns policies (len=8), risks (len=6), review_templates (len=10, each with title/review_type/recurrence/due_days); (d) POST /api/baseline as super_admin creates policies:1 risks:1 reviews:1 for authorized client; (e) POST /api/baseline as readonly@acme.demo => 403; (f) POST /api/baseline with foreign client_id as contributor => 403 (tenant isolation); (g) POST /api/contacts/{id}/invite creates a fresh user with unique email, returns invite_link (APP_BASE_URL is set → link points at /reset-password?token=…), and links the contact. Frontend Playwright verified on /client-settings as platform.admin@grc.demo (Globex Ltd active): both tabs render (tab-users-access + tab-compliance-profile). Clicking Compliance Profile renders the three summary cards (compliance-summary-total=3, applicable=2, review=0) and ALL five buckets (assurance=1, legal=1, contractual=0, insurance=0, other=1) — counts add up to total. FAILING: RecordDrawer 'Invite to Platform' button DOES NOT RENDER for a contact drawer — renderContactActions() is defined at RecordDrawer.jsx:331 but is never invoked from the JSX tree (grep confirms zero call sites). The button, its data-testid `contact-invite`, and the invite-panel container `contact-actions` never appear when opening a contact with an email and no linked_user_id. The backend flow works end-to-end (verified via test_contact_invite_flow) — this is purely a missing JSX render call.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "RecordDrawer.jsx (contact drawer)",
+        "issue": "`renderContactActions()` is defined but never called from the JSX. As a result, the 'Invite to Platform' button (data-testid=contact-invite) and the platform-access panel (data-testid=contact-actions) never render in the Contacts drawer. Add `{kind === \"contacts\" && renderContactActions()}` alongside the other `kind === ...` guards in `renderFields()` (RecordDrawer.jsx:907-909).",
+        "selector": "[data-testid=\"contact-invite\"]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Contact invite from RecordDrawer",
+        "issue": "Because the Invite button never renders, the 'Copy link' toast action added in this iteration is unreachable from the UI. The toast code itself (RecordDrawer.jsx:311-323) is correct (label='Copy link', duration=10000, action.onClick copies invite_link) — only the entry point is broken.",
+        "affected_selectors": ["[data-testid=\"contact-invite\"]", "[data-testid=\"contact-actions\"]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration14.py",
+    "/app/test_reports/pytest/iter14.xml"
+  ],
+  "action_items": [
+    "RecordDrawer.jsx: invoke renderContactActions() from renderFields() when kind === 'contacts' so the Invite to Platform button is actually rendered. Suggested insertion at line ~909 alongside the other kind-guarded panels."
+  ],
+  "critical_code_review_comments": [
+    "server.py is still ~3584 lines. The next candidate for extraction (matching this iteration's pattern) is the /api/users + /api/contacts/{id}/invite block (~lines 667-810) into routes/users.py — it would eliminate ~140 lines of unrelated invite/email HTML from the main module.",
+    "routes/portfolio.py and routes/baseline.py both re-import symbols from `server` at module load. Because server.py wires include_router at the bottom (after helpers), this works — but the circular-import comment should be tightened to name the exact helpers each module needs so a future refactor doesn't accidentally introduce a top-level import cycle.",
+    "The invite email HTML in server.py (lines 784-798) embeds inline styles for a button. Consider extracting to a small template helper (or Jinja) so the tenant_phrase/role_phrase logic is testable in isolation and doesn't grow inside admin_create_user.",
+    "ClientSettings.jsx bucketize() runs on every render even though `requirements` only changes on load. Wrap in useMemo(() => bucketize(requirements), [requirements]) — trivial win.",
+    "The 'Other Obligations' bucket uses `match: () => true` as a catch-all AND is also iterated in `buckets.map`, so requirements matching e.g. 'legal' cannot fall through to 'other' — this is correct. But the design intends 'Other' to be a fallback only; consider renaming the field to `fallback: true` and evaluating outside the loop to make the intent explicit."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration14.py",
+    "/app/test_reports/iteration_14.json",
+    "/app/test_reports/pytest/iter14.xml"
+  ],
+  "success_rate": {
+    "backend": "100% (7/7)",
+    "frontend": "83% — Client Settings tabs + Compliance Profile summary + buckets all verified. Contact invite entry point is broken (button not rendered)."
+  },
+  "test_credentials": "platform.admin@grc.demo / Demo@2026 (used for UI); robbashea@gmail.com / Admin@2026 (super_admin for backend); contributor@acme.demo / Demo@2026 (403 checks); readonly@acme.demo / Demo@2026 (read-only rejection).",
+  "seed_data_creation": "Backend tests create TEST_iter14_<uuid>_pol_A / _rsk_A / _rev_A rows attached to the active Globex tenant (the only non-archived client available in this preview). One UI-side contact was created (name='UI Invite Target', email=iter14ui_<ts>@example.com) but the invite could not be exercised through the drawer due to the render bug — the contact remains in Globex with linked_user_id=null.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Once the one-line render fix lands in RecordDrawer.jsx (invoke renderContactActions() when kind === 'contacts'), the invite flow can be re-tested by opening Contacts & Roles as platform.admin@grc.demo, clicking any contact without a linked_user_id, clicking the Invite to Platform button (data-testid=contact-invite), accepting the confirm() dialog, and asserting a toast with a 'Copy link' action button appears. Backend contract is already verified — no server changes needed. Note: only Globex Ltd is currently active in this preview; all Acme/other tenants were archived by iteration 12/13. If contributor-scoped tests are needed, seed a fresh Acme tenant or restore one from archived state.",
+  "rca of the issue": "Bug: 'Invite to Platform' button never renders in the contact drawer. Root cause: RecordDrawer.jsx defines function renderContactActions() at line 331 but the JSX render tree (renderFields → line 905-912) only guards `kind === 'reviews' | 'findings' | 'policies'`. There is no `kind === 'contacts'` branch calling renderContactActions(). Reproduction: login as platform.admin@grc.demo, open /contacts, click any contact with an email and no linked_user_id → drawer opens with Overview/Related/Evidence/Comments/Activity tabs and shows Full name/Job title/Primary GRC role/Email/Phone/Linked platform user/Status/Notes fields, but there is no Platform access panel and no Invite button anywhere on the page (verified via `page.query_selector_all('[data-testid=\"contact-invite\"]')` → 0 matches). Mitigation: add `{kind === 'contacts' && renderContactActions()}` in the default branch of renderFields() at RecordDrawer.jsx:906-911, or render it above the schema map."
+}

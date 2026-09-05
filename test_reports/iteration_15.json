@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 15 — Retested the frontend fix for Contact Invite entry point in RecordDrawer.jsx. RESULT: The render fix at line 910 works — Platform access panel (data-testid=contact-actions) and 'Invite to Platform' button (data-testid=contact-invite) DO render inside the contact drawer for platform.admin@grc.demo on /contacts. HOWEVER, clicking the button fails with a 404 because the invite POST hits '/api/contacts/undefined/invite'. Root cause: the ID_FIELD map at RecordDrawer.jsx:15-18 is missing the `contacts: \"contact_id\"` entry, so `record[idField]` resolves to `record[undefined]` → undefined. This blocks the Copy-link toast + clipboard flow entirely (toast.error 'Not Found' fires instead). Test 1 (render): PASS. Test 2 (invite POST + Copy link toast): FAIL. Test 3 (clipboard write of /reset-password?token= URL + confirmation toast): FAIL (blocked by 2). Also observed two 422s on drawer open (likely /comments or /related fetch using undefined entity_id — same idField root cause).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "RecordDrawer.jsx",
+        "issue": "ID_FIELD map (lines 15-18) is missing `contacts: 'contact_id'`. As a result, every place using `record[idField]` in the contacts drawer resolves to undefined — the invite POST becomes `/api/contacts/undefined/invite` and returns 404, and the /comments and /related fetches on drawer open fire with entity_id=undefined (422 in console).",
+        "selector": "[data-testid=\"contact-invite\"]",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Contact invite from RecordDrawer (Invite to Platform button)",
+        "issue": "Clicking Invite to Platform fires POST /api/contacts/undefined/invite → 404. Toast shows error instead of success, so the Copy link action button never appears and navigator.clipboard.writeText is never invoked with an invite URL. The backend endpoint itself is verified working (iteration 14).",
+        "affected_selectors": ["[data-testid=\"contact-invite\"]", "ol[data-sonner-toaster] [data-button]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "RecordDrawer.jsx: add `contacts: \"contact_id\"` to the ID_FIELD map (line 15-18). One-line fix that unblocks the invite flow AND fixes the 422 comments/related fetches on the contact drawer.",
+    "After fix: re-run the same Playwright flow — button click should POST /api/contacts/<contact_id>/invite successfully, a Sonner toast with a 'Copy link' action button (duration ~10s) should appear, clicking Copy link should call navigator.clipboard.writeText with a URL containing '/reset-password?token=', and a confirmation toast ('Invite link copied to clipboard') should render."
+  ],
+  "critical_code_review_comments": [
+    "The ID_FIELD map should be exhaustive across every `kind` supported by RecordDrawer. Consider deriving `idField` as `${singular}_id` (singular already computed nearby) so a missing map entry doesn't silently produce `record[undefined]` and cascade into 404/422 across invite/comments/related/evidence.",
+    "renderContactActions() correctly guards on isPlatformAdmin and hasEmail — but consider also disabling the button when `record[idField]` is falsy (defensive) so a mis-mapped kind fails visibly instead of firing a 404 POST.",
+    "The two 422 errors from /comments and /related on contact drawer open are the same root cause and would resolve automatically once ID_FIELD.contacts is set."
+  ],
+  "updated_files": ["/app/test_reports/iteration_15.json"],
+  "success_rate": { "backend": "n/a (not tested per request)", "frontend": "33% — 1 of 3 requested checks passes (render); invite POST + Copy link toast + clipboard write all blocked by missing ID_FIELD.contacts mapping." },
+  "test_credentials": "platform.admin@grc.demo / Demo@2026 (Globex Ltd active)",
+  "seed_data_creation": "Reused the 'UI Invite Target' contact seeded in iteration 14 (email=iter14ui_36631015@example.com, linked_user_id=null) in the Globex tenant. No new seed data created.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The render call at RecordDrawer.jsx:910 is confirmed working — the Platform access panel and Invite button render correctly. The remaining blocker is a ONE-LINE fix: add `contacts: \"contact_id\"` to ID_FIELD (RecordDrawer.jsx:15). After that, the full invite → toast → Copy link → clipboard flow should pass. Playwright approach used here: patch navigator.clipboard.writeText in an init script to capture writes into window.__copied, patch window.confirm=()=>true, then click [data-testid=contact-invite], wait ~3s, look for a `button` in `ol[data-sonner-toaster]` with name 'Copy link', click it, and assert window.__copied contains a URL matching /reset-password\\?token=/.",
+  "rca of the issue": "Bug: Contact invite POST 404s. Reproduction: login platform.admin@grc.demo → /contacts → click 'UI Invite Target' → panel + Invite button render (fix from iteration 14 works) → click Invite to Platform → confirm dialog auto-accepted → POST fires to '/api/contacts/undefined/invite' (captured via page.on('response')) → 404. Root cause: RecordDrawer.jsx line 15-18 `const ID_FIELD = { reviews, findings, risks, policies, vendors, assets, tasks, exceptions }` — no 'contacts' key. Therefore idField = ID_FIELD['contacts'] = undefined, and record[undefined] = undefined at line 305. Mitigation: add `contacts: \"contact_id\"` to the ID_FIELD map. Same fix also eliminates the two 422 errors from /comments and /related that fire on contact drawer open."
+}

@@ -11,6 +11,17 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 - Emails via Emergent Resend; PDFs via reportlab.
 
 ## Implemented (Feb 2026)
+### v28 (Route extraction: portfolio + baseline; Compliance Profile tab; contact-invite polish) — Feb 2026
+- **`/api/clients/directory`** extracted from `server.py` into **`backend/routes/portfolio.py`** — 425 lines lifted verbatim (portfolio KPIs, non-overlap due-window buckets, attention queue, team workload). Late-binding imports mirror the `routes/onboarding.py` pattern. Registered via `app.include_router(portfolio_router)` at the bottom of server.py.
+- **`/api/baseline/templates` + `/api/baseline` + `BaselineIn` model + `BASELINE_TEMPLATES`** extracted into **`backend/routes/baseline.py`** (100 lines). `POST /api/baseline` retains the read-only rejection + `_can_access_client` tenant guard.
+- **server.py** trimmed from **4048 → 3583 lines** (net −465). Onboarding, portfolio, and baseline routers now live in `backend/routes/`. Structural pattern is now in place for extracting `/api/users` + contact-invite next.
+- **Compliance Profile tab** added to `/client-settings` (frontend-only grouping — no new backend model). `ClientSettings.jsx` now renders a Tabs component with **Users & Access** (existing) + **Compliance Profile** (new). ComplianceProfile fetches `/api/requirements?client_id=…` and buckets by category into: Assurance/Certification (SOC 2/ISO/CMMC/PCI), HIPAA & Privacy (legal/regulatory), Contractual, Insurance, Other Obligations. Summary cards show Total / Applicable / Needs review. Every requirement row deep-links to `/requirements?open=<id>`.
+- **Contact invite email — tenant + role aware**: `contact_invite` now looks up `db.clients.find_one` for the tenant name and reads `contact.grc_roles` (falling back to the legacy singular `role`). `admin_create_user` accepts an optional `invite_context={client_name, grc_roles}` kwarg. When present, the invite subject becomes `"You're invited to Northstar GRC — <Client>"` and the body reads `"You have been invited as the <Role[, Role]> for <Client> to collaborate on their GRC program."` (both HTML-escaped). Direct `/api/users` callers still get the neutral template — zero regression.
+- **Invite success toast** in `RecordDrawer.jsx` now includes an explicit `Copy link` action button (Sonner `action: {label, onClick}`, 10 s duration). Clicking copies `invite_link` to the clipboard with a follow-up confirmation toast. Falls back to a plain success toast when no link is returned (e.g. contact already linked to an existing user).
+- **Fix**: `ID_FIELD` map in `RecordDrawer.jsx` was missing `contacts` and `requirements`. Added both — this unblocks the invite POST (was 404-ing to `/api/contacts/undefined/invite`) plus the on-open `/comments` and `/related` fetches (were 422-ing).
+- **Fix**: `renderContactActions()` was defined but never wired into the JSX. Now invoked from the default branch of `renderFields()` alongside the other `kind === …` guards, so the Platform-access panel + Invite button actually appear in the contact drawer for admins.
+- Tested: backend pytest 7/7 (portfolio+baseline+invite parity, tenant isolation, read-only rejection). Frontend Playwright: Client Settings tabs + Compliance Profile summary cards + all 5 buckets render; contact drawer's Invite to Platform button POSTs correctly, toast with Copy-link action renders, clipboard write of `/reset-password?token=…` URL verified.
+
 ### v21 (GRC Portfolio Overview) — Sep 2026
 - **/clients page rebuilt** as an operational portfolio console. Header renamed **GRC Portfolio Overview** with sub-sections: 6 summary cards → Needs Attention Across Clients → Client Portfolio → Team Workload.
 - **Six new summary cards**: Past Due · Due Next 30 Days · Due 31–90 Days · Critical / High Open · Unassigned · Clients Requiring Attention (X of Y). Each card is clickable and opens a portfolio-scoped drill dialog (`drill-dialog`) except the last which scrolls to and filters the client table.
@@ -177,7 +188,9 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 - Vendor Portal (guest link for due-diligence questionnaires)
 - Bulk Assign Reviewer (people picker for reviewer_id)
 - Brute-force lockout on /auth/login
-- Extract server.py into modules (server.py now ~1963 lines)
+- Continue server.py slim-down: extract `/api/users` + `/api/contacts/{id}/invite` block (~140 lines) into `backend/routes/users.py`.
+- Risk Coverage Report PDF export (per-client + portfolio).
+- External integrations (LLM-generated summary/suggestion helpers).
 
 ## Test credentials
 See `/app/memory/test_credentials.md`

@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
   vendors: "vendor_id", assets: "asset_id", tasks: "task_id", exceptions: "exception_id",
+  contacts: "contact_id", requirements: "requirement_id",
 };
 
 const LIKELIHOOD_LABELS = { 1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely", 5: "Almost Certain" };
@@ -303,11 +304,26 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     if (!confirm(`Invite ${record.name || record.email} to the platform as a client contributor?`)) return;
     try {
       const { data } = await api.post(`/contacts/${record[idField]}/invite`);
-      toast.success(data.linked ? "Contact linked to existing platform user" : "Invitation sent");
       if (record) record.linked_user_id = data.user?.user_id;
       setForm((p) => ({ ...p, linked_user_id: data.user?.user_id }));
-      if (data.invite_link) {
-        try { await navigator.clipboard.writeText(data.invite_link); toast.info("Invite link copied to clipboard"); } catch { void 0; }
+      const inviteLink = data.invite_link;
+      const message = data.linked ? "Contact linked to existing platform user" : "Invitation sent";
+      if (inviteLink) {
+        toast.success(message, {
+          description: "Share the invite link if the email doesn't arrive.",
+          action: {
+            label: "Copy link",
+            onClick: () => {
+              navigator.clipboard.writeText(inviteLink).then(
+                () => toast.success("Invite link copied to clipboard"),
+                () => toast.error("Unable to copy — please copy manually"),
+              );
+            },
+          },
+          duration: 10000,
+        });
+      } else {
+        toast.success(message);
       }
       onSaved?.();
     } catch (e) { toast.error(formatError(e)); }
@@ -892,6 +908,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         {kind === "reviews" && renderReviewActionsPanel()}
         {kind === "findings" && renderFindingActionsPanel()}
         {kind === "policies" && renderPolicyPanel()}
+        {kind === "contacts" && renderContactActions()}
         {(schema || []).map((f) => renderField(f))}
       </div>
     );
