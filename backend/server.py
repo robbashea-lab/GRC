@@ -1142,16 +1142,235 @@ async def create_comment(body: CommentIn, user: Dict = Depends(get_current_user)
 
 
 # ---------------- Audit log ----------------
-@api.get("/audit-logs")
-async def list_audit(client_id: Optional[str] = Query(None), user: Dict = Depends(get_current_user)):
+# Human-readable labels are computed on the frontend so the raw event codes stay
+# intact in the DB for immutability/traceability.
+
+_AUDIT_ACTION_BUCKETS: Dict[str, List[str]] = {
+    # user-facing category -> list of raw action codes it collapses to
+    "create": ["create"],
+    "update": ["update"],
+    "delete": ["delete"],
+    "assign": ["assign", "bulk-assign"],
+    "approve": ["approve", "policy-approve"],
+    "complete": ["complete", "review-complete", "onboarding-complete"],
+    "upload": ["upload", "evidence-upload"],
+    "invite": ["invite", "invite-contact", "resend_invite"],
+    "auth": ["login", "logout", "password_change", "password_reset"],
+    "permission": ["role_change", "client_access_change", "disable", "enable"],
+    "onboarding": [
+        "onboarding-response", "onboarding-contact", "onboarding-assessment",
+        "onboarding-known-issue", "onboarding-review", "onboarding-complete", "baseline",
+    ],
+}
+
+
+def _audit_actions_for_bucket(bucket: str) -> List[str]:
+    return _AUDIT_ACTION_BUCKETS.get(bucket, [])
+
+
+async def _audit_scope_for(user: Dict) -> Optional[List[str]]:
+    """Return the list of client_ids the viewer may see audit events for, or
+    None if the viewer can see ALL clients (super_admin only). Non-admins get
+    an empty list — the endpoint should 403 before calling this."""
     role = user.get("role")
-    if role in ("super_admin", "platform_admin"):
-        q = {"client_id": client_id} if client_id else {}
+    if role == "super_admin":
+        return None
+    if role == "platform_admin":
+        return list(user.get("client_ids") or [])
+    return []
+
+
+@api.get("/audit-logs")
+async def list_audit(
+    client_id: Optional[str] = Query(None, description="Client tenant id, 'platform' for platform-only, or omit for all."),
+    user_id: Optional[str] = Query(None),
+    action: Optional[str] = Query(None, description="User-facing bucket (create/update/…/onboarding) OR a raw event code."),
+    entity_type: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None, description="ISO date/datetime lower bound (inclusive)."),
+    end_date: Optional[str] = Query(None, description="ISO date/datetime upper bound (inclusive)."),
+    q: Optional[str] = Query(None, description="Free-text search over action/entity/user/id."),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    user: Dict = Depends(get_current_user),
+):
+    """Unified, authoritative audit log endpoint. Admins only.
+
+    Filters: client_id ('platform' means null client_id), user_id, action (bucket
+    or raw code), entity_type, start_date/end_date (ISO), q (search).
+    Server-side paginated. Returns `{items, total, page, page_size}` with
+    every item enriched with user_name + client_name.
+    """
+    role = user.get("role")
+    if role not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Audit Log is restricted to internal administrators")
+
+    scope = await _audit_scope_for(user)
+    mongo_q: Dict[str, Any] = {}
+
+    # Client filter
+    if client_id == "platform":
+        mongo_q["$or"] = [{"client_id": None}, {"client_id": {"$exists": False}}]
+    elif client_id:
+        if scope is not None and client_id not in scope:
+            raise HTTPException(403, "Not authorized for this client")
+        mongo_q["client_id"] = client_id
     else:
-        allowed = user.get("client_ids") or []
-        q = {"client_id": client_id} if (client_id and client_id in allowed) else {"client_id": {"$in": allowed}}
-    docs = await db.audit_logs.find(q, {"_id": 0}).sort("at", -1).limit(500).to_list(500)
-    return docs
+        # No explicit client filter — restrict platform_admin to their allowed clients
+        # PLUS platform-scope (null) events. Super admin sees everything.
+        if scope is not None:
+            mongo_q["$or"] = [
+                {"client_id": {"$in": scope}},
+                {"client_id": None},
+                {"client_id": {"$exists": False}},
+            ]
+
+    if user_id:
+        mongo_q["user_id"] = user_id
+    if entity_type:
+        mongo_q["entity_type"] = entity_type
+    if action:
+        codes = _audit_actions_for_bucket(action)
+        mongo_q["action"] = {"$in": codes} if codes else action
+    if start_date or end_date:
+        rng: Dict[str, Any] = {}
+        if start_date: rng["$gte"] = start_date
+        if end_date: rng["$lte"] = end_date
+        mongo_q["at"] = rng
+    if q:
+        needle = re.escape(q.strip())
+        rex = {"$regex": needle, "$options": "i"}
+        mongo_q.setdefault("$and", []).append({"$or": [
+            {"action": rex}, {"entity_type": rex}, {"entity_id": rex},
+            {"user_email": rex}, {"user_name": rex}, {"client_id": rex},
+        ]})
+
+    total = await db.audit_logs.count_documents(mongo_q)
+    skip = (page - 1) * page_size
+    docs = await db.audit_logs.find(mongo_q, {"_id": 0}).sort("at", -1).skip(skip).limit(page_size).to_list(page_size)
+
+    # Enrich with user_name + client_name via bulk lookups (bounded by page_size).
+    uids = list({d.get("user_id") for d in docs if d.get("user_id")})
+    cids = list({d.get("client_id") for d in docs if d.get("client_id")})
+    users_map = {}
+    clients_map = {}
+    if uids:
+        for u in await db.users.find({"user_id": {"$in": uids}}, {"_id": 0, "user_id": 1, "name": 1, "email": 1}).to_list(len(uids)):
+            users_map[u["user_id"]] = u
+    if cids:
+        for c in await db.clients.find({"client_id": {"$in": cids}}, {"_id": 0, "client_id": 1, "name": 1}).to_list(len(cids)):
+            clients_map[c["client_id"]] = c
+    for d in docs:
+        u = users_map.get(d.get("user_id")) or {}
+        c = clients_map.get(d.get("client_id")) or {}
+        d["user_name"] = d.get("user_name") or u.get("name") or u.get("email") or d.get("user_email")
+        d["client_name"] = c.get("name") if c else None
+    return {"items": docs, "total": total, "page": page, "page_size": page_size}
+
+
+@api.get("/audit-logs/facets")
+async def audit_facets(user: Dict = Depends(get_current_user)):
+    """Return the filter options (clients, users, entity_types) the viewer is
+    authorized to see. Actions are a static bucket list rendered on the client."""
+    role = user.get("role")
+    if role not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Audit Log is restricted to internal administrators")
+
+    scope = await _audit_scope_for(user)
+    client_q: Dict[str, Any] = {"status": {"$ne": "archived"}}
+    if scope is not None:
+        client_q["client_id"] = {"$in": scope}
+    clients = await db.clients.find(client_q, {"_id": 0, "client_id": 1, "name": 1}).sort("name", 1).to_list(500)
+
+    audit_scope_q: Dict[str, Any] = {}
+    if scope is not None:
+        audit_scope_q["$or"] = [
+            {"client_id": {"$in": scope}},
+            {"client_id": None},
+            {"client_id": {"$exists": False}},
+        ]
+    entity_types = sorted([e for e in await db.audit_logs.distinct("entity_type", audit_scope_q) if e])
+
+    # Actor list — restrict to users who have logged at least one event within the
+    # viewer's authorized scope (keeps the dropdown practical).
+    actor_ids = [x for x in await db.audit_logs.distinct("user_id", audit_scope_q) if x]
+    actors: List[Dict[str, Any]] = []
+    if actor_ids:
+        actor_docs = await db.users.find({"user_id": {"$in": actor_ids}}, {"_id": 0, "user_id": 1, "name": 1, "email": 1}).to_list(1000)
+        by_id = {a["user_id"]: a for a in actor_docs}
+        for uid in actor_ids:
+            u = by_id.get(uid, {})
+            actors.append({
+                "user_id": uid,
+                "name": u.get("name") or u.get("email") or uid,
+                "email": u.get("email"),
+            })
+        actors.sort(key=lambda a: (a["name"] or "").lower())
+
+    action_buckets = [{"value": k, "codes": v} for k, v in _AUDIT_ACTION_BUCKETS.items()]
+    return {"clients": clients, "users": actors, "entity_types": entity_types, "action_buckets": action_buckets}
+
+
+@api.get("/audit-logs/export.csv")
+async def export_audit_csv(
+    client_id: Optional[str] = Query(None),
+    user_id: Optional[str] = Query(None),
+    action: Optional[str] = Query(None),
+    entity_type: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    q: Optional[str] = Query(None),
+    user: Dict = Depends(get_current_user),
+):
+    """Export the currently filtered audit view as CSV. Applies the same
+    scoping/authorization as the list endpoint. Capped at 10k rows."""
+    # Reuse the list endpoint's filter machinery to avoid drift.
+    result = await list_audit(  # type: ignore[arg-type]
+        client_id=client_id, user_id=user_id, action=action, entity_type=entity_type,
+        start_date=start_date, end_date=end_date, q=q,
+        page=1, page_size=200, user=user,
+    )
+    total = min(result.get("total", 0), 10000)
+    rows = list(result.get("items", []))
+    # Additional pages
+    fetched = len(rows)
+    page = 2
+    while fetched < total and page <= 50:  # 50 * 200 = 10000
+        r = await list_audit(  # type: ignore[arg-type]
+            client_id=client_id, user_id=user_id, action=action, entity_type=entity_type,
+            start_date=start_date, end_date=end_date, q=q,
+            page=page, page_size=200, user=user,
+        )
+        rows.extend(r.get("items", []))
+        fetched = len(rows)
+        page += 1
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        "Timestamp", "Client", "Client ID", "User", "Email", "Action",
+        "Entity Type", "Entity ID", "Meta",
+    ])
+    for r in rows:
+        writer.writerow([
+            r.get("at") or "",
+            r.get("client_name") or ("Platform" if not r.get("client_id") else ""),
+            r.get("client_id") or "",
+            r.get("user_name") or r.get("user_email") or "",
+            r.get("user_email") or "",
+            r.get("action") or "",
+            r.get("entity_type") or "",
+            r.get("entity_id") or "",
+            (r.get("meta") and __import__("json").dumps(r.get("meta"))) or "",
+        ])
+    csv_bytes = buf.getvalue().encode("utf-8")
+    await audit(user, "export", "audit-log", "csv", meta={
+        "rows": len(rows),
+        "filters": {"client_id": client_id, "user_id": user_id, "action": action,
+                     "entity_type": entity_type, "start_date": start_date,
+                     "end_date": end_date, "q": q},
+    })
+    return StreamingResponse(iter([csv_bytes]), media_type="text/csv",
+                             headers={"Content-Disposition": 'attachment; filename="audit-log.csv"'})
 
 
 # ---------------- Users (admin) ----------------

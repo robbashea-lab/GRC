@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
-import { Building2, ShieldCheck, ScrollText, FileWarning, Umbrella, Layers } from "lucide-react";
+import { Building2, ShieldCheck, ScrollText, FileWarning, Umbrella, Layers, ExternalLink } from "lucide-react";
 import { UsersTable } from "@/pages/PlatformAdmin";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -212,13 +212,18 @@ export default function ClientSettings() {
         title={currentClient?.name || "Client"}
         subtitle="Manage users, access, and the compliance profile for this client. The active client determines where every change is scoped — no cross-tenant exposure."
       />
-      <div className="px-8 pt-4">
+      <div className="px-8 pt-4 flex items-center gap-3 flex-wrap">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-line bg-surface-card text-sm text-ink-primary" data-testid="client-settings-tenant">
           <Building2 className="h-3.5 w-3.5 text-ink-secondary" />
           <span className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Active client</span>
           <span className="text-ink-help">·</span>
           <span className="font-medium">{currentClient?.name}</span>
         </div>
+        <Button variant="outline" size="sm" onClick={() => nav(`/admin/audit?client=${currentClientId}`)}
+          className="h-9" data-testid="view-audit-history">
+          <ScrollText className="h-3.5 w-3.5 mr-1.5" /> View Audit History
+          <ExternalLink className="h-3 w-3 ml-1.5 text-ink-help" />
+        </Button>
       </div>
       <div className="p-8">
         <Tabs defaultValue="users" className="w-full">

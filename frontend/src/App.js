@@ -10,7 +10,6 @@ import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import RecordListPage from "@/pages/RecordListPage";
 import Evidence from "@/pages/Evidence";
-import AuditLog from "@/pages/AuditLog";
 import Onboarding from "@/pages/Onboarding";
 import Calendar from "@/pages/Calendar";
 import ClientDirectory from "@/pages/ClientDirectory";
@@ -91,7 +90,6 @@ function AppRouter() {
         <Route path="action-items" element={<ActionItems />} />
         <Route path="evidence" element={<Evidence />} />
         <Route path="onboarding" element={<Onboarding />} />
-        <Route path="audit" element={<AuditLog />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

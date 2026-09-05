@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 17 — Full test of the unified Audit Log rewrite (backend + frontend). Backend: created /app/backend/tests/test_audit_logs.py with 16 pytest cases covering shape, platform filter, client filter, action-bucket collapse (invite + onboarding), entity_type/user_id/date/q filters, pagination, admin-only 403s (contributor + readonly), platform_admin scoping (unauthorized-client 403 + default scope), facets shape (11 buckets + non-empty clients), and CSV export headers/content-disposition. All 16 pass (16/16). Frontend: end-to-end Playwright as super_admin — sidebar label is 'Audit Log' (data-testid=nav-admin-audit), legacy nav-audit absent; /admin/audit renders all filters + audit-search + audit-export + audit-table with 50 rows; count line '1,355 events · Page 1 of 28'; row click opens audit-detail drawer with all documented fields (event/raw/at/client/user/entity/entity-id); Platform Activity filter reduces to 11 rows all with Platform badge; Invited filter first row shows 'Contact Invited'; Next paginates to page 2; Export CSV downloads audit-log.csv; ClientSettings → 'View Audit History' navigates to /admin/audit?client=<id>. Contributor: no nav-audit and no nav-admin-audit; /audit redirects to /dashboard; /admin/audit redirects to /dashboard (InternalOnly). All acceptance criteria met.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      { "screen": "Audit Detail Sheet", "issues": ["Radix DialogContent warns 'Missing Description or aria-describedby' — non-blocking a11y warning; add SheetDescription (or aria-describedby) for the sheet."] }
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_audit_logs.py", "/app/test_reports/pytest/audit_logs.xml"],
+  "action_items": [
+    "Optional a11y polish: add a <SheetDescription> (or aria-describedby) inside AdminAudit.jsx AuditDetailDrawer to silence the Radix warning."
+  ],
+  "critical_code_review_comments": [
+    "export_audit_csv reuses list_audit filter machinery but paginates 200-at-a-time up to 50 pages — fine for the 10k cap but the inner call re-runs the users/clients enrichment lookups per page; consider a single aggregation or shared cache to reduce round trips when tenants grow.",
+    "audit-log detail drawer only renders prev/next blocks when meta has those exact keys; the check falls back to previous/before + new/after — good, but the ClientSettings deep link relies on ?client=<id> being read by useSearchParams which currently works only because the parameter name matches ('client'). Keep those constants in one place if the query key ever changes.",
+    "list_audit uses regex from `q` with re.escape — safe. Good."
+  ],
+  "updated_files": ["/app/backend/tests/test_audit_logs.py", "/app/test_reports/iteration_17.json"],
+  "success_rate": { "backend": "100% (16/16)", "frontend": "100% — every acceptance-criteria check passed" },
+  "test_credentials": "robbashea@gmail.com / Admin@2026 (super_admin), platform.admin@grc.demo / Demo@2026, contributor@globex.demo / Demo@2026, readonly@acme.demo / Demo@2026",
+  "seed_data_creation": "None — used the ~1,355 audit_logs events already seeded in the preview env.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Unified Audit Log at /admin/audit is fully working. Backend endpoints (/api/audit-logs, /audit-logs/facets, /audit-logs/export.csv) are admin-only with correct platform_admin scoping. Layout.jsx CLIENT_NAV has no /audit entry; /audit route is removed; AuditLog.jsx deleted. Regression file: /app/backend/tests/test_audit_logs.py. Note: token key on /api/auth/login is 'access_token' (not 'token').",
+  "rca of the issue": "N/A — no bugs found."
+}

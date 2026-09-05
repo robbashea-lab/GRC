@@ -25,7 +25,6 @@ const CLIENT_NAV = [
   { to: "/contacts", label: "Contacts & Roles", icon: Users, testid: "nav-contacts" },
   { to: "/evidence", label: "Evidence", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/onboarding", label: "Onboarding", icon: Sparkles, testid: "nav-onboarding" },
-  { to: "/audit", label: "Audit Log", icon: ScrollText, testid: "nav-audit" },
   { to: "/client-settings", label: "Client Settings", icon: Settings2, testid: "nav-client-settings", adminOnly: true },
 ];
 
@@ -37,7 +36,7 @@ const PLATFORM_NAV = [
   { to: "/admin/users", label: "Users & Access", icon: UserCog, testid: "nav-admin-users" },
   { to: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck, testid: "nav-admin-roles" },
   { to: "/admin/security", label: "Security & Auth", icon: Lock, testid: "nav-admin-security" },
-  { to: "/admin/audit", label: "Platform Audit Log", icon: ScrollText, testid: "nav-admin-audit" },
+  { to: "/admin/audit", label: "Audit Log", icon: ScrollText, testid: "nav-admin-audit" },
 ];
 
 function OrgSelector({ isInternal, atPlatform }) {
