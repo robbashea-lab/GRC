@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import api, { formatError } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
-import { X, ArrowUpRight, Zap, UploadCloud, Download, Trash2, CheckCircle2, XCircle, Send, ShieldCheck, CalendarPlus } from "lucide-react";
+import { X, ArrowUpRight, Zap, UploadCloud, Download, Trash2, CheckCircle2, XCircle, Send, ShieldCheck, CalendarPlus, Users2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ID_FIELD = {
@@ -36,6 +36,11 @@ function levelFromScore(s) {
   if (s >= 5) return "moderate";
   return "low";
 }
+
+const GRC_ROLE_OPTIONS = ["Executive Sponsor", "Primary GRC / Security Contact", "IT Lead",
+  "Information Security Lead", "Risk Management Contact", "Vendor / Third-Party Contact",
+  "Business Continuity / Disaster Recovery Lead", "Incident Response Lead", "HR Contact",
+  "Legal / Privacy Contact", "Finance Contact", "Other"];
 
 const TABS_BY_KIND = {
   risks: [
@@ -290,6 +295,43 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       setAcceptOpen(false);
       onSaved?.();
     } catch (e) { toast.error(formatError(e)); }
+  }
+
+  async function inviteContact() {
+    if (!record?.email) { toast.error("Contact needs an email address before invite"); return; }
+    if (record?.linked_user_id) { toast.info("Contact already linked to a platform user"); return; }
+    if (!confirm(`Invite ${record.name || record.email} to the platform as a client contributor?`)) return;
+    try {
+      const { data } = await api.post(`/contacts/${record[idField]}/invite`);
+      toast.success(data.linked ? "Contact linked to existing platform user" : "Invitation sent");
+      if (record) record.linked_user_id = data.user?.user_id;
+      setForm((p) => ({ ...p, linked_user_id: data.user?.user_id }));
+      if (data.invite_link) {
+        try { await navigator.clipboard.writeText(data.invite_link); toast.info("Invite link copied to clipboard"); } catch { void 0; }
+      }
+      onSaved?.();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
+  function renderContactActions() {
+    if (!isPlatformAdmin) return null;
+    const linked = form.linked_user_id || record?.linked_user_id;
+    const hasEmail = !!(form.email || record?.email);
+    return (
+      <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap" data-testid="contact-actions">
+        <div className="flex items-center gap-2 text-sm text-ink-primary">
+          <Users2 className="h-4 w-4 text-brand-charcoal" /> Platform access
+        </div>
+        {linked ? (
+          <span className="text-xs text-semantic-success">Linked to platform user</span>
+        ) : (
+          <Button size="sm" onClick={inviteContact} disabled={!hasEmail} data-testid="contact-invite"
+            className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+            Invite to Platform
+          </Button>
+        )}
+      </div>
+    );
   }
 
   async function submitVerifyPolicy() {

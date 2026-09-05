@@ -671,6 +671,41 @@ def _admin_can_manage_user(actor: Dict, target: Dict, client_scope: Optional[str
     return bool(actor_clients & target_clients) or (client_scope in actor_clients if client_scope else False)
 
 
+@api.post("/contacts/{contact_id}/invite")
+async def contact_invite(contact_id: str, user: Dict = Depends(get_current_user)):
+    """Invite a Contact to become a platform user (client_contributor by default)
+    using the same flow as Users & Access. Requires an email and no existing linked user.
+    """
+    if user.get("role") not in ("super_admin", "platform_admin"):
+        raise HTTPException(403, "Only admins can invite contacts")
+    contact = await db.contacts.find_one({"contact_id": contact_id}, {"_id": 0})
+    if not contact:
+        raise HTTPException(404, "Contact not found")
+    if not _can_access_client(user, contact["client_id"]):
+        raise HTTPException(403, "Forbidden for this client")
+    if contact.get("linked_user_id"):
+        raise HTTPException(400, "Contact already linked to a platform user")
+    email = (contact.get("email") or "").lower().strip()
+    if not email:
+        raise HTTPException(400, "Contact needs an email address before invite")
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        await db.contacts.update_one({"contact_id": contact_id},
+                                     {"$set": {"linked_user_id": existing["user_id"], "updated_at": _now()}})
+        return {"user": {k: existing[k] for k in existing if k not in ("_id", "password_hash")},
+                "linked": True, "invite_link": None}
+    invite_body = UserCreateIn(
+        email=email, name=contact.get("name") or email,
+        role="client_contributor", client_ids=[contact["client_id"]], password=None,
+    )
+    result = await admin_create_user(invite_body, user=user)
+    await db.contacts.update_one({"contact_id": contact_id},
+                                 {"$set": {"linked_user_id": result["user"]["user_id"], "updated_at": _now()}})
+    await audit(user, "invite-contact", "contact", contact_id, contact["client_id"],
+                meta={"email": email, "new_user_id": result["user"]["user_id"]})
+    return result
+
+
 @api.post("/users")
 async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current_user)):
     if user.get("role") not in ("super_admin", "platform_admin"):
