@@ -92,6 +92,8 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   const [approverQuery, setApproverQuery] = useState("");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ due_date: "", owner_id: "", recurrence: "" });
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyForm, setVerifyForm] = useState({ version: "", owner_id: "", approver_id: "", approved_at: "", last_reviewed_at: "", next_review_date: "", status: "approved" });
   const inputRef = useRef(null);
   const { user } = useAuth();
   const isEdit = !!record;
@@ -279,6 +281,27 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       if (record) Object.assign(record, data);
       setForm((p) => ({ ...p, status: "accepted", treatment: "accept" }));
       setAcceptOpen(false);
+      onSaved?.();
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
+  async function submitVerifyPolicy() {
+    try {
+      const body = {};
+      ["version", "owner_id", "approver_id", "status"].forEach((k) => { if (verifyForm[k]) body[k] = verifyForm[k]; });
+      ["approved_at", "last_reviewed_at", "next_review_date"].forEach((k) => {
+        if (verifyForm[k]) body[k] = new Date(verifyForm[k]).toISOString();
+      });
+      const { data } = await api.post(`/policies/${record[idField]}/verify`, body);
+      toast.success("Policy verified");
+      if (record) Object.assign(record, data);
+      setForm((p) => ({
+        ...p,
+        presence: "verified_existing",
+        status: data.status || p.status,
+        version: data.version || p.version,
+      }));
+      setVerifyOpen(false);
       onSaved?.();
     } catch (e) { toast.error(formatError(e)); }
   }
@@ -890,12 +913,25 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
 
   function renderPolicyPanel() {
     if (!isEdit) return null;
+    const presence = form.presence || record?.presence;
+    const canVerify = isPlatformAdmin && presence && presence !== "verified_existing" && presence !== "not_applicable";
     return (
       <div className="border border-slate-200 bg-slate-50/50 rounded-md p-3 space-y-2">
         <div className="flex items-center justify-between">
           <div className="text-sm text-slate-800">Approval workflow</div>
-          <StatusBadge value={status || "draft"} />
+          <div className="flex items-center gap-1.5">
+            {presence && <StatusBadge value={presence} />}
+            <StatusBadge value={status || "draft"} />
+          </div>
         </div>
+        {canVerify && (
+          <div className="flex items-center justify-between border-t border-slate-200 pt-2">
+            <div className="text-xs text-slate-600">Confirm the document and record verified metadata.</div>
+            <Button size="sm" onClick={() => { setVerifyForm({ version: record?.version || "", owner_id: record?.owner_id || "", approver_id: record?.approver_id || "", approved_at: toDateInput(record?.approved_at), last_reviewed_at: toDateInput(record?.last_reviewed_at), next_review_date: toDateInput(record?.next_review_date), status: record?.status === "approved" ? "approved" : "approved" }); setVerifyOpen(true); }} data-testid="policy-verify" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+              <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Verify policy
+            </Button>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {status === "draft" && canWrite && (
             <Button size="sm" variant="outline" onClick={() => policyAction("submit-review")} data-testid="policy-submit-review">
@@ -1173,6 +1209,81 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={() => setAcceptOpen(false)}>Cancel</Button>
                 <Button size="sm" onClick={submitAcceptRisk} data-testid="accept-submit" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">Accept risk</Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+
+      {/* Verify Policy dialog */}
+      {kind === "policies" && (
+        <Sheet open={verifyOpen} onOpenChange={setVerifyOpen}>
+          <SheetContent side="right" className="w-full sm:max-w-md p-0" data-testid="verify-policy-dialog">
+            <SheetHeader className="px-6 py-4 border-b border-line">
+              <SheetTitle>Verify policy</SheetTitle>
+            </SheetHeader>
+            <div className="p-6 space-y-4">
+              <div className="text-xs text-ink-secondary">
+                Moves this policy from <strong>Reported Existing</strong> to <strong>Verified Existing</strong> and records the verified metadata below. Blank fields will be left unchanged.
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-ink-secondary">Version</Label>
+                  <Input value={verifyForm.version} onChange={(e) => setVerifyForm({ ...verifyForm, version: e.target.value })} placeholder="2.3" className="text-sm" data-testid="verify-version" />
+                </div>
+                <div>
+                  <Label className="text-xs text-ink-secondary">Lifecycle status</Label>
+                  <Select value={verifyForm.status} onValueChange={(v) => setVerifyForm({ ...verifyForm, status: v })}>
+                    <SelectTrigger data-testid="verify-status" className="text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="in_review">In review</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-ink-secondary">Owner</Label>
+                  <Select value={verifyForm.owner_id || "__none__"} onValueChange={(v) => setVerifyForm({ ...verifyForm, owner_id: v === "__none__" ? "" : v })}>
+                    <SelectTrigger data-testid="verify-owner" className="text-sm"><SelectValue placeholder="Assign" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Leave unchanged</SelectItem>
+                      {users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-ink-secondary">Approver</Label>
+                  <Select value={verifyForm.approver_id || "__none__"} onValueChange={(v) => setVerifyForm({ ...verifyForm, approver_id: v === "__none__" ? "" : v })}>
+                    <SelectTrigger className="text-sm"><SelectValue placeholder="Assign" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Leave unchanged</SelectItem>
+                      {users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs text-ink-secondary">Approved on</Label>
+                  <Input type="date" value={verifyForm.approved_at} onChange={(e) => setVerifyForm({ ...verifyForm, approved_at: e.target.value })} className="text-sm" data-testid="verify-approved-at" />
+                </div>
+                <div>
+                  <Label className="text-xs text-ink-secondary">Last reviewed</Label>
+                  <Input type="date" value={verifyForm.last_reviewed_at} onChange={(e) => setVerifyForm({ ...verifyForm, last_reviewed_at: e.target.value })} className="text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs text-ink-secondary">Next review</Label>
+                  <Input type="date" value={verifyForm.next_review_date} onChange={(e) => setVerifyForm({ ...verifyForm, next_review_date: e.target.value })} className="text-sm" data-testid="verify-next-review" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setVerifyOpen(false)}>Cancel</Button>
+                <Button size="sm" onClick={submitVerifyPolicy} data-testid="verify-submit" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+                  Mark as verified
+                </Button>
               </div>
             </div>
           </SheetContent>

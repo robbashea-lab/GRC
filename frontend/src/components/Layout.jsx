@@ -4,7 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Check, Sparkles, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2
+  LogOut, Check, Sparkles, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
+  ClipboardList,
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import {
@@ -20,6 +21,7 @@ const CLIENT_NAV = [
   { to: "/action-items", label: "Action Items", icon: ListChecks, testid: "nav-action-items" },
   { to: "/risks", label: "Risks", icon: ShieldAlert, testid: "nav-risks" },
   { to: "/policies", label: "Policies", icon: FileText, testid: "nav-policies" },
+  { to: "/requirements", label: "Requirements", icon: ClipboardList, testid: "nav-requirements" },
   { to: "/vendors", label: "Vendors", icon: Building2, testid: "nav-vendors" },
   { to: "/evidence", label: "Evidence", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/onboarding", label: "Onboarding", icon: Sparkles, testid: "nav-onboarding" },

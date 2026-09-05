@@ -25,6 +25,13 @@ const TONE_BY_STATUS = {
   identified: "neutral",
   assessed: "info",
   treated: "success",
+  // Requirement applicability
+  applicable: "success",
+  potentially_applicable: "moderate",
+  under_review: "info",
+  // Contact/assessment status
+  reported: "info",
+  verified: "success",
   // Policy lifecycle
   draft: "neutral",
   in_review: "info",
