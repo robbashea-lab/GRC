@@ -11,6 +11,14 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 - Emails via Emergent Resend; PDFs via reportlab.
 
 ## Implemented (Feb 2026)
+### v32 (Sidebar Client Navigator; removed Platform/All Clients box) — Feb 2026
+- **Removed** the sidebar "Platform / All Clients" chip below the logo entirely in Platform mode. The `Clients` nav item now expands in place into a permanent client navigator: heading (still routes to `/clients` Portfolio Overview) + 3 inline filter tabs (All / Fav / Mine) + compact `Search clients…` + a bounded-scroll alphabetized client list. Every row: star toggle (per-user favorites, same server-persisted list from v30) + client name that switches tenant and navigates to `/dashboard` in one click.
+- **Client Workspace mode unchanged**: still shows the tenant chip (`context-header-client`) + `← All Clients` return button for internal users. Client contributor/readonly users see only the tenant chip and their normal client nav.
+- **Client contributor/readonly** never see the Clients navigator — `PlatformClientsSection` only renders when `atPlatform && isInternal`. Server enforces authorization on `/api/clients` and `/api/me/favorites/{id}` so search cannot enumerate unauthorized tenants.
+- **Scale** — the client list is bounded to `max-h-64` (≈16 rows) with vertical scroll, alphabetical sort, search-first filtering; Administration section always remains visible below. Works with 4 clients today, will remain usable with 100+.
+- **No dashboard redesign** — Portfolio Overview page and per-client `/dashboard` are untouched. Quick Client Access at the top of `/clients` remains as a visual quick-scan complement to the persistent sidebar navigator.
+- Verified via Playwright: legacy `context-header-platform` count=0, `sidebar-clients-section` visible, 3 filter tabs render, search input renders, 4 client items in list, clicking a client's name switches tenant and navigates to `/dashboard`, client-mode header + return button confirmed on the same session.
+
 ### v31 (Removed legacy client dropdown; contextual "← All Clients" return) — Feb 2026
 - **Removed** the sidebar `OrgSelector` dropdown ("Platform / All Clients ▾") entirely — Quick Client Access on the Portfolio Overview is now the single canonical way to enter a client workspace.
 - **Added** `ContextHeader` in `components/Layout.jsx` — in Platform context it renders a static "Platform / All Clients" chip; in Client Workspace context it renders the same client chip PLUS (for internal users only) a `← All Clients` button (`data-testid=return-to-portfolio`) that navigates back to `/clients`. Client users see only the tenant chip and cannot navigate out — RBAC unchanged.
