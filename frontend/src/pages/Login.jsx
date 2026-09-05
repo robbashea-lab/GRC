@@ -62,7 +62,7 @@ export default function Login() {
           <div
             aria-hidden="true"
             className="absolute -bottom-24 -right-20 text-[24rem] leading-none font-heading font-semibold tracking-tighter select-none"
-            style={{ color: "rgba(255,255,255,0.018)" }}
+            style={{ color: "rgba(255,255,255,0.014)" }}
           >
             GRC
           </div>
@@ -95,27 +95,16 @@ export default function Login() {
             GRC Operations
           </div>
           <h1 className="text-4xl xl:text-[42px] leading-[1.05] font-heading font-semibold tracking-tight text-ink-onDark">
-            Secure GRC
-            <br />
-            <span className="text-ink-onDark2">workspace.</span>
+            GRC Workspace
           </h1>
-          <p className="mt-4 text-[13px] leading-relaxed text-ink-onDarkMuted max-w-md font-mono uppercase tracking-[0.15em]">
+          <p className="mt-4 text-[11px] leading-relaxed text-ink-onDarkMuted font-mono uppercase tracking-[0.28em]">
             Governance · Risk · Compliance
           </p>
         </div>
 
         {/* Bottom — footer */}
-        <footer className="relative z-10 flex items-center justify-between text-[11px] font-mono uppercase tracking-[0.18em] text-ink-onDarkMuted">
-          <span>© {new Date().getFullYear()} iVenture Solutions</span>
-          <a
-            href="https://iventuresolutions.com/"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-ink-onDark transition-colors"
-            data-testid="brand-external-link"
-          >
-            iventuresolutions.com
-          </a>
+        <footer className="relative z-10 text-[11px] font-mono uppercase tracking-[0.18em] text-ink-onDarkMuted">
+          © {new Date().getFullYear()} iVenture Solutions
         </footer>
       </section>
 
@@ -136,7 +125,7 @@ export default function Login() {
         <div className="w-full max-w-sm">
           {/* Environment identifier */}
           <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-brand-lime/80 mb-3" data-testid="env-identifier">
-            Secure Client Access
+            Authorized Access
           </div>
           <h2 className="text-2xl font-heading font-semibold tracking-tight text-ink-onDark">Sign in</h2>
           <p className="text-[13px] text-ink-onDarkMuted mt-1.5">
@@ -215,7 +204,7 @@ export default function Login() {
                 data-testid="submit-auth"
                 type="submit"
                 disabled={loading}
-                className="group w-full h-10 mt-1 bg-brand-lime hover:bg-brand-lime/90 text-brand-charcoal font-semibold tracking-tight border border-brand-lime/60 shadow-[0_0_0_1px_rgba(163,219,51,0.15)] transition-all"
+                className="group w-full h-10 mt-1 bg-[#8FC22B] hover:bg-[#7FAE24] text-brand-charcoal font-semibold tracking-tight border border-[#7FAE24] shadow-[0_1px_0_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all"
               >
                 {loading ? "Signing in…" : (
                   <span className="inline-flex items-center gap-1.5">
@@ -245,9 +234,8 @@ export default function Login() {
           </div>
 
           {/* Mobile-only compact footer */}
-          <div className="lg:hidden mt-8 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.18em] text-ink-onDarkMuted">
-            <span>© {new Date().getFullYear()} iVenture Solutions</span>
-            <Link to="/forgot-password" className="hover:text-ink-onDark">Support</Link>
+          <div className="lg:hidden mt-8 text-center text-[10px] font-mono uppercase tracking-[0.18em] text-ink-onDarkMuted">
+            © {new Date().getFullYear()} iVenture Solutions
           </div>
         </div>
       </section>
