@@ -1,3 +1,7 @@
 {
-  "project_id": "appgprj_6a9cafcbde888191ae1b350224562554"
+  "project_id": "appgprj_6a9cafcbde888191ae1b350224562554",
+  "static": {
+    "directory": "build",
+    "not_found_handling": "single-page-application"
+  }
 }
