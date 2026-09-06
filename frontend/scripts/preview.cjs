@@ -1,4 +1,4 @@
-// Reproducible connected preview; all credentials remain in the backend.
+// Isolated demo preview. Normal build/start scripts retain real authentication.
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -9,8 +9,8 @@ if (!["start", "build"].includes(mode)) {
 }
 const env = {
   ...process.env,
-  REACT_APP_BACKEND_URL: process.env.REACT_APP_BACKEND_URL ||
-    "https://risk-review-ops.preview.emergentagent.com",
+  REACT_APP_PREVIEW: "true",
+  REACT_APP_BACKEND_URL: "",
 };
 if (mode === "build") {
   // Matches static.directory in the repository's .openai/hosting.json.

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { formatError } from "@/lib/api";
+import { PREVIEW_MODE, formatError } from "@/lib/api";
 import { Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function Login() {
@@ -134,6 +134,14 @@ export default function Login() {
 
           {/* Panel */}
           <div className="mt-7 space-y-4">
+            {PREVIEW_MODE ? (
+              <>
+                <Button data-testid="preview-signin" onClick={submit} disabled={loading} className="w-full h-10 bg-[#8FC22B] hover:bg-[#7FAE24] text-brand-charcoal font-semibold">
+                  {loading ? "Opening…" : "Sign in"}
+                </Button>
+                <p className="text-xs text-ink-onDarkMuted">Demo preview · No credentials needed. Sample data is read-only.</p>
+              </>
+            ) : <>
             <button
               data-testid="google-signin"
               onClick={googleSignIn}
@@ -223,6 +231,7 @@ export default function Login() {
               <Lock className="h-3 w-3" />
               Secure access · Authorized users only
             </div>
+            </>}
           </div>
 
           {/* Invitation-only note */}

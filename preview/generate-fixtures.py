@@ -71,7 +71,7 @@ async def main():
             p = {"client_id": cid}
             await capture(f"/clients/{cid}/members")
             for path in ["/reviews", "/findings", "/risks", "/policies", "/requirements",
-                         "/vendors", "/tasks", "/contacts", "/evidence",
+                         "/vendors", "/tasks", "/contacts", "/evidence", "/exceptions",
                          "/onboarding/policy-library", "/onboarding/requirements-library",
                          "/onboarding/state"]:
                 await capture(path, p)

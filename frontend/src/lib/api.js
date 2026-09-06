@@ -6,9 +6,15 @@ import axios from "axios";
 const BASE = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/+$/, "");
 export const API = `${BASE.replace(/\/api$/, "")}/api`;
 
+export const PREVIEW_MODE = process.env.REACT_APP_PREVIEW === "true";
+
 const api = axios.create({
   baseURL: API,
   withCredentials: false,
+  ...(PREVIEW_MODE ? { adapter: async config => {
+    const { previewAdapter } = await import("@/preview/adapter");
+    return previewAdapter(config);
+  } } : {}),
 });
 
 // Attach bearer token if present in localStorage (fallback when cookies blocked)

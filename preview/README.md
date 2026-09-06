@@ -1,20 +1,22 @@
-# Connected test preview
+# Isolated dashboard preview
 
-The browser preview uses the application's existing authentication and data API
-at `https://risk-review-ops.preview.emergentagent.com`. Google and email/password
-sign-in use the same stored users, server roles, tenant checks, and sessions.
-The static fixture adapter is no longer used by the application.
+Run `npm run build` from the repository root to build the chat preview.
+The preview runner explicitly enables `REACT_APP_PREVIEW=true` and clears the
+backend URL. The login page offers one Sign In button with no credentials.
+It opens the existing Platform Portfolio and client dashboards as Preview Admin.
 
-Install the frontend's declared dependencies with its existing Yarn setup, then
-run `npm run build` from the repository root (or `yarn --cwd frontend build:preview`). This writes the
-validated static build to `build/`, matching `.openai/hosting.json`.
-`REACT_APP_BACKEND_URL` can override the test API URL. The normal frontend
-`build` and `start` scripts continue to use deployment-supplied configuration.
+The preview adapter uses only synthetic snapshots generated from the existing
+backend seed and GET endpoints. It never contacts Emergent, Railway, or a live
+API. Entry persists in this browser until logout. This is a demo entry marker,
+not a real account session. Sample records are read-only; writes fail explicitly
+instead of pretending to save. Uncaptured endpoints report an unavailable view.
 
-For the supervised browser preview, use the frontend directory; its `dev` script
-accepts the service's host and port arguments and supplies the same test API URL.
+Regenerate fixtures using the dependencies in `preview/requirements.txt`:
+`python preview/generate-fixtures.py`. The generator uses an isolated in-memory
+database and does not load environment files or capture operational records.
 
-Manage account names, roles, and passwords through the backend. Never put account
-passwords or session tokens in frontend configuration, this document, or Git.
-Existing seed accounts keep their saved names and passwords across backend
-startup. Seed environment credentials apply when creating an account.
+Normal frontend `build` and `start` scripts retain the real authentication flow
+when REACT_APP_PREVIEW is unset. They require REACT_APP_BACKEND_URL configured
+for an actual backend. Backend authentication and tenant authorization are
+unchanged. Do not enable preview mode when testing real authentication or data
+persistence.
