@@ -148,4 +148,9 @@ const configureDevServer = webpackConfig.devServer;
 webpackConfig.devServer = (devServerConfig) =>
   makeDevServerV5Compatible(configureDevServer(devServerConfig));
 
+// Use the application's existing source alias in dashboard component tests.
+webpackConfig.jest = {
+  configure: { moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" } },
+};
+
 module.exports = webpackConfig;
