@@ -10,6 +10,13 @@ export const API = `${BASE}/api`;
 // REACT_APP_PREVIEW is not enabled.
 const PREVIEW_MODE = process.env.REACT_APP_PREVIEW === "true";
 const previewResponses = previewFixtures?.responses || {};
+const PREVIEW_SESSION_KEY = "grc_preview_session";
+const PREVIEW_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+// This account is intentionally limited to the static preview.  The reserved
+// email domain and unmistakable password make it impossible to confuse with a
+// production credential.  Hosted production builds never use these values.
+const PREVIEW_EMAIL = (process.env.REACT_APP_PREVIEW_EMAIL || "preview@example.invalid").trim().toLowerCase();
+const PREVIEW_PASSWORD = process.env.REACT_APP_PREVIEW_PASSWORD || "TEST_ONLY_PREVIEW_PASSWORD";
 
 function clone(value) {
   if (value === undefined) return undefined;
@@ -76,25 +83,101 @@ function lookupPreview(path, params) {
 
 function previewUser() {
   const user = clone(previewResponses["/auth/me"] || {});
-  return { ...user, name: "Preview Admin", email: "preview@example.invalid" };
+  return { ...user, name: "Preview Admin", email: PREVIEW_EMAIL };
+}
+
+function previewRequestBody(config) {
+  if (!config?.data) return {};
+  if (typeof config.data !== "string") return config.data;
+  try { return JSON.parse(config.data); } catch { return {}; }
+}
+
+function previewResponse(config, data, status = 200, statusText = "OK") {
+  const response = { data, status, statusText, headers: {}, config, request: null };
+  if (status < 200 || status >= 300) {
+    throw new axios.AxiosError(
+      data?.detail || statusText,
+      axios.AxiosError.ERR_BAD_REQUEST,
+      config,
+      null,
+      response,
+    );
+  }
+  return response;
+}
+
+function newPreviewToken() {
+  // This is a local test-session identifier, not a production auth token.
+  return window.crypto?.randomUUID?.() || `preview-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function readPreviewSession() {
+  const token = localStorage.getItem("grc_token");
+  if (!token) return null;
+  try {
+    const session = JSON.parse(localStorage.getItem(PREVIEW_SESSION_KEY) || "null");
+    if (!session || session.token !== token || session.expires_at <= Date.now()) {
+      localStorage.removeItem(PREVIEW_SESSION_KEY);
+      return null;
+    }
+    return session;
+  } catch {
+    localStorage.removeItem(PREVIEW_SESSION_KEY);
+    return null;
+  }
+}
+
+function createPreviewSession(user) {
+  const token = newPreviewToken();
+  localStorage.setItem(PREVIEW_SESSION_KEY, JSON.stringify({
+    token,
+    user_id: user.user_id,
+    expires_at: Date.now() + PREVIEW_SESSION_TTL_MS,
+  }));
+  return token;
 }
 
 async function previewAdapter(config) {
   const path = String(config.url || "/").split("?")[0] || "/";
   const params = config.params || {};
   const method = String(config.method || "get").toLowerCase();
+  const body = previewRequestBody(config);
   let data;
 
-  if (path.endsWith(".csv")) {
+  if (path === "/auth/me" && method === "get") {
+    const session = readPreviewSession();
+    if (!session) return previewResponse(config, { detail: "Not authenticated" }, 401, "Unauthorized");
+    data = previewUser();
+  } else if (path === "/auth/login" && method === "post") {
+    const email = String(body.email || "").trim().toLowerCase();
+    const password = String(body.password || "");
+    if (email !== PREVIEW_EMAIL || password !== PREVIEW_PASSWORD) {
+      return previewResponse(config, { detail: "Invalid credentials" }, 401, "Unauthorized");
+    }
+    const user = previewUser();
+    const token = createPreviewSession(user);
+    data = { access_token: token, user };
+  } else if (path === "/auth/register" && method === "post") {
+    return previewResponse(
+      config,
+      { detail: "Preview registration is disabled; use the provided preview account." },
+      403,
+      "Forbidden",
+    );
+  } else if (path === "/auth/logout" && method === "post") {
+    localStorage.removeItem(PREVIEW_SESSION_KEY);
+    data = { ok: true };
+  } else if (!path.startsWith("/auth/") && !readPreviewSession()) {
+    // Keep the static preview subject to the same authenticated-entry rule as
+    // the real API.  The UI also protects its routes, but the adapter should
+    // not expose fixture data to unauthenticated API calls either.
+    return previewResponse(config, { detail: "Not authenticated" }, 401, "Unauthorized");
+  } else if (path.endsWith(".csv")) {
     data = new Blob(["Preview export\n"], { type: "text/csv" });
   } else if (method === "get") {
     data = lookupPreview(path, params);
     if (path === "/audit-logs" && !Object.keys(paramsObject(params)).length && data?.items) data = data.items;
-  } else if (path === "/auth/login" || path === "/auth/register") {
-    // Demo mode is intentionally tokenless; authentication is represented by
-    // the in-memory preview user and never persists a credential.
-    data = { user: previewUser() };
-  } else if (path === "/auth/logout" || path.startsWith("/notifications/") || path === "/notifications/read-all") {
+  } else if (path.startsWith("/notifications/") || path === "/notifications/read-all") {
     data = { ok: true };
   } else if (path === "/bulk") {
     data = { count: 0 };
@@ -104,14 +187,7 @@ async function previewAdapter(config) {
     data = clone(config.data ? (typeof config.data === "string" ? JSON.parse(config.data) : config.data) : {});
   }
 
-  return {
-    data,
-    status: 200,
-    statusText: "OK",
-    headers: {},
-    config,
-    request: null,
-  };
+  return previewResponse(config, data);
 }
 
 const api = axios.create({
