@@ -14,11 +14,11 @@ if not BASE_URL:
 
 API = f"{BASE_URL}/api"
 
-ADMIN = ("robbashea@gmail.com", "Admin@2026")
-PLAT = ("platform.admin@grc.demo", "Demo@2026")
-ACME_C = ("contributor@acme.demo", "Demo@2026")
-ACME_R = ("readonly@acme.demo", "Demo@2026")
-GLOB_C = ("contributor@globex.demo", "Demo@2026")
+ADMIN = (os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test"), os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD"))
+PLAT = (os.environ.get("GRC_TEST_PLATFORM_EMAIL", "platform-admin@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
+ACME_C = (os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
+ACME_R = (os.environ.get("GRC_TEST_ACME_READONLY_EMAIL", "acme-readonly@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
+GLOB_C = (os.environ.get("GRC_TEST_GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
 
 
 def _login(email, password):

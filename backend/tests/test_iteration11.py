@@ -6,8 +6,8 @@ import requests
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 assert BASE_URL, "REACT_APP_BACKEND_URL must be set"
 
-ADMIN = {"email": "platform.admin@grc.demo", "password": "Demo@2026"}
-ACME_CONTRIB = {"email": "contributor@acme.demo", "password": "Demo@2026"}
+ADMIN = {"email": os.environ.get("GRC_TEST_PLATFORM_EMAIL", "platform-admin@example.test"), "password": os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")}
+ACME_CONTRIB = {"email": os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), "password": os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")}
 
 
 def _login(creds):

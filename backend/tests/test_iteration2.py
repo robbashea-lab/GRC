@@ -12,11 +12,11 @@ if not BASE_URL:
 BASE_URL = BASE_URL.rstrip("/")
 API = f"{BASE_URL}/api"
 
-ADMIN = ("robbashea@gmail.com", "Admin@2026")
-ACME_R = ("readonly@acme.demo", "Demo@2026")
+ADMIN = (os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test"), os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD"))
+ACME_R = (os.environ.get("GRC_TEST_ACME_READONLY_EMAIL", "acme-readonly@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
 
-# From backend/.env
-CRON_SECRET = "7b3f9c0d6e2a4b1f8c5d3e7a9b0c1d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c"
+# Supplied by the test environment; never hardcode the webhook secret.
+CRON_SECRET = os.environ.get("WEBHOOK_CRON_SECRET")
 
 
 def _login(email, pw):
@@ -109,7 +109,7 @@ class TestExceptions:
         assert r4.status_code == 200
 
     def test_tenant_isolation(self, admin_token, acme_cid):
-        globex_token = _login("contributor@globex.demo", "Demo@2026")
+        globex_token = _login(os.environ.get("GRC_TEST_GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
         r = requests.get(f"{API}/exceptions", headers=_hdr(globex_token), params={"client_id": acme_cid})
         assert r.status_code == 403
 
@@ -160,10 +160,12 @@ class TestCronAndReminders:
 
     def test_cron_wrong_secret_401(self):
         r = requests.post(f"{BASE_URL}/api/cron/overdue-reminders",
-                          headers={"Authorization": "Bearer wrongsecret"})
+                          headers={"Authorization": "Bearer TEST_ONLY_WRONG_SECRET"})
         assert r.status_code == 401
 
     def test_cron_valid_secret_200(self):
+        if not CRON_SECRET:
+            pytest.skip("WEBHOOK_CRON_SECRET is not configured for this environment")
         r = requests.post(f"{BASE_URL}/api/cron/overdue-reminders",
                           headers={"Authorization": f"Bearer {CRON_SECRET}"})
         assert r.status_code == 200

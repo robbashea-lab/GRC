@@ -44,31 +44,31 @@ def _h(token):
 
 @pytest.fixture(scope="module")
 def admin():
-    tok, u = _login("robbashea@gmail.com", "Admin@2026")
+    tok, u = _login(os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test"), os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD"))
     return {"token": tok, "user": u}
 
 
 @pytest.fixture(scope="module")
 def platform_admin():
-    tok, u = _login("platform.admin@grc.demo", "Demo@2026")
+    tok, u = _login(os.environ.get("GRC_TEST_PLATFORM_EMAIL", "platform-admin@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
     return {"token": tok, "user": u}
 
 
 @pytest.fixture(scope="module")
 def contrib():
-    tok, u = _login("contributor@acme.demo", "Demo@2026")
+    tok, u = _login(os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
     return {"token": tok, "user": u}
 
 
 @pytest.fixture(scope="module")
 def readonly():
-    tok, u = _login("readonly@acme.demo", "Demo@2026")
+    tok, u = _login(os.environ.get("GRC_TEST_ACME_READONLY_EMAIL", "acme-readonly@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
     return {"token": tok, "user": u}
 
 
 @pytest.fixture(scope="module")
 def globex_contrib():
-    tok, u = _login("contributor@globex.demo", "Demo@2026")
+    tok, u = _login(os.environ.get("GRC_TEST_GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
     return {"token": tok, "user": u}
 
 

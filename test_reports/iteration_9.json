@@ -23,7 +23,7 @@
   ],
   "updated_files": ["/app/backend/tests/test_iteration9.py"],
   "success_rate": {"backend": "100%", "frontend": "~95% (2 cosmetic issues)"},
-  "test_credentials": "Used credentials from /app/memory/test_credentials.md — super_admin robbashea@gmail.com/Admin@2026, contributor@acme.demo/Demo@2026, readonly@acme.demo/Demo@2026, contributor@globex.demo/Demo@2026.",
+  "test_credentials": "Used credentials from /app/memory/test_credentials.md — super_admin admin@example.test/TEST_ONLY_ADMIN_PASSWORD, acme-contributor@example.test/TEST_ONLY_PASSWORD, acme-readonly@example.test/TEST_ONLY_PASSWORD, globex-contributor@example.test/TEST_ONLY_PASSWORD.",
   "seed_data_creation": "Test created and cleaned up 1 scratch finding ('TEST_iter9 unassigned finding') to prove comments do not attribute ownership. Cleanup ran in finally-block.",
   "retest_needed": true,
   "should_main_agent_self_test": true,

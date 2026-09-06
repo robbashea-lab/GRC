@@ -1,116 +1,116 @@
 {
-  "generated_at": "2026-09-06T00:14:35.860801+00:00",
+  "generated_at": "2026-09-06T00:38:32.960360+00:00",
   "source": "Original backend seed; isolated in-memory database; sample records only.",
   "responses": {
     "/auth/me": {
-      "user_id": "user_70112062fc4a",
+      "user_id": "user_1d4298b306e1",
       "email": "preview@example.invalid",
       "name": "Preview Admin",
       "role": "super_admin",
       "client_ids": [
-        "cli_72a948778515",
-        "cli_617cda776a87"
+        "cli_296f75dcdded",
+        "cli_494cd9385db3"
       ],
       "auth_provider": "password",
-      "created_at": "2026-09-06T00:14:34.245711+00:00",
+      "created_at": "2026-09-06T00:38:31.417992+00:00",
       "favorite_client_ids": []
     },
     "/clients": [
       {
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "name": "Acme Corp",
         "industry": "Manufacturing",
         "environment": "Production",
         "status": "active",
-        "created_at": "2026-09-06T00:14:33.927000+00:00",
-        "assigned_owner_id": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:31.109665+00:00",
+        "assigned_owner_id": "user_1d4298b306e1"
       },
       {
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "name": "Globex Ltd",
         "industry": "Fintech",
         "environment": "Production",
         "status": "active",
-        "created_at": "2026-09-06T00:14:33.927786+00:00",
-        "assigned_owner_id": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:31.109897+00:00",
+        "assigned_owner_id": "user_1d4298b306e1"
       }
     ],
     "/users": [
       {
-        "user_id": "user_70112062fc4a",
+        "user_id": "user_1d4298b306e1",
         "email": "preview@example.invalid",
         "name": "Preview Admin",
         "role": "super_admin",
         "client_ids": [
-          "cli_72a948778515",
-          "cli_617cda776a87"
+          "cli_296f75dcdded",
+          "cli_494cd9385db3"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:34.245711+00:00",
+        "created_at": "2026-09-06T00:38:31.417992+00:00",
         "favorite_client_ids": []
       },
       {
-        "user_id": "user_e660a72ba58e",
-        "email": "platform.admin@grc.demo",
+        "user_id": "user_6753d1818a63",
+        "email": "platform-admin@example.test",
         "name": "Platform Admin",
         "role": "platform_admin",
         "client_ids": [
-          "cli_72a948778515",
-          "cli_617cda776a87"
+          "cli_296f75dcdded",
+          "cli_494cd9385db3"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:34.570594+00:00"
+        "created_at": "2026-09-06T00:38:31.733476+00:00"
       },
       {
-        "user_id": "user_11cebb98b357",
-        "email": "contributor@acme.demo",
+        "user_id": "user_1084dac24b35",
+        "email": "acme-contributor@example.test",
         "name": "Alicia Rivera",
         "role": "client_contributor",
         "client_ids": [
-          "cli_72a948778515"
+          "cli_296f75dcdded"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:34.907024+00:00"
+        "created_at": "2026-09-06T00:38:32.055725+00:00"
       },
       {
-        "user_id": "user_fd70b1d73535",
-        "email": "readonly@acme.demo",
+        "user_id": "user_e280db9d3294",
+        "email": "acme-readonly@example.test",
         "name": "Ravi Kumar",
         "role": "client_readonly",
         "client_ids": [
-          "cli_72a948778515"
+          "cli_296f75dcdded"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:35.224471+00:00"
+        "created_at": "2026-09-06T00:38:32.369069+00:00"
       },
       {
-        "user_id": "user_33cb377315c9",
-        "email": "contributor@globex.demo",
+        "user_id": "user_b42087dce9f0",
+        "email": "globex-contributor@example.test",
         "name": "Chen Wei",
         "role": "client_contributor",
         "client_ids": [
-          "cli_617cda776a87"
+          "cli_494cd9385db3"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:35.564988+00:00"
+        "created_at": "2026-09-06T00:38:32.685647+00:00"
       }
     ],
     "/clients/directory": {
       "clients": [
         {
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "name": "Acme Corp",
           "industry": "Manufacturing",
           "environment": "Production",
           "logo_url": null,
           "primary_contact": null,
-          "grc_lead_id": "user_70112062fc4a",
+          "grc_lead_id": "user_1d4298b306e1",
           "grc_lead": {
-            "user_id": "user_70112062fc4a",
+            "user_id": "user_1d4298b306e1",
             "name": "Preview Admin",
             "email": "preview@example.invalid"
           },
-          "assigned_owner_id": "user_70112062fc4a",
+          "assigned_owner_id": "user_1d4298b306e1",
           "client_status": "active",
           "program_status": "action_required",
           "past_due": 4,
@@ -120,9 +120,9 @@
           "unassigned": 0,
           "next_major_item": {
             "title": "Vendor Review \u2014 Primary SaaS providers",
-            "due_date": "2026-09-18T00:14:35.569960+00:00",
+            "due_date": "2026-09-18T00:38:32.686329+00:00",
             "review_type": "vendor",
-            "review_id": "rev_402cd1559849"
+            "review_id": "rev_32ab8f4b3d8d"
           },
           "open_actions": 11,
           "open_findings": 4,
@@ -131,22 +131,22 @@
           "overdue_reviews": 2,
           "critical_high_findings": 2,
           "last_activity": null,
-          "created_at": "2026-09-06T00:14:33.927000+00:00"
+          "created_at": "2026-09-06T00:38:31.109665+00:00"
         },
         {
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "name": "Globex Ltd",
           "industry": "Fintech",
           "environment": "Production",
           "logo_url": null,
           "primary_contact": null,
-          "grc_lead_id": "user_70112062fc4a",
+          "grc_lead_id": "user_1d4298b306e1",
           "grc_lead": {
-            "user_id": "user_70112062fc4a",
+            "user_id": "user_1d4298b306e1",
             "name": "Preview Admin",
             "email": "preview@example.invalid"
           },
-          "assigned_owner_id": "user_70112062fc4a",
+          "assigned_owner_id": "user_1d4298b306e1",
           "client_status": "active",
           "program_status": "action_required",
           "past_due": 4,
@@ -156,9 +156,9 @@
           "unassigned": 0,
           "next_major_item": {
             "title": "Vendor Review \u2014 Primary SaaS providers",
-            "due_date": "2026-09-18T00:14:35.570055+00:00",
+            "due_date": "2026-09-18T00:38:32.686392+00:00",
             "review_type": "vendor",
-            "review_id": "rev_505a60d7ce0b"
+            "review_id": "rev_9045d75432c9"
           },
           "open_actions": 11,
           "open_findings": 4,
@@ -167,7 +167,7 @@
           "overdue_reviews": 2,
           "critical_high_findings": 2,
           "last_activity": null,
-          "created_at": "2026-09-06T00:14:33.927786+00:00"
+          "created_at": "2026-09-06T00:38:31.109897+00:00"
         }
       ],
       "portfolio": {
@@ -184,215 +184,215 @@
         "total_critical_high": 4,
         "total_significant_risks": 0,
         "upcoming_reviews_30d": 4,
-        "generated_at": "2026-09-06T00:14:35.638119+00:00"
+        "generated_at": "2026-09-06T00:38:32.743251+00:00"
       },
       "attention_queue": [
         {
           "priority": "critical",
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "client_name": "Acme Corp",
           "entity_type": "finding",
-          "entity_id": "fnd_d7dfb70aa21b",
+          "entity_id": "fnd_3c9363be1b29",
           "title": "Critical CVE patch overdue on payroll server",
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "owner_name": "Alicia Rivera",
-          "due_date": "2026-09-04T00:14:35.571173+00:00",
+          "due_date": "2026-09-04T00:38:32.686944+00:00",
           "status": "open",
           "overdue": true
         },
         {
           "priority": "critical",
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "client_name": "Globex Ltd",
           "entity_type": "finding",
-          "entity_id": "fnd_0198e7e3bab0",
+          "entity_id": "fnd_a42c2675929f",
           "title": "Critical CVE patch overdue on payroll server",
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "owner_name": "Chen Wei",
-          "due_date": "2026-09-04T00:14:35.571217+00:00",
+          "due_date": "2026-09-04T00:38:32.686979+00:00",
           "status": "open",
           "overdue": true
         },
         {
           "priority": "critical",
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "client_name": "Acme Corp",
           "entity_type": "task",
-          "entity_id": "tsk_b5b3afb061d9",
+          "entity_id": "tsk_5b0d56ee9e82",
           "title": "Patch CVE-2026-1000 on payroll server",
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "owner_name": "Alicia Rivera",
-          "due_date": "2026-09-05T00:14:35.573374+00:00",
+          "due_date": "2026-09-05T00:38:32.688251+00:00",
           "status": "open",
           "overdue": true
         },
         {
           "priority": "critical",
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "client_name": "Globex Ltd",
           "entity_type": "task",
-          "entity_id": "tsk_4a0fb0556844",
+          "entity_id": "tsk_585022921360",
           "title": "Patch CVE-2026-1000 on payroll server",
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "owner_name": "Chen Wei",
-          "due_date": "2026-09-05T00:14:35.573410+00:00",
+          "due_date": "2026-09-05T00:38:32.688279+00:00",
           "status": "open",
           "overdue": true
         },
         {
           "priority": "overdue",
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "client_name": "Acme Corp",
           "entity_type": "review",
-          "entity_id": "rev_fd34550c9a2c",
+          "entity_id": "rev_1b8a1c3a2439",
           "title": "Security Awareness Training Review",
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "owner_name": "Alicia Rivera",
-          "due_date": "2026-08-27T00:14:35.570027+00:00",
+          "due_date": "2026-08-27T00:38:32.686370+00:00",
           "status": "upcoming",
           "overdue": true
         },
         {
           "priority": "overdue",
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "client_name": "Globex Ltd",
           "entity_type": "review",
-          "entity_id": "rev_58101e9cc470",
+          "entity_id": "rev_d40ecfcc86e3",
           "title": "Security Awareness Training Review",
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "owner_name": "Chen Wei",
-          "due_date": "2026-08-27T00:14:35.570104+00:00",
+          "due_date": "2026-08-27T00:38:32.686441+00:00",
           "status": "upcoming",
           "overdue": true
         },
         {
           "priority": "overdue",
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "client_name": "Acme Corp",
           "entity_type": "review",
-          "entity_id": "rev_5d524edc7a99",
+          "entity_id": "rev_586788bb397b",
           "title": "Quarterly Access Review \u2014 Acme Corp",
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "owner_name": "Alicia Rivera",
-          "due_date": "2026-09-03T00:14:35.569754+00:00",
+          "due_date": "2026-09-03T00:38:32.686274+00:00",
           "status": "upcoming",
           "overdue": true
         },
         {
           "priority": "overdue",
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "client_name": "Globex Ltd",
           "entity_type": "review",
-          "entity_id": "rev_55a6f08aa458",
+          "entity_id": "rev_4f2137146f62",
           "title": "Quarterly Access Review \u2014 Globex Ltd",
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "owner_name": "Chen Wei",
-          "due_date": "2026-09-03T00:14:35.570042+00:00",
+          "due_date": "2026-09-03T00:38:32.686380+00:00",
           "status": "upcoming",
           "overdue": true
         },
         {
           "priority": "high",
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "client_name": "Acme Corp",
           "entity_type": "task",
-          "entity_id": "tsk_c87d2392fa62",
+          "entity_id": "tsk_8cc68f0c4f36",
           "title": "Disable stale AD accounts",
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "owner_name": "Alicia Rivera",
-          "due_date": "2026-09-13T00:14:35.573343+00:00",
+          "due_date": "2026-09-13T00:38:32.688231+00:00",
           "status": "in_progress",
           "overdue": false
         },
         {
           "priority": "high",
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "client_name": "Globex Ltd",
           "entity_type": "task",
-          "entity_id": "tsk_71acb3f64646",
+          "entity_id": "tsk_0f5323799e01",
           "title": "Disable stale AD accounts",
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "owner_name": "Chen Wei",
-          "due_date": "2026-09-13T00:14:35.573388+00:00",
+          "due_date": "2026-09-13T00:38:32.688259+00:00",
           "status": "in_progress",
           "overdue": false
         },
         {
           "priority": "high",
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "client_name": "Acme Corp",
           "entity_type": "finding",
-          "entity_id": "fnd_7122d1e76116",
+          "entity_id": "fnd_8ef94d316905",
           "title": "Stale privileged accounts found in AD",
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "owner_name": "Alicia Rivera",
-          "due_date": "2026-09-20T00:14:35.571130+00:00",
+          "due_date": "2026-09-20T00:38:32.686916+00:00",
           "status": "open",
           "overdue": false
         },
         {
           "priority": "high",
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "client_name": "Globex Ltd",
           "entity_type": "finding",
-          "entity_id": "fnd_29036e4a82cb",
+          "entity_id": "fnd_80055dae0c7e",
           "title": "Stale privileged accounts found in AD",
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "owner_name": "Chen Wei",
-          "due_date": "2026-09-20T00:14:35.571193+00:00",
+          "due_date": "2026-09-20T00:38:32.686964+00:00",
           "status": "open",
           "overdue": false
         },
         {
           "priority": "due_soon",
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "client_name": "Acme Corp",
           "entity_type": "review",
-          "entity_id": "rev_402cd1559849",
+          "entity_id": "rev_32ab8f4b3d8d",
           "title": "Vendor Review \u2014 Primary SaaS providers",
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "owner_name": "Alicia Rivera",
-          "due_date": "2026-09-18T00:14:35.569960+00:00",
+          "due_date": "2026-09-18T00:38:32.686329+00:00",
           "status": "in_progress",
           "overdue": false
         },
         {
           "priority": "due_soon",
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "client_name": "Globex Ltd",
           "entity_type": "review",
-          "entity_id": "rev_505a60d7ce0b",
+          "entity_id": "rev_9045d75432c9",
           "title": "Vendor Review \u2014 Primary SaaS providers",
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "owner_name": "Chen Wei",
-          "due_date": "2026-09-18T00:14:35.570055+00:00",
+          "due_date": "2026-09-18T00:38:32.686392+00:00",
           "status": "in_progress",
           "overdue": false
         },
         {
           "priority": "due_soon",
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "client_name": "Acme Corp",
           "entity_type": "task",
-          "entity_id": "tsk_38deac95c257",
+          "entity_id": "tsk_e63553a11ac3",
           "title": "Request SOC 2 from CloudCore",
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "owner_name": "Alicia Rivera",
-          "due_date": "2026-09-20T00:14:35.573365+00:00",
+          "due_date": "2026-09-20T00:38:32.688242+00:00",
           "status": "open",
           "overdue": false
         }
       ],
       "team_workload": [
         {
-          "user_id": "user_70112062fc4a",
+          "user_id": "user_1d4298b306e1",
           "name": "Preview Admin",
           "email": "preview@example.invalid",
           "role": "super_admin",
           "clients": 2,
           "client_ids": [
-            "cli_617cda776a87",
-            "cli_72a948778515"
+            "cli_296f75dcdded",
+            "cli_494cd9385db3"
           ],
           "past_due": 0,
           "due_30d": 0,
@@ -496,11 +496,11 @@
     "/audit-logs/facets": {
       "clients": [
         {
-          "client_id": "cli_72a948778515",
+          "client_id": "cli_296f75dcdded",
           "name": "Acme Corp"
         },
         {
-          "client_id": "cli_617cda776a87",
+          "client_id": "cli_494cd9385db3",
           "name": "Globex Ltd"
         }
       ],
@@ -600,354 +600,354 @@
       "page": 1,
       "page_size": 50
     },
-    "/clients/cli_72a948778515/members": [
+    "/clients/cli_296f75dcdded/members": [
       {
-        "user_id": "user_11cebb98b357",
-        "email": "contributor@acme.demo",
+        "user_id": "user_1084dac24b35",
+        "email": "acme-contributor@example.test",
         "name": "Alicia Rivera",
         "role": "client_contributor",
         "client_ids": [
-          "cli_72a948778515"
+          "cli_296f75dcdded"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:34.907024+00:00"
+        "created_at": "2026-09-06T00:38:32.055725+00:00"
       },
       {
-        "user_id": "user_e660a72ba58e",
-        "email": "platform.admin@grc.demo",
+        "user_id": "user_6753d1818a63",
+        "email": "platform-admin@example.test",
         "name": "Platform Admin",
         "role": "platform_admin",
         "client_ids": [
-          "cli_72a948778515",
-          "cli_617cda776a87"
+          "cli_296f75dcdded",
+          "cli_494cd9385db3"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:34.570594+00:00"
+        "created_at": "2026-09-06T00:38:31.733476+00:00"
       },
       {
-        "user_id": "user_70112062fc4a",
+        "user_id": "user_1d4298b306e1",
         "email": "preview@example.invalid",
         "name": "Preview Admin",
         "role": "super_admin",
         "client_ids": [
-          "cli_72a948778515",
-          "cli_617cda776a87"
+          "cli_296f75dcdded",
+          "cli_494cd9385db3"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:34.245711+00:00",
+        "created_at": "2026-09-06T00:38:31.417992+00:00",
         "favorite_client_ids": []
       },
       {
-        "user_id": "user_fd70b1d73535",
-        "email": "readonly@acme.demo",
+        "user_id": "user_e280db9d3294",
+        "email": "acme-readonly@example.test",
         "name": "Ravi Kumar",
         "role": "client_readonly",
         "client_ids": [
-          "cli_72a948778515"
+          "cli_296f75dcdded"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:35.224471+00:00"
+        "created_at": "2026-09-06T00:38:32.369069+00:00"
       }
     ],
-    "/reviews?client_id=cli_72a948778515": [
+    "/reviews?client_id=cli_296f75dcdded": [
       {
-        "review_id": "rev_fd34550c9a2c",
+        "review_id": "rev_1b8a1c3a2439",
         "title": "Security Awareness Training Review",
         "review_type": "awareness",
-        "client_id": "cli_72a948778515",
-        "due_date": "2026-08-27T00:14:35.570027+00:00",
-        "owner_id": "user_11cebb98b357",
+        "client_id": "cli_296f75dcdded",
+        "due_date": "2026-08-27T00:38:32.686370+00:00",
+        "owner_id": "user_1084dac24b35",
         "status": "upcoming",
         "recurrence": "quarterly",
-        "created_at": "2026-09-06T00:14:35.570032+00:00",
-        "updated_at": "2026-09-06T00:14:35.570034+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686375+00:00",
+        "updated_at": "2026-09-06T00:38:32.686376+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_98fdee09e09f",
+        "review_id": "rev_af342e25943a",
         "title": "BCP / DR Tabletop Exercise",
         "review_type": "bcp_dr",
-        "client_id": "cli_72a948778515",
-        "due_date": "2026-11-05T00:14:35.570018+00:00",
-        "owner_id": "user_11cebb98b357",
+        "client_id": "cli_296f75dcdded",
+        "due_date": "2026-11-05T00:38:32.686361+00:00",
+        "owner_id": "user_1084dac24b35",
         "status": "upcoming",
         "recurrence": "semiannual",
-        "created_at": "2026-09-06T00:14:35.570024+00:00",
-        "updated_at": "2026-09-06T00:14:35.570025+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686367+00:00",
+        "updated_at": "2026-09-06T00:38:32.686368+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_8130cb946bb3",
+        "review_id": "rev_92ddcc6ce1fb",
         "title": "Policy Review \u2014 Information Security Policy",
         "review_type": "policy",
-        "client_id": "cli_72a948778515",
-        "due_date": "2026-10-21T00:14:35.570002+00:00",
-        "owner_id": "user_11cebb98b357",
+        "client_id": "cli_296f75dcdded",
+        "due_date": "2026-10-21T00:38:32.686352+00:00",
+        "owner_id": "user_1084dac24b35",
         "status": "upcoming",
         "recurrence": "annual",
-        "created_at": "2026-09-06T00:14:35.570014+00:00",
-        "updated_at": "2026-09-06T00:14:35.570016+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686358+00:00",
+        "updated_at": "2026-09-06T00:38:32.686359+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_1905c4b15728",
+        "review_id": "rev_fa2abc3fcdc6",
         "title": "Patch & Vulnerability Review",
         "review_type": "vulnerability",
-        "client_id": "cli_72a948778515",
-        "due_date": "2026-09-27T00:14:35.569985+00:00",
-        "owner_id": "user_11cebb98b357",
+        "client_id": "cli_296f75dcdded",
+        "due_date": "2026-09-27T00:38:32.686342+00:00",
+        "owner_id": "user_1084dac24b35",
         "status": "upcoming",
         "recurrence": "monthly",
-        "created_at": "2026-09-06T00:14:35.569997+00:00",
-        "updated_at": "2026-09-06T00:14:35.569999+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686348+00:00",
+        "updated_at": "2026-09-06T00:38:32.686350+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_402cd1559849",
+        "review_id": "rev_32ab8f4b3d8d",
         "title": "Vendor Review \u2014 Primary SaaS providers",
         "review_type": "vendor",
-        "client_id": "cli_72a948778515",
-        "due_date": "2026-09-18T00:14:35.569960+00:00",
-        "owner_id": "user_11cebb98b357",
+        "client_id": "cli_296f75dcdded",
+        "due_date": "2026-09-18T00:38:32.686329+00:00",
+        "owner_id": "user_1084dac24b35",
         "status": "in_progress",
         "recurrence": "annual",
-        "created_at": "2026-09-06T00:14:35.569975+00:00",
-        "updated_at": "2026-09-06T00:14:35.569977+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686337+00:00",
+        "updated_at": "2026-09-06T00:38:32.686339+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_5d524edc7a99",
+        "review_id": "rev_586788bb397b",
         "title": "Quarterly Access Review \u2014 Acme Corp",
         "review_type": "access",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "period": "Q1",
-        "due_date": "2026-09-03T00:14:35.569754+00:00",
-        "owner_id": "user_11cebb98b357",
-        "reviewer_id": "user_e660a72ba58e",
+        "due_date": "2026-09-03T00:38:32.686274+00:00",
+        "owner_id": "user_1084dac24b35",
+        "reviewer_id": "user_6753d1818a63",
         "status": "upcoming",
         "scope": "All privileged accounts",
         "recurrence": "quarterly",
-        "next_review_date": "2026-12-05T00:14:35.569779+00:00",
-        "created_at": "2026-09-06T00:14:35.569901+00:00",
-        "updated_at": "2026-09-06T00:14:35.569904+00:00",
-        "created_by": "user_70112062fc4a"
+        "next_review_date": "2026-12-05T00:38:32.686287+00:00",
+        "created_at": "2026-09-06T00:38:32.686323+00:00",
+        "updated_at": "2026-09-06T00:38:32.686325+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/findings?client_id=cli_72a948778515": [
+    "/findings?client_id=cli_296f75dcdded": [
       {
-        "finding_id": "fnd_1cda90e6d3bb",
+        "finding_id": "fnd_20a27f95f54d",
         "title": "Policy not signed by three department heads",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "severity": "low",
         "status": "open",
-        "owner_id": "user_11cebb98b357",
-        "due_date": "2026-10-06T00:14:35.571184+00:00",
-        "created_at": "2026-09-06T00:14:35.571189+00:00",
-        "updated_at": "2026-09-06T00:14:35.571190+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_1084dac24b35",
+        "due_date": "2026-10-06T00:38:32.686955+00:00",
+        "created_at": "2026-09-06T00:38:32.686961+00:00",
+        "updated_at": "2026-09-06T00:38:32.686962+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "finding_id": "fnd_d7dfb70aa21b",
+        "finding_id": "fnd_3c9363be1b29",
         "title": "Critical CVE patch overdue on payroll server",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "severity": "critical",
         "status": "open",
-        "owner_id": "user_11cebb98b357",
-        "due_date": "2026-09-04T00:14:35.571173+00:00",
-        "created_at": "2026-09-06T00:14:35.571181+00:00",
-        "updated_at": "2026-09-06T00:14:35.571182+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_1084dac24b35",
+        "due_date": "2026-09-04T00:38:32.686944+00:00",
+        "created_at": "2026-09-06T00:38:32.686951+00:00",
+        "updated_at": "2026-09-06T00:38:32.686953+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "finding_id": "fnd_f559dfb70301",
+        "finding_id": "fnd_1cf6de7def17",
         "title": "Vendor SOC 2 report missing",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "severity": "medium",
         "status": "in_remediation",
-        "owner_id": "user_11cebb98b357",
-        "due_date": "2026-09-26T00:14:35.571158+00:00",
-        "created_at": "2026-09-06T00:14:35.571164+00:00",
-        "updated_at": "2026-09-06T00:14:35.571166+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_1084dac24b35",
+        "due_date": "2026-09-26T00:38:32.686934+00:00",
+        "created_at": "2026-09-06T00:38:32.686941+00:00",
+        "updated_at": "2026-09-06T00:38:32.686942+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "finding_id": "fnd_7122d1e76116",
+        "finding_id": "fnd_8ef94d316905",
         "title": "Stale privileged accounts found in AD",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "severity": "high",
         "status": "open",
-        "owner_id": "user_11cebb98b357",
-        "due_date": "2026-09-20T00:14:35.571130+00:00",
+        "owner_id": "user_1084dac24b35",
+        "due_date": "2026-09-20T00:38:32.686916+00:00",
         "description": "7 privileged accounts inactive > 90 days.",
         "remediation_plan": "Disable and remove after owner confirmation.",
-        "created_at": "2026-09-06T00:14:35.571153+00:00",
-        "updated_at": "2026-09-06T00:14:35.571155+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686930+00:00",
+        "updated_at": "2026-09-06T00:38:32.686932+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/risks?client_id=cli_72a948778515": [
+    "/risks?client_id=cli_296f75dcdded": [
       {
-        "risk_id": "rsk_43e5a6399038",
+        "risk_id": "rsk_ad1bea1170ce",
         "title": "Insider misuse of admin credentials",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "category": "operational",
         "likelihood": "medium",
         "impact": "medium",
         "status": "identified",
-        "owner_id": "user_11cebb98b357",
-        "created_at": "2026-09-06T00:14:35.571573+00:00",
-        "updated_at": "2026-09-06T00:14:35.571574+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_1084dac24b35",
+        "created_at": "2026-09-06T00:38:32.687257+00:00",
+        "updated_at": "2026-09-06T00:38:32.687258+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "risk_id": "rsk_4fbefd4568ef",
+        "risk_id": "rsk_a04346a65060",
         "title": "Third-party payroll processor outage",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "category": "vendor",
         "likelihood": "low",
         "impact": "high",
         "status": "treated",
-        "owner_id": "user_11cebb98b357",
-        "created_at": "2026-09-06T00:14:35.571567+00:00",
-        "updated_at": "2026-09-06T00:14:35.571568+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_1084dac24b35",
+        "created_at": "2026-09-06T00:38:32.687250+00:00",
+        "updated_at": "2026-09-06T00:38:32.687252+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "risk_id": "rsk_1ff134fe302e",
+        "risk_id": "rsk_d7605c3ae5a7",
         "title": "Ransomware disruption to core systems",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "category": "cybersecurity",
         "likelihood": "medium",
         "impact": "high",
         "status": "assessed",
-        "owner_id": "user_11cebb98b357",
+        "owner_id": "user_1084dac24b35",
         "treatment": "Immutable backups + EDR + tabletop",
-        "created_at": "2026-09-06T00:14:35.571556+00:00",
-        "updated_at": "2026-09-06T00:14:35.571559+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.687241+00:00",
+        "updated_at": "2026-09-06T00:38:32.687244+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/policies?client_id=cli_72a948778515": [
+    "/policies?client_id=cli_296f75dcdded": [
       {
-        "policy_id": "pol_3e60508632ac",
+        "policy_id": "pol_b3c15a40eec9",
         "title": "Incident Response Plan",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "version": "1.0",
         "status": "approved",
-        "owner_id": "user_11cebb98b357",
-        "approved_at": "2026-07-08T00:14:35.571896+00:00",
-        "next_review_date": "2027-07-08T00:14:35.571898+00:00",
-        "created_at": "2026-09-06T00:14:35.571908+00:00",
-        "updated_at": "2026-09-06T00:14:35.571910+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_1084dac24b35",
+        "approved_at": "2026-07-08T00:38:32.687482+00:00",
+        "next_review_date": "2027-07-08T00:38:32.687484+00:00",
+        "created_at": "2026-09-06T00:38:32.687490+00:00",
+        "updated_at": "2026-09-06T00:38:32.687491+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "policy_id": "pol_58569d671200",
+        "policy_id": "pol_70a07b66b08b",
         "title": "Access Control Policy",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "version": "1.4",
         "status": "in_review",
-        "owner_id": "user_11cebb98b357",
-        "next_review_date": "2026-10-16T00:14:35.571887+00:00",
-        "created_at": "2026-09-06T00:14:35.571893+00:00",
-        "updated_at": "2026-09-06T00:14:35.571894+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_1084dac24b35",
+        "next_review_date": "2026-10-16T00:38:32.687473+00:00",
+        "created_at": "2026-09-06T00:38:32.687478+00:00",
+        "updated_at": "2026-09-06T00:38:32.687480+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "policy_id": "pol_4033d47331be",
+        "policy_id": "pol_ec6aed424438",
         "title": "Information Security Policy",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "version": "2.3",
         "status": "approved",
-        "owner_id": "user_11cebb98b357",
-        "approver_id": "user_e660a72ba58e",
-        "approved_at": "2026-05-09T00:14:35.571865+00:00",
-        "next_review_date": "2027-05-09T00:14:35.571872+00:00",
-        "created_at": "2026-09-06T00:14:35.571883+00:00",
-        "updated_at": "2026-09-06T00:14:35.571885+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_1084dac24b35",
+        "approver_id": "user_6753d1818a63",
+        "approved_at": "2026-05-09T00:38:32.687457+00:00",
+        "next_review_date": "2027-05-09T00:38:32.687460+00:00",
+        "created_at": "2026-09-06T00:38:32.687469+00:00",
+        "updated_at": "2026-09-06T00:38:32.687470+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/requirements?client_id=cli_72a948778515": [],
-    "/vendors?client_id=cli_72a948778515": [
+    "/requirements?client_id=cli_296f75dcdded": [],
+    "/vendors?client_id=cli_296f75dcdded": [
       {
-        "vendor_id": "ven_ba5943c59b1e",
+        "vendor_id": "ven_664c8d7bd922",
         "name": "MailerX",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "criticality": "medium",
         "status": "under_review",
         "services": "Transactional email",
-        "created_at": "2026-09-06T00:14:35.572460+00:00",
-        "updated_at": "2026-09-06T00:14:35.572463+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.687752+00:00",
+        "updated_at": "2026-09-06T00:38:32.687754+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "vendor_id": "ven_aa9b3fd0dc79",
+        "vendor_id": "ven_c55d15d3ca46",
         "name": "PayrollPro",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "criticality": "critical",
         "status": "active",
         "services": "Payroll processing",
-        "contract_end": "2026-12-05T00:14:35.572396+00:00",
-        "created_at": "2026-09-06T00:14:35.572401+00:00",
-        "updated_at": "2026-09-06T00:14:35.572403+00:00",
-        "created_by": "user_70112062fc4a"
+        "contract_end": "2026-12-05T00:38:32.687741+00:00",
+        "created_at": "2026-09-06T00:38:32.687746+00:00",
+        "updated_at": "2026-09-06T00:38:32.687747+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "vendor_id": "ven_26e58d46b18c",
+        "vendor_id": "ven_0c0298c4ade5",
         "name": "CloudCore SaaS",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "criticality": "high",
         "status": "active",
         "contact_email": "security@cloudcore.example",
         "services": "Primary CRM & data storage",
-        "contract_end": "2027-03-25T00:14:35.572377+00:00",
-        "created_at": "2026-09-06T00:14:35.572392+00:00",
-        "updated_at": "2026-09-06T00:14:35.572393+00:00",
-        "created_by": "user_70112062fc4a"
+        "contract_end": "2027-03-25T00:38:32.687728+00:00",
+        "created_at": "2026-09-06T00:38:32.687737+00:00",
+        "updated_at": "2026-09-06T00:38:32.687738+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/tasks?client_id=cli_72a948778515": [
+    "/tasks?client_id=cli_296f75dcdded": [
       {
-        "task_id": "tsk_b5b3afb061d9",
+        "task_id": "tsk_5b0d56ee9e82",
         "title": "Patch CVE-2026-1000 on payroll server",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "status": "open",
         "priority": "critical",
-        "assignee_id": "user_11cebb98b357",
-        "due_date": "2026-09-05T00:14:35.573374+00:00",
-        "created_at": "2026-09-06T00:14:35.573380+00:00",
-        "updated_at": "2026-09-06T00:14:35.573382+00:00",
-        "created_by": "user_70112062fc4a"
+        "assignee_id": "user_1084dac24b35",
+        "due_date": "2026-09-05T00:38:32.688251+00:00",
+        "created_at": "2026-09-06T00:38:32.688256+00:00",
+        "updated_at": "2026-09-06T00:38:32.688257+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "task_id": "tsk_38deac95c257",
+        "task_id": "tsk_e63553a11ac3",
         "title": "Request SOC 2 from CloudCore",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "status": "open",
         "priority": "medium",
-        "assignee_id": "user_11cebb98b357",
-        "due_date": "2026-09-20T00:14:35.573365+00:00",
-        "created_at": "2026-09-06T00:14:35.573371+00:00",
-        "updated_at": "2026-09-06T00:14:35.573372+00:00",
-        "created_by": "user_70112062fc4a"
+        "assignee_id": "user_1084dac24b35",
+        "due_date": "2026-09-20T00:38:32.688242+00:00",
+        "created_at": "2026-09-06T00:38:32.688247+00:00",
+        "updated_at": "2026-09-06T00:38:32.688249+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "task_id": "tsk_c87d2392fa62",
+        "task_id": "tsk_8cc68f0c4f36",
         "title": "Disable stale AD accounts",
-        "client_id": "cli_72a948778515",
+        "client_id": "cli_296f75dcdded",
         "status": "in_progress",
         "priority": "high",
-        "assignee_id": "user_11cebb98b357",
-        "due_date": "2026-09-13T00:14:35.573343+00:00",
-        "created_at": "2026-09-06T00:14:35.573361+00:00",
-        "updated_at": "2026-09-06T00:14:35.573363+00:00",
-        "created_by": "user_70112062fc4a"
+        "assignee_id": "user_1084dac24b35",
+        "due_date": "2026-09-13T00:38:32.688231+00:00",
+        "created_at": "2026-09-06T00:38:32.688239+00:00",
+        "updated_at": "2026-09-06T00:38:32.688241+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/contacts?client_id=cli_72a948778515": [],
-    "/evidence?client_id=cli_72a948778515": [],
-    "/onboarding/policy-library?client_id=cli_72a948778515": {
+    "/contacts?client_id=cli_296f75dcdded": [],
+    "/evidence?client_id=cli_296f75dcdded": [],
+    "/onboarding/policy-library?client_id=cli_296f75dcdded": {
       "categories": [
         {
           "name": "Core Governance",
@@ -956,7 +956,7 @@
               "category": "Core Governance",
               "name": "Information Security Policy",
               "applicability": "common_baseline",
-              "existing_policy_id": "pol_4033d47331be",
+              "existing_policy_id": "pol_ec6aed424438",
               "current_presence": null,
               "current_status": "approved",
               "last_onboarding_note": null,
@@ -1041,7 +1041,7 @@
               "category": "Business Resilience",
               "name": "Incident Response Plan",
               "applicability": "common_baseline",
-              "existing_policy_id": "pol_3e60508632ac",
+              "existing_policy_id": "pol_b3c15a40eec9",
               "current_presence": null,
               "current_status": "approved",
               "last_onboarding_note": null,
@@ -1106,7 +1106,7 @@
         }
       ]
     },
-    "/onboarding/requirements-library?client_id=cli_72a948778515": {
+    "/onboarding/requirements-library?client_id=cli_296f75dcdded": {
       "categories": [
         {
           "name": "Assurance / Certification",
@@ -1272,189 +1272,189 @@
         "Other"
       ]
     },
-    "/onboarding/state?client_id=cli_72a948778515": {
+    "/onboarding/state?client_id=cli_296f75dcdded": {
       "contacts": [],
       "assessments": [],
       "onboarding_history": []
     },
-    "/calendar?client_id=cli_72a948778515&end=2100-01-01&start=2000-01-01": {
+    "/calendar?client_id=cli_296f75dcdded&end=2100-01-01&start=2000-01-01": {
       "reviews": {
         "2026-09-03": [
           {
-            "id": "rev_5d524edc7a99",
+            "id": "rev_586788bb397b",
             "kind": "review",
             "title": "Quarterly Access Review \u2014 Acme Corp",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": "access",
-            "due_date_iso": "2026-09-03T00:14:35.569754+00:00"
+            "due_date_iso": "2026-09-03T00:38:32.686274+00:00"
           }
         ],
         "2026-09-18": [
           {
-            "id": "rev_402cd1559849",
+            "id": "rev_32ab8f4b3d8d",
             "kind": "review",
             "title": "Vendor Review \u2014 Primary SaaS providers",
             "status": "in_progress",
             "severity": null,
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": "vendor",
-            "due_date_iso": "2026-09-18T00:14:35.569960+00:00"
+            "due_date_iso": "2026-09-18T00:38:32.686329+00:00"
           }
         ],
         "2026-09-27": [
           {
-            "id": "rev_1905c4b15728",
+            "id": "rev_fa2abc3fcdc6",
             "kind": "review",
             "title": "Patch & Vulnerability Review",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": "vulnerability",
-            "due_date_iso": "2026-09-27T00:14:35.569985+00:00"
+            "due_date_iso": "2026-09-27T00:38:32.686342+00:00"
           }
         ],
         "2026-10-21": [
           {
-            "id": "rev_8130cb946bb3",
+            "id": "rev_92ddcc6ce1fb",
             "kind": "review",
             "title": "Policy Review \u2014 Information Security Policy",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": "policy",
-            "due_date_iso": "2026-10-21T00:14:35.570002+00:00"
+            "due_date_iso": "2026-10-21T00:38:32.686352+00:00"
           }
         ],
         "2026-11-05": [
           {
-            "id": "rev_98fdee09e09f",
+            "id": "rev_af342e25943a",
             "kind": "review",
             "title": "BCP / DR Tabletop Exercise",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": "bcp_dr",
-            "due_date_iso": "2026-11-05T00:14:35.570018+00:00"
+            "due_date_iso": "2026-11-05T00:38:32.686361+00:00"
           }
         ],
         "2026-08-27": [
           {
-            "id": "rev_fd34550c9a2c",
+            "id": "rev_1b8a1c3a2439",
             "kind": "review",
             "title": "Security Awareness Training Review",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": "awareness",
-            "due_date_iso": "2026-08-27T00:14:35.570027+00:00"
+            "due_date_iso": "2026-08-27T00:38:32.686370+00:00"
           }
         ]
       },
       "findings": {
         "2026-09-20": [
           {
-            "id": "fnd_7122d1e76116",
+            "id": "fnd_8ef94d316905",
             "kind": "finding",
             "title": "Stale privileged accounts found in AD",
             "status": "open",
             "severity": "high",
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": null,
-            "due_date_iso": "2026-09-20T00:14:35.571130+00:00"
+            "due_date_iso": "2026-09-20T00:38:32.686916+00:00"
           }
         ],
         "2026-09-26": [
           {
-            "id": "fnd_f559dfb70301",
+            "id": "fnd_1cf6de7def17",
             "kind": "finding",
             "title": "Vendor SOC 2 report missing",
             "status": "in_remediation",
             "severity": "medium",
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": null,
-            "due_date_iso": "2026-09-26T00:14:35.571158+00:00"
+            "due_date_iso": "2026-09-26T00:38:32.686934+00:00"
           }
         ],
         "2026-09-04": [
           {
-            "id": "fnd_d7dfb70aa21b",
+            "id": "fnd_3c9363be1b29",
             "kind": "finding",
             "title": "Critical CVE patch overdue on payroll server",
             "status": "open",
             "severity": "critical",
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": null,
-            "due_date_iso": "2026-09-04T00:14:35.571173+00:00"
+            "due_date_iso": "2026-09-04T00:38:32.686944+00:00"
           }
         ],
         "2026-10-06": [
           {
-            "id": "fnd_1cda90e6d3bb",
+            "id": "fnd_20a27f95f54d",
             "kind": "finding",
             "title": "Policy not signed by three department heads",
             "status": "open",
             "severity": "low",
             "priority": null,
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": null,
-            "due_date_iso": "2026-10-06T00:14:35.571184+00:00"
+            "due_date_iso": "2026-10-06T00:38:32.686955+00:00"
           }
         ]
       },
       "tasks": {
         "2026-09-13": [
           {
-            "id": "tsk_c87d2392fa62",
+            "id": "tsk_8cc68f0c4f36",
             "kind": "task",
             "title": "Disable stale AD accounts",
             "status": "in_progress",
             "severity": null,
             "priority": "high",
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": null,
-            "due_date_iso": "2026-09-13T00:14:35.573343+00:00"
+            "due_date_iso": "2026-09-13T00:38:32.688231+00:00"
           }
         ],
         "2026-09-20": [
           {
-            "id": "tsk_38deac95c257",
+            "id": "tsk_e63553a11ac3",
             "kind": "task",
             "title": "Request SOC 2 from CloudCore",
             "status": "open",
             "severity": null,
             "priority": "medium",
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": null,
-            "due_date_iso": "2026-09-20T00:14:35.573365+00:00"
+            "due_date_iso": "2026-09-20T00:38:32.688242+00:00"
           }
         ],
         "2026-09-05": [
           {
-            "id": "tsk_b5b3afb061d9",
+            "id": "tsk_5b0d56ee9e82",
             "kind": "task",
             "title": "Patch CVE-2026-1000 on payroll server",
             "status": "open",
             "severity": null,
             "priority": "critical",
-            "owner_id": "user_11cebb98b357",
+            "owner_id": "user_1084dac24b35",
             "review_type": null,
-            "due_date_iso": "2026-09-05T00:14:35.573374+00:00"
+            "due_date_iso": "2026-09-05T00:38:32.688251+00:00"
           }
         ]
       }
     },
-    "/dashboard?client_id=cli_72a948778515&scope=org": {
+    "/dashboard?client_id=cli_296f75dcdded&scope=org": {
       "kpis": {
         "overdue_reviews": 2,
         "open_findings": 4,
@@ -1469,79 +1469,79 @@
       "target_user": null,
       "needs_attention": [
         {
-          "id": "fnd_d7dfb70aa21b",
+          "id": "fnd_3c9363be1b29",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571173+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-04T00:38:32.686944+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "priority_tone": "critical",
           "action": "View finding"
         },
         {
-          "id": "rev_fd34550c9a2c",
+          "id": "rev_1b8a1c3a2439",
           "kind": "review",
           "title": "Security Awareness Training Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-08-27T00:14:35.570027+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-08-27T00:38:32.686370+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "awareness",
           "priority_tone": "critical",
           "action": "Start review"
         },
         {
-          "id": "rev_5d524edc7a99",
+          "id": "rev_586788bb397b",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Acme Corp",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.569754+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-03T00:38:32.686274+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "access",
           "priority_tone": "critical",
           "action": "Start review"
         },
         {
-          "id": "fnd_7122d1e76116",
+          "id": "fnd_8ef94d316905",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571130+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-20T00:38:32.686916+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "priority_tone": "high",
           "action": "View finding"
         },
         {
-          "id": "tsk_b5b3afb061d9",
+          "id": "tsk_5b0d56ee9e82",
           "kind": "task",
           "title": "Patch CVE-2026-1000 on payroll server",
           "status": "open",
           "severity": null,
           "priority": "critical",
-          "due_date": "2026-09-05T00:14:35.573374+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-05T00:38:32.688251+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "priority_tone": "high",
           "action": "Continue"
         },
         {
-          "id": "pol_58569d671200",
+          "id": "pol_70a07b66b08b",
           "kind": "policy",
           "title": "Access Control Policy",
           "status": "in_review",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "priority_tone": "info",
           "action": "Approve"
@@ -1549,49 +1549,49 @@
       ],
       "priority_findings": [
         {
-          "id": "fnd_d7dfb70aa21b",
+          "id": "fnd_3c9363be1b29",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571173+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-04T00:38:32.686944+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "fnd_7122d1e76116",
+          "id": "fnd_8ef94d316905",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571130+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-20T00:38:32.686916+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         }
       ],
       "your_actions": [],
       "watch_items": [
         {
-          "id": "pol_58569d671200",
+          "id": "pol_70a07b66b08b",
           "kind": "policy",
           "title": "Policy review \u00b7 Access Control Policy",
-          "due_date": "2026-10-16T00:14:35.571887+00:00",
+          "due_date": "2026-10-16T00:38:32.687473+00:00",
           "status": "in_review"
         },
         {
-          "id": "rev_5d524edc7a99",
+          "id": "rev_586788bb397b",
           "kind": "review",
           "title": "Next access review \u00b7 Quarterly Access Review \u2014 Acme Corp",
-          "due_date": "2026-12-05T00:14:35.569779+00:00",
+          "due_date": "2026-12-05T00:38:32.686287+00:00",
           "status": "upcoming"
         },
         {
-          "id": "ven_aa9b3fd0dc79",
+          "id": "ven_c55d15d3ca46",
           "kind": "vendor",
           "title": "Vendor contract end \u00b7 PayrollPro",
-          "due_date": "2026-12-05T00:14:35.572396+00:00",
+          "due_date": "2026-12-05T00:38:32.687741+00:00",
           "status": "active"
         }
       ],
@@ -1624,101 +1624,101 @@
       "recent_activity": [],
       "upcoming_reviews": [
         {
-          "id": "rev_402cd1559849",
+          "id": "rev_32ab8f4b3d8d",
           "kind": "review",
           "title": "Vendor Review \u2014 Primary SaaS providers",
           "status": "in_progress",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-18T00:14:35.569960+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-18T00:38:32.686329+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "vendor"
         },
         {
-          "id": "rev_1905c4b15728",
+          "id": "rev_fa2abc3fcdc6",
           "kind": "review",
           "title": "Patch & Vulnerability Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-27T00:14:35.569985+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-27T00:38:32.686342+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "vulnerability"
         }
       ],
       "recent_findings": [
         {
-          "id": "fnd_1cda90e6d3bb",
+          "id": "fnd_20a27f95f54d",
           "kind": "finding",
           "title": "Policy not signed by three department heads",
           "status": "open",
           "severity": "low",
           "priority": null,
-          "due_date": "2026-10-06T00:14:35.571184+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-10-06T00:38:32.686955+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "fnd_d7dfb70aa21b",
+          "id": "fnd_3c9363be1b29",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571173+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-04T00:38:32.686944+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "fnd_f559dfb70301",
+          "id": "fnd_1cf6de7def17",
           "kind": "finding",
           "title": "Vendor SOC 2 report missing",
           "status": "in_remediation",
           "severity": "medium",
           "priority": null,
-          "due_date": "2026-09-26T00:14:35.571158+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-26T00:38:32.686934+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "fnd_7122d1e76116",
+          "id": "fnd_8ef94d316905",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571130+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-20T00:38:32.686916+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         }
       ],
       "top_risks": [
         {
-          "id": "rsk_4fbefd4568ef",
+          "id": "rsk_a04346a65060",
           "kind": "risk",
           "title": "Third-party payroll processor outage",
           "status": "treated",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "rsk_1ff134fe302e",
+          "id": "rsk_d7605c3ae5a7",
           "kind": "risk",
           "title": "Ransomware disruption to core systems",
           "status": "assessed",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         }
       ],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_72a948778515&scope=mine": {
+    "/dashboard?client_id=cli_296f75dcdded&scope=mine": {
       "kpis": {
         "overdue_reviews": 0,
         "open_findings": 0,
@@ -1731,7 +1731,7 @@
       "scope": "mine",
       "scope_label": "Your assigned work",
       "target_user": {
-        "user_id": "user_70112062fc4a",
+        "user_id": "user_1d4298b306e1",
         "name": "Preview Admin",
         "email": "preview@example.invalid"
       },
@@ -1771,7 +1771,7 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_72a948778515&scope=unassigned": {
+    "/dashboard?client_id=cli_296f75dcdded&scope=unassigned": {
       "kpis": {
         "overdue_reviews": 0,
         "open_findings": 0,
@@ -1789,10 +1789,10 @@
       "your_actions": [],
       "watch_items": [
         {
-          "id": "ven_aa9b3fd0dc79",
+          "id": "ven_c55d15d3ca46",
           "kind": "vendor",
           "title": "Vendor contract end \u00b7 PayrollPro",
-          "due_date": "2026-12-05T00:14:35.572396+00:00",
+          "due_date": "2026-12-05T00:38:32.687741+00:00",
           "status": "active"
         }
       ],
@@ -1828,7 +1828,7 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_72a948778515&scope=user&user_id=user_70112062fc4a": {
+    "/dashboard?client_id=cli_296f75dcdded&scope=user&user_id=user_1d4298b306e1": {
       "kpis": {
         "overdue_reviews": 0,
         "open_findings": 0,
@@ -1841,7 +1841,7 @@
       "scope": "user",
       "scope_label": "GRC items assigned to Preview Admin",
       "target_user": {
-        "user_id": "user_70112062fc4a",
+        "user_id": "user_1d4298b306e1",
         "name": "Preview Admin",
         "email": "preview@example.invalid"
       },
@@ -1881,7 +1881,7 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_72a948778515&scope=user&user_id=user_e660a72ba58e": {
+    "/dashboard?client_id=cli_296f75dcdded&scope=user&user_id=user_6753d1818a63": {
       "kpis": {
         "overdue_reviews": 1,
         "open_findings": 0,
@@ -1894,20 +1894,20 @@
       "scope": "user",
       "scope_label": "GRC items assigned to Platform Admin",
       "target_user": {
-        "user_id": "user_e660a72ba58e",
+        "user_id": "user_6753d1818a63",
         "name": "Platform Admin",
-        "email": "platform.admin@grc.demo"
+        "email": "platform-admin@example.test"
       },
       "needs_attention": [
         {
-          "id": "rev_5d524edc7a99",
+          "id": "rev_586788bb397b",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Acme Corp",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.569754+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-03T00:38:32.686274+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "access",
           "priority_tone": "critical",
           "action": "Start review"
@@ -1916,24 +1916,24 @@
       "priority_findings": [],
       "your_actions": [
         {
-          "id": "rev_5d524edc7a99",
+          "id": "rev_586788bb397b",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Acme Corp",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.569754+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-03T00:38:32.686274+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "access",
           "action": "Start review"
         }
       ],
       "watch_items": [
         {
-          "id": "rev_5d524edc7a99",
+          "id": "rev_586788bb397b",
           "kind": "review",
           "title": "Next access review \u00b7 Quarterly Access Review \u2014 Acme Corp",
-          "due_date": "2026-12-05T00:14:35.569779+00:00",
+          "due_date": "2026-12-05T00:38:32.686287+00:00",
           "status": "upcoming"
         }
       ],
@@ -1969,7 +1969,7 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_72a948778515&scope=user&user_id=user_11cebb98b357": {
+    "/dashboard?client_id=cli_296f75dcdded&scope=user&user_id=user_1084dac24b35": {
       "kpis": {
         "overdue_reviews": 2,
         "open_findings": 4,
@@ -1982,85 +1982,85 @@
       "scope": "user",
       "scope_label": "GRC items assigned to Alicia Rivera",
       "target_user": {
-        "user_id": "user_11cebb98b357",
+        "user_id": "user_1084dac24b35",
         "name": "Alicia Rivera",
-        "email": "contributor@acme.demo"
+        "email": "acme-contributor@example.test"
       },
       "needs_attention": [
         {
-          "id": "fnd_d7dfb70aa21b",
+          "id": "fnd_3c9363be1b29",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571173+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-04T00:38:32.686944+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "priority_tone": "critical",
           "action": "View finding"
         },
         {
-          "id": "rev_fd34550c9a2c",
+          "id": "rev_1b8a1c3a2439",
           "kind": "review",
           "title": "Security Awareness Training Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-08-27T00:14:35.570027+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-08-27T00:38:32.686370+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "awareness",
           "priority_tone": "critical",
           "action": "Start review"
         },
         {
-          "id": "rev_5d524edc7a99",
+          "id": "rev_586788bb397b",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Acme Corp",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.569754+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-03T00:38:32.686274+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "access",
           "priority_tone": "critical",
           "action": "Start review"
         },
         {
-          "id": "fnd_7122d1e76116",
+          "id": "fnd_8ef94d316905",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571130+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-20T00:38:32.686916+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "priority_tone": "high",
           "action": "View finding"
         },
         {
-          "id": "tsk_b5b3afb061d9",
+          "id": "tsk_5b0d56ee9e82",
           "kind": "task",
           "title": "Patch CVE-2026-1000 on payroll server",
           "status": "open",
           "severity": null,
           "priority": "critical",
-          "due_date": "2026-09-05T00:14:35.573374+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-05T00:38:32.688251+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "priority_tone": "high",
           "action": "Continue"
         },
         {
-          "id": "pol_58569d671200",
+          "id": "pol_70a07b66b08b",
           "kind": "policy",
           "title": "Access Control Policy",
           "status": "in_review",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "priority_tone": "info",
           "action": "Approve"
@@ -2068,139 +2068,139 @@
       ],
       "priority_findings": [
         {
-          "id": "fnd_d7dfb70aa21b",
+          "id": "fnd_3c9363be1b29",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571173+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-04T00:38:32.686944+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "fnd_7122d1e76116",
+          "id": "fnd_8ef94d316905",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571130+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-20T00:38:32.686916+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         }
       ],
       "your_actions": [
         {
-          "id": "rev_fd34550c9a2c",
+          "id": "rev_1b8a1c3a2439",
           "kind": "review",
           "title": "Security Awareness Training Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-08-27T00:14:35.570027+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-08-27T00:38:32.686370+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "awareness",
           "action": "Start review"
         },
         {
-          "id": "rev_5d524edc7a99",
+          "id": "rev_586788bb397b",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Acme Corp",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.569754+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-03T00:38:32.686274+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "access",
           "action": "Start review"
         },
         {
-          "id": "fnd_d7dfb70aa21b",
+          "id": "fnd_3c9363be1b29",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571173+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-04T00:38:32.686944+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "action": "Respond"
         },
         {
-          "id": "tsk_b5b3afb061d9",
+          "id": "tsk_5b0d56ee9e82",
           "kind": "task",
           "title": "Patch CVE-2026-1000 on payroll server",
           "status": "open",
           "severity": null,
           "priority": "critical",
-          "due_date": "2026-09-05T00:14:35.573374+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-05T00:38:32.688251+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "action": "Continue"
         },
         {
-          "id": "tsk_c87d2392fa62",
+          "id": "tsk_8cc68f0c4f36",
           "kind": "task",
           "title": "Disable stale AD accounts",
           "status": "in_progress",
           "severity": null,
           "priority": "high",
-          "due_date": "2026-09-13T00:14:35.573343+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-13T00:38:32.688231+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "action": "Continue"
         },
         {
-          "id": "rev_402cd1559849",
+          "id": "rev_32ab8f4b3d8d",
           "kind": "review",
           "title": "Vendor Review \u2014 Primary SaaS providers",
           "status": "in_progress",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-18T00:14:35.569960+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-18T00:38:32.686329+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "vendor",
           "action": "Start review"
         },
         {
-          "id": "fnd_7122d1e76116",
+          "id": "fnd_8ef94d316905",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571130+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-20T00:38:32.686916+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "action": "Respond"
         },
         {
-          "id": "tsk_38deac95c257",
+          "id": "tsk_e63553a11ac3",
           "kind": "task",
           "title": "Request SOC 2 from CloudCore",
           "status": "open",
           "severity": null,
           "priority": "medium",
-          "due_date": "2026-09-20T00:14:35.573365+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-20T00:38:32.688242+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null,
           "action": "Continue"
         }
       ],
       "watch_items": [
         {
-          "id": "pol_58569d671200",
+          "id": "pol_70a07b66b08b",
           "kind": "policy",
           "title": "Policy review \u00b7 Access Control Policy",
-          "due_date": "2026-10-16T00:14:35.571887+00:00",
+          "due_date": "2026-10-16T00:38:32.687473+00:00",
           "status": "in_review"
         },
         {
-          "id": "rev_5d524edc7a99",
+          "id": "rev_586788bb397b",
           "kind": "review",
           "title": "Next access review \u00b7 Quarterly Access Review \u2014 Acme Corp",
-          "due_date": "2026-12-05T00:14:35.569779+00:00",
+          "due_date": "2026-12-05T00:38:32.686287+00:00",
           "status": "upcoming"
         }
       ],
@@ -2233,101 +2233,101 @@
       "recent_activity": [],
       "upcoming_reviews": [
         {
-          "id": "rev_402cd1559849",
+          "id": "rev_32ab8f4b3d8d",
           "kind": "review",
           "title": "Vendor Review \u2014 Primary SaaS providers",
           "status": "in_progress",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-18T00:14:35.569960+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-18T00:38:32.686329+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "vendor"
         },
         {
-          "id": "rev_1905c4b15728",
+          "id": "rev_fa2abc3fcdc6",
           "kind": "review",
           "title": "Patch & Vulnerability Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-27T00:14:35.569985+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-27T00:38:32.686342+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": "vulnerability"
         }
       ],
       "recent_findings": [
         {
-          "id": "fnd_1cda90e6d3bb",
+          "id": "fnd_20a27f95f54d",
           "kind": "finding",
           "title": "Policy not signed by three department heads",
           "status": "open",
           "severity": "low",
           "priority": null,
-          "due_date": "2026-10-06T00:14:35.571184+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-10-06T00:38:32.686955+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "fnd_d7dfb70aa21b",
+          "id": "fnd_3c9363be1b29",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571173+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-04T00:38:32.686944+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "fnd_f559dfb70301",
+          "id": "fnd_1cf6de7def17",
           "kind": "finding",
           "title": "Vendor SOC 2 report missing",
           "status": "in_remediation",
           "severity": "medium",
           "priority": null,
-          "due_date": "2026-09-26T00:14:35.571158+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-26T00:38:32.686934+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "fnd_7122d1e76116",
+          "id": "fnd_8ef94d316905",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571130+00:00",
-          "owner_id": "user_11cebb98b357",
+          "due_date": "2026-09-20T00:38:32.686916+00:00",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         }
       ],
       "top_risks": [
         {
-          "id": "rsk_4fbefd4568ef",
+          "id": "rsk_a04346a65060",
           "kind": "risk",
           "title": "Third-party payroll processor outage",
           "status": "treated",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         },
         {
-          "id": "rsk_1ff134fe302e",
+          "id": "rsk_d7605c3ae5a7",
           "kind": "risk",
           "title": "Ransomware disruption to core systems",
           "status": "assessed",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_11cebb98b357",
+          "owner_id": "user_1084dac24b35",
           "review_type": null
         }
       ],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_72a948778515&scope=user&user_id=user_fd70b1d73535": {
+    "/dashboard?client_id=cli_296f75dcdded&scope=user&user_id=user_e280db9d3294": {
       "kpis": {
         "overdue_reviews": 0,
         "open_findings": 0,
@@ -2340,9 +2340,9 @@
       "scope": "user",
       "scope_label": "GRC items assigned to Ravi Kumar",
       "target_user": {
-        "user_id": "user_fd70b1d73535",
+        "user_id": "user_e280db9d3294",
         "name": "Ravi Kumar",
-        "email": "readonly@acme.demo"
+        "email": "acme-readonly@example.test"
       },
       "needs_attention": [],
       "priority_findings": [],
@@ -2380,8 +2380,8 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/comments?entity_id=rev_fd34550c9a2c&entity_type=reviews": [],
-    "/related?entity_id=rev_fd34550c9a2c&entity_type=reviews": {
+    "/comments?entity_id=rev_1b8a1c3a2439&entity_type=reviews": [],
+    "/related?entity_id=rev_1b8a1c3a2439&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2389,8 +2389,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_98fdee09e09f&entity_type=reviews": [],
-    "/related?entity_id=rev_98fdee09e09f&entity_type=reviews": {
+    "/comments?entity_id=rev_af342e25943a&entity_type=reviews": [],
+    "/related?entity_id=rev_af342e25943a&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2398,8 +2398,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_8130cb946bb3&entity_type=reviews": [],
-    "/related?entity_id=rev_8130cb946bb3&entity_type=reviews": {
+    "/comments?entity_id=rev_92ddcc6ce1fb&entity_type=reviews": [],
+    "/related?entity_id=rev_92ddcc6ce1fb&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2407,8 +2407,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_1905c4b15728&entity_type=reviews": [],
-    "/related?entity_id=rev_1905c4b15728&entity_type=reviews": {
+    "/comments?entity_id=rev_fa2abc3fcdc6&entity_type=reviews": [],
+    "/related?entity_id=rev_fa2abc3fcdc6&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2416,8 +2416,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_402cd1559849&entity_type=reviews": [],
-    "/related?entity_id=rev_402cd1559849&entity_type=reviews": {
+    "/comments?entity_id=rev_32ab8f4b3d8d&entity_type=reviews": [],
+    "/related?entity_id=rev_32ab8f4b3d8d&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2425,8 +2425,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_5d524edc7a99&entity_type=reviews": [],
-    "/related?entity_id=rev_5d524edc7a99&entity_type=reviews": {
+    "/comments?entity_id=rev_586788bb397b&entity_type=reviews": [],
+    "/related?entity_id=rev_586788bb397b&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2434,8 +2434,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=fnd_1cda90e6d3bb&entity_type=findings": [],
-    "/related?entity_id=fnd_1cda90e6d3bb&entity_type=findings": {
+    "/comments?entity_id=fnd_20a27f95f54d&entity_type=findings": [],
+    "/related?entity_id=fnd_20a27f95f54d&entity_type=findings": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2443,8 +2443,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=fnd_d7dfb70aa21b&entity_type=findings": [],
-    "/related?entity_id=fnd_d7dfb70aa21b&entity_type=findings": {
+    "/comments?entity_id=fnd_3c9363be1b29&entity_type=findings": [],
+    "/related?entity_id=fnd_3c9363be1b29&entity_type=findings": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2452,8 +2452,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=fnd_f559dfb70301&entity_type=findings": [],
-    "/related?entity_id=fnd_f559dfb70301&entity_type=findings": {
+    "/comments?entity_id=fnd_1cf6de7def17&entity_type=findings": [],
+    "/related?entity_id=fnd_1cf6de7def17&entity_type=findings": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2461,8 +2461,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=fnd_7122d1e76116&entity_type=findings": [],
-    "/related?entity_id=fnd_7122d1e76116&entity_type=findings": {
+    "/comments?entity_id=fnd_8ef94d316905&entity_type=findings": [],
+    "/related?entity_id=fnd_8ef94d316905&entity_type=findings": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2470,8 +2470,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rsk_43e5a6399038&entity_type=risks": [],
-    "/related?entity_id=rsk_43e5a6399038&entity_type=risks": {
+    "/comments?entity_id=rsk_ad1bea1170ce&entity_type=risks": [],
+    "/related?entity_id=rsk_ad1bea1170ce&entity_type=risks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2479,8 +2479,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rsk_4fbefd4568ef&entity_type=risks": [],
-    "/related?entity_id=rsk_4fbefd4568ef&entity_type=risks": {
+    "/comments?entity_id=rsk_a04346a65060&entity_type=risks": [],
+    "/related?entity_id=rsk_a04346a65060&entity_type=risks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2488,8 +2488,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rsk_1ff134fe302e&entity_type=risks": [],
-    "/related?entity_id=rsk_1ff134fe302e&entity_type=risks": {
+    "/comments?entity_id=rsk_d7605c3ae5a7&entity_type=risks": [],
+    "/related?entity_id=rsk_d7605c3ae5a7&entity_type=risks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2497,8 +2497,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=pol_3e60508632ac&entity_type=policies": [],
-    "/related?entity_id=pol_3e60508632ac&entity_type=policies": {
+    "/comments?entity_id=pol_b3c15a40eec9&entity_type=policies": [],
+    "/related?entity_id=pol_b3c15a40eec9&entity_type=policies": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2506,8 +2506,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=pol_58569d671200&entity_type=policies": [],
-    "/related?entity_id=pol_58569d671200&entity_type=policies": {
+    "/comments?entity_id=pol_70a07b66b08b&entity_type=policies": [],
+    "/related?entity_id=pol_70a07b66b08b&entity_type=policies": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2515,8 +2515,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=pol_4033d47331be&entity_type=policies": [],
-    "/related?entity_id=pol_4033d47331be&entity_type=policies": {
+    "/comments?entity_id=pol_ec6aed424438&entity_type=policies": [],
+    "/related?entity_id=pol_ec6aed424438&entity_type=policies": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2524,8 +2524,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=ven_ba5943c59b1e&entity_type=vendors": [],
-    "/related?entity_id=ven_ba5943c59b1e&entity_type=vendors": {
+    "/comments?entity_id=ven_664c8d7bd922&entity_type=vendors": [],
+    "/related?entity_id=ven_664c8d7bd922&entity_type=vendors": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2533,8 +2533,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=ven_aa9b3fd0dc79&entity_type=vendors": [],
-    "/related?entity_id=ven_aa9b3fd0dc79&entity_type=vendors": {
+    "/comments?entity_id=ven_c55d15d3ca46&entity_type=vendors": [],
+    "/related?entity_id=ven_c55d15d3ca46&entity_type=vendors": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2542,8 +2542,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=ven_26e58d46b18c&entity_type=vendors": [],
-    "/related?entity_id=ven_26e58d46b18c&entity_type=vendors": {
+    "/comments?entity_id=ven_0c0298c4ade5&entity_type=vendors": [],
+    "/related?entity_id=ven_0c0298c4ade5&entity_type=vendors": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2551,8 +2551,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=tsk_b5b3afb061d9&entity_type=tasks": [],
-    "/related?entity_id=tsk_b5b3afb061d9&entity_type=tasks": {
+    "/comments?entity_id=tsk_5b0d56ee9e82&entity_type=tasks": [],
+    "/related?entity_id=tsk_5b0d56ee9e82&entity_type=tasks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2560,8 +2560,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=tsk_38deac95c257&entity_type=tasks": [],
-    "/related?entity_id=tsk_38deac95c257&entity_type=tasks": {
+    "/comments?entity_id=tsk_e63553a11ac3&entity_type=tasks": [],
+    "/related?entity_id=tsk_e63553a11ac3&entity_type=tasks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2569,8 +2569,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=tsk_c87d2392fa62&entity_type=tasks": [],
-    "/related?entity_id=tsk_c87d2392fa62&entity_type=tasks": {
+    "/comments?entity_id=tsk_8cc68f0c4f36&entity_type=tasks": [],
+    "/related?entity_id=tsk_8cc68f0c4f36&entity_type=tasks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -2578,343 +2578,343 @@
       "exceptions": [],
       "evidence": []
     },
-    "/clients/cli_617cda776a87/members": [
+    "/clients/cli_494cd9385db3/members": [
       {
-        "user_id": "user_33cb377315c9",
-        "email": "contributor@globex.demo",
+        "user_id": "user_b42087dce9f0",
+        "email": "globex-contributor@example.test",
         "name": "Chen Wei",
         "role": "client_contributor",
         "client_ids": [
-          "cli_617cda776a87"
+          "cli_494cd9385db3"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:35.564988+00:00"
+        "created_at": "2026-09-06T00:38:32.685647+00:00"
       },
       {
-        "user_id": "user_e660a72ba58e",
-        "email": "platform.admin@grc.demo",
+        "user_id": "user_6753d1818a63",
+        "email": "platform-admin@example.test",
         "name": "Platform Admin",
         "role": "platform_admin",
         "client_ids": [
-          "cli_72a948778515",
-          "cli_617cda776a87"
+          "cli_296f75dcdded",
+          "cli_494cd9385db3"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:34.570594+00:00"
+        "created_at": "2026-09-06T00:38:31.733476+00:00"
       },
       {
-        "user_id": "user_70112062fc4a",
+        "user_id": "user_1d4298b306e1",
         "email": "preview@example.invalid",
         "name": "Preview Admin",
         "role": "super_admin",
         "client_ids": [
-          "cli_72a948778515",
-          "cli_617cda776a87"
+          "cli_296f75dcdded",
+          "cli_494cd9385db3"
         ],
         "auth_provider": "password",
-        "created_at": "2026-09-06T00:14:34.245711+00:00",
+        "created_at": "2026-09-06T00:38:31.417992+00:00",
         "favorite_client_ids": []
       }
     ],
-    "/reviews?client_id=cli_617cda776a87": [
+    "/reviews?client_id=cli_494cd9385db3": [
       {
-        "review_id": "rev_58101e9cc470",
+        "review_id": "rev_d40ecfcc86e3",
         "title": "Security Awareness Training Review",
         "review_type": "awareness",
-        "client_id": "cli_617cda776a87",
-        "due_date": "2026-08-27T00:14:35.570104+00:00",
-        "owner_id": "user_33cb377315c9",
+        "client_id": "cli_494cd9385db3",
+        "due_date": "2026-08-27T00:38:32.686441+00:00",
+        "owner_id": "user_b42087dce9f0",
         "status": "upcoming",
         "recurrence": "quarterly",
-        "created_at": "2026-09-06T00:14:35.570115+00:00",
-        "updated_at": "2026-09-06T00:14:35.570119+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686446+00:00",
+        "updated_at": "2026-09-06T00:38:32.686448+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_b2e51fbdd6da",
+        "review_id": "rev_6463dfb080d7",
         "title": "BCP / DR Tabletop Exercise",
         "review_type": "bcp_dr",
-        "client_id": "cli_617cda776a87",
-        "due_date": "2026-11-05T00:14:35.570088+00:00",
-        "owner_id": "user_33cb377315c9",
+        "client_id": "cli_494cd9385db3",
+        "due_date": "2026-11-05T00:38:32.686433+00:00",
+        "owner_id": "user_b42087dce9f0",
         "status": "upcoming",
         "recurrence": "semiannual",
-        "created_at": "2026-09-06T00:14:35.570092+00:00",
-        "updated_at": "2026-09-06T00:14:35.570093+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686437+00:00",
+        "updated_at": "2026-09-06T00:38:32.686439+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_8293e7cabf9b",
+        "review_id": "rev_bc7cd200cddf",
         "title": "Policy Review \u2014 Information Security Policy",
         "review_type": "policy",
-        "client_id": "cli_617cda776a87",
-        "due_date": "2026-10-21T00:14:35.570079+00:00",
-        "owner_id": "user_33cb377315c9",
+        "client_id": "cli_494cd9385db3",
+        "due_date": "2026-10-21T00:38:32.686423+00:00",
+        "owner_id": "user_b42087dce9f0",
         "status": "upcoming",
         "recurrence": "annual",
-        "created_at": "2026-09-06T00:14:35.570084+00:00",
-        "updated_at": "2026-09-06T00:14:35.570085+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686428+00:00",
+        "updated_at": "2026-09-06T00:38:32.686429+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_1a7611a9f2ff",
+        "review_id": "rev_bcd9e826474e",
         "title": "Patch & Vulnerability Review",
         "review_type": "vulnerability",
-        "client_id": "cli_617cda776a87",
-        "due_date": "2026-09-27T00:14:35.570067+00:00",
-        "owner_id": "user_33cb377315c9",
+        "client_id": "cli_494cd9385db3",
+        "due_date": "2026-09-27T00:38:32.686399+00:00",
+        "owner_id": "user_b42087dce9f0",
         "status": "upcoming",
         "recurrence": "monthly",
-        "created_at": "2026-09-06T00:14:35.570076+00:00",
-        "updated_at": "2026-09-06T00:14:35.570077+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686420+00:00",
+        "updated_at": "2026-09-06T00:38:32.686421+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_505a60d7ce0b",
+        "review_id": "rev_9045d75432c9",
         "title": "Vendor Review \u2014 Primary SaaS providers",
         "review_type": "vendor",
-        "client_id": "cli_617cda776a87",
-        "due_date": "2026-09-18T00:14:35.570055+00:00",
-        "owner_id": "user_33cb377315c9",
+        "client_id": "cli_494cd9385db3",
+        "due_date": "2026-09-18T00:38:32.686392+00:00",
+        "owner_id": "user_b42087dce9f0",
         "status": "in_progress",
         "recurrence": "annual",
-        "created_at": "2026-09-06T00:14:35.570060+00:00",
-        "updated_at": "2026-09-06T00:14:35.570064+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686396+00:00",
+        "updated_at": "2026-09-06T00:38:32.686398+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "review_id": "rev_55a6f08aa458",
+        "review_id": "rev_4f2137146f62",
         "title": "Quarterly Access Review \u2014 Globex Ltd",
         "review_type": "access",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "period": "Q1",
-        "due_date": "2026-09-03T00:14:35.570042+00:00",
-        "owner_id": "user_33cb377315c9",
-        "reviewer_id": "user_e660a72ba58e",
+        "due_date": "2026-09-03T00:38:32.686380+00:00",
+        "owner_id": "user_b42087dce9f0",
+        "reviewer_id": "user_6753d1818a63",
         "status": "upcoming",
         "scope": "All privileged accounts",
         "recurrence": "quarterly",
-        "next_review_date": "2026-12-05T00:14:35.570045+00:00",
-        "created_at": "2026-09-06T00:14:35.570052+00:00",
-        "updated_at": "2026-09-06T00:14:35.570053+00:00",
-        "created_by": "user_70112062fc4a"
+        "next_review_date": "2026-12-05T00:38:32.686383+00:00",
+        "created_at": "2026-09-06T00:38:32.686388+00:00",
+        "updated_at": "2026-09-06T00:38:32.686390+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/findings?client_id=cli_617cda776a87": [
+    "/findings?client_id=cli_494cd9385db3": [
       {
-        "finding_id": "fnd_100066c9362c",
+        "finding_id": "fnd_01d7fbaf351c",
         "title": "Policy not signed by three department heads",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "severity": "low",
         "status": "open",
-        "owner_id": "user_33cb377315c9",
-        "due_date": "2026-10-06T00:14:35.571225+00:00",
-        "created_at": "2026-09-06T00:14:35.571234+00:00",
-        "updated_at": "2026-09-06T00:14:35.571236+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_b42087dce9f0",
+        "due_date": "2026-10-06T00:38:32.686987+00:00",
+        "created_at": "2026-09-06T00:38:32.686992+00:00",
+        "updated_at": "2026-09-06T00:38:32.686994+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "finding_id": "fnd_0198e7e3bab0",
+        "finding_id": "fnd_a42c2675929f",
         "title": "Critical CVE patch overdue on payroll server",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "severity": "critical",
         "status": "open",
-        "owner_id": "user_33cb377315c9",
-        "due_date": "2026-09-04T00:14:35.571217+00:00",
-        "created_at": "2026-09-06T00:14:35.571222+00:00",
-        "updated_at": "2026-09-06T00:14:35.571224+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_b42087dce9f0",
+        "due_date": "2026-09-04T00:38:32.686979+00:00",
+        "created_at": "2026-09-06T00:38:32.686984+00:00",
+        "updated_at": "2026-09-06T00:38:32.686985+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "finding_id": "fnd_9ef64a0d267c",
+        "finding_id": "fnd_cd7ef419e7f4",
         "title": "Vendor SOC 2 report missing",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "severity": "medium",
         "status": "in_remediation",
-        "owner_id": "user_33cb377315c9",
-        "due_date": "2026-09-26T00:14:35.571208+00:00",
-        "created_at": "2026-09-06T00:14:35.571214+00:00",
-        "updated_at": "2026-09-06T00:14:35.571215+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_b42087dce9f0",
+        "due_date": "2026-09-26T00:38:32.686972+00:00",
+        "created_at": "2026-09-06T00:38:32.686976+00:00",
+        "updated_at": "2026-09-06T00:38:32.686977+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "finding_id": "fnd_29036e4a82cb",
+        "finding_id": "fnd_80055dae0c7e",
         "title": "Stale privileged accounts found in AD",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "severity": "high",
         "status": "open",
-        "owner_id": "user_33cb377315c9",
-        "due_date": "2026-09-20T00:14:35.571193+00:00",
+        "owner_id": "user_b42087dce9f0",
+        "due_date": "2026-09-20T00:38:32.686964+00:00",
         "description": "7 privileged accounts inactive > 90 days.",
         "remediation_plan": "Disable and remove after owner confirmation.",
-        "created_at": "2026-09-06T00:14:35.571199+00:00",
-        "updated_at": "2026-09-06T00:14:35.571205+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.686969+00:00",
+        "updated_at": "2026-09-06T00:38:32.686970+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/risks?client_id=cli_617cda776a87": [
+    "/risks?client_id=cli_494cd9385db3": [
       {
-        "risk_id": "rsk_1e2743733809",
+        "risk_id": "rsk_8c0efe167ac2",
         "title": "Insider misuse of admin credentials",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "category": "operational",
         "likelihood": "medium",
         "impact": "medium",
         "status": "identified",
-        "owner_id": "user_33cb377315c9",
-        "created_at": "2026-09-06T00:14:35.571592+00:00",
-        "updated_at": "2026-09-06T00:14:35.571593+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_b42087dce9f0",
+        "created_at": "2026-09-06T00:38:32.687277+00:00",
+        "updated_at": "2026-09-06T00:38:32.687278+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "risk_id": "rsk_4a5475dce592",
+        "risk_id": "rsk_f75495d23950",
         "title": "Third-party payroll processor outage",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "category": "vendor",
         "likelihood": "low",
         "impact": "high",
         "status": "treated",
-        "owner_id": "user_33cb377315c9",
-        "created_at": "2026-09-06T00:14:35.571586+00:00",
-        "updated_at": "2026-09-06T00:14:35.571587+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_b42087dce9f0",
+        "created_at": "2026-09-06T00:38:32.687270+00:00",
+        "updated_at": "2026-09-06T00:38:32.687272+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "risk_id": "rsk_24002d580619",
+        "risk_id": "rsk_3100cef12aa9",
         "title": "Ransomware disruption to core systems",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "category": "cybersecurity",
         "likelihood": "medium",
         "impact": "high",
         "status": "assessed",
-        "owner_id": "user_33cb377315c9",
+        "owner_id": "user_b42087dce9f0",
         "treatment": "Immutable backups + EDR + tabletop",
-        "created_at": "2026-09-06T00:14:35.571580+00:00",
-        "updated_at": "2026-09-06T00:14:35.571582+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.687264+00:00",
+        "updated_at": "2026-09-06T00:38:32.687266+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/policies?client_id=cli_617cda776a87": [
+    "/policies?client_id=cli_494cd9385db3": [
       {
-        "policy_id": "pol_6ddf7347d8fc",
+        "policy_id": "pol_37ceb2bed147",
         "title": "Incident Response Plan",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "version": "1.0",
         "status": "approved",
-        "owner_id": "user_33cb377315c9",
-        "approved_at": "2026-07-08T00:14:35.571992+00:00",
-        "next_review_date": "2027-07-08T00:14:35.571996+00:00",
-        "created_at": "2026-09-06T00:14:35.572004+00:00",
-        "updated_at": "2026-09-06T00:14:35.572006+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_b42087dce9f0",
+        "approved_at": "2026-07-08T00:38:32.687534+00:00",
+        "next_review_date": "2027-07-08T00:38:32.687536+00:00",
+        "created_at": "2026-09-06T00:38:32.687541+00:00",
+        "updated_at": "2026-09-06T00:38:32.687543+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "policy_id": "pol_37376379c157",
+        "policy_id": "pol_958c05b12eda",
         "title": "Access Control Policy",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "version": "1.4",
         "status": "in_review",
-        "owner_id": "user_33cb377315c9",
-        "next_review_date": "2026-10-16T00:14:35.571926+00:00",
-        "created_at": "2026-09-06T00:14:35.571932+00:00",
-        "updated_at": "2026-09-06T00:14:35.571934+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_b42087dce9f0",
+        "next_review_date": "2026-10-16T00:38:32.687525+00:00",
+        "created_at": "2026-09-06T00:38:32.687531+00:00",
+        "updated_at": "2026-09-06T00:38:32.687532+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "policy_id": "pol_3819280c912e",
+        "policy_id": "pol_d92a0e1e2885",
         "title": "Information Security Policy",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "version": "2.3",
         "status": "approved",
-        "owner_id": "user_33cb377315c9",
-        "approver_id": "user_e660a72ba58e",
-        "approved_at": "2026-05-09T00:14:35.571913+00:00",
-        "next_review_date": "2027-05-09T00:14:35.571915+00:00",
-        "created_at": "2026-09-06T00:14:35.571920+00:00",
-        "updated_at": "2026-09-06T00:14:35.571921+00:00",
-        "created_by": "user_70112062fc4a"
+        "owner_id": "user_b42087dce9f0",
+        "approver_id": "user_6753d1818a63",
+        "approved_at": "2026-05-09T00:38:32.687493+00:00",
+        "next_review_date": "2027-05-09T00:38:32.687495+00:00",
+        "created_at": "2026-09-06T00:38:32.687521+00:00",
+        "updated_at": "2026-09-06T00:38:32.687524+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/requirements?client_id=cli_617cda776a87": [],
-    "/vendors?client_id=cli_617cda776a87": [
+    "/requirements?client_id=cli_494cd9385db3": [],
+    "/vendors?client_id=cli_494cd9385db3": [
       {
-        "vendor_id": "ven_cb12fd2876f4",
+        "vendor_id": "ven_ebf7c2e5e3e0",
         "name": "MailerX",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "criticality": "medium",
         "status": "under_review",
         "services": "Transactional email",
-        "created_at": "2026-09-06T00:14:35.572605+00:00",
-        "updated_at": "2026-09-06T00:14:35.572607+00:00",
-        "created_by": "user_70112062fc4a"
+        "created_at": "2026-09-06T00:38:32.687774+00:00",
+        "updated_at": "2026-09-06T00:38:32.687775+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "vendor_id": "ven_cfddeff49300",
+        "vendor_id": "ven_5f61ad478826",
         "name": "PayrollPro",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "criticality": "critical",
         "status": "active",
         "services": "Payroll processing",
-        "contract_end": "2026-12-05T00:14:35.572583+00:00",
-        "created_at": "2026-09-06T00:14:35.572590+00:00",
-        "updated_at": "2026-09-06T00:14:35.572592+00:00",
-        "created_by": "user_70112062fc4a"
+        "contract_end": "2026-12-05T00:38:32.687764+00:00",
+        "created_at": "2026-09-06T00:38:32.687768+00:00",
+        "updated_at": "2026-09-06T00:38:32.687770+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "vendor_id": "ven_629a2615c186",
+        "vendor_id": "ven_e47c0f0eda46",
         "name": "CloudCore SaaS",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "criticality": "high",
         "status": "active",
         "contact_email": "security@cloudcore.example",
         "services": "Primary CRM & data storage",
-        "contract_end": "2027-03-25T00:14:35.572466+00:00",
-        "created_at": "2026-09-06T00:14:35.572577+00:00",
-        "updated_at": "2026-09-06T00:14:35.572580+00:00",
-        "created_by": "user_70112062fc4a"
+        "contract_end": "2027-03-25T00:38:32.687756+00:00",
+        "created_at": "2026-09-06T00:38:32.687760+00:00",
+        "updated_at": "2026-09-06T00:38:32.687762+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/tasks?client_id=cli_617cda776a87": [
+    "/tasks?client_id=cli_494cd9385db3": [
       {
-        "task_id": "tsk_4a0fb0556844",
+        "task_id": "tsk_585022921360",
         "title": "Patch CVE-2026-1000 on payroll server",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "status": "open",
         "priority": "critical",
-        "assignee_id": "user_33cb377315c9",
-        "due_date": "2026-09-05T00:14:35.573410+00:00",
-        "created_at": "2026-09-06T00:14:35.573416+00:00",
-        "updated_at": "2026-09-06T00:14:35.573417+00:00",
-        "created_by": "user_70112062fc4a"
+        "assignee_id": "user_b42087dce9f0",
+        "due_date": "2026-09-05T00:38:32.688279+00:00",
+        "created_at": "2026-09-06T00:38:32.688283+00:00",
+        "updated_at": "2026-09-06T00:38:32.688284+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "task_id": "tsk_dae92a3d3f74",
+        "task_id": "tsk_4d8777cd92a5",
         "title": "Request SOC 2 from CloudCore",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "status": "open",
         "priority": "medium",
-        "assignee_id": "user_33cb377315c9",
-        "due_date": "2026-09-20T00:14:35.573402+00:00",
-        "created_at": "2026-09-06T00:14:35.573407+00:00",
-        "updated_at": "2026-09-06T00:14:35.573408+00:00",
-        "created_by": "user_70112062fc4a"
+        "assignee_id": "user_b42087dce9f0",
+        "due_date": "2026-09-20T00:38:32.688269+00:00",
+        "created_at": "2026-09-06T00:38:32.688276+00:00",
+        "updated_at": "2026-09-06T00:38:32.688277+00:00",
+        "created_by": "user_1d4298b306e1"
       },
       {
-        "task_id": "tsk_71acb3f64646",
+        "task_id": "tsk_0f5323799e01",
         "title": "Disable stale AD accounts",
-        "client_id": "cli_617cda776a87",
+        "client_id": "cli_494cd9385db3",
         "status": "in_progress",
         "priority": "high",
-        "assignee_id": "user_33cb377315c9",
-        "due_date": "2026-09-13T00:14:35.573388+00:00",
-        "created_at": "2026-09-06T00:14:35.573398+00:00",
-        "updated_at": "2026-09-06T00:14:35.573399+00:00",
-        "created_by": "user_70112062fc4a"
+        "assignee_id": "user_b42087dce9f0",
+        "due_date": "2026-09-13T00:38:32.688259+00:00",
+        "created_at": "2026-09-06T00:38:32.688267+00:00",
+        "updated_at": "2026-09-06T00:38:32.688268+00:00",
+        "created_by": "user_1d4298b306e1"
       }
     ],
-    "/contacts?client_id=cli_617cda776a87": [],
-    "/evidence?client_id=cli_617cda776a87": [],
-    "/onboarding/policy-library?client_id=cli_617cda776a87": {
+    "/contacts?client_id=cli_494cd9385db3": [],
+    "/evidence?client_id=cli_494cd9385db3": [],
+    "/onboarding/policy-library?client_id=cli_494cd9385db3": {
       "categories": [
         {
           "name": "Core Governance",
@@ -2923,7 +2923,7 @@
               "category": "Core Governance",
               "name": "Information Security Policy",
               "applicability": "common_baseline",
-              "existing_policy_id": "pol_3819280c912e",
+              "existing_policy_id": "pol_d92a0e1e2885",
               "current_presence": null,
               "current_status": "approved",
               "last_onboarding_note": null,
@@ -3008,7 +3008,7 @@
               "category": "Business Resilience",
               "name": "Incident Response Plan",
               "applicability": "common_baseline",
-              "existing_policy_id": "pol_6ddf7347d8fc",
+              "existing_policy_id": "pol_37ceb2bed147",
               "current_presence": null,
               "current_status": "approved",
               "last_onboarding_note": null,
@@ -3073,7 +3073,7 @@
         }
       ]
     },
-    "/onboarding/requirements-library?client_id=cli_617cda776a87": {
+    "/onboarding/requirements-library?client_id=cli_494cd9385db3": {
       "categories": [
         {
           "name": "Assurance / Certification",
@@ -3239,189 +3239,189 @@
         "Other"
       ]
     },
-    "/onboarding/state?client_id=cli_617cda776a87": {
+    "/onboarding/state?client_id=cli_494cd9385db3": {
       "contacts": [],
       "assessments": [],
       "onboarding_history": []
     },
-    "/calendar?client_id=cli_617cda776a87&end=2100-01-01&start=2000-01-01": {
+    "/calendar?client_id=cli_494cd9385db3&end=2100-01-01&start=2000-01-01": {
       "reviews": {
         "2026-09-03": [
           {
-            "id": "rev_55a6f08aa458",
+            "id": "rev_4f2137146f62",
             "kind": "review",
             "title": "Quarterly Access Review \u2014 Globex Ltd",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": "access",
-            "due_date_iso": "2026-09-03T00:14:35.570042+00:00"
+            "due_date_iso": "2026-09-03T00:38:32.686380+00:00"
           }
         ],
         "2026-09-18": [
           {
-            "id": "rev_505a60d7ce0b",
+            "id": "rev_9045d75432c9",
             "kind": "review",
             "title": "Vendor Review \u2014 Primary SaaS providers",
             "status": "in_progress",
             "severity": null,
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": "vendor",
-            "due_date_iso": "2026-09-18T00:14:35.570055+00:00"
+            "due_date_iso": "2026-09-18T00:38:32.686392+00:00"
           }
         ],
         "2026-09-27": [
           {
-            "id": "rev_1a7611a9f2ff",
+            "id": "rev_bcd9e826474e",
             "kind": "review",
             "title": "Patch & Vulnerability Review",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": "vulnerability",
-            "due_date_iso": "2026-09-27T00:14:35.570067+00:00"
+            "due_date_iso": "2026-09-27T00:38:32.686399+00:00"
           }
         ],
         "2026-10-21": [
           {
-            "id": "rev_8293e7cabf9b",
+            "id": "rev_bc7cd200cddf",
             "kind": "review",
             "title": "Policy Review \u2014 Information Security Policy",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": "policy",
-            "due_date_iso": "2026-10-21T00:14:35.570079+00:00"
+            "due_date_iso": "2026-10-21T00:38:32.686423+00:00"
           }
         ],
         "2026-11-05": [
           {
-            "id": "rev_b2e51fbdd6da",
+            "id": "rev_6463dfb080d7",
             "kind": "review",
             "title": "BCP / DR Tabletop Exercise",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": "bcp_dr",
-            "due_date_iso": "2026-11-05T00:14:35.570088+00:00"
+            "due_date_iso": "2026-11-05T00:38:32.686433+00:00"
           }
         ],
         "2026-08-27": [
           {
-            "id": "rev_58101e9cc470",
+            "id": "rev_d40ecfcc86e3",
             "kind": "review",
             "title": "Security Awareness Training Review",
             "status": "upcoming",
             "severity": null,
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": "awareness",
-            "due_date_iso": "2026-08-27T00:14:35.570104+00:00"
+            "due_date_iso": "2026-08-27T00:38:32.686441+00:00"
           }
         ]
       },
       "findings": {
         "2026-09-20": [
           {
-            "id": "fnd_29036e4a82cb",
+            "id": "fnd_80055dae0c7e",
             "kind": "finding",
             "title": "Stale privileged accounts found in AD",
             "status": "open",
             "severity": "high",
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": null,
-            "due_date_iso": "2026-09-20T00:14:35.571193+00:00"
+            "due_date_iso": "2026-09-20T00:38:32.686964+00:00"
           }
         ],
         "2026-09-26": [
           {
-            "id": "fnd_9ef64a0d267c",
+            "id": "fnd_cd7ef419e7f4",
             "kind": "finding",
             "title": "Vendor SOC 2 report missing",
             "status": "in_remediation",
             "severity": "medium",
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": null,
-            "due_date_iso": "2026-09-26T00:14:35.571208+00:00"
+            "due_date_iso": "2026-09-26T00:38:32.686972+00:00"
           }
         ],
         "2026-09-04": [
           {
-            "id": "fnd_0198e7e3bab0",
+            "id": "fnd_a42c2675929f",
             "kind": "finding",
             "title": "Critical CVE patch overdue on payroll server",
             "status": "open",
             "severity": "critical",
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": null,
-            "due_date_iso": "2026-09-04T00:14:35.571217+00:00"
+            "due_date_iso": "2026-09-04T00:38:32.686979+00:00"
           }
         ],
         "2026-10-06": [
           {
-            "id": "fnd_100066c9362c",
+            "id": "fnd_01d7fbaf351c",
             "kind": "finding",
             "title": "Policy not signed by three department heads",
             "status": "open",
             "severity": "low",
             "priority": null,
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": null,
-            "due_date_iso": "2026-10-06T00:14:35.571225+00:00"
+            "due_date_iso": "2026-10-06T00:38:32.686987+00:00"
           }
         ]
       },
       "tasks": {
         "2026-09-13": [
           {
-            "id": "tsk_71acb3f64646",
+            "id": "tsk_0f5323799e01",
             "kind": "task",
             "title": "Disable stale AD accounts",
             "status": "in_progress",
             "severity": null,
             "priority": "high",
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": null,
-            "due_date_iso": "2026-09-13T00:14:35.573388+00:00"
+            "due_date_iso": "2026-09-13T00:38:32.688259+00:00"
           }
         ],
         "2026-09-20": [
           {
-            "id": "tsk_dae92a3d3f74",
+            "id": "tsk_4d8777cd92a5",
             "kind": "task",
             "title": "Request SOC 2 from CloudCore",
             "status": "open",
             "severity": null,
             "priority": "medium",
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": null,
-            "due_date_iso": "2026-09-20T00:14:35.573402+00:00"
+            "due_date_iso": "2026-09-20T00:38:32.688269+00:00"
           }
         ],
         "2026-09-05": [
           {
-            "id": "tsk_4a0fb0556844",
+            "id": "tsk_585022921360",
             "kind": "task",
             "title": "Patch CVE-2026-1000 on payroll server",
             "status": "open",
             "severity": null,
             "priority": "critical",
-            "owner_id": "user_33cb377315c9",
+            "owner_id": "user_b42087dce9f0",
             "review_type": null,
-            "due_date_iso": "2026-09-05T00:14:35.573410+00:00"
+            "due_date_iso": "2026-09-05T00:38:32.688279+00:00"
           }
         ]
       }
     },
-    "/dashboard?client_id=cli_617cda776a87&scope=org": {
+    "/dashboard?client_id=cli_494cd9385db3&scope=org": {
       "kpis": {
         "overdue_reviews": 2,
         "open_findings": 4,
@@ -3436,79 +3436,79 @@
       "target_user": null,
       "needs_attention": [
         {
-          "id": "fnd_0198e7e3bab0",
+          "id": "fnd_a42c2675929f",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571217+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-04T00:38:32.686979+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "priority_tone": "critical",
           "action": "View finding"
         },
         {
-          "id": "rev_58101e9cc470",
+          "id": "rev_d40ecfcc86e3",
           "kind": "review",
           "title": "Security Awareness Training Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-08-27T00:14:35.570104+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-08-27T00:38:32.686441+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "awareness",
           "priority_tone": "critical",
           "action": "Start review"
         },
         {
-          "id": "rev_55a6f08aa458",
+          "id": "rev_4f2137146f62",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Globex Ltd",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.570042+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-03T00:38:32.686380+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "access",
           "priority_tone": "critical",
           "action": "Start review"
         },
         {
-          "id": "fnd_29036e4a82cb",
+          "id": "fnd_80055dae0c7e",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571193+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-20T00:38:32.686964+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "priority_tone": "high",
           "action": "View finding"
         },
         {
-          "id": "tsk_4a0fb0556844",
+          "id": "tsk_585022921360",
           "kind": "task",
           "title": "Patch CVE-2026-1000 on payroll server",
           "status": "open",
           "severity": null,
           "priority": "critical",
-          "due_date": "2026-09-05T00:14:35.573410+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-05T00:38:32.688279+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "priority_tone": "high",
           "action": "Continue"
         },
         {
-          "id": "pol_37376379c157",
+          "id": "pol_958c05b12eda",
           "kind": "policy",
           "title": "Access Control Policy",
           "status": "in_review",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "priority_tone": "info",
           "action": "Approve"
@@ -3516,49 +3516,49 @@
       ],
       "priority_findings": [
         {
-          "id": "fnd_0198e7e3bab0",
+          "id": "fnd_a42c2675929f",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571217+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-04T00:38:32.686979+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "fnd_29036e4a82cb",
+          "id": "fnd_80055dae0c7e",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571193+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-20T00:38:32.686964+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         }
       ],
       "your_actions": [],
       "watch_items": [
         {
-          "id": "pol_37376379c157",
+          "id": "pol_958c05b12eda",
           "kind": "policy",
           "title": "Policy review \u00b7 Access Control Policy",
-          "due_date": "2026-10-16T00:14:35.571926+00:00",
+          "due_date": "2026-10-16T00:38:32.687525+00:00",
           "status": "in_review"
         },
         {
-          "id": "rev_55a6f08aa458",
+          "id": "rev_4f2137146f62",
           "kind": "review",
           "title": "Next access review \u00b7 Quarterly Access Review \u2014 Globex Ltd",
-          "due_date": "2026-12-05T00:14:35.570045+00:00",
+          "due_date": "2026-12-05T00:38:32.686383+00:00",
           "status": "upcoming"
         },
         {
-          "id": "ven_cfddeff49300",
+          "id": "ven_5f61ad478826",
           "kind": "vendor",
           "title": "Vendor contract end \u00b7 PayrollPro",
-          "due_date": "2026-12-05T00:14:35.572583+00:00",
+          "due_date": "2026-12-05T00:38:32.687764+00:00",
           "status": "active"
         }
       ],
@@ -3591,101 +3591,101 @@
       "recent_activity": [],
       "upcoming_reviews": [
         {
-          "id": "rev_505a60d7ce0b",
+          "id": "rev_9045d75432c9",
           "kind": "review",
           "title": "Vendor Review \u2014 Primary SaaS providers",
           "status": "in_progress",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-18T00:14:35.570055+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-18T00:38:32.686392+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "vendor"
         },
         {
-          "id": "rev_1a7611a9f2ff",
+          "id": "rev_bcd9e826474e",
           "kind": "review",
           "title": "Patch & Vulnerability Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-27T00:14:35.570067+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-27T00:38:32.686399+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "vulnerability"
         }
       ],
       "recent_findings": [
         {
-          "id": "fnd_100066c9362c",
+          "id": "fnd_01d7fbaf351c",
           "kind": "finding",
           "title": "Policy not signed by three department heads",
           "status": "open",
           "severity": "low",
           "priority": null,
-          "due_date": "2026-10-06T00:14:35.571225+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-10-06T00:38:32.686987+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "fnd_0198e7e3bab0",
+          "id": "fnd_a42c2675929f",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571217+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-04T00:38:32.686979+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "fnd_9ef64a0d267c",
+          "id": "fnd_cd7ef419e7f4",
           "kind": "finding",
           "title": "Vendor SOC 2 report missing",
           "status": "in_remediation",
           "severity": "medium",
           "priority": null,
-          "due_date": "2026-09-26T00:14:35.571208+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-26T00:38:32.686972+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "fnd_29036e4a82cb",
+          "id": "fnd_80055dae0c7e",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571193+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-20T00:38:32.686964+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         }
       ],
       "top_risks": [
         {
-          "id": "rsk_4a5475dce592",
+          "id": "rsk_f75495d23950",
           "kind": "risk",
           "title": "Third-party payroll processor outage",
           "status": "treated",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "rsk_24002d580619",
+          "id": "rsk_3100cef12aa9",
           "kind": "risk",
           "title": "Ransomware disruption to core systems",
           "status": "assessed",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         }
       ],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_617cda776a87&scope=mine": {
+    "/dashboard?client_id=cli_494cd9385db3&scope=mine": {
       "kpis": {
         "overdue_reviews": 0,
         "open_findings": 0,
@@ -3698,7 +3698,7 @@
       "scope": "mine",
       "scope_label": "Your assigned work",
       "target_user": {
-        "user_id": "user_70112062fc4a",
+        "user_id": "user_1d4298b306e1",
         "name": "Preview Admin",
         "email": "preview@example.invalid"
       },
@@ -3738,7 +3738,7 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_617cda776a87&scope=unassigned": {
+    "/dashboard?client_id=cli_494cd9385db3&scope=unassigned": {
       "kpis": {
         "overdue_reviews": 0,
         "open_findings": 0,
@@ -3756,10 +3756,10 @@
       "your_actions": [],
       "watch_items": [
         {
-          "id": "ven_cfddeff49300",
+          "id": "ven_5f61ad478826",
           "kind": "vendor",
           "title": "Vendor contract end \u00b7 PayrollPro",
-          "due_date": "2026-12-05T00:14:35.572583+00:00",
+          "due_date": "2026-12-05T00:38:32.687764+00:00",
           "status": "active"
         }
       ],
@@ -3795,7 +3795,7 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_617cda776a87&scope=user&user_id=user_70112062fc4a": {
+    "/dashboard?client_id=cli_494cd9385db3&scope=user&user_id=user_1d4298b306e1": {
       "kpis": {
         "overdue_reviews": 0,
         "open_findings": 0,
@@ -3808,7 +3808,7 @@
       "scope": "user",
       "scope_label": "GRC items assigned to Preview Admin",
       "target_user": {
-        "user_id": "user_70112062fc4a",
+        "user_id": "user_1d4298b306e1",
         "name": "Preview Admin",
         "email": "preview@example.invalid"
       },
@@ -3848,7 +3848,7 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_617cda776a87&scope=user&user_id=user_e660a72ba58e": {
+    "/dashboard?client_id=cli_494cd9385db3&scope=user&user_id=user_6753d1818a63": {
       "kpis": {
         "overdue_reviews": 1,
         "open_findings": 0,
@@ -3861,20 +3861,20 @@
       "scope": "user",
       "scope_label": "GRC items assigned to Platform Admin",
       "target_user": {
-        "user_id": "user_e660a72ba58e",
+        "user_id": "user_6753d1818a63",
         "name": "Platform Admin",
-        "email": "platform.admin@grc.demo"
+        "email": "platform-admin@example.test"
       },
       "needs_attention": [
         {
-          "id": "rev_55a6f08aa458",
+          "id": "rev_4f2137146f62",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Globex Ltd",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.570042+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-03T00:38:32.686380+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "access",
           "priority_tone": "critical",
           "action": "Start review"
@@ -3883,24 +3883,24 @@
       "priority_findings": [],
       "your_actions": [
         {
-          "id": "rev_55a6f08aa458",
+          "id": "rev_4f2137146f62",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Globex Ltd",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.570042+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-03T00:38:32.686380+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "access",
           "action": "Start review"
         }
       ],
       "watch_items": [
         {
-          "id": "rev_55a6f08aa458",
+          "id": "rev_4f2137146f62",
           "kind": "review",
           "title": "Next access review \u00b7 Quarterly Access Review \u2014 Globex Ltd",
-          "due_date": "2026-12-05T00:14:35.570045+00:00",
+          "due_date": "2026-12-05T00:38:32.686383+00:00",
           "status": "upcoming"
         }
       ],
@@ -3936,7 +3936,7 @@
       "top_risks": [],
       "assurance_alerts": []
     },
-    "/dashboard?client_id=cli_617cda776a87&scope=user&user_id=user_33cb377315c9": {
+    "/dashboard?client_id=cli_494cd9385db3&scope=user&user_id=user_b42087dce9f0": {
       "kpis": {
         "overdue_reviews": 2,
         "open_findings": 4,
@@ -3949,85 +3949,85 @@
       "scope": "user",
       "scope_label": "GRC items assigned to Chen Wei",
       "target_user": {
-        "user_id": "user_33cb377315c9",
+        "user_id": "user_b42087dce9f0",
         "name": "Chen Wei",
-        "email": "contributor@globex.demo"
+        "email": "globex-contributor@example.test"
       },
       "needs_attention": [
         {
-          "id": "fnd_0198e7e3bab0",
+          "id": "fnd_a42c2675929f",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571217+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-04T00:38:32.686979+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "priority_tone": "critical",
           "action": "View finding"
         },
         {
-          "id": "rev_58101e9cc470",
+          "id": "rev_d40ecfcc86e3",
           "kind": "review",
           "title": "Security Awareness Training Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-08-27T00:14:35.570104+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-08-27T00:38:32.686441+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "awareness",
           "priority_tone": "critical",
           "action": "Start review"
         },
         {
-          "id": "rev_55a6f08aa458",
+          "id": "rev_4f2137146f62",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Globex Ltd",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.570042+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-03T00:38:32.686380+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "access",
           "priority_tone": "critical",
           "action": "Start review"
         },
         {
-          "id": "fnd_29036e4a82cb",
+          "id": "fnd_80055dae0c7e",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571193+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-20T00:38:32.686964+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "priority_tone": "high",
           "action": "View finding"
         },
         {
-          "id": "tsk_4a0fb0556844",
+          "id": "tsk_585022921360",
           "kind": "task",
           "title": "Patch CVE-2026-1000 on payroll server",
           "status": "open",
           "severity": null,
           "priority": "critical",
-          "due_date": "2026-09-05T00:14:35.573410+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-05T00:38:32.688279+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "priority_tone": "high",
           "action": "Continue"
         },
         {
-          "id": "pol_37376379c157",
+          "id": "pol_958c05b12eda",
           "kind": "policy",
           "title": "Access Control Policy",
           "status": "in_review",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "priority_tone": "info",
           "action": "Approve"
@@ -4035,139 +4035,139 @@
       ],
       "priority_findings": [
         {
-          "id": "fnd_0198e7e3bab0",
+          "id": "fnd_a42c2675929f",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571217+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-04T00:38:32.686979+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "fnd_29036e4a82cb",
+          "id": "fnd_80055dae0c7e",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571193+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-20T00:38:32.686964+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         }
       ],
       "your_actions": [
         {
-          "id": "rev_58101e9cc470",
+          "id": "rev_d40ecfcc86e3",
           "kind": "review",
           "title": "Security Awareness Training Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-08-27T00:14:35.570104+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-08-27T00:38:32.686441+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "awareness",
           "action": "Start review"
         },
         {
-          "id": "rev_55a6f08aa458",
+          "id": "rev_4f2137146f62",
           "kind": "review",
           "title": "Quarterly Access Review \u2014 Globex Ltd",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-03T00:14:35.570042+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-03T00:38:32.686380+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "access",
           "action": "Start review"
         },
         {
-          "id": "fnd_0198e7e3bab0",
+          "id": "fnd_a42c2675929f",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571217+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-04T00:38:32.686979+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "action": "Respond"
         },
         {
-          "id": "tsk_4a0fb0556844",
+          "id": "tsk_585022921360",
           "kind": "task",
           "title": "Patch CVE-2026-1000 on payroll server",
           "status": "open",
           "severity": null,
           "priority": "critical",
-          "due_date": "2026-09-05T00:14:35.573410+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-05T00:38:32.688279+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "action": "Continue"
         },
         {
-          "id": "tsk_71acb3f64646",
+          "id": "tsk_0f5323799e01",
           "kind": "task",
           "title": "Disable stale AD accounts",
           "status": "in_progress",
           "severity": null,
           "priority": "high",
-          "due_date": "2026-09-13T00:14:35.573388+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-13T00:38:32.688259+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "action": "Continue"
         },
         {
-          "id": "rev_505a60d7ce0b",
+          "id": "rev_9045d75432c9",
           "kind": "review",
           "title": "Vendor Review \u2014 Primary SaaS providers",
           "status": "in_progress",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-18T00:14:35.570055+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-18T00:38:32.686392+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "vendor",
           "action": "Start review"
         },
         {
-          "id": "fnd_29036e4a82cb",
+          "id": "fnd_80055dae0c7e",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571193+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-20T00:38:32.686964+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "action": "Respond"
         },
         {
-          "id": "tsk_dae92a3d3f74",
+          "id": "tsk_4d8777cd92a5",
           "kind": "task",
           "title": "Request SOC 2 from CloudCore",
           "status": "open",
           "severity": null,
           "priority": "medium",
-          "due_date": "2026-09-20T00:14:35.573402+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-20T00:38:32.688269+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null,
           "action": "Continue"
         }
       ],
       "watch_items": [
         {
-          "id": "pol_37376379c157",
+          "id": "pol_958c05b12eda",
           "kind": "policy",
           "title": "Policy review \u00b7 Access Control Policy",
-          "due_date": "2026-10-16T00:14:35.571926+00:00",
+          "due_date": "2026-10-16T00:38:32.687525+00:00",
           "status": "in_review"
         },
         {
-          "id": "rev_55a6f08aa458",
+          "id": "rev_4f2137146f62",
           "kind": "review",
           "title": "Next access review \u00b7 Quarterly Access Review \u2014 Globex Ltd",
-          "due_date": "2026-12-05T00:14:35.570045+00:00",
+          "due_date": "2026-12-05T00:38:32.686383+00:00",
           "status": "upcoming"
         }
       ],
@@ -4200,102 +4200,102 @@
       "recent_activity": [],
       "upcoming_reviews": [
         {
-          "id": "rev_505a60d7ce0b",
+          "id": "rev_9045d75432c9",
           "kind": "review",
           "title": "Vendor Review \u2014 Primary SaaS providers",
           "status": "in_progress",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-18T00:14:35.570055+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-18T00:38:32.686392+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "vendor"
         },
         {
-          "id": "rev_1a7611a9f2ff",
+          "id": "rev_bcd9e826474e",
           "kind": "review",
           "title": "Patch & Vulnerability Review",
           "status": "upcoming",
           "severity": null,
           "priority": null,
-          "due_date": "2026-09-27T00:14:35.570067+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-27T00:38:32.686399+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": "vulnerability"
         }
       ],
       "recent_findings": [
         {
-          "id": "fnd_100066c9362c",
+          "id": "fnd_01d7fbaf351c",
           "kind": "finding",
           "title": "Policy not signed by three department heads",
           "status": "open",
           "severity": "low",
           "priority": null,
-          "due_date": "2026-10-06T00:14:35.571225+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-10-06T00:38:32.686987+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "fnd_0198e7e3bab0",
+          "id": "fnd_a42c2675929f",
           "kind": "finding",
           "title": "Critical CVE patch overdue on payroll server",
           "status": "open",
           "severity": "critical",
           "priority": null,
-          "due_date": "2026-09-04T00:14:35.571217+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-04T00:38:32.686979+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "fnd_9ef64a0d267c",
+          "id": "fnd_cd7ef419e7f4",
           "kind": "finding",
           "title": "Vendor SOC 2 report missing",
           "status": "in_remediation",
           "severity": "medium",
           "priority": null,
-          "due_date": "2026-09-26T00:14:35.571208+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-26T00:38:32.686972+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "fnd_29036e4a82cb",
+          "id": "fnd_80055dae0c7e",
           "kind": "finding",
           "title": "Stale privileged accounts found in AD",
           "status": "open",
           "severity": "high",
           "priority": null,
-          "due_date": "2026-09-20T00:14:35.571193+00:00",
-          "owner_id": "user_33cb377315c9",
+          "due_date": "2026-09-20T00:38:32.686964+00:00",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         }
       ],
       "top_risks": [
         {
-          "id": "rsk_4a5475dce592",
+          "id": "rsk_f75495d23950",
           "kind": "risk",
           "title": "Third-party payroll processor outage",
           "status": "treated",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         },
         {
-          "id": "rsk_24002d580619",
+          "id": "rsk_3100cef12aa9",
           "kind": "risk",
           "title": "Ransomware disruption to core systems",
           "status": "assessed",
           "severity": null,
           "priority": null,
           "due_date": null,
-          "owner_id": "user_33cb377315c9",
+          "owner_id": "user_b42087dce9f0",
           "review_type": null
         }
       ],
       "assurance_alerts": []
     },
-    "/comments?entity_id=rev_58101e9cc470&entity_type=reviews": [],
-    "/related?entity_id=rev_58101e9cc470&entity_type=reviews": {
+    "/comments?entity_id=rev_d40ecfcc86e3&entity_type=reviews": [],
+    "/related?entity_id=rev_d40ecfcc86e3&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4303,8 +4303,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_b2e51fbdd6da&entity_type=reviews": [],
-    "/related?entity_id=rev_b2e51fbdd6da&entity_type=reviews": {
+    "/comments?entity_id=rev_6463dfb080d7&entity_type=reviews": [],
+    "/related?entity_id=rev_6463dfb080d7&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4312,8 +4312,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_8293e7cabf9b&entity_type=reviews": [],
-    "/related?entity_id=rev_8293e7cabf9b&entity_type=reviews": {
+    "/comments?entity_id=rev_bc7cd200cddf&entity_type=reviews": [],
+    "/related?entity_id=rev_bc7cd200cddf&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4321,8 +4321,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_1a7611a9f2ff&entity_type=reviews": [],
-    "/related?entity_id=rev_1a7611a9f2ff&entity_type=reviews": {
+    "/comments?entity_id=rev_bcd9e826474e&entity_type=reviews": [],
+    "/related?entity_id=rev_bcd9e826474e&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4330,8 +4330,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_505a60d7ce0b&entity_type=reviews": [],
-    "/related?entity_id=rev_505a60d7ce0b&entity_type=reviews": {
+    "/comments?entity_id=rev_9045d75432c9&entity_type=reviews": [],
+    "/related?entity_id=rev_9045d75432c9&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4339,8 +4339,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rev_55a6f08aa458&entity_type=reviews": [],
-    "/related?entity_id=rev_55a6f08aa458&entity_type=reviews": {
+    "/comments?entity_id=rev_4f2137146f62&entity_type=reviews": [],
+    "/related?entity_id=rev_4f2137146f62&entity_type=reviews": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4348,8 +4348,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=fnd_100066c9362c&entity_type=findings": [],
-    "/related?entity_id=fnd_100066c9362c&entity_type=findings": {
+    "/comments?entity_id=fnd_01d7fbaf351c&entity_type=findings": [],
+    "/related?entity_id=fnd_01d7fbaf351c&entity_type=findings": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4357,8 +4357,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=fnd_0198e7e3bab0&entity_type=findings": [],
-    "/related?entity_id=fnd_0198e7e3bab0&entity_type=findings": {
+    "/comments?entity_id=fnd_a42c2675929f&entity_type=findings": [],
+    "/related?entity_id=fnd_a42c2675929f&entity_type=findings": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4366,8 +4366,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=fnd_9ef64a0d267c&entity_type=findings": [],
-    "/related?entity_id=fnd_9ef64a0d267c&entity_type=findings": {
+    "/comments?entity_id=fnd_cd7ef419e7f4&entity_type=findings": [],
+    "/related?entity_id=fnd_cd7ef419e7f4&entity_type=findings": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4375,8 +4375,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=fnd_29036e4a82cb&entity_type=findings": [],
-    "/related?entity_id=fnd_29036e4a82cb&entity_type=findings": {
+    "/comments?entity_id=fnd_80055dae0c7e&entity_type=findings": [],
+    "/related?entity_id=fnd_80055dae0c7e&entity_type=findings": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4384,8 +4384,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rsk_1e2743733809&entity_type=risks": [],
-    "/related?entity_id=rsk_1e2743733809&entity_type=risks": {
+    "/comments?entity_id=rsk_8c0efe167ac2&entity_type=risks": [],
+    "/related?entity_id=rsk_8c0efe167ac2&entity_type=risks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4393,8 +4393,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rsk_4a5475dce592&entity_type=risks": [],
-    "/related?entity_id=rsk_4a5475dce592&entity_type=risks": {
+    "/comments?entity_id=rsk_f75495d23950&entity_type=risks": [],
+    "/related?entity_id=rsk_f75495d23950&entity_type=risks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4402,8 +4402,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=rsk_24002d580619&entity_type=risks": [],
-    "/related?entity_id=rsk_24002d580619&entity_type=risks": {
+    "/comments?entity_id=rsk_3100cef12aa9&entity_type=risks": [],
+    "/related?entity_id=rsk_3100cef12aa9&entity_type=risks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4411,8 +4411,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=pol_6ddf7347d8fc&entity_type=policies": [],
-    "/related?entity_id=pol_6ddf7347d8fc&entity_type=policies": {
+    "/comments?entity_id=pol_37ceb2bed147&entity_type=policies": [],
+    "/related?entity_id=pol_37ceb2bed147&entity_type=policies": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4420,8 +4420,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=pol_37376379c157&entity_type=policies": [],
-    "/related?entity_id=pol_37376379c157&entity_type=policies": {
+    "/comments?entity_id=pol_958c05b12eda&entity_type=policies": [],
+    "/related?entity_id=pol_958c05b12eda&entity_type=policies": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4429,8 +4429,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=pol_3819280c912e&entity_type=policies": [],
-    "/related?entity_id=pol_3819280c912e&entity_type=policies": {
+    "/comments?entity_id=pol_d92a0e1e2885&entity_type=policies": [],
+    "/related?entity_id=pol_d92a0e1e2885&entity_type=policies": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4438,8 +4438,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=ven_cb12fd2876f4&entity_type=vendors": [],
-    "/related?entity_id=ven_cb12fd2876f4&entity_type=vendors": {
+    "/comments?entity_id=ven_ebf7c2e5e3e0&entity_type=vendors": [],
+    "/related?entity_id=ven_ebf7c2e5e3e0&entity_type=vendors": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4447,8 +4447,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=ven_cfddeff49300&entity_type=vendors": [],
-    "/related?entity_id=ven_cfddeff49300&entity_type=vendors": {
+    "/comments?entity_id=ven_5f61ad478826&entity_type=vendors": [],
+    "/related?entity_id=ven_5f61ad478826&entity_type=vendors": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4456,8 +4456,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=ven_629a2615c186&entity_type=vendors": [],
-    "/related?entity_id=ven_629a2615c186&entity_type=vendors": {
+    "/comments?entity_id=ven_e47c0f0eda46&entity_type=vendors": [],
+    "/related?entity_id=ven_e47c0f0eda46&entity_type=vendors": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4465,8 +4465,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=tsk_4a0fb0556844&entity_type=tasks": [],
-    "/related?entity_id=tsk_4a0fb0556844&entity_type=tasks": {
+    "/comments?entity_id=tsk_585022921360&entity_type=tasks": [],
+    "/related?entity_id=tsk_585022921360&entity_type=tasks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4474,8 +4474,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=tsk_dae92a3d3f74&entity_type=tasks": [],
-    "/related?entity_id=tsk_dae92a3d3f74&entity_type=tasks": {
+    "/comments?entity_id=tsk_4d8777cd92a5&entity_type=tasks": [],
+    "/related?entity_id=tsk_4d8777cd92a5&entity_type=tasks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4483,8 +4483,8 @@
       "exceptions": [],
       "evidence": []
     },
-    "/comments?entity_id=tsk_71acb3f64646&entity_type=tasks": [],
-    "/related?entity_id=tsk_71acb3f64646&entity_type=tasks": {
+    "/comments?entity_id=tsk_0f5323799e01&entity_type=tasks": [],
+    "/related?entity_id=tsk_0f5323799e01&entity_type=tasks": {
       "reviews": [],
       "findings": [],
       "tasks": [],
@@ -4492,31 +4492,31 @@
       "exceptions": [],
       "evidence": []
     },
-    "/users/user_70112062fc4a/open_assignments": {
+    "/users/user_1d4298b306e1/open_assignments": {
       "findings": 0,
       "reviews": 0,
       "tasks": 0,
       "significant_risks": 0
     },
-    "/users/user_e660a72ba58e/open_assignments": {
+    "/users/user_6753d1818a63/open_assignments": {
       "findings": 0,
       "reviews": 2,
       "tasks": 0,
       "significant_risks": 0
     },
-    "/users/user_11cebb98b357/open_assignments": {
+    "/users/user_1084dac24b35/open_assignments": {
       "findings": 4,
       "reviews": 6,
       "tasks": 3,
       "significant_risks": 2
     },
-    "/users/user_fd70b1d73535/open_assignments": {
+    "/users/user_e280db9d3294/open_assignments": {
       "findings": 0,
       "reviews": 0,
       "tasks": 0,
       "significant_risks": 0
     },
-    "/users/user_33cb377315c9/open_assignments": {
+    "/users/user_b42087dce9f0/open_assignments": {
       "findings": 4,
       "reviews": 6,
       "tasks": 3,

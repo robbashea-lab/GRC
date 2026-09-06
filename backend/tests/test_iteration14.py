@@ -14,10 +14,10 @@ import requests
 
 BASE = os.environ["REACT_APP_BACKEND_URL"].rstrip("/") + "/api"
 
-SUPER = ("robbashea@gmail.com", "Admin@2026")
-PLATFORM = ("platform.admin@grc.demo", "Demo@2026")
-CONTRIB = ("contributor@acme.demo", "Demo@2026")
-READONLY = ("readonly@acme.demo", "Demo@2026")
+SUPER = (os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test"), os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD"))
+PLATFORM = (os.environ.get("GRC_TEST_PLATFORM_EMAIL", "platform-admin@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
+CONTRIB = (os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
+READONLY = (os.environ.get("GRC_TEST_ACME_READONLY_EMAIL", "acme-readonly@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
 
 
 def _login(email, password):

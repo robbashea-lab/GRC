@@ -18,12 +18,12 @@ def _login(email, password):
 
 @pytest.fixture(scope="module")
 def super_session():
-    return _login("robbashea@gmail.com", "Admin@2026")
+    return _login(os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test"), os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD"))
 
 
 @pytest.fixture(scope="module")
 def contributor_session():
-    return _login("contributor@globex.demo", "Demo@2026")
+    return _login(os.environ.get("GRC_TEST_GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
 
 
 @pytest.fixture(scope="module")

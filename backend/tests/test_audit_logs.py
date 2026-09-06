@@ -16,22 +16,22 @@ def _login(email: str, password: str) -> str:
 
 @pytest.fixture(scope="module")
 def super_token():
-    return _login("robbashea@gmail.com", "Admin@2026")
+    return _login(os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test"), os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD"))
 
 
 @pytest.fixture(scope="module")
 def platform_token():
-    return _login("platform.admin@grc.demo", "Demo@2026")
+    return _login(os.environ.get("GRC_TEST_PLATFORM_EMAIL", "platform-admin@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
 
 
 @pytest.fixture(scope="module")
 def contributor_token():
-    return _login("contributor@globex.demo", "Demo@2026")
+    return _login(os.environ.get("GRC_TEST_GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
 
 
 @pytest.fixture(scope="module")
 def readonly_token():
-    return _login("readonly@acme.demo", "Demo@2026")
+    return _login(os.environ.get("GRC_TEST_ACME_READONLY_EMAIL", "acme-readonly@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
 
 
 def _h(t):

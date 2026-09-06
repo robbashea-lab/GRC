@@ -22,16 +22,16 @@ import requests
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 API = f"{BASE_URL}/api"
 
-SUPER_EMAIL = "robbashea@gmail.com"
-SUPER_PW = "Admin@2026"
-ADMIN_EMAIL = "platform.admin@grc.demo"
-ADMIN_PW = "Demo@2026"
-ACME_CONTRIB_EMAIL = "contributor@acme.demo"
-ACME_CONTRIB_PW = "Demo@2026"
-ACME_RO_EMAIL = "readonly@acme.demo"
-ACME_RO_PW = "Demo@2026"
-GLOBEX_CONTRIB_EMAIL = "contributor@globex.demo"
-GLOBEX_CONTRIB_PW = "Demo@2026"
+SUPER_EMAIL = os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test")
+SUPER_PW = os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD")
+ADMIN_EMAIL = os.environ.get("GRC_TEST_PLATFORM_EMAIL", "platform-admin@example.test")
+ADMIN_PW = os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")
+ACME_CONTRIB_EMAIL = os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test")
+ACME_CONTRIB_PW = os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")
+ACME_RO_EMAIL = os.environ.get("GRC_TEST_ACME_READONLY_EMAIL", "acme-readonly@example.test")
+ACME_RO_PW = os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")
+GLOBEX_CONTRIB_EMAIL = os.environ.get("GRC_TEST_GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test")
+GLOBEX_CONTRIB_PW = os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")
 
 ACME_CLIENT_ID = "cli_24c16ec179a0"
 GLOBEX_CLIENT_ID = "cli_34211c59d50f"

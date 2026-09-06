@@ -33,7 +33,7 @@ def _login(email, password):
 
 @pytest.fixture(scope="module")
 def admin():
-    s, me = _login("platform.admin@grc.demo", "Demo@2026")
+    s, me = _login(os.environ.get("GRC_TEST_PLATFORM_EMAIL", "platform-admin@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
     return {"s": s, "me": me}
 
 
