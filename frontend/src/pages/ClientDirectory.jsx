@@ -269,15 +269,135 @@ export default function ClientDirectory() {
         }
       />
 
-      {/* Quick Client Access — compact directory for immediate workspace entry */}
-      <QuickClientAccess
-        clients={rows}
-        currentUser={user}
-        favoriteIds={favoriteIds}
-        onToggleFavorite={toggleFavorite}
-        onOpenClient={(c) => enterWorkspace(c)}
-        onViewAll={() => document.querySelector('[data-testid="client-portfolio-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
-      />
+      {/* Client Portfolio */}
+      <div className="px-8 pt-4">
+        <h2 className="text-lg font-heading font-semibold text-ink-primary mb-2">Client Portfolio</h2>
+      </div>
+
+      {/* Filter bar */}
+      <div className="px-8 py-4 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">
+        <div className="relative">
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Input data-testid="client-directory-search" value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder="Search client, industry, GRC lead…" className="pl-8 h-9 w-72 text-sm" />
+        </div>
+        <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="client-directory-filters">
+          {FILTERS.map((t) => {
+            const active = filter === t.id;
+            return (
+              <button key={t.id} onClick={() => setFilter(t.id)} data-testid={`client-filter-${t.id}`}
+                className={`px-2.5 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+        <Select value={leadFilter} onValueChange={setLeadFilter}>
+          <SelectTrigger className="h-9 text-sm w-56" data-testid="client-lead-filter">
+            <SelectValue placeholder="All GRC leads" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All GRC leads</SelectItem>
+            {admins.map((u) => (
+              <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <label className="flex items-center gap-2 text-xs text-ink-secondary ml-2 select-none">
+          <input type="checkbox" checked={includeArchived} onChange={(e) => setIncludeArchived(e.target.checked)}
+            data-testid="include-archived-toggle" className="h-3.5 w-3.5" />
+          Include archived
+        </label>
+        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
+      </div>
+
+      {/* Client Portfolio table */}
+      <div className="px-8 py-4">
+        <div className="bg-surface-card border border-line rounded-lg overflow-hidden" data-testid="client-portfolio-table">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+              <tr>
+                <th className="tbl-cell text-left font-medium">Client</th>
+                <th className="tbl-cell text-left font-medium">GRC Lead</th>
+                <th className="tbl-cell text-left font-medium">Program Status</th>
+                <th className="tbl-cell text-right font-medium">Past Due</th>
+                <th className="tbl-cell text-right font-medium">Due 30d</th>
+                <th className="tbl-cell text-right font-medium">Critical / High</th>
+                <th className="tbl-cell text-right font-medium">Unassigned</th>
+                <th className="tbl-cell text-left font-medium">Next Major Item</th>
+                <th className="tbl-cell text-right font-medium w-10">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading && (<tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading directory…</td></tr>)}
+              {!loading && filtered.length === 0 && (
+                <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">No clients match this filter.</td></tr>
+              )}
+              {!loading && filtered.map((r, i) => {
+                const isFav = favoriteIds.has(r.client_id);
+                return (
+                <tr key={r.client_id} className="row-hover" data-testid={`client-row-${i}`}>
+                  <td className="tbl-cell">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(r.client_id, isFav); }}
+                        className={`p-1 rounded hover:bg-surface-subtle transition ${isFav ? "text-amber-500" : "text-ink-help hover:text-ink-secondary"}`}
+                        aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+                        data-testid={`row-fav-${r.client_id}`}
+                      >
+                        <Star className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
+                      </button>
+                      <button onClick={() => enterWorkspace(r)} className="flex items-center gap-3 min-w-0 text-left group"
+                        data-testid={`client-open-${r.client_id}`}>
+                        <Avatar name={r.name} logoUrl={r.logo_url} />
+                        <div className="min-w-0">
+                          <div className="font-medium text-ink-primary group-hover:text-brand-charcoal-hover truncate flex items-center gap-1.5">
+                            {r.name}
+                            <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help" />
+                          </div>
+                          <div className="text-[11px] text-ink-help truncate">
+                            {r.industry || "—"}{r.primary_contact ? ` · ${r.primary_contact}` : ""}
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </td>
+                  <td className="tbl-cell">
+                    {r.grc_lead ? (
+                      <div className="text-xs">
+                        <div className="text-ink-primary font-medium">{r.grc_lead.name || r.grc_lead.email}</div>
+                        {r.grc_lead.email && r.grc_lead.name && <div className="text-ink-help font-mono">{r.grc_lead.email}</div>}
+                      </div>
+                    ) : <span className="text-ink-disabled text-xs">Unassigned</span>}
+                  </td>
+                  <td className="tbl-cell"><StatusChip value={r.program_status} /></td>
+                  <MetricCell value={r.past_due} tone={r.past_due > 0 ? "critical" : "neutral"}
+                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-past-due-${i}`} />
+                  <MetricCell value={r.due_30d} tone={r.due_30d > 0 ? "duesoon" : "neutral"}
+                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-due-30-${i}`} />
+                  <MetricCell value={r.critical_high_open} tone={r.critical_high_open > 0 ? "critical" : "neutral"}
+                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-critical-${i}`} />
+                  <MetricCell value={r.unassigned} tone={r.unassigned > 0 ? "duesoon" : "neutral"}
+                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-unassigned-${i}`} />
+                  <td className="tbl-cell">
+                    {r.next_major_item ? (
+                      <button onClick={() => enterWorkspace(r, "/reviews")} className="text-xs text-left hover:underline underline-offset-2">
+                        <div className="text-ink-primary truncate max-w-[220px]" title={r.next_major_item.title}>{r.next_major_item.title}</div>
+                        <div className="text-ink-help font-mono">{fmtDate(r.next_major_item.due_date)}</div>
+                      </button>
+                    ) : <span className="text-ink-disabled text-xs">No major item</span>}
+                  </td>
+                  <td className="tbl-cell text-right">
+                    <ClientRowMenu row={r} index={i} onOpen={() => enterWorkspace(r)} onArchived={load} canEdit={canCreate} />
+                  </td>
+                </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Portfolio alert cards */}
       {portfolio && (
@@ -375,132 +495,6 @@ export default function ClientDirectory() {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Filter bar */}
-      <div className="px-8 py-4 mt-8 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">
-        <div className="relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input data-testid="client-directory-search" value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="Search client, industry, GRC lead…" className="pl-8 h-9 w-72 text-sm" />
-        </div>
-        <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="client-directory-filters">
-          {FILTERS.map((t) => {
-            const active = filter === t.id;
-            return (
-              <button key={t.id} onClick={() => setFilter(t.id)} data-testid={`client-filter-${t.id}`}
-                className={`px-2.5 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-        <Select value={leadFilter} onValueChange={setLeadFilter}>
-          <SelectTrigger className="h-9 text-sm w-56" data-testid="client-lead-filter">
-            <SelectValue placeholder="All GRC leads" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">All GRC leads</SelectItem>
-            {admins.map((u) => (
-              <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <label className="flex items-center gap-2 text-xs text-ink-secondary ml-2 select-none">
-          <input type="checkbox" checked={includeArchived} onChange={(e) => setIncludeArchived(e.target.checked)}
-            data-testid="include-archived-toggle" className="h-3.5 w-3.5" />
-          Include archived
-        </label>
-        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
-      </div>
-
-      {/* Client Portfolio */}
-      <div className="px-8 py-4">
-        <h2 className="text-lg font-heading font-semibold text-ink-primary mb-2">Client Portfolio</h2>
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden" data-testid="client-portfolio-table">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
-              <tr>
-                <th className="tbl-cell text-left font-medium">Client</th>
-                <th className="tbl-cell text-left font-medium">GRC Lead</th>
-                <th className="tbl-cell text-left font-medium">Program Status</th>
-                <th className="tbl-cell text-right font-medium">Past Due</th>
-                <th className="tbl-cell text-right font-medium">Due 30d</th>
-                <th className="tbl-cell text-right font-medium">Critical / High</th>
-                <th className="tbl-cell text-right font-medium">Unassigned</th>
-                <th className="tbl-cell text-left font-medium">Next Major Item</th>
-                <th className="tbl-cell text-right font-medium w-10">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading && (<tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading directory…</td></tr>)}
-              {!loading && filtered.length === 0 && (
-                <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">No clients match this filter.</td></tr>
-              )}
-              {!loading && filtered.map((r, i) => {
-                const isFav = favoriteIds.has(r.client_id);
-                return (
-                <tr key={r.client_id} className="row-hover" data-testid={`client-row-${i}`}>
-                  <td className="tbl-cell">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); toggleFavorite(r.client_id, isFav); }}
-                        className={`p-1 rounded hover:bg-surface-subtle transition ${isFav ? "text-amber-500" : "text-ink-help hover:text-ink-secondary"}`}
-                        aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-                        data-testid={`row-fav-${r.client_id}`}
-                      >
-                        <Star className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
-                      </button>
-                      <button onClick={() => enterWorkspace(r)} className="flex items-center gap-3 min-w-0 text-left group"
-                        data-testid={`client-open-${r.client_id}`}>
-                        <Avatar name={r.name} logoUrl={r.logo_url} />
-                        <div className="min-w-0">
-                          <div className="font-medium text-ink-primary group-hover:text-brand-charcoal-hover truncate flex items-center gap-1.5">
-                            {r.name}
-                            <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help" />
-                          </div>
-                          <div className="text-[11px] text-ink-help truncate">
-                            {r.industry || "—"}{r.primary_contact ? ` · ${r.primary_contact}` : ""}
-                          </div>
-                        </div>
-                      </button>
-                    </div>
-                  </td>
-                  <td className="tbl-cell">
-                    {r.grc_lead ? (
-                      <div className="text-xs">
-                        <div className="text-ink-primary font-medium">{r.grc_lead.name || r.grc_lead.email}</div>
-                        {r.grc_lead.email && r.grc_lead.name && <div className="text-ink-help font-mono">{r.grc_lead.email}</div>}
-                      </div>
-                    ) : <span className="text-ink-disabled text-xs">Unassigned</span>}
-                  </td>
-                  <td className="tbl-cell"><StatusChip value={r.program_status} /></td>
-                  <MetricCell value={r.past_due} tone={r.past_due > 0 ? "critical" : "neutral"}
-                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-past-due-${i}`} />
-                  <MetricCell value={r.due_30d} tone={r.due_30d > 0 ? "duesoon" : "neutral"}
-                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-due-30-${i}`} />
-                  <MetricCell value={r.critical_high_open} tone={r.critical_high_open > 0 ? "critical" : "neutral"}
-                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-critical-${i}`} />
-                  <MetricCell value={r.unassigned} tone={r.unassigned > 0 ? "duesoon" : "neutral"}
-                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-unassigned-${i}`} />
-                  <td className="tbl-cell">
-                    {r.next_major_item ? (
-                      <button onClick={() => enterWorkspace(r, "/reviews")} className="text-xs text-left hover:underline underline-offset-2">
-                        <div className="text-ink-primary truncate max-w-[220px]" title={r.next_major_item.title}>{r.next_major_item.title}</div>
-                        <div className="text-ink-help font-mono">{fmtDate(r.next_major_item.due_date)}</div>
-                      </button>
-                    ) : <span className="text-ink-disabled text-xs">No major item</span>}
-                  </td>
-                  <td className="tbl-cell text-right">
-                    <ClientRowMenu row={r} index={i} onOpen={() => enterWorkspace(r)} onArchived={load} canEdit={canCreate} />
-                  </td>
-                </tr>
-                );
-              })}
             </tbody>
           </table>
         </div>
@@ -746,147 +740,5 @@ function AddClientDialog({ open, onOpenChange, users, onCreated }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-const QUICK_TABS = [
-  { id: "all", label: "All Clients" },
-  { id: "favorites", label: "Favorites" },
-  { id: "assigned", label: "Assigned to Me" },
-];
-const QUICK_LIMIT = 10;
-
-function QuickClientAccess({ clients, currentUser, favoriteIds, onToggleFavorite, onOpenClient, onViewAll }) {
-  const [tab, setTab] = useState("all");
-  const [search, setSearch] = useState("");
-
-  // Only show active/non-archived clients in quick access.
-  const active = useMemo(
-    () => (clients || []).filter((c) => c.client_status !== "archived"),
-    [clients]
-  );
-
-  const scoped = useMemo(() => {
-    if (tab === "favorites") return active.filter((c) => favoriteIds.has(c.client_id));
-    if (tab === "assigned") return active.filter((c) => c.grc_lead_id === currentUser?.user_id);
-    return active;
-  }, [active, tab, favoriteIds, currentUser?.user_id]);
-
-  const searched = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    const list = s
-      ? scoped.filter((c) => (
-          (c.name || "").toLowerCase().includes(s) ||
-          (c.industry || "").toLowerCase().includes(s) ||
-          (c.grc_lead?.name || "").toLowerCase().includes(s) ||
-          (c.grc_lead?.email || "").toLowerCase().includes(s)
-        ))
-      : scoped;
-    return [...list].sort((a, b) => (a.name || "").trim().localeCompare((b.name || "").trim()));
-  }, [scoped, search]);
-
-  const hasSearch = !!search.trim();
-  const visible = hasSearch ? searched.slice(0, 20) : searched.slice(0, QUICK_LIMIT);
-  const hiddenCount = Math.max(0, searched.length - visible.length);
-  const emptyLabel = tab === "favorites"
-    ? "You haven't favorited any clients yet. Tap the star on any client to add them here."
-    : tab === "assigned"
-      ? "No clients are currently assigned to you as GRC Lead."
-      : "No authorized clients to display.";
-
-  return (
-    <div className="px-8 pt-4" data-testid="quick-client-access">
-      <div className="bg-surface-card border border-line rounded-lg p-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-medium text-ink-primary">Clients</h2>
-            <div className="inline-flex items-center rounded-md border border-line bg-surface-subtle p-0.5 gap-0.5" data-testid="quick-tabs">
-              {QUICK_TABS.map((t) => {
-                const active = tab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setTab(t.id)}
-                    data-testid={`quick-tab-${t.id}`}
-                    className={`px-2.5 h-7 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-card"}`}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="relative flex-1 max-w-sm">
-            <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search clients…"
-              className="pl-8 h-8 text-sm"
-              data-testid="quick-search"
-            />
-          </div>
-        </div>
-
-        {visible.length === 0 ? (
-          <div className="text-xs text-ink-help py-4 text-center" data-testid="quick-empty">
-            {emptyLabel}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2" data-testid="quick-list">
-            {visible.map((c) => {
-              const isFav = favoriteIds.has(c.client_id);
-              const tone = PROGRAM_TONES[c.program_status] || PROGRAM_TONES.healthy;
-              return (
-                <div
-                  key={c.client_id}
-                  className="group flex items-center gap-2 px-2.5 py-2 border border-line rounded-md bg-surface hover:border-brand-charcoal hover:bg-surface-subtle transition cursor-pointer min-w-0"
-                  onClick={() => onOpenClient(c)}
-                  data-testid={`quick-client-${c.client_id}`}
-                >
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); onToggleFavorite(c.client_id, isFav); }}
-                    className={`p-1 rounded hover:bg-surface-card transition ${isFav ? "text-amber-500" : "text-ink-help hover:text-ink-secondary"}`}
-                    aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-                    data-testid={`quick-fav-${c.client_id}`}
-                  >
-                    <Star className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
-                  </button>
-                  <div className="h-7 w-7 rounded-md bg-brand-charcoal text-ink-onDark flex items-center justify-center text-[11px] font-semibold border border-brand-metallic-3 shrink-0">
-                    {(c.name || "?").trim().slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm text-ink-primary font-medium truncate group-hover:text-brand-charcoal-hover">
-                      {c.name}
-                    </div>
-                    <div className="text-[11px] text-ink-help truncate flex items-center gap-1.5">
-                      {c.industry || "—"}
-                      <span className="text-ink-disabled">·</span>
-                      <span className="inline-flex items-center gap-1">
-                        <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
-                        {tone.label}
-                      </span>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help shrink-0" />
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {hiddenCount > 0 && (
-          <div className="mt-3 text-right">
-            <button
-              onClick={onViewAll}
-              className="text-xs text-link hover:text-link-hover"
-              data-testid="quick-view-all"
-            >
-              View all {searched.length} clients →
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
