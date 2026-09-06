@@ -151,7 +151,6 @@ export default function ClientDirectory() {
   const [rows, setRows] = useState([]);
   const [portfolio, setPortfolio] = useState(null);
   const [queue, setQueue] = useState([]);
-  const [workload, setWorkload] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -188,7 +187,6 @@ export default function ClientDirectory() {
       setRows(data.clients || []);
       setPortfolio(data.portfolio || null);
       setQueue(data.attention_queue || []);
-      setWorkload(data.team_workload || []);
       setUsers(usersData || []);
     } catch (e) { toast.error(formatError(e)); }
     finally { setLoading(false); }
@@ -258,7 +256,7 @@ export default function ClientDirectory() {
       <PageHeader
         eyebrow="Platform"
         title="GRC Portfolio Overview"
-        subtitle="High-level view of client program health, upcoming obligations, priority issues, and team workload."
+        subtitle="High-level view of client program health, upcoming obligations, priority issues, and ownership."
         action={
           canCreate && (
             <Button size="sm" onClick={() => setAddOpen(true)} data-testid="add-client-button"
@@ -268,6 +266,39 @@ export default function ClientDirectory() {
           )
         }
       />
+
+      {/* Portfolio alert cards */}
+      {portfolio && (
+        <div className="px-8 pt-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="portfolio-cards">
+            <AttentionCard testid="card-past-due" label="Past Due" value={portfolio.past_due}
+              subtitle="Past due across all clients" icon={ShieldAlert} tone="critical"
+              onClick={() => openDrill("past_due")} />
+            <AttentionCard testid="card-due-30d" label="Due Next 30 Days" value={portfolio.due_30d}
+              subtitle="Upcoming GRC work across the portfolio" icon={CalendarClock} tone="duesoon"
+              onClick={() => openDrill("due_30d")} />
+            <AttentionCard testid="card-due-31-90" label="Due 31–90 Days" value={portfolio.due_31_90d}
+              subtitle="Forward planning window" icon={Clock} tone="info"
+              onClick={() => openDrill("due_30d")} />
+            <AttentionCard testid="card-critical-high" label="Critical / High Open" value={portfolio.critical_high_open}
+              subtitle="Highest-priority open issues" icon={AlertOctagon} tone="critical"
+              onClick={() => openDrill("critical_high")} />
+            <AttentionCard testid="card-unassigned" label="Unassigned" value={portfolio.unassigned}
+              subtitle="Work currently missing ownership" icon={UserX} tone="duesoon"
+              onClick={() => openDrill("unassigned")} />
+            <AttentionCard testid="card-attention-clients"
+              label="Clients Requiring Attention"
+              value={`${portfolio.clients_requiring_attention} of ${portfolio.total_clients}`}
+              subtitle="Clients with material overdue or priority issues" icon={Building2} tone="neutral"
+              onClick={() => openDrill("attention")} />
+          </div>
+          {generatedAt && (
+            <div className="text-[11px] font-mono uppercase tracking-widest text-ink-help mt-2">
+              Updated {relTime(generatedAt)}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Client Portfolio */}
       <div className="px-8 pt-4">
@@ -399,39 +430,6 @@ export default function ClientDirectory() {
         </div>
       </div>
 
-      {/* Portfolio alert cards */}
-      {portfolio && (
-        <div className="px-8 pt-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="portfolio-cards">
-            <AttentionCard testid="card-past-due" label="Past Due" value={portfolio.past_due}
-              subtitle="Past due across all clients" icon={ShieldAlert} tone="critical"
-              onClick={() => openDrill("past_due")} />
-            <AttentionCard testid="card-due-30d" label="Due Next 30 Days" value={portfolio.due_30d}
-              subtitle="Upcoming GRC work across the portfolio" icon={CalendarClock} tone="duesoon"
-              onClick={() => openDrill("due_30d")} />
-            <AttentionCard testid="card-due-31-90" label="Due 31–90 Days" value={portfolio.due_31_90d}
-              subtitle="Forward planning window" icon={Clock} tone="info"
-              onClick={() => openDrill("due_30d")} />
-            <AttentionCard testid="card-critical-high" label="Critical / High Open" value={portfolio.critical_high_open}
-              subtitle="Highest-priority open issues" icon={AlertOctagon} tone="critical"
-              onClick={() => openDrill("critical_high")} />
-            <AttentionCard testid="card-unassigned" label="Unassigned" value={portfolio.unassigned}
-              subtitle="Work currently missing ownership" icon={UserX} tone="duesoon"
-              onClick={() => openDrill("unassigned")} />
-            <AttentionCard testid="card-attention-clients"
-              label="Clients Requiring Attention"
-              value={`${portfolio.clients_requiring_attention} of ${portfolio.total_clients}`}
-              subtitle="Clients with material overdue or priority issues" icon={Building2} tone="neutral"
-              onClick={() => openDrill("attention")} />
-          </div>
-          {generatedAt && (
-            <div className="text-[11px] font-mono uppercase tracking-widest text-ink-help mt-2">
-              Updated {relTime(generatedAt)}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Needs Attention Across Clients */}
       <div className="px-8 mt-8">
         <div className="flex items-end justify-between mb-2">
@@ -493,59 +491,6 @@ export default function ClientDirectory() {
                       className="text-xs text-link hover:text-link-hover"
                     >Open →</button>
                   </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Team Workload */}
-      <div className="px-8 py-4 mt-6 mb-10">
-        <div className="flex items-end justify-between mb-2">
-          <div>
-            <h2 className="text-lg font-heading font-semibold text-ink-primary">Team Workload</h2>
-            <p className="text-xs text-ink-secondary">Operational GRC workload by internal team member. Counts reflect actual owner/assignee, not activity.</p>
-          </div>
-        </div>
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden" data-testid="team-workload">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
-              <tr>
-                <th className="tbl-cell text-left font-medium">Team Member</th>
-                <th className="tbl-cell text-right font-medium">Clients</th>
-                <th className="tbl-cell text-right font-medium">Past Due</th>
-                <th className="tbl-cell text-right font-medium">Due 30d</th>
-                <th className="tbl-cell text-right font-medium">Critical / High</th>
-                <th className="tbl-cell text-right font-medium">Open Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {workload.length === 0 && !loading && (
-                <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-6">No team members carry assigned work yet.</td></tr>
-              )}
-              {workload.map((w, i) => (
-                <tr key={w.user_id} className="row-hover" data-testid={`workload-row-${i}`}>
-                  <td className="tbl-cell">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-full bg-surface-subtle border border-line flex items-center justify-center text-[11px] font-semibold text-ink-primary">
-                        {(w.name || "?").slice(0, 1).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-ink-primary font-medium">{w.name}</div>
-                        <div className="text-[11px] text-ink-help font-mono">{(w.role || "").replace("_", " ")}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="tbl-cell text-right font-mono text-sm">{w.clients}</td>
-                  <MetricCell value={w.past_due} tone={w.past_due > 0 ? "critical" : "neutral"}
-                    onClick={() => { setLeadFilter(w.user_id); setFilter("past_due"); }} testid={`workload-past-due-${i}`} />
-                  <MetricCell value={w.due_30d} tone={w.due_30d > 0 ? "duesoon" : "neutral"}
-                    onClick={() => setLeadFilter(w.user_id)} testid={`workload-due-30-${i}`} />
-                  <MetricCell value={w.critical_high} tone={w.critical_high > 0 ? "critical" : "neutral"}
-                    onClick={() => { setLeadFilter(w.user_id); setFilter("critical_high"); }} testid={`workload-critical-${i}`} />
-                  <MetricCell value={w.open_actions} tone="info"
-                    onClick={() => setLeadFilter(w.user_id)} testid={`workload-open-${i}`} />
                 </tr>
               ))}
             </tbody>
