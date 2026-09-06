@@ -1,0 +1,7 @@
+{
+  "name": "iventure-grc-preview",
+  "private": true,
+  "scripts": {
+    "build": "node frontend/scripts/preview.cjs build"
+  }
+}
