@@ -1781,10 +1781,9 @@ async def seed():
     async def ensure_user(email, name, role, client_ids, password=None):
         u = await db.users.find_one({"email": email})
         if u:
-            # Keep role/tenants aligned + rehash pw if provided and different
-            update = {"role": role, "client_ids": client_ids, "name": name}
-            if password and not verify_password(password, u.get("password_hash") or ""):
-                update["password_hash"] = hash_password(password)
+            # Keep demo role/tenant assignments aligned without undoing profile
+            # edits or password changes made through the account settings.
+            update = {"role": role, "client_ids": client_ids}
             await db.users.update_one({"email": email}, {"$set": update})
             return u["user_id"]
         uid = _uid("user")
@@ -1795,7 +1794,7 @@ async def seed():
         await db.users.insert_one(doc)
         return uid
 
-    admin_uid = await ensure_user(admin_email, "Rob Bashea", "super_admin", [acme["client_id"], globex["client_id"]], admin_password)
+    admin_uid = await ensure_user(admin_email, os.environ.get("ADMIN_NAME", "Robb Shea"), "super_admin", [acme["client_id"], globex["client_id"]], admin_password)
     pa_uid = await ensure_user(platform_admin_email, "Platform Admin", "platform_admin", [acme["client_id"], globex["client_id"]], demo_password)
     c_acme = await ensure_user(acme_contributor_email, "Alicia Rivera", "client_contributor", [acme["client_id"]], demo_password)
     r_acme = await ensure_user(acme_readonly_email, "Ravi Kumar", "client_readonly", [acme["client_id"]], demo_password)
