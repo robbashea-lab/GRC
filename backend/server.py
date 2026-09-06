@@ -1731,8 +1731,16 @@ async def seed():
     await db.password_resets.create_index("token_hash", unique=True)
     await db.sessions.create_index("session_token", unique=True)
 
-    admin_email = os.environ.get("ADMIN_EMAIL", "admin@example.com").lower()
-    admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+    # Seed credentials are environment-controlled.  The fallback values are
+    # intentionally non-production placeholders and must never be used as
+    # operational credentials.
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@example.test").lower()
+    admin_password = os.environ.get("ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD")
+    demo_password = os.environ.get("DEMO_USER_PASSWORD", "TEST_ONLY_PASSWORD")
+    platform_admin_email = os.environ.get("PLATFORM_ADMIN_EMAIL", "platform-admin@example.test").lower()
+    acme_contributor_email = os.environ.get("ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test").lower()
+    acme_readonly_email = os.environ.get("ACME_READONLY_EMAIL", "acme-readonly@example.test").lower()
+    globex_contributor_email = os.environ.get("GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test").lower()
 
     # Tenants
     acme = await db.clients.find_one({"name": "Acme Corp"}, {"_id": 0})
@@ -1766,10 +1774,10 @@ async def seed():
         return uid
 
     admin_uid = await ensure_user(admin_email, "Rob Bashea", "super_admin", [acme["client_id"], globex["client_id"]], admin_password)
-    pa_uid = await ensure_user("platform.admin@grc.demo", "Platform Admin", "platform_admin", [acme["client_id"], globex["client_id"]], "Demo@2026")
-    c_acme = await ensure_user("contributor@acme.demo", "Alicia Rivera", "client_contributor", [acme["client_id"]], "Demo@2026")
-    r_acme = await ensure_user("readonly@acme.demo", "Ravi Kumar", "client_readonly", [acme["client_id"]], "Demo@2026")
-    c_glob = await ensure_user("contributor@globex.demo", "Chen Wei", "client_contributor", [globex["client_id"]], "Demo@2026")
+    pa_uid = await ensure_user(platform_admin_email, "Platform Admin", "platform_admin", [acme["client_id"], globex["client_id"]], demo_password)
+    c_acme = await ensure_user(acme_contributor_email, "Alicia Rivera", "client_contributor", [acme["client_id"]], demo_password)
+    r_acme = await ensure_user(acme_readonly_email, "Ravi Kumar", "client_readonly", [acme["client_id"]], demo_password)
+    c_glob = await ensure_user(globex_contributor_email, "Chen Wei", "client_contributor", [globex["client_id"]], demo_password)
 
     # Migration: normalize legacy review statuses (planned/blocked/overdue → upcoming)
     await db.reviews.update_many({"status": {"$in": ["planned", "blocked", "overdue"]}}, {"$set": {"status": "upcoming"}})

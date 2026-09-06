@@ -28,8 +28,8 @@ if not BASE_URL:
 BASE_URL = BASE_URL.rstrip("/")
 API = f"{BASE_URL}/api"
 
-CONTRIB_EMAIL = "contributor@acme.demo"
-CONTRIB_PW = "Demo@2026"
+CONTRIB_EMAIL = os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test")
+CONTRIB_PW = os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "grc_platform")
@@ -105,7 +105,7 @@ class TestIter6SessionInvalidation:
             raw_token, uid = _issue_reset_token(db, CONTRIB_EMAIL)
 
             # 4) POST /auth/reset-password
-            new_pw = "Iter6Reset!2026"
+            new_pw = os.environ.get("GRC_TEST_RESET_PASSWORD", "TEST_ONLY_RESET_PASSWORD")
             rr = requests.post(f"{API}/auth/reset-password",
                                json={"token": raw_token, "new_password": new_pw}, timeout=30)
             assert rr.status_code == 200, rr.text

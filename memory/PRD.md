@@ -96,7 +96,7 @@ Multi-tenant B2B GRC platform (Linear/Notion-inspired). Roles: Super Admin, Plat
 - **Presence vs Lifecycle** — `PolicyIn` gained `presence` (reported_existing / verified_existing / reported_missing / needs_confirmation / not_applicable), `category`, `applicability_rationale`, `onboarding_note`, `is_client_reported`, `verified_at/by`, `last_reviewed_at`. `status` extended with `needs_verification`, `needs_creation`, `not_applicable`. Version/owner/dates are **never fabricated** by onboarding.
 - **Tasks** now carry `policy_id` + `source` (e.g. "GRC Program Onboarding"). Onboarding is idempotent — resubmitting same responses updates existing rows and does not spawn duplicate tasks. `ActionItems.jsx` now honors `t.source` so the origin badge shows correctly.
 - **Policies list columns** updated to Policy/Document | Presence | Status | Version | Owner | Last review | Next review with tone-mapped presence badges.
-- **Tenant isolation & RBAC verified**: contributor@acme.demo cannot POST onboarding responses for a Globex client_id (403); only super/platform admins can call `/policies/{id}/verify`.
+- **Tenant isolation & RBAC verified**: acme-contributor@example.test cannot POST onboarding responses for a Globex client_id (403); only super/platform admins can call `/policies/{id}/verify`.
 - Tested: 5/5 backend pytest passing, iteration_11 frontend flows green (rationale enforcement, idempotence, verify workflow, Policies list rendering, action-items origin).
 
 ### v19 (Risk & Vendor Detail Tabs · Schedule Vendor Review · Assurance Expiry Alerts) — Sep 2026

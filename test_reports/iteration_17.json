@@ -19,7 +19,7 @@
   ],
   "updated_files": ["/app/backend/tests/test_audit_logs.py", "/app/test_reports/iteration_17.json"],
   "success_rate": { "backend": "100% (16/16)", "frontend": "100% — every acceptance-criteria check passed" },
-  "test_credentials": "robbashea@gmail.com / Admin@2026 (super_admin), platform.admin@grc.demo / Demo@2026, contributor@globex.demo / Demo@2026, readonly@acme.demo / Demo@2026",
+  "test_credentials": "admin@example.test / TEST_ONLY_ADMIN_PASSWORD (super_admin), platform-admin@example.test / TEST_ONLY_PASSWORD, globex-contributor@example.test / TEST_ONLY_PASSWORD, acme-readonly@example.test / TEST_ONLY_PASSWORD",
   "seed_data_creation": "None — used the ~1,355 audit_logs events already seeded in the preview env.",
   "retest_needed": false,
   "should_main_agent_self_test": false,

@@ -44,7 +44,7 @@
     "/app/backend/tests/test_iteration8.py"
   ],
   "success_rate": {"backend": "100% (18/18)", "frontend": "~80% — routing/UI structure pass, but 2 HIGH bugs (Add Client button missing, name click doesn't enter workspace)"},
-  "test_credentials": "Used robbashea@gmail.com/Admin@2026, platform.admin@grc.demo/Demo@2026, contributor@acme.demo/Demo@2026, readonly@acme.demo/Demo@2026, contributor@globex.demo/Demo@2026. No credentials modified.",
+  "test_credentials": "Used admin@example.test/TEST_ONLY_ADMIN_PASSWORD, platform-admin@example.test/TEST_ONLY_PASSWORD, acme-contributor@example.test/TEST_ONLY_PASSWORD, acme-readonly@example.test/TEST_ONLY_PASSWORD, globex-contributor@example.test/TEST_ONLY_PASSWORD. No credentials modified.",
   "seed_data_creation": "test_iteration8.py creates ~3 scratch clients (TEST_iter8_created_*, TEST_iter8_scratch_*) and archives them at end. Also creates 2 TEST_iter8 findings on the scratch client (deleted at end) and 1 TEST_iter8_activity review (deleted at end).",
   "retest_needed": true,
   "main_agent_can_self_test": true,

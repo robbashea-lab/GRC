@@ -20,11 +20,11 @@ BASE = _load_base()
 API = f"{BASE}/api"
 
 CREDS = {
-    "super": ("robbashea@gmail.com", "Admin@2026"),
-    "platform": ("platform.admin@grc.demo", "Demo@2026"),
-    "acme_contrib": ("contributor@acme.demo", "Demo@2026"),
-    "acme_readonly": ("readonly@acme.demo", "Demo@2026"),
-    "globex_contrib": ("contributor@globex.demo", "Demo@2026"),
+    "super": (os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test"), os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD")),
+    "platform": (os.environ.get("GRC_TEST_PLATFORM_EMAIL", "platform-admin@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")),
+    "acme_contrib": (os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")),
+    "acme_readonly": (os.environ.get("GRC_TEST_ACME_READONLY_EMAIL", "acme-readonly@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")),
+    "globex_contrib": (os.environ.get("GRC_TEST_GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")),
 }
 
 
@@ -80,7 +80,7 @@ class TestMembers:
         data = r.json()
         assert isinstance(data, list) and len(data) > 0
         emails = [u.get("email") for u in data]
-        assert "contributor@acme.demo" in emails
+        assert os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test") in emails
 
     def test_members_contributor_no_orphaned(self, sessions, acme_client_id):
         r = sessions["acme_contrib"]["s"].get(f"{API}/clients/{acme_client_id}/members", timeout=15)
@@ -110,7 +110,7 @@ class TestDashboardScope:
         d = r.json()
         assert d.get("scope") == "mine"
         assert d.get("scope_label") == "Your assigned work"
-        assert d.get("target_user", {}).get("email") == "contributor@acme.demo"
+        assert d.get("target_user", {}).get("email") == os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test")
 
     def test_scope_user_missing_user_id(self, sessions, acme_client_id):
         r = sessions["super"]["s"].get(f"{API}/dashboard", params={"client_id": acme_client_id, "scope": "user"}, timeout=15)
@@ -119,7 +119,7 @@ class TestDashboardScope:
     def test_scope_user_by_super_admin(self, sessions, acme_client_id):
         # find contributor uid
         m = sessions["super"]["s"].get(f"{API}/clients/{acme_client_id}/members").json()
-        contrib = next((u for u in m if u.get("email") == "contributor@acme.demo"), None)
+        contrib = next((u for u in m if u.get("email") == os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test")), None)
         assert contrib
         uid = contrib["user_id"]
         r = sessions["super"]["s"].get(f"{API}/dashboard", params={"client_id": acme_client_id, "scope": "user", "user_id": uid}, timeout=20)

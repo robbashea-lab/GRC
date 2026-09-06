@@ -24,9 +24,9 @@ if not BASE_URL:
 BASE_URL = BASE_URL.rstrip("/")
 API = f"{BASE_URL}/api"
 
-ADMIN = ("robbashea@gmail.com", "Admin@2026")
-CONTRIB = ("contributor@acme.demo", "Demo@2026")
-READONLY = ("readonly@acme.demo", "Demo@2026")
+ADMIN = (os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test"), os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD"))
+CONTRIB = (os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
+READONLY = (os.environ.get("GRC_TEST_ACME_READONLY_EMAIL", "acme-readonly@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "grc_platform")
@@ -71,7 +71,7 @@ def readonly_token():
 class TestForgotPassword:
     def test_forgot_known_email_returns_ok_and_persists_row(self, db):
         before = db.password_resets.count_documents({})
-        r = requests.post(f"{API}/auth/forgot-password", json={"email": "robbashea@gmail.com"}, timeout=30)
+        r = requests.post(f"{API}/auth/forgot-password", json={"email": os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test")}, timeout=30)
         assert r.status_code == 200, r.text
         assert r.json() == {"ok": True}
         after = db.password_resets.count_documents({})
@@ -90,18 +90,18 @@ class TestForgotPassword:
 
 class TestResetPassword:
     def test_reset_invalid_token(self):
-        r = requests.post(f"{API}/auth/reset-password", json={"token": "not-a-real-token", "new_password": "GoodPass1!"}, timeout=30)
+        r = requests.post(f"{API}/auth/reset-password", json={"token": "TEST_ONLY_INVALID_TOKEN", "new_password": "TEST_ONLY_VALID_PASSWORD"}, timeout=30)
         assert r.status_code == 400
 
     def test_reset_short_password(self):
-        r = requests.post(f"{API}/auth/reset-password", json={"token": "whatever", "new_password": "short"}, timeout=30)
+        r = requests.post(f"{API}/auth/reset-password", json={"token": "TEST_ONLY_SHORT_TOKEN", "new_password": "short"}, timeout=30)
         assert r.status_code == 400
 
     def test_reset_happy_path_and_replay(self, db):
         # Generate a valid token for contributor
         raw = secrets.token_urlsafe(32)
         h = hashlib.sha256(raw.encode()).hexdigest()
-        u = db.users.find_one({"email": "contributor@acme.demo"})
+        u = db.users.find_one({"email": os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test")})
         assert u is not None
         db.password_resets.insert_one({
             "user_id": u["user_id"],
@@ -112,29 +112,31 @@ class TestResetPassword:
         })
         try:
             # Happy path
-            r = requests.post(f"{API}/auth/reset-password", json={"token": raw, "new_password": "BrandNew2026!"}, timeout=30)
+            reset_password = os.environ.get("GRC_TEST_RESET_PASSWORD", "TEST_ONLY_RESET_PASSWORD")
+            r = requests.post(f"{API}/auth/reset-password", json={"token": raw, "new_password": reset_password}, timeout=30)
             assert r.status_code == 200, r.text
             body = r.json()
             assert body.get("ok") is True
             assert "sessions_revoked" in body  # iter6 contract
 
             # Login old password fails
-            r_old = _login("contributor@acme.demo", "Demo@2026")
+            r_old = _login(os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
             assert r_old.status_code == 401
 
             # Login new password succeeds
-            r_new = _login("contributor@acme.demo", "BrandNew2026!")
+            r_new = _login(os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), reset_password)
             assert r_new.status_code == 200
 
             # Replay same token -> 400
-            r_replay = requests.post(f"{API}/auth/reset-password", json={"token": raw, "new_password": "AnotherOne1!"}, timeout=30)
+            r_replay = requests.post(f"{API}/auth/reset-password", json={"token": raw, "new_password": "TEST_ONLY_REPLAY_PASSWORD"}, timeout=30)
             assert r_replay.status_code == 400
         finally:
-            # Restore password to Demo@2026
-            new_hash = bcrypt.hashpw(b"Demo@2026", bcrypt.gensalt()).decode()
-            db.users.update_one({"email": "contributor@acme.demo"}, {"$set": {"password_hash": new_hash}})
+            # Restore the configured test password.
+            restore_password = os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")
+            new_hash = bcrypt.hashpw(restore_password.encode(), bcrypt.gensalt()).decode()
+            db.users.update_one({"email": os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test")}, {"$set": {"password_hash": new_hash}})
             # Verify restore
-            r_rest = _login("contributor@acme.demo", "Demo@2026")
+            r_rest = _login(os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test"), os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD"))
             assert r_rest.status_code == 200, "Restore of contributor password failed!"
 
 

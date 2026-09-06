@@ -91,7 +91,9 @@ async function previewAdapter(config) {
     data = lookupPreview(path, params);
     if (path === "/audit-logs" && !Object.keys(paramsObject(params)).length && data?.items) data = data.items;
   } else if (path === "/auth/login" || path === "/auth/register") {
-    data = { access_token: "preview-token", user: previewUser() };
+    // Demo mode is intentionally tokenless; authentication is represented by
+    // the in-memory preview user and never persists a credential.
+    data = { user: previewUser() };
   } else if (path === "/auth/logout" || path.startsWith("/notifications/") || path === "/notifications/read-all") {
     data = { ok: true };
   } else if (path === "/bulk") {

@@ -13,12 +13,12 @@ import requests
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 API = f"{BASE_URL}/api"
 
-# NOTE: platform.admin@grc.demo has role=client_contributor in the seeded preview DB
+# NOTE: the platform test account may have a client_contributor role in a legacy seeded preview DB
 # (see BUG in test report). Falling back to super_admin so functional tests can run.
-ADMIN_EMAIL = "robbashea@gmail.com"
-ADMIN_PW = "Admin@2026"
-CONTRIB_EMAIL = "contributor@acme.demo"
-CONTRIB_PW = "Demo@2026"
+ADMIN_EMAIL = os.environ.get("GRC_TEST_ADMIN_EMAIL", "admin@example.test")
+ADMIN_PW = os.environ.get("GRC_TEST_ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD")
+CONTRIB_EMAIL = os.environ.get("GRC_TEST_ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test")
+CONTRIB_PW = os.environ.get("GRC_TEST_DEMO_PASSWORD", "TEST_ONLY_PASSWORD")
 
 
 def _iso(dt):
