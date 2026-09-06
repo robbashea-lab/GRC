@@ -448,6 +448,17 @@ def _set_auth_cookie(resp: Response, token: str, key: str = "access_token", max_
     resp.set_cookie(key=key, value=token, httponly=True, secure=True, samesite="none", max_age=max_age, path="/")
 
 
+def _google_admin_emails() -> set[str]:
+    """Return the explicitly configured Google identities allowed platform access.
+
+    GOOGLE_ADMIN_EMAILS supports a comma-separated allowlist.  ADMIN_EMAIL is
+    retained as a backwards-compatible single-address fallback for existing
+    deployments; no personal or operational address is embedded in source.
+    """
+    raw = os.environ.get("GOOGLE_ADMIN_EMAILS") or os.environ.get("ADMIN_EMAIL", "")
+    return {item.strip().lower() for item in raw.split(",") if item.strip()}
+
+
 @api.post("/auth/register")
 async def register(body: RegisterIn, response: Response):
     email = body.email.lower()
@@ -949,10 +960,15 @@ async def google_session(body: GoogleSessionIn, response: Response):
     email = (data.get("email") or "").lower()
     if not email:
         raise HTTPException(400, "Google session missing email")
+    google_admin = email in _google_admin_emails()
+    admin_client_ids = []
+    if google_admin:
+        clients = await db.clients.find({"status": {"$ne": "archived"}}, {"_id": 0, "client_id": 1}).to_list(500)
+        admin_client_ids = [client["client_id"] for client in clients]
     user = await db.users.find_one({"email": email}, {"_id": 0})
     if not user:
-        # Auto-create with readonly role by default; admin email keeps super_admin if configured
-        role = "super_admin" if email == os.environ.get("ADMIN_EMAIL", "").lower() else "client_readonly"
+        # New Google identities are read-only unless explicitly allowlisted.
+        role = "super_admin" if google_admin else "client_readonly"
         user_id = _uid("user")
         user = {
             "user_id": user_id,
@@ -960,13 +976,19 @@ async def google_session(body: GoogleSessionIn, response: Response):
             "name": data.get("name") or email.split("@")[0],
             "picture": data.get("picture"),
             "role": role,
-            "client_ids": [],
+            "client_ids": admin_client_ids,
             "auth_provider": "google",
             "created_at": _now(),
         }
         await db.users.insert_one(user)
     else:
-        await db.users.update_one({"email": email}, {"$set": {"picture": data.get("picture"), "auth_provider": user.get("auth_provider") or "google"}})
+        updates = {"picture": data.get("picture"), "auth_provider": user.get("auth_provider") or "google"}
+        if google_admin:
+            # Repair identities that were auto-created as read-only before the
+            # administrator allowlist was configured.
+            updates.update({"role": "super_admin", "client_ids": admin_client_ids})
+        await db.users.update_one({"email": email}, {"$set": updates})
+        user.update(updates)
     # Create session
     session_token = data.get("session_token") or _uid("sess")
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)

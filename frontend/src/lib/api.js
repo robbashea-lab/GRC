@@ -17,6 +17,13 @@ const PREVIEW_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 // production credential.  Hosted production builds never use these values.
 const PREVIEW_EMAIL = (process.env.REACT_APP_PREVIEW_EMAIL || "preview@example.invalid").trim().toLowerCase();
 const PREVIEW_PASSWORD = process.env.REACT_APP_PREVIEW_PASSWORD || "TEST_ONLY_PREVIEW_PASSWORD";
+// Google sign-in in the preview is accepted only after the real backend
+// verifies the provider-issued session ID.  Keep the backend URL and the
+// preview admin allowlist build-time configurable; neither is a credential.
+const PREVIEW_AUTH_URL = (process.env.REACT_APP_PREVIEW_AUTH_URL || process.env.REACT_APP_BACKEND_URL || "")
+  .replace(/\/+$/, "")
+  .replace(/\/api$/, "");
+const PREVIEW_GOOGLE_ADMIN_EMAIL = (process.env.REACT_APP_PREVIEW_GOOGLE_ADMIN_EMAIL || "").trim().toLowerCase();
 
 function clone(value) {
   if (value === undefined) return undefined;
@@ -81,9 +88,14 @@ function lookupPreview(path, params) {
   return {};
 }
 
-function previewUser() {
+function previewUser(overrides = {}) {
   const user = clone(previewResponses["/auth/me"] || {});
-  return { ...user, name: "Preview Admin", email: PREVIEW_EMAIL };
+  return {
+    ...user,
+    ...clone(overrides),
+    name: overrides.name || user.name || "Preview Admin",
+    email: (overrides.email || PREVIEW_EMAIL).trim().toLowerCase(),
+  };
 }
 
 function previewRequestBody(config) {
@@ -127,14 +139,61 @@ function readPreviewSession() {
   }
 }
 
-function createPreviewSession(user) {
-  const token = newPreviewToken();
-  localStorage.setItem(PREVIEW_SESSION_KEY, JSON.stringify({
+function createPreviewSession(user, token = newPreviewToken(), provider = "password") {
+  const session = {
     token,
     user_id: user.user_id,
     expires_at: Date.now() + PREVIEW_SESSION_TTL_MS,
-  }));
+    provider,
+  };
+  if (provider === "google") session.user = clone(user);
+  localStorage.setItem(PREVIEW_SESSION_KEY, JSON.stringify(session));
   return token;
+}
+
+function previewGoogleUser(user) {
+  const verified = previewUser(user || {});
+  if (PREVIEW_GOOGLE_ADMIN_EMAIL && verified.email === PREVIEW_GOOGLE_ADMIN_EMAIL) {
+    const fixtureAdmin = previewUser();
+    return {
+      ...verified,
+      role: fixtureAdmin.role,
+      client_ids: fixtureAdmin.client_ids,
+    };
+  }
+  return verified;
+}
+
+async function previewAuthBackend(config, path, body = {}, token = "", method = "POST") {
+  if (!PREVIEW_AUTH_URL) {
+    return previewResponse(
+      config,
+      { detail: "Google sign-in is not configured for this preview." },
+      503,
+      "Service Unavailable",
+    );
+  }
+  let response;
+  try {
+    response = await fetch(`${PREVIEW_AUTH_URL}/api${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      ...(method === "GET" ? {} : { body: JSON.stringify(body) }),
+    });
+  } catch {
+    return previewResponse(
+      config,
+      { detail: "The preview authentication service could not be reached." },
+      502,
+      "Bad Gateway",
+    );
+  }
+  let data;
+  try { data = await response.json(); } catch { data = { detail: "Invalid authentication service response." }; }
+  return previewResponse(config, data, response.status, response.statusText || "Authentication error");
 }
 
 async function previewAdapter(config) {
@@ -147,7 +206,12 @@ async function previewAdapter(config) {
   if (path === "/auth/me" && method === "get") {
     const session = readPreviewSession();
     if (!session) return previewResponse(config, { detail: "Not authenticated" }, 401, "Unauthorized");
-    data = previewUser();
+    if (session.provider === "google") {
+      const response = await previewAuthBackend(config, "/auth/me", {}, session.token, "GET");
+      data = previewGoogleUser(response.data);
+    } else {
+      data = previewUser();
+    }
   } else if (path === "/auth/login" && method === "post") {
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
@@ -157,6 +221,20 @@ async function previewAdapter(config) {
     const user = previewUser();
     const token = createPreviewSession(user);
     data = { access_token: token, user };
+  } else if (path === "/auth/google/session" && method === "post") {
+    const response = await previewAuthBackend(config, "/auth/google/session", body);
+    const verified = response.data || {};
+    if (!verified.session_token || !verified.user?.email) {
+      return previewResponse(
+        config,
+        { detail: "Google sign-in returned an incomplete session." },
+        502,
+        "Bad Gateway",
+      );
+    }
+    const user = previewGoogleUser(verified.user);
+    createPreviewSession(user, verified.session_token, "google");
+    data = { ...verified, user };
   } else if (path === "/auth/register" && method === "post") {
     return previewResponse(
       config,
