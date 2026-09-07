@@ -2,15 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
-import api, { formatError } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
   LogOut, Sparkles, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
-  ClipboardList, ShieldCheck, Lock, Star, Search,
+  ClipboardList, ShieldCheck, Lock, Search,
 } from "lucide-react";
-import { toast } from "sonner";
 import NotificationBell from "@/components/NotificationBell";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -38,6 +36,7 @@ const CLIENT_NAV = [
 // below, not as a flat nav link — it's the heading of the client navigator.
 const PLATFORM_NAV = [
   { section: "Administration" },
+  { to: "/admin/clients", label: "Client Management", icon: Building2, testid: "nav-admin-clients" },
   { to: "/admin/users", label: "Users & Access", icon: UserCog, testid: "nav-admin-users" },
   { to: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck, testid: "nav-admin-roles" },
   { to: "/admin/security", label: "Security & Auth", icon: Lock, testid: "nav-admin-security" },
@@ -86,25 +85,18 @@ function ContextHeader({ isInternal, atPlatform }) {
 
 const CLIENT_FILTERS = [
   { id: "all", label: "All Clients" },
-  { id: "favorites", label: "Favorites" },
   { id: "assigned", label: "Assigned to Me" },
 ];
 
 function PlatformClientsSection() {
   // The permanent Clients navigator in the Platform sidebar. Header links to
-  // /clients (GRC Portfolio Overview); three inline filter tabs; compact
-  // search; alphabetized bounded-scroll list; per-row star toggle.
+  // /clients (GRC Portfolio Overview); ALL/MINE tabs and compact search.
   const { clients, switchClient } = useOrg();
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
-
-  const favoriteIds = useMemo(
-    () => new Set(user?.favorite_client_ids || []),
-    [user?.favorite_client_ids]
-  );
 
   const active = useMemo(
     () => (clients || []).filter((c) => (c.status || "active") !== "archived"),
@@ -113,28 +105,15 @@ function PlatformClientsSection() {
 
   const scoped = useMemo(() => {
     let list = active;
-    if (filter === "favorites") list = list.filter((c) => favoriteIds.has(c.client_id));
-    else if (filter === "assigned") list = list.filter((c) => c.assigned_owner_id === user?.user_id);
+    if (filter === "assigned") list = list.filter((c) => c.assigned_owner_id === user?.user_id);
     const s = q.trim().toLowerCase();
     if (s) list = list.filter((c) => (c.name || "").toLowerCase().includes(s));
     return [...list].sort((a, b) => (a.name || "").trim().localeCompare((b.name || "").trim()));
-  }, [active, filter, favoriteIds, user?.user_id, q]);
-
-  async function toggleFavorite(clientId, currentlyFav) {
-    try {
-      const url = `/me/favorites/${clientId}`;
-      const { data } = currentlyFav ? await api.delete(url) : await api.post(url);
-      if (data?.favorite_client_ids && setUser) {
-        setUser({ ...user, favorite_client_ids: data.favorite_client_ids });
-      }
-    } catch (e) { toast.error(formatError(e)); }
-  }
+  }, [active, filter, user?.user_id, q]);
 
   const onClientsPage = location.pathname === "/clients";
 
-  const emptyLabel = filter === "favorites"
-    ? "No favorites yet."
-    : filter === "assigned"
+  const emptyLabel = filter === "assigned"
       ? "None assigned to you."
       : q ? "No matches." : "No clients available.";
 
@@ -161,7 +140,7 @@ function PlatformClientsSection() {
                 data-testid={`sidebar-filter-${t.id}`}
                 className={`flex-1 px-1.5 h-6 text-[10px] font-mono uppercase tracking-wider rounded-[5px] transition ${isActive ? "bg-brand-metallic text-ink-onDark" : "text-ink-onDarkMuted hover:text-ink-onDark"}`}
               >
-                {t.id === "all" ? "All" : t.id === "favorites" ? "Fav" : "Mine"}
+                {t.id === "all" ? "ALL" : "MINE"}
               </button>
             );
           })}
@@ -184,22 +163,12 @@ function PlatformClientsSection() {
             </div>
           ) : (
             scoped.map((c) => {
-              const isFav = favoriteIds.has(c.client_id);
               return (
                 <div
                   key={c.client_id}
                   className="group flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-brand-metallic-2 transition cursor-pointer min-w-0"
                   data-testid={`sidebar-client-${c.client_id}`}
                 >
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(c.client_id, isFav); }}
-                    className={`p-0.5 rounded transition ${isFav ? "text-amber-400" : "text-ink-onDarkMuted hover:text-ink-onDark"}`}
-                    aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-                    data-testid={`sidebar-fav-${c.client_id}`}
-                  >
-                    <Star className={`h-3 w-3 ${isFav ? "fill-current" : ""}`} />
-                  </button>
                   <button
                     type="button"
                     onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}

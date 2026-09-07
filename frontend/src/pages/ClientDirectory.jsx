@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
@@ -15,9 +14,8 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
-  Plus, Search, MoreVertical, Building2, ArrowRight, ShieldAlert, AlertOctagon,
+  Search, MoreVertical, Building2, ArrowRight, ShieldAlert, AlertOctagon,
   CalendarClock, Archive, ExternalLink, ScrollText, UserX, Users2, Clock, X,
-  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,12 +46,9 @@ const ENTITY_ROUTE = {
 const FILTERS = [
   { id: "all", label: "All Clients" },
   { id: "assigned_to_me", label: "Assigned to Me" },
-  { id: "action_required", label: "Action Required" },
-  { id: "needs_attention", label: "Needs Attention" },
   { id: "past_due", label: "Past Due" },
   { id: "critical_high", label: "Critical / High" },
-  { id: "onboarding", label: "Onboarding" },
-  { id: "archived", label: "Archived" },
+  { id: "unassigned", label: "Unassigned" },
 ];
 
 function StatusChip({ value }) {
@@ -146,8 +141,8 @@ function MetricCell({ value, tone, onClick, testid }) {
 
 export default function ClientDirectory() {
   const nav = useNavigate();
-  const { user, setUser } = useAuth();
-  const { switchClient, refresh: refreshOrg } = useOrg();
+  const { user } = useAuth();
+  const { switchClient } = useOrg();
   const [rows, setRows] = useState([]);
   const [portfolio, setPortfolio] = useState(null);
   const [queue, setQueue] = useState([]);
@@ -157,25 +152,9 @@ export default function ClientDirectory() {
   const [filter, setFilter] = useState("all");
   const [leadFilter, setLeadFilter] = useState("__all__");
   const [includeArchived, setIncludeArchived] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
   const [drillOpen, setDrillOpen] = useState(null); // { scope, title, rows }
 
   const canCreate = ["super_admin", "platform_admin"].includes(user?.role);
-
-  const favoriteIds = useMemo(
-    () => new Set(user?.favorite_client_ids || []),
-    [user?.favorite_client_ids]
-  );
-
-  async function toggleFavorite(clientId, currentlyFav) {
-    try {
-      const url = `/me/favorites/${clientId}`;
-      const { data } = currentlyFav ? await api.delete(url) : await api.post(url);
-      if (data?.favorite_client_ids && setUser) {
-        setUser({ ...user, favorite_client_ids: data.favorite_client_ids });
-      }
-    } catch (e) { toast.error(formatError(e)); }
-  }
 
   async function load() {
     setLoading(true);
@@ -205,6 +184,7 @@ export default function ClientDirectory() {
       if (filter === "assigned_to_me") { if (r.grc_lead_id !== user?.user_id) return false; }
       else if (filter === "past_due")     { if (!(r.past_due > 0)) return false; }
       else if (filter === "critical_high"){ if (!(r.critical_high_open > 0)) return false; }
+      else if (filter === "unassigned") { if (!(r.unassigned > 0)) return false; }
       else if (filter !== "all" && r.program_status !== filter) return false;
       if (!s) return true;
       return (
@@ -257,14 +237,7 @@ export default function ClientDirectory() {
         eyebrow="Platform"
         title="GRC Portfolio Overview"
         subtitle="High-level view of client program health, upcoming obligations, priority issues, and ownership."
-        action={
-          canCreate && (
-            <Button size="sm" onClick={() => setAddOpen(true)} data-testid="add-client-button"
-              className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
-              <Plus className="h-3.5 w-3.5 mr-1" /> Add Client
-            </Button>
-          )
-        }
+
       />
 
       {/* Portfolio alert cards */}
@@ -365,20 +338,10 @@ export default function ClientDirectory() {
                 <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">No clients match this filter.</td></tr>
               )}
               {!loading && filtered.map((r, i) => {
-                const isFav = favoriteIds.has(r.client_id);
                 return (
                 <tr key={r.client_id} className="row-hover" data-testid={`client-row-${i}`}>
                   <td className="tbl-cell">
                     <div className="flex items-center gap-2 min-w-0">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); toggleFavorite(r.client_id, isFav); }}
-                        className={`p-1 rounded hover:bg-surface-subtle transition ${isFav ? "text-amber-500" : "text-ink-help hover:text-ink-secondary"}`}
-                        aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-                        data-testid={`row-fav-${r.client_id}`}
-                      >
-                        <Star className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
-                      </button>
                       <button onClick={() => enterWorkspace(r)} className="flex items-center gap-3 min-w-0 text-left group"
                         data-testid={`client-open-${r.client_id}`}>
                         <Avatar name={r.name} logoUrl={r.logo_url} />
@@ -502,12 +465,7 @@ export default function ClientDirectory() {
         onClose={() => setDrillOpen(null)}
         onOpenItem={(item) => { enterWorkspace({ client_id: item.client_id }, ENTITY_ROUTE[item.entity_type] || "/dashboard"); setDrillOpen(null); }} />
 
-      <AddClientDialog open={addOpen} onOpenChange={setAddOpen} users={admins}
-        onCreated={async (client) => {
-          toast.success(`${client.name} created`);
-          await load();
-          if (refreshOrg) await refreshOrg();
-        }} />
+
     </div>
   );
 }
@@ -609,81 +567,5 @@ function ClientRowMenu({ row, index, onOpen, onArchived, canEdit }) {
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-function AddClientDialog({ open, onOpenChange, users, onCreated }) {
-  const [form, setForm] = useState({
-    name: "", industry: "", status: "onboarding", primary_contact: "", environment: "Production",
-  });
-  const [saving, setSaving] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    setForm({ name: "", industry: "", status: "onboarding", primary_contact: "", environment: "Production" });
-  }, [open]);
-  async function save() {
-    if (!form.name.trim()) { toast.error("Organization name is required"); return; }
-    setSaving(true);
-    try {
-      const { data } = await api.post("/clients", form);
-      onCreated?.(data);
-      onOpenChange(false);
-    } catch (e) { toast.error(formatError(e)); }
-    finally { setSaving(false); }
-  }
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg" data-testid="add-client-dialog">
-        <DialogHeader>
-          <DialogTitle>Add client organization</DialogTitle>
-          <DialogDescription>Create a new tenant. You can walk through GRC Program Onboarding right after creation.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3.5 py-2">
-          <div>
-            <Label className="text-xs text-ink-secondary">Organization name <span className="text-semantic-critical">*</span></Label>
-            <Input data-testid="new-client-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corp" className="text-sm" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-ink-secondary">Industry</Label>
-              <Input data-testid="new-client-industry" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} placeholder="Manufacturing" className="text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-ink-secondary">Client status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger data-testid="new-client-status" className="text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="onboarding">Onboarding</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Primary contact (optional)</Label>
-            <Input data-testid="new-client-contact" value={form.primary_contact} onChange={(e) => setForm({ ...form, primary_contact: e.target.value })} placeholder="Jane Doe · jane@acme.com" className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Assigned GRC Lead (optional)</Label>
-            <Select value={form.assigned_owner_id || "__none__"} onValueChange={(v) => setForm({ ...form, assigned_owner_id: v === "__none__" ? undefined : v })}>
-              <SelectTrigger data-testid="new-client-owner" className="text-sm"><SelectValue placeholder="Assign later" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Assign later</SelectItem>
-                {(users || []).map((u) => (
-                  <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
-          <Button onClick={save} disabled={saving} data-testid="new-client-save" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
-            {saving ? "Creating…" : "Create client"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
