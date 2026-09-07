@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
-import api, { formatError } from "@/lib/api";
+import api, { formatError, PREVIEW_MODE } from "@/lib/api";
 import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,8 @@ export default function Onboarding() {
   const { user } = useAuth();
   const nav = useNavigate();
   const [step, setStep] = useState(0);
+  const [loadedClient, setLoadedClient] = useState(null);
+  const [draftStatus, setDraftStatus] = useState("");
   const [policyLib, setPolicyLib] = useState(null);
   const [reqLib, setReqLib] = useState(null);
   const [templates, setTemplates] = useState(null);
@@ -86,6 +88,8 @@ export default function Onboarding() {
 
   useEffect(() => {
     if (!currentClientId) return;
+    let cancelled = false;
+    setLoadedClient(null);
     (async () => {
       try {
         const [{ data: pl }, { data: rl }, { data: tpl }, { data: st }, { data: usersData }] = await Promise.all([
@@ -95,6 +99,10 @@ export default function Onboarding() {
           api.get("/onboarding/state", { params: { client_id: currentClientId } }),
           api.get("/users").catch(() => ({ data: [] })),
         ]);
+        const draft = PREVIEW_MODE ? (await api.get("/demo/onboarding-draft", { params: { client_id: currentClientId } })).data : null;
+        if (cancelled) return;
+        setStep(draft?.step || 0);
+        setKnownIssues(draft?.knownIssues || []);
         setPolicyLib(pl); setReqLib(rl); setTemplates(tpl); setState(st); setUsers(usersData || []);
         // Preload policy responses.
         const p = {};
@@ -106,7 +114,7 @@ export default function Onboarding() {
             category: it.category,
           };
         }));
-        setPolicyResp(p);
+        setPolicyResp(draft?.policyResp || p);
         setOpenPolicyCats(Object.fromEntries((pl.categories || []).map((c) => [c.name, true])));
         // Preload requirement responses.
         const q = {};
@@ -118,7 +126,7 @@ export default function Onboarding() {
             category: it.category,
           };
         }));
-        setReqResp(q);
+        setReqResp(draft?.reqResp || q);
         setOpenReqCats(Object.fromEntries((rl.categories || []).map((c) => [c.name, true])));
         // Preload contacts by role.
         const cmap = {};
@@ -127,14 +135,23 @@ export default function Onboarding() {
         (rl.role_templates || []).forEach((t) => {
           if (!cmap[t.role]) cmap[t.role] = { role: t.role };
         });
-        setContacts(cmap);
+        setContacts(draft?.contacts || cmap);
         // Preload assessments (edit-in-place).
-        setAssessments((st.assessments || []).map((a) => ({ ...a })));
+        setAssessments(draft?.assessments || (st.assessments || []).map((a) => ({ ...a })));
         // Preselect first 3 reviews (Annual Risk Assessment first).
-        setReviews((tpl.review_templates || []).slice(0, 3));
+        setReviews(draft?.reviews || (tpl.review_templates || []).slice(0, 3));
+        setLoadedClient(currentClientId);
       } catch (e) { toast.error(formatError(e)); }
     })();
+    return () => { cancelled = true; };
   }, [currentClientId]);
+
+  useEffect(() => {
+    if (!PREVIEW_MODE || loadedClient !== currentClientId) return;
+    api.post("/demo/onboarding-draft", { client_id: currentClientId, draft: { step, policyResp, reqResp, contacts, assessments, knownIssues, reviews } })
+      .then(() => setDraftStatus("Demo progress saved for this browser session"))
+      .catch(e => { setDraftStatus("Demo progress could not be saved"); toast.error(formatError(e)); });
+  }, [loadedClient, currentClientId, step, policyResp, reqResp, contacts, assessments, knownIssues, reviews]);
 
   // ------------- Handlers -------------
   const setPR = (name, patch) => setPolicyResp((p) => ({ ...p, [name]: { ...(p[name] || {}), ...patch } }));
@@ -254,6 +271,7 @@ export default function Onboarding() {
 
   return (
     <div>
+      {PREVIEW_MODE && <p role="status" className="px-8 pt-3 text-xs text-ink-muted">{draftStatus}</p>}
       <PageHeader
         title="GRC Program Onboarding"
         subtitle="Establish the client's baseline: what they have, what applies, who is responsible, and what recurring GRC activities need to be scheduled."

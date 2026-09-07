@@ -78,7 +78,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
         await navigator.clipboard.writeText(data.invite_link).catch(() => {});
         toast.success("Invitation link copied to clipboard");
       } else {
-        toast.success("Invitation resent");
+        toast.success(data.simulated ? "Simulated invitation — no email was sent" : "Invitation resent");
       }
     } catch (e) { toast.error(formatError(e)); }
   }
@@ -278,7 +278,7 @@ function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRo
     setSaving(true);
     try {
       const { data } = await api.post("/users", form);
-      toast.success(`${form.name} invited`);
+      toast.success(data.simulated ? "Simulated invitation — no email was sent" : `${form.name} invited`);
       if (data.invite_link) setInviteLink(data.invite_link);
       else onCreated?.();
     } catch (e) { toast.error(formatError(e)); }

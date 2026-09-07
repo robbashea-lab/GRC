@@ -139,7 +139,7 @@ export default function Login() {
                 <Button data-testid="preview-signin" onClick={submit} disabled={loading} className="w-full h-10 bg-[#8FC22B] hover:bg-[#7FAE24] text-brand-charcoal font-semibold">
                   {loading ? "Opening…" : "Sign in"}
                 </Button>
-                <p className="text-xs text-ink-onDarkMuted">Demo preview · No credentials needed. Sample data is read-only.</p>
+                <p className="text-xs text-ink-onDarkMuted">Interactive demo · No credentials needed. Changes last for this browser session.</p>
               </>
             ) : <>
             <button

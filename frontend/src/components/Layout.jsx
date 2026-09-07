@@ -1,3 +1,4 @@
+import DemoNotice from "@/preview/DemoNotice";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOrg } from "@/context/OrgContext";
@@ -280,6 +281,7 @@ export default function Layout() {
     <div className="min-h-screen flex bg-surface-app">
       <Sidebar />
       <main className="flex-1 min-w-0">
+        <DemoNotice />
         <Outlet />
       </main>
     </div>

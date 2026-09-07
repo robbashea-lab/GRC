@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import api, { formatError, API } from "@/lib/api";
+import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
@@ -314,6 +314,11 @@ export default function RecordListPage({ kind }) {
   }
 
   async function exportCsv() {
+    if (PREVIEW_MODE) {
+      const { exportDemoCsv } = await import("@/preview/export");
+      try { const { data } = await api.get(`/${kind}`, { params: { client_id: currentClientId } }); exportDemoCsv(data, kind); toast.success("Demo CSV downloaded"); } catch(e) { toast.error(formatError(e)); }
+      return;
+    }
     try {
       const token = localStorage.getItem("grc_token");
       const resp = await fetch(`${API}/export/${kind}?client_id=${encodeURIComponent(currentClientId)}`, {

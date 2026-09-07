@@ -307,7 +307,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       if (record) record.linked_user_id = data.user?.user_id;
       setForm((p) => ({ ...p, linked_user_id: data.user?.user_id }));
       const inviteLink = data.invite_link;
-      const message = data.linked ? "Contact linked to existing platform user" : "Invitation sent";
+      const message = data.simulated ? "Simulated invitation — no email was sent" : data.linked ? "Contact linked to existing platform user" : "Invitation sent";
       if (inviteLink) {
         toast.success(message, {
           description: "Share the invite link if the email doesn't arrive.",
