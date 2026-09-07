@@ -27,6 +27,7 @@ function makeDevServerV5Compatible(devServerConfig) {
       : https
         ? "https"
         : "http";
+  if (process.env.REACT_APP_PREVIEW === "true") compatibleConfig.allowedHosts = ["terminal.local", "localhost"];
   compatibleConfig.headers = {
     ...compatibleConfig.headers,
     "Cross-Origin-Resource-Policy": "same-origin",

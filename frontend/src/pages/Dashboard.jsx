@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api, { API, formatError } from "@/lib/api";
+import api, { PREVIEW_MODE, API, formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
@@ -145,6 +145,7 @@ export default function Dashboard() {
     : `${currentClient?.name || "All clients"} · ${data.scope_label || ""}`;
 
   async function downloadBoardReport() {
+    if (PREVIEW_MODE) { toast.info("Board PDF generation requires the reporting server and is not available in this browser demo."); return; }
     try {
       const token = localStorage.getItem("grc_token");
       // Board Report always reflects the entire organization, never a person filter.
