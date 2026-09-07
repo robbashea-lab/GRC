@@ -12,6 +12,7 @@ import RecordListPage from "@/pages/RecordListPage";
 import Evidence from "@/pages/Evidence";
 import Onboarding from "@/pages/Onboarding";
 import Calendar from "@/pages/Calendar";
+import ClientManagement from "@/pages/ClientManagement";
 import ClientDirectory from "@/pages/ClientDirectory";
 import MyAccount from "@/pages/MyAccount";
 import PlatformAdmin from "@/pages/PlatformAdmin";
@@ -71,6 +72,7 @@ function AppRouter() {
       >
         <Route index element={<LandingRoute />} />
         <Route path="clients" element={<InternalOnly><ClientDirectory /></InternalOnly>} />
+        <Route path="admin/clients" element={<InternalOnly><ClientManagement /></InternalOnly>} />
         <Route path="admin/users" element={<InternalOnly><PlatformAdmin /></InternalOnly>} />
         <Route path="admin/roles" element={<InternalOnly><AdminRoles /></InternalOnly>} />
         <Route path="admin/security" element={<InternalOnly><AdminSecurity /></InternalOnly>} />
