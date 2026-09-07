@@ -271,25 +271,25 @@ export default function ClientDirectory() {
       {portfolio && (
         <div className="px-8 pt-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="portfolio-cards">
-            <AttentionCard testid="card-past-due" label="Past Due" value={portfolio.past_due}
-              subtitle="Past due across all clients" icon={ShieldAlert} tone="critical"
+            <AttentionCard testid="card-past-due" label="Past Due Items" value={portfolio.past_due}
+              icon={ShieldAlert} tone="critical"
               onClick={() => openDrill("past_due")} />
-            <AttentionCard testid="card-due-30d" label="Due Next 30 Days" value={portfolio.due_30d}
-              subtitle="Upcoming GRC work across the portfolio" icon={CalendarClock} tone="duesoon"
+            <AttentionCard testid="card-due-30d" label="Due in Next 30 Days" value={portfolio.due_30d}
+              icon={CalendarClock} tone="duesoon"
               onClick={() => openDrill("due_30d")} />
-            <AttentionCard testid="card-due-31-90" label="Due 31–90 Days" value={portfolio.due_31_90d}
-              subtitle="Forward planning window" icon={Clock} tone="info"
+            <AttentionCard testid="card-due-31-90" label="Due in 31–90 Days" value={portfolio.due_31_90d}
+              icon={Clock} tone="info"
               onClick={() => openDrill("due_30d")} />
-            <AttentionCard testid="card-critical-high" label="Critical / High Open" value={portfolio.critical_high_open}
-              subtitle="Highest-priority open issues" icon={AlertOctagon} tone="critical"
+            <AttentionCard testid="card-critical-high" label="Open Critical / High Items" value={portfolio.critical_high_open}
+              icon={AlertOctagon} tone="critical"
               onClick={() => openDrill("critical_high")} />
-            <AttentionCard testid="card-unassigned" label="Unassigned" value={portfolio.unassigned}
-              subtitle="Work currently missing ownership" icon={UserX} tone="duesoon"
+            <AttentionCard testid="card-unassigned" label="Unassigned Items" value={portfolio.unassigned}
+              icon={UserX} tone="duesoon"
               onClick={() => openDrill("unassigned")} />
             <AttentionCard testid="card-attention-clients"
               label="Clients Requiring Attention"
               value={`${portfolio.clients_requiring_attention} of ${portfolio.total_clients}`}
-              subtitle="Clients with material overdue or priority issues" icon={Building2} tone="neutral"
+              icon={Building2} tone="neutral"
               onClick={() => openDrill("attention")} />
           </div>
           {generatedAt && (
