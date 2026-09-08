@@ -1,4 +1,4 @@
-# Interactive demo QA — 2026-09-07
+# Interactive demo QA — updated 2026-09-08
 
 The preview uses synthetic records in sessionStorage. Application requests never
 reach a backend in an explicit demo build. Normal backend authentication and
@@ -46,5 +46,36 @@ browser end-to-end coverage.
   reports that it is unavailable. Record and audit CSV exports use demo records.
 - Password changes, real provisioning, and real authorization testing require a
   configured backend. No external invitations or notifications are delivered.
-- The existing six-step onboarding design and its business rules are retained;
-  this change does not implement a redesigned onboarding workflow.
+- Reviews do not yet offer a dedicated related-policies picker. Existing notes,
+  findings, evidence, owner, status, and scheduling fields remain available.
+
+## Focused onboarding baseline — 2026-09-08
+
+Supersedes the earlier onboarding browser coverage above. The current interface
+has four steps, 17 policy assessments, five requirements, and 17 selectable review
+areas. The matching catalogs live in backend/routes/onboarding_catalog.json and
+frontend/src/lib/onboardingCatalog.json; a backend test verifies their parity.
+
+Automated: all 30 frontend tests and four backend tests pass. New checks cover
+stable client-scoped keys, response validation before writes, repeated finalization,
+manual review metadata preservation, historical-record preservation, selection
+counts, empty scheduling fields, session storage, and tenant/write authorization.
+The production build passes with eight pre-existing hook-dependency warnings.
+
+Browser: created Baseline QA through Client Management; opened its workspace;
+verified four steps, 17 Yes/No/Unsure response groups and no notes inputs; entered
+all policy responses and all five requirement responses; refreshed and verified
+responses persisted. All 17 review areas started selected. Deselected Risk
+Assessment, finalized, and saw exactly 16 Needs Scheduling records, no scheduled
+dates/cadence/owners, Upcoming 0 and Overdue 0. Reopened and finalized again with
+16 records remaining. Policies displayed all 17 baseline assessments with the
+correct reported-existing/missing/confirmation distinctions. Switched to Globex,
+entered a different draft response, and returned to Baseline QA's separate saved
+summary. Its dashboard remained zero overdue/upcoming, with useful empty states.
+
+Manual preservation of review fields, compliance storage values, calendar absence,
+and backend permission failures were tested automatically, not through every
+browser control. The complete flow was finalized for one new client; isolation
+was checked using a second client's draft. Other module browser coverage remains
+as described above. Legacy six-step drafts are not converted into the new draft;
+existing policy and requirement records can prefill matching baseline responses.

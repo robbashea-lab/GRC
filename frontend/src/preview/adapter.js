@@ -1,3 +1,5 @@
+import catalog from '@/lib/onboardingCatalog.json';
+import { baselineState, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './fixtures.json';
 import { clone, readStore, saveStore, resetStore, ids, list, record, write, library, audit, uid, now } from './store';
@@ -66,6 +68,11 @@ export async function previewAdapter(config) {
       return save({
         ok: true
       });
+    }
+    if (path === '/onboarding/baseline') {
+      const cid = params.client_id || body.client_id;
+      if (method === 'get') return respond({catalog, state:baselineState(db,cid)});
+      return save(saveBaseline(db,cid,body.state,body.finalize));
     }
     if (path === '/auth/me') return respond(db.user);
     if (method === 'get') {

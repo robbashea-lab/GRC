@@ -74,6 +74,7 @@ function DueCell({ iso, closed = false }) {
 
 // Tab definitions for reviews — order matters (displayed as segmented control)
 const REVIEW_TABS = [
+  { id: "needs_scheduling", label: "Needs Scheduling" },
   { id: "upcoming", label: "Upcoming" },
   { id: "overdue", label: "Overdue" },
   { id: "in_progress", label: "In progress" },
@@ -83,7 +84,7 @@ const REVIEW_TABS = [
 
 // Reviews are the historical record — delete is admin-only from the ... menu.
 function isReviewOverdue(row) {
-  if (!row?.due_date) return false;
+  if (!row?.due_date || row.status === "needs_scheduling") return false;
   if (row.status === "completed" || row.status === "cancelled") return false;
   return new Date(row.due_date).getTime() < Date.now();
 }
@@ -220,7 +221,9 @@ export default function RecordListPage({ kind }) {
 
       if (isReviews) {
         const overdue = isReviewOverdue(r);
-        if (reviewTab === "upcoming") {
+        if (reviewTab === "needs_scheduling") {
+          if (r.status !== "needs_scheduling") return false;
+        } else if (reviewTab === "upcoming") {
           if (r.status !== "upcoming") return false;
           if (overdue) return false; // overdue upcoming go to Overdue tab
         } else if (reviewTab === "overdue") {
@@ -275,9 +278,10 @@ export default function RecordListPage({ kind }) {
 
   const reviewTabCounts = useMemo(() => {
     if (!isReviews) return {};
-    const c = { upcoming: 0, overdue: 0, in_progress: 0, completed: 0, all: rows.length };
+    const c = { needs_scheduling: 0, upcoming: 0, overdue: 0, in_progress: 0, completed: 0, all: rows.length };
     rows.forEach((r) => {
       const overdue = isReviewOverdue(r);
+      if (r.status === "needs_scheduling") c.needs_scheduling += 1;
       if (overdue) c.overdue += 1;
       if (r.status === "upcoming" && !overdue) c.upcoming += 1;
       if (r.status === "in_progress") c.in_progress += 1;
