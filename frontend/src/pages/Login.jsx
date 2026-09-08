@@ -81,7 +81,7 @@ export default function Login() {
             <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
           </div>
           <div className="leading-tight">
-            <div className="text-ink-onDark font-heading font-semibold tracking-tight">iVenture GRC</div>
+            <div className="text-ink-onDark font-heading font-semibold tracking-tight">Jee R Sea</div>
             <div className="text-[10px] uppercase tracking-[0.22em] text-ink-onDarkMuted font-mono mt-0.5">
               by iVenture Solutions
             </div>
@@ -117,7 +117,7 @@ export default function Login() {
             <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
           </div>
           <div className="leading-tight">
-            <div className="text-ink-onDark font-heading font-semibold tracking-tight text-sm">iVenture GRC</div>
+            <div className="text-ink-onDark font-heading font-semibold tracking-tight text-sm">Jee R Sea</div>
             <div className="text-[9px] uppercase tracking-[0.22em] text-ink-onDarkMuted font-mono">by iVenture Solutions</div>
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function Login() {
           </div>
           <h2 className="text-2xl font-heading font-semibold tracking-tight text-ink-onDark">Sign in</h2>
           <p className="text-[13px] text-ink-onDarkMuted mt-1.5">
-            Access your iVenture GRC workspace.
+            Access your Jee R Sea workspace.
           </p>
 
           {/* Panel */}

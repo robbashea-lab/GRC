@@ -99,3 +99,22 @@ link per requirement. CIS IG1 (Does Not Apply) and NIST CSF 2.0 (Unsure) stayed
 hidden. Globex displayed only the unchanged original navigation. Changes from
 Applies to other answers were tested automatically. Pages are intentionally empty
 shells; detailed compliance functionality is not implemented.
+
+## Jee R Sea interface name — 2026-09-08
+
+Renamed the product text in the desktop/mobile sign-in screen, sidebar,
+password-reset screens, Roles & Permissions copy, and browser title/description.
+Company attribution remains iVenture Solutions. This is an interface text change;
+backend, authentication, authorization, routes, and demo data are unchanged.
+
+All 33 frontend tests pass. The optimized preview build passes with the same eight
+pre-existing hook-dependency warnings. Diff checks and the changed-file credential
+scan pass; the existing public browser analytics key is unchanged.
+
+Browser checks used a local preview in headless Edge: desktop login, 390px mobile
+login with no horizontal overflow, one-click demo sign-in, portfolio sidebar,
+Roles & Permissions and refresh, forgot-password and reset-password routes, and
+the browser title. No old product-name text or runtime page errors appeared on
+these screens. Desktop, mobile, and portfolio screenshots were visually reviewed.
+External scripts and fonts were blocked during browser QA; real backend login,
+email delivery, and backend-generated reports were not tested by this change.

@@ -30,7 +30,7 @@ export default function ForgotPassword() {
             <div className="relative h-8 w-8 rounded-md bg-brand-charcoal text-ink-onDark flex items-center justify-center font-bold font-heading">
               ◱<span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
             </div>
-            <div className="font-heading font-semibold tracking-tight">Northstar GRC</div>
+            <div className="font-heading font-semibold tracking-tight">Jee R Sea</div>
           </div>
           <h2 className="text-xl font-heading font-semibold tracking-tight">Reset your password</h2>
           <p className="text-xs text-ink-muted mt-1">We'll email you a secure link to choose a new password.</p>
