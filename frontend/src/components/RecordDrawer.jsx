@@ -11,6 +11,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
 import { X, ArrowUpRight, Zap, UploadCloud, Download, Trash2, CheckCircle2, XCircle, Send, ShieldCheck, CalendarPlus, Users2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SCHEMAS } from "@/lib/schemas";
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
@@ -89,11 +90,15 @@ function toDateInput(v) {
 export default function RecordDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [findingOpen, setFindingOpen] = useState(false);
+  const [relatedDrawer, setRelatedDrawer] = useState(null);
+  const [findingForm, setFindingForm] = useState({});
   const [tab, setTab] = useState("overview");
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [activity, setActivity] = useState([]);
   const [related, setRelated] = useState({});
+  const [policyOptions, setPolicyOptions] = useState([]);
   const [evidenceItems, setEvidenceItems] = useState([]);
   const [linkedReviews, setLinkedReviews] = useState([]);
   const [linkedRisks, setLinkedRisks] = useState([]);
@@ -113,11 +118,14 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
   const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
-  const singular = kind.slice(0, -1);
+  const singular = kind === "policies" ? "policy" : kind.slice(0, -1);
   const tabList = TABS_BY_KIND[kind];
 
   useEffect(() => {
     if (open) {
+      setRelatedDrawer(null); setFindingOpen(false);
+      if (kind === "reviews") api.get("/policies", { params: { client_id: record?.client_id || clientId } }).then(({data}) => setPolicyOptions(data)).catch(() => setPolicyOptions([]));
+      setComments([]); setActivity([]); setRelated({}); setEvidenceItems([]);
       const base = {};
       (schema || []).forEach((f) => {
         let v = record?.[f.name] ?? f.default ?? "";
@@ -198,11 +206,22 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     } catch (e) { void e; }
   }
 
+  function cleanForm() {
+    return Object.fromEntries(Object.entries(form).map(([k,v]) => {
+      const field = (schema || []).find(f => f.name === k);
+      return [k, v === "__none__" || (v === "" && ["number", "date", "policy", "user"].includes(field?.type)) ? null : field?.type === "number" ? Number(v) : v];
+    }));
+  }
+
   async function save() {
+    if (!canWrite || saving) return;
+    const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
+    if (missing) { toast.error(`${missing.label} is required`); return; }
+    if (kind === "reviews" && isEdit && form.status === "completed" && record.status !== "completed") return completeReview();
     setSaving(true);
     try {
-      const clean = {};
-      Object.entries(form).forEach(([k, v]) => { clean[k] = v === "__none__" ? null : v; });
+      const clean = cleanForm();
+      if (kind === "policies" && (record?.schedule_from_reviews || related.reviews?.length)) delete clean.next_review_date;
       if (isEdit) {
         await api.patch(`/${kind}/${record[idField]}`, clean);
         toast.success("Saved");
@@ -226,16 +245,27 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   }
 
   async function quickCreateFinding() {
+    setFindingForm({ title: "", description: "", severity: "medium", owner_id: record.owner_id || "", due_date: "", remediation_title: "", remediation_plan: "" });
+    setFindingOpen(true);
+  }
+
+  async function saveReviewFinding(event) {
+    event.preventDefault();
+    if (saving) return;
+    setSaving(true);
     try {
-      await api.post(`/reviews/${record[idField]}/create-finding`, { title: `Finding from: ${record.title}`, severity: "medium" });
-      toast.success("Finding created and linked to this review");
+      await api.post(`/reviews/${record[idField]}/create-finding`, findingForm);
+      toast.success("Finding and remediation action linked to this review");
+      setFindingOpen(false);
       onSaved?.(); loadRelated();
     } catch (e) { toast.error(formatError(e)); }
+    finally { setSaving(false); }
   }
 
   async function completeReview() {
     if (!confirm(`Mark "${record.title}" as complete? This will spawn the next occurrence if recurring.`)) return;
     try {
+      await api.patch(`/reviews/${record[idField]}`, { ...cleanForm(), status: record.status });
       const { data } = await api.post(`/reviews/${record[idField]}/complete`, { spawn_next: true });
       toast.success(data.spawned ? "Review completed · next occurrence scheduled" : "Review completed");
       if (data.review) {
@@ -245,6 +275,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         setForm((p) => ({ ...p, status: data.review.status, completion_date: data.review.completion_date }));
       }
       onSaved?.();
+      loadRelated();
     } catch (e) { toast.error(formatError(e)); }
   }
 
@@ -446,6 +477,10 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   const liveLevel = levelFromScore(liveScore || null);
 
   function renderField(f) {
+    if (kind === "policies" && f.name === "next_review_date" && (record?.schedule_from_reviews || related.reviews?.length)) {
+      const next = (related.reviews || []).filter(r => !["completed", "cancelled"].includes(r.status) && r.due_date).sort((a,b) => a.due_date.localeCompare(b.due_date))[0];
+      return <div key={f.name}><DateReadonly label="Next review · scheduled in Reviews" value={next?.due_date || record?.next_review_date} /><Button size="sm" variant="link" onClick={() => setTab("related")}>Open related reviews</Button></div>;
+    }
     if (f.showIf) {
       const [k, v] = Object.entries(f.showIf)[0];
       if (form[k] !== v) return null;
@@ -455,6 +490,8 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         <Label className="text-xs text-slate-600">{f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}</Label>
         {f.type === "textarea" ? (
           <Textarea value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} data-testid={`field-${f.name}`} className="text-sm" />
+        ) : f.type === "policy" ? (
+          <Select value={form[f.name] || "__none__"} onValueChange={v => setForm(p => ({ ...p, [f.name]: v }))}><SelectTrigger data-testid={`field-${f.name}`}><SelectValue placeholder="Related policy" /></SelectTrigger><SelectContent><SelectItem value="__none__">No linked policy</SelectItem>{policyOptions.map(p => <SelectItem key={p.policy_id} value={p.policy_id}>{p.title}</SelectItem>)}</SelectContent></Select>
         ) : f.type === "select" ? (
           <Select value={form[f.name] || ""} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
             <SelectTrigger data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
@@ -485,7 +522,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     return (
       <div className="space-y-1">
         <Label className="text-xs text-ink-secondary">{label}</Label>
-        <div className="text-sm font-mono text-ink-primary">{value ? new Date(value).toLocaleDateString() : <span className="text-slate-300">—</span>}</div>
+        <div className="text-sm font-mono text-ink-primary">{value ? new Date(String(value).slice(0, 10) + "T00:00:00").toLocaleDateString() : <span className="text-slate-300">—</span>}</div>
       </div>
     );
   }
@@ -924,6 +961,10 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
             <Zap className="h-4 w-4 text-brand-charcoal" /> Review actions
           </div>
           <div className="flex flex-wrap gap-2">
+            {canWrite && ["needs_scheduling", "upcoming"].includes(record?.status) && <Button size="sm" variant="outline" data-testid="review-start" onClick={async () => {
+              try { await api.patch(`/reviews/${record[idField]}`, { status: "in_progress" }); record.status = "in_progress"; setForm(p => ({ ...p, status: "in_progress" })); onSaved?.(); toast.success("Review started"); }
+              catch (e) { toast.error(formatError(e)); }
+            }}>Start review</Button>}
             {canWrite && record?.status !== "completed" && record?.status !== "cancelled" && (
               <Button size="sm" onClick={completeReview} data-testid="review-complete">
                 <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark complete
@@ -952,7 +993,11 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Finding actions</div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={quickCreateTask} data-testid="quick-create-task">Create remediation task</Button>
+          <Button size="sm" variant="outline" onClick={quickCreateTask} disabled={!!related.tasks?.length} data-testid="quick-create-task">{related.tasks?.length ? "Remediation action linked" : "Create remediation task"}</Button>
+          {status === "remediated" && <Button size="sm" data-testid="finding-validate" onClick={async () => {
+            try { await api.patch(`/findings/${record.finding_id}`, { status: "closed" }); record.status = "closed"; setForm(p => ({ ...p, status: "closed" })); onSaved?.(); toast.success("Remediation validated; finding closed"); }
+            catch (e) { toast.error(formatError(e)); }
+          }}>Validate and close</Button>}
           <Button size="sm" variant="outline" onClick={raiseAsRisk} data-testid="finding-raise-risk" disabled={!!record?.risk_id}>
             {record?.risk_id ? "Linked to risk" : "Raise as risk"}
           </Button>
@@ -994,7 +1039,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         {canVerify && (
           <div className="flex items-center justify-between border-t border-slate-200 pt-2">
             <div className="text-xs text-slate-600">Confirm the document and record verified metadata.</div>
-            <Button size="sm" onClick={() => { setVerifyForm({ version: record?.version || "", owner_id: record?.owner_id || "", approver_id: record?.approver_id || "", approved_at: toDateInput(record?.approved_at), last_reviewed_at: toDateInput(record?.last_reviewed_at), next_review_date: toDateInput(record?.next_review_date), status: record?.status === "approved" ? "approved" : "approved" }); setVerifyOpen(true); }} data-testid="policy-verify" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+            <Button size="sm" onClick={() => { setVerifyForm({ version: record?.version || "", owner_id: record?.owner_id || "", approver_id: record?.approver_id || "", approved_at: toDateInput(record?.approved_at), last_reviewed_at: toDateInput(record?.last_reviewed_at), next_review_date: toDateInput(record?.next_review_date), status: ["approved", "in_review", "draft"].includes(record?.status) ? record.status : "draft" }); setVerifyOpen(true); }} data-testid="policy-verify" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
               <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Verify policy
             </Button>
           </div>
@@ -1059,7 +1104,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
                 {list.map((it) => (
                   <li key={it[ID_FIELD[k]] || it.evidence_id} className="border border-slate-200 rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-slate-50" data-testid={`related-${k}-item`}>
                     <div className="min-w-0">
-                      <div className="text-slate-900 font-medium truncate">{it.title || it.name || it.filename}</div>
+                      {SCHEMAS[k] ? <button className="text-left text-slate-900 font-medium hover:underline" onClick={() => setRelatedDrawer({ kind: k, record: it })}>{it.title || it.name}</button> : <div className="text-slate-900 font-medium truncate">{it.title || it.name || it.filename}</div>}
                       <div className="text-[11px] text-slate-500 font-mono">{it[ID_FIELD[k]] || it.evidence_id}</div>
                     </div>
                     {it.status && <StatusBadge value={it.status} />}
@@ -1249,10 +1294,29 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} data-testid="drawer-cancel">Cancel</Button>
           {tabIsFormEditable && (
-            <Button size="sm" onClick={save} disabled={saving} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : "Create"}</Button>
+            <Button size="sm" onClick={save} disabled={saving || !canWrite} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : "Create"}</Button>
           )}
         </div>
       </SheetContent>
+
+      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} schema={SCHEMAS[relatedDrawer.kind].fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); onSaved?.(); }} />}
+
+      <Sheet open={findingOpen} onOpenChange={setFindingOpen}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form">
+          <SheetHeader><SheetTitle>Raise finding</SheetTitle></SheetHeader>
+          <p className="my-4 text-sm text-ink-secondary">Source review: {record?.title}</p>
+          <form onSubmit={saveReviewFinding} className="space-y-4">
+            <Label className="block">Finding title *<Input required value={findingForm.title || ""} onChange={e => setFindingForm(p => ({ ...p, title: e.target.value }))} data-testid="finding-title" /></Label>
+            <Label className="block">What was identified?<Textarea value={findingForm.description || ""} onChange={e => setFindingForm(p => ({ ...p, description: e.target.value }))} /></Label>
+            <div><Label>Severity</Label><Select value={findingForm.severity || "medium"} onValueChange={v => setFindingForm(p => ({ ...p, severity: v }))}><SelectTrigger aria-label="Finding severity"><SelectValue /></SelectTrigger><SelectContent>{["low", "medium", "high", "critical"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label>Owner</Label><Select value={findingForm.owner_id || "__none__"} onValueChange={v => setFindingForm(p => ({ ...p, owner_id: v === "__none__" ? "" : v }))}><SelectTrigger aria-label="Finding owner"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="__none__">Unassigned</SelectItem>{users.map(u => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}</SelectContent></Select></div>
+            <Label className="block">Due date<Input type="date" value={findingForm.due_date || ""} onChange={e => setFindingForm(p => ({ ...p, due_date: e.target.value }))} /></Label>
+            <Label className="block">Remediation action *<Input required placeholder="Develop and approve a Business Impact Analysis" value={findingForm.remediation_title || ""} onChange={e => setFindingForm(p => ({ ...p, remediation_title: e.target.value }))} data-testid="finding-remediation-title" /></Label>
+            <Label className="block">Remediation plan<Textarea value={findingForm.remediation_plan || ""} onChange={e => setFindingForm(p => ({ ...p, remediation_plan: e.target.value }))} /></Label>
+            <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setFindingOpen(false)}>Cancel</Button><Button type="submit" disabled={saving} data-testid="finding-save">{saving ? "Saving…" : "Save finding and action"}</Button></div>
+          </form>
+        </SheetContent>
+      </Sheet>
 
       {/* Accept Risk dialog */}
       {kind === "risks" && (

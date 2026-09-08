@@ -178,6 +178,8 @@ class ReviewIn(BaseModel):
     title: str
     review_type: str  # asset, software, access, vendor, policy, risk, vulnerability, bcp_dr, incident, awareness
     client_id: str
+    policy_id: Optional[str] = None
+    vendor_id: Optional[str] = None
     period: Optional[str] = None
     due_date: Optional[str] = None
     owner_id: Optional[str] = None
@@ -1987,6 +1989,11 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
     parsed = Model(**(body or {})).model_dump()
     if not _can_access_client(user, parsed["client_id"]):
         raise HTTPException(403, "Forbidden for this client")
+    for related_kind, (_related_type, _related_model, related_key, _related_prefix) in ENTITY_MAP.items():
+        if related_key == id_field or not parsed.get(related_key):
+            continue
+        if not await db[_coll_for(related_kind)].find_one({related_key: parsed[related_key], "client_id": parsed["client_id"]}):
+            raise HTTPException(422, "Related record must belong to the same client")
     if kind == "risks":
         parsed = _apply_risk_scoring(parsed)
         if not parsed.get("date_identified"):
@@ -2012,6 +2019,17 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(403, "Forbidden")
     body = body or {}
     body.pop(id_field, None)
+    completing_review = kind == "reviews" and body.get("status") == "completed" and existing.get("status") != "completed"
+    if completing_review:
+        body.pop("status")
+    if "client_id" in body and body["client_id"] != existing["client_id"]:
+        raise HTTPException(422, "A record cannot be moved to another client")
+    for related_kind, (related_type, related_model, related_key, related_prefix) in ENTITY_MAP.items():
+        if related_key == id_field or not body.get(related_key):
+            continue
+        linked_record = await db[_coll_for(related_kind)].find_one({related_key: body[related_key], "client_id": existing["client_id"]}, {"_id": 0})
+        if not linked_record:
+            raise HTTPException(422, "Related record must belong to the same client")
     if kind == "risks":
         # Merge with existing so partial patches still compute a consistent score.
         merged = {**existing, **body}
@@ -2039,8 +2057,14 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
                 body[k] = computed[k]
     body["updated_at"] = _now()
     await db[_coll_for(kind)].update_one({id_field: item_id}, {"$set": body})
+    if kind == "tasks" and existing.get("finding_id"):
+        work = await db.tasks.find({"finding_id": existing["finding_id"], "client_id": existing["client_id"]}, {"status": 1}).to_list(2000)
+        finding_status = "remediated" if work and all(t.get("status") in ("done", "cancelled") for t in work) else "in_remediation"
+        await db.findings.update_one({"finding_id": existing["finding_id"], "client_id": existing["client_id"], "status": {"$in": ["open", "in_remediation", "remediated"]}}, {"$set": {"status": finding_status, "updated_at": _now()}})
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})
     await audit(user, "update", entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys())})
+    if completing_review:
+        return (await complete_review(item_id, ReviewCompleteIn(spawn_next=True), user))["review"]
     return doc
 
 
@@ -2640,6 +2664,8 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
         raise HTTPException(403, "Forbidden")
     if review.get("status") == "completed":
         raise HTTPException(400, "Review already completed")
+    if review.get("status") == "cancelled":
+        raise HTTPException(400, "A cancelled review cannot be completed")
 
     completion_iso = body.completion_date or _now()
     updates = {
@@ -2653,15 +2679,17 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
         stamp = f"\n\n— Completed by {user.get('name') or user['email']} on {completion_iso[:10]} —\n{body.completion_notes}"
         updates["notes"] = (existing_notes + stamp).strip()
 
-    await db.reviews.update_one({"review_id": review_id}, {"$set": updates})
+    claimed = await db.reviews.update_one({"review_id": review_id, "status": {"$nin": ["completed", "cancelled"]}}, {"$set": updates})
+    if not claimed.modified_count:
+        raise HTTPException(409, "Review was already completed or cancelled")
     await audit(user, "complete", "review", review_id, review.get("client_id"),
                 meta={"recurrence": review.get("recurrence")})
 
     spawned = None
     recurrence = review.get("recurrence") or "none"
     if body.spawn_next and recurrence not in (None, "none", ""):
-        base = review.get("next_review_date") or review.get("due_date")
-        next_due = _next_due_for_recurrence(base, recurrence, review.get("custom_recurrence_days"))
+        base = review.get("due_date") or completion_iso
+        next_due = review.get("next_review_date") or _next_due_for_recurrence(base, recurrence, review.get("custom_recurrence_days"))
         if next_due:
             new_id = _uid("rev")
             spawned = {
@@ -2675,7 +2703,8 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
                 "owner_id": review.get("owner_id"),
                 "reviewer_id": review.get("reviewer_id"),
                 "scope": review.get("scope"),
-                "period": review.get("period"),
+                "policy_id": review.get("policy_id"),
+                "vendor_id": review.get("vendor_id"),
                 "due_date": next_due,
                 "next_review_date": _next_due_for_recurrence(next_due, recurrence, review.get("custom_recurrence_days")),
                 "parent_review_id": review_id,
@@ -2712,6 +2741,12 @@ async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict
         raise HTTPException(404, "Review not found")
     if not _can_access_client(user, review["client_id"]):
         raise HTTPException(403, "Forbidden")
+    if not isinstance(body.get("title"), str) or not body["title"].strip():
+        raise HTTPException(422, "Finding title is required")
+    if not isinstance(body.get("remediation_title"), str) or not body["remediation_title"].strip():
+        raise HTTPException(422, "Remediation action is required")
+    if body.get("severity", "medium") not in ("low", "medium", "high", "critical"):
+        raise HTTPException(422, "Invalid severity")
     fid = _uid("fnd")
     doc = {
         "finding_id": fid,
@@ -2723,11 +2758,15 @@ async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict
         "owner_id": body.get("owner_id") or review.get("owner_id"),
         "due_date": body.get("due_date"),
         "review_id": review_id,
+        "source": review["title"],
+        "identified_at": _now(),
+        "remediation_plan": body.get("remediation_plan") or "",
         "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"],
     }
     await db.findings.insert_one(doc)
     doc.pop("_id", None)
     await audit(user, "create", "finding", fid, review["client_id"], meta={"from_review": review_id})
+    await finding_create_task(fid, {"title": body["remediation_title"].strip()}, user)
     # Notify finding owner (if not self)
     if doc.get("owner_id") and doc["owner_id"] != user["user_id"]:
         await create_notification(
@@ -2750,6 +2789,9 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
         raise HTTPException(404, "Finding not found")
     if not _can_access_client(user, finding["client_id"]):
         raise HTTPException(403, "Forbidden")
+    existing = await db.tasks.find_one({"finding_id": finding_id, "client_id": finding["client_id"]}, {"_id": 0})
+    if existing:
+        return existing
     tid = _uid("tsk")
     doc = {
         "task_id": tid,
@@ -2761,6 +2803,8 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
         "due_date": body.get("due_date") or finding.get("due_date"),
         "description": body.get("description") or finding.get("remediation_plan"),
         "finding_id": finding_id,
+        "review_id": finding.get("review_id"),
+        "source": finding.get("source") or "Finding remediation",
         "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"],
     }
     await db.tasks.insert_one(doc)
@@ -2784,32 +2828,31 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
 @api.get("/related")
 async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(get_current_user)):
     """Return records related to the given entity across collections."""
-    out: Dict[str, List] = {"reviews": [], "findings": [], "tasks": [], "risks": [], "exceptions": [], "evidence": []}
-    if entity_type == "reviews":
-        out["findings"] = await db.findings.find({"review_id": entity_id}, {"_id": 0}).to_list(200)
-    elif entity_type == "findings":
-        out["tasks"] = await db.tasks.find({"finding_id": entity_id}, {"_id": 0}).to_list(200)
-        f = await db.findings.find_one({"finding_id": entity_id}, {"_id": 0})
-        if f and f.get("review_id"):
-            r = await db.reviews.find_one({"review_id": f["review_id"]}, {"_id": 0})
-            if r:
-                out["reviews"] = [r]
-        if f and f.get("risk_id"):
-            r = await db.risks.find_one({"risk_id": f["risk_id"]}, {"_id": 0})
-            if r:
-                out["risks"] = [r]
-        out["exceptions"] = await db.exceptions.find({"finding_id": entity_id}, {"_id": 0}).to_list(50)
-    elif entity_type == "risks":
-        out["findings"] = await db.findings.find({"risk_id": entity_id}, {"_id": 0}).to_list(200)
-        out["exceptions"] = await db.exceptions.find({"risk_id": entity_id}, {"_id": 0}).to_list(50)
-    elif entity_type == "tasks":
-        t = await db.tasks.find_one({"task_id": entity_id}, {"_id": 0})
-        if t and t.get("finding_id"):
-            f = await db.findings.find_one({"finding_id": t["finding_id"]}, {"_id": 0})
-            if f:
-                out["findings"] = [f]
-    out["evidence"] = await db.evidence.find({"linked_type": entity_type[:-1], "linked_id": entity_id}, {"_id": 0, "content_base64": 0}).to_list(200)
-    return out
+    keys = {"reviews": "review_id", "findings": "finding_id", "tasks": "task_id", "risks": "risk_id", "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id", "exceptions": "exception_id", "requirements": "requirement_id", "contacts": "contact_id"}
+    if entity_type not in keys:
+        raise HTTPException(400, "Unsupported record type")
+    source = await db[entity_type].find_one({keys[entity_type]: entity_id}, {"_id": 0})
+    if not source:
+        raise HTTPException(404, "Record not found")
+    cid = source.get("client_id")
+    if not cid or not _can_access_client(user, cid):
+        raise HTTPException(403, "Forbidden")
+    linked = {}
+    for target, key in keys.items():
+        relations = [{keys[entity_type]: entity_id}]
+        if source.get(key):
+            relations.append({key: source[key]})
+        if target == entity_type:
+            relations = []
+            if target == "reviews":
+                relations = [{"parent_review_id": entity_id}]
+                for pointer in ("parent_review_id", "next_occurrence_id"):
+                    if source.get(pointer):
+                        relations.append({key: source[pointer]})
+        linked[target] = await db[target].find({"client_id": cid, "$or": relations}, {"_id": 0}).to_list(200) if relations else []
+    singular = "policy" if entity_type == "policies" else entity_type[:-1]
+    linked["evidence"] = await db.evidence.find({"client_id": cid, "linked_type": singular, "linked_id": entity_id}, {"_id": 0, "content_base64": 0}).to_list(200)
+    return linked
 
 
 # ---------------- Policies & Governance onboarding ----------------
@@ -3668,7 +3711,8 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     if not updates:
         raise HTTPException(400, "No fields to update")
     updates["updated_at"] = _now()
-    await coll.update_many({id_field: {"$in": body.ids}}, {"$set": updates})
+    for d in docs:
+        await update_entity(body.kind, d[id_field], dict(updates), user)
     for d in docs:
         await audit(user, f"bulk-{body.action}", entity_type, d[id_field], d["client_id"], meta=updates)
     return {"ok": True, "count": len(docs), "updates": updates}

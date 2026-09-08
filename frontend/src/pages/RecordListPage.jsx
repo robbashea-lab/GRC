@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -28,7 +28,7 @@ const DEFAULT_SORT = {
   tasks: { by: "due_date", dir: "asc" },
   findings: { by: "severity", dir: "desc" },
   risks: { by: "risk_level", dir: "desc" },
-  policies: { by: "next_review", dir: "asc" },
+  policies: { by: "next_review_date", dir: "asc" },
   vendors: { by: "next_review", dir: "asc" },
   exceptions: { by: "expires_on", dir: "asc" },
 };
@@ -39,7 +39,7 @@ const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
 // `closed` records get neutral treatment (no "overdue" callout).
 function formatDue(iso, closed = false) {
   if (!iso) return { primary: "—", secondary: "", tone: "neutral" };
-  const d = new Date(iso);
+  const d = new Date(String(iso).slice(0, 10) + "T00:00:00");
   if (Number.isNaN(d.getTime())) return { primary: "—", secondary: "", tone: "neutral" };
   const primary = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   if (closed) return { primary, secondary: "", tone: "neutral" };
@@ -74,6 +74,7 @@ function DueCell({ iso, closed = false }) {
 
 // Tab definitions for reviews — order matters (displayed as segmented control)
 const REVIEW_TABS = [
+  { id: "active", label: "Active" },
   { id: "needs_scheduling", label: "Needs Scheduling" },
   { id: "upcoming", label: "Upcoming" },
   { id: "overdue", label: "Overdue" },
@@ -86,7 +87,9 @@ const REVIEW_TABS = [
 function isReviewOverdue(row) {
   if (!row?.due_date || row.status === "needs_scheduling") return false;
   if (row.status === "completed" || row.status === "cancelled") return false;
-  return new Date(row.due_date).getTime() < Date.now();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return new Date(row.due_date.slice(0, 10) + "T00:00:00").getTime() < today.getTime();
 }
 
 export default function RecordListPage({ kind }) {
@@ -100,17 +103,18 @@ export default function RecordListPage({ kind }) {
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const loadSequence = useRef(0);
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
   const statusFilter = params.get("status") || "all";
-  const reviewTab = params.get("tab") || "upcoming";
+  const reviewTab = params.get("tab") || "active";
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
   const sortDir = params.get("sortDir") || defaultSort.dir;
 
   function setParam(key, value) {
     const next = new URLSearchParams(params);
-    if (value == null || value === "" || value === "all" || value === "upcoming") next.delete(key);
+    if (value == null || value === "" || (key === "status" && value === "all")) next.delete(key);
     else next.set(key, value);
     setParams(next, { replace: true });
   }
@@ -153,18 +157,28 @@ export default function RecordListPage({ kind }) {
     return m;
   }, [users]);
 
-  const load = async () => {
-    if (!currentClientId) return;
+  const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
+    if (!currentClientId) { setRows([]); setLoading(false); return; }
     setLoading(true);
     try {
       const { data } = await api.get(`/${kind}`, { params: { client_id: currentClientId } });
+      if (kind === "policies") {
+        const { data: reviews } = await api.get("/reviews", { params: { client_id: currentClientId } });
+        data.forEach(policy => {
+          const linked = reviews.filter(r => r.policy_id === policy.policy_id);
+          const next = linked.filter(r => !["completed", "cancelled"].includes(r.status) && r.due_date).sort((a,b) => a.due_date.localeCompare(b.due_date))[0];
+          if (linked.length) { policy.next_review_date = next?.due_date || null; policy.schedule_from_reviews = true; }
+        });
+      }
+      if (sequence !== loadSequence.current) return;
       setRows(data);
       setChecked(new Set());
-    } catch (e) { toast.error(formatError(e)); }
-    finally { setLoading(false); }
-  };
+    } catch (e) { if (sequence === loadSequence.current) { setRows([]); toast.error(formatError(e)); } }
+    finally { if (sequence === loadSequence.current) setLoading(false); }
+  }, [kind, currentClientId]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [kind, currentClientId]);
+  useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setRows([]); load(); return () => { sequence.current++; }; }, [load]);
   useEffect(() => {
     (async () => {
       try { const { data } = await api.get("/users"); setUsers(data); }
@@ -208,6 +222,7 @@ export default function RecordListPage({ kind }) {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     const passed = rows.filter((r) => {
+      if (r.client_id !== currentClientId) return false;
       // URL-carried filters (from the scoped dashboard). These are additive.
       if (urlFilters.owner) {
         const rOwner = r[ownerField] || r.owner_id || r.assignee_id;
@@ -221,7 +236,9 @@ export default function RecordListPage({ kind }) {
 
       if (isReviews) {
         const overdue = isReviewOverdue(r);
-        if (reviewTab === "needs_scheduling") {
+        if (reviewTab === "active") {
+          if (["completed", "cancelled"].includes(r.status)) return false;
+        } else if (reviewTab === "needs_scheduling") {
           if (r.status !== "needs_scheduling") return false;
         } else if (reviewTab === "upcoming") {
           if (r.status !== "upcoming") return false;
@@ -244,7 +261,7 @@ export default function RecordListPage({ kind }) {
     const key = sortBy;
     const isUserKey = (schema.columns.find((c) => c.key === key) || {}).user;
     const sorted = [...passed].sort((a, b) => {
-      if (isReviews && reviewTab !== "overdue") {
+      if (isReviews && reviewTab === "active" && !params.has("sortBy")) {
         const oa = isReviewOverdue(a), ob = isReviewOverdue(b);
         if (oa !== ob) return oa ? -1 : 1; // overdue first, always
       }
@@ -274,13 +291,14 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId]);
 
   const reviewTabCounts = useMemo(() => {
     if (!isReviews) return {};
-    const c = { needs_scheduling: 0, upcoming: 0, overdue: 0, in_progress: 0, completed: 0, all: rows.length };
+    const c = { active: 0, needs_scheduling: 0, upcoming: 0, overdue: 0, in_progress: 0, completed: 0, all: rows.length };
     rows.forEach((r) => {
       const overdue = isReviewOverdue(r);
+      if (!["completed", "cancelled"].includes(r.status)) c.active += 1;
       if (r.status === "needs_scheduling") c.needs_scheduling += 1;
       if (overdue) c.overdue += 1;
       if (r.status === "upcoming" && !overdue) c.upcoming += 1;

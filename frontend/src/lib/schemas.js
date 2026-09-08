@@ -34,6 +34,7 @@ export const SCHEMAS = {
         { value: "cancelled", label: "Cancelled" },
       ]},
       { name: "period", label: "Period (e.g. Q1 2026)" },
+      { name: "policy_id", label: "Related policy", type: "policy" },
       { name: "due_date", label: "Due date", type: "date" },
       { name: "owner_id", label: "Owner", type: "user" },
       { name: "reviewer_id", label: "Reviewer", type: "user" },
@@ -67,7 +68,7 @@ export const SCHEMAS = {
       ]},
       { name: "status", label: "Status", type: "select", options: [
         { value: "open", label: "Open" }, { value: "in_remediation", label: "In remediation" },
-        { value: "remediated", label: "Remediated" }, { value: "closed", label: "Closed" },
+        { value: "remediated", label: "Remediated · pending validation" }, { value: "closed", label: "Closed" },
         { value: "accepted", label: "Risk accepted" },
       ]},
       { name: "owner_id", label: "Owner", type: "user" },

@@ -222,12 +222,15 @@ test('review → finding → task → risk actions persist, update counts, prese
   } = await api.post(`/reviews/${r.review_id}/create-finding`, {
     severity: 'high',
     due_date: '2020-01-01',
-    title: 'QA finding'
+    title: 'QA finding',
+    remediation_title: 'Resolve the QA finding'
   });
   const {
     data: t
   } = await api.post(`/findings/${f.finding_id}/create-task`, {});
   expect(t.finding_id).toBe(f.finding_id);
+  expect(t.review_id).toBe(r.review_id);
+  expect((await get('tasks', c.client_id)).filter(x => x.finding_id === f.finding_id)).toHaveLength(1);
   let row = (await api.get('/clients/directory')).data.clients.find(x => x.client_id === c.client_id);
   expect(row.past_due).toBe(2);
   expect(row.critical_high_open).toBe(1);

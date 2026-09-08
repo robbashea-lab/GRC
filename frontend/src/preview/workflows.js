@@ -140,13 +140,14 @@ export function action(db, kind, id, name, body) {
   const patch = b => write(db, kind, b, id);
   if (kind === 'reviews' && name === 'complete') {
     if (r.status === 'completed') throw new Error('Review already completed');
+    if (r.status === 'cancelled') throw new Error('A cancelled review cannot be completed');
     patch({
       status: 'completed',
       completion_date: body.completion_date || now(),
       notes: body.completion_notes ? `${r.notes || ''}\n\n— Completed by ${db.user.name} —\n${body.completion_notes}` : r.notes
     });
     let spawned = null;
-    const d = body.spawn_next && nextDue(r.next_review_date || r.due_date, r.recurrence, r.custom_recurrence_days);
+    const d = body.spawn_next && r.recurrence !== 'none' && (r.next_review_date || nextDue(r.due_date || r.completion_date, r.recurrence, r.custom_recurrence_days));
     if (d) {
       spawned = write(db, 'reviews', {
         title: r.title,
@@ -157,7 +158,8 @@ export function action(db, kind, id, name, body) {
         owner_id: r.owner_id,
         reviewer_id: r.reviewer_id,
         scope: r.scope,
-        period: r.period,
+        policy_id: r.policy_id,
+        vendor_id: r.vendor_id,
         due_date: d,
         next_review_date: nextDue(d, r.recurrence, r.custom_recurrence_days),
         parent_review_id: id
@@ -171,19 +173,29 @@ export function action(db, kind, id, name, body) {
       spawned
     };
   }
-  if (kind === 'reviews' && name === 'create-finding') return write(db, 'findings', {
-    ...body,
-    title: body.title || `Finding from: ${r.title}`,
-    client_id: cid,
-    review_id: id,
-    owner_id: body.owner_id || r.owner_id
-  });
+  if (kind === 'reviews' && name === 'create-finding') {
+    if (!body.title?.trim()) throw new Error('Finding title is required.');
+    if (!body.remediation_title?.trim()) throw new Error('Remediation action is required.');
+    if (!['low', 'medium', 'high', 'critical'].includes(body.severity || 'medium')) throw new Error('Invalid severity.');
+    const finding = write(db, 'findings', {
+      title: body.title.trim(), description: body.description || '', severity: body.severity || 'medium',
+      remediation_plan: body.remediation_plan || '', due_date: body.due_date || null,
+      client_id: cid, review_id: id, source: r.title, identified_at: now(),
+      owner_id: body.owner_id ?? r.owner_id
+    });
+    action(db, 'findings', finding.finding_id, 'create-task', { title: body.remediation_title.trim() });
+    return finding;
+  }
   if (kind === 'findings' && name === 'create-task') {
+    const existing = list(db, 'tasks', cid).find(t => t.finding_id === id);
+    if (existing) return existing;
     const task = write(db, 'tasks', {
       ...body,
       title: body.title || `Remediate: ${r.title}`,
       client_id: cid,
       finding_id: id,
+      review_id: r.review_id,
+      source: r.source || 'Finding remediation',
       assignee_id: body.assignee_id || r.owner_id,
       priority: body.priority || r.severity,
       due_date: body.due_date || r.due_date,

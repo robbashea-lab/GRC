@@ -533,7 +533,9 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
                 if group == 'policies':
                     response = state[group][item['key']]
                     updates.update({'baseline_response': response, 'presence': {'yes': 'reported_existing', 'no': 'reported_missing', 'unsure': 'needs_confirmation'}[response], 'is_client_reported': True})
-                    if not old or old.get('status') in (None, '', 'draft', 'needs_verification', 'needs_creation', 'not_applicable'):
+                    if old and old.get('presence') in ('verified_existing', 'not_applicable'):
+                        updates['presence'] = old['presence']
+                    if not old or (old.get('presence') not in ('verified_existing', 'not_applicable') and old.get('status') in (None, '', 'draft', 'needs_verification', 'needs_creation', 'not_applicable')):
                         updates['status'] = {'yes': 'needs_verification', 'no': 'needs_creation', 'unsure': 'needs_verification'}[response]
                 elif group == 'requirements':
                     response = state[group][item['key']]
