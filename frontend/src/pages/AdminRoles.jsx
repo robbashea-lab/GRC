@@ -6,7 +6,7 @@ import { PLANNED_ROLES as ROLES, PLANNED_CAPABILITIES as CAPS, FUTURE_CLIENT_APP
 export default function AdminRoles() {
   return (
     <div>
-      <PageHeader eyebrow="Administration" title="Roles & Permissions" subtitle="Planned roles, trust boundaries, and capabilities for the iVenture GRC platform." />
+      <PageHeader eyebrow="Administration" title="Roles & Permissions" subtitle="Planned roles, trust boundaries, and capabilities for the Jee R Sea platform." />
       <div className="px-8 py-6 max-w-5xl space-y-8">
         <div className="rounded-md border border-semantic-info-border bg-semantic-info-bg p-3 text-xs text-semantic-info flex items-start gap-2" data-testid="admin-roles-note">
           <Info className="h-4 w-4 shrink-0 mt-0.5" />

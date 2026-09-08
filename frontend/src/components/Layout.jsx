@@ -211,7 +211,7 @@ function Sidebar() {
             <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
           </div>
           <div>
-            <div className="text-ink-onDark text-sm font-semibold font-heading tracking-tight">Northstar GRC</div>
+            <div className="text-ink-onDark text-sm font-semibold font-heading tracking-tight">Jee R Sea</div>
             <div className="text-[10px] text-ink-onDarkMuted uppercase tracking-widest font-mono">{atPlatform ? "Platform Ops" : "Program Ops"}</div>
           </div>
         </div>
