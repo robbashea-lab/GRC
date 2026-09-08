@@ -121,6 +121,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       const base = {};
       (schema || []).forEach((f) => {
         let v = record?.[f.name] ?? f.default ?? "";
+        if (kind === "reviews" && record?.status === "needs_scheduling" && f.name === "recurrence" && !record.recurrence) v = "";
         if (f.type === "date" && typeof v === "string" && v.length > 10) v = v.slice(0, 10);
         base[f.name] = v;
       });

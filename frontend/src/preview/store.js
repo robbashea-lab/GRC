@@ -95,7 +95,7 @@ export function validate(db, kind, body, existing) {
     const target = record(db, collection, body[relation]);
     if (target.client_id !== body.client_id) throw new Error('Related records must belong to the same client.');
   }
-  if (body.presence === 'not_applicable' && !body.applicability_rationale?.trim() || body.applicability === 'not_applicable' && !body.rationale?.trim()) throw new Error('Rationale is required for Not Applicable.');
+  if (body.presence === 'not_applicable' && !body.applicability_rationale?.trim() || body.applicability === 'not_applicable' && body.baseline_response !== 'does_not_apply' && !body.rationale?.trim()) throw new Error('Rationale is required for Not Applicable.');
   if (kind === 'risks') for (const f of ['likelihood_score', 'impact_score']) if (body[f] != null && (!Number.isInteger(body[f]) || body[f] < 1 || body[f] > 5)) throw new Error('Risk ratings must be whole numbers from 1 to 5.');
 }
 export function write(db, kind, body, id) {

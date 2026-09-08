@@ -1,0 +1,249 @@
+{
+  "version": 2,
+  "policies": [
+    {
+      "key": "policy-information-security-policy",
+      "name": "Information Security Policy",
+      "category": "Core Governance",
+      "conditional": false
+    },
+    {
+      "key": "policy-risk-management-policy",
+      "name": "Risk Management Policy",
+      "category": "Core Governance",
+      "conditional": false
+    },
+    {
+      "key": "policy-access-control-identity-management-policy",
+      "name": "Access Control & Identity Management Policy",
+      "category": "Core Governance",
+      "conditional": false
+    },
+    {
+      "key": "policy-acceptable-use-policy",
+      "name": "Acceptable Use Policy",
+      "category": "Core Governance",
+      "conditional": false
+    },
+    {
+      "key": "policy-change-management-policy",
+      "name": "Change Management Policy",
+      "category": "Core Governance",
+      "conditional": false
+    },
+    {
+      "key": "policy-vendor-third-party-risk-management-policy",
+      "name": "Vendor / Third-Party Risk Management Policy",
+      "category": "Core Governance",
+      "conditional": false
+    },
+    {
+      "key": "policy-data-classification-handling-policy",
+      "name": "Data Classification & Handling Policy",
+      "category": "Core Governance",
+      "conditional": false
+    },
+    {
+      "key": "policy-data-retention-secure-disposal-policy",
+      "name": "Data Retention & Secure Disposal Policy",
+      "category": "Core Governance",
+      "conditional": false
+    },
+    {
+      "key": "policy-asset-management-policy",
+      "name": "Asset Management Policy",
+      "category": "Security Operations",
+      "conditional": false
+    },
+    {
+      "key": "policy-vulnerability-patch-management-policy",
+      "name": "Vulnerability & Patch Management Policy",
+      "category": "Security Operations",
+      "conditional": false
+    },
+    {
+      "key": "policy-configuration-management-policy",
+      "name": "Configuration Management Policy",
+      "category": "Security Operations",
+      "conditional": false
+    },
+    {
+      "key": "policy-security-awareness-training-policy",
+      "name": "Security Awareness & Training Policy",
+      "category": "Security Operations",
+      "conditional": false
+    },
+    {
+      "key": "policy-incident-response-policy",
+      "name": "Incident Response Policy",
+      "category": "Security Operations",
+      "conditional": false
+    },
+    {
+      "key": "policy-cryptography-key-management-policy",
+      "name": "Cryptography & Key Management Policy",
+      "category": "Security Operations",
+      "conditional": true
+    },
+    {
+      "key": "policy-business-continuity-disaster-recovery-policy",
+      "name": "Business Continuity & Disaster Recovery Policy",
+      "category": "Resilience & Physical Security",
+      "conditional": false
+    },
+    {
+      "key": "policy-backup-restoration-policy",
+      "name": "Backup & Restoration Policy",
+      "category": "Resilience & Physical Security",
+      "conditional": false
+    },
+    {
+      "key": "policy-physical-environmental-security-policy",
+      "name": "Physical & Environmental Security Policy",
+      "category": "Resilience & Physical Security",
+      "conditional": true
+    }
+  ],
+  "requirements": [
+    {
+      "key": "hipaa",
+      "name": "HIPAA",
+      "aliases": [
+        "HIPAA / HITECH"
+      ],
+      "category": "Legal / Regulatory",
+      "description": "Applies where the organization creates, receives, maintains, or transmits protected health information or otherwise falls within the scope of HIPAA."
+    },
+    {
+      "key": "cis-ig1",
+      "name": "CIS Controls IG1",
+      "category": "Security Frameworks"
+    },
+    {
+      "key": "nist-csf-2",
+      "name": "NIST Cybersecurity Framework 2.0",
+      "category": "Security Frameworks"
+    },
+    {
+      "key": "iso-27001",
+      "name": "ISO/IEC 27001",
+      "aliases": [
+        "ISO/IEC 27001:2022"
+      ],
+      "category": "Certification / Contractual Programs"
+    },
+    {
+      "key": "cmmc",
+      "name": "Cybersecurity Maturity Model Certification (CMMC)",
+      "aliases": [
+        "CMMC"
+      ],
+      "category": "Certification / Contractual Programs",
+      "description": "CMMC is a Department of Defense cybersecurity certification and contractual compliance program."
+    }
+  ],
+  "reviews": [
+    {
+      "key": "risk-assessment",
+      "name": "Risk Assessment",
+      "review_type": "risk",
+      "category": "Risk, Governance & Compliance"
+    },
+    {
+      "key": "policy-review",
+      "name": "Policy Review and Approval",
+      "review_type": "policy",
+      "category": "Risk, Governance & Compliance"
+    },
+    {
+      "key": "requirements-review",
+      "name": "Legal, Regulatory & Contractual Requirements Review",
+      "review_type": "requirements",
+      "category": "Risk, Governance & Compliance"
+    },
+    {
+      "key": "management-review",
+      "name": "Security Metrics and Management Review",
+      "review_type": "management",
+      "category": "Risk, Governance & Compliance"
+    },
+    {
+      "key": "risk-exceptions",
+      "name": "Risk Exceptions and Accepted-Risk Review",
+      "review_type": "risk",
+      "category": "Risk, Governance & Compliance"
+    },
+    {
+      "key": "user-access",
+      "name": "User Access Review",
+      "review_type": "access",
+      "category": "Access, Assets & Data"
+    },
+    {
+      "key": "user-lifecycle",
+      "name": "User Provisioning and Offboarding Review",
+      "review_type": "access",
+      "category": "Access, Assets & Data"
+    },
+    {
+      "key": "inventory",
+      "name": "Asset and Software Inventory Review",
+      "review_type": "asset",
+      "category": "Access, Assets & Data"
+    },
+    {
+      "key": "data-inventory",
+      "name": "Data Classification and Sensitive Data Inventory Review",
+      "review_type": "data",
+      "category": "Access, Assets & Data"
+    },
+    {
+      "key": "vulnerability",
+      "name": "Vulnerability and Patch Management Review",
+      "review_type": "vulnerability",
+      "category": "Security Operations"
+    },
+    {
+      "key": "configuration",
+      "name": "Configuration Management Review",
+      "review_type": "configuration",
+      "category": "Security Operations"
+    },
+    {
+      "key": "awareness",
+      "name": "Security Awareness and Training Review",
+      "review_type": "awareness",
+      "category": "Security Operations"
+    },
+    {
+      "key": "vendor",
+      "name": "Vendor / Third-Party Risk Review",
+      "review_type": "vendor",
+      "category": "Security Operations"
+    },
+    {
+      "key": "penetration-test",
+      "name": "External Penetration Test or Vulnerability Assessment",
+      "review_type": "penetration_test",
+      "category": "Security Operations"
+    },
+    {
+      "key": "restore",
+      "name": "Backup and Restore Testing",
+      "review_type": "backup",
+      "category": "Resilience & Incident Preparedness"
+    },
+    {
+      "key": "bcp-dr",
+      "name": "Business Continuity / Disaster Recovery Tabletop Exercise",
+      "review_type": "bcp_dr",
+      "category": "Resilience & Incident Preparedness"
+    },
+    {
+      "key": "incident-response",
+      "name": "Incident Response Tabletop Exercise",
+      "review_type": "incident",
+      "category": "Resilience & Incident Preparedness"
+    }
+  ]
+}

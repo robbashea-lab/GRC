@@ -73,7 +73,7 @@ export default function StatusBadge({ value, tone, testid }) {
   if (!value) return null;
   const bucket = tone || toneFor(value);
   const cls = CLASS_BY_TONE[bucket] || CLASS_BY_TONE.neutral;
-  const label = String(value).replace(/_/g, " ");
+  const label = value === "needs_scheduling" ? "Needs Scheduling" : String(value).replace(/_/g, " ");
   return (
     <span
       data-testid={testid || `badge-${value}`}

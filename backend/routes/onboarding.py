@@ -447,3 +447,112 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
     await audit(user, "onboarding-complete", "client", cid, cid, meta=counters)
 
     return {"ok": True, "counters": counters, "validation_errors": validation_errors}
+
+# Focused baseline assessment. Legacy onboarding endpoints remain available for
+# historical callers; this endpoint never deletes their contacts or assessments.
+import json
+import uuid
+from pathlib import Path as FilePath
+from pydantic import Field
+
+BASELINE_CATALOG = json.loads(FilePath(__file__).with_name('onboarding_catalog.json').read_text())
+
+
+class BaselineState(BaseModel):
+    version: int = 2
+    step: int = Field(default=0, ge=0, le=3)
+    policies: Dict[str, str] = Field(default_factory=dict)
+    requirements: Dict[str, str] = Field(default_factory=dict)
+    reviews: List[str] = Field(default_factory=list)
+    completed: bool = False
+
+
+class BaselineSave(BaseModel):
+    client_id: str
+    state: BaselineState
+    finalize: bool = False
+
+
+def _baseline_match(rows, item):
+    keyed = next((r for r in rows if r.get('baseline_key') == item['key']), None)
+    names = {n.casefold() for n in [item['name'], *item.get('aliases', [])]}
+    return keyed or next((r for r in rows if not r.get('baseline_key') and (r.get('title') or '').strip().casefold() in names), None)
+
+
+async def _baseline_client(cid, user, writable=False):
+    import server
+    if not _can_access_client(user, cid) or (writable and not _writable(user)):
+        raise HTTPException(403, 'Forbidden for this client')
+    client = await server.db.clients.find_one({'client_id': cid}, {'_id': 0})
+    if not client:
+        raise HTTPException(404, 'Client not found')
+    return client
+
+
+@router.get('/onboarding/baseline')
+async def baseline_state(client_id: str, user: Dict = Depends(get_current_user)):
+    import server
+    client = await _baseline_client(client_id, user)
+    state = client.get('onboarding_baseline')
+    if not state:
+        state = {'version': 2, 'step': 0, 'completed': False, 'policies': {}, 'requirements': {},
+                 'reviews': [r['key'] for r in BASELINE_CATALOG['reviews']]}
+        maps = {'policies': {'reported_existing': 'yes', 'verified_existing': 'yes', 'reported_missing': 'no', 'needs_confirmation': 'unsure'},
+                'requirements': {'applicable': 'applies', 'not_applicable': 'does_not_apply', 'potentially_applicable': 'unsure', 'needs_review': 'unsure'}}
+        for group in ('policies', 'requirements'):
+            rows = await server.db[group].find({'client_id': client_id}, {'_id': 0}).to_list(2000)
+            for item in BASELINE_CATALOG[group]:
+                row = _baseline_match(rows, item) or {}
+                state[group][item['key']] = maps[group].get(row.get('presence' if group == 'policies' else 'applicability'), '')
+    return {'catalog': BASELINE_CATALOG, 'state': state}
+
+
+@router.post('/onboarding/baseline')
+async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_user)):
+    import server
+    cid = body.client_id
+    client = await _baseline_client(cid, user, writable=True)
+    state = body.state.model_dump()
+    for group, options in [('policies', ('', 'yes', 'no', 'unsure')), ('requirements', ('', 'applies', 'does_not_apply', 'unsure'))]:
+        allowed = {i['key'] for i in BASELINE_CATALOG[group]}
+        if any(k not in allowed or v not in options for k, v in state[group].items()):
+            raise HTTPException(400, 'Invalid baseline response')
+        if body.finalize and any(not state[group].get(k) for k in allowed):
+            raise HTTPException(400, 'Please answer every policy and requirement before completing onboarding.')
+    if any(k not in {r['key'] for r in BASELINE_CATALOG['reviews']} for k in state['reviews']):
+        raise HTTPException(400, 'Invalid review selection')
+    state['reviews'] = list(dict.fromkeys(state['reviews']))
+    if body.finalize:
+        for group, id_field in [('policies', 'policy_id'), ('requirements', 'requirement_id'), ('reviews', 'review_id')]:
+            rows = await server.db[group].find({'client_id': cid}, {'_id': 0}).to_list(2000)
+            for item in BASELINE_CATALOG[group]:
+                if group == 'reviews' and item['key'] not in state['reviews']:
+                    continue
+                old = _baseline_match(rows, item)
+                updates = {'baseline_key': item['key'], 'updated_at': _now()}
+                if group == 'policies':
+                    response = state[group][item['key']]
+                    updates.update({'baseline_response': response, 'presence': {'yes': 'reported_existing', 'no': 'reported_missing', 'unsure': 'needs_confirmation'}[response], 'is_client_reported': True})
+                    if not old or old.get('status') in (None, '', 'draft', 'needs_verification', 'needs_creation', 'not_applicable'):
+                        updates['status'] = {'yes': 'needs_verification', 'no': 'needs_creation', 'unsure': 'needs_verification'}[response]
+                elif group == 'requirements':
+                    response = state[group][item['key']]
+                    updates.update({'baseline_response': response, 'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'unsure': 'needs_review'}[response], 'is_client_reported': True})
+                    if not old:
+                        updates['status'] = 'under_review'
+                else:
+                    updates['baseline_selection'] = 'selected'
+                if old:
+                    await server.db[group].update_one({id_field: old[id_field], 'client_id': cid}, {'$set': updates})
+                else:
+                    stable_id = 'baseline_' + uuid.uuid5(uuid.NAMESPACE_URL, f'grc:{cid}:{group}:{item["key"]}').hex
+                    defaults = {id_field: stable_id, 'client_id': cid, 'title': item['name'], 'category': item['category'], 'created_at': _now(), 'created_by': user['user_id']}
+                    if group == 'reviews':
+                        defaults.update({'review_type': item['review_type'], 'source': 'GRC Program Onboarding', 'status': 'needs_scheduling', 'due_date': None, 'next_review_date': None, 'recurrence': None, 'owner_id': None})
+                    # The unique Mongo _id makes concurrent retries safe for new records.
+                    await server.db[group].update_one({'_id': stable_id}, {'$set': updates, '$setOnInsert': defaults}, upsert=True)
+        await audit(user, 'onboarding-complete', 'client', cid, cid, meta={'baseline_version': 2, 'selected_reviews': len(state['reviews'])})
+    state['version'] = 2
+    state['completed'] = bool(body.finalize or client.get('onboarding_baseline', {}).get('completed'))
+    await server.db.clients.update_one({'client_id': cid}, {'$set': {'onboarding_baseline': state}})
+    return state

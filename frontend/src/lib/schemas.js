@@ -22,8 +22,12 @@ export const SCHEMAS = {
         { value: "vulnerability", label: "Vulnerability / Patch" },
         { value: "bcp_dr", label: "BCP / DR" }, { value: "incident", label: "Incident Response" },
         { value: "awareness", label: "Security Awareness" },
+        { value: "requirements", label: "Requirements" }, { value: "management", label: "Management" },
+        { value: "data", label: "Data" }, { value: "configuration", label: "Configuration" },
+        { value: "penetration_test", label: "Penetration Test / Assessment" }, { value: "backup", label: "Backup / Restore" },
       ]},
       { name: "status", label: "Status", type: "select", default: "upcoming", options: [
+        { value: "needs_scheduling", label: "Needs Scheduling" },
         { value: "upcoming", label: "Upcoming" },
         { value: "in_progress", label: "In progress" },
         { value: "completed", label: "Completed" },
@@ -40,7 +44,7 @@ export const SCHEMAS = {
       ]},
       { name: "custom_recurrence_days", label: "Custom interval (days)", type: "number", showIf: { recurrence: "custom" } },
       { name: "next_review_date", label: "Next review date", type: "date" },
-      { name: "completion_date", label: "Completion date", type: "date" },
+      { name: "completion_date", label: "Last completed date", type: "date" },
       { name: "scope", label: "Scope", type: "textarea" },
       { name: "notes", label: "Notes", type: "textarea" },
       { name: "follow_up", label: "Follow-up actions", type: "textarea" },
@@ -182,7 +186,7 @@ export const SCHEMAS = {
   },
   policies: {
     title: "Policies",
-    subtitle: "Policy library with client-reported presence, verified metadata, and review dates.",
+    subtitle: "Policy baseline assessments and documents. Reported Missing records identify gaps; they are not existing policy documents.",
     columns: [
       { key: "title", label: "Policy / Document", primary: true },
       { key: "presence", label: "Presence", badge: true },
