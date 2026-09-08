@@ -168,6 +168,14 @@ export function write(db, kind, body, id) {
     }
   }
   if (existing) Object.assign(existing, row);else db[kind].unshift(row);
+  if (kind === 'tasks' && row.finding_id) {
+    const finding = db.findings.find(f => f.finding_id === row.finding_id && f.client_id === row.client_id);
+    if (finding && ['open', 'in_remediation', 'remediated'].includes(finding.status)) {
+      const work = db.tasks.filter(t => t.finding_id === row.finding_id && t.client_id === row.client_id);
+      finding.status = work.every(t => ['done', 'cancelled'].includes(t.status)) ? 'remediated' : 'in_remediation';
+      finding.updated_at = now();
+    }
+  }
   audit(db, existing ? 'update' : 'create', kind, row);
   return existing || row;
 }

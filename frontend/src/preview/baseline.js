@@ -28,7 +28,8 @@ export function saveBaseline(db,cid,state,finalize) {
     for(const item of catalog.policies) {
       const old=findExisting(db,'policies',cid,item), response=state.policies[item.key];
       const status={yes:'needs_verification',no:'needs_creation',unsure:'needs_verification'}[response];
-      write(db,'policies',{client_id:cid,title:old?.title||item.name,category:old?.category||item.category,baseline_key:item.key,baseline_response:response,presence:{yes:'reported_existing',no:'reported_missing',unsure:'needs_confirmation'}[response],is_client_reported:true,status:old&&!['draft','needs_verification','needs_creation','not_applicable',''].includes(old.status||'')?old.status:status},old?.policy_id);
+      const presence = ['verified_existing','not_applicable'].includes(old?.presence) ? old.presence : {yes:'reported_existing',no:'reported_missing',unsure:'needs_confirmation'}[response];
+      write(db,'policies',{client_id:cid,title:old?.title||item.name,category:old?.category||item.category,baseline_key:item.key,baseline_response:response,presence,is_client_reported:true,status:old&&(['verified_existing','not_applicable'].includes(old.presence)||!['draft','needs_verification','needs_creation','not_applicable',''].includes(old.status||''))?old.status:status},old?.policy_id);
     }
     for(const item of catalog.requirements) {
       const old=findExisting(db,'requirements',cid,item), response=state.requirements[item.key];

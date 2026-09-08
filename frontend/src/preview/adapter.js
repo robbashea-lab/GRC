@@ -114,10 +114,14 @@ export async function previewAdapter(config) {
             findings: [],
             tasks: [],
             risks: [],
+            policies: [],
+            vendors: [],
             exceptions: [],
             evidence: []
           };
-        for (const k of Object.keys(data)) data[k] = list(db, k, source.client_id).filter(r => k !== params.entity_type && (r[ids[params.entity_type]] === params.entity_id || source[ids[k]] === r[ids[k]] || k === 'evidence' && r.linked_id === params.entity_id));
+        for (const k of Object.keys(data)) data[k] = list(db, k, source.client_id).filter(r => k === params.entity_type
+          ? k === 'reviews' && (r.parent_review_id === params.entity_id || r.review_id === source.parent_review_id || r.review_id === source.next_occurrence_id)
+          : r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
         return respond(data);
       }
       if (kind === 'comments') return respond(db.comments.filter(r => r.entity_type === params.entity_type && r.entity_id === params.entity_id));
@@ -217,7 +221,11 @@ export async function previewAdapter(config) {
             due_date: payload.due_date
           };
         } else if (body.action === 'update') patch = payload;else throw new Error('Unknown bulk action');
-        write(db, body.kind, patch, r[ids[body.kind]]);
+        if (body.kind === 'reviews' && patch.status === 'completed' && r.status !== 'completed') {
+          const { status, ...fields } = patch;
+          write(db, body.kind, fields, r.review_id);
+          action(db, 'reviews', r.review_id, 'complete', { spawn_next: true });
+        } else write(db, body.kind, patch, r[ids[body.kind]]);
       }
       return save({
         ok: true,
@@ -306,6 +314,11 @@ export async function previewAdapter(config) {
         if (db.users.some(u => u.email?.toLowerCase() === body.email?.toLowerCase())) throw new Error('Email already exists.');
         body.simulated = true;
         body.status = 'invited';
+      }
+      if (kind === 'reviews' && id && body.status === 'completed' && record(db, kind, id).status !== 'completed') {
+        const { status, ...fields } = body;
+        write(db, kind, fields, id);
+        return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
       const result = write(db, kind, body, id);
       return save(kind === 'users' && !id ? {

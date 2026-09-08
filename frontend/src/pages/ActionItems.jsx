@@ -1,21 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, ListChecks, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import RecordDrawer from "@/components/RecordDrawer";
+import { SCHEMAS } from "@/lib/schemas";
 
 // Action Items is a UNIFIED WORK QUEUE that surfaces existing Task / Finding / Review records —
 // it never creates duplicates. Rows link back to their underlying records via the same drawers.
 
 const VIEWS = [
+  { id: "all", label: "All" },
   { id: "my", label: "My Actions" },
   { id: "all_open", label: "All Open" },
+  { id: "in_progress", label: "In Progress" },
   { id: "findings", label: "Findings" },
   { id: "reviews", label: "Reviews" },
   { id: "due_soon", label: "Due Soon" },
@@ -34,12 +38,16 @@ const PRIORITY_TONE = {
 
 const closedTask = ["done", "cancelled"];
 const closedReview = ["completed", "cancelled"];
-const openFindingStatus = ["open", "in_remediation"];
 
 function isOverdue(due, status, closed) {
   if (!due) return false;
   if (closed.includes(status)) return false;
-  return new Date(due).getTime() < Date.now();
+  return daysUntil(due) < 0;
+}
+
+function daysUntil(due) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return due ? Math.round((new Date(due.slice(0, 10) + "T00:00:00") - today) / 86400000) : Infinity;
 }
 
 function priorityLabel(p) {
@@ -55,9 +63,15 @@ export default function ActionItems() {
   const { user } = useAuth();
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
-  const [q, setQ] = useState("");
-  const [view, setView] = useState(user?.role === "client_contributor" ? "my" : "all_open");
+  const [params, setParams] = useSearchParams();
+  const q = params.get("q") || "";
+  const view = params.get("view") || (user?.role === "client_contributor" ? "my" : "all_open");
+  const sort = params.get("sort") || "due";
+  const setParam = (key, value) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next, { replace: true }); };
+  const setQ = value => setParam("q", value);
+  const setView = value => setParam("view", value);
   const [loading, setLoading] = useState(true);
+  const loadSequence = useRef(0);
   const [drawer, setDrawer] = useState({ open: false, kind: null, record: null });
 
   const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
@@ -67,8 +81,9 @@ export default function ActionItems() {
     return m;
   }, [users]);
 
-  async function load() {
-    if (!currentClientId) return;
+  const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
+    if (!currentClientId) { setRows([]); setLoading(false); return; }
     setLoading(true);
     try {
       const [tasks, findings, reviews, u] = await Promise.all([
@@ -77,6 +92,7 @@ export default function ActionItems() {
         api.get("/reviews", { params: { client_id: currentClientId } }).then((r) => r.data),
         api.get("/users").then((r) => r.data).catch(() => []),
       ]);
+      if (sequence !== loadSequence.current) return;
       setUsers(u || []);
 
       const items = [];
@@ -84,30 +100,28 @@ export default function ActionItems() {
       for (const t of tasks) {
         items.push({
           _kind: "task", id: t.task_id, raw: t,
-          title: t.title, type: "General Task",
+          title: t.title, type: t.finding_id ? "Remediation Action" : "General Task",
           priority: t.priority || "medium",
           owner_id: t.assignee_id || t.owner_id,
           due_date: t.due_date, status: t.status || "open",
-          source: t.source || (t.linked_finding_id ? "Finding" : "Manual"),
+          source: [reviews.find(r => r.review_id === t.review_id)?.title || t.source, findings.find(f => f.finding_id === t.finding_id)?.title].filter(Boolean).join(" · ") || "Manual",
           closed: closedTask,
         });
       }
       // Findings that require remediation (surface as action rows, not duplicates)
       for (const f of findings) {
-        if (!openFindingStatus.includes(f.status)) continue;
         items.push({
           _kind: "finding", id: f.finding_id, raw: f,
-          title: f.title, type: "Finding Remediation",
+          title: f.title, type: "Finding / Validation",
           priority: f.severity || "medium",
           owner_id: f.owner_id,
           due_date: f.due_date, status: f.status,
-          source: f.related_review_id ? "Review" : "Finding",
-          closed: ["closed", "remediated"],
+          source: reviews.find(r => r.review_id === f.review_id)?.title || "Finding",
+          closed: ["closed", "accepted"],
         });
       }
       // Reviews assigned to someone — appear as actionable rows without duplicating the record
       for (const r of reviews) {
-        if (closedReview.includes(r.status)) continue;
         items.push({
           _kind: "review", id: r.review_id, raw: r,
           title: r.title, type: "Review",
@@ -119,48 +133,50 @@ export default function ActionItems() {
         });
       }
       setRows(items);
-    } catch (e) { toast.error(formatError(e)); }
-    finally { setLoading(false); }
-  }
+    } catch (e) { if (sequence === loadSequence.current) { setRows([]); toast.error(formatError(e)); } }
+    finally { if (sequence === loadSequence.current) setLoading(false); }
+  }, [currentClientId]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentClientId, location.pathname]);
+  useEffect(() => { const sequence = loadSequence; setRows([]); setDrawer({ open: false, kind: null, record: null }); load(); return () => { sequence.current++; }; }, [load, location.pathname]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    const horizon = Date.now() + 7 * 86400_000;
     return rows.filter((r) => {
       const overdue = isOverdue(r.due_date, r.status, r.closed);
-      const isCompleted = ["done", "completed"].includes(r.status);
-      if (view === "my" && r.owner_id !== user?.user_id) return false;
+      if (r.raw.client_id !== currentClientId) return false;
+      const isCompleted = r.closed.includes(r.status);
+      if (view === "in_progress" && !["in_progress", "in_remediation"].includes(r.status)) return false;
+      if (view === "my" && (r.owner_id !== user?.user_id || isCompleted)) return false;
       if (view === "all_open" && isCompleted) return false;
       if (view === "findings" && r._kind !== "finding") return false;
       if (view === "reviews" && r._kind !== "review") return false;
       if (view === "overdue" && !overdue) return false;
       if (view === "completed" && !isCompleted) return false;
       if (view === "due_soon") {
-        if (!r.due_date || new Date(r.due_date).getTime() > horizon || new Date(r.due_date).getTime() < Date.now()) return false;
+        if (isCompleted) return false;
+        if (daysUntil(r.due_date) < 0 || daysUntil(r.due_date) > 7) return false;
       }
       if (!s) return true;
       return (r.title || "").toLowerCase().includes(s)
         || (r.id || "").toLowerCase().includes(s)
         || (r.source || "").toLowerCase().includes(s)
         || (userMap[r.owner_id] || "").toLowerCase().includes(s);
-    });
-  }, [rows, view, q, user, userMap]);
+    }).sort((a,b) => sort === "title" ? a.title.localeCompare(b.title) : sort === "priority" ? ({critical:4,high:3,medium:2,low:1}[b.priority] || 0) - ({critical:4,high:3,medium:2,low:1}[a.priority] || 0) : (a.due_date || "9999").localeCompare(b.due_date || "9999"));
+  }, [rows, view, q, user, userMap, currentClientId, sort]);
 
   const counts = useMemo(() => {
-    const horizon = Date.now() + 7 * 86400_000;
-    const c = { my: 0, all_open: 0, findings: 0, reviews: 0, due_soon: 0, overdue: 0, completed: 0 };
+    const c = { all: rows.length, in_progress: 0, my: 0, all_open: 0, findings: 0, reviews: 0, due_soon: 0, overdue: 0, completed: 0 };
     rows.forEach((r) => {
       const overdue = isOverdue(r.due_date, r.status, r.closed);
-      const isCompleted = ["done", "completed"].includes(r.status);
-      if (r.owner_id === user?.user_id) c.my += 1;
+      const isCompleted = r.closed.includes(r.status);
+      if (["in_progress", "in_remediation"].includes(r.status)) c.in_progress += 1;
+      if (r.owner_id === user?.user_id && !isCompleted) c.my += 1;
       if (!isCompleted) c.all_open += 1;
       if (r._kind === "finding") c.findings += 1;
       if (r._kind === "review") c.reviews += 1;
       if (overdue) c.overdue += 1;
       if (isCompleted) c.completed += 1;
-      if (r.due_date && new Date(r.due_date).getTime() >= Date.now() && new Date(r.due_date).getTime() <= horizon) c.due_soon += 1;
+      if (!isCompleted && daysUntil(r.due_date) >= 0 && daysUntil(r.due_date) <= 7) c.due_soon += 1;
     });
     return c;
   }, [rows, user]);
@@ -210,6 +226,7 @@ export default function ActionItems() {
             );
           })}
         </div>
+        <Select value={sort} onValueChange={v => setParam("sort", v)}><SelectTrigger className="w-40" aria-label="Sort actions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="due">Due date</SelectItem><SelectItem value="priority">Priority</SelectItem><SelectItem value="title">Title</SelectItem></SelectContent></Select>
         <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
 
@@ -251,14 +268,14 @@ export default function ActionItems() {
                     <td className="tbl-cell text-xs font-mono">
                       {r.due_date ? (
                         <span className={overdue ? "text-semantic-critical font-medium" : "text-ink-secondary"}>
-                          {new Date(r.due_date).toLocaleDateString()}
+                          {new Date(r.due_date.slice(0, 10) + "T00:00:00").toLocaleDateString()}
                           {overdue && <span className="ml-1 text-[10px] uppercase">overdue</span>}
                         </span>
                       ) : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="tbl-cell">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-[11px] text-ink-secondary font-medium capitalize">
-                        {(r.status || "").replace("_", " ")}
+                        {r.status === "remediated" ? "Pending validation" : (r.status || "").replaceAll("_", " ")}
                       </span>
                     </td>
                     <td className="tbl-cell text-xs text-ink-help">{r.source}</td>
@@ -272,9 +289,12 @@ export default function ActionItems() {
 
       {drawer.kind && (
         <RecordDrawer
-          open={drawer.open}
+          open={drawer.open && (!drawer.record || drawer.record.client_id === currentClientId)}
           onOpenChange={(v) => setDrawer((p) => ({ ...p, open: v }))}
           kind={drawer.kind}
+          schema={SCHEMAS[drawer.kind]?.fields}
+          clientId={currentClientId}
+          users={users}
           record={drawer.record}
           onSaved={load}
         />

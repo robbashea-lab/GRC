@@ -6,6 +6,17 @@ const api=axios.create({adapter:previewAdapter});
 const get=async(kind,cid)=>(await api.get(`/${kind}`,{params:{client_id:cid}})).data;
 const state=()=>({version:2,step:3,policies:Object.fromEntries(catalog.policies.map((r,i)=>[r.key,['yes','no','unsure'][i%3]])),requirements:Object.fromEntries(catalog.requirements.map((r,i)=>[r.key,['applies','does_not_apply','unsure'][i%3]])),reviews:catalog.reviews.map(r=>r.key),completed:false});
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/auth/login');});
+
+test('revisiting intake preserves verified policy presence and its separate draft lifecycle', async () => {
+  const client = (await api.post('/clients', { name: 'Verified policy QA' })).data;
+  const s = state();
+  await api.post('/onboarding/baseline', { client_id: client.client_id, state: s, finalize: true });
+  const policy = (await get('policies', client.client_id))[0];
+  await api.patch(`/policies/${policy.policy_id}`, { presence: 'verified_existing', status: 'draft', version: '1.2' });
+  await api.post('/onboarding/baseline', { client_id: client.client_id, state: s, finalize: true });
+  expect((await get('policies', client.client_id)).find(p => p.policy_id === policy.policy_id)).toMatchObject({ presence: 'verified_existing', status: 'draft', version: '1.2' });
+  expect(await get('policies', client.client_id)).toHaveLength(17);
+});
 test('focused catalog and new client defaults have exactly the requested content',async()=>{
   expect(catalog.policies).toHaveLength(17);expect(catalog.requirements).toHaveLength(5);expect(catalog.reviews).toHaveLength(17);
   const c=(await api.post('/clients',{name:'Baseline QA'})).data;
@@ -32,7 +43,7 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
   await api.patch(`/reviews/${manuallyEdited.review_id}`,{title:'Manually renamed review',status:'completed',due_date:'2027-01-15',completion_date:'2026-09-01',recurrence:'quarterly',owner_id:'fixture-owner',notes:'Preserve review notes',evidence_ids:['fixture-evidence']});
   const before=await get('reviews',a.client_id);
   await api.post('/onboarding/baseline',{client_id:a.client_id,state:s,finalize:true});
-  expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(5);expect(await get('reviews',a.client_id)).toHaveLength(16);
+  expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(5);expect(await get('reviews',a.client_id)).toHaveLength(before.length);
   const kept=(await get('reviews',a.client_id)).find(r=>r.review_id===manuallyEdited.review_id);
   for(const k of ['title','status','due_date','completion_date','recurrence','owner_id','notes','evidence_ids'])expect(kept[k]).toEqual(before.find(r=>r.review_id===kept.review_id)[k]);
   const restored=(await api.get('/onboarding/baseline',{params:{client_id:a.client_id}})).data.state;
