@@ -52,3 +52,30 @@ test('invalid finalization is atomic; historical data and existing policy metada
   expect((await get('requirements',c.client_id)).some(r=>r.title==='SOC 2')).toBe(true);
   expect(await get('contacts',c.client_id)).toHaveLength(1);
 });
+
+test('compliance navigation uses only finalized Applies selections and remains client scoped', async () => {
+  const { complianceNavigation } = require('@/lib/complianceNavigation');
+  const a = (await api.post('/clients', { name: 'Compliance A' })).data;
+  const b = (await api.post('/clients', { name: 'Compliance B' })).data;
+  const s = state();
+  s.requirements = { hipaa: 'applies', 'cis-ig1': 'does_not_apply', 'nist-csf-2': 'unsure', 'iso-27001': 'applies', cmmc: 'applies' };
+  const nav = async cid => complianceNavigation(cid, (await api.get('/onboarding/baseline', { params: { client_id: cid } })).data.state, await get('requirements', cid));
+  await api.post('/onboarding/baseline', { client_id: a.client_id, state: s });
+  expect(await nav(a.client_id)).toEqual([]);
+  await api.post('/onboarding/baseline', { client_id: a.client_id, state: s, finalize: true });
+  const initial = await nav(a.client_id);
+  expect(initial.map(i => i.label)).toEqual(['HIPAA', 'ISO 27001', 'CMMC']);
+  expect(initial.map(i => i.id)).toEqual(['hipaa', 'iso-27001', 'cmmc'].map(k => `${a.client_id}:${k}`));
+  expect(await nav(b.client_id)).toEqual([]);
+  await api.post('/onboarding/baseline', { client_id: a.client_id, state: s, finalize: true });
+  expect(await nav(a.client_id)).toEqual(initial);
+  s.requirements.hipaa = 'does_not_apply'; s.requirements.cmmc = 'unsure'; s.requirements['cis-ig1'] = 'applies';
+  await api.post('/onboarding/baseline', { client_id: a.client_id, state: s });
+  expect(await nav(a.client_id)).toEqual(initial);
+  await api.post('/onboarding/baseline', { client_id: a.client_id, state: s, finalize: true });
+  expect((await nav(a.client_id)).map(i => i.label)).toEqual(['CIS IG1', 'ISO 27001']);
+  expect(await get('requirements', a.client_id)).toHaveLength(5);
+  for (const k of Object.keys(s.requirements)) s.requirements[k] = 'unsure';
+  await api.post('/onboarding/baseline', { client_id: a.client_id, state: s, finalize: true });
+  expect(await nav(a.client_id)).toEqual([]);
+});

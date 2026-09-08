@@ -1,3 +1,4 @@
+import { ComplianceProvider, useCompliance } from "@/context/ComplianceContext";
 import DemoNotice from "@/preview/DemoNotice";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -196,7 +197,10 @@ function Sidebar() {
   // Platform context covers portfolio, administration, and any future /platform/* routes.
   // Client Workspace context covers everything else (dashboard, calendar, reviews, etc.).
   const atPlatform = ["/clients", "/admin", "/platform"].some((p) => location.pathname.startsWith(p));
-  const items = atPlatform && isInternal ? PLATFORM_NAV : CLIENT_NAV;
+  const { items: complianceItems } = useCompliance();
+  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV, ...complianceItems.map(item => ({
+    ...item, icon: ShieldCheck, testid: `nav-compliance-${item.key}`,
+  }))];
 
   return (
     <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
@@ -226,7 +230,7 @@ function Sidebar() {
             </div>
           ) : (
             <NavLink
-              key={n.to}
+              key={n.id || n.to}
               to={n.to}
               end={n.end}
               data-testid={n.testid}
@@ -278,12 +282,12 @@ function Sidebar() {
 
 export default function Layout() {
   return (
-    <div className="min-h-screen flex bg-surface-app">
+    <ComplianceProvider><div className="min-h-screen flex bg-surface-app">
       <Sidebar />
       <main className="flex-1 min-w-0">
         <DemoNotice />
         <Outlet />
       </main>
-    </div>
+    </div></ComplianceProvider>
   );
 }

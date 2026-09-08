@@ -10,6 +10,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import RecordListPage from "@/pages/RecordListPage";
 import Evidence from "@/pages/Evidence";
+import ComplianceWorkspace from "@/pages/ComplianceWorkspace";
 import Onboarding from "@/pages/Onboarding";
 import Calendar from "@/pages/Calendar";
 import ClientManagement from "@/pages/ClientManagement";
@@ -91,6 +92,7 @@ function AppRouter() {
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />
         <Route path="action-items" element={<ActionItems />} />
         <Route path="evidence" element={<Evidence />} />
+        <Route path="compliance/:requirementKey" element={<ComplianceWorkspace />} />
         <Route path="onboarding" element={<Onboarding />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
