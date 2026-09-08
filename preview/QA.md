@@ -79,3 +79,23 @@ browser control. The complete flow was finalized for one new client; isolation
 was checked using a second client's draft. Other module browser coverage remains
 as described above. Legacy six-step drafts are not converted into the new draft;
 existing policy and requirement records can prefill matching baseline responses.
+
+## Client-specific compliance navigation — 2026-09-08
+
+Navigation derives from the existing completed baseline and finalized requirement
+records. Draft applicability changes do not alter it. Stable client/requirement
+keys and the canonical five-entry catalog prevent duplicate sidebar items. No
+onboarding, backend, authentication, or permission code changed.
+
+All 33 frontend tests and the production build pass (the same eight existing lint
+warnings remain). Automated checks cover draft versus finalized selections,
+repeat completion, changed applicability, no applicable requirements, client
+isolation, direct page rendering, retained existing links, and load errors.
+
+Browser checks: selected HIPAA, ISO 27001, and CMMC as Applies for Baseline QA;
+confirmed CMMC absent before completion and all three present afterward. Opened
+each empty page, refreshed the CMMC route, finalized again, and confirmed one
+link per requirement. CIS IG1 (Does Not Apply) and NIST CSF 2.0 (Unsure) stayed
+hidden. Globex displayed only the unchanged original navigation. Changes from
+Applies to other answers were tested automatically. Pages are intentionally empty
+shells; detailed compliance functionality is not implemented.
