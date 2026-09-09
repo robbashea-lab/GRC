@@ -83,8 +83,8 @@ export const SCHEMAS = {
     columns: [
       { key: "title", label: "Risk", primary: true },
       { key: "category", label: "Category" },
-      { key: "likelihood", label: "Likelihood", badge: true },
-      { key: "impact", label: "Impact", badge: true },
+      { key: "likelihood_score", label: "Likelihood" },
+      { key: "impact_score", label: "Impact" },
       { key: "status", label: "Status", badge: true },
     ],
     fields: [
@@ -94,13 +94,10 @@ export const SCHEMAS = {
         { value: "vendor", label: "Vendor / Third-party" }, { value: "compliance", label: "Compliance" },
         { value: "financial", label: "Financial" },
       ]},
-      { name: "likelihood", label: "Likelihood", type: "select", options: [
-        { value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" },
-      ]},
-      { name: "impact", label: "Impact", type: "select", options: [
-        { value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" },
-      ]},
+      { name: "likelihood_score", label: "Likelihood (1–5)", type: "number" },
+      { name: "impact_score", label: "Impact (1–5)", type: "number" },
       { name: "status", label: "Status", type: "select", options: [
+        { value: "open", label: "Open" }, { value: "in_progress", label: "In progress" }, { value: "escalated", label: "Escalated" },
         { value: "identified", label: "Identified" }, { value: "assessed", label: "Assessed" },
         { value: "treated", label: "Treated" }, { value: "accepted", label: "Accepted" },
         { value: "closed", label: "Closed" },

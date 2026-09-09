@@ -239,7 +239,7 @@ test('review → finding → task → risk actions persist, update counts, prese
       risk
     }
   } = await api.post(`/findings/${f.finding_id}/raise-risk`);
-  expect(risk.risk_score).toBe(16);
+  expect(risk.risk_score).toBeNull(); // finding severity is not a risk assessment
   await api.patch(`/risks/${risk.risk_id}`, {
     likelihood_score: 1,
     impact_score: 2
@@ -249,13 +249,13 @@ test('review → finding → task → risk actions persist, update counts, prese
     risk_level: 'low'
   });
   const result = (await api.post(`/reviews/${r.review_id}/complete`, {
-    spawn_next: true
+    spawn_next: true, conclusion: 'Access gap recorded', tested_period: 'January 2026', tested_scope: 'Access sample', checklist_confirmed: true, no_evidence_reason: 'Interview results recorded in conclusion'
   })).data;
   expect(result.review.status).toBe('completed');
   expect(result.spawned.due_date).toBe('2026-02-28T00:00:00.000Z');
   await expect(api.post(`/reviews/${r.review_id}/complete`, {
     spawn_next: true
-  })).rejects.toBeTruthy();
+  })).resolves.toMatchObject({ data: { review: { status: 'completed' }, spawned: { review_id: result.spawned.review_id } } });
   await api.post('/bulk', {
     kind: 'tasks',
     ids: [t.task_id],
@@ -356,11 +356,11 @@ test('sample portfolio totals and client KPIs match the backend-generated refere
         }
       })).data;
       const reference = fixtures.responses[`/dashboard?client_id=${c.client_id}&scope=org`];
-      expect(result.kpis).toEqual(reference.kpis);
+      expect(result.kpis).toEqual({ ...reference.kpis, significant_risks: 0 }); // legacy-only ratings are explicitly unassessed
       for (const [key, snapshot] of Object.entries(fixtures.responses)) {
         if (!key.startsWith(`/dashboard?client_id=${c.client_id}&`)) continue;
         const params = Object.fromEntries(new URL(key, 'https://demo.invalid').searchParams);
-        expect((await api.get('/dashboard', { params })).data.kpis).toEqual(snapshot.kpis);
+        expect((await api.get('/dashboard', { params })).data.kpis).toEqual({ ...snapshot.kpis, significant_risks: 0 });
       }
     }
   } finally {

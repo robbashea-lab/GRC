@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import api, { formatError } from "@/lib/api";
@@ -12,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { X, ArrowUpRight, Zap, UploadCloud, Download, Trash2, CheckCircle2, XCircle, Send, ShieldCheck, CalendarPlus, Users2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SCHEMAS } from "@/lib/schemas";
+import rules from "@/lib/grcRules.json";
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
@@ -88,8 +90,11 @@ function toDateInput(v) {
 }
 
 export default function RecordDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved }) {
+  schema = schema || SCHEMAS[kind]?.fields || [];
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [decisionOpen, setDecisionOpen] = useState(false);
+  const [decisionForm, setDecisionForm] = useState({});
   const [findingOpen, setFindingOpen] = useState(false);
   const [relatedDrawer, setRelatedDrawer] = useState(null);
   const [findingForm, setFindingForm] = useState({});
@@ -107,7 +112,6 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   const [rejectReason, setRejectReason] = useState("");
   const [acceptOpen, setAcceptOpen] = useState(false);
   const [acceptForm, setAcceptForm] = useState({ rationale: "", expiry_date: "", approver_id: "", compensating_controls: "" });
-  const [approverQuery, setApproverQuery] = useState("");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ due_date: "", owner_id: "", recurrence: "" });
   const [verifyOpen, setVerifyOpen] = useState(false);
@@ -209,8 +213,8 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   function cleanForm() {
     return Object.fromEntries(Object.entries(form).map(([k,v]) => {
       const field = (schema || []).find(f => f.name === k);
-      return [k, v === "__none__" || (v === "" && ["number", "date", "policy", "user"].includes(field?.type)) ? null : field?.type === "number" ? Number(v) : v];
-    }));
+      return [k, v === "__none__" || (v === "" && (["number", "date", "policy", "user"].includes(field?.type) || ["likelihood_score", "impact_score"].includes(k))) ? null : field?.type === "number" ? Number(v) : v];
+    }).filter(([k, v]) => !isEdit || !(JSON.stringify(v) === JSON.stringify(record[k]) || (v == null || v === "") && (record[k] == null || record[k] === "") || schema.find(f => f.name === k)?.type === "date" && String(record[k] || '').slice(0,10) === v)));
   }
 
   async function save() {
@@ -263,20 +267,28 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   }
 
   async function completeReview() {
-    if (!confirm(`Mark "${record.title}" as complete? This will spawn the next occurrence if recurring.`)) return;
+    setDecisionForm({ tested_period: form.period || "", tested_scope: form.scope || "", conclusion: "", no_evidence_reason: "", checklist_confirmed: false });
+    setDecisionOpen(true);
+  }
+
+  async function submitDecision(event) {
+    event.preventDefault();
+    setSaving(true);
     try {
-      await api.patch(`/reviews/${record[idField]}`, { ...cleanForm(), status: record.status });
-      const { data } = await api.post(`/reviews/${record[idField]}/complete`, { spawn_next: true });
-      toast.success(data.spawned ? "Review completed · next occurrence scheduled" : "Review completed");
-      if (data.review) {
-        record.status = data.review.status;
-        record.completion_date = data.review.completion_date;
-        record.next_occurrence_id = data.review.next_occurrence_id;
-        setForm((p) => ({ ...p, status: data.review.status, completion_date: data.review.completion_date }));
+      if (!(kind === "reviews" && record.status === "completed")) {
+        const { status: ignoredStatus, ...changes } = cleanForm();
+        if (Object.keys(changes).length) await api.patch(`/${kind}/${record[idField]}`, changes);
       }
+      const action = decisionForm.action || (kind === "findings" ? "validate" : record.status === "completed" ? "amend" : "complete");
+      const { data } = await api.post(`/${kind}/${record[idField]}/${action}`, { ...decisionForm, spawn_next: true });
+      Object.assign(record, data.review || data);
+      setForm(p => ({ ...p, status: record.status }));
+      setDecisionOpen(false);
+      toast.success(action === "complete" ? "Review completed; evidence and outcome preserved" : action === "amend" ? "Amendment recorded" : action === "validate" ? "Remediation validated and closed" : "Decision recorded");
       onSaved?.();
       loadRelated();
     } catch (e) { toast.error(formatError(e)); }
+    finally { setSaving(false); }
   }
 
   async function quickCreateTask() {
@@ -291,10 +303,10 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
 
   async function raiseAsRisk() {
     if (record?.risk_id) { toast.info("A risk is already linked to this finding"); return; }
-    if (!confirm(`Raise a risk from "${record.title}"? Likelihood/impact will default from the finding severity — you can refine on the Risk Register.`)) return;
+    if (!confirm(`Raise an unassessed risk from "${record.title}"? Rate its likelihood and impact in the Risk Register.`)) return;
     try {
       const { data } = await api.post(`/findings/${record[idField]}/raise-risk`);
-      toast.success(`Risk raised · Score ${data.risk?.risk_score} · Level ${data.risk?.risk_level}`);
+      toast.success("Risk raised · assessment required");
       if (record) record.risk_id = data.risk?.risk_id;
       onSaved?.();
     } catch (e) { toast.error(formatError(e)); }
@@ -317,7 +329,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
     try {
       const body = {
         rationale: acceptForm.rationale,
-        approver_id: acceptForm.approver_id || undefined,
+        approver_id: user.user_id,
         compensating_controls: acceptForm.compensating_controls || undefined,
       };
       if (acceptForm.expiry_date) body.expiry_date = new Date(acceptForm.expiry_date).toISOString();
@@ -477,6 +489,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   const liveLevel = levelFromScore(liveScore || null);
 
   function renderField(f) {
+    if (["completion_date", "approved_at", "verified_at", "verified_by"].includes(f.name)) return <DateReadonly key={f.name} label={f.label} value={record?.[f.name]} />;
     if (kind === "policies" && f.name === "next_review_date" && (record?.schedule_from_reviews || related.reviews?.length)) {
       const next = (related.reviews || []).filter(r => !["completed", "cancelled"].includes(r.status) && r.due_date).sort((a,b) => a.due_date.localeCompare(b.due_date))[0];
       return <div key={f.name}><DateReadonly label="Next review · scheduled in Reviews" value={next?.due_date || record?.next_review_date} /><Button size="sm" variant="link" onClick={() => setTab("related")}>Open related reviews</Button></div>;
@@ -496,7 +509,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
           <Select value={form[f.name] || ""} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
             <SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
-              {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value} disabled={o.value !== record?.[f.name] && (f.name === "status" && ({policies:['approved'],findings:['closed','accepted','remediated'],risks:['accepted'],reviews:['completed'],exceptions:['approved']}[kind] || []).includes(o.value) || f.name === "presence" && o.value === "verified_existing" && record?.presence !== o.value)}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
         ) : f.type === "user" ? (
@@ -580,14 +593,15 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
             <SelectTrigger data-testid="field-treatment" className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
               {["mitigate", "accept", "transfer", "avoid", "monitor"].map((t) => (
-                <SelectItem key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</SelectItem>
+                <SelectItem key={t} value={t} disabled={t === 'accept' && record?.treatment !== 'accept'}>{t[0].toUpperCase() + t.slice(1)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label className="text-xs text-ink-secondary">Acceptance rationale</Label>
-          <Textarea value={form.acceptance_rationale || ""} onChange={(e) => setForm({ ...form, acceptance_rationale: e.target.value })} rows={3} className="text-sm" data-testid="field-acceptance_rationale" />
+          <Textarea readOnly value={record?.acceptance_rationale || ""} rows={3} className="text-sm" data-testid="field-acceptance_rationale" />
+          <p className="text-xs text-ink-secondary">Recorded by the acceptance action; renew acceptance to record a new decision.</p>
         </div>
         <div>
           <Label className="text-xs text-ink-secondary">Compensating controls</Label>
@@ -919,6 +933,8 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       return (
         <div className="space-y-4">
           {renderRiskActionsPanel()}
+          {!liveLevel && <p className="text-sm text-ink-secondary">Needs assessment. Select numeric likelihood and impact in Assessment.{record?.likelihood || record?.impact ? ` Legacy ratings: likelihood ${record.likelihood || 'unknown'}, impact ${record.impact || 'unknown'}.` : ''}</p>}
+          {record?.acceptance_expires_at && <DateReadonly label="Acceptance expiry · unchanged by routine reviews" value={record.acceptance_expires_at} />}
           {renderFieldsByNames(["title", "category", "status", "owner_id", "description"])}
         </div>
       );
@@ -947,7 +963,13 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         {kind === "findings" && renderFindingActionsPanel()}
         {kind === "policies" && renderPolicyPanel()}
         {kind === "contacts" && renderContactActions()}
-        <div className="record-fields">{(schema || []).map((f) => renderField(f))}</div>
+        {kind === "exceptions" && isEdit && isPlatformAdmin && record.status !== "approved" && <Button onClick={() => { setDecisionForm({action:'approve',rationale:''}); setDecisionOpen(true); }}>Approve exception</Button>}
+        {kind === "reviews" && record?.status === "completed" && <div className="rounded-md border border-line p-4 space-y-2 text-sm" data-testid="review-outcome">
+          {record.completion_snapshot ? <><p>Completed by {userMap[record.completion_snapshot.by] || record.completion_snapshot.by} · {record.completion_snapshot.at?.slice(0,10)}</p><p>Period: {record.completion_snapshot.tested_period}</p><p>Examined: {record.completion_snapshot.tested_scope}</p><p className="whitespace-pre-wrap">Conclusion: {record.completion_snapshot.conclusion}</p><p>{record.completion_snapshot.evidence?.length || 0} preserved evidence version(s){record.completion_snapshot.no_evidence_reason ? ` · ${record.completion_snapshot.no_evidence_reason}` : ''}</p></> : <p>Historical completion: structured outcome and decision provenance were not captured.</p>}
+          {(record.amendments || []).map((a,i) => <p key={i}>Amendment · {a.at?.slice(0,10)} · {userMap[a.by] || a.by}: {a.rationale}</p>)}
+        </div>}
+        {!!record?.decision_history?.length && <div className="rounded-md border border-line p-3 text-sm space-y-2">{record.decision_history.map((d,i) => <p key={i}>{d.action?.replaceAll('_',' ')} · {userMap[d.by || d.recorded_by] || d.by || d.recorded_by} · {(d.at || d.recorded_at)?.slice(0,10)}{d.rationale ? `: ${d.rationale}` : ''}{d.provenance ? ` · ${d.provenance}` : ''}</p>)}</div>}
+        <fieldset disabled={kind === "reviews" && record?.status === "completed"} className="record-fields">{(schema || []).map((f) => renderField(f))}</fieldset>
       </div>
     );
   }
@@ -994,10 +1016,8 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Finding actions</div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={quickCreateTask} disabled={!!related.tasks?.length} data-testid="quick-create-task">{related.tasks?.length ? "Remediation action linked" : "Create remediation task"}</Button>
-          {status === "remediated" && <Button size="sm" data-testid="finding-validate" onClick={async () => {
-            try { await api.patch(`/findings/${record.finding_id}`, { status: "closed" }); record.status = "closed"; setForm(p => ({ ...p, status: "closed" })); onSaved?.(); toast.success("Remediation validated; finding closed"); }
-            catch (e) { toast.error(formatError(e)); }
-          }}>Validate and close</Button>}
+          {status === "remediated" && isPlatformAdmin && <Button size="sm" data-testid="finding-validate" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Validate and close</Button>}
+          {isPlatformAdmin && !['closed','accepted'].includes(status) && <Button size="sm" variant="outline" onClick={() => { setDecisionForm({action:'accept',rationale:''}); setDecisionOpen(true); }}>Accept finding</Button>}
           <Button size="sm" variant="outline" onClick={raiseAsRisk} data-testid="finding-raise-risk" disabled={!!record?.risk_id}>
             {record?.risk_id ? "Linked to risk" : "Raise as risk"}
           </Button>
@@ -1013,9 +1033,9 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         <div className="flex items-center gap-2 text-sm text-ink-primary"><ShieldCheck className="h-4 w-4 text-brand-charcoal" /> Risk actions</div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Mark reviewed</Button>
-          {record?.status !== "accepted" && (
+          {isPlatformAdmin && record?.status !== "closed" && (
             <Button size="sm" onClick={acceptRisk} data-testid="risk-accept" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
-              Accept risk
+              {record?.status === 'accepted' ? 'Renew acceptance' : 'Accept risk'}
             </Button>
           )}
         </div>
@@ -1120,7 +1140,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
   function renderEvidence() {
     return (
       <div className="space-y-4">
-        {canWrite && (
+        {canWrite && !(kind === "reviews" && record?.status === "completed") && (
           <div
             data-testid="drawer-evidence-dropzone"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -1293,13 +1313,33 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
 
         <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} data-testid="drawer-cancel">Cancel</Button>
-          {tabIsFormEditable && (
+          {kind === "reviews" && record?.status === "completed" && canWrite && <Button size="sm" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Add amendment</Button>}
+          {tabIsFormEditable && !(kind === "reviews" && record?.status === "completed") && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : "Create"}</Button>
           )}
         </div>
       </SheetContent>
 
       {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} schema={SCHEMAS[relatedDrawer.kind].fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); onSaved?.(); }} />}
+
+      <Sheet open={decisionOpen} onOpenChange={setDecisionOpen}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader><SheetTitle>{decisionForm.action === 'accept' ? 'Accept finding' : decisionForm.action === 'approve' ? 'Approve exception' : kind === "findings" ? "Validate remediation" : record?.status === "completed" ? "Add review amendment" : "Complete review"}</SheetTitle></SheetHeader>
+          <form onSubmit={submitDecision} className="mt-5 space-y-4">
+            {kind === "reviews" && record?.status !== "completed" ? <>
+              <p className="text-sm">Confirm the scope, examine the supporting evidence, and record the outcome. Raise Findings for gaps before completing this Review.</p>
+              <ul className="list-disc pl-5 text-sm space-y-1">{(rules.reviewPlaybooks[record?.review_type] || rules.reviewPlaybooks.default).map(item => <li key={item}>{item}</li>)}</ul>
+              <Label className="block">Tested period<Input required value={decisionForm.tested_period || ""} onChange={e => setDecisionForm(p => ({ ...p, tested_period: e.target.value }))} /></Label>
+              <Label className="block">What was examined?<Textarea required value={decisionForm.tested_scope || ""} onChange={e => setDecisionForm(p => ({ ...p, tested_scope: e.target.value }))} /></Label>
+              <Label className="block">Conclusion and exceptions<Textarea required value={decisionForm.conclusion || ""} onChange={e => setDecisionForm(p => ({ ...p, conclusion: e.target.value }))} /></Label>
+              <p className="text-sm">{evidenceItems.length} evidence file(s) attached. Their versions will be preserved with this outcome.</p>
+              {!evidenceItems.length && <Label className="block">Why is no evidence required?<Textarea required value={decisionForm.no_evidence_reason || ""} onChange={e => setDecisionForm(p => ({ ...p, no_evidence_reason: e.target.value }))} /></Label>}
+              <label className="flex gap-2 text-sm"><Checkbox required checked={!!decisionForm.checklist_confirmed} onCheckedChange={checked => setDecisionForm(p => ({ ...p, checklist_confirmed: checked === true }))} />I checked the scope, evidence, outcome, and any required follow-up.</label>
+            </> : <Label className="block">{decisionForm.action ? "Decision rationale" : kind === "findings" ? "What confirms the remediation worked?" : "Amendment explanation"}<Textarea required value={decisionForm.rationale || ""} onChange={e => setDecisionForm(p => ({ ...p, rationale: e.target.value }))} /></Label>}
+            <Button type="submit" disabled={saving}>{saving ? "Recording…" : "Record decision"}</Button>
+          </form>
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={findingOpen} onOpenChange={setFindingOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form">
@@ -1332,26 +1372,10 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
               </div>
               <div>
                 <Label className="text-xs text-ink-secondary">Approver</Label>
-                <div className="relative">
-                  <Input
-                    value={approverQuery || (users.find((u) => u.user_id === acceptForm.approver_id)?.name || users.find((u) => u.user_id === acceptForm.approver_id)?.email || "")}
-                    onChange={(e) => { setApproverQuery(e.target.value); setAcceptForm({ ...acceptForm, approver_id: "" }); }}
-                    placeholder="Search users…" className="text-sm" data-testid="accept-approver-search"
-                  />
-                  {approverQuery && !acceptForm.approver_id && (
-                    <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-surface-card border border-line rounded-md shadow-lg" data-testid="approver-suggestions">
-                      {users.filter((u) => (u.name || u.email || "").toLowerCase().includes(approverQuery.toLowerCase())).slice(0, 8).map((u) => (
-                        <button key={u.user_id} onClick={() => { setAcceptForm({ ...acceptForm, approver_id: u.user_id }); setApproverQuery(""); }} data-testid={`approver-option-${u.user_id}`} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle">
-                          <div className="text-ink-primary">{u.name || u.email}</div>
-                          <div className="text-[11px] text-ink-help">{(u.role || "").replace("_", " ")}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <p className="text-sm">{user?.name || user?.email} · your authenticated decision</p>
               </div>
               <div>
-                <Label className="text-xs text-ink-secondary">Review / expiry date</Label>
+                <Label className="text-xs text-ink-secondary">Acceptance expiry (required)</Label>
                 <Input type="date" data-testid="accept-expiry" value={acceptForm.expiry_date} onChange={(e) => setAcceptForm({ ...acceptForm, expiry_date: e.target.value })} className="text-sm" />
                 <div className="text-[11px] text-ink-help mt-1">The risk will reappear in "Due for Review" as this date approaches.</div>
               </div>

@@ -1,4 +1,5 @@
 import { list, record, write, now, audit } from './store';
+import rules from '../lib/grcRules.json';
 export function nextDue(base, recurrence, custom) {
   if (!base || !recurrence || recurrence === 'none') return null;
   const date = new Date(base);
@@ -138,12 +139,32 @@ export function action(db, kind, id, name, body) {
   const r = record(db, kind, id),
     cid = r.client_id;
   const patch = b => write(db, kind, b, id);
+  if (kind === 'exceptions' && name === 'approve' || kind === 'findings' && name === 'accept') {
+    if (!['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can record this decision.');
+    if (!body.rationale?.trim()) throw new Error('Decision rationale is required.');
+    if (kind === 'exceptions' && (!r.expires_at || r.expires_at.slice(0,10) <= now().slice(0,10))) throw new Error('A future exception expiry is required.');
+    return patch({status:kind === 'exceptions' ? 'approved' : 'accepted', ...(kind === 'exceptions' ? {approver_id:db.user.user_id,approved_at:now()} : {}), decision_history:[...(r.decision_history || []), {action:name,by:db.user.user_id,at:now(),rationale:body.rationale}]});
+  }
+  if ((kind === 'risks' && name === 'accept' || kind === 'findings' && name === 'validate' || kind === 'policies' && ['approve','reject','verify'].includes(name)) && !['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can record this decision.');
+  if (kind === 'findings' && name === 'validate') {
+    if (r.status !== 'remediated' || list(db, 'tasks', cid).some(t => t.finding_id === id && !['done','cancelled'].includes(t.status))) throw new Error('Complete remediation before validation.');
+    if (!body.rationale?.trim()) throw new Error('Validation rationale is required.');
+    return patch({status:'closed', validated_by:db.user.user_id, validated_at:now(), decision_history:[...(r.decision_history || []), {action:'validated',by:db.user.user_id,at:now(),rationale:body.rationale}]});
+  }
+  if (kind === 'reviews' && name === 'amend') {
+    if (r.status !== 'completed' || !body.rationale?.trim()) throw new Error('A completed review and amendment explanation are required.');
+    return patch({amendments:[...(r.amendments || []), {by:db.user.user_id,at:now(),rationale:body.rationale}]});
+  }
   if (kind === 'reviews' && name === 'complete') {
-    if (r.status === 'completed') throw new Error('Review already completed');
+    if (r.status === 'completed') return { review:r, spawned:db.reviews.find(v => v.parent_review_id === id) || null };
     if (r.status === 'cancelled') throw new Error('A cancelled review cannot be completed');
+    if (!body.conclusion?.trim() || !body.tested_period?.trim() || !body.tested_scope?.trim() || !body.checklist_confirmed) throw new Error('Conclusion, tested period, scope, and checklist confirmation are required.');
+    const evidence = list(db,'evidence',cid).filter(e => e.linked_id === id && ['review','reviews'].includes(e.linked_type));
+    if (!evidence.length && !body.no_evidence_reason?.trim()) throw new Error('Attach evidence or explain why none is required.');
     patch({
       status: 'completed',
-      completion_date: body.completion_date || now(),
+      completion_date: now(),
+      completion_snapshot: {by:db.user.user_id,at:now(),conclusion:body.conclusion,tested_period:body.tested_period,tested_scope:body.tested_scope,checklist_version:1,checklist_confirmed:true,checklist:rules.reviewPlaybooks[r.review_type] || rules.reviewPlaybooks.default,no_evidence_reason:body.no_evidence_reason,evidence:evidence.map(e => ({evidence_id:e.evidence_id,filename:e.filename,version:e.version || 1}))},
       notes: body.completion_notes ? `${r.notes || ''}\n\n— Completed by ${db.user.name} —\n${body.completion_notes}` : r.notes
     });
     let spawned = null;
@@ -208,20 +229,13 @@ export function action(db, kind, id, name, body) {
   }
   if (kind === 'findings' && name === 'raise-risk') {
     if (r.risk_id) throw new Error('Risk already linked to this finding');
-    const score = {
-      critical: 5,
-      high: 4,
-      medium: 3,
-      low: 2,
-      info: 3
-    }[r.severity] || 3;
     const risk = write(db, 'risks', {
       client_id: cid,
       title: `Risk raised from finding: ${r.title}`,
       owner_id: r.owner_id,
       description: r.description,
-      likelihood_score: score,
-      impact_score: score,
+      likelihood_score: null,
+      impact_score: null,
       source: `Finding ${id}`,
       related_finding_ids: [id],
       treatment: 'mitigate',
@@ -237,18 +251,22 @@ export function action(db, kind, id, name, body) {
   }
   if (kind === 'risks' && name === 'mark-reviewed') return patch({
     last_reviewed: now(),
+    ...(r.status === 'accepted' && !r.acceptance_expires_at && r.next_review ? {acceptance_expires_at:r.next_review} : {}),
     next_review: nextDue(now(), 'annual')
   });
   if (kind === 'risks' && name === 'accept') {
     if (!body.rationale?.trim()) throw new Error('Acceptance rationale is required.');
+    if (!body.expiry_date || body.expiry_date.slice(0,10) <= now().slice(0,10) || Number.isNaN(Date.parse(body.expiry_date))) throw new Error('A future acceptance expiry is required.');
+    if (body.approver_id && body.approver_id !== db.user.user_id) throw new Error('You can only record your own acceptance decision.');
     return patch({
       status: 'accepted',
       treatment: 'accept',
       accepted: true,
-      accepted_by: body.approver_id || db.user.user_id,
+      accepted_by: db.user.user_id,
       acceptance_date: now(),
       acceptance_rationale: body.rationale,
-      next_review: body.expiry_date,
+      acceptance_expires_at: body.expiry_date,
+      decision_history: [...(r.decision_history || []), {action:'accepted', by:db.user.user_id,at:now(),rationale:body.rationale,expires_at:body.expiry_date}],
       last_reviewed: now(),
       compensating_controls: body.compensating_controls
     });
@@ -283,7 +301,8 @@ export function action(db, kind, id, name, body) {
     ...Object.fromEntries(Object.entries(body).filter(([, v]) => v != null && v !== '')),
     presence: 'verified_existing',
     verified_at: now(),
-    verified_by: db.user.user_id
+    verified_by: db.user.user_id,
+    ...(body.status === 'approved' ? {decision_history:[...(r.decision_history || []), {action:'external_approval_recorded',recorded_by:db.user.user_id,recorded_at:now(),reported_approver_id:body.approver_id,reported_approved_at:body.approved_at,provenance:'Verified metadata; not an in-app approval'}]} : {})
   });
   if (kind === 'policies' && ['submit-review', 'approve', 'reject'].includes(name)) {
     if (name === 'reject' && !body.reason?.trim()) throw new Error('Rejection reason is required.');

@@ -1,20 +1,15 @@
 // Mirrors backend/routes/portfolio.py; all views derive from the mutable records.
 import { list, ids, now } from './store';
-const closed = {
-  reviews: ['completed', 'cancelled'],
-  findings: ['closed', 'remediated'],
-  tasks: ['done', 'cancelled'],
-  risks: ['closed', 'retired']
-};
+import { closed, assessedRisk, representedFinding, riskDue } from '../lib/grcWork';
 const open = (k, r) => !(closed[k] || []).includes(r.status);
 const owner = r => r.owner_id || r.assignee_id;
 const severity = r => r.severity || r.risk_level || r.priority || '';
 const high = r => ['critical', 'high', 'immediate'].includes(severity(r));
-const due = (k, r) => k === 'risks' ? r.next_review : r.due_date;
+const due = (k, r) => k === 'risks' ? riskDue(r) : r.due_date;
 export function portfolio(db, includeArchived) {
-  const stamp = now(),
-    horizon = days => new Date(Date.now() + days * 86400000).toISOString();
-  const bucket = d => !d ? null : d < stamp ? 'past_due' : d <= horizon(30) ? 'due_30d' : d <= horizon(90) ? 'due_31_90d' : null;
+  const stamp = now().slice(0,10),
+    horizon = days => new Date(Date.now() + days * 86400000).toISOString().slice(0,10);
+  const bucket = d => !d ? null : d.slice(0,10) < stamp ? 'past_due' : d.slice(0,10) <= horizon(30) ? 'due_30d' : d.slice(0,10) <= horizon(90) ? 'due_31_90d' : null;
   const rank = r => {
     const s = severity(r),
       overdue = r.due_date && r.due_date < stamp;
@@ -22,7 +17,7 @@ export function portfolio(db, includeArchived) {
   };
   const attention = [];
   const rows = db.clients.filter(c => includeArchived || c.status !== 'archived').map(c => {
-    const work = Object.keys(closed).flatMap(k => list(db, k, c.client_id).filter(r => open(k, r) && !(k === 'tasks' && r.finding_id)).map(r => ({
+    const work = Object.keys(closed).flatMap(k => list(db, k, c.client_id).map(r => k === 'risks' ? assessedRisk(r) : r).filter(r => open(k, r) && !(k === 'findings' && representedFinding(r,list(db,'tasks',c.client_id)))).map(r => ({
       ...r,
       entity_type: k.slice(0, -1),
       id: r[ids[k]],
@@ -30,15 +25,16 @@ export function portfolio(db, includeArchived) {
       owner_id: owner(r)
     })));
     const count = b => work.filter(r => bucket(r.due_date) === b).length;
-    const critical = work.filter(r => r.entity_type !== 'review' && high(r));
+    const critical = [...list(db,'findings',c.client_id).filter(r => open('findings',r)).map(r => ({...r,entity_type:'finding'})), ...work.filter(r => r.entity_type === 'risk' || r.entity_type === 'task' && !r.finding_id)].filter(high);
     const past_due = count('past_due'),
       due_30d = count('due_30d'),
       due_31_90d = count('due_31_90d'),
       unassigned = work.filter(r => !r.owner_id).length;
     const inactive = ['archived', 'inactive'].includes(c.status);
     const criticalOverdue = work.some(r => bucket(r.due_date) === 'past_due' && (r.severity === 'critical' || r.risk_level === 'critical' || r.priority === 'immediate'));
-    const program_status = inactive ? c.status : c.status === 'onboarding' ? 'onboarding' : criticalOverdue || past_due >= 3 || critical.length >= 3 ? 'action_required' : past_due || due_30d || critical.length || unassigned ? 'needs_attention' : 'healthy';
-    if (!inactive) for (const r of work) if (['past_due', 'due_30d'].includes(bucket(r.due_date)) || ['finding', 'risk'].includes(r.entity_type) && high(r) && !bucket(r.due_date)) attention.push({
+    const setup = work.some(r => r.status === 'remediated' || r.entity_type === 'review' && !r.due_date || r.entity_type === 'risk' && r.status !== 'accepted' && !r.risk_level);
+    const program_status = inactive ? c.status : c.status === 'onboarding' ? 'onboarding' : criticalOverdue || past_due >= 3 || critical.length >= 3 ? 'action_required' : past_due || due_30d || critical.length || unassigned || setup ? 'needs_attention' : 'healthy';
+    if (!inactive) for (const r of work) if (r.status === 'remediated' || !r.owner_id || r.entity_type === 'review' && !r.due_date || r.entity_type === 'risk' && r.status !== 'accepted' && !r.risk_level || ['past_due', 'due_30d'].includes(bucket(r.due_date)) || ['finding', 'risk'].includes(r.entity_type) && high(r) && !bucket(r.due_date)) attention.push({
       ...r,
       client_name: c.name,
       rank: rank(r)
@@ -58,7 +54,7 @@ export function portfolio(db, includeArchived) {
       unassigned,
       next_major_item: major || null,
       open_actions: past_due + due_30d,
-      open_findings: list(db, 'findings', c.client_id).filter(r => ['open', 'in_remediation'].includes(r.status)).length,
+      open_findings: list(db, 'findings', c.client_id).filter(r => open('findings',r)).length,
       significant_risks: critical.filter(r => r.entity_type === 'risk').length,
       critical_high_findings: critical.filter(r => r.entity_type === 'finding').length,
       overdue_reviews: work.filter(r => r.entity_type === 'review' && bucket(r.due_date) === 'past_due').length,
@@ -103,15 +99,15 @@ export function dashboard(db, params) {
     const owners = (fields[k] || ['owner_id']).map(f => r[f]).filter(Boolean);
     if (params.scope !== 'unassigned') return !selected || owners.includes(selected);
     if (owners.length) return false;
-    return k === 'findings' ? ['open','in_remediation'].includes(r.status) : k === 'risks' ? r.status !== 'closed' : open(k,r);
+    return open(k,r);
   });
   const reviews = get('reviews'),
     findings = get('findings'),
     tasks = get('tasks'),
-    risks = get('risks');
-  const overdue = (k, r) => r.due_date && r.due_date < stamp && open(k, r);
+    risks = get('risks').map(assessedRisk);
+  const overdue = (k, r) => r.due_date && r.due_date.slice(0,10) < stamp.slice(0,10) && open(k, r);
   const overdueReviews = reviews.filter(r => overdue('reviews', r)).length;
-  const openFindings = findings.filter(r => ['open', 'in_remediation'].includes(r.status));
+  const openFindings = findings.filter(r => open('findings',r));
   const critical = openFindings.filter(r => ['high', 'critical'].includes(r.severity)).length;
   return {
     kpis: {
@@ -119,8 +115,8 @@ export function dashboard(db, params) {
       open_findings: openFindings.length,
       critical_findings: critical,
       critical_high_findings: critical,
-      significant_risks: risks.filter(r => r.status !== 'closed' && (r.impact === 'high' || ['high', 'critical'].includes(r.risk_level))).length,
-      overdue_actions: overdueReviews + findings.filter(r => overdue('findings', r)).length + tasks.filter(r => overdue('tasks', r)).length,
+      significant_risks: risks.filter(r => open('risks',r) && ['high', 'critical'].includes(r.risk_level)).length,
+      overdue_actions: overdueReviews + findings.filter(r => overdue('findings', r) && !representedFinding(r,tasks)).length + tasks.filter(r => overdue('tasks', r)).length,
       due_next_30: reviews.filter(r => open('reviews', r) && r.due_date >= stamp && r.due_date <= end).length + tasks.filter(r => r.status !== 'done' && r.due_date >= stamp && r.due_date <= end).length + get('policies').filter(r => r.next_review_date >= stamp && r.next_review_date <= end).length
     },
     scope: params.scope || 'org',

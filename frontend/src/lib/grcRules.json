@@ -1,0 +1,23 @@
+{
+  "closed": {
+    "reviews": ["completed", "cancelled"],
+    "findings": ["closed", "accepted"],
+    "tasks": ["done", "cancelled"],
+    "risks": ["closed", "retired"]
+  },
+  "riskBands": [[15, "critical"], [10, "high"], [5, "moderate"], [1, "low"]],
+  "statuses": {
+    "reviews": ["needs_scheduling", "upcoming", "in_progress", "completed", "cancelled"],
+    "findings": ["open", "in_remediation", "remediated", "closed", "accepted"],
+    "tasks": ["open", "in_progress", "blocked", "done", "cancelled"],
+    "risks": ["open", "in_progress", "identified", "assessed", "treated", "accepted", "escalated", "closed", "retired"],
+    "policies": ["draft", "in_review", "approved", "retired", "needs_verification", "needs_creation", "not_applicable"]
+  },
+  "reviewPlaybooks": {
+    "access": ["Confirm the systems and users in scope", "Check sampled access against current job responsibilities", "Record inappropriate or unconfirmed access as Findings"],
+    "vendor": ["Confirm service criticality and data/access exposure", "Examine current assurance and its covered period", "Record assurance gaps and follow-up owners"],
+    "policy": ["Identify the policy version and accountable owner", "Check whether the policy remains appropriate and approved", "Record required changes and approval follow-up"],
+    "risk": ["Reassess likelihood and impact using current conditions", "Examine treatment progress and acceptance expiry", "Record changed exposure and decisions required"],
+    "default": ["Confirm the practice and period being examined", "Examine evidence or document why none is required", "Record the conclusion, Findings, and required follow-up"]
+  }
+}

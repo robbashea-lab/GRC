@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
+import { representedFinding } from "@/lib/grcWork";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
@@ -110,6 +111,7 @@ export default function ActionItems() {
       }
       // Findings that require remediation (surface as action rows, not duplicates)
       for (const f of findings) {
+        if (representedFinding(f, tasks)) continue;
         items.push({
           _kind: "finding", id: f.finding_id, raw: f,
           title: f.title, type: "Finding / Validation",
@@ -146,7 +148,7 @@ export default function ActionItems() {
       if (r.raw.client_id !== currentClientId) return false;
       const isCompleted = r.closed.includes(r.status);
       if (view === "in_progress" && !["in_progress", "in_remediation"].includes(r.status)) return false;
-      if (view === "my" && (r.owner_id !== user?.user_id || isCompleted)) return false;
+      if (view === "my" && ((r.owner_id !== user?.user_id && !(r._kind === "review" && r.raw.reviewer_id === user?.user_id)) || isCompleted)) return false;
       if (view === "all_open" && isCompleted) return false;
       if (view === "findings" && r._kind !== "finding") return false;
       if (view === "reviews" && r._kind !== "review") return false;

@@ -4,6 +4,7 @@ import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import RecordDrawer from "@/components/RecordDrawer";
+import { SCHEMAS } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -221,7 +222,7 @@ export default function VendorRegister() {
           </table>
         </div>
       </div>
-      {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(x) => setDrawer((p) => ({ ...p, open: x }))} kind="vendors" record={drawer.record} onSaved={load} />}
+      {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(x) => setDrawer((p) => ({ ...p, open: x }))} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
       <NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} />
     </div>
   );

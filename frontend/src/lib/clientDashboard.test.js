@@ -47,7 +47,7 @@ test("linked remediation suppresses duplicate finding; independent deadlines rem
   expect(aggregate({ findings: [finding], tasks: [task("remediate", 5, "high", { finding_id: "f" })] }).attention.map(r => r.kind)).toEqual(["tasks"]);
   expect(aggregate({ findings: [finding], tasks: [task("independent", 10, "high", { finding_id: "f" })] }).attention).toHaveLength(2);
   expect(aggregate({ findings: [finding], tasks: [task("done", 5, "high", { finding_id: "f", status: "done" })] }).attention.map(r => r.kind)).toEqual(["findings"]);
-  expect(aggregate({ findings: [{ ...finding, due_date: null }], tasks: [task("low-undated", null, "low", { finding_id: "f" })] }).attention.map(r => r.kind)).toEqual(["findings"]);
+  expect(aggregate({ findings: [{ ...finding, due_date: null }], tasks: [task("low-undated", null, "low", { finding_id: "f" })] }).attention.map(r => r.kind)).toEqual(["findings", "tasks"]);
 });
 
 test("linked acceptance expiry appears once and modeled requirement reviews are included", () => {

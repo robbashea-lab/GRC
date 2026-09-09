@@ -4,6 +4,8 @@ import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import RecordDrawer from "@/components/RecordDrawer";
+import { SCHEMAS } from "@/lib/schemas";
+import { assessedRisk, riskDue, riskLevel } from "@/lib/grcWork";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,11 +26,7 @@ const LEVEL_TONE = {
 
 // Backend threshold: score >=15 critical; >=10 high; >=5 moderate; else low.
 function levelFromScore(s) {
-  if (!s && s !== 0) return null;
-  if (s >= 15) return "critical";
-  if (s >= 10) return "high";
-  if (s >= 5) return "moderate";
-  return "low";
+  return riskLevel(s);
 }
 
 const VIEWS = [
@@ -70,7 +68,7 @@ export default function RiskRegister() {
         api.get("/risks", { params: { client_id: currentClientId } }).then((r) => r.data),
         api.get("/users").then((r) => r.data).catch(() => []),
       ]);
-      setRows(r || []); setUsers(u || []);
+      setRows((r || []).map(assessedRisk)); setUsers(u || []);
     } catch (e) { toast.error(formatError(e)); }
     finally { setLoading(false); }
   }
@@ -82,7 +80,7 @@ export default function RiskRegister() {
     return rows.filter((r) => {
       const status = r.status || "open";
       const level = r.risk_level || levelFromScore(r.risk_score);
-      const dueReview = r.next_review && new Date(r.next_review).getTime() <= now + 30 * 86400000;
+      const dueReview = riskDue(r) && new Date(riskDue(r)).getTime() <= now + 30 * 86400000;
       if (view === "all_active" && status === "closed") return false;
       if (view === "high_crit" && !["high", "critical"].includes(level)) return false;
       if (view === "mine" && r.owner_id !== user?.user_id) return false;
@@ -109,7 +107,7 @@ export default function RiskRegister() {
       if (status !== "closed") s.open += 1;
       if (["high", "critical"].includes(level) && status !== "closed") s.high_crit += 1;
       if (status === "accepted") s.accepted += 1;
-      if (r.next_review && new Date(r.next_review).getTime() <= now + 30 * 86400000) s.review_due += 1;
+      if (status !== 'closed' && riskDue(r) && new Date(riskDue(r)).getTime() <= now + 30 * 86400000) s.review_due += 1;
     });
     return s;
   }, [rows, now]);
@@ -244,7 +242,7 @@ export default function RiskRegister() {
         </div>
       </div>
 
-      {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(v) => setDrawer((p) => ({ ...p, open: v }))} kind="risks" record={drawer.record} onSaved={load} />}
+      {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(v) => setDrawer((p) => ({ ...p, open: v }))} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load} />}
       <RiskMatrixModal open={matrixOpen} onOpenChange={setMatrixOpen} />
       <NewRiskDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} onOpenMatrix={() => setMatrixOpen(true)} />
     </div>

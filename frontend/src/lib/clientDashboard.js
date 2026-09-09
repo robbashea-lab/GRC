@@ -1,9 +1,10 @@
 // Presentation-only view of records returned by tenant-authorized API endpoints.
 // Nothing here creates or updates an obligation.
+import { representedFinding, assessedRisk } from './grcWork';
 export const DASHBOARD_KINDS = ["reviews", "findings", "tasks", "risks", "policies", "vendors", "exceptions", "requirements"];
 const IDS = { reviews: "review_id", findings: "finding_id", tasks: "task_id", risks: "risk_id", policies: "policy_id", vendors: "vendor_id", exceptions: "exception_id", requirements: "requirement_id" };
 const OWNERS = { reviews: ["owner_id", "reviewer_id"], tasks: ["assignee_id", "owner_id"], policies: ["owner_id", "approver_id"], vendors: ["business_owner_id", "owner_id"], exceptions: ["owner_id", "approver_id"] };
-const CLOSED = new Set(["completed", "cancelled", "done", "closed", "remediated", "retired", "archived", "inactive", "terminated", "offboarding", "revoked", "not_applicable"]);
+const CLOSED = new Set(["completed", "cancelled", "done", "closed", "retired", "archived", "inactive", "terminated", "offboarding", "revoked", "not_applicable"]);
 
 // Compare calendar dates, not the current time of day. Date-only values must
 // not shift to yesterday in a browser west of UTC.
@@ -47,7 +48,7 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
       unassigned: !owners.length, status: record.status });
   }
   for (const r of active.reviews) {
-    add(r, "reviews", "due", "Review", r.due_date, "Open Review");
+    add(r, "reviews", "due", "Review", r.due_date, "Open Review", null, true);
     // Only use a separately modeled next date when no child occurrence already
     // represents it. No recurrence dates are calculated here.
     if (r.recurrence && r.recurrence !== "none" && calendarDay(r.next_review_date) > calendarDay(r.due_date)
@@ -60,18 +61,19 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
     // A linked open remediation task is the authoritative action. Retain a
     // finding when its separately dated deadline is not represented by a task.
     const linked = active.tasks.filter(t => t.finding_id === r.finding_id);
-    const represented = linked.some(t => {
+    const represented = representedFinding(r, linked) && linked.some(t => {
       const day = calendarDay(t.due_date);
       const sameDeadline = !r.due_date || day === calendarDay(r.due_date);
       const taskNeedsAttention = (day != null && day <= currentDay + 14) || ["critical", "high"].includes(t.priority);
       // A low-priority, undated task must not hide a material open finding.
       return sameDeadline && (!["critical", "high"].includes(r.severity) || taskNeedsAttention);
     });
-    if (!represented) add(r, "findings", "due", "Finding", r.due_date, "View Finding", r.severity, true);
+    if (!represented) add(r, "findings", "due", r.status === "remediated" ? "Validation" : "Finding", r.due_date, "View Finding", r.severity, true);
   }
   for (const r of active.risks) {
+    if (r.status === "accepted" && r.acceptance_expires_at && calendarDay(r.acceptance_expires_at) !== calendarDay(r.next_review)) add(r, "risks", "acceptance", "Risk Acceptance Expiry", r.acceptance_expires_at, "View Risk");
     const represented = r.status === "accepted" && active.exceptions.some(e => e.risk_id === r.risk_id && ["approved", "expired"].includes(e.status) && calendarDay(e.expires_at) != null && calendarDay(e.expires_at) === calendarDay(r.next_review));
-    if (!represented) add(r, "risks", "review", r.status === "accepted" ? "Risk Acceptance Review" : (r.next_review ? "Risk Review" : "Risk"), r.next_review, "View Risk", r.status === "accepted" ? null : r.risk_level, r.status !== "accepted");
+    if (!represented) add(r, "risks", "review", r.status === "accepted" ? "Risk Acceptance Review" : (r.next_review ? "Risk Review" : "Risk"), r.next_review, "View Risk", r.status === "accepted" ? null : assessedRisk(r).risk_level, r.status !== "accepted");
   }
   for (const r of active.policies) {
     const represented = active.reviews.some(v => v.policy_id === r.policy_id && calendarDay(v.due_date) === calendarDay(r.next_review_date));
@@ -94,7 +96,7 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
   }
   const unique = [...new Map(candidates.map(r => [r.key, r])).values()].filter(r => scoped(r.record, r.kind));
   const urgent = r => ["critical", "high"].includes(r.severity);
-  const attention = unique.filter(r => (r.day != null && r.day <= currentDay + 14) || urgent(r));
+  const attention = unique.filter(r => (r.day != null && r.day <= currentDay + 14) || urgent(r) || r.status === "remediated" || r.unassigned && r.day == null || r.kind === "reviews" && r.day == null || r.kind === "risks" && !assessedRisk(r.record).risk_level && r.status !== "accepted");
   const rank = r => {
     const severity = r.severity === "critical" ? 0 : r.severity === "high" ? 1 : 2;
     if (r.day != null && r.day < currentDay) return severity;
@@ -104,7 +106,7 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
   const compare = (a, b) => (a.day ?? Infinity) - (b.day ?? Infinity) || a.title.localeCompare(b.title) || a.key.localeCompare(b.key);
   attention.sort((a, b) => rank(a) - rank(b) || compare(a, b));
   for (const r of attention) {
-    const timing = r.day != null && r.day < currentDay ? "Overdue" : r.day != null && r.day <= currentDay + 14 ? "Due within 14 days" : "Open";
+    const timing = r.status === "remediated" ? "Pending validation" : r.kind === "reviews" && r.day == null ? "Needs scheduling" : r.day != null && r.day < currentDay ? "Overdue" : r.day != null && r.day <= currentDay + 14 ? "Due within 14 days" : r.kind === "risks" && !assessedRisk(r.record).risk_level ? "Needs assessment" : r.unassigned ? "Unassigned" : "Open";
     r.priority_label = `${urgent(r) ? r.severity[0].toUpperCase() + r.severity.slice(1) + " · " : ""}${timing}`;
   }
   const keys = new Set(attention.map(r => r.key));
