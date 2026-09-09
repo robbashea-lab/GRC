@@ -11,6 +11,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from grc_rules import CLOSED, assessed_risk, risk_due, represented_finding
 
 from server import (  # noqa: E402
     db, get_current_user,
@@ -92,7 +93,7 @@ async def clients_directory(
             by_client_last_activity[cid] = log
 
     CLOSED_REVIEW = ("completed", "cancelled")
-    CLOSED_FINDING = ("closed", "remediated")
+    CLOSED_FINDING = tuple(CLOSED["findings"])
     CLOSED_TASK = ("done", "cancelled")
     CLOSED_RISK = ("closed", "retired")
     HIGH_TASK_PRIORITY = ("immediate", "critical", "high")
@@ -114,18 +115,18 @@ async def clients_directory(
     def _due_bucket(due: Optional[str]) -> Optional[str]:
         if not due:
             return None
-        if due < now_iso:
+        if due[:10] < now_iso[:10]:
             return "past_due"
-        if due <= horizon_30:
+        if due[:10] <= horizon_30[:10]:
             return "due_30d"
-        if due <= horizon_90:
+        if due[:10] <= horizon_90[:10]:
             return "due_31_90d"
         return None
 
     def _priority_rank(row: Dict[str, Any]) -> int:
         """Lower = higher priority."""
         sev = (row.get("severity") or row.get("risk_level") or row.get("priority") or "").lower()
-        overdue = row.get("due_date") and row["due_date"] < now_iso
+        overdue = row.get("due_date") and row["due_date"][:10] < now_iso[:10]
         crit = sev in ("critical", "immediate")
         high = sev in ("high",)
         if crit and overdue: return 0
@@ -161,7 +162,7 @@ async def clients_directory(
         is_archived_or_inactive = client_status in ("archived", "inactive")
         rs = reviews_by.get(cid, [])
         fs = findings_by.get(cid, [])
-        ks = risks_by.get(cid, [])
+        ks = [assessed_risk(r) for r in risks_by.get(cid, [])]
         ts = tasks_by.get(cid, [])
 
         pd: List[Dict] = []
@@ -195,11 +196,10 @@ async def clients_directory(
             else:                       d3190.append(row)
 
         for r in rs: _push("review",  r, CLOSED_REVIEW)
-        for f in fs: _push("finding", f, CLOSED_FINDING)
-        for r in ks: _push("risk",   r, CLOSED_RISK, due_field="next_review")
+        for f in fs:
+            if not represented_finding(f, ts): _push("finding", f, CLOSED_FINDING)
+        for r in ks: _push("risk", {**r, "next_review": risk_due(r)}, CLOSED_RISK, due_field="next_review")
         for t in ts:
-            if t.get("finding_id"):
-                continue
             _push("task", t, CLOSED_TASK)
 
         crit_high_findings = [
@@ -219,16 +219,15 @@ async def clients_directory(
 
         unassigned_items: List[Dict] = []
         for r in rs:
-            if r.get("status") not in CLOSED_REVIEW and not r.get("owner_id"):
+            if r.get("status") not in CLOSED_REVIEW and not (r.get("owner_id") or r.get("reviewer_id")):
                 unassigned_items.append({"entity_type": "review", "id": r.get("review_id"),
                                           "title": r.get("title"), "due_date": r.get("due_date")})
         for t in ts:
-            if t.get("finding_id"):  continue
             if t.get("status") not in CLOSED_TASK and not (t.get("assignee_id") or t.get("owner_id")):
                 unassigned_items.append({"entity_type": "task", "id": t.get("task_id"),
                                           "title": t.get("title"), "due_date": t.get("due_date")})
         for f in fs:
-            if f.get("status") not in CLOSED_FINDING and not f.get("owner_id"):
+            if f.get("status") not in CLOSED_FINDING and not f.get("owner_id") and not represented_finding(f, ts):
                 unassigned_items.append({"entity_type": "finding", "id": f.get("finding_id"),
                                           "title": f.get("title"), "due_date": f.get("due_date")})
         for k in ks:
@@ -260,7 +259,7 @@ async def clients_directory(
             program_status = "onboarding"
         elif critical_overdue or len(pd) >= 3 or crit_high_open >= 3:
             program_status = "action_required"
-        elif pd or crit_high_open or d30 or len(unassigned_items):
+        elif pd or crit_high_open or d30 or len(unassigned_items) or any(r.get("status") not in CLOSED_REVIEW and not r.get("due_date") for r in rs) or any(f.get("status") == "remediated" for f in fs) or any(r.get("status") not in CLOSED_RISK and not r.get("risk_level") for r in ks):
             program_status = "needs_attention"
         else:
             program_status = "healthy"
@@ -296,6 +295,13 @@ async def clients_directory(
 
             for b in pd + d30:
                 all_attention.append({**b, "rank": _priority_rank(b)})
+            for entity, items, id_key in [("review", rs, "review_id"), ("finding", fs, "finding_id"), ("risk", ks, "risk_id")]:
+                for item in items:
+                    setup = entity == "review" and item.get("status") not in CLOSED_REVIEW and not item.get("due_date")
+                    validation = entity == "finding" and item.get("status") == "remediated"
+                    assessment = entity == "risk" and item.get("status") not in (*CLOSED_RISK, "accepted") and not item.get("risk_level")
+                    if setup or validation or assessment:
+                        all_attention.append({"entity_type":entity, "client_id":cid, "client_name":c["name"], "id":item[id_key], "title":item.get("title"), "status":item.get("status"), "owner_id":item.get("owner_id") or item.get("reviewer_id"), "due_date":item.get("due_date"), "rank":6})
             for f in crit_high_findings:
                 if _due_bucket(f.get("due_date")) is None:
                     all_attention.append({
@@ -359,10 +365,12 @@ async def clients_directory(
     rows.sort(key=lambda r: (order.get(r["program_status"], 9), (r["name"] or "").lower()))
 
     all_attention.sort(key=lambda x: (x["rank"], x.get("due_date") or "9999"))
+    seen_attention = set()
+    all_attention = [a for a in all_attention if not ((a["client_id"], a["entity_type"], a["id"]) in seen_attention or seen_attention.add((a["client_id"], a["entity_type"], a["id"])))]
     attention_queue: List[Dict] = []
     for a in all_attention[:15]:
         owner = user_by_id.get(a.get("owner_id"))
-        overdue = bool(a.get("due_date") and a["due_date"] < now_iso)
+        overdue = bool(a.get("due_date") and a["due_date"][:10] < now_iso[:10])
         sev = (a.get("severity") or a.get("risk_level") or a.get("priority") or "").lower()
         priority_bucket = ("critical" if sev in ("critical", "immediate")
                            else "high" if sev == "high"

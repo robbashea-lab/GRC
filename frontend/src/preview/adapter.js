@@ -5,6 +5,7 @@ import fixtures from './fixtures.json';
 import { clone, readStore, saveStore, resetStore, ids, list, record, write, library, audit, uid, now } from './store';
 import { portfolio, dashboard } from './summaries';
 import { onboard, action } from './workflows';
+import { guardEdit } from './decisions';
 const SESSION = 'grc_demo_entered';
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 export async function previewAdapter(config) {
@@ -221,6 +222,7 @@ export async function previewAdapter(config) {
             due_date: payload.due_date
           };
         } else if (body.action === 'update') patch = payload;else throw new Error('Unknown bulk action');
+        guardEdit(body.kind, patch, r);
         if (body.kind === 'reviews' && patch.status === 'completed' && r.status !== 'completed') {
           const { status, ...fields } = patch;
           write(db, body.kind, fields, r.review_id);
@@ -293,6 +295,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if (kind === 'reviews' && r.status === 'completed' || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id))) throw new Error('Completed reviews and their evidence must be retained.');
         db[kind] = db[kind].filter(x => x[ids[kind]] !== id);
         audit(db, 'delete', kind, r);
         return save({
@@ -300,13 +303,16 @@ export async function previewAdapter(config) {
         });
       }
       if (kind === 'evidence') {
+        if (id) throw new Error('Evidence versions are immutable. Upload a new artifact.');
         if (!body.filename || !body.content_base64) throw new Error('Select a file to upload.');
         if (Math.floor(body.content_base64.split(',').pop().length * 3 / 4) > 1048576) throw new Error('Demo evidence is limited to 1 MB per file because it is stored in this browser session.');
         if (body.linked_id) {
           const target = record(db, body.linked_type === 'policy' ? 'policies' : `${body.linked_type}s`, body.linked_id);
           if (target.client_id !== body.client_id) throw new Error('Evidence must belong to the same client.');
+          if (['review','reviews'].includes(body.linked_type) && target.status === 'completed') throw new Error('Completed review evidence is frozen.');
         }
         body.size = Math.floor(body.content_base64.split(',').pop().length * 3 / 4);
+        body.version = 1;
         body.uploaded_at = now();
         body.uploaded_by = db.user.user_id;
       }
@@ -315,6 +321,7 @@ export async function previewAdapter(config) {
         body.simulated = true;
         body.status = 'invited';
       }
+      if (!['evidence','users','clients','comments'].includes(kind)) guardEdit(kind, body, id ? record(db, kind, id) : {});
       if (kind === 'reviews' && id && body.status === 'completed' && record(db, kind, id).status !== 'completed') {
         const { status, ...fields } = body;
         write(db, kind, fields, id);

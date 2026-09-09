@@ -1,4 +1,5 @@
 import fixtures from './fixtures.json';
+import { assessedRisk } from '../lib/grcWork';
 export const STORE_KEY = 'grc_interactive_demo_v1';
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
@@ -150,6 +151,7 @@ export function write(db, kind, body, id) {
     updated_at: now()
   };
   validate(db, kind, row, existing);
+  if (kind === 'risks') Object.assign(row, assessedRisk(row));
   if (kind === 'risks' && row.likelihood_score && row.impact_score) {
     row.risk_score = row.likelihood_score * row.impact_score;
     row.risk_level = row.risk_score >= 15 ? 'critical' : row.risk_score >= 10 ? 'high' : row.risk_score >= 5 ? 'moderate' : 'low';

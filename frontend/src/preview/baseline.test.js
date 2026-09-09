@@ -12,7 +12,7 @@ test('revisiting intake preserves verified policy presence and its separate draf
   const s = state();
   await api.post('/onboarding/baseline', { client_id: client.client_id, state: s, finalize: true });
   const policy = (await get('policies', client.client_id))[0];
-  await api.patch(`/policies/${policy.policy_id}`, { presence: 'verified_existing', status: 'draft', version: '1.2' });
+  await api.post(`/policies/${policy.policy_id}/verify`, { status: 'draft', version: '1.2' });
   await api.post('/onboarding/baseline', { client_id: client.client_id, state: s, finalize: true });
   expect((await get('policies', client.client_id)).find(p => p.policy_id === policy.policy_id)).toMatchObject({ presence: 'verified_existing', status: 'draft', version: '1.2' });
   expect(await get('policies', client.client_id)).toHaveLength(17);
@@ -40,7 +40,8 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
   const summary=await get('dashboard',a.client_id);expect(summary.kpis.overdue_actions).toBe(0);expect(summary.kpis.due_next_30).toBe(0);
   expect(await get('reviews',b.client_id)).toEqual([]);expect(await get('tasks',a.client_id)).toEqual([]);expect(await get('risks',a.client_id)).toEqual([]);
   const manuallyEdited=reviews[0];
-  await api.patch(`/reviews/${manuallyEdited.review_id}`,{title:'Manually renamed review',status:'completed',due_date:'2027-01-15',completion_date:'2026-09-01',recurrence:'quarterly',owner_id:'fixture-owner',notes:'Preserve review notes',evidence_ids:['fixture-evidence']});
+  await api.patch(`/reviews/${manuallyEdited.review_id}`,{title:'Manually renamed review',due_date:'2027-01-15',recurrence:'quarterly',notes:'Preserve review notes'});
+  await api.post(`/reviews/${manuallyEdited.review_id}/complete`,{spawn_next:false,conclusion:'Practice reviewed',tested_period:'Q3 2026',tested_scope:'Scope documented',checklist_confirmed:true,no_evidence_reason:'Interview only'});
   const before=await get('reviews',a.client_id);
   await api.post('/onboarding/baseline',{client_id:a.client_id,state:s,finalize:true});
   expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(5);expect(await get('reviews',a.client_id)).toHaveLength(before.length);
@@ -51,7 +52,8 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
 });
 test('invalid finalization is atomic; historical data and existing policy metadata survive',async()=>{
   const c=(await api.post('/clients',{name:'History'})).data;
-  await api.post('/policies',{client_id:c.client_id,title:'Information Security Policy',version:'3',status:'approved',onboarding_note:'Historical note'});
+  const policy = (await api.post('/policies',{client_id:c.client_id,title:'Information Security Policy',version:'3',onboarding_note:'Historical note'})).data;
+  await api.post(`/policies/${policy.policy_id}/approve`,{});
   await api.post('/requirements',{client_id:c.client_id,title:'SOC 2',status:'active'});
   await api.post('/contacts',{client_id:c.client_id,name:'Existing Contact'});
   const original=sessionStorage.getItem(STORE_KEY),s=state();s.requirements.hipaa='invalid';
