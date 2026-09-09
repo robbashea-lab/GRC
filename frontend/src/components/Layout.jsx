@@ -1,5 +1,6 @@
 import { ComplianceProvider, useCompliance } from "@/context/ComplianceContext";
 import DemoNotice from "@/preview/DemoNotice";
+import Brand from "@/components/Brand";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOrg } from "@/context/OrgContext";
@@ -203,18 +204,9 @@ function Sidebar() {
   }))];
 
   return (
-    <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
+    <aside className="app-sidebar w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
       <div className={`px-4 py-4 ${atPlatform && isInternal ? "" : "border-b border-brand-metallic-3"}`}>
-        <div className="flex items-center gap-2">
-          <div className="relative h-8 w-8 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center font-bold font-heading">
-            ◱
-            <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
-          </div>
-          <div>
-            <div className="text-ink-onDark text-sm font-semibold font-heading tracking-tight">Jee R Sea</div>
-            <div className="text-[10px] text-ink-onDarkMuted uppercase tracking-widest font-mono">{atPlatform ? "Platform Ops" : "Program Ops"}</div>
-          </div>
-        </div>
+        <Brand />
         {(!atPlatform || !isInternal) && (
           <div className="mt-3">
             <ContextHeader isInternal={isInternal} atPlatform={atPlatform} />
@@ -282,9 +274,9 @@ function Sidebar() {
 
 export default function Layout() {
   return (
-    <ComplianceProvider><div className="min-h-screen flex bg-surface-app">
+    <ComplianceProvider><div className="app-shell min-h-screen flex bg-surface-app">
       <Sidebar />
-      <main className="flex-1 min-w-0">
+      <main className="app-workspace flex-1 min-w-0">
         <DemoNotice />
         <Outlet />
       </main>

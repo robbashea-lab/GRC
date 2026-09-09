@@ -486,29 +486,29 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
       if (form[k] !== v) return null;
     }
     return (
-      <div key={f.name} className="space-y-1.5">
+      <div key={f.name} className={`space-y-1.5 min-w-0 ${f.type === "textarea" || ["title", "name", "policy_id"].includes(f.name) ? "record-field-wide" : ""}`}>
         <Label className="text-xs text-slate-600">{f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}</Label>
         {f.type === "textarea" ? (
-          <Textarea value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} data-testid={`field-${f.name}`} className="text-sm" />
+          <Textarea value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
         ) : f.type === "policy" ? (
-          <Select value={form[f.name] || "__none__"} onValueChange={v => setForm(p => ({ ...p, [f.name]: v }))}><SelectTrigger data-testid={`field-${f.name}`}><SelectValue placeholder="Related policy" /></SelectTrigger><SelectContent><SelectItem value="__none__">No linked policy</SelectItem>{policyOptions.map(p => <SelectItem key={p.policy_id} value={p.policy_id}>{p.title}</SelectItem>)}</SelectContent></Select>
+          <Select value={form[f.name] || "__none__"} onValueChange={v => setForm(p => ({ ...p, [f.name]: v }))}><SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`}><SelectValue placeholder="Related policy" /></SelectTrigger><SelectContent><SelectItem value="__none__">No linked policy</SelectItem>{policyOptions.map(p => <SelectItem key={p.policy_id} value={p.policy_id}>{p.title}</SelectItem>)}</SelectContent></Select>
         ) : f.type === "select" ? (
           <Select value={form[f.name] || ""} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
-            <SelectTrigger data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
+            <SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
               {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
         ) : f.type === "user" ? (
           <Select value={form[f.name] || "__none__"} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
-            <SelectTrigger data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Assign…" /></SelectTrigger>
+            <SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Assign…" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">Unassigned</SelectItem>
               {users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}
             </SelectContent>
           </Select>
         ) : (
-          <Input type={f.type || "text"} value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} data-testid={`field-${f.name}`} className="text-sm" />
+          <Input type={f.type || "text"} value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
         )}
       </div>
     );
@@ -947,7 +947,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
         {kind === "findings" && renderFindingActionsPanel()}
         {kind === "policies" && renderPolicyPanel()}
         {kind === "contacts" && renderContactActions()}
-        {(schema || []).map((f) => renderField(f))}
+        <div className="record-fields">{(schema || []).map((f) => renderField(f))}</div>
       </div>
     );
   }
@@ -1274,7 +1274,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col" data-testid={`${kind}-drawer`}>
+      <SheetContent side="right" className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid={`${kind}-drawer`}>
         <SheetHeader className="px-6 py-4 border-b border-slate-200">
           <div className="flex items-start justify-between">
             <div>
@@ -1282,7 +1282,7 @@ export default function RecordDrawer({ open, onOpenChange, kind, record, schema,
               <SheetTitle className="font-heading text-xl">{isEdit ? (record.title || record.name) : `New ${singular}`}</SheetTitle>
               {isEdit && status && <div className="mt-2"><StatusBadge value={status} /></div>}
             </div>
-            <button onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-slate-100" data-testid="drawer-close"><X className="h-4 w-4" /></button>
+            <button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-slate-100" data-testid="drawer-close"><X className="h-4 w-4" /></button>
           </div>
           {renderTabList()}
         </SheetHeader>

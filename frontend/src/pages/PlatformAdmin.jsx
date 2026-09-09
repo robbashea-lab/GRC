@@ -100,7 +100,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
         )}
       </div>
 
-      <div className="bg-surface-card border border-line rounded-lg overflow-hidden">
+      <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
             <tr>

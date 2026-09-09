@@ -5,7 +5,7 @@ import MockComplianceWorkspace from './ComplianceWorkspace';
 import api from '@/lib/api';
 let mockClient, mockPath, mockKey;
 jest.mock('@/context/OrgContext', () => ({ useOrg: () => ({ currentClientId: mockClient.client_id, currentClient: mockClient, clients: [mockClient] }) }));
-jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: { role: 'super_admin', name: 'Preview Admin' } }) }));
+jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: { role: 'super_admin', name: 'Alex Morgan' } }) }));
 jest.mock('@/components/NotificationBell', () => () => null);
 jest.mock('@/preview/DemoNotice', () => () => null);
 jest.mock('@/lib/api', () => ({ __esModule: true, default: { get: jest.fn() }, formatError: e => e.message }));

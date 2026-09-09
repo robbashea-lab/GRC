@@ -319,7 +319,7 @@ export default function AdminAudit() {
           {loading ? "Loading…" : `${total.toLocaleString()} event${total === 1 ? "" : "s"}`}
           {total > 0 && ` · Page ${page} of ${totalPages}`}
         </div>
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden" data-testid="audit-table">
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="audit-table">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[10px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>

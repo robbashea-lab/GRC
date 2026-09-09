@@ -2,9 +2,9 @@
 // Existing stored role IDs and backend route-level checks remain authoritative.
 export const ROLE_MODEL_STATUS = "planned";
 export const PLANNED_ROLES = [
-  { key: "platform_owner", label: "Platform Owner", scope: "PLATFORM-WIDE", legacyKey: "super_admin", detail: "Full control over the Jee R Sea platform, all client tenants, platform administration, security settings, roles, and audit functions." },
+  { key: "platform_owner", label: "Platform Owner", scope: "PLATFORM-WIDE", legacyKey: "super_admin", detail: "Full control over the Omnisciente platform, all client tenants, platform administration, security settings, roles, and audit functions." },
   { key: "platform_administrator", label: "Platform Administrator", scope: "PLATFORM OPERATIONS", legacyKey: "platform_admin", detail: "Manages routine platform and client administration with guardrails against high-impact security, permission, and destructive changes." },
-  { key: "grc_team_member", label: "GRC Team Member", scope: "ASSIGNED CLIENTS", legacyKey: null, detail: "Internal Jee R Sea staff who perform day-to-day GRC program work within assigned client organizations without administering the overall platform." },
+  { key: "grc_team_member", label: "GRC Team Member", scope: "ASSIGNED CLIENTS", legacyKey: null, detail: "Internal Omnisciente staff who perform day-to-day GRC program work within assigned client organizations without administering the overall platform." },
   { key: "client_contributor", label: "Client Contributor", scope: "THEIR CLIENT", legacyKey: "client_contributor", detail: "Participates in their organization's GRC program, including responding to assigned work, uploading evidence, commenting, and updating permitted records." },
   { key: "client_read_only", label: "Client Read Only", scope: "THEIR CLIENT", legacyKey: "client_readonly", detail: "Read-only access to authorized information within their client organization. Cannot modify GRC records or platform configuration." },
 ];

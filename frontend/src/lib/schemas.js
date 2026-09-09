@@ -3,7 +3,7 @@
 export const SCHEMAS = {
   reviews: {
     title: "Reviews",
-    subtitle: "Authoritative schedule and historical record of your GRC review obligations. Completed reviews are preserved and the next occurrence is auto-scheduled.",
+    subtitle: "Recurring review obligations and completion history.",
     columns: [
       { key: "title", label: "Title", primary: true },
       { key: "review_type", label: "Type" },

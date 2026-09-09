@@ -137,7 +137,7 @@ export default function RiskRegister() {
   return (
     <div>
       <PageHeader
-        eyebrow="Risk Register"
+        eyebrow="Client workspace"
         title="Risk Register"
         subtitle={`${currentClient?.name || ""} · Central register for identified cybersecurity, operational, third-party, compliance, and business risks.`}
         action={
@@ -186,7 +186,7 @@ export default function RiskRegister() {
       </div>
 
       <div className="p-8">
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden">
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
@@ -224,7 +224,7 @@ export default function RiskRegister() {
                     <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-slate-300">—</span>}</td>
                     <td className="tbl-cell">
                       {level ? (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium capitalize ${tone}`}>{level}</span>
+                        <span className={`pill capitalize ${tone}`}>{level}</span>
                       ) : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-slate-300">—</span>}</td>
@@ -261,8 +261,8 @@ function SummaryCard({ label, value, icon: Icon, tone }) {
   return (
     <div className="bg-surface-card border border-line rounded-lg p-3.5 flex items-start justify-between gap-3">
       <div>
-        <div className="text-[11px] font-mono uppercase tracking-widest text-ink-secondary">{label}</div>
-        <div className="text-2xl font-heading font-semibold tracking-tight text-ink-primary mt-1">{value}</div>
+        <div className="metric-label">{label}</div>
+        <div className="metric-value mt-1">{value}</div>
       </div>
       <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}>
         <Icon className="h-4 w-4" />
@@ -410,7 +410,7 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
             <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Calculated</div>
             <div className="font-mono text-sm text-ink-primary">Score {score}</div>
             <ArrowRight className="h-3 w-3 text-ink-help" />
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium capitalize ${tone}`} data-testid="new-risk-level">{level}</span>
+            <span className={`pill capitalize ${tone}`} data-testid="new-risk-level">{level}</span>
           </div>
           <div>
             <Label className="text-xs text-ink-secondary">Owner</Label>

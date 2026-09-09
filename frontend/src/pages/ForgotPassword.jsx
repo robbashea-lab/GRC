@@ -1,3 +1,4 @@
+import Brand from "@/components/Brand";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
@@ -26,12 +27,7 @@ export default function ForgotPassword() {
     <div className="min-h-screen bg-brand-charcoal text-ink-onDark flex items-center justify-center p-6">
       <div className="w-full max-w-sm bg-surface-card text-ink-primary rounded-xl border border-line p-6">
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="relative h-8 w-8 rounded-md bg-brand-charcoal text-ink-onDark flex items-center justify-center font-bold font-heading">
-              ◱<span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
-            </div>
-            <div className="font-heading font-semibold tracking-tight">Jee R Sea</div>
-          </div>
+          <div className="brand-on-light mb-5"><Brand /></div>
           <h2 className="text-xl font-heading font-semibold tracking-tight">Reset your password</h2>
           <p className="text-xs text-ink-muted mt-1">We'll email you a secure link to choose a new password.</p>
         </div>

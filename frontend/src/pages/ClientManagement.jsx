@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useOrg } from "@/context/OrgContext";
-import api, { PREVIEW_MODE, formatError } from "@/lib/api";
+import api, { formatError } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import ClientDialog from "@/components/ClientDialog";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,6 @@ export default function ClientManagement() {
     <PageHeader title="Client Management" subtitle="Manage client organizations, ownership, and lifecycle."
       action={<Button size="sm" onClick={() => setDialog({ client: null })} data-testid="add-client-button" className="bg-brand-charcoal hover:bg-brand-charcoal-hover"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
     <div className="px-8 py-4 space-y-4">
-      {PREVIEW_MODE && <p className="text-xs text-ink-help">Interactive demo: changes are temporary for this browser session. Reset Demo restores the sample data.</p>}
       <div className="flex items-center gap-3 flex-wrap">
         <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search client, industry, GRC lead..." aria-label="Search client organizations" className="max-w-sm" />
         <select aria-label="Client status" value={status} onChange={e => setStatus(e.target.value)} className="rounded-md border border-line bg-surface-card p-2 text-sm">

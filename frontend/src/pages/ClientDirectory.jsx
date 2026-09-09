@@ -54,7 +54,7 @@ const FILTERS = [
 function StatusChip({ value }) {
   const tone = PROGRAM_TONES[value] || PROGRAM_TONES.healthy;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-medium ${tone.chip}`}>
+    <span className={`pill ${tone.chip}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
       {tone.label}
     </span>
@@ -102,8 +102,8 @@ function AttentionCard({ label, value, subtitle, icon: Icon, tone, onClick, test
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[11px] font-mono uppercase tracking-widest text-ink-secondary">{label}</div>
-          <div className="text-2xl font-heading font-semibold tracking-tight text-ink-primary mt-1">{value}</div>
+          <div className="metric-label">{label}</div>
+          <div className="metric-value mt-1">{value}</div>
           {subtitle && <div className="text-[11px] text-ink-help mt-1 leading-tight">{subtitle}</div>}
         </div>
         <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}>
@@ -266,7 +266,7 @@ export default function ClientDirectory() {
               onClick={() => openDrill("attention")} />
           </div>
           {generatedAt && (
-            <div className="text-[11px] font-mono uppercase tracking-widest text-ink-help mt-2">
+            <div className="text-xs text-ink-help mt-2">
               Updated {relTime(generatedAt)}
             </div>
           )}
@@ -317,7 +317,7 @@ export default function ClientDirectory() {
 
       {/* Client Portfolio table */}
       <div className="px-8 py-4">
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden" data-testid="client-portfolio-table">
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
@@ -361,7 +361,7 @@ export default function ClientDirectory() {
                     {r.grc_lead ? (
                       <div className="text-xs">
                         <div className="text-ink-primary font-medium">{r.grc_lead.name || r.grc_lead.email}</div>
-                        {r.grc_lead.email && r.grc_lead.name && <div className="text-ink-help font-mono">{r.grc_lead.email}</div>}
+                        {r.grc_lead.email && r.grc_lead.name && <div className="text-ink-help text-xs max-w-[170px] truncate" title={r.grc_lead.email}>{r.grc_lead.email}</div>}
                       </div>
                     ) : <span className="text-ink-disabled text-xs">Unassigned</span>}
                   </td>
@@ -402,7 +402,7 @@ export default function ClientDirectory() {
           </div>
           <div className="text-xs text-ink-help font-mono">Top {queue.length}</div>
         </div>
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden" data-testid="attention-queue">
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="attention-queue">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>

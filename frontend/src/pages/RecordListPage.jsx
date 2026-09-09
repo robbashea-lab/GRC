@@ -384,7 +384,7 @@ export default function RecordListPage({ kind }) {
             </Button>
             {canWrite && (
               <Button data-testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }}>
-                <Plus className="h-4 w-4 mr-1" /> New {kind.slice(0, -1)}
+                <Plus className="h-4 w-4 mr-1" /> New {kind === "policies" ? "policy" : kind.slice(0, -1)}
               </Button>
             )}
           </div>
@@ -524,7 +524,7 @@ export default function RecordListPage({ kind }) {
       )}
 
       <div className="px-8 py-6">
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr>
@@ -557,7 +557,7 @@ export default function RecordListPage({ kind }) {
             </thead>
             <tbody>
               {loading && <tr><td colSpan={schema.columns.length + 2} className="tbl-cell text-center py-8 text-slate-400">Loading…</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={schema.columns.length + 2} className="tbl-cell text-center py-8 text-slate-400">No records.</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={schema.columns.length + 2} className="empty-state">{rows.length ? `No ${kind.replaceAll("_", " ")} match the current filters.` : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
               {!loading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);
                 return (
@@ -582,7 +582,7 @@ export default function RecordListPage({ kind }) {
                       {c.badge ? (
                         overdueReview && c.key === "status"
                           ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
-                          : <StatusBadge value={row[c.key]} testid={`${kind}-status-${i}`} />
+                          : row[c.key] ? <StatusBadge value={row[c.key]} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
                       ) :
                        c.user ? (
                          row[c.key]

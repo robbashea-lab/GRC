@@ -26,7 +26,6 @@ function withScopeParams(path, scope, extras = {}) {
 }
 
 function KpiCard({ label, value, hint, icon: Icon, tone = "neutral", testid, to }) {
-  const rails = { critical: "before:bg-semantic-critical", duesoon: "before:bg-semantic-duesoon", high: "before:bg-semantic-critical", info: "before:bg-semantic-info", neutral: "before:bg-line" };
   const iconTones = {
     critical: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
     high: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
@@ -37,17 +36,15 @@ function KpiCard({ label, value, hint, icon: Icon, tone = "neutral", testid, to 
   const inner = (
     <>
       <div className="flex items-start justify-between">
-        <div className="text-[11px] font-mono uppercase tracking-widest text-ink-secondary">{label}</div>
+        <div className="metric-label">{label}</div>
         <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${iconTones[tone] || iconTones.neutral}`}><Icon className="h-4 w-4" /></div>
       </div>
-      <div className="text-3xl font-heading font-semibold tracking-tight text-ink-primary">{value}</div>
-      <div className="text-xs text-ink-muted">{hint}</div>
+      <div className="metric-value">{value}</div>
     </>
   );
-  const cls = `relative bg-surface-card border border-line rounded-lg p-4 flex flex-col gap-2 hover:border-line-strong transition
-    before:content-[''] before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-r ${rails[tone] || rails.neutral}`;
+  const cls = "bg-surface-card border border-line rounded-lg p-4 flex flex-col gap-2 hover:border-line-strong transition-colors";
   return to ? (
-    <Link to={to} data-testid={testid} className={cls}>{inner}</Link>
+    <Link to={to} data-testid={testid} className={cls} title={hint}>{inner}</Link>
   ) : (
     <div data-testid={testid} className={cls}>{inner}</div>
   );

@@ -125,7 +125,7 @@ export default function VendorRegister() {
   return (
     <div>
       <PageHeader
-        eyebrow="Vendor Register"
+        eyebrow="Client workspace"
         title="Vendor Register"
         subtitle={`${currentClient?.name || ""} · Central register for third-party services, criticality, data handling, security assurance, and review status.`}
         action={
@@ -157,7 +157,7 @@ export default function VendorRegister() {
         <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
       <div className="p-8">
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden">
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
@@ -188,7 +188,7 @@ export default function VendorRegister() {
                     </td>
                     <td className="tbl-cell text-xs text-ink-secondary">{v.service || v.services || <span className="text-slate-300">—</span>}</td>
                     <td className="tbl-cell">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium ${tone}`}>{CRIT_LABEL[v.criticality] || v.criticality}</span>
+                      <span className={`pill ${tone}`}>{CRIT_LABEL[v.criticality] || v.criticality}</span>
                     </td>
                     <td className="tbl-cell text-xs text-ink-secondary">
                       {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="text-slate-300">—</span>}
@@ -237,8 +237,8 @@ function SummaryCard({ label, value, icon: Icon, tone }) {
   return (
     <div className="bg-surface-card border border-line rounded-lg p-3.5 flex items-start justify-between gap-3">
       <div>
-        <div className="text-[11px] font-mono uppercase tracking-widest text-ink-secondary">{label}</div>
-        <div className="text-2xl font-heading font-semibold tracking-tight text-ink-primary mt-1">{value}</div>
+        <div className="metric-label">{label}</div>
+        <div className="metric-value mt-1">{value}</div>
       </div>
       <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}><Icon className="h-4 w-4" /></div>
     </div>
