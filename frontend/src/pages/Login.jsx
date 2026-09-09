@@ -1,3 +1,4 @@
+import Brand from "@/components/Brand";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -35,92 +36,31 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-charcoal text-ink-onDark flex flex-col lg:flex-row">
+    <div className="login-shell min-h-screen bg-brand-charcoal text-ink-onDark flex flex-col lg:flex-row">
       {/* ─── Brand pane (left) ─────────────────────────────────────────── */}
       <section className="relative hidden lg:flex flex-col justify-between w-1/2 xl:w-[58%] px-14 py-12 overflow-hidden">
-        {/* Background: layered SVG grid + soft radial glow + oversized GRC monogram.
-            Everything below sits above the layers via z-10. */}
-        <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
-          {/* Radial lighting */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(1200px 700px at 20% 15%, rgba(163,219,51,0.055), transparent 60%), radial-gradient(900px 600px at 85% 90%, rgba(163,219,51,0.035), transparent 65%)",
-            }}
-          />
-          {/* Thin grid */}
-          <svg className="absolute inset-0 h-full w-full opacity-[0.055]" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
-                <path d="M42 0H0V42" fill="none" stroke="currentColor" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-          {/* Oversized monogram */}
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-24 -right-20 text-[24rem] leading-none font-heading font-semibold tracking-tighter select-none"
-            style={{ color: "rgba(255,255,255,0.014)" }}
-          >
-            GRC
-          </div>
-          {/* Diagonal accent line */}
-          <div
-            aria-hidden="true"
-            className="absolute top-0 right-0 h-full w-px"
-            style={{ background: "linear-gradient(180deg, transparent 0%, rgba(163,219,51,0.28) 40%, rgba(163,219,51,0.28) 60%, transparent 100%)" }}
-          />
-        </div>
+        <header><Brand /></header>
 
-        {/* Top — brand */}
-        <header className="relative z-10 flex items-center gap-3">
-          <div className="relative h-10 w-10 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center font-bold font-heading border border-brand-metallic-3">
-            iV
-            <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-ink-onDark font-heading font-semibold tracking-tight">Jee R Sea</div>
-            <div className="text-[10px] uppercase tracking-[0.22em] text-ink-onDarkMuted font-mono mt-0.5">
-              by iVenture Solutions
-            </div>
-          </div>
-        </header>
-
-        {/* Middle — minimal statement */}
+        {/* Secure workspace identity */}
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2.5 text-[11px] font-mono uppercase tracking-[0.22em] text-ink-onDarkMuted mb-5">
-            <span className="h-px w-8 bg-brand-lime" />
-            GRC Operations
-          </div>
-          <h1 className="text-4xl xl:text-[42px] leading-[1.05] font-heading font-semibold tracking-tight text-ink-onDark">
+          <h1 className="text-3xl leading-tight font-heading font-semibold tracking-tight text-ink-onDark">
             GRC Workspace
           </h1>
-          <p className="mt-4 text-[11px] leading-relaxed text-ink-onDarkMuted font-mono uppercase tracking-[0.28em]">
+          <p className="mt-3 text-sm leading-relaxed text-ink-onDarkMuted">
             Governance · Risk · Compliance
           </p>
         </div>
 
         {/* Bottom — footer */}
-        <footer className="relative z-10 text-[11px] font-mono uppercase tracking-[0.18em] text-ink-onDarkMuted">
-          © {new Date().getFullYear()} iVenture Solutions
+        <footer className="relative z-10 text-xs text-ink-onDarkMuted">
+          © {new Date().getFullYear()} Prestige Worldwide
         </footer>
       </section>
 
       {/* ─── Auth pane (right) ─────────────────────────────────────────── */}
       <section className="relative flex-1 flex flex-col items-center justify-center px-6 py-10 lg:px-10 bg-brand-charcoal border-l border-brand-metallic-3">
         {/* Mobile-only brand header (visible when the left pane is hidden) */}
-        <div className="lg:hidden mb-10 flex items-center gap-3 self-start">
-          <div className="relative h-9 w-9 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center font-bold font-heading border border-brand-metallic-3">
-            iV
-            <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-brand-lime" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-ink-onDark font-heading font-semibold tracking-tight text-sm">Jee R Sea</div>
-            <div className="text-[9px] uppercase tracking-[0.22em] text-ink-onDarkMuted font-mono">by iVenture Solutions</div>
-          </div>
-        </div>
+        <div className="lg:hidden mb-10 self-start"><Brand /></div>
 
         <div className="w-full max-w-sm">
           {/* Environment identifier */}
@@ -129,17 +69,17 @@ export default function Login() {
           </div>
           <h2 className="text-2xl font-heading font-semibold tracking-tight text-ink-onDark">Sign in</h2>
           <p className="text-[13px] text-ink-onDarkMuted mt-1.5">
-            Access your Jee R Sea workspace.
+            Access your Omnisciente workspace.
           </p>
 
           {/* Panel */}
           <div className="mt-7 space-y-4">
             {PREVIEW_MODE ? (
               <>
-                <Button data-testid="preview-signin" onClick={submit} disabled={loading} className="w-full h-10 bg-[#8FC22B] hover:bg-[#7FAE24] text-brand-charcoal font-semibold">
+                <Button data-testid="preview-signin" onClick={submit} disabled={loading} className="w-full h-10 bg-[#DCE5F2] hover:bg-[#EEF2F8] text-brand-charcoal font-semibold">
                   {loading ? "Opening…" : "Sign in"}
                 </Button>
-                <p className="text-xs text-ink-onDarkMuted">Interactive demo · No credentials needed. Changes last for this browser session.</p>
+                <p className="text-xs text-ink-onDarkMuted">Demo workspace · No credentials required. Changes are saved for this session only.</p>
               </>
             ) : <>
             <button
@@ -162,7 +102,7 @@ export default function Login() {
 
             <form onSubmit={submit} className="space-y-3.5">
               <div>
-                <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.18em] font-mono text-ink-onDarkMuted">Work email</Label>
+                <Label htmlFor="email" className="text-[13px] font-medium text-ink-onDarkMuted">Work email</Label>
                 <Input
                   id="email"
                   data-testid="email-input"
@@ -177,7 +117,7 @@ export default function Login() {
               </div>
               <div>
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-[11px] uppercase tracking-[0.18em] font-mono text-ink-onDarkMuted">Password</Label>
+                  <Label htmlFor="password" className="text-[13px] font-medium text-ink-onDarkMuted">Password</Label>
                   <Link
                     to="/forgot-password"
                     data-testid="forgot-password-link"
@@ -212,7 +152,7 @@ export default function Login() {
                 data-testid="submit-auth"
                 type="submit"
                 disabled={loading}
-                className="group w-full h-10 mt-1 bg-[#8FC22B] hover:bg-[#7FAE24] text-brand-charcoal font-semibold tracking-tight border border-[#7FAE24] shadow-[0_1px_0_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all"
+                className="group w-full h-10 mt-1 bg-[#DCE5F2] hover:bg-[#EEF2F8] text-brand-charcoal font-semibold tracking-tight border border-[#DCE5F2] shadow-[0_1px_0_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all"
               >
                 {loading ? "Signing in…" : (
                   <span className="inline-flex items-center gap-1.5">
@@ -238,13 +178,13 @@ export default function Login() {
           <div className="mt-8 pt-5 border-t border-brand-metallic-3/70 text-center">
             <p className="text-[11px] text-ink-onDarkMuted" data-testid="need-access-note">
               Need access?{" "}
-              <span className="text-ink-onDark2">Contact your iVenture representative.</span>
+              <span className="text-ink-onDark2">Contact your platform administrator.</span>
             </p>
           </div>
 
           {/* Mobile-only compact footer */}
-          <div className="lg:hidden mt-8 text-center text-[10px] font-mono uppercase tracking-[0.18em] text-ink-onDarkMuted">
-            © {new Date().getFullYear()} iVenture Solutions
+          <div className="lg:hidden mt-8 text-center text-xs text-ink-onDarkMuted">
+            © {new Date().getFullYear()} Prestige Worldwide
           </div>
         </div>
       </section>

@@ -4,8 +4,8 @@
   "responses": {
     "/auth/me": {
       "user_id": "user_3e7a764890b9",
-      "email": "preview@example.invalid",
-      "name": "Preview Admin",
+      "email": "alex.morgan@prestigeworldwide.example",
+      "name": "Alex Morgan",
       "role": "super_admin",
       "client_ids": [
         "cli_4be55dbf1400",
@@ -38,8 +38,8 @@
     "/users": [
       {
         "user_id": "user_3e7a764890b9",
-        "email": "preview@example.invalid",
-        "name": "Preview Admin",
+        "email": "alex.morgan@prestigeworldwide.example",
+        "name": "Alex Morgan",
         "role": "super_admin",
         "client_ids": [
           "cli_4be55dbf1400",
@@ -51,8 +51,8 @@
       },
       {
         "user_id": "user_555c834fb122",
-        "email": "platform-admin@example.test",
-        "name": "Platform Admin",
+        "email": "jordan.bennett@prestigeworldwide.example",
+        "name": "Jordan Bennett",
         "role": "platform_admin",
         "client_ids": [
           "cli_4be55dbf1400",
@@ -63,7 +63,7 @@
       },
       {
         "user_id": "user_d87618796be6",
-        "email": "acme-contributor@example.test",
+        "email": "alicia.rivera@acme.example",
         "name": "Alicia Rivera",
         "role": "client_contributor",
         "client_ids": [
@@ -74,7 +74,7 @@
       },
       {
         "user_id": "user_59106c3ef6f5",
-        "email": "acme-readonly@example.test",
+        "email": "ravi.kumar@acme.example",
         "name": "Ravi Kumar",
         "role": "client_readonly",
         "client_ids": [
@@ -85,7 +85,7 @@
       },
       {
         "user_id": "user_7f5bfd561d99",
-        "email": "globex-contributor@example.test",
+        "email": "chen.wei@globex.example",
         "name": "Chen Wei",
         "role": "client_contributor",
         "client_ids": [
@@ -107,8 +107,8 @@
           "grc_lead_id": "user_3e7a764890b9",
           "grc_lead": {
             "user_id": "user_3e7a764890b9",
-            "name": "Preview Admin",
-            "email": "preview@example.invalid"
+            "name": "Alex Morgan",
+            "email": "alex.morgan@prestigeworldwide.example"
           },
           "assigned_owner_id": "user_3e7a764890b9",
           "client_status": "active",
@@ -143,8 +143,8 @@
           "grc_lead_id": "user_3e7a764890b9",
           "grc_lead": {
             "user_id": "user_3e7a764890b9",
-            "name": "Preview Admin",
-            "email": "preview@example.invalid"
+            "name": "Alex Morgan",
+            "email": "alex.morgan@prestigeworldwide.example"
           },
           "assigned_owner_id": "user_3e7a764890b9",
           "client_status": "active",
@@ -386,8 +386,8 @@
       "team_workload": [
         {
           "user_id": "user_3e7a764890b9",
-          "name": "Preview Admin",
-          "email": "preview@example.invalid",
+          "name": "Alex Morgan",
+          "email": "alex.morgan@prestigeworldwide.example",
           "role": "super_admin",
           "clients": 2,
           "client_ids": [
@@ -603,7 +603,7 @@
     "/clients/cli_4be55dbf1400/members": [
       {
         "user_id": "user_d87618796be6",
-        "email": "acme-contributor@example.test",
+        "email": "alicia.rivera@acme.example",
         "name": "Alicia Rivera",
         "role": "client_contributor",
         "client_ids": [
@@ -614,8 +614,8 @@
       },
       {
         "user_id": "user_555c834fb122",
-        "email": "platform-admin@example.test",
-        "name": "Platform Admin",
+        "email": "jordan.bennett@prestigeworldwide.example",
+        "name": "Jordan Bennett",
         "role": "platform_admin",
         "client_ids": [
           "cli_4be55dbf1400",
@@ -626,8 +626,8 @@
       },
       {
         "user_id": "user_3e7a764890b9",
-        "email": "preview@example.invalid",
-        "name": "Preview Admin",
+        "email": "alex.morgan@prestigeworldwide.example",
+        "name": "Alex Morgan",
         "role": "super_admin",
         "client_ids": [
           "cli_4be55dbf1400",
@@ -639,7 +639,7 @@
       },
       {
         "user_id": "user_59106c3ef6f5",
-        "email": "acme-readonly@example.test",
+        "email": "ravi.kumar@acme.example",
         "name": "Ravi Kumar",
         "role": "client_readonly",
         "client_ids": [
@@ -1733,8 +1733,8 @@
       "scope_label": "Your assigned work",
       "target_user": {
         "user_id": "user_3e7a764890b9",
-        "name": "Preview Admin",
-        "email": "preview@example.invalid"
+        "name": "Alex Morgan",
+        "email": "alex.morgan@prestigeworldwide.example"
       },
       "needs_attention": [],
       "priority_findings": [],
@@ -1840,11 +1840,11 @@
         "due_next_30": 0
       },
       "scope": "user",
-      "scope_label": "GRC items assigned to Preview Admin",
+      "scope_label": "GRC items assigned to Alex Morgan",
       "target_user": {
         "user_id": "user_3e7a764890b9",
-        "name": "Preview Admin",
-        "email": "preview@example.invalid"
+        "name": "Alex Morgan",
+        "email": "alex.morgan@prestigeworldwide.example"
       },
       "needs_attention": [],
       "priority_findings": [],
@@ -1893,11 +1893,11 @@
         "due_next_30": 0
       },
       "scope": "user",
-      "scope_label": "GRC items assigned to Platform Admin",
+      "scope_label": "GRC items assigned to Jordan Bennett",
       "target_user": {
         "user_id": "user_555c834fb122",
-        "name": "Platform Admin",
-        "email": "platform-admin@example.test"
+        "name": "Jordan Bennett",
+        "email": "jordan.bennett@prestigeworldwide.example"
       },
       "needs_attention": [
         {
@@ -1985,7 +1985,7 @@
       "target_user": {
         "user_id": "user_d87618796be6",
         "name": "Alicia Rivera",
-        "email": "acme-contributor@example.test"
+        "email": "alicia.rivera@acme.example"
       },
       "needs_attention": [
         {
@@ -2343,7 +2343,7 @@
       "target_user": {
         "user_id": "user_59106c3ef6f5",
         "name": "Ravi Kumar",
-        "email": "acme-readonly@example.test"
+        "email": "ravi.kumar@acme.example"
       },
       "needs_attention": [],
       "priority_findings": [],
@@ -2582,7 +2582,7 @@
     "/clients/cli_879b746d8753/members": [
       {
         "user_id": "user_7f5bfd561d99",
-        "email": "globex-contributor@example.test",
+        "email": "chen.wei@globex.example",
         "name": "Chen Wei",
         "role": "client_contributor",
         "client_ids": [
@@ -2593,8 +2593,8 @@
       },
       {
         "user_id": "user_555c834fb122",
-        "email": "platform-admin@example.test",
-        "name": "Platform Admin",
+        "email": "jordan.bennett@prestigeworldwide.example",
+        "name": "Jordan Bennett",
         "role": "platform_admin",
         "client_ids": [
           "cli_4be55dbf1400",
@@ -2605,8 +2605,8 @@
       },
       {
         "user_id": "user_3e7a764890b9",
-        "email": "preview@example.invalid",
-        "name": "Preview Admin",
+        "email": "alex.morgan@prestigeworldwide.example",
+        "name": "Alex Morgan",
         "role": "super_admin",
         "client_ids": [
           "cli_4be55dbf1400",
@@ -3701,8 +3701,8 @@
       "scope_label": "Your assigned work",
       "target_user": {
         "user_id": "user_3e7a764890b9",
-        "name": "Preview Admin",
-        "email": "preview@example.invalid"
+        "name": "Alex Morgan",
+        "email": "alex.morgan@prestigeworldwide.example"
       },
       "needs_attention": [],
       "priority_findings": [],
@@ -3808,11 +3808,11 @@
         "due_next_30": 0
       },
       "scope": "user",
-      "scope_label": "GRC items assigned to Preview Admin",
+      "scope_label": "GRC items assigned to Alex Morgan",
       "target_user": {
         "user_id": "user_3e7a764890b9",
-        "name": "Preview Admin",
-        "email": "preview@example.invalid"
+        "name": "Alex Morgan",
+        "email": "alex.morgan@prestigeworldwide.example"
       },
       "needs_attention": [],
       "priority_findings": [],
@@ -3861,11 +3861,11 @@
         "due_next_30": 0
       },
       "scope": "user",
-      "scope_label": "GRC items assigned to Platform Admin",
+      "scope_label": "GRC items assigned to Jordan Bennett",
       "target_user": {
         "user_id": "user_555c834fb122",
-        "name": "Platform Admin",
-        "email": "platform-admin@example.test"
+        "name": "Jordan Bennett",
+        "email": "jordan.bennett@prestigeworldwide.example"
       },
       "needs_attention": [
         {
@@ -3953,7 +3953,7 @@
       "target_user": {
         "user_id": "user_7f5bfd561d99",
         "name": "Chen Wei",
-        "email": "globex-contributor@example.test"
+        "email": "chen.wei@globex.example"
       },
       "needs_attention": [
         {

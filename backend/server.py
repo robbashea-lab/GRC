@@ -532,7 +532,7 @@ async def forgot_password(body: ForgotIn):
     safe_link = _esc(link)
     html = (
         '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">'
-        f'<h2 style="margin:0 0 12px 0;color:#0f172a">Reset your Northstar GRC password</h2>'
+        f'<h2 style="margin:0 0 12px 0;color:#0f172a">Reset your Omnisciente password</h2>'
         f'<p style="color:#334155;font-size:14px">Hi {name}, we received a request to reset your password. '
         f'Use the link below within the next 2 hours to choose a new one.</p>'
         f'<p style="margin:20px 0"><a href="{safe_link}" '
@@ -543,7 +543,7 @@ async def forgot_password(body: ForgotIn):
         'We never ask for passwords or codes by email.</p>'
         '</div>'
     )
-    await send_email(to=email, subject="Reset your Northstar GRC password", html=html)
+    await send_email(to=email, subject="Reset your Omnisciente password", html=html)
     return {"ok": True}
 
 
@@ -826,8 +826,8 @@ async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current
                     role_phrase = f" as the <strong>{_esc(label)}</strong>"
                 tenant_phrase = f" for <strong>{_esc(client_name)}</strong>" if client_name else ""
                 subject = (
-                    f"You're invited to Northstar GRC — {client_name}"
-                    if client_name else "You're invited to Northstar GRC"
+                    f"You're invited to Omnisciente — {client_name}"
+                    if client_name else "You're invited to Omnisciente"
                 )
                 context_line = ""
                 if client_name or grc_roles:
@@ -839,9 +839,9 @@ async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current
                     )
                 html = (
                     f'<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">'
-                    f'<h2 style="margin:0 0 12px 0;color:#0f172a">Welcome to Northstar GRC</h2>'
+                    f'<h2 style="margin:0 0 12px 0;color:#0f172a">Welcome to Omnisciente</h2>'
                     f'<p style="margin:0 0 12px 0;color:#334155">'
-                    f'Hi {_esc(body.name)}, {_esc(actor_name)} has invited you to join Northstar GRC.'
+                    f'Hi {_esc(body.name)}, {_esc(actor_name)} has invited you to join Omnisciente.'
                     f'</p>'
                     f'{context_line}'
                     f'<p style="margin:0 0 20px 0"><a href="{_esc(invite_link)}" '
@@ -2159,7 +2159,7 @@ def _assert_safe_email(subject: str, html: str) -> None:
 async def send_email(*, to: str, subject: str, html: str) -> Optional[str]:
     _assert_safe_email(subject, html)
     email_key = os.environ.get("EMERGENT_EMAIL_KEY")
-    from_name = os.environ.get("EMAIL_FROM_NAME", "Northstar GRC")
+    from_name = os.environ.get("EMAIL_FROM_NAME", "Omnisciente")
     if not email_key:
         logging.warning("EMERGENT_EMAIL_KEY not set; skipping email to %s", to)
         return None
@@ -2196,7 +2196,7 @@ def _digest_html(user_name: str, overdue_reviews: List[Dict], overdue_findings: 
         f'<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #e5e7eb">'
         f'<thead><tr style="background:#f8fafc"><th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Type</th><th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Title</th><th align="left" style="padding:8px 12px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Due</th></tr></thead>'
         f'<tbody>{rows}</tbody></table>'
-        f'<p style="margin:16px 0 0 0;font-size:12px;color:#94a3b8">Sent by Northstar GRC. We never ask for passwords or codes by email.</p>'
+        f'<p style="margin:16px 0 0 0;font-size:12px;color:#94a3b8">Sent by Omnisciente. We never ask for passwords or codes by email.</p>'
         f'</td></tr></table>'
     )
 
@@ -2236,7 +2236,7 @@ async def _send_overdue_digest():
             continue
         html = _digest_html(u.get("name") or u["email"], buckets["reviews"], buckets["findings"])
         total = len(buckets["reviews"]) + len(buckets["findings"])
-        await send_email(to=u["email"], subject=f"Northstar GRC: {total} overdue item(s) need attention", html=html)
+        await send_email(to=u["email"], subject=f"Omnisciente: {total} overdue item(s) need attention", html=html)
 
 
 # Manual trigger for testing (admin only)
@@ -2466,7 +2466,7 @@ def _weekly_html(user_name: str, buckets: Dict[str, Dict[str, List[Dict]]], app_
         f'{section("Risks to reassess (>12 months since last review)", buckets.get("reassess", {}), "duesoon")}'
         f'{section("Vendor assurance expiring in the next 60 days", buckets.get("assurance", {}), "duesoon")}'
         f'<p style="margin:20px 0 0 0;font-size:13px;color:#475569">Open your dashboard: <a href="{escape(dashboard_link)}" style="color:#0f172a;text-decoration:underline">{escape(dashboard_link)}</a></p>'
-        f'<p style="margin:12px 0 0 0;font-size:11px;color:#94a3b8">Sent by Northstar GRC. We never ask for passwords or codes by email. To stop receiving this digest, ask your admin to update your notification preferences.</p>'
+        f'<p style="margin:12px 0 0 0;font-size:11px;color:#94a3b8">Sent by Omnisciente. We never ask for passwords or codes by email. To stop receiving this digest, ask your admin to update your notification preferences.</p>'
         f'</td></tr></table>'
     )
 
@@ -2577,8 +2577,8 @@ async def _send_weekly_digest() -> Dict:
             html = _weekly_html(u.get("name") or email, buckets, app_base_url)
             overdue_total = sum(len(v) for v in buckets["overdue"].values())
             subject = (
-                f"Northstar GRC: {overdue_total} overdue and {total - overdue_total} due-soon this week"
-                if overdue_total else f"Northstar GRC: {total} item(s) due this week"
+                f"Omnisciente: {overdue_total} overdue and {total - overdue_total} due-soon this week"
+                if overdue_total else f"Omnisciente: {total} item(s) due this week"
             )
             await send_email(to=email, subject=subject, html=html)
             stats["emails_sent"] += 1
@@ -3792,7 +3792,7 @@ async def _build_board_report(client_id: str, user: Dict) -> bytes:
     styles["Title"].alignment = 0
 
     story: List = []
-    story.append(Paragraph("Northstar GRC — Board Report", styles["Title"]))
+    story.append(Paragraph("Omnisciente — Board Report", styles["Title"]))
     story.append(Paragraph(f"{client['name']} · {datetime.now(timezone.utc).strftime('%d %B %Y')}", styles["Mini"]))
     story.append(Spacer(1, 8))
 

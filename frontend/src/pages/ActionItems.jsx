@@ -7,7 +7,7 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, ListChecks, ArrowRight } from "lucide-react";
+import { Search, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
@@ -17,7 +17,7 @@ import { SCHEMAS } from "@/lib/schemas";
 
 const VIEWS = [
   { id: "all", label: "All" },
-  { id: "my", label: "My Actions" },
+  { id: "my", label: "Assigned to Me" },
   { id: "all_open", label: "All Open" },
   { id: "in_progress", label: "In Progress" },
   { id: "findings", label: "Findings" },
@@ -188,9 +188,8 @@ export default function ActionItems() {
   return (
     <div>
       <PageHeader
-        eyebrow="Action Items"
-        title="What needs to be done"
-        subtitle={`${currentClient?.name || ""} · A unified work queue — assigned tasks, remediation from findings, and reviews you're responsible for.`}
+        title="Action Items"
+        subtitle={`${currentClient?.name || ""} · Assigned work, remediation and review obligations.`}
         action={
           canWrite && (
             <Button
@@ -231,7 +230,7 @@ export default function ActionItems() {
       </div>
 
       <div className="p-8">
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden">
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
@@ -254,13 +253,12 @@ export default function ActionItems() {
                 const tone = PRIORITY_TONE[(r.priority || "").toLowerCase()] || PRIORITY_TONE.medium;
                 return (
                   <tr key={`${r._kind}-${r.id}`} className="row-hover cursor-pointer" onClick={() => open(r)} data-testid={`ai-row-${i}`}>
-                    <td className="tbl-cell font-medium text-ink-primary flex items-center gap-1.5 min-w-0">
-                      <span className="truncate">{r.title}</span>
-                      <ArrowRight className="h-3 w-3 text-ink-help opacity-0 group-hover:opacity-100" />
+                    <td className="tbl-cell font-medium text-ink-primary">
+                      <button type="button" className="text-left hover:underline focus-visible:underline" onClick={e => { e.stopPropagation(); open(r); }}>{r.title}</button>
                     </td>
                     <td className="tbl-cell text-xs text-ink-secondary">{r.type}</td>
                     <td className="tbl-cell">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium ${tone}`}>
+                      <span className={`pill ${tone}`}>
                         {priorityLabel(r.priority)}
                       </span>
                     </td>
@@ -274,7 +272,7 @@ export default function ActionItems() {
                       ) : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="tbl-cell">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-[11px] text-ink-secondary font-medium capitalize">
+                      <span className="pill pill-neutral">
                         {r.status === "remediated" ? "Pending validation" : (r.status || "").replaceAll("_", " ")}
                       </span>
                     </td>

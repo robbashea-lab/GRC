@@ -71,11 +71,11 @@ export default function Evidence() {
         >
           <UploadCloud className="h-8 w-8 mx-auto text-slate-500 mb-2" />
           <div className="text-sm font-medium text-slate-900">Drop files here or click to upload</div>
-          <div className="text-xs text-slate-500 mt-1">Any file type. Stored securely, versioned per client.</div>
+          <div className="text-xs text-slate-500 mt-1">Files and versions are organized by client.</div>
           <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(Array.from(e.target.files || []))} data-testid="evidence-file-input" />
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
           <table className="w-full">
             <thead><tr>
               <th className="tbl-head">File</th><th className="tbl-head">Type</th>
