@@ -1,5 +1,6 @@
 import { list, record, write, now, audit } from './store';
-import rules from '../lib/grcRules.json';
+import { reviewAction, reviewEvent } from './reviews';
+import { assertCurrentOccurrence } from '../lib/reviewOccurrences';
 export function nextDue(base, recurrence, custom) {
   if (!base || !recurrence || recurrence === 'none') return null;
   const date = new Date(base);
@@ -149,62 +150,30 @@ export function action(db, kind, id, name, body) {
   if (kind === 'findings' && name === 'validate') {
     if (r.status !== 'remediated' || list(db, 'tasks', cid).some(t => t.finding_id === id && !['done','cancelled'].includes(t.status))) throw new Error('Complete remediation before validation.');
     if (!body.rationale?.trim()) throw new Error('Validation rationale is required.');
-    return patch({status:'closed', validated_by:db.user.user_id, validated_at:now(), decision_history:[...(r.decision_history || []), {action:'validated',by:db.user.user_id,at:now(),rationale:body.rationale}]});
+    const result = patch({status:'closed', validated_by:db.user.user_id, validated_at:now(), closed_by:db.user.user_id,closed_at:now(),decision_history:[...(r.decision_history || []), {action:'validated',by:db.user.user_id,at:now(),rationale:body.rationale}]});
+    if (r.review_id) reviewEvent(db,record(db,'reviews',r.review_id),'Finding validated and closed',r.occurrence_id || 'occ_' + r.review_id,{finding_id:id,title:r.title});
+    return result;
   }
   if (kind === 'reviews' && name === 'amend') {
     if (r.status !== 'completed' || !body.rationale?.trim()) throw new Error('A completed review and amendment explanation are required.');
     return patch({amendments:[...(r.amendments || []), {by:db.user.user_id,at:now(),rationale:body.rationale}]});
   }
-  if (kind === 'reviews' && name === 'complete') {
-    if (r.status === 'completed') return { review:r, spawned:db.reviews.find(v => v.parent_review_id === id) || null };
-    if (r.status === 'cancelled') throw new Error('A cancelled review cannot be completed');
-    if (!body.conclusion?.trim() || !body.tested_period?.trim() || !body.tested_scope?.trim() || !body.checklist_confirmed) throw new Error('Conclusion, tested period, scope, and checklist confirmation are required.');
-    const evidence = list(db,'evidence',cid).filter(e => e.linked_id === id && ['review','reviews'].includes(e.linked_type));
-    if (!evidence.length && !body.no_evidence_reason?.trim()) throw new Error('Attach evidence or explain why none is required.');
-    patch({
-      status: 'completed',
-      completion_date: now(),
-      completion_snapshot: {by:db.user.user_id,at:now(),conclusion:body.conclusion,tested_period:body.tested_period,tested_scope:body.tested_scope,checklist_version:1,checklist_confirmed:true,checklist:rules.reviewPlaybooks[r.review_type] || rules.reviewPlaybooks.default,no_evidence_reason:body.no_evidence_reason,evidence:evidence.map(e => ({evidence_id:e.evidence_id,filename:e.filename,version:e.version || 1}))},
-      notes: body.completion_notes ? `${r.notes || ''}\n\n— Completed by ${db.user.name} —\n${body.completion_notes}` : r.notes
-    });
-    let spawned = null;
-    const d = body.spawn_next && r.recurrence !== 'none' && (r.next_review_date || nextDue(r.due_date || r.completion_date, r.recurrence, r.custom_recurrence_days));
-    if (d) {
-      spawned = write(db, 'reviews', {
-        title: r.title,
-        client_id: cid,
-        review_type: r.review_type,
-        recurrence: r.recurrence,
-        custom_recurrence_days: r.custom_recurrence_days,
-        owner_id: r.owner_id,
-        reviewer_id: r.reviewer_id,
-        scope: r.scope,
-        policy_id: r.policy_id,
-        vendor_id: r.vendor_id,
-        due_date: d,
-        next_review_date: nextDue(d, r.recurrence, r.custom_recurrence_days),
-        parent_review_id: id
-      });
-      patch({
-        next_occurrence_id: spawned.review_id
-      });
-    }
-    return {
-      review: r,
-      spawned
-    };
-  }
+  if (kind === 'reviews' && ['start','complete'].includes(name)) return reviewAction(db, id, name, body);
   if (kind === 'reviews' && name === 'create-finding') {
+    const prior = body.request_id && list(db,'findings',cid).find(f => f.review_id === id && f.occurrence_id === body.occurrence_id && f.request_id === body.request_id);
+    if (prior) return prior;
+    assertCurrentOccurrence(r, body.occurrence_id);
     if (!body.title?.trim()) throw new Error('Finding title is required.');
     if (!body.remediation_title?.trim()) throw new Error('Remediation action is required.');
     if (!['low', 'medium', 'high', 'critical'].includes(body.severity || 'medium')) throw new Error('Invalid severity.');
     const finding = write(db, 'findings', {
       title: body.title.trim(), description: body.description || '', severity: body.severity || 'medium',
       remediation_plan: body.remediation_plan || '', due_date: body.due_date || null,
-      client_id: cid, review_id: id, source: r.title, identified_at: now(),
-      owner_id: body.owner_id ?? r.owner_id
+      client_id: cid, review_id: id, occurrence_id:body.occurrence_id, request_id:body.request_id, source: r.title, identified_at: now(),
+      owner_id: Object.prototype.hasOwnProperty.call(body, 'owner_id') ? body.owner_id : r.owner_id
     });
     action(db, 'findings', finding.finding_id, 'create-task', { title: body.remediation_title.trim() });
+    reviewEvent(db, r, 'Finding raised', body.occurrence_id, {finding_id:finding.finding_id,title:finding.title});
     return finding;
   }
   if (kind === 'findings' && name === 'create-task') {
@@ -216,6 +185,7 @@ export function action(db, kind, id, name, body) {
       client_id: cid,
       finding_id: id,
       review_id: r.review_id,
+      occurrence_id: r.occurrence_id,
       source: r.source || 'Finding remediation',
       assignee_id: body.assignee_id || r.owner_id,
       priority: body.priority || r.severity,

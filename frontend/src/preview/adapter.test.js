@@ -220,6 +220,7 @@ test('review → finding → task → risk actions persist, update counts, prese
   const {
     data: f
   } = await api.post(`/reviews/${r.review_id}/create-finding`, {
+    occurrence_id:r.current_occurrence_id,
     severity: 'high',
     due_date: '2020-01-01',
     title: 'QA finding',
@@ -249,13 +250,13 @@ test('review → finding → task → risk actions persist, update counts, prese
     risk_level: 'low'
   });
   const result = (await api.post(`/reviews/${r.review_id}/complete`, {
-    spawn_next: true, conclusion: 'Access gap recorded', tested_period: 'January 2026', tested_scope: 'Access sample', checklist_confirmed: true, no_evidence_reason: 'Interview results recorded in conclusion'
+    occurrence_id:r.current_occurrence_id, spawn_next: true, conclusion: 'Access gap recorded', tested_period: 'January 2026', tested_scope: 'Access sample', checklist_confirmed: true, no_evidence_reason: 'Interview results recorded in conclusion'
   })).data;
-  expect(result.review.status).toBe('completed');
-  expect(result.spawned.due_date).toBe('2026-02-28T00:00:00.000Z');
+  expect(result.review.status).toBe('upcoming');
+  expect(result.review.due_date).toBe('2026-02-28T00:00:00.000Z');
   await expect(api.post(`/reviews/${r.review_id}/complete`, {
-    spawn_next: true
-  })).resolves.toMatchObject({ data: { review: { status: 'completed' }, spawned: { review_id: result.spawned.review_id } } });
+    occurrence_id:r.current_occurrence_id
+  })).resolves.toMatchObject({ data: { review: { status: 'upcoming',review_id:r.review_id }, occurrence: { occurrence_id:r.current_occurrence_id } } });
   await api.post('/bulk', {
     kind: 'tasks',
     ids: [t.task_id],

@@ -32,13 +32,14 @@ export function dateMatches(value, range, now = new Date()) {
 }
 export function reviewMatches(row, status) {
   const closed = ['completed', 'cancelled'].includes(row.status);
-  const overdue = !closed && row.status !== 'needs_scheduling' && dateMatches(row.due_date, 'overdue');
-  if (status === 'active') return !closed;
-  if (status === 'all') return true;
+  const unscheduled = calendarDay(row.due_date) === null || ('recurrence' in row && [null,''].includes(row.recurrence)) || row.recurrence === 'custom' && !(Number(row.custom_recurrence_days) > 0);
+  const overdue = !closed && !unscheduled && dateMatches(row.due_date, 'overdue');
+  if (status === 'active' || status === 'all') return !closed;
   if (status === 'overdue') return overdue;
-  if (status === 'upcoming') return row.status === 'upcoming' && !overdue;
-  if (status === 'completed') return closed;
-  return row.status === status;
+  if (status === 'upcoming') return !closed && !unscheduled && dateMatches(row.due_date, 'next90');
+  if (status === 'needs_scheduling') return !closed && unscheduled;
+  if (status === 'completed' || status === 'history') return closed;
+  return !closed && row.status === status;
 }
 export function dateOptions(column) {
   const options = column.dateKind === 'history'

@@ -6,6 +6,8 @@ import { clone, readStore, saveStore, resetStore, ids, list, record, write, libr
 import { portfolio, dashboard } from './summaries';
 import { onboard, action } from './workflows';
 import { guardEdit } from './decisions';
+import { history, reviewEvent } from './reviews';
+import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
 const SESSION = 'grc_demo_entered';
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 export async function previewAdapter(config) {
@@ -77,6 +79,13 @@ export async function previewAdapter(config) {
     }
     if (path === '/auth/me') return respond(db.user);
     if (method === 'get') {
+      if (kind === 'reviews' && ['history','activity'].includes(name)) {
+        const review = record(db,kind,id);
+        if (name === 'history') return respond(history(db,review));
+        return respond(db.logs.filter(l => l.action !== 'update' && l.client_id === review.client_id && l.entity_id === id && ['review','reviews'].includes(l.entity_type)
+          && (!params.occurrence_id || belongsToOccurrence({occurrence_id:l.meta?.occurrence_id}, review, params.occurrence_id)))
+          .map(l => ({...l,log_id:l.log_id || l.audit_id})));
+      }
       if (path === '/clients/directory') return respond(portfolio(db, params.include_archived === true || params.include_archived === 'true'));
       if (path === '/clients') return respond(db.clients.filter(c => params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived'));
       if (kind === 'clients' && name === 'members') {
@@ -123,9 +132,12 @@ export async function previewAdapter(config) {
         for (const k of Object.keys(data)) data[k] = list(db, k, source.client_id).filter(r => k === params.entity_type
           ? k === 'reviews' && (r.parent_review_id === params.entity_id || r.review_id === source.parent_review_id || r.review_id === source.next_occurrence_id)
           : r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
+        if (params.entity_type === 'reviews' && params.occurrence_id)
+          for (const k of ['findings','tasks','evidence']) data[k] = data[k].filter(r => belongsToOccurrence(r,source,params.occurrence_id));
         return respond(data);
       }
-      if (kind === 'comments') return respond(db.comments.filter(r => r.entity_type === params.entity_type && r.entity_id === params.entity_id));
+      if (kind === 'comments') return respond(db.comments.filter(r => r.entity_type === params.entity_type && r.entity_id === params.entity_id
+        && (!['review','reviews'].includes(params.entity_type) || belongsToOccurrence(r,record(db,'reviews',params.entity_id),params.occurrence_id))));
       if (kind === 'notifications') return respond({
         items: db.notifications,
         unread: db.notifications.filter(n => !n.read_at).length
@@ -175,7 +187,11 @@ export async function previewAdapter(config) {
           if (params.client_id && r.client_id !== params.client_id) return fail(404, 'Record not found for this client.');
           return respond(r);
         }
-        return respond(list(db, kind, params.client_id).filter(r => Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v)));
+        let rows = list(db, kind, params.client_id).filter(r => Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
+        if (kind === 'reviews') rows = rows.map(reviewView);
+        if (kind === 'evidence' && params.linked_id && ['review','reviews'].includes(params.linked_type))
+          rows = rows.filter(r => belongsToOccurrence(r,record(db,'reviews',params.linked_id),params.occurrence_id));
+        return respond(rows);
       }
       return fail(404, 'This view is not implemented in the demo.');
     }
@@ -191,6 +207,8 @@ export async function previewAdapter(config) {
     if (path === '/bulk') {
       if (!ids[body.kind] || !body.ids?.length) throw new Error('Select records first.');
       const rows = body.ids.map(i => record(db, body.kind, i));
+      if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
+        throw new Error('Review history must be retained.');
       const payload = body.payload || {};
       const close = {
         reviews: 'completed',
@@ -222,7 +240,7 @@ export async function previewAdapter(config) {
             due_date: payload.due_date
           };
         } else if (body.action === 'update') patch = payload;else throw new Error('Unknown bulk action');
-        guardEdit(body.kind, patch, r);
+        guardEdit(body.kind, patch, r, db.user);
         if (body.kind === 'reviews' && patch.status === 'completed' && r.status !== 'completed') {
           const { status, ...fields } = patch;
           write(db, body.kind, fields, r.review_id);
@@ -263,7 +281,7 @@ export async function previewAdapter(config) {
     if (ids[kind] && name) {
       const result = action(db, kind, id, name, body);
       const r = record(db, kind, id);
-      audit(db, name, kind, r);
+      if (kind !== 'reviews') audit(db, name, kind, r);
       if (['invite', 'submit-review', 'approve', 'reject', 'schedule-review', 'create-finding', 'create-task', 'complete'].includes(name)) db.notifications.unshift({
         notification_id: uid('notification'),
         title: `Simulated: ${name.replaceAll('-', ' ')} · ${r.title || r.name}`,
@@ -279,6 +297,7 @@ export async function previewAdapter(config) {
     }
     if (kind === 'comments') {
       const source = record(db, body.entity_type, body.entity_id);
+      if (['review','reviews'].includes(body.entity_type)) assertCurrentOccurrence(source,body.occurrence_id);
       if (!body.body?.trim()) throw new Error('Comment cannot be empty.');
       const comment = {
         ...body,
@@ -295,7 +314,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
-        if (kind === 'reviews' && r.status === 'completed' || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id))) throw new Error('Completed reviews and their evidence must be retained.');
+        if (kind === 'reviews' && (r.status === 'completed' || r.occurrences?.length) || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id) || v.occurrences?.some(o => o.evidence?.some(e => e.evidence_id === id)))) throw new Error('Completed reviews and their evidence must be retained.');
         db[kind] = db[kind].filter(x => x[ids[kind]] !== id);
         audit(db, 'delete', kind, r);
         return save({
@@ -310,6 +329,7 @@ export async function previewAdapter(config) {
           const target = record(db, body.linked_type === 'policy' ? 'policies' : `${body.linked_type}s`, body.linked_id);
           if (target.client_id !== body.client_id) throw new Error('Evidence must belong to the same client.');
           if (['review','reviews'].includes(body.linked_type) && target.status === 'completed') throw new Error('Completed review evidence is frozen.');
+          if (['review','reviews'].includes(body.linked_type)) assertCurrentOccurrence(target,body.occurrence_id);
         }
         body.size = Math.floor(body.content_base64.split(',').pop().length * 3 / 4);
         body.version = 1;
@@ -321,13 +341,19 @@ export async function previewAdapter(config) {
         body.simulated = true;
         body.status = 'invited';
       }
-      if (!['evidence','users','clients','comments'].includes(kind)) guardEdit(kind, body, id ? record(db, kind, id) : {});
+      if (kind === 'reviews' && id) {
+        assertCurrentOccurrence(record(db,kind,id),body.expected_occurrence_id);
+        delete body.expected_occurrence_id;
+      }
+      if (!['evidence','users','clients','comments'].includes(kind)) guardEdit(kind, body, id ? record(db, kind, id) : {}, db.user);
       if (kind === 'reviews' && id && body.status === 'completed' && record(db, kind, id).status !== 'completed') {
         const { status, ...fields } = body;
         write(db, kind, fields, id);
         return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
       const result = write(db, kind, body, id);
+      if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
+        reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});
       return save(kind === 'users' && !id ? {
         user: result,
         simulated: true,

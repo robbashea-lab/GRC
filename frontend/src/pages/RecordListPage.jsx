@@ -77,13 +77,11 @@ function DueCell({ iso, closed = false }) {
 
 // Tab definitions for reviews — order matters (displayed as segmented control)
 const REVIEW_TABS = [
-  { id: "active", label: "Active" },
-  { id: "needs_scheduling", label: "Needs Scheduling" },
-  { id: "upcoming", label: "Upcoming" },
-  { id: "overdue", label: "Overdue" },
-  { id: "in_progress", label: "In progress" },
-  { id: "completed", label: "Completed" },
   { id: "all", label: "All" },
+  { id: "overdue", label: "Overdue" },
+  { id: "upcoming", label: "Upcoming" },
+  { id: "needs_scheduling", label: "Needs Scheduling" },
+  { id: "in_progress", label: "In Progress" },
 ];
 
 // Reviews are the historical record — delete is admin-only from the ... menu.
@@ -110,7 +108,7 @@ export default function RecordListPage({ kind }) {
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
   const statusFilter = params.get("status") || "all";
-  const reviewTab = params.get("tab") || "active";
+  const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
   const sortDir = params.get("sortDir") || defaultSort.dir;
@@ -149,7 +147,7 @@ export default function RecordListPage({ kind }) {
   const [dueDatePickerOpen, setDueDatePickerOpen] = useState(false);
   const [pickedDueDate, setPickedDueDate] = useState("");
 
-  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
+  const canWrite = (kind === "reviews" ? ["super_admin", "platform_admin"] : ["super_admin", "platform_admin", "client_contributor"]).includes(user?.role);
   const canDelete = ["super_admin", "platform_admin"].includes(user?.role);
   const idField = ID_FIELD[kind];
   const ownerField = kind === "tasks" ? "assignee_id" : "owner_id";
@@ -245,6 +243,7 @@ export default function RecordListPage({ kind }) {
     const s = q.trim().toLowerCase();
     const passed = rows.filter((r) => {
       if (r.client_id !== currentClientId) return false;
+      if (isReviews && !reviewMatches(r, reviewTab === 'history' ? 'history' : 'all')) return false;
       // URL-carried filters (from the scoped dashboard). These are additive.
       if (urlFilters.owner) {
         const rOwner = r[ownerField] || r.owner_id || r.assignee_id;
@@ -259,7 +258,8 @@ export default function RecordListPage({ kind }) {
       if (isReviews && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
       if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && r.status !== statusFilter) return false;
       if (!s) return true;
-      return JSON.stringify(r).toLowerCase().includes(s);
+      const {occurrences, ...searchable} = r;
+      return JSON.stringify(searchable).toLowerCase().includes(s);
     });
     // Sort — always float overdue reviews to the top when viewing "All" / non-overdue tabs.
     const dir = sortDir === "asc" ? 1 : -1;
@@ -301,16 +301,7 @@ export default function RecordListPage({ kind }) {
 
   const reviewTabCounts = useMemo(() => {
     if (!isReviews) return {};
-    const c = { active: 0, needs_scheduling: 0, upcoming: 0, overdue: 0, in_progress: 0, completed: 0, all: rows.length };
-    rows.forEach((r) => {
-      const overdue = isReviewOverdue(r);
-      if (!["completed", "cancelled"].includes(r.status)) c.active += 1;
-      if (r.status === "needs_scheduling") c.needs_scheduling += 1;
-      if (overdue) c.overdue += 1;
-      if (r.status === "upcoming" && !overdue) c.upcoming += 1;
-      if (r.status === "in_progress") c.in_progress += 1;
-      if (r.status === "completed" || r.status === "cancelled") c.completed += 1;
-    });
+    const c = Object.fromEntries(REVIEW_TABS.map(t => [t.id, rows.filter(r => reviewMatches(r,t.id)).length]));
     return c;
   }, [rows, isReviews]);
 
@@ -327,10 +318,10 @@ export default function RecordListPage({ kind }) {
   }
 
   async function markComplete(row) {
-    if (!confirm(`Mark "${row.title}" as complete? This will spawn the next occurrence if recurring.`)) return;
+    if (!confirm(`Mark "${row.title}" as complete? This will advance the same Review if recurring.`)) return;
     try {
-      const { data } = await api.post(`/reviews/${row[idField]}/complete`, { spawn_next: true });
-      toast.success(data.spawned ? "Review completed · next occurrence scheduled" : "Review completed");
+      const { data } = await api.post(`/reviews/${row[idField]}/complete`, { occurrence_id: row.current_occurrence_id || "occ_" + row.review_id });
+      toast.success(data.review.status !== "completed" ? "Review completed · next occurrence scheduled" : "Review completed");
       load();
     } catch (e) { toast.error(formatError(e)); }
   }
@@ -447,7 +438,8 @@ export default function RecordListPage({ kind }) {
             </Select>
           )
         )}
-        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
+        {isReviews && <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
+        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length}</div>
       </div>
 
       {/* Bulk action bar */}
@@ -455,7 +447,7 @@ export default function RecordListPage({ kind }) {
         <div className="mx-8 mt-4 rounded-lg border border-brand-charcoal bg-brand-charcoal text-ink-onDark px-4 py-2.5 flex items-center gap-3" data-testid="bulk-action-bar">
           <div className="text-sm"><span className="font-heading font-semibold text-ink-onDark" data-testid="bulk-selected-count">{checked.size}</span> selected</div>
           <div className="h-4 w-px bg-brand-metallic-3" />
-          {canWrite && (
+          {canWrite && !isReviews && (
             <button onClick={() => bulk("close")} data-testid="bulk-close" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
               <CheckCircle2 className="h-3.5 w-3.5" /> Close
             </button>
@@ -484,7 +476,7 @@ export default function RecordListPage({ kind }) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          {statusOptions.length > 0 && canWrite && (
+          {statusOptions.length > 0 && canWrite && !isReviews && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button data-testid="bulk-set-status" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">

@@ -16,21 +16,21 @@ test('decisions cannot be forged through ordinary or bulk edits', async () => {
   expect((await api.post(`/policies/${p.policy_id}/approve`,{})).data.approver_id).toBeTruthy();
 });
 
-test('review outcomes freeze evidence and allow attributed amendments, not rewrites', async () => {
+test('review occurrences freeze evidence and reject stale rewrites', async () => {
   const c = (await api.post('/clients',{name:'Review QA'})).data;
   const r = (await api.post('/reviews',{client_id:c.client_id,title:'Access review',review_type:'access',recurrence:'annual',due_date:'2026-09-09'})).data;
+  const action = {occurrence_id:r.current_occurrence_id};
   await expect(api.post(`/reviews/${r.review_id}/complete`,{})).rejects.toBeTruthy();
-  const e = (await api.post('/evidence',{client_id:c.client_id,filename:'sample.txt',content_base64:'eA==',linked_type:'review',linked_id:r.review_id})).data;
-  const result = (await api.post(`/reviews/${r.review_id}/complete`,{conclusion:'No exceptions',tested_period:'Q3',tested_scope:'Access sample',checklist_confirmed:true,spawn_next:true})).data;
-  expect(result.review.completion_snapshot.evidence[0].evidence_id).toBe(e.evidence_id);
-  expect(result.review.completion_snapshot.checklist).toHaveLength(3);
+  const e = (await api.post('/evidence',{...action,client_id:c.client_id,filename:'sample.txt',content_base64:'eA==',linked_type:'review',linked_id:r.review_id})).data;
+  const result = (await api.post(`/reviews/${r.review_id}/complete`,action)).data;
+  expect(result.occurrence.evidence[0].evidence_id).toBe(e.evidence_id);
+  expect(result.occurrence.outcome).toBe('no_findings');
   await expect(api.delete(`/evidence/${e.evidence_id}`)).rejects.toBeTruthy();
-  await expect(api.patch(`/reviews/${r.review_id}`,{notes:'rewrite'})).rejects.toBeTruthy();
-  const amended = (await api.post(`/reviews/${r.review_id}/amend`,{rationale:'Sample clarification'})).data;
-  expect(amended.amendments[0].by).toBe(result.review.completion_snapshot.by);
-  expect(amended.completion_snapshot).toEqual(result.review.completion_snapshot);
-  const repeated = (await api.post(`/reviews/${r.review_id}/complete`,{})).data;
-  expect(repeated.spawned.review_id).toBe(result.spawned.review_id);
+  await expect(api.patch(`/reviews/${r.review_id}`,{notes:'rewrite',expected_occurrence_id:r.current_occurrence_id})).rejects.toBeTruthy();
+  const repeated = (await api.post(`/reviews/${r.review_id}/complete`,action)).data;
+  expect(repeated.review.review_id).toBe(r.review_id);
+  expect(repeated.review.occurrences).toHaveLength(1);
+  expect(repeated.occurrence).toEqual(result.occurrence);
 });
 
 test('pending validation, unscheduled reviews and unassessed risks remain visible', () => {
