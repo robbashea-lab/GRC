@@ -1,4 +1,5 @@
 import fixtures from './fixtures.json';
+import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
 export const STORE_KEY = 'grc_interactive_demo_v1';
 export const clone = value => JSON.parse(JSON.stringify(value));
@@ -59,7 +60,7 @@ export function record(db, kind, id) {
   if (!found) throw new Error('Record not found.');
   return found;
 }
-export function audit(db, action, kind, row) {
+export function audit(db, action, kind, row, meta = {}) {
   db.logs.unshift({
     audit_id: uid('audit'),
     action,
@@ -73,7 +74,8 @@ export function audit(db, action, kind, row) {
     meta: {
       simulated: true,
       title: row.title,
-      name: row.name
+      name: row.name,
+      ...meta
     }
   });
 }
@@ -151,6 +153,16 @@ export function write(db, kind, body, id) {
     updated_at: now()
   };
   validate(db, kind, row, existing);
+  if (kind === 'reviews') Object.assign(row, reviewView({...row, ...reviewSchedule(row, !!existing && !body.schedule_anchor && body.due_date !== undefined && body.due_date !== existing.due_date)}));
+  if (kind === 'tasks' && existing && row.status !== existing.status) {
+    row.completed_by = row.status === 'done' ? db.user.user_id : null;
+    row.completed_at = row.status === 'done' ? now() : null;
+  }
+  if (kind === 'tasks' && row.review_id && (!existing || row.status !== existing.status || row.assignee_id !== existing.assignee_id)) {
+    const review = db.reviews.find(r => r.review_id === row.review_id && r.client_id === row.client_id);
+    if (review) audit(db, row.status === 'done' ? 'Action Item completed' : existing ? 'Action Item updated' : 'Action Item created',
+      'reviews', review, {occurrence_id:row.occurrence_id || 'occ_' + row.review_id, task_id:row.task_id, title:row.title, assignee_id:row.assignee_id,status:row.status});
+  }
   if (kind === 'risks') Object.assign(row, assessedRisk(row));
   if (kind === 'risks' && row.likelihood_score && row.impact_score) {
     row.risk_score = row.likelihood_score * row.impact_score;

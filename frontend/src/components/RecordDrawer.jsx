@@ -14,6 +14,7 @@ import { X, ArrowUpRight, Zap, UploadCloud, Download, Trash2, CheckCircle2, XCir
 import { Link } from "react-router-dom";
 import { SCHEMAS } from "@/lib/schemas";
 import rules from "@/lib/grcRules.json";
+import ReviewDrawer from "./ReviewDrawer";
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
@@ -89,7 +90,11 @@ function toDateInput(v) {
   return typeof v === "string" && v.length > 10 ? v.slice(0, 10) : v;
 }
 
-export default function RecordDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved }) {
+export default function RecordDrawer(props) {
+  return props.kind === "reviews" ? <ReviewDrawer {...props} /> : <EntityDrawer {...props} />;
+}
+
+function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved }) {
   schema = schema || SCHEMAS[kind]?.fields || [];
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);

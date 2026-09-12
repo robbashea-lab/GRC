@@ -8,7 +8,7 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
             {"review_id": "tabletop", "client_id": "a", "title": "Incident Response Tabletop Exercise", "review_type": "incident_response", "status": "in_progress", "recurrence": "annual", "due_date": "2026-09-08", "next_review_date": "2027-09-08", "notes": "Historical exercise results", "period": "2026"},
             {"review_id": "private", "client_id": "b", "title": "Private review"},
         ])
-        result = await self.client.post("/api/reviews/tabletop/create-finding", json={"title": "Business Impact Analysis has not been documented", "remediation_title": "Develop and approve a Business Impact Analysis", "severity": "medium"})
+        result = await self.client.post("/api/reviews/tabletop/create-finding", json={"title": "Business Impact Analysis has not been documented", "remediation_title": "Develop and approve a Business Impact Analysis", "severity": "medium", "occurrence_id":"occ_tabletop"})
         self.assertEqual(result.status_code, 200, result.text)
         finding = result.json()
         tasks = (await self.client.get("/api/tasks?client_id=a")).json()
@@ -19,18 +19,19 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
         self.assertEqual(task["title"], "Develop and approve a Business Impact Analysis")
         repeated = await self.client.post(f'/api/findings/{finding["finding_id"]}/create-task', json={})
         self.assertEqual(repeated.json()["task_id"], task["task_id"])
-        completed = await self.client.post("/api/reviews/tabletop/complete", json={"spawn_next": True, "conclusion": "BIA gap identified", "tested_period": "2026", "tested_scope": "Incident response tabletop", "checklist_confirmed": True, "no_evidence_reason": "Facilitated interview recorded in conclusion"})
+        completed = await self.client.post("/api/reviews/tabletop/complete", json={"occurrence_id":"occ_tabletop", "spawn_next": True, "conclusion": "BIA gap identified", "tested_period": "2026", "tested_scope": "Incident response tabletop", "checklist_confirmed": True, "no_evidence_reason": "Facilitated interview recorded in conclusion"})
         self.assertEqual(completed.status_code, 200, completed.text)
-        old, next_review = completed.json()["review"], completed.json()["spawned"]
+        old, next_review = completed.json()["occurrence"], completed.json()["review"]
         self.assertEqual(old["notes"], "Historical exercise results")
         self.assertEqual(next_review["due_date"][:10], "2027-09-08")
-        for key in ("notes", "completion_date", "period"):
+        for key in ("notes", "completion_date"):
             self.assertFalse(next_review.get(key))
         related = (await self.client.get("/api/related?entity_type=reviews&entity_id=tabletop")).json()
         self.assertEqual(related["tasks"][0]["task_id"], task["task_id"])
         self.assertEqual(related["findings"][0]["finding_id"], finding["finding_id"])
         fresh = (await self.client.get(f'/api/related?entity_type=reviews&entity_id={next_review["review_id"]}')).json()
-        self.assertEqual(fresh["findings"], [])
+        self.assertEqual(len(fresh["findings"]), 1)
+        self.assertEqual(old["occurrence_id"], "occ_tabletop")
         await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"status": "done"})
         current = await server.db.findings.find_one({"finding_id": finding["finding_id"]})
         self.assertEqual(current["status"], "remediated")

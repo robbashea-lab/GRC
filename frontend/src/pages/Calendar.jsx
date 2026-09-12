@@ -71,6 +71,7 @@ export default function Calendar() {
 
   function onDragStart(e, item) {
     if (!canReschedule) return;
+    if (item.kind === "review" && (!["super_admin","platform_admin"].includes(user?.role) || ["completed","cancelled"].includes(item.status))) { e.preventDefault(); return; }
     e.dataTransfer.setData("application/json", JSON.stringify({ id: item.id, kind: item.kind }));
     e.dataTransfer.effectAllowed = "move";
   }
@@ -111,7 +112,8 @@ export default function Calendar() {
         if (moved) b[targetDate] = [...(b[targetDate] || []), moved];
         return next;
       });
-      await api.patch(`/${payload.kind}s/${payload.id}`, { due_date: dueIso });
+      await api.patch(`/${payload.kind}s/${payload.id}`, { due_date: dueIso,
+        ...(payload.kind === "review" ? {expected_occurrence_id:original?.current_occurrence_id || "occ_" + payload.id} : {}) });
       toast.success(`Rescheduled to ${targetDate}`);
     } catch (e) {
       toast.error(formatError(e));

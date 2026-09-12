@@ -40,8 +40,8 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
   const summary=await get('dashboard',a.client_id);expect(summary.kpis.overdue_actions).toBe(0);expect(summary.kpis.due_next_30).toBe(0);
   expect(await get('reviews',b.client_id)).toEqual([]);expect(await get('tasks',a.client_id)).toEqual([]);expect(await get('risks',a.client_id)).toEqual([]);
   const manuallyEdited=reviews[0];
-  await api.patch(`/reviews/${manuallyEdited.review_id}`,{title:'Manually renamed review',due_date:'2027-01-15',recurrence:'quarterly',notes:'Preserve review notes'});
-  await api.post(`/reviews/${manuallyEdited.review_id}/complete`,{spawn_next:false,conclusion:'Practice reviewed',tested_period:'Q3 2026',tested_scope:'Scope documented',checklist_confirmed:true,no_evidence_reason:'Interview only'});
+  await api.patch(`/reviews/${manuallyEdited.review_id}`,{expected_occurrence_id:manuallyEdited.current_occurrence_id,title:'Manually renamed review',due_date:'2027-01-15',recurrence:'quarterly',notes:'Preserve review notes'});
+  await api.post(`/reviews/${manuallyEdited.review_id}/complete`,{occurrence_id:manuallyEdited.current_occurrence_id,spawn_next:false,conclusion:'Practice reviewed',tested_period:'Q3 2026',tested_scope:'Scope documented',checklist_confirmed:true,no_evidence_reason:'Interview only'});
   const before=await get('reviews',a.client_id);
   await api.post('/onboarding/baseline',{client_id:a.client_id,state:s,finalize:true});
   expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(5);expect(await get('reviews',a.client_id)).toHaveLength(before.length);

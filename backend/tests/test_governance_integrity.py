@@ -20,7 +20,7 @@ class GovernanceIntegrityTests(ClientDashboardSourcesTests):
         self.sign_in("member")
         self.assertEqual((await self.client.get('/api/comments?entity_type=reviews&entity_id=rb')).status_code,403)
         self.assertEqual((await self.client.post('/api/comments',json={"entity_type":"reviews","entity_id":"rb","body":"x"})).status_code,403)
-        self.assertEqual((await self.client.post('/api/comments',json={"entity_type":"reviews","entity_id":"ra","body":"allowed"})).status_code,200)
+        self.assertEqual((await self.client.post('/api/comments',json={"entity_type":"reviews","entity_id":"ra","occurrence_id":"occ_ra","body":"allowed"})).status_code,200)
         result = await self.client.post('/api/evidence',json={"client_id":"a","filename":"x.txt","content_base64":"eA==","linked_type":"review","linked_id":"rb"})
         self.assertEqual(result.status_code,403)
         await server.create_notification(user_id='member',client_id='b',title='Private',kind='assignment')
@@ -46,22 +46,22 @@ class GovernanceIntegrityTests(ClientDashboardSourcesTests):
         self.sign_in('admin')
         self.assertEqual((await self.client.post('/api/policies/'+pid+'/approve',json={})).status_code,200)
 
-    async def test_completion_snapshot_retry_amendment_and_evidence_retention(self):
+    async def test_completion_snapshot_retry_and_evidence_retention(self):
         self.sign_in('member')
         self.assertEqual((await self.client.post('/api/reviews/ra/complete',json={})).status_code,422)
-        ev = (await self.client.post('/api/evidence',json={"client_id":"a","filename":"access.txt","content_base64":"eA==","linked_type":"review","linked_id":"ra"})).json()
-        completed = await self.client.post('/api/reviews/ra/complete',json=OUTCOME)
+        action = {"occurrence_id":"occ_ra"}
+        ev = (await self.client.post('/api/evidence',json={**action,"client_id":"a","filename":"access.txt","content_base64":"eA==","linked_type":"review","linked_id":"ra"})).json()
+        completed = await self.client.post('/api/reviews/ra/complete',json=action)
         self.assertEqual(completed.status_code,200,completed.text)
-        snapshot = completed.json()['review']['completion_snapshot']
-        self.assertEqual(snapshot['by'],'member')
+        snapshot = completed.json()['occurrence']
+        self.assertEqual(snapshot['completed_by'],'member')
         self.assertEqual(snapshot['evidence'][0]['evidence_id'],ev['evidence_id'])
         self.assertEqual(len(snapshot['evidence'][0]['sha256']),64)
-        await server.db.reviews.delete_one({'parent_review_id':'ra'})  # simulate missing successor after partial write
-        repeated = await self.client.post('/api/reviews/ra/complete',json={})
+        repeated = await self.client.post('/api/reviews/ra/complete',json=action)
         self.assertEqual(repeated.status_code,200,repeated.text)
-        self.assertEqual(await server.db.reviews.count_documents({'parent_review_id':'ra'}),1)
-        self.assertEqual((await self.client.patch('/api/reviews/ra',json={'notes':'rewrite history'})).status_code,409)
-        self.assertEqual((await self.client.post('/api/reviews/ra/amend',json={'rationale':'Clarification, original retained'})).status_code,200)
+        self.assertEqual(repeated.json()['occurrence'],snapshot)
+        self.assertEqual(await server.db.reviews.count_documents({'parent_review_id':'ra'}),0)
+        self.assertEqual((await self.client.patch('/api/reviews/ra',json={'notes':'rewrite history','expected_occurrence_id':'occ_ra'})).status_code,409)
         self.sign_in('admin')
         self.assertEqual((await self.client.delete('/api/evidence/'+ev['evidence_id'])).status_code,409)
         self.assertEqual((await self.client.delete('/api/reviews/ra')).status_code,409)
