@@ -1,3 +1,5 @@
+import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
@@ -141,7 +143,7 @@ export default function ActionItems() {
 
   useEffect(() => { const sequence = loadSequence; setRows([]); setDrawer({ open: false, kind: null, record: null }); load(); return () => { sequence.current++; }; }, [load, location.pathname]);
 
-  const filtered = useMemo(() => {
+  const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return rows.filter((r) => {
       const overdue = isOverdue(r.due_date, r.status, r.closed);
@@ -165,6 +167,11 @@ export default function ActionItems() {
         || (userMap[r.owner_id] || "").toLowerCase().includes(s);
     }).sort((a,b) => sort === "title" ? a.title.localeCompare(b.title) : sort === "priority" ? ({critical:4,high:3,medium:2,low:1}[b.priority] || 0) - ({critical:4,high:3,medium:2,low:1}[a.priority] || 0) : (a.due_date || "9999").localeCompare(b.due_date || "9999"));
   }, [rows, view, q, user, userMap, currentClientId, sort]);
+
+  const tableSource = rows.filter(r => r.raw.client_id === currentClientId);
+  const columns = tableColumns('action-items', { rows: tableSource, users,  });
+  const table = useTableControls({ columns, rows: tableSource, module: 'action-items', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status') setView('all'); } });
+  const filtered = table.apply(presetRows);
 
   const counts = useMemo(() => {
     const c = { all: rows.length, in_progress: 0, my: 0, all_open: 0, findings: 0, reviews: 0, due_soon: 0, overdue: 0, completed: 0 };
@@ -217,7 +224,7 @@ export default function ActionItems() {
             return (
               <button
                 key={v.id}
-                onClick={() => setView(v.id)}
+                onClick={() => { const key = ({all:'status',all_open:'status',in_progress:'status',completed:'status',my:'owner_id',findings:'type',reviews:'type',overdue:'due_date',due_soon:'due_date'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }}
                 data-testid={`ai-view-${v.id}`}
                 className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
               >
@@ -227,28 +234,29 @@ export default function ActionItems() {
             );
           })}
         </div>
-        <Select value={sort} onValueChange={v => setParam("sort", v)}><SelectTrigger className="w-40" aria-label="Sort actions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="due">Due date</SelectItem><SelectItem value="priority">Priority</SelectItem><SelectItem value="title">Title</SelectItem></SelectContent></Select>
+        <Select value={sort} onValueChange={v => { table.setSort(null); setParam("sort", v); }}><SelectTrigger className="w-40" aria-label="Sort actions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="due">Due date</SelectItem><SelectItem value="priority">Priority</SelectItem><SelectItem value="title">Title</SelectItem></SelectContent></Select>
         <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
 
       <div className="p-8">
+        <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
-                <th className="tbl-cell text-left font-medium">Action Item</th>
-                <th className="tbl-cell text-left font-medium">Type</th>
-                <th className="tbl-cell text-left font-medium">Priority</th>
-                <th className="tbl-cell text-left font-medium">Owner</th>
-                <th className="tbl-cell text-left font-medium">Due</th>
-                <th className="tbl-cell text-left font-medium">Status</th>
-                <th className="tbl-cell text-left font-medium">Source</th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="title" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="type" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="priority" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="owner_id" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="due_date" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="source" /></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-10">No action items in this view.</td></tr>
+                <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="action items" onClear={() => { setQ(''); setView('all'); }} /></td></tr>
               )}
               {!loading && filtered.map((r, i) => {
                 const overdue = isOverdue(r.due_date, r.status, r.closed);

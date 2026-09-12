@@ -1,3 +1,5 @@
+import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
@@ -177,7 +179,7 @@ export default function ClientDirectory() {
   }, [users]);
   const admins = useMemo(() => users.filter((u) => ["super_admin", "platform_admin"].includes(u.role)), [users]);
 
-  const filtered = useMemo(() => {
+  const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return rows.filter((r) => {
       if (leadFilter !== "__all__" && r.grc_lead_id !== leadFilter) return false;
@@ -195,6 +197,11 @@ export default function ClientDirectory() {
       );
     });
   }, [rows, q, filter, leadFilter, user]);
+
+  const tableSource = rows;
+  const columns = tableColumns('portfolio', { rows: tableSource, users,  });
+  const table = useTableControls({ columns, rows: tableSource, module: 'portfolio', scope: `${user?.user_id}:${'platform'}` });
+  const filtered = table.apply(presetRows);
 
   function enterWorkspace(row, target = "/dashboard") {
     switchClient(row.client_id);
@@ -317,17 +324,18 @@ export default function ClientDirectory() {
 
       {/* Client Portfolio table */}
       <div className="px-8 py-4">
+        <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
-                <th className="tbl-cell text-left font-medium">Client</th>
-                <th className="tbl-cell text-left font-medium">GRC Lead</th>
-                <th className="tbl-cell text-left font-medium">Program Status</th>
-                <th className="tbl-cell text-right font-medium">Past Due</th>
-                <th className="tbl-cell text-right font-medium">Due 30d</th>
-                <th className="tbl-cell text-right font-medium">Critical / High</th>
-                <th className="tbl-cell text-right font-medium">Unassigned</th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="grc_lead_id" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="program_status" /></th>
+                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="past_due" /></th>
+                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="due_30d" /></th>
+                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="critical_high_open" /></th>
+                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="unassigned" /></th>
                 <th className="tbl-cell text-left font-medium">Next Major Item</th>
                 <th className="tbl-cell text-right font-medium w-10">Actions</th>
               </tr>
@@ -335,7 +343,7 @@ export default function ClientDirectory() {
             <tbody className="divide-y divide-slate-100">
               {loading && (<tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading directory…</td></tr>)}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">No clients match this filter.</td></tr>
+                <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="clients" onClear={() => { setQ(''); setFilter('all'); setLeadFilter('__all__'); }} /></td></tr>
               )}
               {!loading && filtered.map((r, i) => {
                 return (

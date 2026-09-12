@@ -1,3 +1,5 @@
+import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -40,12 +42,15 @@ export default function ClientManagement() {
     finally { setLoading(false); }
   }, [authorized]);
   useEffect(() => { load(); }, [load]);
-  const rows = useMemo(() => clients.filter(c => {
+  const presetRows = useMemo(() => clients.filter(c => {
     if (status !== "all" && c.status !== status) return false;
     const lead = users.find(u => u.user_id === c.assigned_owner_id);
     return [c.name, c.industry, c.primary_contact, lead?.name, lead?.email]
       .some(v => (v || "").toLowerCase().includes(query.trim().toLowerCase()));
   }), [clients, users, query, status]);
+  const columns = tableColumns('client-management', { rows: clients, users, programs });
+  const table = useTableControls({ columns, rows: clients, module: 'client-management', scope: `${user?.user_id}:platform` });
+  const rows = table.apply(presetRows);
   async function saved(client) {
     setDialog(null);
     toast.success(`${client.name} saved`);
@@ -74,9 +79,10 @@ export default function ClientManagement() {
         <span className="text-xs text-ink-help">{rows.length} clients</span>
       </div>
       {error && <div role="alert">{error} <Button variant="outline" onClick={load}>Retry</Button></div>}
+      <TableFilterChips table={table} />
       <div className="overflow-x-auto rounded-lg border border-line bg-surface-card">
         <table className="w-full text-sm" data-testid="client-management-table">
-          <thead className="bg-surface-subtle"><tr>{["Client", "Industry", "GRC Lead", "Program Status", "Client Status", "Actions"].map(h => <th key={h} className="tbl-cell text-left font-medium">{h}</th>)}</tr></thead>
+          <thead className="bg-surface-subtle"><tr>{columns.map(c => <th key={c.key} className="tbl-cell text-left font-medium"><ColumnControl table={table} column={c} /></th>)}<th className="tbl-cell text-left font-medium">Actions</th></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {loading ? <tr><td colSpan={6} className="tbl-cell">Loading clients…</td></tr> : rows.map(c => <tr key={c.client_id} className="row-hover">
               <td className="tbl-cell"><button className="text-link hover:text-link-hover" onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}>{c.name}</button></td>
@@ -89,7 +95,7 @@ export default function ClientManagement() {
                 <Button size="sm" variant="outline" disabled={busy === c.client_id} onClick={() => archive(c)}>{c.status === "archived" ? "Restore" : "Archive"}</Button>
               </div></td>
             </tr>)}
-            {!loading && !rows.length && <tr><td colSpan={6} className="tbl-cell text-ink-help">No clients match this filter.</td></tr>}
+            {!loading && !rows.length && <tr><td colSpan={6} className="tbl-cell text-ink-help"><FilterEmpty table={table} name="clients" onClear={() => { setQuery(''); setStatus('all'); }} /></td></tr>}
           </tbody>
         </table>
       </div>

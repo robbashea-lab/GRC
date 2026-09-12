@@ -1,3 +1,5 @@
+import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useRef, useState } from "react";
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -30,6 +32,11 @@ export default function Evidence() {
     setRows(data);
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentClientId]);
+
+  const tableSource = rows.filter(r => r.client_id === currentClientId);
+  const columns = tableColumns('evidence', { rows: tableSource });
+  const table = useTableControls({ columns, rows: tableSource, module: 'evidence', scope: `${user?.user_id}:${currentClientId}` });
+  const filtered = table.apply(tableSource);
 
   async function handleFiles(files) {
     if (!canWrite) { toast.error("Read-only role"); return; }
@@ -75,16 +82,17 @@ export default function Evidence() {
           <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(Array.from(e.target.files || []))} data-testid="evidence-file-input" />
         </div>
 
+        <TableFilterChips table={table} />
         <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
           <table className="w-full">
             <thead><tr>
-              <th className="tbl-head">File</th><th className="tbl-head">Type</th>
-              <th className="tbl-head">Uploaded by</th><th className="tbl-head">When</th>
-              <th className="tbl-head">Linked to</th><th className="tbl-head w-24">Actions</th>
+              <th className="tbl-head"><ColumnControl table={table} columnKey="filename" /></th><th className="tbl-head"><ColumnControl table={table} columnKey="mime_type" /></th>
+              <th className="tbl-head"><ColumnControl table={table} columnKey="uploaded_by_email" /></th><th className="tbl-head"><ColumnControl table={table} columnKey="created_at" /></th>
+              <th className="tbl-head"><ColumnControl table={table} columnKey="linked_type" /></th><th className="tbl-head w-24">Actions</th>
             </tr></thead>
             <tbody>
-              {rows.length === 0 && <tr><td colSpan={6} className="tbl-cell py-8 text-center text-slate-400">No evidence uploaded yet.</td></tr>}
-              {rows.map((r, i) => (
+              {filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell py-8 text-center text-slate-400">{tableSource.length ? <FilterEmpty table={table} name="evidence" /> : 'No evidence uploaded yet.'}</td></tr>}
+              {filtered.map((r, i) => (
                 <tr key={r.evidence_id} className="row-hover" data-testid={`evidence-row-${i}`}>
                   <td className="tbl-cell font-medium text-slate-900 flex items-center gap-2"><FileIcon className="h-3.5 w-3.5 text-slate-400" />{r.filename}</td>
                   <td className="tbl-cell text-slate-600 font-mono">{r.mime_type || "—"}</td>

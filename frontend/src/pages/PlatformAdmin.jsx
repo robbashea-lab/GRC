@@ -1,3 +1,5 @@
+import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState } from "react";
 import api, { formatError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -30,6 +32,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   const [q, setQ] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [clients, setClients] = useState([]);
+  const [loadedScope, setLoadedScope] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -37,19 +40,25 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
       const path = scope === "client" ? `/clients/${clientId}/members` : "/users";
       const { data } = await api.get(path);
       setUsers(data);
+      setLoadedScope(`${scope}:${clientId}`);
     } catch (e) { toast.error(formatError(e)); }
     finally { setLoading(false); }
   }
   useEffect(() => { if (scope === "platform" || clientId) load(); /* eslint-disable-next-line */ }, [scope, clientId]);
   useEffect(() => { (async () => { try { const { data } = await api.get("/clients"); setClients(data); } catch { setClients([]); } })(); }, []);
 
-  const filtered = useMemo(() => {
+  const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return users;
     return users.filter((u) =>
       (u.name || "").toLowerCase().includes(s) || (u.email || "").toLowerCase().includes(s)
     );
   }, [users, q]);
+
+  const tableSource = loadedScope === `${scope}:${clientId}` ? users : [];
+  const columns = tableColumns('users', { rows: tableSource, users, clients, });
+  const table = useTableControls({ columns, rows: tableSource, module: 'users', scope: `${viewer?.user_id}:${clientId || 'platform'}` });
+  const filtered = table.apply(loadedScope === `${scope}:${clientId}` ? presetRows : []);
 
   async function patchUser(u, changes, label) {
     try {
@@ -100,21 +109,22 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
         )}
       </div>
 
-      <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
+      <TableFilterChips table={table} />
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
             <tr>
-              <th className="tbl-cell text-left font-medium">User</th>
-              <th className="tbl-cell text-left font-medium">Role</th>
-              {scope === "platform" && <th className="tbl-cell text-left font-medium">Client access</th>}
-              <th className="tbl-cell text-left font-medium">Status</th>
-              <th className="tbl-cell text-left font-medium">Last login</th>
+              <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
+              <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="role" /></th>
+              {scope === "platform" && <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="client_ids" /></th>}
+              <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
+              <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="last_login_at" /></th>
               <th className="tbl-cell text-right font-medium w-10" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8">Loading users…</td></tr>}
-            {!loading && filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8">No users match.</td></tr>}
+            {!loading && filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8"><FilterEmpty table={table} name="users" onClear={() => { setQ('');  }} /></td></tr>}
             {!loading && filtered.map((u, i) => {
               const status = u.status || "active";
               const tone = STATUS_TONE[status] || STATUS_TONE.active;

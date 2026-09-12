@@ -1,3 +1,4 @@
+import { ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
@@ -206,6 +207,22 @@ export default function AdminAudit() {
     setDatePreset("30"); setCustomStart(""); setCustomEnd(""); setQ("");
   }
 
+  // Controlled adapter: column menus and toolbar share the existing server query.
+  const columnBindings = [
+    ['date', 'Date / Time', datePreset, setDatePreset, '__any__', DATE_PRESETS.filter(o => o.value !== '__any__')],
+    ['client', 'Client', clientFilter, setClientFilter, '__all__', [{value:'platform',label:'Platform Activity'}, ...(facets.clients || []).map(c => ({value:c.client_id,label:c.name}))]],
+    ['user', 'User', userFilter, setUserFilter, '__all__', (facets.users || []).map(u => ({value:u.user_id,label:u.name || u.email}))],
+    ['action', 'Action', actionFilter, setActionFilter, '__all__', ACTION_OPTIONS.filter(o => o.value !== '__all__')],
+    ['entity', 'Entity', entityFilter, setEntityFilter, '__all__', (facets.entity_types || []).map(e => ({value:e,label:humanEntity(e)}))],
+  ];
+  const table = {
+    columns: columnBindings.map(([key,label,,,,options]) => ({key,label,options,filter:true,sortable:false,single:true})),
+    state: {filters:Object.fromEntries(columnBindings.filter(([, ,value,,empty]) => value !== empty).map(([key,,value]) => [key,[value]]))},
+    options:c => c.options,
+    setFilter:(key,values) => { const binding = columnBindings.find(b => b[0] === key); binding[3](values.at(-1) || binding[4]); },
+    clear:() => { resetFilters(); setDatePreset('__any__'); },
+  };
+
   const activeFilterCount = useMemo(() => {
     let n = 0;
     if (clientFilter !== "__all__") n += 1;
@@ -288,10 +305,10 @@ export default function AdminAudit() {
           <>
             <Input type="date" value={customStart ? customStart.slice(0, 10) : ""}
               onChange={(e) => setCustomStart(e.target.value ? new Date(e.target.value).toISOString() : "")}
-              className="h-9 w-40 text-sm" data-testid="audit-filter-start" />
+              aria-label="Audit range start" className="h-9 w-40 text-sm" data-testid="audit-filter-start" />
             <Input type="date" value={customEnd ? customEnd.slice(0, 10) : ""}
               onChange={(e) => setCustomEnd(e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : "")}
-              className="h-9 w-40 text-sm" data-testid="audit-filter-end" />
+              aria-label="Audit range end" className="h-9 w-40 text-sm" data-testid="audit-filter-end" />
           </>
         )}
 
@@ -315,6 +332,7 @@ export default function AdminAudit() {
       </div>
 
       <div className="px-8 pb-8">
+        <TableFilterChips table={table} />
         <div className="text-xs text-ink-help mb-2" data-testid="audit-count">
           {loading ? "Loading…" : `${total.toLocaleString()} event${total === 1 ? "" : "s"}`}
           {total > 0 && ` · Page ${page} of ${totalPages}`}
@@ -323,11 +341,11 @@ export default function AdminAudit() {
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[10px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
-                <th className="tbl-cell text-left">Date / Time</th>
-                <th className="tbl-cell text-left">Client</th>
-                <th className="tbl-cell text-left">User</th>
-                <th className="tbl-cell text-left">Action</th>
-                <th className="tbl-cell text-left">Entity</th>
+                <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="date" /></th>
+                <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="client" /></th>
+                <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="user" /></th>
+                <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="action" /></th>
+                <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="entity" /></th>
                 <th className="tbl-cell text-left">Record</th>
                 <th className="tbl-cell text-left"></th>
               </tr>
@@ -335,7 +353,7 @@ export default function AdminAudit() {
             <tbody className="divide-y divide-slate-100">
               {loading && (<tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-8">Loading…</td></tr>)}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-8">No events match this filter.</td></tr>
+                <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-8"><FilterEmpty table={table} name="events" /></td></tr>
               )}
               {!loading && rows.map((r, i) => {
                 const isPlatform = !r.client_id;
