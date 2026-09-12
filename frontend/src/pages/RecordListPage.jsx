@@ -1,3 +1,6 @@
+import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { tableColumns } from '@/lib/tableColumns';
+import { reviewMatches } from '@/lib/tableFilters';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
@@ -119,8 +122,8 @@ export default function RecordListPage({ kind }) {
     setParams(next, { replace: true });
   }
   const setQ = (v) => setParam("q", v);
-  const setStatusFilter = (v) => setParam("status", v);
-  const setReviewTab = (v) => setParam("tab", v);
+  const setStatusFilter = (v) => { table.setFilter("status", []); setParam("status", v); };
+  const setReviewTab = (v) => { table.setFilter("status", []); setParam("tab", v); };
   function toggleSort(nextBy) {
     const next = new URLSearchParams(params);
     if (sortBy === nextBy) {
@@ -187,21 +190,30 @@ export default function RecordListPage({ kind }) {
   }, []);
 
   const statusOptions = useMemo(() => schema.fields.find((x) => x.name === "status")?.options || [], [schema]);
+  const filterClient = useRef(currentClientId);
+  const carriedClientChanged = filterClient.current !== currentClientId;
+  useEffect(() => {
+    if (filterClient.current === currentClientId) return;
+    filterClient.current = currentClientId;
+    const next = new URLSearchParams(params);
+    next.delete('owner'); next.delete('unassigned');
+    setParams(next, { replace: true });
+  }, [currentClientId, params, setParams]);
 
   // Carried-scope filters from URL (?owner=<uid>|__me__ &unassigned=1 &severity=critical,high &status=open)
   const urlFilters = useMemo(() => {
     const p = new URLSearchParams(location.search);
-    const rawOwner = p.get("owner") || "";
+    const rawOwner = carriedClientChanged ? "" : p.get("owner") || "";
     let owner = rawOwner;
     if (owner === "__me__") owner = user?.user_id || "";
     return {
       rawOwner,
       owner,
-      unassigned: p.get("unassigned") === "1",
+      unassigned: !carriedClientChanged && p.get("unassigned") === "1",
       severities: (p.get("severity") || "").split(",").map((s) => s.trim()).filter(Boolean),
       status: p.get("status") || "",
     };
-  }, [location.search, user]);
+  }, [location.search, user, carriedClientChanged]);
 
   const hasUrlFilters = urlFilters.owner || urlFilters.unassigned || urlFilters.severities.length > 0 || urlFilters.status;
   const carriedScopeLabel = useMemo(() => {
@@ -219,7 +231,17 @@ export default function RecordListPage({ kind }) {
     return parts.join(" · ");
   }, [hasUrlFilters, urlFilters, userMap, user]);
 
-  const filtered = useMemo(() => {
+  const tableSource = rows.filter(r => r.client_id === currentClientId);
+  const columns = tableColumns(kind, { rows: tableSource, users });
+  const table = useTableControls({ columns, rows: tableSource, module: kind, scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key, values) => {
+    if (key !== 'status' || !values.length) return;
+    const next = new URLSearchParams(params);
+    next.delete('status');
+    if (isReviews) next.set('tab', 'all');
+    setParams(next, { replace: true });
+  } });
+  const columnStatusActive = !!table.state.filters.status?.length;
+  const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     const passed = rows.filter((r) => {
       if (r.client_id !== currentClientId) return false;
@@ -232,27 +254,10 @@ export default function RecordListPage({ kind }) {
         if (r[ownerField] || r.owner_id || r.assignee_id) return false;
       }
       if (urlFilters.severities.length && !urlFilters.severities.includes(r.severity)) return false;
-      if (urlFilters.status && r.status !== urlFilters.status) return false;
+      if (!columnStatusActive && urlFilters.status && r.status !== urlFilters.status) return false;
 
-      if (isReviews) {
-        const overdue = isReviewOverdue(r);
-        if (reviewTab === "active") {
-          if (["completed", "cancelled"].includes(r.status)) return false;
-        } else if (reviewTab === "needs_scheduling") {
-          if (r.status !== "needs_scheduling") return false;
-        } else if (reviewTab === "upcoming") {
-          if (r.status !== "upcoming") return false;
-          if (overdue) return false; // overdue upcoming go to Overdue tab
-        } else if (reviewTab === "overdue") {
-          if (!overdue) return false;
-        } else if (reviewTab === "in_progress") {
-          if (r.status !== "in_progress") return false;
-        } else if (reviewTab === "completed") {
-          if (r.status !== "completed" && r.status !== "cancelled") return false;
-        }
-      } else if (statusFilter !== "all" && r.status && r.status !== statusFilter) {
-        return false;
-      }
+      if (isReviews && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
+      if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && r.status !== statusFilter) return false;
       if (!s) return true;
       return JSON.stringify(r).toLowerCase().includes(s);
     });
@@ -291,7 +296,8 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive]);
+  const filtered = table.apply(presetRows);
 
   const reviewTabCounts = useMemo(() => {
     if (!isReviews) return {};
@@ -415,7 +421,7 @@ export default function RecordListPage({ kind }) {
         {isReviews ? (
           <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="reviews-tabs">
             {REVIEW_TABS.map((t) => {
-              const active = reviewTab === t.id;
+              const active = !columnStatusActive && reviewTab === t.id;
               const count = reviewTabCounts[t.id] ?? 0;
               return (
                 <button
@@ -524,6 +530,7 @@ export default function RecordListPage({ kind }) {
       )}
 
       <div className="px-8 py-6">
+        <TableFilterChips table={table} />
         <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -535,29 +542,13 @@ export default function RecordListPage({ kind }) {
                     data-testid={`${kind}-select-all`}
                   />
                 </th>
-                {schema.columns.map((c) => {
-                  const isActive = sortBy === c.key;
-                  const Icon = isActive ? (sortDir === "asc" ? ArrowUp : ArrowDown) : ChevronsUpDown;
-                  return (
-                    <th key={c.key} className="tbl-head">
-                      <button
-                        type="button"
-                        onClick={() => toggleSort(c.key)}
-                        className={`inline-flex items-center gap-1 hover:text-ink-primary ${isActive ? "text-ink-primary" : ""}`}
-                        data-testid={`${kind}-sort-${c.key}`}
-                      >
-                        {c.label}
-                        <Icon className={`h-3 w-3 ${isActive ? "opacity-100" : "opacity-40"}`} />
-                      </button>
-                    </th>
-                  );
-                })}
+                {columns.map(c => <th key={c.key} className="tbl-head" aria-sort={table.state.sort?.key === c.key ? (table.state.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}><ColumnControl table={table} column={c} /></th>)}
                 <th className="tbl-head w-10"></th>
               </tr>
             </thead>
             <tbody>
               {loading && <tr><td colSpan={schema.columns.length + 2} className="tbl-cell text-center py-8 text-slate-400">Loading…</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={schema.columns.length + 2} className="empty-state">{rows.length ? `No ${kind.replaceAll("_", " ")} match the current filters.` : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={schema.columns.length + 2} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
               {!loading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);
                 return (

@@ -1,3 +1,5 @@
+import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState } from "react";
 import api, { formatError, API } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -75,7 +77,7 @@ export default function RiskRegister() {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentClientId]);
 
   const now = Date.now();
-  const filtered = useMemo(() => {
+  const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return rows.filter((r) => {
       const status = r.status || "open";
@@ -98,6 +100,11 @@ export default function RiskRegister() {
       return (order[a.risk_level] ?? 9) - (order[b.risk_level] ?? 9) || (b.risk_score || 0) - (a.risk_score || 0);
     });
   }, [rows, q, view, user, userMap, now]);
+
+  const tableSource = rows.filter(r => r.client_id === currentClientId);
+  const columns = tableColumns('risk-register', { rows: tableSource, users,  });
+  const table = useTableControls({ columns, rows: tableSource, module: 'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status') setView('all'); } });
+  const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
   const summary = useMemo(() => {
     const s = { open: 0, high_crit: 0, accepted: 0, review_due: 0 };
@@ -173,7 +180,7 @@ export default function RiskRegister() {
           {VIEWS.map((v) => {
             const active = view === v.id;
             return (
-              <button key={v.id} onClick={() => setView(v.id)} data-testid={`risk-view-${v.id}`}
+              <button key={v.id} onClick={() => { const key = ({all_active:'status',closed:'status',accepted:'status',high_crit:'risk_level',mine:'owner_id'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`risk-view-${v.id}`}
                 className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
                 {v.label}
               </button>
@@ -184,25 +191,26 @@ export default function RiskRegister() {
       </div>
 
       <div className="p-8">
+        <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left font-medium">ID</th>
-                <th className="tbl-cell text-left font-medium">Risk</th>
-                <th className="tbl-cell text-left font-medium">Category</th>
-                <th className="tbl-cell text-left font-medium">Likelihood</th>
-                <th className="tbl-cell text-left font-medium">Impact</th>
-                <th className="tbl-cell text-right font-medium">Score</th>
-                <th className="tbl-cell text-left font-medium">Level</th>
-                <th className="tbl-cell text-left font-medium">Owner</th>
-                <th className="tbl-cell text-left font-medium">Status</th>
-                <th className="tbl-cell text-left font-medium">Last reviewed</th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="title" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="category" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="likelihood_score" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="impact_score" /></th>
+                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="risk_score" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="risk_level" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="owner_id" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="last_reviewed" /></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && <tr><td colSpan={10} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={10} className="tbl-cell text-center text-ink-help py-10">No risks match this view.</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={10} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((r, i) => {
                 const level = r.risk_level || levelFromScore(r.risk_score);
                 const tone = LEVEL_TONE[level] || LEVEL_TONE.low;

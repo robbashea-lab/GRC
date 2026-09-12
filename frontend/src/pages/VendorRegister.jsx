@@ -1,3 +1,5 @@
+import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState } from "react";
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -80,7 +82,7 @@ export default function VendorRegister() {
     return { ...v, _nextReviewDays: nextReviewDays, _contractDays: contractDays, _reviewDue: reviewDue, _contractSoon: contractSoon, _assuranceIssue: assuranceIssue, _attention: attention };
   }), [rows]);
 
-  const filtered = useMemo(() => {
+  const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return enriched.filter((v) => {
       const status = v.status || "active";
@@ -94,6 +96,11 @@ export default function VendorRegister() {
       return (v.name || "").toLowerCase().includes(s) || (v.service || v.services || "").toLowerCase().includes(s) || (v.category || "").toLowerCase().includes(s) || (userMap[v.business_owner_id] || "").toLowerCase().includes(s);
     }).sort((a, b) => (b._attention - a._attention) || ({critical:0,high:1,medium:2,moderate:2,low:3}[a.criticality]||9) - ({critical:0,high:1,medium:2,moderate:2,low:3}[b.criticality]||9) || (a.name || "").localeCompare(b.name || ""));
   }, [enriched, q, view, userMap]);
+
+  const tableSource = enriched.filter(r => r.client_id === currentClientId);
+  const columns = tableColumns('vendor-register', { rows: tableSource, users,  });
+  const table = useTableControls({ columns, rows: tableSource, module: 'vendor-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status' || key === 'criticality') setView('all'); } });
+  const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
   const summary = useMemo(() => {
     const s = { critical: 0, review_due: 0, contract_soon: 0, assurance: 0 };
@@ -151,31 +158,32 @@ export default function VendorRegister() {
         </div>
         <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="vendor-views">
           {VIEWS.map((v) => (
-            <button key={v.id} onClick={() => setView(v.id)} data-testid={`vendor-view-${v.id}`}
+            <button key={v.id} onClick={() => { const key = ({all_active:'status',inactive:'status',critical:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`vendor-view-${v.id}`}
               className={`px-3 h-8 text-xs rounded-[6px] transition ${view === v.id ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>{v.label}</button>
           ))}
         </div>
         <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
       <div className="p-8">
+        <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
-                <th className="tbl-cell text-left font-medium">Vendor</th>
-                <th className="tbl-cell text-left font-medium">Service / Product</th>
-                <th className="tbl-cell text-left font-medium">Criticality</th>
-                <th className="tbl-cell text-left font-medium">Data Types</th>
-                <th className="tbl-cell text-left font-medium">Business Owner</th>
-                <th className="tbl-cell text-left font-medium">Last Review</th>
-                <th className="tbl-cell text-left font-medium">Next Review</th>
-                <th className="tbl-cell text-left font-medium">Contract Renewal</th>
-                <th className="tbl-cell text-left font-medium">Status</th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="service" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="criticality" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="data_types" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="business_owner_id" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="last_review" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="next_review" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="contract_renewal" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">No vendors match this view.</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((v, i) => {
                 const tone = CRIT_TONE[v.criticality] || CRIT_TONE.medium;
                 const dt = v.data_types || [];

@@ -1,3 +1,5 @@
+import { useTableControls, ColumnControl } from '@/components/TableControls';
+import { ranks } from '@/lib/tableFilters';
 import { useEffect, useState } from "react";
 import api, { PREVIEW_MODE, API, formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -72,18 +74,22 @@ function Empty({ children }) {
 }
 
 function OperationalTable({ items, upcoming = false, onOpen }) {
+  const { user } = useAuth();
+  const { currentClientId } = useOrg();
+  const columns = [{key:'priority',label:'Priority',rank:ranks,value:r=>r.severity},{key:'type',label:'Type'},{key:'owner',label:'Owner'},{key:'due_date',label:upcoming?'Due / Review Date':'Due',dateKind:'due'},{key:'status',label:'Status'}];
+  const table = useTableControls({ columns, rows:items, module:upcoming?'dashboard-watch':'dashboard-attention', scope:`${user?.user_id}:${currentClientId}` });
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-surface-subtle border-b border-line"><tr>
-          <th className="tbl-head">{upcoming ? "Due / Review Date" : "Priority"}</th>
-          <th className="tbl-head">Item</th><th className="tbl-head">Type</th>
-          <th className="tbl-head">Owner</th>
-          {!upcoming && <th className="tbl-head">Due</th>}
-          <th className="tbl-head">Status</th><th className="tbl-head">Action</th>
+          <th className="tbl-head"><ColumnControl table={table} columnKey={upcoming ? "due_date" : "priority"} /></th>
+          <th className="tbl-head">Item</th><th className="tbl-head"><ColumnControl table={table} columnKey="type" /></th>
+          <th className="tbl-head"><ColumnControl table={table} columnKey="owner" /></th>
+          {!upcoming && <th className="tbl-head"><ColumnControl table={table} columnKey="due_date" /></th>}
+          <th className="tbl-head"><ColumnControl table={table} columnKey="status" /></th><th className="tbl-head">Action</th>
         </tr></thead>
         <tbody className="divide-y divide-line">
-          {items.map(item => (
+          {table.apply(items).map(item => (
             <tr key={item.key} className="row-hover" data-testid={`obligation-${item.key}`}>
               <td className="tbl-cell text-xs">{upcoming ? <DateCell iso={item.due_date} /> : item.priority_label}</td>
               <td className="tbl-cell font-medium text-ink-primary">{item.title}</td>
