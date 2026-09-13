@@ -151,6 +151,7 @@ export function action(db, kind, id, name, body) {
     if (r.status !== 'remediated' || list(db, 'tasks', cid).some(t => t.finding_id === id && !['done','cancelled'].includes(t.status))) throw new Error('Complete remediation before validation.');
     if (!body.rationale?.trim()) throw new Error('Validation rationale is required.');
     const result = patch({status:'closed', validated_by:db.user.user_id, validated_at:now(), closed_by:db.user.user_id,closed_at:now(),decision_history:[...(r.decision_history || []), {action:'validated',by:db.user.user_id,at:now(),rationale:body.rationale}]});
+    for (const task of list(db,'tasks',cid).filter(t=>t.finding_id===id)) audit(db,'Related Finding validated and closed','tasks',task,{finding_id:id});
     if (r.review_id) reviewEvent(db,record(db,'reviews',r.review_id),'Finding validated and closed',r.occurrence_id || 'occ_' + r.review_id,{finding_id:id,title:r.title});
     return result;
   }
@@ -187,6 +188,7 @@ export function action(db, kind, id, name, body) {
       review_id: r.review_id,
       occurrence_id: r.occurrence_id,
       source: r.source || 'Finding remediation',
+      source_type:r.review_id?'review':'finding',source_id:r.review_id||id,
       assignee_id: body.assignee_id || r.owner_id,
       priority: body.priority || r.severity,
       due_date: body.due_date || r.due_date,

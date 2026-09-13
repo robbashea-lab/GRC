@@ -202,7 +202,7 @@ export default function Dashboard() {
       <div className="p-8 space-y-6">
         {/* Row 1 — Priority summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard testid="kpi-overdue" to={withScopeParams("/reviews", scope)} label="Overdue Actions" value={data.kpis.overdue_actions} hint="Past due and still requiring action" icon={Clock} tone="critical" />
+          <KpiCard testid="kpi-overdue" to={withScopeParams("/action-items", scope, {view:"overdue"})} label="Overdue Actions" value={data.kpis.overdue_actions} hint="Past due and still requiring action" icon={Clock} tone="critical" />
           <KpiCard testid="kpi-critical" to={withScopeParams("/findings", scope, { severity: "critical,high", status: "open" })} label="Critical / High Findings" value={data.kpis.critical_high_findings} hint="Highest-priority findings requiring attention" icon={AlertOctagon} tone="critical" />
           <KpiCard testid="kpi-risks" to={withScopeParams("/risks", scope)} label="Significant Risks" value={data.kpis.significant_risks} hint="Open risks requiring continued attention" icon={ShieldAlert} tone="high" />
           <KpiCard testid="kpi-due-30" to={scope.kind !== "org" ? withScopeParams("/tasks", scope) : "/calendar"} label="Due in Next 30 Days" value={data.kpis.due_next_30} hint="Upcoming reviews and actions" icon={CalendarClock} tone="duesoon" />

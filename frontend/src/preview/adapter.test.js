@@ -357,11 +357,14 @@ test('sample portfolio totals and client KPIs match the backend-generated refere
         }
       })).data;
       const reference = fixtures.responses[`/dashboard?client_id=${c.client_id}&scope=org`];
-      expect(result.kpis).toEqual({ ...reference.kpis, significant_risks: 0 }); // legacy-only ratings are explicitly unassessed
+      const tasks = (await api.get("/tasks",{params:{client_id:c.client_id}})).data;
+      const me=(await api.get("/auth/me")).data.user_id;
+      const actionCount = p => tasks.filter(t=>!['done','cancelled'].includes(t.status)&&t.due_date?.slice(0,10)<fixtures.generated_at.slice(0,10)&& (p.scope==='mine'?[t.assignee_id,t.owner_id].includes(me):p.scope==='user'?[t.assignee_id,t.owner_id].includes(p.user_id):p.scope==='unassigned'?!t.assignee_id&&!t.owner_id:true)).length;
+      expect(result.kpis).toEqual({ ...reference.kpis, significant_risks: 0, overdue_actions:actionCount({scope:"org"}) }); // legacy-only ratings are explicitly unassessed
       for (const [key, snapshot] of Object.entries(fixtures.responses)) {
         if (!key.startsWith(`/dashboard?client_id=${c.client_id}&`)) continue;
         const params = Object.fromEntries(new URL(key, 'https://demo.invalid').searchParams);
-        expect((await api.get('/dashboard', { params })).data.kpis).toEqual({ ...snapshot.kpis, significant_risks: 0 });
+        expect((await api.get('/dashboard', { params })).data.kpis).toEqual({ ...snapshot.kpis, significant_risks: 0, overdue_actions:actionCount(params) });
       }
     }
   } finally {

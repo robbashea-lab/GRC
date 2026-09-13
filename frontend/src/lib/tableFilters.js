@@ -62,7 +62,7 @@ export function applyTableFilters(rows, columns, state, now = new Date()) {
     const selected = filters[column.key];
     if (!selected?.length) return true;
     const value = valueOf(column, row);
-    return selected.some(v => column.matches ? column.matches(row, v) : column.dateKind ? dateMatches(value, v, now) : v === EMPTY ? !valuesOf(value).length : valuesOf(value).includes(v));
+    return selected.some(v => column.matches ? column.matches(row, v, now) : column.dateKind ? dateMatches(value, v, now) : v === EMPTY ? !valuesOf(value).length : valuesOf(value).includes(v));
   }));
   const column = columns.find(c => c.key === state.sort?.key);
   if (!column || column.sortable === false) return filtered;

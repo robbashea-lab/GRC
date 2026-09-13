@@ -36,6 +36,7 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ValidationError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
+import action_items
 import review_occurrences
 
 # ---------------- DB ----------------
@@ -346,7 +347,12 @@ class TaskIn(BaseModel):
     finding_id: Optional[str] = None
     review_id: Optional[str] = None
     policy_id: Optional[str] = None  # link back to Policy Register row (for onboarding-generated tasks)
-    source: Optional[str] = None  # e.g. "GRC Program Onboarding"
+    source: Optional[str] = None  # legacy provenance label, preserved
+    source_type: Optional[str] = None
+    source_id: Optional[str] = None
+    risk_id: Optional[str] = None
+    vendor_id: Optional[str] = None
+    assessment_id: Optional[str] = None
 
 
 class ContactIn(BaseModel):
@@ -1229,6 +1235,8 @@ async def create_evidence(body: EvidenceIn, user: Dict = Depends(get_current_use
     await audit(user, "upload", "evidence", ev_id, body.client_id, meta={"filename": body.filename})
     if body.linked_type in ("review", "reviews"):
         await _review_event(user, parent, "Evidence uploaded", body.occurrence_id, filename=body.filename, evidence_id=ev_id)
+    if body.linked_type in ("task", "tasks"):
+        await audit(user, "Evidence uploaded", "task", body.linked_id, body.client_id, meta={"filename": body.filename, "evidence_id": ev_id})
     doc.pop("_id", None)
     doc.pop("content_base64", None)
     return doc
@@ -1256,6 +1264,8 @@ async def delete_evidence(ev_id: str, user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Forbidden")
     if await db.reviews.find_one({"$or": [{"completion_snapshot.evidence.evidence_id": ev_id}, {"occurrences.evidence.evidence_id": ev_id}]}):
         raise HTTPException(409, "Evidence referenced by a completed review must be retained")
+    if doc.get("linked_type") in ("task", "tasks") and await db.tasks.find_one({"task_id": doc.get("linked_id"), "client_id": doc["client_id"], "status": "done"}):
+        raise HTTPException(409, "Completed Action Item evidence must be retained")
     # Retain bytes even if a completion races this removal. Only the inventory link is archived.
     await db.evidence.update_one({"evidence_id": ev_id}, {"$set": {"archived_at": _now()}})
     await audit(user, "delete", "evidence", ev_id, doc.get("client_id"))
@@ -1801,7 +1811,7 @@ async def dashboard(
             "critical_findings": len(critical_high),
             "significant_risks": len(significant_risks),
             # new keys
-            "overdue_actions": len(overdue_reviews) + len(overdue_findings) + len(overdue_tasks),
+            "overdue_actions": len(overdue_tasks),
             "critical_high_findings": len(critical_high),
             "due_next_30": due_next_30_count,
         },
@@ -2138,6 +2148,8 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
     parsed = Model(**checked).model_dump()
     if not _can_access_client(user, parsed["client_id"]):
         raise HTTPException(403, "Forbidden for this client")
+    if kind == "tasks":
+        parsed = await action_items.prepare(db, parsed, _can_access_client)
     if kind == "reviews" and parsed.get("owner_id"):
         owner = await db.users.find_one({"user_id": parsed["owner_id"]}, {"_id": 0})
         if not owner or not _can_access_client(owner, parsed["client_id"]):
@@ -2186,6 +2198,10 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         elif existing.get("occurrences") and incoming:
             raise HTTPException(409, "Reload this occurrence before editing")
     body = _editable_patch(kind, incoming, existing, user=user)
+    if kind == "tasks" and "assignee_id" in incoming and incoming["assignee_id"] in (None, "") and existing.get("owner_id"):
+        body["assignee_id"] = None
+    if kind == "tasks":
+        await action_items.prepare(db, {**existing, **body}, _can_access_client, existing)
     if kind == "reviews" and body.get("owner_id"):
         owner = await db.users.find_one({"user_id": body["owner_id"]}, {"_id": 0})
         if not owner or not _can_access_client(owner, existing["client_id"]):
@@ -2230,20 +2246,28 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     if kind == "reviews" and set(body) & {"due_date", "recurrence", "custom_recurrence_days"}:
         body.update(review_occurrences.schedule({**existing, **body}, reset_anchor="due_date" in body))
         body["status"] = review_occurrences.view({**existing, **body})["status"]
+    if kind == "tasks" and "assignee_id" in body and "owner_id" in existing:
+        body["owner_id"] = None  # assignee is authoritative after an explicit assignment
+    if kind == "tasks" and body.get("status") == "in_progress" and not existing.get("started_at"):
+        body.update({"started_at": _now(), "started_by": user["user_id"]})
     if kind == "tasks" and "status" in body:
         body.update({"completed_at": _now() if body["status"] == "done" else None,
                      "completed_by": user["user_id"] if body["status"] == "done" else None})
     body["updated_at"] = _now()
     query = {id_field: item_id}
+    if kind == "tasks":
+        query["updated_at"] = existing.get("updated_at")
     if kind == "reviews":
         query.update({"current_occurrence_id": existing.get("current_occurrence_id"), "updated_at": existing.get("updated_at")})
     result = await db[_coll_for(kind)].update_one(query, {"$set": body})
-    if kind == "reviews" and not result.matched_count:
+    if kind in ("reviews", "tasks") and not result.matched_count:
         raise HTTPException(409, "Review changed; reload before saving")
     if kind == "tasks" and existing.get("finding_id"):
         work = await db.tasks.find({"finding_id": existing["finding_id"], "client_id": existing["client_id"]}, {"status": 1}).to_list(2000)
         finding_status = "remediated" if work and all(t.get("status") in ("done", "cancelled") for t in work) else "in_remediation"
-        await db.findings.update_one({"finding_id": existing["finding_id"], "client_id": existing["client_id"], "status": {"$in": ["open", "in_remediation", "remediated"]}}, {"$set": {"status": finding_status, "updated_at": _now()}})
+        changed_finding = await db.findings.update_one({"finding_id": existing["finding_id"], "client_id": existing["client_id"], "status": {"$in": ["open", "in_remediation", "remediated"], "$ne": finding_status}}, {"$set": {"status": finding_status, "updated_at": _now()}})
+        if changed_finding.modified_count:
+            await audit(user, "Related Finding moved to Pending Validation" if finding_status == "remediated" else "Related Finding moved to In Remediation", "task", item_id, existing["client_id"], meta={"finding_id": existing["finding_id"]})
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})
     if kind == "reviews" and set(incoming) & {"due_date", "recurrence", "custom_recurrence_days", "owner_id"}:
         await _review_event(user, doc, "Review configuration changed", fields=list(incoming))
@@ -2253,7 +2277,8 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
             await _review_event(user, review, "Action Item completed" if doc.get("status") == "done" else "Action Item updated",
                 existing.get("occurrence_id") or "occ_" + review["review_id"],
                 task_id=item_id, title=doc["title"], status=doc.get("status"), assignee_id=doc.get("assignee_id"))
-    await audit(user, "update", entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys())})
+    event = "Action Item completed" if kind == "tasks" and body.get("status") == "done" else "Work started" if kind == "tasks" and body.get("status") == "in_progress" else "Assignment changed" if kind == "tasks" and "assignee_id" in body else "Action Item updated" if kind == "tasks" else "update"
+    await audit(user, event, entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys())})
     return review_occurrences.view(doc) if kind == "reviews" else doc
 
 
@@ -2269,6 +2294,8 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(403, "Forbidden")
     if kind == "reviews" and (existing.get("status") == "completed" or existing.get("occurrences")):
         raise HTTPException(409, "Completed reviews must be retained")
+    if kind == "tasks" and (existing.get("status") == "done" or existing.get("completed_at")):
+        raise HTTPException(409, "Completed Action Items must be retained")
     await db[_coll_for(kind)].delete_one({id_field: item_id})
     await audit(user, "delete", entity_type, item_id, existing.get("client_id"))
     return {"ok": True}
@@ -2923,6 +2950,8 @@ async def validate_finding(finding_id: str, body: DecisionIn, user: Dict = Depen
     if not result.modified_count:
         raise HTTPException(409, "Finding changed; reload before validating")
     await audit(user, "validate", "finding", finding_id, finding["client_id"], meta=decision)
+    for task in await db.tasks.find({"finding_id": finding_id, "client_id": finding["client_id"]}, {"_id": 0}).to_list(2000):
+        await audit(user, "Related Finding validated and closed", "task", task["task_id"], finding["client_id"], meta={"finding_id": finding_id})
     if finding.get("review_id"):
         review = await db.reviews.find_one({"review_id": finding["review_id"], "client_id": finding["client_id"]}, {"_id": 0})
         if review:
@@ -3154,6 +3183,9 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
         "source": finding.get("source") or "Finding remediation",
         "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"],
     }
+    doc["source_type"] = "review" if doc.get("review_id") else "finding"
+    doc["source_id"] = doc.get("review_id") or finding_id
+    doc = await action_items.prepare(db, doc, _can_access_client)
     await db.tasks.update_one({"_id": tid}, {"$setOnInsert": doc}, upsert=True)
     # link back on the finding
     if finding.get("status") == "open":
@@ -3175,6 +3207,12 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
             client_id=doc["client_id"],
         )
     return doc
+
+
+@api.get("/tasks/{task_id}/activity")
+async def task_activity(task_id: str, user: Dict = Depends(get_current_user)):
+    task = await _authorized_parent("tasks", task_id, user)
+    return await db.audit_logs.find({"client_id": task["client_id"], "entity_id": task_id, "entity_type": {"$in": ["task", "tasks"]}}, {"_id": 0}).sort("at", -1).to_list(500)
 
 
 @api.get("/related")
@@ -3205,6 +3243,15 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
                         relations.append({key: source[pointer]})
         scope = review_occurrences.occurrence_query(source, occurrence_id) if entity_type == "reviews" and occurrence_id and target in ("findings", "tasks") else {}
         linked[target] = await db[target].find({"client_id": cid, "$or": relations, **scope}, {"_id": 0}).to_list(200) if relations else []
+    if entity_type == "tasks" and source.get("assessment_id"):
+        linked["assessments"] = await db.assessments.find({"assessment_id": source["assessment_id"], "client_id": cid}, {"_id": 0}).to_list(1)
+    if entity_type == "tasks" and source.get("occurrence_id"):
+        for review in linked.get("reviews", []):
+            occurrence = next((o for o in review.get("occurrences", []) if o.get("occurrence_id") == source["occurrence_id"]), None)
+            if occurrence:
+                review["linked_occurrence"] = {"period": occurrence.get("period"), "status": occurrence.get("status")}
+            elif review_occurrences.occurrence_id(review) == source["occurrence_id"]:
+                review["linked_occurrence"] = {"period": review_occurrences.view(review).get("period"), "status": review.get("status")}
     singular = "policy" if entity_type == "policies" else entity_type[:-1]
     linked["evidence"] = await db.evidence.find({"client_id": cid, "linked_type": singular, "linked_id": entity_id}, {"_id": 0, "content_base64": 0}).to_list(200)
     return linked
@@ -4043,6 +4090,8 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
             raise HTTPException(403, "Destructive action restricted")
         if body.kind == "reviews" and any(d.get("status") == "completed" or d.get("occurrences") for d in docs):
             raise HTTPException(409, "Completed reviews must be retained")
+        if body.kind == "tasks" and any(d.get("status") == "done" or d.get("completed_at") for d in docs):
+            raise HTTPException(409, "Completed Action Items must be retained")
         await coll.delete_many({id_field: {"$in": body.ids}})
         for d in docs:
             await audit(user, "bulk-delete", entity_type, d[id_field], d["client_id"])
@@ -4078,7 +4127,9 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     if not updates:
         raise HTTPException(400, "No fields to update")
     for d in docs:
-        _editable_patch(body.kind, dict(updates), d, user=user)
+        checked = _editable_patch(body.kind, dict(updates), d, user=user)
+        if body.kind == "tasks":
+            await action_items.prepare(db, {**d, **checked}, _can_access_client, d)
     for d in docs:
         await update_entity(body.kind, d[id_field], {**updates, **({"expected_occurrence_id": review_occurrences.occurrence_id(d)} if body.kind == "reviews" else {})}, user)
     for d in docs:

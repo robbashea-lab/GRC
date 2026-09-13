@@ -1,3 +1,4 @@
+import { prepareTask } from './actionItems';
 import fixtures from './fixtures.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
@@ -152,9 +153,15 @@ export function write(db, kind, body, id) {
     created_by: existing?.created_by || db.user.user_id,
     updated_at: now()
   };
+  if (kind === 'tasks') {
+    if(existing) {row.created_at=existing.created_at;row.created_by=existing.created_by;}
+    prepareTask(db,row,existing);
+    if ('assignee_id' in body && existing && 'owner_id' in existing) row.owner_id=null;
+  }
   validate(db, kind, row, existing);
   if (kind === 'reviews') Object.assign(row, reviewView({...row, ...reviewSchedule(row, !!existing && !body.schedule_anchor && body.due_date !== undefined && body.due_date !== existing.due_date)}));
   if (kind === 'tasks' && existing && row.status !== existing.status) {
+    if (row.status === 'in_progress' && !row.started_at) {row.started_at=now();row.started_by=db.user.user_id;}
     row.completed_by = row.status === 'done' ? db.user.user_id : null;
     row.completed_at = row.status === 'done' ? now() : null;
   }
@@ -181,16 +188,20 @@ export function write(db, kind, body, id) {
       row.last_reviewed = now();
     }
   }
+  const taskEvent = !existing ? 'Action Item created' : row.status!==existing.status ? row.status==='done'?'Action Item completed':row.status==='in_progress'?'Work started':'Status changed' : row.assignee_id!==existing.assignee_id?'Assignment changed':'Action Item updated';
   if (existing) Object.assign(existing, row);else db[kind].unshift(row);
   if (kind === 'tasks' && row.finding_id) {
     const finding = db.findings.find(f => f.finding_id === row.finding_id && f.client_id === row.client_id);
     if (finding && ['open', 'in_remediation', 'remediated'].includes(finding.status)) {
       const work = db.tasks.filter(t => t.finding_id === row.finding_id && t.client_id === row.client_id);
-      finding.status = work.every(t => ['done', 'cancelled'].includes(t.status)) ? 'remediated' : 'in_remediation';
+      const next = work.every(t => ['done', 'cancelled'].includes(t.status)) ? 'remediated' : 'in_remediation';
+      if(next!==finding.status) audit(db,next==='remediated'?'Related Finding moved to Pending Validation':'Related Finding moved to In Remediation','tasks',row,{finding_id:finding.finding_id});
+      finding.status = next;
       finding.updated_at = now();
     }
   }
-  audit(db, existing ? 'update' : 'create', kind, row);
+  const event = kind==='tasks' ? taskEvent : existing?'update':'create';
+  audit(db, event, kind, row);
   return existing || row;
 }
 export function library(db, type, cid) {
