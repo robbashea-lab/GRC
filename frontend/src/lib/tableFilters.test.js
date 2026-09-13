@@ -58,8 +58,8 @@ test('risk score sorting is numeric, severity uses logical ranking, and no score
   expect(rows[3].risk_score).toBeNull();
 });
 test('Action Items preserve native statuses and combine priority, owner and due date',()=>{
-  const rows=[{title:'A',priority:'high',status:'in_remediation',owner_id:'a',due_date:'2026-09-11'},{title:'B',priority:'low',status:'done',due_date:null}];
-  expect(filter(rows,tableColumns('action-items',{rows}),{priority:['high'],status:['in_remediation'],owner_id:['a'],due_date:['next7']})).toEqual([rows[0]]);
+  const rows=[{title:'A',priority:'high',status:'in_progress',owner_id:'a',due_date:'2026-09-11'},{title:'B',priority:'low',status:'done',due_date:null}];
+  expect(filter(rows,tableColumns('action-items',{rows}),{priority:['high'],status:['in_progress'],owner_id:['a'],due_date:['next7']})).toEqual([rows[0]]);
 });
 test.each(['policies','contacts','evidence','client-management','portfolio','users'])('%s declarations support the shared engine without mutation',module=>{
   const row={title:'A',name:'A',client_id:'a',status:'active',role:'IT Lead',mime_type:'application/pdf'};

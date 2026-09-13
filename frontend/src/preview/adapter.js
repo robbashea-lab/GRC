@@ -88,6 +88,10 @@ export async function previewAdapter(config) {
       }
       if (path === '/clients/directory') return respond(portfolio(db, params.include_archived === true || params.include_archived === 'true'));
       if (path === '/clients') return respond(db.clients.filter(c => params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived'));
+      if (kind === 'tasks' && name === 'activity') {
+        const task=record(db,'tasks',id);
+        return respond(db.logs.filter(l=>l.entity_id===id&&l.client_id===task.client_id&&['task','tasks'].includes(l.entity_type)).map(l=>({...l,log_id:l.log_id||l.audit_id})));
+      }
       if (kind === 'clients' && name === 'members') {
         record(db, 'clients', id);
         return respond(db.users.filter(u => ['super_admin', 'platform_admin'].includes(u.role) || (u.client_ids || []).includes(id)));
@@ -125,6 +129,7 @@ export async function previewAdapter(config) {
             tasks: [],
             risks: [],
             policies: [],
+            assessments: [],
             vendors: [],
             exceptions: [],
             evidence: []
@@ -134,6 +139,11 @@ export async function previewAdapter(config) {
           : r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
         if (params.entity_type === 'reviews' && params.occurrence_id)
           for (const k of ['findings','tasks','evidence']) data[k] = data[k].filter(r => belongsToOccurrence(r,source,params.occurrence_id));
+        if(params.entity_type==='tasks'&&source.occurrence_id) for(const review of data.reviews) {
+          const o=review.occurrences?.find(o=>o.occurrence_id===source.occurrence_id);
+          if(o) review.linked_occurrence={period:o.period,status:o.status};
+          else if((review.current_occurrence_id||'occ_'+review.review_id)===source.occurrence_id) review.linked_occurrence={period:reviewView(review).period,status:review.status};
+        }
         return respond(data);
       }
       if (kind === 'comments') return respond(db.comments.filter(r => r.entity_type === params.entity_type && r.entity_id === params.entity_id
@@ -209,6 +219,7 @@ export async function previewAdapter(config) {
       const rows = body.ids.map(i => record(db, body.kind, i));
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
         throw new Error('Review history must be retained.');
+      if (body.kind === 'tasks' && body.action === 'delete' && rows.some(r=>r.status==='done'||r.completed_at)) throw new Error('Completed Action Items must be retained.');
       const payload = body.payload || {};
       const close = {
         reviews: 'completed',
@@ -314,6 +325,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if (kind==='tasks'&&(r.status==='done'||r.completed_at) || kind==='evidence'&&db.tasks.some(t=>t.task_id===r.linked_id&&t.client_id===r.client_id&&t.status==='done')) throw new Error('Completed Action Items and their evidence must be retained.');
         if (kind === 'reviews' && (r.status === 'completed' || r.occurrences?.length) || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id) || v.occurrences?.some(o => o.evidence?.some(e => e.evidence_id === id)))) throw new Error('Completed reviews and their evidence must be retained.');
         db[kind] = db[kind].filter(x => x[ids[kind]] !== id);
         audit(db, 'delete', kind, r);
@@ -354,6 +366,7 @@ export async function previewAdapter(config) {
       const result = write(db, kind, body, id);
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});
+      if (kind === 'evidence' && body.linked_type === 'task') audit(db,'Evidence uploaded','tasks',record(db,'tasks',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
       return save(kind === 'users' && !id ? {
         user: result,
         simulated: true,

@@ -116,7 +116,7 @@ export function dashboard(db, params) {
       critical_findings: critical,
       critical_high_findings: critical,
       significant_risks: risks.filter(r => open('risks',r) && ['high', 'critical'].includes(r.risk_level)).length,
-      overdue_actions: overdueReviews + findings.filter(r => overdue('findings', r) && !representedFinding(r,tasks)).length + tasks.filter(r => overdue('tasks', r)).length,
+      overdue_actions: tasks.filter(r => overdue('tasks', r)).length,
       due_next_30: reviews.filter(r => open('reviews', r) && r.due_date >= stamp && r.due_date <= end).length + tasks.filter(r => r.status !== 'done' && r.due_date >= stamp && r.due_date <= end).length + get('policies').filter(r => r.next_review_date >= stamp && r.next_review_date <= end).length
     },
     scope: params.scope || 'org',

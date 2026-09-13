@@ -15,6 +15,8 @@ import { Link } from "react-router-dom";
 import { SCHEMAS } from "@/lib/schemas";
 import rules from "@/lib/grcRules.json";
 import ReviewDrawer from "./ReviewDrawer";
+import ActionItemFields from "./ActionItemFields";
+import { taskSource, SOURCE_RECORDS, actionStatus } from "@/lib/actionItems";
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
@@ -122,15 +124,19 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyForm, setVerifyForm] = useState({ version: "", owner_id: "", approver_id: "", approved_at: "", last_reviewed_at: "", next_review_date: "", status: "approved" });
   const inputRef = useRef(null);
+  const loadGeneration = useRef(0);
   const { user } = useAuth();
   const isEdit = !!record;
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
   const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
-  const singular = kind === "policies" ? "policy" : kind.slice(0, -1);
+  const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
+  const evidenceKind = kind === "tasks" ? "task" : singular;
   const tabList = TABS_BY_KIND[kind];
 
   useEffect(() => {
+    const generation = loadGeneration;
+    generation.current++;
     if (open) {
       setRelatedDrawer(null); setFindingOpen(false);
       if (kind === "reviews") api.get("/policies", { params: { client_id: record?.client_id || clientId } }).then(({data}) => setPolicyOptions(data)).catch(() => setPolicyOptions([]));
@@ -160,6 +166,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           base[k] = toDateInput(base[k]);
         });
       }
+      if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:record?.priority||"medium"});
       base.client_id = record?.client_id || clientId;
       setForm(base);
       setTab("overview");
@@ -173,31 +180,45 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         setComments([]); setActivity([]); setRelated({}); setEvidenceItems([]); setLinkedReviews([]); setLinkedRisks([]);
       }
     }
+    return () => { generation.current++; };
     // eslint-disable-next-line
-  }, [open, record]);
+  }, [open, record, clientId]);
+
+  useEffect(() => {
+    if (!open || kind !== "tasks" || !record || !["related","activity"].includes(tab)) return;
+    const refresh = () => { loadRelated(); loadActivity(); };
+    refresh(); window.addEventListener("focus", refresh);
+    const timer = setInterval(refresh, 10000);
+    return () => { window.removeEventListener("focus", refresh); clearInterval(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open,kind,record,tab]);
 
   async function loadComments() {
+    const generation=loadGeneration.current;
     try {
       const { data } = await api.get("/comments", { params: { entity_type: kind, entity_id: record[idField] } });
-      setComments(data);
+      if(generation===loadGeneration.current) setComments(data);
     } catch (e) { void e; }
   }
   async function loadActivity() {
+    const generation=loadGeneration.current;
     try {
-      const { data } = await api.get("/audit-logs");
-      setActivity(data.filter((a) => a.entity_id === record[idField]).slice(0, 30));
+      const { data } = await api.get(kind === "tasks" ? `/tasks/${record.task_id}/activity` : "/audit-logs");
+      if(generation===loadGeneration.current) setActivity(data.filter((a) => a.entity_id === record[idField]).slice(0, 30));
     } catch (e) { void e; }
   }
   async function loadRelated() {
+    const generation=loadGeneration.current;
     try {
       const { data } = await api.get("/related", { params: { entity_type: kind, entity_id: record[idField] } });
-      setRelated(data);
+      if(generation===loadGeneration.current) setRelated(data);
     } catch (e) { void e; }
   }
   async function loadEvidence() {
+    const generation=loadGeneration.current;
     try {
-      const { data } = await api.get("/evidence", { params: { client_id: record.client_id, linked_type: singular, linked_id: record[idField] } });
-      setEvidenceItems(data);
+      const { data } = await api.get("/evidence", { params: { client_id: record.client_id, linked_type: evidenceKind, linked_id: record[idField] } });
+      if(generation===loadGeneration.current) setEvidenceItems(data);
     } catch (e) { void e; }
   }
   async function loadLinkedReviews() {
@@ -222,7 +243,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     }).filter(([k, v]) => !isEdit || !(JSON.stringify(v) === JSON.stringify(record[k]) || (v == null || v === "") && (record[k] == null || record[k] === "") || schema.find(f => f.name === k)?.type === "date" && String(record[k] || '').slice(0,10) === v)));
   }
 
-  async function save() {
+  async function save(taskStatus) {
     if (!canWrite || saving) return;
     const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
     if (missing) { toast.error(`${missing.label} is required`); return; }
@@ -230,6 +251,13 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     setSaving(true);
     try {
       const clean = cleanForm();
+      if (kind === "tasks") {
+        if (isEdit) { delete clean.source_type; delete clean.source_id;
+          if (form.assignee_id !== (record.assignee_id ?? record.owner_id ?? null)) clean.assignee_id=form.assignee_id||null;
+        }
+        else { clean.status="open"; if(SOURCE_RECORDS[form.source_type]&&form.source_type!=="audit"&&!form.source_id) throw new Error("Select the source record"); }
+        if (typeof taskStatus === "string") clean.status=taskStatus;
+      }
       if (kind === "policies" && (record?.schedule_from_reviews || related.reviews?.length)) delete clean.next_review_date;
       if (isEdit) {
         await api.patch(`/${kind}/${record[idField]}`, clean);
@@ -463,7 +491,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         const b64 = await fileToBase64(f);
         await api.post("/evidence", {
           filename: f.name, client_id: record.client_id, content_base64: b64,
-          mime_type: f.type, linked_type: singular, linked_id: record[idField],
+          mime_type: f.type, linked_type: evidenceKind, linked_id: record[idField],
         });
         toast.success(`Uploaded ${f.name}`);
       } catch (e) { toast.error(formatError(e)); }
@@ -934,6 +962,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Overview renderers per kind --------
   function renderOverview() {
+    if (kind === "tasks") return <ActionItemFields form={form} setForm={setForm} record={record} clientId={clientId} canWrite={canWrite} saving={saving} onTransition={save}/>;
     if (kind === "risks") {
       return (
         <div className="space-y-4">
@@ -1131,6 +1160,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
                     <div className="min-w-0">
                       {SCHEMAS[k] ? <button className="text-left text-slate-900 font-medium hover:underline" onClick={() => setRelatedDrawer({ kind: k, record: it })}>{it.title || it.name}</button> : <div className="text-slate-900 font-medium truncate">{it.title || it.name || it.filename}</div>}
                       <div className="text-[11px] text-slate-500 font-mono">{it[ID_FIELD[k]] || it.evidence_id}</div>
+                      {kind === "tasks" && k === "reviews" && it.linked_occurrence && <div className="text-xs text-ink-secondary">Occurrence: {it.linked_occurrence.period || "Not recorded"} · {it.linked_occurrence.status}</div>}
                     </div>
                     {it.status && <StatusBadge value={it.status} />}
                   </li>
@@ -1170,7 +1200,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => downloadEv(ev)} className="p-1 rounded hover:bg-slate-100 text-slate-500"><Download className="h-3.5 w-3.5" /></button>
-                {isPlatformAdmin && <button onClick={() => deleteEv(ev)} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>}
+                {isPlatformAdmin && !(kind === "tasks" && record?.status === "done") && <button onClick={() => deleteEv(ev)} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>}
               </div>
             </li>
           ))}
@@ -1194,8 +1224,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           ))}
         </div>
         <div className="space-y-2 pt-2 border-t border-slate-200">
-          <Textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment… use @email to mention" data-testid="comment-input" className="text-sm" />
-          <Button onClick={submitComment} data-testid="comment-submit" size="sm">Post comment</Button>
+          <Textarea disabled={!canWrite} value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment… use @email to mention" data-testid="comment-input" className="text-sm" />
+          <Button disabled={!canWrite} onClick={submitComment} data-testid="comment-submit" size="sm">Post comment</Button>
         </div>
       </div>
     );
@@ -1205,7 +1235,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       <div className="space-y-2">
         {activity.length === 0 && <div className="text-sm text-slate-500">No activity yet.</div>}
         {activity.map((a) => (
-          <div key={a.log_id} className="text-xs flex items-center gap-3 py-2 border-b border-slate-100">
+          <div key={a.log_id || a.audit_id} className="text-xs flex items-center gap-3 py-2 border-b border-slate-100">
             <span className="font-mono text-slate-400">{new Date(a.at).toLocaleString()}</span>
             <span className="text-slate-700 font-medium">{a.user_email}</span>
             <span className="text-slate-500">{a.action}</span>
@@ -1305,7 +1335,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
             <div>
               <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400">{singular}</div>
               <SheetTitle className="font-heading text-xl">{isEdit ? (record.title || record.name) : `New ${singular}`}</SheetTitle>
-              {isEdit && status && <div className="mt-2"><StatusBadge value={status} /></div>}
+              {isEdit && status && <div className="mt-2">{kind === "tasks" ? <span className="pill pill-neutral">{actionStatus(status)}</span> : <StatusBadge value={status} />}</div>}
             </div>
             <button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-slate-100" data-testid="drawer-close"><X className="h-4 w-4" /></button>
           </div>
