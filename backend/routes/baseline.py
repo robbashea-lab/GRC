@@ -14,6 +14,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+import risk_ids
 
 from server import (  # noqa: E402
     db, _uid, _now, _writable, _can_access_client, audit, get_current_user,
@@ -81,6 +82,7 @@ async def create_baseline(body: BaselineIn, user: Dict = Depends(get_current_use
                "category": "operational", "likelihood": "medium", "impact": "medium",
                "status": "identified", "owner_id": user["user_id"],
                "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"]}
+        doc["display_id"] = await risk_ids.allocate(db, body.client_id)
         await db.risks.insert_one(doc)
         created["risks"] += 1
     for rv in body.reviews:

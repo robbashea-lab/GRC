@@ -1,3 +1,5 @@
+import { ensureRiskReview } from './risks';
+import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
 import fixtures from './fixtures.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -35,11 +37,11 @@ export function seedStore() {
   db.notifications = clone(fixtures.responses['/notifications']?.items || []);
   db.drafts = {};
   for (const [key, value] of Object.entries(fixtures.responses)) if (key.startsWith('/onboarding/state?')) db.assessments.push(...clone(value.assessments || []));
-  return db;
+  return initializeRiskIds(db);
 }
 export function readStore() {
   const saved = sessionStorage.getItem(STORE_KEY);
-  if (saved) return JSON.parse(saved);
+  if (saved) return initializeRiskIds(JSON.parse(saved));
   const db = seedStore();
   saveStore(db);
   return db;
@@ -170,10 +172,12 @@ export function write(db, kind, body, id) {
     if (review) audit(db, row.status === 'done' ? 'Action Item completed' : existing ? 'Action Item updated' : 'Action Item created',
       'reviews', review, {occurrence_id:row.occurrence_id || 'occ_' + row.review_id, task_id:row.task_id, title:row.title, assignee_id:row.assignee_id,status:row.status});
   }
-  if (kind === 'risks') Object.assign(row, assessedRisk(row));
+  if (kind === 'risks') {
+    Object.assign(row, assessedRisk(row));
+    row.display_id = existing?.display_id || allocateRiskId(db, row.client_id);
+    if (!existing) row.status = row.risk_score ? "assessed" : "identified";
+  }
   if (kind === 'risks' && row.likelihood_score && row.impact_score) {
-    row.risk_score = row.likelihood_score * row.impact_score;
-    row.risk_level = row.risk_score >= 15 ? 'critical' : row.risk_score >= 10 ? 'high' : row.risk_score >= 5 ? 'moderate' : 'low';
     if (existing && (existing.likelihood_score !== row.likelihood_score || existing.impact_score !== row.impact_score)) {
       row.rating_history = [...(existing.rating_history || []), {
         at: now(),
@@ -185,11 +189,17 @@ export function write(db, kind, body, id) {
         new_impact: row.impact_score,
         prev_score: existing.risk_score
       }];
-      row.last_reviewed = now();
     }
   }
+  const riskEvent = !existing?"Risk created":row.status!==existing.status&&row.status==="closed"?"Risk closed":row.acceptance_date!==existing.acceptance_date?"Risk accepted":row.likelihood_score!==existing.likelihood_score||row.impact_score!==existing.impact_score?"Risk reassessed":row.owner_id!==existing.owner_id?"Risk owner assigned":row.treatment!==existing.treatment?"Treatment updated":row.next_review!==existing.next_review?"Next Risk Review scheduled":"Risk updated";
   const taskEvent = !existing ? 'Action Item created' : row.status!==existing.status ? row.status==='done'?'Action Item completed':row.status==='in_progress'?'Work started':'Status changed' : row.assignee_id!==existing.assignee_id?'Assignment changed':'Action Item updated';
   if (existing) Object.assign(existing, row);else db[kind].unshift(row);
+  if (kind === "risks") ensureRiskReview(db, existing || row);
+  if (kind === "tasks" && row.risk_id) {
+    const risk=record(db,"risks",row.risk_id);
+    if(!existing&&["assessed","open"].includes(risk.status)&&assessedRisk(risk).risk_score) risk.status="in_progress";
+    audit(db,taskEvent,"risks",risk,{task_id:row.task_id});
+  }
   if (kind === 'tasks' && row.finding_id) {
     const finding = db.findings.find(f => f.finding_id === row.finding_id && f.client_id === row.client_id);
     if (finding && ['open', 'in_remediation', 'remediated'].includes(finding.status)) {
@@ -200,7 +210,7 @@ export function write(db, kind, body, id) {
       finding.updated_at = now();
     }
   }
-  const event = kind==='tasks' ? taskEvent : existing?'update':'create';
+  const event = kind==='tasks' ? taskEvent : kind==='risks'?riskEvent:existing?'update':'create';
   audit(db, event, kind, row);
   return existing || row;
 }

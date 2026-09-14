@@ -37,6 +37,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ValidationError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
 import action_items
+import risk_ids
+import risk_lifecycle
 import review_occurrences
 
 # ---------------- DB ----------------
@@ -46,6 +48,41 @@ db = client[os.environ["DB_NAME"]]
 
 app = FastAPI(title="GRC Platform")
 api = APIRouter(prefix="/api")
+
+
+def risk_mutation(fn):
+    """Serialize Risk decisions with linked Review execution across workers."""
+    signature = inspect.signature(fn)
+    @wraps(fn)
+    async def wrapped(*args, **kwargs):
+        values = signature.bind_partial(*args, **kwargs).arguments
+        rid = values.get("risk_id") or (values.get("item_id") if values.get("kind") == "risks" else None)
+        if values.get("kind") == "tasks":
+            data = values.get("body") or {}
+            task = await db.tasks.find_one({"task_id":values.get("item_id")}) if values.get("item_id") else data
+            rid = (task or {}).get("risk_id") or (data.get("source_id") if data.get("source_type") == "risk" else None)
+        review_id = values.get("review_id") or (values.get("item_id") if values.get("kind") == "reviews" else None)
+        if review_id:
+            review = await _authorized_parent("reviews", review_id, values["user"], write=True)
+            rid = review.get("risk_id")
+        if not rid:
+            return await fn(*args, **kwargs)
+        risk = await _authorized_parent("risks", rid, values["user"], write=True)
+        if review_id and risk.get("status") in risk_lifecycle.CLOSED:
+            raise HTTPException(409, "Closed Risks have no active Review operations")
+        token, now = uuid.uuid4().hex, datetime.now(timezone.utc)
+        acquired = await db.risks.update_one({"risk_id":rid,"$or":[{"_governance_lock":None},{"_governance_lock.until":{"$lt":now.isoformat()}}]},
+            {"$set":{"_governance_lock":{"token":token,"until":(now+timedelta(seconds=120)).isoformat()}}})
+        if not acquired.modified_count:
+            raise HTTPException(409, "Another Risk action is being saved; please retry")
+        try:
+            linked = await db.reviews.find_one({"risk_id":rid,"client_id":risk["client_id"]},{"_id":0})
+            if linked:
+                await risk_lifecycle.sync_completion(db, linked)
+            return await asyncio.wait_for(fn(*args, **kwargs), timeout=90)
+        finally:
+            await db.risks.update_one({"risk_id":rid,"_governance_lock.token":token},{"$unset":{"_governance_lock":""}})
+    return wrapped
 
 
 def review_mutation(fn):
@@ -214,6 +251,7 @@ class ClientPatchIn(BaseModel):
 
 
 class ReviewIn(BaseModel):
+    risk_id: Optional[str] = None
     title: str
     review_type: str  # asset, software, access, vendor, policy, risk, vulnerability, bcp_dr, incident, awareness
     client_id: str
@@ -265,6 +303,17 @@ class RiskIn(BaseModel):
     description: Optional[str] = None
     impact_description: Optional[str] = None
     source: Optional[str] = None
+    source_type: Optional[str] = None
+    source_id: Optional[str] = None
+    finding_id: Optional[str] = None
+    vendor_id: Optional[str] = None
+    review_id: Optional[str] = None
+    assessment_id: Optional[str] = None
+    review_cadence: Optional[str] = "annual"
+    custom_recurrence_days: Optional[int] = None
+    assessment_rationale: Optional[str] = None
+    likelihood_rationale: Optional[str] = None
+    impact_rationale: Optional[str] = None
     date_identified: Optional[str] = None
     last_reviewed: Optional[str] = None
     next_review: Optional[str] = None
@@ -1264,6 +1313,8 @@ async def delete_evidence(ev_id: str, user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Forbidden")
     if await db.reviews.find_one({"$or": [{"completion_snapshot.evidence.evidence_id": ev_id}, {"occurrences.evidence.evidence_id": ev_id}]}):
         raise HTTPException(409, "Evidence referenced by a completed review must be retained")
+    if doc.get("linked_type") in ("risk","risks") and await db.risks.find_one({"risk_id":doc.get("linked_id"),"client_id":doc["client_id"],"status":{"$in":["closed","retired"]}}):
+        raise HTTPException(409,"Closed Risk evidence must be retained")
     if doc.get("linked_type") in ("task", "tasks") and await db.tasks.find_one({"task_id": doc.get("linked_id"), "client_id": doc["client_id"], "status": "done"}):
         raise HTTPException(409, "Completed Action Item evidence must be retained")
     # Retain bytes even if a completion races this removal. Only the inventory link is archived.
@@ -1994,6 +2045,8 @@ async def seed():
                client_id=tenant["client_id"], category="operational", likelihood="medium", impact="medium",
                status="identified", owner_id=own),
         ]
+    for risk in risks:
+        risk["display_id"] = await risk_ids.allocate(db, risk["client_id"])
     await db.risks.insert_many(risks)
 
     # Policies
@@ -2078,6 +2131,7 @@ def _risk_level_from_score(score: Optional[int]) -> Optional[str]:
 def _apply_risk_scoring(doc: Dict) -> Dict:
     """When numeric likelihood_score and impact_score are present on a risk,
     compute the derived risk_score and risk_level so they cannot drift out of sync."""
+    doc.pop("_governance_lock", None)
     ls = doc.get("likelihood_score")
     is_ = doc.get("impact_score")
     if type(ls) is int and type(is_) is int and 1 <= ls <= 5 and 1 <= is_ <= 5:
@@ -2096,6 +2150,8 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     if kind in ("findings", "tasks") and previous.get("occurrence_id") and set(changes) & {"review_id", "finding_id"}:
         raise HTTPException(422, "Review occurrence relationships must be retained")
     if kind == "reviews":
+        if "risk_id" in changes:
+            raise HTTPException(422, "Establish Risk Reviews from the Risk governance schedule")
         if user and user.get("role") not in ("super_admin", "platform_admin") and set(changes) - {"notes"}:
             raise HTTPException(403, "Only platform administrators can change Review configuration")
         if set(changes) & {"period", "next_review_date"} or changes.get("status") in ("in_progress", "completed"):
@@ -2108,7 +2164,7 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     protected |= {"current_occurrence_id", "occurrence_id", "occurrences", "schedule_anchor", "started_at", "started_by", "completed_at", "completed_by", "closed_at", "closed_by"}
     if protected.intersection(changes):
         raise HTTPException(422, "Decision and history fields cannot be edited directly")
-    targets = {"policies": {"approved"}, "risks": {"accepted"}, "findings": {"closed", "accepted", "remediated"}, "reviews": {"completed"}, "exceptions": {"approved"}}
+    targets = {"policies": {"approved"}, "risks": {"accepted", "closed", "retired"}, "findings": {"closed", "accepted", "remediated"}, "reviews": {"completed"}, "exceptions": {"approved"}}
     if "status" in changes and (not isinstance(changes["status"], str) or kind in RULES["statuses"] and changes["status"] not in RULES["statuses"][kind]):
         raise HTTPException(422, "Invalid status")
     for field in ("title", "name"):
@@ -2122,6 +2178,16 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     if set(changes) - set(Model.model_fields):
         raise HTTPException(422, "Unknown or read-only fields: " + ", ".join(sorted(set(changes) - set(Model.model_fields))))
     if kind == "risks":
+        if existing and set(changes) & {"next_review","review_cadence","custom_recurrence_days"} and user and user.get("role") not in ("super_admin","platform_admin"):
+            raise HTTPException(403, "Only platform administrators can change Review configuration")
+        if "treatment" in changes and changes["treatment"] not in (None,"","mitigate","accept","transfer","avoid","monitor"):
+            raise HTTPException(422, "Invalid treatment decision")
+        if set(changes) & {"risk_score","risk_level","last_reviewed","date_identified"}:
+            raise HTTPException(422, "Risk assessment results and review history dates are system-controlled")
+        if not existing and changes.get("status") not in (None,"open","identified","assessed"):
+            raise HTTPException(422, "New Risks start as Identified or Assessed")
+        if existing and existing.get("status") in risk_lifecycle.CLOSED and changes:
+            raise HTTPException(409, "Closed Risks are historical and cannot be edited")
         for key in ("likelihood_score", "impact_score"):
             if key in changes and changes[key] is not None and (type(changes[key]) is not int or not 1 <= changes[key] <= 5):
                 raise HTTPException(422, "Risk ratings must be whole numbers from 1 to 5")
@@ -2135,11 +2201,16 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
 @entity_router.get("/{kind}")
 async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Optional[str] = Query(None), user: Dict = Depends(get_current_user)):
     q = _scope_filter(user, client_id)
+    if kind == "risks":
+        scoped_clients = await db.risks.distinct("client_id", q)
+        for scoped_client in scoped_clients:
+            await risk_ids.initialize(db, scoped_client)
     docs = await db[_coll_for(kind)].find(q, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return [_apply_risk_scoring(d) for d in docs] if kind == "risks" else [review_occurrences.view(d) for d in docs] if kind == "reviews" else docs
 
 
 @entity_router.post("/{kind}")
+@risk_mutation
 async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[str, Any] = None, user: Dict = Depends(get_current_user)):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
@@ -2150,7 +2221,7 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
         raise HTTPException(403, "Forbidden for this client")
     if kind == "tasks":
         parsed = await action_items.prepare(db, parsed, _can_access_client)
-    if kind == "reviews" and parsed.get("owner_id"):
+    if kind in ("reviews","risks") and parsed.get("owner_id"):
         owner = await db.users.find_one({"user_id": parsed["owner_id"]}, {"_id": 0})
         if not owner or not _can_access_client(owner, parsed["client_id"]):
             raise HTTPException(422, "Review owner must have access to this client")
@@ -2161,6 +2232,10 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
             raise HTTPException(422, "Related record must belong to the same client")
     if kind == "risks":
         parsed = _apply_risk_scoring(parsed)
+        parsed["display_id"] = await risk_ids.allocate(db, parsed["client_id"])
+        parsed["status"] = "assessed" if parsed.get("risk_score") else "identified"
+        risk_lifecycle.validate_schedule(parsed)
+        parsed = await risk_lifecycle.prepare_source(db, parsed)
         if not parsed.get("date_identified"):
             parsed["date_identified"] = _now()
     if kind == "vendors":
@@ -2174,11 +2249,17 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
         doc = review_occurrences.view(doc)
     await db[_coll_for(kind)].insert_one(doc)
     doc.pop("_id", None)
-    await audit(user, "create", entity_type, new_id, parsed.get("client_id"))
+    await audit(user, "Risk created" if kind == "risks" else "create", entity_type, new_id, parsed.get("client_id"))
+    if kind == "risks":
+        await risk_lifecycle.ensure_review(db, doc, user, _now())
+    if kind == "tasks" and doc.get("risk_id"):
+        await db.risks.update_one({"risk_id":doc["risk_id"],"client_id":doc["client_id"],"status":{"$in":["assessed","open"]},"risk_score":{"$ne":None}}, {"$set":{"status":"in_progress","updated_at":_now()}})
+        await audit(user, "Related Action Item created", "risk", doc["risk_id"], doc["client_id"], meta={"task_id":new_id})
     return doc
 
 
 @entity_router.patch("/{kind}/{item_id}")
+@risk_mutation
 @review_mutation
 async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), body: Dict[str, Any] = None, user: Dict = Depends(get_current_user)):
     if not _writable(user):
@@ -2202,7 +2283,7 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         body["assignee_id"] = None
     if kind == "tasks":
         await action_items.prepare(db, {**existing, **body}, _can_access_client, existing)
-    if kind == "reviews" and body.get("owner_id"):
+    if kind in ("reviews","risks") and body.get("owner_id"):
         owner = await db.users.find_one({"user_id": body["owner_id"]}, {"_id": 0})
         if not owner or not _can_access_client(owner, existing["client_id"]):
             raise HTTPException(422, "Review owner must have access to this client")
@@ -2221,6 +2302,11 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     if kind == "risks":
         # Merge with existing so partial patches still compute a consistent score.
         merged = {**existing, **body}
+        risk_lifecycle.validate_schedule(merged)
+        merged = await risk_lifecycle.prepare_source(db, merged)
+        for key in ("review_id","finding_id","vendor_id","assessment_id"):
+            if merged.get(key) != existing.get(key):
+                body[key] = merged.get(key)
         # Track rating history when likelihood/impact numeric values actually change.
         prev_ls, prev_is = existing.get("likelihood_score"), existing.get("impact_score")
         new_ls = body.get("likelihood_score", prev_ls)
@@ -2238,8 +2324,9 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
                 "prev_score": existing.get("risk_score"),
             })
             body["rating_history"] = history
-            body["last_reviewed"] = _now()
         computed = _apply_risk_scoring(merged)
+        if existing.get("status") in ("open","identified") and computed.get("risk_score"):
+            body["status"] = "assessed"
         for k in ("risk_score", "risk_level"):
             if k in computed:
                 body[k] = computed[k]
@@ -2269,8 +2356,18 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         if changed_finding.modified_count:
             await audit(user, "Related Finding moved to Pending Validation" if finding_status == "remediated" else "Related Finding moved to In Remediation", "task", item_id, existing["client_id"], meta={"finding_id": existing["finding_id"]})
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})
+    if kind == "risks":
+        await risk_lifecycle.ensure_review(db, doc, user, _now())
+    if kind == "reviews" and doc.get("risk_id"):
+        await db.risks.update_one({"risk_id":doc["risk_id"],"client_id":doc["client_id"]}, {"$set":{
+            "next_review":doc.get("due_date") if doc.get("status") not in ("completed","cancelled") else None,
+            "review_cadence":doc.get("recurrence"),"custom_recurrence_days":doc.get("custom_recurrence_days")}})
     if kind == "reviews" and set(incoming) & {"due_date", "recurrence", "custom_recurrence_days", "owner_id"}:
         await _review_event(user, doc, "Review configuration changed", fields=list(incoming))
+    if kind == "tasks":
+        associated = await db.risks.find({"client_id":existing["client_id"],"$or":[{"risk_id":existing.get("risk_id")},{"related_task_ids":item_id}]},{"risk_id":1}).to_list(None)
+        for associated_risk in associated:
+            await audit(user, "Related Action Item completed" if doc.get("status") == "done" else "Related Action Item updated", "risk", associated_risk["risk_id"], existing["client_id"], meta={"task_id":item_id})
     if kind == "tasks" and existing.get("review_id") and set(incoming) & {"status", "assignee_id"}:
         review = await db.reviews.find_one({"review_id": existing["review_id"], "client_id": existing["client_id"]}, {"_id": 0})
         if review:
@@ -2278,7 +2375,9 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
                 existing.get("occurrence_id") or "occ_" + review["review_id"],
                 task_id=item_id, title=doc["title"], status=doc.get("status"), assignee_id=doc.get("assignee_id"))
     event = "Action Item completed" if kind == "tasks" and body.get("status") == "done" else "Work started" if kind == "tasks" and body.get("status") == "in_progress" else "Assignment changed" if kind == "tasks" and "assignee_id" in body else "Action Item updated" if kind == "tasks" else "update"
-    await audit(user, event, entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys())})
+    if kind == "risks":
+        event = "Risk reassessed" if any(existing.get(k) != doc.get(k) for k in ("likelihood_score","impact_score")) else "Risk owner assigned" if "owner_id" in incoming else "Treatment updated" if "treatment" in incoming else "Next Risk Review scheduled" if set(incoming) & {"next_review","review_cadence","custom_recurrence_days"} else "Risk updated"
+    await audit(user, event, entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys()), **({"previous_score":existing.get("risk_score"),"score":doc.get("risk_score"),"level":doc.get("risk_level"),"owner_id":doc.get("owner_id")} if kind == "risks" else {})})
     return review_occurrences.view(doc) if kind == "reviews" else doc
 
 
@@ -2292,6 +2391,8 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
+    if kind == "risks" or kind == "reviews" and existing.get("risk_id"):
+        raise HTTPException(409, "Risks and their Review obligations must be retained")
     if kind == "reviews" and (existing.get("status") == "completed" or existing.get("occurrences")):
         raise HTTPException(409, "Completed reviews must be retained")
     if kind == "tasks" and (existing.get("status") == "done" or existing.get("completed_at")):
@@ -2484,6 +2585,7 @@ class RiskAcceptIn(BaseModel):
 
 
 @api.post("/risks/{risk_id}/accept")
+@risk_mutation
 async def risk_accept(risk_id: str, body: RiskAcceptIn, user: Dict = Depends(get_current_user)):
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Only platform-level roles can accept risks")
@@ -2500,6 +2602,8 @@ async def risk_accept(risk_id: str, body: RiskAcceptIn, user: Dict = Depends(get
         raise HTTPException(404, "Risk not found")
     if not _can_access_client(user, risk["client_id"]):
         raise HTTPException(403, "Forbidden")
+    if risk.get("status") in risk_lifecycle.CLOSED:
+        raise HTTPException(409, "Closed Risks cannot be accepted")
     updates = {
         "status": "accepted",
         "treatment": "accept",
@@ -2508,13 +2612,15 @@ async def risk_accept(risk_id: str, body: RiskAcceptIn, user: Dict = Depends(get
         "acceptance_date": _now(),
         "acceptance_rationale": body.rationale,
         "acceptance_expires_at": body.expiry_date,
-        "last_reviewed": _now(),
+        "next_review": min(risk.get("next_review") or body.expiry_date, body.expiry_date),
         "updated_at": _now(),
     }
     if body.compensating_controls:
         updates["compensating_controls"] = body.compensating_controls
+    risk_lifecycle.validate_schedule({**risk,**updates})
     await db.risks.update_one({"risk_id": risk_id}, {"$set": updates, "$push": {"decision_history": {
         "action": "accepted", "by": user["user_id"], "at": _now(), "rationale": body.rationale, "expires_at": body.expiry_date}}})
+    await risk_lifecycle.ensure_review(db, {**risk,**updates}, user, _now())
     await audit(user, "accept", "risk", risk_id, risk["client_id"], meta={"expiry": body.expiry_date})
     return await db.risks.find_one({"risk_id": risk_id}, {"_id": 0})
 
@@ -2586,23 +2692,73 @@ async def vendor_schedule_review(vendor_id: str, body: VendorScheduleReviewIn, u
 
 
 @api.post("/risks/{risk_id}/mark-reviewed")
+@api.post("/risks/{risk_id}/review")
+@risk_mutation
 async def risk_mark_reviewed(risk_id: str, user: Dict = Depends(get_current_user)):
-    if not _writable(user):
-        raise HTTPException(403, "Read-only role")
-    risk = await db.risks.find_one({"risk_id": risk_id}, {"_id": 0})
-    if not risk:
-        raise HTTPException(404, "Risk not found")
-    if not _can_access_client(user, risk["client_id"]):
-        raise HTTPException(403, "Forbidden")
-    # Preserve legacy acceptance deadlines before separating routine review dates.
-    if risk.get("status") == "accepted" and not risk.get("acceptance_expires_at") and risk.get("next_review"):
-        await db.risks.update_one({"risk_id": risk_id}, {"$set": {"acceptance_expires_at": risk["next_review"]}})
-    # Push out the routine review only; acceptance expiry is independent.
-    next_review = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
-    await db.risks.update_one({"risk_id": risk_id},
-                              {"$set": {"last_reviewed": _now(), "next_review": next_review, "updated_at": _now()}})
-    await audit(user, "mark_reviewed", "risk", risk_id, risk["client_id"])
-    return await db.risks.find_one({"risk_id": risk_id}, {"_id": 0})
+    risk = await _authorized_parent("risks", risk_id, user, write=True)
+    if risk.get("status") in risk_lifecycle.CLOSED:
+        raise HTTPException(409, "Closed Risks have no active Review")
+    await risk_ids.initialize(db, risk["client_id"])
+    risk = await db.risks.find_one({"risk_id":risk_id},{"_id":0})
+    review = await risk_lifecycle.ensure_review(db, risk, user, _now())
+    if not review:
+        raise HTTPException(422, "Set a Next Review date before reviewing this Risk")
+    return {"review":review}
+
+
+class RiskCloseIn(BaseModel):
+    reason: str
+    note: Optional[str] = None
+
+
+@api.post("/risks/{risk_id}/close")
+@risk_mutation
+async def close_risk(risk_id: str, body: RiskCloseIn, user: Dict = Depends(get_current_user)):
+    if user.get("role") not in ("super_admin","platform_admin"):
+        raise HTTPException(403, "Only platform-level roles can close Risks")
+    risk = await _authorized_parent("risks",risk_id,user,write=True)
+    if body.reason not in risk_lifecycle.CLOSURE_REASONS:
+        raise HTTPException(422,"Choose a closure reason")
+    if risk.get("status") in risk_lifecycle.CLOSED:
+        await risk_lifecycle.ensure_review(db,risk,user,_now())
+        return risk
+    now = _now()
+    changes = {"status":"closed","closure_reason":body.reason,"closure_note":body.note,
+               "closed_by":user["user_id"],"closed_at":now,"next_review":None,"updated_at":now}
+    await db.risks.update_one({"risk_id":risk_id},{"$set":changes,"$push":{"decision_history":{
+        "action":"closed","by":user["user_id"],"at":now,"reason":body.reason,"note":body.note}}})
+    await risk_lifecycle.ensure_review(db,{**risk,**changes},user,now)
+    await audit(user,"Risk closed","risk",risk_id,risk["client_id"],meta={"reason":body.reason})
+    return {**risk,**changes}
+
+
+@api.post("/risks/{risk_id}/link-action-item")
+@risk_mutation
+async def link_risk_task(risk_id: str, body: Dict[str, Any], user: Dict = Depends(get_current_user)):
+    risk = await _authorized_parent("risks",risk_id,user,write=True)
+    task = await _authorized_parent("tasks",body.get("task_id"),user,write=True)
+    if risk["client_id"] != task["client_id"]:
+        raise HTTPException(422,"Action Item must belong to this client")
+    if risk.get("status") in risk_lifecycle.CLOSED:
+        raise HTTPException(409,"Closed Risks are historical")
+    result = await db.risks.update_one({"risk_id":risk_id},{"$addToSet":{"related_task_ids":task["task_id"]}})
+    if result.modified_count:
+        await audit(user,"Action Item linked","risk",risk_id,risk["client_id"],meta={"task_id":task["task_id"]})
+    return task
+
+
+@api.get("/risks/{risk_id}/activity")
+async def risk_activity(risk_id: str, user: Dict = Depends(get_current_user)):
+    risk = await _authorized_parent("risks",risk_id,user)
+    return await db.audit_logs.find({"client_id":risk["client_id"],"entity_id":risk_id,
+        "entity_type":{"$in":["risk","risks"]}},{"_id":0}).sort("at",-1).to_list(500)
+
+
+@api.get("/risks/{risk_id}/review-history")
+async def risk_review_history(risk_id: str, user: Dict = Depends(get_current_user)):
+    risk = await _authorized_parent("risks",risk_id,user)
+    reviews = await db.reviews.find({"risk_id":risk_id,"client_id":risk["client_id"]},{"_id":0}).to_list(None)
+    return [{"review_id":r["review_id"],**o} for r in reviews for o in r.get("occurrences",[])]
 
 
 @api.post("/findings/{finding_id}/raise-risk")
@@ -2623,6 +2779,7 @@ async def finding_raise_risk(finding_id: str, user: Dict = Depends(get_current_u
     new_risk_id = _uid("rsk")
     risk_doc = {
         "risk_id": new_risk_id,
+        "display_id": await risk_ids.allocate(db, finding["client_id"]),
         "title": f"Risk raised from finding: {finding.get('title')}",
         "client_id": finding["client_id"],
         "category": "Compliance",
@@ -2630,11 +2787,12 @@ async def finding_raise_risk(finding_id: str, user: Dict = Depends(get_current_u
         "impact_score": None,
         "risk_score": None,
         "risk_level": None,
-        "status": "open",
+        "status": "identified",
         "treatment": "mitigate",
         "owner_id": finding.get("owner_id"),
         "description": finding.get("description"),
         "source": f"Finding {short_id}",
+        "source_type": "finding", "source_id": finding_id, "finding_id": finding_id,
         "related_finding_ids": [finding_id],
         "date_identified": _now(),
         "created_at": _now(),
@@ -2893,6 +3051,8 @@ def _next_due_for_recurrence(base_due_iso: str, recurrence: str, custom_days: Op
 class ReviewCompleteIn(BaseModel):
     occurrence_id: Optional[str] = None
     completion_notes: Optional[str] = None
+    risk_assessment: Optional[Dict[str, Any]] = None
+    risk_outcome: Optional[str] = None
     completion_date: Optional[str] = None
     spawn_next: Optional[bool] = True
     conclusion: Optional[str] = None
@@ -3025,6 +3185,7 @@ class ReviewOccurrenceAction(BaseModel):
 
 
 @api.post("/reviews/{review_id}/start")
+@risk_mutation
 @review_mutation
 async def start_review(review_id: str, body: ReviewOccurrenceAction, user: Dict = Depends(get_current_user)):
     review = await _authorized_parent("reviews", review_id, user, write=True)
@@ -3035,6 +3196,11 @@ async def start_review(review_id: str, body: ReviewOccurrenceAction, user: Dict 
         return review_occurrences.view(review)
     updates = {"status": "in_progress", "current_occurrence_id": body.occurrence_id,
                "started_by": user["user_id"], "started_at": _now(), "updated_at": _now()}
+    if review.get("risk_id"):
+        risk = await _authorized_parent("risks", review["risk_id"], user, write=True)
+        if risk["client_id"] != review["client_id"] or risk.get("status") in risk_lifecycle.CLOSED:
+            raise HTTPException(409, "This Risk is no longer active")
+        updates["risk_baseline"] = risk_lifecycle.snapshot(risk)
     result = await db.reviews.update_one({"review_id": review_id, "current_occurrence_id": review.get("current_occurrence_id"),
                                          "status": review.get("status")}, {"$set": updates})
     if not result.modified_count:
@@ -3044,6 +3210,7 @@ async def start_review(review_id: str, body: ReviewOccurrenceAction, user: Dict 
 
 
 @api.post("/reviews/{review_id}/complete")
+@risk_mutation
 @review_mutation
 async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = Depends(get_current_user)):
     review = await _authorized_parent("reviews", review_id, user, write=True)
@@ -3051,6 +3218,7 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
         raise HTTPException(422, "An occurrence ID is required; reload the Review")
     prior = next((o for o in review.get("occurrences", []) if o["occurrence_id"] == body.occurrence_id), None)
     if prior:
+        await risk_lifecycle.sync_completion(db, review)
         return {"review": review_occurrences.view(review), "occurrence": prior, "spawned": None}
     await _review_selection(review, body.occurrence_id, write=True)
     current = review_occurrences.view(review)
@@ -3063,12 +3231,26 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     completed = review_occurrences.snapshot(review, evidence, findings, user, _now())
     if body.completion_notes is not None:
         completed["notes"] = body.completion_notes
+    if review.get("risk_id"):
+        risk = await _authorized_parent("risks", review["risk_id"], user, write=True)
+        if risk["client_id"] != review["client_id"] or risk.get("status") in risk_lifecycle.CLOSED:
+            raise HTTPException(409, "This Risk is no longer active")
+        changes = _editable_patch("risks", body.risk_assessment or {}, risk, user=user)
+        if set(changes) - {"likelihood_score","impact_score","likelihood_rationale","impact_rationale","assessment_rationale","treatment","notes"}:
+            raise HTTPException(422, "Use Risk governance actions for lifecycle or schedule changes")
+        if body.risk_outcome not in (None,"Reviewed — No Change","Additional Action Required","Closure Recommended"):
+            raise HTTPException(422, "Invalid Risk Review outcome")
+        after = _apply_risk_scoring({**risk, **changes})
+        completed["risk_review_recommendation"] = body.risk_outcome
+        completed["risk_before"] = review.get("risk_baseline") or risk_lifecycle.snapshot(risk)
+        completed["risk_after"] = risk_lifecycle.snapshot(after)
+        completed["outcome"] = "Risk Accepted" if completed["risk_before"].get("acceptance_date") != after.get("acceptance_date") else "Assessment Updated" if any(completed["risk_before"].get(k) != after.get(k) for k in ("likelihood_score","impact_score","assessment_rationale","likelihood_rationale","impact_rationale")) else "Treatment Updated" if completed["risk_before"].get("treatment") != after.get("treatment") else body.risk_outcome or "Reviewed — No Change"
     next_due = current["next_review_date"]
     updates = {"updated_at": completed["completed_at"], "schedule_anchor": current["schedule_anchor"]}
     if next_due:
         updates.update({"due_date": next_due, "current_occurrence_id": _uid("occ"), "status": "upcoming",
                         "notes": None, "started_at": None, "started_by": None, "completion_date": None,
-                        "completion_snapshot": None})
+                        "completion_snapshot": None, "risk_baseline": None})
         updates.update(review_occurrences.schedule({**current, **updates}))
     else:
         updates.update({"current_occurrence_id": body.occurrence_id, "status": "completed",
@@ -3085,6 +3267,9 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     if next_due:
         await _review_event(user, review, "Next occurrence scheduled", body.occurrence_id, due_date=next_due)
     updated = await db.reviews.find_one({"review_id": review_id}, {"_id": 0})
+    await risk_lifecycle.sync_completion(db, updated)
+    if review.get("risk_id"):
+        await audit(user, completed["outcome"], "risk", review["risk_id"], review["client_id"], meta={"review_id":review_id,"occurrence_id":body.occurrence_id})
     return {"review": review_occurrences.view(updated), "occurrence": completed, "spawned": None}
 
 
@@ -3234,6 +3419,10 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         relations = [{keys[entity_type]: entity_id}]
         if source.get(key):
             relations.append({key: source[key]})
+        if entity_type == "risks" and target == "tasks" and source.get("related_task_ids"):
+            relations.append({"task_id":{"$in":source["related_task_ids"]}})
+        if entity_type == "tasks" and target == "risks":
+            relations.append({"related_task_ids":entity_id})
         if target == entity_type:
             relations = []
             if target == "reviews":
@@ -3243,7 +3432,7 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
                         relations.append({key: source[pointer]})
         scope = review_occurrences.occurrence_query(source, occurrence_id) if entity_type == "reviews" and occurrence_id and target in ("findings", "tasks") else {}
         linked[target] = await db[target].find({"client_id": cid, "$or": relations, **scope}, {"_id": 0}).to_list(200) if relations else []
-    if entity_type == "tasks" and source.get("assessment_id"):
+    if entity_type in ("tasks","risks") and source.get("assessment_id"):
         linked["assessments"] = await db.assessments.find({"assessment_id": source["assessment_id"], "client_id": cid}, {"_id": 0}).to_list(1)
     if entity_type == "tasks" and source.get("occurrence_id"):
         for review in linked.get("reviews", []):
@@ -4088,6 +4277,8 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     if body.action == "delete":
         if user.get("role") not in ("super_admin", "platform_admin"):
             raise HTTPException(403, "Destructive action restricted")
+        if body.kind == "risks" or body.kind == "reviews" and any(d.get("risk_id") for d in docs):
+            raise HTTPException(409, "Risks and their Review obligations must be retained")
         if body.kind == "reviews" and any(d.get("status") == "completed" or d.get("occurrences") for d in docs):
             raise HTTPException(409, "Completed reviews must be retained")
         if body.kind == "tasks" and any(d.get("status") == "done" or d.get("completed_at") for d in docs):

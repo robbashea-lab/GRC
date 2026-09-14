@@ -97,9 +97,9 @@ export const SCHEMAS = {
       { name: "likelihood_score", label: "Likelihood (1–5)", type: "number" },
       { name: "impact_score", label: "Impact (1–5)", type: "number" },
       { name: "status", label: "Status", type: "select", options: [
-        { value: "open", label: "Open" }, { value: "in_progress", label: "In progress" }, { value: "escalated", label: "Escalated" },
+        { value: "open", label: "Open (legacy)" }, { value: "in_progress", label: "In Treatment" }, { value: "escalated", label: "Escalated (legacy)" },
         { value: "identified", label: "Identified" }, { value: "assessed", label: "Assessed" },
-        { value: "treated", label: "Treated" }, { value: "accepted", label: "Accepted" },
+        { value: "treated", label: "In Treatment (legacy)" }, { value: "accepted", label: "Accepted" },
         { value: "closed", label: "Closed" },
       ]},
       { name: "owner_id", label: "Owner", type: "user" },

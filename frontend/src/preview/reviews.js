@@ -1,3 +1,4 @@
+import {completeRiskReview,riskSnapshot} from './risks';
 import { list, record, write, now, audit, uid, clone } from './store';
 import { occurrenceId, reviewView, reviewSchedule, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
 
@@ -26,7 +27,7 @@ export function reviewAction(db, id, name, body) {
   if (current.status === 'needs_scheduling') throw new Error('An administrator must schedule this Review first.');
   if (name === 'start') {
     if (review.status !== 'in_progress') {
-      write(db, 'reviews', {status:'in_progress', current_occurrence_id:body.occurrence_id, started_at:now(), started_by:db.user.user_id}, id);
+      write(db, 'reviews', {status:'in_progress', current_occurrence_id:body.occurrence_id, started_at:now(), started_by:db.user.user_id,...(review.risk_id?{risk_baseline:riskSnapshot(record(db,'risks',review.risk_id))}:{})}, id);
       reviewEvent(db, review, 'Review started');
     }
     return reviewView(review);
@@ -38,14 +39,16 @@ export function reviewAction(db, id, name, body) {
     completed_by:db.user.user_id, completed_by_name:db.user.name, notes:body.completion_notes ?? review.notes,
     outcome:findings.length ? 'findings_raised' : 'no_findings', finding_count:findings.length,
     evidence:evidence.map(e => ({evidence_id:e.evidence_id,filename:e.filename,version:e.version,sha256:e.sha256}))});
+  if(review.risk_id) completeRiskReview(db,review,completed,body);
   const next = current.next_review_date;
   write(db, 'reviews', {
     occurrences:[...(occurrences || []), completed], schedule_anchor:current.schedule_anchor,
     ...(next ? {status:'upcoming',due_date:next,current_occurrence_id:uid('occ'),notes:null,started_by:null,started_at:null,
-      completion_date:null,completion_snapshot:null}
+      completion_date:null,completion_snapshot:null,risk_baseline:null}
       : {status:'completed',current_occurrence_id:occurrenceId(review),completion_date:completed.completed_at})
   }, id);
   reviewEvent(db, review, 'Review completed', completed.occurrence_id, {period:completed.period, outcome:completed.outcome, finding_count:findings.length});
+  if (review.risk_id) audit(db,completed.outcome,'risks',record(db,'risks',review.risk_id),{review_id:id,occurrence_id:completed.occurrence_id});
   if (next) reviewEvent(db, review, 'Next occurrence scheduled', completed.occurrence_id, {due_date:next});
   return {review:reviewView(review),occurrence:completed,spawned:null};
 }
