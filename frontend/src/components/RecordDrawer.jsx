@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,9 @@ import { X, ArrowUpRight, Zap, UploadCloud, Download, Trash2, CheckCircle2, XCir
 import { Link } from "react-router-dom";
 import { SCHEMAS } from "@/lib/schemas";
 import rules from "@/lib/grcRules.json";
+import {RiskSourceFields,RiskScheduleFields} from "./RiskGovernanceFields";
+import {riskLevel} from "@/lib/grcWork";
+import RelatedAssessment from "./RelatedAssessment";
 import ReviewDrawer from "./ReviewDrawer";
 import ActionItemFields from "./ActionItemFields";
 import { taskSource, SOURCE_RECORDS, actionStatus } from "@/lib/actionItems";
@@ -37,11 +40,7 @@ const DATA_TYPES = ["No Sensitive Data", "Internal", "Confidential", "PII", "PHI
 const DATA_RELATIONSHIPS = ["Stores", "Processes", "Transmits", "Accesses", "Hosts", "None"];
 
 function levelFromScore(s) {
-  if (s == null) return null;
-  if (s >= 15) return "critical";
-  if (s >= 10) return "high";
-  if (s >= 5) return "moderate";
-  return "low";
+  return riskLevel(s);
 }
 
 const GRC_ROLE_OPTIONS = ["Executive Sponsor", "Primary GRC / Security Contact", "IT Lead",
@@ -93,10 +92,11 @@ function toDateInput(v) {
 }
 
 export default function RecordDrawer(props) {
+  if(props.kind==="assessments") return <RelatedAssessment {...props}/>;
   return props.kind === "reviews" ? <ReviewDrawer {...props} /> : <EntityDrawer {...props} />;
 }
 
-function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved }) {
+function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved, initialValues }) {
   schema = schema || SCHEMAS[kind]?.fields || [];
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -112,6 +112,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [related, setRelated] = useState({});
   const [policyOptions, setPolicyOptions] = useState([]);
   const [evidenceItems, setEvidenceItems] = useState([]);
+  const [riskHistory,setRiskHistory] = useState([]);
+  const [linkTask,setLinkTask]=useState(null);
+  const [closure,setClosure] = useState(null);
   const [linkedReviews, setLinkedReviews] = useState([]);
   const [linkedRisks, setLinkedRisks] = useState([]);
   const [dragOver, setDragOver] = useState(false);
@@ -129,7 +132,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const isEdit = !!record;
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
-  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
+  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
   const evidenceKind = kind === "tasks" ? "task" : singular;
   const tabList = TABS_BY_KIND[kind];
@@ -151,7 +154,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       // Ensure extended risk/vendor fields are always tracked, even if not in the schema list.
       if (kind === "risks") {
         ["likelihood_score","impact_score","treatment","description","impact_description","source",
-         "acceptance_rationale","compensating_controls","next_review","last_reviewed","category","notes"
+         "acceptance_rationale","compensating_controls","next_review","last_reviewed","category","notes","source_type","source_id","review_cadence","custom_recurrence_days","assessment_rationale","likelihood_rationale","impact_rationale"
         ].forEach((k) => { if (!(k in base)) base[k] = record?.[k] ?? ""; });
       }
       if (kind === "vendors") {
@@ -168,6 +171,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       }
       if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:record?.priority||"medium"});
       base.client_id = record?.client_id || clientId;
+      if(!record&&initialValues) Object.assign(base,initialValues);
       setForm(base);
       setTab("overview");
       if (isEdit) {
@@ -193,6 +197,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open,kind,record,tab]);
 
+
   async function loadComments() {
     const generation=loadGeneration.current;
     try {
@@ -203,7 +208,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   async function loadActivity() {
     const generation=loadGeneration.current;
     try {
-      const { data } = await api.get(kind === "tasks" ? `/tasks/${record.task_id}/activity` : "/audit-logs");
+      const { data } = await api.get(["tasks","risks"].includes(kind) ? `/${kind}/${record[idField]}/activity` : "/audit-logs");
       if(generation===loadGeneration.current) setActivity(data.filter((a) => a.entity_id === record[idField]).slice(0, 30));
     } catch (e) { void e; }
   }
@@ -251,6 +256,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     setSaving(true);
     try {
       const clean = cleanForm();
+      if(kind==="risks") for(const key of ["last_reviewed","risk_score","risk_level","date_identified","display_id","legacy_display_id","linked_review_id","review_sync_occurrence_id","rating_history","decision_history","created_at","created_by","updated_at","closed_at","closed_by","closure_reason","closure_note","accepted","accepted_by","acceptance_date","acceptance_rationale","acceptance_expires_at"]) delete clean[key];
       if (kind === "tasks") {
         if (isEdit) { delete clean.source_type; delete clean.source_id;
           if (form.assignee_id !== (record.assignee_id ?? record.owner_id ?? null)) clean.assignee_id=form.assignee_id||null;
@@ -347,13 +353,35 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   async function markRiskReviewed() {
     try {
-      const { data } = await api.post(`/risks/${record[idField]}/mark-reviewed`);
-      toast.success("Marked as reviewed · next review in 12 months");
-      if (record) { record.last_reviewed = data.last_reviewed; record.next_review = data.next_review; }
-      setForm((p) => ({ ...p, last_reviewed: toDateInput(data.last_reviewed), next_review: toDateInput(data.next_review) }));
+      const changes=cleanForm();
+      for(const key of ["last_reviewed","risk_score","risk_level","date_identified"]) delete changes[key];
+      if(Object.keys(changes).length) await api.patch(`/risks/${record.risk_id}`,changes);
+      const {data}=await api.post(`/risks/${record.risk_id}/review`);
+      setRelatedDrawer({kind:"reviews",record:data.review});
       onSaved?.();
-    } catch (e) { toast.error(formatError(e)); }
+    } catch(e) {toast.error(formatError(e));}
   }
+
+  const refreshRisk = useCallback(async () => {
+    if(kind!=="risks"||!record?.risk_id) return;
+    const version=loadGeneration.current;
+    try {
+      const [rows,h,relations,events]=await Promise.all([api.get("/risks",{params:{client_id:clientId}}),api.get(`/risks/${record.risk_id}/review-history`),api.get("/related",{params:{entity_type:"risks",entity_id:record.risk_id}}),api.get(`/risks/${record.risk_id}/activity`)]);
+      if(version!==loadGeneration.current) return;
+      const updated=rows.data.find(r=>r.risk_id===record.risk_id);
+      if(updated) {Object.assign(record,updated);setForm(p=>({...p,...updated}));}
+      setRiskHistory(h.data); setRelated(relations.data); setActivity(events.data);
+    } catch(e) {toast.error(formatError(e));}
+  },[kind,record,clientId]);
+
+  useEffect(()=>{if(open)refreshRisk();},[open,refreshRisk]);
+  useEffect(()=>{
+    if(!open||kind!=="risks"||!record?.risk_id||!["treatment","related","activity","history"].includes(tab)) return;
+    let active=true;
+    const refresh=async()=>{try{const [r,h,a]=await Promise.all([api.get("/related",{params:{entity_type:"risks",entity_id:record.risk_id}}),api.get(`/risks/${record.risk_id}/review-history`),api.get(`/risks/${record.risk_id}/activity`)]);if(active){setRelated(r.data);setRiskHistory(h.data);setActivity(a.data);}}catch(e){if(active)toast.error(formatError(e));}};
+    refresh();const timer=setInterval(refresh,10000);window.addEventListener("focus",refresh);
+    return()=>{active=false;clearInterval(timer);window.removeEventListener("focus",refresh);};
+  },[open,kind,record?.risk_id,tab]);
 
   async function acceptRisk() { setAcceptOpen(true); }
 
@@ -542,7 +570,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <Select value={form[f.name] || ""} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
             <SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
-              {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value} disabled={o.value !== record?.[f.name] && (f.name === "status" && ({policies:['approved'],findings:['closed','accepted','remediated'],risks:['accepted'],reviews:['completed'],exceptions:['approved']}[kind] || []).includes(o.value) || f.name === "presence" && o.value === "verified_existing" && record?.presence !== o.value)}>{o.label}</SelectItem>)}
+              {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value} disabled={o.value !== record?.[f.name] && (f.name === "status" && ({policies:['approved'],findings:['closed','accepted','remediated'],risks:['accepted','closed','retired'],reviews:['completed'],exceptions:['approved']}[kind] || []).includes(o.value) || f.name === "presence" && o.value === "verified_existing" && record?.presence !== o.value)}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
         ) : f.type === "user" ? (
@@ -609,10 +637,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <Label className="text-xs text-ink-secondary">Impact description</Label>
           <Textarea value={form.impact_description || ""} onChange={(e) => setForm({ ...form, impact_description: e.target.value })} rows={3} className="text-sm" data-testid="field-impact_description" />
         </div>
-        <div>
-          <Label className="text-xs text-ink-secondary">Source / trigger</Label>
-          <Input value={form.source || ""} onChange={(e) => setForm({ ...form, source: e.target.value })} placeholder="Annual Risk Assessment, Finding F-14…" className="text-sm" data-testid="field-source" />
-        </div>
+        {["likelihood_rationale","impact_rationale","assessment_rationale"].map(key=><div key={key}><Label>{key.replaceAll("_"," ")}</Label><Textarea aria-label={key.replaceAll("_"," ")} value={form[key]||""} onChange={e=>setForm({...form,[key]:e.target.value})}/></div>)}
       </div>
     );
   }
@@ -621,6 +646,11 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return (
       <div className="space-y-4">
         <div>
+          <h3 className="font-medium text-sm mb-2">Remediation Action Items</h3>
+          {(related.tasks||[]).map(t=><button className="block w-full text-left text-sm border border-line rounded-md p-2 mb-2" key={t.task_id} onClick={()=>setRelatedDrawer({kind:"tasks",record:t})}>{t.title} · {actionStatus(t.status)}</button>)}
+          {!related.tasks?.length&&<p className="text-sm text-ink-secondary mb-2">No linked remediation work yet.</p>}
+          {canWrite&&<Button size="sm" variant="outline" className="mb-4" onClick={()=>setRelatedDrawer({kind:"tasks",record:null,initialValues:{source_type:"risk",source_id:record.risk_id,assignee_id:record.owner_id||null}})}>Create Action Item</Button>}
+          {canWrite&&<Button size="sm" variant="outline" className="mb-4 ml-2" onClick={async()=>{try{const {data}=await api.get("/tasks",{params:{client_id:clientId}});setLinkTask({options:data.filter(t=>!(related.tasks||[]).some(x=>x.task_id===t.task_id)),task_id:""});}catch(e){toast.error(formatError(e));}}}>Link existing Action Item</Button>}
           <Label className="text-xs text-ink-secondary">Treatment strategy</Label>
           <Select value={form.treatment || ""} onValueChange={(v) => setForm({ ...form, treatment: v })}>
             <SelectTrigger data-testid="field-treatment" className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
@@ -649,7 +679,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
             <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Acceptance</div>
             <div><span className="text-ink-secondary">Approved by:</span> <span className="text-ink-primary font-medium">{userMap[record.accepted_by] || record.accepted_by || "—"}</span></div>
             <div><span className="text-ink-secondary">Accepted on:</span> <span className="font-mono">{new Date(record.acceptance_date).toLocaleDateString()}</span></div>
-            {record.next_review && <div><span className="text-ink-secondary">Expires:</span> <span className="font-mono">{new Date(record.next_review).toLocaleDateString()}</span></div>}
+            {record.acceptance_expires_at && <div><span className="text-ink-secondary">Expires:</span> <span className="font-mono">{new Date(record.acceptance_expires_at).toLocaleDateString()}</span></div>}
           </div>
         )}
       </div>
@@ -667,7 +697,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <DateReadonly label="Created" value={record?.created_at} />
         </div>
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help mb-2">Rating history</div>
+          <h3 className="text-sm font-medium mb-2">Completed Risk Reviews</h3>
+          {!riskHistory.length&&<p className="text-sm text-ink-secondary">No completed Risk Reviews recorded.</p>}
+          {riskHistory.map(o=><button key={o.occurrence_id} className="block w-full text-left border border-line rounded-md p-3 mb-2 text-sm" onClick={async()=>{const {data}=await api.get("/reviews",{params:{client_id:clientId}});const r=data.find(r=>r.review_id===o.review_id);if(r)setRelatedDrawer({kind:"reviews",record:r,initialValues:{occurrence:o}});}}><strong>{o.period}</strong><div>Scheduled {o.due_date?.slice(0,10)} · Completed {o.completed_at?.slice(0,10)} · {o.completed_by_name||userMap[o.completed_by]||o.completed_by}</div><div>{o.outcome}</div></button>)}
+          <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help mb-2 mt-4">Rating history</div>
           {history.length === 0 ? (
             <div className="text-sm text-ink-muted">No rating changes recorded yet.</div>
           ) : (
@@ -962,14 +995,19 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Overview renderers per kind --------
   function renderOverview() {
-    if (kind === "tasks") return <ActionItemFields form={form} setForm={setForm} record={record} clientId={clientId} canWrite={canWrite} saving={saving} onTransition={save}/>;
+    if (kind === "tasks") return <ActionItemFields form={form} setForm={setForm} record={record} clientId={clientId} canWrite={canWrite} saving={saving} onTransition={save} sourceLocked={!!initialValues?.source_id}/>;
     if (kind === "risks") {
       return (
         <div className="space-y-4">
           {renderRiskActionsPanel()}
           {!liveLevel && <p className="text-sm text-ink-secondary">Needs assessment. Select numeric likelihood and impact in Assessment.{record?.likelihood || record?.impact ? ` Legacy ratings: likelihood ${record.likelihood || 'unknown'}, impact ${record.impact || 'unknown'}.` : ''}</p>}
           {record?.acceptance_expires_at && <DateReadonly label="Acceptance expiry · unchanged by routine reviews" value={record.acceptance_expires_at} />}
+          <div className="text-xs font-mono">{record?.display_id || "ID assigned on creation"}</div>
           {renderFieldsByNames(["title", "category", "status", "owner_id", "description"])}
+          <div className="grid grid-cols-2 gap-3"><DateReadonly label="Created" value={record?.created_at}/><DateReadonly label="Last Reviewed" value={record?.last_reviewed}/></div>
+          <RiskSourceFields form={form} setForm={setForm} clientId={clientId} disabled={!canWrite}/>
+          <RiskScheduleFields form={form} setForm={setForm} disabled={!canWrite||!isPlatformAdmin}/>
+          {record?.closed_at&&<div className="text-sm">Closed: {record.closure_reason?.replaceAll("_"," ")} · {userMap[record.closed_by] || record.closed_by}<DateReadonly label="Closed on" value={record.closed_at}/>{record.closure_note}</div>}
         </div>
       );
     }
@@ -1066,7 +1104,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap" data-testid="risk-actions-panel">
         <div className="flex items-center gap-2 text-sm text-ink-primary"><ShieldCheck className="h-4 w-4 text-brand-charcoal" /> Risk actions</div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Mark reviewed</Button>
+          <Button size="sm" variant="outline" onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Review Risk</Button>
+          {isPlatformAdmin&&<Button size="sm" variant="outline" onClick={()=>setClosure({reason:"remediated",note:""})}>Close Risk</Button>}
           {isPlatformAdmin && record?.status !== "closed" && (
             <Button size="sm" onClick={acceptRisk} data-testid="risk-accept" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
               {record?.status === 'accepted' ? 'Renew acceptance' : 'Accept risk'}
@@ -1153,13 +1192,13 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {Object.entries(related).map(([k, list]) => (
           (list && list.length > 0) ? (
             <div key={k}>
-              <Link to={`/${k}`} className="text-[10px] font-mono uppercase tracking-widest text-slate-500 hover:text-slate-900 flex items-center gap-1">{k} <ArrowUpRight className="h-3 w-3" /></Link>
+              <Link to={k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-[10px] font-mono uppercase tracking-widest text-slate-500 hover:text-slate-900 flex items-center gap-1">{k} <ArrowUpRight className="h-3 w-3" /></Link>
               <ul className="mt-1.5 space-y-1.5">
                 {list.map((it) => (
-                  <li key={it[ID_FIELD[k]] || it.evidence_id} className="border border-slate-200 rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-slate-50" data-testid={`related-${k}-item`}>
+                  <li key={it[ID_FIELD[k]] || it.evidence_id || it.assessment_id} className="border border-slate-200 rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-slate-50" data-testid={`related-${k}-item`}>
                     <div className="min-w-0">
-                      {SCHEMAS[k] ? <button className="text-left text-slate-900 font-medium hover:underline" onClick={() => setRelatedDrawer({ kind: k, record: it })}>{it.title || it.name}</button> : <div className="text-slate-900 font-medium truncate">{it.title || it.name || it.filename}</div>}
-                      <div className="text-[11px] text-slate-500 font-mono">{it[ID_FIELD[k]] || it.evidence_id}</div>
+                      {(SCHEMAS[k]||k==="assessments") ? <button className="text-left text-slate-900 font-medium hover:underline" onClick={() => setRelatedDrawer({ kind: k, record: it })}>{it.title || it.name}</button> : <div className="text-slate-900 font-medium truncate">{it.title || it.name || it.filename}</div>}
+                      <div className="text-[11px] text-slate-500 font-mono">{it.display_id || it[ID_FIELD[k]] || it.evidence_id || it.assessment_id}</div>
                       {kind === "tasks" && k === "reviews" && it.linked_occurrence && <div className="text-xs text-ink-secondary">Occurrence: {it.linked_occurrence.period || "Not recorded"} · {it.linked_occurrence.status}</div>}
                     </div>
                     {it.status && <StatusBadge value={it.status} />}
@@ -1255,7 +1294,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (tab === "assessment") return renderRiskAssessment();
       if (tab === "treatment") return renderRiskTreatment();
       if (tab === "history") return renderRiskHistory();
-      if (tab === "related") return renderRelated();
+      if (tab === "related") return <div className="space-y-4">{renderRelated()}{renderEvidence()}</div>;
     }
     if (kind === "vendors") {
       if (tab === "data_access") return renderVendorDataAccess();
@@ -1355,7 +1394,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </div>
       </SheetContent>
 
-      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} schema={SCHEMAS[relatedDrawer.kind].fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); onSaved?.(); }} />}
+      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); refreshRisk(); onSaved?.(); }} />}
 
       <Sheet open={decisionOpen} onOpenChange={setDecisionOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
@@ -1393,6 +1432,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </SheetContent>
       </Sheet>
 
+      {linkTask&&<Sheet open onOpenChange={v=>!v&&setLinkTask(null)}><SheetContent><SheetHeader><SheetTitle>Link Action Item</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><p className="text-sm">The original source and Action Item remain unchanged.</p><Select value={linkTask.task_id||"__none__"} onValueChange={task_id=>setLinkTask({...linkTask,task_id})}><SelectTrigger aria-label="Existing Action Item"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="__none__" disabled>Select a record</SelectItem>{linkTask.options.map(t=><SelectItem key={t.task_id} value={t.task_id}>{t.title}</SelectItem>)}</SelectContent></Select><Button disabled={!linkTask.task_id||saving} onClick={async()=>{setSaving(true);try{await api.post(`/risks/${record.risk_id}/link-action-item`,{task_id:linkTask.task_id});setLinkTask(null);loadRelated();onSaved?.();}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Link Action Item</Button></div></SheetContent></Sheet>}
+      {closure&&<Sheet open onOpenChange={value=>!value&&setClosure(null)}><SheetContent className="sm:max-w-md"><SheetHeader><SheetTitle>Close Risk</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><Label>Closure reason</Label><Select value={closure.reason} onValueChange={reason=>setClosure({...closure,reason})}><SelectTrigger aria-label="Closure reason"><SelectValue/></SelectTrigger><SelectContent>{Object.entries({remediated:"Remediated",no_longer_applicable:"No Longer Applicable",system_process_retired:"System / Process Retired",condition_removed:"Risk Condition Removed",other:"Other"}).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Label>Closure note</Label><Textarea aria-label="Closure note" value={closure.note} onChange={e=>setClosure({...closure,note:e.target.value})}/><p className="text-sm text-ink-secondary">The Risk and its history remain available. Future linked Reviews will be cancelled.</p><Button disabled={saving} onClick={async()=>{setSaving(true);try {await api.post(`/risks/${record.risk_id}/close`,closure);setClosure(null);await refreshRisk();onSaved?.();toast.success("Risk closed and retained");}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Confirm closure</Button></div></SheetContent></Sheet>}
       {/* Accept Risk dialog */}
       {kind === "risks" && (
         <Sheet open={acceptOpen} onOpenChange={setAcceptOpen}>

@@ -1,3 +1,4 @@
+import {ensureRiskReview} from './risks';
 import { list, record, write, now, audit } from './store';
 import { reviewAction, reviewEvent } from './reviews';
 import { assertCurrentOccurrence } from '../lib/reviewOccurrences';
@@ -209,6 +210,7 @@ export function action(db, kind, id, name, body) {
       likelihood_score: null,
       impact_score: null,
       source: `Finding ${id}`,
+      source_type:"finding",source_id:id,finding_id:id,
       related_finding_ids: [id],
       treatment: 'mitigate',
       category: 'Compliance'
@@ -221,11 +223,22 @@ export function action(db, kind, id, name, body) {
       finding: r
     };
   }
-  if (kind === 'risks' && name === 'mark-reviewed') return patch({
-    last_reviewed: now(),
-    ...(r.status === 'accepted' && !r.acceptance_expires_at && r.next_review ? {acceptance_expires_at:r.next_review} : {}),
-    next_review: nextDue(now(), 'annual')
-  });
+  if (kind === 'risks' && ['mark-reviewed','review'].includes(name)) {
+    const review=ensureRiskReview(db,r);
+    if(!review) throw new Error('Set a Next Review date before reviewing this active Risk.');
+    return {review};
+  }
+  if(kind==='risks'&&name==='link-action-item') {
+    const task=record(db,'tasks',body.task_id);
+    if(task.client_id!==cid||['closed','retired'].includes(r.status)) throw new Error('Select an Action Item in this active Risk’s client.');
+    r.related_task_ids=[...new Set([...(r.related_task_ids||[]),task.task_id])];audit(db,'Action Item linked','risks',r,{task_id:task.task_id});return task;
+  }
+  if(kind==='risks'&&name==='close') {
+    if(!['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can close Risks.');
+    if(!['remediated','no_longer_applicable','system_process_retired','condition_removed','other'].includes(body.reason)) throw new Error('Choose a closure reason.');
+    return patch({status:'closed',closure_reason:body.reason,closure_note:body.note,closed_by:db.user.user_id,closed_at:now(),next_review:null,
+      decision_history:[...(r.decision_history||[]),{action:'closed',by:db.user.user_id,at:now(),reason:body.reason,note:body.note}]});
+  }
   if (kind === 'risks' && name === 'accept') {
     if (!body.rationale?.trim()) throw new Error('Acceptance rationale is required.');
     if (!body.expiry_date || body.expiry_date.slice(0,10) <= now().slice(0,10) || Number.isNaN(Date.parse(body.expiry_date))) throw new Error('A future acceptance expiry is required.');
@@ -238,8 +251,8 @@ export function action(db, kind, id, name, body) {
       acceptance_date: now(),
       acceptance_rationale: body.rationale,
       acceptance_expires_at: body.expiry_date,
+      next_review: [r.next_review,body.expiry_date].filter(Boolean).sort()[0],
       decision_history: [...(r.decision_history || []), {action:'accepted', by:db.user.user_id,at:now(),rationale:body.rationale,expires_at:body.expiry_date}],
-      last_reviewed: now(),
       compensating_controls: body.compensating_controls
     });
   }

@@ -11,25 +11,29 @@ import api, { formatError } from '@/lib/api';
 import { SCHEMAS } from '@/lib/schemas';
 import { occurrenceId, reviewSchedule, reviewView } from '@/lib/reviewOccurrences';
 import { useAuth } from '@/context/AuthContext';
+import {assessedRisk} from '@/lib/grcWork';
 import StatusBadge from './StatusBadge';
 import RecordDrawer from './RecordDrawer';
 
 const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
 const date = value => value ? new Date(String(value).slice(0,10) + 'T00:00:00').toLocaleDateString() : '—';
-const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : 'Legacy completion';
+const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
 const fileData = file => new Promise((resolve,reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
 
-export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved}) {
+export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues}) {
   const {user} = useAuth();
   const admin = ['super_admin','platform_admin'].includes(user?.role);
   const writable = admin || user?.role === 'client_contributor';
+  const [riskDraft,setRiskDraft] = useState(null);
+  const [riskOutcome,setRiskOutcome]=useState("Reviewed — No Change");
   const [current,setCurrent] = useState(null), [form,setForm] = useState({});
   const [history,setHistory] = useState([]), [selected,setSelected] = useState(null);
   const [tab,setTab] = useState('Overview'), [busy,setBusy] = useState(false);
   const [members,setMembers] = useState([]), [related,setRelated] = useState({});
   const [evidence,setEvidence] = useState([]), [comments,setComments] = useState([]), [activity,setActivity] = useState([]);
   const [comment,setComment] = useState(''), [finding,setFinding] = useState(null), [linked,setLinked] = useState(null);
+  const riskBase=useRef(null);
   const generation = useRef(0);
   const shown = selected || current;
   const cid = current?.client_id || record?.client_id || clientId;
@@ -44,12 +48,12 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved}
     sequence.current++;
     setCurrent(record ? reviewView(record) : null);
     setForm(record ? {...record,due_date:record.due_date?.slice(0,10) || ''} : {title:'',review_type:'',owner_id:'',due_date:'',recurrence:'none',notes:''});
-    setTab('Overview'); setSelected(null); setHistory([]); setEvidence([]); setComments([]); setActivity([]); setRelated({});
+    setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setEvidence([]); setComments([]); setActivity([]); setRelated({});
     setComment(''); setFinding(null); setLinked(null); setMembers([]);
     const version = generation.current;
     api.get(`/clients/${record?.client_id || clientId}/members`).then(({data}) => { if (generation.current === version) setMembers(data); }).catch(e => toast.error(formatError(e)));
     return () => { sequence.current++; };
-  }, [open,record,clientId]);
+  }, [open,record,clientId,initialValues?.occurrence]);
 
   const reload = useCallback(async () => {
     if (!open || !rid || !oid) return;
@@ -63,9 +67,10 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved}
         api.get(`/reviews/${rid}/activity`,{params:selected ? {occurrence_id:oid} : {}})
       ]);
       if (version !== generation.current) return;
-      setHistory(h.data); setRelated(r.data); setEvidence(e.data); setComments(c.data); setActivity(a.data);
+      setHistory(h.data); setRelated(r.data);
+      if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||'monitor'},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidence(e.data); setComments(c.data); setActivity(a.data);
     } catch(e) { if (version === generation.current) toast.error(formatError(e)); }
-  }, [open,rid,oid,cid,current?.review_id,selected]);
+  }, [open,rid,oid,cid,current?.review_id,current?.risk_id,selected]);
   useEffect(() => { reload(); },[reload]);
   useEffect(() => {
     if (!open || !['Related','Activity'].includes(tab)) return;
@@ -97,7 +102,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved}
   }
   const lifecycle = action => run(async () => {
     const saved = await saveChanges();
-    const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved)});
+    const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'&&saved.risk_id?{risk_assessment:riskDraft||{},risk_outcome:riskOutcome}:{})});
     const updated = data.review || data;
     setCurrent(updated); setForm({...updated,due_date:updated.due_date?.slice(0,10) || ''});
     if (data.occurrence) setHistory(items => [data.occurrence,...items.filter(o => o.occurrence_id !== data.occurrence.occurrence_id)]);
@@ -126,6 +131,12 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved}
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
+          {current?.risk_id&&<section className="space-y-3 border border-line rounded-md p-3"><h3 className="font-medium text-sm">Risk reassessment</h3><p className="text-sm text-ink-secondary">Confirm the current assessment or record what changed. Use the linked Risk for acceptance, closure, and treatment work.</p>
+            {selected?.risk_after?<div className="text-sm">{outcome(selected)} · Score {selected.risk_before?.risk_score??'—'} → {selected.risk_after.risk_score??'—'}<p>{selected.risk_after.assessment_rationale}</p><p>Treatment: {selected.risk_before?.treatment} → {selected.risk_after.treatment}</p></div>:riskDraft&&<><div className="grid grid-cols-2 gap-3">{['likelihood_score','impact_score'].map(k=><div key={k}>{picker(k==='likelihood_score'?'Risk likelihood':'Risk impact',String(riskDraft[k]||''),v=>setRiskDraft({...riskDraft,[k]:v?Number(v):null}),[1,2,3,4,5].map(n=>({value:String(n),label:String(n)})),frozen||!writable)}</div>)}</div><p className="text-sm">Score {assessedRisk(riskDraft).risk_score??'—'} · {assessedRisk(riskDraft).risk_level||'Needs assessment'}</p><Label>Assessment rationale</Label><Textarea aria-label="Review assessment rationale" disabled={frozen||!writable} value={riskDraft.assessment_rationale} onChange={e=>setRiskDraft({...riskDraft,assessment_rationale:e.target.value})}/>{picker('Risk treatment',riskDraft.treatment,v=>setRiskDraft({...riskDraft,treatment:v}),['mitigate','transfer','avoid','monitor',...(riskDraft.treatment==='accept'?['accept']:[])].map(v=>({value:v,label:v})),frozen||!writable)}</>}
+            {!frozen&&writable&&picker("Review recommendation",riskOutcome,setRiskOutcome,["Reviewed — No Change","Additional Action Required","Closure Recommended"].map(value=>({value,label:value})))}
+            {selected?.risk_review_recommendation&&<p className="text-sm">{selected.risk_review_recommendation}</p>}
+            {related.risks?.filter(r=>r.risk_id===current.risk_id).map(r=><Button key={r.risk_id} size="sm" variant="outline" onClick={()=>setLinked({kind:'risks',record:r})}>Open Risk · {r.display_id||r.title}</Button>)}
+          </section>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {configFields.filter(f => f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom').map(f => {
               const disabled = frozen || !admin, value = configuration[f.name] || '';

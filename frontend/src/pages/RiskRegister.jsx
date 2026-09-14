@@ -1,13 +1,15 @@
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api, { formatError, API } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
+import {RiskSourceFields,RiskScheduleFields} from "@/components/RiskGovernanceFields";
 import PageHeader from "@/components/PageHeader";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
-import { assessedRisk, riskDue, riskLevel } from "@/lib/grcWork";
+import { RISK_VIEWS, riskMatchesView, riskSummary, riskStatus } from "@/lib/riskRegister";
+import { assessedRisk, riskLevel } from "@/lib/grcWork";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,14 +33,7 @@ function levelFromScore(s) {
   return riskLevel(s);
 }
 
-const VIEWS = [
-  { id: "all_active", label: "All Active" },
-  { id: "high_crit", label: "High / Critical" },
-  { id: "mine", label: "Assigned to Me" },
-  { id: "accepted", label: "Accepted" },
-  { id: "review_due", label: "Due for Review" },
-  { id: "closed", label: "Closed" },
-];
+const VIEWS = RISK_VIEWS;
 
 const CATEGORIES = [
   "Cybersecurity", "Operational", "Third Party / Vendor", "Compliance", "Privacy",
@@ -48,6 +43,7 @@ const CATEGORIES = [
 export default function RiskRegister() {
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
+  const generation=useRef(0);
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
@@ -62,36 +58,30 @@ export default function RiskRegister() {
     const m = {}; users.forEach((u) => { m[u.user_id] = u.name || u.email; }); return m;
   }, [users]);
 
-  async function load() {
+  const load=useCallback(async () => {
     if (!currentClientId) return;
+    const version=++generation.current;
     setLoading(true);
     try {
       const [r, u] = await Promise.all([
         api.get("/risks", { params: { client_id: currentClientId } }).then((r) => r.data),
-        api.get("/users").then((r) => r.data).catch(() => []),
+        api.get(`/clients/${currentClientId}/members`).then((r) => r.data).catch(() => []),
       ]);
-      setRows((r || []).map(assessedRisk)); setUsers(u || []);
+      if(version===generation.current){setRows((r || []).map(assessedRisk)); setUsers(u || []);}
     } catch (e) { toast.error(formatError(e)); }
-    finally { setLoading(false); }
-  }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentClientId]);
+    finally { if(version===generation.current)setLoading(false); }
+  },[currentClientId]);
+  useEffect(() => { const scopeGeneration=generation;setRows([]);setUsers([]);setView("all_active");setQ("");setDrawer({open:false,record:null});setAddOpen(false);load();return()=>{scopeGeneration.current++;}; }, [currentClientId,load]);
 
   const now = Date.now();
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return rows.filter((r) => {
-      const status = r.status || "open";
-      const level = r.risk_level || levelFromScore(r.risk_score);
-      const dueReview = riskDue(r) && new Date(riskDue(r)).getTime() <= now + 30 * 86400000;
-      if (view === "all_active" && status === "closed") return false;
-      if (view === "high_crit" && !["high", "critical"].includes(level)) return false;
-      if (view === "mine" && r.owner_id !== user?.user_id) return false;
-      if (view === "accepted" && status !== "accepted") return false;
-      if (view === "review_due" && !dueReview) return false;
-      if (view === "closed" && status !== "closed") return false;
+      if (!riskMatchesView(r, view, new Date(now))) return false;
       if (!s) return true;
       return (r.title || "").toLowerCase().includes(s)
         || (r.risk_id || "").toLowerCase().includes(s)
+        || (r.display_id || "").toLowerCase().includes(s)
         || (r.description || "").toLowerCase().includes(s)
         || (r.category || "").toLowerCase().includes(s)
         || (userMap[r.owner_id] || "").toLowerCase().includes(s);
@@ -99,32 +89,21 @@ export default function RiskRegister() {
       const order = { critical: 0, high: 1, moderate: 2, low: 3 };
       return (order[a.risk_level] ?? 9) - (order[b.risk_level] ?? 9) || (b.risk_score || 0) - (a.risk_score || 0);
     });
-  }, [rows, q, view, user, userMap, now]);
+  }, [rows, q, view, userMap, now]);
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const columns = tableColumns('risk-register', { rows: tableSource, users,  });
-  const table = useTableControls({ columns, rows: tableSource, module: 'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status') setView('all'); } });
+  const table = useTableControls({ columns, rows: tableSource, module: 'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key,values) => { if (key === null || key === 'status' && !values.length) setView('all_active'); else if (key === 'status') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
-  const summary = useMemo(() => {
-    const s = { open: 0, high_crit: 0, accepted: 0, review_due: 0 };
-    rows.forEach((r) => {
-      const status = r.status || "open";
-      const level = r.risk_level || levelFromScore(r.risk_score);
-      if (status !== "closed") s.open += 1;
-      if (["high", "critical"].includes(level) && status !== "closed") s.high_crit += 1;
-      if (status === "accepted") s.accepted += 1;
-      if (status !== 'closed' && riskDue(r) && new Date(riskDue(r)).getTime() <= now + 30 * 86400000) s.review_due += 1;
-    });
-    return s;
-  }, [rows, now]);
+  const summary = useMemo(() => riskSummary(rows, new Date(now)), [rows, now]);
 
   async function exportCsv() {
-    const cols = ["risk_id", "title", "category", "likelihood_score", "impact_score", "risk_score", "risk_level", "owner", "status", "treatment", "date_identified", "last_reviewed", "next_review"];
+    const cols = ["display_id", "risk_id", "title", "category", "likelihood_score", "impact_score", "risk_score", "risk_level", "owner", "status", "treatment", "date_identified", "last_reviewed", "next_review"];
     const lines = [cols.join(",")];
     rows.forEach((r) => {
       const row = [
-        r.risk_id || "", (r.title || "").replaceAll(",", ";"), r.category || "",
+        r.display_id || "", r.risk_id || "", (r.title || "").replaceAll(",", ";"), r.category || "",
         r.likelihood_score || "", r.impact_score || "", r.risk_score || "", r.risk_level || "",
         (userMap[r.owner_id] || "").replaceAll(",", ";"),
         r.status || "", r.treatment || "",
@@ -164,7 +143,7 @@ export default function RiskRegister() {
 
       <div className="px-8 pt-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="risk-summary">
-          <SummaryCard label="Open Risks" value={summary.open} icon={ShieldAlert} tone="neutral" />
+          <SummaryCard label="Active Risks" value={summary.open} icon={ShieldAlert} tone="neutral" />
           <SummaryCard label="High / Critical" value={summary.high_crit} icon={AlertOctagon} tone="critical" />
           <SummaryCard label="Accepted" value={summary.accepted} icon={Handshake} tone="info" />
           <SummaryCard label="Due for Review" value={summary.review_due} icon={CalendarClock} tone="duesoon" />
@@ -180,7 +159,7 @@ export default function RiskRegister() {
           {VIEWS.map((v) => {
             const active = view === v.id;
             return (
-              <button key={v.id} onClick={() => { const key = ({all_active:'status',closed:'status',accepted:'status',high_crit:'risk_level',mine:'owner_id'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`risk-view-${v.id}`}
+              <button key={v.id} onClick={() => { const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',review_due:'next_review'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`risk-view-${v.id}`}
                 className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
                 {v.label}
               </button>
@@ -199,34 +178,27 @@ export default function RiskRegister() {
                 <th className="tbl-cell text-left font-medium">ID</th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="title" /></th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="category" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="likelihood_score" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="impact_score" /></th>
                 <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="risk_score" /></th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="risk_level" /></th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="owner_id" /></th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="last_reviewed" /></th>
+                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="next_review" /></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading && <tr><td colSpan={10} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={10} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
+              {loading && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((r, i) => {
                 const level = r.risk_level || levelFromScore(r.risk_score);
                 const tone = LEVEL_TONE[level] || LEVEL_TONE.low;
                 return (
                   <tr key={r.risk_id} onClick={() => setDrawer({ open: true, record: r })} className="row-hover cursor-pointer" data-testid={`risk-row-${i}`}>
-                    <td className="tbl-cell font-mono text-[11px] text-ink-help">{(r.risk_id || "").slice(-6).toUpperCase()}</td>
+                    <td className="tbl-cell font-mono text-[11px] text-ink-help">{r.display_id || "ID pending"}</td>
                     <td className="tbl-cell font-medium text-ink-primary min-w-0">
                       <span className="truncate">{r.title}</span>
                     </td>
                     <td className="tbl-cell text-xs text-ink-secondary">{r.category || <span className="text-slate-300">—</span>}</td>
-                    <td className="tbl-cell text-xs text-ink-secondary">
-                      {r.likelihood_score ? `${r.likelihood_score} · ${LIKELIHOOD_LABELS[r.likelihood_score]}` : (r.likelihood || <span className="text-slate-300">—</span>)}
-                    </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">
-                      {r.impact_score ? `${r.impact_score} · ${IMPACT_LABELS[r.impact_score]}` : (r.impact || <span className="text-slate-300">—</span>)}
-                    </td>
                     <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-slate-300">—</span>}</td>
                     <td className="tbl-cell">
                       {level ? (
@@ -236,12 +208,13 @@ export default function RiskRegister() {
                     <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-slate-300">—</span>}</td>
                     <td className="tbl-cell">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-[11px] font-medium capitalize">
-                        {(r.status || "open").replace("_", " ")}
+                        {riskStatus(r.status || "open")}
                       </span>
                     </td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">
                       {r.last_reviewed ? new Date(r.last_reviewed).toLocaleDateString() : <span className="text-slate-300">—</span>}
                     </td>
+                    <td className="tbl-cell text-xs font-mono text-ink-secondary">{r.next_review ? new Date(r.next_review.slice(0,10) + "T12:00:00").toLocaleDateString() : "Not scheduled"}</td>
                   </tr>
                 );
               })}
@@ -339,14 +312,14 @@ function RiskMatrixModal({ open, onOpenChange }) {
 
 function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenMatrix }) {
   const [form, setForm] = useState({
-    title: "", category: "Cybersecurity", description: "", impact_description: "", source: "",
-    likelihood_score: 3, impact_score: 3, owner_id: "", status: "open", treatment: "mitigate",
+    title: "", category: "Cybersecurity", description: "", impact_description: "", source_type: "manual",
+    likelihood_score: 3, impact_score: 3, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
   });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
     if (open) setForm({
-      title: "", category: "Cybersecurity", description: "", impact_description: "", source: "",
-      likelihood_score: 3, impact_score: 3, owner_id: "", status: "open", treatment: "mitigate",
+      title: "", category: "Cybersecurity", description: "", impact_description: "", source_type: "manual",
+      likelihood_score: 3, impact_score: 3, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
     });
   }, [open]);
   const score = form.likelihood_score * form.impact_score;
@@ -354,7 +327,8 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
   const tone = LEVEL_TONE[level] || LEVEL_TONE.low;
 
   async function save() {
-    if (!form.title.trim()) { toast.error("Title is required"); return; }
+    if (!form.title.trim() || !form.description.trim() || !form.category || !form.likelihood_score || !form.impact_score) { toast.error("Title, category, description, likelihood and impact are required"); return; }
+    if (["review","finding","vendor","audit"].includes(form.source_type) && !form.source_id) { toast.error("Select the source record"); return; }
     setSaving(true);
     try {
       const body = { ...form, client_id: clientId };
@@ -367,7 +341,7 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl" data-testid="new-risk-dialog">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="new-risk-dialog">
         <DialogHeader>
           <DialogTitle>New Risk</DialogTitle>
           <DialogDescription>Score and level are calculated automatically.</DialogDescription>
@@ -384,13 +358,10 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
               <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Source</Label>
-            <Input value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} placeholder="Annual Risk Assessment, Finding F-14…" className="text-sm" />
-          </div>
+          <RiskSourceFields form={form} setForm={setForm} clientId={clientId}/>
           <div className="col-span-2">
             <Label className="text-xs text-ink-secondary">Risk description</Label>
-            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" rows={2} />
+            <Textarea aria-label="Risk description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" rows={2} />
           </div>
           <div className="col-span-2">
             <Label className="text-xs text-ink-secondary">Impact description</Label>
@@ -428,23 +399,13 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Status</Label>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {["open", "in_progress", "accepted", "escalated", "closed"].map((s) => (
-                  <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="col-span-2"><RiskScheduleFields form={form} setForm={setForm}/></div>
           <div className="col-span-2">
             <Label className="text-xs text-ink-secondary">Treatment</Label>
             <Select value={form.treatment} onValueChange={(v) => setForm({ ...form, treatment: v })}>
               <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {["mitigate", "accept", "transfer", "avoid", "monitor"].map((t) => (
+                {["mitigate", "transfer", "avoid", "monitor"].map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
               </SelectContent>

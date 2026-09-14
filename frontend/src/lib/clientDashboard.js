@@ -72,7 +72,7 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
   }
   for (const r of active.risks) {
     if (r.status === "accepted" && r.acceptance_expires_at && calendarDay(r.acceptance_expires_at) !== calendarDay(r.next_review)) add(r, "risks", "acceptance", "Risk Acceptance Expiry", r.acceptance_expires_at, "View Risk");
-    const represented = r.status === "accepted" && active.exceptions.some(e => e.risk_id === r.risk_id && ["approved", "expired"].includes(e.status) && calendarDay(e.expires_at) != null && calendarDay(e.expires_at) === calendarDay(r.next_review));
+    const represented = active.reviews.some(v=>v.risk_id===r.risk_id&&calendarDay(v.due_date)===calendarDay(r.next_review)) || r.status === "accepted" && active.exceptions.some(e => e.risk_id === r.risk_id && ["approved", "expired"].includes(e.status) && calendarDay(e.expires_at) != null && calendarDay(e.expires_at) === calendarDay(r.next_review));
     if (!represented) add(r, "risks", "review", r.status === "accepted" ? "Risk Acceptance Review" : (r.next_review ? "Risk Review" : "Risk"), r.next_review, "View Risk", r.status === "accepted" ? null : assessedRisk(r).risk_level, r.status !== "accepted");
   }
   for (const r of active.policies) {
