@@ -26,7 +26,7 @@ class SeedAccountSettingsTests(unittest.IsolatedAsyncioTestCase):
         self.environment = patch.dict(os.environ, {
             "ADMIN_EMAIL": "seed-admin@example.com",
             "ADMIN_NAME": "Seed Admin",
-            "ADMIN_PASSWORD": self.seed_password,
+            "ADMIN_PASSWORD_HASH": server.hash_password(self.seed_password),
             "DEMO_USER_PASSWORD": secrets.token_urlsafe(24),
             "JWT_SECRET": secrets.token_urlsafe(48),
         })
@@ -41,7 +41,9 @@ class SeedAccountSettingsTests(unittest.IsolatedAsyncioTestCase):
         user = await server.db.users.find_one({"email": "seed-admin@example.com"})
         self.assertEqual(user["name"], "Seed Admin")
         self.assertEqual(user["role"], "super_admin")
-        self.assertEqual(len(user["client_ids"]), 2)
+        self.assertEqual(user["client_ids"], [])
+        self.assertEqual(await server.db.clients.count_documents({}), 0)
+        self.assertEqual(await server.db.reviews.count_documents({}), 0)
         self.assertTrue(server.verify_password(self.seed_password, user["password_hash"]))
 
     async def test_restart_preserves_self_service_name_and_password(self):
