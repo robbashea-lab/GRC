@@ -1,3 +1,4 @@
+import VendorGovernancePanel from "./VendorGovernancePanel";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -161,11 +162,15 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         ["service","category","criticality","status","contact_name","contact_email","contact_phone","website",
          "data_types","data_relationship","business_owner_id","assurance_status","assurance_expires_at",
          "review_frequency","last_review","next_review","contract_start","contract_renewal","contract_expiration",
-         "auto_renewal","related_risk_ids","notes"
+         "auto_renewal","related_risk_ids","notes","custom_recurrence_days","assurance_required","assurance_records","assurance_window_days","separate_assurance_review","assurance_review_date","assurance_cadence","contract_review_enabled","contract_lead_days","contract_evidence_ids","dpa_present","baa_present","security_addendum_present","contract_notes","termination_requirements","dependency_notes","offboarding_review_date"
         ].forEach((k) => {
           if (!(k in base)) base[k] = record?.[k] ?? (["data_types","data_relationship","related_risk_ids"].includes(k) ? [] : "");
         });
-        ["assurance_expires_at","last_review","next_review","contract_start","contract_renewal","contract_expiration"].forEach((k) => {
+        base.service = record?.service || record?.services || "";
+        base.assurance_records = record?.assurance_records || [];base.contract_evidence_ids=record?.contract_evidence_ids||[];
+        base.assurance_window_days=record?.assurance_window_days||90;base.contract_lead_days=record?.contract_lead_days||90;
+        for(const key of ["assurance_required","separate_assurance_review","contract_review_enabled"])base[key]=!!record?.[key];
+        ["assurance_expires_at","last_review","next_review","contract_start","contract_renewal","contract_expiration","assurance_review_date","offboarding_review_date"].forEach((k) => {
           base[k] = toDateInput(base[k]);
         });
       }
@@ -189,8 +194,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }, [open, record, clientId]);
 
   useEffect(() => {
-    if (!open || kind !== "tasks" || !record || !["related","activity"].includes(tab)) return;
-    const refresh = () => { loadRelated(); loadActivity(); };
+    if (!open || !["tasks","vendors"].includes(kind) || !record) return;
+    const refresh = () => { loadRelated(); loadActivity(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();loadEvidence();} };
     refresh(); window.addEventListener("focus", refresh);
     const timer = setInterval(refresh, 10000);
     return () => { window.removeEventListener("focus", refresh); clearInterval(timer); };
@@ -208,7 +213,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   async function loadActivity() {
     const generation=loadGeneration.current;
     try {
-      const { data } = await api.get(["tasks","risks"].includes(kind) ? `/${kind}/${record[idField]}/activity` : "/audit-logs");
+      const { data } = await api.get(["tasks","risks","vendors"].includes(kind) ? `/${kind}/${record[idField]}/activity` : "/audit-logs");
       if(generation===loadGeneration.current) setActivity(data.filter((a) => a.entity_id === record[idField]).slice(0, 30));
     } catch (e) { void e; }
   }
@@ -227,17 +232,18 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     } catch (e) { void e; }
   }
   async function loadLinkedReviews() {
+    const generation=loadGeneration.current;
     try {
       const { data } = await api.get("/reviews", { params: { client_id: record.client_id } });
-      setLinkedReviews((data || []).filter((r) => r.vendor_id === record[idField] || (r.review_type === "vendor" && (r.scope || "").toLowerCase().includes((record.name || "").toLowerCase()))));
+      if(generation===loadGeneration.current) setLinkedReviews((data || []).filter(r => r.vendor_id === record[idField] && r.client_id === record.client_id));
     } catch (e) { void e; }
   }
   async function loadLinkedRisks() {
+    const generation=loadGeneration.current;
     try {
       const ids = record.related_risk_ids || [];
-      if (!ids.length) { setLinkedRisks([]); return; }
       const { data } = await api.get("/risks", { params: { client_id: record.client_id } });
-      setLinkedRisks((data || []).filter((r) => ids.includes(r.risk_id)));
+      if(generation===loadGeneration.current) setLinkedRisks((data || []).filter((r) => r.client_id===record.client_id && (ids.includes(r.risk_id)||r.vendor_id===record.vendor_id)));
     } catch (e) { void e; }
   }
 
@@ -256,6 +262,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     setSaving(true);
     try {
       const clean = cleanForm();
+      if(kind==="risks" && clean.custom_recurrence_days==="") clean.custom_recurrence_days=null;
+      if(kind==="vendors") {for(const key of ["last_review","assurance_status","services","assurance_expires_at"])delete clean[key];for(const key of ["assurance_records"])if(clean[key])clean[key]=clean[key].map(({status,...a})=>a);if(clean.custom_recurrence_days==="")delete clean.custom_recurrence_days;if(!clean.assurance_cadence)delete clean.assurance_cadence;}
       if(kind==="risks") for(const key of ["last_reviewed","risk_score","risk_level","date_identified","display_id","legacy_display_id","linked_review_id","review_sync_occurrence_id","rating_history","decision_history","created_at","created_by","updated_at","closed_at","closed_by","closure_reason","closure_note","accepted","accepted_by","acceptance_date","acceptance_rationale","acceptance_expires_at"]) delete clean[key];
       if (kind === "tasks") {
         if (isEdit) { delete clean.source_type; delete clean.source_id;
@@ -731,266 +739,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     setForm({ ...form, [fieldName]: Array.from(arr) });
   }
 
-  function renderVendorDataAccess() {
-    return (
-      <div className="space-y-4">
-        <div>
-          <Label className="text-xs text-ink-secondary">Data types stored / processed</Label>
-          <div className="flex flex-wrap gap-1 mt-1" data-testid="vendor-data-types">
-            {DATA_TYPES.map((dt) => (
-              <button key={dt} type="button" onClick={() => toggleArrayValue("data_types", dt)}
-                className={`px-2 py-0.5 rounded-full border text-[11px] ${(form.data_types || []).includes(dt) ? "bg-brand-charcoal text-ink-onDark border-brand-charcoal" : "bg-surface-card border-line text-ink-secondary hover:bg-surface-subtle"}`}>{dt}</button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <Label className="text-xs text-ink-secondary">Data relationship</Label>
-          <div className="flex flex-wrap gap-1 mt-1" data-testid="vendor-data-relationship">
-            {DATA_RELATIONSHIPS.map((dr) => (
-              <button key={dr} type="button" onClick={() => toggleArrayValue("data_relationship", dr)}
-                className={`px-2 py-0.5 rounded-full border text-[11px] ${(form.data_relationship || []).includes(dr) ? "bg-brand-charcoal text-ink-onDark border-brand-charcoal" : "bg-surface-card border-line text-ink-secondary hover:bg-surface-subtle"}`}>{dr}</button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <Label className="text-xs text-ink-secondary">Business owner</Label>
-          <Select value={form.business_owner_id || "__none__"} onValueChange={(v) => setForm({ ...form, business_owner_id: v === "__none__" ? "" : v })}>
-            <SelectTrigger data-testid="field-business_owner_id" className="text-sm"><SelectValue placeholder="Assign later" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Unassigned</SelectItem>
-              {users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs text-ink-secondary">Vendor contact — name</Label>
-            <Input value={form.contact_name || ""} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Vendor contact — email</Label>
-            <Input value={form.contact_email || ""} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Vendor contact — phone</Label>
-            <Input value={form.contact_phone || ""} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Website</Label>
-            <Input value={form.website || ""} onChange={(e) => setForm({ ...form, website: e.target.value })} placeholder="https://…" className="text-sm" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  function renderVendorAssurance() {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs text-ink-secondary">Assurance status</Label>
-            <Select value={form.assurance_status || ""} onValueChange={(v) => setForm({ ...form, assurance_status: v })}>
-              <SelectTrigger data-testid="field-assurance_status" className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
-              <SelectContent>
-                {["current", "expiring", "expired", "requested", "missing", "under_review"].map((s) => (
-                  <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Next assurance renewal</Label>
-            <Input type="date" value={form.assurance_expires_at || ""} onChange={(e) => setForm({ ...form, assurance_expires_at: e.target.value })} className="text-sm" data-testid="field-assurance_expires_at" />
-            <div className="text-[11px] text-ink-help mt-1">SOC 2 / ISO / DPA renewal cutoff. Alerts trigger 60 days before.</div>
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help mb-1">Assurance documents</div>
-          {canWrite && (
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadFiles(Array.from(e.dataTransfer.files)); }}
-              onClick={() => inputRef.current?.click()}
-              data-testid="vendor-assurance-dropzone"
-              className={`rounded-lg border-2 border-dashed p-4 text-center cursor-pointer transition ${dragOver ? "border-slate-900 bg-slate-100" : "border-slate-300 hover:bg-slate-50"}`}
-            >
-              <UploadCloud className="h-5 w-5 mx-auto text-slate-500 mb-1" />
-              <div className="text-xs font-medium text-slate-900">Drop SOC 2 / ISO / DPA documents here</div>
-              <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => uploadFiles(Array.from(e.target.files || []))} />
-            </div>
-          )}
-          <ul className="divide-y divide-slate-100 border border-slate-200 rounded-md mt-2">
-            {evidenceItems.length === 0 && <li className="p-3 text-center text-slate-400 text-xs">No assurance documents on file yet.</li>}
-            {evidenceItems.map((ev, i) => (
-              <li key={ev.evidence_id} className="flex items-center justify-between px-3 py-2 hover:bg-slate-50" data-testid={`vendor-assurance-item-${i}`}>
-                <div className="min-w-0">
-                  <div className="text-sm text-slate-900 font-medium truncate">{ev.filename}</div>
-                  <div className="text-[11px] text-slate-500 font-mono">{ev.uploaded_by_email} · {new Date(ev.created_at).toLocaleString()}</div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => downloadEv(ev)} className="p-1 rounded hover:bg-slate-100 text-slate-500"><Download className="h-3.5 w-3.5" /></button>
-                  {isPlatformAdmin && <button onClick={() => deleteEv(ev)} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  }
-
-  function renderVendorReviews() {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs text-ink-secondary">Review frequency</Label>
-            <Select value={form.review_frequency || "annual"} onValueChange={(v) => setForm({ ...form, review_frequency: v })}>
-              <SelectTrigger data-testid="field-review_frequency" className="text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {["quarterly", "semiannual", "annual", "biennial", "as_needed", "custom"].map((f) => (
-                  <SelectItem key={f} value={f}>{f.replace("_", " ")}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Last review</Label>
-            <Input type="date" value={form.last_review || ""} onChange={(e) => setForm({ ...form, last_review: e.target.value })} className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Next review</Label>
-            <Input type="date" value={form.next_review || ""} onChange={(e) => setForm({ ...form, next_review: e.target.value })} className="text-sm" data-testid="field-next_review" />
-          </div>
-        </div>
-        {canWrite && (
-          <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2 text-sm text-ink-primary">
-              <CalendarPlus className="h-4 w-4 text-brand-charcoal" /> Schedule a full vendor review
-            </div>
-            <Button size="sm" onClick={() => setScheduleOpen(true)} data-testid="vendor-schedule-review" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
-              Schedule review
-            </Button>
-          </div>
-        )}
-        <div>
-          <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help mb-2 flex items-center justify-between">
-            <span>Past & upcoming vendor reviews</span>
-            <Link to="/reviews" className="text-link hover:text-link-hover normal-case tracking-normal font-sans text-xs flex items-center gap-1">See all <ArrowUpRight className="h-3 w-3" /></Link>
-          </div>
-          {linkedReviews.length === 0 ? (
-            <div className="text-sm text-ink-muted">No reviews linked to this vendor yet.</div>
-          ) : (
-            <ul className="space-y-1.5" data-testid="vendor-linked-reviews">
-              {linkedReviews.map((r) => (
-                <li key={r.review_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between">
-                  <div className="min-w-0">
-                    <div className="text-ink-primary font-medium truncate">{r.title}</div>
-                    <div className="text-[11px] text-ink-help font-mono">Due {r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}</div>
-                  </div>
-                  <StatusBadge value={r.status} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  function renderVendorActionItems() {
-    const findings = related.findings || [];
-    const tasks = related.tasks || [];
-    if (findings.length === 0 && tasks.length === 0) {
-      return <div className="text-sm text-ink-muted">No open findings or tasks linked to this vendor.</div>;
-    }
-    return (
-      <div className="space-y-5">
-        {findings.length > 0 && (
-          <div>
-            <Link to="/findings" className="text-[10px] font-mono uppercase tracking-widest text-slate-500 hover:text-slate-900 flex items-center gap-1">findings <ArrowUpRight className="h-3 w-3" /></Link>
-            <ul className="mt-1.5 space-y-1.5">
-              {findings.map((f) => (
-                <li key={f.finding_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between">
-                  <div className="min-w-0"><div className="text-ink-primary font-medium truncate">{f.title}</div><div className="text-[11px] text-ink-help font-mono">{f.finding_id}</div></div>
-                  {f.severity && <StatusBadge value={f.severity} />}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {tasks.length > 0 && (
-          <div>
-            <Link to="/action-items" className="text-[10px] font-mono uppercase tracking-widest text-slate-500 hover:text-slate-900 flex items-center gap-1">tasks <ArrowUpRight className="h-3 w-3" /></Link>
-            <ul className="mt-1.5 space-y-1.5">
-              {tasks.map((t) => (
-                <li key={t.task_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between">
-                  <div className="min-w-0"><div className="text-ink-primary font-medium truncate">{t.title}</div><div className="text-[11px] text-ink-help font-mono">{t.task_id}</div></div>
-                  {t.status && <StatusBadge value={t.status} />}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  function renderVendorRisks() {
-    if (linkedRisks.length === 0) {
-      return <div className="text-sm text-ink-muted">No risks linked to this vendor yet. Open a risk from the Risk Register and add this vendor's ID to link.</div>;
-    }
-    return (
-      <ul className="space-y-1.5" data-testid="vendor-linked-risks">
-        {linkedRisks.map((r) => {
-          const tone = LEVEL_TONE[r.risk_level] || LEVEL_TONE.low;
-          return (
-            <li key={r.risk_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between">
-              <div className="min-w-0"><div className="text-ink-primary font-medium truncate">{r.title}</div><div className="text-[11px] text-ink-help font-mono">{r.risk_id} · score {r.risk_score || "—"}</div></div>
-              {r.risk_level && <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium capitalize ${tone}`}>{r.risk_level}</span>}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  }
-
-  function renderVendorContract() {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs text-ink-secondary">Contract start</Label>
-            <Input type="date" value={form.contract_start || ""} onChange={(e) => setForm({ ...form, contract_start: e.target.value })} className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Renewal date</Label>
-            <Input type="date" value={form.contract_renewal || ""} onChange={(e) => setForm({ ...form, contract_renewal: e.target.value })} className="text-sm" data-testid="field-contract_renewal" />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Expiration date</Label>
-            <Input type="date" value={form.contract_expiration || ""} onChange={(e) => setForm({ ...form, contract_expiration: e.target.value })} className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Auto-renewal</Label>
-            <Select value={form.auto_renewal || ""} onValueChange={(v) => setForm({ ...form, auto_renewal: v })}>
-              <SelectTrigger className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="yes">Yes</SelectItem>
-                <SelectItem value="no">No</SelectItem>
-                <SelectItem value="unknown">Unknown</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div>
-          <Label className="text-xs text-ink-secondary">Notes</Label>
-          <Textarea value={form.notes || ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className="text-sm" />
-        </div>
-      </div>
-    );
+  function vendorPanel(section) {
+    return <VendorGovernancePanel tab={section} record={record} form={form} setForm={setForm} canWrite={canWrite} isAdmin={isPlatformAdmin} users={users} reviews={linkedReviews} tasks={related.tasks||[]} risks={linkedRisks} evidence={evidenceItems} openRecord={setRelatedDrawer} uploadFiles={uploadFiles} downloadEv={downloadEv} onSaved={()=>{loadLinkedReviews();loadLinkedRisks();loadRelated();onSaved?.();}}/>;
   }
 
   // -------- Overview renderers per kind --------
@@ -1011,23 +761,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </div>
       );
     }
-    if (kind === "vendors") {
-      return (
-        <div className="space-y-4">
-          {renderFieldsByNames(["name", "services", "criticality", "status", "contact_email"])}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-ink-secondary">Service / product</Label>
-              <Input value={form.service || ""} onChange={(e) => setForm({ ...form, service: e.target.value })} className="text-sm" data-testid="field-service" />
-            </div>
-            <div>
-              <Label className="text-xs text-ink-secondary">Category</Label>
-              <Input value={form.category || ""} onChange={(e) => setForm({ ...form, category: e.target.value })} className="text-sm" />
-            </div>
-          </div>
-        </div>
-      );
-    }
+    if (kind === "vendors") return vendorPanel("overview");
     // Default: use full schema
     return (
       <div className="space-y-4">
@@ -1297,12 +1031,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (tab === "related") return <div className="space-y-4">{renderRelated()}{renderEvidence()}</div>;
     }
     if (kind === "vendors") {
-      if (tab === "data_access") return renderVendorDataAccess();
-      if (tab === "assurance") return renderVendorAssurance();
-      if (tab === "reviews_tab") return renderVendorReviews();
-      if (tab === "actions_tab") return renderVendorActionItems();
-      if (tab === "risks_tab") return renderVendorRisks();
-      if (tab === "contract") return renderVendorContract();
+      if (["data_access","assurance","reviews_tab","actions_tab","risks_tab","contract"].includes(tab)) return vendorPanel(tab);
     }
     if (kind === "requirements") {
       if (tab === "applicability") return (
@@ -1389,12 +1118,12 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} data-testid="drawer-cancel">Cancel</Button>
           {kind === "reviews" && record?.status === "completed" && canWrite && <Button size="sm" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Add amendment</Button>}
           {tabIsFormEditable && !(kind === "reviews" && record?.status === "completed") && (
-            <Button size="sm" onClick={save} disabled={saving || !canWrite} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : "Create"}</Button>
+            <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : "Create"}</Button>
           )}
         </div>
       </SheetContent>
 
-      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); refreshRisk(); onSaved?.(); }} />}
+      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
 
       <Sheet open={decisionOpen} onOpenChange={setDecisionOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">

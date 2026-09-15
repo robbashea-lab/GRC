@@ -43,7 +43,7 @@ async def prepare(db, row, can_access, previous=None):
             source_finding = await db.findings.find_one({"finding_id": row["finding_id"], "client_id": cid}, {"_id": 0})
             if not source_finding:
                 raise HTTPException(422, "Finding must belong to this client")
-            for field in ("review_id", "occurrence_id"):
+            for field in ("review_id", "occurrence_id", "vendor_id"):
                 if source_finding.get(field):
                     if row.get(field) and row[field] != source_finding[field]:
                         raise HTTPException(422, "Conflicting Finding provenance")
@@ -52,6 +52,10 @@ async def prepare(db, row, can_access, previous=None):
             review = await db.reviews.find_one({"review_id": row["review_id"], "client_id": cid}, {"_id": 0})
             if not review:
                 raise HTTPException(422, "Review must belong to this client")
+            if review.get("vendor_id"):
+                if row.get("vendor_id") and row["vendor_id"] != review["vendor_id"]:
+                    raise HTTPException(422, "Conflicting Vendor provenance")
+                row["vendor_id"] = review["vendor_id"]
             # A Finding's historical execution wins over the Review's current execution.
             row["occurrence_id"] = row.get("occurrence_id") or review.get("current_occurrence_id") or "occ_" + review["review_id"]
     elif row.get("source_id") or any(row.get(key) for _,key in SOURCES.values()):

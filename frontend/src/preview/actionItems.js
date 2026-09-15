@@ -25,7 +25,7 @@ export function prepareTask(db,row,previous) {
     if(row.finding_id) {
       const finding=db.findings.find(f=>f.finding_id===row.finding_id&&f.client_id===row.client_id);
       if(!finding) throw new Error('Finding must belong to this client.');
-      for(const field of ['review_id','occurrence_id']) if(finding[field]) {
+      for(const field of ['review_id','occurrence_id','vendor_id']) if(finding[field]) {
         if(row[field]&&row[field]!==finding[field]) throw new Error('Conflicting Finding provenance.');
         row[field]=finding[field];
       }
@@ -33,6 +33,7 @@ export function prepareTask(db,row,previous) {
     if(row.review_id) {
       const review=db.reviews.find(r=>r.review_id===row.review_id&&r.client_id===row.client_id);
       if(!review) throw new Error('Review must belong to this client.');
+      if(review.vendor_id) {if(row.vendor_id&&row.vendor_id!==review.vendor_id) throw new Error('Conflicting Vendor provenance.');row.vendor_id=review.vendor_id;}
       row.occurrence_id=row.occurrence_id||review.current_occurrence_id||'occ_'+row.review_id;
     }
   } else if(row.source_id||Object.values(SOURCE_RECORDS).some(([,key])=>row[key])) throw new Error('Select the linked record as the source.');

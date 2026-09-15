@@ -289,12 +289,12 @@ test('policy approval, vendor review, evidence, comments and invitations update 
     data: v
   } = await api.post('/vendors', {
     client_id: c.client_id,
-    name: 'Test vendor'
+    name: 'Test vendor', service:'Test service'
   });
   await api.post(`/vendors/${v.vendor_id}/schedule-review`, {
     due_date: '2027-01-15'
   });
-  expect((await get('reviews', c.client_id))[0].vendor_id).toBe(v.vendor_id);
+  expect((await get('reviews', c.client_id)).filter(r=>r.vendor_id===v.vendor_id)).toHaveLength(1);
   const {
     data: e
   } = await api.post('/evidence', {

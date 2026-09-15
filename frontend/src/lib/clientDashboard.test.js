@@ -31,12 +31,12 @@ test("calendar boundaries, priorities, undated work and closed records", () => {
 
 test("uses real review, policy, vendor, risk, acceptance and contract dates", () => {
   const result = aggregate({ reviews: [{ client_id: "client-a", review_id: "rev", title: "Vendor review", vendor_id: "vendor", status: "upcoming", due_date: date(20) }],
-    vendors: [{ client_id: "client-a", vendor_id: "vendor", name: "Provider", status: "active", criticality: "critical", next_review: date(20), contract_expiration: date(40), contract_end: date(40), contract_renewal: date(40), assurance_expires_at: date(50) }],
+    vendors: [{ client_id: "client-a", vendor_id: "vendor", name: "Provider", status: "active", criticality: "critical", next_review: date(20), contract_expiration: date(40), contract_end: date(40), contract_renewal: date(40), assurance_required:true, assurance_records:[{type:"SOC 2",required:true,refresh_due:date(50)}] }],
     policies: [{ client_id: "client-a", policy_id: "policy", title: "Policy", status: "approved", next_review_date: date(14) }],
     risks: [{ client_id: "client-a", risk_id: "risk", title: "Risk", status: "accepted", risk_level: "critical", next_review: date(60) }],
     exceptions: [{ client_id: "client-a", exception_id: "exception", title: "Acceptance", risk_id: "other-risk", status: "approved", expires_at: date(-1) }],
   });
-  expect(result.upcoming.filter(r => r.kind === "vendors").map(r => r.event)).toEqual(["renewal", "assurance"]);
+  expect(result.upcoming.filter(r => r.kind === "vendors").map(r => r.event)).toEqual(["renewal", "assurance-SOC 2"]);
   expect(result.upcoming.map(r => r.type)).toContain("Risk Acceptance Review");
   expect(result.attention.map(r => r.type)).toEqual(["Risk Acceptance Expiry", "Policy Review"]);
   expect(result.upcoming.find(r => r.id === "rev").record.vendor_id).toBe("vendor");

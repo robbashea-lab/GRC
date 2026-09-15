@@ -1,3 +1,4 @@
+import {validateVendor,ensureVendorReviews,syncVendorReview} from './vendors';
 import { ensureRiskReview } from './risks';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
@@ -132,7 +133,7 @@ export function write(db, kind, body, id) {
       status: 'draft'
     },
     vendors: {
-      status: 'active',
+      status: 'onboarding',
       criticality: 'medium',
       review_frequency: 'annual'
     },
@@ -160,6 +161,7 @@ export function write(db, kind, body, id) {
     prepareTask(db,row,existing);
     if ('assignee_id' in body && existing && 'owner_id' in existing) row.owner_id=null;
   }
+  if(kind==='vendors') {validateVendor(db,row,existing);row.service=row.service||row.services;}
   validate(db, kind, row, existing);
   if (kind === 'reviews') Object.assign(row, reviewView({...row, ...reviewSchedule(row, !!existing && !body.schedule_anchor && body.due_date !== undefined && body.due_date !== existing.due_date)}));
   if (kind === 'tasks' && existing && row.status !== existing.status) {
@@ -195,6 +197,8 @@ export function write(db, kind, body, id) {
   const taskEvent = !existing ? 'Action Item created' : row.status!==existing.status ? row.status==='done'?'Action Item completed':row.status==='in_progress'?'Work started':'Status changed' : row.assignee_id!==existing.assignee_id?'Assignment changed':'Action Item updated';
   if (existing) Object.assign(existing, row);else db[kind].unshift(row);
   if (kind === "risks") ensureRiskReview(db, existing || row);
+  if(kind==="vendors") ensureVendorReviews(db,existing||row);
+  if(kind==="reviews"&&row.vendor_id) syncVendorReview(db,existing||row);
   if (kind === "tasks" && row.risk_id) {
     const risk=record(db,"risks",row.risk_id);
     if(!existing&&["assessed","open"].includes(risk.status)&&assessedRisk(risk).risk_score) risk.status="in_progress";
@@ -210,7 +214,9 @@ export function write(db, kind, body, id) {
       finding.updated_at = now();
     }
   }
-  const event = kind==='tasks' ? taskEvent : kind==='risks'?riskEvent:existing?'update':'create';
+  if(kind==='risks'&&row.vendor_id&&!existing) audit(db,'Risk linked','vendors',record(db,'vendors',row.vendor_id),{risk_id:row.risk_id});
+  if(kind==='tasks'&&row.vendor_id) audit(db,taskEvent,'vendors',record(db,'vendors',row.vendor_id),{task_id:row.task_id});
+  const event = kind==='vendors' ? existing?'Vendor updated':'Vendor created' : kind==='tasks' ? taskEvent : kind==='risks'?riskEvent:existing?'update':'create';
   audit(db, event, kind, row);
   return existing || row;
 }
