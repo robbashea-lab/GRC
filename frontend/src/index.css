@@ -278,7 +278,7 @@ a:hover { color: var(--color-link-hover); }
 .app-workspace tbody tr:last-child td { border-bottom: 0; }
 .app-workspace tbody tr { transition: background-color .12s ease; }
 .app-workspace tbody tr:hover { background: var(--color-bg-row-hover); }
-.app-workspace :is(input:not([type="checkbox"]):not([type="radio"]), [role="combobox"]), [role="dialog"] :is(input:not([type="checkbox"]):not([type="radio"]), [role="combobox"]) { min-height: var(--control-height); font-family: var(--font-body); font-size: 13px; border-color: #cbd2db; border-radius: 6px; box-shadow: none; }
+.app-workspace :is(input:not([type="checkbox"]):not([type="radio"]), [role="combobox"]), [role="dialog"] :is(input:not([type="checkbox"]):not([type="radio"]), [role="combobox"]) { min-height: var(--control-height); font-family: var(--font-body); }
 .app-workspace textarea, [role="dialog"] textarea { font-family: var(--font-body); font-size: 13px; line-height: 1.6; min-height: 88px; border-color: #cbd2db; border-radius: 6px; }
 .app-workspace label, [role="dialog"] label { font-family: var(--font-body); font-size: 13px; font-weight: 500; }
 [role="dialog"] { color: var(--color-text-primary); background: var(--color-bg-surface); }

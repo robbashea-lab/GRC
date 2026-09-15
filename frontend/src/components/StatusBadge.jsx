@@ -4,6 +4,7 @@ const TONE_BY_STATUS = {
   // Reviews
   upcoming: "info",
   planned: "neutral",
+  needs_scheduling: "duesoon",
   in_progress: "info",
   blocked: "moderate",
   completed: "success",

@@ -184,7 +184,7 @@ export default function ClientSettings() {
 
   if (!canManage) {
     return (
-      <div className="p-8">
+      <div className="page-content">
         <PageHeader title="Client Settings" subtitle="You need administrator access to manage this client's users and settings." />
       </div>
     );
@@ -194,7 +194,7 @@ export default function ClientSettings() {
     return (
       <div>
         <PageHeader title="Client Settings" subtitle="Select a client organization first." />
-        <div className="p-8 max-w-xl">
+        <div className="page-content max-w-xl">
           <Button onClick={() => nav("/clients")}>Open Client Directory</Button>
         </div>
       </div>
@@ -212,7 +212,7 @@ export default function ClientSettings() {
         title={currentClient?.name || "Client"}
         subtitle="Manage users, access, and the compliance profile for this client. The active client determines where every change is scoped — no cross-tenant exposure."
       />
-      <div className="px-8 pt-4 flex items-center gap-3 flex-wrap">
+      <div className="page-gutter pt-4 flex items-center gap-3 flex-wrap">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-line bg-surface-card text-sm text-ink-primary" data-testid="client-settings-tenant">
           <Building2 className="h-3.5 w-3.5 text-ink-secondary" />
           <span className="text-xs font-mono uppercase tracking-widest text-ink-help">Active client</span>
@@ -225,7 +225,7 @@ export default function ClientSettings() {
           <ExternalLink className="h-3 w-3 ml-1.5 text-ink-help" />
         </Button>
       </div>
-      <div className="p-8">
+      <div className="page-content">
         <Tabs defaultValue="users" className="w-full">
           <TabsList data-testid="client-settings-tabs">
             <TabsTrigger value="users" data-testid="tab-users-access">Users &amp; Access</TabsTrigger>

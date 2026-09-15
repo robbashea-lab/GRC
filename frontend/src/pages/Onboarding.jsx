@@ -35,14 +35,14 @@ export default function Onboarding(){
   }
   if(!canRun)return <PageHeader title="GRC Program Onboarding" subtitle="You need contributor access to run this wizard."/>;
   if(!currentClientId)return <PageHeader title="GRC Program Onboarding" subtitle="Select a client organization first."/>;
-  if(error)return <div role="alert" className="p-8">{error}</div>;
-  if(!state||loaded!==currentClientId)return <div role="status" className="p-8">Loading onboarding…</div>;
+  if(error)return <div role="alert" className="page-content">{error}</div>;
+  if(!state||loaded!==currentClientId)return <div role="status" className="page-content">Loading onboarding…</div>;
   const step=Math.min(3,Math.max(0,state.step||0)),programs=selectedPrograms(state),plans=frameworkPlans(state),generic=genericReviews(catalog,state);
   const existing=p=>reviews.find(r=>r.framework_plan_key===p.key)||p.baseline_key&&reviews.find(r=>r.baseline_key===p.baseline_key);
   const configure=(p,key,value)=>update({...state,framework_reviews:{...state.framework_reviews,[p.key]:{...reviewConfig(state,p),[key]:value}}});
   return <div><PageHeader title="GRC Program Onboarding" subtitle="Select applicable programs, capture governance documents, and confirm the actual Review program."/>
-    <div className="px-8 pt-4 flex flex-wrap gap-3 text-sm"><span>Active client · <strong>{currentClient?.name}</strong></span><span role="status" className="text-xs text-ink-muted">{saved}</span>{state.completed&&<span className="text-xs text-ink-muted">Revisiting saved onboarding · existing history is retained</span>}</div>
-    <div className="p-8 max-w-7xl"><ol className="onboarding-stepper flex flex-wrap gap-4 mb-6 text-sm" data-testid="onboarding-stepper">{STEPS.map((name,i)=><li key={name} aria-current={step===i?'step':undefined} className={step===i?'font-semibold text-ink-primary':'text-ink-muted'}>{i+1}. {name}</li>)}</ol>
+    <div className="page-gutter pt-4 flex flex-wrap gap-3 text-sm"><span>Active client · <strong>{currentClient?.name}</strong></span><span role="status" className="text-xs text-ink-muted">{saved}</span>{state.completed&&<span className="text-xs text-ink-muted">Revisiting saved onboarding · existing history is retained</span>}</div>
+    <div className="page-content max-w-7xl"><ol className="onboarding-stepper flex flex-wrap gap-4 mb-6 text-sm" data-testid="onboarding-stepper">{STEPS.map((name,i)=><li key={name} aria-current={step===i?'step':undefined} className={step===i?'font-semibold text-ink-primary':'text-ink-muted'}>{i+1}. {name}</li>)}</ol>
     <section className="border border-line bg-surface-card rounded-lg p-6"><h2 className="text-base font-semibold mb-4">{STEPS[step]}</h2>
       {step===0&&<div className="space-y-5"><p className="text-sm text-ink-muted">Select relevant programs. A selection records applicability—not certification. General GRC onboarding does not require a framework.</p>
         <div className="grid md:grid-cols-2 gap-3">{FRAMEWORKS.map(f=><label key={f.key} className="onboarding-program-option flex items-start gap-3 border border-line rounded p-4"><input type="checkbox" aria-label={f.name} checked={state.requirements[f.key]==='applies'} onChange={e=>update({...state,requirements:{...state.requirements,[f.key]:e.target.checked?'applies':'does_not_apply'}})}/><span><span className="block text-sm font-medium">{f.name}</span><span className="block text-xs text-ink-muted mt-1">{f.implemented?'Safeguard assessments and mapped Reviews available.':'Program workspace only. Detailed mapping is not yet configured.'}</span></span></label>)}</div>

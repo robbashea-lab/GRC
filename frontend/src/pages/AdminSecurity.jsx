@@ -14,7 +14,7 @@ export default function AdminSecurity() {
   return (
     <div>
       <PageHeader eyebrow="Administration" title="Security & Authentication" subtitle="Platform-wide authentication and hardening posture." />
-      <div className="px-8 py-6 max-w-4xl space-y-4">
+      <div className="page-gutter py-6 max-w-4xl space-y-4">
         <div className="rounded-md border border-semantic-info-border bg-semantic-info-bg p-3 text-xs text-semantic-info flex items-start gap-2">
           <Info className="h-4 w-4 shrink-0 mt-0.5" />
           <div>Interactive security settings (MFA enrollment, session revocation, IP allow-lists) are on the roadmap. This page documents the current effective posture.</div>

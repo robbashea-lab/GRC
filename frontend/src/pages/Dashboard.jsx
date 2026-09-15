@@ -84,9 +84,9 @@ export default function Dashboard() {
 
   // Never render the previous tenant's response while a new request is loading.
   const data = snapshot?.key === requestKey ? snapshot.result : null;
-  if (!currentClientId) return <div className="p-8 text-sm text-ink-muted">Select a client to view its GRC program.</div>;
-  if (error?.key === requestKey) return <div className="p-8 space-y-3" role="alert"><p>{error.message}</p><Button variant="outline" onClick={() => setRevision(n => n + 1)}>Retry dashboard</Button></div>;
-  if (!data) return <div className="p-8 text-sm text-ink-muted">Loading dashboard…</div>;
+  if (!currentClientId) return <div className="page-content text-sm text-ink-muted">Select a client to view its GRC program.</div>;
+  if (error?.key === requestKey) return <div className="page-content space-y-3" role="alert"><p>{error.message}</p><Button variant="outline" onClick={() => setRevision(n => n + 1)}>Retry dashboard</Button></div>;
+  if (!data) return <div className="page-content text-sm text-ink-muted">Loading dashboard…</div>;
 
   const framework = frameworkSelection?.clientId === currentClientId && data.programs?.some(p=>p.key===frameworkSelection.key) ? frameworkSelection.key : null;
   const view = framework ? {kind:"framework",key:framework} : scope;
@@ -131,7 +131,7 @@ export default function Dashboard() {
       />
 
       {scope.kind !== "org" && (
-        <div className="px-8 pt-4">
+        <div className="page-gutter pt-4">
           <div
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-medium"
             data-testid="active-scope-chip"

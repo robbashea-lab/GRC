@@ -146,7 +146,7 @@ export default function VendorRegister() {
           </div>
         }
       />
-      <div className="px-8 pt-4">
+      <div className="page-gutter pt-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="vendor-summary">
           <SummaryCard label="Critical Vendors" value={summary.critical} icon={Building2} tone="critical" />
           <SummaryCard label="Reviews Due" value={summary.review_due} icon={CalendarClock} tone="duesoon" />
@@ -155,21 +155,21 @@ export default function VendorRegister() {
         </div>
       </div>
       <div className="register-toolbar">
-        <div className="relative">
+        <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search vendors…" className="pl-8 h-9 w-72 text-sm" data-testid="vendor-search" />
         </div>
-        <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="vendor-views">
+        <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="vendor-views">
           {VIEWS.map((v) => (
-            <button key={v.id} onClick={() => { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`vendor-view-${v.id}`}
+            <button key={v.id} aria-pressed={view === v.id} onClick={() => { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`vendor-view-${v.id}`}
               className={`px-3 h-8 text-xs rounded-[6px] transition ${view === v.id ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>{v.label}</button>
           ))}
         </div>
         <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
-      <div className="p-8">
+      <div className="register-body">
         <TableFilterChips table={table} />
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>

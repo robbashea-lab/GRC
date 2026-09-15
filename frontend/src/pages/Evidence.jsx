@@ -67,7 +67,7 @@ export default function Evidence() {
   return (
     <div>
       <PageHeader title="Evidence & Documents" subtitle={`${currentClient?.name || ""} · Drag and drop artifacts, linked to reviews, findings, policies and vendors.`} />
-      <div className="p-8 space-y-6">
+      <div className="page-content space-y-6">
         <div
           data-testid="evidence-dropzone"
           role="button"
@@ -87,7 +87,7 @@ export default function Evidence() {
         </div>
 
         <TableFilterChips table={table} />
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full">
             <thead><tr>
               <th className="tbl-head"><ColumnControl table={table} columnKey="filename" /></th><th className="tbl-head"><ColumnControl table={table} columnKey="mime_type" /></th>

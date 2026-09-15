@@ -151,7 +151,7 @@ export default function Calendar() {
           </div>
         }
       />
-      <div className="p-8 space-y-4">
+      <div className="page-content space-y-4">
         <div className="flex items-center justify-between">
           <div className="text-lg font-heading font-semibold text-ink-primary" data-testid="cal-month-label">{monthLabel}</div>
           <div className="flex items-center gap-3 text-xs text-ink-secondary">
