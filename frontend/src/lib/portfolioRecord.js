@@ -1,4 +1,4 @@
-const kinds={review:'reviews',finding:'findings',task:'tasks',risk:'risks'};
+const kinds={review:'reviews',finding:'findings',task:'tasks',risk:'risks',policy:'policies',vendor:'vendors',exception:'exceptions',requirement:'requirements'};
 
 export async function loadPortfolioRecord(api,item) {
   const kind=kinds[item.entity_type], id=item.entity_id || item.id;

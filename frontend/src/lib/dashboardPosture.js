@@ -1,31 +1,25 @@
-import { assessedRisk, representedFinding } from './grcWork';
+import { representedFinding } from './grcWork';
 import { calendarDay } from './clientDashboard';
 import { assuranceStatus, vendorSignals } from './vendorGovernance';
+import {managementMetrics} from './managementMetrics';
+import {managementDay} from './managementDates';
 
 /** Read-only management projection. Counts and drill-downs share exact arrays. */
 export function dashboardPosture(aggregation, {members=[], today=new Date()}={}) {
   const active=aggregation.activeRecords;
-  const day=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate())/86400000;
+  const day=managementDay(today);
   const names=new Map(members.map(u=>[u.user_id,u.name||u.email]));
   const row=(record,kind,id,type,severity)=>({key:`${kind}:${record[id]}:record`,id:record[id],kind,record,type,
     title:record.title||record.name,owner:names.get(record.owner_id||record.assignee_id||record.business_owner_id)||((record.owner_id||record.assignee_id||record.business_owner_id)?'Assigned user':'Unassigned'),
     unassigned:!(record.owner_id||record.assignee_id||record.business_owner_id),status:record.status,due_date:record.due_date||record.next_review||null,
     day:calendarDay(record.due_date||record.next_review),severity,action:kind==='risks'?'View Risk':kind==='vendors'?'View Vendor':'View Finding'});
-  const materialFindings=active.findings.filter(r=>['high','critical'].includes(r.severity)).map(r=>row(r,'findings','finding_id','Finding',r.severity));
-  const risks=active.risks.map(r=>row(r,'risks','risk_id','Risk',assessedRisk(r).risk_level));
-  const significantRisks=risks.filter(r=>['high','critical'].includes(r.severity));
-  // A projected next recurrence is not a second currently actionable occurrence.
-  // Material findings remain visible in the Findings card even when remediation
-  // is represented by a task in operational deadline counts.
-  const work=aggregation.obligations.filter(r=>r.event!=='next'
-    && !(r.kind==='findings'&&representedFinding(r.record,active.tasks))
-    && !(r.kind==='risks'&&r.event==='acceptance'&&aggregation.obligations.some(e=>e.kind==='exceptions'&&e.record.risk_id===r.id&&e.day===r.day)));
-  const pastDue=work.filter(r=>r.day!==null&&r.day<day);
-  const due30=work.filter(r=>r.day!==null&&r.day>=day&&r.day<=day+30);
+  const management=managementMetrics(aggregation,{members,today});
+  const {work,materialFindings,risks,significantRisks}=management;
+  const {past_due:pastDue,due_30d:due30,due_31_90d:due3190}=management.metrics;
   const buckets=[
     {key:'pastDue',label:'Past Due',items:pastDue,tone:'bg-semantic-critical'},
     {key:'inProgress',label:'In Progress',items:work.filter(r=>r.status==='in_progress'&&(r.day===null||r.day>=day)),tone:'bg-semantic-info'},
-    {key:'due30',label:'Due Next 30 Days',items:due30.filter(r=>r.status!=='in_progress'),tone:'bg-semantic-duesoon'},
+    {key:'due30',label:'Other Due Next 30 Days',items:due30.filter(r=>r.status!=='in_progress'),tone:'bg-semantic-duesoon'},
     {key:'scheduled',label:'Scheduled',items:work.filter(r=>r.day>day+30&&r.status!=='in_progress'),tone:'bg-ink-muted'},
     {key:'unscheduled',label:'No Date / Unscheduled',items:work.filter(r=>r.day===null&&r.status!=='in_progress'),tone:'bg-line-strong'},
   ];
@@ -43,5 +37,5 @@ export function dashboardPosture(aggregation, {members=[], today=new Date()}={})
   const rank=r=>r.day!==null&&r.day<day?(r.severity==='critical'?0:r.severity==='high'?1:2):['critical','high'].includes(r.severity)?3:r.unassigned?4:5;
   priority.sort((a,b)=>rank(a)-rank(b)||(a.day??Infinity)-(b.day??Infinity)||a.title.localeCompare(b.title));
   for(const item of priority)if(!byRecord.has(`${item.kind}:${item.id}`))byRecord.set(`${item.kind}:${item.id}`,{...item,priority_label:item.priority_label||(['critical','high'].includes(item.severity)?item.severity[0].toUpperCase()+item.severity.slice(1):item.unassigned?'Unassigned':'Attention')});
-  return {pastDue,due30,materialFindings,significantRisks,buckets,riskLevels,vendorHealth,priority:[...byRecord.values()],work};
+  return {pastDue,due30,due3190,materialFindings,significantRisks,buckets,riskLevels,vendorHealth,priority:[...byRecord.values()],work,management};
 }

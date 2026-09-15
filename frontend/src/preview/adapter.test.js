@@ -340,8 +340,9 @@ test('storage failure rejects mutations without pretending to save', async () =>
   spy.mockRestore();
   expect((await api.get('/clients')).data).toEqual(before);
 });
-test('sample portfolio totals and client KPIs match the backend-generated reference snapshots', async () => {
+test('legacy sources match backend Phase 1 metric expectations and retain legacy KPI compatibility', async () => {
   const fixtures = require('./fixtures.json');
+  const managementExpected = require('./managementLegacyExpected.json');
   const {ids, saveStore} = require('./store');
   // Keep the historical backend parity test independent of today's demo stories.
   const legacy = Object.fromEntries(Object.keys(ids).map(k => [k, []]));
@@ -356,8 +357,7 @@ test('sample portfolio totals and client KPIs match the backend-generated refere
   try {
     await api.post('/demo/enter');
     const actual = (await api.get('/clients/directory')).data;
-    const expected = fixtures.responses['/clients/directory'];
-    for (const key of ['past_due', 'due_30d', 'due_31_90d', 'critical_high_open', 'unassigned', 'clients_requiring_attention']) expect(actual.portfolio[key]).toBe(expected.portfolio[key]);
+    expect(actual.portfolio).toMatchObject({past_due:8,due_30d:14,due_31_90d:8,critical_high_open:8,unassigned:4,clients_requiring_attention:2});
     for (const c of (await api.get('/clients')).data) {
       const result = (await api.get('/dashboard', {
         params: {
@@ -369,11 +369,13 @@ test('sample portfolio totals and client KPIs match the backend-generated refere
       const tasks = (await api.get("/tasks",{params:{client_id:c.client_id}})).data;
       const me=(await api.get("/auth/me")).data.user_id;
       const actionCount = p => tasks.filter(t=>!['done','cancelled'].includes(t.status)&&t.due_date?.slice(0,10)<fixtures.generated_at.slice(0,10)&& (p.scope==='mine'?[t.assignee_id,t.owner_id].includes(me):p.scope==='user'?[t.assignee_id,t.owner_id].includes(p.user_id):p.scope==='unassigned'?!t.assignee_id&&!t.owner_id:true)).length;
-      expect(result.kpis).toEqual({ ...reference.kpis, significant_risks: 0, overdue_actions:actionCount({scope:"org"}) }); // legacy-only ratings are explicitly unassessed
+      const counts=managementExpected[`/dashboard?client_id=${c.client_id}&scope=org`];
+      expect(result.kpis).toEqual({ ...reference.kpis, ...counts, due_next_30:counts.due_30d, significant_risks: 0, overdue_actions:actionCount({scope:"org"}) }); // legacy-only ratings are explicitly unassessed
       for (const [key, snapshot] of Object.entries(fixtures.responses)) {
         if (!key.startsWith(`/dashboard?client_id=${c.client_id}&`)) continue;
         const params = Object.fromEntries(new URL(key, 'https://demo.invalid').searchParams);
-        expect((await api.get('/dashboard', { params })).data.kpis).toEqual({ ...snapshot.kpis, significant_risks: 0, overdue_actions:actionCount(params) });
+        const counts=managementExpected[key];
+        expect((await api.get('/dashboard', { params })).data.kpis).toEqual({ ...snapshot.kpis, ...counts, due_next_30:counts.due_30d, significant_risks: 0, overdue_actions:actionCount(params) });
       }
     }
   } finally {

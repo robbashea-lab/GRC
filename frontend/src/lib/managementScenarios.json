@@ -1,0 +1,530 @@
+{
+  "today": "2026-09-15",
+  "client_id": "a",
+  "records": {
+    "reviews": [
+      {
+        "review_id": "review-a",
+        "client_id": "a",
+        "title": "review-a",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-09-14"
+      },
+      {
+        "review_id": "review-b",
+        "client_id": "a",
+        "title": "review-b",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-09-25"
+      },
+      {
+        "review_id": "review-c",
+        "client_id": "a",
+        "title": "review-c",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-10-30"
+      },
+      {
+        "review_id": "review-d",
+        "client_id": "a",
+        "title": "review-d",
+        "owner_id": "u",
+        "status": "completed",
+        "due_date": "2026-09-14"
+      },
+      {
+        "review_id": "today",
+        "client_id": "a",
+        "title": "today",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-09-15"
+      },
+      {
+        "review_id": "day30",
+        "client_id": "a",
+        "title": "day30",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-10-15"
+      },
+      {
+        "review_id": "day31",
+        "client_id": "a",
+        "title": "day31",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-10-16"
+      },
+      {
+        "review_id": "day90",
+        "client_id": "a",
+        "title": "day90",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-12-14"
+      },
+      {
+        "review_id": "day91",
+        "client_id": "a",
+        "title": "day91",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-12-15"
+      },
+      {
+        "review_id": "no-date",
+        "client_id": "a",
+        "title": "no-date",
+        "owner_id": "u",
+        "status": "needs_scheduling",
+        "due_date": null
+      },
+      {
+        "review_id": "invalid",
+        "client_id": "a",
+        "title": "invalid",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-02-30"
+      },
+      {
+        "review_id": "archived",
+        "client_id": "a",
+        "title": "archived",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-09-14",
+        "archived_at": "2026-01-01"
+      },
+      {
+        "review_id": "reopened",
+        "client_id": "a",
+        "title": "reopened",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-09-14",
+        "completed_at": "2026-09-01"
+      },
+      {
+        "review_id": "risk-linked",
+        "client_id": "a",
+        "title": "risk-linked",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-09-25",
+        "risk_id": "risk-reviewed",
+        "recurrence": "monthly",
+        "next_review_date": "2026-10-25"
+      },
+      {
+        "review_id": "policy-linked",
+        "client_id": "a",
+        "title": "policy-linked",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-10-05",
+        "policy_id": "policy-linked"
+      },
+      {
+        "review_id": "vendor-linked",
+        "client_id": "a",
+        "title": "vendor-linked",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-09-25",
+        "vendor_id": "vendor-linked"
+      },
+      {
+        "review_id": "contract-linked",
+        "client_id": "a",
+        "title": "contract-linked",
+        "owner_id": "u",
+        "status": "upcoming",
+        "due_date": "2026-10-05",
+        "vendor_id": "vendor-contract",
+        "vendor_purpose": "contract"
+      },
+      {
+        "review_id": "inactive-vendor-review",
+        "client_id": "a",
+        "title": "inactive-vendor-review",
+        "owner_id": "u",
+        "status": "in_progress",
+        "due_date": "2026-09-12",
+        "vendor_id": "vendor-inactive"
+      }
+    ],
+    "tasks": [
+      {
+        "task_id": "action-a",
+        "client_id": "a",
+        "title": "action-a",
+        "owner_id": "u",
+        "status": "open",
+        "due_date": "2026-09-14",
+        "priority": "medium"
+      },
+      {
+        "task_id": "action-b",
+        "client_id": "a",
+        "title": "action-b",
+        "owner_id": "u",
+        "status": "in_progress",
+        "due_date": "2026-10-05",
+        "priority": "high"
+      },
+      {
+        "task_id": "action-c",
+        "client_id": "a",
+        "title": "action-c",
+        "owner_id": "u",
+        "status": "done",
+        "due_date": "2026-09-14",
+        "priority": "critical"
+      },
+      {
+        "task_id": "action-cancelled",
+        "client_id": "a",
+        "title": "action-cancelled",
+        "owner_id": "u",
+        "status": "cancelled",
+        "due_date": "2026-09-14"
+      },
+      {
+        "task_id": "invalid-action",
+        "client_id": "a",
+        "title": "invalid-action",
+        "owner_id": "u",
+        "status": "open",
+        "due_date": "not-a-date"
+      },
+      {
+        "task_id": "unassigned",
+        "client_id": "a",
+        "title": "unassigned",
+        "owner_id": null,
+        "status": "open",
+        "due_date": null
+      },
+      {
+        "task_id": "linked",
+        "client_id": "a",
+        "title": "linked",
+        "owner_id": "u",
+        "status": "open",
+        "due_date": "2026-09-14",
+        "finding_id": "represented",
+        "priority": "high"
+      },
+      {
+        "task_id": "different",
+        "client_id": "a",
+        "title": "different",
+        "owner_id": "u",
+        "status": "open",
+        "due_date": "2026-10-05",
+        "finding_id": "different",
+        "priority": "high"
+      },
+      {
+        "task_id": "validation-done",
+        "client_id": "a",
+        "title": "validation-done",
+        "owner_id": "u",
+        "status": "done",
+        "due_date": "2026-09-14",
+        "finding_id": "validation",
+        "priority": "high"
+      }
+    ],
+    "findings": [
+      {
+        "finding_id": "solo",
+        "client_id": "a",
+        "title": "solo",
+        "owner_id": "u",
+        "status": "open",
+        "due_date": "2026-09-14",
+        "severity": "high"
+      },
+      {
+        "finding_id": "closed",
+        "client_id": "a",
+        "title": "closed",
+        "owner_id": "u",
+        "status": "closed",
+        "due_date": "2026-09-14",
+        "severity": "critical"
+      },
+      {
+        "finding_id": "represented",
+        "client_id": "a",
+        "title": "represented",
+        "owner_id": "u",
+        "status": "in_remediation",
+        "due_date": "2026-09-14",
+        "severity": "high"
+      },
+      {
+        "finding_id": "different",
+        "client_id": "a",
+        "title": "different",
+        "owner_id": "u",
+        "status": "in_remediation",
+        "due_date": "2026-09-13",
+        "severity": "medium"
+      },
+      {
+        "finding_id": "validation",
+        "client_id": "a",
+        "title": "validation",
+        "owner_id": "u",
+        "status": "remediated",
+        "due_date": "2026-09-14",
+        "severity": "high"
+      },
+      {
+        "finding_id": "accepted",
+        "client_id": "a",
+        "title": "accepted",
+        "owner_id": "u",
+        "status": "accepted",
+        "due_date": "2026-09-14",
+        "severity": "critical"
+      }
+    ],
+    "risks": [
+      {
+        "risk_id": "accepted",
+        "client_id": "a",
+        "title": "accepted",
+        "owner_id": "u",
+        "status": "accepted",
+        "next_review": "2026-10-30",
+        "likelihood_score": 2,
+        "impact_score": 5,
+        "acceptance_expires_at": "2026-09-25"
+      },
+      {
+        "risk_id": "risk-reviewed",
+        "client_id": "a",
+        "title": "risk-reviewed",
+        "owner_id": "u",
+        "status": "assessed",
+        "next_review": "2026-09-25",
+        "likelihood_score": 2,
+        "impact_score": 5
+      },
+      {
+        "risk_id": "risk-closed",
+        "client_id": "a",
+        "title": "risk-closed",
+        "owner_id": "u",
+        "status": "closed",
+        "next_review": "2026-09-14",
+        "likelihood_score": 5,
+        "impact_score": 5
+      },
+      {
+        "risk_id": "risk-unassessed",
+        "client_id": "a",
+        "title": "risk-unassessed",
+        "owner_id": null,
+        "status": "identified",
+        "next_review": null
+      }
+    ],
+    "policies": [
+      {
+        "policy_id": "policy-a",
+        "client_id": "a",
+        "title": "policy-a",
+        "owner_id": "u",
+        "status": "approved",
+        "next_review_date": "2026-09-14"
+      },
+      {
+        "policy_id": "policy-linked",
+        "client_id": "a",
+        "title": "policy-linked",
+        "owner_id": "u",
+        "status": "approved",
+        "next_review_date": "2026-10-05"
+      },
+      {
+        "policy_id": "policy-retired",
+        "client_id": "a",
+        "title": "policy-retired",
+        "owner_id": "u",
+        "status": "retired",
+        "next_review_date": "2026-09-14"
+      },
+      {
+        "policy_id": "policy-na",
+        "client_id": "a",
+        "title": "policy-na",
+        "owner_id": "u",
+        "status": "not_applicable",
+        "next_review_date": "2026-09-14"
+      }
+    ],
+    "vendors": [
+      {
+        "vendor_id": "vendor-a",
+        "client_id": "a",
+        "title": "vendor-a",
+        "owner_id": null,
+        "status": "active",
+        "next_review": "2026-10-05",
+        "business_owner_id": "contact-existing",
+        "contract_renewal": "2026-10-30",
+        "contract_expiration": "2026-10-30",
+        "assurance_required": true,
+        "assurance_records": [
+          {
+            "type": "Security Questionnaire",
+            "required": true,
+            "refresh_due": "2026-09-14"
+          },
+          {
+            "type": "SOC 2",
+            "required": false,
+            "refresh_due": "2026-09-14"
+          }
+        ]
+      },
+      {
+        "vendor_id": "vendor-linked",
+        "client_id": "a",
+        "title": "vendor-linked",
+        "owner_id": "u",
+        "status": "active",
+        "next_review": "2026-09-25"
+      },
+      {
+        "vendor_id": "vendor-contract",
+        "client_id": "a",
+        "title": "vendor-contract",
+        "owner_id": "u",
+        "status": "active",
+        "next_review": null,
+        "contract_renewal": "2026-10-30"
+      },
+      {
+        "vendor_id": "vendor-inactive",
+        "client_id": "a",
+        "title": "vendor-inactive",
+        "owner_id": "u",
+        "status": "inactive",
+        "next_review": "2026-09-14",
+        "contract_renewal": "2026-09-17"
+      }
+    ],
+    "exceptions": [
+      {
+        "exception_id": "acceptance",
+        "client_id": "a",
+        "title": "acceptance",
+        "owner_id": "u",
+        "status": "approved",
+        "expires_at": "2026-09-25",
+        "risk_id": "accepted"
+      },
+      {
+        "exception_id": "exception",
+        "client_id": "a",
+        "title": "exception",
+        "owner_id": "u",
+        "status": "expired",
+        "expires_at": "2026-12-14"
+      },
+      {
+        "exception_id": "requested",
+        "client_id": "a",
+        "title": "requested",
+        "owner_id": "u",
+        "status": "requested",
+        "expires_at": "2026-09-14"
+      }
+    ],
+    "requirements": [
+      {
+        "requirement_id": "requirement",
+        "client_id": "a",
+        "title": "requirement",
+        "owner_id": "u",
+        "status": "active",
+        "next_review_date": "2026-10-16"
+      },
+      {
+        "requirement_id": "requirement-na",
+        "client_id": "a",
+        "title": "requirement-na",
+        "owner_id": "u",
+        "status": "active",
+        "next_review_date": "2026-09-14",
+        "applicability": "not_applicable"
+      },
+      {
+        "requirement_id": "cis-undated",
+        "client_id": "a",
+        "title": "cis-undated",
+        "owner_id": "u",
+        "status": "not_assessed",
+        "next_review_date": null
+      }
+    ]
+  },
+  "expected": {
+    "past_due": [
+      "reviews:review-a:due",
+      "reviews:reopened:due",
+      "reviews:inactive-vendor-review:due",
+      "tasks:action-a:due",
+      "tasks:linked:due",
+      "findings:solo:due",
+      "findings:different:due",
+      "findings:validation:due",
+      "policies:policy-a:review",
+      "vendors:vendor-a:assurance-Security Questionnaire"
+    ],
+    "due_30d": [
+      "reviews:review-b:due",
+      "reviews:today:due",
+      "reviews:day30:due",
+      "reviews:risk-linked:due",
+      "reviews:policy-linked:due",
+      "reviews:vendor-linked:due",
+      "reviews:contract-linked:due",
+      "tasks:action-b:due",
+      "tasks:different:due",
+      "vendors:vendor-a:review",
+      "exceptions:acceptance:expiry"
+    ],
+    "due_31_90d": [
+      "reviews:review-c:due",
+      "reviews:day31:due",
+      "reviews:day90:due",
+      "risks:accepted:review",
+      "vendors:vendor-a:renewal",
+      "exceptions:exception:expiry",
+      "requirements:requirement:review"
+    ],
+    "critical_high_open": [
+      "findings:solo:record",
+      "findings:represented:record",
+      "findings:validation:record",
+      "risks:accepted:record",
+      "risks:risk-reviewed:record",
+      "tasks:action-b:record"
+    ],
+    "unassigned": [
+      "tasks:unassigned:due",
+      "risks:risk-unassessed:record"
+    ]
+  }
+}

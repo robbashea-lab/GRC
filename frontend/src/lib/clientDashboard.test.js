@@ -85,3 +85,14 @@ test("loader scopes every record request and preserves existing summary metrics"
   api.get.mockRejectedValueOnce(new Error("Forbidden"));
   await expect(loadClientDashboard(api, { ...options, scope: { kind: "org" } })).rejects.toThrow("Forbidden");
 });
+
+test('complete authorized management snapshot is not truncated by register pagination',async()=>{
+  const records=Object.fromEntries(DASHBOARD_KINDS.map(k=>[k,[]]));
+  records.tasks=Array.from({length:1105},(_,i)=>task(String(i),-1));
+  const api={get:jest.fn(async path=>({data:path==='/dashboard'?{management:{records,as_of:'2026-09-06'}}:[]}))};
+  const result=await loadClientDashboard(api,{...options,scope:{kind:'org'}});
+  expect(result.posture.pastDue).toHaveLength(1105);
+  expect(api.get).toHaveBeenCalledTimes(3);
+  records.tasks.push(task('foreign',-1,'high',{client_id:'client-b'}));
+  await expect(loadClientDashboard(api,{...options,scope:{kind:'org'}})).rejects.toThrow('different client');
+});
