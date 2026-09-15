@@ -19,9 +19,9 @@ import { toast } from "sonner";
 
 const CRIT_TONE = {
   critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "bg-semantic-duesoon-bg text-semantic-duesoon-text border-semantic-duesoon-border",
-  medium: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
-  moderate: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
+  high: "pill-high",
+  medium: "pill-moderate",
+  moderate: "pill-moderate",
   low: "bg-surface-subtle text-ink-secondary border-line",
 };
 const CRIT_LABEL = { critical: "Critical", high: "High", medium: "Moderate", moderate: "Moderate", low: "Low" };
@@ -140,7 +140,7 @@ export default function VendorRegister() {
         action={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={exportCsv} data-testid="vendors-export"><Download className="h-3.5 w-3.5 mr-1" /> Export CSV</Button>
-            {canWrite && <Button size="sm" onClick={() => setAddOpen(true)} data-testid="new-vendor" className="bg-brand-charcoal hover:bg-brand-charcoal-hover"><Plus className="h-3.5 w-3.5 mr-1" /> New Vendor</Button>}
+            {canWrite && <Button size="sm" onClick={() => setAddOpen(true)} data-testid="new-vendor" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> New Vendor</Button>}
           </div>
         }
       />
@@ -152,7 +152,7 @@ export default function VendorRegister() {
           <SummaryCard label="Security Assurance Due" value={summary.assurance} icon={AlertOctagon} tone="critical" />
         </div>
       </div>
-      <div className="px-8 py-4 mt-2 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">
+      <div className="register-toolbar">
         <div className="relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search vendors…" className="pl-8 h-9 w-72 text-sm" data-testid="vendor-search" />
@@ -160,16 +160,16 @@ export default function VendorRegister() {
         <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="vendor-views">
           {VIEWS.map((v) => (
             <button key={v.id} onClick={() => { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`vendor-view-${v.id}`}
-              className={`px-3 h-8 text-xs rounded-[6px] transition ${view === v.id ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>{v.label}</button>
+              className={`px-3 h-8 text-xs rounded-[6px] transition ${view === v.id ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>{v.label}</button>
           ))}
         </div>
-        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
+        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
       <div className="p-8">
         <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="service" /></th>
@@ -182,7 +182,7 @@ export default function VendorRegister() {
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {loading && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
               {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((v, i) => {
@@ -196,31 +196,31 @@ export default function VendorRegister() {
                         {v._attention && <span className="inline-block h-1.5 w-1.5 rounded-full bg-semantic-critical" title="Needs attention" />}
                       </span>
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{v.service || v.services || <span className="text-slate-300">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{v.service || v.services || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell">
                       <span className={`pill ${tone}`}>{CRIT_LABEL[v.criticality] || v.criticality}</span>
                     </td>
                     <td className="tbl-cell text-xs text-ink-secondary">
-                      {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="text-slate-300">—</span>}
+                      {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="text-ink-help">—</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[v.business_owner_id] || <span className="text-slate-300">—</span>}</td>
-                    <td className="tbl-cell text-xs font-mono text-ink-secondary">{v.last_review ? displayDate(v.last_review) : <span className="text-slate-300">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[v.business_owner_id] || <span className="text-ink-help">—</span>}</td>
+                    <td className="tbl-cell text-xs font-mono text-ink-secondary">{v.last_review ? displayDate(v.last_review) : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-xs font-mono">
                       {v.next_review ? (
                         <span className={v._nextReviewDays < 0 ? "text-semantic-critical font-medium" : v._reviewDue ? "text-semantic-duesoon-text font-medium" : "text-ink-secondary"}>
                           {displayDate(v.next_review)}
                         </span>
-                      ) : <span className="text-slate-300">—</span>}
+                      ) : <span className="text-ink-help">—</span>}
                     </td>
                     <td className="tbl-cell text-xs font-mono">
                       {(v.contract_renewal || v.contract_expiration || v.contract_end) ? (
                         <span className={v._contractSoon ? "text-semantic-duesoon-text font-medium" : "text-ink-secondary"}>
                           {displayDate(v.contract_renewal || v.contract_expiration || v.contract_end)}
                         </span>
-                      ) : <span className="text-slate-300">—</span>}
+                      ) : <span className="text-ink-help">—</span>}
                     </td>
                     <td className="tbl-cell">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-[11px] font-medium capitalize">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-xs font-medium capitalize">
                         {(v.status || "active").replace("_", " ")}
                       </span>
                     </td>
@@ -296,7 +296,7 @@ function NewVendorDialog({ open, onOpenChange, clientId, users, onCreated }) {
             <div className="flex flex-wrap gap-1 mt-1">
               {DATA_TYPES.map((dt) => (
                 <button key={dt} type="button" onClick={() => toggleData(dt)}
-                  className={`px-2 py-0.5 rounded-full border text-[11px] ${form.data_types.includes(dt) ? "bg-brand-charcoal text-ink-onDark border-brand-charcoal" : "bg-surface-card border-line text-ink-secondary hover:bg-surface-subtle"}`}>{dt}</button>
+                  className={`px-2 py-0.5 rounded-full border text-xs ${form.data_types.includes(dt) ? "bg-primary text-primary-foreground border-brand-charcoal" : "bg-surface-card border-line text-ink-secondary hover:bg-surface-subtle"}`}>{dt}</button>
               ))}
             </div>
           </div>
@@ -311,7 +311,7 @@ function NewVendorDialog({ open, onOpenChange, clientId, users, onCreated }) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
-          <Button onClick={save} disabled={saving} data-testid="new-vendor-save" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">{saving ? "Saving…" : "Add to register"}</Button>
+          <Button onClick={save} disabled={saving} data-testid="new-vendor-save" className="bg-primary hover:bg-primary/90">{saving ? "Saving…" : "Add to register"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

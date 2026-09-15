@@ -81,7 +81,7 @@ export default function MyAccount() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 data-testid={`account-tab-${t.id}`}
-                className={`inline-flex items-center gap-2 px-3 h-9 rounded-md border text-sm transition ${active ? "border-brand-charcoal bg-brand-charcoal text-ink-onDark font-medium" : "border-line bg-surface-card text-ink-secondary hover:bg-surface-subtle"}`}
+                className={`inline-flex items-center gap-2 px-3 h-9 rounded-md border text-sm transition ${active ? "border-brand-charcoal bg-primary text-primary-foreground font-medium" : "border-line bg-surface-card text-ink-secondary hover:bg-surface-subtle"}`}
               >
                 <t.icon className="h-3.5 w-3.5" /> {t.label}
               </button>
@@ -99,7 +99,7 @@ export default function MyAccount() {
               <div>
                 <Label className="text-xs text-ink-secondary">Email address</Label>
                 <Input value={user?.email || ""} readOnly className="text-sm bg-surface-subtle" />
-                <div className="text-[11px] text-ink-help mt-1">Contact your administrator to change your email address.</div>
+                <div className="text-xs text-ink-help mt-1">Contact your administrator to change your email address.</div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -114,7 +114,7 @@ export default function MyAccount() {
               <div>
                 <Label className="text-xs text-ink-secondary">Role</Label>
                 <Input value={(user?.role || "").replace("_", " ")} readOnly className="text-sm bg-surface-subtle capitalize" />
-                <div className="text-[11px] text-ink-help mt-1">Roles are managed by administrators.</div>
+                <div className="text-xs text-ink-help mt-1">Roles are managed by administrators.</div>
               </div>
               <div className="pt-2">
                 <Button onClick={saveProfile} disabled={saving} data-testid="me-save-profile">Save changes</Button>
@@ -142,7 +142,7 @@ export default function MyAccount() {
                     <Label className="text-xs text-ink-secondary">Confirm new password</Label>
                     <Input data-testid="me-confirm-pw" type="password" value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} className="text-sm" />
                   </div>
-                  <div className="text-[11px] text-ink-help">At least 8 characters. Changing your password will sign out other active sessions.</div>
+                  <div className="text-xs text-ink-help">At least 8 characters. Changing your password will sign out other active sessions.</div>
                   <div className="pt-2">
                     <Button onClick={changePassword} disabled={saving} data-testid="me-change-pw">Change password</Button>
                   </div>
@@ -165,7 +165,7 @@ export default function MyAccount() {
                 />
                 Pause my Monday <strong>My Work</strong> digest email
               </label>
-              <div className="text-[11px] text-ink-help">You'll still receive review-due, assignment and mention notifications inside the app.</div>
+              <div className="text-xs text-ink-help">You'll still receive review-due, assignment and mention notifications inside the app.</div>
               <div className="pt-2">
                 <Button onClick={savePrefs} disabled={saving} data-testid="me-save-prefs">Save preferences</Button>
               </div>

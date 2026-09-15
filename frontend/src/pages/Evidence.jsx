@@ -70,20 +70,24 @@ export default function Evidence() {
       <div className="p-8 space-y-6">
         <div
           data-testid="evidence-dropzone"
+          role="button"
+          tabIndex={0}
+          aria-label="Upload evidence files"
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inputRef.current?.click(); } }}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(Array.from(e.dataTransfer.files)); }}
           onClick={() => inputRef.current?.click()}
-          className={`rounded-lg border-2 border-dashed p-10 text-center cursor-pointer transition ${dragOver ? "border-brand-charcoal bg-surface-subtle" : "border-line-strong bg-surface-card hover:bg-surface-app"}`}
+          className={`rounded-md border border-dashed p-4 text-center cursor-pointer transition ${dragOver ? "border-brand-charcoal bg-surface-subtle" : "border-line-strong bg-surface-card hover:bg-surface-app"}`}
         >
-          <UploadCloud className="h-8 w-8 mx-auto text-slate-500 mb-2" />
-          <div className="text-sm font-medium text-slate-900">Drop files here or click to upload</div>
-          <div className="text-xs text-slate-500 mt-1">Files and versions are organized by client.</div>
+          <UploadCloud className="h-5 w-5 mx-auto text-ink-muted mb-1" />
+          <div className="text-sm font-medium text-ink-primary">Drop files here or click to upload</div>
+          <div className="text-xs text-ink-muted mt-1">Files and versions are organized by client.</div>
           <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(Array.from(e.target.files || []))} data-testid="evidence-file-input" />
         </div>
 
         <TableFilterChips table={table} />
-        <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full">
             <thead><tr>
               <th className="tbl-head"><ColumnControl table={table} columnKey="filename" /></th><th className="tbl-head"><ColumnControl table={table} columnKey="mime_type" /></th>
@@ -91,17 +95,17 @@ export default function Evidence() {
               <th className="tbl-head"><ColumnControl table={table} columnKey="linked_type" /></th><th className="tbl-head w-24">Actions</th>
             </tr></thead>
             <tbody>
-              {filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell py-8 text-center text-slate-400">{tableSource.length ? <FilterEmpty table={table} name="evidence" /> : 'No evidence uploaded yet.'}</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell py-8 text-center text-ink-help">{tableSource.length ? <FilterEmpty table={table} name="evidence" /> : 'No evidence uploaded yet.'}</td></tr>}
               {filtered.map((r, i) => (
                 <tr key={r.evidence_id} className="row-hover" data-testid={`evidence-row-${i}`}>
-                  <td className="tbl-cell font-medium text-slate-900 flex items-center gap-2"><FileIcon className="h-3.5 w-3.5 text-slate-400" />{r.filename}</td>
-                  <td className="tbl-cell text-slate-600 font-mono">{r.mime_type || "—"}</td>
-                  <td className="tbl-cell text-slate-600">{r.uploaded_by_email}</td>
-                  <td className="tbl-cell font-mono text-slate-600">{new Date(r.created_at).toLocaleString()}</td>
-                  <td className="tbl-cell text-slate-500">{r.linked_type ? `${r.linked_type} · ${r.linked_id}` : "—"}</td>
+                  <td className="tbl-cell font-medium text-ink-primary flex items-center gap-2"><FileIcon className="h-3.5 w-3.5 text-ink-help" />{r.filename}</td>
+                  <td className="tbl-cell text-ink-secondary font-mono">{r.mime_type || "—"}</td>
+                  <td className="tbl-cell text-ink-secondary">{r.uploaded_by_email}</td>
+                  <td className="tbl-cell font-mono text-ink-secondary">{new Date(r.created_at).toLocaleString()}</td>
+                  <td className="tbl-cell text-ink-muted">{r.linked_type ? `${r.linked_type} · ${r.linked_id}` : "—"}</td>
                   <td className="tbl-cell">
-                    <button data-testid={`evidence-download-${i}`} onClick={() => download(r)} className="p-1 mr-1 rounded hover:bg-slate-100 text-slate-500"><Download className="h-3.5 w-3.5" /></button>
-                    {canDelete && <button data-testid={`evidence-delete-${i}`} onClick={() => remove(r)} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>}
+                    <button data-testid={`evidence-download-${i}`} onClick={() => download(r)} className="p-1 mr-1 rounded hover:bg-surface-subtle text-ink-muted"><Download className="h-3.5 w-3.5" /></button>
+                    {canDelete && <button data-testid={`evidence-delete-${i}`} onClick={() => remove(r)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical"><Trash2 className="h-3.5 w-3.5" /></button>}
                   </td>
                 </tr>
               ))}

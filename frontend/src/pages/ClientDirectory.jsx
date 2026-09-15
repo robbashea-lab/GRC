@@ -36,7 +36,7 @@ const PROGRAM_TONES = {
 
 const PRIORITY_TONES = {
   critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "bg-semantic-duesoon-bg text-semantic-duesoon-text border-semantic-duesoon-border",
+  high: "pill-high",
   overdue: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
   due_soon: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
 };
@@ -67,7 +67,7 @@ function Avatar({ name, logoUrl }) {
   if (logoUrl) return <img src={logoUrl} alt="" className="h-9 w-9 rounded-md object-cover border border-line" />;
   const initial = (name || "?").trim().slice(0, 1).toUpperCase();
   return (
-    <div className="h-9 w-9 rounded-md bg-brand-charcoal text-ink-onDark flex items-center justify-center text-sm font-semibold border border-brand-metallic-3 shrink-0">
+    <div className="h-9 w-9 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold border border-brand-metallic-3 shrink-0">
       {initial}
     </div>
   );
@@ -106,7 +106,7 @@ function AttentionCard({ label, value, subtitle, icon: Icon, tone, onClick, test
         <div className="min-w-0">
           <div className="metric-label">{label}</div>
           <div className="metric-value mt-1">{value}</div>
-          {subtitle && <div className="text-[11px] text-ink-help mt-1 leading-tight">{subtitle}</div>}
+          {subtitle && <div className="text-xs text-ink-help mt-1 leading-tight">{subtitle}</div>}
         </div>
         <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}>
           <Icon className="h-4 w-4" />
@@ -135,7 +135,7 @@ function MetricCell({ value, tone, onClick, testid }) {
           {value}
         </button>
       ) : (
-        <span data-testid={testid} className="font-mono text-sm text-slate-300">0</span>
+        <span data-testid={testid} className="font-mono text-sm text-ink-help">0</span>
       )}
     </td>
   );
@@ -286,9 +286,9 @@ export default function ClientDirectory() {
       </div>
 
       {/* Filter bar */}
-      <div className="px-8 py-4 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">
+      <div className="register-toolbar">
         <div className="relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input data-testid="client-directory-search" value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Search client, industry, GRC lead…" className="pl-8 h-9 w-72 text-sm" />
         </div>
@@ -297,7 +297,7 @@ export default function ClientDirectory() {
             const active = filter === t.id;
             return (
               <button key={t.id} onClick={() => setFilter(t.id)} data-testid={`client-filter-${t.id}`}
-                className={`px-2.5 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
+                className={`px-2.5 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
                 {t.label}
               </button>
             );
@@ -319,7 +319,7 @@ export default function ClientDirectory() {
             data-testid="include-archived-toggle" className="h-3.5 w-3.5" />
           Include archived
         </label>
-        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
+        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
 
       {/* Client Portfolio table */}
@@ -327,7 +327,7 @@ export default function ClientDirectory() {
         <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="grc_lead_id" /></th>
@@ -340,7 +340,7 @@ export default function ClientDirectory() {
                 <th className="tbl-cell text-right font-medium w-10">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {loading && (<tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading directory…</td></tr>)}
               {!loading && filtered.length === 0 && (
                 <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="clients" onClear={() => { setQ(''); setFilter('all'); setLeadFilter('__all__'); }} /></td></tr>
@@ -358,7 +358,7 @@ export default function ClientDirectory() {
                             {r.name}
                             <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help" />
                           </div>
-                          <div className="text-[11px] text-ink-help truncate">
+                          <div className="text-xs text-ink-help truncate">
                             {r.industry || "—"}{r.primary_contact ? ` · ${r.primary_contact}` : ""}
                           </div>
                         </div>
@@ -412,7 +412,7 @@ export default function ClientDirectory() {
         </div>
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="attention-queue">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left font-medium">Priority</th>
                 <th className="tbl-cell text-left font-medium">Client</th>
@@ -424,7 +424,7 @@ export default function ClientDirectory() {
                 <th className="tbl-cell text-right font-medium w-10">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {loading && (<tr><td colSpan={8} className="tbl-cell text-center text-ink-help py-6">Loading…</td></tr>)}
               {!loading && queue.length === 0 && (
                 <tr><td colSpan={8} className="tbl-cell text-center text-ink-help py-8">
@@ -434,7 +434,7 @@ export default function ClientDirectory() {
               {!loading && queue.map((item, i) => (
                 <tr key={item.entity_id || i} className="row-hover" data-testid={`attention-row-${i}`}>
                   <td className="tbl-cell">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium capitalize ${PRIORITY_TONES[item.priority] || PRIORITY_TONES.due_soon}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium capitalize ${PRIORITY_TONES[item.priority] || PRIORITY_TONES.due_soon}`}>
                       {item.priority.replace("_", " ")}
                     </span>
                   </td>
@@ -446,13 +446,13 @@ export default function ClientDirectory() {
                   </td>
                   <td className="tbl-cell text-ink-primary truncate max-w-[280px]" title={item.title}>{item.title}</td>
                   <td className="tbl-cell text-ink-secondary text-xs capitalize">{item.entity_type}</td>
-                  <td className="tbl-cell text-ink-secondary text-xs">{item.owner_name || <span className="text-slate-300">Unassigned</span>}</td>
+                  <td className="tbl-cell text-ink-secondary text-xs">{item.owner_name || <span className="text-ink-help">Unassigned</span>}</td>
                   <td className="tbl-cell text-xs font-mono">
                     {item.due_date ? (
                       <span className={item.overdue ? "text-semantic-critical" : "text-ink-secondary"}>
                         {fmtDate(item.due_date)}{item.overdue ? " · overdue" : ""}
                       </span>
-                    ) : <span className="text-slate-300">—</span>}
+                    ) : <span className="text-ink-help">—</span>}
                   </td>
                   <td className="tbl-cell text-xs text-ink-secondary capitalize">{(item.status || "").replace("_", " ")}</td>
                   <td className="tbl-cell text-right">
@@ -486,13 +486,13 @@ function DrillDialog({ open, data, onClose, onOpenItem }) {
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>{data.title}</DialogTitle>
-            <button onClick={onClose} className="p-1 rounded hover:bg-slate-100"><X className="h-4 w-4" /></button>
+            <button onClick={onClose} className="p-1 rounded hover:bg-surface-subtle"><X className="h-4 w-4" /></button>
           </div>
           <DialogDescription>{data.items.length} items</DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line sticky top-0">
+            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line sticky top-0">
               <tr>
                 <th className="tbl-cell text-left">Client</th>
                 <th className="tbl-cell text-left">Item</th>
@@ -502,7 +502,7 @@ function DrillDialog({ open, data, onClose, onOpenItem }) {
                 <th className="tbl-cell text-right w-10">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {data.items.length === 0 && (
                 <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-6">Nothing matches this filter — nice!</td></tr>
               )}
@@ -511,13 +511,13 @@ function DrillDialog({ open, data, onClose, onOpenItem }) {
                   <td className="tbl-cell text-ink-primary">{it.client_name}</td>
                   <td className="tbl-cell text-ink-primary truncate max-w-[220px]" title={it.title}>{it.title}</td>
                   <td className="tbl-cell text-ink-secondary text-xs capitalize">{it.entity_type}</td>
-                  <td className="tbl-cell text-xs">{it.owner_name || <span className="text-slate-300">Unassigned</span>}</td>
+                  <td className="tbl-cell text-xs">{it.owner_name || <span className="text-ink-help">Unassigned</span>}</td>
                   <td className="tbl-cell text-xs font-mono">
                     {it.due_date ? (
                       <span className={it.overdue ? "text-semantic-critical" : "text-ink-secondary"}>
                         {fmtDate(it.due_date)}{it.overdue ? " · overdue" : ""}
                       </span>
-                    ) : <span className="text-slate-300">—</span>}
+                    ) : <span className="text-ink-help">—</span>}
                   </td>
                   <td className="tbl-cell text-right">
                     <button onClick={() => onOpenItem(it)} className="text-xs text-link hover:text-link-hover">Open →</button>

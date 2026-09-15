@@ -39,12 +39,12 @@ function KpiCard({ label, value, hint, icon: Icon, tone = "neutral", testid, to 
     <>
       <div className="flex items-start justify-between">
         <div className="metric-label">{label}</div>
-        <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${iconTones[tone] || iconTones.neutral}`}><Icon className="h-4 w-4" /></div>
+        <div className={`h-6 w-6 rounded flex items-center justify-center ${iconTones[tone] || iconTones.neutral}`}><Icon className="h-4 w-4" /></div>
       </div>
       <div className="metric-value">{value}</div>
     </>
   );
-  const cls = "bg-surface-card border border-line rounded-lg p-4 flex flex-col gap-2 hover:border-line-strong transition-colors";
+  const cls = "metric-card bg-surface-card border border-line rounded-md flex flex-col hover:border-line-strong transition-colors";
   return to ? (
     <Link to={to} data-testid={testid} className={cls} title={hint}>{inner}</Link>
   ) : (
@@ -60,7 +60,7 @@ function Panel({ title, subtitle, icon: Icon, action, children, testid }) {
           <div className="text-sm font-heading font-semibold text-ink-primary flex items-center gap-2">
             {Icon && <Icon className="h-4 w-4 text-ink-secondary" />} {title}
           </div>
-          {subtitle && <div className="text-[11px] text-ink-muted mt-0.5">{subtitle}</div>}
+          {subtitle && <div className="text-xs text-ink-muted mt-0.5">{subtitle}</div>}
         </div>
         {action}
       </header>
@@ -184,7 +184,7 @@ export default function Dashboard() {
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-medium"
             data-testid="active-scope-chip"
           >
-            <span className="text-[10px] font-mono uppercase tracking-widest">Viewing</span>
+            <span className="text-xs font-mono uppercase tracking-widest">Viewing</span>
             <span className="text-ink-help">·</span>
             <span>{data.scope_label || "Filtered"}</span>
             <button

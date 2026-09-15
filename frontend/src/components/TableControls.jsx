@@ -36,7 +36,7 @@ export function ColumnControl({ table, column: supplied, columnKey }) {
   const options = c.filter ? table.options(c) : [];
   const labels = c.rank || c.numeric ? ['Lowest First', 'Highest First'] : c.dateKind === 'history' ? ['Oldest', 'Most Recent'] : c.dateKind === 'due' ? ['Soonest Due', 'Furthest Due'] : c.dateKind ? ['Soonest', 'Furthest'] : ['A → Z', 'Z → A'];
   return <DropdownMenu modal={false} onOpenChange={() => setQuery('')}>
-    <DropdownMenuTrigger asChild><button type="button" aria-label={`${c.label}: sort and filter`} className={`inline-flex items-center gap-1 whitespace-nowrap rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 normal-case tracking-normal ${selected.length || sorting ? 'text-ink-primary underline decoration-slate-400 underline-offset-4' : 'hover:text-ink-primary'}`}>
+    <DropdownMenuTrigger asChild><button type="button" aria-label={`${c.label}: sort and filter`} className={`inline-flex items-center gap-1 whitespace-nowrap rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 normal-case tracking-normal ${selected.length || sorting ? 'text-ink-primary underline decoration-current underline-offset-4' : 'hover:text-ink-primary'}`}>
       {c.label}<ChevronDown aria-hidden="true" className={`h-3 w-3 ${selected.length || sorting ? 'opacity-100' : 'opacity-40'}`} />
     </button></DropdownMenuTrigger>
     <DropdownMenuContent align="start" className="w-56 max-h-80" aria-label={`${c.label} options`}>

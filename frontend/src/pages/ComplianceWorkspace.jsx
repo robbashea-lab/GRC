@@ -15,7 +15,7 @@ export default function ComplianceWorkspace() {
     <div className="p-8">
       {loading ? <p role="status" className="text-sm text-ink-muted">Loading client requirement…</p>
         : error ? <p role="alert" className="text-sm text-ink-muted">Unable to load this client requirement. {error}</p>
-        : <div className="bg-white border border-slate-200 rounded-lg p-8 text-sm text-ink-muted">
+        : <div className="bg-surface-card border border-line rounded-lg p-8 text-sm text-ink-muted">
           {enabled ? `No ${section.label} content has been configured for this client yet.` : 'This requirement is not enabled in this client’s completed onboarding.'}
         </div>}
     </div>

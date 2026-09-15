@@ -64,7 +64,7 @@ export default function Login() {
 
         <div className="w-full max-w-sm">
           {/* Environment identifier */}
-          <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-brand-lime/80 mb-3" data-testid="env-identifier">
+          <div className="text-xs font-mono uppercase tracking-[0.28em] text-brand-lime/80 mb-3" data-testid="env-identifier">
             Authorized Access
           </div>
           <h2 className="text-2xl font-heading font-semibold tracking-tight text-ink-onDark">Sign in</h2>
@@ -76,7 +76,7 @@ export default function Login() {
           <div className="mt-7 space-y-4">
             {PREVIEW_MODE ? (
               <>
-                <Button data-testid="preview-signin" onClick={submit} disabled={loading} className="w-full h-10 bg-[#DCE5F2] hover:bg-[#EEF2F8] text-brand-charcoal font-semibold">
+                <Button data-testid="preview-signin" onClick={submit} disabled={loading} className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
                   {loading ? "Opening…" : "Sign in"}
                 </Button>
                 <p className="text-xs text-ink-onDarkMuted">Demo workspace · No credentials required. Changes are saved for this session only.</p>
@@ -96,7 +96,7 @@ export default function Login() {
               Continue with Google
             </button>
 
-            <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.22em] text-ink-onDarkMuted font-mono">
+            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-ink-onDarkMuted font-mono">
               <div className="h-px bg-brand-metallic-3 flex-1" /> or with email <div className="h-px bg-brand-metallic-3 flex-1" />
             </div>
 
@@ -121,7 +121,7 @@ export default function Login() {
                   <Link
                     to="/forgot-password"
                     data-testid="forgot-password-link"
-                    className="text-[11px] text-ink-onDarkMuted hover:text-brand-lime transition-colors"
+                    className="text-xs text-ink-onDarkMuted hover:text-brand-lime transition-colors"
                   >
                     Forgot password?
                   </Link>
@@ -152,7 +152,7 @@ export default function Login() {
                 data-testid="submit-auth"
                 type="submit"
                 disabled={loading}
-                className="group w-full h-10 mt-1 bg-[#DCE5F2] hover:bg-[#EEF2F8] text-brand-charcoal font-semibold tracking-tight border border-[#DCE5F2] shadow-[0_1px_0_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all"
+                className="group w-full h-10 mt-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold tracking-tight border border-transparent transition-all"
               >
                 {loading ? "Signing in…" : (
                   <span className="inline-flex items-center gap-1.5">
@@ -165,7 +165,7 @@ export default function Login() {
 
             {/* Security cue */}
             <div
-              className="flex items-center justify-center gap-1.5 pt-2 text-[10px] font-mono uppercase tracking-[0.22em] text-ink-onDarkMuted"
+              className="flex items-center justify-center gap-1.5 pt-2 text-xs font-mono uppercase tracking-[0.22em] text-ink-onDarkMuted"
               data-testid="security-cue"
             >
               <Lock className="h-3 w-3" />
@@ -176,7 +176,7 @@ export default function Login() {
 
           {/* Invitation-only note */}
           <div className="mt-8 pt-5 border-t border-brand-metallic-3/70 text-center">
-            <p className="text-[11px] text-ink-onDarkMuted" data-testid="need-access-note">
+            <p className="text-xs text-ink-onDarkMuted" data-testid="need-access-note">
               Need access?{" "}
               <span className="text-ink-onDark2">Contact your platform administrator.</span>
             </p>

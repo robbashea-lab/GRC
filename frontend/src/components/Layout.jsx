@@ -63,7 +63,7 @@ function ContextHeader({ isInternal, atPlatform }) {
           type="button"
           onClick={() => navigate("/clients")}
           data-testid="return-to-portfolio"
-          className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-brand-metallic-3 bg-brand-charcoal hover:bg-brand-metallic-2 text-[11px] font-mono uppercase tracking-widest text-ink-onDarkMuted hover:text-ink-onDark transition-colors"
+          className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-brand-metallic-3 bg-brand-charcoal hover:bg-brand-metallic-2 text-xs font-mono uppercase tracking-widest text-ink-onDarkMuted hover:text-ink-onDark transition-colors"
         >
           <ArrowLeft className="h-3 w-3" /> All Clients
         </button>
@@ -76,7 +76,7 @@ function ContextHeader({ isInternal, atPlatform }) {
           {initial}
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-ink-onDarkMuted font-mono">Client Org</div>
+          <div className="text-xs uppercase tracking-wider text-ink-onDarkMuted font-mono">Client Org</div>
           <div className="text-sm text-ink-onDark font-medium truncate">
             {currentClient?.name || "Select a client…"}
           </div>
@@ -141,7 +141,7 @@ function PlatformClientsSection() {
                 key={t.id}
                 onClick={() => setFilter(t.id)}
                 data-testid={`sidebar-filter-${t.id}`}
-                className={`flex-1 px-1.5 h-6 text-[10px] font-mono uppercase tracking-wider rounded-[5px] transition ${isActive ? "bg-brand-metallic text-ink-onDark" : "text-ink-onDarkMuted hover:text-ink-onDark"}`}
+                className={`flex-1 px-1.5 h-6 text-xs font-mono uppercase tracking-wider rounded-[5px] transition ${isActive ? "bg-brand-metallic text-ink-onDark" : "text-ink-onDarkMuted hover:text-ink-onDark"}`}
               >
                 {t.id === "all" ? "ALL" : "MINE"}
               </button>
@@ -161,7 +161,7 @@ function PlatformClientsSection() {
 
         <div className="max-h-64 overflow-y-auto -mx-1 px-1" data-testid="sidebar-client-list">
           {scoped.length === 0 ? (
-            <div className="text-[11px] text-ink-onDarkMuted text-center py-2" data-testid="sidebar-client-empty">
+            <div className="text-xs text-ink-onDarkMuted text-center py-2" data-testid="sidebar-client-empty">
               {emptyLabel}
             </div>
           ) : (
@@ -217,7 +217,7 @@ function Sidebar() {
         {atPlatform && isInternal && <PlatformClientsSection />}
         {items.filter((n) => !n.adminOnly || isInternal).map((n, i) => (
           n.section ? (
-            <div key={`sec-${i}`} className="pt-3 pb-1 px-2 text-[10px] uppercase tracking-widest font-mono text-ink-onDarkMuted">
+            <div key={`sec-${i}`} className="pt-3 pb-1 px-2 text-xs uppercase tracking-widest font-mono text-ink-onDarkMuted">
               {n.section}
             </div>
           ) : (
@@ -246,7 +246,7 @@ function Sidebar() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-xs text-ink-onDark truncate">{user?.name || user?.email}</div>
-                <div className="text-[10px] text-ink-onDarkMuted font-mono uppercase tracking-wider">{(user?.role || "").replace("_", " ")}</div>
+                <div className="text-xs text-ink-onDarkMuted font-mono uppercase tracking-wider">{(user?.role || "").replace("_", " ")}</div>
               </div>
               <ChevronsUpDown className="h-3.5 w-3.5 text-ink-onDarkMuted" />
             </button>

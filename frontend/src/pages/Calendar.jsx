@@ -142,7 +142,7 @@ export default function Calendar() {
       />
       <div className="p-8 space-y-4">
         <div className="flex items-center justify-between">
-          <div className="text-lg font-heading font-semibold text-slate-900" data-testid="cal-month-label">{monthLabel}</div>
+          <div className="text-lg font-heading font-semibold text-ink-primary" data-testid="cal-month-label">{monthLabel}</div>
           <div className="flex items-center gap-3 text-xs text-ink-secondary">
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-semantic-info" /> Reviews</span>
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-semantic-critical" /> Findings</span>
@@ -150,10 +150,10 @@ export default function Calendar() {
             {busy && <span className="text-ink-muted">Saving…</span>}
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
+        <div className="bg-surface-card border border-line rounded-lg overflow-hidden">
+          <div className="grid grid-cols-7 border-b border-line bg-surface-subtle">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => (
-              <div key={w} className="px-2 py-2 text-[10px] font-mono uppercase tracking-widest text-slate-500 text-left">{w}</div>
+              <div key={w} className="px-2 py-2 text-xs font-mono uppercase tracking-widest text-ink-muted text-left">{w}</div>
             ))}
           </div>
           <div className="grid grid-cols-7 grid-rows-6">
@@ -169,11 +169,11 @@ export default function Calendar() {
                   onDragOver={(e) => { if (canReschedule) { e.preventDefault(); setDragOverDay(key); } }}
                   onDragLeave={() => setDragOverDay((prev) => (prev === key ? "" : prev))}
                   onDrop={(e) => onDrop(e, key)}
-                  className={`min-h-[110px] border-b border-r border-slate-100 p-2 text-xs transition-colors ${!inMonth(d) ? "bg-slate-50/60" : "bg-white"} ${isDragTarget ? "outline outline-2 outline-slate-900 outline-offset-[-2px] bg-slate-50" : ""} ${(i + 1) % 7 === 0 ? "border-r-0" : ""}`}
+                  className={`min-h-[110px] border-b border-r border-line p-2 text-xs transition-colors ${!inMonth(d) ? "bg-surface-subtle" : "bg-surface-card"} ${isDragTarget ? "outline outline-2 outline-focus outline-offset-[-2px] bg-surface-subtle" : ""} ${(i + 1) % 7 === 0 ? "border-r-0" : ""}`}
                 >
-                  <div className={`flex items-center justify-between mb-1 ${inMonth(d) ? "text-slate-700" : "text-slate-400"}`}>
-                    <span className={`inline-flex items-center justify-center h-5 min-w-5 px-1 rounded font-mono ${isToday ? "bg-slate-900 text-white" : ""}`}>{d.getDate()}</span>
-                    {items.length > 0 && <span className="text-[10px] text-slate-400 font-mono">{items.length}</span>}
+                  <div className={`flex items-center justify-between mb-1 ${inMonth(d) ? "text-ink-secondary" : "text-ink-help"}`}>
+                    <span className={`inline-flex items-center justify-center h-5 min-w-5 px-1 rounded font-mono ${isToday ? "bg-primary text-primary-foreground" : ""}`}>{d.getDate()}</span>
+                    {items.length > 0 && <span className="text-xs text-ink-help font-mono">{items.length}</span>}
                   </div>
                   <ul className="space-y-1">
                     {items.slice(0, 3).map((it) => (
@@ -186,11 +186,11 @@ export default function Calendar() {
                           title={it.title}
                         >
                           <span className="truncate flex-1">{it.title}</span>
-                          <Link to={`/${it.kind}s`} className="opacity-0 group-hover:opacity-100 text-[10px]">↗</Link>
+                          <Link to={`/${it.kind}s`} className="opacity-0 group-hover:opacity-100 text-xs">↗</Link>
                         </div>
                       </li>
                     ))}
-                    {items.length > 3 && <li className="text-[10px] text-slate-500">+{items.length - 3} more</li>}
+                    {items.length > 3 && <li className="text-xs text-ink-muted">+{items.length - 3} more</li>}
                   </ul>
                 </div>
               );

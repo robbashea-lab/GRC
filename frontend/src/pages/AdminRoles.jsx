@@ -19,7 +19,7 @@ export default function AdminRoles() {
                 <div className="h-9 w-9 rounded-md bg-surface-subtle border border-line flex items-center justify-center"><ShieldCheck className="h-4 w-4 text-brand-charcoal" /></div>
                 <div>
                   <div className="text-sm font-semibold text-ink-primary">{r.label}</div>
-                  <div className="text-[11px] font-mono uppercase tracking-widest text-ink-help">{r.scope}</div>
+                  <div className="text-xs font-mono uppercase tracking-widest text-ink-help">{r.scope}</div>
                   <p className="text-xs text-ink-secondary mt-1.5">{r.detail}</p>
                 </div>
               </div>
@@ -30,10 +30,10 @@ export default function AdminRoles() {
           <h2 className="text-sm font-semibold text-ink-primary mb-2">Planned capability matrix</h2>
           <div className="rounded-md border border-line overflow-x-auto bg-surface-card">
             <table className="w-full text-sm">
-              <thead className="bg-surface-subtle text-[10px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+              <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
                 <tr><th className="tbl-cell text-left">Capability</th>{ROLES.map((r) => <th key={r.key} className="tbl-cell text-center">{r.label}</th>)}</tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-line">
                 {CAPS.map(({ label, roles }) => (
                   <tr key={label}>
                     <td className="tbl-cell text-ink-primary">{label}</td>

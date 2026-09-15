@@ -68,7 +68,7 @@ export default function DashboardScopeSelector({ clientId, value, onChange }) {
           data-testid="dashboard-scope-trigger"
           className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line bg-surface-card hover:bg-surface-subtle text-sm text-ink-primary transition-colors"
         >
-          <span className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Dashboard View</span>
+          <span className="text-xs font-mono uppercase tracking-widest text-ink-help">Dashboard View</span>
           <span className="font-medium">{label}</span>
           <ChevronDown className="h-3.5 w-3.5 text-ink-help" />
         </button>
@@ -157,7 +157,7 @@ function ScopeItem({ active, onClick, icon: Icon, label, hint, hintTone = "muted
       <Icon className="h-4 w-4 text-ink-secondary shrink-0" />
       <div className="min-w-0 flex-1">
         <div className={`truncate ${active ? "font-medium text-ink-primary" : "text-ink-primary"}`}>{label}</div>
-        {hint && <div className={`text-[11px] truncate ${hintClass}`}>{hint}</div>}
+        {hint && <div className={`text-xs truncate ${hintClass}`}>{hint}</div>}
       </div>
       {active && <Check className="h-3.5 w-3.5 text-semantic-success shrink-0" />}
     </button>

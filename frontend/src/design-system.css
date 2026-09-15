@@ -1,0 +1,131 @@
+/* Theme contract. index.css retains the explicit .light palette.
+   Default charcoal values apply to native controls and portalled Radix content. */
+:root:not(.light) {
+  color-scheme: dark;
+  --background: 215 17% 11%;
+  --foreground: 214 22% 92%;
+  --card: 214 18% 16%;
+  --card-foreground: var(--foreground);
+  --popover: 214 18% 18%;
+  --popover-foreground: var(--foreground);
+  --primary: 215 23% 84%;
+  --primary-foreground: 215 22% 15%;
+  --secondary: 214 19% 21%;
+  --secondary-foreground: var(--foreground);
+  --muted: 214 18% 18%;
+  --muted-foreground: 214 13% 69%;
+  --accent: 214 19% 23%;
+  --accent-foreground: var(--foreground);
+  --destructive: 3 61% 42%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 15% 24%;
+  --input: 215 13% 43%;
+  --ring: 213 82% 76%;
+  --color-bg-app: #181D23;
+  --color-bg-surface: #222A33;
+  --color-bg-subtle: #1E252D;
+  --color-bg-tablehead: #202731;
+  --color-bg-row-hover: #29323D;
+  --color-border: #343E4B;
+  --color-border-strong: #536174;
+  --color-input-border: #647286;
+  --color-text-primary: #E6EBF2;
+  --color-text-secondary: #BAC4D1;
+  --color-text-muted: #A2AFC0;
+  --color-text-help: #A2AFC0;
+  --color-text-disabled: #778497;
+  --color-sidebar-bg: #1E2630;
+  --color-sidebar-hover-bg: #29323D;
+  --color-sidebar-active-bg: #343F4C;
+  --color-link: #A0C6FA;
+  --color-link-hover: #C3DCFF;
+  --color-focus-ring: #90BEFA;
+  --color-selected-bg: #303E50;
+  --color-selected-rail: #A0C6FA;
+  --color-critical: #FFAAA5;
+  --color-critical-bg: #3C292E;
+  --color-critical-border: #704349;
+  --color-high: #F4B49C;
+  --color-high-bg: #392C2A;
+  --color-high-border: #6F4D42;
+  --color-moderate: #EAC484;
+  --color-moderate-text: #EAC484;
+  --color-moderate-bg: #352F26;
+  --color-moderate-border: #63533A;
+  --color-duesoon: #EAC484;
+  --color-duesoon-text: #EAC484;
+  --color-duesoon-bg: #352F26;
+  --color-duesoon-border: #63533A;
+  --color-success: #94D3B0;
+  --color-success-bg: #24372F;
+  --color-success-border: #3E6350;
+  --color-info: #AACBF5;
+  --color-info-bg: #283649;
+  --color-info-border: #445D7C;
+  --color-neutral: #BDC7D4;
+  --color-neutral-bg: #2B333E;
+  --color-neutral-border: #485464;
+  --color-accepted: #D0BCEE;
+  --color-accepted-bg: #332E41;
+  --color-accepted-border: #605370;
+}
+.light { color-scheme: light; }
+:root {
+  --radius: .375rem;
+  --space-page: 24px;
+  --space-section: 20px;
+  --control-height: 36px;
+  --color-high: #993B20;
+  --color-high-bg: #FFF4ED;
+  --color-high-border: #E7C2AF;
+  --color-accepted: #69418C;
+  --color-accepted-bg: #F5F0FA;
+  --color-accepted-border: #D8C5EA;
+}
+.page-header { padding: 20px var(--space-page) 16px; background: var(--color-bg-app); }
+.page-title { font-size: 24px; letter-spacing: -.025em; }
+.page-eyebrow { font-size: 12px; }
+.page-subtitle { margin-top: 4px; }
+.app-sidebar { background: var(--color-sidebar-bg); width: 232px; }
+.side-link { padding: 8px 10px; font-size: 13px; }
+.side-link.active::before { width: 2px; left: -5px; background: var(--color-sidebar-text); }
+.demo-notice { background: var(--color-bg-subtle); }
+.app-workspace th, [role="dialog"] th { color: var(--color-text-secondary); }
+.tbl-cell { padding: 9px 12px; font-variant-numeric: tabular-nums; }
+.tbl-head { padding: 9px 12px; }
+.app-workspace :is(input:not([type="checkbox"]):not([type="radio"]), [role="combobox"]),
+[role="dialog"] :is(input:not([type="checkbox"]):not([type="radio"]), [role="combobox"]),
+.app-workspace textarea, [role="dialog"] textarea {
+  border-color: var(--color-input-border);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+}
+input::placeholder, textarea::placeholder { color: var(--color-text-help); opacity: 1; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-focus-ring); }
+.register-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  padding: 12px var(--space-page); border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+.record-drawer { width: min(100vw, 44rem); }
+.record-drawer > :first-child { flex-shrink: 0; }
+.record-drawer [data-testid="drawer-close"] { align-self: flex-start; flex-shrink: 0; width: 30px; height: 30px; border-radius: 4px; }
+.drawer-tab { font-size: 13px; padding: 9px 12px; }
+.drawer-tab.active { background: var(--color-bg-row-hover); border-color: var(--color-text-secondary); }
+.pill { border-radius: 5px; min-height: 23px; line-height: 1.25; padding: 2px 7px; }
+.pill-high { color: var(--color-high); background: var(--color-high-bg); border-color: var(--color-high-border); }
+.pill-accepted { color: var(--color-accepted); background: var(--color-accepted-bg); border-color: var(--color-accepted-border); }
+.metric-value { font-size: 25px; line-height: 1.2; }
+.metric-card { padding: 12px 14px; gap: 4px; }
+.metric-card svg { color: var(--color-text-muted); }
+[data-sonner-toast] {
+  --normal-bg: var(--color-bg-surface);
+  --normal-text: var(--color-text-primary);
+  --normal-border: var(--color-border-strong);
+  font-family: var(--font-body);
+}
+@media (max-width: 1023px) { .app-sidebar { width: 212px; } }
+@media (max-width: 700px) {
+  .app-sidebar { width: 186px; }
+  :root { --space-page: 16px; }
+}

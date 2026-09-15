@@ -38,7 +38,7 @@ export default function AuthCallback() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-300">
+    <div className="min-h-screen flex items-center justify-center bg-surface-app text-ink-help">
       <div className="text-sm">Completing sign-in…</div>
     </div>
   );

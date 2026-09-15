@@ -19,7 +19,7 @@ export default function AdminSecurity() {
           <Info className="h-4 w-4 shrink-0 mt-0.5" />
           <div>Interactive security settings (MFA enrollment, session revocation, IP allow-lists) are on the roadmap. This page documents the current effective posture.</div>
         </div>
-        <div className="rounded-md border border-line bg-surface-card divide-y divide-slate-100" data-testid="admin-security-list">
+        <div className="rounded-md border border-line bg-surface-card divide-y divide-line" data-testid="admin-security-list">
           {ROWS.map((r, i) => (
             <div key={i} className="flex items-start gap-3 p-4">
               <div className="h-8 w-8 rounded-md bg-surface-subtle border border-line flex items-center justify-center"><r.icon className="h-4 w-4 text-brand-charcoal" /></div>

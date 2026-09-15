@@ -66,11 +66,11 @@ function DueCell({ iso, closed = false }) {
     critical: "text-semantic-critical", duesoon: "text-semantic-duesoon-text",
     info: "text-ink-secondary", neutral: "text-ink-secondary",
   }[tone] || "text-ink-secondary";
-  if (primary === "—") return <span className="text-slate-300">—</span>;
+  if (primary === "—") return <span className="text-ink-help">—</span>;
   return (
     <span className="inline-flex flex-col leading-tight">
       <span className={`font-mono text-xs ${toneCls}`}>{primary}</span>
-      {secondary && <span className={`text-[10px] ${toneCls} opacity-80`}>{secondary}</span>}
+      {secondary && <span className={`text-xs ${toneCls} opacity-80`}>{secondary}</span>}
     </span>
   );
 }
@@ -387,9 +387,9 @@ export default function RecordListPage({ kind }) {
           </div>
         }
       />
-      <div className="sticky top-0 z-20 px-8 py-4 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="sticky top-0 z-20 register-toolbar">
         <div className="relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input data-testid={`${kind}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 h-9 w-72 text-sm" />
         </div>
         {hasUrlFilters && (
@@ -419,10 +419,10 @@ export default function RecordListPage({ kind }) {
                   key={t.id}
                   onClick={() => setReviewTab(t.id)}
                   data-testid={`reviews-tab-${t.id}`}
-                  className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
+                  className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
                 >
                   {t.label}
-                  <span className={`ml-1.5 font-mono text-[10px] ${active ? "text-ink-onDarkMuted" : "text-ink-help"}`}>{count}</span>
+                  <span className={`ml-1.5 font-mono text-xs ${active ? "text-ink-onDarkMuted" : "text-ink-help"}`}>{count}</span>
                 </button>
               );
             })}
@@ -439,23 +439,23 @@ export default function RecordListPage({ kind }) {
           )
         )}
         {isReviews && <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
-        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length}</div>
+        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length}</div>
       </div>
 
       {/* Bulk action bar */}
       {checked.size > 0 && (
-        <div className="mx-8 mt-4 rounded-lg border border-brand-charcoal bg-brand-charcoal text-ink-onDark px-4 py-2.5 flex items-center gap-3" data-testid="bulk-action-bar">
-          <div className="text-sm"><span className="font-heading font-semibold text-ink-onDark" data-testid="bulk-selected-count">{checked.size}</span> selected</div>
+        <div className="mx-8 mt-4 rounded-lg border border-brand-charcoal bg-primary text-primary-foreground px-4 py-2.5 flex items-center gap-3" data-testid="bulk-action-bar">
+          <div className="text-sm"><span className="font-heading font-semibold text-primary-foreground" data-testid="bulk-selected-count">{checked.size}</span> selected</div>
           <div className="h-4 w-px bg-brand-metallic-3" />
           {canWrite && !isReviews && (
-            <button onClick={() => bulk("close")} data-testid="bulk-close" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
+            <button onClick={() => bulk("close")} data-testid="bulk-close" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-primary-foreground">
               <CheckCircle2 className="h-3.5 w-3.5" /> Close
             </button>
           )}
           {canWrite && (
             <DropdownMenu open={ownerPicker} onOpenChange={setOwnerPicker}>
               <DropdownMenuTrigger asChild>
-                <button data-testid="bulk-set-owner" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
+                <button data-testid="bulk-set-owner" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-primary-foreground">
                   <UserPlus className="h-3.5 w-3.5" /> Set {ownerField === "assignee_id" ? "assignee" : "owner"}
                 </button>
               </DropdownMenuTrigger>
@@ -479,7 +479,7 @@ export default function RecordListPage({ kind }) {
           {statusOptions.length > 0 && canWrite && !isReviews && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button data-testid="bulk-set-status" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
+                <button data-testid="bulk-set-status" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-primary-foreground">
                   <MoreHorizontal className="h-3.5 w-3.5" /> Set status
                 </button>
               </DropdownMenuTrigger>
@@ -493,14 +493,14 @@ export default function RecordListPage({ kind }) {
             </DropdownMenu>
           )}
           {canDelete && (
-            <button onClick={() => confirm(`Delete ${checked.size} record(s)?`) && bulk("delete")} data-testid="bulk-delete" className="inline-flex items-center gap-1 rounded-md border border-semantic-critical bg-semantic-critical hover:bg-semantic-critical/90 px-2.5 h-8 text-xs text-white">
+            <button onClick={() => confirm(`Delete ${checked.size} record(s)?`) && bulk("delete")} data-testid="bulk-delete" className="inline-flex items-center gap-1 rounded-md border border-semantic-critical bg-semantic-critical hover:bg-semantic-critical/90 px-2.5 h-8 text-xs text-primary-foreground">
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
           )}
           {canWrite && schema.fields.some((f) => f.name === "due_date") && (
             <DropdownMenu open={dueDatePickerOpen} onOpenChange={(v) => { setDueDatePickerOpen(v); if (v) setPickedDueDate(""); }}>
               <DropdownMenuTrigger asChild>
-                <button data-testid="bulk-set-due-date" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-ink-onDark">
+                <button data-testid="bulk-set-due-date" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-primary-foreground">
                   <CalendarDays className="h-3.5 w-3.5" /> Set due date
                 </button>
               </DropdownMenuTrigger>
@@ -508,7 +508,7 @@ export default function RecordListPage({ kind }) {
                 <DropdownMenuLabel className="text-xs px-0 pt-0">Pick a new due date</DropdownMenuLabel>
                 <div className="mt-2 space-y-2">
                   <Input type="date" value={pickedDueDate} onChange={(e) => setPickedDueDate(e.target.value)} data-testid="bulk-due-date-input" className="text-sm h-9" />
-                  <Button size="sm" className="w-full bg-brand-charcoal hover:bg-brand-charcoal-hover" disabled={!pickedDueDate} onClick={() => { bulk("set-due-date", { due_date: pickedDueDate }); setDueDatePickerOpen(false); }} data-testid="bulk-due-date-apply">
+                  <Button size="sm" className="w-full bg-primary hover:bg-primary/90" disabled={!pickedDueDate} onClick={() => { bulk("set-due-date", { due_date: pickedDueDate }); setDueDatePickerOpen(false); }} data-testid="bulk-due-date-apply">
                     Apply to {checked.size} record(s)
                   </Button>
                 </div>
@@ -523,7 +523,7 @@ export default function RecordListPage({ kind }) {
 
       <div className="px-8 py-6">
         <TableFilterChips table={table} />
-        <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
+        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr>
@@ -539,7 +539,7 @@ export default function RecordListPage({ kind }) {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={schema.columns.length + 2} className="tbl-cell text-center py-8 text-slate-400">Loading…</td></tr>}
+              {loading && <tr><td colSpan={schema.columns.length + 2} className="tbl-cell text-center py-8 text-ink-help">Loading…</td></tr>}
               {!loading && filtered.length === 0 && <tr><td colSpan={schema.columns.length + 2} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
               {!loading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);
@@ -561,7 +561,7 @@ export default function RecordListPage({ kind }) {
                     const isDueLike = c.date && /(_date|_review|_on)$/.test(c.key);
                     const closed = row.status === "completed" || row.status === "cancelled" || row.status === "closed";
                     return (
-                    <td key={`${row[idField] || i}-${c.key}`} className={`tbl-cell ${c.primary ? "font-medium text-slate-900" : ""}`}>
+                    <td key={`${row[idField] || i}-${c.key}`} className={`tbl-cell ${c.primary ? "font-medium text-ink-primary" : ""}`}>
                       {c.badge ? (
                         overdueReview && c.key === "status"
                           ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
@@ -569,20 +569,20 @@ export default function RecordListPage({ kind }) {
                       ) :
                        c.user ? (
                          row[c.key]
-                           ? <span className="text-slate-700">{userMap[row[c.key]] || row[c.key]}</span>
+                           ? <span className="text-ink-secondary">{userMap[row[c.key]] || row[c.key]}</span>
                            : <span
-                               className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-[10px] font-mono uppercase tracking-wider"
+                               className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-xs font-mono uppercase tracking-wider"
                                data-testid={`${kind}-unassigned-${i}`}
                              >Unassigned</span>
                        ) :
                        isDueLike ? <DueCell iso={row[c.key]} closed={closed} /> :
-                       c.date ? (row[c.key] ? <span className="font-mono text-slate-600">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-slate-300">—</span>) :
+                       c.date ? (row[c.key] ? <span className="font-mono text-ink-secondary">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-ink-help">—</span>) :
                        (
                          <span className="inline-flex items-center gap-2">
-                           <span>{row[c.key] || <span className="text-slate-300">—</span>}</span>
+                           <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>
                            {c.primary && kind === "findings" && row.risk_id && (
                              <span
-                               className="inline-flex items-center px-1.5 py-0 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-[10px] font-mono uppercase tracking-widest"
+                               className="inline-flex items-center px-1.5 py-0 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-mono uppercase tracking-widest"
                                data-testid={`finding-risk-chip-${i}`}
                                title={`Linked to risk ${row.risk_id}`}
                              >
@@ -631,7 +631,7 @@ export default function RecordListPage({ kind }) {
                               className="text-sm text-semantic-critical focus:text-semantic-critical"
                             >
                               <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                              {isReviews && <span className="ml-auto text-[10px] font-mono text-ink-help">admin</span>}
+                              {isReviews && <span className="ml-auto text-xs font-mono text-ink-help">admin</span>}
                             </DropdownMenuItem>
                           </>
                         )}

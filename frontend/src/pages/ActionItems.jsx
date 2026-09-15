@@ -21,9 +21,9 @@ const VIEWS = ACTION_VIEWS.map(id => ({id, label: id === "all" ? "All" : id === 
 const PRIORITY_TONE = {
   immediate: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
   critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "bg-semantic-duesoon-bg text-semantic-duesoon-text border-semantic-duesoon-border",
-  medium: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
-  moderate: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
+  high: "pill-high",
+  medium: "pill-moderate",
+  moderate: "pill-moderate",
   low: "bg-surface-subtle text-ink-secondary border-line",
 };
 
@@ -147,14 +147,14 @@ export default function ActionItems() {
               size="sm"
               onClick={() => setDrawer({ open: true, kind: "tasks", record: null })}
               data-testid="new-action-item"
-              className="bg-brand-charcoal hover:bg-brand-charcoal-hover"
+              className="bg-primary hover:bg-primary/90"
             >
               <ListChecks className="h-3.5 w-3.5 mr-1" /> New Action Item
             </Button>
           )
         }
       />
-      <div className="px-8 py-4 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">
+      <div className="register-toolbar">
         <div className="relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search action items…" className="pl-8 h-9 w-72 text-sm" data-testid="ai-search" />
@@ -168,23 +168,23 @@ export default function ActionItems() {
                 key={v.id}
                 onClick={() => { const key = v.id === 'overdue' ? 'due_date' : 'status'; if (key) table.setFilter(key, []); setView(v.id); }}
                 data-testid={`ai-view-${v.id}`}
-                className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
+                className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
               >
                 {v.label}
-                <span className={`ml-1.5 font-mono text-[10px] ${active ? "text-ink-onDarkMuted" : "text-ink-help"}`}>{n}</span>
+                <span className={`ml-1.5 font-mono text-xs ${active ? "text-ink-onDarkMuted" : "text-ink-help"}`}>{n}</span>
               </button>
             );
           })}
         </div>
         <Select value={sort} onValueChange={v => { table.setSort(null); setParam("sort", v); }}><SelectTrigger className="w-40" aria-label="Sort actions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="operational">Operational order</SelectItem><SelectItem value="due">Due date</SelectItem><SelectItem value="priority">Priority</SelectItem><SelectItem value="title">Title</SelectItem></SelectContent></Select>
-        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
+        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
 
       <div className="p-8">
         <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="title" /></th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="priority" /></th>
@@ -194,7 +194,7 @@ export default function ActionItems() {
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="source_type" /></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {loading && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
               {!loading && filtered.length === 0 && (
                 <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="action items" onClear={() => { const next=new URLSearchParams(params);next.delete('q');next.set('view','all');setParams(next,{replace:true}); }} /></td></tr>
@@ -212,14 +212,14 @@ export default function ActionItems() {
                         {priorityLabel(r.priority)}
                       </span>
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-slate-300">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-xs font-mono">
                       {r.due_date ? (
                         <span className={overdue ? "text-semantic-critical font-medium" : "text-ink-secondary"}>
                           {new Date(r.due_date.slice(0, 10) + "T00:00:00").toLocaleDateString()}
                           {overdue && <span className="block text-xs">{Math.abs(daysDue(r))} days overdue</span>}
                         </span>
-                      ) : <span className="text-slate-300">—</span>}
+                      ) : <span className="text-ink-help">—</span>}
                     </td>
                     <td className="tbl-cell">
                       <span className="pill pill-neutral">

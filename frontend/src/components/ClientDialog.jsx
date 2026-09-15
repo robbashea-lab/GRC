@@ -83,7 +83,7 @@ export default function ClientDialog({ open, onOpenChange, users, onCreated, cli
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
-          <Button onClick={save} disabled={saving} data-testid="new-client-save" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+          <Button onClick={save} disabled={saving} data-testid="new-client-save" className="bg-primary hover:bg-primary/90">
             {saving ? "Saving…" : client ? "Save changes" : "Create client"}
           </Button>
         </DialogFooter>

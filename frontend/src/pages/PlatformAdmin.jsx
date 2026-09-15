@@ -103,7 +103,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
         </div>
         <div className="text-xs text-ink-help font-mono ml-auto">{filtered.length} / {users.length}</div>
         {canManage && (
-          <Button size="sm" onClick={() => setAddOpen(true)} data-testid={`add-user-${scope}`} className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+          <Button size="sm" onClick={() => setAddOpen(true)} data-testid={`add-user-${scope}`} className="bg-primary hover:bg-primary/90">
             <Plus className="h-3.5 w-3.5 mr-1" /> {scope === "client" ? "Add client user" : "Add user"}
           </Button>
         )}
@@ -112,7 +112,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
       <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+          <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
             <tr>
               <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
               <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="role" /></th>
@@ -122,7 +122,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
               <th className="tbl-cell text-right font-medium w-10" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-line">
             {loading && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8">Loading users…</td></tr>}
             {!loading && filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8"><FilterEmpty table={table} name="users" onClear={() => { setQ('');  }} /></td></tr>}
             {!loading && filtered.map((u, i) => {
@@ -131,8 +131,8 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
               return (
                 <tr key={u.user_id} className="row-hover" data-testid={`user-row-${i}`}>
                   <td className="tbl-cell">
-                    <div className="font-medium text-ink-primary">{u.name || u.email}{u.orphaned && <span className="ml-2 text-[10px] font-mono text-semantic-duesoon-text">ORPHANED</span>}</div>
-                    <div className="text-[11px] text-ink-help">{u.email}</div>
+                    <div className="font-medium text-ink-primary">{u.name || u.email}{u.orphaned && <span className="ml-2 text-xs font-mono text-semantic-duesoon-text">ORPHANED</span>}</div>
+                    <div className="text-xs text-ink-help">{u.email}</div>
                   </td>
                   <td className="tbl-cell text-ink-primary">{ROLE_LABEL[u.role] || u.role}</td>
                   {scope === "platform" && (
@@ -141,12 +141,12 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
                     </td>
                   )}
                   <td className="tbl-cell">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium ${tone}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${tone}`}>
                       {status}
                     </span>
                   </td>
                   <td className="tbl-cell text-xs font-mono text-ink-secondary">
-                    {u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : <span className="text-slate-300">—</span>}
+                    {u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : <span className="text-ink-help">—</span>}
                   </td>
                   <td className="tbl-cell text-right">
                     {canManage && u.user_id !== viewer?.user_id && (
@@ -327,7 +327,7 @@ function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRo
             </div>
             {scope === "client" ? (
               <div className="text-xs text-ink-help p-2 border border-line rounded bg-surface-subtle">
-                <span className="text-[10px] font-mono uppercase tracking-widest">Client</span> · <strong>{clients.find((c) => c.client_id === clientId)?.name || "This client"}</strong>
+                <span className="text-xs font-mono uppercase tracking-widest">Client</span> · <strong>{clients.find((c) => c.client_id === clientId)?.name || "This client"}</strong>
               </div>
             ) : (
               <div>

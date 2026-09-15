@@ -69,7 +69,7 @@ export default function ClientManagement() {
   if (!authorized) return <div role="alert" className="p-8">Client Management is available to platform administrators only.</div>;
   return <div>
     <PageHeader title="Client Management" subtitle="Manage client organizations, ownership, and lifecycle."
-      action={<Button size="sm" onClick={() => setDialog({ client: null })} data-testid="add-client-button" className="bg-brand-charcoal hover:bg-brand-charcoal-hover"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
+      action={<Button size="sm" onClick={() => setDialog({ client: null })} data-testid="add-client-button" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
     <div className="px-8 py-4 space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search client, industry, GRC lead..." aria-label="Search client organizations" className="max-w-sm" />
@@ -83,7 +83,7 @@ export default function ClientManagement() {
       <div className="overflow-x-auto rounded-lg border border-line bg-surface-card">
         <table className="w-full text-sm" data-testid="client-management-table">
           <thead className="bg-surface-subtle"><tr>{columns.map(c => <th key={c.key} className="tbl-cell text-left font-medium"><ColumnControl table={table} column={c} /></th>)}<th className="tbl-cell text-left font-medium">Actions</th></tr></thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-line">
             {loading ? <tr><td colSpan={6} className="tbl-cell">Loading clients…</td></tr> : rows.map(c => <tr key={c.client_id} className="row-hover">
               <td className="tbl-cell"><button className="text-link hover:text-link-hover" onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}>{c.name}</button></td>
               <td className="tbl-cell">{c.industry || "—"}</td>
