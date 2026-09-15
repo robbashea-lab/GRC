@@ -32,8 +32,8 @@ const LIKELIHOOD_LABELS = { 1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely"
 const IMPACT_LABELS = { 1: "Minimal", 2: "Minor", 3: "Moderate", 4: "Major", 5: "Severe" };
 const LEVEL_TONE = {
   critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "bg-semantic-duesoon-bg text-semantic-duesoon-text border-semantic-duesoon-border",
-  moderate: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
+  high: "pill-high",
+  moderate: "pill-moderate",
   low: "bg-surface-subtle text-ink-secondary border-line",
 };
 const DATA_TYPES = ["No Sensitive Data", "Internal", "Confidential", "PII", "PHI", "Financial",
@@ -455,7 +455,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <span className="text-xs text-semantic-success">Linked to platform user</span>
         ) : (
           <Button size="sm" onClick={inviteContact} disabled={!hasEmail} data-testid="contact-invite"
-            className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+            className="bg-primary hover:bg-primary/90">
             Invite to Platform
           </Button>
         )}
@@ -569,7 +569,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     }
     return (
       <div key={f.name} className={`space-y-1.5 min-w-0 ${f.type === "textarea" || ["title", "name", "policy_id"].includes(f.name) ? "record-field-wide" : ""}`}>
-        <Label className="text-xs text-slate-600">{f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}</Label>
+        <Label className="text-xs text-ink-secondary">{f.label}{f.required && <span className="text-semantic-critical ml-0.5">*</span>}</Label>
         {f.type === "textarea" ? (
           <Textarea value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
         ) : f.type === "policy" ? (
@@ -604,7 +604,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return (
       <div className="space-y-1">
         <Label className="text-xs text-ink-secondary">{label}</Label>
-        <div className="text-sm font-mono text-ink-primary">{value ? new Date(String(value).slice(0, 10) + "T00:00:00").toLocaleDateString() : <span className="text-slate-300">—</span>}</div>
+        <div className="text-sm font-mono text-ink-primary">{value ? new Date(String(value).slice(0, 10) + "T00:00:00").toLocaleDateString() : <span className="text-ink-help">—</span>}</div>
       </div>
     );
   }
@@ -634,11 +634,11 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           </div>
         </div>
         <div className="flex items-center gap-3 py-2 px-3 border border-line rounded-md bg-surface-subtle" data-testid="risk-live-score">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Calculated</div>
+          <div className="text-xs font-mono uppercase tracking-widest text-ink-help">Calculated</div>
           <div className="font-mono text-sm text-ink-primary">Score {liveScore || "—"}</div>
           <span className="text-ink-help">→</span>
           {liveLevel ? (
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium capitalize ${LEVEL_TONE[liveLevel]}`}>{liveLevel}</span>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium capitalize ${LEVEL_TONE[liveLevel]}`}>{liveLevel}</span>
           ) : <span className="text-ink-help text-xs">select both</span>}
         </div>
         <div>
@@ -684,7 +684,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </div>
         {record?.acceptance_date && (
           <div className="border border-line rounded-md p-3 bg-surface-subtle text-xs space-y-1" data-testid="risk-acceptance-info">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Acceptance</div>
+            <div className="text-xs font-mono uppercase tracking-widest text-ink-help">Acceptance</div>
             <div><span className="text-ink-secondary">Approved by:</span> <span className="text-ink-primary font-medium">{userMap[record.accepted_by] || record.accepted_by || "—"}</span></div>
             <div><span className="text-ink-secondary">Accepted on:</span> <span className="font-mono">{new Date(record.acceptance_date).toLocaleDateString()}</span></div>
             {record.acceptance_expires_at && <div><span className="text-ink-secondary">Expires:</span> <span className="font-mono">{new Date(record.acceptance_expires_at).toLocaleDateString()}</span></div>}
@@ -708,7 +708,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <h3 className="text-sm font-medium mb-2">Completed Risk Reviews</h3>
           {!riskHistory.length&&<p className="text-sm text-ink-secondary">No completed Risk Reviews recorded.</p>}
           {riskHistory.map(o=><button key={o.occurrence_id} className="block w-full text-left border border-line rounded-md p-3 mb-2 text-sm" onClick={async()=>{const {data}=await api.get("/reviews",{params:{client_id:clientId}});const r=data.find(r=>r.review_id===o.review_id);if(r)setRelatedDrawer({kind:"reviews",record:r,initialValues:{occurrence:o}});}}><strong>{o.period}</strong><div>Scheduled {o.due_date?.slice(0,10)} · Completed {o.completed_at?.slice(0,10)} · {o.completed_by_name||userMap[o.completed_by]||o.completed_by}</div><div>{o.outcome}</div></button>)}
-          <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help mb-2 mt-4">Rating history</div>
+          <div className="text-xs font-mono uppercase tracking-widest text-ink-help mb-2 mt-4">Rating history</div>
           {history.length === 0 ? (
             <div className="text-sm text-ink-muted">No rating changes recorded yet.</div>
           ) : (
@@ -841,7 +841,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <Button size="sm" variant="outline" onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Review Risk</Button>
           {isPlatformAdmin&&<Button size="sm" variant="outline" onClick={()=>setClosure({reason:"remediated",note:""})}>Close Risk</Button>}
           {isPlatformAdmin && record?.status !== "closed" && (
-            <Button size="sm" onClick={acceptRisk} data-testid="risk-accept" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+            <Button size="sm" onClick={acceptRisk} data-testid="risk-accept" className="bg-primary hover:bg-primary/90">
               {record?.status === 'accepted' ? 'Renew acceptance' : 'Accept risk'}
             </Button>
           )}
@@ -855,18 +855,18 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     const presence = form.presence || record?.presence;
     const canVerify = isPlatformAdmin && presence && presence !== "verified_existing" && presence !== "not_applicable";
     return (
-      <div className="border border-slate-200 bg-slate-50/50 rounded-md p-3 space-y-2">
+      <div className="border border-line bg-surface-subtle rounded-md p-3 space-y-2">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-slate-800">Approval workflow</div>
+          <div className="text-sm text-ink-primary">Approval workflow</div>
           <div className="flex items-center gap-1.5">
             {presence && <StatusBadge value={presence} />}
             <StatusBadge value={status || "draft"} />
           </div>
         </div>
         {canVerify && (
-          <div className="flex items-center justify-between border-t border-slate-200 pt-2">
-            <div className="text-xs text-slate-600">Confirm the document and record verified metadata.</div>
-            <Button size="sm" onClick={() => { setVerifyForm({ version: record?.version || "", owner_id: record?.owner_id || "", approver_id: record?.approver_id || "", approved_at: toDateInput(record?.approved_at), last_reviewed_at: toDateInput(record?.last_reviewed_at), next_review_date: toDateInput(record?.next_review_date), status: ["approved", "in_review", "draft"].includes(record?.status) ? record.status : "draft" }); setVerifyOpen(true); }} data-testid="policy-verify" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+          <div className="flex items-center justify-between border-t border-line pt-2">
+            <div className="text-xs text-ink-secondary">Confirm the document and record verified metadata.</div>
+            <Button size="sm" onClick={() => { setVerifyForm({ version: record?.version || "", owner_id: record?.owner_id || "", approver_id: record?.approver_id || "", approved_at: toDateInput(record?.approved_at), last_reviewed_at: toDateInput(record?.last_reviewed_at), next_review_date: toDateInput(record?.next_review_date), status: ["approved", "in_review", "draft"].includes(record?.status) ? record.status : "draft" }); setVerifyOpen(true); }} data-testid="policy-verify" className="bg-primary hover:bg-primary/90">
               <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Verify policy
             </Button>
           </div>
@@ -899,15 +899,15 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           </div>
         )}
         {record?.approval_history?.length > 0 && (
-          <div className="pt-2 border-t border-slate-200">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1">History</div>
+          <div className="pt-2 border-t border-line">
+            <div className="text-xs font-mono uppercase tracking-widest text-ink-muted mb-1">History</div>
             <ul className="space-y-1.5">
               {record.approval_history.map((h, i) => (
-                <li key={i} className="text-xs text-slate-700 flex items-center gap-2">
-                  <span className="font-mono text-slate-400">{new Date(h.at).toLocaleString()}</span>
+                <li key={i} className="text-xs text-ink-secondary flex items-center gap-2">
+                  <span className="font-mono text-ink-help">{new Date(h.at).toLocaleString()}</span>
                   <span className="font-medium">{h.by_email}</span>
-                  <span className="text-slate-500">{h.action}</span>
-                  {h.reason && <span className="text-red-600 italic">"{h.reason}"</span>}
+                  <span className="text-ink-muted">{h.action}</span>
+                  {h.reason && <span className="text-semantic-critical italic">"{h.reason}"</span>}
                   {h.comment && <span className="italic">"{h.comment}"</span>}
                 </li>
               ))}
@@ -922,17 +922,17 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   function renderRelated() {
     return (
       <div className="space-y-5">
-        {relatedTotal === 0 && <div className="text-sm text-slate-500">No related records yet.</div>}
+        {relatedTotal === 0 && <div className="text-sm text-ink-muted">No related records yet.</div>}
         {Object.entries(related).map(([k, list]) => (
           (list && list.length > 0) ? (
             <div key={k}>
-              <Link to={k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-[10px] font-mono uppercase tracking-widest text-slate-500 hover:text-slate-900 flex items-center gap-1">{k} <ArrowUpRight className="h-3 w-3" /></Link>
+              <Link to={k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k} <ArrowUpRight className="h-3 w-3" /></Link>
               <ul className="mt-1.5 space-y-1.5">
                 {list.map((it) => (
-                  <li key={it[ID_FIELD[k]] || it.evidence_id || it.assessment_id} className="border border-slate-200 rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-slate-50" data-testid={`related-${k}-item`}>
+                  <li key={it[ID_FIELD[k]] || it.evidence_id || it.assessment_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-surface-subtle" data-testid={`related-${k}-item`}>
                     <div className="min-w-0">
-                      {(SCHEMAS[k]||k==="assessments") ? <button className="text-left text-slate-900 font-medium hover:underline" onClick={() => setRelatedDrawer({ kind: k, record: it })}>{it.title || it.name}</button> : <div className="text-slate-900 font-medium truncate">{it.title || it.name || it.filename}</div>}
-                      <div className="text-[11px] text-slate-500 font-mono">{it.display_id || it[ID_FIELD[k]] || it.evidence_id || it.assessment_id}</div>
+                      {(SCHEMAS[k]||k==="assessments") ? <button className="text-left text-ink-primary font-medium hover:underline" onClick={() => setRelatedDrawer({ kind: k, record: it })}>{it.title || it.name}</button> : <div className="text-ink-primary font-medium truncate">{it.title || it.name || it.filename}</div>}
+                      <div className="text-xs text-ink-muted font-mono">{it.display_id || it[ID_FIELD[k]] || it.evidence_id || it.assessment_id}</div>
                       {kind === "tasks" && k === "reviews" && it.linked_occurrence && <div className="text-xs text-ink-secondary">Occurrence: {it.linked_occurrence.period || "Not recorded"} · {it.linked_occurrence.status}</div>}
                     </div>
                     {it.status && <StatusBadge value={it.status} />}
@@ -955,25 +955,25 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadFiles(Array.from(e.dataTransfer.files)); }}
             onClick={() => inputRef.current?.click()}
-            className={`rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition ${dragOver ? "border-slate-900 bg-slate-100" : "border-slate-300 hover:bg-slate-50"}`}
+            className={`rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition ${dragOver ? "border-line-strong bg-surface-subtle" : "border-line-strong hover:bg-surface-subtle"}`}
           >
-            <UploadCloud className="h-6 w-6 mx-auto text-slate-500 mb-1" />
-            <div className="text-sm font-medium text-slate-900">Drop files here to attach</div>
-            <div className="text-xs text-slate-500 mt-0.5">They will be linked to this {singular}.</div>
+            <UploadCloud className="h-6 w-6 mx-auto text-ink-muted mb-1" />
+            <div className="text-sm font-medium text-ink-primary">Drop files here to attach</div>
+            <div className="text-xs text-ink-muted mt-0.5">They will be linked to this {singular}.</div>
             <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => uploadFiles(Array.from(e.target.files || []))} data-testid="drawer-evidence-input" />
           </div>
         )}
-        <ul className="divide-y divide-slate-100 border border-slate-200 rounded-md">
-          {evidenceItems.length === 0 && <li className="p-4 text-center text-slate-400 text-sm">No evidence attached yet.</li>}
+        <ul className="divide-y divide-line border border-line rounded-md">
+          {evidenceItems.length === 0 && <li className="p-4 text-center text-ink-help text-sm">No evidence attached yet.</li>}
           {evidenceItems.map((ev, i) => (
-            <li key={ev.evidence_id} className="flex items-center justify-between px-3 py-2 hover:bg-slate-50" data-testid={`drawer-evidence-item-${i}`}>
+            <li key={ev.evidence_id} className="flex items-center justify-between px-3 py-2 hover:bg-surface-subtle" data-testid={`drawer-evidence-item-${i}`}>
               <div className="min-w-0">
-                <div className="text-sm text-slate-900 font-medium truncate">{ev.filename}</div>
-                <div className="text-[11px] text-slate-500 font-mono">{ev.uploaded_by_email} · {new Date(ev.created_at).toLocaleString()}</div>
+                <div className="text-sm text-ink-primary font-medium truncate">{ev.filename}</div>
+                <div className="text-xs text-ink-muted font-mono">{ev.uploaded_by_email} · {new Date(ev.created_at).toLocaleString()}</div>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => downloadEv(ev)} className="p-1 rounded hover:bg-slate-100 text-slate-500"><Download className="h-3.5 w-3.5" /></button>
-                {isPlatformAdmin && !(kind === "tasks" && record?.status === "done") && <button onClick={() => deleteEv(ev)} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>}
+                <button onClick={() => downloadEv(ev)} className="p-1 rounded hover:bg-surface-subtle text-ink-muted"><Download className="h-3.5 w-3.5" /></button>
+                {isPlatformAdmin && !(kind === "tasks" && record?.status === "done") && <button onClick={() => deleteEv(ev)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical"><Trash2 className="h-3.5 w-3.5" /></button>}
               </div>
             </li>
           ))}
@@ -985,18 +985,18 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return (
       <div className="space-y-4">
         <div className="space-y-3">
-          {comments.length === 0 && <div className="text-sm text-slate-500">No comments yet.</div>}
+          {comments.length === 0 && <div className="text-sm text-ink-muted">No comments yet.</div>}
           {comments.map((c) => (
-            <div key={c.comment_id} className="border border-slate-200 rounded-md p-3 bg-white">
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                <span className="font-medium text-slate-800">{c.user_name || c.user_email}</span>
+            <div key={c.comment_id} className="border border-line rounded-md p-3 bg-surface-card">
+              <div className="flex items-center justify-between text-xs text-ink-muted mb-1">
+                <span className="font-medium text-ink-primary">{c.user_name || c.user_email}</span>
                 <span className="font-mono">{new Date(c.created_at).toLocaleString()}</span>
               </div>
-              <div className="text-sm text-slate-700 whitespace-pre-wrap">{c.body}</div>
+              <div className="text-sm text-ink-secondary whitespace-pre-wrap">{c.body}</div>
             </div>
           ))}
         </div>
-        <div className="space-y-2 pt-2 border-t border-slate-200">
+        <div className="space-y-2 pt-2 border-t border-line">
           <Textarea disabled={!canWrite} value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment… use @email to mention" data-testid="comment-input" className="text-sm" />
           <Button disabled={!canWrite} onClick={submitComment} data-testid="comment-submit" size="sm">Post comment</Button>
         </div>
@@ -1006,13 +1006,13 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   function renderActivity() {
     return (
       <div className="space-y-2">
-        {activity.length === 0 && <div className="text-sm text-slate-500">No activity yet.</div>}
+        {activity.length === 0 && <div className="text-sm text-ink-muted">No activity yet.</div>}
         {activity.map((a) => (
-          <div key={a.log_id || a.audit_id} className="text-xs flex items-center gap-3 py-2 border-b border-slate-100">
-            <span className="font-mono text-slate-400">{new Date(a.at).toLocaleString()}</span>
-            <span className="text-slate-700 font-medium">{a.user_email}</span>
-            <span className="text-slate-500">{a.action}</span>
-            <span className="text-slate-400">{a.entity_type}</span>
+          <div key={a.log_id || a.audit_id} className="text-xs flex items-center gap-3 py-2 border-b border-line">
+            <span className="font-mono text-ink-help">{new Date(a.at).toLocaleString()}</span>
+            <span className="text-ink-secondary font-medium">{a.user_email}</span>
+            <span className="text-ink-muted">{a.action}</span>
+            <span className="text-ink-help">{a.entity_type}</span>
           </div>
         ))}
       </div>
@@ -1038,7 +1038,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <div className="space-y-4">
           {renderFieldsByNames(["applicability", "rationale"])}
           <div className="border border-line rounded-md p-3 bg-surface-subtle text-xs">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help mb-1">Guidance</div>
+            <div className="text-xs font-mono uppercase tracking-widest text-ink-help mb-1">Guidance</div>
             <div className="text-ink-secondary">Applicable = confirmed applies. Potentially = likely but needs confirmation. Needs Review = undetermined. Not Applicable = confirmed does not apply and requires a rationale.</div>
           </div>
         </div>
@@ -1098,14 +1098,14 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid={`${kind}-drawer`}>
-        <SheetHeader className="px-6 py-4 border-b border-slate-200">
+        <SheetHeader className="px-6 py-4 border-b border-line">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400">{singular}</div>
+              <div className="text-xs font-mono uppercase tracking-widest text-ink-help">{singular}</div>
               <SheetTitle className="font-heading text-xl">{isEdit ? (record.title || record.name) : `New ${singular}`}</SheetTitle>
               {isEdit && status && <div className="mt-2">{kind === "tasks" ? <span className="pill pill-neutral">{actionStatus(status)}</span> : <StatusBadge value={status} />}</div>}
             </div>
-            <button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-slate-100" data-testid="drawer-close"><X className="h-4 w-4" /></button>
+            <button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-surface-subtle" data-testid="drawer-close"><X className="h-4 w-4" /></button>
           </div>
           {renderTabList()}
         </SheetHeader>
@@ -1114,7 +1114,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           {renderTabContent()}
         </div>
 
-        <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+        <div className="px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} data-testid="drawer-cancel">Cancel</Button>
           {kind === "reviews" && record?.status === "completed" && canWrite && <Button size="sm" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Add amendment</Button>}
           {tabIsFormEditable && !(kind === "reviews" && record?.status === "completed") && (
@@ -1182,7 +1182,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               <div>
                 <Label className="text-xs text-ink-secondary">Acceptance expiry (required)</Label>
                 <Input type="date" data-testid="accept-expiry" value={acceptForm.expiry_date} onChange={(e) => setAcceptForm({ ...acceptForm, expiry_date: e.target.value })} className="text-sm" />
-                <div className="text-[11px] text-ink-help mt-1">The risk will reappear in "Due for Review" as this date approaches.</div>
+                <div className="text-xs text-ink-help mt-1">The risk will reappear in "Due for Review" as this date approaches.</div>
               </div>
               <div>
                 <Label className="text-xs text-ink-secondary">Compensating controls (optional)</Label>
@@ -1190,7 +1190,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={() => setAcceptOpen(false)}>Cancel</Button>
-                <Button size="sm" onClick={submitAcceptRisk} data-testid="accept-submit" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">Accept risk</Button>
+                <Button size="sm" onClick={submitAcceptRisk} data-testid="accept-submit" className="bg-primary hover:bg-primary/90">Accept risk</Button>
               </div>
             </div>
           </SheetContent>
@@ -1263,7 +1263,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={() => setVerifyOpen(false)}>Cancel</Button>
-                <Button size="sm" onClick={submitVerifyPolicy} data-testid="verify-submit" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+                <Button size="sm" onClick={submitVerifyPolicy} data-testid="verify-submit" className="bg-primary hover:bg-primary/90">
                   Mark as verified
                 </Button>
               </div>
@@ -1286,7 +1286,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               <div>
                 <Label className="text-xs text-ink-secondary">Due date</Label>
                 <Input type="date" value={scheduleForm.due_date} onChange={(e) => setScheduleForm({ ...scheduleForm, due_date: e.target.value })} className="text-sm" data-testid="schedule-due-date" />
-                <div className="text-[11px] text-ink-help mt-1">Defaults to +365 days if left blank.</div>
+                <div className="text-xs text-ink-help mt-1">Defaults to +365 days if left blank.</div>
               </div>
               <div>
                 <Label className="text-xs text-ink-secondary">Owner</Label>
@@ -1313,7 +1313,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={() => setScheduleOpen(false)}>Cancel</Button>
-                <Button size="sm" onClick={submitScheduleReview} data-testid="schedule-submit" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+                <Button size="sm" onClick={submitScheduleReview} data-testid="schedule-submit" className="bg-primary hover:bg-primary/90">
                   Schedule review
                 </Button>
               </div>

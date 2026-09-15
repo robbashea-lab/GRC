@@ -160,7 +160,7 @@ function ComplianceProfile({ clientId }) {
                         ) : null}
                       </div>
                       <span
-                        className={`text-[11px] px-2 py-0.5 rounded-full border ${APPLICABILITY_TONE[r.applicability] || APPLICABILITY_TONE.needs_review}`}
+                        className={`text-xs px-2 py-0.5 rounded-full border ${APPLICABILITY_TONE[r.applicability] || APPLICABILITY_TONE.needs_review}`}
                       >
                         {APPLICABILITY_LABEL[r.applicability] || r.applicability || "—"}
                       </span>
@@ -215,7 +215,7 @@ export default function ClientSettings() {
       <div className="px-8 pt-4 flex items-center gap-3 flex-wrap">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-line bg-surface-card text-sm text-ink-primary" data-testid="client-settings-tenant">
           <Building2 className="h-3.5 w-3.5 text-ink-secondary" />
-          <span className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Active client</span>
+          <span className="text-xs font-mono uppercase tracking-widest text-ink-help">Active client</span>
           <span className="text-ink-help">·</span>
           <span className="font-medium">{currentClient?.name}</span>
         </div>

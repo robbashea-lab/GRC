@@ -339,7 +339,7 @@ export default function AdminAudit() {
         </div>
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="audit-table">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[10px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="date" /></th>
                 <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="client" /></th>
@@ -350,7 +350,7 @@ export default function AdminAudit() {
                 <th className="tbl-cell text-left"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {loading && (<tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-8">Loading…</td></tr>)}
               {!loading && rows.length === 0 && (
                 <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-8"><FilterEmpty table={table} name="events" /></td></tr>
@@ -366,7 +366,7 @@ export default function AdminAudit() {
                     </td>
                     <td className="tbl-cell text-xs">
                       {isPlatform ? (
-                        <span className="inline-flex px-2 py-0.5 rounded-full border border-line text-[10px] uppercase tracking-widest text-ink-secondary bg-surface-subtle">Platform</span>
+                        <span className="inline-flex px-2 py-0.5 rounded-full border border-line text-xs uppercase tracking-widest text-ink-secondary bg-surface-subtle">Platform</span>
                       ) : (
                         <span className="text-ink-primary">{r.client_name || r.client_id}</span>
                       )}
@@ -374,14 +374,14 @@ export default function AdminAudit() {
                     <td className="tbl-cell text-xs">
                       <div className="text-ink-primary">{r.user_name || r.user_email || "—"}</div>
                       {r.user_email && r.user_name && r.user_email !== r.user_name && (
-                        <div className="text-[10px] text-ink-help">{r.user_email}</div>
+                        <div className="text-xs text-ink-help">{r.user_email}</div>
                       )}
                     </td>
                     <td className="tbl-cell text-xs text-ink-primary">{humanAction(r.action)}</td>
                     <td className="tbl-cell text-xs text-ink-secondary">{humanEntity(r.entity_type)}</td>
                     <td className="tbl-cell text-xs">
                       <div className="text-ink-primary truncate max-w-[220px]">{r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
-                      <div className="text-[10px] text-ink-help font-mono truncate max-w-[220px]">{r.entity_id}</div>
+                      <div className="text-xs text-ink-help font-mono truncate max-w-[220px]">{r.entity_id}</div>
                     </td>
                     <td className="tbl-cell text-right">
                       <Button variant="ghost" size="sm" className="h-7 text-xs"
@@ -419,7 +419,7 @@ export default function AdminAudit() {
 function DetailRow({ label, children, mono = false, testid }) {
   return (
     <div className="grid grid-cols-3 gap-3 py-2 border-b border-line last:border-0">
-      <div className="text-[10px] uppercase tracking-widest font-mono text-ink-help pt-1">{label}</div>
+      <div className="text-xs uppercase tracking-widest font-mono text-ink-help pt-1">{label}</div>
       <div className={`col-span-2 text-sm ${mono ? "font-mono text-ink-secondary" : "text-ink-primary"} break-words`} data-testid={testid}>
         {children}
       </div>
@@ -454,7 +454,7 @@ function AuditDetailDrawer({ event, onClose }) {
           </DetailRow>
           <DetailRow label="Client" testid="audit-detail-client">
             {isPlatform ? (
-              <span className="inline-flex px-2 py-0.5 rounded-full border border-line text-[10px] uppercase tracking-widest text-ink-secondary bg-surface-subtle">Platform</span>
+              <span className="inline-flex px-2 py-0.5 rounded-full border border-line text-xs uppercase tracking-widest text-ink-secondary bg-surface-subtle">Platform</span>
             ) : (event.client_name || event.client_id)}
           </DetailRow>
           {!isPlatform && (
@@ -463,7 +463,7 @@ function AuditDetailDrawer({ event, onClose }) {
           <DetailRow label="Performed by" testid="audit-detail-user">
             {event.user_name || event.user_email || "—"}
             {event.user_email && event.user_name && event.user_email !== event.user_name && (
-              <div className="text-[11px] text-ink-help">{event.user_email}</div>
+              <div className="text-xs text-ink-help">{event.user_email}</div>
             )}
           </DetailRow>
           <DetailRow label="Entity" testid="audit-detail-entity">{humanEntity(event.entity_type)}</DetailRow>

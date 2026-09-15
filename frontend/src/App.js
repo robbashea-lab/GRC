@@ -28,7 +28,7 @@ import "@/App.css";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="p-8 text-slate-500 text-sm">Loading…</div>;
+  if (loading) return <div className="p-8 text-ink-muted text-sm">Loading…</div>;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
@@ -105,7 +105,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <AppRouter />
-        <Toaster position="bottom-right" richColors />
+        <Toaster position="bottom-right" toastOptions={{ style: { background: "var(--color-bg-surface)", color: "var(--color-text-primary)", borderColor: "var(--color-border-strong)" } }} />
       </AuthProvider>
     </BrowserRouter>
   );

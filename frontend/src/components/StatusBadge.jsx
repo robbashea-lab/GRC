@@ -14,11 +14,12 @@ const TONE_BY_STATUS = {
   in_remediation: "moderate",
   remediated: "success",
   closed: "neutral",
-  accepted: "info",
+  accepted: "accepted",
   done: "success",
   // Severity / criticality
   low: "neutral",
-  medium: "info",
+  medium: "moderate",
+  moderate: "moderate",
   high: "high",
   critical: "critical",
   // Risk lifecycle
@@ -56,6 +57,7 @@ const TONE_BY_STATUS = {
 };
 
 const CLASS_BY_TONE = {
+  accepted: "pill pill-accepted",
   critical: "pill pill-critical",
   high: "pill pill-high",
   moderate: "pill pill-moderate",

@@ -23,8 +23,8 @@ const LIKELIHOOD_LABELS = { 1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely"
 const IMPACT_LABELS = { 1: "Minimal", 2: "Minor", 3: "Moderate", 4: "Major", 5: "Severe" };
 const LEVEL_TONE = {
   critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "bg-semantic-duesoon-bg text-semantic-duesoon-text border-semantic-duesoon-border",
-  moderate: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
+  high: "pill-high",
+  moderate: "pill-moderate",
   low: "bg-surface-subtle text-ink-secondary border-line",
 };
 
@@ -133,7 +133,7 @@ export default function RiskRegister() {
               <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
             </Button>
             {canWrite && (
-              <Button size="sm" onClick={() => setAddOpen(true)} data-testid="new-risk" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+              <Button size="sm" onClick={() => setAddOpen(true)} data-testid="new-risk" className="bg-primary hover:bg-primary/90">
                 <Plus className="h-3.5 w-3.5 mr-1" /> New Risk
               </Button>
             )}
@@ -150,7 +150,7 @@ export default function RiskRegister() {
         </div>
       </div>
 
-      <div className="px-8 py-4 mt-2 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">
+      <div className="register-toolbar">
         <div className="relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search risks…" className="pl-8 h-9 w-72 text-sm" data-testid="risk-search" />
@@ -160,20 +160,20 @@ export default function RiskRegister() {
             const active = view === v.id;
             return (
               <button key={v.id} onClick={() => { const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',review_due:'next_review'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`risk-view-${v.id}`}
-                className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
+                className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
                 {v.label}
               </button>
             );
           })}
         </div>
-        <div className="text-xs text-slate-500 ml-auto font-mono">{filtered.length} / {rows.length}</div>
+        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
 
       <div className="p-8">
         <TableFilterChips table={table} />
         <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-[11px] font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left font-medium">ID</th>
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="title" /></th>
@@ -186,7 +186,7 @@ export default function RiskRegister() {
                 <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="next_review" /></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {loading && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
               {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((r, i) => {
@@ -194,25 +194,25 @@ export default function RiskRegister() {
                 const tone = LEVEL_TONE[level] || LEVEL_TONE.low;
                 return (
                   <tr key={r.risk_id} onClick={() => setDrawer({ open: true, record: r })} className="row-hover cursor-pointer" data-testid={`risk-row-${i}`}>
-                    <td className="tbl-cell font-mono text-[11px] text-ink-help">{r.display_id || "ID pending"}</td>
+                    <td className="tbl-cell font-mono text-xs text-ink-help">{r.display_id || "ID pending"}</td>
                     <td className="tbl-cell font-medium text-ink-primary min-w-0">
                       <span className="truncate">{r.title}</span>
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{r.category || <span className="text-slate-300">—</span>}</td>
-                    <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-slate-300">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{r.category || <span className="text-ink-help">—</span>}</td>
+                    <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell">
                       {level ? (
                         <span className={`pill capitalize ${tone}`}>{level}</span>
-                      ) : <span className="text-slate-300">—</span>}
+                      ) : <span className="text-ink-help">—</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-slate-300">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-[11px] font-medium capitalize">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-xs font-medium capitalize">
                         {riskStatus(r.status || "open")}
                       </span>
                     </td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">
-                      {r.last_reviewed ? new Date(r.last_reviewed).toLocaleDateString() : <span className="text-slate-300">—</span>}
+                      {r.last_reviewed ? new Date(r.last_reviewed).toLocaleDateString() : <span className="text-ink-help">—</span>}
                     </td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">{r.next_review ? new Date(r.next_review.slice(0,10) + "T12:00:00").toLocaleDateString() : "Not scheduled"}</td>
                   </tr>
@@ -257,7 +257,7 @@ function RiskMatrixModal({ open, onOpenChange }) {
     return (
       <td key={`${l}-${i}`} className={`text-center py-3 border border-line font-mono text-sm ${LEVEL_TONE[level]}`}>
         <div className="font-semibold">{s}</div>
-        <div className="text-[10px] uppercase tracking-widest opacity-80">{level}</div>
+        <div className="text-xs uppercase tracking-widest opacity-80">{level}</div>
       </td>
     );
   };
@@ -272,16 +272,16 @@ function RiskMatrixModal({ open, onOpenChange }) {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                <th className="text-left p-2 text-[11px] font-mono uppercase tracking-widest text-ink-help">Likelihood ↓ / Impact →</th>
+                <th className="text-left p-2 text-xs font-mono uppercase tracking-widest text-ink-help">Likelihood ↓ / Impact →</th>
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <th key={i} className="p-2 text-center text-[11px] font-mono uppercase tracking-widest text-ink-help">{i} · {IMPACT_LABELS[i]}</th>
+                  <th key={i} className="p-2 text-center text-xs font-mono uppercase tracking-widest text-ink-help">{i} · {IMPACT_LABELS[i]}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {[5, 4, 3, 2, 1].map((l) => (
                 <tr key={l}>
-                  <th className="text-left p-2 text-[11px] font-mono uppercase tracking-widest text-ink-help">{l} · {LIKELIHOOD_LABELS[l]}</th>
+                  <th className="text-left p-2 text-xs font-mono uppercase tracking-widest text-ink-help">{l} · {LIKELIHOOD_LABELS[l]}</th>
                   {[1, 2, 3, 4, 5].map((i) => cell(l, i))}
                 </tr>
               ))}
@@ -289,13 +289,13 @@ function RiskMatrixModal({ open, onOpenChange }) {
           </table>
           <div className="grid grid-cols-2 gap-6 text-sm">
             <div>
-              <div className="text-[11px] font-mono uppercase tracking-widest text-ink-help mb-2">Likelihood</div>
+              <div className="text-xs font-mono uppercase tracking-widest text-ink-help mb-2">Likelihood</div>
               {[1, 2, 3, 4, 5].map((n) => (
                 <div key={n} className="flex gap-3 py-0.5"><span className="font-mono text-ink-help w-3">{n}</span><span className="text-ink-primary">{LIKELIHOOD_LABELS[n]}</span></div>
               ))}
             </div>
             <div>
-              <div className="text-[11px] font-mono uppercase tracking-widest text-ink-help mb-2">Impact</div>
+              <div className="text-xs font-mono uppercase tracking-widest text-ink-help mb-2">Impact</div>
               {[1, 2, 3, 4, 5].map((n) => (
                 <div key={n} className="flex gap-3 py-0.5"><span className="font-mono text-ink-help w-3">{n}</span><span className="text-ink-primary">{IMPACT_LABELS[n]}</span></div>
               ))}
@@ -369,7 +369,7 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
           </div>
           <div>
             <Label className="text-xs text-ink-secondary flex items-center justify-between">
-              Likelihood <button type="button" onClick={onOpenMatrix} className="text-[10px] font-mono uppercase tracking-widest text-brand-charcoal hover:underline">Scale</button>
+              Likelihood <button type="button" onClick={onOpenMatrix} className="text-xs font-mono uppercase tracking-widest text-brand-charcoal hover:underline">Scale</button>
             </Label>
             <Select value={String(form.likelihood_score)} onValueChange={(v) => setForm({ ...form, likelihood_score: parseInt(v) })}>
               <SelectTrigger data-testid="new-risk-likelihood" className="text-sm"><SelectValue /></SelectTrigger>
@@ -384,7 +384,7 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
             </Select>
           </div>
           <div className="col-span-2 flex items-center gap-3 py-2 px-3 border border-line rounded-md bg-surface-subtle">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-ink-help">Calculated</div>
+            <div className="text-xs font-mono uppercase tracking-widest text-ink-help">Calculated</div>
             <div className="font-mono text-sm text-ink-primary">Score {score}</div>
             <ArrowRight className="h-3 w-3 text-ink-help" />
             <span className={`pill capitalize ${tone}`} data-testid="new-risk-level">{level}</span>
@@ -414,7 +414,7 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
-          <Button onClick={save} disabled={saving} data-testid="new-risk-save" className="bg-brand-charcoal hover:bg-brand-charcoal-hover">
+          <Button onClick={save} disabled={saving} data-testid="new-risk-save" className="bg-primary hover:bg-primary/90">
             {saving ? "Saving…" : "Add to register"}
           </Button>
         </DialogFooter>
