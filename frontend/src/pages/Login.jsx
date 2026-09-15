@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { PREVIEW_MODE, formatError } from "@/lib/api";
+import { DEMO_AVAILABLE, formatError } from "@/lib/api";
 import { Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, exploreDemo } = useAuth();
   const nav = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,10 +29,11 @@ export default function Login() {
     } finally { setLoading(false); }
   }
 
-  function googleSignIn() {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + "/";
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  async function enterDemo() {
+    setLoading(true);
+    try { await exploreDemo(); nav("/clients"); }
+    catch (err) { toast.error(formatError(err)); }
+    finally { setLoading(false); }
   }
 
   return (
@@ -74,42 +75,15 @@ export default function Login() {
 
           {/* Panel */}
           <div className="mt-7 space-y-4">
-            {PREVIEW_MODE ? (
-              <>
-                <Button data-testid="preview-signin" onClick={submit} disabled={loading} className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
-                  {loading ? "Opening…" : "Sign in"}
-                </Button>
-                <p className="text-xs text-ink-onDarkMuted">Demo workspace · No credentials required. Changes are saved for this session only.</p>
-              </>
-            ) : <>
-            <button
-              data-testid="google-signin"
-              onClick={googleSignIn}
-              className="w-full flex items-center justify-center gap-2.5 rounded-md border border-brand-metallic-3 bg-brand-metallic/40 hover:bg-brand-metallic/70 text-ink-onDark text-sm font-medium h-10 transition-colors"
-            >
-              <svg width="15" height="15" viewBox="0 0 48 48" aria-hidden="true">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-              Continue with Google
-            </button>
-
-            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-ink-onDarkMuted font-mono">
-              <div className="h-px bg-brand-metallic-3 flex-1" /> or with email <div className="h-px bg-brand-metallic-3 flex-1" />
-            </div>
-
             <form onSubmit={submit} className="space-y-3.5">
               <div>
-                <Label htmlFor="email" className="text-[13px] font-medium text-ink-onDarkMuted">Work email</Label>
+                <Label htmlFor="email" className="text-[13px] font-medium text-ink-onDarkMuted">Email</Label>
                 <Input
                   id="email"
                   data-testid="email-input"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
                   required
                   autoComplete="email"
                   className="mt-1 h-10 bg-brand-metallic/25 border-brand-metallic-3 text-ink-onDark placeholder:text-ink-onDarkMuted/60 focus-visible:ring-brand-lime/60 focus-visible:border-brand-lime/60"
@@ -171,6 +145,10 @@ export default function Login() {
               <Lock className="h-3 w-3" />
               Secure access · Authorized users only
             </div>
+            {DEMO_AVAILABLE && <>
+              <div className="flex items-center gap-3 text-xs text-ink-onDarkMuted"><div className="h-px bg-brand-metallic-3 flex-1" />or<div className="h-px bg-brand-metallic-3 flex-1" /></div>
+              <Button type="button" variant="outline" data-testid="explore-demo" onClick={enterDemo} disabled={loading} className="w-full h-10 border-brand-metallic-3 text-ink-onDark hover:bg-brand-metallic">Explore Demo</Button>
+              <p className="text-xs text-ink-onDarkMuted">Explore a preconfigured sample GRC environment. No credentials required.</p>
             </>}
           </div>
 

@@ -2,10 +2,11 @@ import {validateVendor,ensureVendorReviews,syncVendorReview} from './vendors';
 import { ensureRiskReview } from './risks';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
-import fixtures from './fixtures.json';
+import { buildDemoStore } from './demoSeed';
+import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
-export const STORE_KEY = 'grc_interactive_demo_v1';
+export const STORE_KEY = 'grc_interactive_demo_v2';
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
   clients: 'client_id',
@@ -27,18 +28,10 @@ export const ids = {
 export const now = () => new Date().toISOString();
 export const uid = kind => `${kind}_demo_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 export function seedStore() {
-  const db = Object.fromEntries(Object.keys(ids).map(k => [k, []]));
-  for (const [key, value] of Object.entries(fixtures.responses)) {
-    const path = key.split('?')[0].slice(1);
-    if (!ids[path] || !Array.isArray(value)) continue;
-    for (const row of value) if (!db[path].some(r => r[ids[path]] === row[ids[path]])) db[path].push(clone(row));
-  }
-  db.user = clone(fixtures.responses['/auth/me']);
-  db.logs = clone(fixtures.responses['/audit-logs']?.items || []);
-  db.notifications = clone(fixtures.responses['/notifications']?.items || []);
-  db.drafts = {};
-  for (const [key, value] of Object.entries(fixtures.responses)) if (key.startsWith('/onboarding/state?')) db.assessments.push(...clone(value.assessments || []));
-  return initializeRiskIds(db);
+  const db = initializeRiskIds(buildDemoStore(Object.keys(ids)));
+  db.risks.forEach(risk => ensureRiskReview(db, risk));
+  db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
+  return db;
 }
 export function readStore() {
   const saved = sessionStorage.getItem(STORE_KEY);
@@ -221,7 +214,7 @@ export function write(db, kind, body, id) {
   return existing || row;
 }
 export function library(db, type, cid) {
-  const source = Object.entries(fixtures.responses).find(([k]) => k.startsWith(`/onboarding/${type}-library?`))[1];
+  const source = fixtures.responses[`/onboarding/${type}-library`];
   const result = clone(source);
   for (const category of result.categories) for (const item of category.items) {
     for (const key of Object.keys(item)) if (/^(existing_|current_|last_onboarding)|^applicability_rationale$/.test(key)) delete item[key];

@@ -2,7 +2,7 @@ import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY} from './store';
 const api=axios.create({adapter:previewAdapter});
-beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/auth/login');});
+beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const db=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
 test('one Risk obligation, repeatable No Change completion, fixed cadence and historical snapshots',async()=>{
   const cid=(await api.post('/clients',{name:'Risk lifecycle QA'})).data.client_id;

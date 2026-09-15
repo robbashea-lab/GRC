@@ -3,7 +3,7 @@ import { previewAdapter } from './adapter';
 import { aggregateClientDashboard } from '../lib/clientDashboard';
 import { assessedRisk, representedFinding, riskDue } from '../lib/grcWork';
 const api = axios.create({adapter:previewAdapter});
-beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await api.post('/auth/login'); });
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await api.post('/demo/enter'); });
 
 test('decisions cannot be forged through ordinary or bulk edits', async () => {
   const c = (await api.post('/clients',{name:'Decision QA'})).data;

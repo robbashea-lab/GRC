@@ -5,7 +5,7 @@ import { STORE_KEY } from './store';
 const api=axios.create({adapter:previewAdapter});
 const get=async(kind,cid)=>(await api.get(`/${kind}`,{params:{client_id:cid}})).data;
 const state=()=>({version:2,step:3,policies:Object.fromEntries(catalog.policies.map((r,i)=>[r.key,['yes','no','unsure'][i%3]])),requirements:Object.fromEntries(catalog.requirements.map((r,i)=>[r.key,['applies','does_not_apply','unsure'][i%3]])),reviews:catalog.reviews.map(r=>r.key),completed:false});
-beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/auth/login');});
+beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 
 test('revisiting intake preserves verified policy presence and its separate draft lifecycle', async () => {
   const client = (await api.post('/clients', { name: 'Verified policy QA' })).data;

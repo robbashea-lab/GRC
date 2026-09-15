@@ -17,7 +17,7 @@ test("explicit click enters without credentials, refresh persists, logout closes
   localStorage.setItem("grc_token", "stale-real-session");
   const {
     data
-  } = await api.post("/auth/login", {});
+  } = await api.post("/demo/enter", {});
   expect(data.user.role).toBe("super_admin");
   expect(data.access_token).toBeUndefined();
   expect(localStorage.getItem("grc_token")).toBeNull();
@@ -31,7 +31,7 @@ test("explicit click enters without credentials, refresh persists, logout closes
       status: 401
     }
   });
-  await api.post("/auth/login");
+  await api.post("/demo/enter");
   expect((await api.get("/clients")).data.length).toBeGreaterThan(0);
 });
 test("portfolio and every sample client load through the real dashboard loader", async () => {
@@ -39,7 +39,7 @@ test("portfolio and every sample client load through the real dashboard loader",
     data: {
       user
     }
-  } = await api.post("/auth/login");
+  } = await api.post("/demo/enter");
   const {
     data: directory
   } = await api.get("/clients/directory", {
@@ -47,7 +47,7 @@ test("portfolio and every sample client load through the real dashboard loader",
       include_archived: "false"
     }
   });
-  expect(directory.clients.length).toBe(2);
+  expect(directory.clients.length).toBe(5);
   expect(directory.portfolio).toBeTruthy();
   expect(Array.isArray(directory.attention_queue)).toBe(true);
   for (const client of (await api.get("/clients")).data) {
@@ -69,7 +69,7 @@ test("portfolio and every sample client load through the real dashboard loader",
   }
 });
 test("unknown client is rejected and invalid writes do not save", async () => {
-  await api.post("/auth/login");
+  await api.post("/demo/enter");
   await expect(api.get("/dashboard", {
     params: {
       client_id: "missing",
@@ -99,7 +99,7 @@ async function newClient(name = 'Interactive QA') {
   })).data;
 }
 test('new clients initialize empty, persist, edit/archive/restore, and reset', async () => {
-  await api.post('/auth/login');
+  await api.post('/demo/enter');
   const c = await newClient();
   for (const kind of ['reviews', 'findings', 'tasks', 'risks', 'policies', 'vendors', 'contacts', 'requirements', 'evidence', 'exceptions']) expect(await get(kind, c.client_id)).toEqual([]);
   expect((await api.get('/clients')).data).toContainEqual(c);
@@ -126,10 +126,10 @@ test('new clients initialize empty, persist, edit/archive/restore, and reset', a
   });
   expect((await reloaded.get('/clients')).data.some(r => r.name === 'Renamed')).toBe(true);
   await api.post('/demo/reset');
-  expect((await api.get('/clients')).data).toHaveLength(2);
+  expect((await api.get('/clients')).data).toHaveLength(5);
 });
 test('onboarding draft and finalization survive client switching without duplicating or crossing tenants', async () => {
-  await api.post('/auth/login');
+  await api.post('/demo/enter');
   const a = await newClient('A'),
     b = await newClient('B');
   const draft = {
@@ -206,7 +206,7 @@ test('onboarding draft and finalization survive client switching without duplica
   expect(await get('policies', a.client_id)).toEqual(before);
 });
 test('review → finding → task → risk actions persist, update counts, preserve relationships and recurrence', async () => {
-  await api.post('/auth/login');
+  await api.post('/demo/enter');
   const c = await newClient();
   const {
     data: r
@@ -270,7 +270,7 @@ test('review → finding → task → risk actions persist, update counts, prese
   expect(await get('risks', other.client_id)).toEqual([]);
 });
 test('policy approval, vendor review, evidence, comments and invitations update real demo records only', async () => {
-  await api.post('/auth/login');
+  await api.post('/demo/enter');
   const c = await newClient();
   const {
     data: p
@@ -331,7 +331,7 @@ test('policy approval, vendor review, evidence, comments and invitations update 
   expect(await get('evidence', c.client_id)).toEqual([]);
 });
 test('storage failure rejects mutations without pretending to save', async () => {
-  await api.post('/auth/login');
+  await api.post('/demo/enter');
   const before = (await api.get('/clients')).data;
   const spy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
     throw new Error('QuotaExceededError');
@@ -342,10 +342,19 @@ test('storage failure rejects mutations without pretending to save', async () =>
 });
 test('sample portfolio totals and client KPIs match the backend-generated reference snapshots', async () => {
   const fixtures = require('./fixtures.json');
+  const {ids, saveStore} = require('./store');
+  // Keep the historical backend parity test independent of today's demo stories.
+  const legacy = Object.fromEntries(Object.keys(ids).map(k => [k, []]));
+  for (const [key,value] of Object.entries(fixtures.responses)) {
+    const kind=key.split('?')[0].slice(1);
+    if(ids[kind]&&Array.isArray(value))for(const row of value)if(!legacy[kind].some(r=>r[ids[kind]]===row[ids[kind]]))legacy[kind].push(row);
+  }
+  Object.assign(legacy,{user:fixtures.responses['/auth/me'],logs:[],notifications:[],drafts:{}});
+  saveStore(legacy);
   jest.useFakeTimers('modern');
   jest.setSystemTime(new Date(fixtures.generated_at));
   try {
-    await api.post('/auth/login');
+    await api.post('/demo/enter');
     const actual = (await api.get('/clients/directory')).data;
     const expected = fixtures.responses['/clients/directory'];
     for (const key of ['past_due', 'due_30d', 'due_31_90d', 'critical_high_open', 'unassigned', 'clients_requiring_attention']) expect(actual.portfolio[key]).toBe(expected.portfolio[key]);

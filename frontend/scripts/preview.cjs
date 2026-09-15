@@ -10,7 +10,7 @@ if (!["start", "build"].includes(mode)) {
 const env = {
   ...process.env,
   REACT_APP_PREVIEW: "true",
-  REACT_APP_BACKEND_URL: "",
+  REACT_APP_BACKEND_URL: process.env.REACT_APP_BACKEND_URL || "",
 };
 if (mode === "build") {
   // Matches static.directory in the repository's .openai/hosting.json.

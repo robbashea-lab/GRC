@@ -2,9 +2,34 @@
 from test_seed_account_settings import SeedAccountSettingsTests, server
 import httpx
 import secrets
+import os
+from unittest.mock import patch
 
 
 class StandardInitializationTests(SeedAccountSettingsTests):
+    async def test_startup_preserves_all_operational_collections(self):
+        kinds = ['clients', 'reviews', 'findings', 'tasks', 'risks', 'policies',
+                 'vendors', 'evidence', 'contacts', 'requirements', 'assessments',
+                 'assets', 'exceptions', 'comments']
+        before = {}
+        for kind in kinds:
+            self.assertEqual(await server.db[kind].count_documents({}), 0)
+            await server.db[kind].insert_one({
+                '_id': 'existing-' + kind, 'client_id': 'existing-client',
+                'status': 'existing-status', 'notes': 'Preserve customer content',
+            })
+            before[kind] = await server.db[kind].find({}).to_list(None)
+        await server.seed()
+        for kind in kinds:
+            self.assertEqual(await server.db[kind].find({}).to_list(None), before[kind])
+
+    async def test_disabled_bootstrap_does_not_recreate_removed_account(self):
+        await server.db.users.delete_one({'email': 'seed-admin@example.com'})
+        with patch.dict(os.environ, {'ADMIN_EMAIL': '', 'ADMIN_PASSWORD_HASH': ''}):
+            await server.seed()
+        self.assertEqual(await server.db.users.count_documents({}), 0)
+        self.assertEqual(await server.db.clients.count_documents({}), 0)
+
     async def test_authentication_and_empty_workspace(self):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="https://auth.test") as client:
             for email, password, expected in [
