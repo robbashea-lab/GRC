@@ -2,6 +2,12 @@
 
 Date: 2026-09-15. This is a development/staging checkpoint, not production readiness or a completed browser QA sign-off.
 
+## Current release decision: Demo-only preview
+
+Standard sign-in is intentionally deferred in the published-preview build. Email, Password and Sign In remain visible but disabled, with an explicit unavailable notice. The preview runner disables standard authentication and supplies no backend origin. A request-layer guard blocks standard API traffic, including stale session restoration; it never returns a fake authenticated user. Non-preview backend authentication and its tests remain unchanged.
+
+Explore Demo is the supported preview entry. Its five-client session-local dataset, banner and logout behavior are retained. Publishing this Demo-only frontend does not certify or enable standard authentication. The checkpoint below records the earlier API-only work; the standard frontend/backend release gate remains applicable only when standard authentication is deliberately enabled in a later release.
+
 ## Verified without restarting the preview
 
 - 82 self-contained backend tests passed, including real FastAPI handlers with isolated mock databases, tenant authorization, initialization, and account preservation.

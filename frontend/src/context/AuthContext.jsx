@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
-import api, { formatError, PREVIEW_MODE, setWorkspaceMode } from "@/lib/api";
+import api, { formatError, PREVIEW_MODE, setWorkspaceMode, STANDARD_AUTH_ENABLED, STANDARD_AUTH_NOTICE } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 
 const AuthContext = createContext(null);
@@ -11,6 +11,12 @@ export function AuthProvider({ children }) {
   const sessionGeneration = useRef(0);
 
   const checkAuth = useCallback(async () => {
+    if (!STANDARD_AUTH_ENABLED && !PREVIEW_MODE) {
+      localStorage.removeItem("grc_token");
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     const generation = sessionGeneration.current;
     try {
       const { data } = await api.get("/auth/me");
@@ -32,6 +38,7 @@ export function AuthProvider({ children }) {
   }, [checkAuth]);
 
   const login = async (email, password) => {
+    if (!STANDARD_AUTH_ENABLED) throw new Error(STANDARD_AUTH_NOTICE);
     sessionGeneration.current++;
     setUser(null);
     setWorkspaceMode("standard");
@@ -43,6 +50,7 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (email, password, name) => {
+    if (!STANDARD_AUTH_ENABLED) throw new Error(STANDARD_AUTH_NOTICE);
     sessionGeneration.current++;
     setUser(null);
     setWorkspaceMode("standard");

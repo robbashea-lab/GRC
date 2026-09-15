@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { DEMO_AVAILABLE, formatError } from "@/lib/api";
+import { DEMO_AVAILABLE, STANDARD_AUTH_ENABLED, STANDARD_AUTH_NOTICE, formatError } from "@/lib/api";
 import { Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function Login() {
@@ -19,6 +19,7 @@ export default function Login() {
 
   async function submit(e) {
     e.preventDefault();
+    if (!STANDARD_AUTH_ENABLED) return;
     setLoading(true);
     try {
       const u = await login(email, password);
@@ -82,6 +83,8 @@ export default function Login() {
                   id="email"
                   data-testid="email-input"
                   type="email"
+                  disabled={!STANDARD_AUTH_ENABLED}
+                  aria-describedby={!STANDARD_AUTH_ENABLED ? "standard-auth-notice" : undefined}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -92,19 +95,21 @@ export default function Login() {
               <div>
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-[13px] font-medium text-ink-onDarkMuted">Password</Label>
-                  <Link
+                  {STANDARD_AUTH_ENABLED && <Link
                     to="/forgot-password"
                     data-testid="forgot-password-link"
                     className="text-xs text-ink-onDarkMuted hover:text-brand-lime transition-colors"
                   >
                     Forgot password?
-                  </Link>
+                  </Link>}
                 </div>
                 <div className="relative mt-1">
                   <Input
                     id="password"
                     data-testid="password-input"
                     type={showPwd ? "text" : "password"}
+                    disabled={!STANDARD_AUTH_ENABLED}
+                    aria-describedby={!STANDARD_AUTH_ENABLED ? "standard-auth-notice" : undefined}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -113,6 +118,7 @@ export default function Login() {
                   />
                   <button
                     type="button"
+                    disabled={!STANDARD_AUTH_ENABLED}
                     onClick={() => setShowPwd((v) => !v)}
                     aria-label={showPwd ? "Hide password" : "Show password"}
                     data-testid="toggle-password"
@@ -125,7 +131,8 @@ export default function Login() {
               <Button
                 data-testid="submit-auth"
                 type="submit"
-                disabled={loading}
+                disabled={loading || !STANDARD_AUTH_ENABLED}
+                aria-describedby={!STANDARD_AUTH_ENABLED ? "standard-auth-notice" : undefined}
                 className="group w-full h-10 mt-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold tracking-tight border border-transparent transition-all"
               >
                 {loading ? "Signing in…" : (
@@ -136,6 +143,7 @@ export default function Login() {
                 )}
               </Button>
             </form>
+            {!STANDARD_AUTH_ENABLED && <p id="standard-auth-notice" role="status" className="text-xs text-ink-onDarkMuted">{STANDARD_AUTH_NOTICE}</p>}
 
             {/* Security cue */}
             <div
