@@ -38,6 +38,7 @@ from pydantic import BaseModel, Field, EmailStr, ValidationError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
 import action_items
 import risk_ids
+import policy_reviews
 import risk_lifecycle
 import vendor_governance
 import review_occurrences
@@ -1801,11 +1802,15 @@ async def dashboard(
         return bool(lr and lr < twelve_months_ago)
     stale_risks = [r for r in risks if _stale(r)]
 
+    def due_soon(value):
+        return bool(value and now_iso[:10] <= value[:10] <= horizon[:10])
     upcoming_reviews = [r for r in reviews
-                        if r.get("due_date") and now_iso <= r["due_date"] <= horizon
+                        if due_soon(r.get("due_date"))
                         and r.get("status") not in ("completed", "cancelled")]
-    upcoming_tasks_30 = [t for t in tasks if t.get("due_date") and now_iso <= t["due_date"] <= horizon and t.get("status") != "done"]
-    policies_due_30 = [p for p in policies if p.get("next_review_date") and now_iso <= p["next_review_date"] <= horizon]
+    upcoming_tasks_30 = [t for t in tasks if due_soon(t.get("due_date")) and is_open("tasks", t)]
+    linked_policies = await db.reviews.distinct("policy_id", scope_filter)
+    policies_due_30 = [p for p in policies if p.get("policy_id") not in linked_policies
+                       and p.get("status") not in ("retired", "not_applicable") and due_soon(p.get("next_review_date"))]
     due_next_30_count = len(upcoming_reviews) + len(upcoming_tasks_30) + len(policies_due_30)
 
     def _brief(item, kind, id_field, title_field="title"):
@@ -2027,6 +2032,8 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     """One contract for normal and bulk writes; decisions have separate endpoints."""
     previous = existing or {}
     changes = {k: v for k, v in body.items() if v != previous.get(k) and not (v in (None, "") and previous.get(k) in (None, ""))}
+    if kind == "policies" and previous.get("schedule_from_reviews") and set(changes) & {"last_reviewed_at", "next_review_date"}:
+        raise HTTPException(422, "Policy Review dates are controlled by linked Reviews")
     if kind == "vendors":
         if existing and set(changes) & {"next_review","review_frequency","custom_recurrence_days","separate_assurance_review","assurance_review_date","assurance_cadence","contract_review_enabled","contract_lead_days","offboarding_review_date"} and user and user.get("role") not in ("super_admin","platform_admin"):
             raise HTTPException(403, "Only platform administrators can change Review configuration")
@@ -2150,6 +2157,8 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
         doc = review_occurrences.view(doc)
     await db[_coll_for(kind)].insert_one(doc)
     doc.pop("_id", None)
+    if kind == "reviews":
+        await policy_reviews.sync(db, doc)
     await audit(user, "Risk created" if kind == "risks" else "Vendor created" if kind == "vendors" else "create", entity_type, new_id, parsed.get("client_id"))
     if kind == "vendors":
         await vendor_governance.ensure_reviews(db,doc,user,_now())
@@ -2271,6 +2280,8 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         await vendor_governance.ensure_reviews(db,doc,user,_now())
     if kind == "reviews" and doc.get("vendor_id"):
         await vendor_governance.sync_completion(db,doc)
+    if kind == "reviews":
+        await policy_reviews.sync(db, doc)
     if kind == "reviews" and doc.get("risk_id"):
         await db.risks.update_one({"risk_id":doc["risk_id"],"client_id":doc["client_id"]}, {"$set":{
             "next_review":doc.get("due_date") if doc.get("status") not in ("completed","cancelled") else None,
@@ -3124,6 +3135,7 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     if prior:
         await risk_lifecycle.sync_completion(db, review)
         await vendor_governance.sync_completion(db, review)
+        await policy_reviews.sync(db, review)
         return {"review": review_occurrences.view(review), "occurrence": prior, "spawned": None}
     await _review_selection(review, body.occurrence_id, write=True)
     current = review_occurrences.view(review)
@@ -3174,6 +3186,9 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     updated = await db.reviews.find_one({"review_id": review_id}, {"_id": 0})
     await risk_lifecycle.sync_completion(db, updated)
     await vendor_governance.sync_completion(db, updated)
+    await policy_reviews.sync(db, updated)
+    if review.get("policy_id"):
+        await audit(user, "Policy Review completed", "policy", review["policy_id"], review["client_id"], meta={"review_id":review_id,"occurrence_id":body.occurrence_id})
     if review.get("vendor_id"):
         await audit(user, "Vendor Review completed", "vendor", review["vendor_id"],review["client_id"],meta={"review_id":review_id,"occurrence_id":body.occurrence_id,"purpose":review.get("vendor_purpose") or "vendor"})
     if review.get("risk_id"):

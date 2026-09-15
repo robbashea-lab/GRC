@@ -180,7 +180,7 @@ async def clients_directory(
                 "entity_type": entity_type,
                 "client_id": cid,
                 "client_name": c.get("name"),
-                "id": r.get("review_id") or r.get("finding_id") or r.get("risk_id") or r.get("task_id"),
+                "id": r.get({"review":"review_id", "finding":"finding_id", "risk":"risk_id", "task":"task_id"}[entity_type]),
                 "title": r.get("title"),
                 "due_date": due,
                 "owner_id": r.get("owner_id") or r.get("assignee_id"),
@@ -198,7 +198,12 @@ async def clients_directory(
         for r in rs: _push("review",  r, CLOSED_REVIEW)
         for f in fs:
             if not represented_finding(f, ts): _push("finding", f, CLOSED_FINDING)
-        for r in ks: _push("risk", {**r, "next_review": risk_due(r)}, CLOSED_RISK, due_field="next_review")
+        for r in ks:
+            due = risk_due(r)
+            represented = due and any(v.get("risk_id") == r.get("risk_id") and v.get("status") not in CLOSED_REVIEW
+                                     and (v.get("due_date") or "")[:10] == due[:10] for v in rs)
+            if not represented:
+                _push("risk", {**r, "next_review": due}, CLOSED_RISK, due_field="next_review")
         for t in ts:
             _push("task", t, CLOSED_TASK)
 

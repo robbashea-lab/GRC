@@ -51,6 +51,7 @@ export function reviewAction(db, id, name, body) {
       : {status:'completed',current_occurrence_id:occurrenceId(review),completion_date:completed.completed_at})
   }, id);
   reviewEvent(db, review, 'Review completed', completed.occurrence_id, {period:completed.period, outcome:completed.outcome, finding_count:findings.length});
+  if(review.policy_id) audit(db,'Policy Review completed','policies',record(db,'policies',review.policy_id),{review_id:id,occurrence_id:completed.occurrence_id});
   if(review.vendor_id) audit(db,'Vendor Review completed','vendors',record(db,'vendors',review.vendor_id),{review_id:id,occurrence_id:completed.occurrence_id});
   if (review.risk_id) audit(db,completed.outcome,'risks',record(db,'risks',review.risk_id),{review_id:id,occurrence_id:completed.occurrence_id});
   if (next) reviewEvent(db, review, 'Next occurrence scheduled', completed.occurrence_id, {due_date:next});
