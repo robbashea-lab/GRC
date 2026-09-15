@@ -3,7 +3,7 @@ import {previewAdapter} from './adapter';
 import {STORE_KEY} from './store';
 import {assuranceStatus,vendorSignals,vendorPlans} from '../lib/vendorGovernance';
 const api=axios.create({adapter:previewAdapter});
-beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/auth/login');});
+beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const db=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
 
 test('one Vendor obligation, contract lead time and fixed annual completion; inactive retains everything',async()=>{

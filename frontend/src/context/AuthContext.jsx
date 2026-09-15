@@ -1,18 +1,22 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import api, { formatError } from "@/lib/api";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import api, { formatError, PREVIEW_MODE, setWorkspaceMode } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const sessionGeneration = useRef(0);
 
   const checkAuth = useCallback(async () => {
+    const generation = sessionGeneration.current;
     try {
       const { data } = await api.get("/auth/me");
-      setUser(data);
+      if (generation === sessionGeneration.current) setUser(data);
     } catch {
-      setUser(null);
+      if (generation === sessionGeneration.current) setUser(null);
     } finally {
       setLoading(false);
     }
@@ -28,6 +32,10 @@ export function AuthProvider({ children }) {
   }, [checkAuth]);
 
   const login = async (email, password) => {
+    sessionGeneration.current++;
+    setUser(null);
+    setWorkspaceMode("standard");
+    queryClient.clear();
     const { data } = await api.post("/auth/login", { email, password });
     if (data.access_token) localStorage.setItem("grc_token", data.access_token);
     setUser(data.user);
@@ -35,6 +43,10 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (email, password, name) => {
+    sessionGeneration.current++;
+    setUser(null);
+    setWorkspaceMode("standard");
+    queryClient.clear();
     const { data } = await api.post("/auth/register", { email, password, name });
     if (data.access_token) localStorage.setItem("grc_token", data.access_token);
     setUser(data.user);
@@ -42,15 +54,33 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    sessionGeneration.current++;
     try { await api.post("/auth/logout"); } catch (e) { void e; }
-    localStorage.removeItem("grc_token");
+    setWorkspaceMode("standard");
+    queryClient.clear();
     setUser(null);
+  };
+
+  const exploreDemo = async () => {
+    sessionGeneration.current++;
+    setUser(null);
+    setWorkspaceMode("demo");
+    queryClient.clear();
+    try {
+      const { data } = await api.post("/demo/enter");
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      setWorkspaceMode("standard");
+      setUser(null);
+      throw error;
+    }
   };
 
   const refresh = checkAuth;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh, setUser, formatError }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, exploreDemo, workspaceMode: PREVIEW_MODE ? "demo" : "standard", refresh, setUser, formatError }}>
       {children}
     </AuthContext.Provider>
   );

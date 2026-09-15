@@ -1,0 +1,34 @@
+let api, setWorkspaceMode, http;
+beforeEach(()=>{
+  jest.resetModules();localStorage.clear();sessionStorage.clear();
+  process.env.REACT_APP_PREVIEW='true';
+  ({default:api,setWorkspaceMode}=require('./api'));
+  http=jest.fn(async config=>({data:{standard:true},status:200,statusText:'OK',headers:{},config}));
+  api.defaults.adapter=http;
+});
+test('standard mode uses HTTP; demo has no bearer token or HTTP writes',async()=>{
+  localStorage.setItem('grc_token','generated-test-token');
+  await api.get('/clients');expect(http).toHaveBeenCalledTimes(1);
+  expect(http.mock.calls[0][0].headers.Authorization).toBe('Bearer generated-test-token');
+  setWorkspaceMode('demo');await api.post('/demo/enter');
+  const {data:clients}=await api.get('/clients');expect(clients).toHaveLength(5);
+  await api.post('/clients',{name:'Isolated test client'});
+  expect(http).toHaveBeenCalledTimes(1);expect(localStorage.getItem('grc_token')).toBeNull();
+  setWorkspaceMode('standard');expect((await api.get('/clients')).data).toEqual({standard:true});
+  expect(http).toHaveBeenCalledTimes(2);
+  expect(http.mock.calls[1][0].headers.Authorization).toBeUndefined();
+});
+test('mode transitions clear client selection and demo entry; refresh preserves explicit mode',async()=>{
+  setWorkspaceMode('demo');await api.post('/demo/enter');
+  localStorage.setItem('grc_client_id','demo_brawndo');
+  jest.resetModules();expect(require('./api').PREVIEW_MODE).toBe(true);
+  require('./api').setWorkspaceMode('standard');
+  expect(sessionStorage.getItem('grc_demo_entered')).toBeNull();
+  expect(localStorage.getItem('grc_client_id')).toBeNull();
+  jest.resetModules();expect(require('./api').PREVIEW_MODE).toBe(false);
+});
+test('demo adapter cannot authenticate an email/password request',async()=>{
+  setWorkspaceMode('demo');
+  await expect(api.post('/auth/login',{email:'test@example.test',password:'test-only-invalid'})).rejects.toMatchObject({response:{status:401}});
+  expect(http).not.toHaveBeenCalled();
+});

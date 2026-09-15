@@ -1,0 +1,401 @@
+{
+  "responses": {
+    "/baseline/templates": {
+      "policies": [
+        "Information Security Policy",
+        "Access Control Policy",
+        "Acceptable Use Policy",
+        "Incident Response Plan",
+        "Business Continuity Plan",
+        "Vendor Management Policy",
+        "Data Classification & Handling Policy",
+        "Change Management Policy"
+      ],
+      "risks": [
+        "Ransomware disruption to core systems",
+        "Phishing leading to account compromise",
+        "Third-party vendor outage",
+        "Insider misuse of privileged access",
+        "Data loss due to unencrypted device",
+        "Regulatory non-compliance"
+      ],
+      "review_templates": [
+        {
+          "title": "Annual Risk Assessment",
+          "review_type": "risk_assessment",
+          "recurrence": "annual",
+          "due_days": 60
+        },
+        {
+          "title": "Quarterly Access Review",
+          "review_type": "access",
+          "recurrence": "quarterly",
+          "due_days": 30
+        },
+        {
+          "title": "Vendor Risk Review",
+          "review_type": "vendor",
+          "recurrence": "annual",
+          "due_days": 45
+        },
+        {
+          "title": "Patch & Vulnerability Review",
+          "review_type": "vulnerability",
+          "recurrence": "monthly",
+          "due_days": 15
+        },
+        {
+          "title": "Policy Review — Information Security Policy",
+          "review_type": "policy",
+          "recurrence": "annual",
+          "due_days": 60
+        },
+        {
+          "title": "BCP / DR Tabletop Exercise",
+          "review_type": "bcp_dr",
+          "recurrence": "semiannual",
+          "due_days": 90
+        },
+        {
+          "title": "Incident Response Tabletop",
+          "review_type": "incident_response",
+          "recurrence": "annual",
+          "due_days": 90
+        },
+        {
+          "title": "Security Awareness Training Review",
+          "review_type": "awareness",
+          "recurrence": "quarterly",
+          "due_days": 30
+        },
+        {
+          "title": "Legal, Regulatory & Contractual Requirements Review",
+          "review_type": "requirements",
+          "recurrence": "annual",
+          "due_days": 90
+        },
+        {
+          "title": "External Penetration Test",
+          "review_type": "penetration_test",
+          "recurrence": "annual",
+          "due_days": 120
+        }
+      ]
+    },
+    "/onboarding/policy-library": {
+      "categories": [
+        {
+          "name": "Core Governance",
+          "items": [
+            {
+              "category": "Core Governance",
+              "name": "Information Security Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Core Governance",
+              "name": "Risk Management Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Core Governance",
+              "name": "Access Control & Identity Management Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Core Governance",
+              "name": "Acceptable Use Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Core Governance",
+              "name": "Change Management Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Core Governance",
+              "name": "Vendor / Third-Party Risk Management Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Core Governance",
+              "name": "Data Classification & Handling Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Core Governance",
+              "name": "Data Retention & Secure Disposal Policy",
+              "applicability": "common_baseline"
+            }
+          ]
+        },
+        {
+          "name": "Security Operations",
+          "items": [
+            {
+              "category": "Security Operations",
+              "name": "Vulnerability & Patch Management Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Security Operations",
+              "name": "Configuration Management Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Security Operations",
+              "name": "Security Awareness & Training Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Security Operations",
+              "name": "Backup & Restoration Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Security Operations",
+              "name": "Cryptography & Key Management Policy",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Security Operations",
+              "name": "Logging & Monitoring Policy",
+              "applicability": "common_baseline"
+            }
+          ]
+        },
+        {
+          "name": "Business Resilience",
+          "items": [
+            {
+              "category": "Business Resilience",
+              "name": "Incident Response Plan",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Business Resilience",
+              "name": "Business Continuity Plan",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Business Resilience",
+              "name": "Disaster Recovery Plan",
+              "applicability": "common_baseline"
+            },
+            {
+              "category": "Business Resilience",
+              "name": "Business Impact Analysis",
+              "applicability": "common_baseline"
+            }
+          ]
+        },
+        {
+          "name": "Physical, Workforce & Technology",
+          "items": [
+            {
+              "category": "Physical, Workforce & Technology",
+              "name": "Physical & Environmental Security Policy",
+              "applicability": "consider_based_on_applicability"
+            },
+            {
+              "category": "Physical, Workforce & Technology",
+              "name": "Remote Work / Telework Policy",
+              "applicability": "consider_based_on_applicability"
+            },
+            {
+              "category": "Physical, Workforce & Technology",
+              "name": "Mobile Device / BYOD Policy",
+              "applicability": "consider_based_on_applicability"
+            },
+            {
+              "category": "Physical, Workforce & Technology",
+              "name": "Cloud Security Policy",
+              "applicability": "consider_based_on_applicability"
+            },
+            {
+              "category": "Physical, Workforce & Technology",
+              "name": "Secure Development / SDLC Policy",
+              "applicability": "consider_based_on_applicability"
+            }
+          ]
+        },
+        {
+          "name": "Privacy & Data Protection",
+          "items": [
+            {
+              "category": "Privacy & Data Protection",
+              "name": "Privacy / Data Protection Policy",
+              "applicability": "common_baseline"
+            }
+          ]
+        }
+      ]
+    },
+    "/onboarding/requirements-library": {
+      "categories": [
+        {
+          "name": "Assurance / Certification",
+          "items": [
+            {
+              "category": "Assurance / Certification",
+              "name": "SOC 2",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Assurance / Certification",
+              "name": "ISO/IEC 27001",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Assurance / Certification",
+              "name": "CMMC",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Assurance / Certification",
+              "name": "PCI DSS",
+              "applicability_hint": "consider"
+            }
+          ]
+        },
+        {
+          "name": "Legal / Regulatory / Privacy",
+          "items": [
+            {
+              "category": "Legal / Regulatory / Privacy",
+              "name": "HIPAA / HITECH",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Legal / Regulatory / Privacy",
+              "name": "State Privacy / Breach Notification Requirements",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Legal / Regulatory / Privacy",
+              "name": "GDPR",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Legal / Regulatory / Privacy",
+              "name": "Other privacy / data-protection requirements",
+              "applicability_hint": "consider"
+            }
+          ]
+        },
+        {
+          "name": "Contractual",
+          "items": [
+            {
+              "category": "Contractual",
+              "name": "Customer security requirements",
+              "applicability_hint": "common"
+            },
+            {
+              "category": "Contractual",
+              "name": "Customer security addendums",
+              "applicability_hint": "common"
+            },
+            {
+              "category": "Contractual",
+              "name": "Contractual penetration-testing requirements",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Contractual",
+              "name": "Contractual BCP/DR requirements",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Contractual",
+              "name": "Contractual security-assessment requirements",
+              "applicability_hint": "consider"
+            }
+          ]
+        },
+        {
+          "name": "Insurance",
+          "items": [
+            {
+              "category": "Insurance",
+              "name": "Cyber Insurance requirements",
+              "applicability_hint": "common"
+            }
+          ]
+        },
+        {
+          "name": "Other",
+          "items": [
+            {
+              "category": "Other",
+              "name": "Industry-specific requirements",
+              "applicability_hint": "consider"
+            },
+            {
+              "category": "Other",
+              "name": "Internal governance requirements",
+              "applicability_hint": "common"
+            }
+          ]
+        }
+      ],
+      "role_templates": [
+        {
+          "role": "Primary GRC / Security Contact",
+          "hint": "Day-to-day contact for the GRC program."
+        },
+        {
+          "role": "Executive Sponsor",
+          "hint": "Senior leader overseeing the program."
+        },
+        {
+          "role": "IT Lead",
+          "hint": "Primary IT / technology contact."
+        },
+        {
+          "role": "Information Security Lead",
+          "hint": "If different from IT."
+        },
+        {
+          "role": "Risk Management Contact",
+          "hint": "Coordinates organizational risk management."
+        },
+        {
+          "role": "Vendor / Third-Party Contact",
+          "hint": "Owns vendor relationships or vendor risk."
+        },
+        {
+          "role": "Business Continuity / Disaster Recovery Lead",
+          "hint": "Continuity & resilience lead."
+        },
+        {
+          "role": "Incident Response Lead",
+          "hint": "Client-side incident response lead."
+        },
+        {
+          "role": "HR Contact",
+          "hint": "Workforce / security process coordination."
+        },
+        {
+          "role": "Legal / Privacy Contact",
+          "hint": "Legal, privacy, or compliance counsel."
+        }
+      ],
+      "assessment_types": [
+        "Penetration Test",
+        "Risk Assessment",
+        "SOC 2 Assessment / Audit",
+        "ISO Audit / Assessment",
+        "CMMC Assessment",
+        "Vulnerability Assessment",
+        "Internal Audit",
+        "Customer Security Assessment",
+        "Vendor Assessment",
+        "Compliance Assessment",
+        "BCP/DR Exercise",
+        "Incident Response Exercise",
+        "Other"
+      ]
+    }
+  }
+}

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { previewAdapter } from './adapter';
 import { readStore, saveStore } from './store';
 const api=axios.create({adapter:previewAdapter});
-beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/auth/login');});
+beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');});
 test('manual work starts Open and retains evidence, comments and completion metadata',async()=>{
   const cid=(await api.get('/clients')).data[0].client_id;
   const t=(await api.post('/tasks',{client_id:cid,title:'Disable stale accounts',source_type:'audit',priority:'high'})).data;

@@ -1,7 +1,7 @@
 import catalog from '@/lib/onboardingCatalog.json';
 import { baselineState, saveBaseline } from './baseline';
 import axios from 'axios';
-import fixtures from './fixtures.json';
+import fixtures from './demoConfiguration.json';
 import { clone, readStore, saveStore, resetStore, ids, list, record, write, library, audit, uid, now } from './store';
 import { portfolio, dashboard } from './summaries';
 import { onboard, action } from './workflows';
@@ -36,20 +36,21 @@ export async function previewAdapter(config) {
   };
   try {
     const db = readStore();
-    if (path === '/auth/login' && method === 'post') {
+    if (path === '/auth/login') return fail(401, 'Use standard sign-in for email and password authentication.');
+    if (path === '/demo/enter' && method === 'post') {
       localStorage.removeItem('grc_token');
-      localStorage.setItem(SESSION, 'true');
+      sessionStorage.setItem(SESSION, 'true');
       return respond({
         user: db.user
       });
     }
     if (path === '/auth/logout') {
-      localStorage.removeItem(SESSION);
+      sessionStorage.removeItem(SESSION);
       return respond({
         ok: true
       });
     }
-    if (localStorage.getItem(SESSION) !== 'true') return fail(401, 'Click Sign in to open the demo preview.');
+    if (sessionStorage.getItem(SESSION) !== 'true') return fail(401, 'Choose Explore Demo to enter the sample workspace.');
     if (params.client_id && !db.clients.some(c => c.client_id === params.client_id)) return fail(404, 'Demo client not found.');
     const parts = path.split('/').filter(Boolean),
       [kind, id, name] = parts;
@@ -155,7 +156,7 @@ export async function previewAdapter(config) {
       });
       if (kind === 'audit-logs') {
         if (id === 'facets') return respond({
-          ...fixtures.responses[path],
+          actions: [...new Set(db.logs.map(l => l.action))],
           clients: db.clients.map(c => ({
             client_id: c.client_id,
             name: c.name
