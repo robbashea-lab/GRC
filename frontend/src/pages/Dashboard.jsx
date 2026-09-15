@@ -7,8 +7,8 @@ import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { AlertOctagon, ShieldAlert, Clock, CalendarClock, FileDown, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { FileDown, X } from "lucide-react";
+import DashboardManagement from "@/components/DashboardManagement";
 import { toast } from "sonner";
 import DashboardScopeSelector from "@/components/DashboardScopeSelector";
 import RecordDrawer from "@/components/RecordDrawer";
@@ -16,62 +16,7 @@ import { SCHEMAS } from "@/lib/schemas";
 import { loadClientDashboard } from "@/lib/loadClientDashboard";
 import { calendarDay } from "@/lib/clientDashboard";
 
-// Attach owner / unassigned + optional extra filters so click-through from a scoped dashboard preserves context.
-function withScopeParams(path, scope, extras = {}) {
-  const params = new URLSearchParams();
-  if (scope && scope.kind === "unassigned") params.set("unassigned", "1");
-  else if (scope && (scope.kind === "mine" || scope.kind === "user")) {
-    params.set("owner", scope.user_id || "__me__");
-  }
-  Object.entries(extras || {}).forEach(([k, v]) => { if (v) params.set(k, v); });
-  return params.toString() ? `${path}?${params.toString()}` : path;
-}
-
-function KpiCard({ label, value, hint, icon: Icon, tone = "neutral", testid, to }) {
-  const iconTones = {
-    critical: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
-    high: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
-    duesoon: "text-semantic-duesoon-text bg-semantic-duesoon-bg border-semantic-duesoon-border",
-    info: "text-semantic-info bg-semantic-info-bg border-semantic-info-border",
-    neutral: "text-ink-secondary bg-surface-subtle border-line",
-  };
-  const inner = (
-    <>
-      <div className="flex items-start justify-between">
-        <div className="metric-label">{label}</div>
-        <div className={`h-6 w-6 rounded flex items-center justify-center ${iconTones[tone] || iconTones.neutral}`}><Icon className="h-4 w-4" /></div>
-      </div>
-      <div className="metric-value">{value}</div>
-    </>
-  );
-  const cls = "metric-card bg-surface-card border border-line rounded-md flex flex-col hover:border-line-strong transition-colors";
-  return to ? (
-    <Link to={to} data-testid={testid} className={cls} title={hint}>{inner}</Link>
-  ) : (
-    <div data-testid={testid} className={cls}>{inner}</div>
-  );
-}
-
-function Panel({ title, subtitle, icon: Icon, action, children, testid }) {
-  return (
-    <section data-testid={testid} className="bg-surface-card border border-line rounded-lg overflow-hidden">
-      <header className="px-5 py-3.5 border-b border-line flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <div className="text-sm font-heading font-semibold text-ink-primary flex items-center gap-2">
-            {Icon && <Icon className="h-4 w-4 text-ink-secondary" />} {title}
-          </div>
-          {subtitle && <div className="text-xs text-ink-muted mt-0.5">{subtitle}</div>}
-        </div>
-        {action}
-      </header>
-      {children}
-    </section>
-  );
-}
-
-function Empty({ children }) {
-  return <div className="px-5 py-6 text-center text-sm text-ink-muted">{children}</div>;
-}
+const ORGANIZATION_SCOPE = {kind:'org'};
 
 function OperationalTable({ items, upcoming = false, onOpen }) {
   const { user } = useAuth();
@@ -120,10 +65,10 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [revision, setRevision] = useState(0);
   const [selected, setSelected] = useState(null);
-  // Default scope per role: client contributors → their own work; everyone else → the org view.
-  const [scope, setScope] = useState(() => (
-    user?.role === "client_contributor" ? { kind: "mine" } : { kind: "org" }
-  ));
+  const [scopeSelection, setScopeSelection] = useState(null);
+  const scope = scopeSelection?.clientId === currentClientId ? scopeSelection.value : ORGANIZATION_SCOPE;
+  const setScope = value => setScopeSelection({clientId:currentClientId,value});
+  const [frameworkSelection, setFrameworkSelection] = useState(null);
 
   const requestKey = JSON.stringify([currentClientId, scope, user?.user_id, revision]);
   useEffect(() => {
@@ -143,6 +88,13 @@ export default function Dashboard() {
   if (error?.key === requestKey) return <div className="p-8 space-y-3" role="alert"><p>{error.message}</p><Button variant="outline" onClick={() => setRevision(n => n + 1)}>Retry dashboard</Button></div>;
   if (!data) return <div className="p-8 text-sm text-ink-muted">Loading dashboard…</div>;
 
+  const framework = frameworkSelection?.clientId === currentClientId && data.programs?.some(p=>p.key===frameworkSelection.key) ? frameworkSelection.key : null;
+  const view = framework ? {kind:"framework",key:framework} : scope;
+  function changeView(next) {
+    setFrameworkSelection(next.kind==="framework"?{clientId:currentClientId,key:next.key}:null);
+    setSelected(null);
+    setScope(next.kind==="framework"?{kind:"org"}:next);
+  }
   const clientSubtitle = scope.kind === "org"
     ? `${currentClient?.name || "All clients"} · Current GRC program status, priorities, and upcoming activity`
     : `${currentClient?.name || "All clients"} · ${data.scope_label || ""}`;
@@ -169,8 +121,8 @@ export default function Dashboard() {
         title="GRC Program Overview"
         subtitle={clientSubtitle}
         action={
-          <div className="flex items-center gap-2">
-            <DashboardScopeSelector clientId={currentClientId} value={scope} onChange={setScope} />
+          <div className="flex flex-wrap items-center gap-2">
+            <DashboardScopeSelector clientId={currentClientId} value={view} onChange={changeView} programs={data.programs || []} />
             <Button variant="outline" onClick={downloadBoardReport} data-testid="download-board-report">
               <FileDown className="h-4 w-4 mr-1" /> Board Report PDF
             </Button>
@@ -199,27 +151,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="p-8 space-y-6">
-        {/* Row 1 — Priority summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard testid="kpi-overdue" to={withScopeParams("/action-items", scope, {view:"overdue"})} label="Overdue Actions" value={data.kpis.overdue_actions} hint="Past due and still requiring action" icon={Clock} tone="critical" />
-          <KpiCard testid="kpi-critical" to={withScopeParams("/findings", scope, { severity: "critical,high", status: "open" })} label="Critical / High Findings" value={data.kpis.critical_high_findings} hint="Highest-priority findings requiring attention" icon={AlertOctagon} tone="critical" />
-          <KpiCard testid="kpi-risks" to={withScopeParams("/risks", scope)} label="Significant Risks" value={data.kpis.significant_risks} hint="Open risks requiring continued attention" icon={ShieldAlert} tone="high" />
-          <KpiCard testid="kpi-due-30" to={scope.kind !== "org" ? withScopeParams("/tasks", scope) : "/calendar"} label="Due in Next 30 Days" value={data.kpis.due_next_30} hint="Upcoming reviews and actions" icon={CalendarClock} tone="duesoon" />
-        </div>
-
-        <Panel testid="panel-needs-attention" title="Needs Attention"
-          subtitle="Highest-priority GRC items requiring action or a decision.">
-          {data.attention.length ? <OperationalTable items={data.attention} onOpen={setSelected} />
-            : <Empty>No items require immediate attention right now.</Empty>}
-        </Panel>
-        <Panel testid="panel-watch" title="Upcoming & Watch Items"
-          subtitle="Upcoming GRC activity, reviews, deadlines, and items to keep on the radar."
-          action={<span className="text-xs text-ink-help whitespace-nowrap">Next 90 Days</span>}>
-          {data.upcoming.length ? <OperationalTable items={data.upcoming} upcoming onOpen={setSelected} />
-            : <Empty>No material upcoming GRC items are currently scheduled.</Empty>}
-        </Panel>
-      </div>
+      <DashboardManagement key={requestKey+":"+framework} posture={data.posture} programs={data.programs} framework={framework} onOpen={setSelected} Table={OperationalTable} />
       {selected && selected.record.client_id === currentClientId && (
         <RecordDrawer key={selected.key} open onOpenChange={open => { if (!open) setSelected(null); }}
           kind={selected.kind} record={selected.record} schema={SCHEMAS[selected.kind]?.fields}

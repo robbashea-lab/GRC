@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import Dashboard from "./Dashboard";
 import { useOrg } from "@/context/OrgContext";
 import { loadClientDashboard } from "@/lib/loadClientDashboard";
+import { aggregateClientDashboard } from "@/lib/clientDashboard";
+import { dashboardPosture } from "@/lib/dashboardPosture";
 
 jest.mock("@/context/OrgContext", () => ({ useOrg: jest.fn() }));
 jest.mock("@/context/AuthContext", () => {
@@ -15,7 +17,7 @@ jest.mock("react-router-dom", () => ({ Link: ({ children, to, ...props }) => <a 
 jest.mock("@/components/DashboardScopeSelector", () => () => null);
 jest.mock("@/components/RecordDrawer", () => props => <div data-testid="record-drawer">{props.kind}:{props.record.task_id}:{props.clientId}</div>);
 
-const empty = { kpis: { overdue_actions: 0, critical_high_findings: 0, significant_risks: 0, due_next_30: 0 }, members: [], attention: [], upcoming: [] };
+const empty = { members: [], programs: [], posture: dashboardPosture(aggregateClientDashboard({}, {clientId:'a'})) };
 let root, container;
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
@@ -25,22 +27,36 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 
-test("new/minimal client renders zero cards and exact empty states, with only two operational panels", async () => {
+test("minimal client has zero cards, three health panels and a compact priority section", async () => {
   loadClientDashboard.mockResolvedValue(empty);
   await act(async () => root.render(<Dashboard />));
   expect(container.textContent).toContain("No items require immediate attention right now.");
-  expect(container.textContent).toContain("No material upcoming GRC items are currently scheduled.");
-  expect(container.querySelectorAll("section")).toHaveLength(2);
+  expect(container.textContent).not.toContain("Upcoming & Watch");
+  expect(container.textContent).not.toContain("Compliance & Readiness");
+  expect(container.querySelectorAll("section")).toHaveLength(4);
   for (const id of ["kpi-overdue", "kpi-critical", "kpi-risks", "kpi-due-30"]) expect(container.querySelector(`[data-testid="${id}"]`).textContent).toContain("0");
 });
 
 test("populated client row opens the existing authoritative record drawer", async () => {
   const item = { key: "tasks:t:due", id: "t", kind: "tasks", title: "Remediate", type: "Action Item", action: "Open Action", priority_label: "Overdue", owner: "Test Owner", status: "open", due_date: "2026-09-01", record: { task_id: "t", client_id: "a" } };
-  loadClientDashboard.mockResolvedValue({ ...empty, attention: [item] });
+  loadClientDashboard.mockResolvedValue({ ...empty, posture: {...empty.posture, priority:[item], pastDue:[item]} });
   await act(async () => root.render(<Dashboard />));
   const button = [...container.querySelectorAll("button")].find(b => b.textContent === "Open Action");
   await act(async () => button.click());
   expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe("tasks:t:a");
+});
+
+test("cards open exact contributing rows; the priority table is capped at five", async () => {
+  const items=Array.from({length:7},(_,i)=>({key:`tasks:${i}:due`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',action:'Open Action',owner:'Unassigned',status:'open',priority_label:'Overdue',record:{task_id:String(i),client_id:'a'}}));
+  loadClientDashboard.mockResolvedValue({...empty,posture:{...empty.posture,pastDue:items,priority:items}});
+  await act(async()=>root.render(<Dashboard/>));
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(5);
+  await act(async()=>container.querySelector('[data-testid="kpi-overdue"]').click());
+  const drawer=document.querySelector('[data-testid="dashboard-drilldown"]');
+  expect(drawer.textContent).toContain('7 contributing records');
+  expect(drawer.querySelectorAll('tbody tr')).toHaveLength(7);
+  await act(async()=>[...drawer.querySelectorAll('button')].find(b=>b.textContent==='Open Action').click());
+  expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe('tasks:0:a');
 });
 
 test("tenant switching hides old data and ignores a late response from the previous tenant", async () => {

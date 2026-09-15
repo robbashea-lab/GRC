@@ -116,5 +116,5 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
   }
   const keys = new Set(attention.map(r => r.key));
   const upcoming = unique.filter(r => !keys.has(r.key) && r.day > currentDay + 14 && r.day <= currentDay + 90).sort(compare);
-  return { attention, upcoming };
+  return { attention, upcoming, obligations: unique, activeRecords: Object.fromEntries(Object.entries(active).map(([kind, rows]) => [kind, rows.filter(r => scoped(r, kind))])) };
 }
