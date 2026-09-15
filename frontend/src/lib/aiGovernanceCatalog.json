@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "statuses": ["draft", "under_review", "active", "suspended", "retired"],
+  "purposes": ["Internal Productivity", "Decision Support", "Automated Decision-Making", "Customer-Facing", "Employee-Facing", "Content Generation", "Software / Code Generation", "Analytics", "Security", "HR / Employment", "Other"],
+  "data_types": ["Public", "Internal", "Confidential", "Highly Confidential", "PII", "PHI", "Financial", "Customer Data", "Employee Data", "Credentials", "Source Code / IP", "Production Data", "No Sensitive Data"],
+  "access": ["Production System Access", "API / Integration Access", "Privileged Access", "Autonomous Action Capability"],
+  "roles": ["User / Deployer", "Developer", "AI System Provider", "Model Provider", "Integrator", "Other"],
+  "risk_topics": ["Bias / Discrimination", "Privacy / Data Exposure", "Security", "Prompt Injection", "Data / Model Poisoning", "Inaccurate Output / Hallucination", "Human Overreliance", "Lack of Human Oversight", "Intellectual Property", "Confidentiality", "Vendor Dependency", "AI Supply Chain", "Autonomous / Agentic Action", "Transparency", "Regulatory / Legal", "Model Change / Drift", "Availability / Business Dependency", "Inappropriate Employee Use"],
+  "intake_indicators": ["Third-party AI tools internally", "Develops AI systems/models", "AI-enabled customer products/services", "HR / Employment", "Consequential decisions", "Sensitive/personal data", "Production/system access", "Autonomous/agentic AI", "Other"],
+  "questions": [
+    {"key":"consequential","label":"Influences consequential decisions?","high":true},
+    {"key":"sensitive","label":"Processes personal or sensitive information?"},
+    {"key":"customer_facing","label":"Interacts directly with customers/users?"},
+    {"key":"autonomous","label":"Can take actions without human approval?","high":true},
+    {"key":"production","label":"Has production/system access?"},
+    {"key":"material_harm","label":"Could incorrect output materially affect people, security, finances or operations?","high":true},
+    {"key":"employment","label":"Used for employment/HR decisions?","high":true},
+    {"key":"third_party","label":"A third-party provider is involved?"},
+    {"key":"oversight","label":"Meaningful human review/oversight is present?","protective":true},
+    {"key":"external_output","label":"Output is externally published or relied upon operationally?"}
+  ],
+  "relationship_classes": ["Context", "Explicit requirement", "Required activity — cadence not prescribed", "Supports requirement", "Recommended governance practice", "Omnisciente default"]
+}

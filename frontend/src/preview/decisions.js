@@ -7,6 +7,8 @@ export function guardEdit(kind, body, existing = {}, user) {
     if(existing.vendor_id&&['next_review','review_frequency','custom_recurrence_days','separate_assurance_review','assurance_review_date','assurance_cadence','contract_review_enabled','contract_lead_days','offboarding_review_date'].some(k=>k in changes)&&user&&!['super_admin','platform_admin'].includes(user.role)) throw new Error('Only platform administrators can change Review configuration.');
   }
   if (kind === 'reviews') {
+    if('ai_system_id' in changes)throw new Error('Establish AI Reviews from AI Governance');
+    if(existing.ai_system_id&&existing.status==='cancelled'&&Object.keys(changes).some(k=>k!=='notes'))throw new Error('Cancelled AI Reviews remain historical');
     if('vendor_id' in changes||'vendor_purpose' in changes) throw new Error('Establish Vendor Reviews from the Vendor schedule.');
     if(existing.vendor_purpose==='contract'&&['due_date','recurrence','custom_recurrence_days'].some(k=>k in changes)) throw new Error('Configure Contract Renewal Review through Vendor contract dates and lead time.');
     if('risk_id' in changes) throw new Error('Establish Risk Reviews from the Risk schedule.');

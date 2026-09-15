@@ -1,6 +1,7 @@
 // Schemas & column definitions for each entity kind
 
 export const SCHEMAS = {
+  ai_systems: {title:'AI Governance',columns:[],fields:[]},
   reviews: {
     title: "Reviews",
     subtitle: "Recurring review obligations and completion history.",
@@ -16,6 +17,7 @@ export const SCHEMAS = {
     fields: [
       { name: "title", label: "Title", required: true },
       { name: "review_type", label: "Review type", type: "select", options: [
+        {value:'ai_governance',label:'AI Governance'},
         { value: "asset", label: "Asset" }, { value: "software", label: "Software" },
         { value: "access", label: "Access" }, { value: "vendor", label: "Vendor" },
         { value: "policy", label: "Policy" }, { value: "risk", label: "Risk" },
@@ -91,6 +93,7 @@ export const SCHEMAS = {
       { name: "title", label: "Title", required: true },
       { name: "category", label: "Category", type: "select", options: [
         { value: "cybersecurity", label: "Cybersecurity" }, { value: "operational", label: "Operational" },
+        {value:'ai_governance',label:'AI Governance'},
         { value: "vendor", label: "Vendor / Third-party" }, { value: "compliance", label: "Compliance" },
         { value: "financial", label: "Financial" },
       ]},
