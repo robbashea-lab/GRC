@@ -37,6 +37,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ValidationError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
 import action_items
+import remediation
 import risk_ids
 import policy_reviews
 import risk_lifecycle
@@ -2163,6 +2164,8 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
         doc = review_occurrences.view(doc)
     await db[_coll_for(kind)].insert_one(doc)
     doc.pop("_id", None)
+    if kind == "tasks":
+        await remediation.synchronize(db, doc, user, _now, audit)
     if kind == "reviews":
         await policy_reviews.sync(db, doc)
     await audit(user, "Risk created" if kind == "risks" else "Vendor created" if kind == "vendors" else "create", entity_type, new_id, parsed.get("client_id"))
@@ -2274,11 +2277,7 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     if kind in ("reviews", "tasks") and not result.matched_count:
         raise HTTPException(409, "Review changed; reload before saving")
     if kind == "tasks" and existing.get("finding_id"):
-        work = await db.tasks.find({"finding_id": existing["finding_id"], "client_id": existing["client_id"]}, {"status": 1}).to_list(2000)
-        finding_status = "remediated" if work and all(t.get("status") in ("done", "cancelled") for t in work) else "in_remediation"
-        changed_finding = await db.findings.update_one({"finding_id": existing["finding_id"], "client_id": existing["client_id"], "status": {"$in": ["open", "in_remediation", "remediated"], "$ne": finding_status}}, {"$set": {"status": finding_status, "updated_at": _now()}})
-        if changed_finding.modified_count:
-            await audit(user, "Related Finding moved to Pending Validation" if finding_status == "remediated" else "Related Finding moved to In Remediation", "task", item_id, existing["client_id"], meta={"finding_id": existing["finding_id"]})
+        await remediation.synchronize(db, existing, user, _now, audit)
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})
     if kind == "risks":
         await risk_lifecycle.ensure_review(db, doc, user, _now())

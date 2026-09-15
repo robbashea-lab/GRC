@@ -15,6 +15,7 @@ import {assessedRisk} from '@/lib/grcWork';
 import {recordUuid} from '@/lib/recordUuid';
 import StatusBadge from './StatusBadge';
 import RecordDrawer from './RecordDrawer';
+import { historicalRemediation } from '@/lib/remediation';
 
 const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
@@ -33,6 +34,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const [tab,setTab] = useState('Overview'), [busy,setBusy] = useState(false);
   const [members,setMembers] = useState([]), [related,setRelated] = useState({});
   const [policies,setPolicies] = useState([]);
+  const [showHistorical,setShowHistorical] = useState(false);
   const [evidence,setEvidence] = useState([]), [comments,setComments] = useState([]), [activity,setActivity] = useState([]);
   const [comment,setComment] = useState(''), [finding,setFinding] = useState(null), [linked,setLinked] = useState(null);
   const riskBase=useRef(null);
@@ -123,7 +125,10 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const chooseHistory = o => { generation.current++; setSelected(o); setTab('Overview'); setEvidence([]); setComments([]); setActivity([]); };
   const configuration = selected || form;
   const derived = reviewSchedule(configuration);
-  const relatedRows = Object.entries(related).flatMap(([kind,items]) => ['findings','tasks','policies','vendors','risks','framework_assessments'].includes(kind) ? items.map(item => ({kind,item})) : []);
+  useEffect(()=>{setShowHistorical(false);},[rid,oid,open]);
+  const allRelatedRows = Object.entries(related).flatMap(([kind,items]) => ['findings','tasks','policies','vendors','risks','framework_assessments'].includes(kind) ? items.map(item => ({kind,item})) : []);
+  const historicalCount = allRelatedRows.filter(({kind,item})=>historicalRemediation(kind,item)).length;
+  const relatedRows = allRelatedRows.filter(({kind,item})=>showHistorical || !historicalRemediation(kind,item));
   return <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid="reviews-drawer">
       <SheetHeader className="px-6 py-4 border-b border-line">
@@ -165,6 +170,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         </>}
         {tab === 'Related' && <>
           {!selected && <p className="text-sm text-ink-secondary">Linked records across this Review's occurrences.</p>}
+          {historicalCount > 0 && <Button size="sm" variant="ghost" aria-pressed={showHistorical} onClick={()=>setShowHistorical(v=>!v)}>{showHistorical ? 'Hide completed / closed records' : `Show completed / closed records (${historicalCount})`}</Button>}
           {!relatedRows.length ? <p className="text-sm text-ink-help">No related records.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Type / ID','Item','Owner','Status / Completion','Due'].map(t => <th key={t} className="text-left py-2 pr-3">{t}</th>)}</tr></thead><tbody>{relatedRows.map(({kind,item}) => {
             const id = item[{tasks:'task_id',findings:'finding_id',policies:'policy_id',vendors:'vendor_id',risks:'risk_id',framework_assessments:'framework_assessment_id'}[kind]];
             return <tr key={id} className="border-t border-line"><td className="py-3 pr-3 text-xs">{{tasks:'Action Item',findings:'Finding',policies:'Policy',vendors:'Vendor',risks:'Risk',framework_assessments:'CIS Safeguard'}[kind]}<button className="block underline break-all text-left" onClick={() => setLinked({kind,record:item})}>{id}</button></td><td className="pr-3"><button className="underline text-left" onClick={() => setLinked({kind,record:item})}>{item.title || item.name}</button></td><td className="pr-3">{person(item.assignee_id || item.owner_id)}</td><td className="pr-3"><StatusBadge value={kind==='tasks'&&item.status==='done'?'completed':item.status} />{(item.completed_at || item.closed_at || item.validated_at) && <div className="text-xs mt-1">{item.status === 'closed' ? 'Closed' : 'Completed'} {date(item.completed_at || item.closed_at || item.validated_at)} by {person(item.completed_by || item.closed_by || item.validated_by)}</div>}</td><td>{date(item.due_date)}</td></tr>;
