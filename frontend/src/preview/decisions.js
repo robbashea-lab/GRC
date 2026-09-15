@@ -1,5 +1,6 @@
 import rules from '../lib/grcRules.json';
 export function guardEdit(kind, body, existing = {}, user) {
+  if(Object.keys(body).some(k=>k.startsWith('framework_')))throw new Error('Framework relationships are managed through the framework workspace');
   const changes = Object.fromEntries(Object.entries(body).filter(([k,v]) => JSON.stringify(v) !== JSON.stringify(existing[k]) && !((v == null || v === '') && (existing[k] == null || existing[k] === ''))));
   if (kind === 'policies' && existing.schedule_from_reviews && ['last_reviewed_at','next_review_date'].some(k => k in changes)) throw new Error('Policy Review dates are controlled by linked Reviews.');
   if(kind==='vendors') {

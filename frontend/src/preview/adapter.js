@@ -1,5 +1,6 @@
 import catalog from '@/lib/onboardingCatalog.json';
 import {aiRequest,aiRelated} from './aiGovernance';
+import {frameworkRequest,frameworkReverse,frameworkScope} from './frameworks';
 import { baselineState, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './demoConfiguration.json';
@@ -56,11 +57,19 @@ export async function previewAdapter(config) {
     const parts = path.split('/').filter(Boolean),
       [kind, id, name] = parts;
     const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
+    // Existing Evidence/comments/related endpoints keep the assessment's tenant boundary.
+    const parentType=params.entity_type||body.entity_type||params.linked_type||body.linked_type;
+    if(['framework_assessment','framework_assessments'].includes(parentType)){
+      const parent=record(db,'framework_assessments',params.entity_id||body.entity_id||params.linked_id||body.linked_id);
+      frameworkScope(db,parent.client_id);
+      if(method!=='get'&&!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
+    }
     const save = data => {
       saveStore(db);
       return respond(data);
     };
     if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
+    if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));
     if (path === '/demo/reset' && method === 'post') {
       resetStore();
       return respond({
@@ -148,7 +157,7 @@ export async function previewAdapter(config) {
           if(o) review.linked_occurrence={period:o.period,status:o.status};
           else if((review.current_occurrence_id||'occ_'+review.review_id)===source.occurrence_id) review.linked_occurrence={period:reviewView(review).period,status:review.status};
         }
-        return respond(aiRelated(db,params.entity_type,source,data));
+        return respond(frameworkReverse(db,params.entity_type,source,aiRelated(db,params.entity_type,source,data)));
       }
       if (kind === 'comments') return respond(db.comments.filter(r => r.entity_type === params.entity_type && r.entity_id === params.entity_id
         && (!['review','reviews'].includes(params.entity_type) || belongsToOccurrence(r,record(db,'reviews',params.entity_id),params.occurrence_id))));
@@ -219,6 +228,7 @@ export async function previewAdapter(config) {
       policy_responses: body.responses
     }));
     if (path === '/bulk') {
+      if(body.kind==='framework_assessments')throw new Error('Use the framework workspace; assessment history is retained');
       if (!ids[body.kind] || !body.ids?.length) throw new Error('Select records first.');
       const rows = body.ids.map(i => record(db, body.kind, i));
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
@@ -376,6 +386,7 @@ export async function previewAdapter(config) {
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});
       if (kind === 'evidence' && body.linked_type === 'task') audit(db,'Evidence uploaded','tasks',record(db,'tasks',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
+      if (kind === 'evidence' && ['framework_assessment','framework_assessments'].includes(body.linked_type)) audit(db,'Evidence linked','framework_assessments',record(db,'framework_assessments',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
       return save(kind === 'users' && !id ? {
         user: result,
         simulated: true,

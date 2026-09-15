@@ -140,6 +140,15 @@
       ],
       "category": "Certification / Contractual Programs",
       "description": "CMMC is a Department of Defense cybersecurity certification and contractual compliance program."
+    },
+    {
+      "key": "soc-2",
+      "name": "SOC 2 Type 2",
+      "aliases": [
+        "SOC 2",
+        "SOC2"
+      ],
+      "category": "Certification / Contractual Programs"
     }
   ],
   "reviews": [

@@ -10,3 +10,5 @@
 !frontend/src/lib
 !frontend/src/lib/grcRules.json
 !frontend/src/lib/aiGovernanceCatalog.json
+!frontend/src/lib/frameworkDefinitions.json
+!frontend/src/lib/cisIG1.json

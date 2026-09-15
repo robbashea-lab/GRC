@@ -20,10 +20,12 @@ import {riskLevel} from "@/lib/grcWork";
 import RelatedAssessment from "./RelatedAssessment";
 import ReviewDrawer from "./ReviewDrawer";
 import AIDrawer from './AIDrawer';
+import FrameworkDrawer from './FrameworkDrawer';
 import ActionItemFields from "./ActionItemFields";
 import { taskSource, SOURCE_RECORDS, actionStatus } from "@/lib/actionItems";
 
 const ID_FIELD = {
+  framework_assessments:'framework_assessment_id',
   ai_systems:'ai_system_id',
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
   vendors: "vendor_id", assets: "asset_id", tasks: "task_id", exceptions: "exception_id",
@@ -95,6 +97,7 @@ function toDateInput(v) {
 }
 
 export default function RecordDrawer(props) {
+  if(props.kind==='framework_assessments')return <FrameworkDrawer {...props}/>;
   if(props.kind==='ai_systems') return <AIDrawer {...props}/>;
   if(props.kind==="assessments") return <RelatedAssessment {...props}/>;
   return props.kind === "reviews" ? <ReviewDrawer {...props} /> : <EntityDrawer {...props} />;
@@ -935,7 +938,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {Object.entries(related).map(([k, list]) => (
           (list && list.length > 0) ? (
             <div key={k}>
-              <Link to={k==='ai_systems'?'/ai-governance':k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k==='ai_systems'?'AI Governance':k} <ArrowUpRight className="h-3 w-3" /></Link>
+              <Link to={k==='framework_assessments'?'/compliance/cis-ig1':k==='ai_systems'?'/ai-governance':k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k==='framework_assessments'?'CIS Safeguards':k==='ai_systems'?'AI Governance':k} <ArrowUpRight className="h-3 w-3" /></Link>
               <ul className="mt-1.5 space-y-1.5">
                 {list.map((it) => (
                   <li key={it[ID_FIELD[k]] || it.evidence_id || it.assessment_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-surface-subtle" data-testid={`related-${k}-item`}>

@@ -3,10 +3,11 @@ import { useOrg } from '@/context/OrgContext';
 import { useCompliance } from '@/context/ComplianceContext';
 import { COMPLIANCE_SECTIONS } from '@/lib/complianceNavigation';
 import PageHeader from '@/components/PageHeader';
+import FrameworkWorkspace from './FrameworkWorkspace';
 
 export default function ComplianceWorkspace() {
   const { requirementKey } = useParams();
-  const { currentClient } = useOrg();
+  const { currentClient,currentClientId } = useOrg();
   const { items, loading, error } = useCompliance();
   const section = COMPLIANCE_SECTIONS.find(item => item.key === requirementKey);
   const enabled = items.some(item => item.key === requirementKey);
@@ -15,8 +16,9 @@ export default function ComplianceWorkspace() {
     <div className="p-8">
       {loading ? <p role="status" className="text-sm text-ink-muted">Loading client requirement…</p>
         : error ? <p role="alert" className="text-sm text-ink-muted">Unable to load this client requirement. {error}</p>
+        : section?.implemented ? <FrameworkWorkspace key={currentClientId+':'+requirementKey} frameworkKey={requirementKey} clientId={currentClientId}/>
         : <div className="bg-surface-card border border-line rounded-lg p-8 text-sm text-ink-muted">
-          {enabled ? `No ${section.label} content has been configured for this client yet.` : 'This requirement is not enabled in this client’s completed onboarding.'}
+          {enabled ? 'Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.' : 'This requirement is not enabled in this client’s completed onboarding.'}
         </div>}
     </div>
   </div>;

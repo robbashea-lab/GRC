@@ -1,0 +1,991 @@
+{
+  "framework": "cis-ig1",
+  "version": "8.1",
+  "implementation_group": 1,
+  "verified_on": "2026-09-15",
+  "count_source": "https://www.cisecurity.org/controls/implementation-groups/ig1",
+  "requirements": [
+    {
+      "id": "1.1",
+      "title": "Establish and Maintain Detailed Enterprise Asset Inventory",
+      "control": 1,
+      "control_name": "Inventory and Control of Enterprise Assets",
+      "type": "recurring",
+      "source_cadence": "At least every six months",
+      "guidance": "Record authorized devices, ownership and network identifiers; reconcile inventory changes.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "1.2",
+      "title": "Address Unauthorized Assets",
+      "control": 1,
+      "control_name": "Inventory and Control of Enterprise Assets",
+      "type": "operational",
+      "source_cadence": "Weekly or more often",
+      "guidance": "Remove, block or isolate devices that lack authorization.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "2.1",
+      "title": "Establish and Maintain a Software Inventory",
+      "control": 2,
+      "control_name": "Inventory and Control of Software Assets",
+      "type": "recurring",
+      "source_cadence": "At least every six months",
+      "guidance": "Track installed software, ownership, licensing and business purpose.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "2.2",
+      "title": "Ensure Authorized Software is Currently Supported",
+      "control": 2,
+      "control_name": "Inventory and Control of Software Assets",
+      "type": "recurring",
+      "source_cadence": "Monthly or more often",
+      "guidance": "Check vendor support and document necessary unsupported-software exceptions.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "2.3",
+      "title": "Address Unauthorized Software",
+      "control": 2,
+      "control_name": "Inventory and Control of Software Assets",
+      "type": "recurring",
+      "source_cadence": "Monthly or more often",
+      "guidance": "Review unauthorized installations and record removal or approved exceptions.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "3.1",
+      "title": "Establish and Maintain a Data Management Process",
+      "control": 3,
+      "control_name": "Data Protection",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Document data ownership, sensitivity, handling, retention and disposal.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "3.2",
+      "title": "Establish and Maintain a Data Inventory",
+      "control": 3,
+      "control_name": "Data Protection",
+      "type": "recurring",
+      "source_cadence": "At least annually",
+      "guidance": "Locate sensitive information and keep its inventory current.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "3.3",
+      "title": "Configure Data Access Control Lists",
+      "control": 3,
+      "control_name": "Data Protection",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Limit data permissions to justified business needs.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "3.4",
+      "title": "Enforce Data Retention",
+      "control": 3,
+      "control_name": "Data Protection",
+      "type": "state",
+      "source_cadence": "Enterprise-defined retention limits",
+      "guidance": "Apply documented minimum and maximum retention periods.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "3.5",
+      "title": "Securely Dispose of Data",
+      "control": 3,
+      "control_name": "Data Protection",
+      "type": "event",
+      "source_cadence": "At disposal",
+      "guidance": "Select disposal methods appropriate to information sensitivity.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "3.6",
+      "title": "Encrypt Data on End-User Devices",
+      "control": 3,
+      "control_name": "Data Protection",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Protect sensitive endpoint information with device encryption.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "4.1",
+      "title": "Establish and Maintain a Secure Configuration Process",
+      "control": 4,
+      "control_name": "Secure Configuration of Enterprise Assets and Software",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Document secure device and software configurations and maintain baselines.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "4.2",
+      "title": "Establish and Maintain a Secure Configuration Process for Network Infrastructure",
+      "control": 4,
+      "control_name": "Secure Configuration of Enterprise Assets and Software",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Maintain documented secure network-device configurations.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "4.3",
+      "title": "Configure Automatic Session Locking on Enterprise Assets",
+      "control": 4,
+      "control_name": "Secure Configuration of Enterprise Assets and Software",
+      "type": "state",
+      "source_cadence": "Inactivity: general OS ≤15 minutes; mobile ≤2 minutes",
+      "guidance": "Enforce appropriate inactivity lock settings.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "4.4",
+      "title": "Implement and Manage a Firewall on Servers",
+      "control": 4,
+      "control_name": "Secure Configuration of Enterprise Assets and Software",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Enable supported server firewall protections.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "4.5",
+      "title": "Implement and Manage a Firewall on End-User Devices",
+      "control": 4,
+      "control_name": "Secure Configuration of Enterprise Assets and Software",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Use default-deny endpoint firewall rules with justified exceptions.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "4.6",
+      "title": "Securely Manage Enterprise Assets and Software",
+      "control": 4,
+      "control_name": "Secure Configuration of Enterprise Assets and Software",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Use secure administrative channels and controlled configuration changes.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "4.7",
+      "title": "Manage Default Accounts on Enterprise Assets and Software",
+      "control": 4,
+      "control_name": "Secure Configuration of Enterprise Assets and Software",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Disable or secure preconfigured accounts.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "5.1",
+      "title": "Establish and Maintain an Inventory of Accounts",
+      "control": 5,
+      "control_name": "Account Management",
+      "type": "recurring",
+      "source_cadence": "Quarterly or more often",
+      "guidance": "Inventory accounts and verify continuing authorization.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "5.2",
+      "title": "Use Unique Passwords",
+      "control": 5,
+      "control_name": "Account Management",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Use distinct passwords; source guidance distinguishes MFA and non-MFA accounts.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "5.3",
+      "title": "Disable Dormant Accounts",
+      "control": 5,
+      "control_name": "Account Management",
+      "type": "operational",
+      "source_cadence": "After 45 days of inactivity, where supported",
+      "guidance": "Detect inactive accounts and disable or remove them.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "5.4",
+      "title": "Restrict Administrator Privileges to Dedicated Administrator Accounts",
+      "control": 5,
+      "control_name": "Account Management",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Separate privileged administration from ordinary computing.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "6.1",
+      "title": "Establish an Access Granting Process",
+      "control": 6,
+      "control_name": "Access Control Management",
+      "type": "event",
+      "source_cadence": "Hire or role change",
+      "guidance": "Document and follow access approval and provisioning.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "6.2",
+      "title": "Establish an Access Revoking Process",
+      "control": 6,
+      "control_name": "Access Control Management",
+      "type": "event",
+      "source_cadence": "Immediately at termination, revocation or role change",
+      "guidance": "Remove access promptly while preserving needed audit history.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "6.3",
+      "title": "Require MFA for Externally-Exposed Applications",
+      "control": 6,
+      "control_name": "Access Control Management",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Enforce supported MFA for externally accessible applications.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "6.4",
+      "title": "Require MFA for Remote Network Access",
+      "control": 6,
+      "control_name": "Access Control Management",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Protect remote network entry with MFA.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "6.5",
+      "title": "Require MFA for Administrative Access",
+      "control": 6,
+      "control_name": "Access Control Management",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Apply supported MFA to privileged accounts.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "7.1",
+      "title": "Establish and Maintain a Vulnerability Management Process",
+      "control": 7,
+      "control_name": "Continuous Vulnerability Management",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Document how vulnerabilities are identified and managed.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "7.2",
+      "title": "Establish and Maintain a Remediation Process",
+      "control": 7,
+      "control_name": "Continuous Vulnerability Management",
+      "type": "recurring",
+      "source_cadence": "Monthly or more often",
+      "guidance": "Review a documented risk-prioritized remediation process.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "7.3",
+      "title": "Perform Automated Operating System Patch Management",
+      "control": 7,
+      "control_name": "Continuous Vulnerability Management",
+      "type": "operational",
+      "source_cadence": "Monthly or more often",
+      "guidance": "Automate operating-system updates and manage failed deployments.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "7.4",
+      "title": "Perform Automated Application Patch Management",
+      "control": 7,
+      "control_name": "Continuous Vulnerability Management",
+      "type": "operational",
+      "source_cadence": "Monthly or more often",
+      "guidance": "Automate application updates and manage failed deployments.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "8.1",
+      "title": "Establish and Maintain an Audit Log Management Process",
+      "control": 8,
+      "control_name": "Audit Log Management",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Document log collection, retention and review expectations.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "8.2",
+      "title": "Collect Audit Logs",
+      "control": 8,
+      "control_name": "Audit Log Management",
+      "type": "state",
+      "source_cadence": "As defined by the logging process",
+      "guidance": "Enable required audit events across assets.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "8.3",
+      "title": "Ensure Adequate Audit Log Storage",
+      "control": 8,
+      "control_name": "Audit Log Management",
+      "type": "state",
+      "source_cadence": "As defined by the logging process",
+      "guidance": "Size and manage storage to meet documented logging needs.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "9.1",
+      "title": "Ensure Use of Only Fully Supported Browsers and Email Clients",
+      "control": 9,
+      "control_name": "Email and Web Browser Protections",
+      "type": "state",
+      "source_cadence": "Current supported vendor versions",
+      "guidance": "Restrict browser and email software to current supported releases.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "9.2",
+      "title": "Use DNS Filtering Services",
+      "control": 9,
+      "control_name": "Email and Web Browser Protections",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Block known malicious domains for local and remote endpoints.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "10.1",
+      "title": "Deploy and Maintain Anti-Malware Software",
+      "control": 10,
+      "control_name": "Malware Defenses",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Maintain endpoint malware protection.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "10.2",
+      "title": "Configure Automatic Anti-Malware Signature Updates",
+      "control": 10,
+      "control_name": "Malware Defenses",
+      "type": "operational",
+      "source_cadence": "Automatic updates",
+      "guidance": "Keep malware detection signatures automatically updated.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "10.3",
+      "title": "Disable Autorun and Autoplay for Removable Media",
+      "control": 10,
+      "control_name": "Malware Defenses",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Prevent removable media from executing automatically.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "11.1",
+      "title": "Establish and Maintain a Data Recovery Process",
+      "control": 11,
+      "control_name": "Data Recovery",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Document recovery scope, priorities, backup procedures and protection.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "11.2",
+      "title": "Perform Automated Backups",
+      "control": 11,
+      "control_name": "Data Recovery",
+      "type": "operational",
+      "source_cadence": "Weekly or more often, based on sensitivity",
+      "guidance": "Automate in-scope backups and investigate failures.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "11.3",
+      "title": "Protect Recovery Data",
+      "control": 11,
+      "control_name": "Data Recovery",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Protect backups consistently with original-data sensitivity.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "11.4",
+      "title": "Establish and Maintain an Isolated Instance of Recovery Data",
+      "control": 11,
+      "control_name": "Data Recovery",
+      "type": "state",
+      "source_cadence": "No fixed review cadence",
+      "guidance": "Maintain a backup copy isolated from primary-system compromise.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "12.1",
+      "title": "Ensure Network Infrastructure is Up-to-Date",
+      "control": 12,
+      "control_name": "Network Infrastructure Management",
+      "type": "recurring",
+      "source_cadence": "Monthly or more often",
+      "guidance": "Verify network software support and maintain current infrastructure.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "14.1",
+      "title": "Establish and Maintain a Security Awareness Program",
+      "control": 14,
+      "control_name": "Security Awareness and Skills Training",
+      "type": "training",
+      "source_cadence": "Training at hire and annually; content review annually and on significant change",
+      "guidance": "Maintain an awareness program and review content; track workforce participation.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "14.2",
+      "title": "Train Workforce Members to Recognize Social Engineering Attacks",
+      "control": 14,
+      "control_name": "Security Awareness and Skills Training",
+      "type": "training",
+      "source_cadence": "Within the awareness program; see 14.1",
+      "guidance": "Teach recognition of phishing and other social manipulation.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "14.3",
+      "title": "Train Workforce Members on Authentication Best Practices",
+      "control": 14,
+      "control_name": "Security Awareness and Skills Training",
+      "type": "training",
+      "source_cadence": "Within the awareness program; see 14.1",
+      "guidance": "Teach secure authentication and credential handling.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "14.4",
+      "title": "Train Workforce on Data Handling Best Practices",
+      "control": 14,
+      "control_name": "Security Awareness and Skills Training",
+      "type": "training",
+      "source_cadence": "Within the awareness program; see 14.1",
+      "guidance": "Teach safe storage, sharing and disposal of sensitive information.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "14.5",
+      "title": "Train Workforce Members on Causes of Unintentional Data Exposure",
+      "control": 14,
+      "control_name": "Security Awareness and Skills Training",
+      "type": "training",
+      "source_cadence": "Within the awareness program; see 14.1",
+      "guidance": "Explain accidental disclosure and prevention.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "14.6",
+      "title": "Train Workforce Members on Recognizing and Reporting Security Incidents",
+      "control": 14,
+      "control_name": "Security Awareness and Skills Training",
+      "type": "training",
+      "source_cadence": "Within the awareness program; see 14.1",
+      "guidance": "Teach workers to identify and report potential incidents.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "14.7",
+      "title": "Train Workforce on How to Identify and Report if Their Enterprise Assets are Missing Security Updates",
+      "control": 14,
+      "control_name": "Security Awareness and Skills Training",
+      "type": "training",
+      "source_cadence": "Within the awareness program; see 14.1",
+      "guidance": "Teach recognition and reporting of failed security updates.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "14.8",
+      "title": "Train Workforce on the Dangers of Connecting to and Transmitting Enterprise Data Over Insecure Networks",
+      "control": 14,
+      "control_name": "Security Awareness and Skills Training",
+      "type": "training",
+      "source_cadence": "Within the awareness program; see 14.1",
+      "guidance": "Cover insecure connections and safe remote/home networking.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "15.1",
+      "title": "Establish and Maintain an Inventory of Service Providers",
+      "control": 15,
+      "control_name": "Service Provider Management",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Inventory providers, classifications and accountable contacts.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "17.1",
+      "title": "Designate Personnel to Manage Incident Handling",
+      "control": 17,
+      "control_name": "Incident Response Management",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Identify incident leadership, backup coverage and internal oversight.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "17.2",
+      "title": "Establish and Maintain Contact Information for Reporting Security Incidents",
+      "control": 17,
+      "control_name": "Incident Response Management",
+      "type": "recurring",
+      "source_cadence": "At least annually",
+      "guidance": "Verify incident notification contacts.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/",
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "id": "17.3",
+      "title": "Establish and Maintain an Enterprise Process for Reporting Incidents",
+      "control": 17,
+      "control_name": "Incident Response Management",
+      "type": "recurring",
+      "source_cadence": "Annually and on significant change",
+      "guidance": "Document and communicate the workforce incident-reporting process.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/",
+      "version": "8.1",
+      "implementation_group": 1
+    }
+  ],
+  "review_plans": [
+    {
+      "key": "asset-inventory",
+      "title": "Enterprise Asset Inventory Review",
+      "safeguards": [
+        "1.1",
+        "1.2"
+      ],
+      "default_cadence": "semiannual",
+      "review_type": "asset",
+      "baseline_key": "inventory",
+      "source_cadence": "1.1: six-month inventory review; 1.2: weekly operational handling, not weekly human Review",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "semiannual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "software-support",
+      "title": "Software Authorization & Support Review",
+      "safeguards": [
+        "2.1",
+        "2.2",
+        "2.3",
+        "9.1",
+        "12.1"
+      ],
+      "default_cadence": "monthly",
+      "review_type": "software",
+      "baseline_key": null,
+      "source_cadence": "2.2, 2.3 and 12.1: monthly review; 2.1: six-month inventory review; 9.1: implementation state",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "monthly",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "data-governance",
+      "title": "Data Management & Inventory Review",
+      "safeguards": [
+        "3.1",
+        "3.2",
+        "3.3",
+        "3.4",
+        "3.5",
+        "3.6"
+      ],
+      "default_cadence": "annual",
+      "review_type": "policy",
+      "baseline_key": "data-inventory",
+      "source_cadence": "3.1, 3.2: annual review; significant change also triggers 3.1; other safeguards provide supporting context",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "secure-configuration",
+      "title": "Secure Configuration Process Review",
+      "safeguards": [
+        "4.1",
+        "4.2"
+      ],
+      "default_cadence": "annual",
+      "review_type": "configuration",
+      "baseline_key": "configuration",
+      "source_cadence": "4.1, 4.2: annual documentation review and significant change",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "account-authorization",
+      "title": "Account Authorization & Access Review",
+      "safeguards": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "6.5"
+      ],
+      "default_cadence": "quarterly",
+      "review_type": "access",
+      "baseline_key": "user-access",
+      "source_cadence": "5.1: quarterly authorization validation; 5.3: 45-day operational inactivity threshold; 6.1/6.2: event-driven",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "quarterly",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "vulnerability-remediation",
+      "title": "Vulnerability & Remediation Process Review",
+      "safeguards": [
+        "7.1",
+        "7.2",
+        "7.3",
+        "7.4"
+      ],
+      "default_cadence": "monthly",
+      "review_type": "vulnerability",
+      "baseline_key": "vulnerability",
+      "source_cadence": "7.2: monthly process review; 7.1: annual/change review; 7.3/7.4: monthly operational patching",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "monthly",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "audit-logging",
+      "title": "Audit Log Management Process Review",
+      "safeguards": [
+        "8.1",
+        "8.2",
+        "8.3"
+      ],
+      "default_cadence": "annual",
+      "review_type": "configuration",
+      "baseline_key": null,
+      "source_cadence": "8.1: annual/change documentation review; 8.2/8.3: implementation state",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "data-recovery",
+      "title": "Data Recovery Governance Review",
+      "safeguards": [
+        "11.1",
+        "11.2",
+        "11.3",
+        "11.4"
+      ],
+      "default_cadence": "annual",
+      "review_type": "backup",
+      "baseline_key": null,
+      "source_cadence": "11.1: annual/change process review; 11.2: weekly operational backups, not a weekly human Review",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "awareness",
+      "title": "Security Awareness Program Review",
+      "safeguards": [
+        "14.1",
+        "14.2",
+        "14.3",
+        "14.4",
+        "14.5",
+        "14.6",
+        "14.7",
+        "14.8"
+      ],
+      "default_cadence": "annual",
+      "review_type": "awareness",
+      "baseline_key": "awareness",
+      "source_cadence": "14.1: annual/change content review and training at hire/annually; remaining safeguards are training topics",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "provider-inventory",
+      "title": "Service Provider Inventory Review",
+      "safeguards": [
+        "15.1"
+      ],
+      "default_cadence": "annual",
+      "review_type": "vendor",
+      "baseline_key": null,
+      "source_cadence": "15.1: annual inventory review and significant change; not a separate assurance review for every vendor",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "incident-governance",
+      "title": "Incident Reporting & Contact Review",
+      "safeguards": [
+        "17.1",
+        "17.2",
+        "17.3"
+      ],
+      "default_cadence": "annual",
+      "review_type": "incident",
+      "baseline_key": null,
+      "source_cadence": "17.1–17.3: annual personnel, contact and reporting-process review; significant change for 17.1/17.3",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics."
+    },
+    {
+      "key": "endpoint-validation",
+      "title": "Endpoint Protection Validation",
+      "safeguards": [
+        "4.3",
+        "4.4",
+        "4.5",
+        "4.6",
+        "4.7",
+        "9.2",
+        "10.1",
+        "10.2",
+        "10.3"
+      ],
+      "default_cadence": "quarterly",
+      "review_type": "configuration",
+      "baseline_key": null,
+      "source_cadence": "No prescribed human-review interval; quarterly validation is an Omnisciente recommendation",
+      "basis": "Omnisciente Recommended",
+      "source_minimum": null,
+      "reason": "Periodically validate implementation without turning automatic operational activity into a mandated Review."
+    }
+  ],
+  "policy_mappings": [
+    {
+      "policy_key": "policy-data-classification-handling-policy",
+      "safeguards": [
+        "3.1",
+        "3.2"
+      ],
+      "basis": "Required Document",
+      "rationale": "CIS 3.1 calls for a documented data-management process; this document may house that process, not a mandated standalone policy title."
+    },
+    {
+      "policy_key": "policy-data-retention-secure-disposal-policy",
+      "safeguards": [
+        "3.1",
+        "3.4",
+        "3.5"
+      ],
+      "basis": "Supports Requirement",
+      "rationale": "Supports retention and disposal within the documented data-management process."
+    },
+    {
+      "policy_key": "policy-configuration-management-policy",
+      "safeguards": [
+        "4.1",
+        "4.2"
+      ],
+      "basis": "Required Document",
+      "rationale": "Documented secure-configuration processes are required; the document must contain the actual processes."
+    },
+    {
+      "policy_key": "policy-access-control-identity-management-policy",
+      "safeguards": [
+        "5.1",
+        "6.1",
+        "6.2"
+      ],
+      "basis": "Supports Requirement",
+      "rationale": "Supports account governance and the documented access-granting process; not an exact policy-title mandate."
+    },
+    {
+      "policy_key": "policy-vulnerability-patch-management-policy",
+      "safeguards": [
+        "7.1",
+        "7.2",
+        "7.3",
+        "7.4"
+      ],
+      "basis": "Required Document",
+      "rationale": "Documented vulnerability and remediation processes; operational patch frequency remains separate."
+    },
+    {
+      "policy_key": "policy-information-security-policy",
+      "safeguards": [
+        "8.1"
+      ],
+      "basis": "Supports Requirement",
+      "rationale": "May reference the documented log-management process; the policy alone does not demonstrate implementation."
+    },
+    {
+      "policy_key": "policy-backup-restoration-policy",
+      "safeguards": [
+        "11.1",
+        "11.2",
+        "11.3",
+        "11.4"
+      ],
+      "basis": "Required Document",
+      "rationale": "Must actually document recovery and backup procedures to represent the required process."
+    },
+    {
+      "policy_key": "policy-security-awareness-training-policy",
+      "safeguards": [
+        "14.1"
+      ],
+      "basis": "Supports Requirement",
+      "rationale": "Supports the awareness program; CIS does not mandate this exact standalone policy."
+    },
+    {
+      "policy_key": "policy-vendor-third-party-risk-management-policy",
+      "safeguards": [
+        "15.1"
+      ],
+      "basis": "Supports Requirement",
+      "rationale": "Supports provider-inventory ownership and maintenance."
+    },
+    {
+      "policy_key": "policy-incident-response-policy",
+      "safeguards": [
+        "17.1",
+        "17.2",
+        "17.3"
+      ],
+      "basis": "Required Document",
+      "rationale": "Can contain the documented workforce reporting process and contacts; not a claim that all incident-policy content is IG1-required."
+    }
+  ]
+}

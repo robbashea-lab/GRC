@@ -1,6 +1,7 @@
 // Schemas & column definitions for each entity kind
 
 export const SCHEMAS = {
+  framework_assessments: {title:'CIS Safeguards',columns:[],fields:[]},
   ai_systems: {title:'AI Governance',columns:[],fields:[]},
   reviews: {
     title: "Reviews",
