@@ -21,7 +21,7 @@ export function portfolio(db, includeArchived) {
       ...r,
       entity_type: k.slice(0, -1),
       id: r[ids[k]],
-      due_date: due(k, r),
+      due_date: k === 'risks' && due(k,r) && list(db,'reviews',c.client_id).some(v => v.risk_id === r.risk_id && open('reviews',v) && v.due_date?.slice(0,10) === due(k,r).slice(0,10)) ? null : due(k, r),
       owner_id: owner(r)
     })));
     const count = b => work.filter(r => bucket(r.due_date) === b).length;
@@ -109,6 +109,8 @@ export function dashboard(db, params) {
   const overdueReviews = reviews.filter(r => overdue('reviews', r)).length;
   const openFindings = findings.filter(r => open('findings',r));
   const critical = openFindings.filter(r => ['high', 'critical'].includes(r.severity)).length;
+  const dueSoon = value => value && stamp.slice(0,10) <= value.slice(0,10) && value.slice(0,10) <= end.slice(0,10);
+  const linkedPolicies = new Set(list(db, 'reviews', params.client_id).map(r => r.policy_id).filter(Boolean));
   return {
     kpis: {
       overdue_reviews: overdueReviews,
@@ -117,7 +119,7 @@ export function dashboard(db, params) {
       critical_high_findings: critical,
       significant_risks: risks.filter(r => open('risks',r) && ['high', 'critical'].includes(r.risk_level)).length,
       overdue_actions: tasks.filter(r => overdue('tasks', r)).length,
-      due_next_30: reviews.filter(r => open('reviews', r) && r.due_date >= stamp && r.due_date <= end).length + tasks.filter(r => r.status !== 'done' && r.due_date >= stamp && r.due_date <= end).length + get('policies').filter(r => r.next_review_date >= stamp && r.next_review_date <= end).length
+      due_next_30: reviews.filter(r => open('reviews', r) && dueSoon(r.due_date)).length + tasks.filter(r => open('tasks', r) && dueSoon(r.due_date)).length + get('policies').filter(r => !linkedPolicies.has(r.policy_id) && !['retired','not_applicable'].includes(r.status) && dueSoon(r.next_review_date)).length
     },
     scope: params.scope || 'org',
     scope_label: params.scope === 'mine' ? 'Your assigned work' : params.scope === 'unassigned' ? 'Unassigned records' : null,
