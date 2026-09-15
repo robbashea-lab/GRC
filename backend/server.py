@@ -45,6 +45,8 @@ import vendor_governance
 import review_occurrences
 import ai_governance
 import framework_governance
+import evidence_context
+import json
 
 # ---------------- DB ----------------
 mongo_url = os.environ["MONGO_URL"]
@@ -1295,6 +1297,29 @@ KIND_REGEX = "^(reviews|findings|risks|policies|vendors|assets|tasks|exceptions|
 
 
 # ---------------- Evidence ----------------
+@api.get('/evidence/catalog')
+async def evidence_catalog(client_id: str, entity_type: Optional[str] = None, entity_id: Optional[str] = None,
+                           occurrence_id: Optional[str] = None, page: int = Query(1, ge=1), page_size: int = Query(25, ge=1, le=100),
+                           state: str = Query('{}', max_length=12000), q: str = Query('', max_length=250),
+                           today: Optional[str] = None, user: Dict = Depends(get_current_user)):
+    _scope_filter(user, client_id)
+    root_kind = evidence_context.ALIASES.get(entity_type)
+    if bool(entity_type) != bool(entity_id) or entity_type and not root_kind:
+        raise HTTPException(422, 'Select a supported Evidence source')
+    root = await _authorized_parent(root_kind, entity_id, user) if root_kind else None
+    if root and root['client_id'] != client_id: raise HTTPException(404, 'Source not found for this client')
+    if root_kind == 'reviews': occurrence_id = await _review_selection(root, occurrence_id)
+    try:
+        filters = json.loads(state)
+        if not isinstance(filters, dict) or not isinstance(filters.get('filters', {}), dict): raise ValueError()
+        if filters.get('sort') is not None and not isinstance(filters['sort'], dict): raise ValueError()
+        if any(not isinstance(v, list) or any(not isinstance(x, str) for x in v) for v in filters.get('filters', {}).values()): raise ValueError()
+        day = evidence_context.date.fromisoformat(today) if today else None
+    except (ValueError, TypeError): raise HTTPException(422, 'Invalid Evidence filter state')
+    return await evidence_context.catalog_page(db, client_id, _can_access_client, root_kind=root_kind, root=root, oid=occurrence_id,
+        page=page, page_size=page_size, state=filters, query=q.strip(), today=day)
+
+
 @api.get("/evidence")
 async def list_evidence(client_id: Optional[str] = Query(None), linked_type: Optional[str] = None,
                         linked_id: Optional[str] = None, user: Dict = Depends(get_current_user), occurrence_id: Optional[str] = None):

@@ -1,118 +1,56 @@
-import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
-import { tableColumns } from '@/lib/tableColumns';
-import { useEffect, useRef, useState } from "react";
-import api, { formatError } from "@/lib/api";
-import { useOrg } from "@/context/OrgContext";
-import { useAuth } from "@/context/AuthContext";
-import PageHeader from "@/components/PageHeader";
-import { UploadCloud, Trash2, Download, File as FileIcon } from "lucide-react";
-import { toast } from "sonner";
+import {useTableControls,ColumnControl,TableFilterChips} from '@/components/TableControls';
+import {tableColumns} from '@/lib/tableColumns';
+import {columnOptions} from '@/lib/tableFilters';
+import {useRef,useState} from 'react';
+import api,{formatError} from '@/lib/api';
+import {useOrg} from '@/context/OrgContext';
+import {useAuth} from '@/context/AuthContext';
+import PageHeader from '@/components/PageHeader';
+import RecordDrawer from '@/components/RecordDrawer';
+import {useEvidenceCatalog,EvidencePagination} from '@/components/EvidencePanel';
+import {EvidenceSource,resolveEvidenceSource,downloadEvidence,uploaderLabel,evidenceSourceLabel} from '@/lib/evidenceContext';
+import {UploadCloud,Trash2,Download,File as FileIcon} from 'lucide-react';
+import {toast} from 'sonner';
+import {Input} from '@/components/ui/input';
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-}
-
-export default function Evidence() {
-  const { currentClient, currentClientId } = useOrg();
-  const { user } = useAuth();
-  const [rows, setRows] = useState([]);
-  const [dragOver, setDragOver] = useState(false);
-  const inputRef = useRef(null);
-  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
-  const canDelete = ["super_admin", "platform_admin"].includes(user?.role);
-
-  const load = async () => {
-    if (!currentClientId) return;
-    const { data } = await api.get("/evidence", { params: { client_id: currentClientId } });
-    setRows(data);
-  };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentClientId]);
-
-  const tableSource = rows.filter(r => r.client_id === currentClientId);
-  const columns = tableColumns('evidence', { rows: tableSource });
-  const table = useTableControls({ columns, rows: tableSource, module: 'evidence', scope: `${user?.user_id}:${currentClientId}` });
-  const filtered = table.apply(tableSource);
-
-  async function handleFiles(files) {
-    if (!canWrite) { toast.error("Read-only role"); return; }
-    for (const f of files) {
-      try {
-        const b64 = await fileToBase64(f);
-        await api.post("/evidence", { filename: f.name, client_id: currentClientId, content_base64: b64, mime_type: f.type });
-        toast.success(`Uploaded ${f.name}`);
-      } catch (e) { toast.error(formatError(e)); }
-    }
-    load();
+const fileData=file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+export default function Evidence(){
+  const {currentClient,currentClientId}=useOrg(),{user}=useAuth();
+  const inputRef=useRef(null),scopeRef=useRef(currentClientId);scopeRef.current=currentClientId;
+  const [dragOver,setDragOver]=useState(false),[search,setSearch]=useState({}),[paging,setPaging]=useState({}),[drawer,setDrawer]=useState(null);
+  const q=search.scope===currentClientId?search.value:'';
+  const table=useTableControls({columns:tableColumns('evidence'),rows:[],module:'evidence',scope:`${user?.user_id}:${currentClientId}`});
+  const state=JSON.stringify(table.state),pageKey=`${currentClientId}:${q}:${state}`,page=paging.key===pageKey?paging.page:1;
+  const setPage=value=>setPaging({key:pageKey,page:value});
+  const now=new Date(),today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const result=useEvidenceCatalog({client_id:currentClientId,q,state,page,page_size:25,today}),data=result.data;
+  table.options=column=>columnOptions({...column,optionsOnly:true,options:(data?.facets?.[column.key]||[]).map(value=>({value,label:column.key==='linked_type'?evidenceSourceLabel(value):value}))},[]);
+  const canWrite=['super_admin','platform_admin','client_contributor'].includes(user?.role),canDelete=['super_admin','platform_admin'].includes(user?.role);
+  const clear=()=>{setSearch({scope:currentClientId,value:''});table.clear();};
+  async function openSource(ref){
+    const scope=currentClientId;
+    try {const target=await resolveEvidenceSource(ref,scope);if(scopeRef.current===scope)setDrawer({...target,scope});}catch(e){toast.error(formatError(e));}
   }
-
-  async function download(row) {
-    const { data } = await api.get(`/evidence/${row.evidence_id}/download`);
-    const a = document.createElement("a");
-    a.href = data.content_base64.startsWith("data:") ? data.content_base64 : `data:${data.mime_type};base64,${data.content_base64}`;
-    a.download = data.filename;
-    a.click();
+  async function upload(files){
+    if(!canWrite)return;
+    for(const file of files)try{await api.post('/evidence',{client_id:currentClientId,filename:file.name,mime_type:file.type,content_base64:await fileData(file)});toast.success(`Uploaded ${file.name}`);}catch(e){toast.error(formatError(e));}
+    result.reload();
   }
-
-  async function remove(row) {
-    if (!confirm(`Delete "${row.filename}"?`)) return;
-    try { await api.delete(`/evidence/${row.evidence_id}`); toast.success("Deleted"); load(); }
-    catch (e) { toast.error(formatError(e)); }
+  async function remove(row){
+    if(!confirm(`Delete "${row.filename}"?`))return;
+    try{await api.delete(`/evidence/${row.evidence_id}`);toast.success('Deleted');setPage(1);result.reload();}catch(e){toast.error(formatError(e));}
   }
-
-  return (
-    <div>
-      <PageHeader title="Evidence & Documents" subtitle={`${currentClient?.name || ""} · Drag and drop artifacts, linked to reviews, findings, policies and vendors.`} />
-      <div className="page-content space-y-6">
-        <div
-          data-testid="evidence-dropzone"
-          role="button"
-          tabIndex={0}
-          aria-label="Upload evidence files"
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inputRef.current?.click(); } }}
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(Array.from(e.dataTransfer.files)); }}
-          onClick={() => inputRef.current?.click()}
-          className={`rounded-md border border-dashed p-4 text-center cursor-pointer transition ${dragOver ? "border-brand-charcoal bg-surface-subtle" : "border-line-strong bg-surface-card hover:bg-surface-app"}`}
-        >
-          <UploadCloud className="h-5 w-5 mx-auto text-ink-muted mb-1" />
-          <div className="text-sm font-medium text-ink-primary">Drop files here or click to upload</div>
-          <div className="text-xs text-ink-muted mt-1">Files and versions are organized by client.</div>
-          <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(Array.from(e.target.files || []))} data-testid="evidence-file-input" />
-        </div>
-
-        <TableFilterChips table={table} />
-        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
-          <table className="w-full">
-            <thead><tr>
-              <th className="tbl-head"><ColumnControl table={table} columnKey="filename" /></th><th className="tbl-head"><ColumnControl table={table} columnKey="mime_type" /></th>
-              <th className="tbl-head"><ColumnControl table={table} columnKey="uploaded_by_email" /></th><th className="tbl-head"><ColumnControl table={table} columnKey="created_at" /></th>
-              <th className="tbl-head"><ColumnControl table={table} columnKey="linked_type" /></th><th className="tbl-head w-24">Actions</th>
-            </tr></thead>
-            <tbody>
-              {filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell py-8 text-center text-ink-help">{tableSource.length ? <FilterEmpty table={table} name="evidence" /> : 'No evidence uploaded yet.'}</td></tr>}
-              {filtered.map((r, i) => (
-                <tr key={r.evidence_id} className="row-hover" data-testid={`evidence-row-${i}`}>
-                  <td className="tbl-cell font-medium text-ink-primary flex items-center gap-2"><FileIcon className="h-3.5 w-3.5 text-ink-help" />{r.filename}</td>
-                  <td className="tbl-cell text-ink-secondary font-mono">{r.mime_type || "—"}</td>
-                  <td className="tbl-cell text-ink-secondary">{r.uploaded_by_email}</td>
-                  <td className="tbl-cell font-mono text-ink-secondary">{new Date(r.created_at).toLocaleString()}</td>
-                  <td className="tbl-cell text-ink-muted">{r.linked_type ? `${r.linked_type} · ${r.linked_id}` : "—"}</td>
-                  <td className="tbl-cell">
-                    <button aria-label={`Download ${r.filename}`} title={`Download ${r.filename}`} data-testid={`evidence-download-${i}`} onClick={() => download(r)} className="p-1 mr-1 rounded hover:bg-surface-subtle text-ink-muted"><Download className="h-3.5 w-3.5" /></button>
-                    {canDelete && <button aria-label={`Delete ${r.filename}`} title={`Delete ${r.filename}`} data-testid={`evidence-delete-${i}`} onClick={() => remove(r)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical"><Trash2 className="h-3.5 w-3.5" /></button>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+  return <div><PageHeader title="Evidence & Documents" subtitle={`${currentClient?.name||''} · Artifacts and their authoritative source records.`}/><div className="page-content space-y-4">
+    {canWrite&&<div data-testid="evidence-dropzone" role="button" tabIndex={0} aria-label="Upload evidence files" onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();inputRef.current?.click();}}} onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onDrop={e=>{e.preventDefault();setDragOver(false);upload(Array.from(e.dataTransfer.files));}} onClick={()=>inputRef.current?.click()} className={`rounded-md border border-dashed p-4 text-center cursor-pointer ${dragOver?'border-brand-charcoal bg-surface-subtle':'border-line-strong bg-surface-card hover:bg-surface-app'}`}><UploadCloud className="h-5 w-5 mx-auto text-ink-muted mb-1"/><div className="text-sm font-medium">Drop files here or click to upload</div><div className="text-xs text-ink-secondary mt-1">Files remain associated with this client.</div><input ref={inputRef} type="file" multiple className="hidden" data-testid="evidence-file-input" onChange={e=>{upload(Array.from(e.target.files||[]));e.target.value='';}}/></div>}
+    <div className="flex items-center gap-3"><Input className="max-w-md" aria-label="Search Evidence" placeholder="Search filename or source…" value={q} onChange={e=>setSearch({scope:currentClientId,value:e.target.value})}/>{q&&<button type="button" className="text-xs underline" onClick={()=>setSearch({scope:currentClientId,value:''})}>Clear search</button>}<span className="ml-auto text-xs text-ink-secondary" role="status">{result.loading?'Loading…':data?`${data.total} / ${data.unfiltered_total} files`:''}</span></div>
+    <TableFilterChips table={table}/>
+    {data?.facets_limited&&<p className="text-xs text-ink-secondary">Showing the first 200 filter values. Use search to find additional filenames, sources or uploaders.</p>}
+    {result.error&&<p role="alert">Evidence could not be loaded: {result.error} <button className="underline" onClick={result.reload}>Retry</button></p>}
+    <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto"><table className="w-full"><thead><tr>{['filename','mime_type','uploaded_by_email','created_at','linked_type'].map(key=><th key={key} className="tbl-head"><ColumnControl table={table} columnKey={key}/></th>)}<th className="tbl-head w-24">Actions</th></tr></thead><tbody>
+      {result.loading&&<tr><td colSpan={6} className="tbl-cell py-8 text-center">Loading Evidence…</td></tr>}
+      {data&&!data.items.length&&<tr><td colSpan={6} className="tbl-cell py-8 text-center text-ink-help">{data.unfiltered_total?<>No Evidence matches the current search and filters. <button className="underline" onClick={clear}>Clear filters</button></>:'No Evidence uploaded yet.'}</td></tr>}
+      {data?.items.map((row,index)=><tr key={row.evidence_id} className="row-hover" data-testid={`evidence-row-${index}`}><td className="tbl-cell font-medium text-ink-primary"><div className="flex gap-2"><FileIcon className="h-3.5 w-3.5 shrink-0 text-ink-help"/><span className="break-words">{row.filename}</span></div></td><td className="tbl-cell text-ink-secondary">{row.mime_type||'—'}</td><td className="tbl-cell text-ink-secondary">{uploaderLabel(row)}</td><td className="tbl-cell text-ink-secondary whitespace-nowrap">{row.created_at?new Date(row.created_at).toLocaleString():'Not recorded'}</td><td className="tbl-cell"><EvidenceSource source={row.context?.source} onOpen={openSource}/>{row.context?.source?.kind==='tasks'&&row.context.finding&&<p className="text-xs text-ink-secondary mt-1">Finding: {row.context.finding.title}{row.context.review?` · ${row.context.review.title} — ${row.context.review.period}`:''}</p>}</td><td className="tbl-cell whitespace-nowrap"><button aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} data-testid={`evidence-download-${index}`} onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))} className="p-1 mr-1 rounded hover:bg-surface-subtle text-ink-secondary"><Download className="h-3.5 w-3.5"/></button>{canDelete&&<button aria-label={`Delete ${row.filename}`} title={`Delete ${row.filename}`} data-testid={`evidence-delete-${index}`} onClick={()=>remove(row)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical"><Trash2 className="h-3.5 w-3.5"/></button>}</td></tr>)}
+    </tbody></table></div>
+    {data&&<EvidencePagination data={data} page={page} setPage={setPage}/>}
+  </div>{drawer?.scope===currentClientId&&<RecordDrawer open onOpenChange={open=>{if(!open)setDrawer(null);}} {...drawer} clientId={currentClientId} onSaved={result.reload}/>}</div>;
 }

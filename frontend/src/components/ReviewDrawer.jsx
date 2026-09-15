@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Download } from 'lucide-react';
+import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { formatError } from '@/lib/api';
 import { SCHEMAS } from '@/lib/schemas';
@@ -17,6 +17,8 @@ import StatusBadge from './StatusBadge';
 import RecordDrawer from './RecordDrawer';
 import { historicalRemediation, reviewRemediation, remediationOrigin } from '@/lib/remediation';
 import CorrectiveActions from './CorrectiveActions';
+import EvidencePanel from './EvidencePanel';
+import {resolveEvidenceSource} from '@/lib/evidenceContext';
 
 const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
@@ -36,7 +38,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const [members,setMembers] = useState([]), [related,setRelated] = useState({});
   const [policies,setPolicies] = useState([]);
   const [showHistorical,setShowHistorical] = useState(false);
-  const [evidence,setEvidence] = useState([]), [comments,setComments] = useState([]), [activity,setActivity] = useState([]);
+  const [evidenceVersion,setEvidenceVersion] = useState(0), [comments,setComments] = useState([]), [activity,setActivity] = useState([]);
   const [comment,setComment] = useState(''), [finding,setFinding] = useState(null), [linked,setLinked] = useState(null);
   const riskBase=useRef(null);
   const generation = useRef(0);
@@ -53,7 +55,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     sequence.current++;
     setCurrent(record ? reviewView(record) : null);
     setForm(record ? {...record,due_date:record.due_date?.slice(0,10) || ''} : {title:'',review_type:'',owner_id:'',due_date:'',recurrence:'none',notes:''});
-    setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setEvidence([]); setComments([]); setActivity([]); setRelated({});
+    setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setComments([]); setActivity([]); setRelated({});
     setComment(''); setFinding(null); setLinked(null); setMembers([]);
     const version = generation.current;
     api.get(`/clients/${record?.client_id || clientId}/members`).then(({data}) => { if (generation.current === version) setMembers(data); }).catch(e => toast.error(formatError(e)));
@@ -66,18 +68,17 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     if (!open || !rid || !oid) return;
     const version = generation.current;
     try {
-      const [h,r,e,c,a] = await Promise.all([
+      const [h,r,c,a] = await Promise.all([
         api.get(`/reviews/${current.review_id}/history`),
         api.get('/related',{params:{entity_type:'reviews',entity_id:rid,...(selected ? {occurrence_id:oid} : {})}}),
-        api.get('/evidence',{params:{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid}}),
         api.get('/comments',{params:{entity_type:'reviews',entity_id:rid,occurrence_id:oid}}),
         api.get(`/reviews/${rid}/activity`,{params:selected ? {occurrence_id:oid} : {}})
       ]);
       if (version !== generation.current) return;
       setHistory(h.data); setRelated(r.data);
-      if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||'monitor'},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidence(e.data); setComments(c.data); setActivity(a.data);
+      if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||'monitor'},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidenceVersion(v=>v+1); setComments(c.data); setActivity(a.data);
     } catch(e) { if (version === generation.current) toast.error(formatError(e)); }
-  }, [open,rid,oid,cid,current?.review_id,current?.risk_id,selected]);
+  }, [open,rid,oid,current?.review_id,current?.risk_id,selected]);
   useEffect(() => { reload(); },[reload]);
   useEffect(() => {
     if (!open || !['Related','Activity'].includes(tab)) return;
@@ -123,7 +124,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
       </SelectContent></Select></div>;
   }
-  const chooseHistory = o => { generation.current++; setSelected(o); setTab('Overview'); setEvidence([]); setComments([]); setActivity([]); };
+  const chooseHistory = o => { generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); };
   const configuration = selected || form;
   const derived = reviewSchedule(configuration);
   useEffect(()=>{setShowHistorical(false);},[rid,oid,open]);
@@ -187,8 +188,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         </>}
         {tab === 'Evidence' && <>
           {!frozen && writable && <Label className="block rounded-md border border-dashed border-line p-5 text-sm">Attach evidence to this occurrence<Input className="mt-2" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e => { const files = Array.from(e.target.files); run(async () => { for (const file of files) await api.post('/evidence',{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid,filename:file.name,mime_type:file.type,content_base64:await fileData(file)}); await reload(); toast.success('Evidence attached'); }); }} /></Label>}
-          {!evidence.length && <p className="text-sm text-ink-help">No evidence attached.</p>}
-          {evidence.map(e => <div key={e.evidence_id} className="border-b border-line py-2 flex justify-between gap-3 text-sm"><span>{e.filename}</span><Button size="sm" variant="ghost" aria-label={`Download ${e.filename}`} onClick={() => run(async () => { const {data} = await api.get(`/evidence/${e.evidence_id}/download`); const a = document.createElement('a'); a.href = data.content_base64.startsWith('data:') ? data.content_base64 : `data:${data.mime_type};base64,${data.content_base64}`; a.download = data.filename; a.click(); })}><Download className="h-4 w-4" /></Button></div>)}
+          <EvidencePanel clientId={cid} kind="reviews" id={rid} occurrenceId={oid} refreshKey={evidenceVersion} onOpen={async ref=>{const version=generation.current;try{const target=await resolveEvidenceSource(ref,cid);if(version===generation.current)setLinked(target);}catch(e){toast.error(formatError(e));}}}/>
         </>}
         {tab === 'Comments' && <>
           {!comments.length && <p className="text-sm text-ink-help">No comments yet.</p>}
