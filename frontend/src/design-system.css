@@ -1,85 +1,91 @@
-/* Theme contract. index.css retains the explicit .light palette.
-   Default charcoal values apply to native controls and portalled Radix content. */
-:root:not(.light) {
-  color-scheme: dark;
+/* Approved light workspace / charcoal navigation system. Shared root tokens include native controls and portalled UI; no route-specific theme. */
+:root {
+  color-scheme: light;
+  --register-gutter: 20px;
+  --register-row: 44px;
+  --background: 200 23% 97%;
+  --foreground: 214 16% 19%;
+  --card: 0 0% 100%;
   --card-foreground: var(--foreground);
+  --popover: 0 0% 100%;
   --popover-foreground: var(--foreground);
+  --primary: 214 16% 19%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 216 22% 95%;
   --secondary-foreground: var(--foreground);
+  --muted: 216 22% 95%;
+  --muted-foreground: 210 6% 43%;
+  --accent: 216 22% 95%;
   --accent-foreground: var(--foreground);
-  --destructive: 3 61% 42%;
+  --border: 213 20% 91%;
+  --input: 213 8% 58%;
+  --ring: 224 89% 61%;
+  --destructive: 4 76% 40%;
   --destructive-foreground: 0 0% 100%;
-  --ring: 213 82% 76%;
-  --color-link: #A0C6FA;
-  --color-link-hover: #C3DCFF;
-  --color-focus-ring: #90BEFA;
-  --color-selected-rail: #A0C6FA;
-  --color-critical: #FFAAA5;
-  --color-critical-bg: #3C292E;
-  --color-critical-border: #704349;
-  --color-high: #F4B49C;
-  --color-high-bg: #392C2A;
-  --color-high-border: #6F4D42;
-  --color-moderate: #EAC484;
-  --color-moderate-text: #EAC484;
-  --color-moderate-bg: #352F26;
-  --color-moderate-border: #63533A;
-  --color-duesoon: #EAC484;
-  --color-duesoon-text: #EAC484;
-  --color-duesoon-bg: #352F26;
-  --color-duesoon-border: #63533A;
-  --color-success: #94D3B0;
-  --color-success-bg: #24372F;
-  --color-success-border: #3E6350;
-  --color-info: #AACBF5;
-  --color-info-bg: #283649;
-  --color-info-border: #445D7C;
-  --color-accepted: #D0BCEE;
-  --color-accepted-bg: #332E41;
-  --color-accepted-border: #605370;
-  --background: 0 0% 9%;
-  --foreground: 0 0% 92%;
-  --card: 0 0% 11%;
-  --popover: 0 0% 13%;
-  --primary: 0 0% 84%;
-  --primary-foreground: 0 0% 12%;
-  --secondary: 0 0% 17%;
-  --muted: 0 0% 13%;
-  --muted-foreground: 0 0% 65%;
-  --accent: 0 0% 19%;
-  --border: 0 0% 20%;
-  --input: 0 0% 44%;
-  --color-bg-app: #181818;
-  --color-bg-surface: #1C1C1C;
-  --color-bg-subtle: #202020;
-  --color-bg-tablehead: #181818;
-  --color-bg-row-hover: #292929;
-  --color-border: #343434;
-  --color-border-strong: #606060;
-  --color-input-border: #747474;
-  --color-text-primary: #F2F2F2;
-  --color-text-secondary: #D0D0D0;
-  --color-text-muted: #ABABAB;
-  --color-text-help: #ABABAB;
-  --color-control-active-border: #888888;
-  --color-text-disabled: #808080;
-  --color-sidebar-bg: #151515;
-  --color-sidebar-hover-bg: #252525;
-  --color-sidebar-active-bg: #303030;
-  --color-sidebar-text: #D0D0D0;
-  --color-sidebar-icon: #A6A6A6;
-  --color-sidebar-hover-text: #EBEBEB;
-  --color-text-on-dark-2: #BFBFBF;
-  --color-text-on-dark-muted: #A6A6A6;
-  --color-brand-charcoal: #202020;
-  --color-brand-charcoal-hover: #262626;
-  --color-brand-charcoal-active: #181818;
-  --color-brand-metallic: #303030;
-  --color-brand-metallic-2: #262626;
-  --color-brand-metallic-3: #3C3C3C;
-  --color-selected-bg: #303030;
-  --color-neutral: #BFBFBF;
-  --color-neutral-bg: #2C2C2C;
-  --color-neutral-border: #4B4B4B;
+  --color-bg-app: #F7F9FA;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-subtle: #F1F3F6;
+  --color-bg-tablehead: #F1F3F6;
+  --color-bg-row-hover: #F7F9FA;
+  --color-border: #E4E8ED;
+  --color-border-strong: #D5DAE1;
+  --color-input-border: #8C949E;
+  --color-control-active-border: #8C949E;
+  --color-text-primary: #293039;
+  --color-text-secondary: #4A545E;
+  --color-text-muted: #666D74;
+  --color-text-help: #666D74;
+  --color-text-disabled: #A8ABB3;
+  --color-text-on-dark: #FFFFFF;
+  --color-text-on-dark-2: #C3C9D0;
+  --color-text-on-dark-muted: #98A1AB;
+  --color-brand-charcoal: #293039;
+  --color-brand-charcoal-hover: #1F252C;
+  --color-brand-charcoal-active: #161A20;
+  --color-brand-metallic: #3E4852;
+  --color-brand-metallic-2: #333C46;
+  --color-brand-metallic-3: #454F5B;
+  --color-brand-lime: #A3DB33;
+  --color-sidebar-bg: #293039;
+  --color-sidebar-text: #C3C9D0;
+  --color-sidebar-icon: #98A1AB;
+  --color-sidebar-hover-bg: #333C46;
+  --color-sidebar-hover-text: #E4E8ED;
+  --color-sidebar-active-bg: #3E4852;
+  --color-sidebar-active-text: #FFFFFF;
+  --color-link: #2A55C8;
+  --color-link-hover: #1F4AC4;
+  --color-focus-ring: #4172F4;
+  --color-selected-bg: #EFF4FF;
+  --color-selected-rail: #2A55C8;
+  --color-critical: #B42318;
+  --color-critical-bg: #FEF3F2;
+  --color-critical-border: #FECDCA;
+  --color-high: #B42318;
+  --color-high-bg: #FEF3F2;
+  --color-high-border: #FECDCA;
+  --color-moderate: #B45309;
+  --color-moderate-text: #93370D;
+  --color-moderate-bg: #FFFAEB;
+  --color-moderate-border: #FDDCAB;
+  --color-duesoon: #A16207;
+  --color-duesoon-text: #75600C;
+  --color-duesoon-bg: #FEFAE7;
+  --color-duesoon-border: #F0E0A6;
+  --color-success: #05603A;
+  --color-success-bg: #ECFDF3;
+  --color-success-border: #A6E9C5;
+  --color-info: #1849A9;
+  --color-info-bg: #EFF4FF;
+  --color-info-border: #B8CCF7;
+  --color-neutral: #4A545E;
+  --color-neutral-bg: #F1F3F6;
+  --color-neutral-border: #D5DAE1;
+  --color-accepted: #4A545E;
+  --color-accepted-bg: #F1F3F6;
+  --color-accepted-border: #D5DAE1;
+  --shadow-floating: 0 0 0 1px rgb(0 0 0 / .06), 0 4px 12px -4px rgb(0 0 0 / .16);
+  --shadow-dialog: -8px 0 32px -16px rgb(0 0 0 / .24);
 }
 .light { color-scheme: light; }
 :root {
@@ -93,19 +99,9 @@
   --duration-menu: 160ms;
   --duration-dialog: 180ms;
   --duration-drawer: 240ms;
-  --shadow-floating: 0 0 0 1px rgb(0 0 0 / .06), 0 1px 2px -1px rgb(0 0 0 / .06), 0 2px 4px rgb(0 0 0 / .04);
-  --shadow-dialog: 0 8px 32px -12px rgb(0 0 0 / .24);
-  --space-page: 24px;
+  --space-page: 20px;
   --space-section: 20px;
-  --color-high: #993B20;
-  --color-high-bg: #FFF4ED;
-  --color-high-border: #E7C2AF;
-  --color-accepted: #69418C;
-  --color-accepted-bg: #F5F0FA;
-  --color-accepted-border: #D8C5EA;
-  --register-gutter: var(--space-page);
   --register-control: 32px;
-  --register-row: 48px;
   --register-type: 13px;
   --register-detail: 12px;
   --register-radius: 5px;
@@ -148,10 +144,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-focus-ri
 
 /* Shared interaction contract. Keep structural borders; elevation is reserved
    for floating surfaces. Radix still owns focus, dismissal, and presence. */
-:root:not(.light) {
-  --shadow-floating: 0 0 0 1px rgb(255 255 255 / .08), 0 4px 12px -4px rgb(0 0 0 / .32);
-  --shadow-dialog: -8px 0 32px -16px rgb(0 0 0 / .48);
-}
 .ui-button,
 .app-workspace .ui-button,
 [role="dialog"] .ui-button {
@@ -360,14 +352,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-focus-ri
 }
 .register-table-frame[data-layout="reviews"] > table {
   table-layout: fixed;
-  min-width: 1056px;
+  min-width: 936px;
 }
 .register-col-check { width: 32px; }
-.register-col-review_type { width: 120px; }
+.register-col-review_type { width: 116px; }
 .register-col-status { width: 124px; }
 .register-col-owner { width: 128px; }
-.register-col-date { width: 110px; }
-.register-col-recurrence { width: 100px; }
+.register-col-date { width: 100px; }
+.register-col-recurrence { width: 96px; }
+.register-col-recurrence + .register-col-date { width: 118px; }
 .register-col-actions { width: 32px; }
 :is(.app-workspace, [role="dialog"]) .tbl-head {
   padding: 9px 10px;
@@ -470,45 +463,45 @@ td:last-child > button[aria-label="Row actions"] {
   .quick-filters button { padding-inline: 7px; }
 }
 :root[data-input-modality="keyboard"] button { transition: none; }
-:root:not(.light) .side-link.active {
+:root .side-link.active {
   color: var(--color-text-primary);
   font-weight: 600;
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
 }
-:root:not(.light) .side-link svg { color: var(--color-sidebar-icon); }
-:root:not(.light) .side-link.active svg { color: var(--color-text-primary); }
-:root:not(.light) .tbl-head { color: var(--color-text-secondary); }
-:root:not(.light) .column-control { font-weight: 600; }
-:root:not(.light) .column-control > svg { opacity: 1; color: var(--color-text-muted); }
-:root:not(.light) .column-control[data-active="true"] {
+:root .side-link svg { color: var(--color-sidebar-icon); }
+:root .side-link.active svg { color: var(--color-text-primary); }
+:root .tbl-head { color: var(--color-text-secondary); }
+:root .column-control { font-weight: 600; }
+:root .column-control > svg { opacity: 1; color: var(--color-text-muted); }
+:root .column-control[data-active="true"] {
   color: var(--color-text-primary);
   background: var(--color-selected-bg);
   box-shadow: 0 0 0 3px var(--color-selected-bg);
   text-decoration-thickness: 2px;
 }
-:root:not(.light) .column-control[data-active="true"] > svg { color: var(--color-text-primary); }
-:root:not(.light) th[aria-sort="ascending"] .column-control > svg { transform: rotate(180deg); }
-:root:not(.light) .quick-filters button[aria-pressed="true"] {
+:root .column-control[data-active="true"] > svg { color: var(--color-text-primary); }
+:root th[aria-sort="ascending"] .column-control > svg { transform: rotate(180deg); }
+:root .quick-filters button[aria-pressed="true"] {
   background: var(--color-selected-bg);
   border-color: var(--color-control-active-border);
 }
-:root:not(.light) .quick-filters button[aria-pressed="true"] span { color: var(--color-text-secondary); }
-:root:not(.light) .table-filter-chips button {
+:root .quick-filters button[aria-pressed="true"] span { color: var(--color-text-secondary); }
+:root .table-filter-chips button {
   color: var(--color-text-primary);
   border-color: var(--color-control-active-border);
   background: var(--color-selected-bg);
 }
-:root:not(.light) .table-filter-chips button:last-child { background: transparent; font-weight: 600; }
-:root:not(.light) .register-date > span:first-child { font-weight: 600; }
-:root:not(.light) .register-date > span + span { color: var(--color-text-muted); font-weight: 400; }
-:root:not(.light) td[data-column="recurrence"] .register-value { color: var(--color-text-muted); }
-:root:not(.light) td:last-child > button[aria-label="Row actions"] { color: var(--color-text-secondary); }
-:root:not(.light) td:last-child > button[aria-label="Row actions"]:is(:hover, :focus-visible, [data-state="open"]) {
+:root .table-filter-chips button:last-child { background: transparent; font-weight: 600; }
+:root .register-date > span:first-child { font-weight: 600; }
+:root .register-date > span + span { color: var(--color-text-muted); font-weight: 400; }
+:root td[data-column="recurrence"] .register-value { color: var(--color-text-muted); }
+:root td:last-child > button[aria-label="Row actions"] { color: var(--color-text-secondary); }
+:root td:last-child > button[aria-label="Row actions"]:is(:hover, :focus-visible, [data-state="open"]) {
   color: var(--color-text-primary);
   background: var(--color-selected-bg);
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
 }
-:root:not(.light) .register-search input:hover { border-color: var(--color-control-active-border); }
+:root .register-search input:hover { border-color: var(--color-control-active-border); }
 
 /* Shared content, control and register adapters. Compositions remain module-owned. */
 .page-content { padding: 20px var(--space-page); }
@@ -529,7 +522,7 @@ td:last-child > button[aria-label="Row actions"] {
 .register-table-frame:not([data-layout="reviews"]) > table { min-width: 720px; }
 .register-table-frame thead { font-family: var(--font-body); text-transform: none; letter-spacing: normal; background: var(--color-bg-tablehead); }
 .register-table-frame:not([data-layout="reviews"]) th { height: 39px; padding: 9px 10px; font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
-.register-table-frame:not([data-layout="reviews"]) td { height: 48px; padding: 7px 10px; font-size: 13px; line-height: 17px; }
+.register-table-frame:not([data-layout="reviews"]) td { height: var(--register-row); padding: 5px 10px; font-size: 13px; line-height: 17px; }
 .register-table-frame:not([data-layout="reviews"]) td.text-xs { font-size: 12px; }
 .register-table-frame:not([data-layout="reviews"]) td.font-mono { font-family: var(--font-body); font-variant-numeric: tabular-nums; }
 .register-table-frame:not([data-layout="reviews"]) td:first-child, .register-table-frame:not([data-layout="reviews"]) th:first-child { padding-left: 0; }
@@ -541,8 +534,56 @@ td:last-child > button[aria-label="Row actions"] {
 .ui-dialog label, .ui-sheet label { font-size: 12px; color: var(--color-text-secondary); }
 .ui-dialog p.text-xs, .ui-sheet p.text-xs { color: var(--color-text-muted); }
 .demo-notice { flex-wrap: wrap; }
-:root:not(.light) .ui-control:not(:disabled):hover { border-color: var(--color-control-active-border); }
+:root .ui-control:not(:disabled):hover { border-color: var(--color-control-active-border); }
 @media (max-width: 700px) {
   .page-header-content { gap: 10px; }
   .quick-filters button { padding-inline: 7px; }
 }
+:root .side-link.active { color: #FFFFFF; background: var(--color-sidebar-active-bg); box-shadow: none; }
+:root .side-link.active::before { width: 3px; background: var(--color-brand-lime); }
+:root .side-link.active svg { color: #FFFFFF; }
+:root .app-sidebar { border-color: var(--color-brand-metallic-3); }
+:root .app-sidebar .border-line { border-color: var(--color-brand-metallic-3); }
+:root .brand-mark { color: var(--color-brand-lime); border-color: var(--color-brand-metallic-3); }
+:root .register-table-frame { background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--register-radius); }
+:root .page-header { padding: 12px var(--register-gutter) 10px; }
+:root .register-toolbar { padding: 6px var(--register-gutter) 10px; }
+:root .register-body { padding-inline: var(--register-gutter); }
+:root .register-table-frame .tbl-cell { padding-block: 5px; }
+:root .register-record-link { line-height: 17px; }
+:root :is(.tbl-head, .tbl-cell):first-child { padding-left: 8px; }
+:root :is(.tbl-head, .tbl-cell):last-child { padding-right: 4px; }
+:root .tbl-head { color: var(--color-text-secondary); }
+:root tr[data-selected="true"] { background: var(--color-selected-bg); box-shadow: inset 3px 0 var(--color-selected-rail); }
+:root .quick-filters button[aria-pressed="true"] { background: var(--color-bg-surface); border-color: var(--color-control-active-border); }
+:root .table-filter-chips button { background: var(--color-bg-surface); }
+:root .table-filter-chips button:last-child { background: transparent; }
+:root .column-control[data-active="true"] { background: var(--color-bg-subtle); box-shadow: 0 0 0 3px var(--color-bg-subtle); }
+:root :is(.app-workspace, [role="dialog"]) .ui-control { background: var(--color-bg-surface); }
+:root .ui-button.bg-primary { background: var(--color-brand-charcoal); color: #FFFFFF; }
+:root .ui-button.border { background: var(--color-bg-surface); border-color: var(--color-input-border); color: var(--color-text-primary); }
+:root .ui-button:disabled { background: var(--color-bg-subtle); color: var(--color-text-disabled); opacity: 1; }
+:root .pill-critical { padding: 2px 6px; border-radius: 3px; background: var(--color-critical); color: #FFFFFF; }
+:root .pill-critical::before { display: none; }
+:root .pill[data-status="upcoming"] { color: var(--color-text-secondary); }
+:root td[data-column="recurrence"] .register-value { color: var(--color-text-secondary); }
+:root :focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+:root [data-testid="reviews-tab-overdue"]:not([aria-pressed="true"]),
+:root [data-testid="reviews-tab-overdue"]:not([aria-pressed="true"]) span { color: var(--color-critical); }
+@media (hover: hover) and (pointer: fine) {
+  :root .quick-filters button:not([aria-pressed="true"]):hover { background: var(--color-bg-subtle); border-color: var(--color-border-strong); }
+  :root .quick-filters button:not([aria-pressed="true"]):active { background: var(--color-border); border-color: var(--color-input-border); }
+  :root .ui-button.bg-primary:not(:disabled):hover { background: var(--color-brand-charcoal-hover); }
+  :root .ui-button.bg-primary:not(:disabled):active { background: var(--color-brand-charcoal-active); }
+  :root .ui-button.border:not(:disabled):hover { background: var(--color-bg-subtle); }
+}
+@media (max-width: 700px) {
+  :root { --register-gutter: 16px; }
+}
+:root .register-table-frame:not([data-layout="reviews"]) :is(th, td):first-child { padding-left: 10px; }
+:root :is(.app-workspace, .login-shell, [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select, [role="combobox"]) { background: var(--color-bg-surface); }
+/* Search and login fields on inverse surfaces keep readable inverse ink,
+   including when standard authentication is enabled in a future environment. */
+:root :is(.app-sidebar, .login-shell) .ui-control { background: var(--color-sidebar-hover-bg); color: var(--color-text-on-dark); border-color: var(--color-input-border); }
+:root :is(.app-sidebar, .login-shell) .ui-control::placeholder { color: var(--color-sidebar-text); }
+:root :is(.app-sidebar, .login-shell) .ui-control:disabled { color: var(--color-text-on-dark-muted); }
