@@ -650,7 +650,7 @@ async def register(body: RegisterIn, response: Response):
 
 @api.post("/auth/login")
 async def login(body: LoginIn, response: Response):
-    email = body.email.lower()
+    email = body.email.strip().lower()
     u = await db.users.find_one({"email": email})
     if not u or not u.get("password_hash") or not verify_password(body.password, u["password_hash"]):
         raise HTTPException(401, "Invalid credentials")
@@ -1971,201 +1971,17 @@ def _assurance_alerts_for(vendors: List[Dict], within_days: int = 60) -> List[Di
     return out[:8]
 
 
-# ---------------- Startup: seed ----------------
+# ---------------- Startup: schema and standard account only ----------------
 async def seed():
-    await db.users.create_index("email", unique=True)
-    await db.clients.create_index("client_id", unique=True)
-    for coll in ["reviews", "findings", "risks", "policies", "vendors", "assets", "tasks", "evidence"]:
-        await db[coll].create_index("client_id")
-    await db.password_resets.create_index("token_hash", unique=True)
-    await db.sessions.create_index("session_token", unique=True)
-
-    # Seed credentials are environment-controlled.  The fallback values are
-    # intentionally non-production placeholders and must never be used as
-    # operational credentials.
-    admin_email = os.environ.get("ADMIN_EMAIL", "admin@example.test").lower()
-    admin_password = os.environ.get("ADMIN_PASSWORD", "TEST_ONLY_ADMIN_PASSWORD")
-    demo_password = os.environ.get("DEMO_USER_PASSWORD", "TEST_ONLY_PASSWORD")
-    platform_admin_email = os.environ.get("PLATFORM_ADMIN_EMAIL", "platform-admin@example.test").lower()
-    acme_contributor_email = os.environ.get("ACME_CONTRIBUTOR_EMAIL", "acme-contributor@example.test").lower()
-    acme_readonly_email = os.environ.get("ACME_READONLY_EMAIL", "acme-readonly@example.test").lower()
-    globex_contributor_email = os.environ.get("GLOBEX_CONTRIBUTOR_EMAIL", "globex-contributor@example.test").lower()
-
-    # Tenants
-    acme = await db.clients.find_one({"name": "Acme Corp"}, {"_id": 0})
-    if not acme:
-        acme = {"client_id": _uid("cli"), "name": "Acme Corp", "industry": "Manufacturing", "environment": "Production", "status": "active", "created_at": _now()}
-        await db.clients.insert_one(acme)
-    globex = await db.clients.find_one({"name": "Globex Ltd"}, {"_id": 0})
-    if not globex:
-        globex = {"client_id": _uid("cli"), "name": "Globex Ltd", "industry": "Fintech", "environment": "Production", "status": "active", "created_at": _now()}
-        await db.clients.insert_one(globex)
-
-    # Backfill status for legacy tenants (any client without a status → active).
-    await db.clients.update_many({"status": {"$in": [None, ""]}}, {"$set": {"status": "active"}})
-    await db.clients.update_many({"status": {"$exists": False}}, {"$set": {"status": "active"}})
-
-    async def ensure_user(email, name, role, client_ids, password=None):
-        u = await db.users.find_one({"email": email})
-        if u:
-            # Keep demo role/tenant assignments aligned without undoing profile
-            # edits or password changes made through the account settings.
-            update = {"role": role, "client_ids": client_ids}
-            await db.users.update_one({"email": email}, {"$set": update})
-            return u["user_id"]
-        uid = _uid("user")
-        doc = {"user_id": uid, "email": email, "name": name, "role": role,
-               "client_ids": client_ids, "auth_provider": "password",
-               "password_hash": hash_password(password) if password else None,
-               "created_at": _now()}
-        await db.users.insert_one(doc)
-        return uid
-
-    admin_uid = await ensure_user(admin_email, os.environ.get("ADMIN_NAME", "Robb Shea"), "super_admin", [acme["client_id"], globex["client_id"]], admin_password)
-    pa_uid = await ensure_user(platform_admin_email, "Platform Admin", "platform_admin", [acme["client_id"], globex["client_id"]], demo_password)
-    c_acme = await ensure_user(acme_contributor_email, "Alicia Rivera", "client_contributor", [acme["client_id"]], demo_password)
-    r_acme = await ensure_user(acme_readonly_email, "Ravi Kumar", "client_readonly", [acme["client_id"]], demo_password)
-    c_glob = await ensure_user(globex_contributor_email, "Chen Wei", "client_contributor", [globex["client_id"]], demo_password)
-
-    # Migration: normalize legacy review statuses (planned/blocked/overdue → upcoming)
-    await db.reviews.update_many({"status": {"$in": ["planned", "blocked", "overdue"]}}, {"$set": {"status": "upcoming"}})
-
-    # Seed data only once
-    if await db.reviews.count_documents({}) > 0:
-        return
-
-    def isod(days_offset=0):
-        return (datetime.now(timezone.utc) + timedelta(days=days_offset)).isoformat()
-
-    def mk(kind, id_prefix, id_field, **fields):
-        doc = {id_field: _uid(id_prefix), **fields, "created_at": _now(), "updated_at": _now(), "created_by": admin_uid}
-        return doc
-
-    # Reviews (mix of types, statuses, due dates)
-    reviews = []
-    for tenant, own in [(acme, c_acme), (globex, c_glob)]:
-        reviews += [
-            mk("reviews", "rev", "review_id", title=f"Quarterly Access Review — {tenant['name']}",
-               review_type="access", client_id=tenant["client_id"], period="Q1", due_date=isod(-3),
-               owner_id=own, reviewer_id=pa_uid, status="upcoming", scope="All privileged accounts",
-               recurrence="quarterly", next_review_date=isod(90)),
-            mk("reviews", "rev", "review_id", title=f"Vendor Review — Primary SaaS providers",
-               review_type="vendor", client_id=tenant["client_id"], due_date=isod(12), owner_id=own,
-               status="in_progress", recurrence="annual"),
-            mk("reviews", "rev", "review_id", title="Patch & Vulnerability Review",
-               review_type="vulnerability", client_id=tenant["client_id"], due_date=isod(21),
-               owner_id=own, status="upcoming", recurrence="monthly"),
-            mk("reviews", "rev", "review_id", title="Policy Review — Information Security Policy",
-               review_type="policy", client_id=tenant["client_id"], due_date=isod(45),
-               owner_id=own, status="upcoming", recurrence="annual"),
-            mk("reviews", "rev", "review_id", title="BCP / DR Tabletop Exercise",
-               review_type="bcp_dr", client_id=tenant["client_id"], due_date=isod(60),
-               owner_id=own, status="upcoming", recurrence="semiannual"),
-            mk("reviews", "rev", "review_id", title="Security Awareness Training Review",
-               review_type="awareness", client_id=tenant["client_id"], due_date=isod(-10),
-               owner_id=own, status="upcoming", recurrence="quarterly"),
-        ]
-    await db.reviews.insert_many(reviews)
-
-    # Findings
-    findings = []
-    for tenant, own in [(acme, c_acme), (globex, c_glob)]:
-        findings += [
-            mk("findings", "fnd", "finding_id", title="Stale privileged accounts found in AD",
-               client_id=tenant["client_id"], severity="high", status="open", owner_id=own, due_date=isod(14),
-               description="7 privileged accounts inactive > 90 days.",
-               remediation_plan="Disable and remove after owner confirmation."),
-            mk("findings", "fnd", "finding_id", title="Vendor SOC 2 report missing",
-               client_id=tenant["client_id"], severity="medium", status="in_remediation",
-               owner_id=own, due_date=isod(20)),
-            mk("findings", "fnd", "finding_id", title="Critical CVE patch overdue on payroll server",
-               client_id=tenant["client_id"], severity="critical", status="open", owner_id=own, due_date=isod(-2)),
-            mk("findings", "fnd", "finding_id", title="Policy not signed by three department heads",
-               client_id=tenant["client_id"], severity="low", status="open", owner_id=own, due_date=isod(30)),
-        ]
-    await db.findings.insert_many(findings)
-
-    # Risks
-    risks = []
-    for tenant, own in [(acme, c_acme), (globex, c_glob)]:
-        risks += [
-            mk("risks", "rsk", "risk_id", title="Ransomware disruption to core systems",
-               client_id=tenant["client_id"], category="cybersecurity", likelihood="medium", impact="high",
-               status="assessed", owner_id=own, treatment="Immutable backups + EDR + tabletop"),
-            mk("risks", "rsk", "risk_id", title="Third-party payroll processor outage",
-               client_id=tenant["client_id"], category="vendor", likelihood="low", impact="high",
-               status="treated", owner_id=own),
-            mk("risks", "rsk", "risk_id", title="Insider misuse of admin credentials",
-               client_id=tenant["client_id"], category="operational", likelihood="medium", impact="medium",
-               status="identified", owner_id=own),
-        ]
-    for risk in risks:
-        risk["display_id"] = await risk_ids.allocate(db, risk["client_id"])
-    await db.risks.insert_many(risks)
-
-    # Policies
-    policies = []
-    for tenant, own in [(acme, c_acme), (globex, c_glob)]:
-        policies += [
-            mk("policies", "pol", "policy_id", title="Information Security Policy",
-               client_id=tenant["client_id"], version="2.3", status="approved", owner_id=own,
-               approver_id=pa_uid, approved_at=isod(-120), next_review_date=isod(245)),
-            mk("policies", "pol", "policy_id", title="Access Control Policy",
-               client_id=tenant["client_id"], version="1.4", status="in_review", owner_id=own,
-               next_review_date=isod(40)),
-            mk("policies", "pol", "policy_id", title="Incident Response Plan",
-               client_id=tenant["client_id"], version="1.0", status="approved", owner_id=own,
-               approved_at=isod(-60), next_review_date=isod(305)),
-        ]
-    await db.policies.insert_many(policies)
-
-    # Vendors
-    vendors = []
-    for tenant in [acme, globex]:
-        vendors += [
-            mk("vendors", "ven", "vendor_id", name="CloudCore SaaS", client_id=tenant["client_id"],
-               criticality="high", status="active", contact_email="security@cloudcore.example",
-               services="Primary CRM & data storage", contract_end=isod(200)),
-            mk("vendors", "ven", "vendor_id", name="PayrollPro", client_id=tenant["client_id"],
-               criticality="critical", status="active", services="Payroll processing", contract_end=isod(90)),
-            mk("vendors", "ven", "vendor_id", name="MailerX", client_id=tenant["client_id"],
-               criticality="medium", status="under_review", services="Transactional email"),
-        ]
-    await db.vendors.insert_many(vendors)
-
-    # Assets
-    assets = []
-    for tenant in [acme, globex]:
-        assets += [
-            mk("assets", "ast", "asset_id", name="prod-db-01", client_id=tenant["client_id"],
-               asset_type="database", criticality="critical", location="us-east-1", status="active"),
-            mk("assets", "ast", "asset_id", name="finance-app-web", client_id=tenant["client_id"],
-               asset_type="application", criticality="high", status="active"),
-            mk("assets", "ast", "asset_id", name="edr-workstation-fleet", client_id=tenant["client_id"],
-               asset_type="workstation", criticality="medium", status="active"),
-        ]
-    await db.assets.insert_many(assets)
-
-    # Tasks
-    tasks = []
-    for tenant, own in [(acme, c_acme), (globex, c_glob)]:
-        tasks += [
-            mk("tasks", "tsk", "task_id", title="Disable stale AD accounts", client_id=tenant["client_id"],
-               status="in_progress", priority="high", assignee_id=own, due_date=isod(7)),
-            mk("tasks", "tsk", "task_id", title="Request SOC 2 from CloudCore", client_id=tenant["client_id"],
-               status="open", priority="medium", assignee_id=own, due_date=isod(14)),
-            mk("tasks", "tsk", "task_id", title="Patch CVE-2026-1000 on payroll server", client_id=tenant["client_id"],
-               status="open", priority="critical", assignee_id=own, due_date=isod(-1)),
-        ]
-    await db.tasks.insert_many(tasks)
+    """Compatibility entry point: never creates fictional operational data."""
+    from initialization import initialize_standard
+    await initialize_standard(db, _uid, _now)
 
 
 @app.on_event("startup")
 async def _on_start():
-    try:
-        await seed()
-    except Exception as e:
-        logging.exception("Seed failed: %s", e)
+    # Fail startup if required database initialization fails.
+    await seed()
 
 
 # ---------------- Health ----------------
@@ -4598,7 +4414,7 @@ app.include_router(entity_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in os.environ.get("CORS_ORIGINS", "").split(",") if origin.strip()],
     allow_credentials=False,  # cookies are cross-site secure=none but we also return token in body
     allow_methods=["*"],
     allow_headers=["*"],
