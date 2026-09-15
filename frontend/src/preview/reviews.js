@@ -21,6 +21,7 @@ export function history(db, review) {
 }
 export function reviewAction(db, id, name, body) {
   const review = record(db, 'reviews', id), current = reviewView(review);
+  if(review.ai_system_id&&(db.ai_systems||[]).some(a=>a.ai_system_id===review.ai_system_id&&a.status==='retired')&&review.status!=='in_progress')throw new Error('Retired AI only permits completion of already-started closure work');
   const previous = review.occurrences?.find(o => o.occurrence_id === body.occurrence_id);
   if (name === 'complete' && previous) return {review:current, occurrence:previous, spawned:null};
   if(review.vendor_id&&db.vendors.some(v=>v.vendor_id===review.vendor_id&&v.status==='inactive')&&review.vendor_purpose!=='offboarding') throw new Error('Inactive Vendors have no active recurring Reviews.');

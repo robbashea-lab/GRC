@@ -9,3 +9,4 @@
 !frontend/src
 !frontend/src/lib
 !frontend/src/lib/grcRules.json
+!frontend/src/lib/aiGovernanceCatalog.json

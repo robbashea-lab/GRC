@@ -10,6 +10,7 @@ import { assessedRisk } from '../lib/grcWork';
 export const STORE_KEY = 'grc_interactive_demo_v2';
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
+  ai_systems:'ai_system_id',
   clients: 'client_id',
   users: 'user_id',
   reviews: 'review_id',
@@ -97,6 +98,7 @@ export function validate(db, kind, body, existing) {
     risk_id: 'risks',
     policy_id: 'policies',
     vendor_id: 'vendors'
+    ,ai_system_id:'ai_systems'
   })) {
     if (relation === ids[kind] || !body[relation]) continue;
     const target = record(db, collection, body[relation]);

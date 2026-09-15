@@ -10,6 +10,9 @@ async def ensure_indexes(db):
         await db[name].create_index("client_id")
     await db.password_resets.create_index("token_hash", unique=True)
     await db.sessions.create_index("session_token", unique=True)
+    await db.ai_systems.create_index('ai_system_id', unique=True)
+    await db.ai_systems.create_index([('client_id',1),('display_id',1)], unique=True)
+    await db.ai_intake.create_index('client_id', unique=True)
 
 
 async def migrate_legacy_records(db):

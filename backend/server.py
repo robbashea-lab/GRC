@@ -42,6 +42,7 @@ import policy_reviews
 import risk_lifecycle
 import vendor_governance
 import review_occurrences
+import ai_governance
 
 # ---------------- DB ----------------
 mongo_url = os.environ["MONGO_URL"]
@@ -136,7 +137,7 @@ def review_mutation(fn):
             review_id = data.get("entity_id")
         if not review_id:
             return await fn(*args, **kwargs)
-        await _authorized_parent("reviews", review_id, values["user"], write=True)
+        linked_review = await _authorized_parent("reviews", review_id, values["user"], write=True)
         token = uuid.uuid4().hex
         now = datetime.now(timezone.utc)
         acquired = await db.reviews.update_one({"review_id": review_id, "$or": [
@@ -145,7 +146,12 @@ def review_mutation(fn):
         if not acquired.modified_count:
             raise HTTPException(409, "Another occurrence action is being saved; please retry")
         try:
-            return await asyncio.wait_for(fn(*args, **kwargs), timeout=60)
+            async with ai_governance.lease(db, linked_review.get('ai_system_id')):
+                if linked_review.get('ai_system_id'):
+                    ai_parent = await _authorized_parent('ai_systems', linked_review['ai_system_id'], values['user'])
+                    if ai_parent.get('status') == 'retired' and (linked_review.get('status') != 'in_progress' or values.get('kind') == 'reviews' and set(data) - {'notes','expected_occurrence_id'}):
+                        raise HTTPException(409, 'Retired AI only permits completion of already-started closure work')
+                return await asyncio.wait_for(fn(*args, **kwargs), timeout=60)
         finally:
             await db.reviews.update_one({"review_id": review_id, "_execution_lock.token": token}, {"$unset": {"_execution_lock": ""}})
     return wrapped
@@ -285,6 +291,7 @@ class ClientPatchIn(BaseModel):
 
 
 class ReviewIn(BaseModel):
+    ai_system_id: Optional[str] = None
     risk_id: Optional[str] = None
     title: str
     review_type: str  # asset, software, access, vendor, policy, risk, vulnerability, bcp_dr, incident, awareness
@@ -546,6 +553,7 @@ async def audit(user: Dict, action: str, entity_type: str, entity_id: str, clien
 
 # ---------------- Notifications helpers (defined early so they're in scope everywhere) ----------------
 ID_FIELD_MAP = {
+    "ai_systems": "ai_system_id",
     "reviews": "review_id", "findings": "finding_id", "risks": "risk_id",
     "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id",
     "tasks": "task_id", "exceptions": "exception_id",
@@ -1370,6 +1378,8 @@ async def delete_evidence(ev_id: str, user: Dict = Depends(get_current_user)):
         raise HTTPException(409,"Vendor assurance, contract and historical evidence must be retained")
     if doc.get("linked_type") in ("risk","risks") and await db.risks.find_one({"risk_id":doc.get("linked_id"),"client_id":doc["client_id"],"status":{"$in":["closed","retired"]}}):
         raise HTTPException(409,"Closed Risk evidence must be retained")
+    if doc.get('linked_type') in ('ai_system','ai_systems') and await db.ai_systems.find_one({'ai_system_id':doc.get('linked_id'),'client_id':doc['client_id'],'status':'retired'}):
+        raise HTTPException(409,'Retired AI evidence must be retained')
     if doc.get("linked_type") in ("task", "tasks") and await db.tasks.find_one({"task_id": doc.get("linked_id"), "client_id": doc["client_id"], "status": "done"}):
         raise HTTPException(409, "Completed Action Item evidence must be retained")
     # Retain bytes even if a completion races this removal. Only the inventory link is archived.
@@ -2034,6 +2044,11 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     if kind in ("findings", "tasks") and previous.get("occurrence_id") and set(changes) & {"review_id", "finding_id"}:
         raise HTTPException(422, "Review occurrence relationships must be retained")
     if kind == "reviews":
+        if 'ai_system_id' in changes:
+            raise HTTPException(422, 'Establish AI Reviews from AI Governance')
+        if existing and existing.get('ai_system_id') and set(changes) & {'due_date','recurrence','custom_recurrence_days','status'}:
+            if changes.get('recurrence') not in (None,'none') and existing.get('recurrence') == 'none' and existing.get('status') == 'cancelled':
+                raise HTTPException(409, 'Cancelled AI Reviews remain historical')
         if existing and existing.get("vendor_purpose") == "contract" and set(changes) & {"due_date","recurrence","custom_recurrence_days"}:
             raise HTTPException(422, "Configure Contract Renewal Review through the Vendor contract dates and lead time")
         if "vendor_purpose" in changes or "vendor_id" in changes:
@@ -2304,7 +2319,7 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
-    if kind in ("risks","vendors") or kind == "reviews" and (existing.get("risk_id") or existing.get("vendor_id")):
+    if kind in ("risks","vendors") or kind == "reviews" and (existing.get("risk_id") or existing.get("vendor_id") or existing.get('ai_system_id')):
         raise HTTPException(409, "Risks and their Review obligations must be retained")
     if kind == "reviews" and (existing.get("status") == "completed" or existing.get("occurrences")):
         raise HTTPException(409, "Completed reviews must be retained")
@@ -3312,7 +3327,7 @@ async def task_activity(task_id: str, user: Dict = Depends(get_current_user)):
 @api.get("/related")
 async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(get_current_user), occurrence_id: Optional[str] = None):
     """Return records related to the given entity across collections."""
-    keys = {"reviews": "review_id", "findings": "finding_id", "tasks": "task_id", "risks": "risk_id", "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id", "exceptions": "exception_id", "requirements": "requirement_id", "contacts": "contact_id"}
+    keys = {"reviews": "review_id", "findings": "finding_id", "tasks": "task_id", "risks": "risk_id", "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id", "exceptions": "exception_id", "requirements": "requirement_id", "contacts": "contact_id", 'ai_systems':'ai_system_id'}
     if entity_type not in keys:
         raise HTTPException(400, "Unsupported record type")
     source = await db[entity_type].find_one({keys[entity_type]: entity_id}, {"_id": 0})
@@ -3324,10 +3339,20 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type == "reviews" and occurrence_id:
         await _review_selection(source, occurrence_id)
     linked = {}
+    ai_reviews = await db.reviews.find({'client_id':cid,'ai_system_id':entity_id},{'review_id':1}).to_list(None) if entity_type == 'ai_systems' else []
     for target, key in keys.items():
         relations = [{keys[entity_type]: entity_id}]
         if source.get(key):
             relations.append({key: source[key]})
+        if entity_type == 'ai_systems':
+            mapped = [x['id'] for x in source.get('related_links',[]) if x['kind']==target]
+            if mapped: relations.append({key:{'$in':mapped}})
+            if target in ('findings','tasks','risks') and ai_reviews: relations.append({'review_id':{'$in':[r['review_id'] for r in ai_reviews]}})
+        if target == 'ai_systems':
+            relations.append({'related_links':{'$elemMatch':{'kind':entity_type,'id':entity_id}}})
+            if source.get('review_id'):
+                ai_review = await db.reviews.find_one({'client_id':cid,'review_id':source['review_id']})
+                if ai_review and ai_review.get('ai_system_id'): relations.append({'ai_system_id':ai_review['ai_system_id']})
         if entity_type == "risks" and target == "tasks" and source.get("related_task_ids"):
             relations.append({"task_id":{"$in":source["related_task_ids"]}})
         if entity_type == "vendors" and target == "risks" and source.get("related_risk_ids"):
@@ -3356,6 +3381,8 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
                 review["linked_occurrence"] = {"period": review_occurrences.view(review).get("period"), "status": review.get("status")}
     singular = "policy" if entity_type == "policies" else entity_type[:-1]
     linked["evidence"] = await db.evidence.find({"client_id": cid, "linked_type": singular, "linked_id": entity_id}, {"_id": 0, "content_base64": 0}).to_list(200)
+    if entity_type == 'ai_systems' and ai_reviews:
+        linked['evidence'] += await db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':[r['review_id'] for r in ai_reviews]}},{'_id':0,'content_base64':0}).to_list(200)
     return linked
 
 
@@ -4190,7 +4217,7 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     if body.action == "delete":
         if user.get("role") not in ("super_admin", "platform_admin"):
             raise HTTPException(403, "Destructive action restricted")
-        if body.kind in ("risks","vendors") or body.kind == "reviews" and any(d.get("risk_id") or d.get("vendor_id") for d in docs):
+        if body.kind in ("risks","vendors") or body.kind == "reviews" and any(d.get("risk_id") or d.get("vendor_id") or d.get('ai_system_id') for d in docs):
             raise HTTPException(409, "Risks and their Review obligations must be retained")
         if body.kind == "reviews" and any(d.get("status") == "completed" or d.get("occurrences") for d in docs):
             raise HTTPException(409, "Completed reviews must be retained")
@@ -4424,6 +4451,8 @@ async def reports_board(client_id: str = Query(...), user: Dict = Depends(get_cu
 
 # Actually mount the routers now — after all literal routes are declared.
 app.include_router(api)
+import sys
+app.include_router(ai_governance.router_for(sys.modules[__name__]))
 app.include_router(entity_router)
 
 

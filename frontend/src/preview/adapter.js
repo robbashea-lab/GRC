@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import {aiRequest,aiRelated} from './aiGovernance';
 import { baselineState, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './demoConfiguration.json';
@@ -59,6 +60,7 @@ export async function previewAdapter(config) {
       saveStore(db);
       return respond(data);
     };
+    if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
     if (path === '/demo/reset' && method === 'post') {
       resetStore();
       return respond({
@@ -146,7 +148,7 @@ export async function previewAdapter(config) {
           if(o) review.linked_occurrence={period:o.period,status:o.status};
           else if((review.current_occurrence_id||'occ_'+review.review_id)===source.occurrence_id) review.linked_occurrence={period:reviewView(review).period,status:review.status};
         }
-        return respond(data);
+        return respond(aiRelated(db,params.entity_type,source,data));
       }
       if (kind === 'comments') return respond(db.comments.filter(r => r.entity_type === params.entity_type && r.entity_id === params.entity_id
         && (!['review','reviews'].includes(params.entity_type) || belongsToOccurrence(r,record(db,'reviews',params.entity_id),params.occurrence_id))));
@@ -222,7 +224,7 @@ export async function previewAdapter(config) {
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
         throw new Error('Review history must be retained.');
       if (body.kind === 'tasks' && body.action === 'delete' && rows.some(r=>r.status==='done'||r.completed_at)) throw new Error('Completed Action Items must be retained.');
-      if(body.action==='delete'&&(['risks','vendors'].includes(body.kind)||body.kind==='reviews'&&rows.some(r=>r.risk_id||r.vendor_id))) throw new Error('Risks and their Review obligations must be retained.');
+      if(body.kind==='ai_systems'||body.action==='delete'&&(['risks','vendors'].includes(body.kind)||body.kind==='reviews'&&rows.some(r=>r.risk_id||r.vendor_id||r.ai_system_id))) throw new Error('Governance records and their Review obligations must be retained.');
       const payload = body.payload || {};
       const close = {
         reviews: 'completed',
@@ -330,7 +332,8 @@ export async function previewAdapter(config) {
         const r = record(db, kind, id);
         if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
-        if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id)) throw new Error('Risks and their Review obligations must be retained.');
+        if(kind==='evidence'&&['ai_system','ai_systems'].includes(r.linked_type)&&(db.ai_systems||[]).some(x=>x.ai_system_id===r.linked_id&&x.status==='retired'))throw new Error('Retired AI evidence must be retained');
+        if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id||r.ai_system_id)) throw new Error('Governance records and their Review obligations must be retained.');
         if (kind==='tasks'&&(r.status==='done'||r.completed_at) || kind==='evidence'&&db.tasks.some(t=>t.task_id===r.linked_id&&t.client_id===r.client_id&&t.status==='done')) throw new Error('Completed Action Items and their evidence must be retained.');
         if (kind === 'reviews' && (r.status === 'completed' || r.occurrences?.length) || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id) || v.occurrences?.some(o => o.evidence?.some(e => e.evidence_id === id)))) throw new Error('Completed reviews and their evidence must be retained.');
         db[kind] = db[kind].filter(x => x[ids[kind]] !== id);

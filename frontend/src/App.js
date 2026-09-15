@@ -24,6 +24,7 @@ import ClientSettings from "@/pages/ClientSettings";
 import ActionItems from "@/pages/ActionItems";
 import RiskRegister from "@/pages/RiskRegister";
 import VendorRegister from "@/pages/VendorRegister";
+import AIGovernance from '@/pages/AIGovernance';
 import "@/App.css";
 
 function Protected({ children }) {
@@ -89,6 +90,7 @@ function AppRouter() {
         <Route path="requirements" element={<RecordListPage kind="requirements" />} />
         <Route path="contacts" element={<RecordListPage kind="contacts" />} />
         <Route path="vendors" element={<VendorRegister />} />
+        <Route path="ai-governance" element={<AIGovernance />} />
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />
         <Route path="action-items" element={<ActionItems />} />
         <Route path="evidence" element={<Evidence />} />

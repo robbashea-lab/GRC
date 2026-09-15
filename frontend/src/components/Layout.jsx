@@ -27,6 +27,7 @@ const CLIENT_NAV = [
   { to: "/risks", label: "Risks", icon: ShieldAlert, testid: "nav-risks" },
   { to: "/policies", label: "Policies", icon: FileText, testid: "nav-policies" },
   { to: "/vendors", label: "Vendors", icon: Building2, testid: "nav-vendors" },
+  { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
   { to: "/contacts", label: "Contacts & Roles", icon: Users, testid: "nav-contacts" },
   { to: "/evidence", label: "Evidence", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/onboarding", label: "Onboarding", icon: Sparkles, testid: "nav-onboarding" },
