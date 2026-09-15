@@ -104,8 +104,8 @@ export default function Evidence() {
                   <td className="tbl-cell font-mono text-ink-secondary">{new Date(r.created_at).toLocaleString()}</td>
                   <td className="tbl-cell text-ink-muted">{r.linked_type ? `${r.linked_type} · ${r.linked_id}` : "—"}</td>
                   <td className="tbl-cell">
-                    <button data-testid={`evidence-download-${i}`} onClick={() => download(r)} className="p-1 mr-1 rounded hover:bg-surface-subtle text-ink-muted"><Download className="h-3.5 w-3.5" /></button>
-                    {canDelete && <button data-testid={`evidence-delete-${i}`} onClick={() => remove(r)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical"><Trash2 className="h-3.5 w-3.5" /></button>}
+                    <button aria-label={`Download ${r.filename}`} title={`Download ${r.filename}`} data-testid={`evidence-download-${i}`} onClick={() => download(r)} className="p-1 mr-1 rounded hover:bg-surface-subtle text-ink-muted"><Download className="h-3.5 w-3.5" /></button>
+                    {canDelete && <button aria-label={`Delete ${r.filename}`} title={`Delete ${r.filename}`} data-testid={`evidence-delete-${i}`} onClick={() => remove(r)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical"><Trash2 className="h-3.5 w-3.5" /></button>}
                   </td>
                 </tr>
               ))}

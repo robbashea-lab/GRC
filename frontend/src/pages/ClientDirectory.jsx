@@ -2,7 +2,9 @@ import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { calendarDay } from '@/lib/clientDashboard';
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import RecordDrawer from '@/components/RecordDrawer';
+import { loadPortfolioRecord } from '@/lib/portfolioRecord';
 import { useNavigate } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -41,10 +43,6 @@ const PRIORITY_TONES = {
   high: "pill-high",
   overdue: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
   due_soon: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
-};
-
-const ENTITY_ROUTE = {
-  review: "/reviews", finding: "/action-items", risk: "/risks", task: "/action-items",
 };
 
 const FILTERS = [
@@ -157,6 +155,17 @@ export default function ClientDirectory() {
   const [leadFilter, setLeadFilter] = useState("__all__");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [drillOpen, setDrillOpen] = useState(null); // { scope, title, rows }
+  const [selectedRecord,setSelectedRecord]=useState(null);
+  const recordRequest=useRef(0);
+  useEffect(()=>()=>{recordRequest.current++;},[]);
+  async function openPortfolioItem(item) {
+    const request=++recordRequest.current;
+    try {
+      const selected=await loadPortfolioRecord(api,item);
+      if(request!==recordRequest.current) return;
+      setDrillOpen(null);setSelectedRecord(selected);
+    } catch(e) {if(request===recordRequest.current) toast.error(formatError(e));}
+  }
 
   const canCreate = ["super_admin", "platform_admin"].includes(user?.role);
 
@@ -459,7 +468,7 @@ export default function ClientDirectory() {
                   <td className="tbl-cell text-xs text-ink-secondary capitalize">{(item.status || "").replace("_", " ")}</td>
                   <td className="tbl-cell text-right">
                     <button
-                      onClick={() => enterWorkspace({ client_id: item.client_id }, ENTITY_ROUTE[item.entity_type] || "/dashboard")}
+                      onClick={() => openPortfolioItem(item)}
                       data-testid={`attention-action-${i}`}
                       className="text-xs text-link hover:text-link-hover"
                     >Open →</button>
@@ -473,7 +482,8 @@ export default function ClientDirectory() {
 
       <DrillDialog open={!!drillOpen} data={drillOpen} userMap={userMap}
         onClose={() => setDrillOpen(null)}
-        onOpenItem={(item) => { enterWorkspace({ client_id: item.client_id }, ENTITY_ROUTE[item.entity_type] || "/dashboard"); setDrillOpen(null); }} />
+        onOpenItem={openPortfolioItem} />
+      {selectedRecord && <RecordDrawer open kind={selectedRecord.kind} record={selectedRecord.record} clientId={selectedRecord.record.client_id} users={users} onSaved={load} onOpenChange={open=>{if(!open){recordRequest.current++;setSelectedRecord(null);}}} />}
 
 
     </div>
