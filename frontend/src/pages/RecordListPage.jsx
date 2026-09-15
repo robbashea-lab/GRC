@@ -1,3 +1,4 @@
+import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
@@ -539,7 +540,7 @@ export default function RecordListPage({ kind }) {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={schema.columns.length + 2} className="tbl-cell text-center py-8 text-ink-help">Loading…</td></tr>}
+              {loading && <TableLoadingRow colSpan={schema.columns.length + 2} />}
               {!loading && filtered.length === 0 && <tr><td colSpan={schema.columns.length + 2} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
               {!loading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);

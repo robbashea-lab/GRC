@@ -1,3 +1,5 @@
+import { StatusPill } from '@/components/StatusBadge';
+import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGovernance';
 import { tableColumns } from '@/lib/tableColumns';
@@ -183,7 +185,7 @@ export default function VendorRegister() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {loading && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
+              {loading && <TableLoadingRow colSpan={9} />}
               {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((v, i) => {
                 const tone = CRIT_TONE[v.criticality] || CRIT_TONE.medium;
@@ -220,9 +222,9 @@ export default function VendorRegister() {
                       ) : <span className="text-ink-help">—</span>}
                     </td>
                     <td className="tbl-cell">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-xs font-medium capitalize">
+                      <StatusPill className="border-line bg-surface-subtle">
                         {(v.status || "active").replace("_", " ")}
-                      </span>
+                      </StatusPill>
                     </td>
                   </tr>
                 );

@@ -22,7 +22,7 @@ export default function AdminSecurity() {
         <div className="rounded-md border border-line bg-surface-card divide-y divide-line" data-testid="admin-security-list">
           {ROWS.map((r, i) => (
             <div key={i} className="flex items-start gap-3 p-4">
-              <div className="h-8 w-8 rounded-md bg-surface-subtle border border-line flex items-center justify-center"><r.icon className="h-4 w-4 text-brand-charcoal" /></div>
+              <div className="h-8 w-8 rounded-md bg-surface-subtle border border-line flex items-center justify-center"><r.icon className="h-4 w-4 text-ink-secondary" /></div>
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-ink-primary">{r.label}</div>
                 <p className="text-xs text-ink-secondary mt-0.5">{r.value}</p>

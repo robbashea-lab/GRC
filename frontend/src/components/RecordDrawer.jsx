@@ -459,7 +459,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return (
       <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap" data-testid="contact-actions">
         <div className="flex items-center gap-2 text-sm text-ink-primary">
-          <Users2 className="h-4 w-4 text-brand-charcoal" /> Platform access
+          <Users2 className="h-4 w-4 text-ink-secondary" /> Platform access
         </div>
         {linked ? (
           <span className="text-xs text-semantic-success">Linked to platform user</span>
@@ -798,7 +798,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       <div className="border border-line bg-surface-subtle rounded-md p-3 space-y-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm text-ink-primary">
-            <Zap className="h-4 w-4 text-brand-charcoal" /> Review actions
+            <Zap className="h-4 w-4 text-ink-secondary" /> Review actions
           </div>
           <div className="flex flex-wrap gap-2">
             {canWrite && ["needs_scheduling", "upcoming"].includes(record?.status) && <Button size="sm" variant="outline" data-testid="review-start" onClick={async () => {
@@ -831,7 +831,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     if (!isEdit || !canWrite) return null;
     return (
       <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-brand-charcoal" /> Finding actions</div>
+        <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-ink-secondary" /> Finding actions</div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={quickCreateTask} disabled={!!related.tasks?.length} data-testid="quick-create-task">{related.tasks?.length ? "Remediation action linked" : "Create remediation task"}</Button>
           {status === "remediated" && isPlatformAdmin && <Button size="sm" data-testid="finding-validate" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Validate and close</Button>}
@@ -848,7 +848,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     if (!isEdit || !canWrite) return null;
     return (
       <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap" data-testid="risk-actions-panel">
-        <div className="flex items-center gap-2 text-sm text-ink-primary"><ShieldCheck className="h-4 w-4 text-brand-charcoal" /> Risk actions</div>
+        <div className="flex items-center gap-2 text-sm text-ink-primary"><ShieldCheck className="h-4 w-4 text-ink-secondary" /> Risk actions</div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Review Risk</Button>
           {isPlatformAdmin&&<Button size="sm" variant="outline" onClick={()=>setClosure({reason:"remediated",note:""})}>Close Risk</Button>}

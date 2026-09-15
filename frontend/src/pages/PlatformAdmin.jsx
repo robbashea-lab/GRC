@@ -1,3 +1,4 @@
+import { StatusPill } from '@/components/StatusBadge';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState } from "react";
@@ -141,9 +142,9 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
                     </td>
                   )}
                   <td className="tbl-cell">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${tone}`}>
+                    <StatusPill className={tone}>
                       {status}
-                    </span>
+                    </StatusPill>
                   </td>
                   <td className="tbl-cell text-xs font-mono text-ink-secondary">
                     {u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : <span className="text-ink-help">—</span>}

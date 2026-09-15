@@ -36,7 +36,7 @@ export function ColumnControl({ table, column: supplied, columnKey }) {
   const options = c.filter ? table.options(c) : [];
   const labels = c.rank || c.numeric ? ['Lowest First', 'Highest First'] : c.dateKind === 'history' ? ['Oldest', 'Most Recent'] : c.dateKind === 'due' ? ['Soonest Due', 'Furthest Due'] : c.dateKind ? ['Soonest', 'Furthest'] : ['A → Z', 'Z → A'];
   return <DropdownMenu modal={false} onOpenChange={() => setQuery('')}>
-    <DropdownMenuTrigger asChild><button type="button" aria-label={`${c.label}: sort and filter`} className={`inline-flex items-center gap-1 whitespace-nowrap rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 normal-case tracking-normal ${selected.length || sorting ? 'text-ink-primary underline decoration-current underline-offset-4' : 'hover:text-ink-primary'}`}>
+    <DropdownMenuTrigger asChild><button type="button" data-active={!!(selected.length || sorting)} aria-label={`${c.label}: sort and filter`} className={`column-control inline-flex items-center gap-1 whitespace-nowrap rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 normal-case tracking-normal ${selected.length || sorting ? 'text-ink-primary underline decoration-current underline-offset-4' : 'hover:text-ink-primary'}`}>
       {c.label}<ChevronDown aria-hidden="true" className={`h-3 w-3 ${selected.length || sorting ? 'opacity-100' : 'opacity-40'}`} />
     </button></DropdownMenuTrigger>
     <DropdownMenuContent align="start" className="w-56 max-h-80" aria-label={`${c.label} options`}>
@@ -52,7 +52,7 @@ export function ColumnControl({ table, column: supplied, columnKey }) {
 export function TableFilterChips({ table }) {
   const chips = table.columns.flatMap(c => (table.state.filters[c.key] || []).map(value => ({ column:c, value, label:table.options(c).find(o => o.value === value)?.label || 'Unavailable value' })));
   if (!chips.length) return null;
-  return <div aria-label="Active table filters" className="flex flex-wrap items-center gap-2 py-2 text-xs text-ink-secondary">
+  return <div aria-label="Active table filters" className="table-filter-chips flex flex-wrap items-center gap-2 py-2 text-xs text-ink-secondary">
     <span>Filters:</span>{chips.map(({ column:c,value,label }) => <button key={`${c.key}:${value}`} type="button" onClick={() => table.setFilter(c.key,table.state.filters[c.key].filter(v => v !== value))} aria-label={`Remove ${c.label}: ${label}`} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface-card px-2 py-1 hover:bg-surface-subtle">{c.label}: {label}<X className="h-3 w-3" aria-hidden="true" /></button>)}
     <button type="button" onClick={table.clear} className="underline underline-offset-2">Clear all</button>
   </div>;

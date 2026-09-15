@@ -1,3 +1,4 @@
+import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -195,7 +196,7 @@ export default function ActionItems() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {loading && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
+              {loading && <TableLoadingRow colSpan={6} />}
               {!loading && filtered.length === 0 && (
                 <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="action items" onClear={() => { const next=new URLSearchParams(params);next.delete('q');next.set('view','all');setParams(next,{replace:true}); }} /></td></tr>
               )}

@@ -1,3 +1,4 @@
+import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { calendarDay } from '@/lib/clientDashboard';
@@ -355,7 +356,7 @@ export default function ClientDirectory() {
                         data-testid={`client-open-${r.client_id}`}>
                         <Avatar name={r.name} logoUrl={r.logo_url} />
                         <div className="min-w-0">
-                          <div className="font-medium text-ink-primary group-hover:text-brand-charcoal-hover truncate flex items-center gap-1.5">
+                          <div className="font-medium text-ink-primary group-hover:text-link-hover truncate flex items-center gap-1.5">
                             {r.name}
                             <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help" />
                           </div>
@@ -426,7 +427,7 @@ export default function ClientDirectory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {loading && (<tr><td colSpan={8} className="tbl-cell text-center text-ink-help py-6">Loading…</td></tr>)}
+              {loading && (<TableLoadingRow colSpan={8} />)}
               {!loading && queue.length === 0 && (
                 <tr><td colSpan={8} className="tbl-cell text-center text-ink-help py-8">
                   No priority portfolio items require attention right now.
@@ -440,7 +441,7 @@ export default function ClientDirectory() {
                     </span>
                   </td>
                   <td className="tbl-cell">
-                    <button className="text-ink-primary hover:text-brand-charcoal-hover hover:underline underline-offset-2"
+                    <button className="text-ink-primary hover:text-link-hover hover:underline underline-offset-2"
                       onClick={() => enterWorkspace({ client_id: item.client_id })}>
                       {item.client_name}
                     </button>

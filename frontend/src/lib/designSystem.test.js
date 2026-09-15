@@ -29,3 +29,22 @@ test('light remains an explicit supported theme and native controls inherit them
   expect(css).toContain('.light { color-scheme: light; }');
   expect(css).toContain('color-scheme: dark');
 });
+
+test('shared motion respects reduced motion and keyboard work without animating layout', () => {
+  expect(css).toContain('--duration-drawer: 240ms');
+  expect(css).toContain('--ease-drawer: cubic-bezier(.32, .72, 0, 1)');
+  expect(css).toContain('transform: scale(.96)');
+  expect(css).toContain(':not([data-static])');
+  expect(css).toContain('@media (hover: hover) and (pointer: fine)');
+  expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+  expect(css).toContain('[data-input-modality="keyboard"]');
+  expect(css).not.toMatch(/transition:\s*all|will-change:\s*all/);
+});
+
+test('floating surfaces keep viewport limits, keyboard focus, and trigger origins', () => {
+  expect(css).toContain('max-width: calc(100vw - 24px)');
+  expect(css).toContain('max-height: calc(100dvh - 32px)');
+  expect(css).toContain('outline: 2px solid var(--color-focus-ring)');
+  expect(css).toContain('transform-origin: var(--radix-dropdown-menu-content-transform-origin)');
+  expect(css).toContain('.ui-tooltip[data-state="instant-open"] { animation: none; }');
+});

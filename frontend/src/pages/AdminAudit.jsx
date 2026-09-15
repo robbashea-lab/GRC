@@ -1,3 +1,4 @@
+import TableLoadingRow from '@/components/TableLoadingRow';
 import { ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -351,7 +352,7 @@ export default function AdminAudit() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {loading && (<tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-8">Loading…</td></tr>)}
+              {loading && (<TableLoadingRow colSpan={7} />)}
               {!loading && rows.length === 0 && (
                 <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-8"><FilterEmpty table={table} name="events" /></td></tr>
               )}

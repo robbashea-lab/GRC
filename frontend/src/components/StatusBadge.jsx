@@ -71,17 +71,21 @@ export function toneFor(value) {
   return TONE_BY_STATUS[value] || "neutral";
 }
 
+export function StatusPill({ className = '', children, ...props }) {
+  return <span className={`pill ${className}`} {...props}>{children}</span>;
+}
+
 export default function StatusBadge({ value, tone, testid }) {
   if (!value) return null;
   const bucket = tone || toneFor(value);
   const cls = CLASS_BY_TONE[bucket] || CLASS_BY_TONE.neutral;
   const label = value === "needs_scheduling" ? "Needs Scheduling" : value === "remediated" ? "Pending validation" : String(value).replace(/_/g, " ");
   return (
-    <span
+    <StatusPill
       data-testid={testid || `badge-${value}`}
       className={cls}
     >
       {label}
-    </span>
+    </StatusPill>
   );
 }
