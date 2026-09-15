@@ -2,6 +2,14 @@ import { actionMatches, actionOrder, taskSource } from './actionItems';
 import { applyTableFilters } from './tableFilters';
 import { tableColumns } from './tableColumns';
 const today=new Date(2026,8,13);
+
+test('Active excludes completed work, including legacy All links, without removing cancelled records',()=>{
+  for(const view of ['active','all']) {
+    expect(actionMatches({status:'done'},view)).toBe(false);
+    for(const status of ['open','in_progress','blocked','cancelled']) expect(actionMatches({status},view)).toBe(true);
+  }
+  expect(actionMatches({status:'done'},'completed')).toBe(true);
+});
 test('work presets overlap overdue without storing a workflow status',()=>{
   const r={status:'in_progress',due_date:'2026-09-01'};
   expect(actionMatches(r,'overdue',today)).toBe(true);

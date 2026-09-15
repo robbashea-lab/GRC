@@ -17,7 +17,7 @@ import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
 
 // Only authoritative Task records are displayed here.
-const VIEWS = ACTION_VIEWS.map(id => ({id, label: id === "all" ? "All" : id === "overdue" ? "Overdue" : id === "completed" ? "Completed" : actionStatus(id)}));
+const VIEWS = ACTION_VIEWS.map(id => ({id, label: id === "active" ? "Active" : id === "overdue" ? "Overdue" : id === "completed" ? "Completed" : actionStatus(id)}));
 
 const PRIORITY_TONE = {
   immediate: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
@@ -55,7 +55,7 @@ export default function ActionItems() {
   const [users, setUsers] = useState([]);
   const [params, setParams] = useSearchParams();
   const q = params.get("q") || "";
-  const view = (ACTION_VIEWS.includes(params.get("view")) ? params.get("view") : "all");
+  const view = (ACTION_VIEWS.includes(params.get("view")) ? params.get("view") : "active");
   const sort = params.get("sort") || "operational";
   const setParam = (key, value) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next, { replace: true }); };
   const setQ = value => setParam("q", value);
@@ -116,7 +116,7 @@ export default function ActionItems() {
 
   const tableSource = rows.filter(r => r.raw.client_id === currentClientId);
   const columns = tableColumns('action-items', { rows: tableSource, users,  });
-  const table = useTableControls({ columns, rows: tableSource, module: 'action-items', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status') setView('all'); } });
+  const table = useTableControls({ columns, rows: tableSource, module: 'action-items', scope: `${user?.user_id}:${currentClientId}` });
   const carriedClient = useRef(currentClientId);
   const carriedOwner = params.get("owner"), carriedUnassigned = params.get("unassigned");
   useEffect(() => {

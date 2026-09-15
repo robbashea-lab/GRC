@@ -2,6 +2,26 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class ActionItemTests(ClientDashboardSourcesTests):
+    async def test_multiple_remediation_tasks_and_new_work_reset_validation(self):
+        await server.db.findings.insert_one({"finding_id":"multi", "client_id":"a", "title":"Gap", "status":"open"})
+        first = await self.task(source_type="finding", source_id="multi")
+        self.assertEqual((await server.db.findings.find_one({"finding_id":"multi"}))["status"], "in_remediation")
+        await self.client.patch('/api/tasks/'+first['task_id'], json={"status":"done"})
+        self.assertEqual((await server.db.findings.find_one({"finding_id":"multi"}))["status"], "remediated")
+        second = await self.task(source_type="finding", source_id="multi")
+        third = await self.task(source_type="finding", source_id="multi")
+        self.assertEqual((await server.db.findings.find_one({"finding_id":"multi"}))["status"], "in_remediation")
+        await self.client.patch('/api/tasks/'+second['task_id'], json={"status":"done"})
+        self.assertEqual((await server.db.findings.find_one({"finding_id":"multi"}))["status"], "in_remediation")
+        self.sign_in('admin')
+        self.assertEqual((await self.client.post('/api/findings/multi/validate',json={"rationale":"Checked"})).status_code,409)
+        await self.client.patch('/api/tasks/'+third['task_id'], json={"status":"done"})
+        closed = await self.client.post('/api/findings/multi/validate',json={"rationale":"All remediation verified"})
+        self.assertEqual(closed.status_code,200,closed.text)
+        self.assertEqual(closed.json()['status'],'closed')
+        self.assertEqual(closed.json()['validated_by'],'admin')
+        self.assertEqual(await server.db.tasks.count_documents({"finding_id":"multi"}),3)
+
     async def task(self, **fields):
         self.sign_in("member")
         response = await self.client.post("/api/tasks", json={"client_id":"a","title":"Disable stale Active Directory accounts","priority":"high","source_type":"audit",**fields})
