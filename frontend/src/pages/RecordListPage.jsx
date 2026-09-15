@@ -2,6 +2,7 @@ import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
+import { reviewDisplayValue } from '@/lib/reviewPresentation';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
@@ -18,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil, Filter, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
+import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, UserRound, CircleDashed, X, CalendarDays, MoreVertical, Pencil, Filter, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 
 const ID_FIELD = {
@@ -69,7 +70,7 @@ function DueCell({ iso, closed = false }) {
   }[tone] || "text-ink-secondary";
   if (primary === "—") return <span className="text-ink-help">—</span>;
   return (
-    <span className="inline-flex flex-col leading-tight">
+    <span className="register-date inline-flex flex-col leading-tight">
       <span className={`font-mono text-xs ${toneCls}`}>{primary}</span>
       {secondary && <span className={`text-xs ${toneCls} opacity-80`}>{secondary}</span>}
     </span>
@@ -366,7 +367,7 @@ export default function RecordListPage({ kind }) {
   }
 
   return (
-    <div>
+    <div className="register-surface" data-layout={isReviews ? 'reviews' : undefined}>
       <PageHeader
         title={schema.title}
         subtitle={`${currentClient?.name || ""} · ${schema.subtitle}`}
@@ -389,9 +390,9 @@ export default function RecordListPage({ kind }) {
         }
       />
       <div className="sticky top-0 z-20 register-toolbar">
-        <div className="relative">
+        <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input data-testid={`${kind}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 h-9 w-72 text-sm" />
+          <Input aria-label={isReviews ? 'Search reviews' : undefined} data-testid={`${kind}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 h-9 w-72 text-sm" />
         </div>
         {hasUrlFilters && (
           <div
@@ -411,7 +412,7 @@ export default function RecordListPage({ kind }) {
           </div>
         )}
         {isReviews ? (
-          <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="reviews-tabs">
+          <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="reviews-tabs">
             {REVIEW_TABS.map((t) => {
               const active = !columnStatusActive && reviewTab === t.id;
               const count = reviewTabCounts[t.id] ?? 0;
@@ -420,6 +421,7 @@ export default function RecordListPage({ kind }) {
                   key={t.id}
                   onClick={() => setReviewTab(t.id)}
                   data-testid={`reviews-tab-${t.id}`}
+                  aria-pressed={active}
                   className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
                 >
                   {t.label}
@@ -440,7 +442,7 @@ export default function RecordListPage({ kind }) {
           )
         )}
         {isReviews && <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
-        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length}</div>
+        <div className="register-count text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length}</div>
       </div>
 
       {/* Bulk action bar */}
@@ -522,10 +524,11 @@ export default function RecordListPage({ kind }) {
         </div>
       )}
 
-      <div className="px-8 py-6">
+      <div className="register-body page-gutter py-6">
         <TableFilterChips table={table} />
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
           <table className="w-full">
+            {isReviews && <colgroup><col className="register-col-check" />{schema.columns.map(c => <col key={c.key} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
             <thead>
               <tr>
                 <th className="tbl-head w-8">
@@ -533,9 +536,10 @@ export default function RecordListPage({ kind }) {
                     checked={allChecked || (someChecked ? "indeterminate" : false)}
                     onCheckedChange={toggleAll}
                     data-testid={`${kind}-select-all`}
+                    aria-label={isReviews ? 'Select all reviews' : undefined}
                   />
                 </th>
-                {columns.map(c => <th key={c.key} className="tbl-head" aria-sort={table.state.sort?.key === c.key ? (table.state.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}><ColumnControl table={table} column={c} /></th>)}
+                {columns.map(c => <th key={c.key} data-column={isReviews ? c.key : undefined} className="tbl-head" aria-sort={table.state.sort?.key === c.key ? (table.state.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}><ColumnControl table={table} column={c} /></th>)}
                 <th className="tbl-head w-10"></th>
               </tr>
             </thead>
@@ -549,6 +553,7 @@ export default function RecordListPage({ kind }) {
                   key={row[idField] || `row-${i}`}
                   className="row-hover cursor-pointer"
                   data-testid={`${kind}-row-${i}`}
+                  data-selected={isReviews ? checked.has(row[idField]) : undefined}
                   onClick={() => { setSelected(row); setOpen(true); }}
                 >
                   <td className="tbl-cell" onClick={(e) => e.stopPropagation()}>
@@ -556,20 +561,23 @@ export default function RecordListPage({ kind }) {
                       checked={checked.has(row[idField])}
                       onCheckedChange={() => toggleOne(row[idField])}
                       data-testid={`${kind}-select-${i}`}
+                      aria-label={isReviews ? `Select ${row.title}` : undefined}
                     />
                   </td>
                   {schema.columns.map((c) => {
                     const isDueLike = c.date && /(_date|_review|_on)$/.test(c.key);
                     const closed = row.status === "completed" || row.status === "cancelled" || row.status === "closed";
                     return (
-                    <td key={`${row[idField] || i}-${c.key}`} className={`tbl-cell ${c.primary ? "font-medium text-ink-primary" : ""}`}>
+                    <td key={`${row[idField] || i}-${c.key}`} data-column={isReviews ? c.key : undefined} className={`tbl-cell ${c.primary ? "font-medium text-ink-primary" : ""}`}>
                       {c.badge ? (
                         overdueReview && c.key === "status"
                           ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
-                          : row[c.key] ? <StatusBadge value={row[c.key]} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
+                          : row[c.key] ? <StatusBadge value={row[c.key]} tone={isReviews && row[c.key] === 'needs_scheduling' ? 'duesoon' : undefined} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
                       ) :
                        c.user ? (
-                         row[c.key]
+                         isReviews ? <span className={`register-owner ${row[c.key] ? '' : 'register-owner--unassigned'}`} data-testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined}>
+                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{row[c.key] ? userMap[row[c.key]] || row[c.key] : 'Unassigned'}</span>
+                         </span> : row[c.key]
                            ? <span className="text-ink-secondary">{userMap[row[c.key]] || row[c.key]}</span>
                            : <span
                                className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-xs font-mono uppercase tracking-wider"
@@ -580,7 +588,9 @@ export default function RecordListPage({ kind }) {
                        c.date ? (row[c.key] ? <span className="font-mono text-ink-secondary">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-ink-help">—</span>) :
                        (
                          <span className="inline-flex items-center gap-2">
-                           <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>
+                           {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
+                             : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
+                             : <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (
                              <span
                                className="inline-flex items-center px-1.5 py-0 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-mono uppercase tracking-widest"

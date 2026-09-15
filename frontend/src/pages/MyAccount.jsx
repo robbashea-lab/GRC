@@ -72,7 +72,7 @@ export default function MyAccount() {
         title={user?.name || user?.email || "My account"}
         subtitle="Manage your personal profile, security and notification preferences."
       />
-      <div className="p-8 max-w-3xl">
+      <div className="page-content max-w-3xl">
         <div className="flex gap-2 mb-6" data-testid="account-tabs">
           {TABS.map((t) => {
             const active = tab === t.id;

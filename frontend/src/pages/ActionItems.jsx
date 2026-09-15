@@ -156,17 +156,17 @@ export default function ActionItems() {
         }
       />
       <div className="register-toolbar">
-        <div className="relative">
+        <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search action items…" className="pl-8 h-9 w-72 text-sm" data-testid="ai-search" />
         </div>
-        <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="ai-views">
+        <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="ai-views">
           {VIEWS.map((v) => {
             const active = view === v.id;
             const n = counts[v.id] || 0;
             return (
               <button
-                key={v.id}
+                key={v.id} aria-pressed={active}
                 onClick={() => { const key = v.id === 'overdue' ? 'due_date' : 'status'; if (key) table.setFilter(key, []); setView(v.id); }}
                 data-testid={`ai-view-${v.id}`}
                 className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
@@ -181,9 +181,9 @@ export default function ActionItems() {
         <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
 
-      <div className="p-8">
+      <div className="register-body">
         <TableFilterChips table={table} />
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>

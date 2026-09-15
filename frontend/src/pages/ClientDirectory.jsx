@@ -251,7 +251,7 @@ export default function ClientDirectory() {
 
       {/* Portfolio alert cards */}
       {portfolio && (
-        <div className="px-8 pt-4">
+        <div className="page-gutter pt-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="portfolio-cards">
             <AttentionCard testid="card-past-due" label="Past Due Items" value={portfolio.past_due}
               icon={ShieldAlert} tone="critical"
@@ -283,22 +283,22 @@ export default function ClientDirectory() {
       )}
 
       {/* Client Portfolio */}
-      <div className="px-8 pt-4">
+      <div className="page-gutter pt-4">
         <h2 className="text-lg font-heading font-semibold text-ink-primary mb-2">Client Portfolio</h2>
       </div>
 
       {/* Filter bar */}
       <div className="register-toolbar">
-        <div className="relative">
+        <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input data-testid="client-directory-search" value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Search client, industry, GRC lead…" className="pl-8 h-9 w-72 text-sm" />
         </div>
-        <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="client-directory-filters">
+        <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="client-directory-filters">
           {FILTERS.map((t) => {
             const active = filter === t.id;
             return (
-              <button key={t.id} onClick={() => setFilter(t.id)} data-testid={`client-filter-${t.id}`}
+              <button key={t.id} aria-pressed={active} onClick={() => setFilter(t.id)} data-testid={`client-filter-${t.id}`}
                 className={`px-2.5 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
                 {t.label}
               </button>
@@ -325,9 +325,9 @@ export default function ClientDirectory() {
       </div>
 
       {/* Client Portfolio table */}
-      <div className="px-8 py-4">
+      <div className="page-gutter py-4">
         <TableFilterChips table={table} />
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
@@ -404,7 +404,7 @@ export default function ClientDirectory() {
       </div>
 
       {/* Needs Attention Across Clients */}
-      <div className="px-8 mt-8">
+      <div className="page-gutter mt-8">
         <div className="flex items-end justify-between mb-2">
           <div>
             <h2 className="text-lg font-heading font-semibold text-ink-primary">Needs Attention Across Clients</h2>
@@ -412,7 +412,7 @@ export default function ClientDirectory() {
           </div>
           <div className="text-xs text-ink-help font-mono">Top {queue.length}</div>
         </div>
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="attention-queue">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="attention-queue">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>

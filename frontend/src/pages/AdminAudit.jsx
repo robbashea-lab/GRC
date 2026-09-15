@@ -242,7 +242,7 @@ export default function AdminAudit() {
         title="Audit Log"
         subtitle="Immutable record of platform and client activity across authorized organizations."
       />
-      <div className="px-8 pt-4 pb-2 flex items-center gap-3 flex-wrap" data-testid="audit-filters">
+      <div className="page-gutter pt-4 pb-2 flex items-center gap-3 flex-wrap" data-testid="audit-filters">
         <Select value={clientFilter} onValueChange={setClientFilter}>
           <SelectTrigger className="h-9 w-56 text-sm" data-testid="audit-filter-client">
             <SelectValue placeholder="All clients" />
@@ -332,13 +332,13 @@ export default function AdminAudit() {
         )}
       </div>
 
-      <div className="px-8 pb-8">
+      <div className="page-gutter pb-8">
         <TableFilterChips table={table} />
         <div className="text-xs text-ink-help mb-2" data-testid="audit-count">
           {loading ? "Loading…" : `${total.toLocaleString()} event${total === 1 ? "" : "s"}`}
           {total > 0 && ` · Page ${page} of ${totalPages}`}
         </div>
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="audit-table">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="audit-table">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>

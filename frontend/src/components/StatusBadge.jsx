@@ -4,6 +4,7 @@ const TONE_BY_STATUS = {
   // Reviews
   upcoming: "info",
   planned: "neutral",
+  needs_scheduling: "duesoon",
   in_progress: "info",
   blocked: "moderate",
   completed: "success",
@@ -82,6 +83,7 @@ export default function StatusBadge({ value, tone, testid }) {
   const label = value === "needs_scheduling" ? "Needs Scheduling" : value === "remediated" ? "Pending validation" : String(value).replace(/_/g, " ");
   return (
     <StatusPill
+      data-status={value}
       data-testid={testid || `badge-${value}`}
       className={cls}
     >

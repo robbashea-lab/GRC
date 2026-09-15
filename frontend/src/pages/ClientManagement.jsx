@@ -66,11 +66,11 @@ export default function ClientManagement() {
     } catch (e) { toast.error(formatError(e)); }
     finally { setBusy(null); }
   }
-  if (!authorized) return <div role="alert" className="p-8">Client Management is available to platform administrators only.</div>;
+  if (!authorized) return <div role="alert" className="page-content">Client Management is available to platform administrators only.</div>;
   return <div>
     <PageHeader title="Client Management" subtitle="Manage client organizations, ownership, and lifecycle."
       action={<Button size="sm" onClick={() => setDialog({ client: null })} data-testid="add-client-button" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
-    <div className="px-8 py-4 space-y-4">
+    <div className="page-gutter py-4 space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search client, industry, GRC lead..." aria-label="Search client organizations" className="max-w-sm" />
         <select aria-label="Client status" value={status} onChange={e => setStatus(e.target.value)} className="rounded-md border border-line bg-surface-card p-2 text-sm">
@@ -80,7 +80,7 @@ export default function ClientManagement() {
       </div>
       {error && <div role="alert">{error} <Button variant="outline" onClick={load}>Retry</Button></div>}
       <TableFilterChips table={table} />
-      <div className="overflow-x-auto rounded-lg border border-line bg-surface-card">
+      <div className="register-table-frame overflow-x-auto rounded-lg border border-line bg-surface-card">
         <table className="w-full text-sm" data-testid="client-management-table">
           <thead className="bg-surface-subtle"><tr>{columns.map(c => <th key={c.key} className="tbl-cell text-left font-medium"><ColumnControl table={table} column={c} /></th>)}<th className="tbl-cell text-left font-medium">Actions</th></tr></thead>
           <tbody className="divide-y divide-line">

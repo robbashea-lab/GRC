@@ -13,11 +13,11 @@ export default function ComplianceWorkspace() {
   const enabled = items.some(item => item.key === requirementKey);
   return <div>
     <PageHeader title={section?.label || 'Requirement unavailable'} subtitle={currentClient?.name || 'Select a client organization from the sidebar first.'} />
-    <div className="p-8">
+    <div className="page-content">
       {loading ? <p role="status" className="text-sm text-ink-muted">Loading client requirement…</p>
         : error ? <p role="alert" className="text-sm text-ink-muted">Unable to load this client requirement. {error}</p>
         : section?.implemented ? <FrameworkWorkspace key={currentClientId+':'+requirementKey} frameworkKey={requirementKey} clientId={currentClientId}/>
-        : <div className="bg-surface-card border border-line rounded-lg p-8 text-sm text-ink-muted">
+        : <div className="bg-surface-card border border-line rounded-lg page-content text-sm text-ink-muted">
           {enabled ? 'Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.' : 'This requirement is not enabled in this client’s completed onboarding.'}
         </div>}
     </div>

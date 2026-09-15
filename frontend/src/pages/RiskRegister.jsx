@@ -140,7 +140,7 @@ export default function RiskRegister() {
         }
       />
 
-      <div className="px-8 pt-4">
+      <div className="page-gutter pt-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="risk-summary">
           <SummaryCard label="Active Risks" value={summary.open} icon={ShieldAlert} tone="neutral" />
           <SummaryCard label="High / Critical" value={summary.high_crit} icon={AlertOctagon} tone="critical" />
@@ -150,15 +150,15 @@ export default function RiskRegister() {
       </div>
 
       <div className="register-toolbar">
-        <div className="relative">
+        <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search risks…" className="pl-8 h-9 w-72 text-sm" data-testid="risk-search" />
         </div>
-        <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="risk-views">
+        <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="risk-views">
           {VIEWS.map((v) => {
             const active = view === v.id;
             return (
-              <button key={v.id} onClick={() => { const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',review_due:'next_review'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`risk-view-${v.id}`}
+              <button key={v.id} aria-pressed={active} onClick={() => { const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',review_due:'next_review'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`risk-view-${v.id}`}
                 className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
                 {v.label}
               </button>
@@ -168,9 +168,9 @@ export default function RiskRegister() {
         <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
       </div>
 
-      <div className="p-8">
+      <div className="register-body">
         <TableFilterChips table={table} />
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>

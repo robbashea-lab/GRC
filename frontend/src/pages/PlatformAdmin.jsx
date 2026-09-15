@@ -98,7 +98,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <div className="relative">
+        <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users…" className="pl-8 h-9 w-72 text-sm" data-testid="users-search" />
         </div>
@@ -111,7 +111,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
       </div>
 
       <TableFilterChips table={table} />
-        <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
             <tr>
@@ -391,7 +391,7 @@ export default function PlatformAdmin() {
         title="Users & Access"
         subtitle="Invite internal team members, assign platform roles and manage which clients each user can access."
       />
-      <div className="p-8">
+      <div className="page-content">
         <UsersTable scope="platform" allowedRoles={allowedRoles} />
       </div>
     </div>
