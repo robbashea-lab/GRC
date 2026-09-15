@@ -24,6 +24,8 @@ import FrameworkDrawer from './FrameworkDrawer';
 import ActionItemFields from "./ActionItemFields";
 import { taskSource, SOURCE_RECORDS, actionStatus } from "@/lib/actionItems";
 import { relatedReviewInitialValues } from "@/lib/reviewOccurrences";
+import {completionHandoff} from '@/lib/remediation';
+import CorrectiveActions from './CorrectiveActions';
 
 const ID_FIELD = {
   framework_assessments:'framework_assessment_id',
@@ -118,6 +120,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [newComment, setNewComment] = useState("");
   const [activity, setActivity] = useState([]);
   const [related, setRelated] = useState({});
+  const [relatedError,setRelatedError]=useState('');
+  const [relatedLoading,setRelatedLoading]=useState(false);
+  const [taskCompletion,setTaskCompletion]=useState(null);
   const [policyOptions, setPolicyOptions] = useState([]);
   const [evidenceItems, setEvidenceItems] = useState([]);
   const [riskHistory,setRiskHistory] = useState([]);
@@ -149,7 +154,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     const generation = loadGeneration;
     generation.current++;
     if (open) {
-      setRelatedDrawer(null); setFindingOpen(false);
+      setRelatedDrawer(null); setFindingOpen(false);setTaskCompletion(null);setRelatedError('');
       if (kind === "reviews") api.get("/policies", { params: { client_id: record?.client_id || clientId } }).then(({data}) => setPolicyOptions(data)).catch(() => setPolicyOptions([]));
       setComments([]); setActivity([]); setRelated({}); setEvidenceItems([]);
       const base = {};
@@ -229,10 +234,27 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
   async function loadRelated() {
     const generation=loadGeneration.current;
+    setRelatedLoading(true);
     try {
       const { data } = await api.get("/related", { params: { entity_type: kind, entity_id: record[idField] } });
-      if(generation===loadGeneration.current) setRelated(data);
-    } catch (e) { void e; }
+      if(generation===loadGeneration.current) {setRelated(data);setRelatedError('');}
+      return data;
+    } catch (e) { if(generation===loadGeneration.current){setRelated({});setRelatedError(formatError(e));}return null; }
+    finally {if(generation===loadGeneration.current)setRelatedLoading(false);}
+  }
+
+  async function openLinkedRecord(target) {
+    const generation=loadGeneration.current;
+    try {
+      // Assessments are exposed through authorized Related, not a standalone CRUD endpoint.
+      const data=target.kind==='assessments'
+        ? (await loadRelated())?.assessments?.find(item=>item.assessment_id===target.record.assessment_id)
+        : (await api.get(`/${target.kind}/${encodeURIComponent(target.record[ID_FIELD[target.kind]])}`)).data;
+      if(generation!==loadGeneration.current)return;
+      if(!data)throw new Error('Linked record unavailable.');
+      if(data.client_id!==(record?.client_id||clientId)) throw new Error('Record belongs to another client.');
+      setRelatedDrawer({...target,record:data});
+    } catch(e) {toast.error(formatError(e));}
   }
   async function loadEvidence() {
     const generation=loadGeneration.current;
@@ -286,10 +308,19 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       let savedRecord;
       if (isEdit) {
         savedRecord=(await api.patch(`/${kind}/${record[idField]}`, clean)).data;
-        toast.success("Saved");
+        if(kind!=="tasks"||savedRecord.status!=="done"||record.status==="done")toast.success("Saved");
       } else {
         savedRecord=(await api.post(`/${kind}`, clean)).data;
         toast.success("Created");
+      }
+      if(kind==='tasks'&&savedRecord.status==='done'&&record?.status!=='done') {
+        if(savedRecord.finding_id) {
+          let finding=null;
+          try {const {data}=await api.get(`/findings/${encodeURIComponent(savedRecord.finding_id)}`);if(data.client_id===savedRecord.client_id)finding=data;}catch(e){void e;}
+          setTaskCompletion({task:savedRecord,finding});setForm(p=>({...p,status:'done'}));
+          onSaved?.(savedRecord);return;
+        }
+        toast.success('Action Item completed');
       }
       onSaved?.(savedRecord);
       onOpenChange(false);
@@ -347,16 +378,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       loadRelated();
     } catch (e) { toast.error(formatError(e)); }
     finally { setSaving(false); }
-  }
-
-  async function quickCreateTask() {
-    try {
-      await api.post(`/findings/${record[idField]}/create-task`, {});
-      toast.success("Remediation task created and finding moved to In Remediation");
-      if (record) record.status = "in_remediation";
-      setForm((p) => ({ ...p, status: "in_remediation" }));
-      onSaved?.(); loadRelated();
-    } catch (e) { toast.error(formatError(e)); }
   }
 
   async function raiseAsRisk() {
@@ -584,6 +605,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const liveLevel = levelFromScore(liveScore || null);
 
   function renderField(f) {
+    if(kind==='findings'&&f.name==='status') f={...f,options:f.options?.map(o=>o.value==='remediated'?{...o,label:'Pending Validation'}:o)};
     if (!isEdit && (["findings", "risks"].includes(kind) && f.name === "status" || ["completion_date", "approved_at", "last_reviewed_at"].includes(f.name))) return null;
     if (kind === "policies" && f.name === "last_reviewed_at" && (record?.schedule_from_reviews || related.reviews?.length)) return <DateReadonly key={f.name} label={f.label} value={record?.last_reviewed_at} />;
     if (["completion_date", "approved_at", "verified_at", "verified_by"].includes(f.name)) return <DateReadonly key={f.name} label={f.label} value={record?.[f.name]} />;
@@ -774,7 +796,11 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Overview renderers per kind --------
   function renderOverview() {
-    if (kind === "tasks") return <ActionItemFields form={form} setForm={setForm} record={record} clientId={clientId} canWrite={canWrite} saving={saving} onTransition={save} sourceLocked={!!initialValues?.source_id}/>;
+    if(kind==='tasks'&&taskCompletion)return <section className="space-y-3 text-sm" data-testid="action-completion-handoff">
+      <div role="status"><h3 className="font-medium">Action Item completed</h3><p className="mt-1">{taskCompletion.task.title}</p><p className="mt-2 text-ink-secondary">{completionHandoff(taskCompletion.finding)}</p><p className="mt-2 text-ink-secondary">This Action Item is now in Completed, with its history preserved.</p></div>
+      {taskCompletion.finding&&<Button size="sm" variant="outline" onClick={()=>openLinkedRecord({kind:'findings',record:taskCompletion.finding})}>View Finding</Button>}
+    </section>;
+    if (kind === "tasks") return <ActionItemFields form={form} setForm={setForm} record={record} clientId={clientId} canWrite={canWrite} saving={saving} onTransition={save} sourceLocked={!!initialValues?.source_id} related={related} onOpen={openLinkedRecord}/>;
     if (kind === "risks") {
       return (
         <div className="space-y-4">
@@ -796,6 +822,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       <div className="space-y-4">
         {kind === "reviews" && renderReviewActionsPanel()}
         {kind === "findings" && renderFindingActionsPanel()}
+        {kind === 'findings' && isEdit && <section className="space-y-2 text-sm" aria-label="Corrective actions"><h3 className="font-medium">Corrective Actions</h3><p className="text-ink-secondary">Work completion is followed by separate Finding validation.</p>{relatedError?<p role="alert">Corrective actions could not be loaded: {relatedError}</p>:relatedLoading?<p>Loading corrective actions…</p>:<CorrectiveActions actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users} onOpen={task=>openLinkedRecord({kind:'tasks',record:task})}/>}</section>}
         {kind === "policies" && renderPolicyPanel()}
         {kind === "contacts" && renderContactActions()}
         {kind === "exceptions" && isEdit && isPlatformAdmin && record.status !== "approved" && <Button onClick={() => { setDecisionForm({action:'approve',rationale:''}); setDecisionOpen(true); }}>Approve exception</Button>}
@@ -850,8 +877,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 text-sm text-ink-primary"><Zap className="h-4 w-4 text-ink-secondary" /> Finding actions</div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={quickCreateTask} disabled={!!related.tasks?.length} data-testid="quick-create-task">{related.tasks?.length ? "Remediation action linked" : "Create remediation task"}</Button>
-          {status === "remediated" && isPlatformAdmin && <Button size="sm" data-testid="finding-validate" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Validate and close</Button>}
+          {!['closed','accepted'].includes(status)&&<Button size="sm" variant="outline" data-testid="quick-create-task" disabled={relatedLoading||!!relatedError} onClick={()=>setRelatedDrawer({kind:'tasks',record:null,initialValues:{source_type:'finding',source_id:record.finding_id,assignee_id:record.owner_id||null,priority:record.severity||'medium'}})}>{related.tasks?.length?'Add Corrective Action':'Create Corrective Action'}</Button>}
+          {status === "remediated" && isPlatformAdmin && <Button size="sm" data-testid="finding-validate" disabled={relatedLoading||!!relatedError} onClick={async() => { if(await loadRelated()){setDecisionForm({ rationale: "" }); setDecisionOpen(true);} }}>Validate and close</Button>}
           {isPlatformAdmin && !['closed','accepted'].includes(status) && <Button size="sm" variant="outline" onClick={() => { setDecisionForm({action:'accept',rationale:''}); setDecisionOpen(true); }}>Accept finding</Button>}
           <Button size="sm" variant="outline" onClick={raiseAsRisk} data-testid="finding-raise-risk" disabled={!!record?.risk_id}>
             {record?.risk_id ? "Linked to risk" : "Raise as risk"}
@@ -1144,9 +1171,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </div>
 
         <div className="px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} data-testid="drawer-cancel">Cancel</Button>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
           {kind === "reviews" && record?.status === "completed" && canWrite && <Button size="sm" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Add amendment</Button>}
-          {tabIsFormEditable && !(kind === "reviews" && record?.status === "completed") && (
+          {tabIsFormEditable && !taskCompletion && !(kind === "reviews" && record?.status === "completed") && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : "Create"}</Button>
           )}
         </div>
@@ -1158,6 +1185,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader><SheetTitle>{decisionForm.action === 'accept' ? 'Accept finding' : decisionForm.action === 'approve' ? 'Approve exception' : kind === "findings" ? "Validate remediation" : record?.status === "completed" ? "Add review amendment" : "Complete review"}</SheetTitle></SheetHeader>
           <form onSubmit={submitDecision} className="mt-5 space-y-4">
+            {kind==='findings'&&!decisionForm.action&&<section className="space-y-3 text-sm" aria-label="Validation context"><h3 className="font-medium">{form.title||record.title}</h3><p className="whitespace-pre-wrap">{form.description||record.description||'No description recorded.'}</p><p className="text-ink-secondary">Current Finding Status: <StatusBadge value={status}/></p><p>Confirm that the corrective work resolved the Finding. Completing an Action alone does not validate it.</p><CorrectiveActions actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users}/></section>}
             {kind === "reviews" && record?.status !== "completed" ? <>
               <p className="text-sm">Confirm the scope, examine the supporting evidence, and record the outcome. Raise Findings for gaps before completing this Review.</p>
               <ul className="list-disc pl-5 text-sm space-y-1">{(rules.reviewPlaybooks[record?.review_type] || rules.reviewPlaybooks.default).map(item => <li key={item}>{item}</li>)}</ul>
