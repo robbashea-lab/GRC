@@ -152,7 +152,7 @@ export async function previewAdapter(config) {
           : (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
         if (params.entity_type === 'reviews' && params.occurrence_id)
           for (const k of ['findings','tasks','evidence']) data[k] = data[k].filter(r => belongsToOccurrence(r,source,params.occurrence_id));
-        if(params.entity_type==='tasks'&&source.occurrence_id) for(const review of data.reviews) {
+        if(['tasks','findings'].includes(params.entity_type)&&source.occurrence_id) for(const review of data.reviews) {
           const o=review.occurrences?.find(o=>o.occurrence_id===source.occurrence_id);
           if(o) review.linked_occurrence={period:o.period,status:o.status};
           else if((review.current_occurrence_id||'occ_'+review.review_id)===source.occurrence_id) review.linked_occurrence={period:reviewView(review).period,status:review.status};

@@ -4,6 +4,21 @@ import {dashboard,portfolio} from './summaries';
 import {seedStore,readStore,saveStore} from './store';
 const api=axios.create({adapter:previewAdapter});
 beforeEach(()=>{sessionStorage.clear();localStorage.clear();});
+test('Finding related Review retains originating occurrence and current evidence stays separate',async()=>{
+  await api.post('/demo/enter');
+  const {data:client}=await api.post('/clients',{name:'Occurrence audit'});
+  const {data:review}=await api.post('/reviews',{client_id:client.client_id,title:'Quarterly review',review_type:'access',recurrence:'quarterly',due_date:'2026-09-30'});
+  const occurrence_id=review.current_occurrence_id;
+  const {data:finding}=await api.post(`/reviews/${review.review_id}/create-finding`,{occurrence_id,title:'Access gap',remediation_title:'Review privileged accounts',severity:'high'});
+  await api.post('/evidence',{client_id:client.client_id,linked_type:'review',linked_id:review.review_id,occurrence_id,filename:'access.txt',content_base64:'eA=='});
+  const {data:done}=await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id});
+  const {data:related}=await api.get('/related',{params:{entity_type:'findings',entity_id:finding.finding_id}});
+  expect(related.reviews[0].linked_occurrence).toEqual({period:'Q3 2026',status:'completed'});
+  const {data:current}=await api.get('/related',{params:{entity_type:'reviews',entity_id:review.review_id,occurrence_id:done.review.current_occurrence_id}});
+  expect(current.evidence).toEqual([]);
+  const {data:old}=await api.get('/related',{params:{entity_type:'reviews',entity_id:review.review_id,occurrence_id}});
+  expect(old.evidence.map(e=>e.filename)).toEqual(['access.txt']);
+});
 test('legacy sample policy dates remain visible without overwriting reviewed dates',()=>{
   const db=seedStore();
   const policy=db.policies.find(p=>p.last_reviewed);

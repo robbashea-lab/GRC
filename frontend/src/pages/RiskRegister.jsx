@@ -37,10 +37,7 @@ function levelFromScore(s) {
 
 const VIEWS = RISK_VIEWS;
 
-const CATEGORIES = [
-  "Cybersecurity", "Operational", "Third Party / Vendor", "Compliance", "Privacy",
-  "Availability / Resilience", "Technology", "Business", "Strategic", "Other",
-];
+const CATEGORIES = SCHEMAS.risks.fields.find(f => f.name === 'category').options;
 
 export default function RiskRegister() {
   const { user } = useAuth();
@@ -314,17 +311,17 @@ function RiskMatrixModal({ open, onOpenChange }) {
 
 function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenMatrix }) {
   const [form, setForm] = useState({
-    title: "", category: "Cybersecurity", description: "", impact_description: "", source_type: "manual",
-    likelihood_score: 3, impact_score: 3, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
+    title: "", category: "cybersecurity", description: "", impact_description: "", source_type: "manual",
+    likelihood_score: null, impact_score: null, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
   });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
     if (open) setForm({
-      title: "", category: "Cybersecurity", description: "", impact_description: "", source_type: "manual",
-      likelihood_score: 3, impact_score: 3, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
+      title: "", category: "cybersecurity", description: "", impact_description: "", source_type: "manual",
+      likelihood_score: null, impact_score: null, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
     });
   }, [open]);
-  const score = form.likelihood_score * form.impact_score;
+  const score = assessedRisk(form).risk_score;
   const level = levelFromScore(score);
   const tone = LEVEL_TONE[level] || LEVEL_TONE.low;
 
@@ -350,19 +347,19 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3 py-2">
           <div className="col-span-2">
-            <Label className="text-xs text-ink-secondary">Risk title</Label>
-            <Input data-testid="new-risk-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="text-sm" />
+            <Label htmlFor="new-risk-title" className="text-xs text-ink-secondary">Risk title *</Label>
+            <Input id="new-risk-title" data-testid="new-risk-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="text-sm" />
           </div>
           <div>
-            <Label className="text-xs text-ink-secondary">Category</Label>
+            <Label className="text-xs text-ink-secondary">Category *</Label>
             <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              <SelectTrigger aria-label="Risk category" className="text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <RiskSourceFields form={form} setForm={setForm} clientId={clientId}/>
           <div className="col-span-2">
-            <Label className="text-xs text-ink-secondary">Risk description</Label>
+            <Label className="text-xs text-ink-secondary">Risk description *</Label>
             <Textarea aria-label="Risk description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" rows={2} />
           </div>
           <div className="col-span-2">
@@ -373,23 +370,23 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
             <Label className="text-xs text-ink-secondary flex items-center justify-between">
               Likelihood <button type="button" onClick={onOpenMatrix} className="text-xs font-mono uppercase tracking-widest text-link hover:underline">Scale</button>
             </Label>
-            <Select value={String(form.likelihood_score)} onValueChange={(v) => setForm({ ...form, likelihood_score: parseInt(v) })}>
-              <SelectTrigger data-testid="new-risk-likelihood" className="text-sm"><SelectValue /></SelectTrigger>
+            <Select value={form.likelihood_score ? String(form.likelihood_score) : ''} onValueChange={(v) => setForm({ ...form, likelihood_score: parseInt(v) })}>
+              <SelectTrigger aria-label="Likelihood (required)" data-testid="new-risk-likelihood" className="text-sm"><SelectValue placeholder="Select likelihood…" /></SelectTrigger>
               <SelectContent>{[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n} · {LIKELIHOOD_LABELS[n]}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
             <Label className="text-xs text-ink-secondary">Impact</Label>
-            <Select value={String(form.impact_score)} onValueChange={(v) => setForm({ ...form, impact_score: parseInt(v) })}>
-              <SelectTrigger data-testid="new-risk-impact" className="text-sm"><SelectValue /></SelectTrigger>
+            <Select value={form.impact_score ? String(form.impact_score) : ''} onValueChange={(v) => setForm({ ...form, impact_score: parseInt(v) })}>
+              <SelectTrigger aria-label="Impact (required)" data-testid="new-risk-impact" className="text-sm"><SelectValue placeholder="Select impact…" /></SelectTrigger>
               <SelectContent>{[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n} · {IMPACT_LABELS[n]}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="col-span-2 flex items-center gap-3 py-2 px-3 border border-line rounded-md bg-surface-subtle">
             <div className="text-xs font-mono uppercase tracking-widest text-ink-help">Calculated</div>
-            <div className="font-mono text-sm text-ink-primary">Score {score}</div>
+            <div className="font-mono text-sm text-ink-primary">Score {score ?? '—'}</div>
             <ArrowRight className="h-3 w-3 text-ink-help" />
-            <span className={`pill capitalize ${tone}`} data-testid="new-risk-level">{level}</span>
+            <span className={`pill capitalize ${tone}`} data-testid="new-risk-level">{level || 'Needs assessment'}</span>
           </div>
           <div>
             <Label className="text-xs text-ink-secondary">Owner</Label>

@@ -1,4 +1,4 @@
-import {reviewSchedule,reviewView,belongsToOccurrence} from './reviewOccurrences';
+import {reviewSchedule,reviewView,belongsToOccurrence,relatedReviewInitialValues} from './reviewOccurrences';
 import {reviewMatches} from './tableFilters';
 test.each([['monthly','2026-10-31'],['quarterly','2026-12-31'],['semiannual','2027-03-31'],['annual','2027-09-30']])('calendar cadence: %s', (recurrence,expected) => {
   expect(reviewSchedule({due_date:'2026-09-30',recurrence}).next_review_date.slice(0,10)).toBe(expected);
@@ -15,6 +15,15 @@ test('legacy untagged evidence belongs only to the original occurrence', () => {
   expect(belongsToOccurrence({},r)).toBe(false);
   expect(belongsToOccurrence({},r,'occ_r')).toBe(true);
   expect(belongsToOccurrence({occurrence_id:'next'},r)).toBe(true);
+});
+
+test('related Review navigation selects the originating occurrence without fabricating missing history', () => {
+  const occurrence = {occurrence_id:'original',period:'Q3 2026',status:'completed'};
+  const review = {review_id:'r',current_occurrence_id:'next',occurrences:[occurrence]};
+  expect(relatedReviewInitialValues(review,{review_id:'r',occurrence_id:'original'})).toEqual({occurrence});
+  expect(relatedReviewInitialValues(review,{review_id:'r',occurrence_id:'next'})).toEqual({});
+  expect(relatedReviewInitialValues(review,{review_id:'other',occurrence_id:'original'})).toEqual({});
+  expect(relatedReviewInitialValues(review,{review_id:'r',occurrence_id:'missing'})).toEqual({});
 });
 test('quick presets share overlapping workflow and 90-day schedule predicates', () => {
   jest.useFakeTimers().setSystemTime(new Date('2026-09-12T12:00:00Z'));

@@ -5,6 +5,27 @@ from routes import portfolio
 
 
 class CoreAuditTests(ClientDashboardSourcesTests):
+    async def test_related_navigation_does_not_grant_write_or_cross_tenant_access(self):
+        await server.db.users.insert_one({'user_id':'reader','email':'reader@example.test','role':'client_viewer','client_ids':['a'],'status':'active'})
+        await server.db.reviews.insert_many([
+            {'review_id':'r-a','client_id':'a','title':'Visible review','status':'upcoming','due_date':'2026-09-30','recurrence':'annual'},
+            {'review_id':'r-b','client_id':'b','title':'Private review','status':'upcoming'}])
+        await server.db.findings.insert_many([
+            {'finding_id':'f-a','client_id':'a','review_id':'r-a','title':'Visible finding','status':'open'},
+            {'finding_id':'f-b','client_id':'b','review_id':'r-a','title':'Private finding','status':'open'}])
+        self.sign_in('reader')
+        related = await self.client.get('/api/related',params={'entity_type':'reviews','entity_id':'r-a'})
+        self.assertEqual(related.status_code,200,related.text)
+        self.assertEqual([f['finding_id'] for f in related.json()['findings']],['f-a'])
+        for endpoint,body in [('/api/reviews/r-a/start',{'occurrence_id':'occ_r-a'}),
+                              ('/api/reviews/r-a/complete',{'occurrence_id':'occ_r-a'}),
+                              ('/api/findings/f-a/create-task',{'title':'Forbidden work'}),
+                              ('/api/evidence',{'client_id':'a','linked_type':'review','linked_id':'r-a','filename':'denied.txt','content_base64':'eA=='})]:
+            self.assertEqual((await self.client.post(endpoint,json=body)).status_code,403,endpoint)
+        self.assertEqual((await self.client.get('/api/related',params={'entity_type':'reviews','entity_id':'r-b'})).status_code,403)
+        self.assertEqual(await server.db.tasks.count_documents({}),0)
+        self.assertEqual(await server.db.evidence.count_documents({}),0)
+
     async def test_policy_occurrences_update_dates_without_changing_document_status(self):
         self.sign_in('admin')
         await server.db.policies.insert_one({'policy_id':'policy-a','client_id':'a','title':'Information Security','status':'approved'})
