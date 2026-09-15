@@ -1,9 +1,17 @@
 from unittest.mock import patch
 from test_client_dashboard_sources import ClientDashboardSourcesTests, server
-from review_occurrences import schedule
+from review_occurrences import schedule, snapshot
 
 
 class OccurrenceTests(ClientDashboardSourcesTests):
+    def test_snapshot_retains_governance_source_without_copying_mutable_history(self):
+        review = {'review_id':'r','client_id':'a','due_date':'2026-09-30','recurrence':'annual',
+                  'risk_id':'risk-a','vendor_id':'vendor-a','vendor_purpose':'assurance','occurrences':[{'old':True}]}
+        completed = snapshot(review, [], 0, {'user_id':'admin'}, '2026-10-08')
+        self.assertEqual(completed['risk_id'], 'risk-a')
+        self.assertEqual(completed['vendor_purpose'], 'assurance')
+        self.assertNotIn('occurrences', completed)
+
     async def seed(self, recurrence="quarterly", due="2026-09-30"):
         await server.db.reviews.insert_one({"review_id":"bcp","client_id":"a","title":"Business Continuity / Disaster Recovery Review",
             "review_type":"bcp_dr","status":"upcoming","recurrence":recurrence,"due_date":due,"notes":"Original notes","owner_id":"member"})
@@ -65,6 +73,11 @@ class OccurrenceTests(ClientDashboardSourcesTests):
         linked = (await self.client.get("/api/related?entity_type=reviews&entity_id=bcp&occurrence_id=occ_bcp")).json()
         self.assertEqual(linked["findings"][0]["status"],"closed")
         self.assertEqual(linked["tasks"][0]["completed_by"],"member")
+        self.assertEqual([e["evidence_id"] for e in linked["evidence"]], [evidence.json()["evidence_id"]])
+        current_related = (await self.client.get("/api/related", params={"entity_type":"reviews", "entity_id":"bcp", "occurrence_id":active["current_occurrence_id"]})).json()
+        self.assertEqual(current_related["evidence"], [])
+        finding_related = (await self.client.get("/api/related", params={"entity_type":"findings", "entity_id":fid})).json()
+        self.assertEqual(finding_related["reviews"][0]["linked_occurrence"]["period"], "Q3 2026")
         events = (await self.client.get("/api/reviews/bcp/activity?occurrence_id=occ_bcp")).json()
         for event in ["Review started","Evidence uploaded","Finding raised","Action Item created","Review completed","Action Item completed","Finding validated and closed"]:
             self.assertIn(event,[e["action"] for e in events])

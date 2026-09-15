@@ -17,6 +17,25 @@ beforeEach(() => {
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
+test('new Risk requires intentional ratings instead of suggesting an assessment',async()=>{
+  await act(async()=>root.render(<RiskRegister/>));
+  await act(async()=>container.querySelector('[data-testid="new-risk"]').click());
+  expect(document.querySelector('[data-testid="new-risk-level"]').textContent).toBe('Needs assessment');
+  expect(document.querySelector('[data-testid="new-risk-likelihood"]').textContent).toBe('Select likelihood…');
+  expect(document.querySelector('[data-testid="new-risk-impact"]').textContent).toBe('Select impact…');
+  expect(document.querySelector('[aria-label="Risk category"]').textContent).toBe('Cybersecurity');
+});
+
+test('legacy Risk category is displayed without silently changing its stored value',async()=>{
+  const original=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...args)=>path==='/risks'?{data:[{risk_id:'r',client_id:'a',title:'Legacy Risk',category:'Cybersecurity',status:'assessed'}]}:original(path,...args));
+  await act(async()=>root.render(<RiskRegister/>));
+  await act(async()=>container.querySelector('[data-testid="risk-row-0"]').click());
+  expect(container.querySelector('[data-testid="field-category"]').textContent).toBe('Cybersecurity (recorded)');
+  await act(async()=>container.querySelector('[data-testid="drawer-save"]').click());
+  expect(api.patch).toHaveBeenCalledWith('/risks/r',expect.not.objectContaining({category:expect.anything()}));
+});
+
 test.each([[RiskRegister,'risk-row-0',['title','category','status','owner_id','description']], [VendorRegister,'vendor-row-0',['name','criticality','status','contact_email']]])('register opens its complete real drawer', async(Component,rowId,fields)=>{
   await act(async()=>root.render(<Component/>));
   const row=container.querySelector(`[data-testid="${rowId}"]`);

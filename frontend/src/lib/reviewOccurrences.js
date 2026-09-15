@@ -45,3 +45,10 @@ export function assertCurrentOccurrence(review, selected) {
   if (!selected || selected !== occurrenceId(review) || ['completed','cancelled'].includes(review.status))
     throw new Error('This occurrence is closed or has changed. Reload the Review.');
 }
+
+// Related Findings/Actions retain their originating execution after recurrence advances.
+export function relatedReviewInitialValues(review, source) {
+  if (source?.review_id !== review.review_id || !source.occurrence_id) return {};
+  const occurrence = review.occurrences?.find(o => o.occurrence_id === source.occurrence_id);
+  return occurrence ? {occurrence} : {};
+}

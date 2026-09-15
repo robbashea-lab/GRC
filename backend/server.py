@@ -3380,7 +3380,7 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         linked[target] = await db[target].find({"client_id": cid, "$or": relations, **scope}, {"_id": 0}).to_list(200) if relations else []
     if entity_type in ("tasks","risks") and source.get("assessment_id"):
         linked["assessments"] = await db.assessments.find({"assessment_id": source["assessment_id"], "client_id": cid}, {"_id": 0}).to_list(1)
-    if entity_type == "tasks" and source.get("occurrence_id"):
+    if entity_type in ("tasks", "findings") and source.get("occurrence_id"):
         for review in linked.get("reviews", []):
             occurrence = next((o for o in review.get("occurrences", []) if o.get("occurrence_id") == source["occurrence_id"]), None)
             if occurrence:
@@ -3389,6 +3389,10 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
                 review["linked_occurrence"] = {"period": review_occurrences.view(review).get("period"), "status": review.get("status")}
     singular = "policy" if entity_type == "policies" else entity_type[:-1]
     linked["evidence"] = await db.evidence.find({"client_id": cid, "linked_type": singular, "linked_id": entity_id}, {"_id": 0, "content_base64": 0}).to_list(200)
+    if entity_type == "reviews":
+        # Reuse the Evidence tab's current/history projection, including snapshots.
+        linked["evidence"] = await list_evidence(client_id=cid, linked_type="review", linked_id=entity_id,
+                                                 user=user, occurrence_id=occurrence_id)
     if entity_type == 'ai_systems' and ai_reviews:
         linked['evidence'] += await db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':[r['review_id'] for r in ai_reviews]}},{'_id':0,'content_base64':0}).to_list(200)
     assessment_clauses=[{'related_links':{'$elemMatch':{'kind':entity_type,'id':entity_id}}}]

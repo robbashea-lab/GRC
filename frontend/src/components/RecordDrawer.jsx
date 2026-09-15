@@ -23,6 +23,7 @@ import AIDrawer from './AIDrawer';
 import FrameworkDrawer from './FrameworkDrawer';
 import ActionItemFields from "./ActionItemFields";
 import { taskSource, SOURCE_RECORDS, actionStatus } from "@/lib/actionItems";
+import { relatedReviewInitialValues } from "@/lib/reviewOccurrences";
 
 const ID_FIELD = {
   framework_assessments:'framework_assessment_id',
@@ -590,6 +591,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <Select value={form[f.name] || ""} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
             <SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
+              {kind === "risks" && f.name === "category" && form.category && !f.options?.some(o => o.value === form.category) && <SelectItem value={form.category}>{form.category} (recorded)</SelectItem>}
               {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value} disabled={o.value !== record?.[f.name] && (f.name === "status" && ({policies:['approved'],findings:['closed','accepted','remediated'],risks:['accepted','closed','retired'],reviews:['completed'],exceptions:['approved']}[kind] || []).includes(o.value) || f.name === "presence" && o.value === "verified_existing" && record?.presence !== o.value)}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -943,9 +945,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
                 {list.map((it) => (
                   <li key={it[ID_FIELD[k]] || it.evidence_id || it.assessment_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-surface-subtle" data-testid={`related-${k}-item`}>
                     <div className="min-w-0">
-                      {(SCHEMAS[k]||k==="assessments") ? <button className="text-left text-ink-primary font-medium hover:underline" onClick={() => setRelatedDrawer({ kind: k, record: it })}>{it.title || it.name}</button> : <div className="text-ink-primary font-medium truncate">{it.title || it.name || it.filename}</div>}
+                      {(SCHEMAS[k]||k==="assessments") ? <button className="text-left text-ink-primary font-medium hover:underline" onClick={() => setRelatedDrawer({ kind: k, record: it, initialValues:k === "reviews" ? relatedReviewInitialValues(it, record) : {} })}>{it.title || it.name}</button> : <div className="text-ink-primary font-medium truncate">{it.title || it.name || it.filename}</div>}
                       <div className="text-xs text-ink-muted font-mono">{it.display_id || it[ID_FIELD[k]] || it.evidence_id || it.assessment_id}</div>
-                      {kind === "tasks" && k === "reviews" && it.linked_occurrence && <div className="text-xs text-ink-secondary">Occurrence: {it.linked_occurrence.period || "Not recorded"} · {it.linked_occurrence.status}</div>}
+                      {k === "reviews" && it.linked_occurrence && <div className="text-xs text-ink-secondary">Occurrence: {it.linked_occurrence.period || "Not recorded"} · {it.linked_occurrence.status}</div>}
                     </div>
                     {it.status && <StatusBadge value={it.status} />}
                   </li>
