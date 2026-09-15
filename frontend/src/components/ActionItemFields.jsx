@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { SOURCE_TYPES, SOURCE_RECORDS, taskSource, actionStatus, actionPriority } from '@/lib/actionItems';
+import ActionSourceChain from './ActionSourceChain';
 
 // Task-specific fields; the existing drawer owns Evidence, Comments and Related.
-export default function ActionItemFields({form,setForm,record,clientId,canWrite,onTransition,saving,sourceLocked=false}) {
+export default function ActionItemFields({form,setForm,record,clientId,canWrite,onTransition,saving,sourceLocked=false,related={},onOpen}) {
   const [data,setData]=useState({users:[],records:{},error:'',loading:true});
   useEffect(()=>{
     let active=true; setData({users:[],records:{},error:'',loading:true});
@@ -38,7 +39,7 @@ export default function ActionItemFields({form,setForm,record,clientId,canWrite,
       <div><Label htmlFor="task-due">Due Date</Label><Input id="task-due" type="date" value={form.due_date||''} disabled={!canWrite} onChange={e=>change('due_date',e.target.value||null)}/></div>
       {record&&select('status','Status',form.status,['open','in_progress','blocked','done','cancelled'].map(v=>[v,actionStatus(v)]),record.status==='done')}
     </div>
-    {record ? <div><Label>Source</Label><p className="text-sm">{source.label}</p>{record.source&&<p className="text-xs text-ink-help">{record.source}</p>}</div> :
+    {record ? <ActionSourceChain record={record} related={related} onOpen={onOpen}/> :
       <div className="space-y-3">
         <div><Label htmlFor="task-source">Source *</Label><Select value={type} onValueChange={v=>setForm(p=>({...p,source_type:v,source_id:null}))} disabled={!canWrite||sourceLocked}><SelectTrigger id="task-source" aria-label="Source"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(SOURCE_TYPES).map(([v,l])=><SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></div>
         {kind&&select('source_id','Related '+SOURCE_TYPES[type],form.source_id,[['__none__',type==='audit'?'External / no linked assessment':'Select a record'],...(data.records[kind]||[]).map(r=>[r[idKey],r.title||r.name])],data.loading||!!data.error||sourceLocked)}

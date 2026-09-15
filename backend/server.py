@@ -3256,7 +3256,7 @@ async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict
             entity_id=fid,
             client_id=doc["client_id"],
         )
-    return doc
+    return await db.findings.find_one({"finding_id": fid, "client_id": review["client_id"]}, {"_id": 0})
 
 
 @api.post("/findings/{finding_id}/create-task")
@@ -3366,7 +3366,9 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
                     if source.get(pointer):
                         relations.append({key: source[pointer]})
         scope = review_occurrences.occurrence_query(source, occurrence_id) if entity_type == "reviews" and occurrence_id and target in ("findings", "tasks") else {}
-        linked[target] = await db[target].find({"client_id": cid, "$or": relations, **scope}, {"_id": 0}).to_list(200) if relations else []
+        # Remediation groups must not drop later Actions or Findings at a display cap.
+        limit = None if entity_type in ("reviews", "findings") and target in ("findings", "tasks") else 200
+        linked[target] = await db[target].find({"client_id": cid, "$or": relations, **scope}, {"_id": 0}).to_list(limit) if relations else []
     if entity_type in ("tasks","risks") and source.get("assessment_id"):
         linked["assessments"] = await db.assessments.find({"assessment_id": source["assessment_id"], "client_id": cid}, {"_id": 0}).to_list(1)
     if entity_type in ("tasks", "findings") and source.get("occurrence_id"):

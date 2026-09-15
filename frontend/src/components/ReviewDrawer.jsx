@@ -15,7 +15,8 @@ import {assessedRisk} from '@/lib/grcWork';
 import {recordUuid} from '@/lib/recordUuid';
 import StatusBadge from './StatusBadge';
 import RecordDrawer from './RecordDrawer';
-import { historicalRemediation, reviewRemediation } from '@/lib/remediation';
+import { historicalRemediation, reviewRemediation, remediationOrigin } from '@/lib/remediation';
+import CorrectiveActions from './CorrectiveActions';
 
 const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
@@ -171,19 +172,15 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           </section>}
         </>}
         {tab === 'Related' && <>
-          {!selected && <p className="text-sm text-ink-secondary">Linked records across this Review's occurrences.</p>}
+          <p className="text-sm text-ink-secondary">{selected?'Linked records from this occurrence.':'Linked records across this Review’s occurrences.'} Statuses below are current; use Activity for the transition history.</p>
+          {!!remediation.groups.length && <h3 className="text-sm font-medium">Findings &amp; Remediation</h3>}
           {historicalCount > 0 && <Button size="sm" variant="ghost" aria-pressed={showHistorical} onClick={()=>setShowHistorical(v=>!v)}>{showHistorical ? 'Hide completed / closed records' : `Show completed / closed records (${historicalCount})`}</Button>}
           {groups.map(({finding,actions})=><section key={finding.finding_id} data-testid="review-remediation-group" className="border border-line rounded-md p-3 space-y-3 text-sm">
-            <div><span className="text-ink-secondary">Finding: </span><button className="underline text-left font-medium" onClick={()=>setLinked({kind:'findings',record:finding})}>{finding.title}</button><div className="mt-1">Finding Status: <StatusBadge value={finding.status}/></div></div>
-            {actions.length ? actions.map(action=><div key={action.task_id} data-testid="review-corrective-action" className="border-t border-line pt-2 space-y-1">
-              <div><span className="text-ink-secondary">Corrective Action: </span><button className="underline text-left" onClick={()=>setLinked({kind:'tasks',record:action})}>{action.title}</button></div>
-              <div>Action Status: <StatusBadge value={action.status==='done'?'completed':action.status}/></div>
-              <div className="text-ink-secondary">Owner: {person(action.assignee_id || action.owner_id)} · Due: {date(action.due_date)}</div>
-              {action.completed_at && <div className="text-xs text-ink-help">Completed {date(action.completed_at)} by {person(action.completed_by)}</div>}
-            </div>):<p className="text-ink-help">No linked corrective actions.</p>}
+            <div><span className="text-ink-secondary">Finding: </span><button className="underline text-left font-medium" onClick={()=>setLinked({kind:'findings',record:finding})}>{finding.title}</button><div className="mt-1">Current Finding Status: <StatusBadge value={finding.status}/></div><p className="text-xs text-ink-secondary mt-1">Origin: {remediationOrigin(finding,current,history)}</p></div>
+            <CorrectiveActions actions={actions} members={members} onOpen={action=>setLinked({kind:'tasks',record:action})} itemTestId="review-corrective-action"/>
             {(finding.validated_at || finding.closed_at) && <div className="text-xs text-ink-help">Closed {date(finding.closed_at || finding.validated_at)} by {person(finding.closed_by || finding.validated_by)}</div>}
           </section>)}
-          {!relatedRows.length ? (!groups.length && <p className="text-sm text-ink-help">No related records.</p>) : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Type / ID','Item','Owner','Status / Completion','Due'].map(t => <th key={t} className="text-left py-2 pr-3">{t}</th>)}</tr></thead><tbody>{relatedRows.map(({kind,item}) => {
+          {!relatedRows.length ? (!groups.length && <p className="text-sm text-ink-help">{historicalCount&&!showHistorical?'No outstanding remediation or other active related records.':'No related records.'}</p>) : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Type / ID','Item','Owner','Status / Completion','Due'].map(t => <th key={t} className="text-left py-2 pr-3">{t}</th>)}</tr></thead><tbody>{relatedRows.map(({kind,item}) => {
             const id = item[{tasks:'task_id',findings:'finding_id',policies:'policy_id',vendors:'vendor_id',risks:'risk_id',framework_assessments:'framework_assessment_id'}[kind]];
             return <tr key={id} className="border-t border-line"><td className="py-3 pr-3 text-xs">{{tasks:'Action Item',findings:'Finding',policies:'Policy',vendors:'Vendor',risks:'Risk',framework_assessments:'CIS Safeguard'}[kind]}<button className="block underline break-all text-left" onClick={() => setLinked({kind,record:item})}>{id}</button></td><td className="pr-3"><button className="underline text-left" onClick={() => setLinked({kind,record:item})}>{item.title || item.name}</button></td><td className="pr-3">{person(item.assignee_id || item.owner_id)}</td><td className="pr-3"><StatusBadge value={kind==='tasks'&&item.status==='done'?'completed':item.status} />{(item.completed_at || item.closed_at || item.validated_at) && <div className="text-xs mt-1">{item.status === 'closed' ? 'Closed' : 'Completed'} {date(item.completed_at || item.closed_at || item.validated_at)} by {person(item.completed_by || item.closed_by || item.validated_by)}</div>}</td><td>{date(item.due_date)}</td></tr>;
           })}</tbody></table></div>}

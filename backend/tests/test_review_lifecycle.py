@@ -11,6 +11,7 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
         result = await self.client.post("/api/reviews/tabletop/create-finding", json={"title": "Business Impact Analysis has not been documented", "remediation_title": "Develop and approve a Business Impact Analysis", "severity": "medium", "occurrence_id":"occ_tabletop"})
         self.assertEqual(result.status_code, 200, result.text)
         finding = result.json()
+        self.assertEqual(finding['status'], 'in_remediation')
         tasks = (await self.client.get("/api/tasks?client_id=a")).json()
         self.assertEqual(len(tasks), 1)
         task = tasks[0]
@@ -54,3 +55,16 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
         self.assertEqual(result.status_code, 422)
         self.assertEqual(await server.db.findings.count_documents({}), 0)
         self.assertEqual(await server.db.tasks.count_documents({}), 0)
+
+    async def test_remediation_related_populations_are_complete_and_tenant_scoped(self):
+        self.sign_in('admin')
+        await server.db.reviews.insert_one({'review_id':'many','client_id':'a','title':'Review','current_occurrence_id':'q3'})
+        await server.db.findings.insert_many([{'finding_id':'f'+str(i),'client_id':'a','review_id':'many','occurrence_id':'q3','title':'Finding','status':'in_remediation'} for i in range(205)])
+        await server.db.tasks.insert_many([{'task_id':'t'+str(i),'client_id':'a','finding_id':'f0','review_id':'many','occurrence_id':'q3','title':'Corrective work','status':'open'} for i in range(205)])
+        await server.db.tasks.insert_one({'task_id':'foreign','client_id':'b','finding_id':'f0','review_id':'many','title':'Private','status':'open'})
+        review=(await self.client.get('/api/related?entity_type=reviews&entity_id=many&occurrence_id=q3')).json()
+        finding=(await self.client.get('/api/related?entity_type=findings&entity_id=f0')).json()
+        self.assertEqual(len(review['findings']),205)
+        self.assertEqual(len(review['tasks']),205)
+        self.assertEqual(len(finding['tasks']),205)
+        self.assertNotIn('foreign',[t['task_id'] for t in finding['tasks']])
