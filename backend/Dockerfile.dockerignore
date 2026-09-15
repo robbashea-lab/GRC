@@ -1,0 +1,11 @@
+**
+!backend
+!backend/*.py
+!backend/requirements-runtime.txt
+!backend/routes
+!backend/routes/*.py
+!backend/routes/*.json
+!frontend
+!frontend/src
+!frontend/src/lib
+!frontend/src/lib/grcRules.json
