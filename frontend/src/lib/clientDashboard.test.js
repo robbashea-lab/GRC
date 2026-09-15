@@ -9,8 +9,8 @@ const task = (id, offset, priority = "medium", extra = {}) => ({ task_id: id, cl
 const aggregate = records => aggregateClientDashboard(records, options);
 
 test("empty and future clients receive the same empty result without configuration", () => {
-  expect(aggregate({})).toEqual({ attention: [], upcoming: [] });
-  expect(aggregateClientDashboard({}, { ...options, clientId: "new-client" })).toEqual({ attention: [], upcoming: [] });
+  expect(aggregate({})).toMatchObject({ attention: [], upcoming: [], obligations: [] });
+  expect(aggregateClientDashboard({}, { ...options, clientId: "new-client" })).toMatchObject({ attention: [], upcoming: [], obligations: [] });
   expect(aggregate({ tasks: [task("first", 1)] }).attention[0].id).toBe("first");
 });
 

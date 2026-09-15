@@ -10,9 +10,10 @@ import { Users, User, UserX, Building2, Check, ChevronDown, Search } from "lucid
  * Person list is fetched from /api/clients/{client_id}/members and is tenant-scoped server-side.
  * Value shape: { kind: "org" | "mine" | "unassigned" | "user", user_id?: string }
  */
-export default function DashboardScopeSelector({ clientId, value, onChange }) {
+export default function DashboardScopeSelector({ clientId, value, onChange, programs=[] }) {
   const { user } = useAuth();
-  const [members, setMembers] = useState([]);
+  const [memberResult, setMemberResult] = useState(null);
+  const members = useMemo(() => memberResult?.clientId === clientId ? memberResult.rows : [], [memberResult, clientId]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
 
@@ -21,12 +22,16 @@ export default function DashboardScopeSelector({ clientId, value, onChange }) {
 
   useEffect(() => {
     if (!clientId) return;
+    const controller = new AbortController();
+    setQ('');
+    setOpen(false);
     (async () => {
       try {
-        const { data } = await api.get(`/clients/${clientId}/members`);
-        setMembers(data || []);
-      } catch { setMembers([]); }
+        const { data } = await api.get(`/clients/${clientId}/members`, {signal:controller.signal});
+        if (!controller.signal.aborted) setMemberResult({clientId,rows:data || []});
+      } catch { if (!controller.signal.aborted) setMemberResult({clientId,rows:[]}); }
     })();
+    return () => controller.abort();
   }, [clientId]);
 
   const filteredMembers = useMemo(() => {
@@ -39,6 +44,7 @@ export default function DashboardScopeSelector({ clientId, value, onChange }) {
 
   const label = useMemo(() => {
     if (!value || value.kind === "org") return "Entire Organization";
+    if (value.kind === "framework") return programs.find(p=>p.key===value.key)?.label || 'Entire Organization';
     if (value.kind === "mine") return "My Work";
     if (value.kind === "unassigned") return "Unassigned";
     if (value.kind === "user") {
@@ -46,7 +52,7 @@ export default function DashboardScopeSelector({ clientId, value, onChange }) {
       return m?.name || m?.email || "Person";
     }
     return "Entire Organization";
-  }, [value, members]);
+  }, [value, members, programs]);
 
   function pick(next) {
     onChange?.(next);
@@ -58,6 +64,7 @@ export default function DashboardScopeSelector({ clientId, value, onChange }) {
     if (!value) return next.kind === "org";
     if (next.kind !== value.kind) return false;
     if (next.kind === "user") return next.user_id === value.user_id;
+    if (next.kind === "framework") return next.key === value.key;
     return true;
   }
 
@@ -83,6 +90,7 @@ export default function DashboardScopeSelector({ clientId, value, onChange }) {
             hint="Full GRC program"
             testid="scope-option-org"
           />
+          {programs.map(program=><ScopeItem key={program.key} active={isActive({kind:'framework',key:program.key})} onClick={()=>pick({kind:'framework',key:program.key})} icon={Building2} label={program.label} hint="Program readiness overview" testid={`scope-program-${program.key}`} />)}
           {!isReadonly && (
             <ScopeItem
               active={isActive({ kind: "mine" })}
