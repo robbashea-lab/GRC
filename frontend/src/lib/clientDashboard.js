@@ -82,11 +82,16 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
   for (const r of active.vendors) {
     const represented = active.reviews.some(v => v.vendor_id === r.vendor_id && calendarDay(v.due_date) === calendarDay(r.next_review));
     if (!represented) add(r, "vendors", "review", "Vendor Review", r.next_review, "Open Vendor");
-    add(r, "vendors", "renewal", "Contract Renewal", r.contract_renewal, "Open Vendor");
+    const contractReview = active.reviews.some(v=>v.vendor_id===r.vendor_id&&v.vendor_purpose==="contract");
+    if(!contractReview) add(r, "vendors", "renewal", "Contract Renewal", r.contract_renewal, "Open Vendor");
     const expiration = r.contract_expiration || r.contract_end;
     // Legacy contract_end and current contract_expiration describe one event.
-    if (calendarDay(expiration) !== calendarDay(r.contract_renewal)) add(r, "vendors", "expiration", "Contract Expiration", expiration, "Open Vendor");
-    add(r, "vendors", "assurance", "Assurance Expiry", r.assurance_expires_at, "Open Vendor");
+    if (!contractReview && calendarDay(expiration) !== calendarDay(r.contract_renewal)) add(r, "vendors", "expiration", "Contract Expiration", expiration, "Open Vendor");
+    if(r.assurance_required) for(const artifact of r.assurance_records||[]) {
+      if(artifact.required===false) continue;
+      const represented=active.reviews.some(v=>v.vendor_id===r.vendor_id&&["assurance","vendor"].includes(v.vendor_purpose||"vendor")&&calendarDay(v.due_date)===calendarDay(artifact.refresh_due));
+      if(!represented) add(r,"vendors","assurance-"+artifact.type,"Assurance Refresh",artifact.refresh_due,"Open Vendor");
+    }
   }
   for (const r of active.exceptions) if (["approved", "expired"].includes(r.status)) {
     add(r, "exceptions", "expiry", r.risk_id ? "Risk Acceptance Expiry" : "Exception Expiry", r.expires_at, "Open Acceptance");

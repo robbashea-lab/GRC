@@ -39,6 +39,7 @@ from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_du
 import action_items
 import risk_ids
 import risk_lifecycle
+import vendor_governance
 import review_occurrences
 
 # ---------------- DB ----------------
@@ -82,6 +83,38 @@ def risk_mutation(fn):
             return await asyncio.wait_for(fn(*args, **kwargs), timeout=90)
         finally:
             await db.risks.update_one({"risk_id":rid,"_governance_lock.token":token},{"$unset":{"_governance_lock":""}})
+    return wrapped
+
+
+def vendor_mutation(fn):
+    """Serialize Vendor configuration and linked Review completion across workers."""
+    signature = inspect.signature(fn)
+    @wraps(fn)
+    async def wrapped(*args, **kwargs):
+        values = signature.bind_partial(*args, **kwargs).arguments
+        vid = values.get("vendor_id") or (values.get("item_id") if values.get("kind") == "vendors" else None)
+        rid = values.get("review_id") or (values.get("item_id") if values.get("kind") == "reviews" else None)
+        if rid:
+            review = await _authorized_parent("reviews", rid, values["user"], write=True)
+            vid = review.get("vendor_id")
+        if not vid:
+            return await fn(*args, **kwargs)
+        vendor = await _authorized_parent("vendors", vid, values["user"], write=True)
+        if rid and vendor.get("status") == "inactive" and review.get("vendor_purpose") != "offboarding":
+            raise HTTPException(409, "Inactive Vendors have no active recurring Reviews")
+        token, now = uuid.uuid4().hex, datetime.now(timezone.utc)
+        acquired = await db.vendors.update_one({"vendor_id":vid,"$or":[{"_governance_lock":None},{"_governance_lock.until":{"$lt":now.isoformat()}}]},
+            {"$set":{"_governance_lock":{"token":token,"until":(now+timedelta(seconds=120)).isoformat()}}})
+        if not acquired.modified_count:
+            raise HTTPException(409, "Another Vendor action is being saved; please retry")
+        try:
+            linked = await db.reviews.find({"vendor_id":vid,"client_id":vendor["client_id"]},{"_id":0}).to_list(None)
+            for item in linked:
+                if item.get("occurrences"):
+                    await vendor_governance.sync_completion(db,item)
+            return await asyncio.wait_for(fn(*args, **kwargs), timeout=90)
+        finally:
+            await db.vendors.update_one({"vendor_id":vid,"_governance_lock.token":token},{"$unset":{"_governance_lock":""}})
     return wrapped
 
 
@@ -352,7 +385,7 @@ class VendorIn(BaseModel):
     service: Optional[str] = None  # short description of what they provide
     category: Optional[str] = "SaaS"
     criticality: str = "medium"  # low, medium, high, critical
-    status: str = "active"  # onboarding, under_review, active, offboarding, inactive
+    status: str = "onboarding"  # onboarding, under_review, active, offboarding, inactive
     data_types: Optional[List[str]] = None
     data_relationship: Optional[List[str]] = None  # stores/processes/transmits/accesses/hosts/none
     business_owner_id: Optional[str] = None
@@ -373,6 +406,23 @@ class VendorIn(BaseModel):
     assurance_expires_at: Optional[str] = None  # ISO date — next SOC2/ISO/DPA renewal cutoff
     notes: Optional[str] = None
     related_risk_ids: Optional[List[str]] = None
+    custom_recurrence_days: Optional[int] = None
+    assurance_required: bool = False
+    assurance_records: List[Dict[str, Any]] = Field(default_factory=list)
+    assurance_window_days: int = 90
+    separate_assurance_review: bool = False
+    assurance_review_date: Optional[str] = None
+    assurance_cadence: str = "annual"
+    contract_review_enabled: bool = False
+    contract_lead_days: int = 90
+    contract_evidence_ids: List[str] = Field(default_factory=list)
+    dpa_present: Optional[str] = None
+    baa_present: Optional[str] = None
+    security_addendum_present: Optional[str] = None
+    contract_notes: Optional[str] = None
+    termination_requirements: Optional[str] = None
+    dependency_notes: Optional[str] = None
+    offboarding_review_date: Optional[str] = None
 
 
 class AssetIn(BaseModel):
@@ -1284,6 +1334,8 @@ async def create_evidence(body: EvidenceIn, user: Dict = Depends(get_current_use
     await audit(user, "upload", "evidence", ev_id, body.client_id, meta={"filename": body.filename})
     if body.linked_type in ("review", "reviews"):
         await _review_event(user, parent, "Evidence uploaded", body.occurrence_id, filename=body.filename, evidence_id=ev_id)
+    if body.linked_type in ("vendor","vendors"):
+        await audit(user,"Vendor evidence uploaded","vendor",body.linked_id,body.client_id,meta={"evidence_id":ev_id,"filename":body.filename})
     if body.linked_type in ("task", "tasks"):
         await audit(user, "Evidence uploaded", "task", body.linked_id, body.client_id, meta={"filename": body.filename, "evidence_id": ev_id})
     doc.pop("_id", None)
@@ -1313,6 +1365,8 @@ async def delete_evidence(ev_id: str, user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Forbidden")
     if await db.reviews.find_one({"$or": [{"completion_snapshot.evidence.evidence_id": ev_id}, {"occurrences.evidence.evidence_id": ev_id}]}):
         raise HTTPException(409, "Evidence referenced by a completed review must be retained")
+    if await db.vendors.find_one({"client_id":doc["client_id"],"$or":[{"contract_evidence_ids":ev_id},{"assurance_records.evidence_ids":ev_id},{"vendor_id":doc.get("linked_id"),"status":{"$in":["inactive","terminated"]}}]}):
+        raise HTTPException(409,"Vendor assurance, contract and historical evidence must be retained")
     if doc.get("linked_type") in ("risk","risks") and await db.risks.find_one({"risk_id":doc.get("linked_id"),"client_id":doc["client_id"],"status":{"$in":["closed","retired"]}}):
         raise HTTPException(409,"Closed Risk evidence must be retained")
     if doc.get("linked_type") in ("task", "tasks") and await db.tasks.find_one({"task_id": doc.get("linked_id"), "client_id": doc["client_id"], "status": "done"}):
@@ -2147,9 +2201,20 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     """One contract for normal and bulk writes; decisions have separate endpoints."""
     previous = existing or {}
     changes = {k: v for k, v in body.items() if v != previous.get(k) and not (v in (None, "") and previous.get(k) in (None, ""))}
+    if kind == "vendors":
+        if existing and set(changes) & {"next_review","review_frequency","custom_recurrence_days","separate_assurance_review","assurance_review_date","assurance_cadence","contract_review_enabled","contract_lead_days","offboarding_review_date"} and user and user.get("role") not in ("super_admin","platform_admin"):
+            raise HTTPException(403, "Only platform administrators can change Review configuration")
+        if "last_review" in changes or "assurance_status" in changes:
+            raise HTTPException(422, "Review dates and assurance status are derived")
+        if existing and previous.get("status") == "inactive" and changes:
+            raise HTTPException(409, "Inactive Vendors remain historical records")
     if kind in ("findings", "tasks") and previous.get("occurrence_id") and set(changes) & {"review_id", "finding_id"}:
         raise HTTPException(422, "Review occurrence relationships must be retained")
     if kind == "reviews":
+        if existing and existing.get("vendor_purpose") == "contract" and set(changes) & {"due_date","recurrence","custom_recurrence_days"}:
+            raise HTTPException(422, "Configure Contract Renewal Review through the Vendor contract dates and lead time")
+        if "vendor_purpose" in changes or "vendor_id" in changes:
+            raise HTTPException(422, "Establish Vendor Reviews from the Vendor schedule")
         if "risk_id" in changes:
             raise HTTPException(422, "Establish Risk Reviews from the Risk governance schedule")
         if user and user.get("role") not in ("super_admin", "platform_admin") and set(changes) - {"notes"}:
@@ -2206,6 +2271,9 @@ async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Op
         for scoped_client in scoped_clients:
             await risk_ids.initialize(db, scoped_client)
     docs = await db[_coll_for(kind)].find(q, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    if kind == "vendors":
+        reviews = await db.reviews.find(q, {"_id":0}).to_list(None)
+        return [vendor_governance.view(d,reviews) for d in docs]
     return [_apply_risk_scoring(d) for d in docs] if kind == "risks" else [review_occurrences.view(d) for d in docs] if kind == "reviews" else docs
 
 
@@ -2239,6 +2307,8 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
         if not parsed.get("date_identified"):
             parsed["date_identified"] = _now()
     if kind == "vendors":
+        await vendor_governance.validate(db,parsed,_can_access_client)
+        parsed["service"] = parsed.get("service") or parsed.get("services")
         for risk_id in parsed.get("related_risk_ids") or []:
             if not await db.risks.find_one({"risk_id":risk_id, "client_id":parsed["client_id"]}):
                 raise HTTPException(422, "Related risk must belong to the same client")
@@ -2249,9 +2319,15 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
         doc = review_occurrences.view(doc)
     await db[_coll_for(kind)].insert_one(doc)
     doc.pop("_id", None)
-    await audit(user, "Risk created" if kind == "risks" else "create", entity_type, new_id, parsed.get("client_id"))
+    await audit(user, "Risk created" if kind == "risks" else "Vendor created" if kind == "vendors" else "create", entity_type, new_id, parsed.get("client_id"))
+    if kind == "vendors":
+        await vendor_governance.ensure_reviews(db,doc,user,_now())
     if kind == "risks":
         await risk_lifecycle.ensure_review(db, doc, user, _now())
+    if kind == "risks" and doc.get("vendor_id"):
+        await audit(user,"Risk linked","vendor",doc["vendor_id"],doc["client_id"],meta={"risk_id":new_id})
+    if kind == "tasks" and doc.get("vendor_id"):
+        await audit(user,"Related Action Item created","vendor",doc["vendor_id"],doc["client_id"],meta={"task_id":new_id})
     if kind == "tasks" and doc.get("risk_id"):
         await db.risks.update_one({"risk_id":doc["risk_id"],"client_id":doc["client_id"],"status":{"$in":["assessed","open"]},"risk_score":{"$ne":None}}, {"$set":{"status":"in_progress","updated_at":_now()}})
         await audit(user, "Related Action Item created", "risk", doc["risk_id"], doc["client_id"], meta={"task_id":new_id})
@@ -2260,6 +2336,7 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
 
 @entity_router.patch("/{kind}/{item_id}")
 @risk_mutation
+@vendor_mutation
 @review_mutation
 async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), body: Dict[str, Any] = None, user: Dict = Depends(get_current_user)):
     if not _writable(user):
@@ -2288,6 +2365,7 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         if not owner or not _can_access_client(owner, existing["client_id"]):
             raise HTTPException(422, "Review owner must have access to this client")
     if kind == "vendors":
+        await vendor_governance.validate(db,{**existing,**body},_can_access_client,existing)
         for risk_id in body.get("related_risk_ids") or []:
             if not await db.risks.find_one({"risk_id":risk_id, "client_id":existing["client_id"]}):
                 raise HTTPException(422, "Related risk must belong to the same client")
@@ -2358,6 +2436,10 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})
     if kind == "risks":
         await risk_lifecycle.ensure_review(db, doc, user, _now())
+    if kind == "vendors":
+        await vendor_governance.ensure_reviews(db,doc,user,_now())
+    if kind == "reviews" and doc.get("vendor_id"):
+        await vendor_governance.sync_completion(db,doc)
     if kind == "reviews" and doc.get("risk_id"):
         await db.risks.update_one({"risk_id":doc["risk_id"],"client_id":doc["client_id"]}, {"$set":{
             "next_review":doc.get("due_date") if doc.get("status") not in ("completed","cancelled") else None,
@@ -2368,6 +2450,8 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         associated = await db.risks.find({"client_id":existing["client_id"],"$or":[{"risk_id":existing.get("risk_id")},{"related_task_ids":item_id}]},{"risk_id":1}).to_list(None)
         for associated_risk in associated:
             await audit(user, "Related Action Item completed" if doc.get("status") == "done" else "Related Action Item updated", "risk", associated_risk["risk_id"], existing["client_id"], meta={"task_id":item_id})
+    if kind == "tasks" and doc.get("vendor_id"):
+        await audit(user,"Related Action Item completed" if doc.get("status") == "done" else "Related Action Item updated","vendor",doc["vendor_id"],doc["client_id"],meta={"task_id":item_id})
     if kind == "tasks" and existing.get("review_id") and set(incoming) & {"status", "assignee_id"}:
         review = await db.reviews.find_one({"review_id": existing["review_id"], "client_id": existing["client_id"]}, {"_id": 0})
         if review:
@@ -2375,6 +2459,8 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
                 existing.get("occurrence_id") or "occ_" + review["review_id"],
                 task_id=item_id, title=doc["title"], status=doc.get("status"), assignee_id=doc.get("assignee_id"))
     event = "Action Item completed" if kind == "tasks" and body.get("status") == "done" else "Work started" if kind == "tasks" and body.get("status") == "in_progress" else "Assignment changed" if kind == "tasks" and "assignee_id" in body else "Action Item updated" if kind == "tasks" else "update"
+    if kind == "vendors":
+        event = "Vendor "+("moved to "+body["status"].replace("_"," ") if "status" in body else "criticality changed" if "criticality" in body else "Business Owner changed" if "business_owner_id" in body else "assurance updated" if "assurance_records" in body else "contract updated" if any(k.startswith("contract_") for k in body) else "Risk linked" if "related_risk_ids" in body else "updated")
     if kind == "risks":
         event = "Risk reassessed" if any(existing.get(k) != doc.get(k) for k in ("likelihood_score","impact_score")) else "Risk owner assigned" if "owner_id" in incoming else "Treatment updated" if "treatment" in incoming else "Next Risk Review scheduled" if set(incoming) & {"next_review","review_cadence","custom_recurrence_days"} else "Risk updated"
     await audit(user, event, entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys()), **({"previous_score":existing.get("risk_score"),"score":doc.get("risk_score"),"level":doc.get("risk_level"),"owner_id":doc.get("owner_id")} if kind == "risks" else {})})
@@ -2391,7 +2477,7 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
-    if kind == "risks" or kind == "reviews" and existing.get("risk_id"):
+    if kind in ("risks","vendors") or kind == "reviews" and (existing.get("risk_id") or existing.get("vendor_id")):
         raise HTTPException(409, "Risks and their Review obligations must be retained")
     if kind == "reviews" and (existing.get("status") == "completed" or existing.get("occurrences")):
         raise HTTPException(409, "Completed reviews must be retained")
@@ -2641,6 +2727,7 @@ _VENDOR_FREQ_TO_RECUR = {
 
 
 @api.post("/vendors/{vendor_id}/schedule-review")
+@vendor_mutation
 async def vendor_schedule_review(vendor_id: str, body: VendorScheduleReviewIn, user: Dict = Depends(get_current_user)):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
@@ -2649,46 +2736,19 @@ async def vendor_schedule_review(vendor_id: str, body: VendorScheduleReviewIn, u
         raise HTTPException(404, "Vendor not found")
     if not _can_access_client(user, vendor["client_id"]):
         raise HTTPException(403, "Forbidden")
-    freq = (body.recurrence or _VENDOR_FREQ_TO_RECUR.get(vendor.get("review_frequency") or "annual", "annual"))
-    custom_days = 730 if (vendor.get("review_frequency") == "biennial" and freq == "custom") else None
-    # Default due date: user-provided > vendor.next_review > +1 year from today
-    due_iso = body.due_date or vendor.get("next_review") or (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
-    if due_iso and len(due_iso) == 10:
-        due_iso = f"{due_iso}T00:00:00+00:00"
-    rev_id = _uid("rev")
-    doc = {
-        "review_id": rev_id,
-        "title": body.title or f"Vendor review · {vendor.get('name')}",
-        "review_type": "vendor",
-        "client_id": vendor["client_id"],
-        "status": "upcoming",
-        "recurrence": freq,
-        "custom_recurrence_days": custom_days,
-        "owner_id": body.owner_id or vendor.get("business_owner_id") or user["user_id"],
-        "reviewer_id": body.reviewer_id,
-        "scope": body.scope or f"Assurance & risk review for {vendor.get('name')}",
-        "due_date": due_iso,
-        "next_review_date": _next_due_for_recurrence(due_iso, freq, custom_days),
-        "vendor_id": vendor_id,
-        "created_at": _now(),
-        "updated_at": _now(),
-        "created_by": user["user_id"],
-    }
-    await db.reviews.insert_one(doc)
-    await db.vendors.update_one({"vendor_id": vendor_id},
-                                {"$set": {"next_review": due_iso, "updated_at": _now()}})
-    await audit(user, "schedule-review", "vendor", vendor_id, vendor["client_id"], meta={"review_id": rev_id})
-    if doc["owner_id"] and doc["owner_id"] != user["user_id"]:
-        await create_notification(
-            user_id=doc["owner_id"],
-            title=f"Vendor review scheduled: {vendor.get('name')}",
-            kind="review_scheduled",
-            entity_type="reviews",
-            entity_id=rev_id,
-            client_id=vendor["client_id"],
-        )
-    doc.pop("_id", None)
-    return {"review": doc, "vendor_id": vendor_id}
+    if user.get("role") not in ("super_admin","platform_admin"):
+        raise HTTPException(403, "Only platform administrators can change Review configuration")
+    changes = {"next_review":body.due_date or vendor.get("next_review")}
+    if not changes["next_review"]:
+        raise HTTPException(422, "Select the first Review date")
+    if body.recurrence:
+        changes["review_frequency"] = "as_needed" if body.recurrence == "none" else body.recurrence
+    candidate = {**vendor,**changes}
+    await vendor_governance.validate(db,candidate,_can_access_client,vendor)
+    reviews = await vendor_governance.ensure_reviews(db,candidate,user,_now())
+    await db.vendors.update_one({"vendor_id":vendor_id},{"$set":changes})
+    await audit(user,"Vendor Review scheduled","vendor",vendor_id,vendor["client_id"])
+    return {"review":next((r for r in reviews if r.get("vendor_purpose") == "vendor"),None),"vendor_id":vendor_id}
 
 
 @api.post("/risks/{risk_id}/mark-reviewed")
@@ -2745,6 +2805,13 @@ async def link_risk_task(risk_id: str, body: Dict[str, Any], user: Dict = Depend
     if result.modified_count:
         await audit(user,"Action Item linked","risk",risk_id,risk["client_id"],meta={"task_id":task["task_id"]})
     return task
+
+
+@api.get("/vendors/{vendor_id}/activity")
+async def vendor_activity(vendor_id: str, user: Dict = Depends(get_current_user)):
+    vendor = await _authorized_parent("vendors",vendor_id,user)
+    return await db.audit_logs.find({"client_id":vendor["client_id"],"entity_id":vendor_id,
+        "entity_type":{"$in":["vendor","vendors"]}},{"_id":0}).sort("at",-1).to_list(500)
 
 
 @api.get("/risks/{risk_id}/activity")
@@ -3186,6 +3253,7 @@ class ReviewOccurrenceAction(BaseModel):
 
 @api.post("/reviews/{review_id}/start")
 @risk_mutation
+@vendor_mutation
 @review_mutation
 async def start_review(review_id: str, body: ReviewOccurrenceAction, user: Dict = Depends(get_current_user)):
     review = await _authorized_parent("reviews", review_id, user, write=True)
@@ -3205,12 +3273,17 @@ async def start_review(review_id: str, body: ReviewOccurrenceAction, user: Dict 
                                          "status": review.get("status")}, {"$set": updates})
     if not result.modified_count:
         raise HTTPException(409, "Review changed; reload before starting")
+    if review.get("vendor_id") and (review.get("vendor_purpose") or "vendor") == "vendor":
+        changed = await db.vendors.update_one({"vendor_id":review["vendor_id"],"client_id":review["client_id"],"status":"onboarding"},{"$set":{"status":"under_review","updated_at":_now()}})
+        if changed.modified_count:
+            await audit(user,"Vendor moved to under review","vendor",review["vendor_id"],review["client_id"])
     await _review_event(user, review, "Review started")
     return review_occurrences.view({**review, **updates})
 
 
 @api.post("/reviews/{review_id}/complete")
 @risk_mutation
+@vendor_mutation
 @review_mutation
 async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = Depends(get_current_user)):
     review = await _authorized_parent("reviews", review_id, user, write=True)
@@ -3219,6 +3292,7 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     prior = next((o for o in review.get("occurrences", []) if o["occurrence_id"] == body.occurrence_id), None)
     if prior:
         await risk_lifecycle.sync_completion(db, review)
+        await vendor_governance.sync_completion(db, review)
         return {"review": review_occurrences.view(review), "occurrence": prior, "spawned": None}
     await _review_selection(review, body.occurrence_id, write=True)
     current = review_occurrences.view(review)
@@ -3268,6 +3342,9 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
         await _review_event(user, review, "Next occurrence scheduled", body.occurrence_id, due_date=next_due)
     updated = await db.reviews.find_one({"review_id": review_id}, {"_id": 0})
     await risk_lifecycle.sync_completion(db, updated)
+    await vendor_governance.sync_completion(db, updated)
+    if review.get("vendor_id"):
+        await audit(user, "Vendor Review completed", "vendor", review["vendor_id"],review["client_id"],meta={"review_id":review_id,"occurrence_id":body.occurrence_id,"purpose":review.get("vendor_purpose") or "vendor"})
     if review.get("risk_id"):
         await audit(user, completed["outcome"], "risk", review["risk_id"], review["client_id"], meta={"review_id":review_id,"occurrence_id":body.occurrence_id})
     return {"review": review_occurrences.view(updated), "occurrence": completed, "spawned": None}
@@ -3317,6 +3394,7 @@ async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict
         "review_id": review_id,
         "occurrence_id": body["occurrence_id"],
         "source": review["title"],
+        "vendor_id": review.get("vendor_id"),
         "identified_at": _now(),
         "remediation_plan": body.get("remediation_plan") or "",
         "remediation_title": body["remediation_title"].strip(),
@@ -3421,6 +3499,10 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
             relations.append({key: source[key]})
         if entity_type == "risks" and target == "tasks" and source.get("related_task_ids"):
             relations.append({"task_id":{"$in":source["related_task_ids"]}})
+        if entity_type == "vendors" and target == "risks" and source.get("related_risk_ids"):
+            relations.append({"risk_id":{"$in":source["related_risk_ids"]}})
+        if entity_type == "risks" and target == "vendors":
+            relations.append({"related_risk_ids":entity_id})
         if entity_type == "tasks" and target == "risks":
             relations.append({"related_task_ids":entity_id})
         if target == entity_type:
@@ -4277,7 +4359,7 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     if body.action == "delete":
         if user.get("role") not in ("super_admin", "platform_admin"):
             raise HTTPException(403, "Destructive action restricted")
-        if body.kind == "risks" or body.kind == "reviews" and any(d.get("risk_id") for d in docs):
+        if body.kind in ("risks","vendors") or body.kind == "reviews" and any(d.get("risk_id") or d.get("vendor_id") for d in docs):
             raise HTTPException(409, "Risks and their Review obligations must be retained")
         if body.kind == "reviews" and any(d.get("status") == "completed" or d.get("occurrences") for d in docs):
             raise HTTPException(409, "Completed reviews must be retained")

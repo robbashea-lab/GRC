@@ -89,9 +89,9 @@ export async function previewAdapter(config) {
       if (path === '/clients/directory') return respond(portfolio(db, params.include_archived === true || params.include_archived === 'true'));
       if (path === '/clients') return respond(db.clients.filter(c => params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived'));
       if (kind === 'risks' && name === 'review-history') return respond(db.reviews.filter(r=>r.risk_id===id&&r.client_id===record(db,'risks',id).client_id).flatMap(r=>(r.occurrences||[]).map(o=>({...o,review_id:r.review_id}))));
-      if (['risks','tasks'].includes(kind) && name === 'activity') {
+      if (['risks','tasks','vendors'].includes(kind) && name === 'activity') {
         const task=record(db,kind,id);
-        return respond(db.logs.filter(l=>l.entity_id===id&&l.client_id===task.client_id&&[kind,kind==='risks'?'risk':'task'].includes(l.entity_type)).map(l=>({...l,log_id:l.log_id||l.audit_id})));
+        return respond(db.logs.filter(l=>l.entity_id===id&&l.client_id===task.client_id&&[kind,kind==='risks'?'risk':kind==='vendors'?'vendor':'task'].includes(l.entity_type)).map(l=>({...l,log_id:l.log_id||l.audit_id})));
       }
       if (kind === 'clients' && name === 'members') {
         record(db, 'clients', id);
@@ -137,7 +137,7 @@ export async function previewAdapter(config) {
           };
         for (const k of Object.keys(data)) data[k] = list(db, k, source.client_id).filter(r => k === params.entity_type
           ? k === 'reviews' && (r.parent_review_id === params.entity_id || r.review_id === source.parent_review_id || r.review_id === source.next_occurrence_id)
-          : (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
+          : (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
         if (params.entity_type === 'reviews' && params.occurrence_id)
           for (const k of ['findings','tasks','evidence']) data[k] = data[k].filter(r => belongsToOccurrence(r,source,params.occurrence_id));
         if(params.entity_type==='tasks'&&source.occurrence_id) for(const review of data.reviews) {
@@ -221,7 +221,7 @@ export async function previewAdapter(config) {
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
         throw new Error('Review history must be retained.');
       if (body.kind === 'tasks' && body.action === 'delete' && rows.some(r=>r.status==='done'||r.completed_at)) throw new Error('Completed Action Items must be retained.');
-      if(body.action==='delete'&&(body.kind==='risks'||body.kind==='reviews'&&rows.some(r=>r.risk_id))) throw new Error('Risks and their Review obligations must be retained.');
+      if(body.action==='delete'&&(['risks','vendors'].includes(body.kind)||body.kind==='reviews'&&rows.some(r=>r.risk_id||r.vendor_id))) throw new Error('Risks and their Review obligations must be retained.');
       const payload = body.payload || {};
       const close = {
         reviews: 'completed',
@@ -327,8 +327,9 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
-        if(kind==='risks'||kind==='reviews'&&r.risk_id) throw new Error('Risks and their Review obligations must be retained.');
+        if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id)) throw new Error('Risks and their Review obligations must be retained.');
         if (kind==='tasks'&&(r.status==='done'||r.completed_at) || kind==='evidence'&&db.tasks.some(t=>t.task_id===r.linked_id&&t.client_id===r.client_id&&t.status==='done')) throw new Error('Completed Action Items and their evidence must be retained.');
         if (kind === 'reviews' && (r.status === 'completed' || r.occurrences?.length) || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id) || v.occurrences?.some(o => o.evidence?.some(e => e.evidence_id === id)))) throw new Error('Completed reviews and their evidence must be retained.');
         db[kind] = db[kind].filter(x => x[ids[kind]] !== id);

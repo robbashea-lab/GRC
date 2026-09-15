@@ -1,6 +1,7 @@
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGovernance';
 import { tableColumns } from '@/lib/tableColumns';
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
@@ -26,18 +27,18 @@ const CRIT_TONE = {
 const CRIT_LABEL = { critical: "Critical", high: "High", medium: "Moderate", moderate: "Moderate", low: "Low" };
 const CATEGORIES = ["SaaS", "Cloud / Hosting", "Managed Service Provider", "Security Provider", "HR / Payroll",
   "Financial", "Legal", "Marketing", "Communications", "Infrastructure", "Professional Services", "Other"];
-const DATA_TYPES = ["No Sensitive Data", "Internal", "Confidential", "PII", "PHI", "Financial",
-  "Customer Data", "Employee Data", "Credentials", "Source Code / IP", "Operational Data", "Other"];
+const DATA_TYPES = VENDOR_DATA_TYPES;
 const VIEWS = [
   { id: "all_active", label: "All Active" },
-  { id: "critical", label: "Critical" },
   { id: "review_due", label: "Reviews Due" },
+  { id: "critical", label: "Critical" },
+  { id: "high", label: "High" },
   { id: "contract_soon", label: "Contracts Expiring" },
-  { id: "assurance", label: "Assurance Needs Attention" },
+  { id: "assurance", label: "Security Assurance Due" },
   { id: "inactive", label: "Inactive" },
 ];
 
-const soonMs = 60 * 86400000; // 60 days
+const displayDate = value => new Date(String(value).slice(0,10)+"T12:00:00").toLocaleDateString();
 
 function daysUntil(iso) {
   if (!iso) return null;
@@ -48,6 +49,8 @@ export default function VendorRegister() {
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
   const [rows, setRows] = useState([]);
+  const [reviews,setReviews] = useState([]);
+  const generation=useRef(0);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
   const [view, setView] = useState("all_active");
@@ -60,41 +63,39 @@ export default function VendorRegister() {
 
   async function load() {
     if (!currentClientId) return;
+    const token=++generation.current;
     setLoading(true);
     try {
-      const [v, u] = await Promise.all([
+      const [v, u, r] = await Promise.all([
         api.get("/vendors", { params: { client_id: currentClientId } }).then((r) => r.data),
-        api.get("/users").then((r) => r.data).catch(() => []),
+        api.get(`/clients/${currentClientId}/members`).then((r) => r.data),
+        api.get("/reviews",{params:{client_id:currentClientId}}).then(r=>r.data),
       ]);
-      setRows(v || []); setUsers(u || []);
+      if(token!==generation.current) return;
+      setRows(v || []); setUsers(u || []); setReviews(r||[]);
     } catch (e) { toast.error(formatError(e)); }
     finally { setLoading(false); }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentClientId]);
+  useEffect(() => { const activeGeneration=generation; setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView("all_active");load();return()=>{activeGeneration.current++;};
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentClientId]);
 
-  const enriched = useMemo(() => rows.map((v) => {
-    const nextReviewDays = daysUntil(v.next_review);
-    const contractDays = daysUntil(v.contract_expiration || v.contract_renewal || v.contract_end);
-    const reviewDue = nextReviewDays !== null && nextReviewDays <= 60;
-    const contractSoon = contractDays !== null && contractDays <= 60;
-    const assuranceIssue = ["expired", "expiring", "missing", "requested"].includes((v.assurance_status || "").toLowerCase());
-    const attention = (v.criticality === "critical" && reviewDue) || (nextReviewDays !== null && nextReviewDays < 0) || contractSoon || assuranceIssue;
-    return { ...v, _nextReviewDays: nextReviewDays, _contractDays: contractDays, _reviewDue: reviewDue, _contractSoon: contractSoon, _assuranceIssue: assuranceIssue, _attention: attention };
-  }), [rows]);
+  const enriched = useMemo(() => rows.map(v=>{const value=vendorSignals(v,reviews);return {...value,_attention:value._reviewDue||value._contractSoon||value._assuranceIssue};}),[rows,reviews]);
 
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return enriched.filter((v) => {
       const status = v.status || "active";
-      if (view === "all_active" && ["inactive", "offboarding"].includes(status)) return false;
+      if (view !== "inactive" && view !== "all" && status === "inactive") return false;
       if (view === "critical" && v.criticality !== "critical") return false;
+      if (view === "high" && v.criticality !== "high") return false;
       if (view === "review_due" && !v._reviewDue) return false;
       if (view === "contract_soon" && !v._contractSoon) return false;
       if (view === "assurance" && !v._assuranceIssue) return false;
-      if (view === "inactive" && !["inactive", "offboarding"].includes(status)) return false;
+      if (view === "inactive" && status !== "inactive") return false;
       if (!s) return true;
       return (v.name || "").toLowerCase().includes(s) || (v.service || v.services || "").toLowerCase().includes(s) || (v.category || "").toLowerCase().includes(s) || (userMap[v.business_owner_id] || "").toLowerCase().includes(s);
-    }).sort((a, b) => (b._attention - a._attention) || ({critical:0,high:1,medium:2,moderate:2,low:3}[a.criticality]||9) - ({critical:0,high:1,medium:2,moderate:2,low:3}[b.criticality]||9) || (a.name || "").localeCompare(b.name || ""));
+    }).sort((a, b) => (b._attention - a._attention) || ({critical:0,high:1,medium:2,moderate:2,low:3}[a.criticality]??9) - ({critical:0,high:1,medium:2,moderate:2,low:3}[b.criticality]??9) || (a.name || "").localeCompare(b.name || ""));
   }, [enriched, q, view, userMap]);
 
   const tableSource = enriched.filter(r => r.client_id === currentClientId);
@@ -105,7 +106,7 @@ export default function VendorRegister() {
   const summary = useMemo(() => {
     const s = { critical: 0, review_due: 0, contract_soon: 0, assurance: 0 };
     enriched.forEach((v) => {
-      const active = !["inactive", "offboarding"].includes(v.status || "active");
+      const active = v.status !== "inactive";
       if (v.criticality === "critical" && active) s.critical += 1;
       if (v._reviewDue && active) s.review_due += 1;
       if (v._contractSoon && active) s.contract_soon += 1;
@@ -148,7 +149,7 @@ export default function VendorRegister() {
           <SummaryCard label="Critical Vendors" value={summary.critical} icon={Building2} tone="critical" />
           <SummaryCard label="Reviews Due" value={summary.review_due} icon={CalendarClock} tone="duesoon" />
           <SummaryCard label="Contracts Expiring" value={summary.contract_soon} icon={FileSignature} tone="duesoon" />
-          <SummaryCard label="Assurance Attention" value={summary.assurance} icon={AlertOctagon} tone="critical" />
+          <SummaryCard label="Security Assurance Due" value={summary.assurance} icon={AlertOctagon} tone="critical" />
         </div>
       </div>
       <div className="px-8 py-4 mt-2 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white/60">
@@ -158,7 +159,7 @@ export default function VendorRegister() {
         </div>
         <div className="inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="vendor-views">
           {VIEWS.map((v) => (
-            <button key={v.id} onClick={() => { const key = ({all_active:'status',inactive:'status',critical:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`vendor-view-${v.id}`}
+            <button key={v.id} onClick={() => { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`vendor-view-${v.id}`}
               className={`px-3 h-8 text-xs rounded-[6px] transition ${view === v.id ? "bg-brand-charcoal text-ink-onDark font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>{v.label}</button>
           ))}
         </div>
@@ -203,18 +204,18 @@ export default function VendorRegister() {
                       {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="tbl-cell text-xs text-ink-secondary">{userMap[v.business_owner_id] || <span className="text-slate-300">—</span>}</td>
-                    <td className="tbl-cell text-xs font-mono text-ink-secondary">{v.last_review ? new Date(v.last_review).toLocaleDateString() : <span className="text-slate-300">—</span>}</td>
+                    <td className="tbl-cell text-xs font-mono text-ink-secondary">{v.last_review ? displayDate(v.last_review) : <span className="text-slate-300">—</span>}</td>
                     <td className="tbl-cell text-xs font-mono">
                       {v.next_review ? (
                         <span className={v._nextReviewDays < 0 ? "text-semantic-critical font-medium" : v._reviewDue ? "text-semantic-duesoon-text font-medium" : "text-ink-secondary"}>
-                          {new Date(v.next_review).toLocaleDateString()}
+                          {displayDate(v.next_review)}
                         </span>
                       ) : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="tbl-cell text-xs font-mono">
                       {(v.contract_renewal || v.contract_expiration || v.contract_end) ? (
                         <span className={v._contractSoon ? "text-semantic-duesoon-text font-medium" : "text-ink-secondary"}>
-                          {new Date(v.contract_renewal || v.contract_expiration || v.contract_end).toLocaleDateString()}
+                          {displayDate(v.contract_renewal || v.contract_expiration || v.contract_end)}
                         </span>
                       ) : <span className="text-slate-300">—</span>}
                     </td>
@@ -255,20 +256,22 @@ function SummaryCard({ label, value, icon: Icon, tone }) {
 }
 
 function NewVendorDialog({ open, onOpenChange, clientId, users, onCreated }) {
-  const [form, setForm] = useState({ name: "", service: "", category: "SaaS", criticality: "medium", status: "onboarding", data_types: [], business_owner_id: "", review_frequency: "annual", contract_renewal: "", notes: "" });
+  const [form, setForm] = useState({ name: "", service: "", category: "SaaS", criticality: "medium", status: "onboarding", data_types: [], business_owner_id: "", review_frequency: "annual", contract_renewal: "", next_review:"", assurance_required:false, assurance_records:[], notes: "" });
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) setForm({ name: "", service: "", category: "SaaS", criticality: "medium", status: "onboarding", data_types: [], business_owner_id: "", review_frequency: "annual", contract_renewal: "", notes: "" }); }, [open]);
+  useEffect(() => { if (open) setForm({ name: "", service: "", category: "SaaS", criticality: "medium", status: "onboarding", data_types: [], business_owner_id: "", review_frequency: "annual", contract_renewal: "", next_review:"", assurance_required:false, assurance_records:[], notes: "" }); }, [open]);
 
   function toggleData(dt) {
     const s = new Set(form.data_types); s.has(dt) ? s.delete(dt) : s.add(dt);
     setForm({ ...form, data_types: Array.from(s) });
   }
   async function save() {
-    if (!form.name.trim()) { toast.error("Vendor name is required"); return; }
+    if (!form.name.trim()||!form.service.trim()) { toast.error("Vendor name and Service / Product are required"); return; }
     setSaving(true);
     try {
       const body = { ...form, client_id: clientId };
       if (!body.business_owner_id) delete body.business_owner_id;
+      body.assurance_required=!!form.assurance_required;
+      body.assurance_records=form.assurance_records||[];
       if (body.contract_renewal) body.contract_renewal = new Date(body.contract_renewal).toISOString();
       await api.post("/vendors", body);
       toast.success(`${form.name} added to the register`);
@@ -284,10 +287,10 @@ function NewVendorDialog({ open, onOpenChange, clientId, users, onCreated }) {
           <DialogDescription>Add a third party to the Vendor Register.</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3 py-2">
-          <div className="col-span-2"><Label className="text-xs text-ink-secondary">Vendor name</Label><Input data-testid="new-vendor-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="text-sm" /></div>
-          <div className="col-span-2"><Label className="text-xs text-ink-secondary">Service / Product</Label><Input value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })} placeholder="Payroll processing, CRM, hosting…" className="text-sm" /></div>
+          <div className="col-span-2"><Label htmlFor="new-vendor-name" className="text-xs text-ink-secondary">Vendor name *</Label><Input id="new-vendor-name" required data-testid="new-vendor-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="text-sm" /></div>
+          <div className="col-span-2"><Label htmlFor="new-vendor-service" className="text-xs text-ink-secondary">Service / Product *</Label><Input id="new-vendor-service" required value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })} placeholder="Payroll processing, CRM, hosting…" className="text-sm" /></div>
           <div><Label className="text-xs text-ink-secondary">Category</Label><Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}><SelectTrigger className="text-sm"><SelectValue /></SelectTrigger><SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-          <div><Label className="text-xs text-ink-secondary">Criticality</Label><Select value={form.criticality} onValueChange={(v) => setForm({ ...form, criticality: v })}><SelectTrigger data-testid="new-vendor-criticality" className="text-sm"><SelectValue /></SelectTrigger><SelectContent>{["critical","high","medium","low"].map((c) => <SelectItem key={c} value={c}>{CRIT_LABEL[c]}</SelectItem>)}</SelectContent></Select></div>
+          <div><Label className="text-xs text-ink-secondary">Criticality</Label><Select value={form.criticality} onValueChange={(v) => setForm({ ...form, criticality: v })}><SelectTrigger aria-label="Criticality" data-testid="new-vendor-criticality" className="text-sm"><SelectValue /></SelectTrigger><SelectContent>{["critical","high","medium","low"].map((c) => <SelectItem key={c} value={c}>{CRIT_LABEL[c]}</SelectItem>)}</SelectContent></Select></div>
           <div className="col-span-2">
             <Label className="text-xs text-ink-secondary">Data types (business dependency + data handling)</Label>
             <div className="flex flex-wrap gap-1 mt-1">
@@ -297,10 +300,13 @@ function NewVendorDialog({ open, onOpenChange, clientId, users, onCreated }) {
               ))}
             </div>
           </div>
-          <div><Label className="text-xs text-ink-secondary">Business owner</Label><Select value={form.business_owner_id || "__none__"} onValueChange={(v) => setForm({ ...form, business_owner_id: v === "__none__" ? "" : v })}><SelectTrigger className="text-sm"><SelectValue placeholder="Assign later" /></SelectTrigger><SelectContent><SelectItem value="__none__">Assign later</SelectItem>{users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}</SelectContent></Select></div>
-          <div><Label className="text-xs text-ink-secondary">Review frequency</Label><Select value={form.review_frequency} onValueChange={(v) => setForm({ ...form, review_frequency: v })}><SelectTrigger className="text-sm"><SelectValue /></SelectTrigger><SelectContent>{["quarterly","semiannual","annual","biennial","as_needed","custom"].map((f) => <SelectItem key={f} value={f}>{f.replace("_", " ")}</SelectItem>)}</SelectContent></Select></div>
-          <div><Label className="text-xs text-ink-secondary">Status</Label><Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}><SelectTrigger className="text-sm"><SelectValue /></SelectTrigger><SelectContent>{["onboarding","under_review","active","offboarding","inactive"].map((s) => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}</SelectContent></Select></div>
-          <div><Label className="text-xs text-ink-secondary">Contract renewal / expiration</Label><Input type="date" value={form.contract_renewal} onChange={(e) => setForm({ ...form, contract_renewal: e.target.value })} className="text-sm" /></div>
+          <div><Label className="text-xs text-ink-secondary">Business owner</Label><Select value={form.business_owner_id || "__none__"} onValueChange={(v) => setForm({ ...form, business_owner_id: v === "__none__" ? "" : v })}><SelectTrigger aria-label="Business owner" className="text-sm"><SelectValue placeholder="Assign later" /></SelectTrigger><SelectContent><SelectItem value="__none__">Assign later</SelectItem>{users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}</SelectContent></Select></div>
+          <div><Label className="text-xs text-ink-secondary">Review frequency</Label><Select value={form.review_frequency} onValueChange={(v) => setForm({ ...form, review_frequency: v })}><SelectTrigger className="text-sm"><SelectValue /></SelectTrigger><SelectContent>{["quarterly","semiannual","annual","biennial","as_needed"].map((f) => <SelectItem key={f} value={f}>{f.replace("_", " ")}</SelectItem>)}</SelectContent></Select></div>
+          <div><Label htmlFor="new-vendor-next-review" className="text-xs text-ink-secondary">Next Review date</Label><Input id="new-vendor-next-review" type="date" value={form.next_review||""} onChange={e=>setForm({...form,next_review:e.target.value})}/></div>
+          <div><Label htmlFor="new-vendor-contract" className="text-xs text-ink-secondary">Contract renewal / expiration</Label><Input id="new-vendor-contract" type="date" value={form.contract_renewal} onChange={(e) => setForm({ ...form, contract_renewal: e.target.value })} className="text-sm" /></div>
+          <div className="col-span-2"><label className="text-sm flex gap-2 items-center"><input type="checkbox" checked={!!form.assurance_required} onChange={e=>setForm({...form,assurance_required:e.target.checked})}/>Security Assurance Required</label>
+            {form.assurance_required&&<div className="flex flex-wrap gap-3 mt-2">{ASSURANCE_TYPES.map(type=><label key={type} className="text-sm flex gap-1"><input type="checkbox" checked={(form.assurance_records||[]).some(a=>a.type===type)} onChange={e=>setForm({...form,assurance_records:e.target.checked?[...(form.assurance_records||[]),{type,required:true,evidence_ids:[]}]:form.assurance_records.filter(a=>a.type!==type)})}/>{type}</label>)}</div>}
+          </div>
           <div className="col-span-2"><Label className="text-xs text-ink-secondary">Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="text-sm" /></div>
         </div>
         <DialogFooter>

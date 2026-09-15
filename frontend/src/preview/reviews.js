@@ -23,11 +23,13 @@ export function reviewAction(db, id, name, body) {
   const review = record(db, 'reviews', id), current = reviewView(review);
   const previous = review.occurrences?.find(o => o.occurrence_id === body.occurrence_id);
   if (name === 'complete' && previous) return {review:current, occurrence:previous, spawned:null};
+  if(review.vendor_id&&db.vendors.some(v=>v.vendor_id===review.vendor_id&&v.status==='inactive')&&review.vendor_purpose!=='offboarding') throw new Error('Inactive Vendors have no active recurring Reviews.');
   assertCurrentOccurrence(review, body.occurrence_id);
   if (current.status === 'needs_scheduling') throw new Error('An administrator must schedule this Review first.');
   if (name === 'start') {
     if (review.status !== 'in_progress') {
       write(db, 'reviews', {status:'in_progress', current_occurrence_id:body.occurrence_id, started_at:now(), started_by:db.user.user_id,...(review.risk_id?{risk_baseline:riskSnapshot(record(db,'risks',review.risk_id))}:{})}, id);
+      if(review.vendor_id&&(review.vendor_purpose||'vendor')==='vendor') {const v=record(db,'vendors',review.vendor_id);if(v.status==='onboarding'){v.status='under_review';audit(db,'Vendor moved to under review','vendors',v);}}
       reviewEvent(db, review, 'Review started');
     }
     return reviewView(review);
@@ -48,6 +50,7 @@ export function reviewAction(db, id, name, body) {
       : {status:'completed',current_occurrence_id:occurrenceId(review),completion_date:completed.completed_at})
   }, id);
   reviewEvent(db, review, 'Review completed', completed.occurrence_id, {period:completed.period, outcome:completed.outcome, finding_count:findings.length});
+  if(review.vendor_id) audit(db,'Vendor Review completed','vendors',record(db,'vendors',review.vendor_id),{review_id:id,occurrence_id:completed.occurrence_id});
   if (review.risk_id) audit(db,completed.outcome,'risks',record(db,'risks',review.risk_id),{review_id:id,occurrence_id:completed.occurrence_id});
   if (next) reviewEvent(db, review, 'Next occurrence scheduled', completed.occurrence_id, {due_date:next});
   return {review:reviewView(review),occurrence:completed,spawned:null};

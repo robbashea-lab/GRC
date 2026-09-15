@@ -1,7 +1,14 @@
 import rules from '../lib/grcRules.json';
 export function guardEdit(kind, body, existing = {}, user) {
   const changes = Object.fromEntries(Object.entries(body).filter(([k,v]) => JSON.stringify(v) !== JSON.stringify(existing[k]) && !((v == null || v === '') && (existing[k] == null || existing[k] === ''))));
+  if(kind==='vendors') {
+    if(['last_review','assurance_status'].some(k=>k in changes)) throw new Error('Review dates and assurance status are derived.');
+    if(existing.status==='inactive'&&Object.keys(changes).length) throw new Error('Inactive Vendors remain historical records.');
+    if(existing.vendor_id&&['next_review','review_frequency','custom_recurrence_days','separate_assurance_review','assurance_review_date','assurance_cadence','contract_review_enabled','contract_lead_days','offboarding_review_date'].some(k=>k in changes)&&user&&!['super_admin','platform_admin'].includes(user.role)) throw new Error('Only platform administrators can change Review configuration.');
+  }
   if (kind === 'reviews') {
+    if('vendor_id' in changes||'vendor_purpose' in changes) throw new Error('Establish Vendor Reviews from the Vendor schedule.');
+    if(existing.vendor_purpose==='contract'&&['due_date','recurrence','custom_recurrence_days'].some(k=>k in changes)) throw new Error('Configure Contract Renewal Review through Vendor contract dates and lead time.');
     if('risk_id' in changes) throw new Error('Establish Risk Reviews from the Risk schedule.');
     if (user && !['super_admin','platform_admin'].includes(user.role) && Object.keys(changes).some(k => k !== 'notes')) throw new Error('Only platform administrators can change Review configuration.');
     if (['period','next_review_date'].some(k => k in changes) || ['in_progress','completed'].includes(changes.status)) throw new Error('Use the Review lifecycle controls. Occurrence and next date are calculated.');

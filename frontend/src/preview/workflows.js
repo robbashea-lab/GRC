@@ -1,3 +1,4 @@
+import {ensureVendorReviews} from './vendors';
 import {ensureRiskReview} from './risks';
 import { list, record, write, now, audit } from './store';
 import { reviewAction, reviewEvent } from './reviews';
@@ -171,7 +172,7 @@ export function action(db, kind, id, name, body) {
     const finding = write(db, 'findings', {
       title: body.title.trim(), description: body.description || '', severity: body.severity || 'medium',
       remediation_plan: body.remediation_plan || '', due_date: body.due_date || null,
-      client_id: cid, review_id: id, occurrence_id:body.occurrence_id, request_id:body.request_id, source: r.title, identified_at: now(),
+      client_id: cid, review_id: id, vendor_id:r.vendor_id, occurrence_id:body.occurrence_id, request_id:body.request_id, source: r.title, identified_at: now(),
       owner_id: Object.prototype.hasOwnProperty.call(body, 'owner_id') ? body.owner_id : r.owner_id
     });
     action(db, 'findings', finding.finding_id, 'create-task', { title: body.remediation_title.trim() });
@@ -257,30 +258,9 @@ export function action(db, kind, id, name, body) {
     });
   }
   if (kind === 'vendors' && name === 'schedule-review') {
-    const recurrence = body.recurrence || {
-      biennial: 'custom',
-      as_needed: 'none'
-    }[r.review_frequency] || r.review_frequency || 'annual';
-    const d = body.due_date || r.next_review || nextDue(now(), 'annual');
-    const review = write(db, 'reviews', {
-      ...body,
-      title: body.title || `Vendor review · ${r.name}`,
-      client_id: cid,
-      review_type: 'vendor',
-      vendor_id: id,
-      owner_id: body.owner_id || r.business_owner_id || db.user.user_id,
-      recurrence,
-      custom_recurrence_days: r.review_frequency === 'biennial' ? 730 : null,
-      due_date: d,
-      next_review_date: nextDue(d, recurrence, r.review_frequency === 'biennial' ? 730 : null)
-    });
-    patch({
-      next_review: d
-    });
-    return {
-      review,
-      vendor_id: id
-    };
+    if(!['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform administrators can change Review configuration.');
+    const updated=patch({next_review:body.due_date||r.next_review,...(body.recurrence?{review_frequency:body.recurrence==='none'?'as_needed':body.recurrence}:{})});
+    return {review:ensureVendorReviews(db,updated).find(r=>r.vendor_purpose==='vendor'),vendor_id:id};
   }
   if (kind === 'policies' && name === 'verify') return patch({
     ...Object.fromEntries(Object.entries(body).filter(([, v]) => v != null && v !== '')),
