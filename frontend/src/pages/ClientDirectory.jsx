@@ -1,7 +1,6 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
-import { calendarDay } from '@/lib/clientDashboard';
 import { useEffect, useMemo, useRef, useState } from "react";
 import RecordDrawer from '@/components/RecordDrawer';
 import { loadPortfolioRecord } from '@/lib/portfolioRecord';
@@ -148,6 +147,7 @@ export default function ClientDirectory() {
   const [rows, setRows] = useState([]);
   const [portfolio, setPortfolio] = useState(null);
   const [queue, setQueue] = useState([]);
+  const [metricItems,setMetricItems]=useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -179,8 +179,9 @@ export default function ClientDirectory() {
       setRows(data.clients || []);
       setPortfolio(data.portfolio || null);
       setQueue(data.attention_queue || []);
+      setMetricItems(data.metric_items || null);
       setUsers(usersData || []);
-    } catch (e) { toast.error(formatError(e)); }
+    } catch (e) { setPortfolio(null);setRows([]);setQueue([]);setMetricItems(null);toast.error(formatError(e)); }
     finally { setLoading(false); }
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [includeArchived]);
@@ -198,6 +199,7 @@ export default function ClientDirectory() {
       else if (filter === "past_due")     { if (!(r.past_due > 0)) return false; }
       else if (filter === "critical_high"){ if (!(r.critical_high_open > 0)) return false; }
       else if (filter === "unassigned") { if (!(r.unassigned > 0)) return false; }
+      else if (filter === "attention") { if (!['action_required','needs_attention'].includes(r.program_status)) return false; }
       else if (filter !== "all" && r.program_status !== filter) return false;
       if (!s) return true;
       return (
@@ -219,32 +221,19 @@ export default function ClientDirectory() {
     nav(target);
   }
 
-  function openDrill(scope) {
-    const now = new Date();
-    const today = calendarDay(now.toISOString());
-    let title = "", filterFn = () => true, sort = (a, b) => 0;
-    if (scope === "past_due") {
-      title = "Past Due — portfolio";
-      filterFn = (item) => calendarDay(item.due_date) != null && calendarDay(item.due_date) < today;
-      sort = (a, b) => new Date(a.due_date) - new Date(b.due_date);
-    } else if (scope === "due_30d") {
-      title = "Due next 30 days — portfolio";
-      filterFn = (item) => calendarDay(item.due_date) != null && calendarDay(item.due_date) >= today && calendarDay(item.due_date) <= today + 30;
-      sort = (a, b) => new Date(a.due_date) - new Date(b.due_date);
-    } else if (scope === "critical_high") {
-      title = "Critical / High open — portfolio";
-      filterFn = (item) => ["critical", "high"].includes(item.priority);
-    } else if (scope === "unassigned") {
-      title = "Unassigned work — portfolio";
-      filterFn = (item) => !item.owner_id;
-    } else if (scope === "attention") {
-      title = `Clients requiring attention — ${portfolio?.clients_requiring_attention || 0} / ${portfolio?.total_clients || 0}`;
-      setFilter("action_required");
-      window.scrollTo({ top: document.querySelector('[data-testid="client-portfolio-table"]')?.offsetTop || 0, behavior: "smooth" });
+  function openDrill(scope, client=null) {
+    const key=scope==='critical_high'?'critical_high_open':scope;
+    if(scope==='attention') {
+      setQ('');setLeadFilter('__all__');table.clear();setFilter('attention');
+      window.scrollTo({top:document.querySelector('[data-testid="client-portfolio-table"]')?.offsetTop||0,behavior:'smooth'});
       return;
     }
-    const items = [...queue].filter(filterFn).sort(sort);
-    setDrillOpen({ scope, title, items });
+    const titles={past_due:'Past Due',due_30d:'Due next 30 days',due_31_90d:'Due in 31–90 Days',critical_high_open:'Critical / High open',unassigned:'Unassigned work'};
+    const source=client?.metric_items||metricItems, expected=client?client[key]:portfolio?.[key];
+    const items=source?.[key];
+    // Mixed-version / incomplete responses fail explicitly, never substitute Top 15.
+    if(!Array.isArray(items)||items.length!==expected) {toast.error('Complete metric details are unavailable. Refresh the portfolio.');return;}
+    setDrillOpen({scope,title:titles[key]+' — '+(client?.name||'portfolio'),items:[...items].sort((a,b)=>(a.due_date||'9999').localeCompare(b.due_date||'9999')||a.key.localeCompare(b.key))});
   }
 
   const generatedAt = portfolio?.generated_at;
@@ -270,7 +259,7 @@ export default function ClientDirectory() {
               onClick={() => openDrill("due_30d")} />
             <AttentionCard testid="card-due-31-90" label="Due in 31–90 Days" value={portfolio.due_31_90d}
               icon={Clock} tone="info"
-              onClick={() => openDrill("due_30d")} />
+              onClick={() => openDrill("due_31_90d")} />
             <AttentionCard testid="card-critical-high" label="Open Critical / High Items" value={portfolio.critical_high_open}
               icon={AlertOctagon} tone="critical"
               onClick={() => openDrill("critical_high")} />
@@ -386,16 +375,16 @@ export default function ClientDirectory() {
                   </td>
                   <td className="tbl-cell"><StatusChip value={r.program_status} /></td>
                   <MetricCell value={r.past_due} tone={r.past_due > 0 ? "critical" : "neutral"}
-                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-past-due-${i}`} />
+                    onClick={() => openDrill('past_due',r)} testid={`client-past-due-${i}`} />
                   <MetricCell value={r.due_30d} tone={r.due_30d > 0 ? "duesoon" : "neutral"}
-                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-due-30-${i}`} />
+                    onClick={() => openDrill('due_30d',r)} testid={`client-due-30-${i}`} />
                   <MetricCell value={r.critical_high_open} tone={r.critical_high_open > 0 ? "critical" : "neutral"}
-                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-critical-${i}`} />
+                    onClick={() => openDrill('critical_high',r)} testid={`client-critical-${i}`} />
                   <MetricCell value={r.unassigned} tone={r.unassigned > 0 ? "duesoon" : "neutral"}
-                    onClick={() => enterWorkspace(r, "/action-items")} testid={`client-unassigned-${i}`} />
+                    onClick={() => openDrill('unassigned',r)} testid={`client-unassigned-${i}`} />
                   <td className="tbl-cell">
                     {r.next_major_item ? (
-                      <button onClick={() => enterWorkspace(r, "/reviews")} className="text-xs text-left hover:underline underline-offset-2">
+                      <button onClick={() => openPortfolioItem({...r.next_major_item,entity_type:'review',entity_id:r.next_major_item.review_id,client_id:r.client_id})} className="text-xs text-left hover:underline underline-offset-2">
                         <div className="text-ink-primary truncate max-w-[220px]" title={r.next_major_item.title}>{r.next_major_item.title}</div>
                         <div className="text-ink-help font-mono">{fmtDate(r.next_major_item.due_date)}</div>
                       </button>
@@ -443,7 +432,7 @@ export default function ClientDirectory() {
                 </td></tr>
               )}
               {!loading && queue.map((item, i) => (
-                <tr key={item.entity_id || i} className="row-hover" data-testid={`attention-row-${i}`}>
+                <tr key={item.key || item.entity_id || i} className="row-hover" data-testid={`attention-row-${i}`}>
                   <td className="tbl-cell">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium capitalize ${PRIORITY_TONES[item.priority] || PRIORITY_TONES.due_soon}`}>
                       {item.priority.replace("_", " ")}
@@ -456,7 +445,7 @@ export default function ClientDirectory() {
                     </button>
                   </td>
                   <td className="tbl-cell text-ink-primary truncate max-w-[280px]" title={item.title}>{item.title}</td>
-                  <td className="tbl-cell text-ink-secondary text-xs capitalize">{item.entity_type}</td>
+                  <td className="tbl-cell text-ink-secondary text-xs capitalize">{item.type || item.entity_type}</td>
                   <td className="tbl-cell text-ink-secondary text-xs">{item.owner_name || <span className="text-ink-help">Unassigned</span>}</td>
                   <td className="tbl-cell text-xs font-mono">
                     {item.due_date ? (
@@ -519,10 +508,10 @@ function DrillDialog({ open, data, onClose, onOpenItem }) {
                 <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-6">Nothing matches this filter — nice!</td></tr>
               )}
               {data.items.map((it, i) => (
-                <tr key={it.entity_id || i} className="row-hover" data-testid={`drill-row-${i}`}>
+                <tr key={it.key || it.entity_id || i} className="row-hover" data-testid={`drill-row-${i}`}>
                   <td className="tbl-cell text-ink-primary">{it.client_name}</td>
                   <td className="tbl-cell text-ink-primary truncate max-w-[220px]" title={it.title}>{it.title}</td>
-                  <td className="tbl-cell text-ink-secondary text-xs capitalize">{it.entity_type}</td>
+                  <td className="tbl-cell text-ink-secondary text-xs capitalize">{it.type || it.entity_type}</td>
                   <td className="tbl-cell text-xs">{it.owner_name || <span className="text-ink-help">Unassigned</span>}</td>
                   <td className="tbl-cell text-xs font-mono">
                     {it.due_date ? (

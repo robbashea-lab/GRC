@@ -1,26 +1,17 @@
 // Presentation-only view of records returned by tenant-authorized API endpoints.
 // Nothing here creates or updates an obligation.
 import { representedFinding, assessedRisk } from './grcWork';
+import managementRules from './managementRules.json';
+import {calendarDay,managementDay} from './managementDates';
+export {calendarDay} from './managementDates';
 export const DASHBOARD_KINDS = ["reviews", "findings", "tasks", "risks", "policies", "vendors", "exceptions", "requirements"];
 const IDS = { reviews: "review_id", findings: "finding_id", tasks: "task_id", risks: "risk_id", policies: "policy_id", vendors: "vendor_id", exceptions: "exception_id", requirements: "requirement_id" };
-const OWNERS = { reviews: ["owner_id", "reviewer_id"], tasks: ["assignee_id", "owner_id"], policies: ["owner_id", "approver_id"], vendors: ["business_owner_id", "owner_id"], exceptions: ["owner_id", "approver_id"] };
-const CLOSED = new Set(["completed", "cancelled", "done", "closed", "retired", "archived", "inactive", "terminated", "offboarding", "revoked", "not_applicable"]);
-
-// Compare calendar dates, not the current time of day. Date-only values must
-// not shift to yesterday in a browser west of UTC.
-export function calendarDay(value) {
-  if (!value || typeof value !== "string") return null;
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T|$)/);
-  if (!match) return null;
-  const [y, m, d] = match.slice(1).map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) return null;
-  return date.getTime() / 86400000;
-}
+const OWNERS = managementRules.owners;
+const CLOSED = new Set(managementRules.terminal);
 
 export function aggregateClientDashboard(records, { clientId, user, scope = { kind: "org" }, members = [], today = new Date() }) {
   if (!clientId) throw new Error("Select a client to view its dashboard.");
-  const currentDay = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86400000;
+  const currentDay = managementDay(today);
   const userMap = new Map(members.map(u => [u.user_id, u.name || u.email]));
   if (user) userMap.set(user.user_id, user.name || user.email);
   const ownerIds = (r, kind) => (OWNERS[kind] || ["owner_id"]).map(k => r[k]).filter(Boolean);
@@ -33,7 +24,7 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
     if (!Array.isArray(list) || list.some(r => r.client_id !== clientId)) {
       throw new Error("The dashboard received records for a different client. Please reload.");
     }
-    active[kind] = list.filter(r => !CLOSED.has(r.status) && !(kind === "findings" && r.status === "accepted"));
+    active[kind] = list.filter(r => !r.archived && !r.archived_at && !CLOSED.has(r.status) && !(kind === "findings" && r.status === "accepted"));
   }
   const candidates = [];
   function add(record, kind, event, type, date, action, severity = null, allowUndated = false) {
@@ -71,7 +62,8 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
     if (!represented) add(r, "findings", "due", r.status === "remediated" ? "Validation" : "Finding", r.due_date, "View Finding", r.severity, true);
   }
   for (const r of active.risks) {
-    if (r.status === "accepted" && r.acceptance_expires_at && calendarDay(r.acceptance_expires_at) !== calendarDay(r.next_review)) add(r, "risks", "acceptance", "Risk Acceptance Expiry", r.acceptance_expires_at, "View Risk");
+    if (r.status === "accepted" && r.acceptance_expires_at && calendarDay(r.acceptance_expires_at) !== calendarDay(r.next_review)
+      && !active.exceptions.some(e=>e.risk_id===r.risk_id&&['approved','expired'].includes(e.status)&&calendarDay(e.expires_at)===calendarDay(r.acceptance_expires_at))) add(r, "risks", "acceptance", "Risk Acceptance Expiry", r.acceptance_expires_at, "View Risk");
     const represented = active.reviews.some(v=>v.risk_id===r.risk_id&&calendarDay(v.due_date)===calendarDay(r.next_review)) || r.status === "accepted" && active.exceptions.some(e => e.risk_id === r.risk_id && ["approved", "expired"].includes(e.status) && calendarDay(e.expires_at) != null && calendarDay(e.expires_at) === calendarDay(r.next_review));
     if (!represented) add(r, "risks", "review", r.status === "accepted" ? "Risk Acceptance Review" : (r.next_review ? "Risk Review" : "Risk"), r.next_review, "View Risk", r.status === "accepted" ? null : assessedRisk(r).risk_level, r.status !== "accepted");
   }
@@ -90,7 +82,7 @@ export function aggregateClientDashboard(records, { clientId, user, scope = { ki
     if(r.assurance_required) for(const artifact of r.assurance_records||[]) {
       if(artifact.required===false) continue;
       const represented=active.reviews.some(v=>v.vendor_id===r.vendor_id&&["assurance","vendor"].includes(v.vendor_purpose||"vendor")&&calendarDay(v.due_date)===calendarDay(artifact.refresh_due));
-      if(!represented) add(r,"vendors","assurance-"+artifact.type,"Assurance Refresh",artifact.refresh_due,"Open Vendor");
+      if(!represented) add(r,"vendors","assurance-"+artifact.type,"Assurance Refresh · "+artifact.type,artifact.refresh_due,"Open Vendor");
     }
   }
   for (const r of active.exceptions) if (["approved", "expired"].includes(r.status)) {

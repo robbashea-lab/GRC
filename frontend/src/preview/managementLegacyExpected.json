@@ -1,0 +1,93 @@
+{
+  "/dashboard?client_id=cli_4be55dbf1400&scope=org": {
+    "past_due": 4,
+    "due_30d": 7,
+    "due_31_90d": 4,
+    "critical_high_open": 4,
+    "unassigned": 2
+  },
+  "/dashboard?client_id=cli_4be55dbf1400&scope=mine": {
+    "past_due": 0,
+    "due_30d": 0,
+    "due_31_90d": 0,
+    "critical_high_open": 0,
+    "unassigned": 0
+  },
+  "/dashboard?client_id=cli_4be55dbf1400&scope=unassigned": {
+    "past_due": 0,
+    "due_30d": 0,
+    "due_31_90d": 1,
+    "critical_high_open": 0,
+    "unassigned": 2
+  },
+  "/dashboard?client_id=cli_4be55dbf1400&scope=user&user_id=user_3e7a764890b9": {
+    "past_due": 0,
+    "due_30d": 0,
+    "due_31_90d": 0,
+    "critical_high_open": 0,
+    "unassigned": 0
+  },
+  "/dashboard?client_id=cli_4be55dbf1400&scope=user&user_id=user_555c834fb122": {
+    "past_due": 1,
+    "due_30d": 0,
+    "due_31_90d": 0,
+    "critical_high_open": 0,
+    "unassigned": 0
+  },
+  "/dashboard?client_id=cli_4be55dbf1400&scope=user&user_id=user_d87618796be6": {
+    "past_due": 4,
+    "due_30d": 7,
+    "due_31_90d": 3,
+    "critical_high_open": 4,
+    "unassigned": 0
+  },
+  "/dashboard?client_id=cli_879b746d8753&scope=org": {
+    "past_due": 4,
+    "due_30d": 7,
+    "due_31_90d": 4,
+    "critical_high_open": 4,
+    "unassigned": 2
+  },
+  "/dashboard?client_id=cli_879b746d8753&scope=mine": {
+    "past_due": 0,
+    "due_30d": 0,
+    "due_31_90d": 0,
+    "critical_high_open": 0,
+    "unassigned": 0
+  },
+  "/dashboard?client_id=cli_879b746d8753&scope=unassigned": {
+    "past_due": 0,
+    "due_30d": 0,
+    "due_31_90d": 1,
+    "critical_high_open": 0,
+    "unassigned": 2
+  },
+  "/dashboard?client_id=cli_879b746d8753&scope=user&user_id=user_3e7a764890b9": {
+    "past_due": 0,
+    "due_30d": 0,
+    "due_31_90d": 0,
+    "critical_high_open": 0,
+    "unassigned": 0
+  },
+  "/dashboard?client_id=cli_879b746d8753&scope=user&user_id=user_555c834fb122": {
+    "past_due": 1,
+    "due_30d": 0,
+    "due_31_90d": 0,
+    "critical_high_open": 0,
+    "unassigned": 0
+  },
+  "/dashboard?client_id=cli_879b746d8753&scope=user&user_id=user_7f5bfd561d99": {
+    "past_due": 4,
+    "due_30d": 7,
+    "due_31_90d": 3,
+    "critical_high_open": 4,
+    "unassigned": 0
+  },
+  "/dashboard?client_id=cli_4be55dbf1400&scope=user&user_id=user_59106c3ef6f5": {
+    "past_due": 0,
+    "due_30d": 0,
+    "due_31_90d": 0,
+    "critical_high_open": 0,
+    "unassigned": 0
+  }
+}

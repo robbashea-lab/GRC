@@ -1759,14 +1759,10 @@ async def dashboard(
     now_iso = _now()
     horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
 
-    # Fetch minimal working sets once, filter in Python — saves round-trips.
-    reviews = await db.reviews.find(scope_filter, {"_id": 0}).sort("due_date", 1).to_list(2000)
-    findings = await db.findings.find(scope_filter, {"_id": 0}).sort("created_at", -1).to_list(2000)
-    risks = await db.risks.find(scope_filter, {"_id": 0}).sort("created_at", -1).to_list(2000)
-    policies = await db.policies.find(scope_filter, {"_id": 0}).to_list(1000)
-    vendors = await db.vendors.find(scope_filter, {"_id": 0}).to_list(1000)
-    tasks = await db.tasks.find(scope_filter, {"_id": 0}).sort("due_date", 1).to_list(1000)
-    exceptions = await db.exceptions.find(scope_filter, {"_id": 0}).to_list(500)
+    from management_obligations import load_records, management_for_scope, calendar_day
+    records = await load_records(db, scope_filter)
+    management = management_for_scope(records, today=now_iso, scope=scope, user_id=target_uid)
+    reviews, findings, risks, policies, vendors, tasks, exceptions = [records[k] for k in ('reviews','findings','risks','policies','vendors','tasks','exceptions')]
 
     # Apply person / unassigned filter to each collection so all downstream KPIs are naturally scoped.
     if scope == "unassigned":
@@ -1788,15 +1784,15 @@ async def dashboard(
 
     risks = [assessed_risk(r) for r in risks]
     def is_overdue(item, date_field="due_date", closed_statuses=("completed", "done", "closed", "accepted", "retired", "cancelled")):
-        d = item.get(date_field)
-        return bool(d and d[:10] < now_iso[:10] and item.get("status") not in closed_statuses)
+        d = calendar_day(item.get(date_field))
+        return d is not None and d < calendar_day(now_iso) and item.get("status") not in closed_statuses
 
-    overdue_reviews = [r for r in reviews if is_overdue(r)]
-    overdue_findings = [f for f in findings if is_overdue(f) and not represented_finding(f, tasks)]
-    overdue_tasks = [t for t in tasks if is_overdue(t)]
-    open_findings = [f for f in findings if is_open("findings", f)]
-    critical_high = [f for f in open_findings if f.get("severity") in ("high", "critical")]
-    significant_risks = [r for r in risks if r.get("risk_level") in ("high", "critical") and is_open("risks", r)]
+    overdue_reviews = [r['record'] for r in management['metrics']['past_due'] if r['kind']=='reviews']
+    overdue_findings = [r['record'] for r in management['metrics']['past_due'] if r['kind']=='findings']
+    overdue_tasks = [r['record'] for r in management['metrics']['past_due'] if r['kind']=='tasks']
+    open_findings = management['activeRecords']['findings']
+    critical_high = [r['record'] for r in management['materialFindings']]
+    significant_risks = [assessed_risk(r['record']) for r in management['significantRisks']]
 
     # Risks needing reassessment: last_reviewed older than 12 months, or never reviewed and identified >12 months ago.
     twelve_months_ago = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat()
@@ -1807,16 +1803,8 @@ async def dashboard(
         return bool(lr and lr < twelve_months_ago)
     stale_risks = [r for r in risks if _stale(r)]
 
-    def due_soon(value):
-        return bool(value and now_iso[:10] <= value[:10] <= horizon[:10])
-    upcoming_reviews = [r for r in reviews
-                        if due_soon(r.get("due_date"))
-                        and r.get("status") not in ("completed", "cancelled")]
-    upcoming_tasks_30 = [t for t in tasks if due_soon(t.get("due_date")) and is_open("tasks", t)]
-    linked_policies = await db.reviews.distinct("policy_id", scope_filter)
-    policies_due_30 = [p for p in policies if p.get("policy_id") not in linked_policies
-                       and p.get("status") not in ("retired", "not_applicable") and due_soon(p.get("next_review_date"))]
-    due_next_30_count = len(upcoming_reviews) + len(upcoming_tasks_30) + len(policies_due_30)
+    upcoming_reviews = [r['record'] for r in management['metrics']['due_30d'] if r['kind']=='reviews']
+    due_next_30_count = management['counts']['due_30d']
 
     def _brief(item, kind, id_field, title_field="title"):
         return {
@@ -1931,15 +1919,17 @@ async def dashboard(
     return {
         "kpis": {
             # legacy keys (kept for regression)
-            "overdue_reviews": len(overdue_reviews),
-            "open_findings": len(open_findings),
-            "critical_findings": len(critical_high),
-            "significant_risks": len(significant_risks),
+            "overdue_reviews": sum(r['kind']=='reviews' for r in management['metrics']['past_due']),
+            "open_findings": len(management['activeRecords']['findings']),
+            "critical_findings": len(management['materialFindings']),
+            "significant_risks": len(management['significantRisks']),
             # new keys
-            "overdue_actions": len(overdue_tasks),
-            "critical_high_findings": len(critical_high),
+            "overdue_actions": sum(r['kind']=='tasks' for r in management['metrics']['past_due']),
+            "critical_high_findings": len(management['materialFindings']),
             "due_next_30": due_next_30_count,
+            **management['counts'],
         },
+        "management": {"as_of": management['as_of'], "counts": management['counts'], "metric_items": management['metrics'], "records": records},
         "scope": scope,
         "scope_label": scope_label,
         "target_user": (
@@ -4335,22 +4325,13 @@ async def _build_board_report(client_id: str, user: Dict) -> bytes:
     client = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
     if not client:
         raise HTTPException(404, "Client not found")
-    now_iso = _now()
-    horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
-    overdue_reviews = await db.reviews.find(
-        {"client_id": client_id, "status": {"$nin": ["completed", "cancelled"]}, "due_date": {"$lt": now_iso}},
-        {"_id": 0}).sort("due_date", 1).to_list(None)
-    upcoming = await db.reviews.find(
-        {"client_id": client_id, "status": {"$nin": CLOSED["reviews"]}, "due_date": {"$gte": now_iso[:10], "$lte": horizon}},
-        {"_id": 0}).sort("due_date", 1).to_list(None)
-    open_findings = await db.findings.find(
-        {"client_id": client_id, "status": {"$nin": CLOSED["findings"]}},
-        {"_id": 0}).sort("severity", -1).to_list(None)
-    critical_findings = [f for f in open_findings if f.get("severity") in ("high", "critical")]
-    top_risks = await db.risks.find(
-        {"client_id": client_id, "status": {"$nin": CLOSED["risks"]}},
-        {"_id": 0}).sort("created_at", -1).to_list(None)
-    top_risks = [assessed_risk(r) for r in top_risks if assessed_risk(r)["risk_level"] in ("high", "critical")]
+    from management_obligations import load_records, management_model
+    management = management_model(await load_records(db, {'client_id': client_id}), client_id, today=_now())
+    overdue_reviews = sorted([r['record'] for r in management['metrics']['past_due'] if r['kind']=='reviews'], key=lambda r:r.get('due_date') or '')
+    upcoming = sorted([r['record'] for r in management['metrics']['due_30d'] if r['kind']=='reviews'], key=lambda r:r.get('due_date') or '')
+    open_findings = management['activeRecords']['findings']
+    critical_findings = [r['record'] for r in management['materialFindings']]
+    top_risks = [assessed_risk(r['record']) for r in management['significantRisks']]
     approvals_cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
     recent_approvals = await db.policies.find(
         {"client_id": client_id, "approved_at": {"$gte": approvals_cutoff}}, {"_id": 0}).sort("approved_at", -1).to_list(20)
@@ -4398,6 +4379,8 @@ async def _build_board_report(client_id: str, user: Dict) -> bytes:
 
     def section(title, headers, keys, items, widths):
         story.append(Paragraph(title, styles["Section"]))
+        if len(items) > 8:
+            story.append(Paragraph(f"Showing 8 of {len(items)} records.", styles["Mini"]))
         if not items:
             story.append(Paragraph("None.", styles["Mini"]))
             return
@@ -4428,7 +4411,7 @@ async def _build_board_report(client_id: str, user: Dict) -> bytes:
     section("Critical / high findings",
             ["Finding", "Severity", "Due", "Status"],
             ["title", "severity", "due_date", "status"],
-            critical_findings or open_findings,
+            critical_findings,
             [3.2 * inch, 1.0 * inch, 1.0 * inch, 1.3 * inch])
 
     section("Significant risks (high impact)",

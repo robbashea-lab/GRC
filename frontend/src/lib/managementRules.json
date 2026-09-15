@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "kinds": {"reviews":"review_id","findings":"finding_id","tasks":"task_id","risks":"risk_id","policies":"policy_id","vendors":"vendor_id","exceptions":"exception_id","requirements":"requirement_id"},
+  "owners": {"reviews":["owner_id","reviewer_id"],"findings":["owner_id"],"tasks":["assignee_id","owner_id"],"risks":["owner_id"],"policies":["owner_id","approver_id"],"vendors":["business_owner_id","owner_id"],"exceptions":["owner_id","approver_id"],"requirements":["owner_id"]},
+  "terminal": ["completed","cancelled","done","closed","retired","archived","inactive","terminated","offboarding","revoked","not_applicable"],
+  "metrics": ["past_due","due_30d","due_31_90d","critical_high_open","unassigned"]
+}
