@@ -1,5 +1,6 @@
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
+import { calendarDay } from '@/lib/clientDashboard';
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
@@ -75,7 +76,7 @@ function Avatar({ name, logoUrl }) {
 
 function fmtDate(iso) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(String(iso).slice(0,10) + 'T12:00:00').toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function relTime(iso) {
@@ -210,15 +211,15 @@ export default function ClientDirectory() {
 
   function openDrill(scope) {
     const now = new Date();
+    const today = calendarDay(now.toISOString());
     let title = "", filterFn = () => true, sort = (a, b) => 0;
     if (scope === "past_due") {
       title = "Past Due — portfolio";
-      filterFn = (item) => item.due_date && new Date(item.due_date) < now;
+      filterFn = (item) => calendarDay(item.due_date) != null && calendarDay(item.due_date) < today;
       sort = (a, b) => new Date(a.due_date) - new Date(b.due_date);
     } else if (scope === "due_30d") {
       title = "Due next 30 days — portfolio";
-      const h = new Date(now); h.setDate(h.getDate() + 30);
-      filterFn = (item) => item.due_date && new Date(item.due_date) >= now && new Date(item.due_date) <= h;
+      filterFn = (item) => calendarDay(item.due_date) != null && calendarDay(item.due_date) >= today && calendarDay(item.due_date) <= today + 30;
       sort = (a, b) => new Date(a.due_date) - new Date(b.due_date);
     } else if (scope === "critical_high") {
       title = "Critical / High open — portfolio";

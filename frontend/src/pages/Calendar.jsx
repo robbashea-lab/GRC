@@ -6,7 +6,8 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import RecordDrawer from "@/components/RecordDrawer";
+import { SCHEMAS } from "@/lib/schemas";
 
 const KIND_COLOR = {
   review: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
@@ -41,6 +42,16 @@ export default function Calendar() {
   const [data, setData] = useState({ reviews: {}, findings: {}, tasks: {} });
   const [dragOverDay, setDragOverDay] = useState("");
   const [busy, setBusy] = useState(false);
+  const [drawer, setDrawer] = useState(null);
+  useEffect(() => { setDrawer(null); }, [currentClientId]);
+  async function openRecord(item) {
+    try {
+      const kind = `${item.kind}s`;
+      const {data: record} = await api.get(`/${kind}/${item.id}`);
+      if (record.client_id !== currentClientId) throw new Error('Record belongs to another client.');
+      setDrawer({kind, record});
+    } catch (e) { toast.error(formatError(e)); }
+  }
   const canReschedule = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
 
   const load = async () => {
@@ -128,13 +139,13 @@ export default function Calendar() {
         subtitle={`${currentClient?.name || ""} · Recurring reviews, findings and tasks. ${canReschedule ? "Drag any chip onto a new day to reschedule." : "Read-only."}`}
         action={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1))} data-testid="cal-prev">
+            <Button variant="outline" size="sm" aria-label="Previous month" onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1))} data-testid="cal-prev">
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={() => setAnchor(new Date())} data-testid="cal-today">
               <CalendarDays className="h-4 w-4 mr-1" /> Today
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1))} data-testid="cal-next">
+            <Button variant="outline" size="sm" aria-label="Next month" onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1))} data-testid="cal-next">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -185,8 +196,7 @@ export default function Calendar() {
                           className={`group flex items-center gap-1 truncate rounded border px-1.5 py-0.5 ${KIND_COLOR[it.kind]} ${canReschedule ? "cursor-grab active:cursor-grabbing" : ""} hover:opacity-80`}
                           title={it.title}
                         >
-                          <span className="truncate flex-1">{it.title}</span>
-                          <Link to={`/${it.kind}s`} className="opacity-0 group-hover:opacity-100 text-xs">↗</Link>
+                          <button type="button" className="truncate flex-1 text-left" onClick={() => openRecord(it)}>{it.title}</button>
                         </div>
                       </li>
                     ))}
@@ -198,6 +208,7 @@ export default function Calendar() {
           </div>
         </div>
       </div>
+      {drawer && drawer.record.client_id === currentClientId && <RecordDrawer open onOpenChange={value => { if (!value) setDrawer(null); }} kind={drawer.kind} record={drawer.record} schema={SCHEMAS[drawer.kind].fields} clientId={currentClientId} onSaved={load} />}
     </div>
   );
 }

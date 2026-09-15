@@ -175,6 +175,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         });
       }
       if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:record?.priority||"medium"});
+      if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium"});
+      if (!record && kind === "risks") Object.assign(base, {status: "identified", review_cadence: "annual", source_type: "manual"});
+      if (!record && kind === "vendors") Object.assign(base, {status: "onboarding", criticality: "medium", review_frequency: "annual"});
       base.client_id = record?.client_id || clientId;
       if(!record&&initialValues) Object.assign(base,initialValues);
       setForm(base);
@@ -272,7 +275,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         else { clean.status="open"; if(SOURCE_RECORDS[form.source_type]&&form.source_type!=="audit"&&!form.source_id) throw new Error("Select the source record"); }
         if (typeof taskStatus === "string") clean.status=taskStatus;
       }
-      if (kind === "policies" && (record?.schedule_from_reviews || related.reviews?.length)) delete clean.next_review_date;
+      if (kind === "policies" && (record?.schedule_from_reviews || related.reviews?.length)) { delete clean.next_review_date; delete clean.last_reviewed_at; }
       if (isEdit) {
         await api.patch(`/${kind}/${record[idField]}`, clean);
         toast.success("Saved");
@@ -505,7 +508,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   async function policyAction(action, body = {}) {
     try {
       const { data } = await api.post(`/policies/${record[idField]}/${action}`, body);
-      toast.success(`Policy ${action === "submit-review" ? "sent for review" : action + "d"}`);
+      toast.success(`Policy ${action === "submit-review" ? "sent for approval" : action + "d"}`);
       if (data) {
         if (data.status) { record.status = data.status; setForm((p) => ({ ...p, status: data.status })); }
         if (data.approval_history) record.approval_history = data.approval_history;
@@ -558,6 +561,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const liveLevel = levelFromScore(liveScore || null);
 
   function renderField(f) {
+    if (!isEdit && (["findings", "risks"].includes(kind) && f.name === "status" || ["completion_date", "approved_at", "last_reviewed_at"].includes(f.name))) return null;
+    if (kind === "policies" && f.name === "last_reviewed_at" && (record?.schedule_from_reviews || related.reviews?.length)) return <DateReadonly key={f.name} label={f.label} value={record?.last_reviewed_at} />;
     if (["completion_date", "approved_at", "verified_at", "verified_by"].includes(f.name)) return <DateReadonly key={f.name} label={f.label} value={record?.[f.name]} />;
     if (kind === "policies" && f.name === "next_review_date" && (record?.schedule_from_reviews || related.reviews?.length)) {
       const next = (related.reviews || []).filter(r => !["completed", "cancelled"].includes(r.status) && r.due_date).sort((a,b) => a.due_date.localeCompare(b.due_date))[0];
@@ -874,7 +879,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <div className="flex flex-wrap gap-2">
           {status === "draft" && canWrite && (
             <Button size="sm" variant="outline" onClick={() => policyAction("submit-review")} data-testid="policy-submit-review">
-              <Send className="h-3.5 w-3.5 mr-1" /> Submit for review
+              <Send className="h-3.5 w-3.5 mr-1" /> Submit for approval
             </Button>
           )}
           {status === "in_review" && isPlatformAdmin && (

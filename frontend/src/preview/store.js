@@ -1,5 +1,6 @@
 import {validateVendor,ensureVendorReviews,syncVendorReview} from './vendors';
 import { ensureRiskReview } from './risks';
+import { syncPolicyReview } from './policyReviews';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
 import { buildDemoStore } from './demoSeed';
@@ -27,15 +28,21 @@ export const ids = {
 };
 export const now = () => new Date().toISOString();
 export const uid = kind => `${kind}_demo_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+function normalizePolicyDates(db) {
+  for (const policy of db.policies || []) {
+    if (policy.last_reviewed_at === undefined && policy.last_reviewed) policy.last_reviewed_at = policy.last_reviewed;
+  }
+  return db;
+}
 export function seedStore() {
-  const db = initializeRiskIds(buildDemoStore(Object.keys(ids)));
+  const db = normalizePolicyDates(initializeRiskIds(buildDemoStore(Object.keys(ids))));
   db.risks.forEach(risk => ensureRiskReview(db, risk));
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
   return db;
 }
 export function readStore() {
   const saved = sessionStorage.getItem(STORE_KEY);
-  if (saved) return initializeRiskIds(JSON.parse(saved));
+  if (saved) return normalizePolicyDates(initializeRiskIds(JSON.parse(saved)));
   const db = seedStore();
   saveStore(db);
   return db;
@@ -192,6 +199,12 @@ export function write(db, kind, body, id) {
   if (kind === "risks") ensureRiskReview(db, existing || row);
   if(kind==="vendors") ensureVendorReviews(db,existing||row);
   if(kind==="reviews"&&row.vendor_id) syncVendorReview(db,existing||row);
+  if(kind==="reviews") syncPolicyReview(db,existing||row);
+  if (kind === 'reviews' && row.risk_id) {
+    const risk = db.risks.find(r => r.risk_id === row.risk_id && r.client_id === row.client_id);
+    if (risk) Object.assign(risk, {next_review: ['completed','cancelled'].includes(row.status) ? null : row.due_date,
+      review_cadence: row.recurrence, custom_recurrence_days: row.custom_recurrence_days});
+  }
   if (kind === "tasks" && row.risk_id) {
     const risk=record(db,"risks",row.risk_id);
     if(!existing&&["assessed","open"].includes(risk.status)&&assessedRisk(risk).risk_score) risk.status="in_progress";

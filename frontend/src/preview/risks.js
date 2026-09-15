@@ -1,5 +1,6 @@
 import {reviewView,reviewSchedule} from '../lib/reviewOccurrences';
 import {assessedRisk} from '../lib/grcWork';
+import {recordUuid} from '../lib/recordUuid';
 
 export const riskSnapshot = risk => Object.fromEntries(['likelihood_score','impact_score','risk_score','risk_level','assessment_rationale','likelihood_rationale','impact_rationale','treatment','notes','status','acceptance_rationale','acceptance_expires_at','accepted_by','acceptance_date'].map(k=>[k,risk[k]??null]));
 export function ensureRiskReview(db,risk) {
@@ -24,7 +25,7 @@ export function ensureRiskReview(db,risk) {
     db.reviews.push(review);
   }
   const dateChanged=review.due_date!==risk.next_review;
-  if(['completed','cancelled'].includes(review.status)&&risk.next_review) Object.assign(review,{status:'upcoming',current_occurrence_id:'occ_'+crypto.randomUUID(),notes:null,started_at:null,started_by:null,completion_date:null});
+  if(['completed','cancelled'].includes(review.status)&&risk.next_review) Object.assign(review,{status:'upcoming',current_occurrence_id:'occ_'+recordUuid(),notes:null,started_at:null,started_by:null,completion_date:null});
   Object.assign(review,{title:`Risk Review — ${risk.display_id} — ${risk.title}`,due_date:risk.next_review,owner_id:risk.owner_id,recurrence:risk.review_cadence||'annual',custom_recurrence_days:risk.custom_recurrence_days});
   Object.assign(review,reviewSchedule(review,dateChanged),reviewView(review));
   risk.linked_review_id=review.review_id;

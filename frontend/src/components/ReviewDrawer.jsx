@@ -12,11 +12,12 @@ import { SCHEMAS } from '@/lib/schemas';
 import { occurrenceId, reviewSchedule, reviewView } from '@/lib/reviewOccurrences';
 import { useAuth } from '@/context/AuthContext';
 import {assessedRisk} from '@/lib/grcWork';
+import {recordUuid} from '@/lib/recordUuid';
 import StatusBadge from './StatusBadge';
 import RecordDrawer from './RecordDrawer';
 
 const tabs = ['Overview','Related','Evidence','Comments','Activity'];
-const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
+const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
 const date = value => value ? new Date(String(value).slice(0,10) + 'T00:00:00').toLocaleDateString() : '—';
 const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
 const fileData = file => new Promise((resolve,reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
@@ -31,6 +32,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const [history,setHistory] = useState([]), [selected,setSelected] = useState(null);
   const [tab,setTab] = useState('Overview'), [busy,setBusy] = useState(false);
   const [members,setMembers] = useState([]), [related,setRelated] = useState({});
+  const [policies,setPolicies] = useState([]);
   const [evidence,setEvidence] = useState([]), [comments,setComments] = useState([]), [activity,setActivity] = useState([]);
   const [comment,setComment] = useState(''), [finding,setFinding] = useState(null), [linked,setLinked] = useState(null);
   const riskBase=useRef(null);
@@ -52,6 +54,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     setComment(''); setFinding(null); setLinked(null); setMembers([]);
     const version = generation.current;
     api.get(`/clients/${record?.client_id || clientId}/members`).then(({data}) => { if (generation.current === version) setMembers(data); }).catch(e => toast.error(formatError(e)));
+    setPolicies([]);
+    api.get('/policies',{params:{client_id:record?.client_id || clientId}}).then(({data})=>{if(generation.current===version)setPolicies(data);}).catch(e=>toast.error(formatError(e)));
     return () => { sequence.current++; };
   }, [open,record,clientId,initialValues?.occurrence]);
 
@@ -138,8 +142,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             {related.risks?.filter(r=>r.risk_id===current.risk_id).map(r=><Button key={r.risk_id} size="sm" variant="outline" onClick={()=>setLinked({kind:'risks',record:r})}>Open Risk · {r.display_id||r.title}</Button>)}
           </section>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {configFields.filter(f => f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom').map(f => {
+            {configFields.filter(f => (f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom') && (f.name !== 'policy_id' || configuration.review_type === 'policy' || configuration.policy_id)).map(f => {
               const disabled = frozen || !admin, value = configuration[f.name] || '';
+              if (f.type === 'policy') return <div key={f.name}>{picker(f.label,value,v=>setForm(p=>({...p,[f.name]:v})),policies.map(p=>({value:p.policy_id,label:p.title})),disabled || !!current,`field-${f.name}`)}</div>;
               if (f.type === 'select' || f.type === 'user') return <div key={f.name}>{picker(f.label,value,v => setForm(p => ({...p,[f.name]:v})), f.type === 'user' ? members.map(m => ({value:m.user_id,label:m.name || m.email})) : [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}</div>;
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
@@ -151,7 +156,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {current && !frozen && writable && <div className="flex flex-wrap gap-2">
             {current.status !== 'in_progress' && <Button size="sm" variant="outline" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-start" onClick={() => lifecycle('start')}>Start Review</Button>}
             <Button size="sm" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-complete" onClick={() => lifecycle('complete')}>Complete Review</Button>
-            <Button size="sm" variant="outline" disabled={busy} data-testid="quick-create-finding" onClick={() => setFinding({request_id:crypto.randomUUID(),title:'',description:'',severity:'medium',owner_id:current.owner_id || '',due_date:'',remediation_title:'',remediation_plan:''})}>Raise Finding</Button>
+            <Button size="sm" variant="outline" disabled={busy} data-testid="quick-create-finding" onClick={() => setFinding({request_id:recordUuid(),title:'',description:'',severity:'medium',owner_id:current.owner_id || '',due_date:'',remediation_title:'',remediation_plan:''})}>Raise Finding</Button>
           </div>}
           {current && !selected && <section className="border-t border-line pt-4" data-testid="review-history"><h3 className="font-medium text-sm mb-3">Review History</h3>
             {!history.length ? <p className="text-sm text-ink-help">No completed occurrences yet.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Occurrence','Due','Completed','Completed By','Outcome'].map(t => <th className="text-left font-medium py-2 pr-3" key={t}>{t}</th>)}</tr></thead><tbody>{history.map(o => <tr key={o.occurrence_id} className="border-t border-line"><td className="py-2 pr-3"><button className="underline text-left" onClick={() => chooseHistory(o)}>{o.period}</button></td><td className="pr-3">{date(o.due_date)}</td><td className="pr-3">{date(o.completed_at)}</td><td className="pr-3">{o.completed_by_name || person(o.completed_by)}</td><td>{outcome(o)}</td></tr>)}</tbody></table></div>}
@@ -160,8 +165,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         {tab === 'Related' && <>
           {!selected && <p className="text-sm text-ink-secondary">Linked records across this Review's occurrences.</p>}
           {!relatedRows.length ? <p className="text-sm text-ink-help">No related records.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Type / ID','Item','Owner','Status / Completion','Due'].map(t => <th key={t} className="text-left py-2 pr-3">{t}</th>)}</tr></thead><tbody>{relatedRows.map(({kind,item}) => {
-            const id = item.task_id || item.finding_id || item.policy_id || item.vendor_id || item.risk_id;
-            return <tr key={id} className="border-t border-line"><td className="py-3 pr-3 text-xs">{kind === 'tasks' ? 'Action Item' : kind.slice(0,-1)}<button className="block underline break-all text-left" onClick={() => setLinked({kind,record:item})}>{id}</button></td><td className="pr-3"><button className="underline text-left" onClick={() => setLinked({kind,record:item})}>{item.title || item.name}</button></td><td className="pr-3">{person(item.assignee_id || item.owner_id)}</td><td className="pr-3"><StatusBadge value={item.status} />{(item.completed_at || item.closed_at || item.validated_at) && <div className="text-xs mt-1">{item.status === 'closed' ? 'Closed' : 'Completed'} {date(item.completed_at || item.closed_at || item.validated_at)} by {person(item.completed_by || item.closed_by || item.validated_by)}</div>}</td><td>{date(item.due_date)}</td></tr>;
+            const id = item[{tasks:'task_id',findings:'finding_id',policies:'policy_id',vendors:'vendor_id',risks:'risk_id'}[kind]];
+            return <tr key={id} className="border-t border-line"><td className="py-3 pr-3 text-xs">{{tasks:'Action Item',findings:'Finding',policies:'Policy',vendors:'Vendor',risks:'Risk'}[kind]}<button className="block underline break-all text-left" onClick={() => setLinked({kind,record:item})}>{id}</button></td><td className="pr-3"><button className="underline text-left" onClick={() => setLinked({kind,record:item})}>{item.title || item.name}</button></td><td className="pr-3">{person(item.assignee_id || item.owner_id)}</td><td className="pr-3"><StatusBadge value={kind==='tasks'&&item.status==='done'?'completed':item.status} />{(item.completed_at || item.closed_at || item.validated_at) && <div className="text-xs mt-1">{item.status === 'closed' ? 'Closed' : 'Completed'} {date(item.completed_at || item.closed_at || item.validated_at)} by {person(item.completed_by || item.closed_by || item.validated_by)}</div>}</td><td>{date(item.due_date)}</td></tr>;
           })}</tbody></table></div>}
         </>}
         {tab === 'Evidence' && <>
