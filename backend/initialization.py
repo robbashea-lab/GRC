@@ -13,6 +13,8 @@ async def ensure_indexes(db):
     await db.ai_systems.create_index('ai_system_id', unique=True)
     await db.ai_systems.create_index([('client_id',1),('display_id',1)], unique=True)
     await db.ai_intake.create_index('client_id', unique=True)
+    await db.framework_assessments.create_index('framework_assessment_id', unique=True)
+    await db.framework_assessments.create_index([('client_id',1),('framework_key',1),('framework_version',1),('definition_id',1)], unique=True)
 
 
 async def migrate_legacy_records(db):

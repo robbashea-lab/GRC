@@ -43,6 +43,7 @@ import risk_lifecycle
 import vendor_governance
 import review_occurrences
 import ai_governance
+import framework_governance
 
 # ---------------- DB ----------------
 mongo_url = os.environ["MONGO_URL"]
@@ -553,6 +554,7 @@ async def audit(user: Dict, action: str, entity_type: str, entity_id: str, clien
 
 # ---------------- Notifications helpers (defined early so they're in scope everywhere) ----------------
 ID_FIELD_MAP = {
+    'framework_assessments':'framework_assessment_id',
     "ai_systems": "ai_system_id",
     "reviews": "review_id", "findings": "finding_id", "risks": "risk_id",
     "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id",
@@ -1341,6 +1343,8 @@ async def create_evidence(body: EvidenceIn, user: Dict = Depends(get_current_use
            "created_at": _now()}
     await db.evidence.insert_one(doc)
     await audit(user, "upload", "evidence", ev_id, body.client_id, meta={"filename": body.filename})
+    if body.linked_type in ("framework_assessment", "framework_assessments"):
+        await audit(user, "Evidence linked", "framework_assessment", body.linked_id, body.client_id, meta={"filename": body.filename, "evidence_id": ev_id})
     if body.linked_type in ("review", "reviews"):
         await _review_event(user, parent, "Evidence uploaded", body.occurrence_id, filename=body.filename, evidence_id=ev_id)
     if body.linked_type in ("vendor","vendors"):
@@ -2031,6 +2035,8 @@ def _apply_risk_scoring(doc: Dict) -> Dict:
 def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user: Optional[Dict] = None) -> Dict:
     """One contract for normal and bulk writes; decisions have separate endpoints."""
     previous = existing or {}
+    if 'framework_assessment_id' in body or any(k.startswith('framework_') for k in body):
+        raise HTTPException(422,'Framework relationships are managed through the framework workspace')
     changes = {k: v for k, v in body.items() if v != previous.get(k) and not (v in (None, "") and previous.get(k) in (None, ""))}
     if kind == "policies" and previous.get("schedule_from_reviews") and set(changes) & {"last_reviewed_at", "next_review_date"}:
         raise HTTPException(422, "Policy Review dates are controlled by linked Reviews")
@@ -3327,7 +3333,7 @@ async def task_activity(task_id: str, user: Dict = Depends(get_current_user)):
 @api.get("/related")
 async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(get_current_user), occurrence_id: Optional[str] = None):
     """Return records related to the given entity across collections."""
-    keys = {"reviews": "review_id", "findings": "finding_id", "tasks": "task_id", "risks": "risk_id", "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id", "exceptions": "exception_id", "requirements": "requirement_id", "contacts": "contact_id", 'ai_systems':'ai_system_id'}
+    keys = {"reviews": "review_id", "findings": "finding_id", "tasks": "task_id", "risks": "risk_id", "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id", "exceptions": "exception_id", "requirements": "requirement_id", "contacts": "contact_id", 'ai_systems':'ai_system_id', 'framework_assessments':'framework_assessment_id'}
     if entity_type not in keys:
         raise HTTPException(400, "Unsupported record type")
     source = await db[entity_type].find_one({keys[entity_type]: entity_id}, {"_id": 0})
@@ -3339,6 +3345,8 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type == "reviews" and occurrence_id:
         await _review_selection(source, occurrence_id)
     linked = {}
+    if entity_type == 'framework_assessments':
+        return await framework_governance.related(sys.modules[__name__],source)
     ai_reviews = await db.reviews.find({'client_id':cid,'ai_system_id':entity_id},{'review_id':1}).to_list(None) if entity_type == 'ai_systems' else []
     for target, key in keys.items():
         relations = [{keys[entity_type]: entity_id}]
@@ -3383,6 +3391,18 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     linked["evidence"] = await db.evidence.find({"client_id": cid, "linked_type": singular, "linked_id": entity_id}, {"_id": 0, "content_base64": 0}).to_list(200)
     if entity_type == 'ai_systems' and ai_reviews:
         linked['evidence'] += await db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':[r['review_id'] for r in ai_reviews]}},{'_id':0,'content_base64':0}).to_list(200)
+    assessment_clauses=[{'related_links':{'$elemMatch':{'kind':entity_type,'id':entity_id}}}]
+    if source.get('framework_assessment_id'):
+        assessment_clauses.append({'framework_assessment_id':source['framework_assessment_id']})
+    if source.get('finding_id'):
+        finding=await db.findings.find_one({'finding_id':source['finding_id'],'client_id':cid})
+        if finding and finding.get('framework_assessment_id'):
+            assessment_clauses.append({'framework_assessment_id':finding['framework_assessment_id']})
+    if entity_type=='reviews' and source.get('framework_key'):
+        assessment_clauses.append({'framework_key':source['framework_key'],'definition_id':{'$in':source.get('framework_safeguards',[])}})
+    linked['framework_assessments']=await db.framework_assessments.find({'client_id':cid,'$or':assessment_clauses},{'_id':0}).to_list(None)
+    for assessment in linked['framework_assessments']:
+        assessment['title']='CIS '+assessment['definition_id']+' · '+framework_governance.DEFINITIONS.get(assessment['definition_id'],{}).get('title','Safeguard')
     return linked
 
 
@@ -4453,6 +4473,7 @@ async def reports_board(client_id: str = Query(...), user: Dict = Depends(get_cu
 app.include_router(api)
 import sys
 app.include_router(ai_governance.router_for(sys.modules[__name__]))
+app.include_router(framework_governance.router_for(sys.modules[__name__]))
 app.include_router(entity_router)
 
 

@@ -10,6 +10,7 @@ import { assessedRisk } from '../lib/grcWork';
 export const STORE_KEY = 'grc_interactive_demo_v2';
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
+  framework_assessments:'framework_assessment_id',
   ai_systems:'ai_system_id',
   clients: 'client_id',
   users: 'user_id',

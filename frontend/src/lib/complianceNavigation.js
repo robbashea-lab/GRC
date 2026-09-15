@@ -1,8 +1,7 @@
-import catalog from '@/lib/onboardingCatalog.json';
+import definitions from './frameworkDefinitions.json';
 
-const labels = { hipaa: 'HIPAA', 'cis-ig1': 'CIS IG1', 'nist-csf-2': 'NIST CSF 2.0', 'iso-27001': 'ISO 27001', cmmc: 'CMMC' };
-export const COMPLIANCE_SECTIONS = catalog.requirements.map(item => ({
-  key: item.key, name: item.name, label: labels[item.key], to: `/compliance/${item.key}`,
+export const COMPLIANCE_SECTIONS = definitions.frameworks.map(item => ({
+  ...item, to: `/compliance/${item.key}`,
 }));
 
 // Read finalized records, not the editable onboarding draft. No extra state or

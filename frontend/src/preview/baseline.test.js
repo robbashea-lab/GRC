@@ -18,11 +18,11 @@ test('revisiting intake preserves verified policy presence and its separate draf
   expect(await get('policies', client.client_id)).toHaveLength(17);
 });
 test('focused catalog and new client defaults have exactly the requested content',async()=>{
-  expect(catalog.policies).toHaveLength(17);expect(catalog.requirements).toHaveLength(5);expect(catalog.reviews).toHaveLength(17);
+  expect(catalog.policies).toHaveLength(17);expect(catalog.requirements).toHaveLength(6);expect(catalog.reviews).toHaveLength(17);
   const c=(await api.post('/clients',{name:'Baseline QA'})).data;
   const b=(await api.get('/onboarding/baseline',{params:{client_id:c.client_id}})).data;
   expect(b.state.reviews).toEqual(catalog.reviews.map(r=>r.key));
-  expect(catalog.requirements.map(r=>r.name)).toEqual(['HIPAA','CIS Controls IG1','NIST Cybersecurity Framework 2.0','ISO/IEC 27001','Cybersecurity Maturity Model Certification (CMMC)']);
+  expect(catalog.requirements.map(r=>r.name)).toEqual(['HIPAA','CIS Controls IG1','NIST Cybersecurity Framework 2.0','ISO/IEC 27001','Cybersecurity Maturity Model Certification (CMMC)','SOC 2 Type 2']);
 });
 test('draft persistence, deselection, finalization, isolation and safe unscheduled reviews',async()=>{
   const a=(await api.post('/clients',{name:'A'})).data,b=(await api.post('/clients',{name:'B'})).data;
@@ -32,7 +32,7 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
   expect((await reloaded.get('/onboarding/baseline',{params:{client_id:a.client_id}})).data.state.policies).toEqual(s.policies);
   expect((await reloaded.get('/onboarding/baseline',{params:{client_id:b.client_id}})).data.state.policies).not.toEqual(s.policies);
   await api.post('/onboarding/baseline',{client_id:a.client_id,state:s,finalize:true});
-  expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(5);
+  expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(6);
   expect((await get('requirements',a.client_id)).find(r=>r.baseline_response==='does_not_apply').applicability).toBe('not_applicable');
   const reviews=await get('reviews',a.client_id);expect(reviews).toHaveLength(16);
   for(const r of reviews)expect(r).toMatchObject({status:'needs_scheduling',due_date:null,next_review_date:null,recurrence:null,owner_id:null});
@@ -44,7 +44,7 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
   await api.post(`/reviews/${manuallyEdited.review_id}/complete`,{occurrence_id:manuallyEdited.current_occurrence_id,spawn_next:false,conclusion:'Practice reviewed',tested_period:'Q3 2026',tested_scope:'Scope documented',checklist_confirmed:true,no_evidence_reason:'Interview only'});
   const before=await get('reviews',a.client_id);
   await api.post('/onboarding/baseline',{client_id:a.client_id,state:s,finalize:true});
-  expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(5);expect(await get('reviews',a.client_id)).toHaveLength(before.length);
+  expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(6);expect(await get('reviews',a.client_id)).toHaveLength(before.length);
   const kept=(await get('reviews',a.client_id)).find(r=>r.review_id===manuallyEdited.review_id);
   for(const k of ['title','status','due_date','completion_date','recurrence','owner_id','notes','evidence_ids'])expect(kept[k]).toEqual(before.find(r=>r.review_id===kept.review_id)[k]);
   const restored=(await api.get('/onboarding/baseline',{params:{client_id:a.client_id}})).data.state;
@@ -87,7 +87,7 @@ test('compliance navigation uses only finalized Applies selections and remains c
   expect(await nav(a.client_id)).toEqual(initial);
   await api.post('/onboarding/baseline', { client_id: a.client_id, state: s, finalize: true });
   expect((await nav(a.client_id)).map(i => i.label)).toEqual(['CIS IG1', 'ISO 27001']);
-  expect(await get('requirements', a.client_id)).toHaveLength(5);
+  expect(await get('requirements', a.client_id)).toHaveLength(6);
   for (const k of Object.keys(s.requirements)) s.requirements[k] = 'unsure';
   await api.post('/onboarding/baseline', { client_id: a.client_id, state: s, finalize: true });
   expect(await nav(a.client_id)).toEqual([]);

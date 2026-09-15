@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "frameworks": [
+    {
+      "key": "hipaa",
+      "name": "HIPAA",
+      "label": "HIPAA",
+      "category": "Legal / Regulatory",
+      "selectable": true,
+      "implemented": false
+    },
+    {
+      "key": "cis-ig1",
+      "name": "CIS Controls v8.1 IG1",
+      "label": "CIS IG1",
+      "category": "Security Frameworks",
+      "selectable": true,
+      "implemented": true,
+      "version": "8.1",
+      "implementation_group": 1
+    },
+    {
+      "key": "nist-csf-2",
+      "name": "NIST CSF 2.0",
+      "label": "NIST CSF 2.0",
+      "category": "Security Frameworks",
+      "selectable": true,
+      "implemented": false
+    },
+    {
+      "key": "iso-27001",
+      "name": "ISO/IEC 27001",
+      "label": "ISO 27001",
+      "category": "Certification / Contractual Programs",
+      "selectable": true,
+      "implemented": false
+    },
+    {
+      "key": "cmmc",
+      "name": "CMMC",
+      "label": "CMMC",
+      "category": "Certification / Contractual Programs",
+      "selectable": true,
+      "implemented": false
+    },
+    {
+      "key": "soc-2",
+      "name": "SOC 2 Type 2",
+      "label": "SOC 2",
+      "category": "Certification / Contractual Programs",
+      "selectable": true,
+      "implemented": false
+    }
+  ]
+}

@@ -465,6 +465,7 @@ class BaselineState(BaseModel):
     requirements: Dict[str, str] = Field(default_factory=dict)
     reviews: List[str] = Field(default_factory=list)
     completed: bool = False
+    framework_reviews: Dict[str, Any] = Field(default_factory=dict)
 
 
 class BaselineSave(BaseModel):
@@ -510,9 +511,16 @@ async def baseline_state(client_id: str, user: Dict = Depends(get_current_user))
 @router.post('/onboarding/baseline')
 async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_user)):
     import server
+    import framework_governance
     cid = body.client_id
     client = await _baseline_client(cid, user, writable=True)
     state = body.state.model_dump()
+    framework_governance.validate_configuration(state)
+    if state['version']>=3:
+        for item in BASELINE_CATALOG['requirements']:
+            state['requirements'].setdefault(item['key'],'does_not_apply')
+    else:
+        state['requirements'].setdefault('soc-2','does_not_apply')
     for group, options in [('policies', ('', 'yes', 'no', 'unsure')), ('requirements', ('', 'applies', 'does_not_apply', 'unsure'))]:
         allowed = {i['key'] for i in BASELINE_CATALOG[group]}
         if any(k not in allowed or v not in options for k, v in state[group].items()):
@@ -523,6 +531,9 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
         raise HTTPException(400, 'Invalid review selection')
     state['reviews'] = list(dict.fromkeys(state['reviews']))
     if body.finalize:
+        if state['version']>=3 and state['requirements'].get('cis-ig1')=='applies':
+            mapped={p['baseline_key'] for p in framework_governance.CIS['review_plans'] if state['framework_reviews'].get(p['key'],{}).get('enabled',True)}
+            state['reviews']=[k for k in state['reviews'] if k not in mapped]
         for group, id_field in [('policies', 'policy_id'), ('requirements', 'requirement_id'), ('reviews', 'review_id')]:
             rows = await server.db[group].find({'client_id': cid}, {'_id': 0}).to_list(2000)
             for item in BASELINE_CATALOG[group]:
@@ -553,8 +564,9 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
                         defaults.update({'review_type': item['review_type'], 'source': 'GRC Program Onboarding', 'status': 'needs_scheduling', 'due_date': None, 'next_review_date': None, 'recurrence': None, 'owner_id': None})
                     # The unique Mongo _id makes concurrent retries safe for new records.
                     await server.db[group].update_one({'_id': stable_id}, {'$set': updates, '$setOnInsert': defaults}, upsert=True)
-        await audit(user, 'onboarding-complete', 'client', cid, cid, meta={'baseline_version': 2, 'selected_reviews': len(state['reviews'])})
-    state['version'] = 2
+        if state['version']>=3:
+            await framework_governance.reconcile(server,cid,state,user)
+        await audit(user, 'onboarding-complete', 'client', cid, cid, meta={'baseline_version': state['version'], 'selected_reviews': len(state['reviews'])})
     state['completed'] = bool(body.finalize or client.get('onboarding_baseline', {}).get('completed'))
     await server.db.clients.update_one({'client_id': cid}, {'$set': {'onboarding_baseline': state}})
     return state

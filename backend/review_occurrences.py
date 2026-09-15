@@ -61,7 +61,9 @@ def occurrence_query(review, selected=None, field="occurrence_id"):
 def snapshot(review, evidence, finding_count, user, at):
     fields = ("review_id", "client_id", "title", "review_type", "due_date", "owner_id", "reviewer_id",
               "recurrence", "custom_recurrence_days", "notes", "scope", "follow_up", "policy_id", "vendor_id",
-              "source", "started_by", "started_at", "ai_system_id", "ai_review_purpose")
+              "source", "started_by", "started_at", "ai_system_id", "ai_review_purpose",
+              "framework_key", "framework_version", "framework_safeguards", "framework_basis",
+              "framework_source_cadence", "framework_default_cadence", "framework_plan_key", "framework_driver_active")
     return {**{k: review.get(k) for k in fields}, **schedule(review),
             "occurrence_id": occurrence_id(review), "status": "completed", "completion_date": at,
             "completed_at": at, "completed_by": user["user_id"], "completed_by_name": user.get("name") or user.get("email"),
