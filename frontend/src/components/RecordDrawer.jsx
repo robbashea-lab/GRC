@@ -381,6 +381,21 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     } catch(e) {toast.error(formatError(e));}
   }
 
+  async function refreshFindingReadiness() {
+    if (kind !== "findings" || !record?.finding_id) return;
+    const version = loadGeneration.current;
+    try {
+      const {data} = await api.get("/findings", {params:{client_id:clientId}});
+      if (version !== loadGeneration.current) return;
+      const updated = data.find(item => item.finding_id === record.finding_id && item.client_id === clientId);
+      if (updated) {
+        // Refresh only authoritative readiness; retain unsaved descriptive edits.
+        record.status = updated.status;
+        setForm(previous => ({...previous,status:updated.status}));
+      }
+    } catch (e) { toast.error(formatError(e)); }
+  }
+
   const refreshRisk = useCallback(async () => {
     if(kind!=="risks"||!record?.risk_id) return;
     const version=loadGeneration.current;
@@ -1137,7 +1152,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </div>
       </SheetContent>
 
-      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
+      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); refreshFindingReadiness(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
 
       <Sheet open={decisionOpen} onOpenChange={setDecisionOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
