@@ -10,6 +10,8 @@ import { onboard, action } from './workflows';
 import { guardEdit } from './decisions';
 import { history, reviewEvent } from './reviews';
 import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
+import {evidencePage,evidenceAccess} from './evidence';
+import {evidenceKind} from '../lib/evidenceReferences';
 const SESSION = 'grc_demo_entered';
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 export async function previewAdapter(config) {
@@ -57,6 +59,13 @@ export async function previewAdapter(config) {
     const parts = path.split('/').filter(Boolean),
       [kind, id, name] = parts;
     const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
+    if(kind==='evidence'){
+      const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
+      if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
+      if(method!=='get'&&!['super_admin','platform_admin','client_contributor'].includes(db.user.role))return fail(403,'Read-only role');
+      if(method==='delete'&&!['super_admin','platform_admin'].includes(db.user.role))return fail(403,'Destructive action restricted');
+      if(path==='/evidence/catalog'&&method==='get')return respond(evidencePage(db,params));
+    }
     // Existing Evidence/comments/related endpoints keep the assessment's tenant boundary.
     const parentType=params.entity_type||body.entity_type||params.linked_type||body.linked_type;
     if(['framework_assessment','framework_assessments'].includes(parentType)){
@@ -211,6 +220,7 @@ export async function previewAdapter(config) {
           return respond(r);
         }
         let rows = list(db, kind, params.client_id).filter(r => Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
+        if(kind==='evidence')rows=rows.filter(r=>!r.archived_at&&evidenceAccess(db.user,r.client_id)).map(({content_base64,...metadata})=>metadata);
         if (kind === 'reviews') rows = rows.map(reviewView);
         if (kind === 'evidence' && params.linked_id && ['review','reviews'].includes(params.linked_type))
           rows = rows.filter(r => belongsToOccurrence(r,record(db,'reviews',params.linked_id),params.occurrence_id));
@@ -346,7 +356,8 @@ export async function previewAdapter(config) {
         if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id||r.ai_system_id)) throw new Error('Governance records and their Review obligations must be retained.');
         if (kind==='tasks'&&(r.status==='done'||r.completed_at) || kind==='evidence'&&db.tasks.some(t=>t.task_id===r.linked_id&&t.client_id===r.client_id&&t.status==='done')) throw new Error('Completed Action Items and their evidence must be retained.');
         if (kind === 'reviews' && (r.status === 'completed' || r.occurrences?.length) || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id) || v.occurrences?.some(o => o.evidence?.some(e => e.evidence_id === id)))) throw new Error('Completed reviews and their evidence must be retained.');
-        db[kind] = db[kind].filter(x => x[ids[kind]] !== id);
+        if(kind==='evidence')r.archived_at=now();
+        else db[kind] = db[kind].filter(x => x[ids[kind]] !== id);
         audit(db, 'delete', kind, r);
         return save({
           ok: true
@@ -356,8 +367,10 @@ export async function previewAdapter(config) {
         if (id) throw new Error('Evidence versions are immutable. Upload a new artifact.');
         if (!body.filename || !body.content_base64) throw new Error('Select a file to upload.');
         if (Math.floor(body.content_base64.split(',').pop().length * 3 / 4) > 1048576) throw new Error('Demo evidence is limited to 1 MB per file because it is stored in this browser session.');
+        if(!!body.linked_type!==!!body.linked_id)throw new Error('Evidence requires both parent type and ID');
         if (body.linked_id) {
-          const target = record(db, body.linked_type === 'policy' ? 'policies' : `${body.linked_type}s`, body.linked_id);
+          if(!evidenceKind(body.linked_type))throw new Error('Unsupported parent record type');
+          const target = record(db, evidenceKind(body.linked_type), body.linked_id);
           if (target.client_id !== body.client_id) throw new Error('Evidence must belong to the same client.');
           if (['review','reviews'].includes(body.linked_type) && target.status === 'completed') throw new Error('Completed review evidence is frozen.');
           if (['review','reviews'].includes(body.linked_type)) assertCurrentOccurrence(target,body.occurrence_id);
@@ -366,6 +379,7 @@ export async function previewAdapter(config) {
         body.version = 1;
         body.uploaded_at = now();
         body.uploaded_by = db.user.user_id;
+        body.uploaded_by_email = db.user.email;
       }
       if (kind === 'users' && !id) {
         if (db.users.some(u => u.email?.toLowerCase() === body.email?.toLowerCase())) throw new Error('Email already exists.');

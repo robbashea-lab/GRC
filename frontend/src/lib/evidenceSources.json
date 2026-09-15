@@ -1,0 +1,14 @@
+{
+  "reviews": {"key":"review_id","label":"Review","aliases":["review","reviews"]},
+  "findings": {"key":"finding_id","label":"Finding","aliases":["finding","findings"]},
+  "tasks": {"key":"task_id","label":"Action Item","aliases":["task","tasks"]},
+  "risks": {"key":"risk_id","label":"Risk","aliases":["risk","risks"]},
+  "vendors": {"key":"vendor_id","label":"Vendor","aliases":["vendor","vendors"]},
+  "policies": {"key":"policy_id","label":"Policy","aliases":["policy","policies"]},
+  "assets": {"key":"asset_id","label":"Asset","aliases":["asset","assets"]},
+  "exceptions": {"key":"exception_id","label":"Exception","aliases":["exception","exceptions"]},
+  "requirements": {"key":"requirement_id","label":"Requirement","aliases":["requirement","requirements"]},
+  "contacts": {"key":"contact_id","label":"Contact","aliases":["contact","contacts"]},
+  "ai_systems": {"key":"ai_system_id","label":"AI System","aliases":["ai_system","ai_systems"]},
+  "framework_assessments": {"key":"framework_assessment_id","label":"CIS Safeguard","aliases":["framework_assessment","framework_assessments"]}
+}

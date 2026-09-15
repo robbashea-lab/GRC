@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import api, { formatError } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
-import { X, ArrowUpRight, Zap, UploadCloud, Download, Trash2, CheckCircle2, XCircle, Send, ShieldCheck, CalendarPlus, Users2 } from "lucide-react";
+import { X, ArrowUpRight, Zap, UploadCloud, CheckCircle2, XCircle, Send, ShieldCheck, CalendarPlus, Users2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SCHEMAS } from "@/lib/schemas";
 import rules from "@/lib/grcRules.json";
@@ -26,6 +26,9 @@ import { taskSource, SOURCE_RECORDS, actionStatus } from "@/lib/actionItems";
 import { relatedReviewInitialValues } from "@/lib/reviewOccurrences";
 import {completionHandoff} from '@/lib/remediation';
 import CorrectiveActions from './CorrectiveActions';
+import EvidencePanel from './EvidencePanel';
+import ActionSourceChain from './ActionSourceChain';
+import {resolveEvidenceSource} from '@/lib/evidenceContext';
 
 const ID_FIELD = {
   framework_assessments:'framework_assessment_id',
@@ -125,6 +128,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [taskCompletion,setTaskCompletion]=useState(null);
   const [policyOptions, setPolicyOptions] = useState([]);
   const [evidenceItems, setEvidenceItems] = useState([]);
+  const [evidenceVersion,setEvidenceVersion]=useState(0);
   const [riskHistory,setRiskHistory] = useState([]);
   const [linkTask,setLinkTask]=useState(null);
   const [closure,setClosure] = useState(null);
@@ -257,6 +261,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     } catch(e) {toast.error(formatError(e));}
   }
   async function loadEvidence() {
+    setEvidenceVersion(v=>v+1);
     const generation=loadGeneration.current;
     try {
       const { data } = await api.get("/evidence", { params: { client_id: record.client_id, linked_type: evidenceKind, linked_id: record[idField] } });
@@ -594,7 +599,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
 
   const relatedTotal = Object.values(related).reduce((a, b) => a + (b?.length || 0), 0);
-  const evidenceCount = evidenceItems.length;
   const isPolicy = kind === "policies";
   const status = form.status || record?.status;
   const userMap = useMemo(() => {
@@ -979,7 +983,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return (
       <div className="space-y-5">
         {relatedTotal === 0 && <div className="text-sm text-ink-muted">No related records yet.</div>}
-        {Object.entries(related).map(([k, list]) => (
+        {Object.entries(related).filter(([k])=>kind!=='risks'||k!=='evidence').map(([k, list]) => (
           (list && list.length > 0) ? (
             <div key={k}>
               <Link to={k==='framework_assessments'?'/compliance/cis-ig1':k==='ai_systems'?'/ai-governance':k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k==='framework_assessments'?'CIS Safeguards':k==='ai_systems'?'AI Governance':k} <ArrowUpRight className="h-3 w-3" /></Link>
@@ -1001,12 +1005,19 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       </div>
     );
   }
+  async function openEvidenceSource(ref) {
+    const generation=loadGeneration.current;
+    try {const target=await resolveEvidenceSource(ref,record.client_id);if(generation===loadGeneration.current)setRelatedDrawer(target);}
+    catch(e){toast.error(formatError(e));}
+  }
   function renderEvidence() {
-    return (
-      <div className="space-y-4">
+    return <div className="space-y-4">
+      {kind==='tasks'&&<ActionSourceChain record={record} related={related} onOpen={openLinkedRecord}/>}
         {canWrite && !(kind === "reviews" && record?.status === "completed") && (
           <div
             data-testid="drawer-evidence-dropzone"
+            role="button" tabIndex={0} aria-label="Upload evidence files"
+            onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();inputRef.current?.click();}}}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadFiles(Array.from(e.dataTransfer.files)); }}
@@ -1019,23 +1030,11 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
             <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => uploadFiles(Array.from(e.target.files || []))} data-testid="drawer-evidence-input" />
           </div>
         )}
-        <ul className="divide-y divide-line border border-line rounded-md">
-          {evidenceItems.length === 0 && <li className="p-4 text-center text-ink-help text-sm">No evidence attached yet.</li>}
-          {evidenceItems.map((ev, i) => (
-            <li key={ev.evidence_id} className="flex items-center justify-between px-3 py-2 hover:bg-surface-subtle" data-testid={`drawer-evidence-item-${i}`}>
-              <div className="min-w-0">
-                <div className="text-sm text-ink-primary font-medium truncate">{ev.filename}</div>
-                <div className="text-xs text-ink-muted font-mono">{ev.uploaded_by_email} · {new Date(ev.created_at).toLocaleString()}</div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => downloadEv(ev)} className="p-1 rounded hover:bg-surface-subtle text-ink-muted"><Download className="h-3.5 w-3.5" /></button>
-                {isPlatformAdmin && !(kind === "tasks" && record?.status === "done") && <button onClick={() => deleteEv(ev)} className="p-1 rounded hover:bg-semantic-critical-bg text-ink-help hover:text-semantic-critical"><Trash2 className="h-3.5 w-3.5" /></button>}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
+
+      <EvidencePanel clientId={record.client_id} kind={kind} id={record[idField]} onOpen={openEvidenceSource} refreshKey={evidenceVersion}
+        validatedAt={kind==='findings'?(record.validated_at||record.closed_at):null}
+        onDelete={isPlatformAdmin&&!(kind==='tasks'&&record.status==='done')?deleteEv:undefined}/>
+    </div>;
   }
   function renderComments() {
     return (
@@ -1137,7 +1136,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {DEFAULT_TABS.map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`drawer-tab whitespace-nowrap ${tab === t ? "active" : ""}`} data-testid={`tab-${t}`}>
             {t === "related" ? `Related${relatedTotal ? ` (${relatedTotal})` : ""}` :
-             t === "evidence" ? `Evidence${evidenceCount ? ` (${evidenceCount})` : ""}` :
+             t === "evidence" ? 'Evidence' :
              t[0].toUpperCase() + t.slice(1)}
           </button>
         ))}
@@ -1179,13 +1178,14 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </div>
       </SheetContent>
 
-      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); refreshFindingReadiness(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
+      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); setEvidenceVersion(v=>v+1); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); setEvidenceVersion(v=>v+1); refreshFindingReadiness(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
 
       <Sheet open={decisionOpen} onOpenChange={setDecisionOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader><SheetTitle>{decisionForm.action === 'accept' ? 'Accept finding' : decisionForm.action === 'approve' ? 'Approve exception' : kind === "findings" ? "Validate remediation" : record?.status === "completed" ? "Add review amendment" : "Complete review"}</SheetTitle></SheetHeader>
           <form onSubmit={submitDecision} className="mt-5 space-y-4">
             {kind==='findings'&&!decisionForm.action&&<section className="space-y-3 text-sm" aria-label="Validation context"><h3 className="font-medium">{form.title||record.title}</h3><p className="whitespace-pre-wrap">{form.description||record.description||'No description recorded.'}</p><p className="text-ink-secondary">Current Finding Status: <StatusBadge value={status}/></p><p>Confirm that the corrective work resolved the Finding. Completing an Action alone does not validate it.</p><CorrectiveActions actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users}/></section>}
+            {kind==='findings'&&!decisionForm.action&&<EvidencePanel clientId={record.client_id} kind="findings" id={record.finding_id} onOpen={openEvidenceSource} refreshKey={evidenceVersion}/>}
             {kind === "reviews" && record?.status !== "completed" ? <>
               <p className="text-sm">Confirm the scope, examine the supporting evidence, and record the outcome. Raise Findings for gaps before completing this Review.</p>
               <ul className="list-disc pl-5 text-sm space-y-1">{(rules.reviewPlaybooks[record?.review_type] || rules.reviewPlaybooks.default).map(item => <li key={item}>{item}</li>)}</ul>
