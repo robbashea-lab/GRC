@@ -1,3 +1,5 @@
+import { StatusPill } from '@/components/StatusBadge';
+import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -187,7 +189,7 @@ export default function RiskRegister() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {loading && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading…</td></tr>}
+              {loading && <TableLoadingRow colSpan={9} />}
               {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((r, i) => {
                 const level = r.risk_level || levelFromScore(r.risk_score);
@@ -207,9 +209,9 @@ export default function RiskRegister() {
                     </td>
                     <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-line bg-surface-subtle text-xs font-medium capitalize">
+                      <StatusPill className="border-line bg-surface-subtle">
                         {riskStatus(r.status || "open")}
-                      </span>
+                      </StatusPill>
                     </td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">
                       {r.last_reviewed ? new Date(r.last_reviewed).toLocaleDateString() : <span className="text-ink-help">—</span>}
@@ -369,7 +371,7 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
           </div>
           <div>
             <Label className="text-xs text-ink-secondary flex items-center justify-between">
-              Likelihood <button type="button" onClick={onOpenMatrix} className="text-xs font-mono uppercase tracking-widest text-brand-charcoal hover:underline">Scale</button>
+              Likelihood <button type="button" onClick={onOpenMatrix} className="text-xs font-mono uppercase tracking-widest text-link hover:underline">Scale</button>
             </Label>
             <Select value={String(form.likelihood_score)} onValueChange={(v) => setForm({ ...form, likelihood_score: parseInt(v) })}>
               <SelectTrigger data-testid="new-risk-likelihood" className="text-sm"><SelectValue /></SelectTrigger>

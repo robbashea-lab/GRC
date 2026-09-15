@@ -16,7 +16,7 @@ export default function AdminRoles() {
           {ROLES.map((r) => (
             <div key={r.key} className="rounded-md border border-line bg-surface-card p-4">
               <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-md bg-surface-subtle border border-line flex items-center justify-center"><ShieldCheck className="h-4 w-4 text-brand-charcoal" /></div>
+                <div className="h-9 w-9 rounded-md bg-surface-subtle border border-line flex items-center justify-center"><ShieldCheck className="h-4 w-4 text-ink-secondary" /></div>
                 <div>
                   <div className="text-sm font-semibold text-ink-primary">{r.label}</div>
                   <div className="text-xs font-mono uppercase tracking-widest text-ink-help">{r.scope}</div>

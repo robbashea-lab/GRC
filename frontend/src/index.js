@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@/index.css";
 import "@/design-system.css";
 import App from "@/App";
+import { installInteractionModality } from '@/lib/interactionModality';
+
+installInteractionModality();
 
 const queryClient = new QueryClient({
   defaultOptions: {

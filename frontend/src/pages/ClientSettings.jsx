@@ -123,7 +123,7 @@ function ComplianceProfile({ clientId }) {
       ) : requirements.length === 0 ? (
         <div className="border border-dashed border-line rounded-md p-6 text-sm text-ink-secondary" data-testid="compliance-empty">
           No requirements captured yet.{" "}
-          <Link to="/onboarding" className="text-brand-charcoal underline">Complete Compliance & Requirements onboarding</Link>{" "}
+          <Link to="/onboarding" className="text-link underline">Complete Compliance & Requirements onboarding</Link>{" "}
           to populate this profile.
         </div>
       ) : (
@@ -132,7 +132,7 @@ function ComplianceProfile({ clientId }) {
             <div key={b.id} className="border border-line rounded-md bg-surface-card" data-testid={`compliance-bucket-${b.id}`}>
               <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-line">
                 <div className="flex items-center gap-3">
-                  <b.icon className="h-4 w-4 text-brand-charcoal" />
+                  <b.icon className="h-4 w-4 text-link" />
                   <div>
                     <div className="text-sm font-medium text-ink-primary">{b.label}</div>
                     <div className="text-xs text-ink-help">{b.hint}</div>
