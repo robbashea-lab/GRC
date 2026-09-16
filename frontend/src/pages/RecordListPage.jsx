@@ -8,6 +8,8 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
+import { ContactAccessStatus, useContactAccess } from '@/components/ContactAccess';
+import { contactResponsibilities } from '@/lib/contactAccess';
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import RecordDrawer from "@/components/RecordDrawer";
@@ -232,6 +234,8 @@ export default function RecordListPage({ kind }) {
   }, [hasUrlFilters, urlFilters, userMap, user]);
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
+  const contactAccessContext = useContactAccess(currentClientId, kind === 'contacts', rows);
+  const columnCount = schema.columns.length + (kind === 'contacts' ? 3 : 2);
   const columns = tableColumns(kind, { rows: tableSource, users });
   const table = useTableControls({ columns, rows: tableSource, module: kind, scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key, values) => {
     if (key !== 'status' || !values.length) return;
@@ -540,12 +544,13 @@ export default function RecordListPage({ kind }) {
                   />
                 </th>
                 {columns.map(c => <th key={c.key} data-column={isReviews ? c.key : undefined} className="tbl-head" aria-sort={table.state.sort?.key === c.key ? (table.state.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}><ColumnControl table={table} column={c} /></th>)}
+                {kind === 'contacts' && <th className="tbl-head">Platform access</th>}
                 <th className="tbl-head w-10"></th>
               </tr>
             </thead>
             <tbody>
-              {loading && <TableLoadingRow colSpan={schema.columns.length + 2} />}
-              {!loading && filtered.length === 0 && <tr><td colSpan={schema.columns.length + 2} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
+              {loading && <TableLoadingRow colSpan={columnCount} />}
+              {!loading && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
               {!loading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);
                 return (
@@ -590,6 +595,7 @@ export default function RecordListPage({ kind }) {
                          <span className="inline-flex items-center gap-2">
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
+                             : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
                              : <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (
                              <span
@@ -605,6 +611,7 @@ export default function RecordListPage({ kind }) {
                     </td>
                   );
                   })}
+                  {kind === 'contacts' && <td className="tbl-cell"><ContactAccessStatus contact={row} clientId={currentClientId} context={contactAccessContext} /></td>}
                   <td className="tbl-cell text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

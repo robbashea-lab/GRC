@@ -116,13 +116,13 @@ export const SCHEMAS = {
   },
   contacts: {
     title: "Contacts & Roles",
-    subtitle: "People involved in this client's GRC program. Contacts are not platform users unless explicitly linked.",
+    subtitle: "Business contacts and GRC responsibilities. Platform accounts are separate and optional.",
     columns: [
       { key: "name", label: "Contact", primary: true },
       { key: "title", label: "Title" },
       { key: "role", label: "GRC Role" },
       { key: "email", label: "Email" },
-      { key: "status", label: "Status", badge: true },
+      { key: "status", label: "Contact status", badge: true },
     ],
     fields: [
       { name: "name", label: "Full name", required: true },
@@ -144,7 +144,7 @@ export const SCHEMAS = {
       { name: "email", label: "Email" },
       { name: "phone", label: "Phone" },
       { name: "linked_user_id", label: "Linked platform user", type: "user" },
-      { name: "status", label: "Status", type: "select", default: "active", options: [
+      { name: "status", label: "Contact status", type: "select", default: "active", options: [
         { value: "active", label: "Active" },
         { value: "inactive", label: "Inactive" },
       ]},
