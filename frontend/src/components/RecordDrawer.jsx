@@ -29,6 +29,8 @@ import CorrectiveActions from './CorrectiveActions';
 import EvidencePanel from './EvidencePanel';
 import ActionSourceChain from './ActionSourceChain';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
+import { ContactAccessDetails } from './ContactAccess';
+import AssignmentHelp from './AssignmentHelp';
 
 const ID_FIELD = {
   framework_assessments:'framework_assessment_id',
@@ -501,10 +503,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return (
       <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap" data-testid="contact-actions">
         <div className="flex items-center gap-2 text-sm text-ink-primary">
-          <Users2 className="h-4 w-4 text-ink-secondary" /> Platform access
+          <Users2 className="h-4 w-4 text-ink-secondary" /> Account link
         </div>
         {linked ? (
-          <span className="text-xs text-semantic-success">Linked to platform user</span>
+          <span className="text-xs text-ink-secondary">Account link recorded</span>
         ) : (
           <Button size="sm" onClick={inviteContact} disabled={!hasEmail} data-testid="contact-invite"
             className="bg-primary hover:bg-primary/90">
@@ -647,6 +649,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         ) : (
           <Input type={f.type || "text"} value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
         )}
+        {f.type === 'user' && f.name !== 'linked_user_id' && <AssignmentHelp policy={kind === 'policies'} />}
       </div>
     );
   }
@@ -828,6 +831,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {kind === "findings" && renderFindingActionsPanel()}
         {kind === 'findings' && isEdit && <section className="space-y-2 text-sm" aria-label="Corrective actions"><h3 className="font-medium">Corrective Actions</h3><p className="text-ink-secondary">Work completion is followed by separate Finding validation.</p>{relatedError?<p role="alert">Corrective actions could not be loaded: {relatedError}</p>:relatedLoading?<p>Loading corrective actions…</p>:<CorrectiveActions actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users} onOpen={task=>openLinkedRecord({kind:'tasks',record:task})}/>}</section>}
         {kind === "policies" && renderPolicyPanel()}
+        {kind === "contacts" && <ContactAccessDetails contact={record} clientId={clientId} open={open} />}
         {kind === "contacts" && renderContactActions()}
         {kind === "exceptions" && isEdit && isPlatformAdmin && record.status !== "approved" && <Button onClick={() => { setDecisionForm({action:'approve',rationale:''}); setDecisionOpen(true); }}>Approve exception</Button>}
         {kind === "reviews" && record?.status === "completed" && <div className="rounded-md border border-line p-4 space-y-2 text-sm" data-testid="review-outcome">
@@ -1157,7 +1161,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <div className="flex items-start justify-between">
             <div>
               <div className="text-xs font-mono uppercase tracking-widest text-ink-help">{singular}</div>
-              <SheetTitle className="font-heading text-xl">{isEdit ? (record.title || record.name) : `New ${singular}`}</SheetTitle>
+              <SheetTitle className="font-heading text-xl">{isEdit ? (kind === 'contacts' ? record.name : record.title || record.name) : `New ${singular}`}</SheetTitle>
               {isEdit && status && <div className="mt-2">{kind === "tasks" ? <span className="pill pill-neutral">{actionStatus(status)}</span> : <StatusBadge value={status} />}</div>}
             </div>
             <button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-surface-subtle" data-testid="drawer-close"><X className="h-4 w-4" /></button>

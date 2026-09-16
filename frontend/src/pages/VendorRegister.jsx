@@ -1,3 +1,4 @@
+import AssignmentHelp from '@/components/AssignmentHelp';
 import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
@@ -302,7 +303,7 @@ function NewVendorDialog({ open, onOpenChange, clientId, users, onCreated }) {
               ))}
             </div>
           </div>
-          <div><Label className="text-xs text-ink-secondary">Business owner</Label><Select value={form.business_owner_id || "__none__"} onValueChange={(v) => setForm({ ...form, business_owner_id: v === "__none__" ? "" : v })}><SelectTrigger aria-label="Business owner" className="text-sm"><SelectValue placeholder="Assign later" /></SelectTrigger><SelectContent><SelectItem value="__none__">Assign later</SelectItem>{users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}</SelectContent></Select></div>
+          <div><Label className="text-xs text-ink-secondary">Business owner</Label><Select value={form.business_owner_id || "__none__"} onValueChange={(v) => setForm({ ...form, business_owner_id: v === "__none__" ? "" : v })}><SelectTrigger aria-label="Business owner" className="text-sm"><SelectValue placeholder="Assign later" /></SelectTrigger><SelectContent><SelectItem value="__none__">Assign later</SelectItem>{users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}</SelectContent></Select><AssignmentHelp /></div>
           <div><Label className="text-xs text-ink-secondary">Review frequency</Label><Select value={form.review_frequency} onValueChange={(v) => setForm({ ...form, review_frequency: v })}><SelectTrigger className="text-sm"><SelectValue /></SelectTrigger><SelectContent>{["quarterly","semiannual","annual","biennial","as_needed"].map((f) => <SelectItem key={f} value={f}>{f.replace("_", " ")}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="new-vendor-next-review" className="text-xs text-ink-secondary">Next Review date</Label><Input id="new-vendor-next-review" type="date" value={form.next_review||""} onChange={e=>setForm({...form,next_review:e.target.value})}/></div>
           <div><Label htmlFor="new-vendor-contract" className="text-xs text-ink-secondary">Contract renewal / expiration</Label><Input id="new-vendor-contract" type="date" value={form.contract_renewal} onChange={(e) => setForm({ ...form, contract_renewal: e.target.value })} className="text-sm" /></div>

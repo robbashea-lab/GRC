@@ -1,3 +1,4 @@
+import AssignmentHelp from '@/components/AssignmentHelp';
 import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
@@ -397,6 +398,7 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
                 {users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}
               </SelectContent>
             </Select>
+            <AssignmentHelp />
           </div>
           <div className="col-span-2"><RiskScheduleFields form={form} setForm={setForm}/></div>
           <div className="col-span-2">

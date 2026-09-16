@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { SOURCE_TYPES, SOURCE_RECORDS, taskSource, actionStatus, actionPriority } from '@/lib/actionItems';
 import ActionSourceChain from './ActionSourceChain';
+import AssignmentHelp from './AssignmentHelp';
 
 // Task-specific fields; the existing drawer owns Evidence, Comments and Related.
 export default function ActionItemFields({form,setForm,record,clientId,canWrite,onTransition,saving,sourceLocked=false,related={},onOpen}) {
@@ -35,7 +36,7 @@ export default function ActionItemFields({form,setForm,record,clientId,canWrite,
     <div><Label htmlFor="task-description">Description</Label><Textarea id="task-description" value={form.description||''} onChange={e=>change('description',e.target.value)} disabled={!canWrite}/></div>
     <div className="grid grid-cols-2 gap-4">
       {select('priority','Priority *',form.priority||'medium',['critical','high','medium','low'].map(v=>[v,actionPriority(v)]))}
-      {select('assignee_id','Assignee',form.assignee_id,[['__none__','Unassigned'],...data.users.map(u=>[u.user_id,u.name||u.email])],data.loading||!!data.error)}
+      <div>{select('assignee_id','Assignee',form.assignee_id,[['__none__','Unassigned'],...data.users.map(u=>[u.user_id,u.name||u.email])],data.loading||!!data.error)}<AssignmentHelp /></div>
       <div><Label htmlFor="task-due">Due Date</Label><Input id="task-due" type="date" value={form.due_date||''} disabled={!canWrite} onChange={e=>change('due_date',e.target.value||null)}/></div>
       {record&&select('status','Status',form.status,['open','in_progress','blocked','done','cancelled'].map(v=>[v,actionStatus(v)]),record.status==='done')}
     </div>

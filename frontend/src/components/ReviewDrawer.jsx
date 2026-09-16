@@ -1,3 +1,4 @@
+import AssignmentHelp from './AssignmentHelp';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -155,7 +156,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             {configFields.filter(f => (f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom') && (f.name !== 'policy_id' || configuration.review_type === 'policy' || configuration.policy_id)).map(f => {
               const disabled = frozen || !admin, value = configuration[f.name] || '';
               if (f.type === 'policy') return <div key={f.name}>{picker(f.label,value,v=>setForm(p=>({...p,[f.name]:v})),policies.map(p=>({value:p.policy_id,label:p.title})),disabled || !!current,`field-${f.name}`)}</div>;
-              if (f.type === 'select' || f.type === 'user') return <div key={f.name}>{picker(f.label,value,v => setForm(p => ({...p,[f.name]:v})), f.type === 'user' ? members.map(m => ({value:m.user_id,label:m.name || m.email})) : [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}</div>;
+              if (f.type === 'select' || f.type === 'user') return <div key={f.name}>{picker(f.label,value,v => setForm(p => ({...p,[f.name]:v})), f.type === 'user' ? members.map(m => ({value:m.user_id,label:m.name || m.email})) : [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}{f.type === 'user' && <AssignmentHelp />}</div>;
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
             <div><Label>Occurrence</Label><p className="text-sm py-2" data-testid="review-period">{selected?.period || derived.period}</p></div>
