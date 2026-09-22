@@ -1,4 +1,5 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
+import {SETUP_FILTERS} from '@/lib/onboardingHandoff';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
@@ -215,10 +216,11 @@ export default function RecordListPage({ kind }) {
       unassigned: !carriedClientChanged && p.get("unassigned") === "1",
       severities: (p.get("severity") || "").split(",").map((s) => s.trim()).filter(Boolean),
       status: p.get("status") || "",
+      setup: SETUP_FILTERS[kind]?.[p.get('setup')] || null,
     };
-  }, [location.search, user, carriedClientChanged]);
+  }, [location.search, user, carriedClientChanged, kind]);
 
-  const hasUrlFilters = urlFilters.owner || urlFilters.unassigned || urlFilters.severities.length > 0 || urlFilters.status;
+  const hasUrlFilters = urlFilters.owner || urlFilters.unassigned || urlFilters.severities.length > 0 || urlFilters.status || urlFilters.setup;
   const carriedScopeLabel = useMemo(() => {
     if (!hasUrlFilters) return "";
     const parts = [];
@@ -231,6 +233,7 @@ export default function RecordListPage({ kind }) {
     if (urlFilters.unassigned) parts.push("Unassigned");
     if (urlFilters.severities.length) parts.push(`Severity: ${urlFilters.severities.join(" / ")}`);
     if (urlFilters.status) parts.push(`Status: ${urlFilters.status}`);
+    if (urlFilters.setup) parts.push(urlFilters.setup.label);
     return parts.join(" · ");
   }, [hasUrlFilters, urlFilters, userMap, user]);
 
@@ -246,10 +249,20 @@ export default function RecordListPage({ kind }) {
     setParams(next, { replace: true });
   } });
   const columnStatusActive = !!table.state.filters.status?.length;
+  const setupEntry = useRef('');
+  useEffect(() => {
+    const key = `${currentClientId}:${kind}:${params.get('setup') || ''}`;
+    if (setupEntry.current !== key) {
+      setupEntry.current = key;
+      // A handoff link is a deliberate precise view, not an intersection with stale session filters.
+      if (urlFilters.setup) table.clear();
+    }
+  });
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     const passed = rows.filter((r) => {
       if (r.client_id !== currentClientId) return false;
+      if (urlFilters.setup && !urlFilters.setup.matches(r)) return false;
       if (isReviews && !reviewMatches(r, reviewTab === 'history' ? 'history' : 'all')) return false;
       // URL-carried filters (from the scoped dashboard). These are additive.
       if (urlFilters.owner) {
@@ -541,7 +554,7 @@ export default function RecordListPage({ kind }) {
             </thead>
             <tbody>
               {loading && <TableLoadingRow colSpan={columnCount} />}
-              {!loading && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity','setup'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
               {!loading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);
                 return (

@@ -24,5 +24,5 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
   const members = memberResponse.data;
   today = today || (summary.data.management?.as_of ? new Date(summary.data.management.as_of+'T12:00:00Z') : new Date());
   const aggregation=aggregateClientDashboard(records, {clientId,user,scope,members,today});
-  return { ...summary.data, members, ...aggregation, posture:dashboardPosture(aggregation,{members,today}), programs:complianceProgress(clientId,baselineResponse.data?.state,records.requirements) };
+  return { ...summary.data, members, ...aggregation, onboardingCompleted:!!baselineResponse.data?.state?.completed, posture:dashboardPosture(aggregation,{members,today}), programs:complianceProgress(clientId,baselineResponse.data?.state,records.requirements) };
 }

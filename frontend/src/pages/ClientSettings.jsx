@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
+import ProgramConfiguration from '@/components/ProgramConfiguration';
 import { Building2, ShieldCheck, ScrollText, FileWarning, Umbrella, Layers, ExternalLink } from "lucide-react";
 import { UsersTable } from "@/pages/PlatformAdmin";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import api, { formatError } from "@/lib/api";
@@ -180,6 +181,8 @@ export default function ClientSettings() {
   const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
   const nav = useNavigate();
+  const [params,setParams] = useSearchParams();
+  const [revision,setRevision] = useState(0);
   const canManage = ["super_admin", "platform_admin"].includes(user?.role);
 
   if (!canManage) {
@@ -226,7 +229,7 @@ export default function ClientSettings() {
         </Button>
       </div>
       <div className="page-content">
-        <Tabs defaultValue="users" className="w-full">
+        <Tabs value={params.get('tab')==='compliance'?'compliance':'users'} onValueChange={tab=>setParams({tab})} className="w-full">
           <TabsList data-testid="client-settings-tabs">
             <TabsTrigger value="users" data-testid="tab-users-access">Users &amp; Access</TabsTrigger>
             <TabsTrigger value="compliance" data-testid="tab-compliance-profile">Compliance Profile</TabsTrigger>
@@ -239,12 +242,11 @@ export default function ClientSettings() {
             <div className="mb-3">
               <h2 className="text-sm font-medium text-ink-primary">Compliance Profile</h2>
               <p className="text-xs text-ink-help">
-                Requirements captured during onboarding, grouped by obligation type. Update this
-                list from the <Link to="/onboarding" className="underline">Compliance &amp; Requirements onboarding step</Link>{" "}
-                or the <Link to="/requirements" className="underline">Requirements register</Link>.
+                Current obligations, grouped by type. Adjust program applicability below or manage details in the <Link to="/requirements" className="underline">Requirements register</Link>.
               </p>
             </div>
-            <ComplianceProfile clientId={currentClientId} />
+            <ProgramConfiguration key={currentClientId} clientId={currentClientId} onSaved={()=>setRevision(n=>n+1)}/>
+            <ComplianceProfile key={`${currentClientId}:${revision}`} clientId={currentClientId} />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,6 +1,7 @@
 import { useTableControls, ColumnControl } from '@/components/TableControls';
 import { ranks } from '@/lib/tableFilters';
 import { useEffect, useState } from "react";
+import {Link} from 'react-router-dom';
 import api, { PREVIEW_MODE, API, formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
@@ -151,6 +152,9 @@ export default function Dashboard() {
         </div>
       )}
 
+      <div className="page-gutter pt-4 text-sm">
+        {!data.onboardingCompleted ? <div className="border border-line rounded-lg bg-surface-card p-3"><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program. </span><Link className="text-link underline" to="/onboarding">Continue onboarding</Link></div> : <Link className="text-link underline" to="/onboarding">View onboarding handoff & setup status</Link>}
+      </div>
       <DashboardManagement key={requestKey+":"+framework} posture={data.posture} programs={data.programs} framework={framework} onOpen={setSelected} Table={OperationalTable} />
       {selected && selected.record.client_id === currentClientId && (
         <RecordDrawer key={selected.key} open onOpenChange={open => { if (!open) setSelected(null); }}

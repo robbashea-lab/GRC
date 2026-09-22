@@ -51,8 +51,9 @@ export default function ClientManagement() {
   const table = useTableControls({ columns, rows: clients, module: 'client-management', scope: `${user?.user_id}:platform` });
   const rows = table.apply(presetRows);
   async function saved(client) {
+    const created = dialog && !dialog.client;
     setDialog(null);
-    toast.success(`${client.name} saved`);
+    toast.success(`${client.name} saved`, created ? {duration:10000, action:{label:'Continue onboarding',onClick:()=>{switchClient(client.client_id);navigate('/onboarding');}}} : undefined);
     await load(); await refresh();
   }
   async function archive(client) {

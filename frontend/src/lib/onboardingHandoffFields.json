@@ -1,0 +1,6 @@
+{
+  "reviews": ["review_id", "client_id", "title", "status", "due_date", "recurrence", "custom_recurrence_days", "owner_id", "baseline_key", "framework_plan_key"],
+  "policies": ["policy_id", "client_id", "title", "presence", "status", "baseline_key"],
+  "requirements": ["requirement_id", "client_id", "baseline_key", "baseline_response", "applicability"],
+  "framework_assessments": ["framework_assessment_id", "client_id", "framework_key", "definition_id", "status"]
+}

@@ -453,7 +453,7 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
 import json
 import uuid
 from pathlib import Path as FilePath
-from pydantic import Field
+from pydantic import Field, ConfigDict
 
 BASELINE_CATALOG = json.loads(FilePath(__file__).with_name('onboarding_catalog.json').read_text())
 
@@ -570,3 +570,65 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
     state['completed'] = bool(body.finalize or client.get('onboarding_baseline', {}).get('completed'))
     await server.db.clients.update_one({'client_id': cid}, {'$set': {'onboarding_baseline': state}})
     return state
+
+
+@router.get('/onboarding/handoff')
+async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_user)):
+    """Minimal current records, not completion-time counters or a user directory."""
+    import asyncio
+    import server
+    import assignment_eligibility
+    import client_relationships
+    import framework_governance
+    client = await _baseline_client(client_id, user)
+    fields = json.loads((framework_governance.ROOT / 'onboardingHandoffFields.json').read_text())
+
+    async def rows(kind, names):
+        result = await server.db[kind].find({'client_id': client_id}, {'_id': 0, **dict.fromkeys(names, 1)}).to_list(2001)
+        if len(result) > 2000:
+            raise HTTPException(413, 'Setup summary is too large. Use the operational registers for this client.')
+        return result
+
+    values = await asyncio.gather(*(rows(kind, names) for kind, names in fields.items()))
+    minimal_client = {k: client.get(k) for k in ('client_id', 'name', 'primary_contact_id', 'primary_contact', 'assigned_owner_id')}
+    projected = (await client_relationships.project(server.db, [minimal_client]))[0]
+    contacts, client_users, candidates = await asyncio.gather(
+        server.db.contacts.count_documents({'client_id': client_id}),
+        server.db.users.count_documents({'client_ids': client_id, 'status': 'active', 'role': {'$nin': ['super_admin', 'platform_admin']}}),
+        assignment_eligibility.candidates(server.db, client_id, limit=1),
+    )
+    return {'client': projected, 'completed': bool(client.get('onboarding_baseline', {}).get('completed')),
+            'records': dict(zip(fields, values)),
+            'people': {'contacts': contacts, 'active_client_users': client_users, 'eligible_assignees_available': bool(candidates['items'])}}
+
+
+class ProgramApplicabilityChange(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    client_id: str
+    applicability: str
+
+
+@router.patch('/onboarding/programs/{key}')
+async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict = Depends(get_current_user)):
+    """Adjust current program configuration, without replaying historical intake."""
+    import server
+    import framework_governance
+    client = await _baseline_client(body.client_id, user, writable=True)
+    baseline = client.get('onboarding_baseline', {})
+    if not baseline.get('completed'):
+        raise HTTPException(409, 'Complete onboarding before adjusting program configuration')
+    item = next((r for r in BASELINE_CATALOG['requirements'] if r['key'] == key), None)
+    if not item or body.applicability not in ('applies', 'does_not_apply', 'unsure'):
+        raise HTTPException(422, 'Invalid program applicability')
+    cid = body.client_id
+    old = await server.db.requirements.find_one({'client_id': cid, 'baseline_key': key})
+    stable_id = 'baseline_' + uuid.uuid5(uuid.NAMESPACE_URL, f'grc:{cid}:requirements:{key}').hex
+    query = {'client_id': cid, 'requirement_id': old['requirement_id']} if old else {'_id': stable_id}
+    await server.db.requirements.update_one(query, {
+        '$set': {'baseline_response': body.applicability, 'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'unsure': 'needs_review'}[body.applicability], 'updated_at': _now()},
+        '$setOnInsert': {'requirement_id': stable_id, 'client_id': cid, 'baseline_key': key, 'title': item['name'], 'category': item['category'], 'status': 'under_review', 'created_at': _now(), 'created_by': user['user_id']},
+    }, upsert=True)
+    if key == 'cis-ig1':
+        await framework_governance.reconcile(server, cid, {**baseline, 'requirements': {key: body.applicability}}, user)
+    await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={'program': key, 'applicability': body.applicability})
+    return {'ok': True}

@@ -19,6 +19,13 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
+test.each([false,true])('Finding drawer without a selected record does not render validation context (open=%s)',async open=>{
+  await act(async()=>root.render(<RecordDrawer open={open} kind="findings" record={null} clientId="a" onOpenChange={()=>{}}/>));
+  expect(container.querySelector('[aria-label="Validation context"]')).toBeNull();
+  if(open)expect(container.querySelector('[data-testid="field-title"]')).toBeTruthy();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
 test.each([
   ['remediated','a',true],
   ['in_remediation','a',false],
