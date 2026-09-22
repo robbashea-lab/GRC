@@ -15,7 +15,7 @@ test('new intake begins with programs; catalog is IG1 only; cadence warning sepa
   expect(onboardingDraft({version:2,step:0,policies:{},requirements:{},reviews:['inventory']})).toMatchObject({step:0,reviews:[]});
   expect(cis.requirements).toHaveLength(56);expect(new Set(cis.requirements.map(d=>d.id)).size).toBe(56);
   expect(cis.requirements.filter(d=>['13','16','18'].includes(d.id.split('.')[0]))).toEqual([]);
-  expect(FRAMEWORKS.filter(f=>f.implemented).map(f=>f.key)).toEqual(['cis-ig1']);
+  expect(FRAMEWORKS.filter(f=>f.implemented).map(f=>f.key)).toEqual(['hipaa','cis-ig1']);
   expect(belowSource(cis.review_plans.find(p=>p.key==='account-authorization'),{recurrence:'annual'})).toBe(true);
   expect(cis.review_plans.find(p=>p.key==='data-recovery').default_cadence).toBe('annual');
 });
@@ -25,11 +25,11 @@ test.each([[],['cis-ig1'],['hipaa'],['iso-27001','soc-2'],['cis-ig1','hipaa','ni
   expect((await get('frameworks/cis-ig1')).assessments).toHaveLength(0);
   const s=state(programs),workspace=await configure(s);
   expect(workspace.assessments).toHaveLength(programs.includes('cis-ig1')?56:0);
-  expect(await get('reviews')).toHaveLength(programs.includes('cis-ig1')?12:0);
+  expect(await get('reviews')).toHaveLength(programs.includes('cis-ig1')?(programs.includes('hipaa')?18:12):programs.includes('hipaa')?8:0);
   const baseline=(await get('onboarding/baseline')).state;
   expect(complianceNavigation(cid,baseline,await get('requirements')).map(f=>f.key).sort()).toEqual([...programs].sort());
   for(const key of ['hipaa','nist-csf-2','iso-27001','cmmc','soc-2']){
-    const shell=await get('frameworks/'+key);expect(shell.assessments).toEqual([]);expect(shell.definitions).toEqual([]);
+    const shell=await get('frameworks/'+key),count=key==='hipaa'&&programs.includes(key)?76:0;expect(shell.assessments).toHaveLength(count);expect(shell.definitions).toHaveLength(count);
   }
 });
 

@@ -12,7 +12,7 @@ export function complianceProgress(clientId, baseline, requirements, summary) {
       explanation:!trackingAvailable?'Program workspace only. Detailed assessment and mapping are not yet implemented.'
         :!recorded?'Assessment summary is unavailable. Open the framework workspace for current records.'
         :!recorded.total?'No assessment records configured. Review the program configuration.'
-        :recorded.status_counts.not_assessed===recorded.total?'No assessments started. Recorded safeguard states are shown below.'
+        :recorded.status_counts.not_assessed===recorded.total?'No assessments started. Recorded requirement states are shown below.'
         :'Current recorded assessment states—not a compliance or certification conclusion.'};
   });
 }

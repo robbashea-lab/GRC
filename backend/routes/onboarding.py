@@ -531,8 +531,8 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
         raise HTTPException(400, 'Invalid review selection')
     state['reviews'] = list(dict.fromkeys(state['reviews']))
     if body.finalize:
-        if state['version']>=3 and state['requirements'].get('cis-ig1')=='applies':
-            mapped={p['baseline_key'] for p in framework_governance.CIS['review_plans'] if state['framework_reviews'].get(p['key'],{}).get('enabled',True)}
+        if state['version']>=3:
+            mapped={p['baseline_key'] for key,c in framework_governance.CATALOGS.items() if state['requirements'].get(key)=='applies' for p in c['review_plans'] if state['framework_reviews'].get(p['key'],{}).get('enabled',True)}
             state['reviews']=[k for k in state['reviews'] if k not in mapped]
         for group, id_field in [('policies', 'policy_id'), ('requirements', 'requirement_id'), ('reviews', 'review_id')]:
             rows = await server.db[group].find({'client_id': cid}, {'_id': 0}).to_list(2000)
@@ -628,7 +628,7 @@ async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict 
         '$set': {'baseline_response': body.applicability, 'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'unsure': 'needs_review'}[body.applicability], 'updated_at': _now()},
         '$setOnInsert': {'requirement_id': stable_id, 'client_id': cid, 'baseline_key': key, 'title': item['name'], 'category': item['category'], 'status': 'under_review', 'created_at': _now(), 'created_by': user['user_id']},
     }, upsert=True)
-    if key == 'cis-ig1':
+    if key in framework_governance.CATALOGS:
         await framework_governance.reconcile(server, cid, {**baseline, 'requirements': {key: body.applicability}}, user)
     await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={'program': key, 'applicability': body.applicability})
     return {'ok': True}

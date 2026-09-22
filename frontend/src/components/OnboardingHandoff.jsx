@@ -38,7 +38,7 @@ export default function OnboardingHandoff({snapshot, state, catalog, clientId, c
         <section className="rounded-lg border border-line bg-surface-card p-5 space-y-3">
           <h2 className="font-semibold text-base">Compliance & requirements</h2>
           {!data.programs.length && <p className="text-sm text-ink-secondary">No formal compliance programs apply. Continue with your general GRC program.</p>}
-          {data.programs.map(f => <div key={f.key} className="text-sm"><Link className="font-medium text-link underline" to={`/compliance/${f.key}`}>{f.name}</Link><p className="text-ink-secondary mt-1">{f.implemented ? (f.assessments ? `${f.assessments} safeguard assessments · ${f.not_assessed} not yet assessed` : 'Assessments not configured. Review program configuration.') : 'Program configured. Detailed requirement tracking is not yet available.'}</p></div>)}
+          {data.programs.map(f => <div key={f.key} className="text-sm"><Link className="font-medium text-link underline" to={`/compliance/${f.key}`}>{f.name}</Link><p className="text-ink-secondary mt-1">{f.implemented ? (f.assessments ? `${f.assessments} requirement assessments · ${f.not_assessed} not yet assessed` : 'Assessments not configured. Review program configuration.') : 'Program configured. Detailed requirement tracking is not yet available.'}</p></div>)}
           {!!data.unsurePrograms.length && <p className="text-sm">Confirm applicability: {data.unsurePrograms.map(f=>f.name).join(' · ')}.</p>}
           <Link className="text-link underline text-sm inline-block" to={settings}>Adjust program configuration</Link>
         </section>

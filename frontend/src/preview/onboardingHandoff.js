@@ -2,6 +2,7 @@ import fields from '../lib/onboardingHandoffFields.json';
 import catalog from '../lib/onboardingCatalog.json';
 import {record, list, write, audit} from './store';
 import {frameworkScope, reconcileFramework} from './frameworks';
+import {CATALOGS} from '../lib/frameworks';
 import {assignmentCandidates} from './assignmentEligibility';
 import {clientProjection} from './clientRelationships';
 
@@ -32,7 +33,7 @@ export function adjustProgram(db, cid, key, body) {
   write(db, 'requirements', {client_id: cid, title: old?.title || item.name, category: old?.category || item.category,
     baseline_key: key, baseline_response: body.applicability,
     applicability: {applies:'applicable',does_not_apply:'not_applicable',unsure:'needs_review'}[body.applicability], status: old?.status || 'under_review'}, old?.requirement_id);
-  if (key === 'cis-ig1') reconcileFramework(db, cid, {...db.baselines[cid], requirements: {[key]: body.applicability}});
+  if (CATALOGS[key]) reconcileFramework(db, cid, {...db.baselines[cid], requirements: {[key]: body.applicability}});
   audit(db, 'program-applicability-updated', 'clients', record(db, 'clients', cid), {program:key, applicability:body.applicability});
   return {ok:true};
 }

@@ -26,7 +26,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         expected = {f'{control}.{n}' for control, count in counts.items() for n in range(1, count+1)}
         self.assertEqual({d['id'] for d in CIS['requirements']}, expected)
         self.assertEqual(len(CIS['requirements']), 56)
-        self.assertEqual([f['key'] for f in FRAMEWORKS if f['implemented']], ['cis-ig1'])
+        self.assertEqual([f['key'] for f in FRAMEWORKS if f['implemented']], ['hipaa','cis-ig1'])
         for plan in CIS['review_plans']:
             self.assertTrue(set(plan['safeguards']) <= expected)
             for field in ('basis','reason','source_cadence','default_cadence'): self.assertTrue(plan[field])
@@ -42,11 +42,13 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
             workspace = await self.configure(self.body(programs,cid))
             expected = 56 if 'cis-ig1' in programs else 0
             self.assertEqual(len(workspace['assessments']), expected)
-            self.assertEqual(await server.db.reviews.count_documents({'client_id':cid}),12 if expected else 0)
+            review_count=18 if expected and 'hipaa' in programs else 12 if expected else 8 if 'hipaa' in programs else 0
+            self.assertEqual(await server.db.reviews.count_documents({'client_id':cid}),review_count)
             for key in ['hipaa','nist-csf-2','iso-27001','cmmc','soc-2']:
                 shell = (await self.client.get('/api/frameworks/'+key,params={'client_id':cid})).json()
                 self.assertEqual(shell['selected'],key in programs)
-                self.assertEqual(shell['definitions'],[]); self.assertEqual(shell['assessments'],[])
+                count=76 if key=='hipaa' and key in programs else 0
+                self.assertEqual(len(shell['definitions']),count); self.assertEqual(len(shell['assessments']),count)
 
     async def test_authoritative_workflow_and_reconfiguration_preserves_history(self):
         body=self.body();body['state']['framework_reviews']['account-authorization']={'recurrence':'annual','due_date':'2026-12-01'}

@@ -889,7 +889,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {Object.entries(related).filter(([k])=>kind!=='risks'||k!=='evidence').map(([k, list]) => (
           (list && list.length > 0) ? (
             <div key={k}>
-              <Link to={k==='framework_assessments'?'/compliance/cis-ig1':k==='ai_systems'?'/ai-governance':k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k==='framework_assessments'?'CIS Safeguards':k==='ai_systems'?'AI Governance':k} <ArrowUpRight className="h-3 w-3" /></Link>
+              <>{k==='framework_assessments'?<h4 className="text-xs font-semibold text-ink-secondary">Framework Requirements</h4>:<Link to={k==='ai_systems'?'/ai-governance':k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k==='ai_systems'?'AI Governance':k} <ArrowUpRight className="h-3 w-3" /></Link>}</>
               <ul className="mt-1.5 space-y-1.5">
                 {list.map((it) => (
                   <li key={it[ID_FIELD[k]] || it.evidence_id || it.assessment_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-surface-subtle" data-testid={`related-${k}-item`}>
