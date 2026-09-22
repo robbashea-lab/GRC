@@ -1,13 +1,14 @@
 import definitions from './frameworkDefinitions.json';
 import cis from './cisIG1.json';
 import hipaa from './hipaaSecurityRule.json';
+import iso from './iso27001.json';
 export {cis};
-export const CATALOGS={'cis-ig1':cis,hipaa};
+export const CATALOGS={'cis-ig1':cis,hipaa,'iso-27001':iso};
 export const frameworkCatalog=key=>CATALOGS[key];
 export const frameworkDefinition=(key,id)=>frameworkCatalog(key)?.requirements.find(d=>d.id===id);
 export const FRAMEWORKS=definitions.frameworks;
 export const ASSESSMENT_STATUSES={not_assessed:'Not Assessed',in_progress:'In Progress',addressed:'Addressed',needs_attention:'Needs Attention',not_applicable:'Not Applicable'};
-export const SPECIFICATION_LABELS={standard:'Standard / general duty',required:'Required specification',addressable:'Addressable specification',related_dependency:'Related dependency'};
+export const SPECIFICATION_LABELS={standard:'Standard / general duty',required:'Required specification',addressable:'Addressable specification',related_dependency:'Related dependency',isms_clause:'ISMS requirement',annex_control:'Annex A / SoA'};
 export const REQUIREMENT_TYPES={recurring:'Recurring governance / validation',operational:'Operational cadence',event:'Event-driven',state:'Implementation / state',training:'Training / program'};
 export const CADENCES=['monthly','quarterly','semiannual','annual','custom'];
 export const cadenceDays=(c,days)=>({monthly:30,quarterly:90,semiannual:180,annual:365}[c]||Number(days)||0);

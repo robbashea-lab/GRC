@@ -36,7 +36,7 @@ test('shared Review counts match onboarding preview and CIS operational records 
   const s=state(['cis-ig1','hipaa']),snapshot=await get('/onboarding/handoff');
   const preview=onboardingPreview(baseline,s,snapshot.records);
   expect(preview.reviews).toMatchObject({total:18,create:6,retain:12});
-  expect(preview.assessmentsByProgram).toEqual({'cis-ig1':0,hipaa:76});
+  expect(preview.assessmentsByProgram).toEqual({'cis-ig1':0,hipaa:76,'iso-27001':0});
   await configure(['cis-ig1','hipaa']);
   const after=await get('/reviews');expect(after).toHaveLength(18);
   for(const r of before)expect(after.find(a=>a.review_id===r.review_id)).toEqual(r);

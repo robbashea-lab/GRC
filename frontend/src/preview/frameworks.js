@@ -3,7 +3,7 @@ import {CATALOGS,frameworkCatalog,frameworkDefinition,FRAMEWORKS,ASSESSMENT_STAT
 import {record,write,audit,now,ids} from './store';
 import {action} from './workflows';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
-const assessmentTitle=a=>`${a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase()} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
+const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
 const writable=db=>{if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');};
 export function frameworkScope(db,cid){
   record(db,'clients',cid);
@@ -86,12 +86,21 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
   if(method==='patch'&&!operation){
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale'];
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification'];
     if(Object.keys(body).some(k=>!fields.includes(k)))throw new Error('Unknown or immutable assessment fields');
     const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
-    if(data.status==='not_applicable'&&!data.na_rationale.trim())throw new Error('N/A rationale is required');
-    if(data.status==='addressed'&&!data.implementation.trim())throw new Error('Describe implementation before marking Addressed');
     const definition=frameworkDefinition(row.framework_key,row.definition_id);
+    if(data.status==='not_applicable'&&definition?.specification!=='annex_control'&&!data.na_rationale.trim())throw new Error('N/A rationale is required');
+    if(data.status==='addressed'&&!data.implementation.trim())throw new Error('Describe implementation before marking Addressed');
+    if(body.soa_applicability!=null&&!['','included','excluded'].includes(body.soa_applicability))throw new Error('Invalid SoA applicability');
+    if(body.soa_justification!=null&&(typeof body.soa_justification!=='string'||body.soa_justification.length>4000))throw new Error('Invalid SoA justification');
+    if(definition?.specification==='isms_clause'&&data.status==='not_applicable')throw new Error('ISMS clauses 4–10 cannot be excluded for conformity');
+    if(definition?.specification==='annex_control'){
+      const applicability=data.soa_applicability||'';
+      if(applicability&&!data.soa_justification?.trim())throw new Error('Document the SoA inclusion or exclusion justification');
+      if((applicability==='excluded')!==(data.status==='not_applicable'))throw new Error('An excluded Annex A control must be Not Applicable; other controls cannot be Not Applicable');
+      if(data.status==='addressed'&&applicability!=='included')throw new Error('Record SoA inclusion before marking Addressed');
+    }else if(body.soa_applicability||body.soa_justification)throw new Error('SoA fields apply only to Annex A controls');
     if(body.addressable_decision!=null&&!['','as_written','equivalent_alternative','not_reasonable_appropriate'].includes(body.addressable_decision))throw new Error('Invalid addressability decision');
     if(body.addressable_rationale!=null&&(typeof body.addressable_rationale!=='string'||body.addressable_rationale.length>4000))throw new Error('Invalid addressability rationale');
     if(definition?.specification==='addressable'){

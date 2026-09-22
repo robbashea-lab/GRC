@@ -56,7 +56,7 @@ test('program cards follow finalized client selections, with no fabricated asses
   expect(complianceProgress('b',{completed:true},records)).toEqual([]);
   const programs=complianceProgress('a',{completed:true},records);
   expect(programs.map(p=>p.key)).toEqual(['hipaa','iso-27001']);
-  for(const p of programs)expect(p).toMatchObject({progress:null,denominator:null,trackingAvailable:p.key==='hipaa'});
+  for(const p of programs)expect(p).toMatchObject({progress:null,denominator:null,trackingAvailable:true});
   expect(complianceProgress('a',{completed:true},records.slice(0,1))).toHaveLength(1);
   expect(complianceProgress('a',{completed:true},[])).toEqual([]);
 });

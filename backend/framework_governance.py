@@ -91,6 +91,8 @@ class AssessmentPatch(BaseModel):
     process_owner_id: Optional[str]=None
     addressable_decision: Optional[Literal['','as_written','equivalent_alternative','not_reasonable_appropriate']]=None
     addressable_rationale: Optional[str]=Field(default=None,max_length=4000)
+    soa_applicability: Optional[Literal['','included','excluded']]=None
+    soa_justification: Optional[str]=Field(default=None,max_length=4000)
 
 class LinkInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -159,9 +161,21 @@ def router_for(s):
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True);data={**old,**changes}
         if data['status'] not in STATUSES or any(data.get(k) is None for k in ('implementation','technology','notes','na_rationale')):raise HTTPException(422,'Invalid assessment fields')
-        if data['status']=='not_applicable' and not data['na_rationale'].strip():raise HTTPException(422,'N/A rationale is required')
-        if data['status']=='addressed' and not data['implementation'].strip():raise HTTPException(422,'Describe implementation before marking Addressed')
         definition=definition_for(old['framework_key'],old['definition_id'])
+        if data['status']=='not_applicable' and definition.get('specification')!='annex_control' and not data['na_rationale'].strip():raise HTTPException(422,'N/A rationale is required')
+        if data['status']=='addressed' and not data['implementation'].strip():raise HTTPException(422,'Describe implementation before marking Addressed')
+        if definition.get('specification')=='isms_clause' and data['status']=='not_applicable':
+            raise HTTPException(422,'ISMS clauses 4–10 cannot be excluded for conformity')
+        if definition.get('specification')=='annex_control':
+            applicability=data.get('soa_applicability') or ''
+            if applicability and not (data.get('soa_justification') or '').strip():
+                raise HTTPException(422,'Document the SoA inclusion or exclusion justification')
+            if (applicability=='excluded') != (data['status']=='not_applicable'):
+                raise HTTPException(422,'An excluded Annex A control must be Not Applicable; other controls cannot be Not Applicable')
+            if data['status']=='addressed' and applicability!='included':
+                raise HTTPException(422,'Record SoA inclusion before marking Addressed')
+        elif changes.get('soa_applicability') or changes.get('soa_justification'):
+            raise HTTPException(422,'SoA fields apply only to Annex A controls')
         if definition.get('specification')=='addressable':
             if data['status']=='not_applicable':raise HTTPException(422,'Addressable is not optional; record an addressability decision instead of N/A')
             if data['status']=='addressed' and (not data.get('addressable_decision') or not (data.get('addressable_rationale') or '').strip()):raise HTTPException(422,'Document the addressability decision and rationale before marking Addressed')
