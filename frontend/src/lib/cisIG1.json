@@ -12,7 +12,7 @@
       "control_name": "Inventory and Control of Enterprise Assets",
       "type": "recurring",
       "source_cadence": "At least every six months",
-      "guidance": "Record authorized devices, ownership and network identifiers; reconcile inventory changes.",
+      "guidance": "Inventory all enterprise assets, including regularly connected assets outside enterprise control; record ownership, identifiers and authorization status, and reconcile changes.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/",
       "version": "8.1",
       "implementation_group": 1
@@ -288,7 +288,7 @@
       "control_name": "Access Control Management",
       "type": "event",
       "source_cadence": "Immediately at termination, revocation or role change",
-      "guidance": "Remove access promptly while preserving needed audit history.",
+      "guidance": "Revoke access immediately on termination, rights revocation or role change; retain disabled accounts when needed to preserve audit history.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
       "version": "8.1",
       "implementation_group": 1
@@ -681,6 +681,14 @@
   "review_plans": [
     {
       "key": "asset-inventory",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "1.1",
+          "interval": "semiannual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/"
+        }
+      ],
       "title": "Enterprise Asset Inventory Review",
       "safeguards": [
         "1.1",
@@ -696,6 +704,24 @@
     },
     {
       "key": "software-support",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "2.2",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/"
+        },
+        {
+          "definition_id": "2.3",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/"
+        },
+        {
+          "definition_id": "12.1",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/"
+        }
+      ],
       "title": "Software Authorization & Support Review",
       "safeguards": [
         "2.1",
@@ -714,6 +740,19 @@
     },
     {
       "key": "data-governance",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "3.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/"
+        },
+        {
+          "definition_id": "3.2",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/"
+        }
+      ],
       "title": "Data Management & Inventory Review",
       "safeguards": [
         "3.1",
@@ -733,6 +772,19 @@
     },
     {
       "key": "secure-configuration",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "4.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/"
+        },
+        {
+          "definition_id": "4.2",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/"
+        }
+      ],
       "title": "Secure Configuration Process Review",
       "safeguards": [
         "4.1",
@@ -748,6 +800,14 @@
     },
     {
       "key": "account-authorization",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "5.1",
+          "interval": "quarterly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/"
+        }
+      ],
       "title": "Account Authorization & Access Review",
       "safeguards": [
         "5.1",
@@ -770,6 +830,14 @@
     },
     {
       "key": "vulnerability-remediation",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "7.2",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/"
+        }
+      ],
       "title": "Vulnerability & Remediation Process Review",
       "safeguards": [
         "7.1",
@@ -787,6 +855,14 @@
     },
     {
       "key": "audit-logging",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "8.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/"
+        }
+      ],
       "title": "Audit Log Management Process Review",
       "safeguards": [
         "8.1",
@@ -803,6 +879,14 @@
     },
     {
       "key": "data-recovery",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "11.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/"
+        }
+      ],
       "title": "Data Recovery Governance Review",
       "safeguards": [
         "11.1",
@@ -820,6 +904,14 @@
     },
     {
       "key": "awareness",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "14.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/"
+        }
+      ],
       "title": "Security Awareness Program Review",
       "safeguards": [
         "14.1",
@@ -841,6 +933,14 @@
     },
     {
       "key": "provider-inventory",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "15.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/"
+        }
+      ],
       "title": "Service Provider Inventory Review",
       "safeguards": [
         "15.1"
@@ -855,6 +955,24 @@
     },
     {
       "key": "incident-governance",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "17.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/"
+        },
+        {
+          "definition_id": "17.2",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/"
+        },
+        {
+          "definition_id": "17.3",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/"
+        }
+      ],
       "title": "Incident Reporting & Contact Review",
       "safeguards": [
         "17.1",
@@ -871,6 +989,8 @@
     },
     {
       "key": "endpoint-validation",
+      "cadence_class": "D",
+      "cadence_references": [],
       "title": "Endpoint Protection Validation",
       "safeguards": [
         "4.3",

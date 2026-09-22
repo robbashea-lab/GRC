@@ -33,6 +33,37 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(CIS['review_plans']),12)
         self.assertEqual(next(p for p in CIS['review_plans'] if p['key']=='data-recovery')['default_cadence'],'annual')
 
+    def test_cis_source_scope_and_event_timing_regressions(self):
+        definitions = {d['id']: d for d in CIS['requirements']}
+        # CIS v8.1 1.1 includes assets not authorized or controlled by the enterprise.
+        self.assertIn('all enterprise assets', definitions['1.1']['guidance'])
+        self.assertIn('outside enterprise control', definitions['1.1']['guidance'])
+        self.assertIn('authorization status', definitions['1.1']['guidance'])
+        # CIS v8.1 6.2 is immediate event-driven revocation, not a periodic review.
+        self.assertEqual(definitions['6.2']['type'], 'event')
+        self.assertIn('immediately', definitions['6.2']['guidance'])
+        self.assertIn('audit history', definitions['6.2']['guidance'])
+        self.assertEqual(CIS['version'], '8.1')
+
+    def test_cis_review_cadence_provenance(self):
+        definitions = {d['id']: d for d in CIS['requirements']}
+        for plan in CIS['review_plans']:
+            with self.subTest(plan=plan['key']):
+                self.assertIn(plan['cadence_class'], ('A', 'D'))
+                if plan['cadence_class'] == 'A':
+                    self.assertTrue(plan['cadence_references'])
+                    for reference in plan['cadence_references']:
+                        definition = definitions[reference['definition_id']]
+                        self.assertIn(definition['id'], plan['safeguards'])
+                        self.assertIn(definition['type'], ('recurring', 'training'))
+                        self.assertEqual(reference['interval'], plan['source_minimum'])
+                        self.assertEqual(reference['source'], definition['source'])
+                        self.assertTrue(reference['source'].startswith('https://cas.docs.cisecurity.org/'))
+                else:
+                    self.assertIsNone(plan['source_minimum'])
+                    self.assertEqual(plan['cadence_references'], [])
+                    self.assertEqual(plan['basis'], 'Omnisciente Recommended')
+
     async def test_selection_combinations_and_no_implicit_retrofit(self):
         self.sign_in('admin')
         for programs in ([],['hipaa'],['iso-27001','soc-2'],['cis-ig1'],['cis-ig1','hipaa','nist-csf-2']):
