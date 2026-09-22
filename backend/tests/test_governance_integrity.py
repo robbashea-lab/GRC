@@ -42,6 +42,7 @@ class GovernanceIntegrityTests(ClientDashboardSourcesTests):
         self.assertEqual((await self.client.post('/api/policies',json={"client_id":"a","title":"Forged","status":"approved"})).status_code,422)
         await self.client.post('/api/bulk',json={"kind":"policies","ids":[pid],"action":"set-status","payload":{"status":"approved"}})
         self.assertEqual((await server.db.policies.find_one({'policy_id':pid}))['status'],'draft')
+        await self.client.post('/api/policies/'+pid+'/approval-subject',json={"version":"1","external_reference":"https://documents.example.test/policy","external_version":"doc-v1"})
         submitted=(await self.client.post('/api/policies/'+pid+'/submit-review')).json()
         decision={"approval_request_id":submitted["approval_request_id"]}
         self.assertEqual((await self.client.post('/api/policies/'+pid+'/approve',json=decision)).status_code,403)

@@ -1,5 +1,6 @@
 import catalog from '@/lib/onboardingCatalog.json';
 import {policyApprovalRequest} from './policyApproval';
+import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
 import {frameworkSummary} from './frameworkSummary';
 import {calendarBuckets} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
@@ -244,6 +245,7 @@ export async function previewAdapter(config) {
       if (body.kind === 'tasks' && body.action === 'delete' && rows.some(r=>r.status==='done'||r.completed_at)) throw new Error('Completed Action Items must be retained.');
       if(body.kind==='ai_systems'||body.action==='delete'&&(['risks','vendors'].includes(body.kind)||body.kind==='reviews'&&rows.some(r=>r.risk_id||r.vendor_id||r.ai_system_id))) throw new Error('Governance records and their Review obligations must be retained.');
       const payload = body.payload || {};
+      if(body.kind==='policies'&&body.action==='delete'&&rows.some(retainedPolicy))throw new Error('Policy approval history must be retained; retire the Policy instead');
       const close = {
         reviews: 'completed',
         tasks: 'done',
@@ -275,6 +277,7 @@ export async function previewAdapter(config) {
           };
         } else if (body.action === 'update') patch = payload;else throw new Error('Unknown bulk action');
         guardEdit(body.kind, patch, r, db.user);
+        if(body.kind==='policies')patch=invalidatePolicyApproval(patch,r);
         if (body.kind === 'reviews' && patch.status === 'completed' && r.status !== 'completed') {
           const { status, ...fields } = patch;
           write(db, body.kind, fields, r.review_id);
@@ -338,6 +341,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if(kind==='policies'&&retainedPolicy(r))throw new Error('Policy approval history must be retained; retire the Policy instead');
         if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
         if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
@@ -366,6 +370,9 @@ export async function previewAdapter(config) {
         }
         body.size = Math.floor(body.content_base64.split(',').pop().length * 3 / 4);
         body.version = 1;
+        const bytes=Uint8Array.from(atob(body.content_base64.split(',').pop()),c=>c.charCodeAt(0));
+        if(globalThis.crypto?.subtle)body.sha256=Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+        else delete body.sha256; // Never invent a digest where Web Crypto is unavailable.
         body.uploaded_at = now();
         body.uploaded_by = db.user.user_id;
         body.uploaded_by_email = db.user.email;
@@ -380,7 +387,7 @@ export async function previewAdapter(config) {
         write(db, kind, fields, id);
         return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
-      const result = write(db, kind, body, id);
+      const result = write(db, kind, kind==='policies'&&id?invalidatePolicyApproval(body,record(db,kind,id)):body, id);
       if (kind === 'clients') return save(clientProjection(db, result));
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});

@@ -4,6 +4,7 @@ import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import AssigneeSelect from './AssigneeSelect';
 import {toast} from 'sonner';
+import PolicyApprovalSubject,{ApprovalSubject} from './PolicyApprovalSubject';
 
 export default function PolicyApprovalPanel({record, onChanged}) {
   const [context,setContext]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
@@ -27,7 +28,7 @@ export default function PolicyApprovalPanel({record, onChanged}) {
       const {data}=await api.post('/policies/'+id+'/'+action,body);
       if(action!=='approval-authority')onChanged(data);
       await load();setComment('');
-      toast.success(action==='approval-authority'?'Approval authority saved':action==='submit-review'?'Policy submitted':action==='approve'?'Policy approved':'Policy returned to Draft');
+      toast.success(action==='approval-authority'?'Approval authority saved':action==='approval-subject'?'Approval basis saved':action==='submit-review'?'Policy submitted':action==='approve'?'Policy approved':'Policy returned to Draft');
     } catch(e) {setError(formatError(e));}
     finally{setBusy(false);}
   }
@@ -36,6 +37,7 @@ export default function PolicyApprovalPanel({record, onChanged}) {
   return <section aria-label="Policy approval authority" className="space-y-3 border-t border-line pt-3">
     {error&&<p role="alert" className="text-sm text-semantic-critical">{error} <button type="button" className="underline" onClick={()=>load()}>Reload approval details</button></p>}
     {!context?<p role="status" className="text-sm text-ink-secondary">Loading approval details…</p>:<>
+      <PolicyApprovalSubject record={record} context={context} busy={busy} onSave={act}/>
       <dl className="text-xs space-y-1 text-ink-secondary">
         <div><dt className="inline font-medium">Business approver: </dt><dd className="inline">{context.named_approver?.name||'Not designated'}{record.approver_id&&!context.named_approver?' · Legacy designation retained in Policy details':''}</dd></div>
         <div><dt className="inline font-medium">Linked platform account: </dt><dd className="inline">{context.linked_account ? context.linked_account.state+(context.linked_account.has_client_access?' · Client access':' · No client access'):'None'}</dd></div>
@@ -62,19 +64,21 @@ export default function PolicyApprovalPanel({record, onChanged}) {
           <Textarea aria-label="Decision comment" value={comment} maxLength={4000} onChange={e=>setComment(e.target.value)} className="mt-1"/>
         </label>
         <div className="flex gap-2">
-          <Button type="button" size="sm" disabled={busy} data-testid="policy-approve" onClick={()=>act('approve',{approval_request_id:context.approval_request_id,comment})}>Approve</Button>
+          <Button type="button" size="sm" disabled={busy||!context.subject} data-testid="policy-approve" onClick={()=>act('approve',{approval_request_id:context.approval_request_id,comment})}>Approve</Button>
           <Button type="button" variant="outline" size="sm" disabled={busy||!comment.trim()} data-testid="policy-reject" onClick={()=>act('reject',{approval_request_id:context.approval_request_id,comment})}>Return to Draft</Button>
         </div>
       </>}
       {['draft','approved'].includes(context.status)&&context.can_submit&&<Button type="button" size="sm" variant="outline" disabled={busy} data-testid="policy-submit-review" onClick={()=>act('submit-review')}>{context.status==='approved'?'Submit new revision':'Submit for approval'}</Button>}
-      {pending&&!context.approval_request_id&&context.can_submit&&<Button type="button" size="sm" variant="outline" disabled={busy} onClick={()=>act('submit-review')}>Confirm legacy submission</Button>}
+      {pending&&context.can_submit&&<Button type="button" size="sm" variant="outline" disabled={busy} onClick={()=>act('return-draft',{approval_request_id:context.approval_request_id||'legacy'})}>Withdraw submission to Draft</Button>}
       {!!context.history.length&&<details><summary className="text-sm cursor-pointer">Approval history ({context.history.length})</summary>
         <ol className="mt-2 space-y-2">{context.history.map((h,i)=><li key={i} className="text-xs text-ink-secondary">
           <span className="font-medium">{h.action.replaceAll('_',' ')}</span> · {h.by_name||h.by_email||h.by} · {new Date(h.at).toLocaleString()}
           {h.authority&&<div>{h.authority==='internal_administrative'?'Internal administrative approval':'Delegated Policy approval'}</div>}
           {(h.comment||h.reason)&&<p>{h.comment||h.reason}</p>}
+          {['submitted','approved','rejected'].includes(h.action)&&<><ApprovalSubject subject={h.subject}/>{h.action==='approved'&&h.subject?.subject_id!==context.subject?.subject_id&&<p>Historical approval — not the current subject</p>}</>}
         </li>)}</ol>
       </details>}
+      {!!context.external_history?.length&&<details><summary className="text-sm cursor-pointer">Recorded external approvals</summary><ul className="mt-2 space-y-3">{context.external_history.map((h,i)=><li key={i} className="text-xs text-ink-secondary"><p>{h.provenance} · Recorded by {h.recorded_by_name||h.recorded_by} · {h.recorded_at}</p><ApprovalSubject subject={h.subject}/></li>)}</ul></details>}
     </>}
   </section>;
 }

@@ -44,6 +44,7 @@ import remediation
 import risk_ids
 import policy_reviews
 import policy_approval
+import policy_provenance
 import risk_lifecycle
 import vendor_governance
 import review_occurrences
@@ -2412,6 +2413,8 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         elif existing.get("occurrences") and incoming:
             raise HTTPException(409, "Reload this occurrence before editing")
     body = _editable_patch(kind, incoming, existing, user=user)
+    if kind == "policies":
+        body = policy_provenance.invalidate(body, existing)
     if kind == "tasks" and "assignee_id" in incoming and incoming["assignee_id"] in (None, "") and existing.get("owner_id"):
         body["assignee_id"] = None
     if kind == "tasks":
@@ -2530,13 +2533,21 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(403, "Forbidden")
     if kind == "contacts" and await db.clients.find_one({"client_id": existing["client_id"], "primary_contact_id": item_id}):
         raise HTTPException(409, "This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.")
+    if kind == "policies" and (existing.get("approval_history") or existing.get("decision_history") or existing.get("status") in ("approved", "in_review")):
+        raise HTTPException(409, "Policy approval history must be retained; retire the Policy instead")
     if kind in ("risks","vendors") or kind == "reviews" and (existing.get("risk_id") or existing.get("vendor_id") or existing.get('ai_system_id')):
         raise HTTPException(409, "Risks and their Review obligations must be retained")
     if kind == "reviews" and (existing.get("status") == "completed" or existing.get("occurrences")):
         raise HTTPException(409, "Completed reviews must be retained")
     if kind == "tasks" and (existing.get("status") == "done" or existing.get("completed_at")):
         raise HTTPException(409, "Completed Action Items must be retained")
-    await db[_coll_for(kind)].delete_one({id_field: item_id})
+    delete_query = {id_field: item_id}
+    if kind == "policies":
+        delete_query.update({"updated_at": existing.get("updated_at"), "status": existing.get("status"),
+                             "approval_history": existing.get("approval_history"), "decision_history": existing.get("decision_history")})
+    deleted = await db[_coll_for(kind)].delete_one(delete_query)
+    if kind == "policies" and not deleted.deleted_count:
+        raise HTTPException(409, "Policy changed; reload before deleting")
     await audit(user, "delete", entity_type, item_id, existing.get("client_id"))
     return {"ok": True}
 
@@ -3865,19 +3876,23 @@ async def policy_verify(policy_id: str, body: PolicyVerifyIn, user: Dict = Depen
         if v not in (None, ""):
             update[k] = v
     await assignment_eligibility.validate(db, "policies", {**p, **update}, _can_access_client, p)
-    result = await db.policies.update_one({"policy_id": policy_id, "updated_at": p.get("updated_at"), "status": p.get("status")}, {"$set": update})
+    changed = {k: v for k, v in update.items() if v != p.get(k)}
+    if body.status != "approved":
+        update = policy_provenance.invalidate(changed, p)
+    operation = {"$set": update}
+    if body.status == "approved":
+        subject = await policy_provenance.snapshot(sys.modules[__name__], {**p, **update})
+        update["approval_subject"] = subject
+        operation["$push"] = {"decision_history": {
+            "action": "external_approval_recorded", "recorded_by": user["user_id"],
+            "recorded_by_name": user.get("name"), "recorded_at": _now(),
+            "reported_approver_id": body.approver_id, "reported_approved_at": body.approved_at,
+            "provenance": "Verified metadata; not an in-app approval", "subject": subject}}
+    result = await db.policies.update_one({"policy_id": policy_id, "updated_at": p.get("updated_at"), "status": p.get("status")}, operation)
     if not result.matched_count:
         raise HTTPException(409, "Policy changed; reload before verifying")
-    await audit(user, "verify", "policy", policy_id, p["client_id"],
-                meta={"prev_presence": p.get("presence"), "verified_fields": [k for k in update.keys() if k not in ("updated_at", "verified_at", "verified_by")]})
-    fresh = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
-    if body.status == "approved":
-        decision = {"action": "external_approval_recorded", "recorded_by": user["user_id"], "recorded_at": _now(),
-                    "reported_approver_id": body.approver_id, "reported_approved_at": body.approved_at,
-                    "provenance": "Verified metadata; not an in-app approval"}
-        await db.policies.update_one({"policy_id": policy_id}, {"$push": {"decision_history": decision}})
-        fresh["decision_history"] = [*(fresh.get("decision_history") or []), decision]
-    return fresh
+    await audit(user, "verify", "policy", policy_id, p["client_id"], meta={"prev_presence": p.get("presence"), "verified_fields": list(update)})
+    return await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
 
 
 # ---------------- Notifications ----------------
@@ -4375,6 +4390,8 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     if body.action == "delete":
         if user.get("role") not in ("super_admin", "platform_admin"):
             raise HTTPException(403, "Destructive action restricted")
+        if body.kind == "policies" and any(d.get("approval_history") or d.get("decision_history") or d.get("status") in ("approved", "in_review") for d in docs):
+            raise HTTPException(409, "Policy approval history must be retained; retire the Policy instead")
         if body.kind == "contacts" and await db.clients.find_one({"client_id": {"$in": [d["client_id"] for d in docs]}, "primary_contact_id": {"$in": body.ids}}):
             raise HTTPException(409, "A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.")
         if body.kind in ("risks","vendors") or body.kind == "reviews" and any(d.get("risk_id") or d.get("vendor_id") or d.get('ai_system_id') for d in docs):
@@ -4383,7 +4400,11 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
             raise HTTPException(409, "Completed reviews must be retained")
         if body.kind == "tasks" and any(d.get("status") == "done" or d.get("completed_at") for d in docs):
             raise HTTPException(409, "Completed Action Items must be retained")
-        await coll.delete_many({id_field: {"$in": body.ids}})
+        if body.kind == "policies":
+            for d in docs:
+                await delete_entity(body.kind, d[id_field], user)
+        else:
+            await coll.delete_many({id_field: {"$in": body.ids}})
         for d in docs:
             await audit(user, "bulk-delete", entity_type, d[id_field], d["client_id"])
         return {"ok": True, "count": len(docs)}

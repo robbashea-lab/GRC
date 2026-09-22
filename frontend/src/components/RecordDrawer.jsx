@@ -876,7 +876,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
             </Button>
           </div>
         )}
-        <PolicyApprovalPanel record={record} onChanged={data=>{Object.assign(record,data);setForm(p=>({...p,status:data.status}));onSaved?.();loadActivity();}}/>
+        <PolicyApprovalPanel record={record} onChanged={data=>{Object.assign(record,data);setForm(p=>({...p,status:data.status,version:data.version}));onSaved?.();loadActivity();}}/>
       </div>
     );
   }

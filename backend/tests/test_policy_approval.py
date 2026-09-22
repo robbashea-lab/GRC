@@ -24,7 +24,8 @@ class PolicyApprovalTests(unittest.IsolatedAsyncioTestCase):
             {"contact_id": "linked", "client_id": "a", "name": "Executive", "linked_user_id": "executive"},
             {"contact_id": "other", "client_id": "b", "name": "Private Contact"},
         ])
-        await server.db.policies.insert_one({"policy_id": "p", "client_id": "a", "title": "Policy", "status": "draft", "approver_id": "legacy"})
+        await server.db.policies.insert_one({"policy_id": "p", "client_id": "a", "title": "Policy", "status": "draft", "approver_id": "legacy",
+            "version":"1","approval_source":{"version":"1","external_reference":"https://documents.example.test/policy","external_version":"doc-v1"}})
         self.sign_in("admin")
 
     async def authority(self, account=None, contact="contact"):

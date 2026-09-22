@@ -278,6 +278,7 @@ test('policy approval, vendor review, evidence, comments and invitations update 
     client_id: c.client_id,
     title: 'Test policy'
   });
+  await api.post(`/policies/${p.policy_id}/approval-subject`,{version:'1',external_reference:'https://documents.example.test/policy',external_version:'doc-v1'});
   const submitted=(await api.post(`/policies/${p.policy_id}/submit-review`)).data;
   await api.post(`/policies/${p.policy_id}/approve`, {
     approval_request_id:submitted.approval_request_id,

@@ -2,9 +2,11 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, ConfigDict
+from copy import deepcopy
+import policy_provenance
 
 INTERNAL = {"super_admin", "platform_admin"}
-PROTECTED = {"approval_account_id", "approver_contact_id", "approval_request_id"}
+PROTECTED = {"approval_account_id", "approver_contact_id", "approval_request_id"} | policy_provenance.PROTECTED
 
 
 class AuthorityIn(BaseModel):
@@ -73,7 +75,25 @@ def router_for(s):
                 "can_submit": s._writable(user),
                 "can_decide": may_decide(s, user, p),
                 "internal_approval": user.get("role") in INTERNAL,
-                "history": p.get("approval_history", [])}
+                "history": p.get("approval_history", []),
+                "external_history": p.get("decision_history", []),
+                "source": p.get("approval_source"), "subject": p.get("approval_subject")}
+
+    @router.post("/policies/{policy_id}/approval-subject")
+    async def source(policy_id: str, body: policy_provenance.SourceIn, user=Depends(s.get_current_user)):
+        p = await s._authorized_parent("policies", policy_id, user, write=True)
+        if p.get("status") == "in_review":
+            raise HTTPException(409, "Return the pending submission to Draft before changing the approval basis")
+        patch = {"approval_source": body.model_dump(), "version": body.version}
+        await policy_provenance.snapshot(s, {**p, **patch})
+        if patch["approval_source"] == p.get("approval_source") and patch["version"] == p.get("version"):
+            return p
+        entry = {"at": s._now(), "action": "approval_basis_updated", "by": user["user_id"],
+                 "by_name": user.get("name"), "by_email": user.get("email")}
+        patch.update({"status": "draft", "approved_at": None, "approval_subject": None, "updated_at": entry["at"]})
+        result = await change(p, patch, entry)
+        await s.audit(user, "policy-basis", "policy", policy_id, p["client_id"])
+        return result
 
     @router.post("/policies/{policy_id}/approval-authority")
     async def authority(policy_id: str, body: AuthorityIn, user=Depends(s.get_current_user)):
@@ -109,10 +129,11 @@ def router_for(s):
         if p.get("status") not in ("draft", "approved") and not (p.get("status") == "in_review" and not p.get("approval_request_id")):
             raise HTTPException(409, "Only Draft or Approved policies can be submitted")
         request_id = s.uuid.uuid4().hex
+        subject = await policy_provenance.snapshot(s, p)
         at = s._now()
         entry = {"at": at, "action": "submitted", "by": user["user_id"], "by_name": user.get("name"),
-                 "by_email": user.get("email"), "approval_request_id": request_id}
-        result = await change(p, {"status": "in_review", "approval_request_id": request_id, "updated_at": at}, entry)
+                 "by_email": user.get("email"), "approval_request_id": request_id, "subject": subject}
+        result = await change(p, {"status": "in_review", "approval_request_id": request_id, "approval_subject": subject, "updated_at": at}, entry)
         await s.audit(user, "submit-review", "policy", policy_id, p["client_id"], meta={"approval_request_id": request_id})
         if p.get("approval_account_id"):
             await s.create_notification(user_id=p["approval_account_id"], title=f"Policy submitted for your approval: {p['title']}",
@@ -129,17 +150,30 @@ def router_for(s):
             raise HTTPException(422, "A return reason is required")
         return await decide(policy_id, body, user, "rejected")
 
+    @router.post("/policies/{policy_id}/return-draft")
+    async def withdraw(policy_id: str, body: DecisionIn, user=Depends(s.get_current_user)):
+        p = await s._authorized_parent("policies", policy_id, user, write=True)
+        if p.get("status") != "in_review" or body.approval_request_id != (p.get("approval_request_id") or "legacy"):
+            raise HTTPException(409, "This submission is no longer pending")
+        entry = {"at": s._now(), "action": "submission_withdrawn", "by": user["user_id"],
+                 "by_name": user.get("name"), "by_email": user.get("email"), "subject": p.get("approval_subject")}
+        result = await change(p, {"status": "draft", "updated_at": entry["at"]}, entry)
+        await s.audit(user, "withdraw-submission", "policy", policy_id, p["client_id"])
+        return result
+
     async def decide(policy_id, body, user, decision):
         p = await s._authorized_parent("policies", policy_id, user)
         if not may_decide(s, user, p):
             raise HTTPException(403, "This account is not authorized to approve this Policy")
         if p.get("status") != "in_review" or p.get("approval_request_id") != body.approval_request_id:
             raise HTTPException(409, "This submission is no longer pending; reload the Policy")
+        if decision == "approved" and not p.get("approval_subject"):
+            raise HTTPException(409, "Legacy submission has no approval basis; return it for a new documented submission")
         at = s._now()
         entry = {"at": at, "action": decision, "by": user["user_id"], "by_name": user.get("name"),
                  "by_email": user.get("email"), "comment": body.comment.strip(),
                  "authority": "internal_administrative" if user.get("role") in INTERNAL else "delegated_policy",
-                 "approval_request_id": body.approval_request_id}
+                 "approval_request_id": body.approval_request_id, "subject": deepcopy(p.get("approval_subject"))}
         patch = {"status": "approved" if decision == "approved" else "draft", "updated_at": at}
         if decision == "approved":
             patch["approved_at"] = at

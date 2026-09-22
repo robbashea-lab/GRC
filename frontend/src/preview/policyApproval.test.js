@@ -9,7 +9,7 @@ beforeEach(async()=>{
   const db=readStore();cid=db.clients[0].client_id;admin=db.user.user_id;
   db.users.push(...['executive','foreign','disabled'].map(id=>({user_id:id,name:id,email:id+'@example.test',status:id==='disabled'?'disabled':'active',role:'client_readonly',client_ids:[id==='foreign'?db.clients[1].client_id:cid]})));
   db.contacts.push({contact_id:'business',client_id:cid,name:'Business Contact',linked_user_id:'executive'});
-  db.policies.push({policy_id:'p',client_id:cid,title:'Policy',status:'draft',approver_id:'historical'});
+  db.policies.push({policy_id:'p',client_id:cid,title:'Policy',status:'draft',approver_id:'historical',version:'1',approval_source:{version:'1',external_reference:'https://documents.example.test/policy',external_version:'doc-v1'}});
   saveStore(db);
 });
 const authority=account=>api.post('/policies/p/approval-authority',{approver_contact_id:'business',approval_account_id:account});
