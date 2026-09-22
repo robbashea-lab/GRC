@@ -23,6 +23,8 @@ async function render(){await act(async()=>root.render(<FrameworkDrawer open rec
 test('default assessment combines source context, narrative and status with progressive guidance',async()=>{
   await render();expect(container.textContent).toContain('Reference · CIS IG1 · 1.1');expect(container.textContent).toContain('What this means');
   expect(container.querySelector('[aria-label="Assessment notes"]')).toBeTruthy();expect(container.querySelector('[aria-label="Assessment Status"]')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Not Assessed');
+  expect(container.textContent).toContain('Framework source reference');
   expect(container.textContent).not.toContain('What to ask the client');expect(container.querySelector('details').open).toBe(false);
   expect(container.querySelector('[aria-label="Additional notes (previously recorded)"]').value).toBe('Legacy narrative retained');
 });

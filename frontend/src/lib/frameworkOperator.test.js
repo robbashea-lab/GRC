@@ -5,6 +5,7 @@ test('CIS guidance covers every existing safeguard without modifying the catalog
   const before=JSON.stringify(CATALOGS['cis-ig1']);
   for(const d of CATALOGS['cis-ig1'].requirements){const g=operatorGuidance('cis-ig1',d);expect(g.meaning).toBe(d.guidance);expect(g.implementation.length).toBeGreaterThan(100);expect(g.evidence.length).toBeGreaterThan(50);}
   expect(JSON.stringify(CATALOGS['cis-ig1'])).toBe(before);
+  expect(new Set(CATALOGS['cis-ig1'].requirements.map(d=>operatorGuidance('cis-ig1',d).evidence)).size).toBe(56);
 });
 test('status labels explain existing states without creating a competing lifecycle',()=>{
   expect(Object.keys(operatorStatuses('cis-ig1'))).toEqual(['not_assessed','in_progress','addressed','needs_attention','not_applicable']);
