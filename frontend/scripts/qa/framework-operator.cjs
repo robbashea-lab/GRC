@@ -46,6 +46,14 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
       await drawer().getByRole('tab',{name:'Assessment',exact:true}).focus();await page.keyboard.press('ArrowRight');await expect(drawer().getByRole('tab',{selected:true})).not.toHaveText('Assessment');await tab('Assessment');
       if(process.env.QA_ARTIFACTS)await page.screenshot({path:path.join(process.env.QA_ARTIFACTS,'operator-'+key+'.png')});await page.keyboard.press('Escape');
       const a=(await db()).framework_assessments.find(a=>a.client_id===cid&&a.framework_key===key&&a.definition_id===id);assert.equal(a.assessment_history.length,2);assert.equal((await db()).findings.find(f=>f.framework_assessment_id===a.framework_assessment_id).status,'closed');
+      if(key==='hipaa'){
+        await go('/compliance/hipaa');await page.getByTestId('requirement-164.308(a)(3)(ii)(A)').getByRole('button').first().click();
+        await expect(drawer()).toContainText('Addressable does not mean optional');
+        await drawer().getByLabel('Assessment notes',{exact:true}).fill('Supervision and authorization documented for the scoped workforce.');
+        await drawer().getByLabel('Assessment Status').selectOption('addressed');await drawer().getByRole('button',{name:'Save assessment',exact:true}).click();await expect(drawer().getByRole('alert')).toContainText('addressability decision');
+        await drawer().getByLabel('Addressability decision').selectOption('as_written');await drawer().getByLabel('Decision rationale').fill('Written authorization and supervision are appropriate to the assessed workforce scope.');
+        await drawer().getByRole('button',{name:'Save assessment',exact:true}).click();await expect(drawer()).toContainText('Assessment saved.');await tab('History');await expect(drawer()).toContainText('Written authorization and supervision');await page.keyboard.press('Escape');
+      }
       if(key==='nist-csf-2'){
         await page.goto(direct);await tab('Profiles');await drawer().getByLabel('Include in Target Profile').check();
         await drawer().getByLabel('Target outcome',{exact:true}).fill('Mission dependencies inform all risk decisions.');
