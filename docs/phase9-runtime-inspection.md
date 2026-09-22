@@ -31,6 +31,11 @@
 2. A legacy client-management test's internal-user fixture omitted active status,
    inconsistent with authoritative assignment eligibility from Phase 4B.
    Correct the fixture, not application permissions or assertions.
+3. Registration accepted an empty/short password; bcrypt 5 raises on more than
+   72 encoded bytes. Validate the existing eight-character reset minimum and
+   bcrypt byte limit centrally before hashing; generated test credentials only.
+   [OWASP Password Storage, bcrypt input limits](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#input-limits-of-bcrypt)
+   supports the byte boundary; this is not an algorithm migration.
 
 The stale deployment must be updated to tested source before claiming persistent
 verification of Phases 7/8. Preview publication alone does not update FastAPI.
