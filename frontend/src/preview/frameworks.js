@@ -1,4 +1,5 @@
 import {validateCsfProfile} from '../lib/csfProfile';
+import {calendarDay} from '../lib/managementDates';
 import { validateAssignment } from './assignmentEligibility';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
@@ -18,7 +19,7 @@ export function validateFrameworkConfig(state){
     if(!c||Object.keys(c).some(k=>!['enabled','recurrence','custom_recurrence_days','due_date'].includes(k)))throw new Error('Invalid framework Review fields');
     if((c.enabled!=null&&typeof c.enabled!=='boolean')||(c.recurrence&&!CADENCES.includes(c.recurrence)))throw new Error('Invalid client cadence');
     if(c.recurrence==='custom'&&(!Number.isInteger(c.custom_recurrence_days)||c.custom_recurrence_days<1||c.custom_recurrence_days>3650))throw new Error('Custom cadence must be 1–3650 days');
-    if(c.due_date&&!/^\d{4}-\d{2}-\d{2}$/.test(c.due_date))throw new Error('Invalid Review date');
+    if(c.due_date&&(!/^\d{4}-\d{2}-\d{2}$/.test(c.due_date)||calendarDay(c.due_date)===null))throw new Error('Invalid Review date');
   }
 }
 export function reconcileFramework(db,cid,state){

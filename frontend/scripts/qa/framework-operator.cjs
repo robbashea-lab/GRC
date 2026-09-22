@@ -4,12 +4,14 @@ const {chromium}=require('playwright');
 const {expect}=require('playwright/test');
 const assert=require('node:assert/strict');
 const path=require('node:path');
+const base=process.env.QA_BASE_URL||'http://127.0.0.1:4174';
+if(new URL(base).hostname!=='127.0.0.1')throw new Error('Framework QA requires an isolated local preview.');
 const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory'],['hipaa','164.308(a)(1)(ii)(A)','requirement'],['iso-27001','4.1','requirement'],['soc-2','CC1.1','criterion']];
 (async()=>{
   const browser=await chromium.launch({headless:true,...(process.env.QA_BROWSER?{executablePath:process.env.QA_BROWSER}:{})});
   const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-  const go=p=>page.goto('http://127.0.0.1:4174'+p),db=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2'))),drawer=()=>page.getByTestId('framework-drawer');
+  const go=p=>page.goto(base+p),db=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2'))),drawer=()=>page.getByTestId('framework-drawer');
   const tab=name=>drawer().getByRole('tab',{name,exact:true}).click();
   try{
     await go('/login');await expect(page.locator('input[type=email]')).toHaveValue('');await expect(page.locator('input[type=password]')).toHaveValue('');
@@ -85,6 +87,19 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
         await page.getByLabel('CSF profile view').selectOption('gaps');await expect(page.locator('main tbody tr')).toHaveCount(1);await page.getByTestId(type+'-'+id).getByRole('button').first().click();await tab('Profiles');await expect(drawer().getByLabel('Target outcome',{exact:true})).toHaveValue('Mission dependencies inform all risk decisions.');await page.keyboard.press('Escape');
       }
       console.log('PASS '+key+': context, guidance, assessment, evidence download/relink, Finding/Action remediation/validation, history, next/previous, draft guard, deep link/refresh/back, search retention, keyboard tabs.');
+    }
+    if(!process.argv[2]){
+      const before=await db(),shared=before.findings.find(f=>f.client_id===cid&&f.title==='cis-ig1 coverage gap');
+      const sharedTask=before.tasks.find(t=>t.finding_id===shared.finding_id),sharedEvidence=before.evidence.find(e=>e.client_id===cid&&e.filename==='cis-ig1-proof.txt');
+      for(const [key,id,type] of cases){
+        await go('/compliance/'+key);await page.getByTestId(type+'-'+id).getByRole('button').first().click();await tab('Related');
+        for(const [kind,identity,title] of [['findings',shared.finding_id,shared.title],['tasks',sharedTask.task_id,sharedTask.title]]){
+          await drawer().getByLabel('Related record type',{exact:true}).selectOption(kind);await drawer().getByLabel('Related record',{exact:true}).selectOption(identity);await drawer().getByRole('button',{name:'Link record',exact:true}).click();await expect(drawer().getByRole('button',{name:title,exact:true})).toBeVisible();
+        }
+        await tab('Evidence');await drawer().getByLabel('Link existing Evidence').selectOption(sharedEvidence.evidence_id);await expect(drawer().getByRole('button',{name:sharedEvidence.filename,exact:true})).toBeVisible();await page.keyboard.press('Escape');
+      }
+      const after=await db();for(const kind of ['findings','tasks','evidence'])assert.equal(after[kind].length,before[kind].length);
+      console.log('PASS cross-framework reuse: one existing Finding, Action and Evidence linked through all five framework UIs without duplicate records.');
     }
     assert.deepEqual((await db()).reviews.filter(r=>r.client_id===cid),reviews);
     for(const route of ['dashboard','calendar','reviews','findings','action-items','risks','policies','vendors','ai-governance','contacts','evidence','onboarding','client-settings',...cases.map(c=>'compliance/'+c[0])]){await go('/'+route);await expect(page.locator('main')).not.toBeEmpty();}

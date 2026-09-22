@@ -1,0 +1,41 @@
+const {chromium}=require('playwright');
+const {expect}=require('playwright/test');
+const assert=require('node:assert/strict'),{createHash}=require('node:crypto');
+const key='grc_interactive_demo_v2',base=process.env.QA_BASE_URL||'http://127.0.0.1:4174';
+if(new URL(base).hostname!=='127.0.0.1')throw new Error('Policy QA requires an isolated local preview.');
+let policyId;
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ const store=()=>page.evaluate(key=>JSON.parse(sessionStorage.getItem(key)),key);
+ const policy=async()=>(await store()).policies.find(p=>p.policy_id===policyId);
+ const open=async()=>{await page.goto(base+'/policies');await page.getByRole('row').filter({hasText:'Phase 8 provenance QA'}).click();await expect(page.getByRole('region',{name:'Policy approval authority'})).toBeVisible();};
+ const configure=async version=>{await page.getByText('Approval document & version',{exact:true}).click();await page.getByLabel('Approval Policy version',{exact:true}).fill(version);};
+ const approve=async()=>{await page.getByTestId('policy-submit-review').click();await expect(page.getByTestId('policy-approve')).toBeEnabled();await page.getByLabel('Decision comment',{exact:true}).fill('Reviewed exact subject');await page.getByTestId('policy-approve').click();await expect.poll(async()=>(await policy()).status).toBe('approved');};
+ try {
+  await page.goto(base+'/login');await page.getByTestId('explore-demo').click();await page.waitForURL('**/clients');
+  await page.goto(base+'/policies');await page.getByTestId('create-policies-button').click();await page.getByTestId('field-title').fill('Phase 8 provenance QA');await page.getByTestId('drawer-save').click();await expect(page.getByTestId('policies-drawer')).toHaveCount(0);policyId=(await store()).policies.find(p=>p.title==='Phase 8 provenance QA').policy_id;
+  await open();await configure('1');await page.getByLabel('External document reference',{exact:true}).fill('https://documents.example.test/policy');
+  await page.getByLabel('Document/version identifier',{exact:true}).fill('SharePoint-version-1');await page.getByRole('button',{name:'Save approval basis',exact:true}).click();
+  await expect.poll(async()=>(await policy()).approval_source?.external_version).toBe('SharePoint-version-1');await approve();
+  const v1=(await policy()).approval_history.find(h=>h.action==='approved');assert.equal(v1.subject.version,'1');assert.equal(v1.subject.basis.document_version,'SharePoint-version-1');
+  await open();await page.getByTestId('field-version').fill('2');await page.getByTestId('drawer-save').click();await expect.poll(async()=>(await policy()).status).toBe('draft');
+  await open();await configure('2');await page.getByLabel('Document/version identifier',{exact:true}).fill('SharePoint-version-2');await page.getByRole('button',{name:'Save approval basis',exact:true}).click();
+  await expect.poll(async()=>(await policy()).approval_source?.external_version).toBe('SharePoint-version-2');await approve();
+  await open();await page.getByText(/^Approval history/).click();await expect(page.getByTestId('policies-drawer')).toContainText('Version 1');await expect(page.getByTestId('policies-drawer')).toContainText('Version 2');await expect(page.getByTestId('policies-drawer')).toContainText('Historical approval — not the current subject');
+  assert.deepEqual((await policy()).approval_history.find(h=>h.action==='approved'),v1);
+  await page.getByTestId('tab-evidence').click();
+  const bytes=Buffer.from('Exact policy document v3');
+  await page.getByTestId('drawer-evidence-input').setInputFiles({name:'policy-v3.txt',mimeType:'text/plain',buffer:bytes});
+  await expect.poll(async()=>(await store()).evidence.find(e=>e.linked_id===policyId)?.sha256).toBe(createHash('sha256').update(bytes).digest('hex'));
+  await page.getByTestId('tab-overview').click();await configure('3');
+  await page.getByLabel('Approval basis',{exact:true}).selectOption('evidence');
+  await expect(page.getByRole('option',{name:/policy-v3.txt/})).toHaveCount(1);const eid=(await store()).evidence.find(e=>e.linked_id===policyId).evidence_id;
+  await page.getByLabel('Policy document',{exact:true}).selectOption(eid);await page.getByRole('button',{name:'Save approval basis',exact:true}).click();
+  await expect.poll(async()=>(await policy()).status).toBe('draft');await approve();await open();await expect(page.getByTestId('policies-drawer')).toContainText(createHash('sha256').update(bytes).digest('hex'));
+  assert.deepEqual((await policy()).approval_history.find(h=>h.action==='approved'),v1);
+  await page.getByText(/^Approval history/).click();if(process.env.QA_ARTIFACTS)await page.screenshot({path:require('node:path').join(process.env.QA_ARTIFACTS,'policy-history.png'),fullPage:true});
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({pass:true,environment:'isolated Demo browser',scenarios:['external v1 approved','generic version change returns Draft','external v2 approval','original snapshot unchanged','history labels','actual uploaded v3 SHA-256','uploaded approval and reload'],consoleErrors:errors}));
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});
