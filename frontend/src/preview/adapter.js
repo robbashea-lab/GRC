@@ -1,5 +1,6 @@
 import catalog from '@/lib/onboardingCatalog.json';
 import { assignmentCandidates } from './assignmentEligibility';
+import { clientProjection, leadCandidates } from './clientRelationships';
 import {aiRequest,aiRelated} from './aiGovernance';
 import {frameworkRequest,frameworkReverse,frameworkScope} from './frameworks';
 import { baselineState, saveBaseline } from './baseline';
@@ -109,7 +110,8 @@ export async function previewAdapter(config) {
           .map(l => ({...l,log_id:l.log_id || l.audit_id})));
       }
       if (path === '/clients/directory') return respond(portfolio(db, params.include_archived === true || params.include_archived === 'true'));
-      if (path === '/clients') return respond(db.clients.filter(c => params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived'));
+      if (path === '/clients') return respond(db.clients.filter(c => params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived').map(c => clientProjection(db, c)));
+      if (path === '/clients/grc-leads') return respond(leadCandidates(db, params.client_id));
       if (kind === 'risks' && name === 'review-history') return respond(db.reviews.filter(r=>r.risk_id===id&&r.client_id===record(db,'risks',id).client_id).flatMap(r=>(r.occurrences||[]).map(o=>({...o,review_id:r.review_id}))));
       if (['risks','tasks','vendors'].includes(kind) && name === 'activity') {
         const task=record(db,kind,id);
@@ -246,6 +248,7 @@ export async function previewAdapter(config) {
       if(body.kind==='framework_assessments')throw new Error('Use the framework workspace; assessment history is retained');
       if (!ids[body.kind] || !body.ids?.length) throw new Error('Select records first.');
       const rows = body.ids.map(i => record(db, body.kind, i));
+      if (body.kind === 'contacts' && body.action === 'delete' && db.clients.some(c => rows.some(r => r.client_id === c.client_id && r.contact_id === c.primary_contact_id))) throw new Error('A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.');
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
         throw new Error('Review history must be retained.');
       if (body.kind === 'tasks' && body.action === 'delete' && rows.some(r=>r.status==='done'||r.completed_at)) throw new Error('Completed Action Items must be retained.');
@@ -355,6 +358,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
         if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
         if(kind==='evidence'&&['ai_system','ai_systems'].includes(r.linked_type)&&(db.ai_systems||[]).some(x=>x.ai_system_id===r.linked_id&&x.status==='retired'))throw new Error('Retired AI evidence must be retained');
@@ -402,6 +406,7 @@ export async function previewAdapter(config) {
         return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
       const result = write(db, kind, body, id);
+      if (kind === 'clients') return save(clientProjection(db, result));
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});
       if (kind === 'evidence' && body.linked_type === 'task') audit(db,'Evidence uploaded','tasks',record(db,'tasks',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});

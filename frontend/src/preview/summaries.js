@@ -5,6 +5,7 @@ import {managementMetrics,managementProgramStatus,portfolioItem} from '../lib/ma
 import rules from '../lib/managementRules.json';
 import {managementDay} from '../lib/managementDates';
 import {representedFinding} from '../lib/grcWork';
+import {clientProjection} from './clientRelationships';
 
 const sources=(db,cid)=>Object.fromEntries(DASHBOARD_KINDS.map(k=>[k,list(db,k,cid)]));
 const model=(db,cid,today,scope={kind:'org'})=>{
@@ -26,8 +27,7 @@ export function portfolio(db,includeArchived,today=new Date()) {
     }
     const major=m.work.filter(r=>r.kind==='reviews'&&r.day>=day&&['risk','risk_assessment','vendor','policy','access','penetration_test','bcp_dr','incident_response','awareness'].includes(r.record.review_type)).sort((a,b)=>a.day-b.day)[0];
     const activity=db.logs.find(l=>l.client_id===c.client_id);
-    return {...c,client_status:c.status,program_status:managementProgramStatus(c,m),grc_lead_id:c.assigned_owner_id,
-      grc_lead:db.users.find(u=>u.user_id===c.assigned_owner_id)||null,...m.counts,metric_items,
+    return {...clientProjection(db,c),client_status:c.status,program_status:managementProgramStatus(c,m),...m.counts,metric_items,
       next_major_item:major?{...portfolioItem(major,c,today),review_id:major.id,review_type:major.record.review_type}:null,
       open_actions:m.counts.past_due+m.counts.due_30d,open_findings:m.activeRecords.findings.length,
       significant_risks:m.significantRisks.length,critical_high_findings:m.materialFindings.length,

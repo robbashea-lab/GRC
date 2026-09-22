@@ -4,6 +4,7 @@ from typing import Dict
 from fastapi import APIRouter, Depends, HTTPException, Query
 from management_obligations import METRICS, calendar_day, load_records, management_model, portfolio_item, program_status
 from grc_rules import represented_finding
+from client_relationships import project
 from server import db, get_current_user
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
@@ -17,6 +18,7 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
     if role == "platform_admin" and user.get("client_ids"):
         query["client_id"] = {"$in": user["client_ids"]}
     clients = await db.clients.find(query, {"_id": 0}).to_list(None)
+    clients = await project(db, clients)
     client_ids = [c["client_id"] for c in clients]
     now = datetime.now(timezone.utc).isoformat()
     today, day = now[:10], calendar_day(now)
@@ -61,11 +63,9 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
                     workload(uid)["open_actions"] += 1
                     workload(uid)["client_ids"].add(cid)
         major = sorted([r for r in m["work"] if r["kind"] == "reviews" and r["day"] is not None and r["day"] >= day and r["record"].get("review_type") in ("risk", "risk_assessment", "vendor", "policy", "access", "penetration_test", "bcp_dr", "incident_response", "awareness")], key=lambda r: r["day"])
-        lead = names.get(c.get("assigned_owner_id"), {})
         activity = latest.get(cid)
         rows.append({**c, "client_status": c.get("status", "active"), "program_status": program_status(c, m),
             "grc_lead_id": c.get("assigned_owner_id"),
-            "grc_lead": {k: lead.get(k) for k in ("user_id", "name", "email")} if c.get("assigned_owner_id") else None,
             **m["counts"], "metric_items": items,
             "next_major_item": {**portfolio_item(major[0], c, today), "review_id": major[0]["id"], "review_type": major[0]["record"].get("review_type")} if major else None,
             "open_actions": m["counts"]["past_due"] + m["counts"]["due_30d"],

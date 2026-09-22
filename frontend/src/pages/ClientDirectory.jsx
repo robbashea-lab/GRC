@@ -1,5 +1,7 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import ClientRelationshipValue from '@/components/ClientRelationshipValue';
+import {primaryContact, grcLead} from '@/lib/clientRelationships';
 import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useRef, useState } from "react";
 import RecordDrawer from '@/components/RecordDrawer';
@@ -189,7 +191,7 @@ export default function ClientDirectory() {
   const userMap = useMemo(() => {
     const m = {}; users.forEach((u) => { m[u.user_id] = u; }); return m;
   }, [users]);
-  const admins = useMemo(() => users.filter((u) => ["super_admin", "platform_admin"].includes(u.role)), [users]);
+  const admins = useMemo(() => [...new Map(rows.filter(r => r.assigned_owner_id).map(r => [r.assigned_owner_id, {user_id: r.assigned_owner_id, name: grcLead(r).name}])).values()], [rows]);
 
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -205,14 +207,14 @@ export default function ClientDirectory() {
       return (
         (r.name || "").toLowerCase().includes(s) ||
         (r.industry || "").toLowerCase().includes(s) ||
-        (r.primary_contact || "").toLowerCase().includes(s) ||
-        (r.grc_lead?.name || "").toLowerCase().includes(s)
+        primaryContact(r).name.toLowerCase().includes(s) ||
+        grcLead(r).name.toLowerCase().includes(s)
       );
     });
   }, [rows, q, filter, leadFilter, user]);
 
   const tableSource = rows;
-  const columns = tableColumns('portfolio', { rows: tableSource, users,  });
+  const columns = tableColumns('portfolio', { rows: tableSource, users: rows.map(r => r.grc_lead).filter(Boolean) });
   const table = useTableControls({ columns, rows: tableSource, module: 'portfolio', scope: `${user?.user_id}:${'platform'}` });
   const filtered = table.apply(presetRows);
 
@@ -359,19 +361,15 @@ export default function ClientDirectory() {
                             <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help" />
                           </div>
                           <div className="text-xs text-ink-help truncate">
-                            {r.industry || "—"}{r.primary_contact ? ` · ${r.primary_contact}` : ""}
+                            {r.industry || "—"}{r.primary_contact_id || r.primary_contact ? ` · Primary Contact: ${primaryContact(r).name}` : ""}
+                            {primaryContact(r).notice && <span className="block">{primaryContact(r).notice}</span>}
                           </div>
                         </div>
                       </button>
                     </div>
                   </td>
                   <td className="tbl-cell">
-                    {r.grc_lead ? (
-                      <div className="text-xs">
-                        <div className="text-ink-primary font-medium">{r.grc_lead.name || r.grc_lead.email}</div>
-                        {r.grc_lead.email && r.grc_lead.name && <div className="text-ink-help text-xs max-w-[170px] truncate" title={r.grc_lead.email}>{r.grc_lead.email}</div>}
-                      </div>
-                    ) : <span className="text-ink-disabled text-xs">Unassigned</span>}
+                    <ClientRelationshipValue client={r} />
                   </td>
                   <td className="tbl-cell"><StatusChip value={r.program_status} /></td>
                   <MetricCell value={r.past_due} tone={r.past_due > 0 ? "critical" : "neutral"}
