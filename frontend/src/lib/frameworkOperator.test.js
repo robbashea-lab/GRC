@@ -35,3 +35,10 @@ test('assessment coverage counts partial assessments, excludes N/A and handles e
   expect(assessmentProgress([{status:'not_assessed'},{status:'in_progress'},{status:'needs_attention'},{status:'not_applicable'}])).toEqual({total:4,applicable:3,assessed:2,excluded:1});
   expect(assessmentProgress([])).toEqual({total:0,applicable:0,assessed:0,excluded:0});
 });
+test.each([0,0.5,0.9,1])('coverage remains understandable across every framework at %s assessed',fraction=>{
+  for(const catalog of Object.values(CATALOGS)){
+    const assessed=Math.floor(catalog.requirements.length*fraction);
+    const rows=catalog.requirements.map((d,i)=>({status:i<assessed?(i%2?'addressed':'in_progress'):'not_assessed'}));
+    expect(assessmentProgress(rows)).toEqual({total:rows.length,applicable:rows.length,assessed,excluded:0});
+  }
+});

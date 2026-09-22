@@ -3,13 +3,15 @@ import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
 
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'u',role:'super_admin'}})}));
+let mockRole='super_admin';
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'u',role:mockRole}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
 jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('./AssigneeSelect',()=>()=>null);
 jest.mock('./ui/sheet',()=>({Sheet:({children})=><div>{children}</div>,SheetContent:({children,...props})=><section {...props}>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>,SheetDescription:({children})=><p>{children}</p>}));
 let root,container,record;
 beforeEach(()=>{
+  mockRole='super_admin';
   global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.1',client_id:'client',status:'not_assessed',implementation:'',notes:'Legacy narrative retained',assessment_history:[]};
   api.get.mockImplementation(async path=>({data:path.endsWith('/related')?{reviews:[],evidence:[]}:path==='/frameworks/cis-ig1'?{assessments:[record]}:[]}));
@@ -33,4 +35,20 @@ test('notes save once, confirm success and remain readable in history including 
   expect(container.textContent).toContain('Assessment saved.');
   await act(async()=>{button('History').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));button('History').focus();});
   expect(container.textContent).toContain('Inventory omits remote devices.');expect(container.textContent).toContain('Additional notes: Legacy narrative retained');
+});
+test('read-only users retain context but cannot save an assessment',async()=>{
+  mockRole='client_viewer';await render();
+  expect(container.querySelector('fieldset').disabled).toBe(true);expect(button('Save assessment')).toBeUndefined();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+test('a failed context load is visible and does not enable a successful-looking save',async()=>{
+  api.get.mockRejectedValue(new Error('Unable to load related records'));await render();
+  expect(container.querySelector('[role="alert"]').textContent).toContain('Unable to load related records');
+  expect(button('Save assessment').disabled).toBe(true);expect(api.patch).not.toHaveBeenCalled();
+});
+test('a failed save preserves the draft and reports failure without a success message',async()=>{
+  await render();api.patch.mockRejectedValue(new Error('Assessment update denied'));
+  await act(async()=>button('Save assessment').click());
+  expect(container.querySelector('[role="alert"]').textContent).toBe('Assessment update denied');
+  expect(container.textContent).not.toContain('Assessment saved.');
 });
