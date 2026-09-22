@@ -42,3 +42,11 @@ test('ISO distinguishes ISMS requirements from risk-based Annex A selection',()=
   expect(context('iso-27001',definitions.find(d=>d.id==='4.1'))).toContain('This is an ISMS requirement');
   expect(context('iso-27001',definitions.find(d=>d.id==='A.5.1'))).toContain('selection alone does not demonstrate implementation');
 });
+
+test('SOC explains design versus operation without prescribing an audit period or sample',()=>{
+  const html=context('soc-2',CATALOGS['soc-2'].requirements[0]);
+  expect(html).toContain('Management Controls describes how this organization addresses it');
+  expect(html).toContain('without demonstrating operation across the recorded observation period');
+  expect(html).toContain('neither creates an audit opinion');
+  expect(html).not.toContain('Official requirement');
+});
