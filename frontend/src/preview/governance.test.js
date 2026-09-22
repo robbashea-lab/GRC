@@ -13,7 +13,9 @@ test('decisions cannot be forged through ordinary or bulk edits', async () => {
     await expect(api.post('/bulk',{kind:'policies',ids:[p.policy_id],action:'update',payload:change})).rejects.toBeTruthy();
   }
   await expect(api.post('/policies',{client_id:c.client_id,title:'Forged',status:'approved'})).rejects.toBeTruthy();
-  expect((await api.post(`/policies/${p.policy_id}/approve`,{})).data.approver_id).toBeTruthy();
+  await expect(api.post(`/policies/${p.policy_id}/approve`,{})).rejects.toBeTruthy();
+  const submitted=(await api.post(`/policies/${p.policy_id}/submit-review`)).data;
+  expect((await api.post(`/policies/${p.policy_id}/approve`,{approval_request_id:submitted.approval_request_id})).data.approval_history.at(-1).by).toBeTruthy();
 });
 
 test('review occurrences freeze evidence and reject stale rewrites', async () => {

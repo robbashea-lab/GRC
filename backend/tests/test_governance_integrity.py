@@ -42,9 +42,11 @@ class GovernanceIntegrityTests(ClientDashboardSourcesTests):
         self.assertEqual((await self.client.post('/api/policies',json={"client_id":"a","title":"Forged","status":"approved"})).status_code,422)
         await self.client.post('/api/bulk',json={"kind":"policies","ids":[pid],"action":"set-status","payload":{"status":"approved"}})
         self.assertEqual((await server.db.policies.find_one({'policy_id':pid}))['status'],'draft')
-        self.assertEqual((await self.client.post('/api/policies/'+pid+'/approve',json={})).status_code,403)
+        submitted=(await self.client.post('/api/policies/'+pid+'/submit-review')).json()
+        decision={"approval_request_id":submitted["approval_request_id"]}
+        self.assertEqual((await self.client.post('/api/policies/'+pid+'/approve',json=decision)).status_code,403)
         self.sign_in('admin')
-        self.assertEqual((await self.client.post('/api/policies/'+pid+'/approve',json={})).status_code,200)
+        self.assertEqual((await self.client.post('/api/policies/'+pid+'/approve',json=decision)).status_code,200)
 
     async def test_completion_snapshot_retry_and_evidence_retention(self):
         self.sign_in('member')

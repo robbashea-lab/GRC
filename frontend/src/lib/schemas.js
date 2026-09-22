@@ -219,7 +219,7 @@ export const SCHEMAS = {
       ]},
       { name: "version", label: "Version" },
       { name: "owner_id", label: "Owner", type: "user" },
-      { name: "approver_id", label: "Approver", type: "user" },
+      { name: "approver_id", label: "Legacy approver designation (not authority)", type: "user" },
       { name: "approved_at", label: "Approved on", type: "date" },
       { name: "last_reviewed_at", label: "Last reviewed", type: "date" },
       { name: "next_review_date", label: "Next review date", type: "date" },

@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import {policyApprovalRequest} from './policyApproval';
 import {frameworkSummary} from './frameworkSummary';
 import {calendarBuckets} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
@@ -85,6 +86,8 @@ export async function previewAdapter(config) {
     };
     const identity = identityRequest(db, path, method, params, body);
     if (identity !== undefined) return method === 'get' ? respond(identity) : save(identity);
+    const approval = policyApprovalRequest(db, path, method, params, body);
+    if (approval !== undefined) return method === 'get' ? respond(approval) : save(approval);
     if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id));
     if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));

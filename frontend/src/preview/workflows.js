@@ -263,6 +263,8 @@ export function action(db, kind, id, name, body) {
     const updated=patch({next_review:body.due_date||r.next_review,...(body.recurrence?{review_frequency:body.recurrence==='none'?'as_needed':body.recurrence}:{})});
     return {review:ensureVendorReviews(db,updated).find(r=>r.vendor_purpose==='vendor'),vendor_id:id};
   }
+  if (kind === 'policies' && name === 'verify' && r.status==='in_review') throw new Error('Return the pending submission to Draft before verifying metadata');
+  if (kind === 'policies' && name === 'verify' && Object.keys(body).some(k=>!['version','owner_id','approver_id','approved_at','last_reviewed_at','next_review_date','summary','status'].includes(k))) throw new Error('Unknown verification field');
   if (kind === 'policies' && name === 'verify') return patch({
     ...Object.fromEntries(Object.entries(body).filter(([, v]) => v != null && v !== '')),
     presence: 'verified_existing',
@@ -270,31 +272,5 @@ export function action(db, kind, id, name, body) {
     verified_by: db.user.user_id,
     ...(body.status === 'approved' ? {decision_history:[...(r.decision_history || []), {action:'external_approval_recorded',recorded_by:db.user.user_id,recorded_at:now(),reported_approver_id:body.approver_id,reported_approved_at:body.approved_at,provenance:'Verified metadata; not an in-app approval'}]} : {})
   });
-  if (kind === 'policies' && ['submit-review', 'approve', 'reject'].includes(name)) {
-    if (name === 'reject' && !body.reason?.trim()) throw new Error('Rejection reason is required.');
-    const status = {
-      'submit-review': 'in_review',
-      approve: 'approved',
-      reject: 'draft'
-    }[name];
-    return patch({
-      status,
-      ...(name === 'approve' ? {
-        approver_id: db.user.user_id,
-        approved_at: now()
-      } : {}),
-      approval_history: [...(r.approval_history || []), {
-        at: now(),
-        action: {
-          'submit-review': 'submitted',
-          approve: 'approved',
-          reject: 'rejected'
-        }[name],
-        by: db.user.user_id,
-        by_email: db.user.email,
-        ...body
-      }]
-    });
-  }
   throw new Error('This action is not implemented in the demo. No changes were saved.');
 }

@@ -278,8 +278,9 @@ test('policy approval, vendor review, evidence, comments and invitations update 
     client_id: c.client_id,
     title: 'Test policy'
   });
-  await api.post(`/policies/${p.policy_id}/submit-review`);
+  const submitted=(await api.post(`/policies/${p.policy_id}/submit-review`)).data;
   await api.post(`/policies/${p.policy_id}/approve`, {
+    approval_request_id:submitted.approval_request_id,
     comment: 'Test approval'
   });
   expect((await get('policies', c.client_id))[0]).toMatchObject({
