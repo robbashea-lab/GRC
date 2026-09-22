@@ -1,7 +1,7 @@
 import rules from '../lib/grcRules.json';
 export function guardEdit(kind, body, existing = {}, user) {
   if(kind==='policies') {
-    if(['approval_account_id','approver_contact_id','approval_request_id'].some(k=>k in body && body[k]!==existing[k]) || body.status==='in_review' && body.status!==existing.status) throw new Error('Use the dedicated approval action');
+    if(['approval_account_id','approver_contact_id','approval_request_id','approval_source','approval_subject'].some(k=>k in body && JSON.stringify(body[k])!==JSON.stringify(existing[k])) || body.status==='in_review' && body.status!==existing.status) throw new Error('Use the dedicated approval action');
     if(existing.status==='in_review' && Object.keys(body).some(k=>JSON.stringify(body[k])!==JSON.stringify(existing[k]) && !((body[k]==null||body[k]==='')&&(existing[k]==null||existing[k]==='')))) throw new Error('Return the pending submission to Draft before editing');
   }
   if(Object.keys(body).some(k=>k.startsWith('framework_')))throw new Error('Framework relationships are managed through the framework workspace');

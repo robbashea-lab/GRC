@@ -53,6 +53,7 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
 test('invalid finalization is atomic; historical data and existing policy metadata survive',async()=>{
   const c=(await api.post('/clients',{name:'History'})).data;
   const policy = (await api.post('/policies',{client_id:c.client_id,title:'Information Security Policy',version:'3',onboarding_note:'Historical note'})).data;
+  await api.post(`/policies/${policy.policy_id}/approval-subject`,{version:'3',external_reference:'https://documents.example.test/policy',external_version:'doc-v3'});
   const submitted=(await api.post(`/policies/${policy.policy_id}/submit-review`)).data;
   await api.post(`/policies/${policy.policy_id}/approve`,{approval_request_id:submitted.approval_request_id});
   await api.post('/requirements',{client_id:c.client_id,title:'SOC 2',status:'active'});

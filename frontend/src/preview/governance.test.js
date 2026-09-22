@@ -14,6 +14,7 @@ test('decisions cannot be forged through ordinary or bulk edits', async () => {
   }
   await expect(api.post('/policies',{client_id:c.client_id,title:'Forged',status:'approved'})).rejects.toBeTruthy();
   await expect(api.post(`/policies/${p.policy_id}/approve`,{})).rejects.toBeTruthy();
+  await api.post(`/policies/${p.policy_id}/approval-subject`,{version:'1',external_reference:'https://documents.example.test/policy',external_version:'doc-v1'});
   const submitted=(await api.post(`/policies/${p.policy_id}/submit-review`)).data;
   expect((await api.post(`/policies/${p.policy_id}/approve`,{approval_request_id:submitted.approval_request_id})).data.approval_history.at(-1).by).toBeTruthy();
 });

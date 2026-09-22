@@ -1,4 +1,6 @@
 import {ensureVendorReviews} from './vendors';
+import {approvalSnapshot} from './policyProvenance';
+import {invalidatePolicyApproval} from '../lib/policyProvenance';
 import {ensureRiskReview} from './risks';
 import { list, record, write, now, audit } from './store';
 import { reviewAction, reviewEvent } from './reviews';
@@ -265,12 +267,17 @@ export function action(db, kind, id, name, body) {
   }
   if (kind === 'policies' && name === 'verify' && r.status==='in_review') throw new Error('Return the pending submission to Draft before verifying metadata');
   if (kind === 'policies' && name === 'verify' && Object.keys(body).some(k=>!['version','owner_id','approver_id','approved_at','last_reviewed_at','next_review_date','summary','status'].includes(k))) throw new Error('Unknown verification field');
-  if (kind === 'policies' && name === 'verify') return patch({
-    ...Object.fromEntries(Object.entries(body).filter(([, v]) => v != null && v !== '')),
-    presence: 'verified_existing',
-    verified_at: now(),
-    verified_by: db.user.user_id,
-    ...(body.status === 'approved' ? {decision_history:[...(r.decision_history || []), {action:'external_approval_recorded',recorded_by:db.user.user_id,recorded_at:now(),reported_approver_id:body.approver_id,reported_approved_at:body.approved_at,provenance:'Verified metadata; not an in-app approval'}]} : {})
-  });
+  if(kind==='policies'&&name==='verify') {
+    let fields={...Object.fromEntries(Object.entries(body).filter(([,v])=>v!=null&&v!=='')),
+      presence:'verified_existing',verified_at:now(),verified_by:db.user.user_id};
+    if(body.status==='approved') {
+      const subject=approvalSnapshot(db,{...r,...fields});
+      fields.approval_subject=subject;
+      fields.decision_history=[...(r.decision_history||[]),{action:'external_approval_recorded',recorded_by:db.user.user_id,
+        recorded_by_name:db.user.name,recorded_at:now(),reported_approver_id:body.approver_id,reported_approved_at:body.approved_at,
+        provenance:'Verified metadata; not an in-app approval',subject}];
+    } else fields=invalidatePolicyApproval(fields,r);
+    return patch(fields);
+  }
   throw new Error('This action is not implemented in the demo. No changes were saved.');
 }
