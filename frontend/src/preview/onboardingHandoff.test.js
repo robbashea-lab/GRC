@@ -62,7 +62,12 @@ test('program adjustment preserves intake and work, is idempotent, and rejects i
   const baseline=(await api.get('/onboarding/baseline',{params:{client_id:cid}})).data.state;
   for(const [key,applicability] of [['soc-2','applies'],['cis-ig1','does_not_apply'],['cis-ig1','applies']]) await api.patch(`/onboarding/programs/${key}`,{client_id:cid,applicability});
   const after=await get();expect(after.programs.map(p=>p.key)).toEqual(expect.arrayContaining(['soc-2','cis-ig1']));
-  expect(after.records.reviews).toEqual(before.records.reviews);expect(after.records.policies).toEqual(before.records.policies);
+  // SOC activation adds its missing Reviews and links the existing baseline risk Review.
+  expect(after.records.reviews).toHaveLength(before.records.reviews.length+4);
+  for(const review of before.records.reviews)expect(after.records.reviews.find(r=>r.review_id===review.review_id)).toMatchObject(review);
+  expect(after.records.policies).toEqual(before.records.policies);
+  await api.patch('/onboarding/programs/soc-2',{client_id:cid,applicability:'applies'});
+  expect((await get()).records.reviews).toEqual(after.records.reviews);
   expect((await api.get('/onboarding/baseline',{params:{client_id:cid}})).data.state).toEqual(baseline);
   const db=readStore();db.user.role='client_readonly';db.user.client_ids=[cid];saveStore(db);
   await expect(api.patch('/onboarding/programs/cis-ig1',{client_id:cid,applicability:'applies'})).rejects.toBeTruthy();

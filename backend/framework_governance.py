@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 import review_occurrences
 import assignment_eligibility
-from framework_catalog import CATALOGS, CIS, definition_for, assessment_title
+from framework_catalog import CATALOGS, CIS, definition_for, assessment_title, active_definitions
+from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
 FRAMEWORKS=json.loads((ROOT/'frameworkDefinitions.json').read_text(encoding='utf-8'))['frameworks']
@@ -43,7 +44,9 @@ async def reconcile(s,cid,state,user):
 
 
 async def reconcile_catalog(s,cid,state,user,key,catalog):
-    for definition in catalog['requirements']:
+    client=await s.db.clients.find_one({'client_id':cid},{'_id':0,'framework_settings':1}) if key=='soc-2' else {}
+    definitions=active_definitions(key,soc_configuration(client or {}))
+    for definition in definitions:
         aid=stable(cid,'assessment',definition['id'],key)
         await s.db.framework_assessments.update_one({'_id':aid},{'$setOnInsert':{
             'framework_assessment_id':aid,'client_id':cid,'framework_key':key,'definition_id':definition['id'],
@@ -93,6 +96,7 @@ class AssessmentPatch(BaseModel):
     addressable_rationale: Optional[str]=Field(default=None,max_length=4000)
     soa_applicability: Optional[Literal['','included','excluded']]=None
     soa_justification: Optional[str]=Field(default=None,max_length=4000)
+    management_controls: list[ManagementControl]=Field(default_factory=list,max_length=30)
 
 class LinkInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -132,7 +136,9 @@ def router_for(s):
     router=APIRouter(prefix='/api',tags=['framework-assessments'])
     async def scoped(cid,user):
         if not s._can_access_client(user,cid):raise HTTPException(403,'Forbidden')
-        if not await s.db.clients.find_one({'client_id':cid}):raise HTTPException(404,'Client not found')
+        client=await s.db.clients.find_one({'client_id':cid},{'_id':0})
+        if not client:raise HTTPException(404,'Client not found')
+        return client
     async def parent(aid,user,write=False):
         return await s._authorized_parent('framework_assessments',aid,user,write)
     async def target_record(kind,record_id,user):
@@ -150,16 +156,39 @@ def router_for(s):
         return await framework_summary.read(s,client)
     @router.get('/frameworks/{key}')
     async def workspace(key:str,client_id:str,user=Depends(s.get_current_user)):
-        await scoped(client_id,user)
+        client=await scoped(client_id,user)
         framework=next((f for f in FRAMEWORKS if f['key']==key),None)
         if not framework:raise HTTPException(404,'Framework not found')
         program=await s.db.requirements.find_one({'client_id':client_id,'baseline_key':key,'baseline_response':'applies'})
         rows=await s.db.framework_assessments.find({'client_id':client_id,'framework_key':key},{'_id':0}).to_list(None) if framework['implemented'] else []
         catalog=CATALOGS.get(key,{})
-        return {'framework':framework,'selected':bool(program),'configured':bool(rows),'definitions':catalog.get('requirements',[]) if framework['implemented'] and rows else [],'assessments':rows}
+        config=soc_configuration(client) if key=='soc-2' else {}
+        retained={a['definition_id'] for a in rows}
+        return {'framework':framework,'selected':bool(program),'configured':bool(rows),
+                'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
+                'assessments':rows,'configuration':config,
+                'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
+    @router.patch('/frameworks/soc-2/configuration')
+    async def configure_soc(body:SocConfiguration,user=Depends(s.get_current_user)):
+        client=await scoped(body.client_id,user)
+        if not s._writable(user):raise HTTPException(403,'Read-only role')
+        if not client.get('onboarding_baseline',{}).get('completed'):
+            raise HTTPException(409,'Complete onboarding before adjusting program configuration')
+        if not await s.db.requirements.find_one({'client_id':body.client_id,'baseline_key':'soc-2','baseline_response':'applies'}):
+            raise HTTPException(409,'Select SOC 2 Applies before configuring its scope')
+        config=body.model_dump(exclude={'client_id'})
+        await s.db.clients.update_one({'client_id':body.client_id},{'$set':{'framework_settings.soc-2':config}})
+        await reconcile(s,body.client_id,{**client['onboarding_baseline'],'requirements':{'soc-2':'applies'}},user)
+        await s.audit(user,'SOC 2 readiness scope updated','client',body.client_id,body.client_id,
+                      meta={'categories':config['categories'],'period_start':config['period_start'],'period_end':config['period_end']})
+        return config
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True);data={**old,**changes}
+        if 'management_controls' in changes:
+            if old['framework_key']!='soc-2':raise HTTPException(422,'Management control readiness fields apply only to SOC 2')
+            ids=[c['control_id'] for c in changes['management_controls']]
+            if len(ids)!=len(set(ids)):raise HTTPException(422,'Management control identifiers must be unique')
         if data['status'] not in STATUSES or any(data.get(k) is None for k in ('implementation','technology','notes','na_rationale')):raise HTTPException(422,'Invalid assessment fields')
         definition=definition_for(old['framework_key'],old['definition_id'])
         if data['status']=='not_applicable' and definition.get('specification')!='annex_control' and not data['na_rationale'].strip():raise HTTPException(422,'N/A rationale is required')

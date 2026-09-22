@@ -38,15 +38,15 @@ class Phase6VisibilityTests(unittest.IsolatedAsyncioTestCase):
         cis=before['items'][0]
         self.assertEqual(cis['total'],56)
         self.assertEqual(cis['status_counts'],{'not_assessed':50,'in_progress':3,'addressed':2,'not_applicable':1,'needs_attention':0})
-        self.assertIsNone(before['items'][1]['status_counts'])
-        self.assertFalse(before['items'][1]['tracking_available'])
+        self.assertEqual(before['items'][1]['status_counts'],{'not_assessed':33,'in_progress':0,'addressed':0,'needs_attention':0,'not_applicable':0})
+        self.assertTrue(before['items'][1]['tracking_available'])
         self.assertNotIn('percent',str(before))
         await self.client.patch('/api/framework_assessments/'+rows[6]['framework_assessment_id'],json={'status':'in_progress'})
         self.assertEqual((await self.summary())['items'][0]['status_counts']['not_assessed'],49)
         self.assertEqual((await self.summary())['items'][0]['status_counts']['in_progress'],4)
         await self.client.patch('/api/onboarding/programs/cis-ig1',json={'client_id':'a','applicability':'does_not_apply'})
         self.assertEqual([p['key'] for p in (await self.summary())['items']],['soc-2'])
-        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),56)
+        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),89)
 
     async def test_remediation_deduplicated_separate_from_assessment_and_evidence(self):
         row=(await self.configure())[0];aid=row['framework_assessment_id']

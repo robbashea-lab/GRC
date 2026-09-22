@@ -6,7 +6,16 @@ ROOT = Path(__file__).parents[1] / 'frontend/src/lib'
 CIS = json.loads((ROOT / 'cisIG1.json').read_text(encoding='utf-8'))
 HIPAA = json.loads((ROOT / 'hipaaSecurityRule.json').read_text(encoding='utf-8'))
 ISO = json.loads((ROOT / 'iso27001.json').read_text(encoding='utf-8'))
-CATALOGS = {'cis-ig1': CIS, 'hipaa': HIPAA, 'iso-27001': ISO}
+SOC = json.loads((ROOT / 'soc2.json').read_text(encoding='utf-8'))
+CATALOGS = {'cis-ig1': CIS, 'hipaa': HIPAA, 'iso-27001': ISO, 'soc-2': SOC}
+
+
+def active_definitions(key, configuration=None):
+    definitions = CATALOGS.get(key, {}).get('requirements', [])
+    if key == 'soc-2':
+        categories = (configuration or {}).get('categories', ['security'])
+        return [d for d in definitions if d['category'] in categories]
+    return definitions
 
 
 def definition_for(framework_key, definition_id):

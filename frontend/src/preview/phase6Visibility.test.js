@@ -18,7 +18,7 @@ test('Dashboard consumes 50/3/2/1 current CIS counts, truthful placeholders, the
   expect(programs.map(p=>p.key)).toEqual(['cis-ig1','soc-2']);
   expect(programs[0].assessment.status_counts).toEqual({not_assessed:50,in_progress:3,addressed:2,not_applicable:1,needs_attention:0});
   expect(programs[0]).toMatchObject({to:'/compliance/cis-ig1',progress:null,denominator:null,trackingAvailable:true});
-  expect(programs[1]).toMatchObject({assessment:null,trackingAvailable:false,progress:null});
+  expect(programs[1]).toMatchObject({assessment:{total:33,status_counts:{not_assessed:33}},trackingAvailable:true,progress:null});
   expect(()=>complianceProgress('other',baseline.state,requirements,summary)).toThrow('another client');
   await api.patch('/framework_assessments/'+workspace.assessments[6].framework_assessment_id,{status:'in_progress'});
   const data=await loadClientDashboard(api,{clientId:cid,user:JSON.parse(sessionStorage.getItem(STORE_KEY)).user,scope:{kind:'org'}});

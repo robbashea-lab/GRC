@@ -1,4 +1,5 @@
-import {FRAMEWORKS, ASSESSMENT_STATUSES} from '../lib/frameworks';
+import {FRAMEWORKS, ASSESSMENT_STATUSES, activeDefinitions} from '../lib/frameworks';
+import {socConfiguration} from '../lib/socReadiness';
 import rules from '../lib/grcRules.json';
 import {frameworkScope} from './frameworks';
 
@@ -9,7 +10,8 @@ export function frameworkSummary(db, cid) {
   return {client_id:cid,items:programs.map(f=>{
     const item={key:f.key,tracking_available:f.implemented,total:null,status_counts:null,unrecognized_status_count:null,last_assessed:null,open_findings:null,open_actions:null};
     if(!f.implemented)return item;
-    const rows=bounded((db.framework_assessments||[]).filter(a=>a.client_id===cid&&a.framework_key===f.key));
+    const active=new Set(activeDefinitions(f.key,socConfiguration(db.clients.find(c=>c.client_id===cid))).map(d=>d.id));
+    const rows=bounded((db.framework_assessments||[]).filter(a=>a.client_id===cid&&a.framework_key===f.key&&active.has(a.definition_id)));
     const aids=new Set(rows.map(a=>a.framework_assessment_id)),definitions=new Set(rows.map(a=>a.definition_id));
     const direct=kind=>new Set(rows.flatMap(a=>(a.related_links||[]).filter(l=>l.kind===kind).map(l=>l.id)));
     const reviewLinks=direct('reviews'),findingLinks=direct('findings'),actionLinks=direct('tasks');

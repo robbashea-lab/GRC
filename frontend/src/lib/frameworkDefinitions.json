@@ -51,7 +51,8 @@
       "label": "SOC 2",
       "category": "Certification / Contractual Programs",
       "selectable": true,
-      "implemented": false
+      "implemented": true,
+      "version": "2017 TSC · revised points of focus 2022"
     }
   ]
 }
