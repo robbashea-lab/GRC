@@ -1,6 +1,7 @@
 import {AI_DEFAULTS,AI_KEYS,aiProjection,validateAI,catalog} from '../lib/aiGovernance';
 import {record,write,audit,uid,now,ids} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
+import { validateAssignment } from './assignmentEligibility';
 
 export function aiRequest(db,path,method,params,body){
   db.ai_systems||=[];db.ai_intake||={};db.ai_counters||={};
@@ -43,7 +44,7 @@ export function aiRequest(db,path,method,params,body){
   }
   if(action||!['post','patch'].includes(method)||(!id&&method!=='post')||(id&&method!=='patch'))throw new Error('AI records are retained; use the supported lifecycle controls');
   if(Object.keys(body).some(k=>![...AI_KEYS,'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
-  const row={...AI_DEFAULTS,...old,...body};validateAI(db,row,old);
+  const row={...AI_DEFAULTS,...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
   if(['active','suspended','retired'].includes(row.status)&&old?.status!==row.status)admin();
   if(row.status==='retired')for(const r of db.reviews.filter(r=>r.ai_system_id===id&&r.client_id===row.client_id&&!['completed','cancelled'].includes(r.status))){write(db,'reviews',{recurrence:'none',status:r.status==='in_progress'?'in_progress':'cancelled'},r.review_id);audit(db,'AI retired; recurring review stopped','reviews',r);}
   if(!old){db.ai_counters[row.client_id]=(db.ai_counters[row.client_id]||0)+1;row.ai_system_id=uid('ai');row.display_id=`AI-${String(db.ai_counters[row.client_id]).padStart(3,'0')}`;row.created_at=now();row.created_by=db.user.user_id;row.related_links=[];db.ai_systems.push(row);}else Object.assign(old,row);

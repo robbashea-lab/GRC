@@ -1,8 +1,9 @@
 import { SOURCE_RECORDS } from '../lib/actionItems';
+import { validateAssignment } from './assignmentEligibility';
 const links=['source_type','source_id','review_id','finding_id','risk_id','vendor_id','policy_id','assessment_id'];
 export function prepareTask(db,row,previous) {
   if(!['critical','high','medium','low'].includes(row.priority)&&!(previous&&row.priority===previous.priority)) throw new Error('Invalid Action Item priority.');
-  if(row.assignee_id&&!db.users.some(u=>u.user_id===row.assignee_id&&(['super_admin','platform_admin'].includes(u.role)||(u.client_ids||[]).includes(row.client_id)))) throw new Error('Assignee must have access to this client.');
+  validateAssignment(db, 'tasks', row, previous);
   if(previous) {
     if(links.some(k=>(row[k]??null)!==(previous[k]??null))) throw new Error('The originating source and relationships must be retained.');
     if(previous.status==='done'&&row.status!=='done') throw new Error('Completed Action Items remain historical evidence.');

@@ -11,7 +11,6 @@ export function ensureRiskReview(db,risk) {
   const relations={review:['reviews','review_id'],finding:['findings','finding_id'],vendor:['vendors','vendor_id'],audit:['assessments','assessment_id']};
   if(risk.source_type&&!['manual','annual_assessment','management',...Object.keys(relations)].includes(risk.source_type)) throw new Error('Invalid Risk source.');
   if(relations[risk.source_type]) {const [kind,key]=relations[risk.source_type]; if(!db[kind]?.some(r=>r[key]===risk.source_id&&r.client_id===risk.client_id)) throw new Error('Select a source record from this client.'); risk[key]=risk.source_id;}
-  if(risk.owner_id&&!db.users.some(u=>u.user_id===risk.owner_id&&(u.role==='super_admin'||u.client_ids?.includes(risk.client_id)))) throw new Error('Owner must have access to this client.');
   const reviews = db.reviews.filter(r=>r.client_id===risk.client_id&&r.risk_id===risk.risk_id);
   if(reviews.length>1) throw new Error('Multiple linked Risk Reviews require reconciliation.');
   let review = reviews[0];

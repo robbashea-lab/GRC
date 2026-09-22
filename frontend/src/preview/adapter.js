@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import { assignmentCandidates } from './assignmentEligibility';
 import {aiRequest,aiRelated} from './aiGovernance';
 import {frameworkRequest,frameworkReverse,frameworkScope} from './frameworks';
 import { baselineState, saveBaseline } from './baseline';
@@ -113,6 +114,10 @@ export async function previewAdapter(config) {
       if (['risks','tasks','vendors'].includes(kind) && name === 'activity') {
         const task=record(db,kind,id);
         return respond(db.logs.filter(l=>l.entity_id===id&&l.client_id===task.client_id&&[kind,kind==='risks'?'risk':kind==='vendors'?'vendor':'task'].includes(l.entity_type)).map(l=>({...l,log_id:l.log_id||l.audit_id})));
+      }
+      if (kind === 'clients' && name === 'assignees') {
+        record(db, 'clients', id);
+        return respond(assignmentCandidates(db, id, params));
       }
       if (kind === 'clients' && name === 'members') {
         record(db, 'clients', id);

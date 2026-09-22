@@ -1,3 +1,4 @@
+import { validateAssignment } from './assignmentEligibility';
 import {cis,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {record,write,audit,now,ids} from './store';
 import {action} from './workflows';
@@ -75,7 +76,7 @@ export function frameworkRequest(db,path,method,params,body){
     const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
     if(data.status==='not_applicable'&&!data.na_rationale.trim())throw new Error('N/A rationale is required');
     if(data.status==='addressed'&&!data.implementation.trim())throw new Error('Describe implementation before marking Addressed');
-    if(data.owner_id){const owner=db.users.find(u=>u.user_id===data.owner_id&&u.status==='active');if(!owner||owner.role!=='super_admin'&&!(owner.role==='platform_admin'&&!owner.client_ids?.length)&&!owner.client_ids?.includes(row.client_id))throw new Error('Owner must be client-authorized');}
+    validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
     const changed=Object.keys(body).filter(k=>body[k]!==row[k]);
     if(changed.length){Object.assign(row,body,{last_assessed:now(),assessed_by:db.user.user_id});row.assessment_history.push({...Object.fromEntries(fields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
@@ -89,7 +90,7 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='post'&&operation==='findings'){
     if(!body.title?.trim()||!body.remediation_title?.trim()||!body.request_id||!['low','medium','high','critical'].includes(body.severity||'medium'))throw new Error('Finding and Action titles, valid severity and request ID are required');
     const fid=stable(row.client_id,'finding',id+':'+body.request_id);let f=db.findings.find(f=>f.finding_id===fid);
-    if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:'CIS IG1 · '+row.definition_id,owner_id:row.owner_id,remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
+    if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:'CIS IG1 · '+row.definition_id,owner_id:row.owner_id,remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
     action(db,'findings',fid,'create-task',{title:f.remediation_title});return f;
   }
   throw new Error('Unsupported framework operation; assessment history is retained');

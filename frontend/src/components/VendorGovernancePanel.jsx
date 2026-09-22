@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import AssigneeSelect from './AssigneeSelect';
 import api,{formatError} from '@/lib/api';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -26,7 +27,7 @@ export default function VendorGovernancePanel({tab,record,form,setForm,canWrite,
     {record.services&&record.services!==record.service&&<p className="text-sm text-ink-secondary">Legacy service detail (retained): {record.services}</p>}
     <div className="grid grid-cols-2 gap-3">{field('category','Category')}{choice('criticality','Criticality',[{value:'critical',label:'Critical'},{value:'high',label:'High'},{value:'medium',label:'Moderate'},{value:'low',label:'Low'}])}
       {choice('status','Status',['onboarding','under_review','active','offboarding','inactive',...(record.status==='terminated'?['terminated']:[])])}
-      {choice('business_owner_id','Business Owner',users.map(u=>({value:u.user_id,label:u.name||u.email})))}
+      <div className="text-sm">Business Owner<AssigneeSelect clientId={record.client_id} label="Business Owner" value={form.business_owner_id} onChange={v=>set('business_owner_id',v)} users={users} disabled={!write} testId="field-business_owner_id"/></div>
       {field('contact_name','Primary contact')}{field('contact_email','Contact email','email')}
       <div className="text-sm">Last Review<p>{dateText(current.last_review)}</p></div><div className="text-sm">Next Review<p>{dateText(current.next_review)}</p></div>
       <div className="text-sm">Created<p>{dateText(record.created_at)}</p></div><div className="text-sm">Contract Renewal<p>{dateText(record.contract_renewal||record.contract_expiration||record.contract_end)}</p></div>

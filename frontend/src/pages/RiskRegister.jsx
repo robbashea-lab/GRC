@@ -1,4 +1,4 @@
-import AssignmentHelp from '@/components/AssignmentHelp';
+import AssigneeSelect from '@/components/AssigneeSelect';
 import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
@@ -391,14 +391,7 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
           </div>
           <div>
             <Label className="text-xs text-ink-secondary">Owner</Label>
-            <Select value={form.owner_id || "__none__"} onValueChange={(v) => setForm({ ...form, owner_id: v === "__none__" ? "" : v })}>
-              <SelectTrigger className="text-sm"><SelectValue placeholder="Assign later" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Assign later</SelectItem>
-                {users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <AssignmentHelp />
+            <AssigneeSelect clientId={clientId} value={form.owner_id} onChange={v=>setForm({...form,owner_id:v})} users={users}/>
           </div>
           <div className="col-span-2"><RiskScheduleFields form={form} setForm={setForm}/></div>
           <div className="col-span-2">

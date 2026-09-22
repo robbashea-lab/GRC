@@ -3,6 +3,7 @@ import uuid
 from datetime import date, timedelta
 from fastapi import HTTPException
 import review_occurrences
+import assignment_eligibility
 
 WINDOW_DAYS = 90
 PURPOSES = {'vendor': 'Vendor Review', 'assurance': 'Security Assurance Review',
@@ -88,11 +89,7 @@ async def validate(db, v, can_access, previous=None):
     for key in ('contract_lead_days','assurance_window_days'):
         if v.get(key) is not None and (type(v[key]) is not int or not 1 <= v[key] <= 3650):
             raise HTTPException(422, 'Lead time must be 1–3650 days')
-    owner = v.get('business_owner_id')
-    if owner:
-        user = await db.users.find_one({'user_id':owner})
-        if not user or not can_access(user,v['client_id']):
-            raise HTTPException(422, 'Business owner must have access to this client')
+    await assignment_eligibility.validate(db, 'vendors', v, can_access, previous)
     if v.get('vendor_id'):
         linked = await db.reviews.find({'vendor_id':v['vendor_id'],'client_id':v['client_id'],'status':{'$nin':['completed','cancelled']}}).to_list(None)
         for purpose in PURPOSES:
