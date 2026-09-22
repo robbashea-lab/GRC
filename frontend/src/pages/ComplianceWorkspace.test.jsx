@@ -10,6 +10,7 @@ jest.mock('@/components/NotificationBell', () => () => null);
 jest.mock('@/preview/DemoNotice', () => () => null);
 jest.mock('@/lib/api', () => ({ __esModule: true, default: { get: jest.fn() }, formatError: e => e.message }));
 jest.mock('react-router-dom', () => ({
+  useSearchParams: () => require('react').useState(new URLSearchParams()),
   useLocation: () => ({ pathname: mockPath }), useParams: () => ({ requirementKey: mockKey }), useNavigate: () => jest.fn(),
   Outlet: () => <MockComplianceWorkspace />,
   NavLink: ({ children, to, ...props }) => <a href={to} data-testid={props['data-testid']}>{children}</a>,
