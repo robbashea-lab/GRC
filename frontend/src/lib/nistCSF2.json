@@ -1,0 +1,2677 @@
+{
+  "schema_version": 1,
+  "framework": "nist-csf-2",
+  "label": "NIST CSF 2.0",
+  "version": "2.0",
+  "verified_on": "2026-09-22",
+  "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+  "labels": {
+    "item": "Subcategory",
+    "items": "Subcategories"
+  },
+  "scope_note": "CSF 2.0 cybersecurity outcomes, not legal mandates or certification. Current and Target Profiles reflect this client's assessment and selected priorities. No maturity score is inferred.",
+  "functions": {
+    "GV": "Govern",
+    "ID": "Identify",
+    "PR": "Protect",
+    "DE": "Detect",
+    "RS": "Respond",
+    "RC": "Recover"
+  },
+  "categories": {
+    "GV.OC": "Organizational Context",
+    "GV.RM": "Risk Management Strategy",
+    "GV.RR": "Roles, Responsibilities, and Authorities",
+    "GV.PO": "Policy",
+    "GV.OV": "Oversight",
+    "GV.SC": "Cybersecurity Supply Chain Risk Management",
+    "ID.AM": "Asset Management",
+    "ID.RA": "Risk Assessment",
+    "ID.IM": "Improvement",
+    "PR.AA": "Identity Management, Authentication, and Access Control",
+    "PR.AT": "Awareness and Training",
+    "PR.DS": "Data Security",
+    "PR.PS": "Platform Security",
+    "PR.IR": "Technology Infrastructure Resilience",
+    "DE.CM": "Continuous Monitoring",
+    "DE.AE": "Adverse Event Analysis",
+    "RS.MA": "Incident Management",
+    "RS.AN": "Incident Analysis",
+    "RS.CO": "Incident Response Reporting and Communication",
+    "RS.MI": "Incident Mitigation",
+    "RC.RP": "Incident Recovery Plan Execution",
+    "RC.CO": "Incident Recovery Communication"
+  },
+  "requirements": [
+    {
+      "id": "GV.OC-01",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.OC",
+      "control": "GV.OC",
+      "control_name": "Organizational Context",
+      "title": "Mission informs cyber risk",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how mission informs cyber risk is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Scope statement, stakeholder register, obligations register, dependency map. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Scope statement, stakeholder register, obligations register, dependency map"
+      ],
+      "question": "How does the organization demonstrate mission informs cyber risk?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.OC-02",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.OC",
+      "control": "GV.OC",
+      "control_name": "Organizational Context",
+      "title": "Stakeholder needs and expectations",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how stakeholder needs and expectations is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Scope statement, stakeholder register, obligations register, dependency map. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Scope statement, stakeholder register, obligations register, dependency map"
+      ],
+      "question": "How does the organization demonstrate stakeholder needs and expectations?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.OC-03",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.OC",
+      "control": "GV.OC",
+      "control_name": "Organizational Context",
+      "title": "Legal regulatory and contractual obligations",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how legal regulatory and contractual obligations is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Scope statement, stakeholder register, obligations register, dependency map. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Scope statement, stakeholder register, obligations register, dependency map"
+      ],
+      "question": "How does the organization demonstrate legal regulatory and contractual obligations?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.OC-04",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.OC",
+      "control": "GV.OC",
+      "control_name": "Organizational Context",
+      "title": "Services others depend on",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how services others depend on is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Scope statement, stakeholder register, obligations register, dependency map. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Scope statement, stakeholder register, obligations register, dependency map"
+      ],
+      "question": "How does the organization demonstrate services others depend on?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.OC-05",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.OC",
+      "control": "GV.OC",
+      "control_name": "Organizational Context",
+      "title": "External dependencies understood",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how external dependencies understood is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Scope statement, stakeholder register, obligations register, dependency map. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Scope statement, stakeholder register, obligations register, dependency map"
+      ],
+      "question": "How does the organization demonstrate external dependencies understood?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RM-01",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RM",
+      "control": "GV.RM",
+      "control_name": "Risk Management Strategy",
+      "title": "Agreed risk objectives",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how agreed risk objectives is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk strategy, appetite statements, risk methodology, management decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk strategy, appetite statements, risk methodology, management decisions"
+      ],
+      "question": "How does the organization demonstrate agreed risk objectives?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RM-02",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RM",
+      "control": "GV.RM",
+      "control_name": "Risk Management Strategy",
+      "title": "Risk appetite and tolerance",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how risk appetite and tolerance is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk strategy, appetite statements, risk methodology, management decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk strategy, appetite statements, risk methodology, management decisions"
+      ],
+      "question": "How does the organization demonstrate risk appetite and tolerance?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RM-03",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RM",
+      "control": "GV.RM",
+      "control_name": "Risk Management Strategy",
+      "title": "Integration with enterprise risk",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how integration with enterprise risk is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk strategy, appetite statements, risk methodology, management decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk strategy, appetite statements, risk methodology, management decisions"
+      ],
+      "question": "How does the organization demonstrate integration with enterprise risk?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RM-04",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RM",
+      "control": "GV.RM",
+      "control_name": "Risk Management Strategy",
+      "title": "Risk response direction",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how risk response direction is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk strategy, appetite statements, risk methodology, management decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk strategy, appetite statements, risk methodology, management decisions"
+      ],
+      "question": "How does the organization demonstrate risk response direction?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RM-05",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RM",
+      "control": "GV.RM",
+      "control_name": "Risk Management Strategy",
+      "title": "Cyber risk communication",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how cyber risk communication is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk strategy, appetite statements, risk methodology, management decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk strategy, appetite statements, risk methodology, management decisions"
+      ],
+      "question": "How does the organization demonstrate cyber risk communication?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RM-06",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RM",
+      "control": "GV.RM",
+      "control_name": "Risk Management Strategy",
+      "title": "Consistent risk methodology",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how consistent risk methodology is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk strategy, appetite statements, risk methodology, management decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk strategy, appetite statements, risk methodology, management decisions"
+      ],
+      "question": "How does the organization demonstrate consistent risk methodology?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RM-07",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RM",
+      "control": "GV.RM",
+      "control_name": "Risk Management Strategy",
+      "title": "Positive risk opportunities",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how positive risk opportunities is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk strategy, appetite statements, risk methodology, management decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk strategy, appetite statements, risk methodology, management decisions"
+      ],
+      "question": "How does the organization demonstrate positive risk opportunities?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RR-01",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RR",
+      "control": "GV.RR",
+      "control_name": "Roles, Responsibilities, and Authorities",
+      "title": "Leadership accountability",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how leadership accountability is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Responsibility matrix, resourcing decisions, personnel procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Responsibility matrix, resourcing decisions, personnel procedures"
+      ],
+      "question": "How does the organization demonstrate leadership accountability?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RR-02",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RR",
+      "control": "GV.RR",
+      "control_name": "Roles, Responsibilities, and Authorities",
+      "title": "Communicated roles and authorities",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how communicated roles and authorities is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Responsibility matrix, resourcing decisions, personnel procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Responsibility matrix, resourcing decisions, personnel procedures"
+      ],
+      "question": "How does the organization demonstrate communicated roles and authorities?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RR-03",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RR",
+      "control": "GV.RR",
+      "control_name": "Roles, Responsibilities, and Authorities",
+      "title": "Risk-aligned resources",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how risk-aligned resources is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Responsibility matrix, resourcing decisions, personnel procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Responsibility matrix, resourcing decisions, personnel procedures"
+      ],
+      "question": "How does the organization demonstrate risk-aligned resources?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.RR-04",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.RR",
+      "control": "GV.RR",
+      "control_name": "Roles, Responsibilities, and Authorities",
+      "title": "Cybersecurity in HR practices",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how cybersecurity in hr practices is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Responsibility matrix, resourcing decisions, personnel procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Responsibility matrix, resourcing decisions, personnel procedures"
+      ],
+      "question": "How does the organization demonstrate cybersecurity in hr practices?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.PO-01",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.PO",
+      "control": "GV.PO",
+      "control_name": "Policy",
+      "title": "Establish and enforce policy",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how establish and enforce policy is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Approved policies, communications, review history. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Approved policies, communications, review history"
+      ],
+      "question": "How does the organization demonstrate establish and enforce policy?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.PO-02",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.PO",
+      "control": "GV.PO",
+      "control_name": "Policy",
+      "title": "Review and update policy",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how review and update policy is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Approved policies, communications, review history. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Approved policies, communications, review history"
+      ],
+      "question": "How does the organization demonstrate review and update policy?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.OV-01",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.OV",
+      "control": "GV.OV",
+      "control_name": "Oversight",
+      "title": "Review strategy outcomes",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how review strategy outcomes is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Management review records, performance measures, improvement decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Management review records, performance measures, improvement decisions"
+      ],
+      "question": "How does the organization demonstrate review strategy outcomes?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.OV-02",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.OV",
+      "control": "GV.OV",
+      "control_name": "Oversight",
+      "title": "Review strategy coverage",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how review strategy coverage is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Management review records, performance measures, improvement decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Management review records, performance measures, improvement decisions"
+      ],
+      "question": "How does the organization demonstrate review strategy coverage?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.OV-03",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.OV",
+      "control": "GV.OV",
+      "control_name": "Oversight",
+      "title": "Evaluate risk management performance",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how evaluate risk management performance is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Management review records, performance measures, improvement decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Management review records, performance measures, improvement decisions"
+      ],
+      "question": "How does the organization demonstrate evaluate risk management performance?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-01",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Supply chain risk program",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how supply chain risk program is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate supply chain risk program?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-02",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Supplier roles and coordination",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how supplier roles and coordination is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate supplier roles and coordination?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-03",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Integrate supply chain risk",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how integrate supply chain risk is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate integrate supply chain risk?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-04",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Prioritize suppliers",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how prioritize suppliers is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate prioritize suppliers?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-05",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Contractual security expectations",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how contractual security expectations is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate contractual security expectations?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-06",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Pre-engagement due diligence",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how pre-engagement due diligence is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate pre-engagement due diligence?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-07",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Lifecycle supplier risk management",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how lifecycle supplier risk management is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate lifecycle supplier risk management?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-08",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Suppliers in incident planning",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how suppliers in incident planning is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate suppliers in incident planning?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-09",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Monitor supply chain practices",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how monitor supply chain practices is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate monitor supply chain practices?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "GV.SC-10",
+      "function": "GV",
+      "function_name": "Govern",
+      "category": "GV.SC",
+      "control": "GV.SC",
+      "control_name": "Cybersecurity Supply Chain Risk Management",
+      "title": "Post-relationship provisions",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how post-relationship provisions is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Vendor inventory, due diligence, contracts, supplier reviews and exit plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Vendor inventory, due diligence, contracts, supplier reviews and exit plans"
+      ],
+      "question": "How does the organization demonstrate post-relationship provisions?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.AM-01",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.AM",
+      "control": "ID.AM",
+      "control_name": "Asset Management",
+      "title": "Hardware inventory",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how hardware inventory is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Inventories, architecture diagrams, classification records, lifecycle procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Inventories, architecture diagrams, classification records, lifecycle procedures"
+      ],
+      "question": "How does the organization demonstrate hardware inventory?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.AM-02",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.AM",
+      "control": "ID.AM",
+      "control_name": "Asset Management",
+      "title": "Software services and systems inventory",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how software services and systems inventory is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Inventories, architecture diagrams, classification records, lifecycle procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Inventories, architecture diagrams, classification records, lifecycle procedures"
+      ],
+      "question": "How does the organization demonstrate software services and systems inventory?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.AM-03",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.AM",
+      "control": "ID.AM",
+      "control_name": "Asset Management",
+      "title": "Network and data flow representations",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how network and data flow representations is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Inventories, architecture diagrams, classification records, lifecycle procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Inventories, architecture diagrams, classification records, lifecycle procedures"
+      ],
+      "question": "How does the organization demonstrate network and data flow representations?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.AM-04",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.AM",
+      "control": "ID.AM",
+      "control_name": "Asset Management",
+      "title": "Supplier services inventory",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how supplier services inventory is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Inventories, architecture diagrams, classification records, lifecycle procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Inventories, architecture diagrams, classification records, lifecycle procedures"
+      ],
+      "question": "How does the organization demonstrate supplier services inventory?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.AM-05",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.AM",
+      "control": "ID.AM",
+      "control_name": "Asset Management",
+      "title": "Asset criticality and classification",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how asset criticality and classification is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Inventories, architecture diagrams, classification records, lifecycle procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Inventories, architecture diagrams, classification records, lifecycle procedures"
+      ],
+      "question": "How does the organization demonstrate asset criticality and classification?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.AM-07",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.AM",
+      "control": "ID.AM",
+      "control_name": "Asset Management",
+      "title": "Data and metadata inventory",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how data and metadata inventory is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Inventories, architecture diagrams, classification records, lifecycle procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Inventories, architecture diagrams, classification records, lifecycle procedures"
+      ],
+      "question": "How does the organization demonstrate data and metadata inventory?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.AM-08",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.AM",
+      "control": "ID.AM",
+      "control_name": "Asset Management",
+      "title": "Asset lifecycle management",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how asset lifecycle management is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Inventories, architecture diagrams, classification records, lifecycle procedures. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Inventories, architecture diagrams, classification records, lifecycle procedures"
+      ],
+      "question": "How does the organization demonstrate asset lifecycle management?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-01",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Identify and validate vulnerabilities",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how identify and validate vulnerabilities is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate identify and validate vulnerabilities?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-02",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Receive threat intelligence",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how receive threat intelligence is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate receive threat intelligence?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-03",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Identify internal and external threats",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how identify internal and external threats is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate identify internal and external threats?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-04",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Assess likelihood and impact",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how assess likelihood and impact is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate assess likelihood and impact?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-05",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Understand inherent risk",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how understand inherent risk is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate understand inherent risk?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-06",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Plan and track risk responses",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how plan and track risk responses is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate plan and track risk responses?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-07",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Assess changes and exceptions",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how assess changes and exceptions is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate assess changes and exceptions?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-08",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Vulnerability disclosure process",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how vulnerability disclosure process is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate vulnerability disclosure process?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-09",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Verify acquisition authenticity",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how verify acquisition authenticity is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate verify acquisition authenticity?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.RA-10",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.RA",
+      "control": "ID.RA",
+      "control_name": "Risk Assessment",
+      "title": "Assess critical suppliers",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how assess critical suppliers is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Risk register, vulnerability results, threat analysis, exception decisions, acquisition checks"
+      ],
+      "question": "How does the organization demonstrate assess critical suppliers?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.IM-01",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.IM",
+      "control": "ID.IM",
+      "control_name": "Improvement",
+      "title": "Evaluation-driven improvement",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how evaluation-driven improvement is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Evaluation reports, exercise lessons, improvement Actions, maintained plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Evaluation reports, exercise lessons, improvement Actions, maintained plans"
+      ],
+      "question": "How does the organization demonstrate evaluation-driven improvement?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.IM-02",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.IM",
+      "control": "ID.IM",
+      "control_name": "Improvement",
+      "title": "Exercise-driven improvement",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how exercise-driven improvement is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Evaluation reports, exercise lessons, improvement Actions, maintained plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Evaluation reports, exercise lessons, improvement Actions, maintained plans"
+      ],
+      "question": "How does the organization demonstrate exercise-driven improvement?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.IM-03",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.IM",
+      "control": "ID.IM",
+      "control_name": "Improvement",
+      "title": "Operational improvement",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how operational improvement is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Evaluation reports, exercise lessons, improvement Actions, maintained plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Evaluation reports, exercise lessons, improvement Actions, maintained plans"
+      ],
+      "question": "How does the organization demonstrate operational improvement?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "ID.IM-04",
+      "function": "ID",
+      "function_name": "Identify",
+      "category": "ID.IM",
+      "control": "ID.IM",
+      "control_name": "Improvement",
+      "title": "Maintain incident and cyber plans",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how maintain incident and cyber plans is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Evaluation reports, exercise lessons, improvement Actions, maintained plans. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Evaluation reports, exercise lessons, improvement Actions, maintained plans"
+      ],
+      "question": "How does the organization demonstrate maintain incident and cyber plans?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.AA-01",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.AA",
+      "control": "PR.AA",
+      "control_name": "Identity Management, Authentication, and Access Control",
+      "title": "Manage identities and credentials",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how manage identities and credentials is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Identity lifecycle records, authentication settings, entitlement reviews, physical access logs. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Identity lifecycle records, authentication settings, entitlement reviews, physical access logs"
+      ],
+      "question": "How does the organization demonstrate manage identities and credentials?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.AA-02",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.AA",
+      "control": "PR.AA",
+      "control_name": "Identity Management, Authentication, and Access Control",
+      "title": "Identity proofing and binding",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how identity proofing and binding is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Identity lifecycle records, authentication settings, entitlement reviews, physical access logs. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Identity lifecycle records, authentication settings, entitlement reviews, physical access logs"
+      ],
+      "question": "How does the organization demonstrate identity proofing and binding?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.AA-03",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.AA",
+      "control": "PR.AA",
+      "control_name": "Identity Management, Authentication, and Access Control",
+      "title": "Authenticate people services and hardware",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how authenticate people services and hardware is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Identity lifecycle records, authentication settings, entitlement reviews, physical access logs. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Identity lifecycle records, authentication settings, entitlement reviews, physical access logs"
+      ],
+      "question": "How does the organization demonstrate authenticate people services and hardware?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.AA-04",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.AA",
+      "control": "PR.AA",
+      "control_name": "Identity Management, Authentication, and Access Control",
+      "title": "Protect identity assertions",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how protect identity assertions is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Identity lifecycle records, authentication settings, entitlement reviews, physical access logs. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Identity lifecycle records, authentication settings, entitlement reviews, physical access logs"
+      ],
+      "question": "How does the organization demonstrate protect identity assertions?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.AA-05",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.AA",
+      "control": "PR.AA",
+      "control_name": "Identity Management, Authentication, and Access Control",
+      "title": "Least privilege and permission review",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how least privilege and permission review is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Identity lifecycle records, authentication settings, entitlement reviews, physical access logs. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Identity lifecycle records, authentication settings, entitlement reviews, physical access logs"
+      ],
+      "question": "How does the organization demonstrate least privilege and permission review?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.AA-06",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.AA",
+      "control": "PR.AA",
+      "control_name": "Identity Management, Authentication, and Access Control",
+      "title": "Risk-based physical access",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how risk-based physical access is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Identity lifecycle records, authentication settings, entitlement reviews, physical access logs. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Identity lifecycle records, authentication settings, entitlement reviews, physical access logs"
+      ],
+      "question": "How does the organization demonstrate risk-based physical access?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.AT-01",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.AT",
+      "control": "PR.AT",
+      "control_name": "Awareness and Training",
+      "title": "General workforce awareness",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how general workforce awareness is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Training material, completion records, role-specific exercises. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Training material, completion records, role-specific exercises"
+      ],
+      "question": "How does the organization demonstrate general workforce awareness?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.AT-02",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.AT",
+      "control": "PR.AT",
+      "control_name": "Awareness and Training",
+      "title": "Specialized role training",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how specialized role training is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Training material, completion records, role-specific exercises. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Training material, completion records, role-specific exercises"
+      ],
+      "question": "How does the organization demonstrate specialized role training?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.DS-01",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.DS",
+      "control": "PR.DS",
+      "control_name": "Data Security",
+      "title": "Protect data at rest",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how protect data at rest is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Data protection settings, handling procedures, encryption configuration, restore records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Data protection settings, handling procedures, encryption configuration, restore records"
+      ],
+      "question": "How does the organization demonstrate protect data at rest?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.DS-02",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.DS",
+      "control": "PR.DS",
+      "control_name": "Data Security",
+      "title": "Protect data in transit",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how protect data in transit is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Data protection settings, handling procedures, encryption configuration, restore records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Data protection settings, handling procedures, encryption configuration, restore records"
+      ],
+      "question": "How does the organization demonstrate protect data in transit?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.DS-10",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.DS",
+      "control": "PR.DS",
+      "control_name": "Data Security",
+      "title": "Protect data in use",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how protect data in use is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Data protection settings, handling procedures, encryption configuration, restore records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Data protection settings, handling procedures, encryption configuration, restore records"
+      ],
+      "question": "How does the organization demonstrate protect data in use?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.DS-11",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.DS",
+      "control": "PR.DS",
+      "control_name": "Data Security",
+      "title": "Create protect and test backups",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how create protect and test backups is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Data protection settings, handling procedures, encryption configuration, restore records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Data protection settings, handling procedures, encryption configuration, restore records"
+      ],
+      "question": "How does the organization demonstrate create protect and test backups?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.PS-01",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.PS",
+      "control": "PR.PS",
+      "control_name": "Platform Security",
+      "title": "Configuration management",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how configuration management is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Configuration baselines, patch records, logging configuration, development evidence. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Configuration baselines, patch records, logging configuration, development evidence"
+      ],
+      "question": "How does the organization demonstrate configuration management?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.PS-02",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.PS",
+      "control": "PR.PS",
+      "control_name": "Platform Security",
+      "title": "Software lifecycle maintenance",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how software lifecycle maintenance is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Configuration baselines, patch records, logging configuration, development evidence. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Configuration baselines, patch records, logging configuration, development evidence"
+      ],
+      "question": "How does the organization demonstrate software lifecycle maintenance?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.PS-03",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.PS",
+      "control": "PR.PS",
+      "control_name": "Platform Security",
+      "title": "Hardware lifecycle maintenance",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how hardware lifecycle maintenance is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Configuration baselines, patch records, logging configuration, development evidence. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Configuration baselines, patch records, logging configuration, development evidence"
+      ],
+      "question": "How does the organization demonstrate hardware lifecycle maintenance?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.PS-04",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.PS",
+      "control": "PR.PS",
+      "control_name": "Platform Security",
+      "title": "Generate monitoring logs",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how generate monitoring logs is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Configuration baselines, patch records, logging configuration, development evidence. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Configuration baselines, patch records, logging configuration, development evidence"
+      ],
+      "question": "How does the organization demonstrate generate monitoring logs?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.PS-05",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.PS",
+      "control": "PR.PS",
+      "control_name": "Platform Security",
+      "title": "Prevent unauthorized software",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how prevent unauthorized software is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Configuration baselines, patch records, logging configuration, development evidence. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Configuration baselines, patch records, logging configuration, development evidence"
+      ],
+      "question": "How does the organization demonstrate prevent unauthorized software?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.PS-06",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.PS",
+      "control": "PR.PS",
+      "control_name": "Platform Security",
+      "title": "Secure development practices",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how secure development practices is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Configuration baselines, patch records, logging configuration, development evidence. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Configuration baselines, patch records, logging configuration, development evidence"
+      ],
+      "question": "How does the organization demonstrate secure development practices?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.IR-01",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.IR",
+      "control": "PR.IR",
+      "control_name": "Technology Infrastructure Resilience",
+      "title": "Protect networks and environments",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how protect networks and environments is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Network safeguards, environmental controls, resilience tests, capacity monitoring. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Network safeguards, environmental controls, resilience tests, capacity monitoring"
+      ],
+      "question": "How does the organization demonstrate protect networks and environments?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.IR-02",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.IR",
+      "control": "PR.IR",
+      "control_name": "Technology Infrastructure Resilience",
+      "title": "Environmental protection",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how environmental protection is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Network safeguards, environmental controls, resilience tests, capacity monitoring. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Network safeguards, environmental controls, resilience tests, capacity monitoring"
+      ],
+      "question": "How does the organization demonstrate environmental protection?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.IR-03",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.IR",
+      "control": "PR.IR",
+      "control_name": "Technology Infrastructure Resilience",
+      "title": "Resilience mechanisms",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how resilience mechanisms is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Network safeguards, environmental controls, resilience tests, capacity monitoring. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Network safeguards, environmental controls, resilience tests, capacity monitoring"
+      ],
+      "question": "How does the organization demonstrate resilience mechanisms?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "PR.IR-04",
+      "function": "PR",
+      "function_name": "Protect",
+      "category": "PR.IR",
+      "control": "PR.IR",
+      "control_name": "Technology Infrastructure Resilience",
+      "title": "Resource capacity",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how resource capacity is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Network safeguards, environmental controls, resilience tests, capacity monitoring. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Network safeguards, environmental controls, resilience tests, capacity monitoring"
+      ],
+      "question": "How does the organization demonstrate resource capacity?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.CM-01",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.CM",
+      "control": "DE.CM",
+      "control_name": "Continuous Monitoring",
+      "title": "Monitor networks and services",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how monitor networks and services is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Monitoring coverage, alert records, provider monitoring, sensor configuration. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Monitoring coverage, alert records, provider monitoring, sensor configuration"
+      ],
+      "question": "How does the organization demonstrate monitor networks and services?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.CM-02",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.CM",
+      "control": "DE.CM",
+      "control_name": "Continuous Monitoring",
+      "title": "Monitor physical environment",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how monitor physical environment is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Monitoring coverage, alert records, provider monitoring, sensor configuration. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Monitoring coverage, alert records, provider monitoring, sensor configuration"
+      ],
+      "question": "How does the organization demonstrate monitor physical environment?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.CM-03",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.CM",
+      "control": "DE.CM",
+      "control_name": "Continuous Monitoring",
+      "title": "Monitor personnel and usage",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how monitor personnel and usage is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Monitoring coverage, alert records, provider monitoring, sensor configuration. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Monitoring coverage, alert records, provider monitoring, sensor configuration"
+      ],
+      "question": "How does the organization demonstrate monitor personnel and usage?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.CM-06",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.CM",
+      "control": "DE.CM",
+      "control_name": "Continuous Monitoring",
+      "title": "Monitor service providers",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how monitor service providers is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Monitoring coverage, alert records, provider monitoring, sensor configuration. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Monitoring coverage, alert records, provider monitoring, sensor configuration"
+      ],
+      "question": "How does the organization demonstrate monitor service providers?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.CM-09",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.CM",
+      "control": "DE.CM",
+      "control_name": "Continuous Monitoring",
+      "title": "Monitor computing environments and data",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how monitor computing environments and data is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Monitoring coverage, alert records, provider monitoring, sensor configuration. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Monitoring coverage, alert records, provider monitoring, sensor configuration"
+      ],
+      "question": "How does the organization demonstrate monitor computing environments and data?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.AE-02",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.AE",
+      "control": "DE.AE",
+      "control_name": "Adverse Event Analysis",
+      "title": "Analyze adverse events",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how analyze adverse events is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Alert analysis, correlation records, incident criteria, escalation records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Alert analysis, correlation records, incident criteria, escalation records"
+      ],
+      "question": "How does the organization demonstrate analyze adverse events?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.AE-03",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.AE",
+      "control": "DE.AE",
+      "control_name": "Adverse Event Analysis",
+      "title": "Correlate information",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how correlate information is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Alert analysis, correlation records, incident criteria, escalation records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Alert analysis, correlation records, incident criteria, escalation records"
+      ],
+      "question": "How does the organization demonstrate correlate information?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.AE-04",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.AE",
+      "control": "DE.AE",
+      "control_name": "Adverse Event Analysis",
+      "title": "Understand event impact and scope",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how understand event impact and scope is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Alert analysis, correlation records, incident criteria, escalation records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Alert analysis, correlation records, incident criteria, escalation records"
+      ],
+      "question": "How does the organization demonstrate understand event impact and scope?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.AE-06",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.AE",
+      "control": "DE.AE",
+      "control_name": "Adverse Event Analysis",
+      "title": "Provide event information",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how provide event information is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Alert analysis, correlation records, incident criteria, escalation records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Alert analysis, correlation records, incident criteria, escalation records"
+      ],
+      "question": "How does the organization demonstrate provide event information?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.AE-07",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.AE",
+      "control": "DE.AE",
+      "control_name": "Adverse Event Analysis",
+      "title": "Integrate threat context",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how integrate threat context is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Alert analysis, correlation records, incident criteria, escalation records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Alert analysis, correlation records, incident criteria, escalation records"
+      ],
+      "question": "How does the organization demonstrate integrate threat context?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "DE.AE-08",
+      "function": "DE",
+      "function_name": "Detect",
+      "category": "DE.AE",
+      "control": "DE.AE",
+      "control_name": "Adverse Event Analysis",
+      "title": "Declare incidents against criteria",
+      "type": "state",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how declare incidents against criteria is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Alert analysis, correlation records, incident criteria, escalation records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Alert analysis, correlation records, incident criteria, escalation records"
+      ],
+      "question": "How does the organization demonstrate declare incidents against criteria?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.MA-01",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.MA",
+      "control": "RS.MA",
+      "control_name": "Incident Management",
+      "title": "Execute coordinated response",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how execute coordinated response is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Incident response plans, triage records, escalation logs, recovery decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Incident response plans, triage records, escalation logs, recovery decisions"
+      ],
+      "question": "How does the organization demonstrate execute coordinated response?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.MA-02",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.MA",
+      "control": "RS.MA",
+      "control_name": "Incident Management",
+      "title": "Triage and validate reports",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how triage and validate reports is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Incident response plans, triage records, escalation logs, recovery decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Incident response plans, triage records, escalation logs, recovery decisions"
+      ],
+      "question": "How does the organization demonstrate triage and validate reports?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.MA-03",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.MA",
+      "control": "RS.MA",
+      "control_name": "Incident Management",
+      "title": "Categorize and prioritize incidents",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how categorize and prioritize incidents is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Incident response plans, triage records, escalation logs, recovery decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Incident response plans, triage records, escalation logs, recovery decisions"
+      ],
+      "question": "How does the organization demonstrate categorize and prioritize incidents?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.MA-04",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.MA",
+      "control": "RS.MA",
+      "control_name": "Incident Management",
+      "title": "Escalate incidents",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how escalate incidents is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Incident response plans, triage records, escalation logs, recovery decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Incident response plans, triage records, escalation logs, recovery decisions"
+      ],
+      "question": "How does the organization demonstrate escalate incidents?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.MA-05",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.MA",
+      "control": "RS.MA",
+      "control_name": "Incident Management",
+      "title": "Apply recovery initiation criteria",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how apply recovery initiation criteria is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Incident response plans, triage records, escalation logs, recovery decisions. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Incident response plans, triage records, escalation logs, recovery decisions"
+      ],
+      "question": "How does the organization demonstrate apply recovery initiation criteria?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.AN-03",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.AN",
+      "control": "RS.AN",
+      "control_name": "Incident Analysis",
+      "title": "Establish incident cause",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how establish incident cause is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Investigation notes, forensic records, chain of custody, impact analysis. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Investigation notes, forensic records, chain of custody, impact analysis"
+      ],
+      "question": "How does the organization demonstrate establish incident cause?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.AN-06",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.AN",
+      "control": "RS.AN",
+      "control_name": "Incident Analysis",
+      "title": "Record investigation actions",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how record investigation actions is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Investigation notes, forensic records, chain of custody, impact analysis. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Investigation notes, forensic records, chain of custody, impact analysis"
+      ],
+      "question": "How does the organization demonstrate record investigation actions?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.AN-07",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.AN",
+      "control": "RS.AN",
+      "control_name": "Incident Analysis",
+      "title": "Preserve incident data and provenance",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how preserve incident data and provenance is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Investigation notes, forensic records, chain of custody, impact analysis. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Investigation notes, forensic records, chain of custody, impact analysis"
+      ],
+      "question": "How does the organization demonstrate preserve incident data and provenance?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.AN-08",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.AN",
+      "control": "RS.AN",
+      "control_name": "Incident Analysis",
+      "title": "Validate incident magnitude",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how validate incident magnitude is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Investigation notes, forensic records, chain of custody, impact analysis. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Investigation notes, forensic records, chain of custody, impact analysis"
+      ],
+      "question": "How does the organization demonstrate validate incident magnitude?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.CO-02",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.CO",
+      "control": "RS.CO",
+      "control_name": "Incident Response Reporting and Communication",
+      "title": "Notify relevant stakeholders",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how notify relevant stakeholders is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Notification procedures, communications, legal review of reporting obligations. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Notification procedures, communications, legal review of reporting obligations"
+      ],
+      "question": "How does the organization demonstrate notify relevant stakeholders?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.CO-03",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.CO",
+      "control": "RS.CO",
+      "control_name": "Incident Response Reporting and Communication",
+      "title": "Share designated information",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how share designated information is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Notification procedures, communications, legal review of reporting obligations. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Notification procedures, communications, legal review of reporting obligations"
+      ],
+      "question": "How does the organization demonstrate share designated information?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.MI-01",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.MI",
+      "control": "RS.MI",
+      "control_name": "Incident Mitigation",
+      "title": "Contain incidents",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how contain incidents is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Containment actions, eradication records, validation evidence. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Containment actions, eradication records, validation evidence"
+      ],
+      "question": "How does the organization demonstrate contain incidents?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RS.MI-02",
+      "function": "RS",
+      "function_name": "Respond",
+      "category": "RS.MI",
+      "control": "RS.MI",
+      "control_name": "Incident Mitigation",
+      "title": "Eradicate incidents",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how eradicate incidents is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Containment actions, eradication records, validation evidence. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Containment actions, eradication records, validation evidence"
+      ],
+      "question": "How does the organization demonstrate eradicate incidents?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RC.RP-01",
+      "function": "RC",
+      "function_name": "Recover",
+      "category": "RC.RP",
+      "control": "RC.RP",
+      "control_name": "Incident Recovery Plan Execution",
+      "title": "Execute recovery plan",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how execute recovery plan is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Recovery plans, restore tests, integrity checks, business acceptance, closure records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Recovery plans, restore tests, integrity checks, business acceptance, closure records"
+      ],
+      "question": "How does the organization demonstrate execute recovery plan?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RC.RP-02",
+      "function": "RC",
+      "function_name": "Recover",
+      "category": "RC.RP",
+      "control": "RC.RP",
+      "control_name": "Incident Recovery Plan Execution",
+      "title": "Prioritize recovery actions",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how prioritize recovery actions is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Recovery plans, restore tests, integrity checks, business acceptance, closure records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Recovery plans, restore tests, integrity checks, business acceptance, closure records"
+      ],
+      "question": "How does the organization demonstrate prioritize recovery actions?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RC.RP-03",
+      "function": "RC",
+      "function_name": "Recover",
+      "category": "RC.RP",
+      "control": "RC.RP",
+      "control_name": "Incident Recovery Plan Execution",
+      "title": "Verify restoration assets",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how verify restoration assets is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Recovery plans, restore tests, integrity checks, business acceptance, closure records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Recovery plans, restore tests, integrity checks, business acceptance, closure records"
+      ],
+      "question": "How does the organization demonstrate verify restoration assets?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RC.RP-04",
+      "function": "RC",
+      "function_name": "Recover",
+      "category": "RC.RP",
+      "control": "RC.RP",
+      "control_name": "Incident Recovery Plan Execution",
+      "title": "Restore critical mission functions",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how restore critical mission functions is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Recovery plans, restore tests, integrity checks, business acceptance, closure records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Recovery plans, restore tests, integrity checks, business acceptance, closure records"
+      ],
+      "question": "How does the organization demonstrate restore critical mission functions?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RC.RP-05",
+      "function": "RC",
+      "function_name": "Recover",
+      "category": "RC.RP",
+      "control": "RC.RP",
+      "control_name": "Incident Recovery Plan Execution",
+      "title": "Verify restored systems",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how verify restored systems is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Recovery plans, restore tests, integrity checks, business acceptance, closure records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Recovery plans, restore tests, integrity checks, business acceptance, closure records"
+      ],
+      "question": "How does the organization demonstrate verify restored systems?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RC.RP-06",
+      "function": "RC",
+      "function_name": "Recover",
+      "category": "RC.RP",
+      "control": "RC.RP",
+      "control_name": "Incident Recovery Plan Execution",
+      "title": "Declare recovery complete",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how declare recovery complete is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Recovery plans, restore tests, integrity checks, business acceptance, closure records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Recovery plans, restore tests, integrity checks, business acceptance, closure records"
+      ],
+      "question": "How does the organization demonstrate declare recovery complete?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RC.CO-03",
+      "function": "RC",
+      "function_name": "Recover",
+      "category": "RC.CO",
+      "control": "RC.CO",
+      "control_name": "Incident Recovery Communication",
+      "title": "Communicate recovery progress",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how communicate recovery progress is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Stakeholder updates, approved communications, recovery reports. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Stakeholder updates, approved communications, recovery reports"
+      ],
+      "question": "How does the organization demonstrate communicate recovery progress?",
+      "verified_on": "2026-09-22"
+    },
+    {
+      "id": "RC.CO-04",
+      "function": "RC",
+      "function_name": "Recover",
+      "category": "RC.CO",
+      "control": "RC.CO",
+      "control_name": "Incident Recovery Communication",
+      "title": "Approved public recovery updates",
+      "type": "event",
+      "specification": "cybersecurity_outcome",
+      "classification": "framework_outcome",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
+      "guidance": "Describe how approved public recovery updates is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "evidence_guidance": "Typical evidence: Stakeholder updates, approved communications, recovery reports. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
+      "evidence": [
+        "Stakeholder updates, approved communications, recovery reports"
+      ],
+      "question": "How does the organization demonstrate approved public recovery updates?",
+      "verified_on": "2026-09-22"
+    }
+  ],
+  "review_plans": [
+    {
+      "key": "csf-management-review",
+      "baseline_key": "management-review",
+      "title": "Cybersecurity Strategy and Profile Review",
+      "review_type": "requirements",
+      "safeguards": [
+        "GV.OV-01",
+        "GV.OV-02",
+        "GV.OV-03"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "annual",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    },
+    {
+      "key": "csf-risk-assessment",
+      "baseline_key": "risk-assessment",
+      "title": "Cybersecurity Risk Assessment Review",
+      "review_type": "risk",
+      "safeguards": [
+        "GV.RM-06",
+        "ID.RA-01",
+        "ID.RA-04",
+        "ID.RA-05",
+        "ID.RA-06"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "annual",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    },
+    {
+      "key": "csf-user-access",
+      "baseline_key": "user-access",
+      "title": "Access Rights Review",
+      "review_type": "access",
+      "safeguards": [
+        "PR.AA-01",
+        "PR.AA-05"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "quarterly",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    },
+    {
+      "key": "csf-vendor",
+      "baseline_key": "vendor",
+      "title": "Supplier Risk Review",
+      "review_type": "vendor",
+      "safeguards": [
+        "GV.SC-04",
+        "GV.SC-07",
+        "GV.SC-09"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "annual",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    },
+    {
+      "key": "csf-policy-review",
+      "baseline_key": "policy-review",
+      "title": "Cybersecurity Policy Review",
+      "review_type": "policy",
+      "safeguards": [
+        "GV.PO-01",
+        "GV.PO-02"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "annual",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    },
+    {
+      "key": "csf-awareness",
+      "baseline_key": "awareness",
+      "title": "Awareness Program Review",
+      "review_type": "awareness",
+      "safeguards": [
+        "PR.AT-01",
+        "PR.AT-02"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "annual",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    },
+    {
+      "key": "csf-vulnerability",
+      "baseline_key": "vulnerability",
+      "title": "Vulnerability Governance Review",
+      "review_type": "vulnerability",
+      "safeguards": [
+        "ID.RA-01",
+        "ID.RA-08",
+        "PR.PS-02"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "quarterly",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    },
+    {
+      "key": "csf-backup",
+      "baseline_key": "backup",
+      "title": "Recovery and Restore Exercise",
+      "review_type": "backup",
+      "safeguards": [
+        "PR.DS-11",
+        "RC.RP-03",
+        "RC.RP-05"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "annual",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    },
+    {
+      "key": "csf-incident-response",
+      "baseline_key": "incident-response",
+      "title": "Incident Response Exercise",
+      "review_type": "incident",
+      "safeguards": [
+        "ID.IM-02",
+        "ID.IM-04",
+        "RS.MA-01",
+        "RS.CO-02",
+        "RC.CO-03"
+      ],
+      "basis": "Recommended governance mechanism",
+      "classification": "recommended",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
+      "source_cadence": "NIST CSF does not prescribe this Review or its cadence.",
+      "default_cadence": "annual",
+      "source_minimum": null,
+      "purpose": "Evaluate the linked CSF outcomes and maintain the client's Current and Target Profiles.",
+      "evidence_expectations": "Relevant operating records, evaluation notes and documented decisions; alternative evidence may be appropriate.",
+      "completion_criteria": "Document results, identify gaps, link Findings and Actions where needed, and assess the affected outcomes separately."
+    }
+  ],
+  "policy_mappings": [
+    {
+      "policy_key": "policy-information-security-policy",
+      "safeguards": [
+        "GV.PO-01",
+        "GV.PO-02",
+        "GV.RR-02"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-risk-management-policy",
+      "safeguards": [
+        "GV.RM-01",
+        "GV.RM-02",
+        "GV.RM-06",
+        "ID.RA-05",
+        "ID.RA-06"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-access-control-identity-management-policy",
+      "safeguards": [
+        "PR.AA-01",
+        "PR.AA-05"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-acceptable-use-policy",
+      "safeguards": [
+        "PR.AA-05",
+        "PR.AT-01"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-change-management-policy",
+      "safeguards": [
+        "ID.RA-07",
+        "PR.PS-01"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-vendor-third-party-risk-management-policy",
+      "safeguards": [
+        "GV.SC-01",
+        "GV.SC-05",
+        "GV.SC-07",
+        "GV.SC-10"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-data-classification-handling-policy",
+      "safeguards": [
+        "ID.AM-05",
+        "ID.AM-07",
+        "PR.DS-01",
+        "PR.DS-02",
+        "PR.DS-10"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-data-retention-secure-disposal-policy",
+      "safeguards": [
+        "ID.AM-08"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-asset-management-policy",
+      "safeguards": [
+        "ID.AM-01",
+        "ID.AM-02",
+        "ID.AM-04",
+        "ID.AM-08"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-vulnerability-patch-management-policy",
+      "safeguards": [
+        "ID.RA-01",
+        "ID.RA-08",
+        "PR.PS-02"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-configuration-management-policy",
+      "safeguards": [
+        "PR.PS-01",
+        "PR.PS-05"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-security-awareness-training-policy",
+      "safeguards": [
+        "PR.AT-01",
+        "PR.AT-02"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-incident-response-policy",
+      "safeguards": [
+        "ID.IM-04",
+        "RS.MA-01",
+        "RS.CO-02",
+        "RS.MI-01"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-cryptography-key-management-policy",
+      "safeguards": [
+        "PR.DS-01",
+        "PR.DS-02"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-business-continuity-disaster-recovery-policy",
+      "safeguards": [
+        "PR.IR-03",
+        "RC.RP-01",
+        "RC.RP-04"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-backup-restoration-policy",
+      "safeguards": [
+        "PR.DS-11",
+        "RC.RP-03",
+        "RC.RP-05"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    },
+    {
+      "policy_key": "policy-physical-environmental-security-policy",
+      "safeguards": [
+        "PR.AA-06",
+        "PR.IR-02"
+      ],
+      "classification": "recommended",
+      "basis": "Supporting policy area",
+      "mapping_type": "partial",
+      "rationale": "May support these outcomes; a policy alone does not demonstrate implementation. Reuse the existing authoritative Policy and assess each outcome separately.",
+      "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+    }
+  ]
+}

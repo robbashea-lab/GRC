@@ -1,3 +1,4 @@
+import {validateCsfProfile} from '../lib/csfProfile';
 import { validateAssignment } from './assignmentEligibility';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
@@ -99,8 +100,12 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
   if(method==='patch'&&!operation){
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls'];
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile'];
     if(Object.keys(body).some(k=>!fields.includes(k)))throw new Error('Unknown or immutable assessment fields');
+    if('csf_profile' in body){
+      if(row.framework_key!=='nist-csf-2')throw new Error('CSF profile fields apply only to NIST CSF');
+      body={...body,csf_profile:validateCsfProfile(body.csf_profile)};
+    }
     if('management_controls' in body){
       if(row.framework_key!=='soc-2')throw new Error('Management control readiness fields apply only to SOC 2');
       body={...body,management_controls:validateManagementControls(body.management_controls)};
