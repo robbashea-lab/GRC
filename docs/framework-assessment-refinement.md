@@ -16,3 +16,11 @@ Reviewed all 56 current safeguard explanations and all 15 included control-group
 Verification: 24 focused tests in three suites passed; targeted ESLint and diff whitespace checks passed; production build passed with the existing PlatformAdmin hook warning. The first browser run found an ambiguous new accessible label; it was corrected and the rebuilt version passed. Browser coverage: CIS assessment/save/history, evidence download/unlink/relink, Finding/Action remediation and explicit validation, previous/next, draft guard, deep links/refresh/back, search retention and keyboard tabs. The runner also verified unchanged shared Reviews, 18 routes, four viewport widths, wrong-client deep-link exclusion and no console errors in an isolated Demo session.
 
 Build verified: main.fd36a243.js; approved CSS main.9c179479.css. No published preview or persistent backend verification is claimed.
+
+## Phase 2 — NIST CSF 2.0
+
+Reviewed all 106 plain-language outcomes and the implementation guidance for all 22 categories across six Functions. Existing outcome-specific explanations and category-context evidence are retained. Added default assessment context distinguishing current achievement from Target Profile decisions, with no prescribed technology, maturity score or automatic gap/status transition.
+
+Added a rendering contract covering every item across all five current catalogs (422 items), source links, attribution, explanation, evidence disclosure and recurrence context without catalog mutation. NIST-specific test verifies the Current/Target distinction.
+
+Verification: 30 frontend tests in four focused suites passed. Six isolated FastAPI CSF tests passed, including unauthorized and cross-client assessment/link access, profile validation, history preservation and no automatic status changes. Production build main.0825bf58.js passed with the existing warning. An early browser invocation hit the build-in-progress page and was rerun after compilation; the completed-build NIST browser flow passed, including Target Profile/gap save and reopen, shared workflow checks, 18 routes, four widths and wrong-client deep-link exclusion. This is Demo browser plus isolated API verification, not live persistent-backend verification.
