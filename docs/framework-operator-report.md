@@ -16,13 +16,19 @@ Browser gate: CIS assessment, notes, partial state, upload/download/unlink/relin
 
 Accessibility: reused the existing Radix tabs and alert dialog rather than custom keyboard logic; source/reference links and disclosure headings have readable names. Consulted the [WAI-ARIA APG Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/) for arrow-key/focus semantics. This is not a whole-application accessibility conformance claim.
 
-## UI review
-
 ## Phase 2 — NIST CSF 2.0
 
 Replaced repeated title-based prompts in presentation with 106 distinct original explanations and practical guidance for all 22 Categories. The existing source identifiers, titles, Functions and Category structure are unchanged. Guidance is explicitly Omnisciente summary, not quoted NIST text; the authoritative reference remains adjacent. Current Profile uses Assessment notes; Target and gap decisions stay separate and do not automatically create Reviews, Findings or Actions.
 
 Gate: 11 focused automated tests passed; production build and targeted lint passed. Browser operator lifecycle passed for NIST, including Current/Target explanation, saved target, high-priority explicit gap and gap view. Eighteen-route smoke test, four widths, wrong-client exclusion and unchanged shared Reviews passed. No console errors. NIST screenshot reviewed; native outcome terminology retained.
+
+## Phase 3 — HIPAA
+
+Separated the existing regulatory wording from 76 original plain-English explanations. Short regulatory passages appear open; longer passages are expandable without removing the source. Practical implementation and evidence guidance is grouped by the existing regulatory section. Specification labels are visible near the citation. Addressable is explicitly not optional; the existing decision/rationale workflow and server validation are untouched.
+
+Gate: 13 focused automated tests, targeted lint and production build passed. Browser operator lifecycle passed, including an additional addressable specification: absent decision rejected, as-written decision/rationale saved and retained in History. Eighteen routes, four widths, unchanged Reviews and wrong-client exclusion passed with no console errors. HIPAA screenshot reviewed. No recurrence, regulatory dataset or copyright/licensing status change.
+
+## UI review
 
 | Severity | Location | Before | After | Why |
 | --- | --- | --- | --- | --- |
