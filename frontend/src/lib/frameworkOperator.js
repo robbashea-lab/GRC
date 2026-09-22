@@ -1,6 +1,7 @@
 import {ASSESSMENT_STATUSES,FRAMEWORKS} from './frameworks';
 import {CSF_STATUSES} from './csfProfile';
 import cisGuidance from './operatorGuidance/cis.json';
+import nistGuidance from './operatorGuidance/nist.json';
 
 export const operatorStatuses=key=>key==='nist-csf-2'?CSF_STATUSES:{...ASSESSMENT_STATUSES,in_progress:'Partially Implemented',addressed:'Implemented',needs_attention:'Not Implemented / Needs Validation'};
 export const STATUS_HELP={
@@ -12,6 +13,7 @@ export const STATUS_HELP={
 };
 export const operatorProgram=key=>FRAMEWORKS.find(f=>f.key===key)?.label||key;
 export function operatorGuidance(key,definition){
+  if(key==='nist-csf-2')return {meaning:nistGuidance.meanings[definition.id],implementation:nistGuidance.groups[definition.category],evidence:definition.evidence_guidance};
   const group=key==='cis-ig1'?cisGuidance[String(definition.control)]:null;
   return {meaning:definition.guidance,implementation:group?.implementation||'Describe the scoped practice, accountable responsibility and exceptions. Evidence should demonstrate operation, not only the existence of a document.',evidence:group?.evidence||definition.evidence_guidance||'Policies, configuration records and dated records of the activity may support the assessment.'};
 }

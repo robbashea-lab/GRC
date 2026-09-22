@@ -6,7 +6,8 @@ export default function CsfProfile({value,current,onChange}){
   return <section className="space-y-4 text-sm">
     <h3 className="font-semibold">Current and Target Profiles</h3>
     <p className="text-xs text-ink-secondary">Client-wide outcome profile. Current practice comes from this assessment. Targets and gaps are explicit management decisions, not computed maturity scores. Use linked Findings and Actions to manage remediation.</p>
-    <div className="border border-line rounded p-3"><h4 className="font-medium">Current Profile · {CSF_STATUSES[current.status]}</h4><p className="mt-2 whitespace-pre-wrap">{current.implementation||'Current practice has not been documented. Use Implementation to assess it.'}</p></div>
+    <div className="border border-line rounded p-3"><h4 className="font-medium">Current Profile · {CSF_STATUSES[current.status]}</h4><p className="mt-2 whitespace-pre-wrap">{current.implementation||'Current practice has not been documented. Use Assessment to record it.'}</p></div>
+    <p className="text-xs text-ink-secondary">Current describes practice today. Target describes the desired outcome. A gap records the difference; linked Findings and Actions manage the work to close it.</p>
     <label className="flex gap-2 items-center"><input type="checkbox" checked={p.target_selected} onChange={e=>set('target_selected',e.target.checked)}/>Include in Target Profile</label>
     <label className="block">Target outcome<Textarea aria-label="Target outcome" maxLength={4000} value={p.target_outcome} onChange={e=>set('target_outcome',e.target.value)}/></label>
     <div className="grid sm:grid-cols-2 gap-3"><label>Target priority<select aria-label="Target priority" className={SELECT} value={p.priority} onChange={e=>set('priority',e.target.value)}>{[['','Not prioritized'],['low','Low'],['medium','Medium'],['high','High'],['critical','Critical']].map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label>

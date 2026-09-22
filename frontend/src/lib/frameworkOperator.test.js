@@ -11,6 +11,11 @@ test('status labels explain existing states without creating a competing lifecyc
   expect(operatorStatuses('cis-ig1').in_progress).toBe('Partially Implemented');
   expect(operatorStatuses('nist-csf-2').in_progress).toBe('Partially Achieved');
 });
+test('all NIST outcomes have distinct plain-English explanations and category guidance',()=>{
+  const all=CATALOGS['nist-csf-2'].requirements.map(d=>operatorGuidance('nist-csf-2',d));
+  expect(new Set(all.map(g=>g.meaning)).size).toBe(106);
+  for(const g of all){expect(g.meaning.length).toBeGreaterThan(50);expect(g.implementation.length).toBeGreaterThan(60);expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('How does');}
+});
 test('assessment coverage counts partial assessments, excludes N/A and handles empty data',()=>{
   expect(assessmentProgress([{status:'not_assessed'},{status:'in_progress'},{status:'needs_attention'},{status:'not_applicable'}])).toEqual({total:4,applicable:3,assessed:2,excluded:1});
   expect(assessmentProgress([])).toEqual({total:0,applicable:0,assessed:0,excluded:0});
