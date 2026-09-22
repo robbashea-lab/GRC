@@ -313,7 +313,7 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                     "role": c.role, "client_id": cid,
                     "name": (c.name or None), "title": (c.title or None),
                     "email": (c.email or None), "phone": (c.phone or None),
-                    "linked_user_id": (c.linked_user_id or None),
+                    # Identity associations are changed only through explicit account linking.
                     "notes": (c.notes or None),
                     "not_applicable": False,
                     "updated_at": now,

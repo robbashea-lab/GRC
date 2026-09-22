@@ -323,7 +323,7 @@ test('policy approval, vendor review, evidence, comments and invitations update 
     name: 'Fixture Person',
     email: 'fixture@example.test'
   });
-  const invite = (await api.post(`/contacts/${c1.contact_id}/invite`)).data;
+  const invite = (await api.post(`/contacts/${c1.contact_id}/invite`, { role: 'client_readonly', client_id: c.client_id, confirmed: true })).data;
   expect(invite.simulated).toBe(true);
   expect(invite.invite_link).toBeUndefined();
   expect((await get('contacts', c.client_id))[0].linked_user_id).toBe(invite.user.user_id);

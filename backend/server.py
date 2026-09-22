@@ -35,6 +35,7 @@ from reportlab.lib.units import inch
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ValidationError
+from pymongo.errors import DuplicateKeyError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
 import action_items
 import assignment_eligibility
@@ -193,7 +194,7 @@ def verify_password(p: str, h: str) -> bool:
 def create_access_token(user_id: str, email: str) -> str:
     now = datetime.now(timezone.utc)
     payload = {"sub": user_id, "email": email, "type": "access",
-               "iat": now, "exp": now + timedelta(days=7)}
+               "iat": now.timestamp(), "exp": now + timedelta(days=7)}
     return jwt.encode(payload, _jwt_secret(), algorithm=JWT_ALGORITHM)
 
 
@@ -203,7 +204,7 @@ async def _get_user_from_token(token: str) -> Optional[Dict]:
         if payload.get("type") != "access":
             return None
         user = await db.users.find_one({"user_id": payload["sub"]}, {"_id": 0, "password_hash": 0})
-        if not user:
+        if not user or user.get("status", "active") != "active":
             return None
         # Invalidate tokens issued before the last password change.
         pca = user.get("password_changed_at")
@@ -219,7 +220,7 @@ async def _get_user_from_token(token: str) -> Optional[Dict]:
             if pca_dt and iat is not None:
                 if pca_dt.tzinfo is None:
                     pca_dt = pca_dt.replace(tzinfo=timezone.utc)
-                iat_dt = datetime.fromtimestamp(int(iat), tz=timezone.utc)
+                iat_dt = datetime.fromtimestamp(float(iat), tz=timezone.utc)
                 if iat_dt <= pca_dt:
                     return None
         return user
@@ -239,7 +240,7 @@ async def _get_user_from_session(token: str) -> Optional[Dict]:
     if exp < datetime.now(timezone.utc):
         return None
     user = await db.users.find_one({"user_id": sess["user_id"]}, {"_id": 0, "password_hash": 0})
-    return user
+    return user if user and user.get("status", "active") == "active" else None
 
 
 async def get_current_user(request: Request) -> Dict:
@@ -662,6 +663,7 @@ async def register(body: RegisterIn, response: Response):
         "role": "client_readonly",
         "client_ids": [],
         "auth_provider": "password",
+        "status": "active",
         "created_at": _now(),
     }
     await db.users.insert_one(doc)
@@ -678,8 +680,8 @@ async def login(body: LoginIn, response: Response):
     u = await db.users.find_one({"email": email})
     if not u or not u.get("password_hash") or not verify_password(body.password, u["password_hash"]):
         raise HTTPException(401, "Invalid credentials")
-    if u.get("status") == "disabled":
-        raise HTTPException(403, "This account has been disabled. Contact your administrator.")
+    if u.get("status", "active") != "active":
+        raise HTTPException(403, "This account is not active. Contact your administrator.")
     token = create_access_token(u["user_id"], email)
     await db.users.update_one({"user_id": u["user_id"]}, {"$set": {"last_login_at": _now()}})
     _set_auth_cookie(response, token)
@@ -694,7 +696,7 @@ async def forgot_password(body: ForgotIn):
     email = body.email.lower()
     u = await db.users.find_one({"email": email}, {"_id": 0})
     # Always return ok to avoid user-enumeration.
-    if not u or not u.get("password_hash"):
+    if not u or not u.get("password_hash") or u.get("status", "active") != "active":
         return {"ok": True}
     raw = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw.encode()).hexdigest()
@@ -749,10 +751,28 @@ async def reset_password_endpoint(body: ResetIn):
         exp = exp.replace(tzinfo=timezone.utc)
     if exp < datetime.now(timezone.utc):
         raise HTTPException(400, "Invalid or expired reset link")
-    await db.users.update_one({"user_id": rec["user_id"]},
-                              {"$set": {"password_hash": hash_password(body.new_password),
-                                        "password_changed_at": _now()}})
-    await db.password_resets.update_one({"token_hash": token_hash}, {"$set": {"used": True, "used_at": _now()}})
+    account = await db.users.find_one({"user_id": rec["user_id"]})
+    if not account or account.get("status", "active") not in ("active", "invited"):
+        raise HTTPException(400, "Invalid or expired reset link")
+    password_hash = hash_password(body.new_password)
+    if exp <= datetime.now(timezone.utc):
+        raise HTTPException(400, "Invalid or expired reset link")
+    # Atomic claim: concurrent submissions cannot both use this credential.
+    claimed = await db.password_resets.update_one(
+        {"token_hash": token_hash, "used": False},
+        {"$set": {"used": True, "used_at": _now()}},
+    )
+    if claimed.modified_count != 1:
+        raise HTTPException(400, "Invalid or expired reset link")
+    # Recheck account state in the write itself so a concurrent disable wins.
+    changed = await db.users.update_one(
+        {"user_id": rec["user_id"], "status": account.get("status"),
+         "password_changed_at": account.get("password_changed_at")},
+        {"$set": {"password_hash": password_hash, "password_changed_at": _now(),
+                  "status": "active"}},
+    )
+    if changed.matched_count != 1:
+        raise HTTPException(400, "Account state changed. Request a new link.")
     # Kill all existing OAuth sessions for this user so any stolen cookie stops working.
     sessions_del = await db.sessions.delete_many({"user_id": rec["user_id"]})
     return {"ok": True, "sessions_revoked": sessions_del.deleted_count}
@@ -882,11 +902,85 @@ class UserPatchIn(BaseModel):
     status: Optional[str] = None  # active | disabled | invited
 
 
+class ContactLinkIn(BaseModel):
+    user_id: Optional[str] = None
+    confirmed: bool = False
+
+
+class ContactInviteIn(BaseModel):
+    role: str
+    client_id: str
+    confirmed: bool = False
+
+
+class ClientMembershipIn(BaseModel):
+    client_ids: List[str]
+
+
+def _account_summary(account, actor):
+    fields = ("user_id", "name", "email", "role", "status", "last_login_at", "orphaned")
+    row = {field: account[field] for field in fields if field in account}
+    row["client_ids"] = [cid for cid in (account.get("client_ids") or []) if _can_access_client(actor, cid)]
+    return row
+
+
+def _identity_admin(user, client_id):
+    if user.get("role") not in ("super_admin", "platform_admin") or not _can_access_client(user, client_id):
+        raise HTTPException(403, "Not authorized to manage accounts for this client")
+
+
+@api.get("/clients/{client_id}/contact-accounts")
+async def contact_accounts(client_id: str, user: Dict = Depends(get_current_user)):
+    if not _can_access_client(user, client_id):
+        raise HTTPException(403, "Forbidden for this client")
+    linked = await db.contacts.distinct("linked_user_id", {"client_id": client_id})
+    rows = await db.users.find({"user_id": {"$in": [uid for uid in linked if uid]}}, {
+        "_id": 0, "user_id": 1, "name": 1, "email": 1, "status": 1,
+        "role": 1, "client_ids": 1,
+    }).to_list(1000)
+    return [{"user_id": row["user_id"], "name": row.get("name"), "email": row.get("email"),
+             "status": row.get("status"), "has_client_access": _can_access_client(row, client_id)} for row in rows]
+
+
+@api.get("/contacts/{contact_id}/account-candidates")
+async def contact_account_candidates(contact_id: str, search: str = Query("", max_length=100),
+                                     user: Dict = Depends(get_current_user)):
+    contact = await db.contacts.find_one({"contact_id": contact_id})
+    if not contact:
+        raise HTTPException(404, "Contact not found")
+    _identity_admin(user, contact["client_id"])
+    # Deliberately bounded to existing client-authorized active accounts, not a global directory.
+    return await assignment_eligibility.candidates(db, contact["client_id"], search)
+
+
+@api.post("/contacts/{contact_id}/account-link")
+async def link_contact_account(contact_id: str, body: ContactLinkIn, user: Dict = Depends(get_current_user)):
+    contact = await db.contacts.find_one({"contact_id": contact_id})
+    if not contact:
+        raise HTTPException(404, "Contact not found")
+    _identity_admin(user, contact["client_id"])
+    if not body.confirmed:
+        raise HTTPException(422, "Confirm this identity association; access will not change")
+    if body.user_id:
+        target = await db.users.find_one({"user_id": body.user_id})
+        if not target or not _can_access_client(target, contact["client_id"]) or target.get("status") != "active":
+            raise HTTPException(422, "Choose an active account already authorized for this client")
+    changed = await db.contacts.update_one(
+        {"contact_id": contact_id, "linked_user_id": contact.get("linked_user_id")},
+        {"$set": {"linked_user_id": body.user_id, "updated_at": _now()}},
+    )
+    if changed.matched_count != 1:
+        raise HTTPException(409, "Account link changed; reload before retrying")
+    await audit(user, "link-account" if body.user_id else "unlink-account", "contact", contact_id,
+                contact["client_id"], meta={"previous_user_id": contact.get("linked_user_id"), "user_id": body.user_id})
+    return await db.contacts.find_one({"contact_id": contact_id}, {"_id": 0})
+
+
 def _admin_can_manage_role(actor: Dict, target_role: str) -> bool:
     """Only super_admin can assign super_admin; platform_admin can assign platform_admin/client_* roles."""
     actor_role = actor.get("role")
     if actor_role == "super_admin":
-        return True
+        return target_role in ("super_admin", "platform_admin", "client_contributor", "client_readonly")
     if actor_role == "platform_admin":
         return target_role in ("platform_admin", "client_contributor", "client_readonly")
     return False
@@ -899,6 +993,8 @@ def _admin_can_manage_user(actor: Dict, target: Dict, client_scope: Optional[str
         return True
     if actor_role != "platform_admin":
         return False
+    if target.get("role") == "super_admin" or (target.get("role") == "platform_admin" and not target.get("client_ids")):
+        return False
     # platform_admin: must share at least one client with target OR be scoped to a client they can access
     if client_scope and not _can_access_client(actor, client_scope):
         return False
@@ -908,10 +1004,8 @@ def _admin_can_manage_user(actor: Dict, target: Dict, client_scope: Optional[str
 
 
 @api.post("/contacts/{contact_id}/invite")
-async def contact_invite(contact_id: str, user: Dict = Depends(get_current_user)):
-    """Invite a Contact to become a platform user (client_contributor by default)
-    using the same flow as Users & Access. Requires an email and no existing linked user.
-    """
+async def contact_invite(contact_id: str, body: ContactInviteIn, user: Dict = Depends(get_current_user)):
+    """Explicitly invite with a confirmed client role; never match-and-link an account."""
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Only admins can invite contacts")
     contact = await db.contacts.find_one({"contact_id": contact_id}, {"_id": 0})
@@ -919,133 +1013,101 @@ async def contact_invite(contact_id: str, user: Dict = Depends(get_current_user)
         raise HTTPException(404, "Contact not found")
     if not _can_access_client(user, contact["client_id"]):
         raise HTTPException(403, "Forbidden for this client")
+    if body.client_id != contact["client_id"] or not body.confirmed or body.role not in ("client_contributor", "client_readonly"):
+        raise HTTPException(422, "Confirm the Contact's client and a permitted client role")
     if contact.get("linked_user_id"):
         raise HTTPException(400, "Contact already linked to a platform user")
     email = (contact.get("email") or "").lower().strip()
     if not email:
         raise HTTPException(400, "Contact needs an email address before invite")
-    existing = await db.users.find_one({"email": email})
+    existing = await db.users.find_one({"email": {"$regex": "^" + re.escape(email) + "$", "$options": "i"}})
     if existing:
-        await db.contacts.update_one({"contact_id": contact_id},
-                                     {"$set": {"linked_user_id": existing["user_id"], "updated_at": _now()}})
-        return {"user": {k: existing[k] for k in existing if k not in ("_id", "password_hash")},
-                "linked": True, "invite_link": None}
-    invite_body = UserCreateIn(
-        email=email, name=contact.get("name") or email,
-        role="client_contributor", client_ids=[contact["client_id"]], password=None,
-    )
-    # Build tenant + role context so the invite email references the specific client
-    # and the GRC role(s) the contact holds (falls back to legacy single 'role' field).
-    tenant = await db.clients.find_one({"client_id": contact["client_id"]},
-                                       {"_id": 0, "name": 1}) or {}
-    grc_roles = contact.get("grc_roles") or ([contact["role"]] if contact.get("role") else [])
-    invite_context = {
-        "client_name": tenant.get("name"),
-        "grc_roles": [r for r in grc_roles if r],
-    }
-    result = await admin_create_user(invite_body, user=user, invite_context=invite_context)
-    await db.contacts.update_one({"contact_id": contact_id},
-                                 {"$set": {"linked_user_id": result["user"]["user_id"], "updated_at": _now()}})
+        raise HTTPException(409, "Account already exists. Use explicit account linking and authorized client membership management.")
+    try:
+        invite_body = UserCreateIn(
+            email=email, name=contact.get("name") or email,
+            role=body.role, client_ids=[contact["client_id"]], password=None,
+        )
+    except ValidationError:
+        raise HTTPException(422, "Contact needs a valid invitation email address")
+    result = await admin_create_user(invite_body, user=user)
+    linked = await db.contacts.update_one({"contact_id": contact_id, "linked_user_id": contact.get("linked_user_id")},
+        {"$set": {"linked_user_id": result["user"]["user_id"], "updated_at": _now()}})
+    if linked.matched_count != 1:
+        raise HTTPException(409, "Invitation created, but the Contact association changed. Reload and explicitly link the account if needed.")
     await audit(user, "invite-contact", "contact", contact_id, contact["client_id"],
                 meta={"email": email, "new_user_id": result["user"]["user_id"]})
     return result
 
 
+async def _issue_invitation(account, actor):
+    """Use the existing mail transport; never return bearer credentials to administrators."""
+    raw = secrets.token_urlsafe(32)
+    timestamp = _now()
+    await db.password_resets.update_many(
+        {"user_id": account["user_id"], "used": False},
+        {"$set": {"used": True, "used_at": timestamp, "superseded": True}},
+    )
+    await db.password_resets.insert_one({
+        "user_id": account["user_id"], "token_hash": hashlib.sha256(raw.encode()).hexdigest(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        "purpose": "invitation", "used": False, "created_at": timestamp,
+    })
+    base = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
+    delivery = "unavailable"
+    if urlparse(base).scheme == "https" and urlparse(base).netloc:
+        link = f"{base}/reset-password?token={raw}"
+        html = (f'<p>Hi {escape(account.get("name") or account["email"])}, '
+                 f'{escape(actor.get("name") or "Your administrator")} invited you to Omnisciente.</p>'
+                 f'<p><a href="{escape(link, quote=True)}">Set your password</a></p>'
+                 '<p>This link expires in 7 days. Account activation does not change your assigned role.</p>')
+        try:
+            receipt = await send_email(to=account["email"], subject="You're invited to Omnisciente", html=html)
+            delivery = "sent" if receipt else "unavailable"
+        except ValueError:
+            # Mail validation errors can contain the secret URL. Never log their payload.
+            logging.warning("Invitation email rejected by configured mail safety checks")
+    await db.users.update_one({"user_id": account["user_id"]}, {"$set": {
+        "invitation_delivery": delivery, "invitation_requested_at": timestamp,
+    }})
+    return delivery
+
+
 @api.post("/users")
-async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current_user),
-                            invite_context: Optional[Dict[str, Any]] = None):
-    if user.get("role") not in ("super_admin", "platform_admin"):
-        raise HTTPException(403, "Only admins can create users")
+async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current_user)):
     if not _admin_can_manage_role(user, body.role):
-        raise HTTPException(403, f"You cannot assign role '{body.role}'")
-    email = body.email.lower()
-    existing = await db.users.find_one({"email": email})
-    if existing:
-        raise HTTPException(400, "Email already exists")
-    # Platform admin can only invite into clients they can access.
-    if user.get("role") == "platform_admin":
-        for cid in body.client_ids:
-            if not _can_access_client(user, cid):
-                raise HTTPException(403, f"You cannot assign client {cid}")
-    uid = _uid("user")
-    status = "active" if body.password else "invited"
+        raise HTTPException(403, "Not authorized to create an account with this role")
+    client_ids = list(dict.fromkeys(body.client_ids))
+    if body.role == "platform_admin" and not client_ids and user.get("role") != "super_admin":
+        raise HTTPException(403, "Only a Super Admin can authorize global internal scope")
+    for cid in client_ids:
+        if not _can_access_client(user, cid):
+            raise HTTPException(403, "Not authorized for the requested client")
+        if not await db.clients.find_one({"client_id": cid}):
+            raise HTTPException(422, "Choose an existing client")
+    email = body.email.strip().lower()
+    if await db.users.find_one({"email": {"$regex": "^" + re.escape(email) + "$", "$options": "i"}}):
+        raise HTTPException(409, "Account already exists. Use explicit account linking and authorized client membership management.")
     doc = {
-        "user_id": uid,
-        "email": email,
-        "name": body.name,
-        "role": body.role,
-        "client_ids": body.client_ids,
-        "status": status,
-        "created_at": _now(),
-        "created_by": user["user_id"],
+        "user_id": _uid("user"), "email": email, "name": body.name, "role": body.role,
+        "client_ids": client_ids, "status": "active" if body.password else "invited",
+        "created_at": _now(), "created_by": user["user_id"],
     }
     if body.password:
         if len(body.password) < 8:
             raise HTTPException(400, "Password must be at least 8 characters")
         doc["password_hash"] = hash_password(body.password)
-    await db.users.insert_one(doc)
-    await audit(user, "invite", "user", uid, meta={"email": email, "role": body.role, "client_ids": body.client_ids})
-    # If no password given, generate a password-reset token so the invitee can set their own.
-    invite_link = None
-    if not body.password:
-        raw = secrets.token_urlsafe(32)
-        token_hash = hashlib.sha256(raw.encode()).hexdigest()
-        await db.password_resets.insert_one({
-            "user_id": uid, "token_hash": token_hash,
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-            "used": False, "created_at": _now(),
-        })
-        base = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
-        if base:
-            invite_link = f"{base}/reset-password?token={raw}"
-            # Fire-and-forget invitation email; failures don't block user creation.
-            try:
-                from html import escape as _esc
-                actor_name = user.get("name") or user.get("email") or "Your GRC team"
-                ctx = invite_context or {}
-                client_name = (ctx.get("client_name") or "").strip() or None
-                grc_roles = [r for r in (ctx.get("grc_roles") or []) if r]
-                role_phrase = ""
-                if grc_roles:
-                    label = grc_roles[0] if len(grc_roles) == 1 else (
-                        ", ".join(grc_roles[:-1]) + f", and {grc_roles[-1]}"
-                    )
-                    role_phrase = f" as the <strong>{_esc(label)}</strong>"
-                tenant_phrase = f" for <strong>{_esc(client_name)}</strong>" if client_name else ""
-                subject = (
-                    f"You're invited to Omnisciente — {client_name}"
-                    if client_name else "You're invited to Omnisciente"
-                )
-                context_line = ""
-                if client_name or grc_roles:
-                    context_line = (
-                        f'<p style="margin:0 0 16px 0;color:#334155">'
-                        f'You have been invited{role_phrase}{tenant_phrase} to collaborate on '
-                        f'their governance, risk, and compliance program.'
-                        f'</p>'
-                    )
-                html = (
-                    f'<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">'
-                    f'<h2 style="margin:0 0 12px 0;color:#0f172a">Welcome to Omnisciente</h2>'
-                    f'<p style="margin:0 0 12px 0;color:#334155">'
-                    f'Hi {_esc(body.name)}, {_esc(actor_name)} has invited you to join Omnisciente.'
-                    f'</p>'
-                    f'{context_line}'
-                    f'<p style="margin:0 0 20px 0"><a href="{_esc(invite_link)}" '
-                    f'style="background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;'
-                    f'border-radius:6px;display:inline-block">Set your password</a></p>'
-                    f'<p style="color:#94a3b8;font-size:12px;margin:0">'
-                    f'This link expires in 7 days. We never ask for passwords or codes by email.'
-                    f'</p>'
-                    f'</div>'
-                )
-                await send_email(to=email, subject=subject, html=html)
-            except Exception:
-                pass
-    doc.pop("password_hash", None)
-    doc.pop("_id", None)
-    out = await db.users.find_one({"user_id": uid}, {"_id": 0, "password_hash": 0})
-    return {"user": out, "invite_link": invite_link}
+    try:
+        await db.users.insert_one(doc)
+    except DuplicateKeyError:
+        raise HTTPException(409, "Account already exists")
+    delivery = None if body.password else await _issue_invitation(doc, user)
+    await audit(user, "create-account" if body.password else "invite", "user", doc["user_id"],
+                meta={"role": body.role, "client_ids": client_ids, "delivery": delivery})
+    for cid in client_ids:
+        await audit(user, "membership-granted", "user", doc["user_id"], cid)
+    out = await db.users.find_one({"user_id": doc["user_id"]}, {"_id": 0, "password_hash": 0})
+    return {"user": out, "delivery": delivery}
 
 
 @api.patch("/users/{user_id}")
@@ -1055,6 +1117,10 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
         raise HTTPException(404, "User not found")
     if not _admin_can_manage_user(user, target):
         raise HTTPException(403, "Not authorized to manage this user")
+    if user.get("role") == "platform_admin":
+        foreign = set(target.get("client_ids") or []) - set(user.get("client_ids") or [])
+        if foreign and any(getattr(body, field) is not None for field in ("name", "role", "status")):
+            raise HTTPException(403, "Account-wide changes require authority over all client memberships")
     updates: Dict = {}
     if body.name is not None:
         updates["name"] = body.name
@@ -1065,7 +1131,7 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
     if body.client_ids is not None:
         if user.get("role") == "platform_admin":
             # Platform admin cannot add clients they themselves cannot access.
-            for cid in body.client_ids:
+            for cid in set(body.client_ids) ^ set(target.get("client_ids") or []):
                 if not _can_access_client(user, cid):
                     raise HTTPException(403, f"You cannot assign client {cid}")
         updates["client_ids"] = body.client_ids
@@ -1073,36 +1139,94 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
         if body.status not in ("active", "invited", "disabled"):
             raise HTTPException(400, "Invalid status")
         updates["status"] = body.status
+        if body.status == "active" and not target.get("password_hash") and target.get("auth_provider") != "google":
+            raise HTTPException(409, "The account must complete its invitation before activation")
+    if updates.get("role", target.get("role")) == "platform_admin" and not updates.get("client_ids", target.get("client_ids")) and user.get("role") != "super_admin":
+        raise HTTPException(403, "Only a Super Admin can authorize global internal scope")
     # Guardrail: users cannot demote or disable themselves via this endpoint.
     if user_id == user["user_id"] and ("role" in updates or updates.get("status") == "disabled"):
         raise HTTPException(400, "You cannot change your own role or disable yourself")
     if not updates:
-        target.pop("password_hash", None); target.pop("_id", None)
-        return target
+        return _account_summary(target, user)
     updates["updated_at"] = _now()
-    await db.users.update_one({"user_id": user_id}, {"$set": updates})
+    changed = await db.users.update_one({"user_id": user_id, "role": target.get("role"),
+        "status": target.get("status"), "client_ids": target.get("client_ids")}, {"$set": updates})
+    if changed.matched_count != 1:
+        raise HTTPException(409, "Account state changed; reload before retrying")
     # If disabling: revoke all sessions.
     if updates.get("status") == "disabled":
         await db.sessions.delete_many({"user_id": user_id})
         await db.users.update_one({"user_id": user_id}, {"$set": {"password_changed_at": _now()}})
+        await db.password_resets.update_many(
+            {"user_id": user_id, "used": False},
+            {"$set": {"used": True, "used_at": _now()}},
+        )
     await audit(user, "update", "user", user_id, meta={"fields": list(updates.keys()), "new": {k: v for k, v in updates.items() if k != "updated_at"}})
+    if "client_ids" in updates:
+        old_ids, new_ids = set(target.get("client_ids") or []), set(updates["client_ids"])
+        for cid in old_ids ^ new_ids:
+            await audit(user, "membership-granted" if cid in new_ids else "membership-removed", "user", user_id, cid)
+    if "status" in updates and updates["status"] != target.get("status"):
+        await audit(user, "account-disabled" if updates["status"] == "disabled" else "account-status-changed", "user", user_id,
+                    meta={"previous": target.get("status"), "status": updates["status"]})
     fresh = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
-    return fresh
+    return _account_summary(fresh, user)
 
 
 @api.get("/users/{user_id}/open_assignments")
-async def user_open_assignments(user_id: str, user: Dict = Depends(get_current_user)):
-    """Preview open records this user still owns — used before disabling/removing them."""
-    target = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
-    if not target:
-        raise HTTPException(404, "User not found")
+async def user_open_assignments(user_id: str, client_id: Optional[str] = Query(None),
+                                user: Dict = Depends(get_current_user)):
+    """Read-only, scoped active ownership report; never rewrites ownership or actors."""
     if user.get("role") not in ("super_admin", "platform_admin") and user["user_id"] != user_id:
         raise HTTPException(403, "Not authorized")
-    findings = await db.findings.count_documents({"owner_id": user_id, "status": {"$in": ["open", "in_remediation"]}})
-    reviews = await db.reviews.count_documents({"$or": [{"owner_id": user_id}, {"reviewer_id": user_id}], "status": {"$nin": ["completed", "cancelled"]}})
-    tasks = await db.tasks.count_documents({"$or": [{"assignee_id": user_id}, {"owner_id": user_id}], "status": {"$nin": ["done", "cancelled"]}})
-    risks = await db.risks.count_documents({"owner_id": user_id, "status": {"$ne": "closed"}, "impact": "high"})
-    return {"findings": findings, "reviews": reviews, "tasks": tasks, "significant_risks": risks}
+    scope = _scope_filter(user, client_id)
+    counts, items = {}, []
+    for kind, fields in assignment_eligibility.FIELDS.items():
+        references = [{field: user_id} for field in fields]
+        if kind == "tasks":
+            references.append({"owner_id": user_id, "$or": [{"assignee_id": None}, {"assignee_id": ""}]})
+        terminal = list(CLOSED.get(kind, []))
+        terminal += {
+            "vendors": ["inactive", "terminated"], "policies": ["retired", "not_applicable"],
+            "framework_assessments": ["not_applicable"], "ai_systems": ["retired"],
+        }.get(kind, [])
+        query = {"$and": [scope, {"$or": references}, {"status": {"$nin": terminal}}]}
+        counts[kind] = await db[kind].count_documents(query)
+        id_field = ENTITY_MAP[kind][2] if kind in ENTITY_MAP else {
+            "framework_assessments": "framework_assessment_id", "ai_systems": "ai_system_id",
+        }[kind]
+        rows = await db[kind].find(query, {"_id": 0, id_field: 1, "client_id": 1,
+            "title": 1, "name": 1, "status": 1, "due_date": 1, "definition_id": 1}).sort(id_field, 1).to_list(100)
+        items.extend({"kind": kind, "id": row.get(id_field), "client_id": row["client_id"],
+                      "title": row.get("title") or row.get("name") or framework_governance.DEFINITIONS.get(row.get("definition_id"), {}).get("title") or "Untitled record",
+                      "status": row.get("status"), "due_date": row.get("due_date")} for row in rows)
+    return {**counts, "total": sum(counts.values()), "items": items,
+            "truncated": sum(counts.values()) > len(items)}
+
+
+@api.patch("/users/{user_id}/client-memberships")
+async def update_client_memberships(user_id: str, body: ClientMembershipIn, user: Dict = Depends(get_current_user)):
+    target = await db.users.find_one({"user_id": user_id})
+    if not target or not _admin_can_manage_user(user, target):
+        raise HTTPException(403, "Not authorized to manage this user")
+    desired = set(body.client_ids)
+    for cid in desired:
+        if not _can_access_client(user, cid):
+            raise HTTPException(403, "Not authorized for the requested client")
+        if not await db.clients.find_one({"client_id": cid}):
+            raise HTTPException(422, "Choose an existing client")
+    previous = set(target.get("client_ids") or [])
+    # The client UI sends only visible memberships. Preserve all other tenants.
+    desired |= {cid for cid in previous if not _can_access_client(user, cid)}
+    if target.get("role") == "platform_admin" and not desired and user.get("role") != "super_admin":
+        raise HTTPException(403, "Removing the last membership would grant global internal scope")
+    changed = await db.users.update_one({"user_id": user_id, "role": target.get("role"), "client_ids": target.get("client_ids")},
+        {"$set": {"client_ids": sorted(desired), "updated_at": _now()}})
+    if changed.matched_count != 1:
+        raise HTTPException(409, "Membership changed; reload before retrying")
+    for cid in previous ^ desired:
+        await audit(user, "membership-granted" if cid in desired else "membership-removed", "user", user_id, cid)
+    return _account_summary({**target, "client_ids": sorted(desired)}, user)
 
 
 @api.post("/users/{user_id}/resend-invite")
@@ -1114,18 +1238,13 @@ async def admin_resend_invite(user_id: str, user: Dict = Depends(get_current_use
         raise HTTPException(404, "User not found")
     if not _admin_can_manage_user(user, target):
         raise HTTPException(403, "Not authorized to manage this user")
-    raw = secrets.token_urlsafe(32)
-    token_hash = hashlib.sha256(raw.encode()).hexdigest()
-    await db.password_resets.update_many({"user_id": user_id, "used": False}, {"$set": {"used": True, "used_at": _now()}})
-    await db.password_resets.insert_one({
-        "user_id": user_id, "token_hash": token_hash,
-        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-        "used": False, "created_at": _now(),
-    })
-    base = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
-    invite_link = f"{base}/reset-password?token={raw}" if base else None
-    await audit(user, "resend_invite", "user", user_id)
-    return {"ok": True, "invite_link": invite_link}
+    if target.get("status") != "invited":
+        raise HTTPException(409, "Only pending invitations can be resent")
+    if user.get("role") == "platform_admin" and set(target.get("client_ids") or []) - set(user.get("client_ids") or []):
+        raise HTTPException(403, "Invitation administration requires authority over all client memberships")
+    delivery = await _issue_invitation(target, user)
+    await audit(user, "resend_invite", "user", user_id, meta={"delivery": delivery})
+    return {"ok": True, "delivery": delivery}
 
 
 # ---------------- Auth logout end ----------------
@@ -1155,6 +1274,8 @@ async def google_session(body: GoogleSessionIn, response: Response):
         clients = await db.clients.find({"status": {"$ne": "archived"}}, {"_id": 0, "client_id": 1}).to_list(500)
         admin_client_ids = [client["client_id"] for client in clients]
     user = await db.users.find_one({"email": email}, {"_id": 0})
+    if user and user.get("status", "active") != "active":
+        raise HTTPException(403, "This account is not active. Contact your administrator.")
     if not user:
         # New Google identities are read-only unless explicitly allowlisted.
         role = "super_admin" if google_admin else "client_readonly"
@@ -1167,6 +1288,7 @@ async def google_session(body: GoogleSessionIn, response: Response):
             "role": role,
             "client_ids": admin_client_ids,
             "auth_provider": "google",
+            "status": "active",
             "created_at": _now(),
         }
         await db.users.insert_one(user)
@@ -1313,8 +1435,8 @@ async def client_members(client_id: str, user: Dict = Depends(get_current_user))
     known_ids = {u["user_id"] for u in members}
     if user.get("role") in ("super_admin", "platform_admin"):
         owner_ids: set = set()
-        for coll in ("reviews", "findings", "risks", "tasks", "policies", "vendors", "assets", "exceptions"):
-            for field in ("owner_id", "assignee_id"):
+        for coll, assignment_fields in assignment_eligibility.FIELDS.items():
+            for field in (*assignment_fields, *(("owner_id",) if coll == "tasks" else ())):
                 docs = await db[coll].find(
                     {"client_id": client_id, field: {"$nin": [None, ""]}},
                     {field: 1, "_id": 0},
@@ -1333,7 +1455,7 @@ async def client_members(client_id: str, user: Dict = Depends(get_current_user))
                 u["orphaned"] = True
             members.extend(orphans)
     members.sort(key=lambda u: (u.get("name") or u.get("email") or "").lower())
-    return members
+    return [_account_summary(member, user) for member in members]
 
 # ---------------- Generic list/create/update/delete factory ----------------
 ENTITY_MAP = {
@@ -1773,7 +1895,12 @@ async def export_audit_csv(
 async def list_users(user: Dict = Depends(get_current_user)):
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Forbidden")
-    docs = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(500)
+    query = {} if user.get("role") == "super_admin" or not user.get("client_ids") else {"client_ids": {"$in": user["client_ids"]}}
+    docs = await db.users.find(query, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1,
+                                      "status": 1, "client_ids": 1, "last_login_at": 1}).to_list(500)
+    if user.get("role") == "platform_admin" and user.get("client_ids"):
+        for doc in docs:
+            doc["client_ids"] = [cid for cid in (doc.get("client_ids") or []) if cid in user["client_ids"]]
     return docs
 
 
@@ -2117,6 +2244,8 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     if 'framework_assessment_id' in body or any(k.startswith('framework_') for k in body):
         raise HTTPException(422,'Framework relationships are managed through the framework workspace')
     changes = {k: v for k, v in body.items() if v != previous.get(k) and not (v in (None, "") and previous.get(k) in (None, ""))}
+    if kind == "contacts" and "linked_user_id" in changes:
+        raise HTTPException(422, "Use the explicit account-link action to change a Contact identity association")
     if kind == "policies" and previous.get("schedule_from_reviews") and set(changes) & {"last_reviewed_at", "next_review_date"}:
         raise HTTPException(422, "Policy Review dates are controlled by linked Reviews")
     if kind == "vendors":
@@ -3994,7 +4123,7 @@ async def _legacy_onboarding_finalize_removed(body, user):
                     "role": c.role, "client_id": cid,
                     "name": (c.name or None), "title": (c.title or None),
                     "email": (c.email or None), "phone": (c.phone or None),
-                    "linked_user_id": (c.linked_user_id or None),
+                    # Identity associations are changed only through explicit account linking.
                     "notes": (c.notes or None),
                     "not_applicable": False,
                     "updated_at": now,

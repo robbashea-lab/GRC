@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import { identityRequest } from './identityLifecycle';
 import { assignmentCandidates } from './assignmentEligibility';
 import { clientProjection, leadCandidates } from './clientRelationships';
 import {aiRequest,aiRelated} from './aiGovernance';
@@ -79,6 +80,8 @@ export async function previewAdapter(config) {
       saveStore(db);
       return respond(data);
     };
+    const identity = identityRequest(db, path, method, params, body);
+    if (identity !== undefined) return method === 'get' ? respond(identity) : save(identity);
     if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
     if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));
     if (path === '/demo/reset' && method === 'post') {
@@ -120,10 +123,6 @@ export async function previewAdapter(config) {
       if (kind === 'clients' && name === 'assignees') {
         record(db, 'clients', id);
         return respond(assignmentCandidates(db, id, params));
-      }
-      if (kind === 'clients' && name === 'members') {
-        record(db, 'clients', id);
-        return respond(db.users.filter(u => u.role === 'super_admin' || (u.client_ids || []).includes(id)));
       }
       if (path === '/dashboard') return respond(dashboard(db, params));
       if (path === '/onboarding/policy-library') return respond(library(db, 'policy', params.client_id));
@@ -209,12 +208,6 @@ export async function previewAdapter(config) {
           page_size: size
         });
       }
-      if (kind === 'users' && name === 'open_assignments') return respond({
-        findings: db.findings.filter(r => r.owner_id === id && ['open', 'in_remediation'].includes(r.status)).length,
-        reviews: db.reviews.filter(r => r.owner_id === id && !['completed', 'cancelled'].includes(r.status)).length,
-        tasks: db.tasks.filter(r => r.assignee_id === id && !['done', 'cancelled'].includes(r.status)).length,
-        significant_risks: db.risks.filter(r => r.owner_id === id && r.status !== 'closed' && ['high', 'critical'].includes(r.risk_level)).length
-      });
       if (kind === 'evidence' && name === 'download') {
         const r = record(db, kind, id);
         if (!r.content_base64) throw new Error('This sample has no downloadable file. Upload a temporary demo file to test downloading.');
@@ -312,16 +305,6 @@ export async function previewAdapter(config) {
       if (userRecord) Object.assign(userRecord, body);
       return save(db.user);
     }
-    if (kind === 'users' && name === 'resend-invite') {
-      const user = record(db, 'users', id);
-      user.invite_sent_at = now();
-      audit(db, 'simulated-invite', kind, user);
-      return save({
-        ok: true,
-        simulated: true,
-        message: 'Simulated invitation — no email was sent.'
-      });
-    }
     if (ids[kind] && name) {
       const result = action(db, kind, id, name, body);
       const r = record(db, kind, id);
@@ -390,11 +373,6 @@ export async function previewAdapter(config) {
         body.uploaded_by = db.user.user_id;
         body.uploaded_by_email = db.user.email;
       }
-      if (kind === 'users' && !id) {
-        if (db.users.some(u => u.email?.toLowerCase() === body.email?.toLowerCase())) throw new Error('Email already exists.');
-        body.simulated = true;
-        body.status = 'invited';
-      }
       if (kind === 'reviews' && id) {
         assertCurrentOccurrence(record(db,kind,id),body.expected_occurrence_id);
         delete body.expected_occurrence_id;
@@ -411,11 +389,7 @@ export async function previewAdapter(config) {
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});
       if (kind === 'evidence' && body.linked_type === 'task') audit(db,'Evidence uploaded','tasks',record(db,'tasks',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
       if (kind === 'evidence' && ['framework_assessment','framework_assessments'].includes(body.linked_type)) audit(db,'Evidence linked','framework_assessments',record(db,'framework_assessments',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
-      return save(kind === 'users' && !id ? {
-        user: result,
-        simulated: true,
-        message: 'Simulated invitation — no email was sent.'
-      } : result);
+      return save(result);
     }
     return fail(501, 'This action is not implemented in the demo. No changes were saved.');
   } catch (error) {
