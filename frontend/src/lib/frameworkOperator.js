@@ -3,6 +3,7 @@ import {CSF_STATUSES} from './csfProfile';
 import cisGuidance from './operatorGuidance/cis.json';
 import nistGuidance from './operatorGuidance/nist.json';
 import hipaaGuidance from './operatorGuidance/hipaa.json';
+import isoGuidance from './operatorGuidance/iso.json';
 
 export const operatorStatuses=key=>key==='nist-csf-2'?CSF_STATUSES:{...ASSESSMENT_STATUSES,in_progress:'Partially Implemented',addressed:'Implemented',needs_attention:'Not Implemented / Needs Validation'};
 export const STATUS_HELP={
@@ -14,6 +15,7 @@ export const STATUS_HELP={
 };
 export const operatorProgram=key=>FRAMEWORKS.find(f=>f.key===key)?.label||key;
 export function operatorGuidance(key,definition){
+  if(key==='iso-27001'){const annex=isoGuidance.annex[definition.id];return {meaning:annex?.[0]||definition.guidance,implementation:isoGuidance.groups[definition.control],evidence:annex?.[1]||definition.evidence_guidance};}
   if(key==='hipaa')return {meaning:hipaaGuidance.meanings[definition.id],...(hipaaGuidance.groups[definition.id.slice(0,7)]||hipaaGuidance.groups.support)};
   if(key==='nist-csf-2')return {meaning:nistGuidance.meanings[definition.id],implementation:nistGuidance.groups[definition.category],evidence:definition.evidence_guidance};
   const group=key==='cis-ig1'?cisGuidance[String(definition.control)]:null;

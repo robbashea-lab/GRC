@@ -46,6 +46,15 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
       await drawer().getByRole('tab',{name:'Assessment',exact:true}).focus();await page.keyboard.press('ArrowRight');await expect(drawer().getByRole('tab',{selected:true})).not.toHaveText('Assessment');await tab('Assessment');
       if(process.env.QA_ARTIFACTS)await page.screenshot({path:path.join(process.env.QA_ARTIFACTS,'operator-'+key+'.png')});await page.keyboard.press('Escape');
       const a=(await db()).framework_assessments.find(a=>a.client_id===cid&&a.framework_key===key&&a.definition_id===id);assert.equal(a.assessment_history.length,2);assert.equal((await db()).findings.find(f=>f.framework_assessment_id===a.framework_assessment_id).status,'closed');
+      if(key==='iso-27001'){
+        await go('/compliance/iso-27001');await page.getByLabel('ISO workspace view').selectOption('soa');await expect(page.locator('main tbody tr')).toHaveCount(93);
+        await page.getByTestId('requirement-A.5.18').getByRole('button').first().click();await expect(drawer()).toContainText('Annex A / SoA');
+        await drawer().getByLabel('SoA applicability').selectOption('excluded');await drawer().getByLabel('Assessment Status').selectOption('not_applicable');await drawer().getByRole('button',{name:'Save assessment',exact:true}).click();await expect(drawer().getByRole('alert')).toContainText('justification');
+        await drawer().getByLabel('SoA justification').fill('Synthetic applicability decision for this test scope.');await drawer().getByRole('button',{name:'Save assessment',exact:true}).click();await expect(drawer()).toContainText('Assessment saved.');
+        const soaLink=page.url();await page.reload();await expect(drawer().getByLabel('SoA applicability')).toHaveValue('excluded');await tab('History');await expect(drawer()).toContainText('Synthetic applicability decision');await page.keyboard.press('Escape');
+        for(const view of ['audit','management','treatment','corrections']){await page.getByLabel('ISO workspace view').selectOption(view);assert.ok(await page.locator('main tbody tr').count()>0);}
+        await page.goto(soaLink);await expect(drawer().getByLabel('Assessment Status')).toHaveValue('not_applicable');await page.keyboard.press('Escape');
+      }
       if(key==='hipaa'){
         await go('/compliance/hipaa');await page.getByTestId('requirement-164.308(a)(3)(ii)(A)').getByRole('button').first().click();
         await expect(drawer()).toContainText('Addressable does not mean optional');

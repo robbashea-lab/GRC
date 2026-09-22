@@ -20,6 +20,11 @@ test('HIPAA explanatory text never substitutes for stored regulatory wording',()
   for(const d of CATALOGS.hipaa.requirements){const g=operatorGuidance('hipaa',d);expect(g.meaning.length).toBeGreaterThan(50);expect(g.meaning).not.toBe(d.guidance);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();}
   expect(operatorGuidance('hipaa',CATALOGS.hipaa.requirements.find(d=>d.id==='164.306(d)')).meaning).toContain('does not mean optional');
 });
+test('ISO clauses and all 93 Annex controls retain distinct usable guidance',()=>{
+  const catalog=CATALOGS['iso-27001'];
+  for(const d of catalog.requirements){const g=operatorGuidance('iso-27001',d);expect(g.meaning.length).toBeGreaterThan(40);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('Omnisciente implementation prompt');}
+  expect(catalog.requirements.filter(d=>d.specification==='annex_control')).toHaveLength(93);
+});
 test('assessment coverage counts partial assessments, excludes N/A and handles empty data',()=>{
   expect(assessmentProgress([{status:'not_assessed'},{status:'in_progress'},{status:'needs_attention'},{status:'not_applicable'}])).toEqual({total:4,applicable:3,assessed:2,excluded:1});
   expect(assessmentProgress([])).toEqual({total:0,applicable:0,assessed:0,excluded:0});
