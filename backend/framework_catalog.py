@@ -7,7 +7,8 @@ CIS = json.loads((ROOT / 'cisIG1.json').read_text(encoding='utf-8'))
 HIPAA = json.loads((ROOT / 'hipaaSecurityRule.json').read_text(encoding='utf-8'))
 ISO = json.loads((ROOT / 'iso27001.json').read_text(encoding='utf-8'))
 SOC = json.loads((ROOT / 'soc2.json').read_text(encoding='utf-8'))
-CATALOGS = {'cis-ig1': CIS, 'hipaa': HIPAA, 'iso-27001': ISO, 'soc-2': SOC}
+NIST = json.loads((ROOT / 'nistCSF2.json').read_text(encoding='utf-8'))
+CATALOGS = {'cis-ig1': CIS, 'hipaa': HIPAA, 'iso-27001': ISO, 'soc-2': SOC, 'nist-csf-2': NIST}
 
 
 def active_definitions(key, configuration=None):

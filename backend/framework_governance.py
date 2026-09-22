@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 import review_occurrences
 import assignment_eligibility
 from framework_catalog import CATALOGS, CIS, definition_for, assessment_title, active_definitions
+from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
@@ -96,6 +97,7 @@ class AssessmentPatch(BaseModel):
     addressable_rationale: Optional[str]=Field(default=None,max_length=4000)
     soa_applicability: Optional[Literal['','included','excluded']]=None
     soa_justification: Optional[str]=Field(default=None,max_length=4000)
+    csf_profile: CsfProfile = Field(default_factory=CsfProfile)
     management_controls: list[ManagementControl]=Field(default_factory=list,max_length=30)
 
 class LinkInput(BaseModel):
@@ -185,6 +187,8 @@ def router_for(s):
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True);data={**old,**changes}
+        if 'csf_profile' in changes and old['framework_key']!='nist-csf-2':
+            raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
         if 'management_controls' in changes:
             if old['framework_key']!='soc-2':raise HTTPException(422,'Management control readiness fields apply only to SOC 2')
             ids=[c['control_id'] for c in changes['management_controls']]

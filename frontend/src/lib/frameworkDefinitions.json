@@ -26,7 +26,8 @@
       "label": "NIST CSF 2.0",
       "category": "Security Frameworks",
       "selectable": true,
-      "implemented": false
+      "implemented": true,
+      "version": "2.0"
     },
     {
       "key": "iso-27001",
