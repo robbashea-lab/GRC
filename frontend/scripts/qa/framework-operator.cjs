@@ -46,6 +46,13 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
       await drawer().getByRole('tab',{name:'Assessment',exact:true}).focus();await page.keyboard.press('ArrowRight');await expect(drawer().getByRole('tab',{selected:true})).not.toHaveText('Assessment');await tab('Assessment');
       if(process.env.QA_ARTIFACTS)await page.screenshot({path:path.join(process.env.QA_ARTIFACTS,'operator-'+key+'.png')});await page.keyboard.press('Escape');
       const a=(await db()).framework_assessments.find(a=>a.client_id===cid&&a.framework_key===key&&a.definition_id===id);assert.equal(a.assessment_history.length,2);assert.equal((await db()).findings.find(f=>f.framework_assessment_id===a.framework_assessment_id).status,'closed');
+      if(key==='nist-csf-2'){
+        await page.goto(direct);await tab('Profiles');await drawer().getByLabel('Include in Target Profile').check();
+        await drawer().getByLabel('Target outcome',{exact:true}).fill('Mission dependencies inform all risk decisions.');
+        await drawer().getByLabel('Target priority').selectOption('high');await drawer().getByLabel('Gap decision').selectOption('gap');await drawer().getByLabel('Gap analysis / rationale').fill('A newly acquired service is outside the validated scope.');
+        await drawer().getByRole('button',{name:'Save assessment',exact:true}).click();await expect(drawer()).toContainText('Assessment saved.');await page.keyboard.press('Escape');
+        await page.getByLabel('CSF profile view').selectOption('gaps');await expect(page.locator('main tbody tr')).toHaveCount(1);await page.getByTestId(type+'-'+id).getByRole('button').first().click();await tab('Profiles');await expect(drawer().getByLabel('Target outcome',{exact:true})).toHaveValue('Mission dependencies inform all risk decisions.');await page.keyboard.press('Escape');
+      }
       console.log('PASS '+key+': context, guidance, assessment, evidence download/relink, Finding/Action remediation/validation, history, next/previous, draft guard, deep link/refresh/back, search retention, keyboard tabs.');
     }
     assert.deepEqual((await db()).reviews.filter(r=>r.client_id===cid),reviews);

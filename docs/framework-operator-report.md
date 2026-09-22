@@ -18,6 +18,12 @@ Accessibility: reused the existing Radix tabs and alert dialog rather than custo
 
 ## UI review
 
+## Phase 2 — NIST CSF 2.0
+
+Replaced repeated title-based prompts in presentation with 106 distinct original explanations and practical guidance for all 22 Categories. The existing source identifiers, titles, Functions and Category structure are unchanged. Guidance is explicitly Omnisciente summary, not quoted NIST text; the authoritative reference remains adjacent. Current Profile uses Assessment notes; Target and gap decisions stay separate and do not automatically create Reviews, Findings or Actions.
+
+Gate: 11 focused automated tests passed; production build and targeted lint passed. Browser operator lifecycle passed for NIST, including Current/Target explanation, saved target, high-priority explicit gap and gap view. Eighteen-route smoke test, four widths, wrong-client exclusion and unchanged shared Reviews passed. No console errors. NIST screenshot reviewed; native outcome terminology retained.
+
 | Severity | Location | Before | After | Why |
 | --- | --- | --- | --- | --- |
 | Medium | FrameworkDrawer.jsx | Context and assessment split into separate tabs | Primary assessment screen; secondary guidance disclosures | Less navigation during client discussion |
