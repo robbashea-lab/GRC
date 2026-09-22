@@ -7,6 +7,7 @@ COPY backend/*.py ./
 COPY backend/routes ./routes
 COPY frontend/src/lib/grcRules.json /app/frontend/src/lib/grcRules.json
 COPY frontend/src/lib/managementRules.json /app/frontend/src/lib/managementRules.json
+COPY frontend/src/lib/portfolioRules.json /app/frontend/src/lib/portfolioRules.json
 COPY frontend/src/lib/aiGovernanceCatalog.json /app/frontend/src/lib/aiGovernanceCatalog.json
 COPY frontend/src/lib/frameworkDefinitions.json frontend/src/lib/cisIG1.json /app/frontend/src/lib/
 COPY frontend/src/lib/evidenceSources.json /app/frontend/src/lib/evidenceSources.json

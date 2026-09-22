@@ -2324,8 +2324,17 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
 
 
 @entity_router.get("/{kind}")
-async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Optional[str] = Query(None), user: Dict = Depends(get_current_user)):
+async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Optional[str] = Query(None), portfolio_significant: bool = Query(False), user: Dict = Depends(get_current_user)):
     q = _scope_filter(user, client_id)
+    if portfolio_significant:
+        if kind != 'risks' or not client_id:
+            raise HTTPException(422, 'A client Risk Register is required')
+        from management_obligations import active_record
+        # Exact contributing population, independent of the normal register cap.
+        # Do not initialize IDs or mutate source records from a portfolio drill-in.
+        risks = await db.risks.find(q, {'_id': 0}).to_list(None)
+        risks = [_apply_risk_scoring(r) for r in risks if active_record(r, 'risks')]
+        return [r for r in risks if r.get('risk_level') in ('high', 'critical')]
     if kind == "risks":
         scoped_clients = await db.risks.distinct("client_id", q)
         for scoped_client in scoped_clients:
@@ -2335,6 +2344,21 @@ async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Op
         reviews = await db.reviews.find(q, {"_id":0}).to_list(None)
         return [vendor_governance.view(d,reviews) for d in docs]
     return [_apply_risk_scoring(d) for d in docs] if kind == "risks" else [review_occurrences.view(d) for d in docs] if kind == "reviews" else docs
+
+
+@entity_router.get("/{kind}/{item_id}")
+async def get_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), user: Dict = Depends(get_current_user)):
+    """Read the authoritative record for drill-ins using existing resource scope."""
+    doc = await _authorized_parent(kind, item_id, user)
+    doc.pop('_governance_lock', None)
+    if kind == 'reviews':
+        return review_occurrences.view(doc)
+    if kind == 'risks':
+        return _apply_risk_scoring(doc)
+    if kind == 'vendors':
+        reviews = await db.reviews.find({'client_id': doc['client_id'], 'vendor_id': item_id}, {'_id': 0}).to_list(None)
+        return vendor_governance.view(doc, reviews)
+    return doc
 
 
 @entity_router.post("/{kind}")

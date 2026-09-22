@@ -1,0 +1,13 @@
+.portfolio-overview .portfolio-table { min-width: 1040px; }
+.portfolio-overview .portfolio-table .tbl-cell { padding: 9px 10px; vertical-align: middle; }
+.portfolio-overview .portfolio-table th .column-control { white-space: normal; text-align: inherit; }
+.portfolio-table td:first-child { min-width: 170px; max-width: 230px; }
+.portfolio-table td:nth-child(2) { min-width: 115px; max-width: 155px; }
+.portfolio-table td:nth-child(3) { min-width: 145px; max-width: 185px; }
+.portfolio-framework { white-space: nowrap; }
+.portfolio-metric { min-width: 24px; min-height: 28px; }
+.portfolio-overview button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.portfolio-overview [role="region"]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+/* Frequent investigation controls are immediate, including mixed mouse/keyboard
+   closing. No exit animation can retain a visually closed menu over the rows. */
+:root .portfolio-column-menu[data-state] { animation: none; }

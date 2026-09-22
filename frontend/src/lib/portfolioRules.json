@@ -1,0 +1,12 @@
+{
+  "priorityOrder": ["critical_high_issues", "past_due", "significant_risks", "unassigned", "due_30d"],
+  "activity": [
+    {"kind":"review", "actions":["Review started", "Review completed"]},
+    {"kind":"finding", "actions":["create", "validate"], "labels":{"create":"Finding raised", "validate":"Finding validated"}},
+    {"kind":"task", "actions":["Action Item completed", "Work started"]},
+    {"kind":"risk", "actions":["Risk reassessed", "Risk closed", "Reviewed — No Change", "Additional Action Required", "Closure Recommended", "accept"], "labels":{"accept":"Risk accepted"}},
+    {"kind":"vendor", "actions":["Vendor Review completed"]},
+    {"kind":"policy", "actions":["Policy Review completed"]},
+    {"kind":"evidence", "actions":["upload"], "labels":{"upload":"Evidence added"}}
+  ]
+}

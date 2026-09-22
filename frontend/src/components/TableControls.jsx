@@ -8,26 +8,26 @@ import { applyTableFilters, columnOptions } from '@/lib/tableFilters';
 const sessions = new Map();
 let activeScope;
 let generation = 0;
-export function useTableControls({ columns, rows, module, scope, onFilterChange }) {
+export function useTableControls({ columns, rows, module, scope, onFilterChange, state: controlledState, onStateChange }) {
   if (activeScope !== scope) { sessions.clear(); activeScope = scope; generation++; }
   const key = `${generation}:${scope}:${module}`;
   const [local, setLocal] = useState(() => ({ key, state: sessions.get(key) || { filters: {} } }));
-  const state = local.key === key ? local.state : sessions.get(key) || { filters: {} };
-  const update = next => { sessions.set(key, next); setLocal({ key, state: next }); };
+  const state = controlledState || (local.key === key ? local.state : sessions.get(key) || { filters: {} });
+  const update = next => { if(onStateChange)onStateChange(next); else {sessions.set(key, next); setLocal({ key, state: next });} };
   const setFilter = (columnKey, values) => {
     const filters = { ...state.filters };
     if (values.length) filters[columnKey] = values; else delete filters[columnKey];
     update({ ...state, filters }); onFilterChange?.(columnKey, values);
   };
   const clear = () => { update({ filters: {} }); onFilterChange?.(null, []); };
-  return { columns, state, setFilter, clear, total: rows.length,
+  return { columns, state, setFilter, clear, replaceState: update, total: rows.length,
     setSort: (key, dir) => update({ ...state, sort: key ? { key, dir } : null }),
     apply: data => applyTableFilters(data, columns, state),
     options: column => columnOptions(column, rows),
   };
 }
 
-export function ColumnControl({ table, column: supplied, columnKey }) {
+export function ColumnControl({ table, column: supplied, columnKey, menuClassName='' }) {
   const [query, setQuery] = useState('');
   const c = supplied || table.columns.find(c => c.key === columnKey);
   if (!c) return null;
@@ -39,7 +39,7 @@ export function ColumnControl({ table, column: supplied, columnKey }) {
     <DropdownMenuTrigger asChild><button type="button" data-active={!!(selected.length || sorting)} aria-label={`${c.label}: sort and filter`} className={`column-control inline-flex items-center gap-1 whitespace-nowrap rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 normal-case tracking-normal ${selected.length || sorting ? 'text-ink-primary underline decoration-current underline-offset-4' : 'hover:text-ink-primary'}`}>
       {c.label}<ChevronDown aria-hidden="true" className={`h-3 w-3 ${selected.length || sorting ? 'opacity-100' : 'opacity-40'}`} />
     </button></DropdownMenuTrigger>
-    <DropdownMenuContent align="start" className="w-56 max-h-80" aria-label={`${c.label} options`}>
+    <DropdownMenuContent align="start" className={`w-56 max-h-80 ${menuClassName}`} aria-label={`${c.label} options`}>
       <DropdownMenuLabel>{c.label}</DropdownMenuLabel>
       {c.sortable !== false && <>{['asc','desc'].map((dir,i) => <DropdownMenuCheckboxItem key={dir} checked={sorting && table.state.sort.dir === dir} onCheckedChange={() => table.setSort(c.key,dir)}>{labels[i]}</DropdownMenuCheckboxItem>)}{sorting && <DropdownMenuItem onSelect={() => table.setSort(null)}>Reset sort</DropdownMenuItem>}<DropdownMenuSeparator /></>}
       {options.length > 20 && <input aria-label={`Find ${c.label} options`} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key !== 'Escape' && e.key !== 'Tab') e.stopPropagation(); }} className="m-1 w-[calc(100%-8px)] rounded border border-line p-2 text-sm" placeholder="Find an option…" />}

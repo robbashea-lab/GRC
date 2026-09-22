@@ -2,9 +2,10 @@
 from datetime import datetime, timezone
 from typing import Dict
 from fastapi import APIRouter, Depends, HTTPException, Query
-from management_obligations import METRICS, calendar_day, load_records, management_model, portfolio_item, program_status
+from management_obligations import METRICS, calendar_day, load_records, management_model, owner_ids, portfolio_item, program_status
 from grc_rules import represented_finding
 from client_relationships import project
+import portfolio_overview
 from server import db, get_current_user
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
@@ -23,22 +24,24 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
     now = datetime.now(timezone.utc).isoformat()
     today, day = now[:10], calendar_day(now)
     source = await load_records(db, {"client_id": {"$in": client_ids}})
-    members = await db.users.find({}, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1}).to_list(None)
+    referenced_users = {uid for kind, records in source.items() for record in records for uid in owner_ids(record, kind)}
+    referenced_users.update(c['assigned_owner_id'] for c in clients if c.get('assigned_owner_id'))
+    members = await db.users.find({'user_id': {'$in': list(referenced_users)}}, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1}).to_list(None)
     names = {u["user_id"]: u for u in members}
-    logs = await db.audit_logs.find(
-        {"client_id": {"$in": client_ids}, "action": {"$nin": ["login", "logout", "view", "list"]}},
-        {"_id": 0, "client_id": 1, "at": 1, "action": 1, "entity_type": 1, "user_email": 1, "user_name": 1}
-    ).sort("at", -1).to_list(None)
-    latest = {}
-    for log in logs:
-        latest.setdefault(log.get("client_id"), log)
+    latest = await portfolio_overview.latest_activity(db, client_ids, now)
+    grouped = {cid: {kind: [] for kind in source} for cid in client_ids}
+    for kind, values in source.items():
+        for record in values:
+            grouped[record['client_id']][kind].append(record)
     metric_items = {k: [] for k in METRICS}
     attention, rows, workloads = [], [], {}
     for c in clients:
         cid = c["client_id"]
-        records = {k: [r for r in values if r.get("client_id") == cid] for k, values in source.items()}
+        records = grouped[cid]
         m = management_model(records, cid, today=today, members=members)
         items = {k: [portfolio_item(r, c, today) for r in m["metrics"][k]] for k in METRICS}
+        extra = portfolio_overview.populations(m)
+        items.update({k: [portfolio_item(r, c, today) for r in values] for k, values in extra.items()})
         active = c.get("status") not in ("archived", "inactive")
         if active:
             for key in METRICS:
@@ -66,19 +69,19 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
         activity = latest.get(cid)
         rows.append({**c, "client_status": c.get("status", "active"), "program_status": program_status(c, m),
             "grc_lead_id": c.get("assigned_owner_id"),
-            **m["counts"], "metric_items": items,
+            **m["counts"], "metric_items": items, "critical_high_issues": len(extra['critical_high_issues']),
+            "frameworks": portfolio_overview.frameworks(c, records['requirements']),
             "next_major_item": {**portfolio_item(major[0], c, today), "review_id": major[0]["id"], "review_type": major[0]["record"].get("review_type")} if major else None,
             "open_actions": m["counts"]["past_due"] + m["counts"]["due_30d"],
             "open_findings": len(m["activeRecords"]["findings"]), "significant_risks": len(m["significantRisks"]),
             "critical_high_findings": len(m["materialFindings"]),
             "overdue_reviews": sum(r["kind"] == "reviews" for r in m["metrics"]["past_due"]),
             "upcoming_reviews": sum(r["kind"] == "reviews" for r in m["metrics"]["due_30d"]),
-            "last_activity": {**activity, "actor": activity.get("user_name") or activity.get("user_email")} if activity else None})
+            "last_activity": activity})
     active = [r for r in rows if r["client_status"] not in ("archived", "inactive")]
     action = sum(r["program_status"] == "action_required" for r in active)
     needs = sum(r["program_status"] == "needs_attention" for r in active)
-    order = ["action_required", "needs_attention", "onboarding", "healthy", "inactive", "archived"]
-    rows.sort(key=lambda r: (order.index(r["program_status"]), r["name"].lower()))
+    rows.sort(key=portfolio_overview.attention_order)
     def rank(r):
         return (0 if r["overdue"] else 1) if r["priority"] == "critical" else 2 if r["priority"] == "high" and r["overdue"] else 3 if r["overdue"] else 4 if r["priority"] == "high" else 5
     attention.sort(key=lambda r: (rank(r), r["due_date"] or "9999", r["key"]))
