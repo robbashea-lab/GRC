@@ -9,6 +9,7 @@ export function ComplianceProvider({ children }) {
   const { currentClientId } = useOrg();
   const { pathname } = useLocation();
   const [result, setResult] = useState(null);
+  const [revision, setRevision] = useState(0);
   const platform = ['/clients', '/admin', '/platform'].some(path => pathname.startsWith(path));
   useEffect(() => {
     let cancelled = false;
@@ -22,10 +23,10 @@ export function ComplianceProvider({ children }) {
       if (!cancelled) setResult({ clientId: currentClientId, pathname, items: [], error: formatError(error) });
     });
     return () => { cancelled = true; };
-  }, [currentClientId, pathname, platform]);
+  }, [currentClientId, pathname, platform, revision]);
   const ready = result?.clientId === currentClientId && result?.pathname === pathname;
   const value = !currentClientId || platform ? { items: [], loading: false, error: '' }
     : { items: result?.clientId === currentClientId ? result.items : [], loading: !ready, error: ready ? result.error : '' };
-  return <ComplianceContext.Provider value={value}>{children}</ComplianceContext.Provider>;
+  return <ComplianceContext.Provider value={{...value, refresh:()=>setRevision(n=>n+1)}}>{children}</ComplianceContext.Provider>;
 }
 export const useCompliance = () => useContext(ComplianceContext);

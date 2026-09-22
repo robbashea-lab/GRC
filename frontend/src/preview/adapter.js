@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
 import { identityRequest } from './identityLifecycle';
 import { assignmentCandidates } from './assignmentEligibility';
 import { clientProjection, leadCandidates } from './clientRelationships';
@@ -98,6 +99,8 @@ export async function previewAdapter(config) {
         ok: true
       });
     }
+    if (path === '/onboarding/handoff' && method === 'get') return respond(handoffSnapshot(db, params.client_id));
+    if (path.startsWith('/onboarding/programs/') && method === 'patch') return save(adjustProgram(db, body.client_id, path.split('/').pop(), body));
     if (path === '/onboarding/baseline') {
       const cid = params.client_id || body.client_id;
       if (method === 'get') return respond({catalog, state:baselineState(db,cid)});
