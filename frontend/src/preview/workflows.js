@@ -191,7 +191,7 @@ export function action(db, kind, id, name, body) {
       occurrence_id: r.occurrence_id,
       source: r.source || 'Finding remediation',
       source_type:r.review_id?'review':'finding',source_id:r.review_id||id,
-      assignee_id: body.assignee_id || r.owner_id,
+      assignee_id: Object.prototype.hasOwnProperty.call(body, 'assignee_id') ? body.assignee_id : r.owner_id,
       priority: body.priority || r.severity,
       due_date: body.due_date || r.due_date,
       description: body.description || r.remediation_plan

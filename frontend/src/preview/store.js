@@ -3,6 +3,7 @@ import { ensureRiskReview } from './risks';
 import { syncPolicyReview } from './policyReviews';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
+import { validateAssignment } from './assignmentEligibility';
 import { buildDemoStore } from './demoSeed';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -110,6 +111,7 @@ export function validate(db, kind, body, existing) {
 }
 export function write(db, kind, body, id) {
   const existing = id ? record(db, kind, id) : null;
+  validateAssignment(db, kind, { ...existing, ...body }, existing);
   const defaults = {
     clients: {
       status: 'onboarding',

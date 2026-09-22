@@ -7,7 +7,7 @@ import api,{formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
 import {AI_DEFAULTS,AI_KEYS,aiScreening,catalog} from '@/lib/aiGovernance';
 import RecordDrawer from './RecordDrawer';
-import AssignmentHelp from './AssignmentHelp';
+import AssigneeSelect from './AssigneeSelect';
 import {SCHEMAS} from '@/lib/schemas';
 
 const IDS={reviews:'review_id',risks:'risk_id',findings:'finding_id',tasks:'task_id',policies:'policy_id',vendors:'vendor_id',requirements:'requirement_id'};
@@ -27,7 +27,7 @@ export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onS
   },[clientId,id,revision]);
   const put=(key,value)=>setForm(p=>({...p,[key]:value}));
   const input=(key,label,multiline=false)=> <Field label={label}>{multiline?<Textarea value={form[key]||''} onChange={e=>put(key,e.target.value)}/>:<Input value={form[key]||''} onChange={e=>put(key,e.target.value)} required={key==='name'}/>}</Field>;
-  const person=(key,label)=> <div><Field label={label}><select className={SELECT} value={form[key]||''} onChange={e=>put(key,e.target.value||null)}><option value="">Unassigned</option>{users.map(u=><option key={u.user_id} value={u.user_id}>{u.name||u.email}</option>)}</select></Field><AssignmentHelp /></div>;
+  const person=(key,label)=> <div><span className="text-sm">{label}</span><AssigneeSelect clientId={clientId} label={label} value={form[key]} onChange={v=>put(key,v)} users={users}/></div>;
   const boolean=(label,value,onChange)=><Field label={label}><select className={SELECT} value={value===true?'yes':value===false?'no':''} onChange={e=>onChange(e.target.value===''?null:e.target.value==='yes')}><option value="">Not assessed</option><option value="yes">Yes</option><option value="no">No</option></select></Field>;
   async function run(fn){setBusy(true);setError('');try{await fn();setRevision(n=>n+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}
   async function save(e){e.preventDefault();await run(async()=>{const body={client_id:clientId,...Object.fromEntries(AI_KEYS.map(k=>[k,form[k]]))};await (id?api.patch(`/ai_systems/${id}`,body):api.post('/ai_systems',body));onSaved?.();onOpenChange(false);});}

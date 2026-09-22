@@ -37,6 +37,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ValidationError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
 import action_items
+import assignment_eligibility
 import remediation
 import risk_ids
 import policy_reviews
@@ -1241,6 +1242,18 @@ async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depend
     return doc
 
 
+@api.get("/clients/{client_id}/assignees")
+async def eligible_assignees(client_id: str, search: str = Query("", max_length=100),
+                             offset: int = Query(0, ge=0, le=10000),
+                             limit: int = Query(50, ge=1, le=100),
+                             user: Dict = Depends(get_current_user)):
+    if not _can_access_client(user, client_id):
+        raise HTTPException(403, "Forbidden")
+    if not await db.clients.find_one({"client_id": client_id}, {"_id": 1}):
+        raise HTTPException(404, "Client not found")
+    return await assignment_eligibility.candidates(db, client_id, search, offset, limit)
+
+
 @api.get("/clients/{client_id}/members")
 async def client_members(client_id: str, user: Dict = Depends(get_current_user)):
     """Users associated with the tenant. Client users see only their client members; internal admins additionally see 'orphaned' users who still own records but are not formal members."""
@@ -2149,10 +2162,7 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
         raise HTTPException(403, "Forbidden for this client")
     if kind == "tasks":
         parsed = await action_items.prepare(db, parsed, _can_access_client)
-    if kind in ("reviews","risks") and parsed.get("owner_id"):
-        owner = await db.users.find_one({"user_id": parsed["owner_id"]}, {"_id": 0})
-        if not owner or not _can_access_client(owner, parsed["client_id"]):
-            raise HTTPException(422, "Review owner must have access to this client")
+    await assignment_eligibility.validate(db, kind, parsed, _can_access_client)
     for related_kind, (_related_type, _related_model, related_key, _related_prefix) in ENTITY_MAP.items():
         if related_key == id_field or not parsed.get(related_key):
             continue
@@ -2224,10 +2234,7 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         body["assignee_id"] = None
     if kind == "tasks":
         await action_items.prepare(db, {**existing, **body}, _can_access_client, existing)
-    if kind in ("reviews","risks") and body.get("owner_id"):
-        owner = await db.users.find_one({"user_id": body["owner_id"]}, {"_id": 0})
-        if not owner or not _can_access_client(owner, existing["client_id"]):
-            raise HTTPException(422, "Review owner must have access to this client")
+    await assignment_eligibility.validate(db, kind, {**existing, **body}, _can_access_client, existing)
     if kind == "vendors":
         await vendor_governance.validate(db,{**existing,**body},_can_access_client,existing)
         for risk_id in body.get("related_risk_ids") or []:
@@ -3238,10 +3245,9 @@ async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict
         await finding_create_task(fid, {"title": prior.get("remediation_title") or prior["title"]}, user)
         return prior
     await _review_selection(review, body["occurrence_id"], write=True)
-    if body.get("owner_id"):
-        owner = await db.users.find_one({"user_id": body["owner_id"]}, {"_id": 0})
-        if not owner or not _can_access_client(owner, review["client_id"]):
-            raise HTTPException(422, "Owner must have access to this client")
+    await assignment_eligibility.validate(db, "findings", {
+        "client_id": review["client_id"], "owner_id": body.get("owner_id", review.get("owner_id")),
+    }, _can_access_client)
     if not isinstance(body.get("title"), str) or not body["title"].strip():
         raise HTTPException(422, "Finding title is required")
     if not isinstance(body.get("remediation_title"), str) or not body["remediation_title"].strip():
@@ -3303,7 +3309,7 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
         "client_id": finding["client_id"],
         "status": "open",
         "priority": body.get("priority", finding.get("severity", "medium")),
-        "assignee_id": body.get("assignee_id") or finding.get("owner_id"),
+        "assignee_id": body.get("assignee_id", finding.get("owner_id")),
         "due_date": body.get("due_date") or finding.get("due_date"),
         "description": body.get("description") or finding.get("remediation_plan"),
         "finding_id": finding_id,
@@ -3672,6 +3678,7 @@ async def policy_verify(policy_id: str, body: PolicyVerifyIn, user: Dict = Depen
         v = getattr(body, k, None)
         if v not in (None, ""):
             update[k] = v
+    await assignment_eligibility.validate(db, "policies", {**p, **update}, _can_access_client, p)
     await db.policies.update_one({"policy_id": policy_id}, {"$set": update})
     await audit(user, "verify", "policy", policy_id, p["client_id"],
                 meta={"prev_presence": p.get("presence"), "verified_fields": [k for k in update.keys() if k not in ("updated_at", "verified_at", "verified_by")]})
@@ -4299,6 +4306,7 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
         raise HTTPException(400, "No fields to update")
     for d in docs:
         checked = _editable_patch(body.kind, dict(updates), d, user=user)
+        await assignment_eligibility.validate(db, body.kind, {**d, **checked}, _can_access_client, d)
         if body.kind == "tasks":
             await action_items.prepare(db, {**d, **checked}, _can_access_client, d)
     for d in docs:

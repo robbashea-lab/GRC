@@ -1,13 +1,14 @@
 import {vendorPlans,VENDOR_PURPOSES} from '../lib/vendorGovernance';
 import {reviewView,reviewSchedule} from '../lib/reviewOccurrences';
 import {recordUuid} from '../lib/recordUuid';
+import {validateAssignment} from './assignmentEligibility';
 export function validateVendor(db,v,previous) {
   if(!v.name?.trim()||!(v.service||v.services)?.trim()) throw new Error('Vendor name and Service / Product are required.');
   if(!['critical','high','medium','moderate','low'].includes(v.criticality)) throw new Error('Invalid Vendor criticality.');
   const stages={onboarding:['under_review','offboarding'],under_review:['active','offboarding'],active:['under_review','offboarding'],offboarding:['inactive'],inactive:[]};
   if(!previous&&v.status!=='onboarding') throw new Error('New Vendors start Onboarding.');
   if(previous&&previous.status!==v.status&&!stages[previous.status]?.includes(v.status)) throw new Error('Use the next Vendor lifecycle stage.');
-  if(v.business_owner_id&&!db.users.some(u=>u.user_id===v.business_owner_id&&(u.role==='super_admin'||u.client_ids?.includes(v.client_id)))) throw new Error('Business owner must have access to this client.');
+  validateAssignment(db,'vendors',v,previous);
   for(const key of ['contract_lead_days','assurance_window_days']) if(v[key]!=null&&(!Number.isInteger(v[key])||v[key]<1||v[key]>3650)) throw new Error('Lead time must be 1–3650 days.');
   if(v.assurance_required&&!(v.assurance_records||[]).some(a=>a.required!==false)) throw new Error('Select at least one expected assurance artifact.');
   for(const id of v.related_risk_ids||[]) if(!db.risks.some(r=>r.risk_id===id&&r.client_id===v.client_id)) throw new Error('Related Risk must belong to the same client.');

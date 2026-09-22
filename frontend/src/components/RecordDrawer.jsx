@@ -1,4 +1,5 @@
 import VendorGovernancePanel from "./VendorGovernancePanel";
+import AssigneeSelect from "./AssigneeSelect";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -638,6 +639,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value} disabled={o.value !== record?.[f.name] && (f.name === "status" && ({policies:['approved'],findings:['closed','accepted','remediated'],risks:['accepted','closed','retired'],reviews:['completed'],exceptions:['approved']}[kind] || []).includes(o.value) || f.name === "presence" && o.value === "verified_existing" && record?.presence !== o.value)}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
+        ) : f.type === "user" && !["linked_user_id", "approver_id"].includes(f.name) ? (
+          <AssigneeSelect clientId={record?.client_id || clientId} label={f.label} value={form[f.name]} onChange={v=>setForm({...form,[f.name]:v})} users={users} testId={`field-${f.name}`} required={f.required}/>
         ) : f.type === "user" ? (
           <Select value={form[f.name] || "__none__"} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
             <SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Assign…" /></SelectTrigger>
@@ -649,7 +652,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         ) : (
           <Input type={f.type || "text"} value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
         )}
-        {f.type === 'user' && f.name !== 'linked_user_id' && <AssignmentHelp policy={kind === 'policies'} />}
+        {f.type === 'user' && f.name === 'approver_id' && <AssignmentHelp policy={kind === 'policies'} />}
       </div>
     );
   }
@@ -1213,7 +1216,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
             <Label className="block">Finding title *<Input required value={findingForm.title || ""} onChange={e => setFindingForm(p => ({ ...p, title: e.target.value }))} data-testid="finding-title" /></Label>
             <Label className="block">What was identified?<Textarea value={findingForm.description || ""} onChange={e => setFindingForm(p => ({ ...p, description: e.target.value }))} /></Label>
             <div><Label>Severity</Label><Select value={findingForm.severity || "medium"} onValueChange={v => setFindingForm(p => ({ ...p, severity: v }))}><SelectTrigger aria-label="Finding severity"><SelectValue /></SelectTrigger><SelectContent>{["low", "medium", "high", "critical"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
-            <div><Label>Owner</Label><Select value={findingForm.owner_id || "__none__"} onValueChange={v => setFindingForm(p => ({ ...p, owner_id: v === "__none__" ? "" : v }))}><SelectTrigger aria-label="Finding owner"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="__none__">Unassigned</SelectItem>{users.map(u => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label>Owner</Label><AssigneeSelect clientId={record?.client_id || clientId} label="Finding owner" value={findingForm.owner_id} onChange={v=>setFindingForm(p=>({...p,owner_id:v}))} users={users}/></div>
             <Label className="block">Due date<Input type="date" value={findingForm.due_date || ""} onChange={e => setFindingForm(p => ({ ...p, due_date: e.target.value }))} /></Label>
             <Label className="block">Remediation action *<Input required placeholder="Develop and approve a Business Impact Analysis" value={findingForm.remediation_title || ""} onChange={e => setFindingForm(p => ({ ...p, remediation_title: e.target.value }))} data-testid="finding-remediation-title" /></Label>
             <Label className="block">Remediation plan<Textarea value={findingForm.remediation_plan || ""} onChange={e => setFindingForm(p => ({ ...p, remediation_plan: e.target.value }))} /></Label>
@@ -1289,13 +1292,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs text-ink-secondary">Owner</Label>
-                  <Select value={verifyForm.owner_id || "__none__"} onValueChange={(v) => setVerifyForm({ ...verifyForm, owner_id: v === "__none__" ? "" : v })}>
-                    <SelectTrigger data-testid="verify-owner" className="text-sm"><SelectValue placeholder="Assign" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Leave unchanged</SelectItem>
-                      {users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <AssigneeSelect clientId={record?.client_id || clientId} label="Policy owner" value={verifyForm.owner_id} onChange={v=>setVerifyForm({...verifyForm,owner_id:v})} users={users} testId="verify-owner" emptyLabel="Leave unchanged"/>
                 </div>
                 <div>
                   <Label className="text-xs text-ink-secondary">Approver</Label>

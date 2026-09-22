@@ -1,5 +1,6 @@
 """Small Task provenance contract; no new entity or shadow task store."""
 from fastapi import HTTPException
+import assignment_eligibility
 
 SOURCES = {"review": ("reviews", "review_id"), "finding": ("findings", "finding_id"),
            "risk": ("risks", "risk_id"), "vendor": ("vendors", "vendor_id"), "policy": ("policies", "policy_id"), "audit": ("assessments", "assessment_id")}
@@ -9,11 +10,7 @@ async def prepare(db, row, can_access, previous=None):
     cid = row["client_id"]
     if row.get("priority") not in ("critical", "high", "medium", "low") and not (previous and row.get("priority") == previous.get("priority")):
         raise HTTPException(422, "Invalid Action Item priority")
-    owner_id = row.get("assignee_id")
-    if owner_id:
-        owner = await db.users.find_one({"user_id": owner_id}, {"_id": 0})
-        if not owner or not can_access(owner, cid):
-            raise HTTPException(422, "Assignee must have access to this client")
+    await assignment_eligibility.validate(db, "tasks", row, can_access, previous)
     if previous:
         if any(row.get(k) != previous.get(k) for k in LINKS):
             raise HTTPException(422, "The originating source and relationships must be retained")

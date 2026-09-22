@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, ConfigDict, StrictBool
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 import review_occurrences
+import assignment_eligibility
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiGovernanceCatalog.json').read_text(encoding='utf-8'))
 
@@ -110,10 +111,7 @@ def router_for(s):
         for key in ('purposes','data_types','access','roles','risk_topics'):
             if set(data[key])-set(CATALOG[key]): raise HTTPException(422,'Invalid '+key)
         if set(data['screening'])-{q['key'] for q in CATALOG['questions']}: raise HTTPException(422,'Invalid screening question')
-        for key in ('owner_id','technical_owner_id','oversight_owner_id'):
-            if data.get(key):
-                owner=await s.db.users.find_one({'user_id':data[key],'status':'active'})
-                if not owner or not s._can_access_client(owner,data['client_id']): raise HTTPException(422,'Owner must be an active client-authorized user')
+        await assignment_eligibility.validate(s.db, 'ai_systems', data, s._can_access_client, old)
         if data.get('vendor_id') and not await s.db.vendors.find_one({'vendor_id':data['vendor_id'],'client_id':data['client_id']}): raise HTTPException(422,'Vendor must belong to this client')
     @router.get('/ai-intake')
     async def get_intake(client_id:str,user=Depends(s.get_current_user)):

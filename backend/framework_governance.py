@@ -6,6 +6,7 @@ from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 import review_occurrences
+import assignment_eligibility
 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
 FRAMEWORKS=json.loads((ROOT/'frameworkDefinitions.json').read_text())['frameworks']
@@ -126,9 +127,7 @@ def router_for(s):
         if data['status'] not in STATUSES or any(data.get(k) is None for k in ('implementation','technology','notes','na_rationale')):raise HTTPException(422,'Invalid assessment fields')
         if data['status']=='not_applicable' and not data['na_rationale'].strip():raise HTTPException(422,'N/A rationale is required')
         if data['status']=='addressed' and not data['implementation'].strip():raise HTTPException(422,'Describe implementation before marking Addressed')
-        if data.get('owner_id'):
-            owner=await s.db.users.find_one({'user_id':data['owner_id'],'status':'active'})
-            if not owner or not s._can_access_client(owner,old['client_id']):raise HTTPException(422,'Owner must be an active client-authorized user')
+        await assignment_eligibility.validate(s.db, 'framework_assessments', data, s._can_access_client, old)
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed:
@@ -154,6 +153,9 @@ def router_for(s):
         doc={'finding_id':fid,'client_id':row['client_id'],'title':body.title.strip(),'description':body.description,'severity':body.severity,
              'status':'open','framework_assessment_id':aid,'source':'CIS IG1 · '+row['definition_id'],'owner_id':row.get('owner_id'),
              'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'remediation_title':body.remediation_title.strip()}
+        previous=await s.db.findings.find_one({'finding_id':fid,'client_id':row['client_id']})
+        if not previous:
+            await assignment_eligibility.validate(s.db, 'findings', doc, s._can_access_client)
         result=await s.db.findings.update_one({'_id':fid},{'$setOnInsert':doc},upsert=True)
         saved=await s.db.findings.find_one({'finding_id':fid},{'_id':0})
         await s.finding_create_task(fid,{'title':saved['remediation_title']},user)

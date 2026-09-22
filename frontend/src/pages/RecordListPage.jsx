@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import AssigneeSelect from "@/components/AssigneeSelect";
 import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, UserRound, CircleDashed, X, CalendarDays, MoreVertical, Pencil, Filter, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 
@@ -469,17 +470,7 @@ export default function RecordListPage({ kind }) {
               <DropdownMenuContent align="start" className="w-64 max-h-72 overflow-y-auto">
                 <DropdownMenuLabel className="text-xs">Choose a user</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => bulk("set-owner", { owner_id: null })} className="text-sm">Unassigned</DropdownMenuItem>
-                {users.map((u) => (
-                  <DropdownMenuItem
-                    key={u.user_id}
-                    onClick={() => bulk("set-owner", { owner_id: u.user_id })}
-                    data-testid={`bulk-owner-${u.user_id}`}
-                    className="text-sm"
-                  >
-                    {u.name || u.email}
-                  </DropdownMenuItem>
-                ))}
+                <div className="p-2"><AssigneeSelect clientId={currentClientId} label="Bulk owner" value={null} onChange={v=>bulk("set-owner",{owner_id:v})}/></div>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

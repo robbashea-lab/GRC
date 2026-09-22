@@ -1,4 +1,4 @@
-import AssignmentHelp from './AssignmentHelp';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import api, { formatError } from '@/lib/api';
 import { SCHEMAS } from '@/lib/schemas';
 import { occurrenceId, reviewSchedule, reviewView } from '@/lib/reviewOccurrences';
 import { useAuth } from '@/context/AuthContext';
+import AssigneeSelect from './AssigneeSelect';
 import {assessedRisk} from '@/lib/grcWork';
 import {recordUuid} from '@/lib/recordUuid';
 import StatusBadge from './StatusBadge';
@@ -156,7 +157,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             {configFields.filter(f => (f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom') && (f.name !== 'policy_id' || configuration.review_type === 'policy' || configuration.policy_id)).map(f => {
               const disabled = frozen || !admin, value = configuration[f.name] || '';
               if (f.type === 'policy') return <div key={f.name}>{picker(f.label,value,v=>setForm(p=>({...p,[f.name]:v})),policies.map(p=>({value:p.policy_id,label:p.title})),disabled || !!current,`field-${f.name}`)}</div>;
-              if (f.type === 'select' || f.type === 'user') return <div key={f.name}>{picker(f.label,value,v => setForm(p => ({...p,[f.name]:v})), f.type === 'user' ? members.map(m => ({value:m.user_id,label:m.name || m.email})) : [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}{f.type === 'user' && <AssignmentHelp />}</div>;
+              if (f.type === 'user') return <div key={f.name}><Label>{f.label}</Label><AssigneeSelect clientId={cid} label={f.label} value={value} onChange={v=>setForm(p=>({...p,[f.name]:v}))} disabled={disabled} users={members} testId={`field-${f.name}`}/></div>;
+              if (f.type === 'select') return <div key={f.name}>{picker(f.label,value,v => setForm(p => ({...p,[f.name]:v})), [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}</div>;
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
             <div><Label>Occurrence</Label><p className="text-sm py-2" data-testid="review-period">{selected?.period || derived.period}</p></div>
@@ -211,7 +213,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
           <Label className="block">Description<Textarea value={finding.description} onChange={e => setFinding(p => ({...p,description:e.target.value}))} /></Label>
           {picker('Severity',finding.severity,v => setFinding(p => ({...p,severity:v})),SCHEMAS.findings.fields.find(f => f.name === 'severity').options)}
-          {picker('Owner',finding.owner_id,v => setFinding(p => ({...p,owner_id:v})),members.map(m => ({value:m.user_id,label:m.name || m.email})))}
+          <div><Label>Owner</Label><AssigneeSelect clientId={cid} value={finding.owner_id} onChange={v=>setFinding(p=>({...p,owner_id:v}))} users={members}/></div>
           <Label className="block">Due date<Input type="date" value={finding.due_date} onChange={e => setFinding(p => ({...p,due_date:e.target.value}))} /></Label>
           <Label className="block">Corrective action *<Input required data-testid="finding-remediation-title" value={finding.remediation_title} onChange={e => setFinding(p => ({...p,remediation_title:e.target.value}))} /></Label>
           <Label className="block">Remediation notes<Textarea value={finding.remediation_plan} onChange={e => setFinding(p => ({...p,remediation_plan:e.target.value}))} /></Label>

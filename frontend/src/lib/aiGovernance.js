@@ -37,5 +37,4 @@ export function validateAI(db,row,existing){
   for(const key of ['purposes','data_types','access','roles','risk_topics'])if(!Array.isArray(row[key])||row[key].some(v=>!catalog[key].includes(v)))throw new Error('Invalid '+key);
   for(const [key,value] of Object.entries(row.screening||{}))if(!catalog.questions.some(q=>q.key===key)||(value!==null&&typeof value!=='boolean'))throw new Error('Invalid screening answer');
   if(row.vendor_id&&!db.vendors.some(v=>v.vendor_id===row.vendor_id&&v.client_id===row.client_id))throw new Error('Vendor must belong to this client');
-  for(const key of ['owner_id','technical_owner_id','oversight_owner_id'])if(row[key]&&!db.users.some(u=>u.user_id===row[key]&&u.status==='active'&&(u.role==='super_admin'||u.role==='platform_admin'&&!u.client_ids?.length||u.client_ids?.includes(row.client_id))))throw new Error('Owner must be an active client-authorized user');
 }
