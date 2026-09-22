@@ -4,6 +4,8 @@ import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {useSearchParams} from 'react-router-dom';
+import managementRules from '@/lib/managementRules.json';
 import api, { formatError, API } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
@@ -41,6 +43,9 @@ const VIEWS = RISK_VIEWS;
 const CATEGORIES = SCHEMAS.risks.fields.find(f => f.name === 'category').options;
 
 export default function RiskRegister() {
+  const [searchParams,setSearchParams]=useSearchParams();
+  const portfolioSignificant=searchParams.get('portfolio')==='significant';
+  const portfolioEntry=useRef(null);
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
   const generation=useRef(0);
@@ -64,19 +69,20 @@ export default function RiskRegister() {
     setLoading(true);
     try {
       const [r, u] = await Promise.all([
-        api.get("/risks", { params: { client_id: currentClientId } }).then((r) => r.data),
+        api.get("/risks", { params: { client_id: currentClientId, ...(portfolioSignificant?{portfolio_significant:true}:{}) } }).then((r) => r.data),
         api.get(`/clients/${currentClientId}/members`).then((r) => r.data).catch(() => []),
       ]);
       if(version===generation.current){setRows((r || []).map(assessedRisk)); setUsers(u || []);}
     } catch (e) { toast.error(formatError(e)); }
     finally { if(version===generation.current)setLoading(false); }
-  },[currentClientId]);
+  },[currentClientId,portfolioSignificant]);
   useEffect(() => { const scopeGeneration=generation;setRows([]);setUsers([]);setView("all_active");setQ("");setDrawer({open:false,record:null});setAddOpen(false);load();return()=>{scopeGeneration.current++;}; }, [currentClientId,load]);
 
   const now = Date.now();
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return rows.filter((r) => {
+      if(portfolioSignificant&&(r.archived||r.archived_at||managementRules.terminal.includes(r.status)||!['high','critical'].includes(r.risk_level)))return false;
       if (!riskMatchesView(r, view, new Date(now))) return false;
       if (!s) return true;
       return (r.title || "").toLowerCase().includes(s)
@@ -89,12 +95,19 @@ export default function RiskRegister() {
       const order = { critical: 0, high: 1, moderate: 2, low: 3 };
       return (order[a.risk_level] ?? 9) - (order[b.risk_level] ?? 9) || (b.risk_score || 0) - (a.risk_score || 0);
     });
-  }, [rows, q, view, userMap, now]);
+  }, [rows, q, view, userMap, now,portfolioSignificant]);
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const columns = tableColumns('risk-register', { rows: tableSource, users,  });
   const table = useTableControls({ columns, rows: tableSource, module: 'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key,values) => { if (key === null || key === 'status' && !values.length) setView('all_active'); else if (key === 'status') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
+  useEffect(()=>{
+    const key=portfolioSignificant?currentClientId:null;
+    if(key&&portfolioEntry.current!==key){
+      table.replaceState({filters:{}});setView('all_active');setQ('');
+    }
+    portfolioEntry.current=key;
+  },[portfolioSignificant,currentClientId,table]);
 
   const summary = useMemo(() => riskSummary(rows, new Date(now)), [rows, now]);
 
@@ -142,6 +155,7 @@ export default function RiskRegister() {
       />
 
       <div className="page-gutter pt-4">
+        {portfolioSignificant&&<div className="mb-3 text-sm text-ink-secondary" data-testid="portfolio-risk-filter">Active High / Critical Risks · includes accepted Risks <button className="ml-2 underline" onClick={()=>{const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}}>Clear portfolio filter</button></div>}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="risk-summary">
           <SummaryCard label="Active Risks" value={summary.open} icon={ShieldAlert} tone="neutral" />
           <SummaryCard label="High / Critical" value={summary.high_crit} icon={AlertOctagon} tone="critical" />

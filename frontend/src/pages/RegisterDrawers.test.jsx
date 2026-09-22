@@ -6,7 +6,7 @@ import api from '@/lib/api';
 jest.mock('@/context/OrgContext', () => ({useOrg:() => ({currentClientId:'a',currentClient:{name:'Client A'}})}));
 jest.mock('@/context/AuthContext', () => ({useAuth:() => ({user:{user_id:'owner',name:'Owner',role:'super_admin'}})}));
 jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api'}));
-jest.mock('react-router-dom', () => ({Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
+jest.mock('react-router-dom', () => ({useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
 jest.mock('@/components/ui/sheet', () => ({Sheet:({open,children})=>open?<div>{children}</div>:null,SheetContent:({children})=><section>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>}));
 let root, container;
 beforeEach(() => {

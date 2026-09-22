@@ -67,6 +67,13 @@ export async function previewAdapter(config) {
     const parts = path.split('/').filter(Boolean),
       [kind, id, name] = parts;
     const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
+    // Portfolio drill-ins use the same authorized client boundary as the server.
+    // This remains a Demo simulation, never an authorization mechanism for real data.
+    if(method==='get') {
+      if(params.client_id&&!evidenceAccess(db.user,params.client_id))return fail(403,'Forbidden for this client');
+      const target=ids[kind]&&id&&(db[kind]||[]).find(r=>r[ids[kind]]===id);
+      if(target?.client_id&&!evidenceAccess(db.user,target.client_id))return fail(403,'Forbidden for this client');
+    }
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
@@ -123,7 +130,7 @@ export async function previewAdapter(config) {
           .map(l => ({...l,log_id:l.log_id || l.audit_id})));
       }
       if (path === '/clients/directory') return respond(portfolio(db, params.include_archived === true || params.include_archived === 'true'));
-      if (path === '/clients') return respond(db.clients.filter(c => params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived').map(c => clientProjection(db, c)));
+      if (path === '/clients') return respond(db.clients.filter(c => evidenceAccess(db.user,c.client_id)&&(params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived')).map(c => clientProjection(db, c)));
       if (path === '/clients/grc-leads') return respond(leadCandidates(db, params.client_id));
       if (kind === 'risks' && name === 'review-history') return respond(db.reviews.filter(r=>r.risk_id===id&&r.client_id===record(db,'risks',id).client_id).flatMap(r=>(r.occurrences||[]).map(o=>({...o,review_id:r.review_id}))));
       if (['risks','tasks','vendors'].includes(kind) && name === 'activity') {

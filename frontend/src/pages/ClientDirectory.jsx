@@ -1,578 +1,267 @@
-import TableLoadingRow from '@/components/TableLoadingRow';
-import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
-import ClientRelationshipValue from '@/components/ClientRelationshipValue';
-import {primaryContact, grcLead} from '@/lib/clientRelationships';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api, { formatError } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { useOrg } from '@/context/OrgContext';
+import { grcLead } from '@/lib/clientRelationships';
 import { tableColumns } from '@/lib/tableColumns';
-import { useEffect, useMemo, useRef, useState } from "react";
-import RecordDrawer from '@/components/RecordDrawer';
+import { portfolioOrder } from '@/lib/portfolioOverview';
+import { usePortfolioView } from '@/lib/usePortfolioView';
 import { loadPortfolioRecord } from '@/lib/portfolioRecord';
-import { useNavigate } from "react-router-dom";
-import api, { formatError } from "@/lib/api";
-import { useOrg } from "@/context/OrgContext";
-import { useAuth } from "@/context/AuthContext";
-import PageHeader from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
-  Search, MoreVertical, Building2, ArrowRight, ShieldAlert, AlertOctagon,
-  CalendarClock, Archive, ExternalLink, ScrollText, UserX, Users2, Clock, X,
-} from "lucide-react";
-import { toast } from "sonner";
-
-const PROGRAM_TONES = {
-  action_required: { label: "Action Required", dot: "bg-semantic-critical",
-    chip: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border" },
-  needs_attention: { label: "Needs Attention", dot: "bg-semantic-duesoon",
-    chip: "bg-semantic-duesoon-bg text-semantic-duesoon-text border-semantic-duesoon-border" },
-  healthy: { label: "Healthy", dot: "bg-semantic-success",
-    chip: "bg-semantic-success-bg text-semantic-success border-semantic-success-border" },
-  onboarding: { label: "Onboarding", dot: "bg-semantic-info",
-    chip: "bg-semantic-info-bg text-semantic-info border-semantic-info-border" },
-  inactive: { label: "Inactive", dot: "bg-line-strong", chip: "bg-surface-subtle text-ink-secondary border-line" },
-  archived: { label: "Archived", dot: "bg-line-strong", chip: "bg-surface-subtle text-ink-help border-line" },
-};
-
-const PRIORITY_TONES = {
-  critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "pill-high",
-  overdue: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  due_soon: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
-};
-
-const FILTERS = [
-  { id: "all", label: "All Clients" },
-  { id: "assigned_to_me", label: "Assigned to Me" },
-  { id: "past_due", label: "Past Due" },
-  { id: "critical_high", label: "Critical / High" },
-  { id: "unassigned", label: "Unassigned" },
-];
-
-function StatusChip({ value }) {
-  const tone = PROGRAM_TONES[value] || PROGRAM_TONES.healthy;
-  return (
-    <span className={`pill ${tone.chip}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
-      {tone.label}
-    </span>
-  );
-}
-
-function Avatar({ name, logoUrl }) {
-  if (logoUrl) return <img src={logoUrl} alt="" className="h-9 w-9 rounded-md object-cover border border-line" />;
-  const initial = (name || "?").trim().slice(0, 1).toUpperCase();
-  return (
-    <div className="h-9 w-9 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold border border-brand-metallic-3 shrink-0">
-      {initial}
-    </div>
-  );
-}
-
-function fmtDate(iso) {
-  if (!iso) return "—";
-  return new Date(String(iso).slice(0,10) + 'T12:00:00').toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-function relTime(iso) {
-  if (!iso) return "just now";
-  const d = new Date(iso).getTime();
-  const diff = (Date.now() - d) / 1000;
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return new Date(iso).toLocaleDateString();
-}
-
-function AttentionCard({ label, value, subtitle, icon: Icon, tone, onClick, testid }) {
-  const tones = {
-    critical: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
-    duesoon: "text-semantic-duesoon-text bg-semantic-duesoon-bg border-semantic-duesoon-border",
-    info: "text-semantic-info bg-semantic-info-bg border-semantic-info-border",
-    neutral: "text-ink-secondary bg-surface-subtle border-line",
-  };
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      data-testid={testid}
-      className="text-left bg-surface-card border border-line rounded-lg p-3.5 hover:border-brand-charcoal hover:shadow-sm transition group focus:outline-none focus:ring-2 focus:ring-brand-charcoal/30"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="metric-label">{label}</div>
-          <div className="metric-value mt-1">{value}</div>
-          {subtitle && <div className="text-xs text-ink-help mt-1 leading-tight">{subtitle}</div>}
-        </div>
-        <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}>
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function MetricCell({ value, tone, onClick, testid }) {
-  const tones = {
-    critical: "text-semantic-critical",
-    duesoon: "text-semantic-duesoon-text",
-    info: "text-semantic-info",
-    neutral: "text-ink-secondary",
-  };
-  const showLink = value > 0;
-  return (
-    <td className="tbl-cell text-right">
-      {showLink ? (
-        <button
-          onClick={onClick}
-          data-testid={testid}
-          className={`font-mono text-sm font-medium hover:underline underline-offset-2 ${tones[tone] || tones.neutral}`}
-        >
-          {value}
-        </button>
-      ) : (
-        <span data-testid={testid} className="font-mono text-sm text-ink-help">0</span>
-      )}
-    </td>
-  );
-}
-
+import { useTableControls, ColumnControl, TableFilterChips } from '@/components/TableControls';
+import PageHeader from '@/components/PageHeader';
+import RecordDrawer from '@/components/RecordDrawer';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Search, MoreVertical, Archive, ExternalLink, ScrollText, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import './Portfolio.css';
+const QUICK = [['past_due', 'Past Due'], ['critical_high_issues', 'Critical / High'], ['significant_risks', 'Significant Risks'], ['unassigned', 'Unassigned']];
+const METRICS = [['past_due', 'Past Due'], ['due_30d', 'Due ≤30d'], ['critical_high_issues', 'Critical / High'], ['significant_risks', 'Significant Risks'], ['unassigned', 'Unassigned']];
+const fmtDate = value => value ? new Date(String(value).slice(0, 10) + 'T12:00:00').toLocaleDateString(undefined, {
+  month: 'short',
+  day: 'numeric'
+}) : '—';
+const actionLabel = item => ({
+  review: 'Open Review',
+  task: 'Open Action',
+  finding: 'View Finding',
+  risk: 'View Risk',
+  vendor: 'View Vendor',
+  policy: 'View Policy'
+})[item.entity_type] || 'Open record';
 export default function ClientDirectory() {
-  const nav = useNavigate();
-  const { user } = useAuth();
-  const { switchClient } = useOrg();
-  const [rows, setRows] = useState([]);
-  const [portfolio, setPortfolio] = useState(null);
-  const [queue, setQueue] = useState([]);
-  const [metricItems,setMetricItems]=useState(null);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [leadFilter, setLeadFilter] = useState("__all__");
-  const [includeArchived, setIncludeArchived] = useState(false);
-  const [drillOpen, setDrillOpen] = useState(null); // { scope, title, rows }
-  const [selectedRecord,setSelectedRecord]=useState(null);
-  const recordRequest=useRef(0);
-  useEffect(()=>()=>{recordRequest.current++;},[]);
-  async function openPortfolioItem(item) {
-    const request=++recordRequest.current;
-    try {
-      const selected=await loadPortfolioRecord(api,item);
-      if(request!==recordRequest.current) return;
-      setDrillOpen(null);setSelectedRecord(selected);
-    } catch(e) {if(request===recordRequest.current) toast.error(formatError(e));}
-  }
-
-  const canCreate = ["super_admin", "platform_admin"].includes(user?.role);
-
-  async function load() {
+  const {
+    user
+  } = useAuth();
+  return user ? <Portfolio user={user} key={user.user_id + ':' + user.role + ':' + (user.client_ids || []).join(',')} /> : null;
+}
+function Portfolio({
+  user
+}) {
+  const nav = useNavigate(),
+    {
+      switchClient
+    } = useOrg();
+  const [view, update, restoreScroll] = usePortfolioView(user);
+  const [rows, setRows] = useState([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState('');
+  const [drill, setDrill] = useState(null),
+    [selected, setSelected] = useState(null),
+    [members, setMembers] = useState([]);
+  const generation = useRef(0),
+    recordRequest = useRef(0);
+  const globalScope = user.role === 'super_admin' || (user.role === 'platform_admin' && !user.client_ids?.length);
+  const canManage = ['super_admin', 'platform_admin'].includes(user.role);
+  const load = useCallback(async () => {
+    const request = ++generation.current;
     setLoading(true);
+    setError('');
     try {
-      const [{ data }, { data: usersData }] = await Promise.all([
-        api.get("/clients/directory", { params: { include_archived: includeArchived ? "true" : "false" } }),
-        api.get("/users").catch(() => ({ data: [] })),
-      ]);
-      setRows(data.clients || []);
-      setPortfolio(data.portfolio || null);
-      setQueue(data.attention_queue || []);
-      setMetricItems(data.metric_items || null);
-      setUsers(usersData || []);
-    } catch (e) { setPortfolio(null);setRows([]);setQueue([]);setMetricItems(null);toast.error(formatError(e)); }
-    finally { setLoading(false); }
-  }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [includeArchived]);
-
-  const userMap = useMemo(() => {
-    const m = {}; users.forEach((u) => { m[u.user_id] = u; }); return m;
-  }, [users]);
-  const admins = useMemo(() => [...new Map(rows.filter(r => r.assigned_owner_id).map(r => [r.assigned_owner_id, {user_id: r.assigned_owner_id, name: grcLead(r).name}])).values()], [rows]);
-
-  const presetRows = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (leadFilter !== "__all__" && r.grc_lead_id !== leadFilter) return false;
-      if (filter === "assigned_to_me") { if (r.grc_lead_id !== user?.user_id) return false; }
-      else if (filter === "past_due")     { if (!(r.past_due > 0)) return false; }
-      else if (filter === "critical_high"){ if (!(r.critical_high_open > 0)) return false; }
-      else if (filter === "unassigned") { if (!(r.unassigned > 0)) return false; }
-      else if (filter === "attention") { if (!['action_required','needs_attention'].includes(r.program_status)) return false; }
-      else if (filter !== "all" && r.program_status !== filter) return false;
-      if (!s) return true;
-      return (
-        (r.name || "").toLowerCase().includes(s) ||
-        (r.industry || "").toLowerCase().includes(s) ||
-        primaryContact(r).name.toLowerCase().includes(s) ||
-        grcLead(r).name.toLowerCase().includes(s)
-      );
-    });
-  }, [rows, q, filter, leadFilter, user]);
-
-  const tableSource = rows;
-  const columns = tableColumns('portfolio', { rows: tableSource, users: rows.map(r => r.grc_lead).filter(Boolean) });
-  const table = useTableControls({ columns, rows: tableSource, module: 'portfolio', scope: `${user?.user_id}:${'platform'}` });
-  const filtered = table.apply(presetRows);
-
-  function enterWorkspace(row, target = "/dashboard") {
+      const {
+        data
+      } = await api.get('/clients/directory', {
+        params: {
+          include_archived: view.includeArchived
+        }
+      });
+      if (request === generation.current) setRows(data.clients || []);
+    } catch (e) {
+      if (request === generation.current) {
+        setRows([]);
+        setError(formatError(e));
+      }
+    } finally {
+      if (request === generation.current) setLoading(false);
+    }
+  }, [view.includeArchived]);
+  useEffect(() => {
+    const requests = generation,
+      records = recordRequest;
+    load();
+    return () => {
+      requests.current++;
+      records.current++;
+    };
+  }, [load]);
+  useEffect(() => {
+    if (!loading) restoreScroll();
+  });
+  const columns = tableColumns('portfolio', {
+    rows
+  });
+  const table = useTableControls({
+    columns,
+    rows,
+    module: 'portfolio',
+    scope: user.user_id + ':platform',
+    state: view.table,
+    onStateChange: next => update({
+      table: next,
+      scroll: 0
+    })
+  });
+  const query = view.search.trim().toLowerCase();
+  const filtered = table.apply([...rows].sort(portfolioOrder).filter(r => (!view.mine || r.grc_lead_id === user.user_id) && (!query || [r.name, r.industry, grcLead(r).name].some(v => v?.toLowerCase().includes(query)))));
+  const hasFilters = !!(query || view.mine || Object.keys(view.table.filters).length);
+  const clear = () => update({
+    search: '',
+    mine: false,
+    table: {
+      filters: {}
+    },
+    scroll: 0
+  });
+  const enter = (row, path = '/dashboard') => {
     switchClient(row.client_id);
-    nav(target);
-  }
-
-  function openDrill(scope, client=null) {
-    const key=scope==='critical_high'?'critical_high_open':scope;
-    if(scope==='attention') {
-      setQ('');setLeadFilter('__all__');table.clear();setFilter('attention');
-      window.scrollTo({top:document.querySelector('[data-testid="client-portfolio-table"]')?.offsetTop||0,behavior:'smooth'});
+    nav(path);
+  };
+  const closeDrill = () => {
+    recordRequest.current++;
+    setDrill(null);
+  };
+  const openDrill = (key, row) => {
+    const items = row.metric_items?.[key];
+    if (!Array.isArray(items) || items.length !== row[key]) {
+      toast.error('Complete metric details are unavailable. Refresh the portfolio.');
       return;
     }
-    const titles={past_due:'Past Due',due_30d:'Due next 30 days',due_31_90d:'Due in 31–90 Days',critical_high_open:'Critical / High open',unassigned:'Unassigned work'};
-    const source=client?.metric_items||metricItems, expected=client?client[key]:portfolio?.[key];
-    const items=source?.[key];
-    // Mixed-version / incomplete responses fail explicitly, never substitute Top 15.
-    if(!Array.isArray(items)||items.length!==expected) {toast.error('Complete metric details are unavailable. Refresh the portfolio.');return;}
-    setDrillOpen({scope,title:titles[key]+' — '+(client?.name||'portfolio'),items:[...items].sort((a,b)=>(a.due_date||'9999').localeCompare(b.due_date||'9999')||a.key.localeCompare(b.key))});
-  }
-
-  const generatedAt = portfolio?.generated_at;
-
-  return (
-    <div className="min-h-screen">
-      <PageHeader
-        eyebrow="Platform"
-        title="GRC Portfolio Overview"
-        subtitle="High-level view of client program health, upcoming obligations, priority issues, and ownership."
-
-      />
-
-      {/* Portfolio alert cards */}
-      {portfolio && (
-        <div className="page-gutter pt-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="portfolio-cards">
-            <AttentionCard testid="card-past-due" label="Past Due Items" value={portfolio.past_due}
-              icon={ShieldAlert} tone="critical"
-              onClick={() => openDrill("past_due")} />
-            <AttentionCard testid="card-due-30d" label="Due in Next 30 Days" value={portfolio.due_30d}
-              icon={CalendarClock} tone="duesoon"
-              onClick={() => openDrill("due_30d")} />
-            <AttentionCard testid="card-due-31-90" label="Due in 31–90 Days" value={portfolio.due_31_90d}
-              icon={Clock} tone="info"
-              onClick={() => openDrill("due_31_90d")} />
-            <AttentionCard testid="card-critical-high" label="Open Critical / High Items" value={portfolio.critical_high_open}
-              icon={AlertOctagon} tone="critical"
-              onClick={() => openDrill("critical_high")} />
-            <AttentionCard testid="card-unassigned" label="Unassigned Items" value={portfolio.unassigned}
-              icon={UserX} tone="duesoon"
-              onClick={() => openDrill("unassigned")} />
-            <AttentionCard testid="card-attention-clients"
-              label="Clients Requiring Attention"
-              value={`${portfolio.clients_requiring_attention} of ${portfolio.total_clients}`}
-              icon={Building2} tone="neutral"
-              onClick={() => openDrill("attention")} />
-          </div>
-          {generatedAt && (
-            <div className="text-xs text-ink-help mt-2">
-              Updated {relTime(generatedAt)}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Client Portfolio */}
-      <div className="page-gutter pt-4">
-        <h2 className="text-lg font-heading font-semibold text-ink-primary mb-2">Client Portfolio</h2>
-      </div>
-
-      {/* Filter bar */}
-      <div className="register-toolbar">
-        <div className="register-search relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input data-testid="client-directory-search" value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="Search client, industry, GRC lead…" className="pl-8 h-9 w-72 text-sm" />
-        </div>
-        <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="client-directory-filters">
-          {FILTERS.map((t) => {
-            const active = filter === t.id;
-            return (
-              <button key={t.id} aria-pressed={active} onClick={() => setFilter(t.id)} data-testid={`client-filter-${t.id}`}
-                className={`px-2.5 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-        <Select value={leadFilter} onValueChange={setLeadFilter}>
-          <SelectTrigger className="h-9 text-sm w-56" data-testid="client-lead-filter">
-            <SelectValue placeholder="All GRC leads" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">All GRC leads</SelectItem>
-            {admins.map((u) => (
-              <SelectItem key={u.user_id} value={u.user_id}>{u.name || u.email}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <label className="flex items-center gap-2 text-xs text-ink-secondary ml-2 select-none">
-          <input type="checkbox" checked={includeArchived} onChange={(e) => setIncludeArchived(e.target.checked)}
-            data-testid="include-archived-toggle" className="h-3.5 w-3.5" />
-          Include archived
-        </label>
-        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
-      </div>
-
-      {/* Client Portfolio table */}
-      <div className="page-gutter py-4">
-        <TableFilterChips table={table} />
-        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
-              <tr>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="grc_lead_id" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="program_status" /></th>
-                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="past_due" /></th>
-                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="due_30d" /></th>
-                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="critical_high_open" /></th>
-                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="unassigned" /></th>
-                <th className="tbl-cell text-left font-medium">Next Major Item</th>
-                <th className="tbl-cell text-right font-medium w-10">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {loading && (<tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10">Loading directory…</td></tr>)}
-              {!loading && filtered.length === 0 && (
-                <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="clients" onClear={() => { setQ(''); setFilter('all'); setLeadFilter('__all__'); }} /></td></tr>
-              )}
-              {!loading && filtered.map((r, i) => {
-                return (
-                <tr key={r.client_id} className="row-hover" data-testid={`client-row-${i}`}>
-                  <td className="tbl-cell">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <button onClick={() => enterWorkspace(r)} className="flex items-center gap-3 min-w-0 text-left group"
-                        data-testid={`client-open-${r.client_id}`}>
-                        <Avatar name={r.name} logoUrl={r.logo_url} />
-                        <div className="min-w-0">
-                          <div className="font-medium text-ink-primary group-hover:text-link-hover truncate flex items-center gap-1.5">
-                            {r.name}
-                            <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-ink-help" />
-                          </div>
-                          <div className="text-xs text-ink-help truncate">
-                            {r.industry || "—"}{r.primary_contact_id || r.primary_contact ? ` · Primary Contact: ${primaryContact(r).name}` : ""}
-                            {primaryContact(r).notice && <span className="block">{primaryContact(r).notice}</span>}
-                          </div>
-                        </div>
-                      </button>
-                    </div>
-                  </td>
-                  <td className="tbl-cell">
-                    <ClientRelationshipValue client={r} />
-                  </td>
-                  <td className="tbl-cell"><StatusChip value={r.program_status} /></td>
-                  <MetricCell value={r.past_due} tone={r.past_due > 0 ? "critical" : "neutral"}
-                    onClick={() => openDrill('past_due',r)} testid={`client-past-due-${i}`} />
-                  <MetricCell value={r.due_30d} tone={r.due_30d > 0 ? "duesoon" : "neutral"}
-                    onClick={() => openDrill('due_30d',r)} testid={`client-due-30-${i}`} />
-                  <MetricCell value={r.critical_high_open} tone={r.critical_high_open > 0 ? "critical" : "neutral"}
-                    onClick={() => openDrill('critical_high',r)} testid={`client-critical-${i}`} />
-                  <MetricCell value={r.unassigned} tone={r.unassigned > 0 ? "duesoon" : "neutral"}
-                    onClick={() => openDrill('unassigned',r)} testid={`client-unassigned-${i}`} />
-                  <td className="tbl-cell">
-                    {r.next_major_item ? (
-                      <button onClick={() => openPortfolioItem({...r.next_major_item,entity_type:'review',entity_id:r.next_major_item.review_id,client_id:r.client_id})} className="text-xs text-left hover:underline underline-offset-2">
-                        <div className="text-ink-primary truncate max-w-[220px]" title={r.next_major_item.title}>{r.next_major_item.title}</div>
-                        <div className="text-ink-help font-mono">{fmtDate(r.next_major_item.due_date)}</div>
-                      </button>
-                    ) : <span className="text-ink-disabled text-xs">No major item</span>}
-                  </td>
-                  <td className="tbl-cell text-right">
-                    <ClientRowMenu row={r} index={i} onOpen={() => enterWorkspace(r)} onArchived={load} canEdit={canCreate} />
-                  </td>
-                </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Needs Attention Across Clients */}
-      <div className="page-gutter mt-8">
-        <div className="flex items-end justify-between mb-2">
-          <div>
-            <h2 className="text-lg font-heading font-semibold text-ink-primary">Needs Attention Across Clients</h2>
-            <p className="text-xs text-ink-secondary">Highest-priority GRC items requiring action, ownership, or a decision.</p>
-          </div>
-          <div className="text-xs text-ink-help font-mono">Top {queue.length}</div>
-        </div>
-        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="attention-queue">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
-              <tr>
-                <th className="tbl-cell text-left font-medium">Priority</th>
-                <th className="tbl-cell text-left font-medium">Client</th>
-                <th className="tbl-cell text-left font-medium">Item</th>
-                <th className="tbl-cell text-left font-medium">Type</th>
-                <th className="tbl-cell text-left font-medium">Owner</th>
-                <th className="tbl-cell text-left font-medium">Due</th>
-                <th className="tbl-cell text-left font-medium">Status</th>
-                <th className="tbl-cell text-right font-medium w-10">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {loading && (<TableLoadingRow colSpan={8} />)}
-              {!loading && queue.length === 0 && (
-                <tr><td colSpan={8} className="tbl-cell text-center text-ink-help py-8">
-                  No priority portfolio items require attention right now.
-                </td></tr>
-              )}
-              {!loading && queue.map((item, i) => (
-                <tr key={item.key || item.entity_id || i} className="row-hover" data-testid={`attention-row-${i}`}>
-                  <td className="tbl-cell">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium capitalize ${PRIORITY_TONES[item.priority] || PRIORITY_TONES.due_soon}`}>
-                      {item.priority.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="tbl-cell">
-                    <button className="text-ink-primary hover:text-link-hover hover:underline underline-offset-2"
-                      onClick={() => enterWorkspace({ client_id: item.client_id })}>
-                      {item.client_name}
-                    </button>
-                  </td>
-                  <td className="tbl-cell text-ink-primary truncate max-w-[280px]" title={item.title}>{item.title}</td>
-                  <td className="tbl-cell text-ink-secondary text-xs capitalize">{item.type || item.entity_type}</td>
-                  <td className="tbl-cell text-ink-secondary text-xs">{item.owner_name || <span className="text-ink-help">Unassigned</span>}</td>
-                  <td className="tbl-cell text-xs font-mono">
-                    {item.due_date ? (
-                      <span className={item.overdue ? "text-semantic-critical" : "text-ink-secondary"}>
-                        {fmtDate(item.due_date)}{item.overdue ? " · overdue" : ""}
-                      </span>
-                    ) : <span className="text-ink-help">—</span>}
-                  </td>
-                  <td className="tbl-cell text-xs text-ink-secondary capitalize">{(item.status || "").replace("_", " ")}</td>
-                  <td className="tbl-cell text-right">
-                    <button
-                      onClick={() => openPortfolioItem(item)}
-                      data-testid={`attention-action-${i}`}
-                      className="text-xs text-link hover:text-link-hover"
-                    >Open →</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <DrillDialog open={!!drillOpen} data={drillOpen} userMap={userMap}
-        onClose={() => setDrillOpen(null)}
-        onOpenItem={openPortfolioItem} />
-      {selectedRecord && <RecordDrawer open kind={selectedRecord.kind} record={selectedRecord.record} clientId={selectedRecord.record.client_id} users={users} onSaved={load} onOpenChange={open=>{if(!open){recordRequest.current++;setSelectedRecord(null);}}} />}
-
-
+    recordRequest.current++;
+    setDrill({
+      title: METRICS.find(([k]) => k === key)[1] + ' — ' + row.name,
+      items: [...items].sort((a, b) => (a.due_date || '9999').localeCompare(b.due_date || '9999') || a.key.localeCompare(b.key))
+    });
+  };
+  const openItem = async item => {
+    const request = ++recordRequest.current;
+    try {
+      const [record, {
+        data
+      }] = await Promise.all([loadPortfolioRecord(api, item), api.get(`/clients/${encodeURIComponent(item.client_id)}/members`)]);
+      if (request !== recordRequest.current) return;
+      setMembers(data);
+      setDrill(null);
+      setSelected(record);
+    } catch (e) {
+      if (request === recordRequest.current) toast.error(formatError(e));
+    }
+  };
+  return <div className="portfolio-overview">
+    <PageHeader eyebrow="Platform" title="GRC Portfolio Overview" subtitle="Client priorities, accountable leads, and upcoming GRC work." />
+    <div className="page-gutter pt-3 pb-2 flex items-center justify-between gap-3">
+      <h2 className="text-lg font-heading font-semibold">Client Portfolio</h2>
+      <span className="text-xs text-ink-secondary">{globalScope ? 'Authorized client portfolio' : 'Your authorized clients'}</span>
     </div>
-  );
+    <div className="register-toolbar flex-wrap">
+      <div className="register-search relative">
+        <Search aria-hidden="true" className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
+        <Input aria-label="Search clients" data-testid="client-directory-search" placeholder="Search client, industry, lead…" value={view.search} onChange={e => update({
+          search: e.target.value,
+          scroll: 0
+        })} className="pl-8 h-9 w-64 text-sm" />
+      </div>
+      {globalScope && <div className="quick-filters inline-flex gap-0.5" aria-label="Portfolio scope">
+        {[[false, 'All Clients', 'all'], [true, 'Assigned to Me', 'assigned_to_me']].map(([mine, label, id]) => <button key={id} type="button" data-testid={`client-filter-${id}`} aria-pressed={view.mine === mine} onClick={() => update({
+          mine,
+          scroll: 0
+        })} className={`px-2.5 h-8 rounded-md text-xs ${view.mine === mine ? 'bg-primary text-primary-foreground' : 'text-ink-secondary hover:bg-surface-subtle'}`}>{label}</button>)}
+      </div>}
+      <div className="quick-filters inline-flex flex-wrap gap-0.5" data-testid="client-directory-filters">
+        {QUICK.map(([key, label]) => {
+          const active = table.state.filters[key]?.includes('some');
+          return <button key={key} type="button" data-testid={`client-filter-${key}`} aria-pressed={!!active} onClick={() => table.setFilter(key, active ? [] : ['some'])} className={`px-2 h-8 rounded-md text-xs ${active ? 'bg-primary text-primary-foreground' : 'text-ink-secondary hover:bg-surface-subtle'}`}>{label}</button>;
+        })}
+      </div>
+      <div className="flex items-center gap-3 text-xs">
+        <ColumnControl table={table} columnKey="grc_lead_id" menuClassName="portfolio-column-menu" />
+        <ColumnControl table={table} columnKey="frameworks" menuClassName="portfolio-column-menu" />
+        <label className="inline-flex items-center gap-2 whitespace-nowrap text-ink-secondary"><input type="checkbox" checked={view.includeArchived} onChange={e => update({
+            includeArchived: e.target.checked,
+            scroll: 0
+          })} data-testid="include-archived" />Include archived</label>
+      </div>
+    </div>
+    <div className="page-gutter pb-5">
+      <TableFilterChips table={table} />
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-secondary py-2">
+        <span>{loading ? 'Loading clients…' : `${filtered.length} ${filtered.length === 1 ? 'client' : 'clients'}${hasFilters ? ` · ${rows.length} available` : ''}`}</span>
+        <span>{table.state.sort ? 'Custom column sort' : 'Attention first: issues · past due · risks · unassigned · upcoming'}{hasFilters && <button onClick={clear} className="ml-3 underline underline-offset-2">Clear filters</button>}</span>
+      </div>
+      {error ? <div role="alert" className="border border-line rounded-lg p-5 text-sm">{error}<Button variant="outline" size="sm" onClick={load} className="ml-3">Retry</Button></div> : <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table" tabIndex={0} role="region" aria-label="Client portfolio, scroll horizontally for additional columns">
+        <table className="portfolio-table w-full text-sm">
+          <caption className="sr-only">Authorized client GRC priorities. Critical / High counts open Findings and standalone high-priority Actions; Risks are counted separately.</caption>
+          <thead><tr>{columns.map(c => <th key={c.key} scope="col" aria-sort={table.state.sort?.key === c.key ? table.state.sort.dir === 'asc' ? 'ascending' : 'descending' : undefined} className={`tbl-cell font-medium ${c.numeric ? 'text-right' : 'text-left'}`}><ColumnControl table={table} column={c} menuClassName="portfolio-column-menu" /></th>)}<th scope="col" className="tbl-cell"><span className="sr-only">Actions</span></th></tr></thead>
+          <tbody className="divide-y divide-line">
+            {loading ? <tr><td colSpan={10} className="tbl-cell py-8 text-center text-ink-secondary">Loading directory…</td></tr> : filtered.length === 0 ? <tr><td colSpan={10} className="tbl-cell py-8 text-center text-ink-secondary">
+              <p>{view.mine ? 'No clients are currently assigned to you.' : rows.length ? 'No clients match the current filters.' : 'No clients are currently available to you.'}</p>
+              {hasFilters && <button onClick={clear} className="mt-2 underline underline-offset-2">Clear filters</button>}
+              {canManage && <button onClick={() => nav('/admin/clients')} className="ml-3 mt-2 underline underline-offset-2">Client Management →</button>}
+            </td></tr> : filtered.map((r, i) => {
+              const lead = grcLead(r);
+              return <tr key={r.client_id} className="row-hover" data-testid={`client-row-${i}`} data-client-id={r.client_id}>
+              <td className="tbl-cell"><button onClick={() => enter(r)} data-testid={`client-open-${r.client_id}`} className="text-left hover:underline underline-offset-2 font-medium text-ink-primary">{r.name}</button><div className="text-xs text-ink-secondary">{r.industry || '—'}{['archived', 'inactive', 'onboarding'].includes(r.client_status) && <span className="ml-1 capitalize">· {r.client_status}</span>}</div></td>
+              <td className="tbl-cell"><span className="font-medium text-ink-primary">{lead.name}</span>{lead.notice && <span title={lead.notice} className="inline-flex ml-1"><AlertTriangle className="h-3 w-3 text-ink-secondary" aria-hidden="true" /><span className="sr-only">{lead.notice}</span></span>}</td>
+              <td className="tbl-cell"><div className="flex flex-wrap gap-1">{r.frameworks?.length ? r.frameworks.map(f => <button key={f.key} onClick={() => enter(r, f.to)} className="portfolio-framework rounded border border-line bg-surface-subtle text-ink-secondary px-1.5 py-0.5 text-xs hover:bg-surface-hover" aria-label={`Open ${f.label} for ${r.name}`} title={`${f.label} applies. Open the framework workspace for recorded assessments and linked work.`}>{f.label}</button>) : <span className="text-xs text-ink-help">None selected</span>}</div></td>
+              {METRICS.map(([key, label]) => <td key={key} className="tbl-cell text-right"><button type="button" data-metric={key} aria-label={`${r.name}: ${label}, ${r[key] ?? 'unavailable'} items`} className={`portfolio-metric font-mono tabular-nums font-medium underline-offset-2 hover:underline ${r[key] > 0 ? ['past_due', 'critical_high_issues'].includes(key) ? 'text-semantic-critical' : key === 'unassigned' ? 'text-semantic-duesoon-text' : 'text-ink-primary' : 'text-ink-help'}`} onClick={() => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)}>{r[key] ?? '—'}</button></td>)}
+              <td className="tbl-cell text-xs text-ink-secondary">{r.last_activity ? <time dateTime={r.last_activity.at} title={`${r.last_activity.label} · ${new Date(r.last_activity.at).toLocaleString()}`}>{fmtDate(r.last_activity.at)}<span className="sr-only"> · {r.last_activity.label}</span></time> : <span title="No supported lifecycle event has been recorded. Generic edits and logins are excluded.">Not recorded</span>}</td>
+              <td className="tbl-cell"><ClientRowMenu row={r} index={i} onOpen={() => enter(r)} onArchived={load} canEdit={canManage} /></td>
+            </tr>;
+            })}
+          </tbody>
+        </table>
+      </div>}
+    </div>
+    <Sheet open={!!drill} onOpenChange={open => {
+      if (!open) closeDrill();
+    }}><SheetContent className="w-full sm:max-w-4xl overflow-y-auto" data-testid="drill-dialog">
+      <SheetHeader><SheetTitle>{drill?.title || 'Portfolio items'}</SheetTitle><SheetDescription>{drill?.items.length || 0} contributing items · opens authoritative records</SheetDescription></SheetHeader>
+      <div className="overflow-x-auto mt-4"><table className="w-full text-sm"><thead><tr>{['Item', 'Type', 'Owner', 'Due', 'Status', 'Action'].map(t => <th key={t} scope="col" className="tbl-cell text-left">{t}</th>)}</tr></thead><tbody className="divide-y divide-line">
+        {drill?.items.length === 0 && <tr><td colSpan={6} className="tbl-cell py-8 text-ink-secondary">No items contribute to this metric.</td></tr>}
+        {drill?.items.map((item, i) => <tr key={item.key} data-testid={`drill-row-${i}`} data-record-key={item.key}>
+          <td className="tbl-cell"><button onClick={() => openItem(item)} className="text-left text-ink-primary hover:underline">{item.title}</button></td>
+          <td className="tbl-cell text-xs">{item.type}</td><td className="tbl-cell text-xs">{item.owner_name || 'Unassigned'}</td>
+          <td className={`tbl-cell text-xs whitespace-nowrap ${item.overdue ? 'text-semantic-critical' : 'text-ink-secondary'}`}>{fmtDate(item.due_date)}{item.overdue && ' · overdue'}</td>
+          <td className="tbl-cell text-xs capitalize">{(item.status || 'Not recorded').replaceAll('_', ' ')}</td>
+          <td className="tbl-cell"><button onClick={() => openItem(item)} className="text-xs text-link whitespace-nowrap hover:underline">{actionLabel(item)}</button></td>
+        </tr>)}
+      </tbody></table></div>
+    </SheetContent></Sheet>
+    {selected && <RecordDrawer open kind={selected.kind} record={selected.record} clientId={selected.record.client_id} users={members} onSaved={load} onOpenChange={open => {
+      if (!open) {
+        recordRequest.current++;
+        setSelected(null);
+      }
+    }} />}
+  </div>;
 }
-
-function DrillDialog({ open, data, onClose, onOpenItem }) {
-  if (!open || !data) return null;
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl" data-testid="drill-dialog">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>{data.title}</DialogTitle>
-            <button onClick={onClose} className="p-1 rounded hover:bg-surface-subtle"><X className="h-4 w-4" /></button>
-          </div>
-          <DialogDescription>{data.items.length} items</DialogDescription>
-        </DialogHeader>
-        <div className="max-h-[60vh] overflow-y-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line sticky top-0">
-              <tr>
-                <th className="tbl-cell text-left">Client</th>
-                <th className="tbl-cell text-left">Item</th>
-                <th className="tbl-cell text-left">Type</th>
-                <th className="tbl-cell text-left">Owner</th>
-                <th className="tbl-cell text-left">Due</th>
-                <th className="tbl-cell text-right w-10">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {data.items.length === 0 && (
-                <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-6">Nothing matches this filter — nice!</td></tr>
-              )}
-              {data.items.map((it, i) => (
-                <tr key={it.key || it.entity_id || i} className="row-hover" data-testid={`drill-row-${i}`}>
-                  <td className="tbl-cell text-ink-primary">{it.client_name}</td>
-                  <td className="tbl-cell text-ink-primary truncate max-w-[220px]" title={it.title}>{it.title}</td>
-                  <td className="tbl-cell text-ink-secondary text-xs capitalize">{it.type || it.entity_type}</td>
-                  <td className="tbl-cell text-xs">{it.owner_name || <span className="text-ink-help">Unassigned</span>}</td>
-                  <td className="tbl-cell text-xs font-mono">
-                    {it.due_date ? (
-                      <span className={it.overdue ? "text-semantic-critical" : "text-ink-secondary"}>
-                        {fmtDate(it.due_date)}{it.overdue ? " · overdue" : ""}
-                      </span>
-                    ) : <span className="text-ink-help">—</span>}
-                  </td>
-                  <td className="tbl-cell text-right">
-                    <button onClick={() => onOpenItem(it)} className="text-xs text-link hover:text-link-hover">Open →</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ClientRowMenu({ row, index, onOpen, onArchived, canEdit }) {
+function ClientRowMenu({
+  row,
+  index,
+  onOpen,
+  onArchived,
+  canEdit
+}) {
   const nav = useNavigate();
-  const { switchClient } = useOrg();
-  async function archive() {
-    if (!confirm(`Archive ${row.name}?`)) return;
-    try { await api.patch(`/clients/${row.client_id}`, { status: "archived" }); toast.success(`${row.name} archived`); onArchived?.(); }
-    catch (e) { toast.error(formatError(e)); }
+  async function setArchived(archived) {
+    if (archived && !window.confirm(`Archive ${row.name}?`)) return;
+    try {
+      await api.patch(`/clients/${row.client_id}`, {
+        status: archived ? 'archived' : 'active'
+      });
+      toast.success(`${row.name} ${archived ? 'archived' : 'restored'}`);
+      onArchived();
+    } catch (e) {
+      toast.error(formatError(e));
+    }
   }
-  async function unarchive() {
-    try { await api.patch(`/clients/${row.client_id}`, { status: "active" }); toast.success(`${row.name} restored`); onArchived?.(); }
-    catch (e) { toast.error(formatError(e)); }
-  }
-  function viewActivity() { nav(`/admin/audit?client=${row.client_id}`); }
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button data-testid={`client-row-menu-${index}`} className="p-1 rounded hover:bg-surface-subtle text-ink-help">
-          <MoreVertical className="h-4 w-4" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuItem onClick={onOpen} className="text-sm" data-testid={`client-menu-open-${index}`}>
-          <ExternalLink className="h-3.5 w-3.5 mr-2" /> Open client workspace
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={viewActivity} className="text-sm" data-testid={`client-menu-activity-${index}`}>
-          <ScrollText className="h-3.5 w-3.5 mr-2" /> View activity
-        </DropdownMenuItem>
-        {canEdit && (
-          <>
-            <DropdownMenuSeparator />
-            {row.client_status === "archived" ? (
-              <DropdownMenuItem onClick={unarchive} className="text-sm" data-testid={`client-menu-unarchive-${index}`}>
-                <Archive className="h-3.5 w-3.5 mr-2" /> Restore client
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={archive} className="text-sm text-semantic-critical focus:text-semantic-critical" data-testid={`client-menu-archive-${index}`}>
-                <Archive className="h-3.5 w-3.5 mr-2" /> Archive client
-              </DropdownMenuItem>
-            )}
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  return <DropdownMenu><DropdownMenuTrigger asChild><button type="button" data-testid={`client-row-menu-${index}`} aria-label={`Actions for ${row.name}`} className="p-1 rounded hover:bg-surface-subtle text-ink-secondary"><MoreVertical className="h-4 w-4" /></button></DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuItem onClick={onOpen}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open client workspace</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => nav(`/admin/audit?client=${encodeURIComponent(row.client_id)}`)}><ScrollText className="h-3.5 w-3.5 mr-2" />View activity</DropdownMenuItem>
+      {canEdit && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setArchived(row.client_status !== 'archived')}><Archive className="h-3.5 w-3.5 mr-2" />{row.client_status === 'archived' ? 'Restore client' : 'Archive client'}</DropdownMenuItem></>}
+    </DropdownMenuContent>
+  </DropdownMenu>;
 }

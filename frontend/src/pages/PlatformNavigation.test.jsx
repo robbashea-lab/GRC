@@ -5,6 +5,8 @@ import ClientManagement from "./ClientManagement";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import mockFixtures from "@/preview/fixtures.json";
+import {seedStore} from '@/preview/store';
+import {portfolio} from '@/preview/summaries';
 
 const mockNavigate = jest.fn(), mockSwitch = jest.fn(), mockRefresh = jest.fn();
 let mockUser;
@@ -17,8 +19,9 @@ jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate, useLocat
 let root, container;
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
-  mockUser = mockFixtures.responses["/auth/me"];
-  api.get.mockImplementation(async path => ({ data: mockFixtures.responses[path] }));
+  window.scrollTo=jest.fn();
+  mockUser = {...mockFixtures.responses["/auth/me"]};
+  api.get.mockImplementation(async path => ({ data: path==='/clients/directory'?portfolio(seedStore(),false):mockFixtures.responses[path] }));
   api.post.mockResolvedValue({ data: { client_id: "new", name: "Sample" } });
   api.patch.mockResolvedValue({ data: { ...mockFixtures.responses["/clients"][0] } });
   mockNavigate.mockClear(); mockSwitch.mockClear(); api.post.mockClear(); api.patch.mockClear();
@@ -34,27 +37,26 @@ const change = async (node, value) => {
 };
 const click = async node => { expect(node).toBeTruthy(); await act(async () => node.click()); };
 
-test("portfolio retains metrics and only operational quick filters", async () => {
+test("portfolio is the dashboard, with combinable operational filters and preserved navigation", async () => {
   await render(<ClientDirectory />);
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
   const filters = container.querySelector('[data-testid="client-directory-filters"]');
-  expect([...filters.querySelectorAll("button")].map(b => b.textContent)).toEqual(["All Clients", "Assigned to Me", "Past Due", "Critical / High", "Unassigned"]);
-  const p = mockFixtures.responses["/clients/directory"].portfolio;
-  for (const [id, value] of [["past-due",p.past_due],["due-30d",p.due_30d],["due-31-90",p.due_31_90d],["critical-high",p.critical_high_open],["unassigned",p.unassigned]]) {
-    expect(container.querySelector(`[data-testid="card-${id}"]`).textContent).toContain(String(value));
-  }
-  expect(container.querySelector('[data-testid="card-attention-clients"]').textContent).toContain(`${p.clients_requiring_attention} of ${p.total_clients}`);
-  const rows = mockFixtures.responses["/clients/directory"].clients;
-  for (const [id, predicate] of [["all", () => true], ["assigned_to_me",r => r.grc_lead_id === mockUser.user_id], ["past_due",r => r.past_due > 0], ["critical_high",r => r.critical_high_open > 0], ["unassigned",r => r.unassigned > 0]]) {
-    await click(container.querySelector(`[data-testid="client-filter-${id}"]`));
-    expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(rows.filter(predicate).length);
-  }
+  expect([...filters.querySelectorAll("button")].map(b => b.textContent)).toEqual(["Past Due", "Critical / High", "Significant Risks", "Unassigned"]);
+  expect(container.querySelector('[data-testid="portfolio-cards"]')).toBeNull();
+  const rows = portfolio(seedStore(),false).clients;
+  await click(container.querySelector('[data-testid="client-filter-assigned_to_me"]'));
+  expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(rows.filter(r=>r.grc_lead_id===mockUser.user_id).length);
   await click(container.querySelector('[data-testid="client-filter-all"]'));
+  for(const key of ['past_due','critical_high_issues','significant_risks','unassigned']){
+    await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
+    expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(rows.filter(r=>r[key]>0).length);
+    await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
+  }
   await click(container.querySelector(`[data-testid="client-open-${rows[0].client_id}"]`));
   expect(mockSwitch).toHaveBeenCalledWith(rows[0].client_id);
   expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
-  expect(container.textContent).toContain("Needs Attention Across Clients");
-  expect(container.querySelector('[data-testid="client-lead-filter"]')).toBeTruthy();
+  expect(container.textContent).not.toContain("Needs Attention Across Clients");
+  expect(container.querySelector('button[aria-label="GRC Lead: sort and filter"]')).toBeTruthy();
   await change(container.querySelector('[data-testid="client-directory-search"]'), rows[0].name);
   expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(1);
 });
