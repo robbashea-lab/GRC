@@ -40,3 +40,11 @@
 The stale deployment must be updated to tested source before claiming persistent
 verification of Phases 7/8. Preview publication alone does not update FastAPI.
 Uncertain or historical credentials are not used as an authentication bypass.
+
+## Deployment-discovered packaging defect
+
+The first updated container failed at import because managementRules.json was
+also absent. Railway retained the prior serving deployment. Added the missing
+catalog and replaced the packaging test's manual catalog list with discovery
+of JSON references in backend application code. No database initialization ran
+in that failed container; the existing database and volume were not reset.
