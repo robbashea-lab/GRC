@@ -182,6 +182,10 @@ def _now() -> str:
 
 # ---------------- Password ----------------
 def hash_password(p: str) -> str:
+    # Match the existing minimum used by password reset; bcrypt 5 rejects
+    # inputs above 72 bytes. Validate before hashing on every credential path.
+    if len(p) < 8 or len(p.encode("utf-8")) > 72:
+        raise HTTPException(422, "Password must contain at least 8 characters and no more than 72 UTF-8 bytes")
     return bcrypt.hashpw(p.encode(), bcrypt.gensalt()).decode()
 
 
