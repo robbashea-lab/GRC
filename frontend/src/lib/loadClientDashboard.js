@@ -22,7 +22,10 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
     throw new Error("This client's record list could not be loaded in full. Please use the detailed modules while the dashboard is reviewed.");
   }
   const members = memberResponse.data;
+  const configuredPrograms=complianceProgress(clientId,baselineResponse.data?.state,records.requirements);
+  const frameworkSummary=configuredPrograms.some(p=>p.trackingAvailable)
+    ? (await api.get('/frameworks/summary',{params:{client_id:clientId},signal})).data : undefined;
   today = today || (summary.data.management?.as_of ? new Date(summary.data.management.as_of+'T12:00:00Z') : new Date());
   const aggregation=aggregateClientDashboard(records, {clientId,user,scope,members,today});
-  return { ...summary.data, members, ...aggregation, onboardingCompleted:!!baselineResponse.data?.state?.completed, posture:dashboardPosture(aggregation,{members,today}), programs:complianceProgress(clientId,baselineResponse.data?.state,records.requirements) };
+  return { ...summary.data, members, ...aggregation, onboardingCompleted:!!baselineResponse.data?.state?.completed, posture:dashboardPosture(aggregation,{members,today}), programs:complianceProgress(clientId,baselineResponse.data?.state,records.requirements,frameworkSummary) };
 }

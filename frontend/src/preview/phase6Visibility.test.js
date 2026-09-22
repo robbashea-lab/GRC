@@ -1,0 +1,62 @@
+import axios from 'axios';
+import {previewAdapter} from './adapter';
+import {STORE_KEY} from './store';
+import catalog from '../lib/onboardingCatalog.json';
+import {complianceProgress} from '../lib/complianceProgress';
+import {loadClientDashboard} from '../lib/loadClientDashboard';
+const api=axios.create({adapter:previewAdapter});
+let cid;
+const get=async(path,extra={})=>(await api.get('/'+path,{params:{client_id:cid,...extra}})).data;
+const flat=data=>Object.values(data).flatMap(bucket=>Object.values(bucket).flat());
+beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');cid=(await api.post('/clients',{name:'Visibility QA'})).data.client_id;});
+async function configure(){await api.post('/onboarding/baseline',{client_id:cid,finalize:true,state:{version:3,policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure'])),requirements:{'cis-ig1':'applies','soc-2':'applies','iso-27001':'unsure'},reviews:[]}});return get('frameworks/cis-ig1');}
+test('Dashboard consumes 50/3/2/1 current CIS counts, truthful placeholders, then 49/4/2/1',async()=>{
+  const workspace=await configure();
+  for(const [i,status] of ['in_progress','in_progress','in_progress','addressed','addressed','not_applicable'].entries())await api.patch('/framework_assessments/'+workspace.assessments[i].framework_assessment_id,{status,implementation:'Operating procedure recorded',na_rationale:'Outside scope'});
+  const baseline=await get('onboarding/baseline'),requirements=await get('requirements'),summary=await get('frameworks/summary');
+  const programs=complianceProgress(cid,baseline.state,requirements,summary);
+  expect(programs.map(p=>p.key)).toEqual(['cis-ig1','soc-2']);
+  expect(programs[0].assessment.status_counts).toEqual({not_assessed:50,in_progress:3,addressed:2,not_applicable:1,needs_attention:0});
+  expect(programs[0]).toMatchObject({to:'/compliance/cis-ig1',progress:null,denominator:null,trackingAvailable:true});
+  expect(programs[1]).toMatchObject({assessment:null,trackingAvailable:false,progress:null});
+  expect(()=>complianceProgress('other',baseline.state,requirements,summary)).toThrow('another client');
+  await api.patch('/framework_assessments/'+workspace.assessments[6].framework_assessment_id,{status:'in_progress'});
+  const data=await loadClientDashboard(api,{clientId:cid,user:JSON.parse(sessionStorage.getItem(STORE_KEY)).user,scope:{kind:'org'}});
+  expect(data.programs[0].assessment.status_counts).toMatchObject({not_assessed:49,in_progress:4});
+  await api.patch('/onboarding/programs/cis-ig1',{client_id:cid,applicability:'does_not_apply'});
+  expect((await get('frameworks/summary')).items.map(p=>p.key)).toEqual(['soc-2']);
+  expect((await get('frameworks/cis-ig1')).assessments).toHaveLength(56);
+});
+test('assessment state unaffected by separate deduplicated Finding, Action and Evidence',async()=>{
+  const a=(await configure()).assessments[0],base='/framework_assessments/'+a.framework_assessment_id;
+  await api.patch(base,{status:'addressed',implementation:'Recorded operating practice'});
+  const f=(await api.post(base+'/findings',{title:'Inventory gap',remediation_title:'Reconcile inventory',request_id:'phase6'})).data;
+  await api.post(base+'/links',{kind:'findings',id:f.finding_id});
+  await api.post('/evidence',{client_id:cid,linked_type:'framework_assessment',linked_id:a.framework_assessment_id,filename:'support.txt',content_base64:'eA=='});
+  let summary=(await get('frameworks/summary')).items[0];
+  expect(summary).toMatchObject({open_findings:1,open_actions:1,status_counts:{addressed:1}});
+  const action=(await get('tasks'))[0];await api.patch('/tasks/'+action.task_id,{status:'done'});
+  summary=(await get('frameworks/summary')).items[0];expect(summary).toMatchObject({open_findings:1,open_actions:0,status_counts:{addressed:1}});
+});
+test('Calendar preserves active/closed distinction and Review occurrences through actual workflows',async()=>{
+  const review=(await api.post('/reviews',{client_id:cid,title:'Quarterly access',review_type:'access',due_date:'2026-09-30',recurrence:'quarterly'})).data;
+  await api.post('/reviews/'+review.review_id+'/complete',{occurrence_id:review.current_occurrence_id});
+  const f=(await api.post('/findings',{client_id:cid,title:'NO ISP',due_date:'2026-10-02',severity:'high'})).data;
+  const t=(await api.post('/tasks',{client_id:cid,title:'MAKE AN ISP',source_type:'finding',source_id:f.finding_id,due_date:'2026-10-02',priority:'high'})).data;
+  const params={start:'2026-09-01',end:'2026-12-31'};
+  expect(flat(await get('calendar',{...params,scope:'active'}))).toHaveLength(3);
+  await api.patch('/tasks/'+t.task_id,{status:'done'});
+  expect(new Set(flat(await get('calendar',{...params,scope:'active'})).map(r=>r.status))).toEqual(new Set(['remediated','upcoming']));
+  await api.post('/findings/'+f.finding_id+'/validate',{rationale:'Document checked'});
+  const rows=flat(await get('calendar',{...params,scope:'all'}));
+  expect(rows).toHaveLength(4);
+  expect(rows.filter(r=>r.historical).every(r=>!r.can_reschedule)).toBe(true);
+  expect(rows.filter(r=>r.kind==='review').map(r=>r.period)).toEqual(['Q3 2026','Q4 2026']);
+});
+test('summary and Calendar do not expose another client to a client-only account',async()=>{
+  await configure();const other=(await api.post('/clients',{name:'Other client'})).data.client_id;
+  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));db.user={...db.user,role:'client_contributor',client_ids:[cid]};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  expect((await get('frameworks/summary')).client_id).toBe(cid);
+  await expect(get('frameworks/summary',{client_id:other})).rejects.toThrow('Forbidden');
+  await expect(get('calendar',{client_id:other})).rejects.toThrow('Forbidden');
+});

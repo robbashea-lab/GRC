@@ -113,6 +113,12 @@ def router_for(s):
         if not await s.db.clients.find_one({'client_id':cid}):raise HTTPException(404,'Client not found')
     async def parent(aid,user,write=False):
         return await s._authorized_parent('framework_assessments',aid,user,write)
+    @router.get('/frameworks/summary')
+    async def summary(client_id:str,user=Depends(s.get_current_user)):
+        import framework_summary
+        await scoped(client_id,user)
+        client=await s.db.clients.find_one({'client_id':client_id},{'_id':0,'client_id':1,'onboarding_baseline.completed':1})
+        return await framework_summary.read(s,client)
     @router.get('/frameworks/{key}')
     async def workspace(key:str,client_id:str,user=Depends(s.get_current_user)):
         await scoped(client_id,user)

@@ -1,4 +1,6 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import {frameworkSummary} from './frameworkSummary';
+import {calendarBuckets} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
 import { identityRequest } from './identityLifecycle';
 import { assignmentCandidates } from './assignmentEligibility';
@@ -84,6 +86,7 @@ export async function previewAdapter(config) {
     const identity = identityRequest(db, path, method, params, body);
     if (identity !== undefined) return method === 'get' ? respond(identity) : save(identity);
     if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
+    if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id));
     if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));
     if (path === '/demo/reset' && method === 'post') {
       resetStore();
@@ -137,20 +140,8 @@ export async function previewAdapter(config) {
       });
       if (path === '/baseline/templates') return respond(fixtures.responses[path]);
       if (path === '/calendar') {
-        const data = {
-          reviews: {},
-          findings: {},
-          tasks: {}
-        };
-        for (const k of Object.keys(data)) for (const r of list(db, k, params.client_id)) if (r.due_date && (!params.start || r.due_date >= params.start) && (!params.end || r.due_date <= params.end)) {
-          const day = r.due_date.slice(0, 10);
-          (data[k][day] ||= []).push({
-            ...r,
-            id: r[ids[k]],
-            kind: k.slice(0, -1)
-          });
-        }
-        return respond(data);
+        frameworkScope(db,params.client_id);
+        return respond(calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,list(db,k,params.client_id)])),db.user,params));
       }
       if (path === '/related') {
         const source = record(db, params.entity_type, params.entity_id),

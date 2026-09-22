@@ -1,214 +1,125 @@
-import { useEffect, useMemo, useState } from "react";
-import api, { formatError } from "@/lib/api";
-import { useOrg } from "@/context/OrgContext";
-import { useAuth } from "@/context/AuthContext";
-import PageHeader from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import { toast } from "sonner";
-import RecordDrawer from "@/components/RecordDrawer";
-import { SCHEMAS } from "@/lib/schemas";
+import {useEffect,useMemo,useRef,useState} from 'react';
+import {ChevronLeft,ChevronRight,CalendarDays} from 'lucide-react';
+import {useOrg} from '@/context/OrgContext';
+import {useAuth} from '@/context/AuthContext';
+import api,{formatError} from '@/lib/api';
+import {Button} from '@/components/ui/button';
+import PageHeader from '@/components/PageHeader';
+import RecordDrawer from '@/components/RecordDrawer';
+import {SCHEMAS} from '@/lib/schemas';
+import {occurrenceId} from '@/lib/reviewOccurrences';
+import {CALENDAR_SCOPES,calendarStatus,calendarType,calendarSelection,canMoveCalendar,rescheduledDate} from '@/lib/calendarView';
+import {toast} from 'sonner';
 
-const KIND_COLOR = {
-  review: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
-  finding: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  task: "bg-semantic-success-bg text-semantic-success border-semantic-success-border",
-};
-
+const KIND_COLOR={review:'bg-semantic-info-bg text-semantic-info border-semantic-info-border',finding:'bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border',task:'bg-semantic-success-bg text-semantic-success border-semantic-success-border'};
+const emptyBuckets=()=>({reviews:{},findings:{},tasks:{}});
 function monthGrid(anchor) {
-  const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
-  const start = new Date(first);
-  start.setDate(1 - ((first.getDay() + 6) % 7)); // Monday-start
-  const days = [];
-  for (let i = 0; i < 42; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    days.push(d);
-  }
-  return days;
+  const first=new Date(anchor.getFullYear(),anchor.getMonth(),1);
+  const start=new Date(first);start.setDate(1-((first.getDay()+6)%7));
+  return Array.from({length:42},(_,i)=>new Date(start.getFullYear(),start.getMonth(),start.getDate()+i));
 }
-
-function ymd(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${dd}`;
-}
+const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
 export default function Calendar() {
-  const { currentClient, currentClientId } = useOrg();
-  const { user } = useAuth();
-  const [anchor, setAnchor] = useState(() => new Date());
-  const [data, setData] = useState({ reviews: {}, findings: {}, tasks: {} });
-  const [dragOverDay, setDragOverDay] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [drawer, setDrawer] = useState(null);
-  useEffect(() => { setDrawer(null); }, [currentClientId]);
+  const {currentClient,currentClientId}=useOrg(),{user}=useAuth();
+  const [anchor,setAnchor]=useState(()=>new Date()),[scope,setScope]=useState('active'),[revision,setRevision]=useState(0);
+  const [result,setResult]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[drawer,setDrawer]=useState(null);
+  const [dragging,setDragging]=useState(null),[dragOverDay,setDragOverDay]=useState(''),[expanded,setExpanded]=useState({});
+  const days=useMemo(()=>monthGrid(anchor),[anchor]);
+  const start=ymd(days[0]),end=ymd(days[41]),requestKey=`${currentClientId}:${start}:${scope}:${revision}`;
+  const activeRequest=useRef(requestKey);activeRequest.current=requestKey;
+  const currentClientRef=useRef(currentClientId);currentClientRef.current=currentClientId;
+  const writable=['super_admin','platform_admin','client_contributor'].includes(user?.role);
+  const reload=()=>setRevision(n=>n+1);
+  useEffect(()=>{setDrawer(null);setScope('active');setDragging(null);},[currentClientId]);
+  useEffect(()=>{
+    const controller=new AbortController();setError('');setExpanded({});setDragging(null);setDragOverDay('');
+    if(!currentClientId)return;
+    api.get('/calendar',{params:{client_id:currentClientId,start,end,scope},signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted)return;
+      if(['reviews','findings','tasks'].some(kind=>!data[kind]||Object.values(data[kind]).flat().some(item=>item.client_id!==currentClientId)))throw new Error('Calendar records do not match the selected client.');
+      setResult({key:requestKey,data});
+    }).catch(e=>{if(!controller.signal.aborted)setError(formatError(e));});
+    return ()=>controller.abort();
+  },[currentClientId,start,end,scope,requestKey]);
+  const loading=!!currentClientId&&result?.key!==requestKey&&!error;
+  const data=result?.key===requestKey?result.data:emptyBuckets();
+  const itemsForDay=day=>[...(data.reviews[day]||[]),...(data.findings[day]||[]),...(data.tasks[day]||[])];
+  const total=Object.values(data).reduce((n,bucket)=>n+Object.values(bucket).reduce((sum,items)=>sum+items.length,0),0);
+
   async function openRecord(item) {
+    const key=requestKey;
     try {
-      const kind = `${item.kind}s`;
-      const {data: record} = await api.get(`/${kind}/${item.id}`);
-      if (record.client_id !== currentClientId) throw new Error('Record belongs to another client.');
-      setDrawer({kind, record});
-    } catch (e) { toast.error(formatError(e)); }
+      const kind=item.kind+'s';
+      const {data:record}=await api.get(`/${kind}/${item.id}`);
+      if(activeRequest.current!==key)return;
+      setDrawer({key:item.key,kind,record,initialValues:calendarSelection(item,record,currentClientId)});
+    }catch(e){if(activeRequest.current===key)toast.error(formatError(e));}
   }
-  const canReschedule = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
-
-  const load = async () => {
-    if (!currentClientId) return;
+  function onDragStart(e,item) {
+    if(busy||!item.can_reschedule){e.preventDefault();return;}
+    e.dataTransfer.setData('application/json',JSON.stringify({key:item.key}));
+    e.dataTransfer.effectAllowed='move';setDragging(item.key);
+  }
+  async function onDrop(e,target) {
+    e.preventDefault();setDragging(null);setDragOverDay('');
+    if(busy||!writable)return;
+    let payload;try{payload=JSON.parse(e.dataTransfer.getData('application/json'));}catch{return;}
+    const original=Object.values(data).flatMap(bucket=>Object.values(bucket).flat()).find(item=>item.key===payload?.key);
+    if(!original?.can_reschedule||original.historical)return;
+    const cid=currentClientId,key=requestKey;setBusy(true);
     try {
-      const start = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1).toISOString();
-      const end = new Date(anchor.getFullYear(), anchor.getMonth() + 2, 0).toISOString();
-      const { data } = await api.get("/calendar", { params: { client_id: currentClientId, start, end } });
-      setData(data);
-    } catch (e) { toast.error(formatError(e)); }
-  };
-
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [anchor, currentClientId]);
-
-  const days = useMemo(() => monthGrid(anchor), [anchor]);
-  const monthLabel = anchor.toLocaleString(undefined, { month: "long", year: "numeric" });
-  const today = ymd(new Date());
-  const inMonth = (d) => d.getMonth() === anchor.getMonth();
-
-  function itemsForDay(d) {
-    const key = ymd(d);
-    return [
-      ...(data.reviews[key] || []),
-      ...(data.findings[key] || []),
-      ...(data.tasks[key] || []),
-    ];
+      // Re-read before writing so a terminal or advanced occurrence is not rescheduled from a stale chip.
+      const {data:record}=await api.get(`/${original.kind}s/${original.id}`);
+      if(activeRequest.current!==key)return;
+      if(record.client_id!==cid||!canMoveCalendar(original.kind,record,user)||original.kind==='review'&&original.occurrence_id!==occurrenceId(record))throw new Error('This item is no longer reschedulable. Refresh the Calendar.');
+      await api.patch(`/${original.kind}s/${original.id}`,{due_date:rescheduledDate(record.due_date,target),...(original.kind==='review'?{expected_occurrence_id:original.occurrence_id}:{})});
+      if(currentClientRef.current===cid)toast.success(`Rescheduled to ${target}`);
+    }catch(e){if(currentClientRef.current===cid)toast.error(formatError(e));}
+    finally{setBusy(false);if(currentClientRef.current===cid)reload();}
   }
-
-  function onDragStart(e, item) {
-    if (!canReschedule) return;
-    if (item.kind === "review" && (!["super_admin","platform_admin"].includes(user?.role) || ["completed","cancelled"].includes(item.status))) { e.preventDefault(); return; }
-    e.dataTransfer.setData("application/json", JSON.stringify({ id: item.id, kind: item.kind }));
-    e.dataTransfer.effectAllowed = "move";
-  }
-
-  async function onDrop(e, targetDate) {
-    e.preventDefault();
-    setDragOverDay("");
-    if (!canReschedule) return;
-    let payload;
-    try { payload = JSON.parse(e.dataTransfer.getData("application/json")); }
-    catch { return; }
-    if (!payload?.id || !payload?.kind) return;
-    // Preserve the original time-of-day so dragging only shifts the date, not the hour.
-    const bucket = payload.kind === "review" ? data.reviews : payload.kind === "finding" ? data.findings : data.tasks;
-    let original;
-    for (const list of Object.values(bucket)) {
-      const hit = list.find((x) => x.id === payload.id);
-      if (hit) { original = hit; break; }
-    }
-    // Look up the original due_date from any cached row we have; fallback to 09:00 UTC.
-    let hh = "09", mm = "00", ss = "00";
-    if (original?.due_date_iso) {
-      const t = new Date(original.due_date_iso);
-      if (!isNaN(t)) { hh = String(t.getUTCHours()).padStart(2, "0"); mm = String(t.getUTCMinutes()).padStart(2, "0"); ss = String(t.getUTCSeconds()).padStart(2, "0"); }
-    }
-    const dueIso = `${targetDate}T${hh}:${mm}:${ss}.000Z`;
-    setBusy(true);
-    try {
-      // Optimistic UI: move locally first
-      setData((prev) => {
-        const next = { reviews: { ...prev.reviews }, findings: { ...prev.findings }, tasks: { ...prev.tasks } };
-        const b = payload.kind === "review" ? next.reviews : payload.kind === "finding" ? next.findings : next.tasks;
-        let moved = null;
-        for (const [k, list] of Object.entries(b)) {
-          const idx = list.findIndex((x) => x.id === payload.id);
-          if (idx >= 0) { moved = list[idx]; b[k] = list.filter((_, i) => i !== idx); if (b[k].length === 0) delete b[k]; break; }
-        }
-        if (moved) b[targetDate] = [...(b[targetDate] || []), moved];
-        return next;
-      });
-      await api.patch(`/${payload.kind}s/${payload.id}`, { due_date: dueIso,
-        ...(payload.kind === "review" ? {expected_occurrence_id:original?.current_occurrence_id || "occ_" + payload.id} : {}) });
-      toast.success(`Rescheduled to ${targetDate}`);
-    } catch (e) {
-      toast.error(formatError(e));
-      load(); // revert
-    } finally { setBusy(false); }
-  }
-
-  return (
-    <div>
-      <PageHeader
-        title="Review Calendar"
-        subtitle={`${currentClient?.name || ""} · Recurring reviews, findings and tasks. ${canReschedule ? "Drag any chip onto a new day to reschedule." : "Read-only."}`}
-        action={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" aria-label="Previous month" onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1))} data-testid="cal-prev">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setAnchor(new Date())} data-testid="cal-today">
-              <CalendarDays className="h-4 w-4 mr-1" /> Today
-            </Button>
-            <Button variant="outline" size="sm" aria-label="Next month" onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1))} data-testid="cal-next">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        }
-      />
-      <div className="page-content space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="text-lg font-heading font-semibold text-ink-primary" data-testid="cal-month-label">{monthLabel}</div>
-          <div className="flex items-center gap-3 text-xs text-ink-secondary">
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-semantic-info" /> Reviews</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-semantic-critical" /> Findings</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-semantic-success" /> Tasks</span>
-            {busy && <span className="text-ink-muted">Saving…</span>}
-          </div>
-        </div>
-        <div className="bg-surface-card border border-line rounded-lg overflow-hidden">
-          <div className="grid grid-cols-7 border-b border-line bg-surface-subtle">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => (
-              <div key={w} className="px-2 py-2 text-xs font-mono uppercase tracking-widest text-ink-muted text-left">{w}</div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 grid-rows-6">
-            {days.map((d, i) => {
-              const key = ymd(d);
-              const items = itemsForDay(d);
-              const isToday = key === today;
-              const isDragTarget = dragOverDay === key;
-              return (
-                <div
-                  key={i}
-                  data-testid={`cal-day-${key}`}
-                  onDragOver={(e) => { if (canReschedule) { e.preventDefault(); setDragOverDay(key); } }}
-                  onDragLeave={() => setDragOverDay((prev) => (prev === key ? "" : prev))}
-                  onDrop={(e) => onDrop(e, key)}
-                  className={`min-h-[110px] border-b border-r border-line p-2 text-xs transition-colors ${!inMonth(d) ? "bg-surface-subtle" : "bg-surface-card"} ${isDragTarget ? "outline outline-2 outline-focus outline-offset-[-2px] bg-surface-subtle" : ""} ${(i + 1) % 7 === 0 ? "border-r-0" : ""}`}
-                >
-                  <div className={`flex items-center justify-between mb-1 ${inMonth(d) ? "text-ink-secondary" : "text-ink-help"}`}>
-                    <span className={`inline-flex items-center justify-center h-5 min-w-5 px-1 rounded font-mono ${isToday ? "bg-primary text-primary-foreground" : ""}`}>{d.getDate()}</span>
-                    {items.length > 0 && <span className="text-xs text-ink-help font-mono">{items.length}</span>}
-                  </div>
-                  <ul className="space-y-1">
-                    {items.slice(0, 3).map((it) => (
-                      <li key={`${it.kind}-${it.id}`}>
-                        <div
-                          draggable={canReschedule}
-                          onDragStart={(e) => onDragStart(e, it)}
-                          data-testid={`cal-item-${it.kind}-${it.id}`}
-                          className={`group flex items-center gap-1 truncate rounded border px-1.5 py-0.5 ${KIND_COLOR[it.kind]} ${canReschedule ? "cursor-grab active:cursor-grabbing" : ""} hover:opacity-80`}
-                          title={it.title}
-                        >
-                          <button type="button" className="truncate flex-1 text-left" onClick={() => openRecord(it)}>{it.title}</button>
-                        </div>
-                      </li>
-                    ))}
-                    {items.length > 3 && <li className="text-xs text-ink-muted">+{items.length - 3} more</li>}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
+  return <div>
+    <PageHeader title="Review Calendar" subtitle={`${currentClient?.name||''} · Due-dated Reviews, Findings and Action Items. ${writable?'Eligible active items can be dragged or opened to edit their dates.':'Read-only.'}`}
+      action={<div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" aria-label="Previous month" data-testid="cal-prev" onClick={()=>setAnchor(new Date(anchor.getFullYear(),anchor.getMonth()-1,1))}><ChevronLeft className="h-4 w-4"/></Button>
+        <Button variant="outline" size="sm" data-testid="cal-today" onClick={()=>setAnchor(new Date())}><CalendarDays className="h-4 w-4 mr-1"/>Today</Button>
+        <Button variant="outline" size="sm" aria-label="Next month" data-testid="cal-next" onClick={()=>setAnchor(new Date(anchor.getFullYear(),anchor.getMonth()+1,1))}><ChevronRight className="h-4 w-4"/></Button>
+      </div>}/>
+    <div className="page-content space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-lg font-heading font-semibold" data-testid="cal-month-label">{anchor.toLocaleString(undefined,{month:'long',year:'numeric'})}</div>
+        <div role="group" aria-label="Calendar scope" className="flex flex-wrap gap-1">{CALENDAR_SCOPES.map(([value,label])=><Button key={value} size="sm" variant={scope===value?'secondary':'ghost'} aria-pressed={scope===value} onClick={()=>setScope(value)}>{label}</Button>)}</div>
+      </div>
+      <div className="flex flex-wrap items-center gap-3 text-xs text-ink-secondary">
+        <span>Reviews · Findings · Action Items</span>
+        {scope!=='active'&&<span>Historical items stay on their due dates; includes cancelled work and accepted Findings.</span>}
+        {busy&&<span role="status">Saving…</span>}
+      </div>
+      {loading&&<p role="status" className="text-sm">Loading Calendar…</p>}
+      {error&&<div role="alert" className="text-sm">{error} <Button variant="outline" size="sm" onClick={reload}>Retry Calendar</Button></div>}
+      {!currentClientId&&<p className="text-sm">Select a client to view its Calendar.</p>}
+      {currentClientId&&!loading&&!error&&!total&&<p role="status" className="text-sm">{scope==='active'?'No active items scheduled for this period.':scope==='history'?'No completed or closed items for this period.':'No dated items for this period.'}</p>}
+      <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">
+        <div className="min-w-[600px]">
+          <div className="grid grid-cols-7 border-b border-line bg-surface-subtle">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(w=><div key={w} className="px-2 py-2 text-xs font-mono uppercase tracking-widest text-ink-muted">{w}</div>)}</div>
+          <div className="grid grid-cols-7 grid-rows-6">{days.map((day,i)=>{
+            const date=ymd(day),items=itemsForDay(date),inMonth=day.getMonth()===anchor.getMonth();
+            return <div key={date} data-testid={`cal-day-${date}`} onDragOver={e=>{if(dragging&&!busy){e.preventDefault();setDragOverDay(date);}}} onDragLeave={()=>setDragOverDay('')} onDrop={e=>onDrop(e,date)}
+              className={`min-w-0 min-h-[110px] border-b border-r border-line p-2 text-xs ${inMonth?'bg-surface-card':'bg-surface-subtle'} ${dragOverDay===date?'outline outline-2 outline-focus outline-offset-[-2px]':''} ${(i+1)%7===0?'border-r-0':''}`}>
+              <div className="flex items-center justify-between mb-1 text-ink-secondary"><span className={`inline-flex items-center justify-center h-5 min-w-5 px-1 rounded font-mono ${date===ymd(new Date())?'bg-primary text-primary-foreground':''}`}>{day.getDate()}</span>{!!items.length&&<span className="font-mono">{items.length}</span>}</div>
+              <ul className="space-y-1">{items.slice(0,expanded[date]?items.length:3).map(item=><li key={item.key}>
+                <button type="button" draggable={item.can_reschedule&&!busy} onDragStart={e=>onDragStart(e,item)} onDragEnd={()=>{setDragging(null);setDragOverDay('');}} onClick={()=>openRecord(item)} data-testid={`cal-item-${item.key}`}
+                  aria-label={`${calendarType(item)}: ${item.title} — ${calendarStatus(item)} — ${date}${item.period?' · '+item.period:''}`} title={`${item.title} · ${calendarStatus(item)}${item.can_reschedule?' · Drag or open to reschedule':''}`}
+                  className={`w-full min-w-0 text-left rounded border px-1.5 py-1 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring ${item.historical?'bg-surface-subtle text-ink-secondary border-line':KIND_COLOR[item.kind]} ${item.can_reschedule&&!busy?'cursor-grab active:cursor-grabbing':''}`}>
+                  <span className="block truncate font-medium">{item.title}</span><span className="block leading-snug">{calendarType(item)} · {calendarStatus(item)}</span>{item.kind==='review'&&<span className="block truncate">{item.period}</span>}
+                </button>
+              </li>)}</ul>
+              {items.length>3&&<button type="button" className="text-xs text-link underline mt-1" aria-label={`${expanded[date]?'Show fewer':'Show all '+items.length+' items'} on ${date}`} onClick={()=>setExpanded(value=>({...value,[date]:!value[date]}))}>{expanded[date]?'Show fewer':`+${items.length-3} more`}</button>}
+            </div>;
+          })}</div>
         </div>
       </div>
-      {drawer && drawer.record.client_id === currentClientId && <RecordDrawer open onOpenChange={value => { if (!value) setDrawer(null); }} kind={drawer.kind} record={drawer.record} schema={SCHEMAS[drawer.kind].fields} clientId={currentClientId} onSaved={load} />}
     </div>
-  );
+    {drawer&&drawer.record.client_id===currentClientId&&<RecordDrawer key={drawer.key} open onOpenChange={open=>{if(!open){setDrawer(null);reload();}}} kind={drawer.kind} record={drawer.record} initialValues={drawer.initialValues} schema={SCHEMAS[drawer.kind].fields} clientId={currentClientId} onSaved={reload}/>}
+  </div>;
 }
