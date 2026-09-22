@@ -2,6 +2,8 @@
 from collections import Counter
 from fastapi import HTTPException
 from framework_governance import FRAMEWORKS, STATUSES
+from framework_catalog import active_definitions
+from soc_readiness import configuration as soc_configuration
 
 
 async def bounded(collection, query, fields):
@@ -25,6 +27,10 @@ async def read(s, client):
         if framework['implemented']:
             assessments = await bounded(s.db.framework_assessments, {'client_id': cid, 'framework_key': key},
                                         ['framework_assessment_id', 'definition_id', 'status', 'related_links', 'last_assessed'])
+            if key == 'soc-2':
+                scoped_client = await s.db.clients.find_one({'client_id': cid}, {'_id': 0, 'framework_settings': 1})
+                active = {d['id'] for d in active_definitions(key, soc_configuration(scoped_client or {}))}
+                assessments = [a for a in assessments if a['definition_id'] in active]
             counts = Counter(a.get('status') for a in assessments)
             aids = [a['framework_assessment_id'] for a in assessments]
             definitions = [a['definition_id'] for a in assessments]

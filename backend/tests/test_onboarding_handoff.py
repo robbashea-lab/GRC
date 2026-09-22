@@ -99,8 +99,15 @@ class OnboardingHandoffTests(unittest.IsolatedAsyncioTestCase):
             response = await self.client.patch('/api/onboarding/programs/'+key,json={'client_id':'a','applicability':value})
             self.assertEqual(response.status_code,200,response.text)
         after = await self.snapshot()
-        for kind in ['policies','reviews','framework_assessments']:
-            self.assertEqual(after['records'][kind],before['records'][kind])
+        self.assertEqual(after['records']['policies'],before['records']['policies'])
+        self.assertEqual(len(after['records']['reviews']),len(before['records']['reviews'])+4)
+        self.assertEqual(len(after['records']['framework_assessments']),len(before['records']['framework_assessments'])+33)
+        for kind,identity in [('reviews','review_id'),('framework_assessments','framework_assessment_id')]:
+            for old in before['records'][kind]:
+                retained=next(r for r in after['records'][kind] if r[identity]==old[identity])
+                self.assertEqual({k:retained[k] for k in old},old)
+        await self.client.patch('/api/onboarding/programs/soc-2',json={'client_id':'a','applicability':'applies'})
+        self.assertEqual((await self.snapshot())['records'],after['records'])
         self.assertEqual(next(r for r in after['records']['requirements'] if r['baseline_key']=='soc-2')['baseline_response'],'applies')
         self.assertEqual((await self.client.get('/api/onboarding/baseline?client_id=a')).json()['state'],baseline)
         self.assertEqual(await server.db.tasks.count_documents({}),0)

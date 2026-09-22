@@ -1,4 +1,4 @@
-import {FRAMEWORKS, CATALOGS, frameworkPlans, reviewConfig, genericReviews,existingFrameworkReview} from './frameworks';
+import {FRAMEWORKS, CATALOGS, activeDefinitions, frameworkPlans, reviewConfig, genericReviews,existingFrameworkReview} from './frameworks';
 import {reviewView} from './reviewOccurrences';
 
 export const APPLICABILITY = [['applies','Applies'],['does_not_apply','Does Not Apply'],['unsure','Unsure']];
@@ -34,7 +34,7 @@ export function onboardingPreview(catalog, state, records) {
     reviews.push({existing:!!old, row:old || {status:'needs_scheduling',recurrence:null}});
   }
   const count = (items, fn) => items.filter(fn).length;
-  const assessmentsByProgram=Object.fromEntries(Object.entries(CATALOGS).map(([key,c])=>[key,state.requirements[key]==='applies'?c.requirements.filter(d=>!records.framework_assessments.some(a=>a.framework_key===key&&a.definition_id===d.id)).length:0]));
+    const assessmentsByProgram=Object.fromEntries(Object.keys(CATALOGS).map(key=>[key,state.requirements[key]==='applies'?activeDefinitions(key).filter(d=>!records.framework_assessments.some(a=>a.framework_key===key&&a.definition_id===d.id)).length:0]));
   const newAssessments=Object.values(assessmentsByProgram).reduce((n,count)=>n+count,0);
   return {policies:{total:policies.length, create:count(policies,p=>!p.existing), retain:count(policies,p=>p.existing),
     yes:count(policies,p=>p.response==='yes'), no:count(policies,p=>p.response==='no'), unsure:count(policies,p=>p.response==='unsure')},

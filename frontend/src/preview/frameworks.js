@@ -1,5 +1,6 @@
 import { validateAssignment } from './assignmentEligibility';
-import {CATALOGS,frameworkCatalog,frameworkDefinition,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
+import {CATALOGS,frameworkCatalog,frameworkDefinition,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
+import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
 import {action} from './workflows';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
@@ -31,7 +32,7 @@ export function reconcileFramework(db,cid,state){
   }
 }
 function reconcileCatalog(db,cid,state,key,catalog){
-  for(const d of catalog.requirements){
+  for(const d of activeDefinitions(key,socConfiguration(db.clients.find(c=>c.client_id===cid)))){
     const aid=stable(cid,'assessment',d.id,key);
     if(!db.framework_assessments.some(a=>a.framework_assessment_id===aid))db.framework_assessments.push({framework_assessment_id:aid,client_id:cid,framework_key:key,framework_version:catalog.version,definition_id:d.id,status:'not_assessed',implementation:'',technology:'',notes:'',na_rationale:'',owner_id:null,process_owner_id:null,created_at:now(),related_links:[],assessment_history:[]});
   }
@@ -76,18 +77,34 @@ export function frameworkReverse(db,kind,source,result){
 export function frameworkRequest(db,path,method,params,body){
   db.framework_assessments||=[];
   const [,kind,id,operation]=path.split('/');
+  if(kind==='frameworks'&&id==='soc-2'&&operation==='configuration'&&method==='patch'){
+    frameworkScope(db,body.client_id);writable(db);
+    if(!db.baselines?.[body.client_id]?.completed)throw new Error('Complete onboarding before adjusting program configuration');
+    if(!db.requirements.some(r=>r.client_id===body.client_id&&r.baseline_key==='soc-2'&&r.baseline_response==='applies'))throw new Error('Select SOC 2 Applies before configuring its scope');
+    const config=validateSocConfiguration(body),client=record(db,'clients',body.client_id);
+    client.framework_settings={...client.framework_settings,'soc-2':config};
+    reconcileFramework(db,body.client_id,{...db.baselines[body.client_id],requirements:{'soc-2':'applies'}});
+    audit(db,'SOC 2 readiness scope updated','clients',client,{categories:config.categories,period_start:config.period_start,period_end:config.period_end});
+    return config;
+  }
   if(kind==='frameworks'&&method==='get'){
     frameworkScope(db,params.client_id);const framework=FRAMEWORKS.find(f=>f.key===id);if(!framework)throw new Error('Framework not found');
     const assessments=framework.implemented?db.framework_assessments.filter(a=>a.client_id===params.client_id&&a.framework_key===id):[];
-    return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,definitions:assessments.length?frameworkCatalog(id)?.requirements||[]:[],assessments};
+    const configuration=id==='soc-2'?socConfiguration(record(db,'clients',params.client_id)):{};
+    return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
+      definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
   }
   const row=record(db,'framework_assessments',id);frameworkScope(db,row.client_id);if(method!=='get')writable(db);
   if(method==='get'&&!operation)return row;
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
   if(method==='patch'&&!operation){
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification'];
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls'];
     if(Object.keys(body).some(k=>!fields.includes(k)))throw new Error('Unknown or immutable assessment fields');
+    if('management_controls' in body){
+      if(row.framework_key!=='soc-2')throw new Error('Management control readiness fields apply only to SOC 2');
+      body={...body,management_controls:validateManagementControls(body.management_controls)};
+    }
     const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
     const definition=frameworkDefinition(row.framework_key,row.definition_id);
     if(data.status==='not_applicable'&&definition?.specification!=='annex_control'&&!data.na_rationale.trim())throw new Error('N/A rationale is required');
