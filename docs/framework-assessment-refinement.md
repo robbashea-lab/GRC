@@ -42,3 +42,74 @@ Verification: 32 frontend tests in four suites, six isolated IsoTests, targeted 
 Reviewed all 61 original criterion explanations/evidence pairs and all 13 implementation guidance groups, including optional categories. Retained the item-specific content. Clarified why a policy or point-in-time screenshot can support design without demonstrating operation over the observation period, and where to record coverage limits. The existing Management Controls, design/operating observations, period and population/sample notes remain authoritative. No auditor sample size, required period or audit opinion is inferred.
 
 Verification: 37 frontend tests in five focused suites, seven isolated SocTests, targeted lint and production build passed. Browser SOC gate passed including control design/operating gap, observation period and missing-instance persistence, category selection/removal with retained history, shared assessment/remediation/evidence flow and route/width/isolation checks. No console errors. Build main.801836b6.js, approved CSS unchanged.
+
+## Shared standard and final review
+
+The existing shared FrameworkContext, FrameworkDrawer and operatorGuidance layer are extended, not replaced. Default content stays focused on identity/source, meaning, assessment and primary notes; implementation/evidence, governance/recurrence and ownership remain progressive disclosures. Saved conclusion stays visible across tabs without reflecting an unsaved selection. Secondary legacy notes and assessment history are retained separately. No new dependencies, persistence fields, generic content engine or framework-local operational copies were added.
+
+The final visual pass removed a duplicated attribution sentence. Screenshots of all five default assessment views were inspected: reference, meaning and notes remain distinct, status is readable, and the approved light workspace/charcoal sidebar is preserved. Better UI and Emil Design Engineering informed the restrained hierarchy/disclosure review; Ponytail kept changes in existing shared components. No new animation or application-wide style was introduced.
+
+| Severity | Location | Refinement | Verification |
+| --- | --- | --- | --- |
+| Medium | FrameworkDrawer | Persisted conclusion visible while navigating tabs; drafts remain distinct | Component tests and browser workflows |
+| Medium | CIS/HIPAA guidance | Specific evidence examples instead of broad repeated lists | All 132 entries inspected and automated coverage checked |
+| Low | FrameworkContext | Neutral source-reference hierarchy and explicit framework-native context | Five default-view screenshots inspected |
+| Low | FrameworkDrawer history | Unknown historical user no longer labelled Unassigned | Component regression test |
+
+Existing keyboard behavior was checked against the [WAI-ARIA APG Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/). Verification emphasizes observable DOM/browser behavior, consistent with [Testing Library guiding principles](https://testing-library.com/docs/guiding-principles/). No claim of whole-application WCAG conformance or independent accessibility audit is made.
+
+## Final verification — executed on 2026-09-22
+
+- **Frontend:** `craco test --watch=false --runInBand` — **389 tests / 71 suites passed**. Includes the new nine-test all-item/context suite, saved-versus-draft conclusion, historical attribution and read-only role tests, plus existing framework, Evidence, Finding, Action, onboarding, assignment and presentation regression suites.
+- **Structural coverage:** all **422** current catalog items render source, explanation, progressive guidance and recurrence context without mutation: CIS 56, NIST 106, HIPAA 76, ISO 123, SOC 61. Existing utility tests also check all-item content presence and assessment-coverage fixtures at empty, partial, mostly and fully assessed levels. Structural coverage is not a claim that every record was manually assessed in the browser.
+- **Backend:** **33 isolated FastAPI tests passed** across FrameworkTests (5), FrameworkProgramTests (1), CsfTests (6), HipaaTests (8), IsoTests (6), SocTests (7). These cover actual route authorization, cross-client denial, read-only constraints, native validation, immutable history, shared work and independent assessment/remediation. Tests use in-memory isolated Mongo substitutes, not a persistent staging database.
+- **Per-phase browser:** each of five gates passed against its completed production build before its phase commit.
+- **Final combined browser:** `framework-operator.cjs` passed all five workflows in one fresh Demo client, including primary notes/status, saved history, evidence upload/download/unlink/relink, Finding/Action creation, Action completion, separate Finding validation, manual reassessment, previous/next, dirty-state guard, deep links/refresh/back/forward, keyboard tabs and retained search.
+- **Shared-record regression:** one existing Finding, Action and Evidence was linked through all five framework UIs with unchanged total counts. The 23 shared Reviews were unchanged. Framework-specific records remained distinct.
+- **Visual/read-only browser:** `framework-operator-visual.cjs` passed empty search/clear, empty Evidence/History, hover/active tabs, drawer widths 1440/1280/1024/768, 10%-speed entry capture and reduced motion. All five read-only assessment/Related/Evidence views prevented mutation controls. These synthetic browser roles exercise Demo presentation; trusted authorization is separately API-tested.
+- **Activation regression:** Applies/Unsure/Does Not Apply changes retained assessments and Reviews; no automatic cancellation or loss of history. Demo logout returned to blank login without creating a standard token.
+- **Smoke:** Dashboard, Calendar, Reviews, Findings, Action Items, Risks, Policies, Vendors, AI Governance, Contacts, Evidence, Onboarding, Client Settings and all five framework routes loaded. Wrong-client assessment deep link was excluded. Both final browser runners reported no page/console errors.
+- **Build:** final production preview build passed. Existing unrelated `PlatformAdmin.jsx:52` hook dependency warning remains. JavaScript `main.617fb5f7.js`; approved CSS `main.9c179479.css`. HTTP-served JavaScript exactly matched the build on disk: SHA-256 `6b60772661350aa310853bbf8a91128c63a24da40b7d1cebb0cc466dc96c4afe`.
+- **Static review:** targeted ESLint, browser-script syntax and `git diff --check` passed. This JavaScript project has no configured TypeScript check. Final diff and added-line secret-pattern/file checks found no credentials, private keys, database connection secrets, environment files, dependencies, generated builds or unrelated source changes. This is a scoped review, not a full secret-scanner audit of Git history.
+
+No full 36-month operating-model replay or unrelated platform-wide audit was rerun. The previous operating-model report remains the baseline; verification here targets the changed presentation and connected framework workflows.
+
+## Semantics preserved and deliberate limitations
+
+- CIS safeguard types, NIST Current/Target outcomes, HIPAA required/addressable decisions, ISO ISMS versus Annex A/SoA, and SOC management-control/readiness semantics remain distinct.
+- Existing persisted status keys are unchanged. Absent implementation and insufficient validation remain the existing combined state, clarified by notes. No new lifecycle or automatic assessment change is introduced.
+- The same source URLs, IDs, titles, mappings, regulatory wording, scope rules, review plans and cadence metadata are retained. Suggested setup cadence remains separate from actual Review scheduling. No new cadence discrepancy was established by this presentation review; substantive cadence/source validation is deferred.
+- Substantive framework correctness, regulatory currency, licensed-text rights and professional validation of explanatory content remain deferred to a dedicated content-validation phase. Current source references are preserved, not independently certified current. The HIPAA supporting units are not a full Privacy Rule assessment. ISO/SOC summaries are original explanations, not licensed full standard text.
+- The full source text for CIS/ISO/SOC is not reproduced. Users retain the authoritative reference link and original explanation. No compliance percentage, certification, attestation opinion or maturity score is added.
+- No interview script, evidence checklist mandate, new assessment state, autosave, permanent saved view, new module or automatic issue merging was added. Field-model and broad navigation redesigns remain out of scope.
+- Existing limitation: ISO/CSF view selectors use their existing refresh defaults. Draft protection covers drawer navigation/close and native unload, not every SPA browser-history path. Save before leaving through browser history; no routing rewrite was attempted.
+- No backend, schema or database migration changes. No production or non-demo persistent data was reset, seeded or modified. Authentication, RBAC, memberships, approval authority and workflow logic are untouched.
+- Browser verification used isolated session Demo data. Frontend-to-persistent-backend authentication, production persistence, physical devices, screen readers and independent practitioner/client usability studies are **not verified** by this work.
+
+## Commits and preview
+
+All phases are committed on the isolated local branch `codex/framework-assessment-refinement`, based on `facb2b15d26dabb0d7386f4eb3e139a4c4b49984`. The original worktree's unapproved visual candidate is untouched. No history rewrite, main-branch merge, GitHub push or publication was performed by this task.
+
+| Phase | Commit |
+| --- | --- |
+| CIS | `5c29fe6fc8d65d458a6f0c11307db6a664f967bd` |
+| NIST | `e38634d4915d683a98f3815810323890af10f839` |
+| HIPAA | `c40ca21df0532cccc7f52dd7ef172fb5dfedbb17` |
+| ISO | `96bb194f1808725cd74f54115242028c0c8f1827` |
+| SOC 2 | `91a3f49a76621985fe6a1145178495295571e993` |
+
+Final integration commit is reported in the handoff rather than inserting a self-referential hash. Local tested preview: `http://127.0.0.1:4182/login` (this computer only). The published private site was not updated; there is no new published version to report.
+
+## Files changed
+
+- `frontend/src/components/FrameworkContext.jsx` — shared source hierarchy, native semantics and evidence interpretation.
+- `frontend/src/components/FrameworkDrawer.jsx` — persisted conclusion and historical-actor fallback.
+- `frontend/src/lib/frameworkOperator.js` — reuse item-specific guidance keyed by existing IDs.
+- `frontend/src/lib/operatorGuidance/cis.json` — 56 evidence entries.
+- `frontend/src/lib/operatorGuidance/hipaa.json` — 76 evidence entries.
+- `frontend/src/lib/operatorGuidance/iso.json` — 30 plain-language clause explanations.
+- `frontend/src/components/FrameworkContext.test.jsx` — all-item rendering and framework distinctions.
+- `frontend/src/components/FrameworkOperator.test.jsx` — saved/draft status, attribution and read-only regression.
+- `frontend/src/lib/frameworkOperator.test.js` — guidance coverage and ISO explanatory-text checks.
+- `frontend/scripts/qa/framework-operator-visual.cjs` — explicit local preview target, screenshots and read-only coverage.
+- `docs/framework-assessment-refinement.md` — phase and final evidence report.

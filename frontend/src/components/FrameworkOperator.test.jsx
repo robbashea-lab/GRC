@@ -38,9 +38,27 @@ test('notes save once, confirm success and remain readable in history including 
   await act(async()=>{button('History').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));button('History').focus();});
   expect(container.textContent).toContain('Inventory omits remote devices.');expect(container.textContent).toContain('Additional notes: Legacy narrative retained');
 });
-test('read-only users retain context but cannot save an assessment',async()=>{
-  mockRole='client_viewer';await render();
+test.each(['client_readonly','client_viewer'])('%s retains context but cannot save an assessment',async role=>{
+  mockRole=role;await render();
   expect(container.querySelector('fieldset').disabled).toBe(true);expect(button('Save assessment')).toBeUndefined();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('saved conclusion does not change until the draft is saved',async()=>{
+  await render();const field=container.querySelector('[aria-label="Assessment Status"]');
+  await act(async()=>{field.value='in_progress';field.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Not Assessed');
+  expect(container.textContent).toContain('Unsaved assessment changes');
+  await act(async()=>button('Save assessment').click());
+  expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Partially Implemented');
+});
+
+test('unavailable historical actors remain distinct from missing attribution',async()=>{
+  record.assessment_history=[{status:'in_progress',at:'2026-09-01',by:'former',implementation:'Earlier assessment retained'},{status:'not_assessed',at:'2026-08-01'}];
+  await render();await act(async()=>{button('History').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));button('History').focus();});
+  expect(container.textContent).toContain('Former / unavailable user');
+  expect(container.textContent).toContain('Not recorded');
+  expect(container.textContent).toContain('Earlier assessment retained');
   expect(api.patch).not.toHaveBeenCalled();
 });
 test('a failed context load is visible and does not enable a successful-looking save',async()=>{
