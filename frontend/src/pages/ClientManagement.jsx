@@ -7,6 +7,8 @@ import { useOrg } from "@/context/OrgContext";
 import api, { formatError } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import ClientDialog from "@/components/ClientDialog";
+import ClientRelationshipValue from '@/components/ClientRelationshipValue';
+import {primaryContact, grcLead} from '@/lib/clientRelationships';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
@@ -18,7 +20,6 @@ export default function ClientManagement() {
   const navigate = useNavigate();
   const authorized = ["super_admin", "platform_admin"].includes(user?.role);
   const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
   const [programs, setPrograms] = useState({});
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
@@ -30,13 +31,11 @@ export default function ClientManagement() {
     if (!authorized) return;
     setLoading(true); setError("");
     try {
-      const [records, members, directory] = await Promise.all([
+      const [records, directory] = await Promise.all([
         api.get("/clients", { params: { include_archived: true } }),
-        api.get("/users"),
         api.get("/clients/directory", { params: { include_archived: true } }),
       ]);
       setClients(records.data);
-      setUsers(members.data.filter(u => ["super_admin", "platform_admin"].includes(u.role)));
       setPrograms(Object.fromEntries(directory.data.clients.map(c => [c.client_id, c.program_status])));
     } catch (e) { setError(formatError(e)); }
     finally { setLoading(false); }
@@ -44,11 +43,11 @@ export default function ClientManagement() {
   useEffect(() => { load(); }, [load]);
   const presetRows = useMemo(() => clients.filter(c => {
     if (status !== "all" && c.status !== status) return false;
-    const lead = users.find(u => u.user_id === c.assigned_owner_id);
-    return [c.name, c.industry, c.primary_contact, lead?.name, lead?.email]
+    const lead = grcLead(c);
+    return [c.name, c.industry, primaryContact(c).name, lead.name, lead.detail]
       .some(v => (v || "").toLowerCase().includes(query.trim().toLowerCase()));
-  }), [clients, users, query, status]);
-  const columns = tableColumns('client-management', { rows: clients, users, programs });
+  }), [clients, query, status]);
+  const columns = tableColumns('client-management', { rows: clients, programs });
   const table = useTableControls({ columns, rows: clients, module: 'client-management', scope: `${user?.user_id}:platform` });
   const rows = table.apply(presetRows);
   async function saved(client) {
@@ -87,7 +86,7 @@ export default function ClientManagement() {
             {loading ? <tr><td colSpan={6} className="tbl-cell">Loading clients…</td></tr> : rows.map(c => <tr key={c.client_id} className="row-hover">
               <td className="tbl-cell"><button className="text-link hover:text-link-hover" onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}>{c.name}</button></td>
               <td className="tbl-cell">{c.industry || "—"}</td>
-              <td className="tbl-cell">{users.find(u => u.user_id === c.assigned_owner_id)?.name || "Unassigned"}</td>
+              <td className="tbl-cell"><ClientRelationshipValue client={c} /></td>
               <td className="tbl-cell capitalize">{(programs[c.client_id] || "—").replaceAll("_", " ")}</td>
               <td className="tbl-cell capitalize">{c.status || "active"}</td>
               <td className="tbl-cell"><div className="flex gap-2">
@@ -100,6 +99,6 @@ export default function ClientManagement() {
         </table>
       </div>
     </div>
-    <ClientDialog open={!!dialog} client={dialog?.client || null} onOpenChange={open => { if (!open) setDialog(null); }} users={users} onCreated={saved} />
+    <ClientDialog open={!!dialog} client={dialog?.client || null} onOpenChange={open => { if (!open) setDialog(null); }} onCreated={saved} />
   </div>;
 }

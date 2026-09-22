@@ -4,6 +4,7 @@ import { syncPolicyReview } from './policyReviews';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
 import { validateAssignment } from './assignmentEligibility';
+import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -168,6 +169,23 @@ export function write(db, kind, body, id) {
   }
   if(kind==='vendors') {validateVendor(db,row,existing);row.service=row.service||row.services;}
   validate(db, kind, row, existing);
+  if (kind === 'clients') {
+    validateClientRelationships(db, row, existing);
+    if (!existing && body.primary_contact_details) {
+      const details = body.primary_contact_details;
+      if (!details.name?.trim() || details.name.length > 200 || (details.title || '').length > 200) throw new Error('Primary Contact name is required (maximum 200 characters)');
+      const contact = { name: details.name.trim(), email: details.email || null, title: details.title || null,
+        client_id: row.client_id, contact_id: uid('contacts'), status: 'active', created_at: now(), updated_at: now(), created_by: db.user.user_id };
+      if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new Error('Enter a valid email address.');
+      db.contacts.push(contact);
+      row.primary_contact_id = contact.contact_id;
+      audit(db, 'create', 'contacts', contact, {source: 'client_primary_contact'});
+    }
+    delete row.primary_contact_details;
+    delete row.primary_contact_record;
+    delete row.grc_lead;
+    delete row.grc_lead_id;
+  }
   if (kind === 'reviews') Object.assign(row, reviewView({...row, ...reviewSchedule(row, !!existing && !body.schedule_anchor && body.due_date !== undefined && body.due_date !== existing.due_date)}));
   if (kind === 'tasks' && existing && row.status !== existing.status) {
     if (row.status === 'in_progress' && !row.started_at) {row.started_at=now();row.started_by=db.user.user_id;}

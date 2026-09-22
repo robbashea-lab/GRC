@@ -38,6 +38,7 @@ from pydantic import BaseModel, Field, EmailStr, ValidationError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
 import action_items
 import assignment_eligibility
+import client_relationships
 import remediation
 import risk_ids
 import policy_reviews
@@ -275,12 +276,19 @@ class LoginIn(BaseModel):
     password: str
 
 
+class PrimaryContactIn(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    email: Optional[EmailStr] = None
+    title: Optional[str] = Field(default=None, max_length=200)
+
+
 class ClientIn(BaseModel):
     name: str
     industry: Optional[str] = None
     environment: Optional[str] = "Production"
     status: Optional[str] = "onboarding"  # onboarding, active, inactive, archived
     primary_contact: Optional[str] = None
+    primary_contact_details: Optional[PrimaryContactIn] = None
     assigned_owner_id: Optional[str] = None
     logo_url: Optional[str] = None
 
@@ -291,6 +299,7 @@ class ClientPatchIn(BaseModel):
     environment: Optional[str] = None
     status: Optional[str] = None
     primary_contact: Optional[str] = None
+    primary_contact_id: Optional[str] = Field(default=None, max_length=100)
     assigned_owner_id: Optional[str] = None
     logo_url: Optional[str] = None
 
@@ -1195,7 +1204,28 @@ async def list_clients(
     if not include_archived:
         q["status"] = {"$ne": "archived"}
     docs = await db.clients.find(q, {"_id": 0}).to_list(500)
-    return docs
+    return await client_relationships.project(db, docs)
+
+
+@api.get("/clients/grc-leads")
+async def grc_lead_candidates(client_id: Optional[str] = Query(None),
+                              user: Dict = Depends(get_current_user)):
+    if user.get("role") not in client_relationships.INTERNAL_ROLES:
+        raise HTTPException(403, "Restricted to internal admins")
+    if client_id and not _can_access_client(user, client_id):
+        raise HTTPException(403, "Forbidden for this client")
+    if client_id and not await db.clients.find_one({"client_id": client_id}):
+        raise HTTPException(404, "Client not found")
+    # A new client has no memberships yet. Only already-global staff qualify.
+    scope = {"$or": [{"role": "super_admin"}, {"role": "platform_admin", "$or": [
+        {"client_ids": {"$size": 0}}, {"client_ids": None},
+        *([{"client_ids": client_id}] if client_id else []),
+    ]}]}
+    rows = await db.users.find({"$and": [{"status": "active"}, scope]},
+        {"_id": 0, "user_id": 1, "name": 1, "email": 1}).sort("name", 1).to_list(201)
+    if len(rows) > 200:
+        raise HTTPException(422, "Too many eligible leads; contact your administrator")
+    return rows
 
 
 @api.post("/clients")
@@ -1215,12 +1245,31 @@ async def create_client(body: ClientIn, user: Dict = Depends(get_current_user)):
         "created_at": _now(),
         "updated_at": _now(),
     }
-    await db.clients.insert_one(doc)
+    await client_relationships.validate(db, doc, None, _can_access_client)
+    contact = None
+    if body.primary_contact_details:
+        details = body.primary_contact_details.model_dump()
+        if not details["name"].strip():
+            raise HTTPException(422, "Primary Contact name is required")
+        contact = {**details, "name": details["name"].strip(), "contact_id": _uid("cnt"),
+                   "client_id": cid, "status": "active", "created_at": _now(), "updated_at": _now(),
+                   "created_by": user["user_id"]}
+        doc["primary_contact_id"] = contact["contact_id"]
+        await db.contacts.insert_one(contact)
+    try:
+        await db.clients.insert_one(doc)
+    except Exception:
+        # Compensate only this request's new, not-yet-published Contact.
+        if contact and not await db.clients.find_one({"client_id": cid}):
+            await db.contacts.delete_one({"_id": contact["_id"], "client_id": cid})
+        raise
     if user.get("role") == "platform_admin" and user.get("client_ids"):
         await db.users.update_one({"user_id": user["user_id"]}, {"$addToSet": {"client_ids": cid}})
     await audit(user, "create", "client", cid, cid, meta={"name": body.name})
+    if contact:
+        await audit(user, "create", "contact", contact["contact_id"], cid, meta={"source": "client_primary_contact"})
     doc.pop("_id", None)
-    return doc
+    return (await client_relationships.project(db, [doc]))[0]
 
 
 @api.patch("/clients/{client_id}")
@@ -1234,12 +1283,13 @@ async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depend
         raise HTTPException(404, "Client not found")
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if not updates:
-        return existing
+        return (await client_relationships.project(db, [existing]))[0]
+    await client_relationships.validate(db, {**existing, **updates}, existing, _can_access_client)
     updates["updated_at"] = _now()
     await db.clients.update_one({"client_id": client_id}, {"$set": updates})
     await audit(user, "update", "client", client_id, client_id, meta=updates)
     doc = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
-    return doc
+    return (await client_relationships.project(db, [doc]))[0]
 
 
 @api.get("/clients/{client_id}/assignees")
@@ -2346,6 +2396,8 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
+    if kind == "contacts" and await db.clients.find_one({"client_id": existing["client_id"], "primary_contact_id": item_id}):
+        raise HTTPException(409, "This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.")
     if kind in ("risks","vendors") or kind == "reviews" and (existing.get("risk_id") or existing.get("vendor_id") or existing.get('ai_system_id')):
         raise HTTPException(409, "Risks and their Review obligations must be retained")
     if kind == "reviews" and (existing.get("status") == "completed" or existing.get("occurrences")):
@@ -4264,6 +4316,8 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     if body.action == "delete":
         if user.get("role") not in ("super_admin", "platform_admin"):
             raise HTTPException(403, "Destructive action restricted")
+        if body.kind == "contacts" and await db.clients.find_one({"client_id": {"$in": [d["client_id"] for d in docs]}, "primary_contact_id": {"$in": body.ids}}):
+            raise HTTPException(409, "A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.")
         if body.kind in ("risks","vendors") or body.kind == "reviews" and any(d.get("risk_id") or d.get("vendor_id") or d.get('ai_system_id') for d in docs):
             raise HTTPException(409, "Risks and their Review obligations must be retained")
         if body.kind == "reviews" and any(d.get("status") == "completed" or d.get("occurrences") for d in docs):
