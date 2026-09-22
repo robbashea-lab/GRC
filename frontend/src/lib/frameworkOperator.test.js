@@ -25,6 +25,12 @@ test('ISO clauses and all 93 Annex controls retain distinct usable guidance',()=
   for(const d of catalog.requirements){const g=operatorGuidance('iso-27001',d);expect(g.meaning.length).toBeGreaterThan(40);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('Omnisciente implementation prompt');}
   expect(catalog.requirements.filter(d=>d.specification==='annex_control')).toHaveLength(93);
 });
+test('SOC criteria explain distinct expectations without prescribing controls or samples',()=>{
+  const all=CATALOGS['soc-2'].requirements.map(d=>operatorGuidance('soc-2',d));
+  expect(new Set(all.map(g=>g.meaning)).size).toBe(61);
+  for(const g of all){expect(g.meaning.length).toBeGreaterThan(40);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('readiness prompt');}
+  expect(operatorStatuses('soc-2').addressed).toBe('Addressed (Readiness)');
+});
 test('assessment coverage counts partial assessments, excludes N/A and handles empty data',()=>{
   expect(assessmentProgress([{status:'not_assessed'},{status:'in_progress'},{status:'needs_attention'},{status:'not_applicable'}])).toEqual({total:4,applicable:3,assessed:2,excluded:1});
   expect(assessmentProgress([])).toEqual({total:0,applicable:0,assessed:0,excluded:0});

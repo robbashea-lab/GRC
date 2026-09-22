@@ -46,6 +46,20 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
       await drawer().getByRole('tab',{name:'Assessment',exact:true}).focus();await page.keyboard.press('ArrowRight');await expect(drawer().getByRole('tab',{selected:true})).not.toHaveText('Assessment');await tab('Assessment');
       if(process.env.QA_ARTIFACTS)await page.screenshot({path:path.join(process.env.QA_ARTIFACTS,'operator-'+key+'.png')});await page.keyboard.press('Escape');
       const a=(await db()).framework_assessments.find(a=>a.client_id===cid&&a.framework_key===key&&a.definition_id===id);assert.equal(a.assessment_history.length,2);assert.equal((await db()).findings.find(f=>f.framework_assessment_id===a.framework_assessment_id).status,'closed');
+      if(key==='soc-2'){
+        await page.goto(direct);await expect(drawer()).toContainText('The criterion describes an expectation');
+        await tab('Management Controls');await drawer().getByRole('button',{name:'Add management control',exact:true}).click();
+        await drawer().getByLabel('Control name 1',{exact:true}).fill('Management reviews conduct exceptions');
+        await drawer().getByLabel('Control description 1',{exact:true}).fill('An assigned manager reviews reported exceptions and records follow-up decisions.');
+        await drawer().getByLabel('Design readiness 1').selectOption('adequate');await drawer().getByLabel('Operating evidence 1').selectOption('gap');
+        await drawer().getByLabel('Control frequency 1').fill('On reported exceptions');
+        await drawer().getByLabel('Observation period start 1').fill('2026-01-01');await drawer().getByLabel('Observation period end 1').fill('2026-06-30');
+        await drawer().getByLabel('Expected instances 1').fill('3');await drawer().getByLabel('Collected instances 1').fill('2');await expect(drawer()).toContainText('Reported missing instances: 1');
+        await drawer().getByRole('button',{name:'Save assessment',exact:true}).click();await expect(drawer()).toContainText('Assessment saved.');await page.reload();await tab('Management Controls');await expect(drawer().getByLabel('Control name 1')).toHaveValue('Management reviews conduct exceptions');await page.keyboard.press('Escape');
+        await page.getByText('Scope & evidence period',{exact:true}).click();await page.getByLabel('Availability',{exact:true}).check();await page.getByRole('button',{name:'Save SOC 2 scope',exact:true}).click();await expect(page.locator('main tbody tr')).toHaveCount(36);
+        await page.getByLabel('Availability',{exact:true}).uncheck();await page.getByRole('button',{name:'Save SOC 2 scope',exact:true}).click();await expect(page.locator('main tbody tr')).toHaveCount(33);
+        await page.getByLabel('Include retained out-of-scope criteria').check();await expect(page.locator('main tbody tr')).toHaveCount(36);
+      }
       if(key==='iso-27001'){
         await go('/compliance/iso-27001');await page.getByLabel('ISO workspace view').selectOption('soa');await expect(page.locator('main tbody tr')).toHaveCount(93);
         await page.getByTestId('requirement-A.5.18').getByRole('button').first().click();await expect(drawer()).toContainText('Annex A / SoA');
