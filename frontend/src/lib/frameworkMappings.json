@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "mappings": [
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.AA-05"
+      },
+      "target": {
+        "framework": "cis-ig1",
+        "definition": "6.1"
+      },
+      "type": "partial",
+      "theme": "Access governance",
+      "notes": "Authorization and entitlement evidence may support these topics. Scope, revocation, ongoing review and framework-specific conditions still need independent assessment.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.AA-05"
+      },
+      "target": {
+        "framework": "hipaa",
+        "definition": "164.308(a)(4)(ii)(B)"
+      },
+      "type": "partial",
+      "theme": "Access governance",
+      "notes": "Authorization and entitlement evidence may support these topics. Scope, revocation, ongoing review and framework-specific conditions still need independent assessment.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.AA-05"
+      },
+      "target": {
+        "framework": "iso-27001",
+        "definition": "A.5.18"
+      },
+      "type": "partial",
+      "theme": "Access governance",
+      "notes": "Authorization and entitlement evidence may support these topics. Scope, revocation, ongoing review and framework-specific conditions still need independent assessment.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.AA-05"
+      },
+      "target": {
+        "framework": "soc-2",
+        "definition": "CC6.2"
+      },
+      "type": "partial",
+      "theme": "Access governance",
+      "notes": "Authorization and entitlement evidence may support these topics. Scope, revocation, ongoing review and framework-specific conditions still need independent assessment.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.DS-11"
+      },
+      "target": {
+        "framework": "cis-ig1",
+        "definition": "11.2"
+      },
+      "type": "partial",
+      "theme": "Backup and recovery evidence",
+      "notes": "Backup records may support recovery readiness; they do not establish every recovery, availability or contingency obligation.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.DS-11"
+      },
+      "target": {
+        "framework": "hipaa",
+        "definition": "164.308(a)(7)(ii)(A)"
+      },
+      "type": "partial",
+      "theme": "Backup and recovery evidence",
+      "notes": "Backup records may support recovery readiness; they do not establish every recovery, availability or contingency obligation.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.DS-11"
+      },
+      "target": {
+        "framework": "iso-27001",
+        "definition": "A.8.13"
+      },
+      "type": "partial",
+      "theme": "Backup and recovery evidence",
+      "notes": "Backup records may support recovery readiness; they do not establish every recovery, availability or contingency obligation.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.DS-11"
+      },
+      "target": {
+        "framework": "soc-2",
+        "definition": "CC7.5"
+      },
+      "type": "partial",
+      "theme": "Backup and recovery evidence",
+      "notes": "Backup records may support recovery readiness; they do not establish every recovery, availability or contingency obligation.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.AT-01"
+      },
+      "target": {
+        "framework": "cis-ig1",
+        "definition": "14.1"
+      },
+      "type": "partial",
+      "theme": "Workforce awareness",
+      "notes": "Training and communications may support these topics; role coverage, content, effectiveness and each framework's qualifications must be assessed separately.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.AT-01"
+      },
+      "target": {
+        "framework": "hipaa",
+        "definition": "164.308(a)(5)(i)"
+      },
+      "type": "partial",
+      "theme": "Workforce awareness",
+      "notes": "Training and communications may support these topics; role coverage, content, effectiveness and each framework's qualifications must be assessed separately.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.AT-01"
+      },
+      "target": {
+        "framework": "iso-27001",
+        "definition": "A.6.3"
+      },
+      "type": "partial",
+      "theme": "Workforce awareness",
+      "notes": "Training and communications may support these topics; role coverage, content, effectiveness and each framework's qualifications must be assessed separately.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    },
+    {
+      "source": {
+        "framework": "nist-csf-2",
+        "definition": "PR.AT-01"
+      },
+      "target": {
+        "framework": "soc-2",
+        "definition": "CC2.2"
+      },
+      "type": "partial",
+      "theme": "Workforce awareness",
+      "notes": "Training and communications may support these topics; role coverage, content, effectiveness and each framework's qualifications must be assessed separately.",
+      "provenance": {
+        "publisher": "Omnisciente implementation interpretation",
+        "researched_on": "2026-09-22",
+        "basis": "Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule."
+      }
+    }
+  ]
+}
