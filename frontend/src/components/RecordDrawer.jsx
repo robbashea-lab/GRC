@@ -12,7 +12,8 @@ import { toast } from "sonner";
 import api, { formatError } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
-import { X, ArrowUpRight, Zap, UploadCloud, CheckCircle2, XCircle, Send, ShieldCheck, CalendarPlus, Users2 } from "lucide-react";
+import { X, ArrowUpRight, Zap, UploadCloud, CheckCircle2, ShieldCheck, CalendarPlus, Users2 } from "lucide-react";
+import PolicyApprovalPanel from './PolicyApprovalPanel';
 import { Link } from "react-router-dom";
 import { SCHEMAS } from "@/lib/schemas";
 import rules from "@/lib/grcRules.json";
@@ -139,8 +140,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [linkedReviews, setLinkedReviews] = useState([]);
   const [linkedRisks, setLinkedRisks] = useState([]);
   const [dragOver, setDragOver] = useState(false);
-  const [rejectOpen, setRejectOpen] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
   const [acceptOpen, setAcceptOpen] = useState(false);
   const [acceptForm, setAcceptForm] = useState({ rationale: "", expiry_date: "", approver_id: "", compensating_controls: "" });
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -514,25 +513,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     } catch (e) { toast.error(formatError(e)); }
   }
 
-  // ---- Policy approval workflow ----
-  async function policyAction(action, body = {}) {
-    try {
-      const { data } = await api.post(`/policies/${record[idField]}/${action}`, body);
-      toast.success(`Policy ${action === "submit-review" ? "sent for approval" : action + "d"}`);
-      if (data) {
-        if (data.status) { record.status = data.status; setForm((p) => ({ ...p, status: data.status })); }
-        if (data.approval_history) record.approval_history = data.approval_history;
-        if (data.approved_at) record.approved_at = data.approved_at;
-        if (data.approver_id) record.approver_id = data.approver_id;
-      }
-      onSaved?.(); loadActivity();
-    } catch (e) { toast.error(formatError(e)); }
-  }
-  async function submitReject() {
-    if (!rejectReason.trim()) return;
-    await policyAction("reject", { reason: rejectReason });
-    setRejectOpen(false); setRejectReason("");
-  }
 
   async function uploadFiles(files) {
     for (const f of files) {
@@ -896,49 +876,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
             </Button>
           </div>
         )}
-        <div className="flex flex-wrap gap-2">
-          {status === "draft" && canWrite && (
-            <Button size="sm" variant="outline" onClick={() => policyAction("submit-review")} data-testid="policy-submit-review">
-              <Send className="h-3.5 w-3.5 mr-1" /> Submit for approval
-            </Button>
-          )}
-          {status === "in_review" && isPlatformAdmin && (
-            <>
-              <Button size="sm" onClick={() => policyAction("approve")} data-testid="policy-approve"><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve</Button>
-              <Button size="sm" variant="outline" onClick={() => setRejectOpen(true)} data-testid="policy-reject"><XCircle className="h-3.5 w-3.5 mr-1" /> Send back</Button>
-            </>
-          )}
-          {status === "approved" && canWrite && (
-            <Button size="sm" variant="outline" onClick={() => policyAction("submit-review")}>
-              <Send className="h-3.5 w-3.5 mr-1" /> Submit new revision
-            </Button>
-          )}
-        </div>
-        {rejectOpen && (
-          <div className="pt-2 space-y-2">
-            <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Reason for sending back to draft…" data-testid="policy-reject-reason" className="text-sm" />
-            <div className="flex gap-2 justify-end">
-              <Button size="sm" variant="outline" onClick={() => setRejectOpen(false)}>Cancel</Button>
-              <Button size="sm" onClick={submitReject} data-testid="policy-reject-confirm">Send back</Button>
-            </div>
-          </div>
-        )}
-        {record?.approval_history?.length > 0 && (
-          <div className="pt-2 border-t border-line">
-            <div className="text-xs font-mono uppercase tracking-widest text-ink-muted mb-1">History</div>
-            <ul className="space-y-1.5">
-              {record.approval_history.map((h, i) => (
-                <li key={i} className="text-xs text-ink-secondary flex items-center gap-2">
-                  <span className="font-mono text-ink-help">{new Date(h.at).toLocaleString()}</span>
-                  <span className="font-medium">{h.by_email}</span>
-                  <span className="text-ink-muted">{h.action}</span>
-                  {h.reason && <span className="text-semantic-critical italic">"{h.reason}"</span>}
-                  {h.comment && <span className="italic">"{h.comment}"</span>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <PolicyApprovalPanel record={record} onChanged={data=>{Object.assign(record,data);setForm(p=>({...p,status:data.status}));onSaved?.();loadActivity();}}/>
       </div>
     );
   }

@@ -43,6 +43,7 @@ import client_relationships
 import remediation
 import risk_ids
 import policy_reviews
+import policy_approval
 import risk_lifecycle
 import vendor_governance
 import review_occurrences
@@ -2244,6 +2245,8 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     if 'framework_assessment_id' in body or any(k.startswith('framework_') for k in body):
         raise HTTPException(422,'Framework relationships are managed through the framework workspace')
     changes = {k: v for k, v in body.items() if v != previous.get(k) and not (v in (None, "") and previous.get(k) in (None, ""))}
+    if kind == "policies":
+        policy_approval.guard_patch(changes, previous)
     if kind == "contacts" and "linked_user_id" in changes:
         raise HTTPException(422, "Use the explicit account-link action to change a Contact identity association")
     if kind == "policies" and previous.get("schedule_from_reviews") and set(changes) & {"last_reviewed_at", "next_review_date"}:
@@ -2470,13 +2473,13 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
                      "completed_by": user["user_id"] if body["status"] == "done" else None})
     body["updated_at"] = _now()
     query = {id_field: item_id}
-    if kind == "tasks":
+    if kind in ("tasks", "policies"):
         query["updated_at"] = existing.get("updated_at")
     if kind == "reviews":
         query.update({"current_occurrence_id": existing.get("current_occurrence_id"), "updated_at": existing.get("updated_at")})
     result = await db[_coll_for(kind)].update_one(query, {"$set": body})
-    if kind in ("reviews", "tasks") and not result.matched_count:
-        raise HTTPException(409, "Review changed; reload before saving")
+    if kind in ("reviews", "tasks", "policies") and not result.matched_count:
+        raise HTTPException(409, "Record changed; reload before saving")
     if kind == "tasks" and existing.get("finding_id"):
         await remediation.synchronize(db, existing, user, _now, audit)
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})
@@ -3848,6 +3851,8 @@ async def policy_verify(policy_id: str, body: PolicyVerifyIn, user: Dict = Depen
         raise HTTPException(404, "Policy not found")
     if not _can_access_client(user, p["client_id"]):
         raise HTTPException(403, "Forbidden for this client")
+    if p.get("status") == "in_review":
+        raise HTTPException(409, "Return the pending submission to Draft before verifying metadata")
     update: Dict[str, Any] = {
         "presence": "verified_existing",
         "verified_at": _now(),
@@ -3860,7 +3865,9 @@ async def policy_verify(policy_id: str, body: PolicyVerifyIn, user: Dict = Depen
         if v not in (None, ""):
             update[k] = v
     await assignment_eligibility.validate(db, "policies", {**p, **update}, _can_access_client, p)
-    await db.policies.update_one({"policy_id": policy_id}, {"$set": update})
+    result = await db.policies.update_one({"policy_id": policy_id, "updated_at": p.get("updated_at"), "status": p.get("status")}, {"$set": update})
+    if not result.matched_count:
+        raise HTTPException(409, "Policy changed; reload before verifying")
     await audit(user, "verify", "policy", policy_id, p["client_id"],
                 meta={"prev_presence": p.get("presence"), "verified_fields": [k for k in update.keys() if k not in ("updated_at", "verified_at", "verified_by")]})
     fresh = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
@@ -4293,84 +4300,7 @@ async def read_all_notifications(user: Dict = Depends(get_current_user)):
     return {"ok": True}
 
 
-# ---------------- Policy approval workflow ----------------
-class PolicyApproveIn(BaseModel):
-    comment: Optional[str] = None
-
-
-class PolicyRejectIn(BaseModel):
-    reason: str
-
-
-async def _policy_history_push(policy_id: str, entry: Dict[str, Any]) -> None:
-    entry = {"at": _now(), **entry}
-    await db.policies.update_one({"policy_id": policy_id},
-                                 {"$push": {"approval_history": entry},
-                                  "$set": {"updated_at": _now()}})
-
-
-@api.post("/policies/{policy_id}/submit-review")
-async def policy_submit(policy_id: str, user: Dict = Depends(get_current_user)):
-    p = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
-    if not p:
-        raise HTTPException(404, "Not found")
-    if not _can_access_client(user, p["client_id"]) or not _writable(user):
-        raise HTTPException(403, "Forbidden")
-    await db.policies.update_one({"policy_id": policy_id}, {"$set": {"status": "in_review", "updated_at": _now()}})
-    await _policy_history_push(policy_id, {"action": "submitted",
-                                           "by": user["user_id"], "by_email": user["email"]})
-    await audit(user, "submit-review", "policy", policy_id, p["client_id"])
-    if p.get("approver_id"):
-        await create_notification(user_id=p["approver_id"],
-                                  title=f"Policy submitted for your approval: {p['title']}",
-                                  kind="policy_review", entity_type="policies",
-                                  entity_id=policy_id, client_id=p["client_id"])
-    return await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
-
-
-@api.post("/policies/{policy_id}/approve")
-async def policy_approve(policy_id: str, body: PolicyApproveIn, user: Dict = Depends(get_current_user)):
-    await _authorized_parent("policies", policy_id, user, write=True)
-    if user.get("role") not in ("super_admin", "platform_admin"):
-        raise HTTPException(403, "Only platform-level roles can approve policies")
-    p = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
-    if not p:
-        raise HTTPException(404, "Not found")
-    await db.policies.update_one({"policy_id": policy_id}, {"$set": {
-        "status": "approved", "approver_id": user["user_id"],
-        "approved_at": _now(), "updated_at": _now(),
-    }})
-    await _policy_history_push(policy_id, {"action": "approved",
-                                           "by": user["user_id"], "by_email": user["email"],
-                                           "comment": body.comment})
-    await audit(user, "approve", "policy", policy_id, p["client_id"])
-    if p.get("owner_id"):
-        await create_notification(user_id=p["owner_id"],
-                                  title=f"Policy approved: {p['title']}",
-                                  kind="policy_approved", entity_type="policies",
-                                  entity_id=policy_id, client_id=p["client_id"])
-    return await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
-
-
-@api.post("/policies/{policy_id}/reject")
-async def policy_reject(policy_id: str, body: PolicyRejectIn, user: Dict = Depends(get_current_user)):
-    await _authorized_parent("policies", policy_id, user, write=True)
-    if user.get("role") not in ("super_admin", "platform_admin"):
-        raise HTTPException(403, "Only platform-level roles can reject policies")
-    p = await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
-    if not p:
-        raise HTTPException(404, "Not found")
-    await db.policies.update_one({"policy_id": policy_id}, {"$set": {"status": "draft", "updated_at": _now()}})
-    await _policy_history_push(policy_id, {"action": "rejected",
-                                           "by": user["user_id"], "by_email": user["email"],
-                                           "reason": body.reason})
-    await audit(user, "reject", "policy", policy_id, p["client_id"], meta={"reason": body.reason})
-    if p.get("owner_id"):
-        await create_notification(user_id=p["owner_id"],
-                                  title=f"Policy sent back to draft: {p['title']}",
-                                  kind="policy_rejected", entity_type="policies",
-                                  entity_id=policy_id, client_id=p["client_id"])
-    return await db.policies.find_one({"policy_id": policy_id}, {"_id": 0})
+# Policy decisions and delegation live in policy_approval.py.
 
 
 # ---------------- CSV export ----------------
@@ -4651,6 +4581,7 @@ app.include_router(api)
 import sys
 app.include_router(ai_governance.router_for(sys.modules[__name__]))
 app.include_router(framework_governance.router_for(sys.modules[__name__]))
+app.include_router(policy_approval.router_for(sys.modules[__name__]))
 app.include_router(entity_router)
 
 
