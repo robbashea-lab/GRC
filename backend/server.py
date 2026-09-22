@@ -4504,38 +4504,11 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
 async def calendar_view(client_id: Optional[str] = Query(None),
                         start: Optional[str] = Query(None),
                         end: Optional[str] = Query(None),
+                        scope: str = Query('active', pattern='^(active|history|all)$'),
                         user: Dict = Depends(get_current_user)):
-    scope = _scope_filter(user, client_id)
-    date_q: Dict[str, Any] = {"$exists": True, "$ne": None}
-    if start:
-        date_q["$gte"] = start
-    if end:
-        date_q["$lte"] = end
-    reviews = await db.reviews.find({**scope, "due_date": date_q}, {"_id": 0}).to_list(5000)
-    findings = await db.findings.find({**scope, "due_date": date_q}, {"_id": 0}).to_list(5000)
-    tasks = await db.tasks.find({**scope, "due_date": date_q}, {"_id": 0}).to_list(5000)
-    # Group by yyyy-mm-dd for easier client rendering
-    def bucket(items, kind, title_key):
-        out: Dict[str, List] = {}
-        for it in items:
-            d = (it.get("due_date") or "")[:10]
-            if not d:
-                continue
-            out.setdefault(d, []).append({
-                "id": it.get(kind + "_id"), "kind": kind,
-                "title": it.get(title_key), "status": it.get("status"),
-                "severity": it.get("severity"), "priority": it.get("priority"),
-                "owner_id": it.get("owner_id") or it.get("assignee_id"),
-                "review_type": it.get("review_type"),
-                "due_date_iso": it.get("due_date"),
-                **({"current_occurrence_id": review_occurrences.occurrence_id(it)} if kind == "review" else {}),
-            })
-        return out
-    return {
-        "reviews": bucket(reviews, "review", "title"),
-        "findings": bucket(findings, "finding", "title"),
-        "tasks": bucket(tasks, "task", "title"),
-    }
+    import sys
+    import calendar_view as calendar_projection
+    return await calendar_projection.read(sys.modules[__name__], _scope_filter(user, client_id), user, start, end, scope)
 
 
 # ---------------- Board Report (PDF) ----------------

@@ -1,15 +1,18 @@
 import { complianceNavigation } from './complianceNavigation';
 
-// Finalized program applicability is authoritative. The current Requirement
-// model is a program register, not assessed framework controls. Neither evidence
-// presence nor a selected framework establishes an addressed requirement.
-// Future assessment integration belongs here, shared with reporting: it must
-// define applicable denominator, exclude N/A, retain unassessed states, and
-// reconcile open material findings/validation before calculating progress.
-export function complianceProgress(clientId, baseline, requirements) {
-  return complianceNavigation(clientId, baseline, requirements).map(program => ({
-    ...program, progress: null, denominator: null, trackingAvailable: false,
-    status: 'Program tracking configured',
-    explanation: 'Detailed requirement progress will appear as requirement assessments are completed.',
-  }));
+// Applicability, assessment state and remediation are separate facts. No scoring
+// methodology is assumed: N/A remains a count, never an inferred completion.
+export function complianceProgress(clientId, baseline, requirements, summary) {
+  if(summary && summary.client_id!==clientId)throw new Error('Framework summary belongs to another client.');
+  return complianceNavigation(clientId, baseline, requirements).map(program => {
+    const recorded=summary?.items.find(item=>item.key===program.key);
+    const trackingAvailable=!!program.implemented;
+    return {...program,progress:null,denominator:null,trackingAvailable,assessment:trackingAvailable?recorded||null:null,
+      status:trackingAvailable?'Assessment tracking available':'Configured — detailed assessment not yet available',
+      explanation:!trackingAvailable?'Program workspace only. Detailed assessment and mapping are not yet implemented.'
+        :!recorded?'Assessment summary is unavailable. Open the framework workspace for current records.'
+        :!recorded.total?'No assessment records configured. Review the program configuration.'
+        :recorded.status_counts.not_assessed===recorded.total?'No assessments started. Recorded safeguard states are shown below.'
+        :'Current recorded assessment states—not a compliance or certification conclusion.'};
+  });
 }

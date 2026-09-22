@@ -165,6 +165,6 @@ class OccurrenceTests(ClientDashboardSourcesTests):
         calendar = (await self.client.get("/api/calendar?client_id=a&start=2026-01-01&end=2027-01-01")).json()
         self.assertNotIn("2026-09-30",calendar["reviews"])
         self.assertEqual(len(calendar["reviews"]["2026-12-31"]),1)
-        self.assertEqual(calendar["reviews"]["2026-12-31"][0]["current_occurrence_id"],done.json()["review"]["current_occurrence_id"])
+        self.assertEqual(calendar["reviews"]["2026-12-31"][0]["occurrence_id"],done.json()["review"]["current_occurrence_id"])
         dashboard = await self.client.get("/api/dashboard?client_id=a")
         self.assertEqual(dashboard.status_code,200,dashboard.text)
