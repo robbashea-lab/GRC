@@ -1,4 +1,4 @@
-import {FRAMEWORKS, cis, frameworkPlans, reviewConfig, genericReviews} from './frameworks';
+import {FRAMEWORKS, CATALOGS, frameworkPlans, reviewConfig, genericReviews,existingFrameworkReview} from './frameworks';
 import {reviewView} from './reviewOccurrences';
 
 export const APPLICABILITY = [['applies','Applies'],['does_not_apply','Does Not Apply'],['unsure','Unsure']];
@@ -24,8 +24,9 @@ export function existingBaseline(rows, item) {
 }
 export function onboardingPreview(catalog, state, records) {
   const policies = catalog.policies.map(p => ({existing:!!existingBaseline(records.policies,p), response:state.policies[p.key]}));
-  const reviews = frameworkPlans(state).filter(p => reviewConfig(state,p).enabled).map(p => {
-    const old = records.reviews.find(r => r.framework_plan_key === p.key) || (p.baseline_key && records.reviews.find(r => r.baseline_key === p.baseline_key));
+  const uniquePlans=[...new Map(frameworkPlans(state).filter(p=>reviewConfig(state,p).enabled).map(p=>[p.baseline_key||p.key,p])).values()];
+  const reviews = uniquePlans.map(p => {
+    const old = existingFrameworkReview(records.reviews,p);
     return {existing:!!old, row:old || {status:'needs_scheduling', ...reviewConfig(state,p)}};
   });
   for (const item of genericReviews(catalog,state)) {
@@ -33,12 +34,12 @@ export function onboardingPreview(catalog, state, records) {
     reviews.push({existing:!!old, row:old || {status:'needs_scheduling',recurrence:null}});
   }
   const count = (items, fn) => items.filter(fn).length;
-  const newAssessments = state.requirements['cis-ig1'] === 'applies'
-    ? cis.requirements.filter(d => !records.framework_assessments.some(a => a.framework_key === 'cis-ig1' && a.definition_id === d.id)).length : 0;
+  const assessmentsByProgram=Object.fromEntries(Object.entries(CATALOGS).map(([key,c])=>[key,state.requirements[key]==='applies'?c.requirements.filter(d=>!records.framework_assessments.some(a=>a.framework_key===key&&a.definition_id===d.id)).length:0]));
+  const newAssessments=Object.values(assessmentsByProgram).reduce((n,count)=>n+count,0);
   return {policies:{total:policies.length, create:count(policies,p=>!p.existing), retain:count(policies,p=>p.existing),
     yes:count(policies,p=>p.response==='yes'), no:count(policies,p=>p.response==='no'), unsure:count(policies,p=>p.response==='unsure')},
     reviews:{total:reviews.length, create:count(reviews,r=>!r.existing), retain:count(reviews,r=>r.existing),
-      scheduling:count(reviews,r=>SETUP_FILTERS.reviews.scheduling.matches(r.row)), owners:count(reviews,r=>!!r.row.owner_id)}, newAssessments};
+      scheduling:count(reviews,r=>SETUP_FILTERS.reviews.scheduling.matches(r.row)), owners:count(reviews,r=>!!r.row.owner_id)}, newAssessments,assessmentsByProgram};
 }
 export function currentHandoff(snapshot, cid) {
   if (snapshot.client?.client_id !== cid) throw new Error('Setup summary does not match the selected client.');

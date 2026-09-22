@@ -6,6 +6,7 @@ import { prepareTask } from './actionItems';
 import { validateAssignment } from './assignmentEligibility';
 import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
+import { reconcileFramework } from './frameworks';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
@@ -42,6 +43,8 @@ export function seedStore() {
   const db = normalizePolicyDates(initializeRiskIds(buildDemoStore(Object.keys(ids))));
   db.risks.forEach(risk => ensureRiskReview(db, risk));
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
+  // Only explicit Demo creation/reset seeds framework work; standard startup never calls this.
+  for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
   return db;
 }
 export function readStore() {

@@ -23,12 +23,13 @@ export default function ProgramConfiguration({clientId, onSaved}) {
   }
   return <section className="border border-line rounded-lg p-4 mb-5 space-y-3" aria-label="Program configuration">
     <h3 className="text-sm font-semibold">Program configuration</h3>
-    <p className="text-xs text-ink-secondary">Adjust current applicability without repeating onboarding. Selecting CIS configures its existing assessments and mapped Reviews. Existing work and history are retained when a program is removed.</p>
+    <p className="text-xs text-ink-secondary">Adjust applicability without repeating onboarding. Operational programs initialize their assessments and reuse mapped Reviews. Existing work and history are retained when a program is removed.</p>
     {error&&<div role="alert" className="text-sm"><p>{error}</p><Button variant="outline" size="sm" onClick={()=>setRevision(n=>n+1)}>Retry configuration</Button></div>}
     {!snapshot&&!error&&<p role="status" className="text-sm">Loading program configuration…</p>}
     {snapshot?.client.client_id===clientId && (snapshot.completed ? <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{FRAMEWORKS.map(f=>{
       const value=snapshot.records.requirements.find(r=>r.baseline_key===f.key)?.baseline_response || 'does_not_apply';
-      return <label key={f.key} className="text-sm">{f.name}<select disabled={busy} aria-label={`Applicability — ${f.name}`} className="block mt-1 border border-line rounded p-2 bg-surface-card w-full" value={value} onChange={e=>change(f.key,e.target.value)}>{APPLICABILITY.map(([v,label])=><option value={v} key={v}>{label}</option>)}</select></label>;
+      const initialized=snapshot.records.framework_assessments.some(a=>a.framework_key===f.key);
+      return <div key={f.key}><label className="text-sm">{f.name}<select disabled={busy} aria-label={`Applicability — ${f.name}`} className="block mt-1 border border-line rounded p-2 bg-surface-card w-full" value={value} onChange={e=>change(f.key,e.target.value)}>{APPLICABILITY.map(([v,label])=><option value={v} key={v}>{label}</option>)}</select></label>{f.implemented&&value==='applies'&&!initialized&&<Button variant="ghost" size="sm" disabled={busy} onClick={()=>change(f.key,'applies')}>Initialize {f.label}</Button>}</div>;
     })}</div> : <Link className="text-sm text-link underline" to="/onboarding">Continue onboarding</Link>)}
   </section>;
 }

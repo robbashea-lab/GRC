@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from datetime import date, timedelta
 import review_occurrences
+from framework_catalog import assessment_title
 
 SOURCES = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/evidenceSources.json').read_text())
 ALIASES = {alias: kind for kind, spec in SOURCES.items() for alias in spec['aliases']}
@@ -17,6 +18,7 @@ def reference(kind, row, ident=None, occurrence=None):
               'available': bool(row), 'title': (row or {}).get('title') or (row or {}).get('name') or 'Source unavailable'}
     if row:
         result['status'] = row.get('status')
+        if kind=='framework_assessments':result['title']=assessment_title(row)
         result['archived'] = bool(row.get('archived_at') or row.get('status') == 'archived')
     if row and kind == 'reviews':
         oid = occurrence or 'occ_' + row['review_id']

@@ -1202,9 +1202,9 @@ async def user_open_assignments(user_id: str, client_id: Optional[str] = Query(N
             "framework_assessments": "framework_assessment_id", "ai_systems": "ai_system_id",
         }[kind]
         rows = await db[kind].find(query, {"_id": 0, id_field: 1, "client_id": 1,
-            "title": 1, "name": 1, "status": 1, "due_date": 1, "definition_id": 1}).sort(id_field, 1).to_list(100)
+            "title": 1, "name": 1, "status": 1, "due_date": 1, "definition_id": 1, "framework_key": 1}).sort(id_field, 1).to_list(100)
         items.extend({"kind": kind, "id": row.get(id_field), "client_id": row["client_id"],
-                      "title": row.get("title") or row.get("name") or framework_governance.DEFINITIONS.get(row.get("definition_id"), {}).get("title") or "Untitled record",
+                      "title": row.get("title") or row.get("name") or framework_governance.definition_for(row.get("framework_key"), row.get("definition_id")).get("title") or "Untitled record",
                       "status": row.get("status"), "due_date": row.get("due_date")} for row in rows)
     return {**counts, "total": sum(counts.values()), "items": items,
             "truncated": sum(counts.values()) > len(items)}
@@ -3577,9 +3577,11 @@ async def task_activity(task_id: str, user: Dict = Depends(get_current_user)):
 async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(get_current_user), occurrence_id: Optional[str] = None):
     """Return records related to the given entity across collections."""
     keys = {"reviews": "review_id", "findings": "finding_id", "tasks": "task_id", "risks": "risk_id", "policies": "policy_id", "vendors": "vendor_id", "assets": "asset_id", "exceptions": "exception_id", "requirements": "requirement_id", "contacts": "contact_id", 'ai_systems':'ai_system_id', 'framework_assessments':'framework_assessment_id'}
+    if entity_type=='evidence':
+        keys['evidence']='evidence_id'
     if entity_type not in keys:
         raise HTTPException(400, "Unsupported record type")
-    source = await db[entity_type].find_one({keys[entity_type]: entity_id}, {"_id": 0})
+    source = await db[entity_type].find_one({keys[entity_type]: entity_id}, {"_id": 0, "content_base64": 0})
     if not source:
         raise HTTPException(404, "Record not found")
     cid = source.get("client_id")
@@ -3641,6 +3643,12 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type == 'ai_systems' and ai_reviews:
         linked['evidence'] += await db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':[r['review_id'] for r in ai_reviews]}},{'_id':0,'content_base64':0}).to_list(200)
     assessment_clauses=[{'related_links':{'$elemMatch':{'kind':entity_type,'id':entity_id}}}]
+    if entity_type=='policies' and source.get('baseline_key'):
+        for framework_key,catalog in framework_governance.CATALOGS.items():
+            definitions=[did for mapping in catalog['policy_mappings'] if mapping['policy_key']==source['baseline_key'] for did in mapping['safeguards']]
+            if definitions:assessment_clauses.append({'framework_key':framework_key,'definition_id':{'$in':definitions}})
+    if entity_type=='evidence' and source.get('linked_type') in ('framework_assessment','framework_assessments'):
+        assessment_clauses.append({'framework_assessment_id':source.get('linked_id')})
     if source.get('framework_assessment_id'):
         assessment_clauses.append({'framework_assessment_id':source['framework_assessment_id']})
     if source.get('finding_id'):
@@ -3650,8 +3658,10 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type=='reviews' and source.get('framework_key'):
         assessment_clauses.append({'framework_key':source['framework_key'],'definition_id':{'$in':source.get('framework_safeguards',[])}})
     linked['framework_assessments']=await db.framework_assessments.find({'client_id':cid,'$or':assessment_clauses},{'_id':0}).to_list(None)
+    if entity_type=='evidence':
+        linked['framework_assessments']=[a for a in linked['framework_assessments'] if entity_id not in a.get('unlinked_evidence_ids',[])]
     for assessment in linked['framework_assessments']:
-        assessment['title']='CIS '+assessment['definition_id']+' · '+framework_governance.DEFINITIONS.get(assessment['definition_id'],{}).get('title','Safeguard')
+        assessment['title']=framework_governance.assessment_title(assessment)
     return linked
 
 

@@ -1,4 +1,4 @@
-"""Reusable client requirement assessments; CIS is the only populated framework."""
+"""Tenant-authorized framework assessments and shared operational relationships."""
 import json
 import uuid
 from pathlib import Path
@@ -7,20 +7,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 import review_occurrences
 import assignment_eligibility
+from framework_catalog import CATALOGS, CIS, definition_for, assessment_title
 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
-FRAMEWORKS=json.loads((ROOT/'frameworkDefinitions.json').read_text())['frameworks']
-CIS=json.loads((ROOT/'cisIG1.json').read_text())
-DEFINITIONS={r['id']:r for r in CIS['requirements']}
+FRAMEWORKS=json.loads((ROOT/'frameworkDefinitions.json').read_text(encoding='utf-8'))['frameworks']
 STATUSES=('not_assessed','in_progress','addressed','needs_attention','not_applicable')
 CADENCES=('monthly','quarterly','semiannual','annual','custom')
 
-def stable(cid,kind,key):
-    return 'fw_'+uuid.uuid5(uuid.NAMESPACE_URL,f'{cid}:cis-ig1:8.1:{kind}:{key}').hex
+def stable(cid,kind,key,framework='cis-ig1'):
+    # Retain the original CIS namespace and IDs, including stored occurrence links.
+    version=CATALOGS[framework]['version']
+    return 'fw_'+uuid.uuid5(uuid.NAMESPACE_URL,f'{cid}:{framework}:{version}:{kind}:{key}').hex
 
 def validate_configuration(state):
     configs=state.get('framework_reviews',{})
-    if not isinstance(configs,dict) or set(configs)-{p['key'] for p in CIS['review_plans']}:
+    if not isinstance(configs,dict) or set(configs)-{p['key'] for c in CATALOGS.values() for p in c['review_plans']}:
         raise HTTPException(422,'Invalid framework Review configuration')
     for config in configs.values():
         if not isinstance(config,dict) or set(config)-{'enabled','recurrence','custom_recurrence_days','due_date'}:
@@ -31,38 +32,53 @@ def validate_configuration(state):
         if config.get('due_date') and not review_occurrences.scheduled_date(config['due_date']): raise HTTPException(422,'Invalid Review date')
 
 async def reconcile(s,cid,state,user):
-    """Only explicit v3 completion configures assessments. Never delete or reset responses."""
-    selected=state.get('requirements',{}).get('cis-ig1')=='applies'
-    if not selected:
-        await s.db.reviews.update_many({'client_id':cid,'framework_key':'cis-ig1'},{'$set':{'framework_driver_active':False}})
-        return
-    for definition in CIS['requirements']:
-        aid=stable(cid,'assessment',definition['id'])
+    """Explicit activation only. Absent keys are untouched (single-program Settings edits)."""
+    for key,catalog in CATALOGS.items():
+        if key not in state.get('requirements',{}):
+            continue
+        if state['requirements'][key]!='applies':
+            await s.db.reviews.update_many({'client_id':cid,'framework_key':key},{'$set':{'framework_driver_active':False}})
+            continue
+        await reconcile_catalog(s,cid,state,user,key,catalog)
+
+
+async def reconcile_catalog(s,cid,state,user,key,catalog):
+    for definition in catalog['requirements']:
+        aid=stable(cid,'assessment',definition['id'],key)
         await s.db.framework_assessments.update_one({'_id':aid},{'$setOnInsert':{
-            'framework_assessment_id':aid,'client_id':cid,'framework_key':'cis-ig1','definition_id':definition['id'],
-            'framework_version':'8.1','status':'not_assessed','implementation':'','technology':'','notes':'','na_rationale':'',
+            'framework_assessment_id':aid,'client_id':cid,'framework_key':key,'definition_id':definition['id'],
+            'framework_version':catalog['version'],'status':'not_assessed','implementation':'','technology':'','notes':'','na_rationale':'',
             'owner_id':None,'process_owner_id':None,'created_at':s._now(),'related_links':[],'assessment_history':[]}},upsert=True)
-    for plan in CIS['review_plans']:
+    for plan in catalog['review_plans']:
         config={'enabled':True,'recurrence':plan['default_cadence'],**state.get('framework_reviews',{}).get(plan['key'],{})}
         old=await s.db.reviews.find_one({'client_id':cid,'framework_plan_key':plan['key']},{'_id':0})
         if not config['enabled']:
             if old: await s.db.reviews.update_one({'review_id':old['review_id']},{'$set':{'framework_driver_active':False}})
             continue
         if not old and plan.get('baseline_key'):
-            old=await s.db.reviews.find_one({'client_id':cid,'baseline_key':plan['baseline_key']},{'_id':0})
-        mapping={'framework_key':'cis-ig1','framework_version':'8.1','framework_plan_key':plan['key'],'framework_driver_active':True,
+            equivalent=[p['key'] for c in CATALOGS.values() for p in c['review_plans'] if p.get('baseline_key')==plan['baseline_key']]
+            old=await s.db.reviews.find_one({'client_id':cid,'$or':[{'baseline_key':plan['baseline_key']},{'framework_plan_key':{'$in':equivalent}}]},{'_id':0})
+        mapping={'framework_key':key,'framework_version':catalog['version'],'framework_plan_key':plan['key'],'framework_driver_active':True,
                  'framework_safeguards':plan['safeguards'],'framework_basis':plan['basis'],'framework_source_cadence':plan['source_cadence'],
                  'framework_default_cadence':plan['default_cadence']}
+        mapping.update({'framework_'+field:plan[field] for field in ('purpose','evidence_expectations','completion_criteria') if field in plan})
         if old:
-            # Dates, owners, overrides, occurrences and lifecycle are never reset by re-onboarding.
-            await s.db.reviews.update_one({'review_id':old['review_id'],'client_id':cid},{'$set':mapping})
+            rid=old['review_id']
+            # Never replace another framework's provenance or operational history.
+            if old.get('framework_key') in (None,key):
+                await s.db.reviews.update_one({'review_id':rid,'client_id':cid},{'$set':mapping})
         else:
-            rid=stable(cid,'review',plan['key'])
+            # Equivalent plans use the same insertion key even during concurrent activation.
+            canonical=next(((other_key,p) for other_key,c in CATALOGS.items() for p in c['review_plans'] if plan.get('baseline_key') and p.get('baseline_key')==plan['baseline_key']), (key,plan))
+            rid=stable(cid,'review',canonical[1]['key'],canonical[0])
             row={'review_id':rid,'client_id':cid,'title':plan['title'],'review_type':plan['review_type'],'status':'needs_scheduling',
                  'due_date':config.get('due_date') or None,'recurrence':config['recurrence'],'custom_recurrence_days':config.get('custom_recurrence_days'),
                  'owner_id':None,'created_at':s._now(),'created_by':user['user_id'],**mapping}
             row.update(review_occurrences.schedule(row));row['current_occurrence_id']=review_occurrences.occurrence_id(row)
             await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':row},upsert=True)
+        await s.db.framework_assessments.update_many(
+            {'client_id':cid,'framework_key':key,'definition_id':{'$in':plan['safeguards']}},
+            {'$addToSet':{'related_links':{'kind':'reviews','id':rid}}})
 
 class AssessmentPatch(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -73,10 +89,12 @@ class AssessmentPatch(BaseModel):
     na_rationale: Optional[str]=Field(default=None,max_length=4000)
     owner_id: Optional[str]=None
     process_owner_id: Optional[str]=None
+    addressable_decision: Optional[Literal['','as_written','equivalent_alternative','not_reasonable_appropriate']]=None
+    addressable_rationale: Optional[str]=Field(default=None,max_length=4000)
 
 class LinkInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
-    kind: Literal['reviews','findings','tasks','risks','policies','evidence','requirements']
+    kind: Literal['reviews','findings','tasks','risks','policies','evidence','requirements','vendors']
     id: str=Field(min_length=1,max_length=160)
 
 class FindingInput(BaseModel):
@@ -90,11 +108,11 @@ class FindingInput(BaseModel):
 async def related(s,row):
     cid,aid,did=row['client_id'],row['framework_assessment_id'],row['definition_id']
     out={}
-    for kind,key in {'reviews':'review_id','findings':'finding_id','tasks':'task_id','risks':'risk_id','policies':'policy_id','requirements':'requirement_id','evidence':'evidence_id'}.items():
+    for kind,key in {'reviews':'review_id','findings':'finding_id','tasks':'task_id','risks':'risk_id','policies':'policy_id','requirements':'requirement_id','evidence':'evidence_id','vendors':'vendor_id'}.items():
         links=[l['id'] for l in row.get('related_links',[]) if l['kind']==kind]
         clauses=[{key:{'$in':links}},{'framework_assessment_id':aid}]
         if kind=='reviews':clauses.append({'framework_key':row['framework_key'],'framework_safeguards':did})
-        if kind=='policies':clauses.append({'baseline_key':{'$in':[p['policy_key'] for p in CIS['policy_mappings'] if did in p['safeguards']]}})
+        if kind=='policies':clauses.append({'baseline_key':{'$in':[p['policy_key'] for p in CATALOGS.get(row['framework_key'],{}).get('policy_mappings',[]) if did in p['safeguards']]}})
         if kind=='evidence':clauses.append({'linked_type':{'$in':['framework_assessment','framework_assessments']},'linked_id':aid})
         out[kind]=await s.db[kind].find({'client_id':cid,'$or':clauses},{'_id':0,'content_base64':0}).to_list(None)
     rids=[r['review_id'] for r in out['reviews']]
@@ -104,6 +122,8 @@ async def related(s,row):
     out['tasks']=list({r['task_id']:r for r in out['tasks']+tasks}.values())
     review_evidence=await s.db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}},{'_id':0,'content_base64':0}).to_list(None)
     out['evidence']=list({e['evidence_id']:e for e in out['evidence']+review_evidence}.values())
+    excluded=set(row.get('unlinked_evidence_ids',[]))
+    out['evidence']=[e for e in out['evidence'] if e['evidence_id'] not in excluded]
     return out
 
 def router_for(s):
@@ -113,6 +133,13 @@ def router_for(s):
         if not await s.db.clients.find_one({'client_id':cid}):raise HTTPException(404,'Client not found')
     async def parent(aid,user,write=False):
         return await s._authorized_parent('framework_assessments',aid,user,write)
+    async def target_record(kind,record_id,user):
+        if kind!='evidence':return await s._authorized_parent(kind,record_id,user)
+        # Evidence has separate routes, not the operational parent-record registry.
+        target=await s.db.evidence.find_one({'evidence_id':record_id},{'_id':0,'content_base64':0})
+        if not target:raise HTTPException(404,'Evidence not found')
+        if not s._can_access_client(user,target['client_id']):raise HTTPException(403,'Forbidden')
+        return target
     @router.get('/frameworks/summary')
     async def summary(client_id:str,user=Depends(s.get_current_user)):
         import framework_summary
@@ -126,13 +153,20 @@ def router_for(s):
         if not framework:raise HTTPException(404,'Framework not found')
         program=await s.db.requirements.find_one({'client_id':client_id,'baseline_key':key,'baseline_response':'applies'})
         rows=await s.db.framework_assessments.find({'client_id':client_id,'framework_key':key},{'_id':0}).to_list(None) if framework['implemented'] else []
-        return {'framework':framework,'selected':bool(program),'configured':bool(rows),'definitions':CIS['requirements'] if framework['implemented'] and rows else [],'assessments':rows}
+        catalog=CATALOGS.get(key,{})
+        return {'framework':framework,'selected':bool(program),'configured':bool(rows),'definitions':catalog.get('requirements',[]) if framework['implemented'] and rows else [],'assessments':rows}
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True);data={**old,**changes}
         if data['status'] not in STATUSES or any(data.get(k) is None for k in ('implementation','technology','notes','na_rationale')):raise HTTPException(422,'Invalid assessment fields')
         if data['status']=='not_applicable' and not data['na_rationale'].strip():raise HTTPException(422,'N/A rationale is required')
         if data['status']=='addressed' and not data['implementation'].strip():raise HTTPException(422,'Describe implementation before marking Addressed')
+        definition=definition_for(old['framework_key'],old['definition_id'])
+        if definition.get('specification')=='addressable':
+            if data['status']=='not_applicable':raise HTTPException(422,'Addressable is not optional; record an addressability decision instead of N/A')
+            if data['status']=='addressed' and (not data.get('addressable_decision') or not (data.get('addressable_rationale') or '').strip()):raise HTTPException(422,'Document the addressability decision and rationale before marking Addressed')
+        elif changes.get('addressable_decision') or changes.get('addressable_rationale'):
+            raise HTTPException(422,'Addressability fields apply only to addressable specifications')
         await assignment_eligibility.validate(s.db, 'framework_assessments', data, s._can_access_client, old)
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         changed=[k for k in changes if changes[k]!=old.get(k)]
@@ -141,15 +175,31 @@ def router_for(s):
             await s.db.framework_assessments.update_one({'framework_assessment_id':aid,'client_id':old['client_id']},{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status']})
         return await parent(aid,user)
+    @router.get('/framework_assessments/{aid}')
+    async def get_assessment(aid:str,user=Depends(s.get_current_user)):
+        return await parent(aid,user)
     @router.get('/framework_assessments/{aid}/related')
     async def get_related(aid:str,user=Depends(s.get_current_user)):
         return await related(s,await parent(aid,user))
     @router.post('/framework_assessments/{aid}/links')
     async def link(aid:str,body:LinkInput,user=Depends(s.get_current_user)):
-        row=await parent(aid,user,True);target=await s._authorized_parent(body.kind,body.id,user)
+        row=await parent(aid,user,True);target=await target_record(body.kind,body.id,user)
         if target['client_id']!=row['client_id']:raise HTTPException(422,'Relationship must belong to this client')
-        await s.db.framework_assessments.update_one({'framework_assessment_id':aid},{'$addToSet':{'related_links':body.model_dump()}})
+        update={'$addToSet':{'related_links':body.model_dump()}}
+        if body.kind=='evidence':update['$pull']={'unlinked_evidence_ids':body.id}
+        await s.db.framework_assessments.update_one({'framework_assessment_id':aid,'client_id':row['client_id']},update)
         await s.audit(user,'Framework record linked','framework_assessment',aid,row['client_id'],meta=body.model_dump())
+        return {'ok':True}
+    @router.delete('/framework_assessments/{aid}/links')
+    async def unlink(aid:str,body:LinkInput,user=Depends(s.get_current_user)):
+        row=await parent(aid,user,True)
+        if body.kind!='evidence':raise HTTPException(422,'Only Evidence relationships can be unlinked here')
+        target=await target_record('evidence',body.id,user)
+        if target['client_id']!=row['client_id']:raise HTTPException(422,'Relationship must belong to this client')
+        # Suppress this assessment's current link, not the artifact or original provenance.
+        await s.db.framework_assessments.update_one({'framework_assessment_id':aid,'client_id':row['client_id']},
+            {'$pull':{'related_links':body.model_dump()},'$addToSet':{'unlinked_evidence_ids':body.id}})
+        await s.audit(user,'Framework Evidence unlinked','framework_assessment',aid,row['client_id'],meta=body.model_dump())
         return {'ok':True}
     @router.post('/framework_assessments/{aid}/findings')
     async def finding(aid:str,body:FindingInput,user=Depends(s.get_current_user)):
@@ -157,7 +207,7 @@ def router_for(s):
         if not body.title.strip() or not body.remediation_title.strip():raise HTTPException(422,'Finding and Action titles are required')
         fid=stable(row['client_id'],'finding',aid+':'+body.request_id)
         doc={'finding_id':fid,'client_id':row['client_id'],'title':body.title.strip(),'description':body.description,'severity':body.severity,
-             'status':'open','framework_assessment_id':aid,'source':'CIS IG1 · '+row['definition_id'],'owner_id':row.get('owner_id'),
+             'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':row.get('owner_id'),
              'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'remediation_title':body.remediation_title.strip()}
         previous=await s.db.findings.find_one({'finding_id':fid,'client_id':row['client_id']})
         if not previous:

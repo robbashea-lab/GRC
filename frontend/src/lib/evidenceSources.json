@@ -10,5 +10,5 @@
   "requirements": {"key":"requirement_id","label":"Requirement","aliases":["requirement","requirements"]},
   "contacts": {"key":"contact_id","label":"Contact","aliases":["contact","contacts"]},
   "ai_systems": {"key":"ai_system_id","label":"AI System","aliases":["ai_system","ai_systems"]},
-  "framework_assessments": {"key":"framework_assessment_id","label":"CIS Safeguard","aliases":["framework_assessment","framework_assessments"]}
+  "framework_assessments": {"key":"framework_assessment_id","label":"Framework Requirement","aliases":["framework_assessment","framework_assessments"]}
 }

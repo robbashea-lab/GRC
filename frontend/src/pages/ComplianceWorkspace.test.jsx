@@ -13,13 +13,16 @@ jest.mock('react-router-dom', () => ({
   useLocation: () => ({ pathname: mockPath }), useParams: () => ({ requirementKey: mockKey }), useNavigate: () => jest.fn(),
   Outlet: () => <MockComplianceWorkspace />,
   NavLink: ({ children, to, ...props }) => <a href={to} data-testid={props['data-testid']}>{children}</a>,
+  Link: ({children,to}) => <a href={to}>{children}</a>,
 }), { virtual: true });
 let root, container;
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   mockClient = { client_id: 'a', name: 'Client A' }; mockKey = 'hipaa'; mockPath = '/compliance/hipaa';
   api.get.mockImplementation(async (path, config) => ({ data: path === '/onboarding/baseline' ? { state: { completed: true } }
-    : config.params.client_id === 'a' ? ['hipaa','iso-27001','cmmc'].map(key => ({client_id:'a',baseline_key:key,baseline_response:'applies'})) : [] }));
+    : path.startsWith('/frameworks/') ? {configured:false,selected:mockClient.client_id==='a',assessments:[],definitions:[]}
+    : path.endsWith('/members') ? []
+    : config?.params?.client_id === 'a' ? ['hipaa','iso-27001','cmmc'].map(key => ({client_id:'a',baseline_key:key,baseline_response:'applies'})) : [] }));
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
@@ -27,7 +30,7 @@ const render = async () => { await act(async () => root.render(<Layout />)); };
 test('direct compliance routes render client empty states and preserve existing sidebar links', async () => {
   for (const [key, label] of [['hipaa','HIPAA'],['iso-27001','ISO 27001'],['cmmc','CMMC']]) {
     mockKey = key; mockPath = `/compliance/${key}`; await render();
-    expect(container.querySelector('main').textContent).toContain('Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.');
+    expect(container.querySelector('main').textContent).toContain(key==='hipaa'?'Select Applies in Client Settings to initialize this program after onboarding.':'Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.');
     expect(container.querySelector('main').textContent).toContain(label);
     expect(container.querySelector('main').textContent).toContain('Client A');
     expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(3);
