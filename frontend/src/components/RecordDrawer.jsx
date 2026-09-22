@@ -31,6 +31,7 @@ import EvidencePanel from './EvidencePanel';
 import ActionSourceChain from './ActionSourceChain';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import { ContactAccessDetails } from './ContactAccess';
+import ContactAccountActions from './ContactAccountActions';
 import AssignmentHelp from './AssignmentHelp';
 
 const ID_FIELD = {
@@ -466,56 +467,13 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     } catch (e) { toast.error(formatError(e)); }
   }
 
-  async function inviteContact() {
-    if (!record?.email) { toast.error("Contact needs an email address before invite"); return; }
-    if (record?.linked_user_id) { toast.info("Contact already linked to a platform user"); return; }
-    if (!confirm(`Invite ${record.name || record.email} to the platform as a client contributor?`)) return;
-    try {
-      const { data } = await api.post(`/contacts/${record[idField]}/invite`);
-      if (record) record.linked_user_id = data.user?.user_id;
-      setForm((p) => ({ ...p, linked_user_id: data.user?.user_id }));
-      const inviteLink = data.invite_link;
-      const message = data.simulated ? "Simulated invitation — no email was sent" : data.linked ? "Contact linked to existing platform user" : "Invitation sent";
-      if (inviteLink) {
-        toast.success(message, {
-          description: "Share the invite link if the email doesn't arrive.",
-          action: {
-            label: "Copy link",
-            onClick: () => {
-              navigator.clipboard.writeText(inviteLink).then(
-                () => toast.success("Invite link copied to clipboard"),
-                () => toast.error("Unable to copy — please copy manually"),
-              );
-            },
-          },
-          duration: 10000,
-        });
-      } else {
-        toast.success(message);
-      }
-      onSaved?.();
-    } catch (e) { toast.error(formatError(e)); }
-  }
-
   function renderContactActions() {
-    if (!isPlatformAdmin) return null;
-    const linked = form.linked_user_id || record?.linked_user_id;
-    const hasEmail = !!(form.email || record?.email);
-    return (
-      <div className="border border-line bg-surface-subtle rounded-md p-3 flex items-center justify-between gap-2 flex-wrap" data-testid="contact-actions">
-        <div className="flex items-center gap-2 text-sm text-ink-primary">
-          <Users2 className="h-4 w-4 text-ink-secondary" /> Account link
-        </div>
-        {linked ? (
-          <span className="text-xs text-ink-secondary">Account link recorded</span>
-        ) : (
-          <Button size="sm" onClick={inviteContact} disabled={!hasEmail} data-testid="contact-invite"
-            className="bg-primary hover:bg-primary/90">
-            Invite to Platform
-          </Button>
-        )}
-      </div>
-    );
+    if (!isPlatformAdmin || !record?.contact_id) return null;
+    return <ContactAccountActions contact={record} onChanged={linked_user_id => {
+      record.linked_user_id = linked_user_id;
+      setForm(previous => ({ ...previous, linked_user_id }));
+      onSaved?.();
+    }} />;
   }
 
   async function submitVerifyPolicy() {

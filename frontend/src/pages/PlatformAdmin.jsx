@@ -1,7 +1,9 @@
 import { StatusPill } from '@/components/StatusBadge';
+import UserAssignments from '@/components/UserAssignments';
+import { invitationFeedback } from '@/lib/invitationFeedback';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api, { formatError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
@@ -11,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Send, ShieldOff, ShieldCheck, Search, Copy } from "lucide-react";
+import { Plus, MoreVertical, Send, ShieldOff, ShieldCheck, Search } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLE_LABEL = {
@@ -32,6 +34,8 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [assignmentAccount, setAssignmentAccount] = useState(null);
+  const pendingAssignment = useRef(null);
   const [clients, setClients] = useState([]);
   const [loadedScope, setLoadedScope] = useState(null);
 
@@ -63,7 +67,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
 
   async function patchUser(u, changes, label) {
     try {
-      await api.patch(`/users/${u.user_id}`, changes);
+      await api.patch(`/users/${u.user_id}${changes.client_ids ? '/client-memberships' : ''}`, changes);
       toast.success(label || "User updated");
       load();
     } catch (e) { toast.error(formatError(e)); }
@@ -71,10 +75,10 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
 
   async function disableUser(u) {
     try {
-      const { data } = await api.get(`/users/${u.user_id}/open_assignments`);
-      const total = (data.findings || 0) + (data.reviews || 0) + (data.tasks || 0) + (data.significant_risks || 0);
+      const { data } = await api.get(`/users/${u.user_id}/open_assignments`, { params: clientId ? { client_id: clientId } : {} });
+      const total = data.total;
       const confirmMsg = total
-        ? `${u.name || u.email} currently owns:\n· ${data.findings} open finding(s)\n· ${data.reviews} review(s)\n· ${data.tasks} task(s)\n· ${data.significant_risks} significant risk(s)\n\nDisable anyway? These assignments remain but will need reassignment.`
+        ? `${u.name || u.email} has ${total} active assignments in your authorized scope. Disable the account? Ownership and history will be retained. Review assignments to deliberately reassign work.`
         : `Disable ${u.name || u.email}?`;
       if (!confirm(confirmMsg)) return;
       await patchUser(u, { status: "disabled" }, `${u.name || u.email} disabled`);
@@ -84,12 +88,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   async function resendInvite(u) {
     try {
       const { data } = await api.post(`/users/${u.user_id}/resend-invite`);
-      if (data.invite_link) {
-        await navigator.clipboard.writeText(data.invite_link).catch(() => {});
-        toast.success("Invitation link copied to clipboard");
-      } else {
-        toast.success(data.simulated ? "Simulated invitation — no email was sent" : "Invitation resent");
-      }
+      toast.info(invitationFeedback(data));
     } catch (e) { toast.error(formatError(e)); }
   }
 
@@ -157,7 +156,12 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
                             <MoreVertical className="h-4 w-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={() => {
+                          const account = pendingAssignment.current;
+                          pendingAssignment.current = null;
+                          if (account) queueMicrotask(() => setAssignmentAccount(account));
+                        }}>
+                          <DropdownMenuItem onSelect={() => { pendingAssignment.current = u; }}>View active assignments</DropdownMenuItem>
                           <EditRoleItem u={u} allowedRoles={allowedRoles} onSave={(role) => patchUser(u, { role }, `Role changed to ${ROLE_LABEL[role]}`)} />
                           {scope === "platform" && (
                             <EditClientsItem u={u} clients={clients} onSave={(ids) => patchUser(u, { client_ids: ids }, "Client access updated")} />
@@ -206,6 +210,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
         allowedRoles={allowedRoles}
         onCreated={() => { setAddOpen(false); load(); }}
       />
+      {assignmentAccount && <UserAssignments account={assignmentAccount} clientId={clientId} onClose={() => setAssignmentAccount(null)} />}
     </div>
   );
 }
@@ -277,11 +282,9 @@ function EditClientsItem({ u, clients, onSave }) {
 function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRoles, onCreated }) {
   const [form, setForm] = useState({ name: "", email: "", role: allowedRoles[allowedRoles.length - 1], client_ids: clientId ? [clientId] : [] });
   const [saving, setSaving] = useState(false);
-  const [inviteLink, setInviteLink] = useState("");
 
   useEffect(() => {
     if (open) setForm({ name: "", email: "", role: allowedRoles[allowedRoles.length - 1], client_ids: clientId ? [clientId] : [] });
-    setInviteLink("");
   }, [open, allowedRoles, clientId]);
 
   async function save() {
@@ -289,9 +292,8 @@ function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRo
     setSaving(true);
     try {
       const { data } = await api.post("/users", form);
-      toast.success(data.simulated ? "Simulated invitation — no email was sent" : `${form.name} invited`);
-      if (data.invite_link) setInviteLink(data.invite_link);
-      else onCreated?.();
+      toast.info(invitationFeedback(data));
+      onCreated?.();
     } catch (e) { toast.error(formatError(e)); }
     finally { setSaving(false); }
   }
@@ -307,7 +309,7 @@ function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRo
               : "Send an invitation with a secure set-password link (valid 7 days)."}
           </DialogDescription>
         </DialogHeader>
-        {!inviteLink ? (
+        {(
           <div className="space-y-3 py-2">
             <div>
               <Label className="text-xs text-ink-secondary">Full name</Label>
@@ -351,27 +353,10 @@ function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRo
               </div>
             )}
           </div>
-        ) : (
-          <div className="py-2 space-y-2">
-            <p className="text-sm text-ink-secondary">Invitation created. Share this link with the user (it was also emailed to them):</p>
-            <div className="flex items-center gap-2">
-              <Input readOnly value={inviteLink} className="text-xs font-mono" />
-              <Button
-                variant="outline"
-                onClick={async () => { await navigator.clipboard.writeText(inviteLink); toast.success("Copied"); }}
-              ><Copy className="h-3.5 w-3.5" /></Button>
-            </div>
-          </div>
         )}
         <DialogFooter>
-          {!inviteLink ? (
-            <>
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
               <Button onClick={save} disabled={saving} data-testid="new-user-save">{saving ? "Inviting…" : "Send invitation"}</Button>
-            </>
-          ) : (
-            <Button onClick={onCreated} data-testid="new-user-done">Done</Button>
-          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

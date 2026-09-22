@@ -11,9 +11,14 @@ export function contactAccess(contact, clientId, context) {
   };
   if (context?.status !== 'ready') return unknown;
   const account = context.members.find(member => member.user_id === contact.linked_user_id);
+  if (account && typeof account.has_client_access === 'boolean') {
+    if (account.status === 'disabled') return { label: 'Disabled account', description: 'The linked account is disabled. Existing ownership and history are retained; active work may require reassignment.' };
+    if (account.status === 'invited') return { label: 'Invitation pending', description: 'The linked account has not completed activation. Invitation delivery is reported separately; no active account access is implied.' };
+    if (!account.has_client_access) return { label: 'No client access', description: 'An account is linked, but it has no access to this client. The business Contact remains valid.' };
+  }
   // The members endpoint can also return historical owners without current access.
   const clients = account?.client_ids;
-  const hasAccess = account && (account.role === 'super_admin' ||
+  const hasAccess = account && (account.has_client_access === true || account.role === 'super_admin' ||
     account.role === 'platform_admin' && Array.isArray(clients) && clients.length === 0 ||
     Array.isArray(clients) && clients.includes(clientId));
   if (!hasAccess) return unknown;

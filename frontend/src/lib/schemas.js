@@ -143,7 +143,6 @@ export const SCHEMAS = {
       ]},
       { name: "email", label: "Email" },
       { name: "phone", label: "Phone" },
-      { name: "linked_user_id", label: "Linked platform user", type: "user" },
       { name: "status", label: "Contact status", type: "select", default: "active", options: [
         { value: "active", label: "Active" },
         { value: "inactive", label: "Inactive" },

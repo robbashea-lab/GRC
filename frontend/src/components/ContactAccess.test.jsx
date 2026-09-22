@@ -20,7 +20,7 @@ afterEach(async () => { await act(async () => root.unmount()); container.remove(
 const render = (row = contact, open = true) => act(async () => root.render(<ContactAccessDetails contact={row} clientId={row.client_id} open={open} />));
 const resolve = (request, data) => act(async () => request.resolve({ data }));
 test('uses scoped read-only endpoint and shared status, without account actions or IDs', async () => {
-  await render(); expect(requests[0].url).toBe('/clients/a/members');
+  await render(); expect(requests[0].url).toBe('/clients/a/contact-accounts');
   await resolve(requests[0], [member]);
   expect(container.textContent).toContain('Active account');
   expect(container.textContent).toContain('Security Lead');

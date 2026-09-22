@@ -84,8 +84,9 @@ export function onboard(db, body) {
   }
   for (const c of body.contacts || []) {
     const old = list(db, 'contacts', cid).find(r => r.role?.toLowerCase() === c.role?.toLowerCase());
+    const { linked_user_id, ...businessFields } = c;
     write(db, 'contacts', {
-      ...c,
+      ...businessFields,
       client_id: cid
     }, old?.contact_id);
     counters.contacts_saved++;
@@ -294,28 +295,6 @@ export function action(db, kind, id, name, body) {
         ...body
       }]
     });
-  }
-  if (kind === 'contacts' && name === 'invite') {
-    if (!r.email) throw new Error('Contact needs an email address before invite');
-    let user = db.users.find(u => u.email.toLowerCase() === r.email.toLowerCase());
-    const linked = !!user;
-    if (!user) user = write(db, 'users', {
-      name: r.name || r.email,
-      email: r.email,
-      role: 'client_contributor',
-      client_ids: [cid],
-      status: 'invited',
-      simulated: true
-    });
-    patch({
-      linked_user_id: user.user_id
-    });
-    return {
-      user,
-      linked,
-      simulated: true,
-      message: 'Simulated invitation — no email was sent.'
-    };
   }
   throw new Error('This action is not implemented in the demo. No changes were saved.');
 }
