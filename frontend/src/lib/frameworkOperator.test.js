@@ -20,6 +20,7 @@ test('all NIST outcomes have distinct plain-English explanations and category gu
 test('HIPAA explanatory text never substitutes for stored regulatory wording',()=>{
   for(const d of CATALOGS.hipaa.requirements){const g=operatorGuidance('hipaa',d);expect(g.meaning.length).toBeGreaterThan(50);expect(g.meaning).not.toBe(d.guidance);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();}
   expect(operatorGuidance('hipaa',CATALOGS.hipaa.requirements.find(d=>d.id==='164.306(d)')).meaning).toContain('does not mean optional');
+  expect(new Set(CATALOGS.hipaa.requirements.map(d=>operatorGuidance('hipaa',d).evidence)).size).toBe(76);
 });
 test('ISO clauses and all 93 Annex controls retain distinct usable guidance',()=>{
   const catalog=CATALOGS['iso-27001'];

@@ -27,3 +27,12 @@ test('NIST explains current achievement separately from Target Profile decisions
   expect(html).toContain('not a prescribed technology or artifact');
   expect(html).not.toContain('Official requirement');
 });
+
+test('HIPAA keeps regulatory text and addressability visible without replacing them with guidance',()=>{
+  const definition=CATALOGS.hipaa.requirements.find(d=>d.id==='164.308(a)(3)(ii)(A)');
+  const html=context('hipaa',definition);
+  expect(html).toContain('Official requirement · regulatory text');
+  expect(html).toContain('Addressable does not mean optional');
+  expect(html).toContain('Explanation, separate from the regulatory text');
+  expect(html).toContain('Authorization or supervision arrangements');
+});

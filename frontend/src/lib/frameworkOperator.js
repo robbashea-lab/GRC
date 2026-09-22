@@ -18,7 +18,7 @@ export const operatorProgram=key=>FRAMEWORKS.find(f=>f.key===key)?.label||key;
 export function operatorGuidance(key,definition){
   if(key==='soc-2'){const criterion=socGuidance.criteria[definition.id];return {meaning:criterion?.[0],implementation:socGuidance.groups[definition.control]||socGuidance.groups.privacy,evidence:criterion?.[1]};}
   if(key==='iso-27001'){const annex=isoGuidance.annex[definition.id];return {meaning:annex?.[0]||definition.guidance,implementation:isoGuidance.groups[definition.control],evidence:annex?.[1]||definition.evidence_guidance};}
-  if(key==='hipaa')return {meaning:hipaaGuidance.meanings[definition.id],...(hipaaGuidance.groups[definition.id.slice(0,7)]||hipaaGuidance.groups.support)};
+  if(key==='hipaa')return {meaning:hipaaGuidance.meanings[definition.id],...(hipaaGuidance.groups[definition.id.slice(0,7)]||hipaaGuidance.groups.support),evidence:hipaaGuidance.evidence[definition.id]};
   if(key==='nist-csf-2')return {meaning:nistGuidance.meanings[definition.id],implementation:nistGuidance.groups[definition.category],evidence:definition.evidence_guidance};
   const group=key==='cis-ig1'?cisGuidance[String(definition.control)]:null;
   return {meaning:definition.guidance,implementation:group?.implementation||'Describe the scoped practice, accountable responsibility and exceptions. Evidence should demonstrate operation, not only the existence of a document.',evidence:cisGuidance.evidence?.[definition.id]||group?.evidence||definition.evidence_guidance||'Policies, configuration records and dated records of the activity may support the assessment.'};
