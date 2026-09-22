@@ -28,13 +28,19 @@ Separated the existing regulatory wording from 76 original plain-English explana
 
 Gate: 13 focused automated tests, targeted lint and production build passed. Browser operator lifecycle passed, including an additional addressable specification: absent decision rejected, as-written decision/rationale saved and retained in History. Eighteen routes, four widths, unchanged Reviews and wrong-client exclusion passed with no console errors. HIPAA screenshot reviewed. No recurrence, regulatory dataset or copyright/licensing status change.
 
-## UI review
-
 ## Phase 4 — ISO/IEC 27001:2022
 
 Kept the 30 existing ISMS explanations and added 93 distinct original Annex A explanations with item-specific evidence examples. Shared practical guidance follows the ISMS clause/control family. Specification labels distinguish ISMS requirements from Annex A/SoA. Existing SoA applicability, justification and status constraints remain authoritative. No licensed standard text was added or removed; concise summaries and source references remain explicit.
 
 Gate: 13 focused automated tests and production build passed. Browser operator lifecycle passed for an ISMS requirement; Annex A additionally exercised 93-control view, missing-justification rejection, documented exclusion/N/A, direct-link refresh and historical rationale. Internal Audit, Management Review, Risk Treatment and Corrective Actions views loaded. Eighteen-route regression, four widths, unchanged Reviews and wrong-client exclusion passed without console errors. ISO screenshot reviewed. The isolated backend suite also passed: 199 tests across 32 modules, including framework lifecycle and authorization tests.
+
+## Phase 5 — SOC 2
+
+Added distinct explanations and evidence examples for all 61 existing criteria. Management-designed controls remain separate from the AICPA criterion, with existing design readiness, operating observations, periods and management-entered instance counts preserved. Readiness-specific display labels avoid calling a criterion itself an implemented technical control. No auditor sampling, required period or audit opinion is inferred. No copyrighted full criterion text was added.
+
+Gate: 13 focused automated tests, targeted lint and production build passed. Browser operator lifecycle passed plus management-control design/operating-gap recording, frequency and observation-period persistence, missing-instance count, optional Availability selection/removal and retained criteria. Eighteen routes, four widths, unchanged Reviews and wrong-client exclusion passed without console errors. SOC screenshot reviewed. Separate isolated client-management authorization tests passed (2).
+
+## UI review
 
 | Severity | Location | Before | After | Why |
 | --- | --- | --- | --- | --- |
