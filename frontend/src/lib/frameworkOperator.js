@@ -17,7 +17,7 @@ export const STATUS_HELP={
 export const operatorProgram=key=>FRAMEWORKS.find(f=>f.key===key)?.label||key;
 export function operatorGuidance(key,definition){
   if(key==='soc-2'){const criterion=socGuidance.criteria[definition.id];return {meaning:criterion?.[0],implementation:socGuidance.groups[definition.control]||socGuidance.groups.privacy,evidence:criterion?.[1]};}
-  if(key==='iso-27001'){const annex=isoGuidance.annex[definition.id];return {meaning:annex?.[0]||definition.guidance,implementation:isoGuidance.groups[definition.control],evidence:annex?.[1]||definition.evidence_guidance};}
+  if(key==='iso-27001'){const annex=isoGuidance.annex[definition.id];return {meaning:annex?.[0]||isoGuidance.clauses[definition.id],implementation:isoGuidance.groups[definition.control],evidence:annex?.[1]||definition.evidence_guidance};}
   if(key==='hipaa')return {meaning:hipaaGuidance.meanings[definition.id],...(hipaaGuidance.groups[definition.id.slice(0,7)]||hipaaGuidance.groups.support),evidence:hipaaGuidance.evidence[definition.id]};
   if(key==='nist-csf-2')return {meaning:nistGuidance.meanings[definition.id],implementation:nistGuidance.groups[definition.category],evidence:definition.evidence_guidance};
   const group=key==='cis-ig1'?cisGuidance[String(definition.control)]:null;

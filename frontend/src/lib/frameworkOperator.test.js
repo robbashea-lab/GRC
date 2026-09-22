@@ -26,6 +26,9 @@ test('ISO clauses and all 93 Annex controls retain distinct usable guidance',()=
   const catalog=CATALOGS['iso-27001'];
   for(const d of catalog.requirements){const g=operatorGuidance('iso-27001',d);expect(g.meaning.length).toBeGreaterThan(40);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('Omnisciente implementation prompt');}
   expect(catalog.requirements.filter(d=>d.specification==='annex_control')).toHaveLength(93);
+  const clauses=catalog.requirements.filter(d=>d.specification!=='annex_control');
+  expect(clauses).toHaveLength(30);
+  for(const d of clauses)expect(operatorGuidance('iso-27001',d).meaning).not.toMatch(/^(Record|Document|Explain|Link|Show|Identify|Describe|Assemble|Define) /);
 });
 test('SOC criteria explain distinct expectations without prescribing controls or samples',()=>{
   const all=CATALOGS['soc-2'].requirements.map(d=>operatorGuidance('soc-2',d));

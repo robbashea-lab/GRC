@@ -36,3 +36,9 @@ test('HIPAA keeps regulatory text and addressability visible without replacing t
   expect(html).toContain('Explanation, separate from the regulatory text');
   expect(html).toContain('Authorization or supervision arrangements');
 });
+
+test('ISO distinguishes ISMS requirements from risk-based Annex A selection',()=>{
+  const definitions=CATALOGS['iso-27001'].requirements;
+  expect(context('iso-27001',definitions.find(d=>d.id==='4.1'))).toContain('This is an ISMS requirement');
+  expect(context('iso-27001',definitions.find(d=>d.id==='A.5.1'))).toContain('selection alone does not demonstrate implementation');
+});
