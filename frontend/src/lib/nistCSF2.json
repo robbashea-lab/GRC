@@ -2171,18 +2171,18 @@
       "category": "RC.RP",
       "control": "RC.RP",
       "control_name": "Incident Recovery Plan Execution",
-      "title": "Restore critical mission functions",
+      "title": "Establish post-incident operating norms",
       "type": "event",
       "specification": "cybersecurity_outcome",
       "classification": "framework_outcome",
       "source": "https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf",
       "source_cadence": "CSF specifies outcomes, not a fixed implementation cadence.",
-      "guidance": "Describe how restore critical mission functions is achieved within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
+      "guidance": "Describe how post-incident operating norms are established within this client's scope. Record the current practice, limitations, accountable owner and supporting relationships. Select a target only when it reflects the organization's risk priorities.",
       "evidence_guidance": "Typical evidence: Recovery plans, restore tests, integrity checks, business acceptance, closure records. Other records may be suitable if they demonstrate this specific outcome. These examples are not prescribed artifacts; document scope and limitations.",
       "evidence": [
         "Recovery plans, restore tests, integrity checks, business acceptance, closure records"
       ],
-      "question": "How does the organization demonstrate restore critical mission functions?",
+      "question": "How does the organization establish post-incident operating norms?",
       "verified_on": "2026-09-22"
     },
     {
@@ -2273,6 +2273,8 @@
   "review_plans": [
     {
       "key": "csf-management-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "management-review",
       "title": "Cybersecurity Strategy and Profile Review",
       "review_type": "requirements",
@@ -2293,6 +2295,8 @@
     },
     {
       "key": "csf-risk-assessment",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "risk-assessment",
       "title": "Cybersecurity Risk Assessment Review",
       "review_type": "risk",
@@ -2315,6 +2319,8 @@
     },
     {
       "key": "csf-user-access",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "user-access",
       "title": "Access Rights Review",
       "review_type": "access",
@@ -2334,6 +2340,8 @@
     },
     {
       "key": "csf-vendor",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "vendor",
       "title": "Supplier Risk Review",
       "review_type": "vendor",
@@ -2354,6 +2362,8 @@
     },
     {
       "key": "csf-policy-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "policy-review",
       "title": "Cybersecurity Policy Review",
       "review_type": "policy",
@@ -2373,6 +2383,8 @@
     },
     {
       "key": "csf-awareness",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "awareness",
       "title": "Awareness Program Review",
       "review_type": "awareness",
@@ -2392,6 +2404,8 @@
     },
     {
       "key": "csf-vulnerability",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "vulnerability",
       "title": "Vulnerability Governance Review",
       "review_type": "vulnerability",
@@ -2412,6 +2426,8 @@
     },
     {
       "key": "csf-backup",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "backup",
       "title": "Recovery and Restore Exercise",
       "review_type": "backup",
@@ -2432,6 +2448,8 @@
     },
     {
       "key": "csf-incident-response",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "incident-response",
       "title": "Incident Response Exercise",
       "review_type": "incident",

@@ -17,6 +17,23 @@ test('all NIST outcomes have distinct plain-English explanations and category gu
   expect(new Set(all.map(g=>g.meaning)).size).toBe(106);
   for(const g of all){expect(g.meaning.length).toBeGreaterThan(50);expect(g.implementation.length).toBeGreaterThan(60);expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('How does');}
 });
+
+test('NIST source qualifications survive concise operator explanations',()=>{
+  const catalog=CATALOGS['nist-csf-2'];
+  const meaning=id=>operatorGuidance('nist-csf-2',catalog.requirements.find(d=>d.id===id)).meaning;
+  expect(meaning('ID.RA-09')).toContain('integrity');
+  expect(meaning('ID.RA-10')).toContain('before acquisition');
+  expect(meaning('PR.AA-04')).toContain('verify');
+  expect(meaning('PR.AA-05')).toContain('separation of duties');
+  expect(meaning('RS.AN-06')).toContain('provenance');
+  expect(meaning('RC.RP-04')).toContain('post-incident operating norms');
+  expect(catalog.requirements.find(d=>d.id==='RC.RP-04').title).toBe('Establish post-incident operating norms');
+  for(const plan of catalog.review_plans){
+    expect(plan.cadence_class).toBe('D');
+    expect(plan.source_minimum).toBeNull();
+    expect(plan.cadence_references).toEqual([]);
+  }
+});
 test('HIPAA explanatory text never substitutes for stored regulatory wording',()=>{
   for(const d of CATALOGS.hipaa.requirements){const g=operatorGuidance('hipaa',d);expect(g.meaning.length).toBeGreaterThan(50);expect(g.meaning).not.toBe(d.guidance);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();}
   expect(operatorGuidance('hipaa',CATALOGS.hipaa.requirements.find(d=>d.id==='164.306(d)')).meaning).toContain('does not mean optional');

@@ -56,3 +56,9 @@ Ponytail kept changes in existing catalog metadata and tests rather than introdu
 - Production preview build: passed; JS `main.77a7d42d.js`, unchanged approved CSS `main.9c179479.css`. Existing `PlatformAdmin.jsx:52` hook dependency warning remains outside scope.
 - No live-browser, persistent-backend or independently reviewed assurance is claimed for this content phase. No push or publication performed.
 - Targeted ESLint on shared framework consumers: passed. `git diff --check`: passed. Final application diff contains only two explanations and additive provenance; tests/documentation contain no credentials or environment values.
+
+## Phase 2 — NIST CSF 2.0
+
+CIS commit: `f9a373862a07913805c080bd1fbd56e0887341b9`. The staged CIS check identified an extra trailing report blank line; cleaned up in Phase 2, with no application impact. [NIST ledger](nist-substantive-validation.md): all 106 items, nine recommendation-only Review defaults and 17 supporting policy mappings inspected; six operator explanations corrected, with the RC.RP-04 title and derived catalog prompts aligned. Explicit D cadence metadata added, without a source minimum or changed schedules.
+
+Phase 2 gate: 6 backend tests, 36 frontend tests (5 suites), targeted ESLint and production build passed; existing PlatformAdmin warning retained. Build `main.655fa0ed.js`, unchanged CSS. API tests use isolated Mongo mocks. No live-browser/staging-backend, push or publication claims. HIPAA research has begun; ISO/SOC and final cross-framework gate remain pending.

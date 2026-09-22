@@ -116,5 +116,3 @@ All ten mappings retained. `Required Document` means the source calls for a docu
 ## Cadence guardrail and change tracking
 
 CIS-C03: added `cadence_class` and `cadence_references` to the existing 12 plan definitions (previously absent). Each A reference identifies a mapped source safeguard, its existing source URL and the supported interval. D has no exact-source reference/minimum. Automated checks reject missing or mismatched provenance and prevent operational patch/backup tasks from becoming source drivers for human Reviews. Existing below-source warnings remain advisory and do not establish conformity. No new scheduling engine, database enum, recurrence change or automatic reconfiguration was introduced.
-
-
