@@ -115,6 +115,7 @@ export function validate(db, kind, body, existing) {
 }
 export function write(db, kind, body, id) {
   const existing = id ? record(db, kind, id) : null;
+  const profileChanges=kind==='clients'&&existing?Object.fromEntries(Object.entries(body).filter(([k,v])=>!['expected_updated_at','updated_at'].includes(k)&&JSON.stringify(existing[k])!==JSON.stringify(v)).map(([k,v])=>[k,{before:clone(existing[k]??null),after:clone(v)}])):null;
   if (existing && Object.prototype.hasOwnProperty.call(body, 'expected_updated_at') && body.expected_updated_at !== (existing.updated_at ?? null)) {
     throw new Error('Record changed since it was opened; reload before saving');
   }
@@ -255,7 +256,7 @@ export function write(db, kind, body, id) {
   if(kind==='risks'&&row.vendor_id&&!existing) audit(db,'Risk linked','vendors',record(db,'vendors',row.vendor_id),{risk_id:row.risk_id});
   if(kind==='tasks'&&row.vendor_id) audit(db,taskEvent,'vendors',record(db,'vendors',row.vendor_id),{task_id:row.task_id});
   const event = kind==='vendors' ? existing?'Vendor updated':'Vendor created' : kind==='tasks' ? taskEvent : kind==='risks'?riskEvent:existing?'update':'create';
-  audit(db, event, kind, row);
+  audit(db, event, kind, row,profileChanges?{changes:profileChanges}:{});
   return existing || row;
 }
 export function library(db, type, cid) {

@@ -30,8 +30,7 @@ const CLIENT_NAV = [
   { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
   { to: "/contacts", label: "Contacts & Roles", icon: Users, testid: "nav-contacts" },
   { to: "/evidence", label: "Evidence Library", icon: FolderArchive, testid: "nav-evidence" },
-  { to: "/onboarding", label: "Onboarding", icon: Sparkles, testid: "nav-onboarding" },
-  { to: "/client-settings", label: "Client Settings", icon: Settings2, testid: "nav-client-settings", adminOnly: true },
+  { to: "/client-profile", label: "Client Profile", icon: Settings2, testid: "nav-client-profile" },
 ];
 
 // Platform-level modules (visible to internal admins in the platform context).

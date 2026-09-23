@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import {recordedBaseline} from '../lib/clientProfile';
 import { list, write, record, audit, clone } from './store';
 import {frameworkScope,validateFrameworkConfig,reconcileFramework} from './frameworks';
 import {genericReviews} from '../lib/frameworks';
@@ -21,6 +22,7 @@ export function baselineState(db,cid) {
 }
 export function saveBaseline(db,cid,state,finalize,precondition={}) {
   record(db,'clients',cid);
+  const priorBaseline=recordedBaseline(record(db,'clients',cid),db.baselines?.[cid],db.logs);
   frameworkScope(db,cid);
   if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
   if(Object.prototype.hasOwnProperty.call(precondition,'expected_updated_at')&&precondition.expected_updated_at!==(db.baselines?.[cid]?.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
@@ -54,6 +56,11 @@ export function saveBaseline(db,cid,state,finalize,precondition={}) {
     audit(db,'onboarding-complete','clients',record(db,'clients',cid));
     if(state.version>=3)reconcileFramework(db,cid,state);
   }
-  db.baselines||={};db.baselines[cid]={...clone(state),version:state.version>=3?3:2,completed:finalize||!!db.baselines[cid]?.completed,updated_at:new Date(Math.max(Date.now(),(Date.parse(db.baselines[cid]?.updated_at)||0)+1)).toISOString()};
+  const firstCompletion=finalize&&!priorBaseline;
+  const existingClient=record(db,'clients',cid);
+  if(priorBaseline&&!existingClient.initial_program_baseline)existingClient.initial_program_baseline=clone(priorBaseline);
+  db.baselines||={};db.baselines[cid]={...clone(state),version:state.version>=3?3:2,completed:finalize||!!priorBaseline,updated_at:new Date(Math.max(Date.now(),(Date.parse(db.baselines[cid]?.updated_at)||0)+1)).toISOString()};
+  const client=record(db,'clients',cid);
+  if(firstCompletion&&!client.initial_program_baseline)client.initial_program_baseline={state:clone(db.baselines[cid]),completed_at:db.baselines[cid].updated_at,completed_by:db.user.user_id,primary_contact_id:client.primary_contact_id??null,assigned_owner_id:client.assigned_owner_id??null,policies:db.policies.filter(p=>p.client_id===cid).length,reviews:db.reviews.filter(p=>p.client_id===cid).length};
   return db.baselines[cid];
 }

@@ -5,12 +5,12 @@ import ClientRelationshipValue from './ClientRelationshipValue';
 import {grcLead, primaryContact} from '@/lib/clientRelationships';
 import {APPLICABILITY, currentHandoff, SETUP_FILTERS} from '@/lib/onboardingHandoff';
 
-export default function OnboardingHandoff({snapshot, state, catalog, clientId, canManage}) {
+export default function OnboardingHandoff({snapshot, state, catalog, clientId, canManage, embedded=false}) {
   const data = currentHandoff(snapshot, clientId);
-  const settings = canManage ? '/client-settings?tab=compliance' : '/requirements';
+  const settings = canManage ? '/client-profile?tab=program' : '/requirements';
   const lead = grcLead(data.client), contact = primaryContact(data.client);
   return <div data-testid="onboarding-handoff">
-    <PageHeader title="Onboarding complete" subtitle={`${data.client.name} · Current operational setup`} action={<Button asChild><Link to="/dashboard">Open Dashboard</Link></Button>}/>
+    {!embedded&&<PageHeader title="Onboarding complete" subtitle={`${data.client.name} · Current operational setup`} action={<Button asChild><Link to="/dashboard">Open Dashboard</Link></Button>}/>}
     <div className="page-content max-w-7xl space-y-5">
       <p className="text-sm text-ink-secondary">Your baseline is configured. Complete the remaining setup in the operational modules; onboarding does not need to be repeated.</p>
       <div className="grid md:grid-cols-2 gap-4">
@@ -44,10 +44,10 @@ export default function OnboardingHandoff({snapshot, state, catalog, clientId, c
         </section>
       </div>
       <p className="text-xs text-ink-secondary">These counts reflect current client records, including later operational changes—not a completion-time snapshot or a compliance score.</p>
-      <details className="rounded-lg border border-line bg-surface-card p-4"><summary className="cursor-pointer text-sm font-medium">View onboarding baseline</summary>
+      {!embedded&&<details className="rounded-lg border border-line bg-surface-card p-4"><summary className="cursor-pointer text-sm font-medium">View onboarding baseline</summary>
         <p className="text-xs text-ink-secondary mt-3">Saved intake responses. Current Policies and program applicability may differ; manage changes in their normal modules.</p>
         <div className="grid md:grid-cols-2 gap-5 mt-4 text-sm"><div><h3 className="font-semibold mb-2">Policies</h3>{catalog.policies.map(p=><p key={p.key}>{p.name} — {{yes:'Reported Existing',no:'Reported Missing',unsure:'Needs Confirmation'}[state.policies[p.key]] || 'Not recorded'}</p>)}</div><div><h3 className="font-semibold mb-2">Compliance</h3>{catalog.requirements.map(f=><p key={f.key}>{f.name} — {APPLICABILITY.find(([v])=>v===state.requirements[f.key])?.[1] || 'Not recorded'}</p>)}<h3 className="font-semibold mt-4 mb-2">General Review selections</h3>{catalog.reviews.filter(r=>state.reviews.includes(r.key)).map(r=><p key={r.key}>{r.name}</p>)}</div></div>
-      </details>
+      </details>}
     </div>
   </div>;
 }

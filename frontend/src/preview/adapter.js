@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
 import {frameworkSummary} from './frameworkSummary';
@@ -94,6 +95,8 @@ export async function previewAdapter(config) {
       return respond(data);
     };
     const identity = identityRequest(db, path, method, params, body);
+    if(kind==='clients'&&id&&name==='profile')return method==='get'?respond(clientProfileRequest(db,id,method,body)):save(clientProfileRequest(db,id,method,body));
+    if(kind==='clients'&&method!=='get'&&['profile','initial_program_baseline','onboarding_baseline'].some(k=>k in body))return fail(422,'Use the dedicated profile or onboarding workflow');
     if (identity !== undefined) return method === 'get' ? respond(identity) : save(identity);
     const approval = policyApprovalRequest(db, path, method, params, body);
     if (approval !== undefined) return method === 'get' ? respond(approval) : save(approval);

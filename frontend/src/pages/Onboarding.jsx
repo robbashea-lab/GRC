@@ -16,7 +16,7 @@ import {toast} from 'sonner';
 
 const STEPS=['Compliance & Requirements','Policies & Governance Documents','Recurring Reviews','Review & Create'];
 const ANSWERS=[['yes','Yes'],['no','No'],['unsure','Unsure']];
-export default function Onboarding(){
+export default function Onboarding({onComplete}){
   const {currentClient,currentClientId}=useOrg(),{user}=useAuth(),compliance=useCompliance();
   const [snapshot,setSnapshot]=useState(null),[validation,setValidation]=useState(false),[retry,setRetry]=useState(0);
   const [loaded,setLoaded]=useState(null),[state,setState]=useState(null),[catalog,setCatalog]=useState(null),[reviews,setReviews]=useState([]),[error,setError]=useState(''),[saved,setSaved]=useState(''),[busy,setBusy]=useState(false);
@@ -48,7 +48,7 @@ export default function Onboarding(){
       await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true,expected_records:recordVersions.current,expected_updated_at:editVersion.current});
       if(revision!==generation.current)return;
       toast.success('Onboarding complete. Review the remaining operational setup.');
-      compliance.refresh?.();setRetry(n=>n+1);
+      compliance.refresh?.();setRetry(n=>n+1);onComplete?.();
     }catch(e){if(revision===generation.current)toast.error(formatError(e));}finally{setBusy(false);}
   }
   if(!canRun)return <PageHeader title="GRC Program Onboarding" subtitle="You need contributor access to run this wizard."/>;

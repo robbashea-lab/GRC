@@ -167,7 +167,7 @@ export default function Dashboard() {
       )}
 
       <div className="page-gutter pt-4 text-sm">
-        {!data.onboardingCompleted ? <div className="border border-line rounded-lg bg-surface-card p-3"><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program. </span><Link className="text-link underline" to="/onboarding">Continue onboarding</Link></div> : <Link className="text-link underline" to="/onboarding">View onboarding handoff & setup status</Link>}
+        {!data.onboardingCompleted ? <div className="border border-line rounded-lg bg-surface-card p-3"><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program. </span><Link className="text-link underline" to="/client-profile">Continue onboarding</Link></div> : <Link className="text-link underline" to="/client-profile?tab=program">View Client Profile & program configuration</Link>}
       </div>
       <DashboardManagement key={requestKey+":"+framework} clientId={currentClientId} posture={data.posture} programs={data.programs} framework={framework} onOpen={openItem} loadDetail={data.contract_version===2?loadDetail:undefined} Table={OperationalTable} />
       {selected && selected.record.client_id === currentClientId && (

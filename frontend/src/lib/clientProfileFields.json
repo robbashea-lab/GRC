@@ -1,0 +1,63 @@
+{
+  "options": {
+    "answer": ["Yes", "No", "Unknown"],
+    "capability": ["Implemented", "Partial", "Not Implemented", "Unknown", "Not Applicable"]
+  },
+  "sections": {
+    "organization": [
+      {"id":"legal_name","label":"Legal organization name","type":"text"},
+      {"id":"domain","label":"Primary domain","type":"text"},
+      {"id":"organization_type","label":"Organization type","type":"select","options":["Private company","Public company","Government","Nonprofit","Other","Unknown"]},
+      {"id":"parent","label":"Parent organization","type":"text"},
+      {"id":"business_units","label":"Business units / subsidiaries","type":"text"},
+      {"id":"employees","label":"Employee count","type":"number"},
+      {"id":"technology_users","label":"Computer / technology users","type":"number"},
+      {"id":"locations","label":"Number of locations","type":"number"},
+      {"id":"country","label":"Headquarters country","type":"text"},
+      {"id":"region","label":"Headquarters state / region","type":"text"},
+      {"id":"operating_regions","label":"Countries / regions of operation","type":"text"},
+      {"id":"operating_states","label":"US states of operation","type":"text"},
+      {"id":"business_model","label":"Business model","type":"multi","options":["B2B","B2C","B2G","Nonprofit","Internal/shared services","Other","Unknown"]},
+      {"id":"workforce","label":"Workforce model","type":"select","options":["Primarily onsite","Hybrid","Primarily remote","Distributed","Unknown"]},
+      {"id":"it_management","label":"IT management model","type":"multi","options":["Internal IT","MSP","MSSP","Co-managed","Outsourced","General business staff","Other","Unknown"]},
+      {"id":"cyber_insurance","label":"Cyber insurance","type":"select","options":"answer"},
+      {"id":"insurer","label":"Insurer / provider (if insured)","type":"text"},
+      {"id":"insurance_renewal","label":"Insurance renewal / expiration (if insured)","type":"date"},
+      {"id":"notes","label":"Organization context notes","type":"text"}
+    ],
+    "technical": [
+      {"id":"identity","label":"Identity platforms","type":"multi","options":["Microsoft Entra ID","Active Directory","Okta","Google Workspace","Other","Unknown"]},
+      {"id":"productivity","label":"Productivity platforms","type":"multi","options":["Microsoft 365","Google Workspace","Other","Unknown"]},
+      {"id":"cloud","label":"Cloud platforms","type":"multi","options":["Microsoft Azure","AWS","Google Cloud","Other cloud","None","Unknown"]},
+      {"id":"infrastructure","label":"Infrastructure","type":"multi","options":["On-premises servers","Cloud servers","Colocation / datacenter","SaaS-first","Hybrid","Hosted infrastructure","Other","Unknown"]},
+      {"id":"endpoints","label":"Endpoints","type":"multi","options":["Windows","macOS","Linux","iOS","Android","BYOD","VDI / virtual desktop","Other","Unknown"]},
+      {"id":"network","label":"Network capabilities","type":"multi","options":["Corporate wireless","Guest wireless","VPN","Zero Trust / ZTNA","Remote access","Site-to-site connectivity","Other","Unknown"]},
+      {"id":"operating_environment","label":"Operating environment","type":"multi","options":["SaaS applications","Custom software development","Product development","AI/ML development","Operational Technology","IoT","Public-facing applications","E-commerce","Other","Unknown"]},
+      {"id":"security_technology","label":"Security technology capabilities","type":"multi","options":["EDR/XDR","MDR","SIEM","Email security","Vulnerability management","RMM","MDM","Backup","IAM","MFA","PAM","DNS/web filtering","Firewall","Security awareness","DLP","Other","Unknown"]}
+    ],
+    "security": [
+      {"id":"data_types","label":"Data types handled","type":"multi","options":["PII","PHI / ePHI","Payment card information","Financial information","Customer confidential information","Employee information","Intellectual property","Confidential business information","Government information","FCI","CUI","Authentication credentials/secrets","Source code","Other","Unknown"]},
+      {"id":"collects","label":"Collects customer data","type":"select","options":"answer"},
+      {"id":"stores","label":"Stores customer data","type":"select","options":"answer"},
+      {"id":"processes","label":"Processes customer data","type":"select","options":"answer"},
+      {"id":"transmits","label":"Transmits customer data","type":"select","options":"answer"},
+      {"id":"hosts","label":"Hosts customer workloads / data","type":"select","options":"answer"},
+      {"id":"admin_access","label":"Administrative access to customer systems","type":"select","options":"answer"},
+      {"id":"develops","label":"Develops solutions using customer data","type":"select","options":"answer"},
+      {"id":"information_security","label":"Information Security Program","type":"select","options":"capability"},
+      {"id":"risk_management","label":"Risk Management","type":"select","options":"capability"},
+      {"id":"incident_response","label":"Incident Response","type":"select","options":"capability"},
+      {"id":"business_continuity","label":"Business Continuity","type":"select","options":"capability"},
+      {"id":"disaster_recovery","label":"Disaster Recovery","type":"select","options":"capability"},
+      {"id":"vulnerability_management","label":"Vulnerability Management","type":"select","options":"capability"},
+      {"id":"patch_management","label":"Patch Management","type":"select","options":"capability"},
+      {"id":"awareness","label":"Security Awareness","type":"select","options":"capability"},
+      {"id":"third_party","label":"Third-Party Risk Management","type":"select","options":"capability"},
+      {"id":"classification","label":"Data Classification","type":"select","options":"capability"},
+      {"id":"access_management","label":"Access Management","type":"select","options":"capability"},
+      {"id":"restoration","label":"Backup & Restoration","type":"select","options":"capability"},
+      {"id":"secure_development","label":"Secure Development","type":"select","options":"capability"},
+      {"id":"ai_governance","label":"AI Governance","type":"select","options":"capability"}
+    ]
+  }
+}

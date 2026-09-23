@@ -553,6 +553,8 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
     import framework_governance
     cid = body.client_id
     client = await _baseline_client(cid, user, writable=True)
+    from client_profile import recorded_baseline
+    previous_baseline=await recorded_baseline(server,client)
     server._require_snapshot(body.model_dump(exclude_unset=True),client.get('onboarding_baseline') or {})
     state = body.state.model_dump()
     framework_governance.validate_configuration(state)
@@ -614,8 +616,20 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
         if state['version']>=3:
             await framework_governance.reconcile(server,cid,state,user)
         await audit(user, 'onboarding-complete', 'client', cid, cid, meta={'baseline_version': state['version'], 'selected_reviews': len(state['reviews'])})
-    state['completed'] = bool(body.finalize or client.get('onboarding_baseline', {}).get('completed'))
+    state['completed'] = bool(body.finalize or previous_baseline)
     state['updated_at'] = server._next_write_time((client.get('onboarding_baseline') or {}).get('updated_at'))
+    if previous_baseline and not client.get('initial_program_baseline'):
+        await server.db.clients.update_one({'client_id':cid,'initial_program_baseline':{'$exists':False}},
+            {'$set':{'initial_program_baseline':previous_baseline}})
+    # Capture only the first completion. Existing completed clients retain their
+    # legacy intake, without inventing historical counts or a completion date.
+    if body.finalize and not previous_baseline:
+        snapshot = {'state': state, 'completed_at': state['updated_at'], 'completed_by': user['user_id'],
+                    'primary_contact_id': client.get('primary_contact_id'), 'assigned_owner_id': client.get('assigned_owner_id'),
+                    'policies': await server.db.policies.count_documents({'client_id':cid}),
+                    'reviews': await server.db.reviews.count_documents({'client_id':cid})}
+        await server.db.clients.update_one({'client_id':cid,'initial_program_baseline':{'$exists':False}},
+                                          {'$set':{'initial_program_baseline':snapshot}})
     await server.db.clients.update_one({'client_id': cid}, {'$set': {'onboarding_baseline': state}})
     return state
 
@@ -629,6 +643,8 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
     import client_relationships
     import framework_governance
     client = await _baseline_client(client_id, user)
+    from client_profile import recorded_baseline
+    completed=await recorded_baseline(server,client) is not None
     fields = json.loads((framework_governance.ROOT / 'onboardingHandoffFields.json').read_text())
 
     async def rows(kind, names):
@@ -645,7 +661,7 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
         server.db.users.count_documents({'client_ids': client_id, 'status': 'active', 'role': {'$nin': ['super_admin', 'platform_admin']}}),
         assignment_eligibility.candidates(server.db, client_id, limit=1),
     )
-    return {'client': projected, 'completed': bool(client.get('onboarding_baseline', {}).get('completed')),
+    return {'client': projected, 'completed': completed,
             'records': dict(zip(fields, values)),
             'people': {'contacts': contacts, 'active_client_users': client_users, 'eligible_assignees_available': bool(candidates['items'])}}
 
@@ -654,6 +670,8 @@ class ProgramApplicabilityChange(BaseModel):
     model_config = ConfigDict(extra='forbid')
     client_id: str
     applicability: str
+    reason: Optional[str] = Field(default=None,max_length=2000)
+    effective_date: Optional[str] = Field(default=None,max_length=10)
     expected_updated_at: Optional[str] = Field(default=None,max_length=100)
 
 
@@ -665,22 +683,35 @@ async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict 
     import framework_governance
     client = await _baseline_client(body.client_id, user, writable=True)
     baseline = client.get('onboarding_baseline', {})
-    if not baseline.get('completed'):
+    from client_profile import recorded_baseline
+    if not await recorded_baseline(server,client):
         raise HTTPException(409, 'Complete onboarding before adjusting program configuration')
     item = next((r for r in BASELINE_CATALOG['requirements'] if r['key'] == key), None)
-    if not item or body.applicability not in ('applies', 'does_not_apply', 'unsure'):
+    if not item or body.applicability not in ('applies', 'does_not_apply', 'unsure', 'retired'):
         raise HTTPException(422, 'Invalid program applicability')
+    if body.applicability == 'retired':
+        from datetime import date
+        try:
+            if not body.reason or not body.reason.strip() or date.fromisoformat(body.effective_date).isoformat()!=body.effective_date or date.fromisoformat(body.effective_date)>date.today(): raise ValueError()
+        except (ValueError,TypeError):
+            raise HTTPException(422,'Retirement requires a reason and valid effective date on or before today')
     cid = body.client_id
     old = await server.db.requirements.find_one({'client_id': cid, 'baseline_key': key})
     server._require_snapshot(body.model_dump(exclude_unset=True),old or {})
+    if old and old.get('baseline_response')==body.applicability:
+        if key in framework_governance.CATALOGS:
+            await framework_governance.reconcile(server,cid,{**baseline,'requirements':{key:body.applicability}},user)
+            await audit(user,'program-applicability-updated','client',cid,cid,meta={'program':key,'previous_status':body.applicability,'applicability':body.applicability,'reconciled':True})
+        return {'ok':True}
     stable_id = 'baseline_' + uuid.uuid5(uuid.NAMESPACE_URL, f'grc:{cid}:requirements:{key}').hex
     query = {'client_id': cid, 'requirement_id': old['requirement_id'], 'updated_at':old.get('updated_at')} if old else {'_id': stable_id}
     changed = await server.db.requirements.update_one(query, {
-        '$set': {'baseline_response': body.applicability, 'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'unsure': 'needs_review'}[body.applicability], 'updated_at': old.get('updated_at') if old and old.get('baseline_response')==body.applicability else server._next_write_time((old or {}).get('updated_at'))},
+        '$set': {'baseline_response': body.applicability, 'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'retired':'not_applicable', 'unsure': 'needs_review'}[body.applicability], 'updated_at': server._next_write_time((old or {}).get('updated_at')),
+                 'program_change': {'previous_status':(old or {}).get('baseline_response'),'new_status':body.applicability,'reason':body.reason,'effective_date':body.effective_date,'changed_by':user['user_id'],'changed_at':_now()}},
         '$setOnInsert': {'requirement_id': stable_id, 'client_id': cid, 'baseline_key': key, 'title': item['name'], 'category': item['category'], 'status': 'under_review', 'created_at': _now(), 'created_by': user['user_id']},
     }, upsert=not bool(old))
     if old and not changed.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
     if key in framework_governance.CATALOGS:
         await framework_governance.reconcile(server, cid, {**baseline, 'requirements': {key: body.applicability}}, user)
-    await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={'program': key, 'applicability': body.applicability})
+    await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={'program': key, 'previous_status':(old or {}).get('baseline_response'), 'applicability': body.applicability,'reason':body.reason,'effective_date':body.effective_date})
     return {'ok': True}

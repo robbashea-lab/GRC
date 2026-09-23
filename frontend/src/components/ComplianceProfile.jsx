@@ -1,15 +1,8 @@
-import { useEffect, useState } from "react";
-import { useOrg } from "@/context/OrgContext";
-import { useAuth } from "@/context/AuthContext";
-import PageHeader from "@/components/PageHeader";
-import ProgramConfiguration from '@/components/ProgramConfiguration';
-import { Building2, ShieldCheck, ScrollText, FileWarning, Umbrella, Layers, ExternalLink } from "lucide-react";
-import { UsersTable } from "@/pages/PlatformAdmin";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import api, { formatError } from "@/lib/api";
-import { toast } from "sonner";
+import {useEffect,useState} from 'react';
+import {Link} from 'react-router-dom';
+import {ShieldCheck,ScrollText,FileWarning,Umbrella,Layers} from 'lucide-react';
+import api,{formatError} from '@/lib/api';
+import {toast} from 'sonner';
 
 // Buckets we surface in the Compliance Profile. We fetch the raw Requirements
 // register and group by category (no new backend model — pure UI grouping).
@@ -83,7 +76,7 @@ function bucketize(requirements) {
   return buckets;
 }
 
-function ComplianceProfile({ clientId }) {
+export default function ComplianceProfile({ clientId }) {
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -173,83 +166,6 @@ function ComplianceProfile({ clientId }) {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-export default function ClientSettings() {
-  const { currentClient, currentClientId } = useOrg();
-  const { user } = useAuth();
-  const nav = useNavigate();
-  const [params,setParams] = useSearchParams();
-  const [revision,setRevision] = useState(0);
-  const canManage = ["super_admin", "platform_admin"].includes(user?.role);
-
-  if (!canManage) {
-    return (
-      <div className="page-content">
-        <PageHeader title="Client Settings" subtitle="You need administrator access to manage this client's users and settings." />
-      </div>
-    );
-  }
-
-  if (!currentClientId) {
-    return (
-      <div>
-        <PageHeader title="Client Settings" subtitle="Select a client organization first." />
-        <div className="page-content max-w-xl">
-          <Button onClick={() => nav("/clients")}>Open Client Directory</Button>
-        </div>
-      </div>
-    );
-  }
-
-  const allowedRoles = user.role === "super_admin"
-    ? ["platform_admin", "client_contributor", "client_readonly"]
-    : ["client_contributor", "client_readonly"];
-
-  return (
-    <div>
-      <PageHeader
-        eyebrow="Client Settings"
-        title={currentClient?.name || "Client"}
-        subtitle="Manage users, access, and the compliance profile for this client. The active client determines where every change is scoped — no cross-tenant exposure."
-      />
-      <div className="page-gutter pt-4 flex items-center gap-3 flex-wrap">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-line bg-surface-card text-sm text-ink-primary" data-testid="client-settings-tenant">
-          <Building2 className="h-3.5 w-3.5 text-ink-secondary" />
-          <span className="text-xs font-mono uppercase tracking-widest text-ink-help">Active client</span>
-          <span className="text-ink-help">·</span>
-          <span className="font-medium">{currentClient?.name}</span>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => nav(`/admin/audit?client=${currentClientId}`)}
-          className="h-9" data-testid="view-audit-history">
-          <ScrollText className="h-3.5 w-3.5 mr-1.5" /> View Audit History
-          <ExternalLink className="h-3 w-3 ml-1.5 text-ink-help" />
-        </Button>
-      </div>
-      <div className="page-content">
-        <Tabs value={params.get('tab')==='compliance'?'compliance':'users'} onValueChange={tab=>setParams({tab})} className="w-full">
-          <TabsList data-testid="client-settings-tabs">
-            <TabsTrigger value="users" data-testid="tab-users-access">Users &amp; Access</TabsTrigger>
-            <TabsTrigger value="compliance" data-testid="tab-compliance-profile">Compliance Profile</TabsTrigger>
-          </TabsList>
-          <TabsContent value="users" className="mt-4">
-            <h2 className="text-sm font-medium text-ink-primary mb-3">Users &amp; Access</h2>
-            <UsersTable scope="client" clientId={currentClientId} allowedRoles={allowedRoles} />
-          </TabsContent>
-          <TabsContent value="compliance" className="mt-4">
-            <div className="mb-3">
-              <h2 className="text-sm font-medium text-ink-primary">Compliance Profile</h2>
-              <p className="text-xs text-ink-help">
-                Current obligations, grouped by type. Adjust program applicability below or manage details in the <Link to="/requirements" className="underline">Requirements register</Link>.
-              </p>
-            </div>
-            <ProgramConfiguration key={currentClientId} clientId={currentClientId} onSaved={()=>setRevision(n=>n+1)}/>
-            <ComplianceProfile key={`${currentClientId}:${revision}`} clientId={currentClientId} />
-          </TabsContent>
-        </Tabs>
-      </div>
     </div>
   );
 }

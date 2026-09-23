@@ -16,6 +16,7 @@ COPY frontend/src/lib/nistCSF2.json /app/frontend/src/lib/nistCSF2.json
 COPY frontend/src/lib/soc2.json /app/frontend/src/lib/soc2.json
 COPY frontend/src/lib/evidenceSources.json /app/frontend/src/lib/evidenceSources.json
 COPY frontend/src/lib/onboardingHandoffFields.json /app/frontend/src/lib/onboardingHandoffFields.json
+COPY frontend/src/lib/clientProfileFields.json /app/frontend/src/lib/clientProfileFields.json
 RUN useradd --create-home --uid 10001 app
 USER app
 CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]

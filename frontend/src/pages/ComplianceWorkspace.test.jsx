@@ -31,14 +31,16 @@ const render = async () => { await act(async () => root.render(<Layout />)); };
 test('direct compliance routes render client empty states and preserve existing sidebar links', async () => {
   for (const [key, label] of [['hipaa','HIPAA'],['iso-27001','ISO 27001'],['cmmc','CMMC']]) {
     mockKey = key; mockPath = `/compliance/${key}`; await render();
-    expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Select Applies in Client Settings to initialize this program after onboarding.':'Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.');
+    expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Select Applies in Client Profile to initialize this program after onboarding.':'Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.');
     expect(container.querySelector('main').textContent).toContain(label);
     expect(container.querySelector('main').textContent).toContain('Client A');
     expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(3);
   }
-  for (const route of ['dashboard','calendar','reviews','action-items','risks','policies','vendors','contacts','evidence','onboarding','client-settings']) {
+  for (const route of ['dashboard','calendar','reviews','action-items','risks','policies','vendors','contacts','evidence','client-profile']) {
     expect(container.querySelector(`a[href="/${route}"]`)).toBeTruthy();
   }
+  expect(container.querySelector('a[href="/onboarding"]')).toBeNull();
+  expect(container.querySelector('a[href="/client-settings"]')).toBeNull();
   expect(container.querySelector('a[href="/compliance/cis-ig1"]')).toBeNull();
   mockClient = {client_id:'b',name:'Client B'}; await render();
   expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(0);

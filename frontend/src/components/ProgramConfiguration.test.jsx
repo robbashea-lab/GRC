@@ -1,0 +1,20 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import ProgramConfiguration from './ProgramConfiguration';
+import api from '@/lib/api';
+jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({refresh:jest.fn()})}));
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
+jest.mock('react-router-dom',()=>({Link:({to,children})=><a href={to}>{children}</a>}),{virtual:true});
+let root,container;
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.append(container);root=createRoot(container);api.get.mockResolvedValue({data:{completed:true,client:{client_id:'a'},records:{requirements:[],framework_assessments:[]}}});api.patch.mockResolvedValue({data:{ok:true}});});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+test('applicability selection previews effects before any write; placeholder claims are restrained',async()=>{
+  await act(async()=>root.render(<ProgramConfiguration clientId="a"/>));
+  const select=container.querySelector('select[aria-label*="CMMC"]');
+  await act(async()=>{select.value='applies';select.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(api.patch).not.toHaveBeenCalled();
+  expect(document.querySelector('[role="dialog"]').textContent).toContain('not implemented');
+  const confirm=Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Confirm Program Change');
+  await act(async()=>confirm.click());
+  expect(api.patch).toHaveBeenCalledWith('/onboarding/programs/cmmc',expect.objectContaining({client_id:'a',applicability:'applies',expected_updated_at:null}));
+});

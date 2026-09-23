@@ -1525,7 +1525,7 @@ async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depend
     changed = await db.clients.update_one({"client_id": client_id, "updated_at": existing.get("updated_at")}, {"$set": updates})
     if not changed.matched_count:
         raise HTTPException(409, "Record changed since it was opened; reload before saving")
-    await audit(user, "update", "client", client_id, client_id, meta=updates)
+    await audit(user, "update", "client", client_id, client_id, meta={**updates,'changes':{k:{'before':existing.get(k),'after':v} for k,v in updates.items() if k!='updated_at' and existing.get(k)!=v}})
     doc = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
     return (await client_relationships.project(db, [doc]))[0]
 
@@ -4857,6 +4857,8 @@ app.include_router(ai_governance.router_for(sys.modules[__name__]))
 app.include_router(framework_governance.router_for(sys.modules[__name__]))
 app.include_router(policy_approval.router_for(sys.modules[__name__]))
 app.include_router(evidence_library.router_for(sys.modules[__name__]))
+import client_profile
+app.include_router(client_profile.router_for(sys.modules[__name__]))
 app.include_router(entity_router)
 
 

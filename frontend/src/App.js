@@ -11,7 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import RecordListPage from "@/pages/RecordListPage";
 import Evidence from "@/pages/Evidence";
 import ComplianceWorkspace from "@/pages/ComplianceWorkspace";
-import Onboarding from "@/pages/Onboarding";
+import ClientProfile, {LegacyClientSettings} from "@/pages/ClientProfile";
 import Calendar from "@/pages/Calendar";
 import ClientManagement from "@/pages/ClientManagement";
 import ClientDirectory from "@/pages/ClientDirectory";
@@ -20,7 +20,6 @@ import PlatformAdmin from "@/pages/PlatformAdmin";
 import AdminRoles from "@/pages/AdminRoles";
 import AdminSecurity from "@/pages/AdminSecurity";
 import AdminAudit from "@/pages/AdminAudit";
-import ClientSettings from "@/pages/ClientSettings";
 import ActionItems from "@/pages/ActionItems";
 import RiskRegister from "@/pages/RiskRegister";
 import VendorRegister from "@/pages/VendorRegister";
@@ -80,7 +79,8 @@ function AppRouter() {
         <Route path="admin/security" element={<InternalOnly><AdminSecurity /></InternalOnly>} />
         <Route path="admin/audit" element={<InternalOnly><AdminAudit /></InternalOnly>} />
         <Route path="account" element={<MyAccount />} />
-        <Route path="client-settings" element={<InternalOnly><ClientSettings /></InternalOnly>} />
+        <Route path="client-settings" element={<InternalOnly><LegacyClientSettings /></InternalOnly>} />
+        <Route path="client-profile" element={<ClientProfile />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />
@@ -95,7 +95,7 @@ function AppRouter() {
         <Route path="action-items" element={<ActionItems />} />
         <Route path="evidence" element={<Evidence />} />
         <Route path="compliance/:requirementKey" element={<ComplianceWorkspace />} />
-        <Route path="onboarding" element={<Onboarding />} />
+        <Route path="onboarding" element={<Navigate to="/client-profile" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
