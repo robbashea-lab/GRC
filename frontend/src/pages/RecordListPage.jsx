@@ -155,7 +155,8 @@ export default function RecordListPage({ kind }) {
   const [dueDatePickerOpen, setDueDatePickerOpen] = useState(false);
   const [pickedDueDate, setPickedDueDate] = useState("");
 
-  const canWrite = (kind === "reviews" ? ["super_admin", "platform_admin"] : ["super_admin", "platform_admin", "client_contributor"]).includes(user?.role);
+  // Register-wide creation, scheduling and bulk actions require program administration.
+  const canWrite = ["super_admin", "platform_admin"].includes(user?.role);
   const canDelete = ["super_admin", "platform_admin"].includes(user?.role);
   const idField = ID_FIELD[kind];
   const ownerField = kind === "tasks" ? "assignee_id" : "owner_id";

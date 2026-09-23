@@ -58,7 +58,7 @@ export default function RiskRegister() {
   const [addOpen, setAddOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
 
-  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
+  const canWrite = ["super_admin", "platform_admin"].includes(user?.role);
   const userMap = useMemo(() => {
     const m = {}; users.forEach((u) => { m[u.user_id] = u.name || u.email; }); return m;
   }, [users]);

@@ -51,14 +51,18 @@ class PolicyApprovalTests(unittest.IsolatedAsyncioTestCase):
     async def test_delegated_readonly_decision_does_not_grant_write_and_preserves_designation(self):
         self.assertEqual((await self.authority("executive","linked")).status_code,200)
         decision=await self.submit()
+        before_history=(await server.db.policies.find_one({'policy_id':'p'}))['approval_history']
         self.sign_in("executive")
         self.assertEqual((await self.client.patch("/api/policies/p",json={"title":"Changed"})).status_code,403)
-        self.assertEqual((await self.client.get("/api/policies/pending-decisions?client_id=a")).json(),[{"policy_id":"p","title":"Policy"}])
+        self.assertEqual((await self.client.get("/api/policies/pending-decisions?client_id=a")).json(),[])
         result=await self.client.post("/api/policies/p/approve",json={**decision,"comment":"Reviewed"})
-        self.assertEqual(result.status_code,200,result.text)
-        self.assertEqual(result.json()["approver_id"],"legacy")
-        self.assertEqual(result.json()["approval_history"][-1]["authority"],"delegated_policy")
-        self.assertEqual((await self.client.post("/api/policies/p/approve",json=decision)).status_code,409)
+        self.assertEqual(result.status_code,403,result.text)
+        unchanged=await server.db.policies.find_one({'policy_id':'p'})
+        self.assertEqual(unchanged['status'],'in_review')
+        self.assertEqual(unchanged['approver_id'],'legacy')
+        self.assertEqual(unchanged['approval_account_id'],'executive')
+        self.assertEqual(unchanged['approval_history'],before_history)
+        self.assertEqual((await self.client.post("/api/policies/p/approve",json=decision)).status_code,403)
         self.assertEqual((await self.client.get("/api/policies/pending-decisions?client_id=a")).json(),[])
 
     async def test_scope_disabled_contact_and_generic_escalation_rejected(self):

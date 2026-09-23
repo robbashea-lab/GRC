@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import api, { formatError } from "@/lib/api";
+import api, { formatError, setAccessToken } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -23,12 +23,12 @@ export default function AuthCallback() {
         if (!data?.session_token || !data.user?.user_id || !data.user?.role) {
           throw new Error("Google sign-in did not return a valid application session.");
         }
-        localStorage.setItem("grc_token", data.session_token);
+        setAccessToken(data.session_token);
         setUser(data.user);
         window.history.replaceState({}, "", "/");
         navigate("/", { replace: true });
       } catch (err) {
-        localStorage.removeItem("grc_token");
+        setAccessToken(null);
         setUser(null);
         toast.error(formatError(err));
         navigate("/login", { replace: true });

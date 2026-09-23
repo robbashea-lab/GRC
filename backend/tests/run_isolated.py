@@ -10,7 +10,7 @@ evidence_context evidence_library framework_governance framework_program governa
 identity_lifecycle iso_framework management_obligations onboarding_baseline onboarding_handoff
 operating_model people_visibility phase6_visibility policy_approval policy_provenance
 portfolio_overview review_lifecycle review_occurrences risk_ids risk_lifecycle runtime_packaging
-seed_account_settings soc_framework standard_initialization vendor_governance
+seed_account_settings security_campaign soc_framework standard_initialization vendor_governance
 """.split()
 
 if __name__ == "__main__":

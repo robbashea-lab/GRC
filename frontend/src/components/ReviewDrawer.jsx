@@ -33,7 +33,8 @@ const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome ===
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues}) {
   const {user} = useAuth();
   const admin = ['super_admin','platform_admin'].includes(user?.role);
-  const writable = admin || user?.role === 'client_contributor';
+  const writable = admin || user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
+    [record?.owner_id, record?.reviewer_id].includes(user?.user_id);
   const [riskDraft,setRiskDraft] = useState(null);
   const [riskOutcome,setRiskOutcome]=useState("Reviewed — No Change");
   const [current,setCurrent] = useState(null), [form,setForm] = useState({});

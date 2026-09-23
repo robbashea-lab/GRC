@@ -64,7 +64,7 @@ export default function ActionItems() {
   const loadSequence = useRef(0);
   const [drawer, setDrawer] = useState({ open: false, kind: null, record: null });
 
-  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role);
+  const canWrite = ["super_admin", "platform_admin", "client_grc_manager", "client_contributor"].includes(user?.role);
   const userMap = useMemo(() => {
     const m = {};
     users.forEach((u) => { m[u.user_id] = u.name || u.email; });

@@ -4,14 +4,15 @@ import { record, write, audit, ids, now } from './store';
 import rules from '@/lib/grcRules.json';
 import cis from '@/lib/cisIG1.json';
 
-const roles = ['super_admin', 'platform_admin', 'client_contributor', 'client_readonly'];
+const clientRoles = ['client_grc_manager', 'client_contributor', 'client_readonly'];
+const roles = ['super_admin', 'platform_admin', ...clientRoles];
 const admin = (db, cid) => {
   if (!['super_admin', 'platform_admin'].includes(db.user.role) || cid && !clientAccess(db.user, cid)) throw new Error('Not authorized to manage accounts for this client');
 };
 const manageable = (db, target) => {
   admin(db);
   if (db.user.role === 'super_admin') return;
-  if (target.role === 'super_admin' || target.role === 'platform_admin' && !target.client_ids?.length ||
+  if (!clientRoles.includes(target.role) ||
       !target.client_ids?.some(cid => db.user.client_ids?.includes(cid))) throw new Error('Not authorized to manage this user');
 };
 const simulate = (db, user) => {
@@ -23,7 +24,7 @@ const simulate = (db, user) => {
 };
 function createAccount(db, body) {
   admin(db);
-  if (!roles.includes(body.role) || body.role === 'super_admin' && db.user.role !== 'super_admin') throw new Error('Not authorized for this role');
+  if (!roles.includes(body.role) || db.user.role !== 'super_admin' && !clientRoles.includes(body.role)) throw new Error('Not authorized for this role');
   const client_ids = [...new Set(body.client_ids || [])];
   if (body.role === 'platform_admin' && !client_ids.length && db.user.role !== 'super_admin') throw new Error('Only a Super Admin can authorize global internal scope');
   for (const cid of client_ids) { admin(db, cid); record(db, 'clients', cid); }
@@ -72,7 +73,7 @@ export function identityRequest(db, path, method, params, body) {
       return contact;
     }
     if (contact.linked_user_id) throw new Error('Contact already linked to a platform user');
-    if (body.client_id !== contact.client_id || !['client_readonly', 'client_contributor'].includes(body.role)) throw new Error('Confirm the client and a permitted client role');
+    if (body.client_id !== contact.client_id || !clientRoles.includes(body.role)) throw new Error('Confirm the client and a permitted client role');
     const result = createAccount(db, { name: contact.name, email: contact.email, role: body.role, client_ids: [contact.client_id] });
     contact.linked_user_id = result.user.user_id;
     audit(db, 'invite-contact', 'contacts', contact, { user_id: result.user.user_id });
@@ -95,7 +96,7 @@ export function identityRequest(db, path, method, params, body) {
     return { ...counts, total, items, truncated: total > items.length };
   }
   admin(db);
-  if (!id && method === 'get') return db.users.filter(u => db.user.role === 'super_admin' || !db.user.client_ids?.length || u.client_ids?.some(cid => db.user.client_ids.includes(cid))).map(u => ({
+  if (!id && method === 'get') return db.users.filter(u => db.user.role === 'super_admin' || u.client_ids?.some(cid => db.user.client_ids?.includes(cid))).map(u => ({
     user_id: u.user_id, name: u.name, email: u.email, role: u.role, status: u.status, last_login_at: u.last_login_at, updated_at:u.updated_at,
     client_ids: db.user.role === 'platform_admin' && db.user.client_ids?.length ? (u.client_ids || []).filter(cid => db.user.client_ids.includes(cid)) : u.client_ids,
   }));
@@ -121,7 +122,7 @@ export function identityRequest(db, path, method, params, body) {
   }
   if (method !== 'patch' || action) throw new Error('Unsupported identity operation');
   if (db.user.role !== 'super_admin' && foreign.length && ['name', 'role', 'status'].some(f => body[f] != null)) throw new Error('Account-wide changes require authority over all client memberships');
-  if (body.role && (!roles.includes(body.role) || body.role === 'super_admin' && db.user.role !== 'super_admin')) throw new Error('Not authorized for this role');
+  if (body.role && (!roles.includes(body.role) || db.user.role !== 'super_admin' && !clientRoles.includes(body.role))) throw new Error('Not authorized for this role');
   if (body.status && !['active', 'disabled', 'invited'].includes(body.status)) throw new Error('Invalid account status');
   if (target.user_id === db.user.user_id && (body.role || body.status === 'disabled')) throw new Error('You cannot change your own role or disable yourself');
   if ((target.status === 'invited' || target.invitation_requested_at) && body.status === 'active') throw new Error('The account must complete its invitation before activation');

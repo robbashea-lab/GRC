@@ -21,7 +21,7 @@ export default function Onboarding({onComplete}){
   const [snapshot,setSnapshot]=useState(null),[validation,setValidation]=useState(false),[retry,setRetry]=useState(0);
   const [loaded,setLoaded]=useState(null),[state,setState]=useState(null),[catalog,setCatalog]=useState(null),[reviews,setReviews]=useState([]),[error,setError]=useState(''),[saved,setSaved]=useState(''),[busy,setBusy]=useState(false);
   const pending=useRef(Promise.resolve()),generation=useRef(0),editVersion=useRef(null),recordVersions=useRef(null);
-  const canRun=['super_admin','platform_admin','client_contributor'].includes(user?.role);
+  const canRun=['super_admin','platform_admin'].includes(user?.role);
   useEffect(()=>{
     const c=new AbortController();generation.current++;setLoaded(null);setState(null);setSnapshot(null);setError('');setValidation(false);
     if(!currentClientId)return;

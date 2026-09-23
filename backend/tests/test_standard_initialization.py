@@ -38,6 +38,7 @@ class StandardInitializationTests(SeedAccountSettingsTests):
                 ("unknown@example.com", self.seed_password, 401),
                 ("", "", 422),
             ]:
+                client.cookies.clear()  # independent credential attempts, not cookie-authenticated writes
                 result = await client.post("/api/auth/login", json={"email": email, "password": password})
                 self.assertEqual(result.status_code, expected)
                 if expected == 200:

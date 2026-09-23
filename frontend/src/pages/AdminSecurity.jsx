@@ -2,12 +2,12 @@ import PageHeader from "@/components/PageHeader";
 import { Lock, KeyRound, ShieldAlert, Clock, Info } from "lucide-react";
 
 const ROWS = [
-  { icon: KeyRound, label: "Authentication", value: "Email + password (bcrypt) with JWT bearer tokens. Emergent-managed Google OAuth available for internal admins on request." },
+  { icon: KeyRound, label: "Authentication", value: "Email/password with bcrypt and environment-bound JWTs. External Google session exchange is disabled in staging/production pending identity-provider validation." },
   { icon: Lock, label: "Password policy", value: "Minimum 8 characters. Bcrypt cost factor 12. Passwords stored hashed - never in plain text." },
-  { icon: Clock, label: "Session lifetime", value: "24-hour JWT, invalidated on logout. Sessions are user-scoped; no shared tokens." },
+  { icon: Clock, label: "Session lifetime", value: "Seven-day JWT maximum. Logout revokes account sessions. Role, status and client assignments are checked per request. Reload uses HttpOnly cookies; bearer tokens are not persisted in localStorage." },
   { icon: ShieldAlert, label: "MFA", value: "Not yet enabled at the platform level. Planned for the next security release." },
-  { icon: ShieldAlert, label: "Brute-force protection", value: "Login endpoint tracks failed attempts per email and returns 429 after 5 consecutive failures within 15 minutes." },
-  { icon: Lock, label: "Transport security", value: "All API and UI traffic terminates over HTTPS at the Emergent ingress. Cookies use SameSite and Secure." },
+  { icon: ShieldAlert, label: "Abuse protection", value: "Authentication endpoints allow 30 requests per source IP and endpoint per minute, per process. Distributed rate limiting and trusted proxies still require staging validation." },
+  { icon: Lock, label: "Transport security", value: "Cookies use Secure, HttpOnly and SameSite=Lax. Staging requires HTTPS origins. Live TLS and ingress behavior are not yet validated." },
 ];
 
 export default function AdminSecurity() {

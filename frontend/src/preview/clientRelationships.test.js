@@ -8,8 +8,8 @@ const fixture = () => ({user:user('actor','super_admin',[]),users:[user('interna
 
 test('internal candidate scope is narrower than operational assignment and exposes minimal identity',()=>{
   const db=fixture();
-  expect(leadCandidates(db,'a').map(u=>u.user_id).sort()).toEqual(['global','internal']);
-  expect(leadCandidates(db).map(u=>u.user_id)).toEqual(['global']);
+  expect(leadCandidates(db,'a').map(u=>u.user_id).sort()).toEqual(['internal']);
+  expect(leadCandidates(db).map(u=>u.user_id)).toEqual([]);
   leadCandidates(db,'a').forEach(u=>expect(Object.keys(u).sort()).toEqual(['email','name','user_id']));
   db.user=user('scoped','platform_admin',['b']);
   expect(()=>leadCandidates(db,'a')).toThrow('Forbidden');

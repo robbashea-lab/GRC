@@ -6,11 +6,11 @@ import { PLANNED_ROLES as ROLES, PLANNED_CAPABILITIES as CAPS, FUTURE_CLIENT_APP
 export default function AdminRoles() {
   return (
     <div>
-      <PageHeader eyebrow="Administration" title="Roles & Permissions" subtitle="Planned roles, trust boundaries, and capabilities for the Omnisciente platform." />
+      <PageHeader eyebrow="Administration" title="Roles & Permissions" subtitle="Role families, client scope, and server-side authorization boundaries." />
       <div className="page-gutter py-6 max-w-5xl space-y-8">
         <div className="rounded-md border border-semantic-info-border bg-semantic-info-bg p-3 text-xs text-semantic-info flex items-start gap-2" data-testid="admin-roles-note">
           <Info className="h-4 w-4 shrink-0 mt-0.5" />
-          <div>Planned / Defined Role Model — not yet enforced. These definitions do not change current effective permissions, user assignments, or sign-in access. Fine-grained RBAC will be implemented separately.</div>
+          <div>Server-enforced role contract. This page explains permissions; it does not edit grants. Every operation also requires authorized client scope and the applicable record/workflow checks.</div>
         </div>
         <section data-testid="admin-roles-grid" className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {ROLES.map((r) => (
@@ -27,7 +27,7 @@ export default function AdminRoles() {
           ))}
         </section>
         <section data-testid="admin-roles-matrix">
-          <h2 className="text-sm font-semibold text-ink-primary mb-2">Planned capability matrix</h2>
+          <h2 className="text-sm font-semibold text-ink-primary mb-2">Capability matrix</h2>
           <div className="register-table-frame rounded-md border border-line overflow-x-auto bg-surface-card">
             <table className="w-full text-sm">
               <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
@@ -49,12 +49,11 @@ export default function AdminRoles() {
           </div>
         </section>
         <section className="space-y-3 text-xs text-ink-secondary" data-testid="role-trust-boundaries">
-          <h2 className="text-sm font-semibold text-ink-primary">Intended trust boundaries</h2>
-          <p>Platform Owner is reserved for a small number of trusted Prestige Worldwide leaders. Permanent client deletion is an exceptional future operation requiring safeguards; archive is the normal lifecycle action and preserves historical records.</p>
-          <p>Platform Administrators handle routine operations. They may assign Client Contributor and Client Read Only, but cannot grant equal or greater authority or modify Platform Owner accounts without an explicit, future owner-authorized delegation. They cannot change unrestricted role definitions, platform security, or delete audit history.</p>
-          <p>Limited means separately authorized routine client-profile fields for GRC Team Members, archive/restore for Platform Administrators, and only the two listed client-level roles for administrator role assignment. It never implies permission to delete tenants or escalate authority.</p>
-          <p>GRC Team Members work only in assigned clients. Client Contributors work only on permitted records in their own organization. Client Read Only is for executives, auditors, observers, and other stakeholders who need visibility without modification rights.</p>
-          <p>All intended grants remain subject to server-side tenant scope, record permissions, and workflow rules. Approval, risk acceptance, and closure decisions require explicit governance authority and any separation-of-duties checks; normal contribution does not confer approval authority.</p>
+          <h2 className="text-sm font-semibold text-ink-primary">Trust boundaries</h2>
+          <p>Only Platform Owners have global client scope. An empty service-provider assignment list grants no client access. Providers cannot create or manage internal administrator accounts.</p>
+          <p>Client managers coordinate permitted operations and assign existing client users. Contributors work assigned records. Limited assignment never permits changing another user's role or client access.</p>
+          <p>Read-only users cannot approve, upload or modify business records, even when named as a business approver. External auditor access requires a future explicit content-grant model and is not active.</p>
+          <p>History locks, optimistic concurrency and separation-of-duties checks apply in addition to role permissions. No role grants arbitrary audit-history deletion or bypasses record integrity.</p>
         </section>
         <section className="rounded-md border border-line bg-surface-card p-4 space-y-2" data-testid="future-client-approver">
           <h2 className="text-sm font-semibold text-ink-primary">{FUTURE_CLIENT_APPROVER.label} · Future</h2>
@@ -63,9 +62,9 @@ export default function AdminRoles() {
         </section>
         <section className="space-y-3 text-xs text-ink-secondary" data-testid="current-effective-permissions">
           <h2 className="text-sm font-semibold text-ink-primary">Current Effective Permissions</h2>
-          <p>Existing fixed role IDs and backend endpoint checks continue to control the connected application. The planned restrictions above are not a claim about current enforcement. The chat demo uses a local Alex Morgan entry and sample data; it does not validate real authentication or RBAC.</p>
-          <p>Compatibility mapping for later migration: <code>super_admin</code> → Platform Owner; <code>platform_admin</code> → Platform Administrator; <code>client_contributor</code> → Client Contributor; <code>client_readonly</code> → Client Read Only. These are design mappings only. No stored IDs or assignments have changed. GRC Team Member has no current runtime mapping.</p>
-          <p>The current implementation still gives both internal admin roles broad client access and client-management rights. The narrower planned administrator and contributor boundaries require a separate enforcement review before rollout.</p>
+          <p>Persisted role IDs are retained. No accounts are automatically promoted or assigned additional clients. The backend checks role, tenant scope and record permissions independently of browser state.</p>
+          <p><code>super_admin</code> maps to Platform Owner; <code>platform_admin</code> to Service Provider GRC Administrator; <code>client_grc_manager</code> to Client GRC Manager. Contributor and read-only IDs remain unchanged.</p>
+          <p>Demo simulation is synthetic and is not proof of real authentication or tenant isolation. Production-like staging validation and independent penetration testing remain required.</p>
         </section>
       </div>
     </div>

@@ -13,7 +13,7 @@ test("planned matrix has explicit values and separates contribution from approva
   }
   const approval = PLANNED_CAPABILITIES.find(r => r.capabilities.includes("accept_risk"));
   expect(approval.roles.client_contributor).toBe("No");
-  expect(approval.roles.grc_team_member).toBe("No");
+  expect(approval.roles.client_grc_manager).toBe("No");
   expect(FUTURE_CLIENT_APPROVER.assignable).toBe(false);
   expect(keys).not.toContain(FUTURE_CLIENT_APPROVER.key);
 });
@@ -28,8 +28,8 @@ test("page clearly separates the five planned roles from current permissions", a
     for (const role of PLANNED_ROLES) expect(cards.textContent).toContain(role.label);
     expect(cards.textContent).not.toContain("Super Admin");
     expect(container.querySelectorAll("thead th")).toHaveLength(6);
-    expect(container.querySelector('[data-testid="admin-roles-note"]').textContent).toContain("not yet enforced");
-    expect(container.querySelector('[data-testid="current-effective-permissions"]').textContent).toContain("No stored IDs or assignments have changed");
+    expect(container.querySelector('[data-testid="admin-roles-note"]').textContent).toContain("Server-enforced role contract");
+    expect(container.querySelector('[data-testid="current-effective-permissions"]').textContent).toContain("No accounts are automatically promoted");
     expect(container.querySelector('[data-testid="future-client-approver"]').textContent).toContain("not active or assignable");
   } finally { await act(async () => root.unmount()); }
 });

@@ -175,6 +175,8 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         for path in ['/api/frameworks/cis-ig1?client_id=b','/api/framework_assessments/'+b+'/related','/api/framework_assessments/'+b+'/activity','/api/comments?entity_type=framework_assessments&entity_id='+b]:
             self.assertEqual((await self.client.get(path)).status_code,403,path)
         self.assertEqual((await self.client.post('/api/evidence',json={'client_id':'a','linked_type':'framework_assessment','linked_id':b,'filename':'foreign.txt','content_base64':'eA=='})).status_code,403)
+        self.assertEqual((await self.client.patch(base,json={'notes':'Contributor update'})).status_code,403)
+        await server.db.framework_assessments.update_one({'framework_assessment_id':a},{'$set':{'owner_id':'member'}})
         self.assertEqual((await self.client.patch(base,json={'notes':'Contributor update'})).status_code,200)
         await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
         self.assertEqual((await self.client.patch(base,json={'notes':'Forbidden'})).status_code,403)

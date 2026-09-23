@@ -30,7 +30,7 @@ function EvidenceWorkspace(){
   const now=new Date(),today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const result=useEvidenceCatalog({client_id:currentClientId,q,state,page,page_size:25,today,...(scopedRoot?{entity_type:root.kind,entity_id:root.id,...(root.occurrence_id?{occurrence_id:root.occurrence_id}:{})}:{})}),data=result.data;
   table.options=column=>columnOptions({...column,optionsOnly:true,options:(data?.facets?.[column.key]||[]).map(value=>({value,label:column.key==='linked_type'?evidenceSourceLabel(value):value}))},[]);
-  const canWrite=['super_admin','platform_admin','client_contributor'].includes(user?.role),canDelete=['super_admin','platform_admin'].includes(user?.role);
+  const canWrite=['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(user?.role),canDelete=['super_admin','platform_admin'].includes(user?.role);
   const clear=()=>{setSearch({scope:currentClientId,value:''});table.clear();setArea(null);setSource(null);setSelectedSet(null);};
   async function openSource(ref){
     const scope=currentClientId;

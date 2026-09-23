@@ -45,7 +45,10 @@ class BaselineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.post('/api/onboarding/baseline',json=self.body('b'))).status_code,403)
         self.assertEqual((await self.client.get('/api/onboarding/baseline?client_id=b')).status_code,403)
         body=self.body();body['state']['policies'][catalog['policies'][0]['key']]='na'
+        self.assertEqual((await self.client.post('/api/onboarding/baseline',json=body)).status_code,403)
+        self.sign_in('admin')
         self.assertEqual((await self.client.post('/api/onboarding/baseline',json=body)).status_code,400)
         self.assertEqual(await server.db.policies.count_documents({}),0)
         await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.sign_in('member')
         self.assertEqual((await self.client.post('/api/onboarding/baseline',json=self.body())).status_code,403)

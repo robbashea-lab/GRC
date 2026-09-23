@@ -56,6 +56,7 @@ class CreateRequestTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await server.db.audit_logs.count_documents({"action": "create"}), 3)
 
     async def test_invalid_reuse_and_authorization(self):
+        await server.db.users.update_one({'user_id':'member'}, {'$set':{'role':'platform_admin'}})
         self.sign_in("member")
         self.assertEqual((await self.create()).status_code, 200)
         self.assertEqual((await self.create(body={"client_id": "a", "title": "Changed payload"})).status_code, 409)

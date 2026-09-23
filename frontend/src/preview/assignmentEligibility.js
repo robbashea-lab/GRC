@@ -5,8 +5,8 @@ export const assignmentFields = {
   assets: ['owner_id'], requirements: ['owner_id'], exceptions: ['owner_id'],
   framework_assessments: ['owner_id'], ai_systems: ['owner_id', 'technical_owner_id', 'oversight_owner_id'],
 };
-export const clientAccess = (user, cid) => user?.role === 'super_admin' ||
-  (user?.role === 'platform_admin' && !user.client_ids?.length) || !!user?.client_ids?.includes(cid);
+export const clientAccess = (user, cid) => ['super_admin','platform_admin','client_grc_manager','client_contributor','client_readonly'].includes(user?.role) &&
+  (user.role === 'super_admin' || !!user?.client_ids?.includes(cid));
 export const eligible = (user, cid) => user?.status === 'active' && clientAccess(user, cid);
 export function validateAssignment(db, kind, row, previous) {
   for (const field of assignmentFields[kind] || []) {

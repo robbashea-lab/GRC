@@ -149,7 +149,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const isEdit = !!record;
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
-  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
+  const clientMayWork = user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
+    (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id));
+  const canWrite = (isPlatformAdmin || clientMayWork && (isEdit || kind === 'tasks')) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
   const evidenceKind = kind === "tasks" ? "task" : singular;
   const tabList = TABS_BY_KIND[kind];

@@ -110,7 +110,7 @@ class OccurrenceTests(ClientDashboardSourcesTests):
         self.assertEqual(done.json()["review"]["status"],"completed")
         self.assertEqual(done.json()["occurrence"]["outcome"],"no_findings")
         self.assertEqual(len((await self.client.get("/api/reviews/bcp/history")).json()),1)
-        await server.db.reviews.insert_one({"review_id":"missing","client_id":"a","title":"Unscheduled","status":"upcoming","recurrence":"annual"})
+        await server.db.reviews.insert_one({"review_id":"missing","client_id":"a","title":"Unscheduled","status":"upcoming","recurrence":"annual","owner_id":"member"})
         self.assertEqual((await self.client.post("/api/reviews/missing/complete",json={"occurrence_id":"occ_missing"})).status_code,422)
 
     async def test_legacy_history_retained_without_fabrication(self):

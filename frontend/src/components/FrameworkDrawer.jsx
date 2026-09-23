@@ -28,7 +28,8 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const {user}=useAuth(),aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
   const catalog=frameworkCatalog(record.framework_key),isCsf=record.framework_key==='nist-csf-2',isSoc=record.framework_key==='soc-2',isCis=record.framework_key==='cis-ig1',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement'),program=operatorProgram(record.framework_key);
   const statuses=operatorStatuses(record.framework_key);
-  const writable=['super_admin','platform_admin','client_contributor'].includes(user?.role);
+  const writable=['super_admin','platform_admin','client_grc_manager'].includes(user?.role) ||
+    user?.role==='client_contributor' && record?.owner_id===user?.user_id;
   const [tab,setTab]=useState(''),[form,setForm]=useState(record),[ctx,setCtx]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[nested,setNested]=useState(null),[comment,setComment]=useState(''),[finding,setFinding]=useState(null),[link,setLink]=useState({kind:'risks',id:''});
   const [reviewDraft,setReviewDraft]=useState(false);
   const [savedForm,setSavedForm]=useState(record),[feedback,setFeedback]=useState(''),[pending,setPending]=useState(null);

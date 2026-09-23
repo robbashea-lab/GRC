@@ -9,7 +9,10 @@ class ClientManagementTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_internal_roles_can_create_edit_archive_restore(self):
         await server.db.users.insert_one({"user_id": "platform", "email": "platform@example.test", "role": "platform_admin", "client_ids": [], "status": "active"})
-        for uid in ["admin", "platform"]:
+        self.sign_in('platform')
+        self.assertEqual((await self.client.post('/api/clients',json={'name':'Denied'})).status_code,403)
+        self.assertEqual((await self.client.get('/api/clients')).json(),[])
+        for uid in ["admin"]:
             self.sign_in(uid)
             created = await self.client.post("/api/clients", json={"name": "Management fixture", "industry": "Technology", "assigned_owner_id": uid})
             self.assertEqual(created.status_code, 200)
