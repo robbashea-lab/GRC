@@ -6,7 +6,7 @@ Research: 2026-09-22. Catalog identity preserved: `2022 + Amd 1:2024`.
 
 All 123 current entries (30 ISMS units and 93 Annex A entries), their authored operator explanations, implementation groups, evidence suggestions, ten Review plans and 17 policy mappings were inspected. **Full normative validation is NOT COMPLETE: all 123 entries retain REQUIRES AUTHORIZED SOURCE status for exact clause/control completeness and qualifications.** The public sources below verify version and selected interpretation only. No full authorized standard was provided. CIS authorization does not establish ISO reproduction rights.
 
-Existing titles are original shorthand, not purported verbatim ISO headings. Existing `verified_on` metadata is not evidence that the entire licensed standard has been compared. No normative wording is imported or expanded in this phase. No credential or license material is needed.
+Existing titles are original shorthand, not purported verbatim ISO headings. Existing `verified_on` metadata is not evidence that the entire licensed standard has been compared. No normative wording is imported or expanded in this phase. No credential or license material is needed. The closure addendum supersedes the blanket source-unavailable statement for the limited clauses present in an official preview; it does not claim full catalog validation.
 
 ## Source ledger
 
@@ -205,3 +205,28 @@ The three existing NIST → ISO rows (access, backups, awareness) remain PARTIAL
 Existing guidance for 6.1.3 correctly warns that necessary controls can extend beyond Annex A. The application's 93-entry Annex register is not by itself a complete organization-specific SoA; custom necessary controls may need separately maintained evidence. This is a documented scope limitation, not authorization to add a new custom-controls model.
 
 ISMS clauses remain distinct from risk-selected Annex controls. Existing inclusion/exclusion reasons and independent assessments remain unchanged. No IDs, catalog-version identity, histories, client records, permissions or recurrence were changed. Source-dependent uncertainties are left explicit instead of guessed.
+
+## Closure addendum — bounded primary-source comparison (2026-09-22)
+
+**PARTIALLY VALIDATED — AUTHORIZED SOURCE ACCESS REQUIRED.** Full ISO closure remains **LICENSE / SOURCE ACCESS BLOCKED**. A source already referenced in the repository is available: **I05**, ISO/IEC, third edition October 2022, [SIST-hosted official preview](https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf), accessed 2026-09-22. It contains normative printed pages 1–5, not clauses 7–10 or Annex A. Its contents page alone cannot validate those missing texts. No full standard was copied into Git.
+
+The 12 existing units below were compared against I05, with I03 for the climate amendment. Result: topic alignment of the authored shorthand, guidance and suggested evidence is supported, **not exhaustive assessment coverage**. Evidence examples remain suggestions. Existing explanations are deliberately concise, so no certification sufficiency or complete subparagraph coverage is inferred.
+
+| Unit | Primary-source location | Bounded conclusion / limitation |
+| --- | --- | --- |
+| 4.1 | I05 p. 1; I03 p. 2 | Context and climate relevance supported. |
+| 4.2 | I05 pp. 1–2; I03 p. 2 | Interested-party obligations supported. |
+| 4.3 | I05 p. 2 | Scope supported; context dependencies remain part of assessment. |
+| 4.4 | I05 p. 2 | Process interaction supported. |
+| 5.1 | I05 p. 2 | Leadership topic supported; prompt is not every leadership duty. |
+| 5.2 | I05 p. 3 | Policy topic supported; prompt is not every policy commitment. |
+| 5.3 | I05 p. 3 | Accountability supported. |
+| 6.1.1 | I05 p. 3 | Planning and effectiveness supported. |
+| 6.1.2 | I05 p. 4 | Risk method supported; short prompt is not a full methodology. |
+| 6.1.3 | I05 pp. 4–5 | Treatment/SoA supported; Annex-only register is insufficient for additional necessary controls. |
+| 6.2 | I05 p. 5 | Objectives supported; measurement depends on practicability. |
+| 6.3 | I05 p. 5 | Planned changes supported despite omission from preview contents list. |
+
+These clauses supply no numerical interval for the existing Review defaults. This does not establish the cadence of unavailable Annex content. All ten product Review recommendations remain class D and unchanged. No correction to catalog text, version or stored data is justified by this bounded comparison. The remaining 111 units retain exact-source-access limitations; the 12 above retain completeness limitations rather than being declared fully validated.
+
+Engineering verification: 17 backend tests passed when loading the ISO and SOC test modules (including their imported fixture tests); 24 frontend tests passed across ISO preview, SOC preview and shared operator suites. ISO tests exercise clause exclusion rejection, Annex inclusion/exclusion justification and preserved SoA history. These results verify application behavior, not licensed-source completeness. Live-browser closure QA remains pending at this checkpoint.
