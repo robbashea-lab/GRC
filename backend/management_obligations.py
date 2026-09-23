@@ -64,8 +64,13 @@ def management_model(records, client_id, *, today=None, members=(), scope='org',
             return
         work.append(row(r, kind, event, label, due, level))
 
+    review_dates = {field: {(r.get(field), calendar_day(r.get('due_date'))) for r in active['reviews']}
+                    for field in ('risk_id','policy_id','vendor_id')}
+    tasks_by_finding = {}
+    for task in active['tasks']:
+        tasks_by_finding.setdefault(task.get('finding_id'), []).append(task)
     def review_rep(field, identity, due):
-        return any(v.get(field) == identity and calendar_day(v.get('due_date')) == calendar_day(due) for v in active['reviews'])
+        return (identity, calendar_day(due)) in review_dates[field]
 
     def exception_rep(risk_id, due):
         return calendar_day(due) is not None and any(e.get('risk_id') == risk_id and e.get('status') in ('approved', 'expired') and calendar_day(e.get('expires_at')) == calendar_day(due) for e in active['exceptions'])
@@ -75,7 +80,7 @@ def management_model(records, client_id, *, today=None, members=(), scope='org',
     for r in active['tasks']:
         add(r, 'tasks', 'due', 'Action Item', r.get('due_date'), r.get('priority'), True)
     for r in active['findings']:
-        if not represented_finding(r, active['tasks']):
+        if not represented_finding(r, tasks_by_finding.get(r['finding_id'], [])):
             add(r, 'findings', 'due', 'Validation' if r.get('status') == 'remediated' else 'Finding', r.get('due_date'), r.get('severity'), True)
     for r in active['risks']:
         accepted = r.get('status') == 'accepted'
@@ -147,14 +152,17 @@ def portfolio_item(item, client, today):
             'priority': item['severity'] if item['severity'] in ('critical', 'high') else 'overdue' if overdue else 'due_soon'}
 
 
-async def load_records(db, query):
+async def load_records(db, query, projection=None):
     # Complete management input, not register pagination or a top-N queue.
     import review_occurrences
     import vendor_governance
-    records = {kind: await db[kind].find(query, {'_id': 0}).to_list(None) for kind in KINDS}
+    records = {kind: await db[kind].find(query, projection or {'_id': 0}).to_list(None) for kind in KINDS}
     records['reviews'] = [review_occurrences.view(r) for r in records['reviews']]
     records['risks'] = [assessed_risk(r) for r in records['risks']]
-    records['vendors'] = [vendor_governance.view(r, records['reviews']) for r in records['vendors']]
+    reviews_by_vendor = {}
+    for review in records['reviews']:
+        reviews_by_vendor.setdefault(review.get('vendor_id'), []).append(review)
+    records['vendors'] = [vendor_governance.view(r, reviews_by_vendor.get(r['vendor_id'], [])) for r in records['vendors']]
     for rows in records.values():
         for r in rows:
             r.pop('_governance_lock', None)

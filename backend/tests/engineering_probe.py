@@ -13,7 +13,7 @@ import tracemalloc
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 
 
-async def main(profile, soak_seconds):
+async def main(profile, soak_seconds, dashboard_only=False):
     logging.disable(logging.CRITICAL)
     harness = Harness()
     await harness.asyncSetUp()
@@ -39,6 +39,24 @@ async def main(profile, soak_seconds):
             response=await harness.client.get(path)
             assert response.status_code in (200,413),(path,response.status_code,response.text[:150])
             print(json.dumps({'operation':path,'status':response.status_code,'ms':round((time.perf_counter()-start)*1000,1),'bytes':len(response.content)}),flush=True)
+            if path.startswith('/api/dashboard'):
+                data=response.json()
+                size=lambda value:len(json.dumps(value,separators=(',',':'),ensure_ascii=False).encode())
+                sections={key:size(value) for key,value in data.items()}
+                management_sections={key:size(value) for key,value in data.get('management',{}).items()}
+                objects=0;unique=set();pending=[data]
+                while pending:
+                    value=pending.pop()
+                    if isinstance(value,dict):
+                        if 'client_id' in value:
+                            identity=next(((key,value[key]) for key in keys.values() if value.get(key)),None)
+                            if identity:objects+=1;unique.add(identity)
+                        pending.extend(value.values())
+                    elif isinstance(value,list):pending.extend(value)
+                print(json.dumps({'dashboard_sections':sections,'management_sections':management_sections,
+                                  'embedded_record_objects':objects,'unique_embedded_records':len(unique),'kpis':data['kpis']}),flush=True)
+                if dashboard_only:
+                    return
 
         # Small isolated tenant: bounded read concurrency, not expensive customer-sized writes.
         async def request():
@@ -73,5 +91,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile',choices=['medium','large'],default='medium')
     parser.add_argument('--soak-seconds',type=int,choices=range(1,61),default=30)
+    parser.add_argument('--dashboard-only',action='store_true')
     args=parser.parse_args()
-    asyncio.run(main(args.profile,args.soak_seconds))
+    asyncio.run(main(args.profile,args.soak_seconds,args.dashboard_only))

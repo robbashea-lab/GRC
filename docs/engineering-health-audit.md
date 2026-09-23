@@ -413,3 +413,11 @@ atomic with the status transition. Initial phase verification: 304 offline backe
 cases plus 244 subtests, 411 frontend tests, build and core Demo browser passed.
 Persistent Mongo durability is not verified. ENG-14/02/15/16 remain open; the
 original scorecard is not upgraded to imply completion of the entire program.
+
+ENG-14 follow-up: bounded v2 Dashboard contract, authorized paginated contributing
+records, and on-demand authoritative record opening implemented. Same large mock
+fixture dropped from 66,988,251 to 104,979 bytes with identical KPIs; measured
+151,470.0 to 11,285.2 ms (isolated single runs, not persistent capacity). Backend
+308 cases/244 subtests, frontend 414 tests, build and Dashboard/core Demo browser
+checks passed. Full measurements and remaining scaling limits are in the
+remediation ledger. ENG-02/15/16 and persistent durability remain open.

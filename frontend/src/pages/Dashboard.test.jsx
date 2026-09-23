@@ -5,14 +5,15 @@ import { useOrg } from "@/context/OrgContext";
 import { loadClientDashboard } from "@/lib/loadClientDashboard";
 import { aggregateClientDashboard } from "@/lib/clientDashboard";
 import { dashboardPosture } from "@/lib/dashboardPosture";
+import api from '@/lib/api';
 
 jest.mock("@/context/OrgContext", () => ({ useOrg: jest.fn() }));
 jest.mock("@/context/AuthContext", () => {
   const user = { user_id: "test-user", role: "super_admin" };
   return { useAuth: () => ({ user }) };
 });
-jest.mock("@/lib/loadClientDashboard", () => ({ loadClientDashboard: jest.fn() }));
-jest.mock("@/lib/api", () => ({ __esModule: true, default: {}, API: "/api", formatError: err => err.message }));
+jest.mock("@/lib/loadClientDashboard", () => ({ loadClientDashboard: jest.fn(), labelDashboardRows:rows=>rows }));
+jest.mock("@/lib/api", () => ({ __esModule: true, default: {get:jest.fn()}, API: "/api", formatError: err => err.message }));
 jest.mock("react-router-dom", () => ({ Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a> }), { virtual: true });
 jest.mock("@/components/DashboardScopeSelector", () => () => null);
 jest.mock("@/components/RecordDrawer", () => props => <div data-testid="record-drawer">{props.kind}:{props.record.task_id}:{props.clientId}</div>);
@@ -24,6 +25,7 @@ beforeEach(() => {
   container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
   useOrg.mockReturnValue({ currentClientId: "a", currentClient: { name: "Client A" } });
   loadClientDashboard.mockReset();
+  api.get.mockReset();
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 
@@ -57,6 +59,24 @@ test("cards open exact contributing rows; the priority table is capped at five",
   expect(drawer.querySelectorAll('tbody tr')).toHaveLength(7);
   await act(async()=>[...drawer.querySelectorAll('button')].find(b=>b.textContent==='Open Action').click());
   expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe('tasks:0:a');
+});
+
+test('bounded dashboard displays full totals, pages detail and fetches the authoritative record',async()=>{
+  const items=Array.from({length:26},(_,i)=>({key:`tasks:${i}:due`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',action:'Open Action',owner:'Unassigned',status:'open',priority_label:'Overdue',record:{task_id:String(i),client_id:'a'}}));
+  loadClientDashboard.mockResolvedValue({...empty,contract_version:2,posture:{...empty.posture,pastDue:items.slice(0,25),totals:{pastDue:26}}});
+  api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'a',items:items.slice(options.params.offset,options.params.offset+25),total:26,offset:options.params.offset,limit:25}:{client_id:'a',task_id:'25',title:'Authoritative Action'}}));
+  await act(async()=>root.render(<Dashboard/>));
+  expect(container.querySelector('[data-testid="kpi-overdue"]').getAttribute('aria-label')).toContain('26');
+  await act(async()=>container.querySelector('[data-testid="kpi-overdue"]').click());
+  const drawer=document.querySelector('[data-testid="dashboard-drilldown"]');
+  expect(drawer.textContent).toContain('Showing 1–25 of 26');
+  expect(drawer.querySelectorAll('tbody tr')).toHaveLength(25);
+  await act(async()=>[...drawer.querySelectorAll('button')].find(button=>button.textContent==='Next').click());
+  expect(drawer.textContent).toContain('Showing 26–26 of 26');
+  expect(drawer.querySelectorAll('tbody tr')).toHaveLength(1);
+  await act(async()=>[...drawer.querySelectorAll('button')].find(button=>button.textContent==='Open Action').click());
+  expect(api.get).toHaveBeenCalledWith('/tasks/25');
+  expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe('tasks:25:a');
 });
 
 test("tenant switching hides old data and ignores a late response from the previous tenant", async () => {

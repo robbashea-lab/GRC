@@ -62,7 +62,17 @@ class ManagementObligationTests(ClientDashboardSourcesTests):
         self.assertEqual(len(p.json()['metric_items']['past_due']),1105)
         self.assertEqual(len(p.json()['attention_queue']),15)
         self.assertEqual(d.json()['kpis']['past_due'],1105)
-        self.assertEqual(len(d.json()['management']['metric_items']['past_due']),1105)
+        self.assertEqual(len(d.json()['management']['metric_items']['past_due']),25)
+        self.assertEqual(d.json()['posture']['totals']['pastDue'],1105)
+        self.assertNotIn('records',d.json()['management'])
+        identities=[]
+        for offset in range(0,1105,100):
+            page=await self.client.get(f'/api/dashboard?client_id=a&detail=pastDue&offset={offset}&limit=100')
+            self.assertEqual(page.status_code,200,page.text)
+            self.assertEqual(page.json()['total'],1105)
+            self.assertLessEqual(len(page.json()['items']),100)
+            identities.extend(r['id'] for r in page.json()['items'])
+        self.assertEqual(len(set(identities)),1105)
 
     async def test_report_uses_review_subset_of_shared_model_without_due_today_overdue(self):
         await self.seed_scenario()

@@ -58,7 +58,11 @@ test("portfolio and every sample client load through the real dashboard loader",
         kind: "org"
       }
     });
-    expect(Array.isArray(result.attention)).toBe(true);
+    expect(result.contract_version).toBe(2);
+    expect(Array.isArray(result.posture.priority)).toBe(true);
+    expect(result.posture.priority.length).toBeLessThanOrEqual(25);
+    expect(result.posture.totals.priority).toBeGreaterThanOrEqual(result.posture.priority.length);
+    expect(result.management.records).toBeUndefined();
     expect(result.members.length).toBeGreaterThan(0);
     const rows = (await api.get("/tasks", {
       params: {

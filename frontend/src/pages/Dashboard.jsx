@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import DashboardScopeSelector from "@/components/DashboardScopeSelector";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
-import { loadClientDashboard } from "@/lib/loadClientDashboard";
+import { loadClientDashboard, labelDashboardRows } from "@/lib/loadClientDashboard";
 import { calendarDay } from "@/lib/clientDashboard";
 
 const ORGANIZATION_SCOPE = {kind:'org'};
@@ -116,6 +116,20 @@ export default function Dashboard() {
     } catch (e) { toast.error(e.message || "Report failed"); }
   }
 
+  async function openItem(item) {
+    if (data.contract_version !== 2) {setSelected(item);return;}
+    try {
+      const {data:record}=await api.get(`/${item.kind}/${encodeURIComponent(item.id)}`);
+      if(record.client_id!==currentClientId) throw new Error('Record belongs to another client.');
+      setSelected({...item,record});
+    } catch(error) {toast.error(formatError(error));}
+  }
+  async function loadDetail(key,offset,signal) {
+    const {data:result}=await api.get('/dashboard',{params:{client_id:currentClientId,scope:scope.kind,user_id:scope.user_id,detail:key,offset,limit:25},signal});
+    if(result.client_id!==currentClientId) throw new Error('Dashboard detail belongs to another client.');
+    return {...result,items:labelDashboardRows(result.items,data.members)};
+  }
+
   return (
     <div>
       <PageHeader
@@ -155,7 +169,7 @@ export default function Dashboard() {
       <div className="page-gutter pt-4 text-sm">
         {!data.onboardingCompleted ? <div className="border border-line rounded-lg bg-surface-card p-3"><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program. </span><Link className="text-link underline" to="/onboarding">Continue onboarding</Link></div> : <Link className="text-link underline" to="/onboarding">View onboarding handoff & setup status</Link>}
       </div>
-      <DashboardManagement key={requestKey+":"+framework} posture={data.posture} programs={data.programs} framework={framework} onOpen={setSelected} Table={OperationalTable} />
+      <DashboardManagement key={requestKey+":"+framework} posture={data.posture} programs={data.programs} framework={framework} onOpen={openItem} loadDetail={data.contract_version===2?loadDetail:undefined} Table={OperationalTable} />
       {selected && selected.record.client_id === currentClientId && (
         <RecordDrawer key={selected.key} open onOpenChange={open => { if (!open) setSelected(null); }}
           kind={selected.kind} record={selected.record} schema={SCHEMAS[selected.kind]?.fields}

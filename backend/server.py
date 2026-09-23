@@ -1976,6 +1976,9 @@ async def dashboard(
     client_id: Optional[str] = Query(None),
     scope: Optional[str] = Query("org"),  # org | mine | user | unassigned
     user_id: Optional[str] = Query(None),
+    detail: Optional[str] = Query(None, max_length=40),
+    offset: int = Query(0, ge=0),
+    limit: int = Query(25, ge=1, le=100),
     user: Dict = Depends(get_current_user),
 ):
     scope = (scope or "org").lower()
@@ -2015,8 +2018,16 @@ async def dashboard(
     horizon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
 
     from management_obligations import load_records, management_for_scope, calendar_day
-    records = await load_records(db, scope_filter)
+    import dashboard_contract
+    records = await load_records(db, scope_filter, dashboard_contract.PROJECTION)
     management = management_for_scope(records, today=now_iso, scope=scope, user_id=target_uid)
+    groups = dashboard_contract.populations(management)
+    if detail:
+        if detail not in groups:
+            raise HTTPException(422, 'Unknown dashboard detail')
+        rows = groups[detail]
+        return {'client_id':client_id,'as_of':management['as_of'],'items':[dashboard_contract.brief(r) for r in rows[offset:offset+limit]],
+                'total':len(rows),'offset':offset,'limit':limit,'has_more':offset+limit<len(rows)}
     reviews, findings, risks, policies, vendors, tasks, exceptions = [records[k] for k in ('reviews','findings','risks','policies','vendors','tasks','exceptions')]
 
     # Apply person / unassigned filter to each collection so all downstream KPIs are naturally scoped.
@@ -2075,9 +2086,9 @@ async def dashboard(
     needs: List[Dict] = []
     # Priority 1: critical findings (overdue first)
     crit_overdue = [f for f in critical_high if is_overdue(f) and f.get("severity") == "critical"]
-    crit_other = [f for f in critical_high if f.get("severity") == "critical" and f not in crit_overdue]
+    crit_other = [f for f in critical_high if f.get("severity") == "critical" and not is_overdue(f)]
     high_overdue = [f for f in critical_high if is_overdue(f) and f.get("severity") == "high"]
-    high_other = [f for f in critical_high if f.get("severity") == "high" and f not in high_overdue]
+    high_other = [f for f in critical_high if f.get("severity") == "high" and not is_overdue(f)]
     for f in crit_overdue + crit_other:
         needs.append({**_brief(f, "finding", "finding_id"), "priority_tone": "critical", "action": "View finding"})
     for r in overdue_reviews:
@@ -2184,7 +2195,16 @@ async def dashboard(
             "due_next_30": due_next_30_count,
             **management['counts'],
         },
-        "management": {"as_of": management['as_of'], "counts": management['counts'], "metric_items": management['metrics'], "records": records},
+        "contract_version": 2,
+        "client_id": client_id,
+        "posture": dashboard_contract.summary(groups),
+        "applicable_requirements": [{'client_id':client_id,'baseline_key':key,'baseline_response':'applies'}
+                                    for key in sorted({r['baseline_key'] for r in records['requirements']
+                                                       if r.get('baseline_key') in {f['key'] for f in framework_governance.FRAMEWORKS}
+                                                       and r.get('baseline_response')=='applies'})] if client_id else [],
+        "management": {"as_of": management['as_of'], "counts": management['counts'],
+                       "preview_limit":dashboard_contract.PREVIEW_LIMIT,
+                       "metric_items":{key:[dashboard_contract.brief(r) for r in rows[:dashboard_contract.PREVIEW_LIMIT]] for key,rows in management['metrics'].items()}},
         "scope": scope,
         "scope_label": scope_label,
         "target_user": (
@@ -2200,7 +2220,7 @@ async def dashboard(
         "upcoming_reviews": [_brief(r, "review", "review_id") for r in upcoming_reviews[:8]],
         "recent_findings": [_brief(f, "finding", "finding_id") for f in open_findings[:8]],
         "top_risks": [_brief(r, "risk", "risk_id") for r in significant_risks[:6]],
-        "assurance_alerts": _assurance_alerts_for(vendors),
+        "assurance_alerts": _assurance_alerts_for(vendors)[:8],
     }
 
 
