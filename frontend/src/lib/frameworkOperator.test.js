@@ -62,6 +62,14 @@ test('ISO clauses and all 93 Annex controls retain distinct usable guidance',()=
   expect(clauses).toHaveLength(30);
   for(const d of clauses)expect(operatorGuidance('iso-27001',d).meaning).not.toMatch(/^(Record|Document|Explain|Link|Show|Identify|Describe|Assemble|Define) /);
 });
+test('ISO numerical Review defaults remain recommendations without source minima',()=>{
+  for(const plan of CATALOGS['iso-27001'].review_plans){
+    expect(plan.cadence_class).toBe('D');
+    expect(plan.cadence_references).toEqual([]);
+    expect(plan.source_minimum).toBeFalsy();
+    expect(plan.basis).toBe('Omnisciente Recommended');
+  }
+});
 test('SOC criteria explain distinct expectations without prescribing controls or samples',()=>{
   const all=CATALOGS['soc-2'].requirements.map(d=>operatorGuidance('soc-2',d));
   expect(new Set(all.map(g=>g.meaning)).size).toBe(61);

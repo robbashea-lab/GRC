@@ -2105,6 +2105,8 @@
   "review_plans": [
     {
       "key": "iso-internal-audit",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": null,
       "title": "ISMS Internal Audit",
       "review_type": "requirements",
@@ -2124,6 +2126,8 @@
     },
     {
       "key": "iso-management-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "management-review",
       "title": "ISMS Management Review",
       "review_type": "management",
@@ -2146,6 +2150,8 @@
     },
     {
       "key": "iso-risk-assessment",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "risk-assessment",
       "title": "ISMS Risk Assessment and Treatment Review",
       "review_type": "risk",
@@ -2167,6 +2173,8 @@
     },
     {
       "key": "iso-objective-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": null,
       "title": "ISMS Objective Review",
       "review_type": "management",
@@ -2185,6 +2193,8 @@
     },
     {
       "key": "iso-soa-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": null,
       "title": "Statement of Applicability Review",
       "review_type": "requirements",
@@ -2295,6 +2305,8 @@
     },
     {
       "key": "iso-corrective-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": null,
       "title": "ISMS Corrective Action Review",
       "review_type": "management",
@@ -2313,6 +2325,8 @@
     },
     {
       "key": "iso-policy-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "policy-review",
       "title": "Security Policy Review",
       "review_type": "policy",
@@ -2334,6 +2348,8 @@
     },
     {
       "key": "iso-user-access",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "user-access",
       "title": "Access Entitlement Review",
       "review_type": "access",
@@ -2355,6 +2371,8 @@
     },
     {
       "key": "iso-vendor",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "vendor",
       "title": "Third-Party Security Review",
       "review_type": "vendor",
@@ -2376,6 +2394,8 @@
     },
     {
       "key": "iso-awareness",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "awareness",
       "title": "Security Awareness Review",
       "review_type": "awareness",
