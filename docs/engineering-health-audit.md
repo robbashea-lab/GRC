@@ -375,3 +375,25 @@ was created. Unexecuted coverage includes long-duration soak, exhaustive rapid
 submits across every mutation, every file-size/MIME boundary, real replica-set
 transactions, restart persistence and independent security assessment. These remain
 open gates, not implied passes. The report does not declare all twenty phases passed.
+
+## Git and release handoff
+
+- Validated framework baseline: 5b10f70a5ebcdfa98a4dfb23dd6b53cffc2c9124.
+- History-preserving local integration: 77b4c682673b30d2cf3ebc058013deaeffc98da6.
+- Tested implementation commit: 0611f49869bd353f7d5555a76717e8153a44f52b.
+- Local main was fast-forwarded to the tested implementation. The final documentation
+  follow-up commit is identifiable with git log -1 on main; it changes no application
+  source or build asset. No history was rewritten.
+- The original work/GRC checkout remains on codex/visual-candidate-preserved at
+  the integration baseline with all eight tracked visual edits and five untracked
+  paths preserved. Before/after diff and file-content hashes matched. None was staged.
+  The clean framework-assessment-refinement checkout now owns main.
+- Normal noninteractive git push origin main failed: Git could not obtain an
+  authentication password/token. GitHub main has **not** received this implementation.
+  No credential was printed, committed, invented or substituted.
+- Existing private Site version remains 50; tested assets have **not** been published.
+  Git authentication and the hosting packager's bash dependency must be restored,
+  then exact source/version/build identity and audience must be verified again.
+- Persistent staging remains blocked by the independently confirmed storage failure;
+  changing paid capacity requires owner authorization. No old DB reconnection is an
+  acceptable substitute. Resolve open engineering gates before a real-client pilot.
