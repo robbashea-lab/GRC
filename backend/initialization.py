@@ -8,6 +8,8 @@ async def ensure_indexes(db):
     await db.clients.create_index("client_id", unique=True)
     for name in ["reviews", "findings", "risks", "policies", "vendors", "assets", "tasks", "evidence"]:
         await db[name].create_index("client_id")
+    await db.evidence.create_index([('client_id',1),('archived_at',1),('created_at',-1),('evidence_id',1)])
+    await db.evidence.create_index([('client_id',1),('relationships.kind',1),('relationships.id',1)])
     await db.password_resets.create_index("token_hash", unique=True)
     await db.sessions.create_index("session_token", unique=True)
     await db.ai_systems.create_index('ai_system_id', unique=True)

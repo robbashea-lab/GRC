@@ -5,7 +5,7 @@ export function approvalSnapshot(db,p) {
   if(Object.keys(s).some(k=>!['version','evidence_id','external_reference','external_version'].includes(k))||!!s.evidence_id===!!s.external_reference)throw new Error('Choose one uploaded document or external reference');
   let basis;
   if(s.evidence_id) {
-    const e=db.evidence.find(e=>e.evidence_id===s.evidence_id&&e.client_id===p.client_id&&['policy','policies'].includes(e.linked_type)&&e.linked_id===p.policy_id&&!e.archived_at);
+    const e=db.evidence.find(e=>e.evidence_id===s.evidence_id&&e.client_id===p.client_id&&!e.archived_at&&((['policy','policies'].includes(e.linked_type)&&e.linked_id===p.policy_id)||e.relationships?.some(r=>r.kind==='policies'&&r.id===p.policy_id)));
     if(!e?.sha256||s.external_version)throw new Error('Choose available hashed Evidence linked to this Policy');
     basis={type:'evidence',evidence_id:e.evidence_id,filename:e.filename,version:e.version,sha256:e.sha256};
   } else {

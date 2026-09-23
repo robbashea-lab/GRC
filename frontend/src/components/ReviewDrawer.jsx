@@ -194,7 +194,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         </>}
         {tab === 'Evidence' && <>
           {!frozen && writable && <Label className="block rounded-md border border-dashed border-line p-5 text-sm">Attach evidence to this occurrence<Input className="mt-2" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e => { const files = Array.from(e.target.files); run(async () => { for (const file of files) await api.post('/evidence',{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid,filename:file.name,mime_type:file.type,content_base64:await fileData(file)}); await reload(); toast.success('Evidence attached'); }); }} /></Label>}
-          <EvidencePanel clientId={cid} kind="reviews" id={rid} occurrenceId={oid} refreshKey={evidenceVersion} onOpen={async ref=>{const version=generation.current;try{const target=await resolveEvidenceSource(ref,cid);if(version===generation.current)setLinked(target);}catch(e){toast.error(formatError(e));}}}/>
+          <EvidencePanel clientId={cid} kind="reviews" id={rid} occurrenceId={oid} refreshKey={evidenceVersion} allowLink={!frozen} onOpen={async ref=>{const version=generation.current;try{const target=await resolveEvidenceSource(ref,cid);if(version===generation.current)setLinked(target);}catch(e){toast.error(formatError(e));}}}/>
         </>}
         {tab === 'Comments' && <>
           {!comments.length && <p className="text-sm text-ink-help">No comments yet.</p>}

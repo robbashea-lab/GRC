@@ -29,7 +29,7 @@ const CLIENT_NAV = [
   { to: "/vendors", label: "Vendors", icon: Building2, testid: "nav-vendors" },
   { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
   { to: "/contacts", label: "Contacts & Roles", icon: Users, testid: "nav-contacts" },
-  { to: "/evidence", label: "Evidence", icon: FolderArchive, testid: "nav-evidence" },
+  { to: "/evidence", label: "Evidence Library", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/onboarding", label: "Onboarding", icon: Sparkles, testid: "nav-onboarding" },
   { to: "/client-settings", label: "Client Settings", icon: Settings2, testid: "nav-client-settings", adminOnly: true },
 ];

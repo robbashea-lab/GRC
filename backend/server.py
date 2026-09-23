@@ -51,6 +51,7 @@ import review_occurrences
 import ai_governance
 import framework_governance
 import evidence_context
+import evidence_library
 import json
 import create_requests
 
@@ -613,15 +614,14 @@ class ExceptionIn(BaseModel):
     compensating_controls: Optional[str] = None
 
 
-class EvidenceIn(BaseModel):
+class EvidenceIn(evidence_library.Metadata):
     occurrence_id: Optional[str] = None
-    filename: str
+    filename: str = Field(min_length=1,max_length=300)
     client_id: str
     content_base64: str  # data URI or raw base64
     mime_type: Optional[str] = "application/octet-stream"
     linked_type: Optional[str] = None  # review | finding | risk | policy | vendor | asset
     linked_id: Optional[str] = None
-    notes: Optional[str] = None
 
 
 class CommentIn(BaseModel):
@@ -1627,11 +1627,19 @@ async def list_evidence(client_id: Optional[str] = Query(None), linked_type: Opt
     q = _scope_filter(user, client_id)
     if linked_type: q["linked_type"] = linked_type
     if linked_id: q["linked_id"] = linked_id
+    if linked_id and linked_type:
+        kind = evidence_context.ALIASES.get(linked_type)
+        if kind:
+            q.pop('linked_type',None);q.pop('linked_id',None)
+            q['$or']=[{'linked_type':{'$in':evidence_context.SOURCES[kind]['aliases']},'linked_id':linked_id},
+                      {'relationships':{'$elemMatch':{'kind':kind,'id':linked_id}}}]
     if linked_id and linked_type in ("review", "reviews"):
         review = await _authorized_parent("reviews", linked_id, user)
         selected = await _review_selection(review, occurrence_id)
         q.update({"client_id": review["client_id"], "linked_type": {"$in": ["review", "reviews"]},
                   **review_occurrences.occurrence_query(review, selected)})
+        q.pop('linked_type',None);q.pop('occurrence_id',None)
+        q.update(evidence_context.review_evidence_query(review,selected))
         historical = next((o for o in review.get("occurrences", []) if o["occurrence_id"] == selected), None)
         if historical:
             return await db.evidence.find({"client_id": review["client_id"],
@@ -1649,7 +1657,7 @@ async def create_evidence(body: EvidenceIn, user: Dict = Depends(get_current_use
         raise HTTPException(403, "Forbidden")
     async def execute(identity):
         return await _create_evidence(body=body, user=user, identity=identity)
-    return await create_requests.run(db, idempotency_key, user["user_id"], body.client_id, "evidence", body.model_dump(), execute)
+    return await create_requests.run(db, idempotency_key, user["user_id"], body.client_id, "evidence", body.model_dump(mode='json'), execute)
 
 
 @review_mutation
@@ -1675,7 +1683,7 @@ async def _create_evidence(body, user, identity=None):
     except (ValueError, base64.binascii.Error):
         raise HTTPException(422, "Invalid base64 evidence content")
     ev_id = _uid("ev")
-    doc = {"evidence_id": ev_id, **body.model_dump(), "version": 1, "sha256": hashlib.sha256(file_bytes).hexdigest(),
+    doc = {"evidence_id": ev_id, **body.model_dump(mode='json'), "size":len(file_bytes), "version": 1, "sha256": hashlib.sha256(file_bytes).hexdigest(),
            "uploaded_by": user["user_id"], "uploaded_by_email": user["email"],
            "created_at": _now()}
     doc = await create_requests.insert_primary(db, "evidence", doc, identity)
@@ -1716,6 +1724,8 @@ async def delete_evidence(ev_id: str, user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Forbidden")
     if await db.reviews.find_one({"$or": [{"completion_snapshot.evidence.evidence_id": ev_id}, {"occurrences.evidence.evidence_id": ev_id}]}):
         raise HTTPException(409, "Evidence referenced by a completed review must be retained")
+    if await evidence_library.protected(db, doc):
+        raise HTTPException(409, 'Evidence supporting retained history must be retained')
     if await db.vendors.find_one({"client_id":doc["client_id"],"$or":[{"contract_evidence_ids":ev_id},{"assurance_records.evidence_ids":ev_id},{"vendor_id":doc.get("linked_id"),"status":{"$in":["inactive","terminated"]}}]}):
         raise HTTPException(409,"Vendor assurance, contract and historical evidence must be retained")
     if doc.get("linked_type") in ("risk","risks") and await db.risks.find_one({"risk_id":doc.get("linked_id"),"client_id":doc["client_id"],"status":{"$in":["closed","retired"]}}):
@@ -3581,8 +3591,8 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     if current["status"] == "needs_scheduling":
         raise HTTPException(422, "An administrator must schedule this Review before completion")
     scope = review_occurrences.occurrence_query(review, body.occurrence_id)
-    evidence = await db.evidence.find({"client_id": review["client_id"], "linked_type": {"$in": ["review", "reviews"]},
-        "linked_id": review_id, "archived_at": None, **scope}, {"_id": 0, "content_base64": 0}).to_list(None)
+    evidence = await db.evidence.find({"client_id": review["client_id"], "archived_at": None,
+        **evidence_context.review_evidence_query(review, body.occurrence_id)}, {"_id": 0, "content_base64": 0}).to_list(None)
     findings = await db.findings.count_documents({"client_id": review["client_id"], "review_id": review_id, **scope})
     completed = review_occurrences.snapshot(review, evidence, findings, user, _now())
     if body.completion_notes is not None:
@@ -4846,6 +4856,7 @@ import sys
 app.include_router(ai_governance.router_for(sys.modules[__name__]))
 app.include_router(framework_governance.router_for(sys.modules[__name__]))
 app.include_router(policy_approval.router_for(sys.modules[__name__]))
+app.include_router(evidence_library.router_for(sys.modules[__name__]))
 app.include_router(entity_router)
 
 

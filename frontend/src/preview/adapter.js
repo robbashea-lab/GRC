@@ -18,7 +18,7 @@ import { onboard, action } from './workflows';
 import { guardEdit } from './decisions';
 import { history, reviewEvent } from './reviews';
 import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
-import {evidencePage,evidenceAccess} from './evidence';
+import {evidencePage,evidenceAccess,evidenceLibraryRequest} from './evidence';
 import {evidenceKind} from '../lib/evidenceReferences';
 const SESSION = 'grc_demo_entered';
 // Loaded only by the explicit demo build. No request is forwarded to any server.
@@ -67,6 +67,7 @@ export async function previewAdapter(config) {
     const parts = path.split('/').filter(Boolean),
       [kind, id, name] = parts;
     const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
+    if(kind==='evidence-library'){const data=evidenceLibraryRequest(db,method,parts,params,body);if(method!=='get')saveStore(db);return respond(data);}
     // Portfolio drill-ins use the same authorized client boundary as the server.
     // This remains a Demo simulation, never an authorization mechanism for real data.
     if(method==='get') {
@@ -225,10 +226,13 @@ export async function previewAdapter(config) {
           return respond(r);
         }
         let rows = list(db, kind, params.client_id).filter(r => Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
+        if(kind==='evidence')rows=list(db,kind,params.client_id).filter(r=>!params.linked_id ||
+          (r.linked_id===params.linked_id&&evidenceKind(r.linked_type)===evidenceKind(params.linked_type)) ||
+          r.relationships?.some(l=>l.kind===evidenceKind(params.linked_type)&&l.id===params.linked_id));
         if(kind==='evidence')rows=rows.filter(r=>!r.archived_at&&evidenceAccess(db.user,r.client_id)).map(({content_base64,...metadata})=>metadata);
         if (kind === 'reviews') rows = rows.map(reviewView);
         if (kind === 'evidence' && params.linked_id && ['review','reviews'].includes(params.linked_type))
-          rows = rows.filter(r => belongsToOccurrence(r,record(db,'reviews',params.linked_id),params.occurrence_id));
+          rows = rows.filter(r => (r.linked_id===params.linked_id&&belongsToOccurrence(r,record(db,'reviews',params.linked_id),params.occurrence_id))||r.relationships?.some(l=>l.kind==='reviews'&&l.id===params.linked_id&&l.occurrence_id===(params.occurrence_id||record(db,'reviews',params.linked_id).current_occurrence_id)));
         return respond(rows);
       }
       return fail(404, 'This view is not implemented in the demo.');
@@ -358,7 +362,10 @@ export async function previewAdapter(config) {
         if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id||r.ai_system_id)) throw new Error('Governance records and their Review obligations must be retained.');
         if (kind==='tasks'&&(r.status==='done'||r.completed_at) || kind==='evidence'&&db.tasks.some(t=>t.task_id===r.linked_id&&t.client_id===r.client_id&&t.status==='done')) throw new Error('Completed Action Items and their evidence must be retained.');
         if (kind === 'reviews' && (r.status === 'completed' || r.occurrences?.length) || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id) || v.occurrences?.some(o => o.evidence?.some(e => e.evidence_id === id)))) throw new Error('Completed reviews and their evidence must be retained.');
-        if(kind==='evidence')r.archived_at=now();
+        if(kind==='evidence'){
+          if(r.relationships?.some(l=>['risks','tasks','vendors','ai_systems'].includes(l.kind)&&(db[l.kind]||[]).some(p=>p.client_id===r.client_id&&p[ids[l.kind]]===l.id&&['closed','retired','done','inactive','terminated'].includes(p.status))))throw new Error('Evidence supporting retained history must be retained');
+          r.archived_at=now();
+        }
         else db[kind] = db[kind].filter(x => x[ids[kind]] !== id);
         audit(db, 'delete', kind, r);
         return save({
@@ -377,9 +384,9 @@ export async function previewAdapter(config) {
           if (['review','reviews'].includes(body.linked_type) && target.status === 'completed') throw new Error('Completed review evidence is frozen.');
           if (['review','reviews'].includes(body.linked_type)) assertCurrentOccurrence(target,body.occurrence_id);
         }
-        body.size = Math.floor(body.content_base64.split(',').pop().length * 3 / 4);
         body.version = 1;
         const bytes=Uint8Array.from(atob(body.content_base64.split(',').pop()),c=>c.charCodeAt(0));
+        body.size = bytes.length;
         if(globalThis.crypto?.subtle)body.sha256=Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
         else delete body.sha256; // Never invent a digest where Web Crypto is unavailable.
         body.uploaded_at = now();

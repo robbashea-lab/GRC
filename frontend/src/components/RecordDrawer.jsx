@@ -537,7 +537,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     a.download = data.filename; a.click();
   }
   async function deleteEv(ev) {
-    if (!window.confirm(`Delete "${ev.filename}"?`)) return;
+    if (!window.confirm(`Delete "${ev.filename}" from the library? It has ${ev.references?.length||1} source/supporting references. This is not an unlink. Retained history and bytes are not erased; retention rules apply.`)) return;
     try { await api.delete(`/evidence/${ev.evidence_id}`); loadEvidence(); }
     catch (e) { toast.error(formatError(e)); }
   }

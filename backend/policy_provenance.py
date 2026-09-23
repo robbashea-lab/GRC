@@ -35,8 +35,9 @@ async def snapshot(s, policy):
         raise HTTPException(422, "Update the approval basis to match the current Policy version")
     if source.evidence_id:
         evidence = await s.db.evidence.find_one({"evidence_id": source.evidence_id,
-            "client_id": policy["client_id"], "linked_type": {"$in": ["policy", "policies"]},
-            "linked_id": policy["policy_id"], "archived_at": None}, {"_id": 0, "content_base64": 0})
+            "client_id": policy["client_id"], "archived_at": None, '$or':[
+                {'linked_type':{'$in':['policy','policies']},'linked_id':policy['policy_id']},
+                {'relationships':{'$elemMatch':{'kind':'policies','id':policy['policy_id']}}}]}, {"_id": 0, "content_base64": 0})
         if not evidence or not evidence.get("sha256"):
             raise HTTPException(422, "Choose available hashed Evidence linked to this Policy")
         basis = {"type": "evidence", **{k: evidence.get(k) for k in ("evidence_id", "filename", "version", "sha256")}}

@@ -36,7 +36,7 @@ export function reviewAction(db, id, name, body) {
     return reviewView(review);
   }
   const findings = list(db,'findings',review.client_id).filter(f => f.review_id === id && belongsToOccurrence(f,review));
-  const evidence = list(db,'evidence',review.client_id).filter(e => e.linked_id === id && ['review','reviews'].includes(e.linked_type) && belongsToOccurrence(e,review));
+  const evidence = list(db,'evidence',review.client_id).filter(e => !e.archived_at&& ((e.linked_id === id && ['review','reviews'].includes(e.linked_type) && belongsToOccurrence(e,review)) || e.relationships?.some(r=>r.kind==='reviews'&&r.id===id&&r.occurrence_id===occurrenceId(review))));
   const {occurrences, ...execution} = current;
   const completed = clone({...execution, occurrence_id:occurrenceId(review), status:'completed', completed_at:now(), completion_date:now(),
     completed_by:db.user.user_id, completed_by_name:db.user.name, notes:body.completion_notes ?? review.notes,
