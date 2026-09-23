@@ -103,7 +103,7 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
     }
     assert.deepEqual((await db()).reviews.filter(r=>r.client_id===cid),reviews);
     for(const route of ['dashboard','calendar','reviews','findings','action-items','risks','policies','vendors','ai-governance','contacts','evidence','onboarding','client-settings',...cases.map(c=>'compliance/'+c[0])]){await go('/'+route);await expect(page.locator('main')).not.toBeEmpty();}
-    for(const width of [1440,1280,1024,768]){await page.setViewportSize({width,height:1100});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'overflow at '+width);}
+    for(const width of [1440,1280,1024,768]){await page.setViewportSize({width,height:1100});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),'overflow at '+width);}
     await page.evaluate(()=>localStorage.setItem('grc_client_id','demo_dunder'));await go('/compliance/nist-csf-2?assessment='+initial.framework_assessments.find(a=>a.client_id===cid).framework_assessment_id);await expect(drawer()).toHaveCount(0);
     assert.deepEqual(errors,[]);console.log('PASS: 394 assessments, unchanged shared Reviews, 18 routes, four widths, wrong-client link excluded, no console errors.');
   }catch(e){if(process.env.QA_ARTIFACTS)await page.screenshot({path:path.join(process.env.QA_ARTIFACTS,'operator-failure.png'),fullPage:true});throw e;}finally{await browser.close();}

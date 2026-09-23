@@ -106,7 +106,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       setCurrent(data); setForm({...data,due_date:data.due_date?.slice(0,10) || ''}); onSaved?.(); return data;
     }
     if (Object.keys(patch).length) {
-      const {data} = await api.patch(`/reviews/${current.review_id}`,{...patch,expected_occurrence_id:occurrenceId(current)});
+      const {data} = await api.patch(`/reviews/${current.review_id}`,{...patch,expected_occurrence_id:occurrenceId(current),expected_updated_at:current.updated_at??null});
       setCurrent(data); onSaved?.(); return data;
     }
     return current;

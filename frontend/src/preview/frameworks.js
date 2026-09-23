@@ -101,6 +101,8 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
   if(method==='patch'&&!operation){
+    if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_assessed??null))throw new Error('Assessment changed since it was opened; reload before saving');
+    body={...body};delete body.expected_last_assessed;
     const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile'];
     if(Object.keys(body).some(k=>!fields.includes(k)))throw new Error('Unknown or immutable assessment fields');
     if('csf_profile' in body){
@@ -133,7 +135,7 @@ export function frameworkRequest(db,path,method,params,body){
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
     const changed=Object.keys(body).filter(k=>body[k]!==row[k]);
-    if(changed.length){Object.assign(row,body,{last_assessed:now(),assessed_by:db.user.user_id});row.assessment_history.push({...Object.fromEntries(fields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
+    if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});row.assessment_history.push({...Object.fromEntries(fields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
     return row;
   }
   if(method==='post'&&operation==='links'){

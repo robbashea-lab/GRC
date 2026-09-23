@@ -180,6 +180,18 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _next_write_time(previous: Optional[str]) -> str:
+    """Keep optimistic edit tokens distinct when the system clock repeats."""
+    current = datetime.fromisoformat(_now())
+    if previous:
+        prior = datetime.fromisoformat(previous.replace("Z", "+00:00"))
+        if prior.tzinfo is None:
+            prior = prior.replace(tzinfo=timezone.utc)
+        if prior >= current:
+            current = prior + timedelta(microseconds=1)
+    return current.isoformat()
+
+
 # ---------------- Password ----------------
 def hash_password(p: str) -> str:
     # Match the existing minimum used by password reset; bcrypt 5 rejects
@@ -2295,6 +2307,8 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     for field in ("title", "name"):
         if field in changes and (not isinstance(changes[field], str) or not changes[field].strip()):
             raise HTTPException(422, field.title() + " is required")
+    if changes.get("due_date") and not review_occurrences.scheduled_date(changes["due_date"]):
+        raise HTTPException(422, "Invalid due date")
     if "severity" in changes and changes["severity"] not in ["low", "medium", "high", "critical"]:
         raise HTTPException(422, "Invalid severity")
     if changes.get("status") in targets.get(kind, set()) or (kind == "policies" and changes.get("presence") == "verified_existing") or (kind == "risks" and changes.get("treatment") == "accept"):
@@ -2339,7 +2353,9 @@ async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Op
         scoped_clients = await db.risks.distinct("client_id", q)
         for scoped_client in scoped_clients:
             await risk_ids.initialize(db, scoped_client)
-    docs = await db[_coll_for(kind)].find(q, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    docs = await db[_coll_for(kind)].find(q, {"_id": 0}).sort("created_at", -1).to_list(1001)
+    if len(docs) > 1000:
+        raise HTTPException(413, "This register exceeds the current 1,000-record limit. Use an export or contact your administrator. No partial results shown.")
     if kind == "vendors":
         reviews = await db.reviews.find(q, {"_id":0}).to_list(None)
         return [vendor_governance.view(d,reviews) for d in docs]
@@ -2434,6 +2450,10 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(403, "Forbidden")
     expected_occurrence = (body or {}).get("expected_occurrence_id")
     incoming = dict(body or {})
+    if "expected_updated_at" in incoming:
+        expected = incoming.pop("expected_updated_at")
+        if expected != existing.get("updated_at"):
+            raise HTTPException(409, "Record changed since it was opened; reload before saving")
     if kind == "reviews":
         incoming.pop("expected_occurrence_id", None)
         if expected_occurrence:
@@ -2502,14 +2522,14 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     if kind == "tasks" and "status" in body:
         body.update({"completed_at": _now() if body["status"] == "done" else None,
                      "completed_by": user["user_id"] if body["status"] == "done" else None})
-    body["updated_at"] = _now()
+    body["updated_at"] = _next_write_time(existing.get("updated_at"))
     query = {id_field: item_id}
-    if kind in ("tasks", "policies"):
-        query["updated_at"] = existing.get("updated_at")
     if kind == "reviews":
-        query.update({"current_occurrence_id": existing.get("current_occurrence_id"), "updated_at": existing.get("updated_at")})
+        query["current_occurrence_id"] = existing.get("current_occurrence_id")
+    # Also protect the read/validate/write window, independently of browser state.
+    query["updated_at"] = existing.get("updated_at")
     result = await db[_coll_for(kind)].update_one(query, {"$set": body})
-    if kind in ("reviews", "tasks", "policies") and not result.matched_count:
+    if not result.matched_count:
         raise HTTPException(409, "Record changed; reload before saving")
     if kind == "tasks" and existing.get("finding_id"):
         await remediation.synchronize(db, existing, user, _now, audit)

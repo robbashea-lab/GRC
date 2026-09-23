@@ -1,5 +1,24 @@
 import {reviewSchedule,reviewView,belongsToOccurrence,relatedReviewInitialValues} from './reviewOccurrences';
 import {reviewMatches} from './tableFilters';
+
+test.each(['monthly','quarterly','semiannual','annual','custom'])('out-of-range next %s date remains readable and requires scheduling',recurrence=>{
+  const row={review_id:'boundary',due_date:'9999-12-31',recurrence,custom_recurrence_days:3650,status:'upcoming'};
+  expect(reviewSchedule(row).next_review_date).toBeNull();
+  expect(reviewView(row).status).toBe('needs_scheduling');
+  expect(row.status).toBe('upcoming');
+});
+
+test('calendar anchors remain stable over 1, 3, 10 and 25 years',()=>{
+  for(const years of [1,3,10,25])for(const [recurrence,months] of Object.entries({monthly:1,quarterly:3,semiannual:6,annual:12})){
+    let row={due_date:'2024-01-31',recurrence};const seen=new Set();
+    for(let i=1;i<=years*12/months;i++){
+      const next=reviewSchedule(row),date=new Date(next.next_review_date),expected=new Date(Date.UTC(2024,i*months+1,0));
+      expect(date.toISOString()).toBe(expected.toISOString());
+      expect(seen.has(next.next_review_date)).toBe(false);seen.add(next.next_review_date);
+      row={...row,...next,due_date:next.next_review_date};
+    }
+  }
+});
 test.each([['monthly','2026-10-31'],['quarterly','2026-12-31'],['semiannual','2027-03-31'],['annual','2027-09-30']])('calendar cadence: %s', (recurrence,expected) => {
   expect(reviewSchedule({due_date:'2026-09-30',recurrence}).next_review_date.slice(0,10)).toBe(expected);
 });
@@ -9,6 +28,11 @@ test('month-end anchor and scheduled period survive late completions', () => {
   expect(reviewSchedule({...first,due_date:first.next_review_date,recurrence:'monthly'}).next_review_date.slice(0,10)).toBe('2026-03-30');
   expect(reviewSchedule({due_date:'2026-09-30',recurrence:'quarterly',completion_date:'2026-10-08'}).period).toBe('Q3 2026');
   expect(reviewView({review_id:'r',due_date:null,status:'upcoming'}).status).toBe('needs_scheduling');
+});
+
+test.each(['2026-02-29','2026-02-30','2026-04-31','not-a-date'])('invalid calendar date stays unscheduled: %s',due_date=>{
+  expect(reviewSchedule({due_date,recurrence:'monthly'}).next_review_date).toBeNull();
+  expect(reviewView({review_id:'r',due_date,recurrence:'none',status:'upcoming'}).status).toBe('needs_scheduling');
 });
 test('legacy untagged evidence belongs only to the original occurrence', () => {
   const r = {review_id:'r',current_occurrence_id:'next'};

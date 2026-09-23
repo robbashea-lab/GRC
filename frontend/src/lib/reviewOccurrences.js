@@ -1,8 +1,15 @@
 // Date-only obligations retain their calendar cadence, not the completion timestamp.
 export const occurrenceId = review => review.current_occurrence_id || 'occ_' + review.review_id;
+export function scheduledDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}(?:$|T| )/.test(value)) return null;
+  const day = value.slice(0,10), calendar = new Date(day + 'T00:00:00Z'), date = new Date(value);
+  // Date.parse normalizes February 30 instead of rejecting it.
+  if (!Number.isFinite(calendar.getTime()) || calendar.toISOString().slice(0,10) !== day || !Number.isFinite(date.getTime()) || date.getUTCFullYear() < 1 || date.getUTCFullYear() > 9999) return null;
+  return date;
+}
 export function reviewSchedule(review, resetAnchor = false) {
-  const date = new Date(review.due_date || NaN);
-  const valid = !Number.isNaN(date.getTime());
+  const date = scheduledDate(review.due_date);
+  const valid = !!date;
   const recurrence = review.recurrence || 'none';
   const anchor = (!resetAnchor && review.schedule_anchor) || (valid ? {
     day: date.getUTCDate(),
@@ -21,9 +28,10 @@ export function reviewSchedule(review, resetAnchor = false) {
       date.setUTCDate(1); date.setUTCMonth(month + months);
       const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
       date.setUTCDate(anchor.month_end ? last : Math.min(anchor.day, last));
-      next = date.toISOString();
+      if (date.getUTCFullYear() <= 9999) next = date.toISOString();
     } else if (recurrence === 'custom' && Number.isInteger(review.custom_recurrence_days) && review.custom_recurrence_days > 0) {
-      next = new Date(date.getTime() + review.custom_recurrence_days * 86400000).toISOString();
+      const candidate = new Date(date.getTime() + review.custom_recurrence_days * 86400000);
+      if (!Number.isNaN(candidate.getTime()) && candidate.getUTCFullYear() <= 9999) next = candidate.toISOString();
     }
   }
   return {period, next_review_date:next, schedule_anchor:anchor};
@@ -31,7 +39,7 @@ export function reviewSchedule(review, resetAnchor = false) {
 export function reviewView(review) {
   const result = {...review, ...reviewSchedule(review), current_occurrence_id:occurrenceId(review)};
   if (!['completed','cancelled'].includes(review.status)) {
-    const missing = !review.due_date || Number.isNaN(Date.parse(review.due_date)) || ('recurrence' in review && [null,''].includes(review.recurrence))
+    const missing = !scheduledDate(review.due_date) || ('recurrence' in review && [null,''].includes(review.recurrence))
       || (!['none','',null,undefined].includes(review.recurrence) && !result.next_review_date);
     if (missing) result.status = 'needs_scheduling';
     else if (review.status === 'needs_scheduling') result.status = 'upcoming';

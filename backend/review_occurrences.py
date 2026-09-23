@@ -31,10 +31,15 @@ def schedule(review, reset_anchor=False):
         if recurrence in MONTHS:
             month0 = date.month - 1 + MONTHS[recurrence]
             year, month = date.year + month0 // 12, month0 % 12 + 1
-            last = monthrange(year, month)[1]
-            next_date = date.replace(year=year, month=month, day=last if anchor["month_end"] else min(anchor["day"], last)).isoformat()
+            # Imported extreme dates must remain readable, not crash the register.
+            # A missing next date makes an active recurring Review Needs Scheduling.
+            if year <= datetime.max.year:
+                last = monthrange(year, month)[1]
+                next_date = date.replace(year=year, month=month, day=last if anchor["month_end"] else min(anchor["day"], last)).isoformat()
         elif recurrence == "custom" and isinstance(review.get("custom_recurrence_days"), int) and review["custom_recurrence_days"] > 0:
-            next_date = (date + timedelta(days=review["custom_recurrence_days"])).isoformat()
+            days = review["custom_recurrence_days"]
+            if days <= (datetime.max.replace(tzinfo=date.tzinfo) - date).days:
+                next_date = (date + timedelta(days=days)).isoformat()
     return {"period": label, "next_review_date": next_date, "schedule_anchor": anchor}
 
 

@@ -315,7 +315,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (kind === "policies" && (record?.schedule_from_reviews || related.reviews?.length)) { delete clean.next_review_date; delete clean.last_reviewed_at; }
       let savedRecord;
       if (isEdit) {
-        savedRecord=(await api.patch(`/${kind}/${record[idField]}`, clean)).data;
+        savedRecord=(await api.patch(`/${kind}/${record[idField]}`, {...clean,expected_updated_at:record.updated_at??null})).data;
         if(kind!=="tasks"||savedRecord.status!=="done"||record.status==="done")toast.success("Saved");
       } else {
         savedRecord=(await api.post(`/${kind}`, clean)).data;
@@ -390,7 +390,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   async function raiseAsRisk() {
     if (record?.risk_id) { toast.info("A risk is already linked to this finding"); return; }
-    if (!confirm(`Raise an unassessed risk from "${record.title}"? Rate its likelihood and impact in the Risk Register.`)) return;
+    if (!window.confirm(`Raise an unassessed risk from "${record.title}"? Rate its likelihood and impact in the Risk Register.`)) return;
     try {
       const { data } = await api.post(`/findings/${record[idField]}/raise-risk`);
       toast.success("Risk raised · assessment required");
@@ -534,7 +534,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     a.download = data.filename; a.click();
   }
   async function deleteEv(ev) {
-    if (!confirm(`Delete "${ev.filename}"?`)) return;
+    if (!window.confirm(`Delete "${ev.filename}"?`)) return;
     try { await api.delete(`/evidence/${ev.evidence_id}`); loadEvidence(); }
     catch (e) { toast.error(formatError(e)); }
   }

@@ -115,6 +115,11 @@ export function validate(db, kind, body, existing) {
 }
 export function write(db, kind, body, id) {
   const existing = id ? record(db, kind, id) : null;
+  if (existing && Object.prototype.hasOwnProperty.call(body, 'expected_updated_at') && body.expected_updated_at !== (existing.updated_at ?? null)) {
+    throw new Error('Record changed since it was opened; reload before saving');
+  }
+  body = { ...body };
+  delete body.expected_updated_at;
   validateAssignment(db, kind, { ...existing, ...body }, existing);
   const defaults = {
     clients: {
@@ -163,7 +168,8 @@ export function write(db, kind, body, id) {
     [ids[kind]]: id || uid(kind),
     created_at: existing?.created_at || now(),
     created_by: existing?.created_by || db.user.user_id,
-    updated_at: now()
+    // Distinguish consecutive edits even within the same millisecond.
+    updated_at: new Date(Math.max(Date.now(), (Date.parse(existing?.updated_at) || 0) + 1)).toISOString()
   };
   if (kind === 'tasks') {
     if(existing) {row.created_at=existing.created_at;row.created_by=existing.created_by;}

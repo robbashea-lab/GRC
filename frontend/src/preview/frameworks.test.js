@@ -20,6 +20,16 @@ test('new intake begins with programs; catalog is IG1 only; cadence warning sepa
   expect(cis.review_plans.find(p=>p.key==='data-recovery').default_cadence).toBe('annual');
 });
 
+test('stale assessment save preserves the newer conclusion and history',async()=>{
+  const w=await configure(),row=w.assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
+  await api.patch(path,{notes:'Newer conclusion',expected_last_assessed:null});
+  await expect(api.patch(path,{notes:'Stale conclusion',expected_last_assessed:null})).rejects.toThrow('Assessment changed since it was opened');
+  const saved=(await api.get(path)).data;
+  expect(saved.notes).toBe('Newer conclusion');
+  expect(saved.assessment_history).toHaveLength(1);
+  expect(saved.assessment_history[0]).not.toHaveProperty('expected_last_assessed');
+});
+
 test.each([[],['cis-ig1'],['hipaa'],['iso-27001','soc-2'],['cis-ig1','hipaa','nist-csf-2']])('selection %j creates only implemented requirements and reviews',async(...args)=>{
   const programs=args;
   expect((await get('frameworks/cis-ig1')).assessments).toHaveLength(0);

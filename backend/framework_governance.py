@@ -86,6 +86,7 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
 
 class AssessmentPatch(BaseModel):
     model_config=ConfigDict(extra='forbid')
+    expected_last_assessed: Optional[str]=Field(default=None,max_length=100)
     status: Optional[Literal['not_assessed','in_progress','addressed','needs_attention','not_applicable']]=None
     implementation: Optional[str]=Field(default=None,max_length=20000)
     technology: Optional[str]=Field(default=None,max_length=4000)
@@ -186,7 +187,10 @@ def router_for(s):
         return config
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
-        old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True);data={**old,**changes}
+        old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)
+        if 'expected_last_assessed' in changes and changes.pop('expected_last_assessed') != old.get('last_assessed'):
+            raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
+        data={**old,**changes}
         if 'csf_profile' in changes and old['framework_key']!='nist-csf-2':
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
         if 'management_controls' in changes:
@@ -218,8 +222,9 @@ def router_for(s):
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed:
-            at=s._now();snapshot={k:data.get(k) for k in AssessmentPatch.model_fields};snapshot.update(at=at,by=user['user_id'])
-            await s.db.framework_assessments.update_one({'framework_assessment_id':aid,'client_id':old['client_id']},{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
+            at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed'};snapshot.update(at=at,by=user['user_id'])
+            result=await s.db.framework_assessments.update_one({'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')},{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
+            if not result.matched_count:raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status']})
         return await parent(aid,user)
     @router.get('/framework_assessments/{aid}')
