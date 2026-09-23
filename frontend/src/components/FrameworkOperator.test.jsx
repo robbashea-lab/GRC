@@ -21,11 +21,11 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 const button=name=>[...container.querySelectorAll('button')].find(b=>b.textContent===name);
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="client" onOpenChange={()=>{}}/>));}
 test('default assessment combines source context, narrative and status with progressive guidance',async()=>{
-  await render();expect(container.textContent).toContain('Reference · CIS IG1 · 1.1');expect(container.textContent).toContain('What this means');
+  await render();expect(container.textContent).toContain('Framework Reference');expect(container.textContent).toContain('Implementation Guidance');
   expect(container.querySelector('[aria-label="Assessment notes"]')).toBeTruthy();expect(container.querySelector('[aria-label="Assessment Status"]')).toBeTruthy();
   expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Not Assessed');
-  expect(container.textContent).toContain('Framework source reference');
-  expect(container.textContent).not.toContain('What to ask the client');expect(container.querySelector('details').open).toBe(false);
+  expect(container.textContent).toContain('Open official reference');
+  expect(container.textContent).not.toContain('What to ask the client');expect(container.querySelector('details')).toBeNull();
   expect(container.querySelector('[aria-label="Additional notes (previously recorded)"]').value).toBe('Legacy narrative retained');
 });
 test('notes save once, confirm success and remain readable in history including legacy notes',async()=>{
@@ -35,7 +35,7 @@ test('notes save once, confirm success and remain readable in history including 
   await act(async()=>button('Save assessment').click());
   expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({implementation:'Inventory omits remote devices.',notes:'Legacy narrative retained'}));
   expect(container.textContent).toContain('Assessment saved.');
-  await act(async()=>{button('History').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));button('History').focus();});
+  await act(async()=>{button('Activity / History').click();});
   expect(container.textContent).toContain('Inventory omits remote devices.');expect(container.textContent).toContain('Additional notes: Legacy narrative retained');
 });
 test.each(['client_readonly','client_viewer'])('%s retains context but cannot save an assessment',async role=>{
@@ -55,7 +55,7 @@ test('saved conclusion does not change until the draft is saved',async()=>{
 
 test('unavailable historical actors remain distinct from missing attribution',async()=>{
   record.assessment_history=[{status:'in_progress',at:'2026-09-01',by:'former',implementation:'Earlier assessment retained'},{status:'not_assessed',at:'2026-08-01'}];
-  await render();await act(async()=>{button('History').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));button('History').focus();});
+  await render();await act(async()=>{button('Activity / History').click();});
   expect(container.textContent).toContain('Former / unavailable user');
   expect(container.textContent).toContain('Not recorded');
   expect(container.textContent).toContain('Earlier assessment retained');

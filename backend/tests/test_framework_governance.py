@@ -9,6 +9,50 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
 
+    async def test_workspace_review_setup_reuses_onboarding_and_preserves_schedule(self):
+        workspace=await self.configure()
+        plan=CIS['review_plans'][0]
+        row=next(a for a in workspace['assessments'] if a['definition_id'] in plan['safeguards'])
+        old=await server.db.reviews.find_one({'client_id':'a','framework_plan_key':plan['key']})
+        count=await server.db.reviews.count_documents({'client_id':'a'})
+        path='/api/framework_assessments/'+row['framework_assessment_id']+'/reviews'
+        for _ in range(2):
+            response=await self.client.post(path,json={'plan_key':plan['key'],'title':'Do not overwrite','due_date':'2027-01-01'})
+            self.assertEqual(response.status_code,200,response.text)
+            self.assertEqual(response.json()['review_id'],old['review_id'])
+            self.assertEqual(response.json()['due_date'],old['due_date'])
+            self.assertEqual(response.json()['title'],old['title'])
+        self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),count)
+        for definition in plan['safeguards']:
+            linked=await server.db.framework_assessments.find_one({'client_id':'a','framework_key':'cis-ig1','definition_id':definition})
+            self.assertIn({'kind':'reviews','id':old['review_id']},linked['related_links'])
+
+    async def test_workspace_review_creation_retry_validation_and_authorization(self):
+        workspace=await self.configure()
+        aid=workspace['assessments'][0]['framework_assessment_id']
+        path='/api/framework_assessments/'+aid+'/reviews'
+        body={'title':'Organization inventory validation','recurrence':'quarterly','due_date':'2027-02-10','owner_id':'member'}
+        invalid=await self.client.post(path,json={**body,'due_date':'2027-02-30'})
+        self.assertEqual(invalid.status_code,422,invalid.text)
+        first=await self.client.post(path,json=body)
+        self.assertEqual(first.status_code,200,first.text)
+        second=await self.client.post(path,json=body)
+        self.assertEqual(second.json()['review_id'],first.json()['review_id'])
+        self.assertEqual(first.json()['status'],'upcoming')
+        self.assertTrue(first.json()['current_occurrence_id'])
+        calendar=await self.client.get('/api/calendar',params={'client_id':'a','start':'2027-02-01','end':'2027-02-28','scope':'active'})
+        self.assertEqual(calendar.status_code,200,calendar.text)
+        self.assertIn(first.json()['review_id'],[r['id'] for r in calendar.json()['reviews']['2027-02-10']])
+        await server.db.reviews.insert_one({'review_id':'foreign-review','client_id':'b','title':'Private'})
+        forbidden=await self.client.post(path,json={'review_id':'foreign-review'})
+        self.assertEqual(forbidden.status_code,422)
+        self.sign_in('member')
+        forbidden=await self.client.post(path,json={'review_id':'foreign-review'})
+        self.assertEqual(forbidden.status_code,403)
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        forbidden=await self.client.post(path,json=body)
+        self.assertEqual(forbidden.status_code,403)
+
     def body(self, programs=('cis-ig1',), cid='a'):
         return {'client_id': cid, 'finalize': True, 'state': {
             'version': 3, 'step': 3, 'policies': {p['key']: 'unsure' for p in BASELINE_CATALOG['policies']},

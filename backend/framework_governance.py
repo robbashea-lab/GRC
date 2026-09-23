@@ -1,6 +1,7 @@
 """Tenant-authorized framework assessments and shared operational relationships."""
 import json
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -106,6 +107,38 @@ class LinkInput(BaseModel):
     kind: Literal['reviews','findings','tasks','risks','policies','evidence','requirements','vendors']
     id: str=Field(min_length=1,max_length=160)
 
+class ReviewSetup(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    plan_key: Optional[str]=Field(default=None,max_length=160)
+    review_id: Optional[str]=Field(default=None,max_length=160)
+    title: str=Field(default='',max_length=500)
+    owner_id: Optional[str]=None
+    recurrence: Literal['monthly','quarterly','semiannual','annual','custom']='quarterly'
+    custom_recurrence_days: Optional[int]=Field(default=None,ge=1,le=3650)
+    due_date: Optional[str]=Field(default=None,max_length=10)
+
+async def workspace_work(s,cid,rows):
+    """Three bounded-field reads, no occurrence/evidence/history payloads or per-row queries."""
+    if not rows:return {}
+    projection={'_id':0,'client_id':1,'review_id':1,'finding_id':1,'task_id':1,'framework_assessment_id':1,'framework_key':1,'framework_safeguards':1,'status':1,'due_date':1}
+    reviews=await s.db.reviews.find({'client_id':cid},projection).to_list(None)
+    findings=await s.db.findings.find({'client_id':cid,'status':{'$nin':['closed','accepted']}},projection).to_list(None)
+    tasks=await s.db.tasks.find({'client_id':cid,'status':{'$nin':['done','cancelled']}},projection).to_list(None)
+    today=datetime.now(timezone.utc).date().isoformat()
+    result={}
+    for row in rows:
+        links=row.get('related_links') or [];aid=row['framework_assessment_id']
+        def linked(kind,ident):return {'kind':kind,'id':ident} in links
+        rs=[r for r in reviews if linked('reviews',r['review_id']) or (r.get('framework_key')==row['framework_key'] and row['definition_id'] in r.get('framework_safeguards',[]))]
+        rids={r['review_id'] for r in rs}
+        fs=[f for f in findings if linked('findings',f['finding_id']) or f.get('framework_assessment_id')==aid or f.get('review_id') in rids]
+        fids={f['finding_id'] for f in fs}
+        def overdue(r):return bool(r.get('due_date')) and r['due_date'][:10]<today
+        result[aid]={'review_ids':sorted(rids),'finding_ids':sorted(fids),'open_findings':len(fs),
+          'overdue_reviews':sum(overdue(r) for r in rs if r.get('status') not in ('completed','cancelled')),
+          'overdue_actions':sum(overdue(t) for t in tasks if linked('tasks',t['task_id']) or t.get('framework_assessment_id')==aid or t.get('review_id') in rids or t.get('finding_id') in fids)}
+    return result
+
 class FindingInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
     title:str=Field(min_length=1,max_length=500)
@@ -170,7 +203,7 @@ def router_for(s):
         retained={a['definition_id'] for a in rows}
         return {'framework':framework,'selected':bool(program),'configured':bool(rows),
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
-                'assessments':rows,'configuration':config,
+                'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows),
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
     @router.patch('/frameworks/soc-2/configuration')
     @s.configuration_mutation
@@ -189,6 +222,41 @@ def router_for(s):
         await s.audit(user,'SOC 2 readiness scope updated','client',body.client_id,body.client_id,
                       meta={'categories':config['categories'],'period_start':config['period_start'],'period_end':config['period_end']})
         return {**config,'expected_updated_at':at}
+    @router.post('/framework_assessments/{aid}/reviews')
+    async def setup_review(aid:str,body:ReviewSetup,user=Depends(s.get_current_user)):
+        row=await parent(aid,user,True);cid=row['client_id'];key=row['framework_key'];catalog=CATALOGS[key]
+        if not await s.db.requirements.find_one({'client_id':cid,'baseline_key':key,'baseline_response':'applies'}):raise HTTPException(409,'Activate the program before configuring Reviews')
+        plan=next((p for p in catalog['review_plans'] if p['key']==body.plan_key and row['definition_id'] in p['safeguards']),None)
+        if body.plan_key and not plan:raise HTTPException(422,'Review plan does not map to this requirement')
+        old=None
+        if body.review_id:
+            old=await target_record('reviews',body.review_id,user)
+            if old['client_id']!=cid:raise HTTPException(422,'Relationship must belong to this client')
+        elif plan:
+            equivalent=[p['key'] for c in CATALOGS.values() for p in c['review_plans'] if plan.get('baseline_key') and p.get('baseline_key')==plan['baseline_key']]
+            clauses=[{'framework_plan_key':plan['key']}]
+            if plan.get('baseline_key'):clauses.extend([{'baseline_key':plan['baseline_key']},{'framework_plan_key':{'$in':equivalent}}])
+            old=await s.db.reviews.find_one({'client_id':cid,'$or':clauses},{'_id':0})
+        canonical=next(((k,p) for k,c in CATALOGS.items() for p in c['review_plans'] if plan and plan.get('baseline_key') and p.get('baseline_key')==plan['baseline_key']), (key,plan))
+        rid=old['review_id'] if old else stable(cid,'review',canonical[1]['key'] if plan else 'requirement:'+row['definition_id'],canonical[0])
+        if not old:
+            old=await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0})
+        if not old:
+            if not body.title.strip():raise HTTPException(422,'Review title is required')
+            if body.due_date and not review_occurrences.scheduled_date(body.due_date):raise HTTPException(422,'Invalid Review date')
+            if body.recurrence=='custom' and not body.custom_recurrence_days:raise HTTPException(422,'Custom interval is required')
+            draft=s.ReviewIn(client_id=cid,title=body.title.strip(),review_type=plan['review_type'] if plan else 'requirements',owner_id=body.owner_id,recurrence=body.recurrence,custom_recurrence_days=body.custom_recurrence_days,due_date=body.due_date or None,status='upcoming' if body.due_date else 'needs_scheduling').model_dump()
+            await assignment_eligibility.validate(s.db,'reviews',draft,s._can_access_client)
+            draft.update(review_id=rid,created_at=s._now(),created_by=user['user_id'],framework_key=key,framework_safeguards=plan['safeguards'] if plan else [row['definition_id']])
+            if plan:draft.update(framework_plan_key=plan['key'],baseline_key=plan.get('baseline_key'),framework_basis=plan['basis'],framework_source_cadence=plan['source_cadence'])
+            draft.update(review_occurrences.schedule(draft));draft['current_occurrence_id']=review_occurrences.occurrence_id(draft)
+            inserted=await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':draft},upsert=True)
+            if inserted.upserted_id:await s.audit(user,'create','reviews',rid,cid,meta={'framework_assessment_id':aid})
+        mapped=plan['safeguards'] if plan else [row['definition_id']]
+        linked=await s.db.framework_assessments.update_many({'client_id':cid,'framework_key':key,'definition_id':{'$in':mapped}},{'$addToSet':{'related_links':{'kind':'reviews','id':rid}}})
+        if linked.modified_count:await s.audit(user,'Framework Review linked','framework_assessments',aid,cid,meta={'review_id':rid})
+        return await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0})
+
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)

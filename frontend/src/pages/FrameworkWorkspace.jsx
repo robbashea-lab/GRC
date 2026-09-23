@@ -2,49 +2,84 @@ import {useEffect,useMemo,useState} from 'react';
 import {Link,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
-import {frameworkCatalog,REQUIREMENT_TYPES,SPECIFICATION_LABELS} from '@/lib/frameworks';
-import {useTableControls,ColumnControl,TableFilterChips} from '@/components/TableControls';
+import {frameworkCatalog} from '@/lib/frameworks';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import FrameworkDrawer from '@/components/FrameworkDrawer';
 import {SocProgramSettings} from '@/components/SocReadiness';
-import {CSF_GAPS,prioritizeCsfGaps} from '@/lib/csfProfile';
 import {socConfiguration} from '@/lib/socReadiness';
 import {operatorStatuses,assessmentProgress} from '@/lib/frameworkOperator';
+import {groupRequirements,nextAssessment,matchesAssessment,sectionSummary,needsAttention,hierarchyPath,visibleSections} from '@/lib/frameworkWorkspace';
 
+const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',not_assessed:'Not Assessed',assessed:'Assessed'};
 const ISO_VIEWS={
-  isms:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
-  soa:{label:'Annex A / SoA',matches:r=>r.specification==='annex_control'},
+  isms_clause:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
+  annex_control:{label:'Annex A / SoA',matches:r=>r.specification==='annex_control'},
   audit:{label:'Internal Audit',matches:r=>['9.2.1','9.2.2','A.5.35'].includes(r.definition_id)},
   management:{label:'Management Review',matches:r=>r.definition_id.startsWith('9.3.')},
   treatment:{label:'Risk Treatment',matches:r=>['6.1.2','6.1.3','8.2','8.3'].includes(r.definition_id)},
   corrections:{label:'Corrective Actions',matches:r=>['10.1','10.2'].includes(r.definition_id)},
-  all:{label:'All ISO assessment records',matches:()=>true}
 };
+function readPreference(key){try{return JSON.parse(sessionStorage.getItem(key))||{};}catch{return {};}}
+function Sections({nodes,expanded,toggle,openRecord,statuses}){
+  return <div className="space-y-3">{visibleSections(nodes,expanded).map(node=>{
+    const summary=sectionSummary(node.rows),next=nextAssessment(node.rows),open=expanded.includes(node.key),id='framework-section-'+node.key.replaceAll('/','-');
+    return <section key={node.key} className={`rounded-lg border border-line bg-surface-card ${node.depth?'ml-3 sm:ml-6':''}`} aria-label={node.label}>
+      <div className="p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0"><h3 className="font-semibold text-sm">{node.label}</h3><p className="text-xs text-ink-secondary mt-1">{summary.total} requirements · {summary.assessed} assessed · {summary.attention} need attention · {summary.reviews} linked Reviews · {summary.findings} open Findings</p></div>
+        <div className="flex gap-1">{next&&<Button size="sm" variant="ghost" aria-label={`Continue ${node.label}`} onClick={()=>openRecord(next)}>Continue Assessment</Button>}<Button size="sm" variant="outline" aria-expanded={open} aria-controls={id} onClick={()=>toggle(node.key)}>{open?'Collapse':'Expand'}</Button></div>
+      </div>
+      {open&&<div id={id} className="border-t border-line p-3">{node.children.length?<p className="text-xs text-ink-secondary">{node.children.length} sections below</p>:<ul className="divide-y divide-line">{node.rows.map(row=><li key={row.framework_assessment_id} data-testid={'requirement-'+row.definition_id} className="py-3 flex flex-wrap justify-between gap-2">
+        <button className="text-left text-link font-medium text-sm min-w-0 flex-1" onClick={()=>openRecord(row)}>{row.definition_id} · {row.title}</button>
+        <div className="text-xs text-ink-secondary text-right"><p className={row.status==='needs_attention'?'text-semantic-critical':row.status==='in_progress'?'text-semantic-warning':''}>{statuses[row.status]||'Not Assessed'}</p>{row.csf_profile?.target_selected&&<p>Target priority: {row.csf_profile.priority||'Not prioritized'}</p>}{row.work?.overdue_reviews>0&&<p className="text-semantic-critical">{row.work.overdue_reviews} overdue Reviews</p>}{row.work?.open_findings>0&&<p>{row.work.open_findings} open Findings</p>}</div>
+      </li>)}</ul>}</div>}
+    </section>;
+  })}</div>;
+}
 export default function FrameworkWorkspace({frameworkKey,clientId}){
-  const [params,setParams]=useSearchParams();
-  const [csfView,setCsfView]=useState('current');
-  useEffect(()=>setCsfView('current'),[clientId,frameworkKey]);
-  const [isoView,setIsoView]=useState('isms'),[showRetained,setShowRetained]=useState(false);
-  useEffect(()=>setShowRetained(false),[clientId,frameworkKey]);
-  useEffect(()=>setIsoView('isms'),[clientId,frameworkKey]);
-  const {user}=useAuth(),[data,setData]=useState(null),[users,setUsers]=useState([]),[error,setError]=useState(''),[revision,setRevision]=useState(0),[search,setSearch]=useState('');
-  useEffect(()=>{const c=new AbortController();setError('');if(!clientId)return;Promise.all([api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal})]).then(([r,m])=>{if(!c.signal.aborted){setData(r.data);setUsers(m.data);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[frameworkKey,clientId,revision]);
-  useEffect(()=>{setData(null);setSearch('');},[frameworkKey,clientId]);
-  const catalog=frameworkCatalog(frameworkKey),isCis=frameworkKey==='cis-ig1',isIso=frameworkKey==='iso-27001',isCsf=frameworkKey==='nist-csf-2',isSoc=frameworkKey==='soc-2',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement');
-  const statuses=operatorStatuses(frameworkKey);
-  const rows=useMemo(()=>data?.assessments.map(a=>({...data.definitions.find(d=>d.id===a.definition_id),...a})).filter(a=>a.client_id===clientId)||[],[data,clientId]);
-  const scopedRows=isCsf?rows.filter(r=>csfView==='current'||(r.csf_profile?.target_selected&&(csfView==='target'||r.csf_profile.gap_state==='gap'))):isIso?rows.filter(ISO_VIEWS[isoView].matches):isSoc&&!showRetained?rows.filter(r=>data?.active_definition_ids?.includes(r.definition_id)):rows;
+  const [params,setParams]=useSearchParams(),{user}=useAuth();
+  const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
+  const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
+  const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
+  const [data,setData]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[search,setSearch]=useState(''),[filter,setFilter]=useState('all');
+  const [view,setView]=useState('all'),[showRetained,setShowRetained]=useState(false);
+  useEffect(()=>{const p=readPreference(preferenceKey);setPreference(p);setExpanded(p.section?[p.section]:[]);setData(null);setSearch('');setFilter('all');setView('all');setShowRetained(false);},[preferenceKey]);
+  useEffect(()=>{const c=new AbortController();setError('');if(!clientId)return;api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}).then(r=>{if(!c.signal.aborted)setData(r.data);}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[frameworkKey,clientId,revision]);
+  const remember=value=>{const p={...preference,...value};setPreference(p);try{sessionStorage.setItem(preferenceKey,JSON.stringify(p));}catch{/* UI preference only; assessment persistence is server-owned. */}};
+  const catalog=frameworkCatalog(frameworkKey),statuses=operatorStatuses(frameworkKey);
+  const rows=useMemo(()=>{
+    const byId=new Map((data?.assessments||[]).filter(a=>a.client_id===clientId).map(a=>[a.definition_id,a]));
+    return (data?.definitions||[]).filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
+  },[data,clientId]);
+  const scoped=rows.filter(r=>{
+    if(frameworkKey==='soc-2'&&!showRetained&&!data?.active_definition_ids?.includes(r.definition_id))return false;
+    if(frameworkKey==='nist-csf-2'&&view!=='all')return r.csf_profile?.target_selected&&(view==='target'||r.csf_profile.gap_state==='gap');
+    if(frameworkKey==='iso-27001'&&view!=='all')return ISO_VIEWS[view]?.matches(r);
+    return true;
+  });
+  const visible=scoped.filter(r=>matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
   const selected=rows.find(r=>r.framework_assessment_id===params.get('assessment'))||null;
-  const openRecord=row=>{const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);setParams(next);};
+  const openRecord=row=>{remember({lastId:row.framework_assessment_id,section:hierarchyPath(frameworkKey,row)[0].id});const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);setParams(next);};
   const closeRecord=()=>{const next=new URLSearchParams(params);next.delete('assessment');setParams(next,{replace:true});setRevision(n=>n+1);};
-  const items=catalog?.labels?.items||(item+'s');
-  const columns=useMemo(()=>[{key:'definition_id',label:'ID',sortable:true},...(isCsf?[{key:'function_name',label:'Function',filter:true}]:[]),{key:'control_name',label:isCis?'Control':isCsf?'Category':'Section',filter:true},{key:'title',label:item,sortable:true},{key:isCis?'type':'specification',label:isCis?'Requirement Type':'Specification',filter:true,labelValue:v=>(isCis?REQUIREMENT_TYPES:SPECIFICATION_LABELS)[v]},{key:'status',label:'Status',filter:true,labelValue:v=>operatorStatuses(frameworkKey)[v]},{key:'owner_id',label:'Owner',filter:true,emptyLabel:'Unassigned',optionsOnly:true,options:users.map(u=>({value:u.user_id,label:u.name||u.email}))}], [users,isCis,isCsf,item,frameworkKey]);
-  const table=useTableControls({columns,rows,module:'framework-'+frameworkKey,scope:clientId+':'+user?.user_id});
+  const toggle=key=>{setExpanded(old=>old.includes(key)?old.filter(k=>k!==key):[...old,key]);remember({section:key.split('/')[0]});};
+  const allKeys=ns=>ns.flatMap(n=>[n.key,...allKeys(n.children)]);
   if(error)return <p role="alert" className="text-sm">{error}</p>;
-  if(!data)return <p role="status" className="text-sm text-ink-muted">Loading program workspace…</p>;
-  if(!data.configured)return <section className="border border-line bg-surface-card rounded p-6 text-sm"><p>{data.selected?'Program selected for this client.':'Program not currently selected.'}</p><p className="text-ink-muted mt-2">Select Applies in Client Profile to initialize this program after onboarding. Existing records are not reset.</p><Link className="text-link underline" to="/client-profile?tab=program">Configure in Client Profile</Link></section>;
-  const visible=table.apply((isCsf&&csfView==='gaps'?prioritizeCsfGaps(scopedRows):scopedRows).filter(r=>(r.definition_id+' '+r.title+' '+r.control_name).toLowerCase().includes(search.toLowerCase())));
-  const progress=assessmentProgress(scopedRows),index=visible.findIndex(r=>r.framework_assessment_id===selected?.framework_assessment_id);
-  return <div className="space-y-5" data-testid={isCis?'cis-workspace':'framework-workspace'}>{!data.selected&&<p className="text-sm text-ink-muted">Historical program · This framework is no longer an active driver. Assessments and linked work are retained.</p>}{isCsf&&<div className="flex flex-wrap items-end gap-3"><label className="text-sm">CSF profile view<select aria-label="CSF profile view" className="block border border-line rounded bg-surface-card p-2 mt-1" value={csfView} onChange={e=>setCsfView(e.target.value)}><option value="current">Current Profile</option><option value="target">Target Profile</option><option value="gaps">Prioritized Gaps</option></select></label><p className="text-xs text-ink-secondary max-w-xl">All 106 outcomes are available for assessment. Target membership and gaps are explicit decisions. Filter by Function or Category; open a Subcategory to record its target and priority.</p></div>}{isSoc&&<><SocProgramSettings clientId={clientId} configuration={data.configuration||socConfiguration()} writable={data.selected&&['super_admin','platform_admin','client_contributor'].includes(user?.role)} onSaved={()=>setRevision(n=>n+1)}/><label className="text-xs text-ink-secondary flex gap-2 items-center"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope criteria</label></>}{isIso&&<div className="flex flex-wrap items-end gap-3"><label className="text-sm">ISO workspace view<select aria-label="ISO workspace view" value={isoView} onChange={e=>setIsoView(e.target.value)} className="block border border-line rounded bg-surface-card p-2 mt-1">{Object.entries(ISO_VIEWS).map(([key,v])=><option key={key} value={key}>{v.label}</option>)}</select></label><p className="text-xs text-ink-secondary max-w-xl">Governance work remains in linked Reviews, Risks, Findings and Actions. Open a requirement to manage its implementation and supporting Evidence.</p></div>}<div className="grid grid-cols-2 lg:grid-cols-6 gap-3"><div className="border border-line rounded p-3 text-sm">{isCis?'Total IG1 Safeguards':('Assessment '+items)}<strong className="block text-xl">{scopedRows.length}</strong></div>{Object.entries(statuses).map(([k,label])=><button key={k} className="text-left border border-line rounded p-3 text-sm" onClick={()=>table.setFilter('status',[k])}>{label}<strong className="block text-xl">{scopedRows.filter(r=>r.status===k).length}</strong></button>)}</div><p className="text-xs text-ink-muted">{isCis?'CIS Controls v8.1 · IG1 only.':catalog.scope_note} Status reflects recorded assessment, not certification. No compliance percentage is inferred.</p><p className="text-sm text-ink-secondary">Assessment progress: {progress.assessed} / {progress.applicable} applicable {items.toLowerCase()} assessed{progress.excluded? ` · ${progress.excluded} Not Applicable, excluded from this denominator`:''}. Assessed includes partial and unresolved results, not only implementation.</p>{params.get('assessment')&&!rows.some(r=>r.framework_assessment_id===params.get('assessment'))&&<p role="status" className="text-sm text-ink-secondary">This assessment is not available in the current client workspace.</p>}<Input aria-label={`Search ${items.toLowerCase()}`} placeholder={`Search ${items.toLowerCase()}…`} value={search} onChange={e=>setSearch(e.target.value)}/><TableFilterChips table={table}/>{isCsf&&csfView!=='current'&&!scopedRows.length&&<p className="text-sm text-ink-secondary">No {csfView==='target'?'targets selected':'explicit gaps recorded'}. Open a Subcategory in Current Profile to document a target and gap decision.</p>}<div className="register-table-frame overflow-x-auto border border-line rounded"><table className="w-full text-sm"><thead className="bg-surface-subtle"><tr>{columns.map(c=><th key={c.key} className="p-3 text-left"><ColumnControl table={table} column={c}/></th>)}<th className="p-3 text-left">Related</th></tr></thead><tbody>{visible.map(r=><tr key={r.framework_assessment_id} className="border-t border-line" data-testid={`${item.toLowerCase()}-${r.definition_id}`}><td className="p-3 font-mono whitespace-nowrap">{r.definition_id}</td>{isCsf&&<td className="p-3 text-xs">{r.function_name}</td>}<td className="p-3 text-xs text-ink-muted">{r.control_name}</td><td className="p-3"><button className="text-link text-left" onClick={()=>openRecord(r)}>{r.title}</button>{isCsf&&r.csf_profile?.target_selected&&<span className="block text-xs text-ink-secondary mt-1">Target: {r.csf_profile.target_outcome} · {r.csf_profile.priority||'Not prioritized'} · {CSF_GAPS[r.csf_profile.gap_state]}</span>}{isSoc&&!data.active_definition_ids?.includes(r.definition_id)&&<span className="block text-xs text-ink-secondary">Retained · outside current scope</span>}</td><td className="p-3 text-xs">{isCis?REQUIREMENT_TYPES[r.type]:SPECIFICATION_LABELS[r.specification]}{r.specification==='annex_control'&&<span className="block text-ink-secondary mt-1">SoA: {r.soa_applicability||'Not determined'}</span>}</td><td className="p-3 whitespace-nowrap">{statuses[r.status]}</td><td className="p-3">{users.find(u=>u.user_id===r.owner_id)?.name||'Unassigned'}</td><td className="p-3"><button className="text-link" aria-label={`Open ${item.toLowerCase()} ${r.definition_id} relationships`} onClick={()=>openRecord(r)}>Open</button></td></tr>)}</tbody></table>{!visible.length&&<div className="p-6 text-sm">No {items.toLowerCase()} match the current filters. <Button variant="ghost" onClick={()=>{table.clear();setSearch('');}}>Clear filters</Button></div>}</div>{selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}} onPrevious={index>0?()=>openRecord(visible[index-1]):null} onNext={index>=0&&index<visible.length-1?()=>openRecord(visible[index+1]):null} position={index>=0?`${index+1} of ${visible.length} in current results`:'Outside current filters'}/>}</div>;
+  if(!data)return <p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>;
+  if(!data.configured)return <section className="border border-line bg-surface-card rounded p-6 text-sm"><p>{data.selected?'Program selected for this client.':'Program not currently selected.'}</p><p className="text-ink-secondary mt-2">Select Applies in Client Profile to initialize this program after onboarding. Existing records are not reset.</p><Link className="text-link underline" to="/client-profile?tab=program">Configure in Client Profile</Link></section>;
+  const progress=assessmentProgress(scoped),resume=nextAssessment(scoped,preference.lastId),index=scoped.findIndex(r=>r.framework_assessment_id===selected?.framework_assessment_id);
+  const attention=scoped.filter(needsAttention).length;
+  return <div className="space-y-4" data-testid={frameworkKey==='cis-ig1'?'cis-workspace':'framework-workspace'}>
+    {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
+    <section aria-label="Assessment progress" className="space-y-2"><h2 className="font-semibold">Assessment Progress</h2><p className="text-sm">{progress.assessed} / {progress.applicable} applicable {(catalog?.labels?.items||'requirements').toLowerCase()} assessed · {scoped.length-progress.assessed-progress.excluded} not assessed · {progress.excluded} N/A</p><p className="text-xs text-ink-secondary">Assessment coverage includes partial and unresolved results. It is not certification or a compliance percentage.</p></section>
+    <section className="border border-line rounded-lg p-4 bg-surface-card flex flex-wrap justify-between items-center gap-3" aria-label="Continue where you left off"><div><h2 className="text-sm font-semibold">Continue where you left off</h2><p className="text-sm text-ink-secondary mt-1">{resume?`${resume.definition_id} · ${resume.title}`:'No pending assessments or linked work requiring attention.'}</p></div>{resume&&<Button onClick={()=>openRecord(resume)}>Continue Assessment</Button>}</section>
+    <div className="flex flex-wrap items-center gap-3 text-sm"><button className="text-link" onClick={()=>setFilter('attention')}>Needs Attention · {attention} items</button><span className="text-xs text-ink-secondary">Assessment gaps and linked operational work are separate conditions.</span></div>
+    {frameworkKey==='soc-2'&&<><details><summary className="cursor-pointer text-sm font-medium">Program scope & observation period</summary><SocProgramSettings clientId={clientId} configuration={data.configuration||socConfiguration()} writable={data.selected&&['super_admin','platform_admin','client_contributor'].includes(user?.role)} onSaved={()=>setRevision(n=>n+1)}/></details><label className="text-xs flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope criteria</label></>}
+    {['iso-27001','nist-csf-2'].includes(frameworkKey)&&<label className="text-sm">{frameworkKey==='iso-27001'?'ISO workspace view':'CSF profile view'}<select className="border border-line rounded p-2 ml-2 bg-surface-card" aria-label={frameworkKey==='iso-27001'?'ISO workspace view':'CSF profile view'} value={view} onChange={e=>setView(e.target.value)}><option value="all">{frameworkKey==='iso-27001'?'All ISMS & Annex A':'Current Profile'}</option>{(frameworkKey==='iso-27001'?Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label]):[['target','Target Profile'],['gaps','Recorded Gaps']]).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>}
+    <Input aria-label="Search requirements" placeholder="Search requirements…" value={search} onChange={e=>setSearch(e.target.value)}/>
+    <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>setFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div>
+    {!visible.length&&<p role="status" className="text-sm">No requirements match these filters.</p>}
+    {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
+    <Sections {...{nodes,expanded,toggle,openRecord,statuses}}/>
+    {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}} onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null} position={index>=0?`${index+1} of ${scoped.length} in framework order`:'Retained assessment'}/>}
+  </div>;
 }

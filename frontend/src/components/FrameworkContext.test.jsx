@@ -10,11 +10,11 @@ test.each(Object.entries(CATALOGS))('%s renders every current item with source, 
   for(const definition of catalog.requirements){
     const html=context(framework,definition);
     expect(html).toContain(definition.id);
-    expect(html).toContain('What this means');
-    expect(html).toContain('Implementation guidance');
-    expect(html).toContain('Evidence examples');
+    expect(html).toContain('Framework Reference');
+    expect(html).toContain('Implementation Guidance');
+    expect(html).toContain('What to Review / Validate');
     expect(html).toContain('Omnisciente guidance');
-    expect(html).toContain('Governance &amp; recurrence');
+    expect(html).toContain('Governance &amp; Recurrence');
     expect(html).not.toMatch(/undefined|\[object Object\]/);
     expect(definition.source).toMatch(/^https:\/\//);
   }
@@ -31,7 +31,7 @@ test('NIST explains current achievement separately from Target Profile decisions
 test('HIPAA keeps regulatory text and addressability visible without replacing them with guidance',()=>{
   const definition=CATALOGS.hipaa.requirements.find(d=>d.id==='164.308(a)(3)(ii)(A)');
   const html=context('hipaa',definition);
-  expect(html).toContain('Official requirement · regulatory text');
+  expect(html).toContain('Official Requirement');
   expect(html).toContain('Addressable does not mean optional');
   expect(html).toContain('Explanation, separate from the regulatory text');
   expect(html).toContain('Authorization or supervision arrangements');

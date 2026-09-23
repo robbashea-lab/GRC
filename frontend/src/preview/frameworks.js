@@ -5,6 +5,8 @@ import {CATALOGS,frameworkCatalog,frameworkDefinition,activeDefinitions,FRAMEWOR
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
 import {action} from './workflows';
+import {assessmentWork} from '../lib/frameworkWorkspace';
+import {existingFrameworkReview} from '../lib/frameworks';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
 const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
 const writable=db=>{if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');};
@@ -100,9 +102,29 @@ export function frameworkRequest(db,path,method,params,body){
     const assessments=framework.implemented?db.framework_assessments.filter(a=>a.client_id===params.client_id&&a.framework_key===id):[];
     const configuration=id==='soc-2'?socConfiguration(record(db,'clients',params.client_id)):{};
     return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
-      definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
+      definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,work:Object.fromEntries(assessments.map(a=>[a.framework_assessment_id,assessmentWork(a,db)])),active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
   }
   const row=record(db,'framework_assessments',id);frameworkScope(db,row.client_id);if(method!=='get')writable(db);
+  if(method==='post'&&operation==='reviews'){
+    if(Object.keys(body).some(k=>!['plan_key','review_id','title','owner_id','recurrence','custom_recurrence_days','due_date'].includes(k)))throw new Error('Invalid Review setup fields');
+    if(!db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key===row.framework_key&&r.baseline_response==='applies'))throw new Error('Activate the program before configuring Reviews');
+    const catalog=frameworkCatalog(row.framework_key),plan=catalog.review_plans.find(p=>p.key===body.plan_key&&p.safeguards.includes(row.definition_id));
+    if(body.plan_key&&!plan)throw new Error('Review plan does not map to this requirement');
+    let review=body.review_id?record(db,'reviews',body.review_id):plan?existingFrameworkReview(db.reviews.filter(r=>r.client_id===row.client_id),plan):null;
+    if(review&&review.client_id!==row.client_id)throw new Error('Relationship must belong to this client');
+    const canonical=Object.entries(CATALOGS).flatMap(([key,c])=>c.review_plans.map(p=>({key,plan:p}))).find(p=>plan?.baseline_key&&p.plan.baseline_key===plan.baseline_key);
+    const rid=stable(row.client_id,'review',plan?(canonical?.plan.key||plan.key):'requirement:'+row.definition_id,canonical?.key||row.framework_key);
+    review||=db.reviews.find(r=>(r.review_id===rid||r.framework_setup_key===rid)&&r.client_id===row.client_id);
+    if(!review){
+      if(typeof body.title!=='string'||!body.title.trim()||body.title.length>500||!CADENCES.includes(body.recurrence))throw new Error('Review title and valid cadence are required');
+      if(body.due_date&&(!/^\d{4}-\d{2}-\d{2}$/.test(body.due_date)||calendarDay(body.due_date)===null))throw new Error('Invalid Review date');
+      if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3650))throw new Error('Custom cadence must be 1–3650 days');
+      review=write(db,'reviews',{client_id:row.client_id,title:body.title.trim(),review_type:plan?.review_type||'requirements',owner_id:body.owner_id||null,recurrence:body.recurrence,custom_recurrence_days:body.custom_recurrence_days,due_date:body.due_date||null,status:body.due_date?'upcoming':'needs_scheduling',framework_key:row.framework_key,framework_plan_key:plan?.key,baseline_key:plan?.baseline_key,framework_safeguards:plan?.safeguards||[row.definition_id],framework_basis:plan?.basis,framework_source_cadence:plan?.source_cadence,framework_setup_key:rid});
+    }
+    let changed=false;
+    for(const a of db.framework_assessments.filter(a=>a.client_id===row.client_id&&a.framework_key===row.framework_key&&(plan?.safeguards||[row.definition_id]).includes(a.definition_id))){a.related_links||=[];if(!a.related_links.some(l=>l.kind==='reviews'&&l.id===review.review_id)){a.related_links.push({kind:'reviews',id:review.review_id});changed=true;}}
+    if(changed)audit(db,'Framework Review linked','framework_assessments',row,{review_id:review.review_id});return review;
+  }
   if(method==='get'&&!operation)return row;
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);

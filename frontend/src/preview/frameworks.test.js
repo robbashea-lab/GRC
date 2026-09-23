@@ -11,6 +11,24 @@ const state=(programs=['cis-ig1'])=>({version:3,step:3,policies:Object.fromEntri
 const configure=async(s=state(),id=cid)=>{await api.post('/onboarding/baseline',{client_id:id,state:s,finalize:true});return get('frameworks/cis-ig1',id);};
 beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');cid=(await api.post('/clients',{name:'CIS framework QA'})).data.client_id;});
 
+test('workspace Review setup reuses onboarding, creates normal scheduled work and survives retries',async()=>{
+  const w=await configure(),row=w.assessments[0],base='/framework_assessments/'+row.framework_assessment_id+'/reviews';
+  const plan=cis.review_plans.find(p=>p.safeguards.includes(row.definition_id));
+  const existing=(await get('reviews')).find(r=>r.framework_plan_key===plan.key),count=(await get('reviews')).length;
+  const reused=(await api.post(base,{plan_key:plan.key,title:'Must not replace',recurrence:'monthly'})).data;
+  expect(reused.review_id).toBe(existing.review_id);expect(reused.title).toBe(existing.title);expect((await get('reviews')).length).toBe(count);
+  const body={title:'Scoped validation review',recurrence:'quarterly',due_date:'2027-01-02',owner_id:'demo_admin'};
+  const created=(await api.post(base,body)).data;
+  expect(created.current_occurrence_id).toBeTruthy();expect(created.due_date).toBe(body.due_date);
+  const calendar=(await api.get('/calendar',{params:{client_id:cid,start:'2027-01-01',end:'2027-01-31',scope:'active'}})).data;
+  expect(calendar.reviews['2027-01-02'].some(r=>r.id===created.review_id)).toBe(true);
+  expect((await api.post(base,body)).data.review_id).toBe(created.review_id);
+  expect((await get('reviews')).length).toBe(count+1);
+  expect((await get('frameworks/cis-ig1')).work[row.framework_assessment_id].review_ids).toContain(created.review_id);
+  const foreign=(await api.get('/reviews',{params:{client_id:'demo_globo'}})).data[0];
+  await expect(api.post(base,{review_id:foreign.review_id})).rejects.toThrow('Relationship must belong to this client');
+});
+
 test('new intake begins with programs; catalog is IG1 only; cadence warning separates automation',()=>{
   expect(onboardingDraft({version:2,step:0,policies:{},requirements:{},reviews:['inventory']})).toMatchObject({step:0,reviews:[]});
   expect(cis.requirements).toHaveLength(56);expect(new Set(cis.requirements.map(d=>d.id)).size).toBe(56);
