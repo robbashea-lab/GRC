@@ -135,3 +135,11 @@ Three NIST → SOC mappings remain PARTIAL (PR.AA-05 → CC6.2, PR.DS-11 → CC7
 ## Preserved product boundaries
 
 Security/Common Criteria remains the default product scope; the four other categories require client selection. This is not a claim that every SOC engagement must use that exact starting scope. Readiness, design and operating evidence remain distinct from CPA attestation. No source record, period, assessment, history, permission or catalog identity changed. No copyrighted criteria text or new claimed points of focus were imported.
+
+## Closure source-access gate (2026-09-22)
+
+**PARTIALLY VALIDATED — AUTHORIZED SOURCE ACCESS REQUIRED. LICENSE / SOURCE ACCESS BLOCKED** for exact criterion and revised points-of-focus comparison of all 61 entries. S01, AICPA/ASEC, *2017 Trust Services Criteria (With Revised Points of Focus – 2022)*, [publisher resource](https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022), was accessed again on 2026-09-22. The publisher lists the resource on 2023-09-30 and requires account access to download. That listing date is not a new criteria edition. No authorized downloaded copy was found in the available project/attachments. No account was created, access control bypassed or credentials requested.
+
+An older publisher edition and third-party copies referenced in historical research are not substitutes for the requested authorized revised source. The existing 61-item ledger therefore remains source-qualified. No original wording, purported points of focus, criterion-specific control frequency or requirement classification was changed based on inaccessible text. Ten existing Review plans remain class D product recommendations, not annual/quarterly AICPA mandates. Existing partial cross-mappings retain their access warning.
+
+Closure engineering checks: 17 backend tests passed across the ISO/SOC modules including imported fixture tests; 24 frontend tests passed across ISO/SOC preview and shared operator suites. These cover independent category scope/assessments and do not prove substantive accuracy of unavailable text. No application or data change was necessary in this closure step. Broader regression and browser results belong in the final integration report rather than being inferred here.
