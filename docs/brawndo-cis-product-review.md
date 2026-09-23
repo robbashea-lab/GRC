@@ -1,5 +1,7 @@
 # Brawndo CIS IG1 product review — 2026-09-23
 
+Follow-up: [six-phase finalization](brawndo-cis-finalization.md) traced the suspected date loss to uncommitted browser-automation input, verified scheduling persistence, fixed shared dialog descriptions/focus, and froze the reference pattern. The observations below are retained as the original review record; consult the follow-up for current resolution and test results.
+
 ## Scope and method
 
 Browser-first review of the local synthetic Demo: existing Brawndo Profile/configuration, CIS overview and sequential assessment, plus a separate `Brawndo — onboarding QA` client created through the normal UI. The canonical Brawndo baseline was not reset. Test mutations remain local browser-session data; they are not seed changes or real client data.

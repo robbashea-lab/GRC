@@ -7,7 +7,7 @@ import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
-jest.mock('./RecordDrawer',()=>({kind,record})=><div data-testid="nested">{kind} {record.title}</div>);
+jest.mock('./RecordDrawer',()=>({kind,record,onOpenChange})=><div data-testid="nested">{kind} {record.title}<button onClick={()=>onOpenChange(false)}>Close linked record</button></div>);
 jest.mock('./AssigneeSelect',()=>()=>null);
 jest.mock('./ui/dialog',()=>{
  const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};
@@ -65,8 +65,10 @@ test('evidence links and Findings use authoritative relationship/workflow endpoi
 });
 test('linked Findings and Action Items open their existing drawers',async()=>{
  related.findings=[{finding_id:'f',title:'Device gap',status:'open'}];related.tasks=[{task_id:'t',title:'Isolate devices',status:'open'}];
- await render();await act(async()=>button('Device gap').click());expect(container.querySelector('[data-testid="nested"]').textContent).toBe('findings Device gap');
- await act(async()=>button('Isolate devices').click());expect(container.querySelector('[data-testid="nested"]').textContent).toBe('tasks Isolate devices');
+ await render();await act(async()=>button('Device gap').click());expect(container.querySelector('[data-testid="nested"]').firstChild.textContent).toBe('findings');
+ expect(container.querySelector('[data-testid="nested"]').textContent).toContain('Device gap');
+ await act(async()=>button('Isolate devices').click());expect(container.querySelector('[data-testid="nested"]').firstChild.textContent).toBe('tasks');
+ expect(container.querySelector('[data-testid="nested"]').textContent).toContain('Isolate devices');
 });
 test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit or create linked work',async role=>{
  mockUser.role=role;await render();expect(container.querySelector('fieldset').disabled).toBe(true);expect(button('Save assessment')).toBeUndefined();expect(button('Create Finding')).toBeUndefined();
@@ -105,4 +107,27 @@ test('evidence picker searches display name, distinguishes no match, and retains
  expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(true);
  await input('Find existing evidence','report.txt');expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(false);
  expect(container.textContent).toContain('save immediately');
+});
+
+test('same-record refresh retains linked opener; refresh failure still disables writes',async()=>{
+ related.findings=[{finding_id:'f',title:'Device gap',status:'open'}];await render();
+ const opener=button('Device gap');await act(async()=>opener.click());
+ let reject;api.get.mockImplementation(()=>new Promise((_,fail)=>{reject=fail;}));
+ await act(async()=>button('Close linked record').click());
+ expect(button('Device gap')).toBe(opener);expect(opener.isConnected).toBe(true);
+ await act(async()=>reject(new Error('Refresh denied')));
+ expect(button('Save assessment').disabled).toBe(true);
+ expect(container.textContent).toContain('Refresh denied');
+});
+
+test('context refresh cannot erase an already refreshed evidence picker',async()=>{
+ await render();await act(async()=>button('Link Evidence').click());
+ const normalGet=api.get.getMockImplementation();let finishContext;
+ api.get.mockImplementation(path=>path==='/frameworks/cis-ig1'?new Promise(resolve=>{finishContext=resolve;}):normalGet(path));
+ const select=container.querySelector('[aria-label="Link existing Evidence"]');
+ await act(async()=>{select.value='e';select.dispatchEvent(new Event('change',{bubbles:true}));});
+ expect(select.disabled).toBe(false);
+ await act(async()=>finishContext({data:{assessments:[record]}}));
+ expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(false);
+ expect(container.textContent).not.toContain('Loading available evidence');
 });

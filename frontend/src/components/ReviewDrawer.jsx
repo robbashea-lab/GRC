@@ -143,7 +143,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const historicalCount = remediation.groups.filter(({finding})=>finding.status==='closed').length + allRelatedRows.filter(({kind,item})=>historicalRemediation(kind,item)).length;
   const relatedRows = allRelatedRows.filter(({kind,item})=>showHistorical || !historicalRemediation(kind,item));
   return <Sheet open={open} onOpenChange={onOpenChange}>
-    <SheetContent className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid="reviews-drawer">
+    <SheetContent description="Inspect this Review's schedule, supporting evidence, related work and completion history. Save configuration changes separately from completing the Review." className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid="reviews-drawer">
       <SheetHeader className="px-6 py-4 border-b border-line">
         <div className="flex justify-between gap-3"><div><div className="text-xs text-ink-help">Review {selected ? '· Historical occurrence' : ''}</div><SheetTitle className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
           {shown && <div className="mt-2"><StatusBadge value={shown.status} /></div>}</div>
@@ -216,7 +216,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     </SheetContent>
     {linked && <RecordDrawer open kind={linked.kind} record={linked.record} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();}}} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) setFinding(null);}}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form"><SheetHeader><SheetTitle>Raise Finding</SheetTitle></SheetHeader>
+      <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form"><SheetHeader><SheetTitle>Raise Finding</SheetTitle></SheetHeader>
         {finding && <form className="mt-5 space-y-4" onSubmit={e => {e.preventDefault();run(async () => {await api.post(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
           <Label className="block">Description<Textarea value={finding.description} onChange={e => setFinding(p => ({...p,description:e.target.value}))} /></Label>

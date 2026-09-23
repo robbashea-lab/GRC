@@ -39,11 +39,15 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const leave=fn=>{if(busy)return;if(dirty||reviewDraft||finding||comment.trim())setPending(()=>fn);else fn();};
   useEffect(()=>{if(!dirty&&!reviewDraft&&!finding&&!comment.trim())return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty,reviewDraft,finding,comment]);
   useEffect(()=>{
-    const c=new AbortController();setCtx(null);setError('');const opts={params:{client_id:clientId},signal:c.signal};
+    const c=new AbortController();
+    // Keep the same prototype's linked rows mounted during refresh so closing a
+    // nested drawer can restore its opener and does not jump the reading position.
+    setCtx(old=>prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old:null);
+    setError('');const opts={params:{client_id:clientId},signal:c.signal};
     Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),api.get('/contacts',opts),api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+record.framework_key,opts)]).then(([related,users,contacts,comments,activity,workspace])=>{
-      if(!c.signal.aborted)setCtx({related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:workspace.data.configuration||{},current:workspace.data.assessments.find(a=>a.framework_assessment_id===aid),options:{reviews:related.data.reviews||[]}});
-    }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
-  },[aid,clientId,record.framework_key,revision]);
+      if(!c.signal.aborted)setCtx(old=>({related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:workspace.data.configuration||{},current:workspace.data.assessments.find(a=>a.framework_assessment_id===aid),options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
+    }).catch(e=>{if(!c.signal.aborted){setCtx(null);setError(formatError(e));}});return()=>c.abort();
+  },[aid,clientId,record.framework_key,revision,prototype]);
   const contextLoaded=!!ctx;
   useEffect(()=>{
     if(!contextLoaded)return;
