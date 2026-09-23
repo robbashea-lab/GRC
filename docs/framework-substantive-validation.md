@@ -5,6 +5,8 @@ Branch: `codex/framework-substantive-validation`.
 
 ## Status
 
+For the latest closure results, see **Closure integration — 2026-09-22** below; the earlier phase narrative is retained as an audit trail.
+
 **All five phases processed; CIS, NIST and HIPAA source-comparison passes completed with the scoped caveats below. ISO and SOC 2 full substantive validation remains incomplete because exact authorized sources were unavailable. Final engineering regression and local Demo content checks passed.** CIS commercial product-use authorization is resolved. Passing tests do not establish normative completeness, client compliance or independent assurance.
 
 The repository represents CIS v8.1 IG1. CIS's official IG1 page confirms a 56-safeguard scope for v8/v8.1. This confirms the aggregate count only, not the stored membership, titles, explanations, cadence, policy/review mappings or cross-framework relationships. The official Navigator and assessment specification provide public research material, but public access does not establish commercial product-use permission.
@@ -130,3 +132,49 @@ Assessment histories retain prior assessment-field snapshots, not frozen catalog
 - HIPAA: qualified client-scope review of group-health-plan duties versus business-associate/vendor governance. No legal applicability or certification conclusion is made.
 - Full normative validation of the 184 restricted items and six restricted mappings remains NOT VERIFIED. No blanket all-framework substantive pass, independent SME review, persistent-staging authentication test or whole-application security assurance is claimed.
 - No push, merge to main or publication performed. All work is on `codex/framework-substantive-validation`; the separate unapproved visual worktree remains untouched. The local preview is not an updated published preview.
+
+## Closure integration — 2026-09-22
+
+Continued from `e46ca3707e5f92a267fde2141efd7ee1201a8757`; no restart of CIS/NIST validation. This section supersedes earlier unresolved-status statements where expressly noted.
+
+| Framework | Current disposition | Closure scope |
+| --- | --- | --- |
+| CIS v8.1 IG1 | SUBSTANTIVELY VALIDATED WITH DOCUMENTED LIMITATIONS | Prior 56-item pass retained; concise implementation guidance is not the complete source or client assurance. Licensing checkpoint remains resolved. |
+| NIST CSF 2.0 | SUBSTANTIVELY VALIDATED WITH DOCUMENTED LIMITATIONS | Prior 106-item pass retained; outcomes do not mandate product Review intervals. |
+| HIPAA | SUBSTANTIVELY VALIDATED WITH DOCUMENTED LIMITATIONS | Prior 76-item pass retained; group-plan/vendor catalog flag resolved narrowly. Client legal applicability remains separate. |
+| ISO 27001 | PARTIALLY VALIDATED — AUTHORIZED SOURCE ACCESS REQUIRED | Official preview supports topic-level comparison for 12 units in clauses 4–6; 111 other units lack exact text. Full normative completeness remains unverified for all 123. |
+| SOC 2 | PARTIALLY VALIDATED — AUTHORIZED SOURCE ACCESS REQUIRED | All 61 entries remain exact-source limited; publisher metadata does not substitute for revised criteria/points of focus. |
+
+### Decisions and corrections
+
+- HIPAA HC01/HC02: two existing reason strings now distinguish PARTIAL business-associate support from RELATED sponsor-agent safeguards under 164.314(b)(2)(iii). All linked IDs and artifact classifications remain unchanged. The [HIPAA ledger](hipaa-substantive-validation.md) records old/new values, OFR/GPO and HHS sources, access date and rationale. No unresolved global catalog SME flag remains; a specific client's legal duties still require qualified judgment.
+- ISO: legitimate SIST preview discovered in existing research references, read without importing source text. The [ISO closure addendum](iso-substantive-validation.md) identifies exact available pages and all 12 bounded conclusions. No unsupported catalog correction or completeness upgrade. Additional necessary controls outside the Annex register remain a documented product scope limitation.
+- SOC: official revised-2022 resource still account-gated; no authorized local copy found. The [SOC closure addendum](soc-substantive-validation.md) records the source-access gate. No third-party or older edition substituted, no account created and no confidential licensing material requested.
+- [Final cadence matrix](framework-cadence-closure.md): all 47 plans, mapped IDs, current default, A–G distinction, numerical drivers and context. Counts: 12 CIS, 9 NIST, 8 HIPAA, 10 ISO, 8 SOC; 11 A and 36 D. No stored or default recurrence changed.
+- [Targeted mapping check](framework-mapping-closure.md): all 12 existing cross-framework edges remain PARTIAL; six ISO/SOC targets remain explicitly source-qualified. Eleven requested topics inspected without creating a new crosswalk, claiming equivalence or transferring assessment status.
+
+### Verification and integrity
+
+New regressions: HIPAA API reconfiguration/history/link preservation; HIPAA relationship scope presentation; shared 47-plan cadence source/mapped-definition contract. No existing assertions were weakened.
+
+- Backend: 36 tests passed across the six explicit framework test classes. FastAPI routes with isolated Mongo mocks, not persistent staging. Covers histories, stable IDs, scope, source-record reuse and authorization/tenant denials. Earlier ISO/SOC module run passed 17 tests including imported fixtures; it is not 17 distinct ISO/SOC-only cases.
+- Frontend: all 71 suites / 396 tests passed with `craco test --watch=false --runInBand`. Targeted ESLint passed for both changed frontend test files. No standalone TypeScript check is configured.
+- Production build passed: `main.bdf7819a.js`, approved CSS unchanged at `main.9c179479.css`. Existing `PlatformAdmin.jsx:52` hook dependency warning and Node `fs.F_OK` deprecation remain, not introduced or suppressed here.
+- Exact-build local content browser QA passed: 12 guidance/deep-link refresh checks, six visible restricted-source mapping notices, both new HIPAA relationship descriptions, no assessment/Review changes on inspection, wrong-client link excluded, no console/page errors. Five canonical Demo clients loaded. Browser data is isolated session Demo data, not server authorization proof.
+- Full operator browser regression passed all five frameworks: assessment save/history, Evidence upload/download/unlink/relink, Finding/Action completion and validation without automatic assessment changes, ISO SoA justification/history, SOC management controls/period and category retention, HIPAA addressability, CSF Profiles, deep links/refresh/back, keyboard tabs and draft protection. Shared existing Evidence/Finding/Action reuse produced no duplicate records; recurring Reviews remained identical. All 18 module routes and 1440/1280/1024/768 widths passed; wrong-client deep link excluded; no console/page errors. This used a fresh local Demo session with outbound analytics fulfilled locally, not a live persistent backend.
+- Two earlier operator runs timed out at the search/open/Escape/reopen sequence (at different frameworks). The script issued Escape without asserting the drawer had mounted. Added visible/closed assertions; the complete rerun passed. No application behavior or acceptance assertion was weakened. `node --check` passed. Additional CRA ESLint over this existing standalone QA script reports its existing line 106 `innerWidth` restricted-global use; presence at baseline `e46ca370` was confirmed. That standalone-script lint check is NOT a pass. Targeted changed component/helper test lint and production build results above remain accurate.
+- Structural comparison against `e46ca370` passed for all five complete catalogs after excluding only the two intended HIPAA reason changes. IDs, versions, mappings, actual plan configuration and cadence remain identical. Existing historical assessment values and recurring Reviews survived the API regression; catalog wording is not stored as immutable historic snapshots.
+- Diff inspection and added-line secret-pattern check found no introduced secrets, credentials, environment values, dependencies, schema changes, migrations, authentication/RBAC changes or unrelated application modifications. No persistent data was accessed, reseeded or deleted. QA helpers/build output remain outside Git. These checks are not independent security assurance.
+
+### Closure changeset and remaining gates
+
+1. HIPAA closure: `dc0acfa` — two scope clarifications and focused tests.
+2. ISO closure: `24d560a` — bounded-source comparison and explicit remaining gate.
+3. SOC closure: `0dc98e4` — source-access disposition.
+4. Final integration: the commit containing this section, the cadence/mapping matrices and shared test. A report cannot include its own final commit hash; resolve with `git log -1` or the task handoff.
+
+No new migrations or deployment steps. The final integration also corrects a documentation-only SOC plan count from ten to eight; catalog data never changed.
+
+Still required for full substantive closure: authorized full ISO 2022/amendment content and authorized 2017 TSC with revised 2022 points of focus. No blanket five-framework normative pass, certification, persistent-backend browser verification or independent SME assurance is claimed. Proposed HIPAA changes were not imported. No new material ambiguity requiring product decisions was introduced.
+
+Branch remains `codex/framework-substantive-validation`. No push, merge, publication, deployment or infrastructure provisioning performed. The separate visual worktree remains untouched.

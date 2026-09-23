@@ -1,6 +1,29 @@
 import data from './frameworkMappings.json';
-import {frameworkDefinition} from './frameworks';
+import {CATALOGS,frameworkDefinition} from './frameworks';
 import {mappingsFor} from './frameworkMappings';
+
+test('every Review cadence source driver resolves inside its own mapped definitions',()=>{
+  const plans=Object.entries(CATALOGS).flatMap(([framework,catalog])=>catalog.review_plans.map(plan=>({framework,plan})));
+  expect(plans).toHaveLength(47);
+  expect(plans.filter(({plan})=>plan.cadence_class==='A')).toHaveLength(11);
+  expect(plans.filter(({plan})=>plan.cadence_class==='D')).toHaveLength(36);
+  for(const {framework,plan} of plans){
+    for(const id of plan.safeguards)expect(frameworkDefinition(framework,id)).toBeDefined();
+    if(plan.cadence_class==='A'){
+      expect(plan.cadence_references.length).toBeGreaterThan(0);
+      expect(plan.cadence_references.some(ref=>ref.interval===plan.source_minimum)).toBe(true);
+      for(const ref of plan.cadence_references){
+        expect(plan.safeguards).toContain(ref.definition_id);
+        expect(ref.source).toMatch(/^https:\/\//);
+        expect(frameworkDefinition(framework,ref.definition_id)).toBeDefined();
+      }
+    }else{
+      expect(plan.cadence_references).toEqual([]);
+      expect(plan.source_minimum).toBeFalsy();
+      expect(plan.basis.toLowerCase()).toContain('recommend');
+    }
+  }
+});
 test('all mappings reference valid current definitions and explicitly partial provenance',()=>{
   expect(data.mappings).toHaveLength(12);
   const identities=new Set();
