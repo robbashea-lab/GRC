@@ -60,6 +60,30 @@ class HipaaTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),76)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),8)
 
+    async def test_group_plan_related_mapping_preserves_existing_assessment_and_review(self):
+        plan=next(p for p in HIPAA['review_plans'] if p['key']=='hipaa-vendor')
+        policy=next(p for p in HIPAA['policy_mappings'] if p['policy_key']=='policy-vendor-third-party-risk-management-policy')
+        for mapping in (plan,policy):
+            self.assertIn('164.314(b)(1)',mapping['safeguards'])
+            self.assertIn('RELATED',mapping['reason'])
+            self.assertIn('164.314(b)(2)(iii)',mapping['reason'])
+            self.assertEqual(mapping['classification'],'recommended')
+        workspace=await self.configure()
+        row=next(a for a in workspace['assessments'] if a['definition_id']=='164.314(b)(1)')
+        path='/api/framework_assessments/'+row['framework_assessment_id']
+        result=await self.client.patch(path,json={'status':'in_progress','implementation':'Plan sponsor duties assessed separately from agent agreements'})
+        self.assertEqual(result.status_code,200,result.text)
+        before=(await self.client.get(path)).json()
+        reviews=await server.db.reviews.find({'client_id':'a'},{'_id':0}).to_list(None)
+        await self.configure()
+        after=(await self.client.get(path)).json()
+        for field in ('framework_assessment_id','framework_version','implementation','status','assessment_history','related_links'):
+            self.assertEqual(after[field],before[field],field)
+        self.assertEqual(await server.db.reviews.find({'client_id':'a'},{'_id':0}).to_list(None),reviews)
+        related=(await self.client.get(path+'/related')).json()
+        self.assertTrue(any(r.get('framework_plan_key')=='hipaa-vendor' for r in related['reviews']))
+        self.assertTrue(any(p.get('baseline_key')==policy['policy_key'] for p in related['policies']))
+
     async def test_addressable_decisions_history_and_no_automatic_status(self):
         workspace=await self.configure()
         a=next(a for a in workspace['assessments'] if a['definition_id']=='164.312(a)(2)(iv)')

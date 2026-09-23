@@ -154,3 +154,20 @@ The vendor Review's existing group-health-plan relationship is RELATED organizat
 The three NIST mappings (PR.AA-05 → access authorization, PR.DS-11 → backup plan, PR.AT-01 → workforce training) remain PARTIAL after comparing both source topics. Legal scope, addressability and complete operational duties remain independent. No automatic status changes.
 
 No client records, source legal wording, IDs or version identity changed. eCFR's legacy cross-reference to 164.308(b)(4) within 164.314(a)(2)(iii) is retained as source wording, not silently edited into an invented regulation. Exact client legal determinations require qualified review.
+
+## Closure — group-plan / third-party association (2026-09-22)
+
+**Prior SME flag resolved for the catalog mapping; client-specific legal applicability is not decided.** Current OFR/GPO [45 CFR 164.314(b)(1) and (b)(2)(iii)](https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-C/section-164.314), accessed 2026-09-22, expressly addresses plan-sponsor agents' security agreements. The current page reports Title 45 currency through 2026-09-21; its section history cites 2003 and 2013, not a new 2026 rule. Paragraph (a) separately addresses business-associate arrangements. [HHS/OCR's current Security Rule summary](https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html), reviewed 2026-08-07 and accessed 2026-09-22, confirms the distinction from the proposed rule.
+
+Determination: **RELATED**, narrowly through agent-security agreements, for the existing 164.314(b)(1) association with both `hipaa-vendor` and `policy-vendor-third-party-risk-management-policy`. The same resources provide PARTIAL support for the separately mapped business-associate provisions. They do not cover all sponsor safeguards, plan amendments, separation or incident-reporting duties. No claim that a sponsor is automatically a business associate is made.
+
+### Closure correction register (recorded before edits)
+
+| ID | Target | Previous value | Correction | Source / rationale / data impact |
+| --- | --- | --- | --- | --- |
+| HC01 | hipaa-vendor.reason | Generic suggested governance support for all cited duties | Explicit PARTIAL business-associate support and RELATED group-plan agent scope; not a substitute for all plan-document duties | 164.314(a), (b)(1), (b)(2)(iii); narrow the displayed relationship without deleting links, Reviews, schedules or histories. |
+| HC02 | vendor policy mapping.reason | Generic policy-family/ePHI support | Same limited RELATED sponsor-agent connection, with no prescribed policy-title claim | Same source; preserve all four mapped IDs and recommended artifact classification. |
+
+The existing `classification: recommended` expresses artifact/default status, not relationship strength; it is preserved. RELATED/PARTIAL are explicit in the existing displayed reason field, avoiding a new mapping schema. These reasons appear in requirement Governance/Related and onboarding context. This closes the catalog uncertainty, not every client's legal determination.
+
+Closure verification: 9 HIPAA backend tests passed against isolated test persistence; 19 targeted frontend tests passed across `hipaaFramework.test.js`, `FrameworkContext.test.jsx` and `frameworkMappings.test.js`. The new regressions cover reconfiguration preserving the stored assessment/history and Review identity, and presentation of the limited agent relationship. Browser verification is pending; these results do not claim live-backend or published-preview verification.

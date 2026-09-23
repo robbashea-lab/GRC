@@ -43,6 +43,17 @@ test('ISO distinguishes ISMS requirements from risk-based Annex A selection',()=
   expect(context('iso-27001',definitions.find(d=>d.id==='A.5.1'))).toContain('selection alone does not demonstrate implementation');
 });
 
+test('HIPAA group-plan governance exposes the limited agent relationship',()=>{
+  const c=CATALOGS.hipaa,definition=c.requirements.find(d=>d.id==='164.314(b)(1)');
+  const html=context('hipaa',definition);
+  expect(html).toContain('RELATED to 164.314(b)(1) only through plan-sponsor agent safeguards');
+  expect(html).toContain('does not assess all group-health-plan duties');
+  const mapping=c.policy_mappings.find(p=>p.policy_key==='policy-vendor-third-party-risk-management-policy');
+  expect(mapping.reason).toContain('164.314(b)(2)(iii)');
+  expect(mapping.reason).toContain('not all group-health-plan duties');
+  expect(mapping.classification).toBe('recommended');
+});
+
 test('SOC explains design versus operation without prescribing an audit period or sample',()=>{
   const html=context('soc-2',CATALOGS['soc-2'].requirements[0]);
   expect(html).toContain('Management Controls describes how this organization addresses it');

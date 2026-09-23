@@ -1492,7 +1492,7 @@
       ],
       "basis": "Omnisciente Recommended",
       "classification": "recommended",
-      "reason": "A suggested human governance review supporting the cited regulatory duties; not a replacement for operational safeguards or event-triggered action.",
+      "reason": "PARTIAL support for business-associate arrangements under 164.308(b) and 164.314(a). RELATED to 164.314(b)(1) only through plan-sponsor agent safeguards in 164.314(b)(2)(iii); this Review does not assess all group-health-plan duties or replace required plan-document provisions.",
       "source_cadence": "HIPAA does not prescribe this suggested calendar interval. Apply the cited requirement’s own ongoing, periodic or event-triggered duty.",
       "purpose": "HIPAA business associate arrangements review",
       "evidence_expectations": "Review scoped implementation and available evidence; record gaps and raise normal Findings and remediation Actions.",
@@ -1633,7 +1633,7 @@
         "164.314(b)(1)"
       ],
       "classification": "recommended",
-      "reason": "Reuse this policy family where its actual ePHI scope supports the cited duties. HIPAA does not prescribe this exact title."
+      "reason": "PARTIAL support for business-associate arrangements. RELATED to 164.314(b)(1) only through plan-sponsor agent safeguards in 164.314(b)(2)(iii), not all group-health-plan duties. Required plan-document provisions remain separate; HIPAA does not prescribe this policy title."
     },
     {
       "policy_key": "policy-information-security-policy",
