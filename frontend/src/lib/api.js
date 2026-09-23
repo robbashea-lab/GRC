@@ -1,4 +1,5 @@
 import axios from "axios";
+import {recordUuid} from './recordUuid';
 
 // Standard authentication and operational data always use the configured API.
 // Only intentional Explore Demo sessions use the isolated, session-local adapter.
@@ -38,6 +39,11 @@ api.interceptors.request.use((cfg) => {
   }
   if (!STANDARD_AUTH_ENABLED) {
     throw new axios.AxiosError(STANDARD_AUTH_NOTICE, "ERR_STANDARD_AUTH_DEFERRED", cfg);
+  }
+  // Transport retries using the same config retain this identity. Forms also
+  // retain their intent across a fresh submit after an uncertain response.
+  if (cfg.method === 'post' && /^\/(clients|reviews|findings|tasks|risks|vendors|policies|contacts|assets|exceptions|requirements|evidence|ai_systems)$/.test(cfg.url)) {
+    cfg.headers['Idempotency-Key'] ||= recordUuid();
   }
   const t = localStorage.getItem("grc_token");
   if (t) cfg.headers.Authorization = `Bearer ${t}`;

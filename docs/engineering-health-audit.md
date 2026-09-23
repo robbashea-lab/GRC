@@ -397,3 +397,19 @@ open gates, not implied passes. The report does not declare all twenty phases pa
 - Persistent staging remains blocked by the independently confirmed storage failure;
   changing paid capacity requires owner authorization. No old DB reconnection is an
   acceptable substitute. Resolve open engineering gates before a real-client pilot.
+
+## RELEASE-GATE REMEDIATION
+
+Remediation began 2026-09-23 from verified clean main `afecba1`; application
+baseline `0611f49` is followed only by that documentation commit. Original audit
+evidence above is retained. See [the remediation ledger](release-gate-remediation.md)
+for create inventory, request/audit recovery contract, verification and limitations.
+
+ENG-04 P1: the original Finding/audit failure now retries one primary object using
+a required durable intent key, instead of creating two. Separate keys preserve
+legitimate identical-title creations. Shared forms retain uncertain intent;
+backend scope/role checks precede replay. Pending conditional Finding events are
+atomic with the status transition. Initial phase verification: 304 offline backend
+cases plus 244 subtests, 411 frontend tests, build and core Demo browser passed.
+Persistent Mongo durability is not verified. ENG-14/02/15/16 remain open; the
+original scorecard is not upgraded to imply completion of the entire program.

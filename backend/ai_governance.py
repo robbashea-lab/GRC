@@ -5,12 +5,13 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Literal
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel, Field, ConfigDict, StrictBool
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 import review_occurrences
 import assignment_eligibility
+import create_requests
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiGovernanceCatalog.json').read_text(encoding='utf-8'))
 
@@ -131,7 +132,16 @@ def router_for(s):
         rows=await s.db.ai_systems.find({'client_id':client_id},{'_id':0}).to_list(1000)
         return [await view(r) for r in rows]
     @router.post('/ai_systems')
-    async def create_ai(body:AIInput,user=Depends(s.get_current_user)):
+    async def create_ai(body:AIInput,user=Depends(s.get_current_user),idempotency_key:Optional[str]=Header(None)):
+        await client_scope(body.client_id,user,True)
+        async def execute(identity):
+            return await create_ai_record(body,user,identity)
+        return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'ai_systems',body.model_dump(),execute)
+    async def create_ai_record(body,user,identity):
+        existing=await s.db.ai_systems.find_one({'_id':'create:'+identity},{'_id':0})
+        if existing:
+            await s.audit(user,'AI use case created','ai_system',existing['ai_system_id'],existing['client_id'])
+            return await view(existing)
         data=body.model_dump();await validate(data,user)
         counter_key='ai-display:'+data['client_id']
         try:
@@ -139,7 +149,7 @@ def router_for(s):
         except DuplicateKeyError:
             counter=await s.db.business_counters.find_one_and_update({'_id':counter_key},{'$inc':{'sequence':1}},return_document=ReturnDocument.AFTER)
         row={**data,'ai_system_id':s._uid('ai'),'display_id':f"AI-{counter['sequence']:03d}",'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'related_links':[]}
-        await s.db.ai_systems.insert_one(row)
+        row=await create_requests.insert_primary(s.db,'ai_systems',row,identity)
         await s.audit(user,'AI use case created','ai_system',row['ai_system_id'],row['client_id'])
         return await view(row)
     @router.patch('/ai_systems/{aid}')

@@ -4,6 +4,7 @@ from pathlib import Path
 import secrets
 import sys
 import unittest
+import uuid
 from unittest.mock import patch
 
 import httpx
@@ -27,7 +28,12 @@ class ClientDashboardSourcesTests(unittest.IsolatedAsyncioTestCase):
         for uid, role, clients in [("admin", "super_admin", ["a", "b"]), ("member", "client_contributor", ["a"])]:
             await server.db.users.insert_one({"user_id": uid, "email": uid + "@example.test", "name": uid, "role": role, "client_ids": clients, "status": "active"})
         await server.db.clients.insert_many([{"client_id": "a", "name": "Populated", "status": "active"}, {"client_id": "b", "name": "Minimal", "status": "active"}])
-        self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="https://isolated.example.test")
+        async def identify_create(request):
+            # Each test POST is a distinct intent unless the scenario explicitly
+            # supplies a repeated key. Match the frontend transport contract.
+            if request.method == "POST" and request.url.path.removeprefix('/api/') in {*server.ENTITY_MAP, 'clients', 'evidence', 'ai_systems'}:
+                request.headers.setdefault('Idempotency-Key', uuid.uuid4().hex)
+        self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="https://isolated.example.test", event_hooks={"request": [identify_create]})
         self.addAsyncCleanup(self.client.aclose)
 
     def sign_in(self, uid):

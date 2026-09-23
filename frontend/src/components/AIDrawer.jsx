@@ -4,6 +4,7 @@ import {Button} from './ui/button';
 import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
 import api,{formatError} from '@/lib/api';
+import {useCreateIntent} from '@/lib/createIntent';
 import {useAuth} from '@/context/AuthContext';
 import {AI_DEFAULTS,AI_KEYS,aiScreening,catalog} from '@/lib/aiGovernance';
 import RecordDrawer from './RecordDrawer';
@@ -17,6 +18,7 @@ function Choices({label,values,selected=[],onChange,disabled}){return <fieldset 
 
 export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onSaved}){
   const {user}=useAuth(),id=record?.ai_system_id;
+  const createRecord=useCreateIntent((...args)=>api.post(...args),clientId);
   const [form,setForm]=useState(()=>({...AI_DEFAULTS,...record})),[tab,setTab]=useState('Overview'),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[context,setContext]=useState(null),[nested,setNested]=useState(null);
   const [schedule,setSchedule]=useState({due_date:'',recurrence:'annual',custom_recurrence_days:90}),[change,setChange]=useState(''),[link,setLink]=useState({kind:'risks',id:'',classification:'Context',source:'',rationale:''});
   const admin=['super_admin','platform_admin'].includes(user?.role),writable=['super_admin','platform_admin','client_contributor'].includes(user?.role),historical=(context?.row||record)?.status==='retired',editable=writable&&!historical;
@@ -30,7 +32,7 @@ export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onS
   const person=(key,label)=> <div><span className="text-sm">{label}</span><AssigneeSelect clientId={clientId} label={label} value={form[key]} onChange={v=>put(key,v)} users={users}/></div>;
   const boolean=(label,value,onChange)=><Field label={label}><select className={SELECT} value={value===true?'yes':value===false?'no':''} onChange={e=>onChange(e.target.value===''?null:e.target.value==='yes')}><option value="">Not assessed</option><option value="yes">Yes</option><option value="no">No</option></select></Field>;
   async function run(fn){setBusy(true);setError('');try{await fn();setRevision(n=>n+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}
-  async function save(e){e.preventDefault();await run(async()=>{const body={client_id:clientId,...Object.fromEntries(AI_KEYS.map(k=>[k,form[k]]))};await (id?api.patch(`/ai_systems/${id}`,body):api.post('/ai_systems',body));onSaved?.();onOpenChange(false);});}
+  async function save(e){e.preventDefault();await run(async()=>{const body={client_id:clientId,...Object.fromEntries(AI_KEYS.map(k=>[k,form[k]]))};await (id?api.patch(`/ai_systems/${id}`,body):createRecord('/ai_systems',body));onSaved?.();onOpenChange(false);});}
   function openRecord(kind,row){setNested({kind,record:row});}
   async function upload(file){if(!file)return;await run(async()=>{const content=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});await api.post('/evidence',{client_id:clientId,linked_type:'ai_system',linked_id:id,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:content});});}
   async function download(ev){await run(async()=>{const {data}=await api.get(`/evidence/${ev.evidence_id}/download`);const a=document.createElement('a');a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type};base64,${data.content_base64}`;a.download=data.filename;a.click();});}

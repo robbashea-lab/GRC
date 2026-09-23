@@ -17,6 +17,7 @@ jest.mock("@/lib/api", () => ({ __esModule: true, default: { get: jest.fn(), pos
 jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate, useLocation: () => ({ pathname: "/clients" }), Outlet: () => null, NavLink: ({ children, to }) => <a href={to}>{typeof children === "function" ? children({ isActive: false }) : children}</a> }), { virtual: true });
 
 let root, container;
+beforeAll(() => {Object.defineProperty(global, 'crypto', {configurable:true,value:require('crypto').webcrypto});});
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   window.scrollTo=jest.fn();
@@ -83,7 +84,7 @@ test("management reuses client form for add and edit; client role gets no contro
   expect(document.querySelector('[data-testid="new-client-name"]').value).toBe("");
   await change(document.querySelector('[data-testid="new-client-name"]'), "New organization");
   await click(document.querySelector('[data-testid="new-client-save"]'));
-  expect(api.post).toHaveBeenCalledWith("/clients", expect.objectContaining({ name: "New organization" }));
+  expect(api.post).toHaveBeenCalledWith("/clients", expect.objectContaining({ name: "New organization" }), {headers:{'Idempotency-Key':expect.any(String)}});
   api.post.mockClear();
   await click([...container.querySelectorAll("button")].find(b => b.textContent === "Edit"));
   const c = mockFixtures.responses["/clients"][0];

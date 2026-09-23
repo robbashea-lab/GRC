@@ -23,7 +23,7 @@ from urllib.parse import urlparse
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Any, Dict, Tuple
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, Path
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, Path, Header
 from fastapi.responses import StreamingResponse
 import csv
 import io
@@ -52,6 +52,7 @@ import ai_governance
 import framework_governance
 import evidence_context
 import json
+import create_requests
 
 # ---------------- DB ----------------
 mongo_url = os.environ["MONGO_URL"]
@@ -571,7 +572,7 @@ class ResetIn(BaseModel):
 
 # ---------------- Audit ----------------
 async def audit(user: Dict, action: str, entity_type: str, entity_id: str, client_id: Optional[str] = None, meta: Optional[Dict] = None):
-    await db.audit_logs.insert_one({
+    document = {
         "log_id": _uid("log"),
         "at": _now(),
         "user_id": user.get("user_id"),
@@ -581,7 +582,15 @@ async def audit(user: Dict, action: str, entity_type: str, entity_id: str, clien
         "entity_id": entity_id,
         "client_id": client_id,
         "meta": meta or {},
-    })
+    }
+    intent = create_requests.current.get()
+    if intent:
+        # Replaying a partially completed create repairs its audit without duplicates.
+        identity = create_requests.digest([intent, action, entity_type, entity_id, client_id, meta])
+        await db.create_requests.update_one({"_id": intent}, {"$set": {"pending_audits." + identity: document}})
+        await db.audit_logs.update_one({"_id": "create:" + identity}, {"$setOnInsert": document}, upsert=True)
+    else:
+        await db.audit_logs.insert_one(document)
 
 
 # ---------------- Notifications helpers (defined early so they're in scope everywhere) ----------------
@@ -1369,10 +1378,16 @@ async def grc_lead_candidates(client_id: Optional[str] = Query(None),
 
 
 @api.post("/clients")
-async def create_client(body: ClientIn, user: Dict = Depends(get_current_user)):
+async def create_client(body: ClientIn, user: Dict = Depends(get_current_user), idempotency_key: Optional[str] = Header(None)):
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Only platform admins can create clients")
-    cid = _uid("cli")
+    async def execute(identity):
+        return await _create_client(body, user, identity)
+    return await create_requests.run(db, idempotency_key, user["user_id"], None, "clients", body.model_dump(), execute)
+
+
+async def _create_client(body, user, identity):
+    cid = "cli_" + identity
     doc = {
         "client_id": cid,
         "name": body.name,
@@ -1391,18 +1406,14 @@ async def create_client(body: ClientIn, user: Dict = Depends(get_current_user)):
         details = body.primary_contact_details.model_dump()
         if not details["name"].strip():
             raise HTTPException(422, "Primary Contact name is required")
-        contact = {**details, "name": details["name"].strip(), "contact_id": _uid("cnt"),
+        contact = {**details, "name": details["name"].strip(), "contact_id": "cnt_" + identity,
                    "client_id": cid, "status": "active", "created_at": _now(), "updated_at": _now(),
                    "created_by": user["user_id"]}
         doc["primary_contact_id"] = contact["contact_id"]
-        await db.contacts.insert_one(contact)
-    try:
-        await db.clients.insert_one(doc)
-    except Exception:
-        # Compensate only this request's new, not-yet-published Contact.
-        if contact and not await db.clients.find_one({"client_id": cid}):
-            await db.contacts.delete_one({"_id": contact["_id"], "client_id": cid})
-        raise
+        contact = await create_requests.insert_primary(db, "contacts", contact, identity)
+    # Retain a partial Contact for same-intent recovery; never delete on an
+    # uncertain database response, which may have committed the Client write.
+    doc = await create_requests.insert_primary(db, "clients", doc, identity)
     if user.get("role") == "platform_admin" and user.get("client_ids"):
         await db.users.update_one({"user_id": user["user_id"]}, {"$addToSet": {"client_ids": cid}})
     await audit(user, "create", "client", cid, cid, meta={"name": body.name})
@@ -1544,8 +1555,18 @@ async def list_evidence(client_id: Optional[str] = Query(None), linked_type: Opt
 
 
 @api.post("/evidence")
+async def create_evidence(body: EvidenceIn, user: Dict = Depends(get_current_user), idempotency_key: Optional[str] = Header(None)):
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    if not _can_access_client(user, body.client_id):
+        raise HTTPException(403, "Forbidden")
+    async def execute(identity):
+        return await _create_evidence(body=body, user=user, identity=identity)
+    return await create_requests.run(db, idempotency_key, user["user_id"], body.client_id, "evidence", body.model_dump(), execute)
+
+
 @review_mutation
-async def create_evidence(body: EvidenceIn, user: Dict = Depends(get_current_user)):
+async def _create_evidence(body, user, identity=None):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
     if not _can_access_client(user, body.client_id):
@@ -1570,7 +1591,8 @@ async def create_evidence(body: EvidenceIn, user: Dict = Depends(get_current_use
     doc = {"evidence_id": ev_id, **body.model_dump(), "version": 1, "sha256": hashlib.sha256(file_bytes).hexdigest(),
            "uploaded_by": user["user_id"], "uploaded_by_email": user["email"],
            "created_at": _now()}
-    await db.evidence.insert_one(doc)
+    doc = await create_requests.insert_primary(db, "evidence", doc, identity)
+    ev_id = doc["evidence_id"]
     await audit(user, "upload", "evidence", ev_id, body.client_id, meta={"filename": body.filename})
     if body.linked_type in ("framework_assessment", "framework_assessments"):
         await audit(user, "Evidence linked", "framework_assessment", body.linked_id, body.client_id, meta={"filename": body.filename, "evidence_id": ev_id})
@@ -2378,11 +2400,28 @@ async def get_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = P
 
 
 @entity_router.post("/{kind}")
+async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[str, Any] = None,
+                        user: Dict = Depends(get_current_user), idempotency_key: Optional[str] = Header(None)):
+    # Authorization is re-evaluated even when a completed response is replayed.
+    if not _writable(user):
+        raise HTTPException(403, "Read-only role")
+    if not _can_access_client(user, (body or {}).get("client_id")):
+        raise HTTPException(403, "Forbidden for this client")
+    async def execute(identity):
+        return await _create_entity(kind=kind, body=body, user=user, identity=identity)
+    return await create_requests.run(db, idempotency_key, user["user_id"], (body or {}).get("client_id"),
+                                     kind, body or {}, execute)
+
+
 @risk_mutation
-async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[str, Any] = None, user: Dict = Depends(get_current_user)):
+async def _create_entity(kind, body, user, identity=None):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
     entity_type, Model, id_field, prefix = ENTITY_MAP[kind]
+    if identity:
+        existing = await db[_coll_for(kind)].find_one({"_id": "create:" + identity}, {"_id": 0})
+        if existing:
+            return await _finish_entity_create(kind, existing, user)
     checked = _editable_patch(kind, body or {}, user=user)
     parsed = Model(**checked).model_dump()
     if not _can_access_client(user, parsed["client_id"]):
@@ -2414,13 +2453,18 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
            "created_by": user["user_id"]}
     if kind == "reviews":
         doc = review_occurrences.view(doc)
-    await db[_coll_for(kind)].insert_one(doc)
-    doc.pop("_id", None)
+    doc = await create_requests.insert_primary(db, _coll_for(kind), doc, identity)
+    return await _finish_entity_create(kind, doc, user)
+
+
+async def _finish_entity_create(kind, doc, user):
+    entity_type, _model, id_field, _prefix = ENTITY_MAP[kind]
+    new_id = doc[id_field]
     if kind == "tasks":
         await remediation.synchronize(db, doc, user, _now, audit)
     if kind == "reviews":
         await policy_reviews.sync(db, doc)
-    await audit(user, "Risk created" if kind == "risks" else "Vendor created" if kind == "vendors" else "create", entity_type, new_id, parsed.get("client_id"))
+    await audit(user, "Risk created" if kind == "risks" else "Vendor created" if kind == "vendors" else "create", entity_type, new_id, doc.get("client_id"))
     if kind == "vendors":
         await vendor_governance.ensure_reviews(db,doc,user,_now())
     if kind == "risks":
@@ -4670,6 +4714,7 @@ app.add_middleware(
     allow_credentials=False,  # cookies are cross-site secure=none but we also return token in body
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Create-Rejected", "Retry-After"],
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

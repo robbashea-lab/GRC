@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {createIntent} from '@/lib/createIntent';
 import api, { formatError } from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
     name: "", industry: "", status: "onboarding", primary_contact: "", environment: "Production",
   });
   const [saving, setSaving] = useState(false);
+  const createRecord = useMemo(() => createIntent((...args) => api.post(...args)), []);
   const [choices, setChoices] = useState(null), [choiceError, setChoiceError] = useState(''), [retry, setRetry] = useState(0);
   useEffect(() => {
     if (!open) return;
@@ -43,7 +45,7 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
         delete payload.primary_contact_id;
         if (contact_name.trim()) payload.primary_contact_details = {name: contact_name.trim(), email: contact_email.trim() || null, title: contact_title.trim() || null};
       }
-      const { data } = await (client ? api.patch(`/clients/${client.client_id}`, payload) : api.post("/clients", payload));
+      const { data } = await (client ? api.patch(`/clients/${client.client_id}`, payload) : createRecord("/clients", payload));
       onCreated?.(data);
       onOpenChange(false);
     } catch (e) { toast.error(formatError(e)); }

@@ -1,6 +1,7 @@
 import VendorGovernancePanel from "./VendorGovernancePanel";
 import AssigneeSelect from "./AssigneeSelect";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +119,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   schema = schema || SCHEMAS[kind]?.fields || [];
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const createRecord = useCreateIntent((...args) => api.post(...args), `${clientId}:${kind}`);
   const [decisionOpen, setDecisionOpen] = useState(false);
   const [decisionForm, setDecisionForm] = useState({});
   const [findingOpen, setFindingOpen] = useState(false);
@@ -318,7 +320,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         savedRecord=(await api.patch(`/${kind}/${record[idField]}`, {...clean,expected_updated_at:record.updated_at??null})).data;
         if(kind!=="tasks"||savedRecord.status!=="done"||record.status==="done")toast.success("Saved");
       } else {
-        savedRecord=(await api.post(`/${kind}`, clean)).data;
+        savedRecord=(await createRecord(`/${kind}`, clean)).data;
         toast.success("Created");
       }
       if(kind==='tasks'&&savedRecord.status==='done'&&record?.status!=='done') {

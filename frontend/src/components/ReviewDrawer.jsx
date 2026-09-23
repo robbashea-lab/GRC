@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const generation = useRef(0);
   const shown = selected || current;
   const cid = current?.client_id || record?.client_id || clientId;
+  const createRecord = useCreateIntent((...args) => api.post(...args), cid);
   const rid = shown?.review_id;
   const oid = selected?.occurrence_id || (shown ? occurrenceId(shown) : null);
   const frozen = !!selected || ['completed','cancelled'].includes(current?.status);
@@ -102,7 +104,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   async function saveChanges() {
     const patch = changes();
     if (!current) {
-      const {data} = await api.post('/reviews',{...patch,client_id:cid});
+      const {data} = await createRecord('/reviews',{...patch,client_id:cid});
       setCurrent(data); setForm({...data,due_date:data.due_date?.slice(0,10) || ''}); onSaved?.(); return data;
     }
     if (Object.keys(patch).length) {

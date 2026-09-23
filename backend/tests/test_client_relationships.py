@@ -88,13 +88,30 @@ class ClientRelationshipsTests(harness.ClientDashboardSourcesTests):
         self.assertEqual(await server.db.clients.count_documents({}), 2)
         self.assertEqual(await server.db.contacts.count_documents({}), 0)
 
-    async def test_failed_client_insert_cleans_only_this_requests_new_contact(self):
+    async def test_failed_client_insert_retains_and_recovers_only_this_requests_new_contact(self):
         await server.db.contacts.insert_one({'contact_id': 'existing', 'client_id': 'a', 'name': 'Keep'})
-        collection = server.db.clients
-        with patch.object(server.db, 'clients', collection), patch.object(collection, 'insert_one', AsyncMock(side_effect=RuntimeError('simulated insert failure'))):
-            with self.assertRaises(RuntimeError):
-                await self.client.post('/api/clients', json={'name': 'Failed', 'primary_contact_details': {'name': 'Maya'}})
-        self.assertEqual([c['contact_id'] for c in await server.db.contacts.find().to_list(None)], ['existing'])
+        collection_type = type(server.db.clients)
+        original = collection_type.insert_one
+        async def fail_client(collection, *args, **kwargs):
+            if collection.name == 'clients':
+                raise RuntimeError('simulated insert failure')
+            return await original(collection, *args, **kwargs)
+        with patch.object(collection_type, 'insert_one', fail_client):
+            # Keyed creates use an atomic upsert, not insert_one; inject that
+            # boundary as well so the test still fails after Contact persistence.
+            original_update = collection_type.update_one
+            async def fail_client_update(collection, *args, **kwargs):
+                if collection.name == 'clients':
+                    raise RuntimeError('simulated insert failure')
+                return await original_update(collection, *args, **kwargs)
+            with patch.object(collection_type, 'update_one', fail_client_update):
+                failed = await self.client.post('/api/clients', headers={'Idempotency-Key':'client-contact-failure'}, json={'name': 'Failed', 'primary_contact_details': {'name': 'Maya'}})
+                self.assertEqual(failed.status_code, 503)
+        retry = await self.client.post('/api/clients', headers={'Idempotency-Key':'client-contact-failure'}, json={'name': 'Failed', 'primary_contact_details': {'name': 'Maya'}})
+        self.assertEqual(retry.status_code, 200, retry.text)
+        self.assertEqual(await server.db.contacts.count_documents({}), 2)
+        self.assertIsNotNone(await server.db.contacts.find_one({'contact_id':'existing','name':'Keep'}))
+        self.assertEqual(await server.db.contacts.count_documents({'client_id':retry.json()['client_id']}), 1)
 
     async def test_display_parity_no_read_migration_or_historical_rewrite(self):
         import routes.portfolio as portfolio

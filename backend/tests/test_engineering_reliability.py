@@ -95,15 +95,15 @@ class EngineeringReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(saved['assessment_history']),1)
         self.assertNotIn('expected_last_assessed',saved['assessment_history'][0])
 
-    async def test_fault_characterization_generic_create_is_not_retry_safe(self):
-        # Characterization, not a passing resilience claim: no request identity exists here.
+    async def test_post_write_failure_retry_preserves_one_finding(self):
         self.sign_in('admin')
+        headers={'Idempotency-Key':'original-defect-regression'}
         with patch.object(server,'audit',AsyncMock(side_effect=RuntimeError('injected post-write failure'))):
-            with self.assertRaises(RuntimeError):
-                await self.client.post('/api/findings',json={'client_id':'a','title':'Response lost'})
-        retry=await self.client.post('/api/findings',json={'client_id':'a','title':'Response lost'})
+            failed=await self.client.post('/api/findings',json={'client_id':'a','title':'Response lost'},headers=headers)
+            self.assertEqual(failed.status_code,503)
+        retry=await self.client.post('/api/findings',json={'client_id':'a','title':'Response lost'},headers=headers)
         self.assertEqual(retry.status_code,200,retry.text)
-        self.assertEqual(await server.db.findings.count_documents({'client_id':'a','title':'Response lost'}),2)
+        self.assertEqual(await server.db.findings.count_documents({'client_id':'a','title':'Response lost'}),1)
 
     async def test_parallel_validation_records_one_decision(self):
         self.sign_in('admin')
