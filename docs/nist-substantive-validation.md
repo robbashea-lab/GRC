@@ -2,7 +2,7 @@
 
 **Phase 2 gate complete.** 100 unchanged item interpretations verified; 6 corrected, including one shorthand title and its derived prompts. Six backend CSF tests and 36 frontend tests across five suites passed. Targeted ESLint and diff whitespace checks passed. Production build passed (`main.655fa0ed.js`), retaining the unrelated PlatformAdmin hook warning. No live browser or persistent staging backend exercised; no publication. The following register retains the pre-implementation research record.
 
-Phase 2 in progress. Source: [NIST CSWP 29](https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf), NIST, 2024-02-26, accessed 2026-09-22. Official public framework; Appendix A supplies the Core, sections 1–4 explain outcomes, Profiles and informative implementation guidance. No certification or universal numeric cadence is established by CSF. This validates represented version 2.0, not a silent upgrade.
+Pre-implementation research record. Source: [NIST CSWP 29](https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf), NIST, 2024-02-26, accessed 2026-09-22. Official public framework; Appendix A supplies the Core, sections 1–4 explain outcomes, Profiles and informative implementation guidance. No certification or universal numeric cadence is established by CSF. This validates represented version 2.0, not a silent upgrade.
 
 ## Corrections recorded before implementation
 

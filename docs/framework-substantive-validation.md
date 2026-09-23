@@ -5,7 +5,7 @@ Branch: `codex/framework-substantive-validation`.
 
 ## Status
 
-**CIS, NIST and HIPAA content passes and automated phase gates completed; ISO and SOC 2 in progress. CIS product-use authorization confirmed by the user on 2026-09-22.** The former licensing blocker is resolved for the existing Omnisciente commercial product/use case. Qualified scope limitations remain in the phase ledgers. Earlier engineering tests are not evidence of substantive correctness.
+**All five phases processed; CIS, NIST and HIPAA source-comparison passes completed with the scoped caveats below. ISO and SOC 2 full substantive validation remains incomplete because exact authorized sources were unavailable. Final engineering regression and local Demo content checks passed.** CIS commercial product-use authorization is resolved. Passing tests do not establish normative completeness, client compliance or independent assurance.
 
 The repository represents CIS v8.1 IG1. CIS's official IG1 page confirms a 56-safeguard scope for v8/v8.1. This confirms the aggregate count only, not the stored membership, titles, explanations, cadence, policy/review mappings or cross-framework relationships. The official Navigator and assessment specification provide public research material, but public access does not establish commercial product-use permission.
 
@@ -80,3 +80,53 @@ Phase 4 engineering gate: 6 backend tests, 38 frontend tests (5 suites), targete
 ISO commit: `0c7f85da4c470c4d29ad4c543e9c54dbd226c934`. [SOC ledger](soc-substantive-validation.md) covers inspection of all 61 current entries, eight Review plans and 14 policy mappings. AICPA confirms the represented resource identity but requires account access for the criteria document; the original official PDF URL redirects to that gate. Exact criterion/points-of-focus completeness remains REQUIRES AUTHORIZED SOURCE for all 61. No third-party mirror or gate bypass used, no copyrighted criterion text imported, and no unsupported content correction made.
 
 Eight existing recommended numerical Review defaults receive explicit D metadata. Phase 5 engineering gate: 7 backend tests, 38 frontend tests (5 suites), targeted ESLint and production build passed (`main.0bcd42e3.js`; unchanged CSS and existing PlatformAdmin warning). This is not a substantive source-validation pass or live persistent-backend verification. Final cross-framework regression follows.
+
+## Final review correction — F01 (recorded before implementation)
+
+The six existing mappings targeting ISO/SOC show the same generic provenance basis as source-verified CIS/HIPAA relationships. Previous basis: `Comparison of the cited source and target references; not an official crosswalk, exact equivalence or automatic assessment rule.` Replace only those six displayed basis strings with `Authored topic association; exact target-source validation requires an authorized source. This is not an official crosswalk, exact equivalence or automatic assessment rule.` Rationale: I01/S01 access limits above must be visible where users inspect mapping provenance, not hidden solely in this report. Preserve endpoints, PARTIAL relationship, notes, assessment independence and history. No mapping or authorization is broadened.
+
+## Consolidated result
+
+| Framework | Current items inspected | Unchanged bounded interpretation verified | Corrected items | Exact-source validation incomplete | Phase commit |
+| --- | --- | --- | --- | --- | --- |
+| CIS v8.1 IG1 | 56 | 54 | 2 | 0 | f9a373862a07913805c080bd1fbd56e0887341b9 |
+| NIST CSF 2.0 | 106 | 100 | 6 | 0 | f0c4cfc8c99dded5719f06d2ef0ea548bfe9486e |
+| HIPAA current represented scope | 76 | 74 | 2 | 0 | ab9ca9f37542526f73d6cd4b708cdb125b9f9f19 |
+| ISO/IEC 27001:2022 + Amd 1:2024 | 123 | 0 | 0 | 123 | 0c7f85da4c470c4d29ad4c543e9c54dbd226c934 |
+| SOC 2 / 2017 TSC, revised 2022 points of focus | 61 | 0 | 0 | 61 | 15c055bfaac391b9602900f36a45ae034acd93d8 |
+| Total | 422 | 228 | 10 | 184 | Final provenance/report commit follows these five |
+
+Verified means appropriate concise interpretation and supporting examples against cited sources, not an exhaustive substitute for those sources. Counts do not count a correction twice. ISO's version/climate subset and SOC's version/readiness boundary have narrower public-source confirmation, but this does not move their whole items into VERIFIED. HIPAA has one separately flagged group-plan/vendor association requiring client-specific SME review.
+
+### Cadence and mapping results
+
+- All 47 existing Review plans now carry explicit cadence metadata: 11 A source-interval drivers (CIS), 36 D numerical product recommendations. Each A driver has its mapped safeguard, interval and source URL. D does not claim a source minimum.
+- Operational timing, event-triggered work, state requirements, source periodicity and management-defined frequency remain distinct from governance Review recurrence. CIS weekly backup/unauthorized-asset handling, monthly patching, inactivity settings and immediate revocation are not delayed to a governance Review.
+- HIPAA periodic duties, six-year document retention and event-driven notification deadlines do not become annual/quarterly legal mandates. No proposed rule was imported.
+- 71 policy mapping rows inspected; support relationships do not mandate a separately named document. Six CIS/HIPAA cross-framework relationships have both source endpoints compared; six ISO/SOC relationships remain source-qualified. All 12 are PARTIAL; no equivalence or automatic assessment transfer.
+- No numerical cadence default, source minimum, requirement ID, catalog version identity, policy mapping, cross-framework endpoint or operational schedule changed.
+
+### Final QA actually executed
+
+1. Backend: 35 tests passed in the six framework suites (`FrameworkTests`, `CsfTests`, `HipaaTests`, `IsoTests`, `SocTests`, `FrameworkProgramTests`). Real FastAPI routes with isolated Mongo mocks; includes configuration/reconfiguration, stable IDs, assessment history, Evidence reuse, Finding/Action independence, recurring Review history, read-only denial and cross-client denial. Not a persistent database or full-backend-suite claim.
+2. Frontend: `craco test --watch=false --runInBand` — all 71 suites / 394 tests passed after F01. Covers shared framework presentation, Demo persistence and broader existing workflow regressions.
+3. Targeted ESLint on framework helpers, changed tests, Context and Drawer passed. One attempted command named nonexistent `FrameworkOperator.jsx`; corrected to actual `FrameworkDrawer.jsx` and rerun successfully. No standalone TypeScript check is configured for this JavaScript project.
+4. Production preview build passed after final application changes: `main.ff3513eb.js`, unchanged approved `main.9c179479.css`. The existing `PlatformAdmin.jsx:52` missing-hook-dependency warning and runtime deprecation notice remain; no unrelated fix.
+5. Headless Edge browser against the exact final local build at `http://127.0.0.1:4182`: 12 targeted content/drawer/deep-link refresh checks across five frameworks passed, including all ten corrected items. All six qualified ISO/SOC mapping notices were visible in Related tabs. Five canonical Demo clients loaded; a fresh fictional client generated 394 assessments (SOC starts with 33 Common Criteria). Opening guidance did not change its assessments or Reviews. Wrong-client assessment deep link was excluded; no page/console errors. External analytics requests were fulfilled locally in this isolated QA session.
+6. Catalog comparison against baseline confirmed stable version strings, requirement IDs, all policy mappings and every operational plan field apart from the new provenance fields. Final diff/whitespace checks passed. Added-line credential-pattern check returned no matches; manual application diff inspection found no added secrets, credentials, environment values, dependencies, migrations or unrelated application changes.
+
+Added seven regression tests: two backend CIS tests, four operator/cadence tests and one qualified-mapping test. Existing assertions were not weakened. Browser smoke helper and production build are outside Git, not committed debugging artifacts. Browser Demo isolation is not server authorization proof; that is separately covered by the isolated API tests.
+
+### Historical data and architecture
+
+The existing shared JSON catalogs, operator guidance and tests were extended; no new service, scheduling engine or schema was introduced. Ponytail guided reuse of these existing structures. Stable version/IDs prevent assessment regeneration. No persistent database was connected, seeded, deleted or migrated. Existing reconciliation uses insert-only initialization for assessment state; tests confirm histories and recurring work survive reconfiguration. Framework deactivation still preserves recurring Reviews until explicitly cancelled.
+
+Assessment histories retain prior assessment-field snapshots, not frozen catalog wording. The old/new explanation register and Git history preserve changed reference text. This is a stated limitation, not a claim that historic UI descriptions are immutable snapshots.
+
+### Remaining limitations and next input
+
+- ISO: obtain an authorized 2022 standard plus Amd 1:2024 for clause/control completeness and cadence qualifications; public metadata and educational notes are insufficient. Existing Annex register alone is not a complete custom organization-specific SoA.
+- SOC: obtain authorized access to the 2017 TSC with 2022 revised points of focus. The publisher account gate was respected. No account or confidential license information is requested by this report.
+- HIPAA: qualified client-scope review of group-health-plan duties versus business-associate/vendor governance. No legal applicability or certification conclusion is made.
+- Full normative validation of the 184 restricted items and six restricted mappings remains NOT VERIFIED. No blanket all-framework substantive pass, independent SME review, persistent-staging authentication test or whole-application security assurance is claimed.
+- No push, merge to main or publication performed. All work is on `codex/framework-substantive-validation`; the separate unapproved visual worktree remains untouched. The local preview is not an updated published preview.
