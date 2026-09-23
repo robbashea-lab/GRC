@@ -34,7 +34,7 @@ async def project(db, clients):
         {"_id": 0, "user_id": 1, "name": 1, "email": 1, "status": 1, "role": 1}).to_list(None) if user_ids else []
     contact_map = {(c["client_id"], c["contact_id"]): c for c in contacts}
     user_map = {u["user_id"]: u for u in users}
-    return [{**c,
+    return [{**{k:v for k,v in c.items() if k!='_configuration_lock'},
         "primary_contact_record": contact_map.get((c["client_id"], c.get("primary_contact_id"))),
         "grc_lead_id": c.get("assigned_owner_id"),
         "grc_lead": user_map.get(c.get("assigned_owner_id")),

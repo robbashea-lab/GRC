@@ -22,6 +22,7 @@ export default function MyAccount() {
       name: user.name || "",
       job_title: user.job_title || "",
       phone: user.phone || "",
+      expected_updated_at: user.updated_at ?? null,
     });
     setPrefs({ weekly_digest_optout: !!user.weekly_digest_optout });
   }, [user]);

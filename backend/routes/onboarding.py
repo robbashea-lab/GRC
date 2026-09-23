@@ -23,7 +23,7 @@ from server import (  # noqa: E402
     db, _uid, _now, audit, _writable, _can_access_client,
     _next_due_for_recurrence, get_current_user,
     _presence_for_response, _lifecycle_for_response,
-    OnboardingPolicyResponse,
+    OnboardingPolicyResponse, configuration_mutation, _require_snapshot, _save_snapshot,
 )
 
 router = APIRouter(prefix="/api", tags=["onboarding"])
@@ -70,6 +70,7 @@ ASSESSMENT_TYPES: List[str] = [
 
 
 class OnboardingContact(BaseModel):
+    expected_updated_at: Optional[str] = None
     role: str
     name: Optional[str] = None
     title: Optional[str] = None
@@ -81,6 +82,7 @@ class OnboardingContact(BaseModel):
 
 
 class OnboardingAssessment(BaseModel):
+    expected_updated_at: Optional[str] = None
     name: str
     assessment_type: Optional[str] = None
     date: Optional[str] = None
@@ -103,6 +105,7 @@ class OnboardingKnownIssue(BaseModel):
 
 
 class OnboardingRequirementResponse(BaseModel):
+    expected_updated_at: Optional[str] = None
     name: str
     category: Optional[str] = None
     applicability: str
@@ -152,6 +155,7 @@ async def onboarding_requirements_library(
         match = by_name.get(item["name"].strip().lower())
         if match:
             row["existing_requirement_id"] = match.get("requirement_id")
+            row["updated_at"] = match.get("updated_at")
             row["current_applicability"] = match.get("applicability")
             row["current_note"] = match.get("note")
             row["current_rationale"] = match.get("rationale")
@@ -182,6 +186,7 @@ async def onboarding_state(
 
 
 @router.post("/onboarding/finalize")
+@configuration_mutation
 async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(get_current_user)):
     """Idempotent orchestrator for the six-step onboarding wizard.
     Never fabricates verified metadata. Never duplicates by (client_id + title).
@@ -192,6 +197,25 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
         raise HTTPException(403, "Forbidden for this client")
 
     cid = body.client_id
+    # Reject stale batches before any writes; still condition each write because
+    # register edits do not take the configuration lease. This is not a transaction.
+    for kind, entries, name_field in (
+        ('policies', body.policy_responses, 'title'),
+        ('requirements', body.requirement_responses, 'title'),
+        ('contacts', body.contacts, 'role'),
+        ('assessments', body.assessments, 'name'),
+    ):
+        if not entries:
+            continue
+        rows = await db[kind].find({'client_id': cid}).to_list(None)
+        def entry_key(name, date=None):
+            return (name or '').strip().lower(), (date or '') if kind == 'assessments' else ''
+        by_key = {entry_key(row.get(name_field), row.get('date')): row for row in rows}
+        for entry in entries or []:
+            name = entry.role if kind == 'contacts' else entry.name
+            existing = by_key.get(entry_key(name, getattr(entry, 'date', None)))
+            if existing:
+                _require_snapshot(entry.model_dump(exclude_unset=True), existing)
     now = _now()
     counters = {
         "policies_created": 0, "policies_updated": 0,
@@ -230,7 +254,7 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                 }
                 if existing.get("status") in (None, "", "draft", "needs_verification", "needs_creation", "not_applicable"):
                     update["status"] = lifecycle
-                await db.policies.update_one({"policy_id": existing["policy_id"]}, {"$set": update})
+                await _save_snapshot(db.policies, {"policy_id": existing["policy_id"]}, existing, r.model_dump(exclude_unset=True), update)
                 counters["policies_updated"] += 1
                 pol_id = existing["policy_id"]
             else:
@@ -270,15 +294,15 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
             status_val, app_val = _APPLICABILITY_MAP[app]
             existing = req_by_name.get(r.name.strip().lower())
             if existing:
-                await db.requirements.update_one(
+                await _save_snapshot(db.requirements,
                     {"requirement_id": existing["requirement_id"]},
-                    {"$set": {
+                    existing, r.model_dump(exclude_unset=True), {
                         "applicability": app_val, "status": status_val,
                         "category": r.category or existing.get("category"),
                         "note": r.note or existing.get("note"),
                         "rationale": r.rationale if app == "not_applicable" else existing.get("rationale"),
                         "is_client_reported": True, "updated_at": now,
-                    }})
+                    })
                 counters["requirements_updated"] += 1
                 req_id = existing["requirement_id"]
             else:
@@ -320,7 +344,7 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                 }
             existing = by_role.get(role_key)
             if existing:
-                await db.contacts.update_one({"contact_id": existing["contact_id"]}, {"$set": doc_upsert})
+                await _save_snapshot(db.contacts, {"contact_id": existing["contact_id"]}, existing, c.model_dump(exclude_unset=True), doc_upsert)
                 contact_id = existing["contact_id"]
             else:
                 contact_id = _uid("cnt")
@@ -339,9 +363,9 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
         for a in body.assessments:
             key = (a.name.strip().lower(), a.date or "")
             if key in seen_key:
-                await db.assessments.update_one(
+                await _save_snapshot(db.assessments,
                     {"assessment_id": seen_key[key]["assessment_id"]},
-                    {"$set": {
+                    seen_key[key], a.model_dump(exclude_unset=True), {
                         "assessment_type": a.assessment_type,
                         "conducted_by": a.conducted_by,
                         "status": a.status or "reported",
@@ -350,7 +374,7 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                         "notes": a.notes,
                         "evidence_ids": a.evidence_ids or [],
                         "updated_at": now,
-                    }},
+                    },
                 )
                 assessment_id = seen_key[key]["assessment_id"]
             else:
@@ -472,6 +496,8 @@ class BaselineSave(BaseModel):
     client_id: str
     state: BaselineState
     finalize: bool = False
+    expected_updated_at: Optional[str] = Field(default=None,max_length=100)
+    expected_records: Optional[Dict[str, Any]] = None
 
 
 def _baseline_match(rows, item):
@@ -490,6 +516,18 @@ async def _baseline_client(cid, user, writable=False):
     return client
 
 
+async def baseline_record_versions(cid):
+    import server
+    versions = {}
+    for group, id_field in [('policies','policy_id'),('requirements','requirement_id'),('reviews','review_id')]:
+        rows = await server.db[group].find({'client_id':cid}, {'_id':0,'title':1,'baseline_key':1,id_field:1,'updated_at':1}).to_list(2001)
+        if len(rows)>2000:raise HTTPException(413,'Setup population is too large; use the operational registers')
+        for item in BASELINE_CATALOG[group]:
+            row = _baseline_match(rows,item)
+            versions[group+':'+item['key']] = {id_field:row[id_field],'updated_at':row.get('updated_at')} if row else None
+    return versions
+
+
 @router.get('/onboarding/baseline')
 async def baseline_state(client_id: str, user: Dict = Depends(get_current_user)):
     import server
@@ -505,15 +543,17 @@ async def baseline_state(client_id: str, user: Dict = Depends(get_current_user))
             for item in BASELINE_CATALOG[group]:
                 row = _baseline_match(rows, item) or {}
                 state[group][item['key']] = maps[group].get(row.get('presence' if group == 'policies' else 'applicability'), '')
-    return {'catalog': BASELINE_CATALOG, 'state': state}
+    return {'catalog': BASELINE_CATALOG, 'state': state, 'record_versions':await baseline_record_versions(client_id)}
 
 
 @router.post('/onboarding/baseline')
+@configuration_mutation
 async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_user)):
     import server
     import framework_governance
     cid = body.client_id
     client = await _baseline_client(cid, user, writable=True)
+    server._require_snapshot(body.model_dump(exclude_unset=True),client.get('onboarding_baseline') or {})
     state = body.state.model_dump()
     framework_governance.validate_configuration(state)
     if state['version']>=3:
@@ -531,6 +571,10 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
         raise HTTPException(400, 'Invalid review selection')
     state['reviews'] = list(dict.fromkeys(state['reviews']))
     if body.finalize:
+        if body.expected_records is None:
+            raise HTTPException(428,'Reload setup before finalizing; source record versions are required')
+        if body.expected_records != await baseline_record_versions(cid):
+            raise HTTPException(409,'Setup records changed since this form was opened; reload before finalizing')
         if state['version']>=3:
             mapped={p['baseline_key'] for key,c in framework_governance.CATALOGS.items() if state['requirements'].get(key)=='applies' for p in c['review_plans'] if state['framework_reviews'].get(p['key'],{}).get('enabled',True)}
             state['reviews']=[k for k in state['reviews'] if k not in mapped]
@@ -556,7 +600,10 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
                 else:
                     updates['baseline_selection'] = 'selected'
                 if old:
-                    await server.db[group].update_one({id_field: old[id_field], 'client_id': cid}, {'$set': updates})
+                    if any(old.get(k)!=v for k,v in updates.items() if k!='updated_at'):
+                        updates['updated_at']=server._next_write_time(old.get('updated_at'))
+                        changed=await server.db[group].update_one({id_field: old[id_field], 'client_id': cid,'updated_at':old.get('updated_at')}, {'$set': updates})
+                        if not changed.matched_count:raise HTTPException(409,'A setup record changed; reload before saving')
                 else:
                     stable_id = 'baseline_' + uuid.uuid5(uuid.NAMESPACE_URL, f'grc:{cid}:{group}:{item["key"]}').hex
                     defaults = {id_field: stable_id, 'client_id': cid, 'title': item['name'], 'category': item['category'], 'created_at': _now(), 'created_by': user['user_id']}
@@ -568,6 +615,7 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
             await framework_governance.reconcile(server,cid,state,user)
         await audit(user, 'onboarding-complete', 'client', cid, cid, meta={'baseline_version': state['version'], 'selected_reviews': len(state['reviews'])})
     state['completed'] = bool(body.finalize or client.get('onboarding_baseline', {}).get('completed'))
+    state['updated_at'] = server._next_write_time((client.get('onboarding_baseline') or {}).get('updated_at'))
     await server.db.clients.update_one({'client_id': cid}, {'$set': {'onboarding_baseline': state}})
     return state
 
@@ -606,9 +654,11 @@ class ProgramApplicabilityChange(BaseModel):
     model_config = ConfigDict(extra='forbid')
     client_id: str
     applicability: str
+    expected_updated_at: Optional[str] = Field(default=None,max_length=100)
 
 
 @router.patch('/onboarding/programs/{key}')
+@configuration_mutation
 async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict = Depends(get_current_user)):
     """Adjust current program configuration, without replaying historical intake."""
     import server
@@ -622,12 +672,14 @@ async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict 
         raise HTTPException(422, 'Invalid program applicability')
     cid = body.client_id
     old = await server.db.requirements.find_one({'client_id': cid, 'baseline_key': key})
+    server._require_snapshot(body.model_dump(exclude_unset=True),old or {})
     stable_id = 'baseline_' + uuid.uuid5(uuid.NAMESPACE_URL, f'grc:{cid}:requirements:{key}').hex
-    query = {'client_id': cid, 'requirement_id': old['requirement_id']} if old else {'_id': stable_id}
-    await server.db.requirements.update_one(query, {
-        '$set': {'baseline_response': body.applicability, 'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'unsure': 'needs_review'}[body.applicability], 'updated_at': _now()},
+    query = {'client_id': cid, 'requirement_id': old['requirement_id'], 'updated_at':old.get('updated_at')} if old else {'_id': stable_id}
+    changed = await server.db.requirements.update_one(query, {
+        '$set': {'baseline_response': body.applicability, 'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'unsure': 'needs_review'}[body.applicability], 'updated_at': old.get('updated_at') if old and old.get('baseline_response')==body.applicability else server._next_write_time((old or {}).get('updated_at'))},
         '$setOnInsert': {'requirement_id': stable_id, 'client_id': cid, 'baseline_key': key, 'title': item['name'], 'category': item['category'], 'status': 'under_review', 'created_at': _now(), 'created_by': user['user_id']},
-    }, upsert=True)
+    }, upsert=not bool(old))
+    if old and not changed.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
     if key in framework_governance.CATALOGS:
         await framework_governance.reconcile(server, cid, {**baseline, 'requirements': {key: body.applicability}}, user)
     await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={'program': key, 'applicability': body.applicability})

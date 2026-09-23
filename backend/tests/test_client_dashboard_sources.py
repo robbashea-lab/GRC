@@ -1,5 +1,6 @@
 """Exercise real tenant-authorized routes against an isolated in-memory database."""
 import os
+import json
 from pathlib import Path
 import secrets
 import sys
@@ -33,6 +34,67 @@ class ClientDashboardSourcesTests(unittest.IsolatedAsyncioTestCase):
             # supplies a repeated key. Match the frontend transport contract.
             if request.method == "POST" and request.url.path.removeprefix('/api/') in {*server.ENTITY_MAP, 'clients', 'evidence', 'ai_systems'}:
                 request.headers.setdefault('Idempotency-Key', uuid.uuid4().hex)
+            # Existing workflow tests represent fresh editors. Conflict tests
+            # explicitly retain an older token; missing-token tests disable this
+            # fixture hook. Never do this read-before-write substitution in UI.
+            parts=request.url.path.removeprefix('/api/').split('/')
+            if request.method=='POST' and (parts==['ai-intake'] or len(parts)==3 and parts[0]=='contacts' and parts[2]=='account-link'):
+                data=json.loads(request.content)
+                field='updated_at' if parts==['ai-intake'] else 'linked_user_id'
+                row=await server.db.ai_intake.find_one({'client_id':data.get('client_id')}) if parts==['ai-intake'] else await server.db.contacts.find_one({'contact_id':parts[1]})
+                data.setdefault('expected_'+field,(row or {}).get(field))
+                request._content=json.dumps(data).encode()
+                request.stream=httpx.ByteStream(request._content)
+                request.headers['Content-Length']=str(len(request._content))
+                request.headers['Content-Type']='application/json'
+            if (request.method=='PATCH' and (len(parts)==2 or len(parts)==3 and parts[0]=='users' and parts[2]=='client-memberships') and parts[0] in {*server.ENTITY_MAP,'clients','ai_systems','framework_assessments','users'}) or (request.method=='DELETE' and len(parts)==2 and parts[0] in server.ENTITY_MAP):
+                kind,identity=parts[:2]
+                id_field=server.ENTITY_MAP[kind][2] if kind in server.ENTITY_MAP else {'clients':'client_id','ai_systems':'ai_system_id','framework_assessments':'framework_assessment_id','users':'user_id'}[kind]
+                row=await server.db[kind].find_one({id_field:identity}) or {}
+                field='last_assessed' if kind=='framework_assessments' else 'updated_at'
+                data=json.loads(request.content or b'{}')
+                data.setdefault('expected_'+field,row.get(field))
+                request._content=json.dumps(data).encode()
+                request.stream=httpx.ByteStream(request._content)
+                request.headers['Content-Length']=str(len(request._content))
+                request.headers['Content-Type']='application/json'
+            if request.method=='POST' and request.url.path=='/api/bulk':
+                data=json.loads(request.content)
+                if data.get('kind') in server.ENTITY_MAP and 'expected_versions' not in data:
+                    key=server.ENTITY_MAP[data['kind']][2]
+                    rows=await server.db[data['kind']].find({key:{'$in':data.get('ids',[])}}).to_list(None)
+                    data['expected_versions']={row[key]:row.get('updated_at') for row in rows}
+                    request._content=json.dumps(data).encode()
+                    request.stream=httpx.ByteStream(request._content)
+                    request.headers['Content-Length']=str(len(request._content))
+                    request.headers['Content-Type']='application/json'
+            if request.method=='POST' and len(parts)==3 and (parts[0],parts[2]) in {('risks','accept'),('risks','close'),('vendors','schedule-review'),('policies','verify'),('policies','approval-subject'),('policies','approval-authority'),('policies','submit-review'),('findings','accept'),('exceptions','approve')}:
+                data=json.loads(request.content or b'{}')
+                key=server.ENTITY_MAP[parts[0]][2]
+                row=await server.db[parts[0]].find_one({key:parts[1]}) or {}
+                data.setdefault('expected_updated_at',row.get('updated_at'))
+                request._content=json.dumps(data).encode()
+                request.stream=httpx.ByteStream(request._content)
+                request.headers['Content-Length']=str(len(request._content))
+                request.headers['Content-Type']='application/json'
+            if request.url.path in ('/api/onboarding/baseline','/api/frameworks/soc-2/configuration') and request.method in ('POST','PATCH') or request.url.path.startswith('/api/onboarding/programs/') and request.method=='PATCH':
+                data=json.loads(request.content)
+                cid=data.get('client_id')
+                client=await server.db.clients.find_one({'client_id':cid}) or {}
+                if request.url.path=='/api/onboarding/baseline':
+                    row=client.get('onboarding_baseline') or {}
+                    if data.get('finalize') and 'expected_records' not in data:
+                        from routes.onboarding import baseline_record_versions
+                        data['expected_records']=await baseline_record_versions(cid)
+                elif request.url.path=='/api/frameworks/soc-2/configuration':
+                    row={'updated_at':client.get('soc_configuration_updated_at')}
+                else:
+                    row=await server.db.requirements.find_one({'client_id':cid,'baseline_key':parts[-1]}) or {}
+                data.setdefault('expected_updated_at',row.get('updated_at'))
+                request._content=json.dumps(data).encode()
+                request.stream=httpx.ByteStream(request._content)
+                request.headers['Content-Length']=str(len(request._content))
+                request.headers['Content-Type']='application/json'
         self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="https://isolated.example.test", event_hooks={"request": [identify_create]})
         self.addAsyncCleanup(self.client.aclose)
 

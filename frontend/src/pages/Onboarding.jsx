@@ -20,19 +20,23 @@ export default function Onboarding(){
   const {currentClient,currentClientId}=useOrg(),{user}=useAuth(),compliance=useCompliance();
   const [snapshot,setSnapshot]=useState(null),[validation,setValidation]=useState(false),[retry,setRetry]=useState(0);
   const [loaded,setLoaded]=useState(null),[state,setState]=useState(null),[catalog,setCatalog]=useState(null),[reviews,setReviews]=useState([]),[error,setError]=useState(''),[saved,setSaved]=useState(''),[busy,setBusy]=useState(false);
-  const pending=useRef(Promise.resolve()),generation=useRef(0);
+  const pending=useRef(Promise.resolve()),generation=useRef(0),editVersion=useRef(null),recordVersions=useRef(null);
   const canRun=['super_admin','platform_admin','client_contributor'].includes(user?.role);
   useEffect(()=>{
     const c=new AbortController();generation.current++;setLoaded(null);setState(null);setSnapshot(null);setError('');setValidation(false);
     if(!currentClientId)return;
     Promise.all([api.get('/onboarding/baseline',{params:{client_id:currentClientId},signal:c.signal}),api.get('/onboarding/handoff',{params:{client_id:currentClientId},signal:c.signal})]).then(([baseline,handoff])=>{
-      if(c.signal.aborted)return;setCatalog(baseline.data.catalog);setState(baseline.data.state.completed ? baseline.data.state : onboardingDraft(baseline.data.state));setReviews(handoff.data.records.reviews);setSnapshot(handoff.data);setLoaded(currentClientId);setSaved('');
+      if(c.signal.aborted)return;editVersion.current=baseline.data.state.updated_at??null;recordVersions.current=baseline.data.record_versions??null;pending.current=Promise.resolve();setCatalog(baseline.data.catalog);setState(baseline.data.state.completed ? baseline.data.state : onboardingDraft(baseline.data.state));setReviews(handoff.data.records.reviews);setSnapshot(handoff.data);setLoaded(currentClientId);setSaved('');
     }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
   },[currentClientId,retry]);
   function update(next){
     setState(next);setSaved('Saving progress…');
     const cid=currentClientId,revision=generation.current;
-    pending.current=pending.current.catch(()=>{}).then(()=>api.post('/onboarding/baseline',{client_id:cid,state:next,finalize:false}));
+    pending.current=pending.current.catch(()=>{}).then(async()=>{
+      if(revision!==generation.current)return;
+      const result=await api.post('/onboarding/baseline',{client_id:cid,state:next,finalize:false,expected_updated_at:editVersion.current});
+      if(revision===generation.current)editVersion.current=result.data.updated_at??null;
+    });
     pending.current.then(()=>{if(revision===generation.current)setSaved('Progress saved');}).catch(e=>{if(revision===generation.current){setSaved('Progress could not be saved');toast.error(formatError(e));}});
   }
   async function finalize(){
@@ -41,7 +45,7 @@ export default function Onboarding(){
     const cid=currentClientId,revision=generation.current;
     setBusy(true);try{
       await pending.current;
-      await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true});
+      await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true,expected_records:recordVersions.current,expected_updated_at:editVersion.current});
       if(revision!==generation.current)return;
       toast.success('Onboarding complete. Review the remaining operational setup.');
       compliance.refresh?.();setRetry(n=>n+1);

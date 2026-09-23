@@ -376,10 +376,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     try {
       if (!(kind === "reviews" && record.status === "completed")) {
         const { status: ignoredStatus, ...changes } = cleanForm();
-        if (Object.keys(changes).length) await api.patch(`/${kind}/${record[idField]}`, changes);
+        if (Object.keys(changes).length) {const saved=await api.patch(`/${kind}/${record[idField]}`, {...changes,expected_updated_at:record.updated_at??null});Object.assign(record,saved.data);}
       }
       const action = decisionForm.action || (kind === "findings" ? "validate" : record.status === "completed" ? "amend" : "complete");
-      const { data } = await api.post(`/${kind}/${record[idField]}/${action}`, { ...decisionForm, spawn_next: true });
+      const { data } = await api.post(`/${kind}/${record[idField]}/${action}`, { ...decisionForm, spawn_next: true, expected_updated_at:record.updated_at??null });
       Object.assign(record, data.review || data);
       setForm(p => ({ ...p, status: record.status }));
       setDecisionOpen(false);
@@ -405,7 +405,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     try {
       const changes=cleanForm();
       for(const key of ["last_reviewed","risk_score","risk_level","date_identified"]) delete changes[key];
-      if(Object.keys(changes).length) await api.patch(`/risks/${record.risk_id}`,changes);
+      if(Object.keys(changes).length) await api.patch(`/risks/${record.risk_id}`,{...changes,expected_updated_at:record.updated_at??null});
       const {data}=await api.post(`/risks/${record.risk_id}/review`);
       setRelatedDrawer({kind:"reviews",record:data.review});
       onSaved?.();
@@ -459,7 +459,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         compensating_controls: acceptForm.compensating_controls || undefined,
       };
       if (acceptForm.expiry_date) body.expiry_date = new Date(acceptForm.expiry_date).toISOString();
-      const { data } = await api.post(`/risks/${record[idField]}/accept`, body);
+      const { data } = await api.post(`/risks/${record[idField]}/accept`, {...body,expected_updated_at:record.updated_at??null});
       toast.success("Risk accepted");
       if (record) Object.assign(record, data);
       setForm((p) => ({ ...p, status: "accepted", treatment: "accept" }));
@@ -484,7 +484,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       ["approved_at", "last_reviewed_at", "next_review_date"].forEach((k) => {
         if (verifyForm[k]) body[k] = new Date(verifyForm[k]).toISOString();
       });
-      const { data } = await api.post(`/policies/${record[idField]}/verify`, body);
+      const { data } = await api.post(`/policies/${record[idField]}/verify`, {...body,expected_updated_at:record.updated_at??null});
       toast.success("Policy verified");
       if (record) Object.assign(record, data);
       setForm((p) => ({
@@ -504,7 +504,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (scheduleForm.due_date) body.due_date = new Date(scheduleForm.due_date).toISOString();
       if (scheduleForm.owner_id) body.owner_id = scheduleForm.owner_id;
       if (scheduleForm.recurrence) body.recurrence = scheduleForm.recurrence;
-      const { data } = await api.post(`/vendors/${record[idField]}/schedule-review`, body);
+      const { data } = await api.post(`/vendors/${record[idField]}/schedule-review`, {...body,expected_updated_at:record.updated_at??null});
+      if (data.vendor) Object.assign(record, data.vendor);
       toast.success(`Vendor review scheduled for ${new Date(data.review.due_date).toLocaleDateString()}`);
       setScheduleOpen(false);
       setScheduleForm({ due_date: "", owner_id: "", recurrence: "" });
@@ -797,7 +798,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           </div>
           <div className="flex flex-wrap gap-2">
             {canWrite && ["needs_scheduling", "upcoming"].includes(record?.status) && <Button size="sm" variant="outline" data-testid="review-start" onClick={async () => {
-              try { await api.patch(`/reviews/${record[idField]}`, { status: "in_progress" }); record.status = "in_progress"; setForm(p => ({ ...p, status: "in_progress" })); onSaved?.(); toast.success("Review started"); }
+              try { const {data}=await api.patch(`/reviews/${record[idField]}`, { status: "in_progress", expected_updated_at:record.updated_at??null }); Object.assign(record,data); setForm(p => ({ ...p, status: "in_progress" })); onSaved?.(); toast.success("Review started"); }
               catch (e) { toast.error(formatError(e)); }
             }}>Start review</Button>}
             {canWrite && record?.status !== "completed" && record?.status !== "cancelled" && (
@@ -1124,7 +1125,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       </Sheet>
 
       {linkTask&&<Sheet open onOpenChange={v=>!v&&setLinkTask(null)}><SheetContent><SheetHeader><SheetTitle>Link Action Item</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><p className="text-sm">The original source and Action Item remain unchanged.</p><Select value={linkTask.task_id||"__none__"} onValueChange={task_id=>setLinkTask({...linkTask,task_id})}><SelectTrigger aria-label="Existing Action Item"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="__none__" disabled>Select a record</SelectItem>{linkTask.options.map(t=><SelectItem key={t.task_id} value={t.task_id}>{t.title}</SelectItem>)}</SelectContent></Select><Button disabled={!linkTask.task_id||saving} onClick={async()=>{setSaving(true);try{await api.post(`/risks/${record.risk_id}/link-action-item`,{task_id:linkTask.task_id});setLinkTask(null);loadRelated();onSaved?.();}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Link Action Item</Button></div></SheetContent></Sheet>}
-      {closure&&<Sheet open onOpenChange={value=>!value&&setClosure(null)}><SheetContent className="sm:max-w-md"><SheetHeader><SheetTitle>Close Risk</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><Label>Closure reason</Label><Select value={closure.reason} onValueChange={reason=>setClosure({...closure,reason})}><SelectTrigger aria-label="Closure reason"><SelectValue/></SelectTrigger><SelectContent>{Object.entries({remediated:"Remediated",no_longer_applicable:"No Longer Applicable",system_process_retired:"System / Process Retired",condition_removed:"Risk Condition Removed",other:"Other"}).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Label>Closure note</Label><Textarea aria-label="Closure note" value={closure.note} onChange={e=>setClosure({...closure,note:e.target.value})}/><p className="text-sm text-ink-secondary">The Risk and its history remain available. Future linked Reviews will be cancelled.</p><Button disabled={saving} onClick={async()=>{setSaving(true);try {await api.post(`/risks/${record.risk_id}/close`,closure);setClosure(null);await refreshRisk();onSaved?.();toast.success("Risk closed and retained");}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Confirm closure</Button></div></SheetContent></Sheet>}
+      {closure&&<Sheet open onOpenChange={value=>!value&&setClosure(null)}><SheetContent className="sm:max-w-md"><SheetHeader><SheetTitle>Close Risk</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><Label>Closure reason</Label><Select value={closure.reason} onValueChange={reason=>setClosure({...closure,reason})}><SelectTrigger aria-label="Closure reason"><SelectValue/></SelectTrigger><SelectContent>{Object.entries({remediated:"Remediated",no_longer_applicable:"No Longer Applicable",system_process_retired:"System / Process Retired",condition_removed:"Risk Condition Removed",other:"Other"}).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Label>Closure note</Label><Textarea aria-label="Closure note" value={closure.note} onChange={e=>setClosure({...closure,note:e.target.value})}/><p className="text-sm text-ink-secondary">The Risk and its history remain available. Future linked Reviews will be cancelled.</p><Button disabled={saving} onClick={async()=>{setSaving(true);try {await api.post(`/risks/${record.risk_id}/close`,{...closure,expected_updated_at:record.updated_at??null});setClosure(null);await refreshRisk();onSaved?.();toast.success("Risk closed and retained");}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Confirm closure</Button></div></SheetContent></Sheet>}
       {/* Accept Risk dialog */}
       {kind === "risks" && (
         <Sheet open={acceptOpen} onOpenChange={setAcceptOpen}>

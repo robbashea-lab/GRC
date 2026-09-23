@@ -27,7 +27,7 @@ export default function ContactAccountActions({ contact, onChanged }) {
     setSaving(true); setError('');
     try {
       const { data } = await api.post(`/contacts/${contact.contact_id}/${mode === 'invite' ? 'invite' : 'account-link'}`,
-        mode === 'invite' ? { role, client_id: contact.client_id, confirmed: true } : { user_id: mode === 'unlink' ? null : candidate, confirmed: true });
+        mode === 'invite' ? { role, client_id: contact.client_id, confirmed: true } : { user_id: mode === 'unlink' ? null : candidate, confirmed: true, expected_linked_user_id: contact.linked_user_id ?? null });
       const linked = mode === 'invite' ? data.user.user_id : data.linked_user_id;
       toast.info(mode === 'invite' ? invitationFeedback(data) : 'Account association updated. Access is unchanged.');
       onChanged(linked); setMode(null);

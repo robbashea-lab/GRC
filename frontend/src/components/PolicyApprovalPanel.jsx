@@ -25,7 +25,8 @@ export default function PolicyApprovalPanel({record, onChanged}) {
   async function act(action,body={}) {
     setBusy(true);setError('');
     try {
-      const {data}=await api.post('/policies/'+id+'/'+action,body);
+      const versioned=['approval-authority','approval-subject','submit-review'].includes(action)?{...body,expected_updated_at:context.updated_at??null}:body;
+      const {data}=await api.post('/policies/'+id+'/'+action,versioned);
       if(action!=='approval-authority')onChanged(data);
       await load();setComment('');
       toast.success(action==='approval-authority'?'Approval authority saved':action==='approval-subject'?'Approval basis saved':action==='submit-review'?'Policy submitted':action==='approve'?'Policy approved':'Policy returned to Draft');

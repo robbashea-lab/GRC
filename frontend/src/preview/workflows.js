@@ -144,6 +144,8 @@ export function onboard(db, body) {
 export function action(db, kind, id, name, body) {
   const r = record(db, kind, id),
     cid = r.client_id;
+  if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
+  body={...body};delete body.expected_updated_at;
   const patch = b => write(db, kind, b, id);
   if (kind === 'exceptions' && name === 'approve' || kind === 'findings' && name === 'accept') {
     if (!['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can record this decision.');
@@ -263,7 +265,7 @@ export function action(db, kind, id, name, body) {
   if (kind === 'vendors' && name === 'schedule-review') {
     if(!['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform administrators can change Review configuration.');
     const updated=patch({next_review:body.due_date||r.next_review,...(body.recurrence?{review_frequency:body.recurrence==='none'?'as_needed':body.recurrence}:{})});
-    return {review:ensureVendorReviews(db,updated).find(r=>r.vendor_purpose==='vendor'),vendor_id:id};
+    return {review:ensureVendorReviews(db,updated).find(r=>r.vendor_purpose==='vendor'),vendor_id:id,vendor:updated};
   }
   if (kind === 'policies' && name === 'verify' && r.status==='in_review') throw new Error('Return the pending submission to Draft before verifying metadata');
   if (kind === 'policies' && name === 'verify' && Object.keys(body).some(k=>!['version','owner_id','approver_id','approved_at','last_reviewed_at','next_review_date','summary','status'].includes(k))) throw new Error('Unknown verification field');

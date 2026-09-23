@@ -23,7 +23,7 @@ from urllib.parse import urlparse
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Any, Dict, Tuple
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, Path, Header
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, Path, Header, Body
 from fastapi.responses import StreamingResponse
 import csv
 import io
@@ -98,6 +98,60 @@ def risk_mutation(fn):
     return wrapped
 
 
+def finding_mutation(fn):
+    """Serialize validation with remediation edits using the existing lease pattern."""
+    signature = inspect.signature(fn)
+    @wraps(fn)
+    async def wrapped(*args, **kwargs):
+        values = signature.bind_partial(*args, **kwargs).arguments
+        fid = values.get('finding_id') or (values.get('item_id') if values.get('kind') == 'findings' else None)
+        if values.get('kind') == 'tasks':
+            data = values.get('body') or {}
+            row = await db.tasks.find_one({'task_id':values['item_id']}) if values.get('item_id') else data
+            fid = (row or {}).get('finding_id') or (data.get('source_id') if data.get('source_type') == 'finding' else None)
+        if not fid:
+            return await fn(*args, **kwargs)
+        await _authorized_parent('findings', fid, values['user'], write=True)
+        token, now = uuid.uuid4().hex, datetime.now(timezone.utc)
+        acquired = await db.findings.update_one({'finding_id':fid,'$or':[
+            {'_remediation_lock':None},{'_remediation_lock.until':{'$lt':now.isoformat()}}]},
+            {'$set':{'_remediation_lock':{'token':token,'until':(now+timedelta(seconds=120)).isoformat()}}})
+        if not acquired.modified_count:
+            raise HTTPException(409,'Another remediation action is being saved; reload before retrying')
+        try:
+            result = await asyncio.wait_for(fn(*args, **kwargs), timeout=90)
+            if isinstance(result, dict):
+                result.pop('_remediation_lock', None)
+            return result
+        finally:
+            await db.findings.update_one({'finding_id':fid,'_remediation_lock.token':token},{'$unset':{'_remediation_lock':''}})
+    return wrapped
+
+
+def configuration_mutation(fn):
+    """Serialize client configuration and its existing reconciliation steps."""
+    signature = inspect.signature(fn)
+    @wraps(fn)
+    async def wrapped(*args, **kwargs):
+        values = signature.bind_partial(*args, **kwargs).arguments
+        body, user = values['body'], values['user']
+        cid = body.client_id
+        if not _can_access_client(user, cid) or not _writable(user):
+            raise HTTPException(403, 'Forbidden for this client')
+        token, now = uuid.uuid4().hex, datetime.now(timezone.utc)
+        acquired = await db.clients.update_one({'client_id':cid,'$or':[
+            {'_configuration_lock':None},{'_configuration_lock.until':{'$lt':now.isoformat()}}]},
+            {'$set':{'_configuration_lock':{'token':token,'until':(now+timedelta(seconds=120)).isoformat()}}})
+        if not acquired.modified_count:
+            if not await db.clients.find_one({'client_id':cid}):raise HTTPException(404,'Client not found')
+            raise HTTPException(409,'Another configuration change is being saved; reload before retrying')
+        try:
+            return await asyncio.wait_for(fn(*args, **kwargs), timeout=90)
+        finally:
+            await db.clients.update_one({'client_id':cid,'_configuration_lock.token':token},{'$unset':{'_configuration_lock':''}})
+    return wrapped
+
+
 def vendor_mutation(fn):
     """Serialize Vendor configuration and linked Review completion across workers."""
     signature = inspect.signature(fn)
@@ -159,7 +213,7 @@ def review_mutation(fn):
             async with ai_governance.lease(db, linked_review.get('ai_system_id')):
                 if linked_review.get('ai_system_id'):
                     ai_parent = await _authorized_parent('ai_systems', linked_review['ai_system_id'], values['user'])
-                    if ai_parent.get('status') == 'retired' and (linked_review.get('status') != 'in_progress' or values.get('kind') == 'reviews' and set(data) - {'notes','expected_occurrence_id'}):
+                    if ai_parent.get('status') == 'retired' and (linked_review.get('status') != 'in_progress' or values.get('kind') == 'reviews' and set(data) - {'notes','expected_occurrence_id','expected_updated_at'}):
                         raise HTTPException(409, 'Retired AI only permits completion of already-started closure work')
                 return await asyncio.wait_for(fn(*args, **kwargs), timeout=60)
         finally:
@@ -191,6 +245,25 @@ def _next_write_time(previous: Optional[str]) -> str:
         if prior >= current:
             current = prior + timedelta(microseconds=1)
     return current.isoformat()
+
+
+def _require_snapshot(incoming, existing, field="updated_at"):
+    """Require the version the editor actually loaded, including legacy null."""
+    key = "expected_" + field
+    if key not in incoming:
+        raise HTTPException(428, "Reload the record before saving; an edit version is required")
+    if incoming[key] != existing.get(field):
+        label = "Assessment" if field == "last_assessed" else "Record"
+        raise HTTPException(409, label + " changed since it was opened; reload before saving")
+
+
+async def _save_snapshot(collection, identity, existing, incoming, updates):
+    """Conditional writes shared by legacy multi-record onboarding editors."""
+    _require_snapshot(incoming, existing)
+    updates = {**updates, "updated_at": _next_write_time(existing.get("updated_at"))}
+    changed = await collection.update_one({**identity, "updated_at": existing.get("updated_at")}, {"$set": updates})
+    if changed.matched_count != 1:
+        raise HTTPException(409, "Record changed during save; reload before saving. Earlier records may have been saved.")
 
 
 # ---------------- Password ----------------
@@ -314,6 +387,7 @@ class ClientIn(BaseModel):
 
 
 class ClientPatchIn(BaseModel):
+    expected_updated_at: Optional[str] = Field(default=None, max_length=100)
     name: Optional[str] = None
     industry: Optional[str] = None
     environment: Optional[str] = None
@@ -814,6 +888,7 @@ async def logout(response: Response, user: Dict = Depends(get_current_user)):
 
 # ---------------- My Account (self-service) ----------------
 class MeProfileIn(BaseModel):
+    expected_updated_at: Optional[str] = None
     name: Optional[str] = None
     job_title: Optional[str] = None
     phone: Optional[str] = None
@@ -831,11 +906,11 @@ class MePreferencesIn(BaseModel):
 
 @api.patch("/me")
 async def update_me(body: MeProfileIn, user: Dict = Depends(get_current_user)):
-    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    _require_snapshot(body.model_dump(exclude_unset=True), user)
+    updates = {k: v for k, v in body.model_dump(exclude={'expected_updated_at'}).items() if v is not None}
     if not updates:
         return user
-    updates["updated_at"] = _now()
-    await db.users.update_one({"user_id": user["user_id"]}, {"$set": updates})
+    await _save_snapshot(db.users, {"user_id": user["user_id"]}, user, body.model_dump(exclude_unset=True), updates)
     await audit(user, "update", "user", user["user_id"], meta={"self": True, "fields": list(updates.keys())})
     fresh = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0})
     return fresh
@@ -852,10 +927,12 @@ async def update_me_password(body: MePasswordIn, user: Dict = Depends(get_curren
         raise HTTPException(400, "Current password is incorrect")
     if len(body.new_password) < 8:
         raise HTTPException(400, "New password must be at least 8 characters")
-    await db.users.update_one(
-        {"user_id": user["user_id"]},
+    changed = await db.users.update_one(
+        {"user_id": user["user_id"], "password_hash": full["password_hash"]},
         {"$set": {"password_hash": hash_password(body.new_password), "password_changed_at": _now()}},
     )
+    if changed.matched_count != 1:
+        raise HTTPException(409, "Password changed during this request; sign in again before retrying")
     revoked = await db.sessions.delete_many({"user_id": user["user_id"]})
     await audit(user, "password_change", "user", user["user_id"], meta={"self": True})
     return {"ok": True, "sessions_revoked": revoked.deleted_count}
@@ -923,6 +1000,7 @@ class UserCreateIn(BaseModel):
 
 
 class UserPatchIn(BaseModel):
+    expected_updated_at: Optional[str] = Field(default=None, max_length=100)
     name: Optional[str] = None
     role: Optional[str] = None
     client_ids: Optional[List[str]] = None
@@ -931,6 +1009,7 @@ class UserPatchIn(BaseModel):
 
 class ContactLinkIn(BaseModel):
     user_id: Optional[str] = None
+    expected_linked_user_id: Optional[str] = None
     confirmed: bool = False
 
 
@@ -942,10 +1021,11 @@ class ContactInviteIn(BaseModel):
 
 class ClientMembershipIn(BaseModel):
     client_ids: List[str]
+    expected_updated_at: Optional[str] = Field(default=None, max_length=100)
 
 
 def _account_summary(account, actor):
-    fields = ("user_id", "name", "email", "role", "status", "last_login_at", "orphaned")
+    fields = ("user_id", "name", "email", "role", "status", "last_login_at", "orphaned", "updated_at")
     row = {field: account[field] for field in fields if field in account}
     row["client_ids"] = [cid for cid in (account.get("client_ids") or []) if _can_access_client(actor, cid)]
     return row
@@ -986,6 +1066,7 @@ async def link_contact_account(contact_id: str, body: ContactLinkIn, user: Dict 
     if not contact:
         raise HTTPException(404, "Contact not found")
     _identity_admin(user, contact["client_id"])
+    _require_snapshot(body.model_dump(exclude_unset=True), contact, "linked_user_id")
     if not body.confirmed:
         raise HTTPException(422, "Confirm this identity association; access will not change")
     if body.user_id:
@@ -994,7 +1075,7 @@ async def link_contact_account(contact_id: str, body: ContactLinkIn, user: Dict 
             raise HTTPException(422, "Choose an active account already authorized for this client")
     changed = await db.contacts.update_one(
         {"contact_id": contact_id, "linked_user_id": contact.get("linked_user_id")},
-        {"$set": {"linked_user_id": body.user_id, "updated_at": _now()}},
+        {"$set": {"linked_user_id": body.user_id, "updated_at": _next_write_time(contact.get("updated_at"))}},
     )
     if changed.matched_count != 1:
         raise HTTPException(409, "Account link changed; reload before retrying")
@@ -1144,6 +1225,7 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
         raise HTTPException(404, "User not found")
     if not _admin_can_manage_user(user, target):
         raise HTTPException(403, "Not authorized to manage this user")
+    _require_snapshot(body.model_dump(exclude_unset=True),target)
     if user.get("role") == "platform_admin":
         foreign = set(target.get("client_ids") or []) - set(user.get("client_ids") or [])
         if foreign and any(getattr(body, field) is not None for field in ("name", "role", "status")):
@@ -1175,8 +1257,8 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
         raise HTTPException(400, "You cannot change your own role or disable yourself")
     if not updates:
         return _account_summary(target, user)
-    updates["updated_at"] = _now()
-    changed = await db.users.update_one({"user_id": user_id, "role": target.get("role"),
+    updates["updated_at"] = _next_write_time(target.get("updated_at"))
+    changed = await db.users.update_one({"user_id": user_id, "updated_at":target.get("updated_at"), "role": target.get("role"),
         "status": target.get("status"), "client_ids": target.get("client_ids")}, {"$set": updates})
     if changed.matched_count != 1:
         raise HTTPException(409, "Account state changed; reload before retrying")
@@ -1236,6 +1318,7 @@ async def update_client_memberships(user_id: str, body: ClientMembershipIn, user
     target = await db.users.find_one({"user_id": user_id})
     if not target or not _admin_can_manage_user(user, target):
         raise HTTPException(403, "Not authorized to manage this user")
+    _require_snapshot(body.model_dump(exclude_unset=True),target)
     desired = set(body.client_ids)
     for cid in desired:
         if not _can_access_client(user, cid):
@@ -1247,13 +1330,14 @@ async def update_client_memberships(user_id: str, body: ClientMembershipIn, user
     desired |= {cid for cid in previous if not _can_access_client(user, cid)}
     if target.get("role") == "platform_admin" and not desired and user.get("role") != "super_admin":
         raise HTTPException(403, "Removing the last membership would grant global internal scope")
-    changed = await db.users.update_one({"user_id": user_id, "role": target.get("role"), "client_ids": target.get("client_ids")},
-        {"$set": {"client_ids": sorted(desired), "updated_at": _now()}})
+    at=_next_write_time(target.get('updated_at'))
+    changed = await db.users.update_one({"user_id": user_id, "updated_at":target.get("updated_at"), "role": target.get("role"), "client_ids": target.get("client_ids")},
+        {"$set": {"client_ids": sorted(desired), "updated_at": at}})
     if changed.matched_count != 1:
         raise HTTPException(409, "Membership changed; reload before retrying")
     for cid in previous ^ desired:
         await audit(user, "membership-granted" if cid in desired else "membership-removed", "user", user_id, cid)
-    return _account_summary({**target, "client_ids": sorted(desired)}, user)
+    return _account_summary({**target, "client_ids": sorted(desired), "updated_at":at}, user)
 
 
 @api.post("/users/{user_id}/resend-invite")
@@ -1432,12 +1516,15 @@ async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depend
     existing = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
     if not existing:
         raise HTTPException(404, "Client not found")
-    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    _require_snapshot(body.model_dump(exclude_unset=True), existing)
+    updates = {k: v for k, v in body.model_dump(exclude={'expected_updated_at'}).items() if v is not None}
     if not updates:
         return (await client_relationships.project(db, [existing]))[0]
     await client_relationships.validate(db, {**existing, **updates}, existing, _can_access_client)
-    updates["updated_at"] = _now()
-    await db.clients.update_one({"client_id": client_id}, {"$set": updates})
+    updates["updated_at"] = _next_write_time(existing.get("updated_at"))
+    changed = await db.clients.update_one({"client_id": client_id, "updated_at": existing.get("updated_at")}, {"$set": updates})
+    if not changed.matched_count:
+        raise HTTPException(409, "Record changed since it was opened; reload before saving")
     await audit(user, "update", "client", client_id, client_id, meta=updates)
     doc = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
     return (await client_relationships.project(db, [doc]))[0]
@@ -2395,7 +2482,7 @@ async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Op
         scoped_clients = await db.risks.distinct("client_id", q)
         for scoped_client in scoped_clients:
             await risk_ids.initialize(db, scoped_client)
-    docs = await db[_coll_for(kind)].find(q, {"_id": 0}).sort("created_at", -1).to_list(1001)
+    docs = await db[_coll_for(kind)].find(q, {"_id": 0, "_remediation_lock": 0}).sort("created_at", -1).to_list(1001)
     if len(docs) > 1000:
         raise HTTPException(413, "This register exceeds the current 1,000-record limit. Use an export or contact your administrator. No partial results shown.")
     if kind == "vendors":
@@ -2409,6 +2496,7 @@ async def get_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = P
     """Read the authoritative record for drill-ins using existing resource scope."""
     doc = await _authorized_parent(kind, item_id, user)
     doc.pop('_governance_lock', None)
+    doc.pop('_remediation_lock', None)
     if kind == 'reviews':
         return review_occurrences.view(doc)
     if kind == 'risks':
@@ -2434,6 +2522,7 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
 
 
 @risk_mutation
+@finding_mutation
 async def _create_entity(kind, body, user, identity=None):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
@@ -2503,6 +2592,7 @@ async def _finish_entity_create(kind, doc, user):
 @risk_mutation
 @vendor_mutation
 @review_mutation
+@finding_mutation
 async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), body: Dict[str, Any] = None, user: Dict = Depends(get_current_user)):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
@@ -2514,10 +2604,8 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(403, "Forbidden")
     expected_occurrence = (body or {}).get("expected_occurrence_id")
     incoming = dict(body or {})
-    if "expected_updated_at" in incoming:
-        expected = incoming.pop("expected_updated_at")
-        if expected != existing.get("updated_at"):
-            raise HTTPException(409, "Record changed since it was opened; reload before saving")
+    _require_snapshot(incoming, existing)
+    incoming.pop("expected_updated_at")
     if kind == "reviews":
         incoming.pop("expected_occurrence_id", None)
         if expected_occurrence:
@@ -2634,7 +2722,8 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
 
 
 @entity_router.delete("/{kind}/{item_id}")
-async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), user: Dict = Depends(get_current_user)):
+@finding_mutation
+async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), user: Dict = Depends(get_current_user), body: Optional[Dict[str, Any]] = Body(None)):
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Destructive action restricted")
     entity_type, _M, id_field, _p = ENTITY_MAP[kind]
@@ -2653,13 +2742,14 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(409, "Completed reviews must be retained")
     if kind == "tasks" and (existing.get("status") == "done" or existing.get("completed_at")):
         raise HTTPException(409, "Completed Action Items must be retained")
-    delete_query = {id_field: item_id}
+    _require_snapshot(body or {}, existing)
+    delete_query = {id_field: item_id, "updated_at": existing.get("updated_at")}
     if kind == "policies":
         delete_query.update({"updated_at": existing.get("updated_at"), "status": existing.get("status"),
                              "approval_history": existing.get("approval_history"), "decision_history": existing.get("decision_history")})
     deleted = await db[_coll_for(kind)].delete_one(delete_query)
-    if kind == "policies" and not deleted.deleted_count:
-        raise HTTPException(409, "Policy changed; reload before deleting")
+    if not deleted.deleted_count:
+        raise HTTPException(409, "Record changed; reload before deleting")
     await audit(user, "delete", entity_type, item_id, existing.get("client_id"))
     return {"ok": True}
 
@@ -2840,6 +2930,7 @@ _SEV_TO_I = {"critical": 5, "high": 4, "medium": 3, "moderate": 3, "low": 2}
 
 
 class RiskAcceptIn(BaseModel):
+    expected_updated_at: Optional[str] = Field(default=None,max_length=100)
     rationale: str
     expiry_date: Optional[str] = None  # ISO date, becomes next_review
     approver_id: Optional[str] = None
@@ -2864,6 +2955,7 @@ async def risk_accept(risk_id: str, body: RiskAcceptIn, user: Dict = Depends(get
         raise HTTPException(404, "Risk not found")
     if not _can_access_client(user, risk["client_id"]):
         raise HTTPException(403, "Forbidden")
+    _require_snapshot(body.model_dump(exclude_unset=True),risk)
     if risk.get("status") in risk_lifecycle.CLOSED:
         raise HTTPException(409, "Closed Risks cannot be accepted")
     updates = {
@@ -2875,7 +2967,7 @@ async def risk_accept(risk_id: str, body: RiskAcceptIn, user: Dict = Depends(get
         "acceptance_rationale": body.rationale,
         "acceptance_expires_at": body.expiry_date,
         "next_review": min(risk.get("next_review") or body.expiry_date, body.expiry_date),
-        "updated_at": _now(),
+        "updated_at": _next_write_time(risk.get('updated_at')),
     }
     if body.compensating_controls:
         updates["compensating_controls"] = body.compensating_controls
@@ -2888,6 +2980,7 @@ async def risk_accept(risk_id: str, body: RiskAcceptIn, user: Dict = Depends(get
 
 
 class VendorScheduleReviewIn(BaseModel):
+    expected_updated_at: Optional[str] = Field(default=None,max_length=100)
     due_date: Optional[str] = None  # ISO date
     owner_id: Optional[str] = None
     reviewer_id: Optional[str] = None
@@ -2914,6 +3007,7 @@ async def vendor_schedule_review(vendor_id: str, body: VendorScheduleReviewIn, u
         raise HTTPException(403, "Forbidden")
     if user.get("role") not in ("super_admin","platform_admin"):
         raise HTTPException(403, "Only platform administrators can change Review configuration")
+    _require_snapshot(body.model_dump(exclude_unset=True),vendor)
     changes = {"next_review":body.due_date or vendor.get("next_review")}
     if not changes["next_review"]:
         raise HTTPException(422, "Select the first Review date")
@@ -2922,9 +3016,10 @@ async def vendor_schedule_review(vendor_id: str, body: VendorScheduleReviewIn, u
     candidate = {**vendor,**changes}
     await vendor_governance.validate(db,candidate,_can_access_client,vendor)
     reviews = await vendor_governance.ensure_reviews(db,candidate,user,_now())
+    changes['updated_at']=_next_write_time(vendor.get('updated_at'))
     await db.vendors.update_one({"vendor_id":vendor_id},{"$set":changes})
     await audit(user,"Vendor Review scheduled","vendor",vendor_id,vendor["client_id"])
-    return {"review":next((r for r in reviews if r.get("vendor_purpose") == "vendor"),None),"vendor_id":vendor_id}
+    return {"review":next((r for r in reviews if r.get("vendor_purpose") == "vendor"),None),"vendor_id":vendor_id,"vendor":{**vendor,**changes}}
 
 
 @api.post("/risks/{risk_id}/mark-reviewed")
@@ -2943,6 +3038,7 @@ async def risk_mark_reviewed(risk_id: str, user: Dict = Depends(get_current_user
 
 
 class RiskCloseIn(BaseModel):
+    expected_updated_at: Optional[str] = Field(default=None,max_length=100)
     reason: str
     note: Optional[str] = None
 
@@ -2953,12 +3049,13 @@ async def close_risk(risk_id: str, body: RiskCloseIn, user: Dict = Depends(get_c
     if user.get("role") not in ("super_admin","platform_admin"):
         raise HTTPException(403, "Only platform-level roles can close Risks")
     risk = await _authorized_parent("risks",risk_id,user,write=True)
+    _require_snapshot(body.model_dump(exclude_unset=True),risk)
     if body.reason not in risk_lifecycle.CLOSURE_REASONS:
         raise HTTPException(422,"Choose a closure reason")
     if risk.get("status") in risk_lifecycle.CLOSED:
         await risk_lifecycle.ensure_review(db,risk,user,_now())
         return risk
-    now = _now()
+    now = _next_write_time(risk.get('updated_at'))
     changes = {"status":"closed","closure_reason":body.reason,"closure_note":body.note,
                "closed_by":user["user_id"],"closed_at":now,"next_review":None,"updated_at":now}
     await db.risks.update_one({"risk_id":risk_id},{"$set":changes,"$push":{"decision_history":{
@@ -3005,6 +3102,7 @@ async def risk_review_history(risk_id: str, user: Dict = Depends(get_current_use
 
 
 @api.post("/findings/{finding_id}/raise-risk")
+@finding_mutation
 async def finding_raise_risk(finding_id: str, user: Dict = Depends(get_current_user)):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
@@ -3307,6 +3405,7 @@ class ReviewCompleteIn(BaseModel):
 
 class DecisionIn(BaseModel):
     rationale: str
+    expected_updated_at: Optional[str] = Field(default=None,max_length=100)
 
 
 @api.post("/exceptions/{exception_id}/approve")
@@ -3314,28 +3413,34 @@ async def approve_exception(exception_id: str, body: DecisionIn, user: Dict = De
     item = await _authorized_parent("exceptions", exception_id, user, write=True)
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Only platform-level roles can approve exceptions")
+    _require_snapshot(body.model_dump(exclude_unset=True),item)
     if not body.rationale.strip() or not item.get("expires_at") or item["expires_at"][:10] <= _now()[:10]:
         raise HTTPException(422, "Approval rationale and future exception expiry are required")
     decision = {"action":"approved", "by":user["user_id"], "at":_now(), "rationale":body.rationale.strip()}
-    await db.exceptions.update_one({"exception_id":exception_id}, {"$set":{"status":"approved", "approver_id":user["user_id"], "approved_at":decision["at"]}, "$push":{"decision_history":decision}})
+    changed=await db.exceptions.update_one({"exception_id":exception_id,'updated_at':item.get('updated_at')}, {"$set":{"status":"approved", "approver_id":user["user_id"], "approved_at":decision["at"],'updated_at':_next_write_time(item.get('updated_at'))}, "$push":{"decision_history":decision}})
+    if not changed.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
     await audit(user, "approve", "exception", exception_id, item["client_id"], meta=decision)
     return await db.exceptions.find_one({"exception_id":exception_id}, {"_id":0})
 
 
 @api.post("/findings/{finding_id}/accept")
+@finding_mutation
 async def accept_finding(finding_id: str, body: DecisionIn, user: Dict = Depends(get_current_user)):
     item = await _authorized_parent("findings", finding_id, user, write=True)
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Only platform-level roles can accept findings")
+    _require_snapshot(body.model_dump(exclude_unset=True),item)
     if not body.rationale.strip():
         raise HTTPException(422, "Acceptance rationale is required")
     decision = {"action":"accepted", "by":user["user_id"], "at":_now(), "rationale":body.rationale.strip()}
-    await db.findings.update_one({"finding_id":finding_id}, {"$set":{"status":"accepted", "updated_at":decision["at"]}, "$push":{"decision_history":decision}})
+    changed=await db.findings.update_one({"finding_id":finding_id,'updated_at':item.get('updated_at')}, {"$set":{"status":"accepted", "updated_at":_next_write_time(item.get('updated_at'))}, "$push":{"decision_history":decision}})
+    if not changed.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
     await audit(user, "accept", "finding", finding_id, item["client_id"], meta=decision)
     return await db.findings.find_one({"finding_id":finding_id}, {"_id":0})
 
 
 @api.post("/findings/{finding_id}/validate")
+@finding_mutation
 async def validate_finding(finding_id: str, body: DecisionIn, user: Dict = Depends(get_current_user)):
     finding = await _authorized_parent("findings", finding_id, user, write=True)
     if user.get("role") not in ("super_admin", "platform_admin"):
@@ -3347,7 +3452,7 @@ async def validate_finding(finding_id: str, body: DecisionIn, user: Dict = Depen
     if await db.tasks.find_one({"finding_id": finding_id, "client_id": finding["client_id"], "status": {"$nin": ["done", "cancelled"]}}):
         raise HTTPException(409, "Complete outstanding remediation first")
     decision = {"action": "validated", "by": user["user_id"], "at": _now(), "rationale": body.rationale.strip()}
-    result = await db.findings.update_one({"finding_id": finding_id, "status": "remediated"}, {"$set": {
+    result = await db.findings.update_one({"finding_id": finding_id, "status": "remediated", "updated_at":finding.get('updated_at')}, {"$set": {
         "status": "closed", "validated_by": user["user_id"], "validated_at": decision["at"],
         "closed_by": user["user_id"], "closed_at": decision["at"], "updated_at": decision["at"]}, "$push": {"decision_history": decision}})
     if not result.modified_count:
@@ -3598,6 +3703,7 @@ async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict
 
 
 @api.post("/findings/{finding_id}/create-task")
+@finding_mutation
 async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict = Depends(get_current_user)):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
@@ -3631,7 +3737,7 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
     await db.tasks.update_one({"_id": tid}, {"$setOnInsert": doc}, upsert=True)
     # link back on the finding
     if finding.get("status") == "open":
-        await db.findings.update_one({"finding_id": finding_id}, {"$set": {"status": "in_remediation", "updated_at": _now()}})
+        await db.findings.update_one({"finding_id": finding_id, "status":"open"}, {"$set": {"status": "in_remediation", "updated_at": _next_write_time(finding.get('updated_at'))}})
     doc.pop("_id", None)
     await audit(user, "create", "task", tid, finding["client_id"], meta={"from_finding": finding_id})
     if finding.get("review_id"):
@@ -3789,6 +3895,7 @@ POLICY_LIBRARY: List[Dict[str, Any]] = [
 
 
 class OnboardingPolicyResponse(BaseModel):
+    expected_updated_at: Optional[str] = None
     name: str  # matches POLICY_LIBRARY entry (case-insensitive)
     category: Optional[str] = None
     response: str  # yes | no | unsure | na
@@ -3833,6 +3940,7 @@ async def onboarding_policy_library(
         match = by_name.get(item["name"].strip().lower())
         if match:
             row["existing_policy_id"] = match.get("policy_id")
+            row["updated_at"] = match.get("updated_at")
             row["current_presence"] = match.get("presence")
             row["current_status"] = match.get("status")
             row["last_onboarding_note"] = match.get("onboarding_note")
@@ -3847,6 +3955,7 @@ async def onboarding_policy_library(
 
 
 @api.post("/onboarding/policy-responses")
+@configuration_mutation
 async def onboarding_policy_responses(body: OnboardingPoliciesIn, user: Dict = Depends(get_current_user)):
     """Convert client-reported responses into Policy Register rows + optional Action Items.
     Never fabricates version/owner/approval_date/last_review/next_review — those stay blank
@@ -3859,6 +3968,10 @@ async def onboarding_policy_responses(body: OnboardingPoliciesIn, user: Dict = D
     # Preload existing policies for tenant to avoid duplicates.
     existing = await db.policies.find({"client_id": body.client_id}, {"_id": 0}).to_list(2000)
     existing_by_name = {(p.get("title") or "").strip().lower(): p for p in existing}
+    for response in body.responses:
+        row = existing_by_name.get(response.name.strip().lower())
+        if row:
+            _require_snapshot(response.model_dump(exclude_unset=True), row)
     # Preload open onboarding-sourced tasks per policy_id to avoid duplicate action items.
     open_tasks = await db.tasks.find(
         {"client_id": body.client_id, "source": "GRC Program Onboarding",
@@ -3894,7 +4007,7 @@ async def onboarding_policy_responses(body: OnboardingPoliciesIn, user: Dict = D
             # trample a Verified/Approved policy just because a client re-runs onboarding.
             if existing_row.get("status") in (None, "", "draft", "needs_verification", "needs_creation", "not_applicable"):
                 update["status"] = lifecycle
-            await db.policies.update_one({"policy_id": existing_row["policy_id"]}, {"$set": update})
+            await _save_snapshot(db.policies, {"policy_id": existing_row["policy_id"]}, existing_row, r.model_dump(exclude_unset=True), update)
             counters["policies_updated"] += 1
             pol_id = existing_row["policy_id"]
             prev_presence = existing_row.get("presence")
@@ -3962,6 +4075,7 @@ async def onboarding_policy_responses(body: OnboardingPoliciesIn, user: Dict = D
 
 
 class PolicyVerifyIn(BaseModel):
+    expected_updated_at: Optional[str] = Field(default=None,max_length=100)
     version: Optional[str] = None
     owner_id: Optional[str] = None
     approver_id: Optional[str] = None
@@ -3984,13 +4098,14 @@ async def policy_verify(policy_id: str, body: PolicyVerifyIn, user: Dict = Depen
         raise HTTPException(404, "Policy not found")
     if not _can_access_client(user, p["client_id"]):
         raise HTTPException(403, "Forbidden for this client")
+    _require_snapshot(body.model_dump(exclude_unset=True),p)
     if p.get("status") == "in_review":
         raise HTTPException(409, "Return the pending submission to Draft before verifying metadata")
     update: Dict[str, Any] = {
         "presence": "verified_existing",
         "verified_at": _now(),
         "verified_by": user["user_id"],
-        "updated_at": _now(),
+        "updated_at": _next_write_time(p.get('updated_at')),
     }
     for k in ("version", "owner_id", "approver_id", "approved_at", "last_reviewed_at",
               "next_review_date", "summary", "status"):
@@ -4492,6 +4607,7 @@ class BulkIn(BaseModel):
     ids: List[str]
     action: str  # close | set-status | set-owner | assign | update | delete
     payload: Optional[Dict[str, Any]] = None
+    expected_versions: Dict[str, Optional[str]] = Field(default_factory=dict)
 
 
 @app.post("/api/bulk")
@@ -4522,11 +4638,12 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
             raise HTTPException(409, "Completed reviews must be retained")
         if body.kind == "tasks" and any(d.get("status") == "done" or d.get("completed_at") for d in docs):
             raise HTTPException(409, "Completed Action Items must be retained")
-        if body.kind == "policies":
-            for d in docs:
-                await delete_entity(body.kind, d[id_field], user)
-        else:
-            await coll.delete_many({id_field: {"$in": body.ids}})
+        for d in docs:
+            if d[id_field] not in body.expected_versions:
+                raise HTTPException(428, "Reload selected records before deleting; edit versions are required")
+            _require_snapshot({'expected_updated_at':body.expected_versions[d[id_field]]},d)
+        for d in docs:
+            await delete_entity(body.kind, d[id_field], user, {'expected_updated_at':body.expected_versions[d[id_field]]})
         for d in docs:
             await audit(user, "bulk-delete", entity_type, d[id_field], d["client_id"])
         return {"ok": True, "count": len(docs)}
@@ -4535,6 +4652,10 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Read-only role")
 
     payload = body.payload or {}
+    for d in docs:
+        if d[id_field] not in body.expected_versions:
+            raise HTTPException(428, "Reload selected records before saving; edit versions are required")
+        _require_snapshot({'expected_updated_at':body.expected_versions[d[id_field]]},d)
     if body.action == "close":
         updates = {"status": CLOSE_STATUS.get(body.kind, "closed")}
     elif body.action == "set-status":
@@ -4566,7 +4687,7 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
         if body.kind == "tasks":
             await action_items.prepare(db, {**d, **checked}, _can_access_client, d)
     for d in docs:
-        await update_entity(body.kind, d[id_field], {**updates, **({"expected_occurrence_id": review_occurrences.occurrence_id(d)} if body.kind == "reviews" else {})}, user)
+        await update_entity(body.kind, d[id_field], {**updates, "expected_updated_at":d.get("updated_at"), **({"expected_occurrence_id": review_occurrences.occurrence_id(d)} if body.kind == "reviews" else {})}, user)
     for d in docs:
         await audit(user, f"bulk-{body.action}", entity_type, d[id_field], d["client_id"], meta=updates)
     return {"ok": True, "count": len(docs), "updates": updates}

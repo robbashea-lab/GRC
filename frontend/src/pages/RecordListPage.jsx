@@ -349,7 +349,7 @@ export default function RecordListPage({ kind }) {
 
   async function remove(row) {
     if (!confirm("Delete this record? This action is logged.")) return;
-    try { await api.delete(`/${kind}/${row[idField]}`); toast.success("Deleted"); load(); }
+    try { await api.delete(`/${kind}/${row[idField]}`, {data:{expected_updated_at:row.updated_at??null}}); toast.success("Deleted"); load(); }
     catch (e) { toast.error(formatError(e)); }
   }
 
@@ -377,7 +377,8 @@ export default function RecordListPage({ kind }) {
     const ids = [...checked];
     if (!ids.length) return;
     try {
-      const { data } = await api.post("/bulk", { kind, ids, action, payload });
+      const expected_versions=Object.fromEntries(rows.filter(row=>checked.has(row[idField])).map(row=>[row[idField],row.updated_at??null]));
+      const { data } = await api.post("/bulk", { kind, ids, action, payload, expected_versions });
       toast.success(`${data.count} record(s) updated`);
       setChecked(new Set());
       setOwnerPicker(false); setPickedOwner("");

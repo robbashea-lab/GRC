@@ -67,7 +67,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
 
   async function patchUser(u, changes, label) {
     try {
-      await api.patch(`/users/${u.user_id}${changes.client_ids ? '/client-memberships' : ''}`, changes);
+      await api.patch(`/users/${u.user_id}${changes.client_ids ? '/client-memberships' : ''}`, {...changes,expected_updated_at:u.updated_at??null});
       toast.success(label || "User updated");
       load();
     } catch (e) { toast.error(formatError(e)); }

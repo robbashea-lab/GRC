@@ -167,3 +167,67 @@ Verification:
 
 ENG-14 payload defect: corrected and locally API/test/Demo-browser verified.
 Persistent authenticated browser and real-Mongo latency remain NOT VERIFIED.
+
+## Phase 3 — ENG-02 mutation inventory and remediation
+
+Original P1: optional snapshot guards protected some forms but legacy callers and
+separate routes could replace a newer edit. A lease prevents simultaneous writes,
+not a form loaded before another writer's successful save.
+
+Concurrency classes: A = editor snapshot required; B = conditional domain
+transition; C = serialized multi-record operation; D = additive/set operation;
+E = deliberately last-write-wins for non-operational preferences.
+
+| Mutation surface | Model and correction |
+|---|---|
+| Client details/status/relationships | A: required `expected_updated_at`, conditional update, monotonic version; shared dialog and archive controls submit the loaded version. |
+| Contact, Review, Finding, Action, Risk, Vendor, Policy, Asset, Exception, Requirement PATCH | A: token is now mandatory (428 missing, 409 stale); existing editable-field and authorization rules retained. Full-form and inline callers supply their snapshot. |
+| Assignment / Calendar scheduling / bulk register edits | A: same generic boundary. Bulk checks every supplied record version before writes, then each individual conditional mutation; no transaction claim. |
+| Generic / bulk deletion | A plus existing history-retention rules; conditional delete cannot remove a newer version. Batch operations can partially finish if a conflict occurs after preflight. |
+| Review start/complete/amend | B/C/D: existing occurrence identity, conditional state, execution lease, immutable completed occurrence and additive amendments retained. No replacement by generic version semantics. |
+| Finding validation / remediation | B/C: validation condition includes current version and pending-validation state. Finding-scoped lease also covers generic remediation creates/edits/deletes, acceptance, quick remediation and raising Risk. Paused mid-request test proves validation is rejected while remediation is being created. |
+| Risk accept/close | A/C: loaded Risk version plus existing Risk lease and decision history; a stale acceptance cannot revive a closed Risk. Review execution keeps its stronger domain rules. |
+| Vendor scheduling/retirement | A/C: loaded version, existing Vendor lease and retained Review semantics. Scheduling returns the updated Vendor so the drawer advances only its own successful version. |
+| Policy source, authority, submit, verify | A: explicit loaded version; transport field never stored as business metadata. Approval/rejection/return retain B: approval request identity, immutable basis and conditional state. Approval authority is unchanged. |
+| Framework assessment | A: `expected_last_assessed` mandatory, conditional update and history append retained. |
+| SOC scope / program applicability | A/C: separate configuration version or Requirement version, client configuration lease for reconciliation; no automatic cancellation of recurring Reviews. |
+| Onboarding draft/finalize | A/C: draft version; finalization also compares the Policy/Requirement/Review identities and versions loaded with setup, so a later register edit is not silently replayed over. Child writes are conditional. |
+| Legacy onboarding finalize/policy-responses | A/C: per-entry versions required for existing records, preflight followed by conditional writes; library/state exposes versions. No current production UI callers use these legacy routes. |
+| AI inventory/intake | A/C: loaded versions, conditional update; existing AI lease retained. First intake creation uses a unique stable primary ID. |
+| AI material-change / scheduling / links | D/C: explicit new material-change event with retained audit note and latest-event projection; existing scheduled Review reused; set-add relationships. Not a replacement of arbitrary stale form fields. |
+| Account administration/membership | A: loaded version and existing role/member conditions, no broadened account scope. |
+| Contact account association | A/B: expected prior linked identity plus conditional association; invitations retain existing account/link checks. No permission changes. |
+| Self profile/password | A/B: profile version; password hash must still equal the hash verified by the request before replacement. Existing hashing/session behavior retained. |
+| Preferences/favorites/notification read | E/D: latest explicit personal preference wins; favorites add/remove and read markers are set/idempotent operations. No GRC operational record is affected. |
+| Evidence | Immutable artifact metadata; new version/upload rather than snapshot replacement. Existing retention/archive and relationship semantics retained. |
+| Comments, evidence/record/framework links, baseline additive creation | D: append/set/stable identity semantics, not arbitrary full-record replacement. Existing authorization remains authoritative. |
+
+UI conflicts leave the form/draft intact and display the backend's reload message;
+no arbitrary field auto-merge or silent version refresh is added. Onboarding's
+queued autosaves advance only from their own successful response. Demo adapters
+honor supplied versions, but legacy Demo-only test calls still allow omitted
+tokens; the real backend rejects omission. Demo is not authorization proof.
+
+Tests deliberately disable the fresh-editor fixture hook for missing/stale/racing
+versions. Existing lifecycle tests have a fixture hook supplying versions for
+fresh edits; this hook is test-only and must never be copied into production.
+New coverage includes all ten generic kinds, Client, disjoint fields, ten racing
+editors, missing tokens, stale bulk edits/deletes, AI first-create race, account
+association, profile, legacy/current onboarding, SOC configuration, applicability,
+Risk closure and in-flight remediation/validation. Existing Policy concurrent
+decision and Review lifecycle regressions remain in the complete offline suite.
+
+Verification: 326 backend cases and 254 subtests passed; frontend suite
+414 tests/74 suites passed after the final setup-source-token addition. Production
+build passed (`main.6e0852c8.js`, SHA-256
+`8d1b91714dc157f70d8fcff1b41b05dd2afecd3fe9a9baf0c38075589f089240`)
+with only the existing PlatformAdmin hook warning. Demo stale Finding browser
+retained draft and newer record; core Review/Evidence/Finding/Action/Risk chain,
+onboarding (four widths, client switching, source drawers) and Policy approval
+(external and uploaded versions, unchanged original history) passed. Persistent Mongo,
+two authenticated browsers against that Mongo, worker interruption and lease
+expiry remain NOT VERIFIED. Multi-document reconciliation is not crash-atomic;
+audit failures outside ENG-04 receipts are not claimed recovered transactions.
+
+ENG-02: implementation and isolated tests substantially extended; full release
+gate remains NEEDS ATTENTION until the connected two-session and durability checks.

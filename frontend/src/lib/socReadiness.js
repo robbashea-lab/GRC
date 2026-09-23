@@ -1,6 +1,6 @@
 import {recordUuid} from './recordUuid';
 export const SOC_CATEGORIES={security:'Security / Common Criteria',availability:'Availability',confidentiality:'Confidentiality',processing_integrity:'Processing Integrity',privacy:'Privacy'};
-export const socConfiguration=client=>({categories:['security'],system_description:'',period_start:'',period_end:'',...client?.framework_settings?.['soc-2']});
+export const socConfiguration=client=>({categories:['security'],system_description:'',period_start:'',period_end:'',...client?.framework_settings?.['soc-2'],expected_updated_at:client?.soc_configuration_updated_at??null});
 export const controlGap=control=>control.expected_instances==null||control.collected_instances==null?null:Math.max(0,control.expected_instances-control.collected_instances);
 export const newManagementControl=(period={})=>({control_id:recordUuid(),name:'',description:'',design:'not_assessed',operating:'not_assessed',frequency:'',period_start:period.period_start||'',period_end:period.period_end||'',expected_instances:null,collected_instances:null,population_notes:'',testing_notes:''});
 
@@ -18,7 +18,7 @@ function text(value,max,label){
   return value.trim();
 }
 export function validateSocConfiguration(body){
-  if(Object.keys(body).some(k=>!['client_id','categories','system_description','period_start','period_end'].includes(k)))throw new Error('Unknown SOC 2 configuration fields');
+  if(Object.keys(body).some(k=>!['client_id','categories','system_description','period_start','period_end','expected_updated_at'].includes(k)))throw new Error('Unknown SOC 2 configuration fields');
   const cid=text(body.client_id,160,'client');
   const categories=body.categories===undefined?['security']:body.categories;
   if(!cid||!Array.isArray(categories)||categories.length>5||!categories.includes('security')||new Set(categories).size!==categories.length||categories.some(c=>!SOC_CATEGORIES[c]))throw new Error('Common Criteria must remain in scope; categories must be valid and unique');

@@ -63,6 +63,7 @@ export function identityRequest(db, path, method, params, body) {
     if (action === 'account-candidates' && method === 'get') return assignmentCandidates(db, contact.client_id, params);
     if (method !== 'post' || !body.confirmed) throw new Error('Confirm the identity action');
     if (action === 'account-link') {
+      if (Object.prototype.hasOwnProperty.call(body, 'expected_linked_user_id') && body.expected_linked_user_id !== (contact.linked_user_id ?? null)) throw new Error('Account link changed; reload before retrying');
       if (body.user_id && !eligible(db.users.find(u => u.user_id === body.user_id), contact.client_id)) throw new Error('Choose an active account already authorized for this client');
       const previous_user_id = contact.linked_user_id;
       contact.linked_user_id = body.user_id || null;
@@ -95,12 +96,13 @@ export function identityRequest(db, path, method, params, body) {
   }
   admin(db);
   if (!id && method === 'get') return db.users.filter(u => db.user.role === 'super_admin' || !db.user.client_ids?.length || u.client_ids?.some(cid => db.user.client_ids.includes(cid))).map(u => ({
-    user_id: u.user_id, name: u.name, email: u.email, role: u.role, status: u.status, last_login_at: u.last_login_at,
+    user_id: u.user_id, name: u.name, email: u.email, role: u.role, status: u.status, last_login_at: u.last_login_at, updated_at:u.updated_at,
     client_ids: db.user.role === 'platform_admin' && db.user.client_ids?.length ? (u.client_ids || []).filter(cid => db.user.client_ids.includes(cid)) : u.client_ids,
   }));
   if (!id && method === 'post') return createAccount(db, body);
   const target = record(db, 'users', id);
   manageable(db, target);
+  if(method==='patch'&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(target.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   const foreign = (target.client_ids || []).filter(cid => !db.user.client_ids?.includes(cid));
   if (method === 'patch' && action === 'client-memberships') {
     for (const cid of body.client_ids || []) { admin(db, cid); record(db, 'clients', cid); }
@@ -109,8 +111,9 @@ export function identityRequest(db, path, method, params, body) {
     if (target.role === 'platform_admin' && !desired.length && db.user.role !== 'super_admin') throw new Error('Removing the last membership would grant global internal scope');
     const previous = target.client_ids;
     target.client_ids = desired;
+    target.updated_at=new Date(Math.max(Date.now(),(Date.parse(target.updated_at)||0)+1)).toISOString();
     audit(db, 'update-memberships', 'users', target, { previous, client_ids: desired });
-    return { user_id: target.user_id, client_ids: desired.filter(cid => clientAccess(db.user, cid)) };
+    return { user_id: target.user_id, client_ids: desired.filter(cid => clientAccess(db.user, cid)), updated_at:target.updated_at };
   }
   if (method === 'post' && action === 'resend-invite') {
     if (db.user.role !== 'super_admin' && foreign.length) throw new Error('Invitation administration requires authority over all client memberships');
@@ -128,7 +131,7 @@ export function identityRequest(db, path, method, params, body) {
   if ((body.role || target.role) === 'platform_admin' && !(body.client_ids || target.client_ids)?.length && db.user.role !== 'super_admin') throw new Error('Only a Super Admin can authorize global internal scope');
   const patch = Object.fromEntries(['name', 'role', 'status', 'client_ids'].filter(f => body[f] != null).map(f => [f, body[f]]));
   const previous = { status: target.status, client_ids: target.client_ids };
-  Object.assign(target, patch, { updated_at: now() });
+  Object.assign(target, patch, { updated_at: new Date(Math.max(Date.now(),(Date.parse(target.updated_at)||0)+1)).toISOString() });
   audit(db, 'update-account', 'users', target, { previous, changes: patch });
   return target;
 }

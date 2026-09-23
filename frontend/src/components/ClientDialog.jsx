@@ -45,7 +45,7 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
         delete payload.primary_contact_id;
         if (contact_name.trim()) payload.primary_contact_details = {name: contact_name.trim(), email: contact_email.trim() || null, title: contact_title.trim() || null};
       }
-      const { data } = await (client ? api.patch(`/clients/${client.client_id}`, payload) : createRecord("/clients", payload));
+      const { data } = await (client ? api.patch(`/clients/${client.client_id}`, {...payload,expected_updated_at:client.updated_at??null}) : createRecord("/clients", payload));
       onCreated?.(data);
       onOpenChange(false);
     } catch (e) { toast.error(formatError(e)); }

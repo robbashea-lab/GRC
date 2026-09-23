@@ -57,7 +57,8 @@ class SeedAccountSettingsTests(unittest.IsolatedAsyncioTestCase):
             })
             self.assertEqual(login.status_code, 200)
             client.headers["Authorization"] = "Bearer " + login.json()["access_token"]
-            profile = await client.patch("/api/me", json={"name": "Updated Test Admin"})
+            current = (await client.get('/api/auth/me')).json()
+            profile = await client.patch("/api/me", json={"name": "Updated Test Admin", "expected_updated_at": current.get('updated_at')})
             self.assertEqual(profile.status_code, 200)
             changed = await client.patch("/api/me/password", json={
                 "current_password": self.seed_password, "new_password": new_password,

@@ -121,9 +121,16 @@ def router_for(s):
     @router.post('/ai-intake')
     async def save_intake(body:dict,user=Depends(s.get_current_user)):
         cid=body.get('client_id');await client_scope(cid,user,True)
+        old=await s.db.ai_intake.find_one({'client_id':cid}) or {}
+        s._require_snapshot(body,old)
         if body.get('usage') not in ('yes','no','unsure') or not isinstance(body.get('indicators',[]),list) or set(body.get('indicators',[]))-set(CATALOG['intake_indicators']): raise HTTPException(422,'Invalid AI intake')
-        data={'client_id':cid,'usage':body['usage'],'indicators':body.get('indicators',[]) if body['usage']=='yes' else [],'updated_at':s._now()}
-        await s.db.ai_intake.update_one({'client_id':cid},{'$set':data},upsert=True)
+        data={'client_id':cid,'usage':body['usage'],'indicators':body.get('indicators',[]) if body['usage']=='yes' else [],'updated_at':s._next_write_time(old.get('updated_at'))}
+        if old:
+            result=await s.db.ai_intake.update_one({'_id':old['_id'],'updated_at':old.get('updated_at')},{'$set':data})
+            if result.matched_count!=1: raise HTTPException(409,'Record changed since it was opened; reload before saving')
+        else:
+            try: await s.db.ai_intake.insert_one({'_id':'ai-intake:'+cid,**data})
+            except DuplicateKeyError: raise HTTPException(409,'Record changed since it was opened; reload before saving')
         await s.audit(user,'AI intake updated','client',cid,cid)
         return data
     @router.get('/ai_systems')
@@ -155,10 +162,13 @@ def router_for(s):
     @router.patch('/ai_systems/{aid}')
     async def update_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True)
-        if set(body)-set(AIInput.model_fields): raise HTTPException(422,'Unknown or read-only AI fields')
+        s._require_snapshot(body,old)
+        changes={k:v for k,v in body.items() if k!='expected_updated_at'}
+        if set(changes)-set(AIInput.model_fields): raise HTTPException(422,'Unknown or read-only AI fields')
         async with lease(s.db,aid):
             old=await parent(aid,user,True)
-            try: data=AIInput(**{**{k:old[k] for k in AIInput.model_fields if k in old},**body}).model_dump()
+            s._require_snapshot(body,old)
+            try: data=AIInput(**{**{k:old[k] for k in AIInput.model_fields if k in old},**changes}).model_dump()
             except Exception as exc: raise HTTPException(422,'Invalid AI fields') from exc
             await validate(data,user,old)
             if data['status']=='retired':
@@ -168,8 +178,10 @@ def router_for(s):
                     if review['status']!='in_progress': changes['status']='cancelled'
                     await s.db.reviews.update_one({'review_id':review['review_id']},{'$set':changes})
                     await s._review_event(user,review,'AI retired; recurring review stopped')
-            await s.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{**data,'updated_at':s._now()}})
-            changed=[k for k in data if data[k]!=old.get(k)]
+            data['updated_at']=s._next_write_time(old.get('updated_at'))
+            changed_record=await s.db.ai_systems.update_one({'ai_system_id':aid,'updated_at':old.get('updated_at')},{'$set':data})
+            if not changed_record.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
+            changed=[k for k in data if k!='updated_at' and data[k]!=old.get(k)]
             if changed: await s.audit(user,'AI '+('retired' if data['status']=='retired' else 'suspended' if data['status']=='suspended' else 'governance updated'),'ai_system',aid,old['client_id'],meta={'changed_fields':changed,'previous_tier':screening(old)['risk_tier'],'risk_tier':screening(data)['risk_tier']})
             return await view({**old,**data})
     @router.post('/ai_systems/{aid}/reviews')
@@ -199,7 +211,7 @@ def router_for(s):
             await s.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'material_change_at':at,'material_change_note':body['note'],'updated_at':at}})
             await s.audit(user,'AI material change recorded','ai_system',aid,row['client_id'],meta={'note':body['note']})
             # The alert initiates reassessment through the existing Review; no automatic duplicate.
-            return await view({**row,'material_change_at':at,'material_change_note':body['note']})
+            return await view({**row,'material_change_at':at,'material_change_note':body['note'],'updated_at':at})
     @router.post('/ai_systems/{aid}/links')
     async def link_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)

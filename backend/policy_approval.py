@@ -11,6 +11,7 @@ PROTECTED = {"approval_account_id", "approver_contact_id", "approval_request_id"
 
 class AuthorityIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    expected_updated_at: Optional[str] = Field(None,max_length=100)
     approver_contact_id: Optional[str] = Field(None, max_length=100)
     approval_account_id: Optional[str] = Field(None, max_length=100)
 
@@ -19,6 +20,14 @@ class DecisionIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     approval_request_id: str = Field(min_length=1, max_length=100)
     comment: str = Field("", max_length=4000)
+
+
+class SourceEdit(policy_provenance.SourceIn):
+    expected_updated_at: Optional[str] = Field(None,max_length=100)
+
+
+class SubmissionIn(BaseModel):
+    expected_updated_at: Optional[str] = Field(None,max_length=100)
 
 
 def may_decide(s, user, policy):
@@ -66,7 +75,7 @@ def router_for(s):
                     "state": row.get("status"), "has_client_access": access,
                     "eligible": row.get("status") == "active" and access}
 
-        return {"policy_id": policy_id, "status": p.get("status"),
+        return {"policy_id": policy_id, "status": p.get("status"), "updated_at":p.get('updated_at'),
                 "approval_request_id": p.get("approval_request_id"),
                 "named_approver": {"contact_id": contact["contact_id"], "name": contact["name"]} if contact else None,
                 "linked_account": await account(contact.get("linked_user_id")) if contact else None,
@@ -80,11 +89,12 @@ def router_for(s):
                 "source": p.get("approval_source"), "subject": p.get("approval_subject")}
 
     @router.post("/policies/{policy_id}/approval-subject")
-    async def source(policy_id: str, body: policy_provenance.SourceIn, user=Depends(s.get_current_user)):
+    async def source(policy_id: str, body: SourceEdit, user=Depends(s.get_current_user)):
         p = await s._authorized_parent("policies", policy_id, user, write=True)
+        s._require_snapshot(body.model_dump(exclude_unset=True),p)
         if p.get("status") == "in_review":
             raise HTTPException(409, "Return the pending submission to Draft before changing the approval basis")
-        patch = {"approval_source": body.model_dump(), "version": body.version}
+        patch = {"approval_source": body.model_dump(exclude={'expected_updated_at'}), "version": body.version}
         await policy_provenance.snapshot(s, {**p, **patch})
         if patch["approval_source"] == p.get("approval_source") and patch["version"] == p.get("version"):
             return p
@@ -100,6 +110,7 @@ def router_for(s):
         p = await s._authorized_parent("policies", policy_id, user)
         if user.get("role") not in INTERNAL:
             raise HTTPException(403, "Only scoped internal administrators can delegate approval")
+        s._require_snapshot(body.model_dump(exclude_unset=True),p)
         if p.get("status") == "in_review":
             raise HTTPException(409, "Return the pending submission to Draft before changing authority")
         if body.approver_contact_id and not await s.db.contacts.find_one({"contact_id": body.approver_contact_id, "client_id": p["client_id"]}):
@@ -109,12 +120,13 @@ def router_for(s):
             if not account or account.get("status") != "active" or not s._can_access_client(account, p["client_id"]):
                 raise HTTPException(422, "Choose an active account with access to this client")
         entry = {"at": s._now(), "action": "authority_updated", "by": user["user_id"],
-                 "by_name": user.get("name"), "by_email": user.get("email"), **body.model_dump()}
-        await change(p, {**body.model_dump(), "updated_at": entry["at"]}, entry)
-        await s.audit(user, "policy-authority", "policy", policy_id, p["client_id"], meta=body.model_dump())
+                 "by_name": user.get("name"), "by_email": user.get("email"), **body.model_dump(exclude={'expected_updated_at'})}
+        await change(p, {**body.model_dump(exclude={'expected_updated_at'}), "updated_at": entry["at"]}, entry)
+        await s.audit(user, "policy-authority", "policy", policy_id, p["client_id"], meta=body.model_dump(exclude={'expected_updated_at'}))
         return await context(policy_id, user)
 
     async def change(p, patch, entry):
+        patch['updated_at']=s._next_write_time(p.get('updated_at'))
         query = {"policy_id": p["policy_id"], "client_id": p["client_id"],
                  "status": p.get("status"), "updated_at": p.get("updated_at"),
                  "approval_request_id": p.get("approval_request_id")}
@@ -124,8 +136,9 @@ def router_for(s):
         return await s.db.policies.find_one({"policy_id": p["policy_id"]}, {"_id": 0})
 
     @router.post("/policies/{policy_id}/submit-review")
-    async def submit(policy_id: str, user=Depends(s.get_current_user)):
+    async def submit(policy_id: str, body: SubmissionIn, user=Depends(s.get_current_user)):
         p = await s._authorized_parent("policies", policy_id, user, write=True)
+        s._require_snapshot(body.model_dump(exclude_unset=True),p)
         if p.get("status") not in ("draft", "approved") and not (p.get("status") == "in_review" and not p.get("approval_request_id")):
             raise HTTPException(409, "Only Draft or Approved policies can be submitted")
         request_id = s.uuid.uuid4().hex

@@ -69,6 +69,6 @@ test('an eligible date move preserves its original time and offset via the autho
   await act(async()=>root.render(<Calendar/>));
   const target=[...container.querySelectorAll('[data-testid^="cal-day-"]')].map(e=>e.dataset.testid.slice(8)).find(d=>d!==day);
   await act(async()=>drop('task:open:current',target));
-  expect(api.patch).toHaveBeenCalledWith('/tasks/open',{due_date:target+'T14:30:00-04:00'});
+  expect(api.patch).toHaveBeenCalledWith('/tasks/open',{due_date:target+'T14:30:00-04:00',expected_updated_at:null});
   expect(container.querySelector(`[data-testid="cal-day-${target}"]`).textContent).toContain('Current work');
 });

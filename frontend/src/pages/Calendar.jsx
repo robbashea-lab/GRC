@@ -73,7 +73,7 @@ export default function Calendar() {
       const {data:record}=await api.get(`/${original.kind}s/${original.id}`);
       if(activeRequest.current!==key)return;
       if(record.client_id!==cid||!canMoveCalendar(original.kind,record,user)||original.kind==='review'&&original.occurrence_id!==occurrenceId(record))throw new Error('This item is no longer reschedulable. Refresh the Calendar.');
-      await api.patch(`/${original.kind}s/${original.id}`,{due_date:rescheduledDate(record.due_date,target),...(original.kind==='review'?{expected_occurrence_id:original.occurrence_id}:{})});
+      await api.patch(`/${original.kind}s/${original.id}`,{due_date:rescheduledDate(record.due_date,target),expected_updated_at:record.updated_at??null,...(original.kind==='review'?{expected_occurrence_id:original.occurrence_id}:{})});
       if(currentClientRef.current===cid)toast.success(`Rescheduled to ${target}`);
     }catch(e){if(currentClientRef.current===cid)toast.error(formatError(e));}
     finally{setBusy(false);if(currentClientRef.current===cid)reload();}

@@ -118,7 +118,7 @@ export async function previewAdapter(config) {
     if (path === '/onboarding/baseline') {
       const cid = params.client_id || body.client_id;
       if (method === 'get') return respond({catalog, state:baselineState(db,cid)});
-      return save(saveBaseline(db,cid,body.state,body.finalize));
+      return save(saveBaseline(db,cid,body.state,body.finalize,body));
     }
     if (path === '/auth/me') return respond(db.user);
     if (method === 'get') {
@@ -246,6 +246,7 @@ export async function previewAdapter(config) {
       if(body.kind==='framework_assessments')throw new Error('Use the framework workspace; assessment history is retained');
       if (!ids[body.kind] || !body.ids?.length) throw new Error('Select records first.');
       const rows = body.ids.map(i => record(db, body.kind, i));
+      if(body.expected_versions&&rows.some(row=>body.expected_versions[row[ids[body.kind]]] !== (row.updated_at??null)))throw new Error('Record changed since it was opened; reload before saving');
       if (body.kind === 'contacts' && body.action === 'delete' && db.clients.some(c => rows.some(r => r.client_id === c.client_id && r.contact_id === c.primary_contact_id))) throw new Error('A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.');
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
         throw new Error('Review history must be retained.');
@@ -348,6 +349,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw new Error('Record changed; reload before deleting');
         if(kind==='policies'&&retainedPolicy(r))throw new Error('Policy approval history must be retained; retire the Policy instead');
         if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
         if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');

@@ -84,10 +84,12 @@ export function frameworkRequest(db,path,method,params,body){
     if(!db.baselines?.[body.client_id]?.completed)throw new Error('Complete onboarding before adjusting program configuration');
     if(!db.requirements.some(r=>r.client_id===body.client_id&&r.baseline_key==='soc-2'&&r.baseline_response==='applies'))throw new Error('Select SOC 2 Applies before configuring its scope');
     const config=validateSocConfiguration(body),client=record(db,'clients',body.client_id);
+    if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(client.soc_configuration_updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
     client.framework_settings={...client.framework_settings,'soc-2':config};
+    client.soc_configuration_updated_at=new Date(Math.max(Date.now(),(Date.parse(client.soc_configuration_updated_at)||0)+1)).toISOString();
     reconcileFramework(db,body.client_id,{...db.baselines[body.client_id],requirements:{'soc-2':'applies'}});
     audit(db,'SOC 2 readiness scope updated','clients',client,{categories:config.categories,period_start:config.period_start,period_end:config.period_end});
-    return config;
+    return {...config,expected_updated_at:client.soc_configuration_updated_at};
   }
   if(kind==='frameworks'&&method==='get'){
     frameworkScope(db,params.client_id);const framework=FRAMEWORKS.find(f=>f.key===id);if(!framework)throw new Error('Framework not found');

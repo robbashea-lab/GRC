@@ -421,3 +421,13 @@ fixture dropped from 66,988,251 to 104,979 bytes with identical KPIs; measured
 308 cases/244 subtests, frontend 414 tests, build and Dashboard/core Demo browser
 checks passed. Full measurements and remaining scaling limits are in the
 remediation ledger. ENG-02/15/16 and persistent durability remain open.
+
+ENG-02 follow-up: mandatory snapshot preconditions now cover generic registers,
+Clients, AI intake/inventory, user administration, Policy submission configuration,
+SOC/program settings and onboarding, including loaded source-record versions at
+finalization. Conditional deletes and Finding-scoped remediation serialization
+close additional races. The mutation matrix, explicitly allowed preference
+last-write-wins, tests and non-transactional limits are in the remediation ledger.
+326 offline cases plus 254 subtests passed; local Demo stale-edit browser preserves
+draft/newer data. Connected two-session/Mongo durability proof is still missing:
+do not treat ENG-02 as a fully closed persistent release gate.

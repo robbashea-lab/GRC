@@ -13,6 +13,7 @@ export function aiRequest(db,path,method,params,body){
   if(path==='/ai-intake'){
     const cid=params.client_id||body.client_id;checkClient(cid);
     if(method==='get')return db.ai_intake[cid]||{client_id:cid,usage:'unsure',indicators:[]};
+    if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(db.ai_intake[cid]?.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
     if(method!=='post'||!['yes','no','unsure'].includes(body.usage)||!Array.isArray(body.indicators)||body.indicators.some(i=>!catalog.intake_indicators.includes(i)))throw new Error('Invalid AI intake');
     db.ai_intake[cid]={client_id:cid,usage:body.usage,indicators:body.usage==='yes'?body.indicators:[],updated_at:now()};audit(db,'AI intake updated','clients',record(db,'clients',cid));return db.ai_intake[cid];
   }
@@ -43,12 +44,14 @@ export function aiRequest(db,path,method,params,body){
     const link={kind:body.kind,id:body.id,classification,source:body.source||'',rationale:body.rationale||''};old.related_links||=[];if(!old.related_links.some(l=>JSON.stringify(l)===JSON.stringify(link)))old.related_links.push(link);audit(db,'AI record linked','ai_systems',old,link);return {ok:true};
   }
   if(action||!['post','patch'].includes(method)||(!id&&method!=='post')||(id&&method!=='patch'))throw new Error('AI records are retained; use the supported lifecycle controls');
+  if(old&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
+  body={...body};delete body.expected_updated_at;
   if(Object.keys(body).some(k=>![...AI_KEYS,'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
   const row={...AI_DEFAULTS,...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
   if(['active','suspended','retired'].includes(row.status)&&old?.status!==row.status)admin();
   if(row.status==='retired')for(const r of db.reviews.filter(r=>r.ai_system_id===id&&r.client_id===row.client_id&&!['completed','cancelled'].includes(r.status))){write(db,'reviews',{recurrence:'none',status:r.status==='in_progress'?'in_progress':'cancelled'},r.review_id);audit(db,'AI retired; recurring review stopped','reviews',r);}
   if(!old){db.ai_counters[row.client_id]=(db.ai_counters[row.client_id]||0)+1;row.ai_system_id=uid('ai');row.display_id=`AI-${String(db.ai_counters[row.client_id]).padStart(3,'0')}`;row.created_at=now();row.created_by=db.user.user_id;row.related_links=[];db.ai_systems.push(row);}else Object.assign(old,row);
-  row.updated_at=now();if(old)old.updated_at=row.updated_at;audit(db,!old?'AI use case created':row.status==='retired'?'AI retired':'AI governance updated','ai_systems',row);return view(row);
+  row.updated_at=new Date(Math.max(Date.now(),(Date.parse(old?.updated_at)||0)+1)).toISOString();if(old)old.updated_at=row.updated_at;audit(db,!old?'AI use case created':row.status==='retired'?'AI retired':'AI governance updated','ai_systems',row);return view(row);
 }
 export function aiRelated(db,kind,source,data){
   const cid=source.client_id,id=source[ids[kind]],aiRows=(db.ai_systems||[]).filter(a=>a.client_id===cid);

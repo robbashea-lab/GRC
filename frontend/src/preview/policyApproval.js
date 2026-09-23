@@ -21,7 +21,7 @@ export function policyApprovalRequest(db,path,method,params,body) {
       const access=clientAccess(u,cid);
       return {user_id:ident,name:access?u.name:'Account without client access',state:u.status,has_client_access:access,eligible:eligible(u,cid)};
     };
-    return {policy_id:id,status:p.status,approval_request_id:p.approval_request_id,
+    return {policy_id:id,status:p.status,approval_request_id:p.approval_request_id,updated_at:p.updated_at,
       named_approver:contact?{contact_id:contact.contact_id,name:contact.name}:null,
       linked_account:account(contact?.linked_user_id),authorized_account:account(p.approval_account_id),
       can_configure:internal(db.user),can_submit:['super_admin','platform_admin','client_contributor'].includes(db.user.role),
@@ -29,7 +29,9 @@ export function policyApprovalRequest(db,path,method,params,body) {
   }
   if (action==='approval-context' && method==='get') return context();
   if (method!=='post') throw new Error('Unsupported approval action');
-  const at=now(),entry={at,by:db.user.user_id,by_name:db.user.name,by_email:db.user.email};
+  if(['approval-authority','approval-subject','submit-review'].includes(action)&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(p.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
+  body={...body};delete body.expected_updated_at;
+  const at=new Date(Math.max(Date.now(),(Date.parse(p.updated_at)||0)+1)).toISOString(),entry={at,by:db.user.user_id,by_name:db.user.name,by_email:db.user.email};
   if (action==='approval-authority') {
     if (!internal(db.user)) throw new Error('Only scoped internal administrators can delegate approval');
     if (p.status==='in_review') throw new Error('Return the pending submission to Draft before changing authority');

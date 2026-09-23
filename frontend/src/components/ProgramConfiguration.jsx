@@ -18,7 +18,7 @@ export default function ProgramConfiguration({clientId, onSaved}) {
   },[clientId,revision]);
   async function change(key,applicability){
     setBusy(true);setError('');
-    try{await api.patch(`/onboarding/programs/${key}`,{client_id:clientId,applicability});compliance.refresh?.();setRevision(n=>n+1);onSaved?.();}
+    try{await api.patch(`/onboarding/programs/${key}`,{client_id:clientId,applicability,expected_updated_at:snapshot.records.requirements.find(row=>row.baseline_key===key)?.updated_at??null});compliance.refresh?.();setRevision(n=>n+1);onSaved?.();}
     catch(e){setError(formatError(e));}finally{setBusy(false);}
   }
   return <section className="border border-line rounded-lg p-4 mb-5 space-y-3" aria-label="Program configuration">

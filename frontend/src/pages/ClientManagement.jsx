@@ -61,7 +61,7 @@ export default function ClientManagement() {
     if (!window.confirm(`${restoring ? "Restore" : "Archive"} ${client.name}?`)) return;
     setBusy(client.client_id);
     try {
-      const { data } = await api.patch(`/clients/${client.client_id}`, { status: restoring ? "active" : "archived" });
+      const { data } = await api.patch(`/clients/${client.client_id}`, { status: restoring ? "active" : "archived", expected_updated_at:client.updated_at??null });
       await saved(data);
     } catch (e) { toast.error(formatError(e)); }
     finally { setBusy(null); }

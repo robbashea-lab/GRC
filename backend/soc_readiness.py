@@ -23,6 +23,7 @@ def validate_period(start, end):
 class SocConfiguration(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     client_id: str = Field(min_length=1, max_length=160)
+    expected_updated_at: Optional[str] = Field(default=None,max_length=100)
     categories: list[Category] = Field(default_factory=lambda: ['security'], min_length=1, max_length=5)
     system_description: str = Field(default='', max_length=4000)
     period_start: str = Field(default='', max_length=10)
@@ -61,4 +62,5 @@ class ManagementControl(BaseModel):
 
 def configuration(client):
     return {'categories':['security'], 'system_description':'', 'period_start':'', 'period_end':'',
-            **client.get('framework_settings', {}).get('soc-2', {})}
+            **client.get('framework_settings', {}).get('soc-2', {}),
+            'expected_updated_at':client.get('soc_configuration_updated_at')}

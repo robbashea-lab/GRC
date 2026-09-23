@@ -249,6 +249,7 @@ function ClientRowMenu({
     if (archived && !window.confirm(`Archive ${row.name}?`)) return;
     try {
       await api.patch(`/clients/${row.client_id}`, {
+        expected_updated_at: row.updated_at ?? null,
         status: archived ? 'archived' : 'active'
       });
       toast.success(`${row.name} ${archived ? 'archived' : 'restored'}`);

@@ -172,6 +172,7 @@ def router_for(s):
                 'assessments':rows,'configuration':config,
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
     @router.patch('/frameworks/soc-2/configuration')
+    @s.configuration_mutation
     async def configure_soc(body:SocConfiguration,user=Depends(s.get_current_user)):
         client=await scoped(body.client_id,user)
         if not s._writable(user):raise HTTPException(403,'Read-only role')
@@ -179,17 +180,19 @@ def router_for(s):
             raise HTTPException(409,'Complete onboarding before adjusting program configuration')
         if not await s.db.requirements.find_one({'client_id':body.client_id,'baseline_key':'soc-2','baseline_response':'applies'}):
             raise HTTPException(409,'Select SOC 2 Applies before configuring its scope')
-        config=body.model_dump(exclude={'client_id'})
-        await s.db.clients.update_one({'client_id':body.client_id},{'$set':{'framework_settings.soc-2':config}})
+        s._require_snapshot(body.model_dump(exclude_unset=True),{'updated_at':client.get('soc_configuration_updated_at')})
+        config=body.model_dump(exclude={'client_id','expected_updated_at'})
+        at=s._next_write_time(client.get('soc_configuration_updated_at'))
+        await s.db.clients.update_one({'client_id':body.client_id},{'$set':{'framework_settings.soc-2':config,'soc_configuration_updated_at':at}})
         await reconcile(s,body.client_id,{**client['onboarding_baseline'],'requirements':{'soc-2':'applies'}},user)
         await s.audit(user,'SOC 2 readiness scope updated','client',body.client_id,body.client_id,
                       meta={'categories':config['categories'],'period_start':config['period_start'],'period_end':config['period_end']})
-        return config
+        return {**config,'expected_updated_at':at}
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)
-        if 'expected_last_assessed' in changes and changes.pop('expected_last_assessed') != old.get('last_assessed'):
-            raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
+        s._require_snapshot(changes,old,'last_assessed')
+        changes.pop('expected_last_assessed')
         data={**old,**changes}
         if 'csf_profile' in changes and old['framework_key']!='nist-csf-2':
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')

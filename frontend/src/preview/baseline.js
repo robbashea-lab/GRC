@@ -19,10 +19,11 @@ export function baselineState(db,cid) {
   }
   return {version:2,step:0,policies,requirements,reviews:catalog.reviews.map(r=>r.key),completed:false};
 }
-export function saveBaseline(db,cid,state,finalize) {
+export function saveBaseline(db,cid,state,finalize,precondition={}) {
   record(db,'clients',cid);
   frameworkScope(db,cid);
   if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
+  if(Object.prototype.hasOwnProperty.call(precondition,'expected_updated_at')&&precondition.expected_updated_at!==(db.baselines?.[cid]?.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   state=clone(state);validateFrameworkConfig(state);
   state.requirements||={};state.requirements['soc-2']||='does_not_apply';
   if(state.version>=3)for(const item of catalog.requirements)state.requirements[item.key]||='does_not_apply';
@@ -53,6 +54,6 @@ export function saveBaseline(db,cid,state,finalize) {
     audit(db,'onboarding-complete','clients',record(db,'clients',cid));
     if(state.version>=3)reconcileFramework(db,cid,state);
   }
-  db.baselines||={};db.baselines[cid]={...clone(state),version:state.version>=3?3:2,completed:finalize||!!db.baselines[cid]?.completed};
+  db.baselines||={};db.baselines[cid]={...clone(state),version:state.version>=3?3:2,completed:finalize||!!db.baselines[cid]?.completed,updated_at:new Date(Math.max(Date.now(),(Date.parse(db.baselines[cid]?.updated_at)||0)+1)).toISOString()};
   return db.baselines[cid];
 }
