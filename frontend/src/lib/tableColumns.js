@@ -29,6 +29,7 @@ export function tableColumns(module, { rows=[], users=[], clients=[], programs={
   const schema=SCHEMAS[module];
   return (schema?.columns||[]).map(c=>{
     const field=schema.fields.find(f=>f.name===c.key);
+    if(c.key==='basis')return {key:c.key,label:c.label};
     if(c.user) return person(c.key,c.label);
     if(c.date) return date(c.key,c.label,/^(last|created|updated|completion)/.test(c.key)?'history':c.key==='due_date'?'due':'future',c.key==='due_date'?'No Due Date':c.key==='next_review_date'?(module==='reviews'?'No Next Due':'No Review Scheduled'):/^(last|completion)/.test(c.key)?'Never Reviewed':'No Date');
     if(c.key==='status'&&module==='reviews') return select(c.key,c.label,{options:[{value:'overdue',label:'Overdue'},...(field?.options||[])],matches:reviewMatches});

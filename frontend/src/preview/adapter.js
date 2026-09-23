@@ -233,7 +233,7 @@ export async function previewAdapter(config) {
           (r.linked_id===params.linked_id&&evidenceKind(r.linked_type)===evidenceKind(params.linked_type)) ||
           r.relationships?.some(l=>l.kind===evidenceKind(params.linked_type)&&l.id===params.linked_id));
         if(kind==='evidence')rows=rows.filter(r=>!r.archived_at&&evidenceAccess(db.user,r.client_id)).map(({content_base64,...metadata})=>metadata);
-        if (kind === 'reviews') rows = rows.map(reviewView);
+        if (kind === 'reviews') rows = rows.map(r=>({...reviewView(r),...(params.include_basis?{basis_framework_keys:[...new Set((db.framework_assessments||[]).filter(a=>a.client_id===r.client_id&&a.related_links?.some(l=>l.kind==='reviews'&&l.id===r.review_id)).map(a=>a.framework_key))]}:{})}));
         if (kind === 'evidence' && params.linked_id && ['review','reviews'].includes(params.linked_type))
           rows = rows.filter(r => (r.linked_id===params.linked_id&&belongsToOccurrence(r,record(db,'reviews',params.linked_id),params.occurrence_id))||r.relationships?.some(l=>l.kind==='reviews'&&l.id===params.linked_id&&l.occurrence_id===(params.occurrence_id||record(db,'reviews',params.linked_id).current_occurrence_id)));
         return respond(rows);

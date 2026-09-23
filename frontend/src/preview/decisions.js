@@ -35,7 +35,7 @@ export function guardEdit(kind, body, existing = {}, user) {
     if(!existing.risk_id&&changes.status&&!['open','identified','assessed'].includes(changes.status)) throw new Error('New Risks start as Identified or Assessed.');
   }
   const protectedFields = ['created_at','created_by','updated_at','completion_date','parent_review_id','completion_snapshot','next_occurrence_id','rating_history','approval_history','decision_history','validated_by','validated_at','verified_at','verified_by','approved_at','accepted','accepted_by','acceptance_date','acceptance_rationale','acceptance_expires_at'];
-  protectedFields.push('current_occurrence_id','occurrence_id','occurrences','schedule_anchor','started_at','started_by','completed_at','completed_by','closed_at','closed_by');
+  protectedFields.push('current_occurrence_id','occurrence_id','occurrences','schedule_anchor','started_at','started_by','completed_at','completed_by','closed_at','closed_by','title_generated');
   if (protectedFields.some(k => k in changes)) throw new Error('Decision and history fields cannot be edited directly.');
   const targets = {policies:['approved'], risks:['accepted','closed','retired'], findings:['closed','accepted','remediated'], reviews:['completed'], exceptions:['approved']};
   if ('status' in changes && rules.statuses[kind] && !rules.statuses[kind].includes(changes.status)) throw new Error('Invalid status.');

@@ -189,7 +189,8 @@ export function action(db, kind, id, name, body) {
     if (existing) return existing;
     const task = write(db, 'tasks', {
       ...body,
-      title: body.title || `Remediate: ${r.title}`,
+      title: body.title || r.title,
+      title_generated: !body.title,
       client_id: cid,
       finding_id: id,
       review_id: r.review_id,

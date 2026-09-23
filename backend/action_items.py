@@ -6,6 +6,13 @@ SOURCES = {"review": ("reviews", "review_id"), "finding": ("findings", "finding_
            "risk": ("risks", "risk_id"), "vendor": ("vendors", "vendor_id"), "policy": ("policies", "policy_id"), "audit": ("assessments", "assessment_id")}
 LINKS = {"source_type", "source_id", "review_id", "finding_id", "risk_id", "vendor_id", "policy_id", "assessment_id"}
 
+
+def view(row):
+    # Text resemblance alone is not proof of system authorship.
+    if row.get('title_generated') is True and row.get('title', '').startswith('Remediate: '):
+        return {**row, 'title': row['title'][11:]}
+    return row
+
 async def prepare(db, row, can_access, previous=None):
     cid = row["client_id"]
     if row.get("priority") not in ("critical", "high", "medium", "low") and not (previous and row.get("priority") == previous.get("priority")):
@@ -20,7 +27,7 @@ async def prepare(db, row, can_access, previous=None):
     if row.get("status", "open") != "open":
         raise HTTPException(422, "New Action Items start Open")
     source_type = row.get("source_type") or next((t for t, (_, key) in SOURCES.items() if row.get(key)), "manual")
-    if source_type not in {*SOURCES, "manual", "audit"}:
+    if source_type not in {*SOURCES, "manual", "audit", "incident", "other"}:
         raise HTTPException(422, "Invalid source")
     row["source_type"] = source_type
     if source_type == "audit" and not row.get("source_id") and not row.get("assessment_id"):

@@ -4,7 +4,7 @@ import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
-import { ACTION_VIEWS, actionMatches, actionOrder, actionStatus, daysDue, taskSource } from "@/lib/actionItems";
+import { ACTION_VIEWS, SOURCE_TYPES, actionMatches, actionOrder, actionStatus, daysDue, taskSource } from "@/lib/actionItems";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
@@ -227,7 +227,7 @@ export default function ActionItems() {
                         {actionStatus(r.status)}
                       </span>
                     </td>
-                    <td className="tbl-cell text-xs text-ink-help">{r.sourceRecord.target && SCHEMAS[r.sourceRecord.kind] ? <button className="text-left hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,kind:r.sourceRecord.kind,record:r.sourceRecord.target});}}>{r.source}</button> : r.source}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{r.sourceRecord.target && (SCHEMAS[r.sourceRecord.kind]||r.sourceRecord.kind==='assessments') ? <button className="text-left text-link hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,kind:r.sourceRecord.kind,record:r.sourceRecord.target});}}>{r.source}</button> : r.sourceRecord.id?'Linked record unavailable':r.source}<span className="block text-ink-help">{SOURCE_TYPES[r.source_type]||'Historical source'}</span></td>
                   </tr>
                 );
               })}

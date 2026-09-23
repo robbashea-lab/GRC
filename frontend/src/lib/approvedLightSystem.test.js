@@ -23,7 +23,8 @@ test('authoritative neutral, brand and semantic values stay separate',()=>{
 test('approved density stays shared without hiding columns or changing selected All',()=>{
   expect(palette['--register-row']).toBe('44px');
   expect(palette['--register-gutter']).toBe('20px');
-  expect(css).toContain('min-width: 936px');
+  // The requested Basis column adds 120px without squeezing Title or Next Due.
+  expect(css).toContain('min-width: 1056px');
   expect(css).toContain('.register-col-recurrence + .register-col-date { width: 118px; }');
   expect(css).toContain('.quick-filters button:not([aria-pressed="true"]):hover');
   expect(css).not.toMatch(/text-overflow:\s*ellipsis|line-clamp|overflow:\s*hidden/);

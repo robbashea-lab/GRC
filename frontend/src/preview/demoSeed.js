@@ -46,6 +46,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
     completed.occurrences=[{...completed,occurrence_id:completed.current_occurrence_id,completed_by_name:org.lead,outcome:'no_findings',finding_count:0,evidence:[]}];
     db.reviews.push(completed);
     const findingTitles=['Periodic privileged access reviews are overdue.','Backup restore testing has not been completed according to the expected cadence.','Ownership for critical GRC activities is not consistently established.','Vendor assurance evidence requires renewal.','Policy review approvals require management follow-up.','Vulnerability remediation governance requires consistent tracking.'];
+    const actionTitles=['Complete the overdue privileged access review','Perform and document backup restore testing','Assign owners for critical governance activities','Obtain current vendor assurance evidence','Obtain policy review decisions from management','Document and track vulnerability remediation'];
     const count=poor?6:org.maturity<2?2:3;
     for(let i=0;i<count;i++) {
       const review=reviews[i%reviews.length], status=poor?['open','in_remediation','open','remediated','open','in_remediation'][i]:i===0?'closed':org.maturity<2?'in_remediation':'open';
@@ -53,7 +54,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       const occurrence=status==='closed'&&review.occurrences.length?review.occurrences[0]:null;
       if(occurrence){occurrence.outcome='findings_raised';occurrence.finding_count++;}
       db.findings.push({...meta,finding_id:fid,title:org.maturity<2?'Documented governance improvement '+(i+1):findingTitles[i],description:'Sample review observation requiring documented ownership, evidence and follow-up.',status,severity:poor?(i%2?'high':'critical'):i===0?'low':'medium',owner_id:assigned,due_date:due,review_id:review.review_id,occurrence_id:occurrence?.occurrence_id||review.current_occurrence_id,...(status==='closed'?{closed_at:date(-30),closed_by:owner,validation_notes:'Evidence reviewed; corrective action verified.'}:{})});
-      if(!(poor&&i===2))db.tasks.push({...meta,task_id:cid+'_task_'+i,title:'Remediate: '+findingTitles[i],status:['closed','remediated'].includes(status)?'done':i%2?'in_progress':'open',priority:poor?'high':'medium',assignee_id:assigned,due_date:due,source:'finding',source_id:fid,finding_id:fid,review_id:review.review_id,occurrence_id:occurrence?.occurrence_id||review.current_occurrence_id,...(['closed','remediated'].includes(status)?{completed_at:date(-32)}:{})});
+      if(!(poor&&i===2))db.tasks.push({...meta,task_id:cid+'_task_'+i,title:actionTitles[i],title_generated:true,status:['closed','remediated'].includes(status)?'done':i%2?'in_progress':'open',priority:poor?'high':'medium',assignee_id:assigned,due_date:due,source:'finding',source_id:fid,finding_id:fid,review_id:review.review_id,occurrence_id:occurrence?.occurrence_id||review.current_occurrence_id,...(['closed','remediated'].includes(status)?{completed_at:date(-32)}:{})});
     }
     for(let i=0;i<(poor?4:2);i++) {
       const accepted=i===1;

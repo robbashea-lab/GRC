@@ -35,6 +35,7 @@ from reportlab.lib.units import inch
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ValidationError
+from governance_context import GovernanceContext
 from pymongo.errors import DuplicateKeyError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
 import action_items
@@ -400,6 +401,7 @@ class ClientPatchIn(BaseModel):
 
 
 class ReviewIn(BaseModel):
+    governance_context: Optional[GovernanceContext] = None
     ai_system_id: Optional[str] = None
     risk_id: Optional[str] = None
     title: str
@@ -477,6 +479,7 @@ class RiskIn(BaseModel):
 
 
 class PolicyIn(BaseModel):
+    governance_context: Optional[GovernanceContext] = None
     title: str
     client_id: str
     version: Optional[str] = None  # No fabricated default until verified.
@@ -553,6 +556,7 @@ class AssetIn(BaseModel):
 
 
 class TaskIn(BaseModel):
+    governance_context: Optional[GovernanceContext] = None
     title: str
     client_id: str
     status: str = "open"  # open, in_progress, done, blocked
@@ -2477,7 +2481,7 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
 
 
 @entity_router.get("/{kind}")
-async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Optional[str] = Query(None), portfolio_significant: bool = Query(False), user: Dict = Depends(get_current_user)):
+async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Optional[str] = Query(None), portfolio_significant: bool = Query(False), user: Dict = Depends(get_current_user), include_basis: bool = Query(False)):
     q = _scope_filter(user, client_id)
     if portfolio_significant:
         if kind != 'risks' or not client_id:
@@ -2498,7 +2502,19 @@ async def list_entities(kind: str = Path(..., pattern=KIND_REGEX), client_id: Op
     if kind == "vendors":
         reviews = await db.reviews.find(q, {"_id":0}).to_list(None)
         return [vendor_governance.view(d,reviews) for d in docs]
-    return [_apply_risk_scoring(d) for d in docs] if kind == "risks" else [review_occurrences.view(d) for d in docs] if kind == "reviews" else docs
+    if kind == "reviews" and include_basis is True:
+        # Optional presentation projection leaves normal operational reads unchanged.
+        # One bounded-population query, not a per-row relationship request.
+        by_id = {d['review_id']: d for d in docs}
+        mappings = await db.framework_assessments.find({**q, 'related_links': {'$elemMatch': {'kind':'reviews', 'id':{'$in':list(by_id)}}}},
+            {'client_id':1,'framework_key':1,'related_links':1}).to_list(None)
+        for a in mappings:
+            for link in a.get('related_links',[]):
+                row = by_id.get(link.get('id')) if link.get('kind')=='reviews' else None
+                if row and row['client_id']==a['client_id']:
+                    keys=row.setdefault('basis_framework_keys',[])
+                    if a['framework_key'] not in keys: keys.append(a['framework_key'])
+    return [_apply_risk_scoring(d) for d in docs] if kind == "risks" else [review_occurrences.view(d) for d in docs] if kind == "reviews" else [action_items.view(d) for d in docs] if kind=='tasks' else docs
 
 
 @entity_router.get("/{kind}/{item_id}")
@@ -2507,6 +2523,7 @@ async def get_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = P
     doc = await _authorized_parent(kind, item_id, user)
     doc.pop('_governance_lock', None)
     doc.pop('_remediation_lock', None)
+    if kind=='tasks': return action_items.view(doc)
     if kind == 'reviews':
         return review_occurrences.view(doc)
     if kind == 'risks':
@@ -2629,6 +2646,7 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         body["assignee_id"] = None
     if kind == "tasks":
         await action_items.prepare(db, {**existing, **body}, _can_access_client, existing)
+        if 'title' in body: body['title_generated']=False
     await assignment_eligibility.validate(db, kind, {**existing, **body}, _can_access_client, existing)
     if kind == "vendors":
         await vendor_governance.validate(db,{**existing,**body},_can_access_client,existing)
@@ -2727,7 +2745,7 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         event = "Vendor "+("moved to "+body["status"].replace("_"," ") if "status" in body else "criticality changed" if "criticality" in body else "Business Owner changed" if "business_owner_id" in body else "assurance updated" if "assurance_records" in body else "contract updated" if any(k.startswith("contract_") for k in body) else "Risk linked" if "related_risk_ids" in body else "updated")
     if kind == "risks":
         event = "Risk reassessed" if any(existing.get(k) != doc.get(k) for k in ("likelihood_score","impact_score")) else "Risk owner assigned" if "owner_id" in incoming else "Treatment updated" if "treatment" in incoming else "Next Risk Review scheduled" if set(incoming) & {"next_review","review_cadence","custom_recurrence_days"} else "Risk updated"
-    await audit(user, event, entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys()), **({"previous_score":existing.get("risk_score"),"score":doc.get("risk_score"),"level":doc.get("risk_level"),"owner_id":doc.get("owner_id")} if kind == "risks" else {})})
+    await audit(user, event, entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys()), **({"governance_context_before":existing.get("governance_context"),"governance_context_after":doc.get("governance_context")} if "governance_context" in body else {}), **({"previous_score":existing.get("risk_score"),"score":doc.get("risk_score"),"level":doc.get("risk_level"),"owner_id":doc.get("owner_id")} if kind == "risks" else {})})
     return review_occurrences.view(doc) if kind == "reviews" else doc
 
 
@@ -3728,7 +3746,8 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
     tid = "tsk_" + uuid.uuid5(uuid.NAMESPACE_URL, "finding-remediation:" + finding_id).hex
     doc = {
         "task_id": tid,
-        "title": body.get("title") or f"Remediate: {finding['title']}",
+        "title": body.get("title") or finding['title'],
+        "title_generated": not bool(body.get("title")),
         "client_id": finding["client_id"],
         "status": "open",
         "priority": body.get("priority", finding.get("severity", "medium")),
@@ -3855,6 +3874,12 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         finding=await db.findings.find_one({'finding_id':source['finding_id'],'client_id':cid})
         if finding and finding.get('framework_assessment_id'):
             assessment_clauses.append({'framework_assessment_id':finding['framework_assessment_id']})
+    if entity_type in ('tasks','findings') and source.get('review_id'):
+        parent_review=await db.reviews.find_one({'review_id':source['review_id'],'client_id':cid},{'_id':0})
+        if parent_review:
+            assessment_clauses.append({'related_links':{'$elemMatch':{'kind':'reviews','id':parent_review['review_id']}}})
+            if parent_review.get('framework_key'):
+                assessment_clauses.append({'framework_key':parent_review['framework_key'],'definition_id':{'$in':parent_review.get('framework_safeguards',[])}})
     if entity_type=='reviews' and source.get('framework_key'):
         assessment_clauses.append({'framework_key':source['framework_key'],'definition_id':{'$in':source.get('framework_safeguards',[])}})
     linked['framework_assessments']=await db.framework_assessments.find({'client_id':cid,'$or':assessment_clauses},{'_id':0}).to_list(None)
@@ -3862,6 +3887,7 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         linked['framework_assessments']=[a for a in linked['framework_assessments'] if entity_id not in a.get('unlinked_evidence_ids',[])]
     for assessment in linked['framework_assessments']:
         assessment['title']=framework_governance.assessment_title(assessment)
+    linked['tasks']=[action_items.view(t) for t in linked.get('tasks',[])]
     return linked
 
 

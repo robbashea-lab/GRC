@@ -22,7 +22,8 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 test('pilot preserves rows, columns, status, selection and authoritative record opening',async()=>{
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
   expect(container.querySelector('.register-surface[data-layout="reviews"]')).toBeTruthy();
-  expect(container.querySelectorAll('thead th')).toHaveLength(9);
+  expect(container.querySelectorAll('thead th')).toHaveLength(10);
+  expect(container.querySelector('th[data-column="basis"]').textContent).toContain('Basis');
   expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(2);
   expect(container.querySelector('[data-testid="reviews-row-0"]').textContent).toContain('Quarterly');
   expect(container.querySelector('[data-testid="reviews-status-0"]').textContent).toBe('overdue');

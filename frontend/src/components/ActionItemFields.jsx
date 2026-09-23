@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { SOURCE_TYPES, SOURCE_RECORDS, taskSource, actionStatus, actionPriority } from '@/lib/actionItems';
 import ActionSourceChain from './ActionSourceChain';
 import AssigneeSelect from './AssigneeSelect';
+import RequirementBasis, {GovernanceContextFields} from './RequirementBasis';
 
 // Task-specific fields; the existing drawer owns Evidence, Comments and Related.
 export default function ActionItemFields({form,setForm,record,clientId,canWrite,onTransition,saving,sourceLocked=false,related={},onOpen}) {
@@ -45,6 +46,8 @@ export default function ActionItemFields({form,setForm,record,clientId,canWrite,
         <div><Label htmlFor="task-source">Source *</Label><Select value={type} onValueChange={v=>setForm(p=>({...p,source_type:v,source_id:null}))} disabled={!canWrite||sourceLocked}><SelectTrigger id="task-source" aria-label="Source"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(SOURCE_TYPES).map(([v,l])=><SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></div>
         {kind&&select('source_id','Related '+SOURCE_TYPES[type],form.source_id,[['__none__',type==='audit'?'External / no linked assessment':'Select a record'],...(data.records[kind]||[]).map(r=>[r[idKey],r.title||r.name])],data.loading||!!data.error||sourceLocked)}
       </div>}
+    {record&&<RequirementBasis kind="tasks" record={record} related={related} onOpen={onOpen} users={data.users}/>}
+    <GovernanceContextFields value={form.governance_context} disabled={!canWrite} onChange={value=>change('governance_context',value)}/>
     {record&&<dl className="grid grid-cols-1 gap-3 pt-3 border-t border-line text-sm">
       {stamp('Created',record.created_at,record.created_by)}
       {stamp('Started',record.started_at,record.started_by)}

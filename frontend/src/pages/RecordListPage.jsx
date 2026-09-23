@@ -82,6 +82,7 @@ function DueCell({ iso, closed = false }) {
   );
 }
 
+import {basisSummary} from '@/lib/requirementBasis';
 // Tab definitions for reviews — order matters (displayed as segmented control)
 const REVIEW_TABS = [
   { id: "all", label: "All" },
@@ -170,7 +171,7 @@ export default function RecordListPage({ kind }) {
     if (!currentClientId) { setRows([]); setLoading(false); return; }
     setLoading(true);
     try {
-      const { data } = await api.get(`/${kind}`, { params: { client_id: currentClientId } });
+      const { data } = await api.get(`/${kind}`, { params: { client_id: currentClientId,...(kind==='reviews'?{include_basis:true}:{}) } });
       if (kind === "policies") {
         const { data: reviews } = await api.get("/reviews", { params: { client_id: currentClientId } });
         data.forEach(policy => {
@@ -596,6 +597,7 @@ export default function RecordListPage({ kind }) {
                                data-testid={`${kind}-unassigned-${i}`}
                              >Unassigned</span>
                        ) :
+                       isReviews && c.key==='basis' ? <span className="text-xs text-ink-secondary" title={basisSummary(row)}>{basisSummary(row)}</span> :
                        isDueLike ? <DueCell iso={row[c.key]} closed={closed} /> :
                        c.date ? (row[c.key] ? <span className="font-mono text-ink-secondary">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-ink-help">—</span>) :
                        (

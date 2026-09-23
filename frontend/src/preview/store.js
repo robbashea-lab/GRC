@@ -10,6 +10,8 @@ import { reconcileFramework } from './frameworks';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
+import {validateGovernanceContext} from '../lib/requirementBasis';
+import {actionTitle} from '../lib/actionItems';
 export const STORE_KEY = 'grc_interactive_demo_v2';
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
@@ -34,6 +36,7 @@ export const ids = {
 export const now = () => new Date().toISOString();
 export const uid = kind => `${kind}_demo_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 function normalizePolicyDates(db) {
+  for(const task of db.tasks||[])task.title=actionTitle(task);
   for (const policy of db.policies || []) {
     if (policy.last_reviewed_at === undefined && policy.last_reviewed) policy.last_reviewed_at = policy.last_reviewed;
   }
@@ -45,6 +48,18 @@ export function seedStore() {
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
   // Only explicit Demo creation/reset seeds framework work; standard startup never calls this.
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
+  const client=db.clients.find(c=>c.name==='Initech');
+  if(client){
+    const cid=client.client_id,meta={client_id:cid,created_at:now(),created_by:db.user.user_id};
+    const review=db.reviews.find(r=>r.client_id===cid&&r.framework_key==='iso-27001');
+    if(review)review.governance_context={category:'organizational',rationale:'Management uses this Review to evaluate the configured ISO program and document follow-up.',cadence_source:'organization_defined',cadence_rationale:'The sample organization selected this schedule for its governance cycle; it is not a numerical ISO mandate.'};
+    db.policies.push({...meta,policy_id:cid+'_organizational-policy',title:'Internal meeting records policy',status:'draft',summary:'Keep management decisions accessible to the people implementing them.',governance_context:{category:'management',rationale:'Management decision to retain internal meeting decisions; no external framework mapping has been asserted.'}});
+    db.assessments.push({...meta,assessment_id:cid+'_readiness-context',name:'Infrastructure transition assessment',status:'completed',summary:'Sample assessment of the infrastructure transition; outstanding actions remain operational work.'});
+    write(db,'tasks',{...meta,title:'Document infrastructure transition decisions',source_type:'audit',source_id:cid+'_readiness-context',governance_context:{rationale:'Record the decisions identified by the transition assessment.'}});
+    write(db,'tasks',{...meta,title:'Confirm management review participants',source_type:'manual',governance_context:{category:'management',rationale:'Requested by IT leadership for the next management meeting.'}});
+    const risk=db.risks.find(r=>r.client_id===cid&&!['closed','retired','accepted'].includes(r.status));
+    if(risk)write(db,'tasks',{...meta,title:'Document the selected risk treatment',source_type:'risk',source_id:risk.risk_id,governance_context:{category:'risk',rationale:'Capture the treatment work for the linked Risk; completion does not close the Risk.'}});
+  }
   return db;
 }
 export function readStore() {
@@ -91,6 +106,7 @@ export function audit(db, action, kind, row, meta = {}) {
   });
 }
 export function validate(db, kind, body, existing) {
+  if(['reviews','policies','tasks'].includes(kind))validateGovernanceContext(body.governance_context);
   if (kind !== 'clients' && kind !== 'users' && !db.clients.some(c => c.client_id === body.client_id)) throw new Error('Select an existing demo client.');
   if (existing?.client_id && body.client_id !== existing.client_id) throw new Error('Records cannot be moved between clients.');
   const field = ['clients', 'vendors', 'assets', 'users'].includes(kind) ? 'name' : ['contacts', 'evidence'].includes(kind) ? null : 'title';
@@ -116,6 +132,7 @@ export function validate(db, kind, body, existing) {
 export function write(db, kind, body, id) {
   const existing = id ? record(db, kind, id) : null;
   const profileChanges=kind==='clients'&&existing?Object.fromEntries(Object.entries(body).filter(([k,v])=>!['expected_updated_at','updated_at'].includes(k)&&JSON.stringify(existing[k])!==JSON.stringify(v)).map(([k,v])=>[k,{before:clone(existing[k]??null),after:clone(v)}])):null;
+  const contextChange=existing&&'governance_context' in body?{governance_context_before:clone(existing.governance_context??null),governance_context_after:clone(body.governance_context)}:{};
   if (existing && Object.prototype.hasOwnProperty.call(body, 'expected_updated_at') && body.expected_updated_at !== (existing.updated_at ?? null)) {
     throw new Error('Record changed since it was opened; reload before saving');
   }
@@ -173,6 +190,7 @@ export function write(db, kind, body, id) {
     updated_at: new Date(Math.max(Date.now(), (Date.parse(existing?.updated_at) || 0) + 1)).toISOString()
   };
   if (kind === 'tasks') {
+    if(existing&&'title' in body&&body.title!==existing.title)row.title_generated=false;
     if(existing) {row.created_at=existing.created_at;row.created_by=existing.created_by;}
     prepareTask(db,row,existing);
     if ('assignee_id' in body && existing && 'owner_id' in existing) row.owner_id=null;
@@ -256,7 +274,7 @@ export function write(db, kind, body, id) {
   if(kind==='risks'&&row.vendor_id&&!existing) audit(db,'Risk linked','vendors',record(db,'vendors',row.vendor_id),{risk_id:row.risk_id});
   if(kind==='tasks'&&row.vendor_id) audit(db,taskEvent,'vendors',record(db,'vendors',row.vendor_id),{task_id:row.task_id});
   const event = kind==='vendors' ? existing?'Vendor updated':'Vendor created' : kind==='tasks' ? taskEvent : kind==='risks'?riskEvent:existing?'update':'create';
-  audit(db, event, kind, row,profileChanges?{changes:profileChanges}:{});
+  audit(db, event, kind, row,{...(profileChanges?{changes:profileChanges}:{}),...contextChange});
   return existing || row;
 }
 export function library(db, type, cid) {

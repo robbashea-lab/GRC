@@ -74,6 +74,10 @@ export function frameworkReverse(db,kind,source,result){
   const fid=source.finding_id,aid=source.framework_assessment_id||(kind==='evidence'&&['framework_assessment','framework_assessments'].includes(source.linked_type)?source.linked_id:null)||db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===fid)?.framework_assessment_id;
   result.framework_assessments=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(a.framework_assessment_id===aid||a.related_links?.some(l=>l.kind===kind&&l.id===source[ids[kind]])||(kind==='reviews'&&a.framework_key===source.framework_key&&source.framework_safeguards?.includes(a.definition_id))||(kind==='policies'&&frameworkCatalog(a.framework_key)?.policy_mappings.some(m=>m.policy_key===source.baseline_key&&m.safeguards.includes(a.definition_id)))))
     .filter(a=>kind!=='evidence'||!a.unlinked_evidence_ids?.includes(source.evidence_id)).map(a=>({...a,title:assessmentTitle(a)}));
+  if(['tasks','findings'].includes(kind)&&source.review_id){
+    const review=db.reviews.find(r=>r.review_id===source.review_id&&r.client_id===source.client_id);
+    if(review){const parent=frameworkReverse(db,'reviews',review,{}).framework_assessments;result.framework_assessments=[...new Map([...result.framework_assessments,...parent].map(a=>[a.framework_assessment_id,a])).values()];}
+  }
   return result;
 }
 export function frameworkRequest(db,path,method,params,body){

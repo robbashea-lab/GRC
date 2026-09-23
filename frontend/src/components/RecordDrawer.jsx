@@ -31,6 +31,7 @@ import {completionHandoff} from '@/lib/remediation';
 import CorrectiveActions from './CorrectiveActions';
 import EvidencePanel from './EvidencePanel';
 import ActionSourceChain from './ActionSourceChain';
+import RequirementBasis, {GovernanceContextFields} from './RequirementBasis';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import { ContactAccessDetails } from './ContactAccess';
 import ContactAccountActions from './ContactAccountActions';
@@ -199,6 +200,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium"});
       if (!record && kind === "risks") Object.assign(base, {status: "identified", review_cadence: "annual", source_type: "manual"});
       if (!record && kind === "vendors") Object.assign(base, {status: "onboarding", criticality: "medium", review_frequency: "annual"});
+      if(['policies','tasks'].includes(kind))base.governance_context=record?.governance_context||null;
       base.client_id = record?.client_id || clientId;
       if(!record&&initialValues) Object.assign(base,initialValues);
       setForm(base);
@@ -774,7 +776,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {kind === "reviews" && renderReviewActionsPanel()}
         {kind === "findings" && renderFindingActionsPanel()}
         {kind === 'findings' && isEdit && <section className="space-y-2 text-sm" aria-label="Corrective actions"><h3 className="font-medium">Corrective Actions</h3><p className="text-ink-secondary">Work completion is followed by separate Finding validation.</p>{relatedError?<p role="alert">Corrective actions could not be loaded: {relatedError}</p>:relatedLoading?<p>Loading corrective actions…</p>:<CorrectiveActions actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users} onOpen={task=>openLinkedRecord({kind:'tasks',record:task})}/>}</section>}
-        {kind === "policies" && renderPolicyPanel()}
+        {['policies','findings'].includes(kind)&&record&&<RequirementBasis kind={kind} record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/>}
+        {kind === "policies" && <><GovernanceContextFields value={form.governance_context} cadence disabled={!canWrite} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{renderPolicyPanel()}</>}
         {kind === "contacts" && <ContactAccessDetails contact={record} clientId={clientId} open={open} />}
         {kind === "contacts" && renderContactActions()}
         {kind === "exceptions" && isEdit && isPlatformAdmin && record.status !== "approved" && <Button onClick={() => { setDecisionForm({action:'approve',rationale:''}); setDecisionOpen(true); }}>Approve exception</Button>}

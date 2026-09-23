@@ -11,7 +11,7 @@ export function prepareTask(db,row,previous) {
   }
   if(row.status!=='open') throw new Error('New Action Items start Open.');
   const type=row.source_type||Object.keys(SOURCE_RECORDS).find(t=>row[SOURCE_RECORDS[t][1]])||'manual';
-  if(![...Object.keys(SOURCE_RECORDS),'manual','audit'].includes(type)) throw new Error('Invalid source.');
+  if(![...Object.keys(SOURCE_RECORDS),'manual','audit','incident','other'].includes(type)) throw new Error('Invalid source.');
   row.source_type=type;
   if(type==='audit'&&!row.source_id&&!row.assessment_id) {
     if(Object.entries(SOURCE_RECORDS).some(([t,[,key]])=>t!=='audit'&&row[key])) throw new Error('Select the linked record as the source.');

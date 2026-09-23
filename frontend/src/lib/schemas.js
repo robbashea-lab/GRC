@@ -9,6 +9,7 @@ export const SCHEMAS = {
     columns: [
       { key: "title", label: "Title", primary: true },
       { key: "review_type", label: "Type" },
+      { key: "basis", label: "Basis" },
       { key: "status", label: "Status", badge: true },
       { key: "owner_id", label: "Owner", user: true },
       { key: "due_date", label: "Due date", date: true },

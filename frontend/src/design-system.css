@@ -352,10 +352,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-focus-ri
 }
 .register-table-frame[data-layout="reviews"] > table {
   table-layout: fixed;
-  min-width: 936px;
+  min-width: 1056px;
 }
 .register-col-check { width: 32px; }
 .register-col-review_type { width: 116px; }
+.register-col-basis { width: 120px; }
 .register-col-status { width: 124px; }
 .register-col-owner { width: 128px; }
 .register-col-date { width: 100px; }
