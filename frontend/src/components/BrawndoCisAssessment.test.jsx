@@ -78,3 +78,31 @@ test('failed save keeps the draft, error and unsaved status',async()=>{
  await render();await input('How is this requirement implemented?','Draft kept');api.patch.mockRejectedValue(new Error('Conflict: reload required'));await act(async()=>button('Save assessment').click());
  expect(container.textContent).toContain('Conflict: reload required');expect(container.textContent).toContain('Unsaved assessment changes');expect(container.querySelector('textarea').value).toBe('Draft kept');
 });
+
+test('Save & next waits for a successful save and never navigates after failure',async()=>{
+ await render();await input('How is this requirement implemented?','New narrative');
+ api.patch.mockRejectedValueOnce(new Error('Save rejected'));
+ await act(async()=>button('Save & next').click());expect(next).not.toHaveBeenCalled();
+ expect(container.querySelector('.brawndo-assessment-footer [role="alert"]').textContent).toBe('Save rejected');
+ await act(async()=>button('Save & next').click());expect(next).toHaveBeenCalledTimes(1);
+ expect(record.implementation).toBe('New narrative');
+});
+
+test('Save & next cannot discard a separate Finding or comment draft',async()=>{
+ await render();await act(async()=>button('Create Finding').click());
+ expect(button('Save & next').disabled).toBe(true);
+ expect(container.querySelector('[aria-label="Finding description"]').tagName).toBe('TEXTAREA');
+ await act(async()=>button('Cancel Finding').click());
+ await input('Safeguard comment','Unposted comment');expect(button('Save & next').disabled).toBe(true);
+ expect(next).not.toHaveBeenCalled();
+});
+
+test('evidence picker searches display name, distinguishes no match, and retains filename',async()=>{
+ api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/evidence'?[{evidence_id:'e',filename:'report.txt',display_name:'Asset reconciliation',created_at:'2026-09-01',evidence_type:'Report'}]:[]}));
+ await render();await act(async()=>button('Link Evidence').click());
+ expect(container.textContent).toContain('Asset reconciliation · 2026-09-01');
+ await input('Find existing evidence','no-match');expect(container.textContent).toContain('No evidence matches your search');
+ expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(true);
+ await input('Find existing evidence','report.txt');expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(false);
+ expect(container.textContent).toContain('save immediately');
+});

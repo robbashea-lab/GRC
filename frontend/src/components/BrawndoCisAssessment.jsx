@@ -1,4 +1,4 @@
-import {useRef} from 'react';
+import {useRef,useState} from 'react';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
 import {Input} from './ui/input';
@@ -30,11 +30,15 @@ function Step({number,title,children}){
 }
 
 export default function BrawndoCisAssessment({state,actions}){
-  const {open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link}=state;
-  const {put,save,run,download,setComment,setFinding,setTab,setNested,setReviewDraft,setLink,close,previous,next,reviewSaved,retry}=actions;
+  const {open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,otherDraft}=state;
+  const {put,save,saveAndNext,run,download,setComment,setFinding,setTab,setNested,setReviewDraft,setLink,close,previous,next,reviewSaved,retry}=actions;
+  const [evidenceSearch,setEvidenceSearch]=useState('');
   const heading=useRef(null),opener=useRef(document.activeElement),clientId=record.client_id,aid=record.framework_assessment_id;
   const guide=operatorGuidance('cis-ig1',definition),source=sourcePresentation(definition),statuses=operatorStatuses('cis-ig1');
   const disabled=!writable||busy||!ctx;
+  const availableEvidence=ctx?.options.evidence?.filter(e=>!related.evidence?.some(r=>r.evidence_id===e.evidence_id));
+  const matchingEvidence=availableEvidence?.filter(e=>`${e.display_name||''} ${e.filename} ${e.evidence_type||''}`.toLowerCase().includes(evidenceSearch.trim().toLowerCase()));
+  const evidenceLabel=e=>e.display_name||e.filename;
   const who=id=>ctx?.users.find(u=>u.user_id===id)?.name||(id?'Former / unavailable user':'Unassigned');
   const records=(kind,rows=[])=>rows.map(r=><li key={r[RECORD_IDS[kind]]} className="brawndo-linked-row">
     <button type="button" className="text-link text-left" disabled={busy} onClick={()=>setNested({kind,record:r})}>{r.title||r.name}</button>
@@ -89,10 +93,13 @@ export default function BrawndoCisAssessment({state,actions}){
             </Step>
             <Step number="4" title="Evidence & Validation">
               <div className="flex flex-wrap justify-between items-center gap-2"><p>{ctx?`${related.evidence?.length||0} linked evidence records`:'Loading evidence…'}</p>{writable&&<Button variant="outline" size="sm" disabled={disabled} aria-expanded={tab==='Evidence'} onClick={()=>setTab(tab==='Evidence'?'':'Evidence')}>Link Evidence</Button>}</div>
-              <ul>{related.evidence?.map(e=><li className="brawndo-linked-row" key={e.evidence_id}><button className="text-link text-left" disabled={busy} onClick={()=>download(e)}>{e.filename}</button><span className="text-xs text-ink-secondary">{e.created_at?.slice(0,10)}</span></li>)}</ul>
+              <ul>{related.evidence?.map(e=><li className="brawndo-linked-row" key={e.evidence_id}><div className="min-w-0"><button className="text-link text-left" aria-label={`Download ${evidenceLabel(e)}`} disabled={busy} onClick={()=>download(e)}>{evidenceLabel(e)}</button>{e.display_name&&e.display_name!==e.filename&&<p className="text-xs text-ink-secondary">{e.filename}</p>}</div><span className="text-xs text-ink-secondary">{[e.evidence_type,e.created_at?.slice(0,10)].filter(Boolean).join(' · ')}</span></li>)}</ul>
               {ctx&&!related.evidence?.length&&<p className="text-sm text-ink-secondary">No evidence linked yet. Link an existing artifact or upload one without duplicating the Evidence Library.</p>}
               {tab==='Evidence'&&writable&&<fieldset disabled={disabled} className="brawndo-inset space-y-3">
-                <label className="block">Link existing Evidence<select aria-label="Link existing Evidence" value="" onChange={e=>{const id=e.target.value;if(id)run(()=>api.post(`/framework_assessments/${aid}/links`,{kind:'evidence',id}));}}><option value="">Select Evidence Library item</option>{ctx?.options.evidence?.filter(e=>!related.evidence?.some(r=>r.evidence_id===e.evidence_id)).map(e=><option key={e.evidence_id} value={e.evidence_id}>{e.filename}</option>)}</select></label>
+                <p className="text-xs text-ink-secondary">Evidence links and uploads save immediately. Assessment text is saved separately below.</p>
+                <label className="block">Find existing evidence<Input aria-label="Find existing evidence" value={evidenceSearch} onChange={e=>setEvidenceSearch(e.target.value)} placeholder="Search name, filename or type"/></label>
+                <label className="block">Link existing Evidence<select aria-label="Link existing Evidence" disabled={!matchingEvidence?.length} value="" onChange={e=>{const id=e.target.value;if(id)run(()=>api.post(`/framework_assessments/${aid}/links`,{kind:'evidence',id}));}}><option value="">Select Evidence Library item</option>{matchingEvidence?.map(e=><option key={e.evidence_id} value={e.evidence_id}>{evidenceLabel(e)}{e.created_at?` · ${e.created_at.slice(0,10)}`:''}</option>)}</select></label>
+                <p role="status" className="text-xs text-ink-secondary">{!availableEvidence?'Loading available evidence…':!availableEvidence.length?'No additional evidence available to link.':!matchingEvidence.length?'No evidence matches your search.':`${matchingEvidence.length} available to link`}</p>
                 <label className="block">Upload Evidence<input className="block mt-2 max-w-full" aria-label="Upload Evidence" type="file" onChange={e=>{const f=e.target.files?.[0];if(f)run(async()=>api.post('/evidence',{client_id:clientId,linked_type:'framework_assessment',linked_id:aid,filename:f.name,mime_type:f.type||'application/octet-stream',content_base64:await readEvidenceFile(f)}));}}/></label>
                 {!!related.evidence?.length&&<details><summary>Manage current assessment links</summary>{related.evidence.map(e=><Button key={e.evidence_id} variant="ghost" size="sm" onClick={()=>run(()=>api.delete(`/framework_assessments/${aid}/links`,{data:{kind:'evidence',id:e.evidence_id}}))}>Unlink {e.filename}</Button>)}<p className="text-xs">Unlinking preserves the Library item and its original provenance.</p></details>}
               </fieldset>}
@@ -103,7 +110,7 @@ export default function BrawndoCisAssessment({state,actions}){
               <ul>{records('findings',related.findings)}</ul>
               {ctx&&!related.findings?.length&&<p className="text-sm text-ink-secondary">No linked Findings.</p>}
               {finding&&<fieldset disabled={disabled} className="brawndo-inset space-y-3"><legend className="font-medium">New Finding</legend>
-                {[['title','Finding title'],['remediation_title','Remediation Action title'],['description','Finding description']].map(([key,label])=><label className="block" key={key}>{label}<Input aria-label={label} value={finding[key]} onChange={e=>setFinding({...finding,[key]:e.target.value})}/></label>)}
+                {[['title','Finding title'],['remediation_title','Remediation Action title'],['description','Finding description']].map(([key,label])=>{const Field=key==='description'?Textarea:Input;return <label className="block" key={key}>{label}<Field aria-label={label} value={finding[key]} onChange={e=>setFinding({...finding,[key]:e.target.value})}/></label>;})}
                 <label className="block">Severity<select aria-label="Finding severity" value={finding.severity} onChange={e=>setFinding({...finding,severity:e.target.value})}>{['low','medium','high','critical'].map(s=><option key={s}>{s}</option>)}</select></label>
                 <div className="flex flex-wrap gap-2"><Button onClick={()=>run(async()=>{await api.post(`/framework_assessments/${aid}/findings`,finding);setFinding(null);})}>Create Finding & Action</Button><Button variant="ghost" onClick={()=>setFinding(null)}>Cancel Finding</Button></div>
               </fieldset>}
@@ -132,7 +139,7 @@ export default function BrawndoCisAssessment({state,actions}){
           </aside>
         </div>
       </div>
-      <footer className="brawndo-assessment-footer"><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?'Unsaved assessment changes':feedback||(!writable?'Read-only assessment':'Changes are saved only when you choose Save assessment.')}</span></div><div className="flex gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<Button disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>}</div></footer>
+      <footer className="brawndo-assessment-footer"><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?'Unsaved assessment changes':feedback||(!writable?'Read-only assessment':'Assessment changes are saved when you choose Save assessment.')}</span>{otherDraft&&<p id="brawndo-other-draft" className="text-xs text-ink-secondary">Finish or cancel the open Finding, Review setup or comment before using Save & next.</p>}</div><div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={otherDraft?'brawndo-other-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></footer>
     </DialogContent>
   </Dialog>;
 }

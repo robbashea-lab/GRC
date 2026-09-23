@@ -6,6 +6,7 @@ import {frameworkCatalog} from '@/lib/frameworks';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import FrameworkDrawer from '@/components/FrameworkDrawer';
+import {isBrawndoCisPrototype} from '@/components/BrawndoCisAssessment';
 import {SocProgramSettings} from '@/components/SocReadiness';
 import {socConfiguration} from '@/lib/socReadiness';
 import {operatorStatuses,assessmentProgress} from '@/lib/frameworkOperator';
@@ -21,23 +22,24 @@ const ISO_VIEWS={
   corrections:{label:'Corrective Actions',matches:r=>['10.1','10.2'].includes(r.definition_id)},
 };
 function readPreference(key){try{return JSON.parse(sessionStorage.getItem(key))||{};}catch{return {};}}
-function Sections({nodes,expanded,toggle,openRecord,statuses}){
+function Sections({nodes,expanded,toggle,openRecord,statuses,prototype}){
   return <div className="space-y-3">{visibleSections(nodes,expanded).map(node=>{
     const summary=sectionSummary(node.rows),next=nextAssessment(node.rows),open=expanded.includes(node.key),id='framework-section-'+node.key.replaceAll('/','-');
     return <section key={node.key} className={`rounded-lg border border-line bg-surface-card ${node.depth?'ml-3 sm:ml-6':''}`} aria-label={node.label}>
       <div className="p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0"><h3 className="font-semibold text-sm">{node.label}</h3><p className="text-xs text-ink-secondary mt-1">{summary.total} requirements · {summary.assessed} assessed · {summary.attention} need attention · {summary.reviews} linked Reviews · {summary.findings} open Findings</p></div>
+        <div className="min-w-0"><h3 className="font-semibold text-sm">{node.label}</h3><p className="text-xs text-ink-secondary mt-1">{prototype?`${summary.total} safeguard${summary.total===1?'':'s'} · ${summary.assessed} assessed${summary.attention?` · ${summary.attention} need attention`:''}${summary.reviews?` · ${summary.reviews} linked review${summary.reviews===1?'':'s'}`:''}${summary.findings?` · ${summary.findings} open finding${summary.findings===1?'':'s'}`:''}`:<>{summary.total} requirements · {summary.assessed} assessed · {summary.attention} need attention · {summary.reviews} linked Reviews · {summary.findings} open Findings</>}</p></div>
         <div className="flex gap-1">{next&&<Button size="sm" variant="ghost" aria-label={`Continue ${node.label}`} onClick={()=>openRecord(next)}>Continue Assessment</Button>}<Button size="sm" variant="outline" aria-expanded={open} aria-controls={id} onClick={()=>toggle(node.key)}>{open?'Collapse':'Expand'}</Button></div>
       </div>
       {open&&<div id={id} className="border-t border-line p-3">{node.children.length?<p className="text-xs text-ink-secondary">{node.children.length} sections below</p>:<ul className="divide-y divide-line">{node.rows.map(row=><li key={row.framework_assessment_id} data-testid={'requirement-'+row.definition_id} className="py-3 flex flex-wrap justify-between gap-2">
         <button className="text-left text-link font-medium text-sm min-w-0 flex-1" onClick={()=>openRecord(row)}>{row.definition_id} · {row.title}</button>
-        <div className="text-xs text-ink-secondary text-right"><p className={row.status==='needs_attention'?'text-semantic-critical':row.status==='in_progress'?'text-semantic-warning':''}>{statuses[row.status]||'Not Assessed'}</p>{row.csf_profile?.target_selected&&<p>Target priority: {row.csf_profile.priority||'Not prioritized'}</p>}{row.work?.overdue_reviews>0&&<p className="text-semantic-critical">{row.work.overdue_reviews} overdue Reviews</p>}{row.work?.open_findings>0&&<p>{row.work.open_findings} open Findings</p>}</div>
+        <div className="text-xs text-ink-secondary text-right"><p className={row.status==='needs_attention'?'text-semantic-critical':row.status==='in_progress'?'text-semantic-warning':''}>{statuses[row.status]||'Not Assessed'}</p>{row.csf_profile?.target_selected&&<p>Target priority: {row.csf_profile.priority||'Not prioritized'}</p>}{row.work?.overdue_reviews>0&&<p className="text-semantic-critical">{row.work.overdue_reviews} overdue Reviews</p>}{prototype&&row.work?.overdue_actions>0&&<p className="text-semantic-critical">{row.work.overdue_actions} overdue Action Items</p>}{row.work?.open_findings>0&&<p>{row.work.open_findings} open Findings</p>}</div>
       </li>)}</ul>}</div>}
     </section>;
   })}</div>;
 }
 export default function FrameworkWorkspace({frameworkKey,clientId}){
   const [params,setParams]=useSearchParams(),{user}=useAuth();
+  const prototype=isBrawndoCisPrototype(clientId,{client_id:clientId,framework_key:frameworkKey},user);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
@@ -63,23 +65,29 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const closeRecord=()=>{const next=new URLSearchParams(params);next.delete('assessment');setParams(next,{replace:true});setRevision(n=>n+1);};
   const toggle=key=>{setExpanded(old=>old.includes(key)?old.filter(k=>k!==key):[...old,key]);remember({section:key.split('/')[0]});};
   const allKeys=ns=>ns.flatMap(n=>[n.key,...allKeys(n.children)]);
-  if(error)return <p role="alert" className="text-sm">{error}</p>;
+  const chooseFilter=key=>{setFilter(key);if(prototype)setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,key,search)))));};
+  const changeSearch=value=>{setSearch(value);if(prototype&&value.trim())setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,filter,value)))));};
+  if(error)return <div role="alert" className="text-sm">{error}{prototype&&<Button variant="outline" onClick={()=>setRevision(n=>n+1)}>Retry workspace</Button>}</div>;
   if(!data)return <p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>;
   if(!data.configured)return <section className="border border-line bg-surface-card rounded p-6 text-sm"><p>{data.selected?'Program selected for this client.':'Program not currently selected.'}</p><p className="text-ink-secondary mt-2">Select Applies in Client Profile to initialize this program after onboarding. Existing records are not reset.</p><Link className="text-link underline" to="/client-profile?tab=program">Configure in Client Profile</Link></section>;
   const progress=assessmentProgress(scoped),resume=nextAssessment(scoped,preference.lastId),index=scoped.findIndex(r=>r.framework_assessment_id===selected?.framework_assessment_id);
   const attention=scoped.filter(needsAttention).length;
+  const lastOpened=prototype&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
   return <div className="space-y-4" data-testid={frameworkKey==='cis-ig1'?'cis-workspace':'framework-workspace'}>
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
+    {prototype&&<Link className="text-sm text-link underline" to="/client-profile?tab=program">CIS configuration in Client Profile</Link>}
     <section aria-label="Assessment progress" className="space-y-2"><h2 className="font-semibold">Assessment Progress</h2><p className="text-sm">{progress.assessed} / {progress.applicable} applicable {(catalog?.labels?.items||'requirements').toLowerCase()} assessed · {scoped.length-progress.assessed-progress.excluded} not assessed · {progress.excluded} N/A</p><p className="text-xs text-ink-secondary">Assessment coverage includes partial and unresolved results. It is not certification or a compliance percentage.</p></section>
     <section className="border border-line rounded-lg p-4 bg-surface-card flex flex-wrap justify-between items-center gap-3" aria-label="Continue where you left off"><div><h2 className="text-sm font-semibold">Continue where you left off</h2><p className="text-sm text-ink-secondary mt-1">{resume?`${resume.definition_id} · ${resume.title}`:'No pending assessments or linked work requiring attention.'}</p></div>{resume&&<Button onClick={()=>openRecord(resume)}>Continue Assessment</Button>}</section>
-    <div className="flex flex-wrap items-center gap-3 text-sm"><button className="text-link" onClick={()=>setFilter('attention')}>Needs Attention · {attention} items</button><span className="text-xs text-ink-secondary">Assessment gaps and linked operational work are separate conditions.</span></div>
+    {lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}
+    <div className="flex flex-wrap items-center gap-3 text-sm"><button className="text-link" onClick={()=>chooseFilter('attention')}>Needs Attention · {attention} items</button><span className="text-xs text-ink-secondary">Assessment gaps and linked operational work are separate conditions.</span></div>
     {frameworkKey==='soc-2'&&<><details><summary className="cursor-pointer text-sm font-medium">Program scope & observation period</summary><SocProgramSettings clientId={clientId} configuration={data.configuration||socConfiguration()} writable={data.selected&&['super_admin','platform_admin','client_contributor'].includes(user?.role)} onSaved={()=>setRevision(n=>n+1)}/></details><label className="text-xs flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope criteria</label></>}
     {['iso-27001','nist-csf-2'].includes(frameworkKey)&&<label className="text-sm">{frameworkKey==='iso-27001'?'ISO workspace view':'CSF profile view'}<select className="border border-line rounded p-2 ml-2 bg-surface-card" aria-label={frameworkKey==='iso-27001'?'ISO workspace view':'CSF profile view'} value={view} onChange={e=>setView(e.target.value)}><option value="all">{frameworkKey==='iso-27001'?'All ISMS & Annex A':'Current Profile'}</option>{(frameworkKey==='iso-27001'?Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label]):[['target','Target Profile'],['gaps','Recorded Gaps']]).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>}
-    <Input aria-label="Search requirements" placeholder="Search requirements…" value={search} onChange={e=>setSearch(e.target.value)}/>
-    <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>setFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div>
+    <Input aria-label={prototype?'Search safeguards':'Search requirements'} placeholder={prototype?'Search safeguard number or title…':'Search requirements…'} value={search} onChange={e=>changeSearch(e.target.value)}/>
+    <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>chooseFilter(key)}>{prototype&&key==='in_progress'?'Partially Implemented':label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div>
+    {prototype&&(search||filter!=='all')&&<div className="text-sm flex flex-wrap items-center gap-3"><span role="status">Showing {visible.length} of {scoped.length} safeguards</span><Button size="sm" variant="ghost" onClick={()=>{setSearch('');setFilter('all');}}>Clear search and filters</Button></div>}
     {!visible.length&&<p role="status" className="text-sm">No requirements match these filters.</p>}
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
-    <Sections {...{nodes,expanded,toggle,openRecord,statuses}}/>
+    <Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype}}/>
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}} onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null} position={index>=0?`${index+1} of ${scoped.length} in framework order`:'Retained assessment'}/>}
   </div>;
 }
