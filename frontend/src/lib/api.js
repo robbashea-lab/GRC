@@ -1,5 +1,6 @@
 import axios from "axios";
 import {recordUuid} from './recordUuid';
+import {demoStorageError} from './demoStorageErrors';
 
 // Standard authentication and operational data always use the configured API.
 // Only intentional Explore Demo sessions use the isolated, session-local adapter.
@@ -10,15 +11,18 @@ export const DEMO_AVAILABLE = process.env.REACT_APP_PREVIEW === "true";
 export const STANDARD_AUTH_ENABLED = !DEMO_AVAILABLE || process.env.REACT_APP_STANDARD_SIGN_IN === "true";
 export const STANDARD_AUTH_NOTICE = "Standard sign-in is not enabled in this preview.";
 const MODE_KEY = "grc_workspace_mode";
-export let PREVIEW_MODE = sessionStorage.getItem(MODE_KEY) === "demo" && DEMO_AVAILABLE;
+function storedMode(){try{return sessionStorage.getItem(MODE_KEY);}catch{return null;}}
+export let PREVIEW_MODE = storedMode() === "demo" && DEMO_AVAILABLE;
 export function setWorkspaceMode(mode) {
   if (!["standard", "demo"].includes(mode) || (mode === "demo" && !DEMO_AVAILABLE)) throw new Error("Workspace unavailable.");
   PREVIEW_MODE = mode === "demo";
+  try {
   sessionStorage.setItem(MODE_KEY, mode);
   localStorage.removeItem("grc_token");
   localStorage.removeItem("grc_client_id");
   localStorage.removeItem("grc_demo_entered");
   sessionStorage.removeItem("grc_demo_entered");
+  }catch(error){PREVIEW_MODE=false;throw demoStorageError(error,'write');}
 }
 
 const api = axios.create({

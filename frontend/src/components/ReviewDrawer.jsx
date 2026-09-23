@@ -1,3 +1,4 @@
+import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {useCreateIntent} from '@/lib/createIntent';
@@ -28,7 +29,6 @@ const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
 const date = value => value ? new Date(String(value).slice(0,10) + 'T00:00:00').toLocaleDateString() : '—';
 const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
-const fileData = file => new Promise((resolve,reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
 
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues}) {
   const {user} = useAuth();

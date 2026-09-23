@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
 
   const checkAuth = useCallback(async () => {
     if (!STANDARD_AUTH_ENABLED && !PREVIEW_MODE) {
-      localStorage.removeItem("grc_token");
+      try{localStorage.removeItem("grc_token");}catch{/* Sign-in stays disabled even when browser storage is unavailable. */}
       setUser(null);
       setLoading(false);
       return;

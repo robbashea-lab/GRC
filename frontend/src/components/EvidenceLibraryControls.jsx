@@ -1,3 +1,4 @@
+import {readEvidenceFile} from '@/lib/evidenceFile';
 import {useEffect,useState} from 'react';
 import api,{formatError} from '@/lib/api';
 import {Button} from './ui/button';
@@ -22,7 +23,7 @@ export function EvidenceUpload({clientId,onClose,onSaved}){
   const [area,setArea]=useState('Unassigned'),[source,setSource]=useState(null),[metadata,setMetadata]=useState({evidence_type:'Other'}),[file,setFile]=useState(null),[busy,setBusy]=useState(false);
   const create=useCreateIntent(api.post,clientId);
   async function upload(e){e.preventDefault();if(!file)return;setBusy(true);try{
-    const content=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+    const content=await readEvidenceFile(file);
     await create('/evidence',{client_id:clientId,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:content,...metadata,...(source?{linked_type:source.kind,linked_id:source.id,occurrence_id:source.occurrence_id||null}:{})});toast.success('Evidence added');onSaved();onClose();
   }catch(error){toast.error(formatError(error));}finally{setBusy(false);}}
   return <Sheet open onOpenChange={v=>{if(!v&&!busy)onClose();}}><SheetContent className="w-full sm:max-w-xl overflow-y-auto"><SheetHeader><SheetTitle>Add Evidence</SheetTitle><SheetDescription>Prefer uploading where work happens. Choose a source, or leave this file unassigned for later classification.</SheetDescription></SheetHeader><form onSubmit={upload} className="pt-4"><fieldset disabled={busy} className="space-y-4"><label className="block text-sm">Program Area<select aria-label="Program Area" className={selectClass} value={area} onChange={e=>{setArea(e.target.value);setSource(null);}}>{PROGRAM_AREAS.map(a=><option key={a}>{a}</option>)}</select></label>

@@ -1,3 +1,4 @@
+import {readEvidenceFile as readFile} from '@/lib/evidenceFile';
 import {useEffect,useState} from 'react';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
@@ -23,7 +24,6 @@ import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,A
 
 const IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',evidence:'evidence_id',vendors:'vendor_id'};
 const SELECT='w-full border border-line bg-surface-card rounded p-2 text-sm';
-const readFile=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
 export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position}){
   const {user}=useAuth(),aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
   const catalog=frameworkCatalog(record.framework_key),isCsf=record.framework_key==='nist-csf-2',isSoc=record.framework_key==='soc-2',isCis=record.framework_key==='cis-ig1',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement'),program=operatorProgram(record.framework_key);
