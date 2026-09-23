@@ -440,3 +440,13 @@ production build and representative Demo browser regressions passed. No global
 dependency junction or unrelated visual checkout was modified. Details and the
 remaining backend transitive-lock/toolchain limits are in dependency-workflow.md
 and the remediation ledger. This does not close the persistent staging gate.
+
+Final remediation handoff: clean-bundle five-framework browser regression passed
+(394 assessments, 18 routes, four widths, shared records unchanged). Railway
+read-only diagnosis reconfirms the 500 MB Mongo volume/startup OutOfDiskSpace
+blocker; proposed 1 GB increase awaits owner approval. Persistent authenticated
+QA remains not run. Normal GitHub push still lacks credentials; private Sites
+packaging still cannot launch Bash. Site remains version 50, not this code.
+The remediation ledger records per-phase commits, all limitations and the final
+scorecard. Recommendation remains NOT YET SUITABLE for a controlled real-client
+pilot. Original audit observations are preserved, not retroactively relabeled.

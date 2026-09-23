@@ -4,7 +4,8 @@ Started 2026-09-23. Baseline inspected, not inferred: clean `main` at
 `afecba1bff2d3f8486c7f928be8864bb22fc1cfb`; preceding application commit
 `0611f49869bd353f7d5555a76717e8153a44f52b`. The successor changes only
 `docs/engineering-health-audit.md`. Separate visual-candidate checkout remains
-untouched. This ledger is in progress, **not a release approval**.
+untouched. Local remediation is recorded below; unresolved release gates mean
+this is **not a release approval**.
 
 ## ENG-04 create inventory
 
@@ -265,3 +266,116 @@ returned no known advisories for 12 pins; transitive hash-locking is not verifie
 ENG-15: frontend reproducibility verified on a clean local tree; advisory
 disposition documented. Legacy build tooling and full backend transitive locking
 remain explicitly deferred rather than hidden by an audit suppression.
+
+## Phase 5 — ENG-16 read-only staging diagnosis
+
+Railway project `cc2a2570-6bb4-4c1c-a360-fb11473db43c` (Omnisciente Development),
+environment `9b143765-4ea7-4a6a-8c08-046985a17dc1`, is the development/staging
+target. Its environment label is `production`; that label does not make this a
+production release. No variables' values, credentials or database contents were
+read. No volume, service, plan, startup configuration or data was changed.
+
+- API service `5325773c-5e5e-4f4f-9a98-1961267080dd` remains FAILED at deployment
+  `ac8d16dc-f470-4e14-b29c-b46d5c1203c0`, configured source
+  `da81cdeb25f6ea4b3a303e68c15b548a16662bfb`, not this remediation.
+- Mongo service `cc095e93-e78d-4fce-b7ca-4dc7c48b35d7` uses mongo:8.3.11;
+  deployment `02ede91d-1de2-4dd9-8d0c-1b76bb09d2b6` is reported SUCCESS.
+- Existing volume `6dfc6920-f125-4481-84ea-bf9305cdd4a9` is 500 MB at `/data/db`.
+  API startup logs from September 22 report Mongo OutOfDiskSpace code 14031:
+  **233,508,864 bytes available versus 524,288,000 required**.
+- The latest 24-hour service disk metric has 1,440 samples, current
+  0.069459968 GB. This is not filesystem free space or exact database size and
+  must not be substituted for the startup error's capacity check.
+- No replica-set configuration was established by inspection. Real-Mongo
+  transaction capability, restart durability and receipt-storage growth are
+  unverified. The API watch paths include backend and grcRules.json only;
+  unrelated framework JSON changes are not covered by that trigger.
+
+The proposed least-destructive recovery is increasing the existing volume to
+1 GB, without deletion/reset or another service. Explicit owner approval has
+been requested because billing may change; **no approval received at handoff**.
+Do not upgrade a plan if the current plan rejects resizing. Railway's
+[volume resizing guidance](https://docs.railway.com/volumes#live-resizing-the-volume)
+was consulted; availability depends on plan and filesystem state.
+
+Persistent QA remains **NOT RUN / BLOCKED**: real standard login, two authenticated
+frontend sessions against Mongo, cross-tenant persistent isolation, worker
+interruption/lease recovery, restart durability and real-Mongo Dashboard latency.
+Demo tests and MongoMock tests are not substitutes for those gates.
+
+## Final local regression and release assessment
+
+| Gate | Evidence / status |
+|---|---|
+| ENG-04 | Generic create retry identity and post-write audit recovery regression passed. NEEDS ATTENTION: persistent interruption/lease proof, reload-lost form intent, manual upload retry and related-workflow audit repair are not universally closed. |
+| ENG-14 | FIXED for response contract in isolated tests: exact KPIs, bounded previews, authorized pagination. Real-Mongo capacity remains unverified; the server still loads projected populations. |
+| ENG-02 | Mandatory snapshots and conditional/serialized mutations tested. NEEDS ATTENTION for persistent two-session and interruption validation; multi-record batches are not transactions. |
+| ENG-15 | Clean frontend lockfile/install/test/build verified; three legacy build-tool advisories dispositioned. Backend full transitive reproducibility and toolchain retirement deferred. |
+| ENG-16 | BLOCKED: existing Mongo volume capacity prevents API startup. No paid or destructive action taken. |
+| Recommendation | **Not yet suitable for a controlled real-client pilot.** No production-readiness or independent-assurance claim. |
+
+Final executed checks (application source unchanged after these checks):
+
+- `backend/tests/run_isolated.py`: **326 passed, 254 subtests passed**. Includes
+  negative authorization/client isolation, retries, stale writes, races and
+  existing workflow regressions. External mutation scripts were not run.
+- Clean dependency tree: **414 frontend tests / 74 suites passed**, production
+  build passed, targeted changed-file lint zero errors / one existing warning.
+- Exact final clean bundle on loopback port 4184: core Review/Evidence/Finding/
+  Action/Risk chain, bounded Dashboard paging, stale-edit preservation, Policy
+  version approvals, onboarding/client switching and four-width checks passed.
+- Five framework browser journeys (CIS, NIST, HIPAA, ISO, SOC 2) passed: **394
+  assessments, 18 routes, four widths**, Evidence download/relink, remediation,
+  history, deep-link refresh/back, draft protection and wrong-client exclusion.
+  One existing Finding/Action/Evidence reused across all five without duplication;
+  shared Reviews remained unchanged. No console errors reported by those scripts.
+- Same synthetic Dashboard medium fixture: 17,309,238 bytes / 13,698.6 ms to
+  104,958 bytes / 2,917.5 ms. Large: 66,988,251 bytes / 151,470.0 ms to 104,979
+  bytes / 11,285.2 ms. Mock single runs with tracemalloc, not an SLA or real
+  database benchmark. Identical underlying fixtures/KPIs; see Phase 2 details.
+- Final diff reviewed for scope and whitespace; added-line secret-pattern check
+  found no matches. This is not exhaustive secret scanning or independent review.
+  Existing unapproved visual checkout still has its original 8 tracked and 5
+  untracked paths; none was staged, edited or committed by this program.
+
+Changed-file scope: backend create receipts, Dashboard contract/projections,
+server and existing AI/Policy/remediation/onboarding/framework/SOC mutation
+boundaries; corresponding frontend forms, transport, Dashboard loader/drawer and
+Demo parity; focused backend/frontend/browser tests; dependency manifest/lock,
+audit script and release documentation. No framework content, cadence taxonomy,
+branding, RBAC authority or business lifecycle redesign. Full file list is
+reproducible with `git diff --name-only afecba1bff2d3f8486c7f928be8864bb22fc1cfb HEAD`.
+
+Residual/deferred work: persistent release gates above; form-intent recovery
+after browser refresh; full related-create audit recovery; receipt retention
+capacity policy; database-level aggregation/explain measurements; multi-document
+crash recovery; backend transitive locking and legacy build-tool replacement.
+These are not represented as completed by passing local tests.
+
+### Commits and delivery
+
+| Phase | Local main commit |
+|---|---|
+| ENG-04 | `382fb2b9d46099ca3d81d5b77a73bfa8583ef8b7` |
+| ENG-14 | `f00bf9a6c8ea3a5d5a1225cf9efc262aa62e727c` |
+| ENG-02 | `7c3463710eaa3307c674847086eb7e00555208b5` |
+| ENG-15 | `a34489b64c48cfb08089dca0eef518334afdf87a` |
+| ENG-16 | No application/infrastructure change; diagnosis in final documentation commit. |
+
+Normal `git push origin main` was attempted with prompting disabled and failed:
+`could not read Username for 'https://github.com': terminal prompts disabled`.
+**PUSH BLOCKED — AUTHENTICATION REQUIRED.** No alternate credential was invented,
+no history rewritten. The final documentation commit is local as well.
+
+Private Site freshly reports **version 50**, owner-only, zero external visitors:
+https://iventure-grc-code-preview.mr-robbashea.chatgpt.site . **Not updated.**
+The current 0.1.71 packaging helper still invokes `bash`; no Bash executable was
+found on PATH or in inspected Git installation locations. Direct invocation
+returned `Unable to start the Sites workflow command.` No plugin rewrite, shell
+installation, source-only remote build or false publication claim was made.
+No new Site version or staging deployment contains this implementation.
+
+Resume after approved existing-volume recovery and restored GitHub/package
+runtime access: push exact main, deploy staging normally, execute persistent
+gates, then publish the validated matching frontend while retaining owner-only
+access. The clean build and separate verification checkout are preserved.
