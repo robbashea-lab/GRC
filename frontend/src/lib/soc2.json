@@ -1137,6 +1137,8 @@
   "review_plans": [
     {
       "key": "soc-risk-assessment",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "risk-assessment",
       "title": "SOC 2 Risk and System Scope Review",
       "review_type": "risk",
@@ -1157,6 +1159,8 @@
     },
     {
       "key": "soc-user-access",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "user-access",
       "title": "Access Entitlement Review",
       "review_type": "access",
@@ -1176,6 +1180,8 @@
     },
     {
       "key": "soc-vulnerability",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "vulnerability",
       "title": "Vulnerability Governance Review",
       "review_type": "vulnerability",
@@ -1194,6 +1200,8 @@
     },
     {
       "key": "soc-vendor",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "vendor",
       "title": "Third-Party Security Review",
       "review_type": "vendor",
@@ -1213,6 +1221,8 @@
     },
     {
       "key": "soc-backup",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "backup",
       "title": "Backup and Recovery Validation",
       "review_type": "backup",
@@ -1232,6 +1242,8 @@
     },
     {
       "key": "soc-incident-response",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "incident-response",
       "title": "Incident Response Exercise",
       "review_type": "incident",
@@ -1252,6 +1264,8 @@
     },
     {
       "key": "soc-policy-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "policy-review",
       "title": "Security Policy Review",
       "review_type": "policy",
@@ -1270,6 +1284,8 @@
     },
     {
       "key": "soc-awareness",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "awareness",
       "title": "Security Awareness Review",
       "review_type": "awareness",

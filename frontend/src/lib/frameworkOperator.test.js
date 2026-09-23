@@ -76,6 +76,14 @@ test('SOC criteria explain distinct expectations without prescribing controls or
   for(const g of all){expect(g.meaning.length).toBeGreaterThan(40);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('readiness prompt');}
   expect(operatorStatuses('soc-2').addressed).toBe('Addressed (Readiness)');
 });
+test('SOC readiness Review defaults do not become source-mandated control frequencies',()=>{
+  for(const plan of CATALOGS['soc-2'].review_plans){
+    expect(plan.cadence_class).toBe('D');
+    expect(plan.cadence_references).toEqual([]);
+    expect(plan.source_minimum).toBeFalsy();
+    expect(plan.classification).toBe('recommended');
+  }
+});
 test('assessment coverage counts partial assessments, excludes N/A and handles empty data',()=>{
   expect(assessmentProgress([{status:'not_assessed'},{status:'in_progress'},{status:'needs_attention'},{status:'not_applicable'}])).toEqual({total:4,applicable:3,assessed:2,excluded:1});
   expect(assessmentProgress([])).toEqual({total:0,applicable:0,assessed:0,excluded:0});
