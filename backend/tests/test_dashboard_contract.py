@@ -64,6 +64,24 @@ class DashboardContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([r['baseline_key'] for r in result['applicable_requirements']],['cis-ig1','soc-2'])
         self.assertEqual(result['posture']['totals']['significantRisks'],1)
         self.assertEqual(result['posture']['significantRisks'][0]['id'],'accepted')
+        self.assertEqual(result['posture']['totals']['acceptedRisks'],1)
+        self.assertEqual(result['posture']['totals']['risk-critical'],1)
         await server.db.requirements.update_one({'requirement_id':'a-soc'},{'$set':{'baseline_response':'does_not_apply'}})
         result=(await self.client.get('/api/dashboard?client_id=a')).json()
         self.assertEqual([r['baseline_key'] for r in result['applicable_requirements']],['cis-ig1'])
+
+    async def test_vendor_conditions_drill_to_exact_sources_and_use_defined_windows(self):
+        self.sign_in('admin')
+        await server.db.vendors.insert_many([
+            {'client_id':'a','vendor_id':'v','name':'Provider','status':'active','criticality':'critical',
+             'contract_renewal':'2026-10-30','assurance_required':True,'assurance_records':[]},
+            {'client_id':'a','vendor_id':'inactive','name':'Inactive','status':'inactive','criticality':'critical'}])
+        await server.db.reviews.insert_many([
+            {'client_id':'a','review_id':rid,'title':rid,'status':'upcoming','recurrence':'annual','vendor_id':'v',
+             'vendor_purpose':'vendor','due_date':due} for rid,due in [('past','2026-09-22'),('soon','2026-10-23'),('later','2026-10-24')]])
+        with patch.object(server,'_now',lambda:'2026-09-23T12:00:00Z'):
+            data=(await self.client.get('/api/dashboard?client_id=a')).json()['posture']
+            for group,ids in [('vendorReviewsPast',['past']),('vendorReviewsSoon',['soon']),('criticalVendors',['v']),('missingAssurance',['v']),('contracts',['v'])]:
+                self.assertEqual(data['totals'][group],len(ids))
+                detail=(await self.client.get('/api/dashboard',params={'client_id':'a','detail':group})).json()
+                self.assertEqual([r['id'] for r in detail['items']],ids)

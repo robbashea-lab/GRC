@@ -1,4 +1,7 @@
 import unittest
+from unittest.mock import patch
+from framework_summary import progress, ongoing
+from framework_catalog import active_definitions
 import test_client_dashboard_sources as harness
 from routes.onboarding import BASELINE_CATALOG
 
@@ -8,6 +11,53 @@ server = harness.server
 class Phase6VisibilityTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = harness.ClientDashboardSourcesTests.asyncSetUp
     sign_in = harness.ClientDashboardSourcesTests.sign_in
+
+    def test_resolution_rules_and_empty_scope(self):
+        rows=[{'definition_id':'1.1','status':state,'na_rationale':'Reason' if i==4 else ''}
+              for i,state in enumerate(['addressed','in_progress','not_assessed','needs_attention','not_applicable','not_applicable','legacy'])]
+        self.assertEqual(progress(rows,'cis-ig1'),dict(total=7,resolved=2,valid_na=1,invalid_na=1,percent=29))
+        self.assertIsNone(progress([],'cis-ig1')['percent'])
+        for key,spec in [('iso-27001','isms_clause'),('hipaa','addressable')]:
+            definition=next(d for d in active_definitions(key) if d.get('specification')==spec)
+            self.assertEqual(progress([{'definition_id':definition['id'],'status':'not_applicable','na_rationale':'Legacy'}],key)['resolved'],0)
+        definition=next(d for d in active_definitions('iso-27001') if d.get('specification')=='annex_control')
+        row={'definition_id':definition['id'],'status':'not_applicable','soa_applicability':'excluded','soa_justification':'Documented exclusion'}
+        self.assertEqual(progress([row],'iso-27001')['percent'],100)
+        self.assertEqual(progress([{**row,'soa_justification':''}],'iso-27001')['percent'],0)
+
+    async def test_program_detail_is_paged_scoped_and_obligations_do_not_change_progress(self):
+        rows=await self.configure()
+        aid=rows[0]['framework_assessment_id']
+        for rid,due in [('past','2026-09-22'),('today','2026-09-23'),('30','2026-10-23'),('future','2026-10-24'),('none',None)]:
+            await server.db.reviews.insert_one({'client_id':'a','review_id':rid,'title':rid,'framework_assessment_id':aid,
+                'status':'upcoming','recurrence':'annual','due_date':due})
+        await server.db.reviews.insert_one({'client_id':'b','review_id':'foreign','title':'Private','framework_assessment_id':aid,
+            'status':'upcoming','recurrence':'annual','due_date':'2000-01-01'})
+        with patch.object(server,'_now',lambda:'2026-09-23T12:00:00Z'):
+            summary=(await self.summary())['items'][0]
+            # Finalizing CIS creates twelve authoritative, unscheduled baseline Reviews.
+            self.assertEqual(summary['ongoing']['counts'],dict(past_due=1,due_soon=2,current=1,unscheduled=13))
+            self.assertEqual(summary['assessment_progress']['percent'],0)
+            self.sign_in('member')
+            for state,count in summary['status_counts'].items():
+                response=await self.client.get('/api/frameworks/summary',params={'client_id':'a','program':'cis-ig1','detail':state,'limit':25})
+                self.assertEqual(response.status_code,200,response.text)
+                self.assertEqual(response.json()['total'],count)
+                self.assertLessEqual(len(response.json()['items']),25)
+            detail=(await self.client.get('/api/frameworks/summary?client_id=a&program=cis-ig1&detail=past_due')).json()
+            self.assertEqual([r['id'] for r in detail['items']],['past'])
+            self.assertEqual((await self.client.get('/api/frameworks/summary?client_id=b&program=cis-ig1&detail=all')).status_code,403)
+            await server.db.reviews.update_one({'review_id':'past'},{'$set':{'due_date':'2026-10-25'}})
+            after=(await self.summary())['items'][0]
+            self.assertEqual(after['assessment_progress'],summary['assessment_progress'])
+            self.assertEqual(after['ongoing']['counts']['past_due'],0)
+
+    def test_completed_and_one_time_reviews_are_not_recurring_obligations(self):
+        base={'review_id':'r','status':'upcoming','recurrence':'annual','due_date':'2026-09-23'}
+        result,groups=ongoing([base,{**base,'review_id':'done','status':'completed'},
+                              {**base,'review_id':'once','recurrence':'none'}],'2026-09-23')
+        self.assertEqual(result['total'],1)
+        self.assertEqual([r['id'] for r in groups['due_soon']],['r'])
 
     async def configure(self):
         self.sign_in('admin')
@@ -40,7 +90,7 @@ class Phase6VisibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cis['status_counts'],{'not_assessed':50,'in_progress':3,'addressed':2,'not_applicable':1,'needs_attention':0})
         self.assertEqual(before['items'][1]['status_counts'],{'not_assessed':33,'in_progress':0,'addressed':0,'needs_attention':0,'not_applicable':0})
         self.assertTrue(before['items'][1]['tracking_available'])
-        self.assertNotIn('percent',str(before))
+        self.assertEqual(cis['assessment_progress'], {'total':56,'resolved':3,'valid_na':1,'invalid_na':0,'percent':5})
         await self.client.patch('/api/framework_assessments/'+rows[6]['framework_assessment_id'],json={'status':'in_progress'})
         self.assertEqual((await self.summary())['items'][0]['status_counts']['not_assessed'],49)
         self.assertEqual((await self.summary())['items'][0]['status_counts']['in_progress'],4)

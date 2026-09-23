@@ -3,7 +3,7 @@ import json
 import uuid
 from pathlib import Path
 from typing import Literal, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 import review_occurrences
 import assignment_eligibility
@@ -152,11 +152,12 @@ def router_for(s):
         if not s._can_access_client(user,target['client_id']):raise HTTPException(403,'Forbidden')
         return target
     @router.get('/frameworks/summary')
-    async def summary(client_id:str,user=Depends(s.get_current_user)):
+    async def summary(client_id:str, program:Optional[str]=None, detail:Optional[str]=None,
+                      offset:int=Query(0,ge=0), limit:int=Query(25,ge=1,le=100), user=Depends(s.get_current_user)):
         import framework_summary
         await scoped(client_id,user)
         client=await s.db.clients.find_one({'client_id':client_id},{'_id':0,'client_id':1,'onboarding_baseline.completed':1})
-        return await framework_summary.read(s,client)
+        return await framework_summary.read(s,client,(program,detail) if detail else None,offset,limit)
     @router.get('/frameworks/{key}')
     async def workspace(key:str,client_id:str,user=Depends(s.get_current_user)):
         client=await scoped(client_id,user)

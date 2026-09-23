@@ -57,7 +57,13 @@ def populations(model):
     }
     for level in ('critical','high','moderate','low',None):
         groups['risk-'+(level or 'unassessed')] = [r for r in risks if r['severity']==level]
-    for key in ('vendorReviews','assurance','contracts','criticalVendors'):
+    groups['acceptedRisks'] = [r for r in risks if r['status']=='accepted']
+    vendor_reviews = [r for r in work if
+                      r['kind']=='reviews' and r['record'].get('vendor_id') and (r['record'].get('vendor_purpose') or 'vendor')=='vendor'
+                      or r['kind']=='vendors' and r['event']=='review']
+    groups['vendorReviewsPast'] = [r for r in vendor_reviews if r['day'] is not None and r['day']<day]
+    groups['vendorReviewsSoon'] = [r for r in vendor_reviews if r['day'] is not None and day<=r['day']<=day+30]
+    for key in ('vendorReviews','assurance','contracts','criticalVendors','missingAssurance'):
         groups[key] = []
     primary_vendors = {r.get('vendor_id') for r in active['reviews'] if (r.get('vendor_purpose') or 'vendor')=='vendor'}
     for vendor in active['vendors']:
@@ -67,6 +73,9 @@ def populations(model):
         if vendor['vendor_id'] in primary_vendors and due is not None and due<=day+90:groups['vendorReviews'].append(row)
         if contract is not None and contract<=day+(vendor.get('contract_lead_days') or 90):groups['contracts'].append(row)
         if vendor.get('criticality')=='critical':groups['criticalVendors'].append(row)
+        required = [a for a in vendor.get('assurance_records') or [] if a.get('required') is not False]
+        if vendor.get('assurance_required') and (not required or any(vendor_governance.assurance_status(vendor,a,date.fromordinal(day))=='missing' for a in required)):
+            groups['missingAssurance'].append(row)
         if vendor.get('assurance_required') and any(
             vendor_governance.assurance_status(vendor,a,date.fromordinal(day)) in ('expired','due_soon','missing')
             or a.get('required') is not False and calendar_day(a.get('received_at')) is None
@@ -107,9 +116,9 @@ def summary(groups):
         return [dict(key=key,label=label,tone=tone,items=result[key],total=len(groups[key])) for key,label,tone in definitions]
     result['buckets']=distribution([
         ('pastDue','Past Due','bg-semantic-critical'),('inProgress','In Progress','bg-semantic-info'),
-        ('otherDue30','Other Due Next 30 Days','bg-semantic-duesoon'),('scheduled','Scheduled','bg-ink-muted'),
+        ('otherDue30','Due Next 30 Days','bg-semantic-duesoon'),('scheduled','Scheduled','bg-ink-muted'),
         ('unscheduled','No Date / Unscheduled','bg-line-strong')])
     result['riskLevels']=distribution([('risk-'+level,label,'bg-semantic-critical' if level=='critical' else 'bg-semantic-duesoon' if level=='high' else 'bg-ink-muted')
                                       for level,label in [('critical','Critical'),('high','High'),('moderate','Moderate'),('low','Low'),('unassessed','Not Assessed')]])
-    result['vendorHealth']=distribution([(key,label,'') for key,label in [('vendorReviews','Vendor Reviews Due'),('assurance','Security Assurance Due'),('contracts','Contracts Expiring'),('criticalVendors','Critical Vendors')]])
+    result['vendorHealth']=distribution([(key,label,'') for key,label in [('vendorReviewsPast','Vendor Reviews Past Due'),('vendorReviewsSoon','Vendor Reviews Due in 30 Days'),('assurance','Assurance Needs Attention'),('contracts','Contracts Expiring'),('criticalVendors','Critical Vendors'),('missingAssurance','Missing Required Assurance')]])
     return result

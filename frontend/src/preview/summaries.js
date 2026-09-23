@@ -57,7 +57,7 @@ export function dashboard(db,params) {
   const aggregation=aggregateClientDashboard(records,{clientId:params.client_id,members:db.users,user:db.user,today,scope});
   const full=dashboardPosture(aggregation,{members:db.users,today}),m=full.management;
   m.activeRecords=aggregation.activeRecords;
-  const groups=Object.fromEntries(['pastDue','due30','due3190','materialFindings','significantRisks','priority'].map(key=>[key,full[key]]));
+  const groups=Object.fromEntries(['pastDue','due30','due3190','materialFindings','significantRisks','acceptedRisks','priority'].map(key=>[key,full[key]]));
   const buckets=full.buckets.map(group=>({...group,key:group.key==='due30'?'otherDue30':group.key}));
   const riskLevels=full.riskLevels.map(group=>({...group,key:'risk-'+group.key}));
   for(const group of [...buckets,...riskLevels,...full.vendorHealth])groups[group.key]=group.items;

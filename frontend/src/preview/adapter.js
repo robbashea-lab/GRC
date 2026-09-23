@@ -98,7 +98,7 @@ export async function previewAdapter(config) {
     const approval = policyApprovalRequest(db, path, method, params, body);
     if (approval !== undefined) return method === 'get' ? respond(approval) : save(approval);
     if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
-    if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id));
+    if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
     if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));
     if (path === '/demo/reset' && method === 'post') {
       resetStore();

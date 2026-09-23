@@ -117,7 +117,7 @@ export default function Dashboard() {
   }
 
   async function openItem(item) {
-    if (data.contract_version !== 2) {setSelected(item);return;}
+    if (data.contract_version !== 2 && item.record) {setSelected(item);return;}
     try {
       const {data:record}=await api.get(`/${item.kind}/${encodeURIComponent(item.id)}`);
       if(record.client_id!==currentClientId) throw new Error('Record belongs to another client.');
@@ -169,7 +169,7 @@ export default function Dashboard() {
       <div className="page-gutter pt-4 text-sm">
         {!data.onboardingCompleted ? <div className="border border-line rounded-lg bg-surface-card p-3"><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program. </span><Link className="text-link underline" to="/onboarding">Continue onboarding</Link></div> : <Link className="text-link underline" to="/onboarding">View onboarding handoff & setup status</Link>}
       </div>
-      <DashboardManagement key={requestKey+":"+framework} posture={data.posture} programs={data.programs} framework={framework} onOpen={openItem} loadDetail={data.contract_version===2?loadDetail:undefined} Table={OperationalTable} />
+      <DashboardManagement key={requestKey+":"+framework} clientId={currentClientId} posture={data.posture} programs={data.programs} framework={framework} onOpen={openItem} loadDetail={data.contract_version===2?loadDetail:undefined} Table={OperationalTable} />
       {selected && selected.record.client_id === currentClientId && (
         <RecordDrawer key={selected.key} open onOpenChange={open => { if (!open) setSelected(null); }}
           kind={selected.kind} record={selected.record} schema={SCHEMAS[selected.kind]?.fields}

@@ -20,6 +20,7 @@ test('exact date boundaries, completed exclusions and disjoint work distribution
 test('accepted material risks count; closed risks and unassessed scores do not',()=>{
   const result=posture({risks:[risk('accepted',{status:'accepted'}),risk('closed',{status:'closed'}),risk('unknown',{likelihood_score:null}),risk('low',{impact_score:1})]});
   expect(result.significantRisks.map(r=>r.id)).toEqual(['accepted']);
+  expect(result.acceptedRisks.map(r=>r.id)).toEqual(['accepted']);
   expect(result.riskLevels.find(g=>g.key==='unassessed').items.map(r=>r.id)).toEqual(['unknown']);
   expect(result.riskLevels.flatMap(g=>g.items)).toHaveLength(3);
 });
@@ -64,7 +65,7 @@ test('program cards follow finalized client selections, with no fabricated asses
 test('vendor health reuses review, assurance and contract windows and excludes inactive vendors',()=>{
   const vendor={client_id:'a',vendor_id:'v',name:'Provider',status:'active',criticality:'critical',next_review:date(5),contract_renewal:date(40),assurance_required:true,assurance_records:[{type:'Security Questionnaire',required:true,refresh_due:date(-1),received_at:date(-100),evidence_ids:['e']}]};
   const result=posture({vendors:[vendor,{...vendor,vendor_id:'inactive',status:'inactive'}],reviews:[{client_id:'a',review_id:'vr',vendor_id:'v',title:'Vendor review',status:'upcoming',due_date:date(5)}]});
-  for(const group of result.vendorHealth)expect(group.items.map(r=>r.id)).toEqual(['v']);
+  expect(Object.fromEntries(result.vendorHealth.map(g=>[g.key,g.items.map(r=>r.id)]))).toEqual({vendorReviewsPast:[],vendorReviewsSoon:['vr'],assurance:['v'],contracts:['v'],criticalVendors:['v'],missingAssurance:[]});
   expect(result.due30.filter(r=>r.type==='Vendor Review')).toHaveLength(0);
   expect(result.due30.filter(r=>r.id==='vr')).toHaveLength(1);
 });

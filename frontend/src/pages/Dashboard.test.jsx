@@ -36,7 +36,8 @@ test("minimal client has zero cards, three health panels and a compact priority 
   expect(container.textContent).not.toContain("Upcoming & Watch");
   expect(container.textContent).not.toContain("Compliance & Readiness");
   expect(container.querySelectorAll("section")).toHaveLength(4);
-  for (const id of ["kpi-overdue", "kpi-critical", "kpi-risks", "kpi-due-30"]) expect(container.querySelector(`[data-testid="${id}"]`).textContent).toContain("0");
+  expect(container.querySelector('[data-testid="kpi-overdue"]')).toBeNull();
+  expect(container.querySelector('button[aria-label="Past Due: 0 items"]')).not.toBeNull();
 });
 
 test("populated client row opens the existing authoritative record drawer", async () => {
@@ -50,10 +51,10 @@ test("populated client row opens the existing authoritative record drawer", asyn
 
 test("cards open exact contributing rows; the priority table is capped at five", async () => {
   const items=Array.from({length:7},(_,i)=>({key:`tasks:${i}:due`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',action:'Open Action',owner:'Unassigned',status:'open',priority_label:'Overdue',record:{task_id:String(i),client_id:'a'}}));
-  loadClientDashboard.mockResolvedValue({...empty,posture:{...empty.posture,pastDue:items,priority:items}});
+  loadClientDashboard.mockResolvedValue({...empty,posture:{...empty.posture,pastDue:items,priority:items,buckets:[{key:'pastDue',label:'Past Due',items}]}});
   await act(async()=>root.render(<Dashboard/>));
   expect(container.querySelectorAll('tbody tr')).toHaveLength(5);
-  await act(async()=>container.querySelector('[data-testid="kpi-overdue"]').click());
+  await act(async()=>container.querySelector('button[aria-label="Past Due: 7 items"]').click());
   const drawer=document.querySelector('[data-testid="dashboard-drilldown"]');
   expect(drawer.textContent).toContain('7 contributing records');
   expect(drawer.querySelectorAll('tbody tr')).toHaveLength(7);
@@ -63,11 +64,11 @@ test("cards open exact contributing rows; the priority table is capped at five",
 
 test('bounded dashboard displays full totals, pages detail and fetches the authoritative record',async()=>{
   const items=Array.from({length:26},(_,i)=>({key:`tasks:${i}:due`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',action:'Open Action',owner:'Unassigned',status:'open',priority_label:'Overdue',record:{task_id:String(i),client_id:'a'}}));
-  loadClientDashboard.mockResolvedValue({...empty,contract_version:2,posture:{...empty.posture,pastDue:items.slice(0,25),totals:{pastDue:26}}});
+  loadClientDashboard.mockResolvedValue({...empty,contract_version:2,posture:{...empty.posture,pastDue:items.slice(0,25),totals:{pastDue:26},buckets:[{key:'pastDue',label:'Past Due',items:items.slice(0,25),total:26}]}});
   api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'a',items:items.slice(options.params.offset,options.params.offset+25),total:26,offset:options.params.offset,limit:25}:{client_id:'a',task_id:'25',title:'Authoritative Action'}}));
   await act(async()=>root.render(<Dashboard/>));
-  expect(container.querySelector('[data-testid="kpi-overdue"]').getAttribute('aria-label')).toContain('26');
-  await act(async()=>container.querySelector('[data-testid="kpi-overdue"]').click());
+  expect(container.querySelector('button[aria-label="Past Due: 26 items"]')).not.toBeNull();
+  await act(async()=>container.querySelector('button[aria-label="Past Due: 26 items"]').click());
   const drawer=document.querySelector('[data-testid="dashboard-drilldown"]');
   expect(drawer.textContent).toContain('Showing 1–25 of 26');
   expect(drawer.querySelectorAll('tbody tr')).toHaveLength(25);
