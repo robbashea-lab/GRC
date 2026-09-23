@@ -16,7 +16,7 @@ test('deferred preview blocks standard requests even with a stale real token',as
   }
   expect(http).not.toHaveBeenCalled();
   deferred.setWorkspaceMode('demo');await deferred.default.post('/demo/enter');
-  expect((await deferred.default.get('/clients')).data).toHaveLength(5);
+  expect((await deferred.default.get('/clients')).data).toHaveLength(7);
   await deferred.default.post('/auth/logout');deferred.setWorkspaceMode('standard');
   await expect(deferred.default.get('/auth/me')).rejects.toMatchObject({code:'ERR_STANDARD_AUTH_DEFERRED'});
   expect(localStorage.getItem('grc_token')).toBeNull();
@@ -26,7 +26,7 @@ test('standard mode uses HTTP; demo has no bearer token or HTTP writes',async()=
   await api.get('/clients');expect(http).toHaveBeenCalledTimes(1);
   expect(http.mock.calls[0][0].headers.Authorization).toBe('Bearer generated-test-token');
   setWorkspaceMode('demo');await api.post('/demo/enter');
-  const {data:clients}=await api.get('/clients');expect(clients).toHaveLength(5);
+  const {data:clients}=await api.get('/clients');expect(clients).toHaveLength(7);
   await api.post('/clients',{name:'Isolated test client'});
   expect(http).toHaveBeenCalledTimes(1);expect(localStorage.getItem('grc_token')).toBeNull();
   setWorkspaceMode('standard');expect((await api.get('/clients')).data).toEqual({standard:true});

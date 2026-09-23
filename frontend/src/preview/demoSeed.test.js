@@ -2,14 +2,15 @@ import {seedStore, ids, resetStore, readStore, saveStore} from './store';
 import {portfolio} from './summaries';
 import {validateVendor} from './vendors';
 import {assuranceStatus} from '../lib/vendorGovernance';
+import {evidenceKind} from '../lib/evidenceReferences';
 
 beforeEach(()=>sessionStorage.clear());
 test('canonical clients reset independently of standard session material',()=>{
   const db=seedStore();
-  expect(db.clients.map(c=>c.name)).toEqual(['Cyberdyne System','Prestige World Wide','Initech','Brawndo','Dunder Mifflin']);
+  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Initech','Dunder Mifflin','Prestige Worldwide','Sacred Heart Hospital','Cyberdyne Systems','Globo Gym']);
   db.clients.push({client_id:'test-demo-only',name:'Session mutation'});saveStore(db);
   localStorage.setItem('grc_token','test-standard-token');resetStore();
-  expect(readStore().clients).toHaveLength(5);
+  expect(readStore().clients).toHaveLength(7);
   expect(localStorage.getItem('grc_token')).toBe('test-standard-token');localStorage.clear();
 });
 test('every relationship, owner and occurrence belongs to its client',()=>{
@@ -31,16 +32,15 @@ test('every relationship, owner and occurrence belongs to its client',()=>{
   }
   for(const vendor of db.vendors)expect(()=>validateVendor(db,vendor,vendor)).not.toThrow();
   for(const evidence of db.evidence) {
-    const kind=evidence.linked_type==='vendor'?'vendors':'reviews';
+    const kind=evidenceKind(evidence.linked_type);
     expect(db[kind].some(r=>r[ids[kind]]===evidence.linked_id&&r.client_id===evidence.client_id)).toBe(true);
   }
 });
-test('governance debt is derived from valid records and Brawndo is materially worst',()=>{
-  const db=seedStore(),result=portfolio(db,false),bad=result.clients.find(c=>c.name==='Brawndo');
-  for(const key of ['past_due','critical_high_open','unassigned'])for(const other of result.clients.filter(c=>c!==bad))expect(bad[key]).toBeGreaterThan(other[key]);
-  expect(bad.program_status).toBe('action_required');
+test('Year-2 portfolios have limited derived work instead of abandoned programs',()=>{
+  const db=seedStore(),result=portfolio(db,false);
+  for(const row of result.clients){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(8);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
   for(const key of ['past_due','critical_high_open','unassigned'])expect(result.portfolio[key]).toBe(result.clients.reduce((sum,c)=>sum+c[key],0));
   const assurance=db.vendors.flatMap(v=>v.assurance_records.map(a=>assuranceStatus(v,a)));
-  expect(assurance).toEqual(expect.arrayContaining(['current','due_soon','expired','missing']));
+  expect(assurance).toEqual(expect.arrayContaining(['current','due_soon']));
   expect(db.contacts.length).toBeGreaterThan(db.users.length);
 });

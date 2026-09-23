@@ -47,7 +47,7 @@ test("portfolio and every sample client load through the real dashboard loader",
       include_archived: "false"
     }
   });
-  expect(directory.clients.length).toBe(5);
+  expect(directory.clients.length).toBe(7);
   expect(directory.portfolio).toBeTruthy();
   expect(Array.isArray(directory.attention_queue)).toBe(true);
   for (const client of (await api.get("/clients")).data) {
@@ -130,7 +130,7 @@ test('new clients initialize empty, persist, edit/archive/restore, and reset', a
   });
   expect((await reloaded.get('/clients')).data.some(r => r.name === 'Renamed')).toBe(true);
   await api.post('/demo/reset');
-  expect((await api.get('/clients')).data).toHaveLength(5);
+  expect((await api.get('/clients')).data).toHaveLength(7);
 });
 test('onboarding draft and finalization survive client switching without duplicating or crossing tenants', async () => {
   await api.post('/demo/enter');

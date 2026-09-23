@@ -71,10 +71,12 @@ export async function previewAdapter(config) {
     if(kind==='evidence-library'){const data=evidenceLibraryRequest(db,method,parts,params,body);if(method!=='get')saveStore(db);return respond(data);}
     // Portfolio drill-ins use the same authorized client boundary as the server.
     // This remains a Demo simulation, never an authorization mechanism for real data.
-    if(method==='get') {
-      if(params.client_id&&!evidenceAccess(db.user,params.client_id))return fail(403,'Forbidden for this client');
+    {
+      for(const clientId of [params.client_id,body.client_id])if(clientId&&!evidenceAccess(db.user,clientId))return fail(403,'Forbidden for this client');
       const target=ids[kind]&&id&&(db[kind]||[]).find(r=>r[ids[kind]]===id);
       if(target?.client_id&&!evidenceAccess(db.user,target.client_id))return fail(403,'Forbidden for this client');
+      const relationKind=evidenceKind(params.entity_type||body.entity_type),relationId=params.entity_id||body.entity_id;
+      if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))return fail(403,'Forbidden for this client');}
     }
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
@@ -228,7 +230,7 @@ export async function previewAdapter(config) {
           if (params.client_id && r.client_id !== params.client_id) return fail(404, 'Record not found for this client.');
           return respond(r);
         }
-        let rows = list(db, kind, params.client_id).filter(r => Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
+        let rows = list(db, kind, params.client_id).filter(r => (!r.client_id||evidenceAccess(db.user,r.client_id))&&Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
         if(kind==='evidence')rows=list(db,kind,params.client_id).filter(r=>!params.linked_id ||
           (r.linked_id===params.linked_id&&evidenceKind(r.linked_type)===evidenceKind(params.linked_type)) ||
           r.relationships?.some(l=>l.kind===evidenceKind(params.linked_type)&&l.id===params.linked_id));
@@ -253,6 +255,7 @@ export async function previewAdapter(config) {
       if(body.kind==='framework_assessments')throw new Error('Use the framework workspace; assessment history is retained');
       if (!ids[body.kind] || !body.ids?.length) throw new Error('Select records first.');
       const rows = body.ids.map(i => record(db, body.kind, i));
+      if(rows.some(row=>row.client_id&&!evidenceAccess(db.user,row.client_id)))return fail(403,'Forbidden for this client');
       if(body.expected_versions&&rows.some(row=>body.expected_versions[row[ids[body.kind]]] !== (row.updated_at??null)))throw new Error('Record changed since it was opened; reload before saving');
       if (body.kind === 'contacts' && body.action === 'delete' && db.clients.some(c => rows.some(r => r.client_id === c.client_id && r.contact_id === c.primary_contact_id))) throw new Error('A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.');
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))

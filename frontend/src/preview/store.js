@@ -6,7 +6,9 @@ import { prepareTask } from './actionItems';
 import { validateAssignment } from './assignmentEligibility';
 import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
-import { reconcileFramework } from './frameworks';
+import { reconcileFramework, frameworkRequest } from './frameworks';
+import {finishDemoStore} from './demoHistory';
+import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
@@ -42,25 +44,13 @@ function normalizePolicyDates(db) {
   }
   return db;
 }
-export function seedStore() {
-  const db = normalizePolicyDates(initializeRiskIds(buildDemoStore(Object.keys(ids))));
+export function seedStore(clock=new Date()) {
+  const db = normalizePolicyDates(initializeRiskIds(buildDemoStore(Object.keys(ids),clock)));
   db.risks.forEach(risk => ensureRiskReview(db, risk));
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
   // Only explicit Demo creation/reset seeds framework work; standard startup never calls this.
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
-  const client=db.clients.find(c=>c.name==='Initech');
-  if(client){
-    const cid=client.client_id,meta={client_id:cid,created_at:now(),created_by:db.user.user_id};
-    const review=db.reviews.find(r=>r.client_id===cid&&r.framework_key==='iso-27001');
-    if(review)review.governance_context={category:'organizational',rationale:'Management uses this Review to evaluate the configured ISO program and document follow-up.',cadence_source:'organization_defined',cadence_rationale:'The sample organization selected this schedule for its governance cycle; it is not a numerical ISO mandate.'};
-    db.policies.push({...meta,policy_id:cid+'_organizational-policy',title:'Internal meeting records policy',status:'draft',summary:'Keep management decisions accessible to the people implementing them.',governance_context:{category:'management',rationale:'Management decision to retain internal meeting decisions; no external framework mapping has been asserted.'}});
-    db.assessments.push({...meta,assessment_id:cid+'_readiness-context',name:'Infrastructure transition assessment',status:'completed',summary:'Sample assessment of the infrastructure transition; outstanding actions remain operational work.'});
-    write(db,'tasks',{...meta,title:'Document infrastructure transition decisions',source_type:'audit',source_id:cid+'_readiness-context',governance_context:{rationale:'Record the decisions identified by the transition assessment.'}});
-    write(db,'tasks',{...meta,title:'Confirm management review participants',source_type:'manual',governance_context:{category:'management',rationale:'Requested by IT leadership for the next management meeting.'}});
-    const risk=db.risks.find(r=>r.client_id===cid&&!['closed','retired','accepted'].includes(r.status));
-    if(risk)write(db,'tasks',{...meta,title:'Document the selected risk treatment',source_type:'risk',source_id:risk.risk_id,governance_context:{category:'risk',rationale:'Capture the treatment work for the linked Risk; completion does not close the Risk.'}});
-  }
-  return db;
+  return finishDemoStore(db,clock,{action,write,frameworkRequest});
 }
 export function readStore() {
   const saved = sessionStorage.getItem(STORE_KEY);

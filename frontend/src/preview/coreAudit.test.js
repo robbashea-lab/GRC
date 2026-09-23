@@ -20,8 +20,10 @@ test('Finding related Review retains originating occurrence and current evidence
   expect(old.evidence.map(e=>e.filename)).toEqual(['access.txt']);
 });
 test('legacy sample policy dates remain visible without overwriting reviewed dates',()=>{
-  const db=seedStore();
-  const policy=db.policies.find(p=>p.last_reviewed);
+  let db=seedStore();
+  const legacy=db.policies[0];legacy.last_reviewed='2026-08-01';delete legacy.last_reviewed_at;
+  saveStore(db);db=readStore();
+  const policy=db.policies.find(p=>p.policy_id===legacy.policy_id);
   expect(policy.last_reviewed_at).toBe(policy.last_reviewed);
   policy.last_reviewed_at='2026-09-15';
   saveStore(db);
@@ -58,6 +60,7 @@ test('dashboard counts today, excludes cancelled actions, and counts linked poli
   db.reviews=[{review_id:'r',client_id,policy_id:'p',status:'upcoming',due_date:today}];
   db.tasks=[{task_id:'a',client_id,status:'open',due_date:today},{task_id:'b',client_id,status:'cancelled',due_date:today}];
   db.policies=[{policy_id:'p',client_id,status:'approved',next_review_date:today}];
+  db.findings=[];db.risks=[];db.vendors=[];
   expect(dashboard(db,{client_id,scope:'org'}).kpis.due_next_30).toBe(2);
 });
 test('portfolio counts a linked Risk review deadline once',()=>{
