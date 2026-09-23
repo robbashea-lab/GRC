@@ -5,7 +5,7 @@ Branch: `codex/framework-substantive-validation`.
 
 ## Status
 
-**Phase 1 CIS content validation and automated QA gate complete; subsequent phases pending. CIS product-use authorization confirmed by the user on 2026-09-22.** The former licensing blocker is resolved for the existing Omnisciente commercial product/use case. NIST catalog validation, HIPAA, ISO and SOC 2 remain pending. Earlier engineering tests are not evidence of substantive correctness.
+**CIS, NIST and HIPAA content passes and automated phase gates completed; ISO and SOC 2 in progress. CIS product-use authorization confirmed by the user on 2026-09-22.** The former licensing blocker is resolved for the existing Omnisciente commercial product/use case. Qualified scope limitations remain in the phase ledgers. Earlier engineering tests are not evidence of substantive correctness.
 
 The repository represents CIS v8.1 IG1. CIS's official IG1 page confirms a 56-safeguard scope for v8/v8.1. This confirms the aggregate count only, not the stored membership, titles, explanations, cadence, policy/review mappings or cross-framework relationships. The official Navigator and assessment specification provide public research material, but public access does not establish commercial product-use permission.
 
@@ -62,3 +62,9 @@ Ponytail kept changes in existing catalog metadata and tests rather than introdu
 CIS commit: `f9a373862a07913805c080bd1fbd56e0887341b9`. The staged CIS check identified an extra trailing report blank line; cleaned up in Phase 2, with no application impact. [NIST ledger](nist-substantive-validation.md): all 106 items, nine recommendation-only Review defaults and 17 supporting policy mappings inspected; six operator explanations corrected, with the RC.RP-04 title and derived catalog prompts aligned. Explicit D cadence metadata added, without a source minimum or changed schedules.
 
 Phase 2 gate: 6 backend tests, 36 frontend tests (5 suites), targeted ESLint and production build passed; existing PlatformAdmin warning retained. Build `main.655fa0ed.js`, unchanged CSS. API tests use isolated Mongo mocks. No live-browser/staging-backend, push or publication claims. HIPAA research has begun; ISO/SOC and final cross-framework gate remain pending.
+
+## Phase 3 — HIPAA
+
+NIST commit: `f0c4cfc8c99dded5719f06d2ef0ea548bfe9486e`. [HIPAA ledger](hipaa-substantive-validation.md): all 76 current units inspected against current eCFR; 74 VERIFIED as bounded summaries, two CORRECTED. The corrections restore the exact-copy/addressability context for equipment movement and periodic documentation review. Eight existing numerical Review defaults are explicitly D recommendations; no legal minimum or stored schedule changed. The vendor mapping to group-plan duties remains a qualified RELATED association requiring client-scope SME review, not proof of those duties being discharged.
+
+Phase 3 gate: 8 backend tests, 38 frontend tests (5 suites), targeted ESLint and production build passed. Build `main.af9a5b57.js`, unchanged CSS and existing PlatformAdmin warning. Isolated API persistence/history, Evidence/Finding/Action/Review, read-only and tenant tests passed; not a live persistent-backend/browser test. IDs, catalog version, source regulatory text and client records are unchanged. No push or publication.

@@ -1344,6 +1344,8 @@
   "review_plans": [
     {
       "key": "hipaa-risk-assessment",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "risk-assessment",
       "title": "HIPAA risk analysis and management review",
       "review_type": "risk",
@@ -1370,6 +1372,8 @@
     },
     {
       "key": "hipaa-user-access",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "user-access",
       "title": "HIPAA access governance review",
       "review_type": "access",
@@ -1400,6 +1404,8 @@
     },
     {
       "key": "hipaa-awareness",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "awareness",
       "title": "HIPAA security awareness program review",
       "review_type": "awareness",
@@ -1421,6 +1427,8 @@
     },
     {
       "key": "hipaa-incident-response",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "incident-response",
       "title": "HIPAA incident response readiness review",
       "review_type": "incident",
@@ -1446,6 +1454,8 @@
     },
     {
       "key": "hipaa-bcp-dr",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "bcp-dr",
       "title": "HIPAA contingency and recovery exercise review",
       "review_type": "bcp_dr",
@@ -1468,6 +1478,8 @@
     },
     {
       "key": "hipaa-vendor",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "vendor",
       "title": "HIPAA business associate arrangements review",
       "review_type": "vendor",
@@ -1488,6 +1500,8 @@
     },
     {
       "key": "hipaa-policy-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "policy-review",
       "title": "HIPAA policy and documentation review",
       "review_type": "policy",
@@ -1511,6 +1525,8 @@
     },
     {
       "key": "hipaa-management-review",
+      "cadence_class": "D",
+      "cadence_references": [],
       "baseline_key": "management-review",
       "title": "HIPAA security evaluation",
       "review_type": "management",

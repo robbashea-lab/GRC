@@ -39,6 +39,21 @@ test('HIPAA explanatory text never substitutes for stored regulatory wording',()
   expect(operatorGuidance('hipaa',CATALOGS.hipaa.requirements.find(d=>d.id==='164.306(d)')).meaning).toContain('does not mean optional');
   expect(new Set(CATALOGS.hipaa.requirements.map(d=>operatorGuidance('hipaa',d).evidence)).size).toBe(76);
 });
+
+test('HIPAA summaries retain periodic review and the pre-movement backup safeguard',()=>{
+  const catalog=CATALOGS.hipaa;
+  const definition=id=>catalog.requirements.find(d=>d.id===id);
+  expect(operatorGuidance('hipaa',definition('164.316(b)(2)(iii)')).meaning).toContain('periodically');
+  const backup=definition('164.310(d)(2)(iv)');
+  expect(backup.specification).toBe('addressable');
+  expect(operatorGuidance('hipaa',backup).meaning).toContain('retrievable exact copy');
+  expect(operatorGuidance('hipaa',backup).meaning).toContain('before moving');
+  for(const plan of catalog.review_plans){
+    expect(plan.cadence_class).toBe('D');
+    expect(plan.source_minimum).toBeFalsy();
+    expect(plan.cadence_references).toEqual([]);
+  }
+});
 test('ISO clauses and all 93 Annex controls retain distinct usable guidance',()=>{
   const catalog=CATALOGS['iso-27001'];
   for(const d of catalog.requirements){const g=operatorGuidance('iso-27001',d);expect(g.meaning.length).toBeGreaterThan(40);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('Omnisciente implementation prompt');}
