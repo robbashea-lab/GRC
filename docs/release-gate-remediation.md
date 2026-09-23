@@ -231,3 +231,37 @@ audit failures outside ENG-04 receipts are not claimed recovered transactions.
 
 ENG-02: implementation and isolated tests substantially extended; full release
 gate remains NEEDS ATTENTION until the connected two-session and durability checks.
+
+## Phase 4 — ENG-15 reproducible dependency verification
+
+Committed Yarn Classic lockfile and documented a frozen, lifecycle-script-disabled
+installation. Targeted same-major Router, PostCSS, fast-uri, qs, YAML and SVGO 2
+patches address the clean-tree advisory findings. No CRA/React migration was
+attempted. See [dependency workflow and advisory disposition](dependency-workflow.md).
+
+A separate detached worktree with a real, initially absent `frontend/node_modules`
+completed the frozen install in 59.23 seconds. Manifest and lockfile match this
+checkout. Lockfile SHA-256 before/after:
+`964a01e58816f56e558f3b656c6b4204070e9c9cca091074f370aebb6531174d`.
+The original shared dependency junction was not changed. An initial alternative
+directory/junction attempt did not resolve Node's nested dependencies; installation
+was corrected in the isolated checkout, not by changing application code.
+
+Clean-tree frontend verification: **414 tests / 74 suites passed**; production
+build passed. Bundle `main.21ba92ea.js`, SHA-256
+`544a580e1e4b0f6c8f7e3d808f4f4557998ab497c950050c78fda5376d0c27e2`.
+Targeted lint: zero errors, one existing PlatformAdmin hook-dependency warning.
+There is no configured TypeScript project. Core GRC, onboarding at four widths,
+Policy approval, Dashboard pagination and stale-edit Demo browser checks passed
+against this exact bundle. These are not persistent-backend authentication tests.
+
+The registry inventory fell from 23 to **3 advisory entries**, all in retained
+build-time SVGO 1.3.2 (two high, one moderate). Its old API prevents a safe forced
+major replacement; no application path uses it to sanitize uploaded Evidence.
+The documented disposition is limited to current trusted build inputs, not a
+claim that the dependency is vulnerability-free. Backend direct-pin pip-audit
+returned no known advisories for 12 pins; transitive hash-locking is not verified.
+
+ENG-15: frontend reproducibility verified on a clean local tree; advisory
+disposition documented. Legacy build tooling and full backend transitive locking
+remain explicitly deferred rather than hidden by an audit suppression.

@@ -431,3 +431,12 @@ last-write-wins, tests and non-transactional limits are in the remediation ledge
 326 offline cases plus 254 subtests passed; local Demo stale-edit browser preserves
 draft/newer data. Connected two-session/Mongo durability proof is still missing:
 do not treat ENG-02 as a fully closed persistent release gate.
+
+ENG-15 follow-up: Yarn lockfile, frozen installation instructions and installed-tree
+advisory inventory added. Targeted same-major patches reduce 23 advisory entries
+to three retained SVGO 1 build-tool findings with explicit reachability disposition.
+A clean isolated dependency install preserved the lock hash; 414 frontend tests,
+production build and representative Demo browser regressions passed. No global
+dependency junction or unrelated visual checkout was modified. Details and the
+remaining backend transitive-lock/toolchain limits are in dependency-workflow.md
+and the remediation ledger. This does not close the persistent staging gate.
