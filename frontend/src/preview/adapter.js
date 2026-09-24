@@ -21,6 +21,9 @@ import { history, reviewEvent } from './reviews';
 import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
 import {evidencePage,evidenceAccess,evidenceLibraryRequest} from './evidence';
 import {evidenceKind} from '../lib/evidenceReferences';
+import {clearEvidenceFiles,demoDiagnostics} from './store';
+import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
+import {fileBytes} from './evidenceStorage';
 const SESSION = 'grc_demo_entered';
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 export async function previewAdapter(config) {
@@ -38,16 +41,21 @@ export async function previewAdapter(config) {
     headers: {},
     config
   });
-  const fail = (status, detail) => {
+  const fail = (status, detail, storage_code) => {
     throw new axios.AxiosError(detail, 'ERR_BAD_REQUEST', config, null, {
       data: {
-        detail
+        detail, ...(storage_code?{storage_code}:{})
       },
       status,
       config
     });
   };
   try {
+    if(['/demo/reset','/demo/clear-evidence-files','/demo/storage'].includes(path)){
+      if(sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo before managing Demo storage.');
+      if(path==='/demo/storage'&&method==='get')return respond(demoDiagnostics());
+      if(method==='post'&&path!=='/demo/storage'){if(path==='/demo/reset')resetStore();else clearEvidenceFiles();return respond({ok:true});}
+    }
     const db = readStore();
     if (path === '/auth/login') return fail(401, 'Use standard sign-in for email and password authentication.');
     if (path === '/demo/enter' && method === 'post') {
@@ -105,12 +113,6 @@ export async function previewAdapter(config) {
     if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
     if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));
-    if (path === '/demo/reset' && method === 'post') {
-      resetStore();
-      return respond({
-        ok: true
-      });
-    }
     if (path === '/demo/onboarding-draft') {
       record(db, 'clients', params.client_id || body.client_id);
       if (method === 'get') return respond(db.drafts[params.client_id] || null);
@@ -221,7 +223,7 @@ export async function previewAdapter(config) {
       }
       if (kind === 'evidence' && name === 'download') {
         const r = record(db, kind, id);
-        if (!r.content_base64) throw new Error('This sample has no downloadable file. Upload a temporary demo file to test downloading.');
+        if (!r.content_base64) throw new Error('Demo file content is not available after reload, clearing or cache eviction. Its metadata and relationships are preserved. Upload a new sample file to download content.');
         return respond(r);
       }
       if (ids[kind]) {
@@ -381,7 +383,7 @@ export async function previewAdapter(config) {
       if (kind === 'evidence') {
         if (id) throw new Error('Evidence versions are immutable. Upload a new artifact.');
         if (!body.filename || !body.content_base64) throw new Error('Select a file to upload.');
-        if (Math.floor(body.content_base64.split(',').pop().length * 3 / 4) > 1048576) throw new Error('Demo evidence is limited to 1 MB per file because it is stored in this browser session.');
+        checkDemoFileSize(fileBytes(body.content_base64));
         if(!!body.linked_type!==!!body.linked_id)throw new Error('Evidence requires both parent type and ID');
         if (body.linked_id) {
           if(!evidenceKind(body.linked_type))throw new Error('Unsupported parent record type');
@@ -420,6 +422,7 @@ export async function previewAdapter(config) {
     return fail(501, 'This action is not implemented in the demo. No changes were saved.');
   } catch (error) {
     if (error.isAxiosError) throw error;
-    return fail(400, error.message || 'Demo action failed. No changes were saved.');
+    if(['SecurityError','NotAllowedError','QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error.name))error=demoStorageError(error);
+    return fail(400, error.message || 'Demo action failed. No changes were saved.',error.storage_code);
   }
 }

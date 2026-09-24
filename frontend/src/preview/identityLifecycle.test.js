@@ -51,6 +51,7 @@ test('disabled work preserved; report counts once and excludes historical and un
   expect(call('/contacts/maya/account-candidates').items.some(u => u.user_id === 'alex')).toBe(false);
 });
 test('visible membership edit preserves other clients and Contact association', () => {
+  db.users.find(u => u.user_id === 'shared').role = 'client_contributor';
   db.contacts[0].linked_user_id = 'shared';
   call('/users/shared/client-memberships', 'patch', {client_ids:[]});
   expect(db.users.find(u => u.user_id === 'shared').client_ids).toEqual(['b']);
@@ -64,7 +65,8 @@ test('scoped admin cannot manage Super Admin, foreign account, or grant global s
   expect(() => call('/users/super', 'patch', {status:'disabled'})).toThrow('Not authorized');
   expect(() => call('/users/foreign/client-memberships', 'patch', {client_ids:['a','b']})).toThrow('Not authorized');
   expect(() => call('/users/alex/client-memberships', 'patch', {client_ids:['a','b']})).toThrow('Not authorized');
-  expect(() => call('/users/shared', 'patch', {status:'disabled'})).toThrow('all client memberships');
+  expect(() => call('/users/shared', 'patch', {status:'disabled'})).toThrow('Not authorized');
+  expect(() => call('/users/alex', 'patch', {role:'platform_admin'})).toThrow('Not authorized');
   expect(call('/users').some(u => u.user_id === 'foreign')).toBe(false);
 });
 test('Contact-only and business role cannot invite or grant access', () => {

@@ -32,7 +32,7 @@ class SubmissionIn(BaseModel):
 
 def may_decide(s, user, policy):
     return (user.get("status") == "active" and s._can_access_client(user, policy["client_id"])
-            and (user.get("role") in INTERNAL or policy.get("approval_account_id") == user["user_id"]))
+            and user.get("role") in INTERNAL)
 
 
 def guard_patch(changes, previous):
@@ -49,6 +49,8 @@ def router_for(s):
     async def pending(client_id: str = Query(...), user=Depends(s.get_current_user)):
         if not s._can_access_client(user, client_id):
             raise HTTPException(403, "Forbidden for this client")
+        if user.get("role") not in INTERNAL:
+            return []
         query = {"client_id": client_id, "status": "in_review"}
         if user.get("role") not in INTERNAL:
             query["approval_account_id"] = user["user_id"]

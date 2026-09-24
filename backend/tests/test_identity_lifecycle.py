@@ -104,8 +104,11 @@ class IdentityLifecycleTests(unittest.IsolatedAsyncioTestCase):
         candidates = (await self.client.get('/api/clients/a/assignees')).json()['items']
         self.assertNotIn('member', [row['user_id'] for row in candidates])
 
-    async def test_legacy_active_session_compatibility(self):
+    async def test_missing_account_status_requires_explicit_activation(self):
         await server.db.users.update_one({'user_id': 'member'}, {'$unset': {'status': ''}})
+        self.assertIsNone(await server._get_user_from_token(
+            server.create_access_token('member', 'member@example.test')))
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'status':'active'}})
         self.assertIsNotNone(await server._get_user_from_token(
             server.create_access_token('member', 'member@example.test')))
 
@@ -145,7 +148,11 @@ class IdentityLifecycleTests(unittest.IsolatedAsyncioTestCase):
                            ('/api/contacts/maya/invite', {'role': 'client_readonly', 'client_id': 'a', 'confirmed': True})]:
             self.assertEqual((await self.client.post(path, json=body)).status_code, 403)
         result = await self.client.patch('/api/contacts/maya', json={'linked_user_id': 'member'})
+        self.assertEqual(result.status_code, 403, result.text)
+        self.sign_in('admin')
+        result = await self.client.patch('/api/contacts/maya', json={'linked_user_id': 'member'})
         self.assertEqual(result.status_code, 422, result.text)
+        self.sign_in('member')
         self.assertEqual((await self.client.patch('/api/users/foreign', json={'client_ids': ['a', 'b']})).status_code, 403)
         self.sign_in('foreign')
         self.assertEqual((await self.client.get('/api/contacts/maya/account-candidates')).status_code, 403)

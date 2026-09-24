@@ -18,7 +18,8 @@ import { toast } from "sonner";
 
 const ROLE_LABEL = {
   super_admin: "Super Admin",
-  platform_admin: "Platform Admin",
+  platform_admin: "Service Provider GRC Administrator",
+  client_grc_manager: "Client GRC Manager",
   client_contributor: "Client Contributor",
   client_readonly: "Client Read Only",
 };
@@ -367,8 +368,8 @@ export default function PlatformAdmin() {
   const { user } = useAuth();
   if (!["super_admin", "platform_admin"].includes(user?.role)) return null;
   const allowedRoles = user.role === "super_admin"
-    ? ["super_admin", "platform_admin", "client_contributor", "client_readonly"]
-    : ["platform_admin", "client_contributor", "client_readonly"];
+    ? ["super_admin", "platform_admin", "client_grc_manager", "client_contributor", "client_readonly"]
+    : ["client_grc_manager", "client_contributor", "client_readonly"];
   return (
     <div>
       <PageHeader

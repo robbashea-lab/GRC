@@ -55,13 +55,18 @@ import evidence_context
 import evidence_library
 import json
 import create_requests
+import authorization
+import security_runtime
 
 # ---------------- DB ----------------
 mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ["DB_NAME"]]
 
-app = FastAPI(title="GRC Platform")
+_developer_docs = security_runtime.environment() in {'development', 'test'}
+app = FastAPI(title="GRC Platform", docs_url='/docs' if _developer_docs else None,
+              redoc_url='/redoc' if _developer_docs else None,
+              openapi_url='/openapi.json' if _developer_docs else None)
 api = APIRouter(prefix="/api")
 
 
@@ -138,7 +143,8 @@ def configuration_mutation(fn):
         values = signature.bind_partial(*args, **kwargs).arguments
         body, user = values['body'], values['user']
         cid = body.client_id
-        if not _can_access_client(user, cid) or not _writable(user):
+        authorization.require_program_admin(user)
+        if not _can_access_client(user, cid):
             raise HTTPException(403, 'Forbidden for this client')
         token, now = uuid.uuid4().hex, datetime.now(timezone.utc)
         acquired = await db.clients.update_one({'client_id':cid,'$or':[
@@ -287,27 +293,27 @@ def verify_password(p: str, h: str) -> bool:
 # ---------------- JWT ----------------
 def create_access_token(user_id: str, email: str) -> str:
     now = datetime.now(timezone.utc)
-    payload = {"sub": user_id, "email": email, "type": "access",
+    payload = {"sub": user_id, "email": email, "type": "access", 'iss':'omnisciente', 'aud':security_runtime.environment(),
                "iat": now.timestamp(), "exp": now + timedelta(days=7)}
     return jwt.encode(payload, _jwt_secret(), algorithm=JWT_ALGORITHM)
 
 
 async def _get_user_from_token(token: str) -> Optional[Dict]:
     try:
-        payload = jwt.decode(token, _jwt_secret(), algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, _jwt_secret(), algorithms=[JWT_ALGORITHM], issuer='omnisciente', audience=security_runtime.environment(), options={'require':['sub','iat','exp','type']})
         if payload.get("type") != "access":
             return None
         user = await db.users.find_one({"user_id": payload["sub"]}, {"_id": 0, "password_hash": 0})
-        if not user or user.get("status", "active") != "active":
+        if not user or user.get("status") != "active":
             return None
         # Invalidate tokens issued before the last password change.
-        pca = user.get("password_changed_at")
+        pca = max(filter(None, [user.get('password_changed_at'), user.get('sessions_revoked_at')]), default=None)
         if pca:
             if isinstance(pca, str):
                 try:
                     pca_dt = datetime.fromisoformat(pca)
                 except ValueError:
-                    pca_dt = None
+                    return None
             else:
                 pca_dt = pca
             iat = payload.get("iat")
@@ -318,7 +324,7 @@ async def _get_user_from_token(token: str) -> Optional[Dict]:
                 if iat_dt <= pca_dt:
                     return None
         return user
-    except jwt.PyJWTError:
+    except (jwt.PyJWTError, ValueError, TypeError, KeyError):
         return None
 
 
@@ -326,23 +332,39 @@ async def _get_user_from_session(token: str) -> Optional[Dict]:
     sess = await db.sessions.find_one({"session_token": token}, {"_id": 0})
     if not sess:
         return None
+    if sess.get('environment') != security_runtime.environment():
+        return None
     exp = sess.get("expires_at")
     if isinstance(exp, str):
-        exp = datetime.fromisoformat(exp)
+        try:
+            exp = datetime.fromisoformat(exp)
+        except ValueError:
+            return None
+    if not isinstance(exp, datetime):
+        return None
     if exp.tzinfo is None:
         exp = exp.replace(tzinfo=timezone.utc)
     if exp < datetime.now(timezone.utc):
         return None
     user = await db.users.find_one({"user_id": sess["user_id"]}, {"_id": 0, "password_hash": 0})
-    return user if user and user.get("status", "active") == "active" else None
+    return user if user and user.get("status") == "active" else None
 
 
 async def get_current_user(request: Request) -> Dict:
-    # Try session_token (Emergent OAuth) then access_token (JWT) then Authorization header
+    auth = request.headers.get('Authorization')
+    if auth is not None:
+        token = auth[7:] if auth.startswith('Bearer ') else ''
+        u = await _get_user_from_token(token) or await _get_user_from_session(token)
+        if not u:
+            raise HTTPException(401, 'Not authenticated')
+        await authorization.authorize_request(request, u, db)
+        return u
+    # Ambient cookies are considered only when no Authorization header was sent.
     session_token = request.cookies.get("session_token")
     if session_token:
         u = await _get_user_from_session(session_token)
         if u:
+            await authorization.authorize_request(request, u, db)
             return u
     access_token = request.cookies.get("access_token")
     if not access_token:
@@ -352,9 +374,11 @@ async def get_current_user(request: Request) -> Dict:
     if access_token:
         u = await _get_user_from_token(access_token)
         if u:
+            await authorization.authorize_request(request, u, db)
             return u
         u = await _get_user_from_session(access_token)
         if u:
+            await authorization.authorize_request(request, u, db)
             return u
     raise HTTPException(401, "Not authenticated")
 
@@ -704,26 +728,15 @@ async def create_notification(*, user_id: str, title: str, kind: str,
 
 # ---------------- Tenant scoping ----------------
 def _can_access_client(user: Dict, client_id: str) -> bool:
-    role = user.get("role")
-    if role == "super_admin" or (role == "platform_admin" and not user.get("client_ids")):
-        return True
-    return client_id in (user.get("client_ids") or [])
+    return authorization.can_access(user, client_id)
 
 
 def _writable(user: Dict) -> bool:
-    return user.get("role") in ("super_admin", "platform_admin", "client_contributor")
+    return authorization.writable(user)
 
 
 def _scope_filter(user: Dict, client_id: Optional[str] = None) -> Dict:
-    role = user.get("role")
-    if role == "super_admin" or (role == "platform_admin" and not user.get("client_ids")):
-        return {"client_id": client_id} if client_id else {}
-    allowed = user.get("client_ids") or []
-    if client_id:
-        if client_id not in allowed:
-            raise HTTPException(403, "Forbidden for this client")
-        return {"client_id": client_id}
-    return {"client_id": {"$in": allowed}}
+    return authorization.scope(user, client_id)
 
 
 async def _authorized_parent(kind: str, item_id: str, user: Dict, write: bool = False) -> Dict:
@@ -740,7 +753,7 @@ async def _authorized_parent(kind: str, item_id: str, user: Dict, write: bool = 
 
 # ---------------- Auth endpoints ----------------
 def _set_auth_cookie(resp: Response, token: str, key: str = "access_token", max_age: int = 7 * 24 * 3600):
-    resp.set_cookie(key=key, value=token, httponly=True, secure=True, samesite="none", max_age=max_age, path="/")
+    resp.set_cookie(key=key, value=token, httponly=True, secure=True, samesite="lax", max_age=max_age, path="/")
 
 
 def _google_admin_emails() -> set[str]:
@@ -756,6 +769,8 @@ def _google_admin_emails() -> set[str]:
 
 @api.post("/auth/register")
 async def register(body: RegisterIn, response: Response):
+    if security_runtime.environment() in {'staging','production'}:
+        raise HTTPException(403, 'Access requires an authorized invitation')
     email = body.email.lower()
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Email already registered")
@@ -785,10 +800,11 @@ async def login(body: LoginIn, response: Response):
     u = await db.users.find_one({"email": email})
     if not u or not u.get("password_hash") or not verify_password(body.password, u["password_hash"]):
         raise HTTPException(401, "Invalid credentials")
-    if u.get("status", "active") != "active":
+    if u.get("status") != "active":
         raise HTTPException(403, "This account is not active. Contact your administrator.")
     token = create_access_token(u["user_id"], email)
     await db.users.update_one({"user_id": u["user_id"]}, {"$set": {"last_login_at": _now()}})
+    await audit(u, 'login', 'user', u['user_id'])
     _set_auth_cookie(response, token)
     u.pop("password_hash", None)
     u.pop("_id", None)
@@ -885,6 +901,10 @@ async def reset_password_endpoint(body: ResetIn):
 
 @api.post("/auth/logout")
 async def logout(response: Response, user: Dict = Depends(get_current_user)):
+    # Revoke all this account's sessions, including copied bearer credentials.
+    await db.users.update_one({'user_id':user['user_id']}, {'$set':{'sessions_revoked_at':_now()}})
+    await db.sessions.delete_many({'user_id':user['user_id']})
+    await audit(user, 'logout', 'user', user['user_id'])
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("session_token", path="/")
     return {"ok": True}
@@ -1089,12 +1109,12 @@ async def link_contact_account(contact_id: str, body: ContactLinkIn, user: Dict 
 
 
 def _admin_can_manage_role(actor: Dict, target_role: str) -> bool:
-    """Only super_admin can assign super_admin; platform_admin can assign platform_admin/client_* roles."""
+    """Provider administrators can assign client roles, never internal roles."""
     actor_role = actor.get("role")
     if actor_role == "super_admin":
-        return target_role in ("super_admin", "platform_admin", "client_contributor", "client_readonly")
+        return target_role in authorization.ROLES
     if actor_role == "platform_admin":
-        return target_role in ("platform_admin", "client_contributor", "client_readonly")
+        return target_role in authorization.CLIENT_ROLES
     return False
 
 
@@ -1105,7 +1125,7 @@ def _admin_can_manage_user(actor: Dict, target: Dict, client_scope: Optional[str
         return True
     if actor_role != "platform_admin":
         return False
-    if target.get("role") == "super_admin" or (target.get("role") == "platform_admin" and not target.get("client_ids")):
+    if target.get("role") not in authorization.CLIENT_ROLES:
         return False
     # platform_admin: must share at least one client with target OR be scoped to a client they can access
     if client_scope and not _can_access_client(actor, client_scope):
@@ -1125,7 +1145,7 @@ async def contact_invite(contact_id: str, body: ContactInviteIn, user: Dict = De
         raise HTTPException(404, "Contact not found")
     if not _can_access_client(user, contact["client_id"]):
         raise HTTPException(403, "Forbidden for this client")
-    if body.client_id != contact["client_id"] or not body.confirmed or body.role not in ("client_contributor", "client_readonly"):
+    if body.client_id != contact["client_id"] or not body.confirmed or body.role not in authorization.CLIENT_ROLES:
         raise HTTPException(422, "Confirm the Contact's client and a permitted client role")
     if contact.get("linked_user_id"):
         raise HTTPException(400, "Contact already linked to a platform user")
@@ -1372,6 +1392,8 @@ async def me(user: Dict = Depends(get_current_user)):
 
 @api.post("/auth/google/session")
 async def google_session(body: GoogleSessionIn, response: Response):
+    if security_runtime.environment() in {'staging','production'}:
+        raise HTTPException(503, 'External identity integration requires staging validation before enablement')
     async with httpx.AsyncClient(timeout=15) as hx:
         r = await hx.get(
             "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
@@ -1409,17 +1431,15 @@ async def google_session(body: GoogleSessionIn, response: Response):
         await db.users.insert_one(user)
     else:
         updates = {"picture": data.get("picture"), "auth_provider": user.get("auth_provider") or "google"}
-        if google_admin:
-            # Repair identities that were auto-created as read-only before the
-            # administrator allowlist was configured.
-            updates.update({"role": "super_admin", "client_ids": admin_client_ids})
+        # Existing roles are authoritative; login cannot undo a role downgrade.
         await db.users.update_one({"email": email}, {"$set": updates})
         user.update(updates)
     # Create session
-    session_token = data.get("session_token") or _uid("sess")
+    session_token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
     await db.sessions.insert_one({
         "session_token": session_token,
+        'environment': security_runtime.environment(),
         "user_id": user["user_id"],
         "created_at": _now(),
         "expires_at": expires_at.isoformat(),
@@ -1683,13 +1703,25 @@ async def _create_evidence(body, user, identity=None):
                 raise HTTPException(422, "Select the Review occurrence before uploading")
             await _review_selection(parent, body.occurrence_id, write=True)
     try:
+        if len(body.content_base64) > 12 * 1024 * 1024:
+            raise HTTPException(413, 'Evidence exceeds the 8 MB file limit')
         file_bytes = base64.b64decode(body.content_base64.split(",")[-1], validate=True)
     except (ValueError, base64.binascii.Error):
         raise HTTPException(422, "Invalid base64 evidence content")
+    if len(file_bytes) > 8 * 1024 * 1024:
+        raise HTTPException(413, 'Evidence exceeds the 8 MB file limit')
+    if any(ord(c)<32 for c in body.filename) or '/' in body.filename or '\\' in body.filename:
+        raise HTTPException(422, 'Use a filename without paths or control characters')
+    if ('.'+body.filename.rsplit('.',1)[-1].lower()) in {'.html','.htm','.svg','.js','.mjs','.exe','.com','.bat','.cmd','.ps1','.sh'}:
+        raise HTTPException(422, 'Active or executable evidence files are not accepted')
+    if body.mime_type and body.mime_type.split(';')[0].lower() in {'text/html','image/svg+xml','application/javascript','text/javascript'}:
+        raise HTTPException(422, 'Active content is not accepted as evidence')
     ev_id = _uid("ev")
     doc = {"evidence_id": ev_id, **body.model_dump(mode='json'), "size":len(file_bytes), "version": 1, "sha256": hashlib.sha256(file_bytes).hexdigest(),
            "uploaded_by": user["user_id"], "uploaded_by_email": user["email"],
            "created_at": _now()}
+    # Never retain a client-selected data-URL media type as executable content.
+    doc['content_base64'] = base64.b64encode(file_bytes).decode('ascii')
     doc = await create_requests.insert_primary(db, "evidence", doc, identity)
     ev_id = doc["evidence_id"]
     await audit(user, "upload", "evidence", ev_id, body.client_id, meta={"filename": body.filename})
@@ -1713,8 +1745,8 @@ async def download_evidence(ev_id: str, user: Dict = Depends(get_current_user)):
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, doc["client_id"]):
         raise HTTPException(403, "Forbidden")
-    return {"filename": doc["filename"], "mime_type": doc.get("mime_type"),
-            "content_base64": doc["content_base64"]}
+    return {"filename": doc["filename"], "mime_type": 'application/octet-stream',
+            "content_base64": doc["content_base64"].split(',')[-1]}
 
 
 @api.delete("/evidence/{ev_id}")
@@ -1834,7 +1866,7 @@ async def _audit_scope_for(user: Dict) -> Optional[List[str]]:
     if role == "super_admin":
         return None
     if role == "platform_admin":
-        return list(user["client_ids"]) if user.get("client_ids") else None
+        return list(user.get("client_ids") or [])
     return []
 
 
@@ -1867,20 +1899,17 @@ async def list_audit(
 
     # Client filter
     if client_id == "platform":
+        if scope is not None:
+            raise HTTPException(403, 'Platform audit events require Platform Owner')
         mongo_q["$or"] = [{"client_id": None}, {"client_id": {"$exists": False}}]
     elif client_id:
         if scope is not None and client_id not in scope:
             raise HTTPException(403, "Not authorized for this client")
         mongo_q["client_id"] = client_id
     else:
-        # No explicit client filter — restrict platform_admin to their allowed clients
-        # PLUS platform-scope (null) events. Super admin sees everything.
+        # No explicit filter: providers see only events for assigned clients.
         if scope is not None:
-            mongo_q["$or"] = [
-                {"client_id": {"$in": scope}},
-                {"client_id": None},
-                {"client_id": {"$exists": False}},
-            ]
+            mongo_q['client_id'] = {'$in':scope}
 
     if user_id:
         mongo_q["user_id"] = user_id
@@ -1941,11 +1970,7 @@ async def audit_facets(user: Dict = Depends(get_current_user)):
 
     audit_scope_q: Dict[str, Any] = {}
     if scope is not None:
-        audit_scope_q["$or"] = [
-            {"client_id": {"$in": scope}},
-            {"client_id": None},
-            {"client_id": {"$exists": False}},
-        ]
+        audit_scope_q['client_id'] = {'$in':scope}
     entity_types = sorted([e for e in await db.audit_logs.distinct("entity_type", audit_scope_q) if e])
 
     # Actor list — restrict to users who have logged at least one event within the
@@ -2009,7 +2034,7 @@ async def export_audit_csv(
         "Entity Type", "Entity ID", "Meta",
     ])
     for r in rows:
-        writer.writerow([
+        writer.writerow([security_runtime.csv_cell(value) for value in [
             r.get("at") or "",
             r.get("client_name") or ("Platform" if not r.get("client_id") else ""),
             r.get("client_id") or "",
@@ -2019,7 +2044,7 @@ async def export_audit_csv(
             r.get("entity_type") or "",
             r.get("entity_id") or "",
             (r.get("meta") and __import__("json").dumps(r.get("meta"))) or "",
-        ])
+        ]])
     csv_bytes = buf.getvalue().encode("utf-8")
     await audit(user, "export", "audit-log", "csv", meta={
         "rows": len(rows),
@@ -2036,10 +2061,10 @@ async def export_audit_csv(
 async def list_users(user: Dict = Depends(get_current_user)):
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Forbidden")
-    query = {} if user.get("role") == "super_admin" or not user.get("client_ids") else {"client_ids": {"$in": user["client_ids"]}}
+    query = {} if user.get("role") == "super_admin" else {"client_ids": {"$in": user.get("client_ids") or []}}
     docs = await db.users.find(query, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1,
                                       "status": 1, "client_ids": 1, "last_login_at": 1}).to_list(500)
-    if user.get("role") == "platform_admin" and user.get("client_ids"):
+    if user.get("role") == "platform_admin":
         for doc in docs:
             doc["client_ids"] = [cid for cid in (doc.get("client_ids") or []) if cid in user["client_ids"]]
     return docs
@@ -2108,7 +2133,9 @@ async def dashboard(
         if user.get("role") in ("client_contributor", "client_readonly") and user_id != user["user_id"]:
             raise HTTPException(403, "Not authorized to view another user's assignments")
         target_uid = user_id
-        target_user = target
+        if user.get('role') != 'super_admin' and user_id != user['user_id'] and not set(target.get('client_ids') or []).intersection(user.get('client_ids') or []):
+            raise HTTPException(403, 'User is outside your client scope')
+        target_user = {key: target.get(key) for key in ('user_id', 'name', 'email')}
     elif scope == "unassigned":
         # Only internal admins can view unassigned records portfolio-wide.
         if user.get("role") not in ("super_admin", "platform_admin"):
@@ -2366,6 +2393,7 @@ async def seed():
 
 @app.on_event("startup")
 async def _on_start():
+    security_runtime.validate_environment()
     # Fail startup if required database initialization fails.
     await seed()
 
@@ -2432,7 +2460,8 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
             raise HTTPException(422, "Establish Vendor Reviews from the Vendor schedule")
         if "risk_id" in changes:
             raise HTTPException(422, "Establish Risk Reviews from the Risk governance schedule")
-        if user and user.get("role") not in ("super_admin", "platform_admin") and set(changes) - {"notes"}:
+        client_fields = {"notes", "owner_id", "reviewer_id"} if user and user.get("role") == "client_grc_manager" else {"notes"}
+        if user and user.get("role") not in ("super_admin", "platform_admin") and set(changes) - client_fields:
             raise HTTPException(403, "Only platform administrators can change Review configuration")
         if set(changes) & {"period", "next_review_date"} or changes.get("status") in ("in_progress", "completed"):
             raise HTTPException(422, "Occurrence, next date, and lifecycle transitions are system-controlled")
@@ -2908,7 +2937,7 @@ async def cron_overdue_reminders(request: Request):
     # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
     secret = os.environ.get("WEBHOOK_CRON_SECRET", "")
     auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer ") or auth[7:] != secret:
+    if not secret or not auth.startswith("Bearer ") or not secrets.compare_digest(auth[7:], secret):
         raise HTTPException(401, "Unauthorized")
     import asyncio
     asyncio.create_task(_send_overdue_digest())
@@ -3365,7 +3394,7 @@ async def cron_weekly_my_work(request: Request):
     # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
     secret = os.environ.get("WEBHOOK_CRON_SECRET", "")
     auth = request.headers.get("Authorization", "")
-    if not secret or not auth.startswith("Bearer ") or auth[7:] != secret:
+    if not secret or not auth.startswith("Bearer ") or not secrets.compare_digest(auth[7:], secret):
         raise HTTPException(401, "Unauthorized")
     import asyncio
     asyncio.create_task(_send_weekly_digest())
@@ -4616,7 +4645,7 @@ async def export_csv(kind: str = Path(..., pattern=KIND_REGEX),
         row = {}
         for k in ordered:
             v = d.get(k, "")
-            row[k] = v if not isinstance(v, (list, dict)) else str(v)
+            row[k] = security_runtime.csv_cell(v)
         writer.writerow(row)
     output.seek(0)
     filename = f"{kind}-{datetime.now(timezone.utc).strftime('%Y%m%d')}.csv"
@@ -4770,7 +4799,7 @@ async def _build_board_report(client_id: str, user: Dict) -> bytes:
 
     story: List = []
     story.append(Paragraph("Omnisciente — Board Report", styles["Title"]))
-    story.append(Paragraph(f"{client['name']} · {datetime.now(timezone.utc).strftime('%d %B %Y')}", styles["Mini"]))
+    story.append(Paragraph(f"{escape(client['name'])} · {datetime.now(timezone.utc).strftime('%d %B %Y')}", styles["Mini"]))
     story.append(Spacer(1, 8))
 
     # KPIs
@@ -4855,7 +4884,7 @@ async def _build_board_report(client_id: str, user: Dict) -> bytes:
 
     story.append(Spacer(1, 10))
     story.append(Paragraph(
-        f"Generated by {user.get('name') or user.get('email')} · {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} · Confidential",
+        f"Generated by {escape(user.get('name') or user.get('email') or '')} · {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} · Confidential",
         styles["Mini"]))
 
     doc.build(story)
@@ -4891,13 +4920,14 @@ app.include_router(entity_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in os.environ.get("CORS_ORIGINS", "").split(",") if origin.strip()],
-    allow_credentials=False,  # cookies are cross-site secure=none but we also return token in body
+    allow_credentials=True,  # explicit allowed origins; SameSite=Lax cookies
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Create-Rejected", "Retry-After"],
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+app.add_middleware(security_runtime.SecurityBoundary)
 
 
 @app.on_event("shutdown")

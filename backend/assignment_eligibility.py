@@ -40,15 +40,13 @@ async def validate(db, kind, row, can_access, previous=None):
 
 
 async def candidates(db, client_id, search="", offset=0, limit=50):
-    # Mirrors existing _can_access_client; global internal scope is not membership.
+    # Only Platform Owners have global scope; provider assignments are explicit.
     scope = {"$or": [
         {"client_ids": client_id},
         {"role": "super_admin"},
-        {"role": "platform_admin", "$or": [
-            {"client_ids": {"$size": 0}}, {"client_ids": None},
-        ]},
     ]}
-    query = {"$and": [{"status": "active"}, scope]}
+    from authorization import ROLES
+    query = {"$and": [{"status": "active", "role": {"$in": list(ROLES)}}, scope]}
     if search.strip():
         pattern = {"$regex": re.escape(search.strip()), "$options": "i"}
         query["$and"].append({"$or": [{"name": pattern}, {"email": pattern}]})

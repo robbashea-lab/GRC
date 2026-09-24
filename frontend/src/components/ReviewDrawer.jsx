@@ -1,3 +1,4 @@
+import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {useCreateIntent} from '@/lib/createIntent';
@@ -28,12 +29,12 @@ const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
 const date = value => value ? new Date(String(value).slice(0,10) + 'T00:00:00').toLocaleDateString() : '—';
 const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
-const fileData = file => new Promise((resolve,reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
 
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues}) {
   const {user} = useAuth();
   const admin = ['super_admin','platform_admin'].includes(user?.role);
-  const writable = admin || user?.role === 'client_contributor';
+  const writable = admin || user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
+    [record?.owner_id, record?.reviewer_id].includes(user?.user_id);
   const [riskDraft,setRiskDraft] = useState(null);
   const [riskOutcome,setRiskOutcome]=useState("Reviewed — No Change");
   const [current,setCurrent] = useState(null), [form,setForm] = useState({});
@@ -142,7 +143,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const historicalCount = remediation.groups.filter(({finding})=>finding.status==='closed').length + allRelatedRows.filter(({kind,item})=>historicalRemediation(kind,item)).length;
   const relatedRows = allRelatedRows.filter(({kind,item})=>showHistorical || !historicalRemediation(kind,item));
   return <Sheet open={open} onOpenChange={onOpenChange}>
-    <SheetContent className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid="reviews-drawer">
+    <SheetContent description="Inspect this Review's schedule, supporting evidence, related work and completion history. Save configuration changes separately from completing the Review." className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid="reviews-drawer">
       <SheetHeader className="px-6 py-4 border-b border-line">
         <div className="flex justify-between gap-3"><div><div className="text-xs text-ink-help">Review {selected ? '· Historical occurrence' : ''}</div><SheetTitle className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
           {shown && <div className="mt-2"><StatusBadge value={shown.status} /></div>}</div>
@@ -215,7 +216,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     </SheetContent>
     {linked && <RecordDrawer open kind={linked.kind} record={linked.record} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();}}} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) setFinding(null);}}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form"><SheetHeader><SheetTitle>Raise Finding</SheetTitle></SheetHeader>
+      <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form"><SheetHeader><SheetTitle>Raise Finding</SheetTitle></SheetHeader>
         {finding && <form className="mt-5 space-y-4" onSubmit={e => {e.preventDefault();run(async () => {await api.post(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
           <Label className="block">Description<Textarea value={finding.description} onChange={e => setFinding(p => ({...p,description:e.target.value}))} /></Label>

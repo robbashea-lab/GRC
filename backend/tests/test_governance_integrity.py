@@ -34,6 +34,8 @@ class GovernanceIntegrityTests(ClientDashboardSourcesTests):
 
     async def test_generic_create_patch_bulk_cannot_forge_decisions(self):
         self.sign_in('member')
+        self.assertEqual((await self.client.post('/api/policies',json={'client_id':'a','title':'Denied'})).status_code,403)
+        self.sign_in('scoped')
         policy = (await self.client.post('/api/policies',json={"client_id":"a","title":"Policy"})).json()
         pid = policy['policy_id']
         for change in [{"status":"approved"},{"approved_at":"2026-01-01"},{"approval_history":[{"by":"admin"}]},{"unexpected":True}]:
@@ -45,11 +47,13 @@ class GovernanceIntegrityTests(ClientDashboardSourcesTests):
         await self.client.post('/api/policies/'+pid+'/approval-subject',json={"version":"1","external_reference":"https://documents.example.test/policy","external_version":"doc-v1"})
         submitted=(await self.client.post('/api/policies/'+pid+'/submit-review')).json()
         decision={"approval_request_id":submitted["approval_request_id"]}
+        self.sign_in('member')
         self.assertEqual((await self.client.post('/api/policies/'+pid+'/approve',json=decision)).status_code,403)
         self.sign_in('admin')
         self.assertEqual((await self.client.post('/api/policies/'+pid+'/approve',json=decision)).status_code,200)
 
     async def test_completion_snapshot_retry_and_evidence_retention(self):
+        await server.db.reviews.update_one({'review_id':'ra'},{'$set':{'owner_id':'member'}})
         self.sign_in('member')
         self.assertEqual((await self.client.post('/api/reviews/ra/complete',json={})).status_code,422)
         action = {"occurrence_id":"occ_ra"}

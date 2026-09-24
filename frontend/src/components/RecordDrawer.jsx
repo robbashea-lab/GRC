@@ -1,3 +1,4 @@
+import {readEvidenceFile as fileToBase64} from '@/lib/evidenceFile';
 import VendorGovernancePanel from "./VendorGovernancePanel";
 import AssigneeSelect from "./AssigneeSelect";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -95,14 +96,7 @@ const TABS_BY_KIND = {
 };
 const DEFAULT_TABS = ["overview", "related", "evidence", "comments", "activity"];
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-}
+
 
 function toDateInput(v) {
   if (!v) return "";
@@ -155,7 +149,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const isEdit = !!record;
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
-  const canWrite = ["super_admin", "platform_admin", "client_contributor"].includes(user?.role) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
+  const clientMayWork = user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
+    (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id));
+  const canWrite = (isPlatformAdmin || clientMayWork && (isEdit || kind === 'tasks')) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
   const evidenceKind = kind === "tasks" ? "task" : singular;
   const tabList = TABS_BY_KIND[kind];
@@ -1061,7 +1057,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid={`${kind}-drawer`}>
+      <SheetContent side="right" description={isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`} className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid={`${kind}-drawer`}>
         <SheetHeader className="px-6 py-4 border-b border-line">
           <div className="flex items-start justify-between">
             <div>
@@ -1090,7 +1086,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); setEvidenceVersion(v=>v+1); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); setEvidenceVersion(v=>v+1); refreshFindingReadiness(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
 
       <Sheet open={decisionOpen} onOpenChange={setDecisionOpen}>
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+        <SheetContent description="Record the outcome and supporting rationale for this governance decision. Confirming records your authenticated decision in its history." className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader><SheetTitle>{decisionForm.action === 'accept' ? 'Accept finding' : decisionForm.action === 'approve' ? 'Approve exception' : kind === "findings" ? "Validate remediation" : record?.status === "completed" ? "Add review amendment" : "Complete review"}</SheetTitle></SheetHeader>
           <form onSubmit={submitDecision} className="mt-5 space-y-4">
             {kind==='findings'&&record&&!decisionForm.action&&<section className="space-y-3 text-sm" aria-label="Validation context"><h3 className="font-medium">{form.title||record.title}</h3><p className="whitespace-pre-wrap">{form.description||record.description||'No description recorded.'}</p><p className="text-ink-secondary">Current Finding Status: <StatusBadge value={status}/></p><p>Confirm that the corrective work resolved the Finding. Completing an Action alone does not validate it.</p><CorrectiveActions actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users}/></section>}
@@ -1111,7 +1107,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       </Sheet>
 
       <Sheet open={findingOpen} onOpenChange={setFindingOpen}>
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form">
+        <SheetContent description="Describe the gap identified during this Review and the corrective Action needed to address it." className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form">
           <SheetHeader><SheetTitle>Raise finding</SheetTitle></SheetHeader>
           <p className="my-4 text-sm text-ink-secondary">Source review: {record?.title}</p>
           <form onSubmit={saveReviewFinding} className="space-y-4">
@@ -1127,12 +1123,12 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </SheetContent>
       </Sheet>
 
-      {linkTask&&<Sheet open onOpenChange={v=>!v&&setLinkTask(null)}><SheetContent><SheetHeader><SheetTitle>Link Action Item</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><p className="text-sm">The original source and Action Item remain unchanged.</p><Select value={linkTask.task_id||"__none__"} onValueChange={task_id=>setLinkTask({...linkTask,task_id})}><SelectTrigger aria-label="Existing Action Item"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="__none__" disabled>Select a record</SelectItem>{linkTask.options.map(t=><SelectItem key={t.task_id} value={t.task_id}>{t.title}</SelectItem>)}</SelectContent></Select><Button disabled={!linkTask.task_id||saving} onClick={async()=>{setSaving(true);try{await api.post(`/risks/${record.risk_id}/link-action-item`,{task_id:linkTask.task_id});setLinkTask(null);loadRelated();onSaved?.();}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Link Action Item</Button></div></SheetContent></Sheet>}
-      {closure&&<Sheet open onOpenChange={value=>!value&&setClosure(null)}><SheetContent className="sm:max-w-md"><SheetHeader><SheetTitle>Close Risk</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><Label>Closure reason</Label><Select value={closure.reason} onValueChange={reason=>setClosure({...closure,reason})}><SelectTrigger aria-label="Closure reason"><SelectValue/></SelectTrigger><SelectContent>{Object.entries({remediated:"Remediated",no_longer_applicable:"No Longer Applicable",system_process_retired:"System / Process Retired",condition_removed:"Risk Condition Removed",other:"Other"}).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Label>Closure note</Label><Textarea aria-label="Closure note" value={closure.note} onChange={e=>setClosure({...closure,note:e.target.value})}/><p className="text-sm text-ink-secondary">The Risk and its history remain available. Future linked Reviews will be cancelled.</p><Button disabled={saving} onClick={async()=>{setSaving(true);try {await api.post(`/risks/${record.risk_id}/close`,{...closure,expected_updated_at:record.updated_at??null});setClosure(null);await refreshRisk();onSaved?.();toast.success("Risk closed and retained");}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Confirm closure</Button></div></SheetContent></Sheet>}
+{linkTask&&<Sheet open onOpenChange={v=>!v&&setLinkTask(null)}><SheetContent description="Link an existing Action Item to this risk without changing the Action's original source."><SheetHeader><SheetTitle>Link Action Item</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><p className="text-sm">The original source and Action Item remain unchanged.</p><Select value={linkTask.task_id||"__none__"} onValueChange={task_id=>setLinkTask({...linkTask,task_id})}><SelectTrigger aria-label="Existing Action Item"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="__none__" disabled>Select a record</SelectItem>{linkTask.options.map(t=><SelectItem key={t.task_id} value={t.task_id}>{t.title}</SelectItem>)}</SelectContent></Select><Button disabled={!linkTask.task_id||saving} onClick={async()=>{setSaving(true);try{await api.post(`/risks/${record.risk_id}/link-action-item`,{task_id:linkTask.task_id});setLinkTask(null);loadRelated();onSaved?.();}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Link Action Item</Button></div></SheetContent></Sheet>}
+      {closure&&<Sheet open onOpenChange={value=>!value&&setClosure(null)}><SheetContent description="Record why this risk can be closed. Its history remains available; future linked Reviews will be cancelled." className="sm:max-w-md"><SheetHeader><SheetTitle>Close Risk</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><Label>Closure reason</Label><Select value={closure.reason} onValueChange={reason=>setClosure({...closure,reason})}><SelectTrigger aria-label="Closure reason"><SelectValue/></SelectTrigger><SelectContent>{Object.entries({remediated:"Remediated",no_longer_applicable:"No Longer Applicable",system_process_retired:"System / Process Retired",condition_removed:"Risk Condition Removed",other:"Other"}).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Label>Closure note</Label><Textarea aria-label="Closure note" value={closure.note} onChange={e=>setClosure({...closure,note:e.target.value})}/><p className="text-sm text-ink-secondary">The Risk and its history remain available. Future linked Reviews will be cancelled.</p><Button disabled={saving} onClick={async()=>{setSaving(true);try {await api.post(`/risks/${record.risk_id}/close`,{...closure,expected_updated_at:record.updated_at??null});setClosure(null);await refreshRisk();onSaved?.();toast.success("Risk closed and retained");}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Confirm closure</Button></div></SheetContent></Sheet>}
       {/* Accept Risk dialog */}
       {kind === "risks" && (
         <Sheet open={acceptOpen} onOpenChange={setAcceptOpen}>
-          <SheetContent side="right" className="w-full sm:max-w-md p-0" data-testid="accept-risk-dialog">
+          <SheetContent side="right" description="Record why management accepts this risk, its acceptance expiry and any compensating controls." className="w-full sm:max-w-md p-0" data-testid="accept-risk-dialog">
             <SheetHeader className="px-6 py-4 border-b border-line">
               <SheetTitle>Accept risk</SheetTitle>
             </SheetHeader>
@@ -1166,7 +1162,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       {/* Verify Policy dialog */}
       {kind === "policies" && (
         <Sheet open={verifyOpen} onOpenChange={setVerifyOpen}>
-          <SheetContent side="right" className="w-full sm:max-w-md p-0" data-testid="verify-policy-dialog">
+          <SheetContent side="right" description="Verify the reported policy and record its confirmed metadata. Blank fields retain their existing values." className="w-full sm:max-w-md p-0" data-testid="verify-policy-dialog">
             <SheetHeader className="px-6 py-4 border-b border-line">
               <SheetTitle>Verify policy</SheetTitle>
             </SheetHeader>
@@ -1235,7 +1231,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       {/* Schedule Vendor Review dialog */}
       {kind === "vendors" && (
         <Sheet open={scheduleOpen} onOpenChange={setScheduleOpen}>
-          <SheetContent side="right" className="w-full sm:max-w-md p-0" data-testid="schedule-review-dialog">
+          <SheetContent side="right" description="Create a vendor Review with an accountable owner, due date and recurrence." className="w-full sm:max-w-md p-0" data-testid="schedule-review-dialog">
             <SheetHeader className="px-6 py-4 border-b border-line">
               <SheetTitle>Schedule vendor review</SheetTitle>
             </SheetHeader>

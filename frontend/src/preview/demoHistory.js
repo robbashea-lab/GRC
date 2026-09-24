@@ -2,6 +2,7 @@ import { demoDates, demoOrganizations } from './demoPortfolio';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { frameworkDefinition, CATALOGS } from '../lib/frameworks';
 import { approvalSnapshot } from './policyProvenance';
+import { BRAWNDO_CIS, BRAWNDO_CIS_FINDINGS } from './brawndoProgram';
 function previousDate(value, months) {
   const d = new Date(value + 'T12:00:00Z'),
     day = d.getUTCDate();
@@ -318,6 +319,13 @@ export function finishDemoStore(db, clock, {
         technology: 'Managed identity, endpoint and service environment.',
         notes: 'DEMO - SYNTHETIC DATA. Assessment progress is not certification.'
       };
+      const reference = cid === 'demo_brawndo' && a.framework_key === 'cis-ig1' ? BRAWNDO_CIS[a.definition_id] : null;
+      if (reference) Object.assign(patch, {
+        status: reference[0],
+        technology: reference[2],
+        implementation: reference[3],
+        notes: ''
+      });
       if (d.specification === 'annex_control') Object.assign(patch, {
         soa_applicability: 'included',
         soa_justification: 'Included for the documented service boundary and identified information risks.'
@@ -351,6 +359,12 @@ export function finishDemoStore(db, clock, {
       a.created_at = date(-580);
       a.last_assessed = date(-10);
       a.assessment_history.forEach(h => h.at = date(-10));
+      if (reference) {
+        a.last_assessed = reference[1] == null ? null : date(-reference[1]);
+        if (reference[1] == null) a.assessment_history = [];
+        a.assessment_history.forEach(h => h.at = a.last_assessed);
+        if (reference[4] != null) evidence(db, client, 'cis-' + a.definition_id, 'CIS ' + a.definition_id + ' ' + d.title + ' - validation record', 'framework_assessment', a.framework_assessment_id, date(-reference[4]), owner);
+      }
       for (const m of CATALOGS[a.framework_key].policy_mappings.filter(m => m.safeguards.includes(a.definition_id))) {
         const p = policies.find(p => p.baseline_key === m.policy_key);
         if (p) a.related_links.push({
@@ -373,6 +387,26 @@ export function finishDemoStore(db, clock, {
         kind: 'risks',
         id: risks[1].risk_id
       });
+    }
+    if (cid === 'demo_brawndo') for (const [id, title, severity, remediation, who, due, age] of BRAWNDO_CIS_FINDINGS) {
+      const a = db.framework_assessments.find(a => a.client_id === cid && a.framework_key === 'cis-ig1' && a.definition_id === id);
+      const f = frameworkRequest(db, '/framework-assessments/' + a.framework_assessment_id + '/findings', 'post', {}, {
+        title, severity, remediation_title: remediation, request_id: 'brawndo-cis-' + id,
+        description: a.implementation
+      });
+      Object.assign(f, {created_by: owner, due_date: date(due + 14), created_at: date(-age), updated_at: date(-Math.min(age, 7)), status: due < 0 ? 'in_remediation' : 'open'});
+      for (const t of db.tasks.filter(t => t.finding_id === f.finding_id)) {
+        const old = t.task_id;
+        t.task_id = cid + '_cis_action_' + id;
+        for (const l of db.logs) {
+          if (l.entity_id === old) l.entity_id = t.task_id;
+          if (l.meta?.task_id === old) l.meta.task_id = t.task_id;
+        }
+        Object.assign(t, {
+        assignee_id: users[who].user_id, due_date: date(due), created_by: owner, created_at: date(-age), updated_at: date(-Math.min(age, 7)),
+        status: due < 0 ? 'in_progress' : 'open'
+      });
+      }
     }
   }
   // Replace wall-clock workflow telemetry with explicit, internally consistent
@@ -400,7 +434,7 @@ export function finishDemoStore(db, clock, {
       occurrence_id: o.occurrence_id,
       outcome: o.outcome
     });
-    for (const a of db.framework_assessments.filter(a => a.client_id === c.client_id)) log('framework_assessments', a.framework_assessment_id, c.client_id, date(-10), db.user, 'Framework assessment updated', {
+    for (const a of db.framework_assessments.filter(a => a.client_id === c.client_id && a.last_assessed)) log('framework_assessments', a.framework_assessment_id, c.client_id, a.last_assessed.slice(0, 10), db.user, 'Framework assessment updated', {
       status: a.status
     });
     for (const t of db.tasks.filter(t => t.client_id === c.client_id)) log('tasks', t.task_id, c.client_id, t.completed_at || date(-3), db.users.find(user => user.user_id === (t.completed_by || t.created_by)) || db.user, t.status === 'done' ? 'Action Item completed' : 'Action Item updated');

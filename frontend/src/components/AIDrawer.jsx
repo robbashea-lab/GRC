@@ -1,3 +1,4 @@
+import {readEvidenceFile} from '@/lib/evidenceFile';
 import {cloneElement,useEffect,useState} from 'react';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
@@ -34,7 +35,7 @@ export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onS
   async function run(fn){setBusy(true);setError('');try{await fn();setRevision(n=>n+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}
   async function save(e){e.preventDefault();await run(async()=>{const body={client_id:clientId,...Object.fromEntries(AI_KEYS.map(k=>[k,form[k]]))};await (id?api.patch(`/ai_systems/${id}`,{...body,expected_updated_at:form.updated_at??null}):createRecord('/ai_systems',body));onSaved?.();onOpenChange(false);});}
   function openRecord(kind,row){setNested({kind,record:row});}
-  async function upload(file){if(!file)return;await run(async()=>{const content=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});await api.post('/evidence',{client_id:clientId,linked_type:'ai_system',linked_id:id,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:content});});}
+  async function upload(file){if(!file)return;await run(async()=>{const content=await readEvidenceFile(file);await api.post('/evidence',{client_id:clientId,linked_type:'ai_system',linked_id:id,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:content});});}
   async function download(ev){await run(async()=>{const {data}=await api.get(`/evidence/${ev.evidence_id}/download`);const a=document.createElement('a');a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type};base64,${data.content_base64}`;a.download=data.filename;a.click();});}
   const related=context?.related||{};
   function recordList(kind,rows){return <ul className="space-y-2">{rows.map(r=><li key={r[IDS[kind]]} className="border border-line rounded p-3 flex justify-between gap-3 text-sm"><button className="text-link text-left" onClick={()=>openRecord(kind,r)}>{r.display_id?`${r.display_id} · `:''}{r.title||r.name}</button><span className="text-xs text-ink-muted">{r.status?.replaceAll('_',' ')}{kind==='reviews'&&` · ${r.due_date?.slice(0,10)||'Needs scheduling'}`}</span></li>)}</ul>;}

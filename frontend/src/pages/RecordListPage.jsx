@@ -155,7 +155,8 @@ export default function RecordListPage({ kind }) {
   const [dueDatePickerOpen, setDueDatePickerOpen] = useState(false);
   const [pickedDueDate, setPickedDueDate] = useState("");
 
-  const canWrite = (kind === "reviews" ? ["super_admin", "platform_admin"] : ["super_admin", "platform_admin", "client_contributor"]).includes(user?.role);
+  // Register-wide creation, scheduling and bulk actions require program administration.
+  const canWrite = ["super_admin", "platform_admin"].includes(user?.role);
   const canDelete = ["super_admin", "platform_admin"].includes(user?.role);
   const idField = ID_FIELD[kind];
   const ownerField = kind === "tasks" ? "assignee_id" : "owner_id";
@@ -455,7 +456,7 @@ export default function RecordListPage({ kind }) {
         ) : (
           statusOptions.length > 0 && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectTrigger aria-label="Filter by status" data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
                 {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
@@ -548,7 +549,7 @@ export default function RecordListPage({ kind }) {
                     checked={allChecked || (someChecked ? "indeterminate" : false)}
                     onCheckedChange={toggleAll}
                     data-testid={`${kind}-select-all`}
-                    aria-label={isReviews ? 'Select all reviews' : undefined}
+                    aria-label={`Select all ${kind.replaceAll('_',' ')}`}
                   />
                 </th>
                 {columns.map(c => <th key={c.key} data-column={isReviews ? c.key : undefined} className="tbl-head" aria-sort={table.state.sort?.key === c.key ? (table.state.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}><ColumnControl table={table} column={c} /></th>)}
@@ -574,7 +575,7 @@ export default function RecordListPage({ kind }) {
                       checked={checked.has(row[idField])}
                       onCheckedChange={() => toggleOne(row[idField])}
                       data-testid={`${kind}-select-${i}`}
-                      aria-label={isReviews ? `Select ${row.title}` : undefined}
+                      aria-label={`Select ${row.title || row.name || 'record'}`}
                     />
                   </td>
                   {schema.columns.map((c) => {
@@ -605,6 +606,7 @@ export default function RecordListPage({ kind }) {
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
+                             : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
                              : <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (
                              <span

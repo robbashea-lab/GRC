@@ -44,10 +44,21 @@ const sheetVariants = cva(
   }
 )
 
-const SheetContent = React.forwardRef(({ side = "right", className, children, ...props }, ref) => (
+const SheetContent = React.forwardRef(({ side = "right", className, children, description, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
+  const opener = React.useRef(null);
+  return (
   <SheetPortal>
     <SheetOverlay />
-    <SheetPrimitive.Content ref={useSurfaceRef(ref)} className={cn(sheetVariants({ side }), className)} {...props}>
+    <SheetPrimitive.Content ref={useSurfaceRef(ref)} className={cn(sheetVariants({ side }), className)} {...props}
+      onOpenAutoFocus={event => { opener.current = document.activeElement; onOpenAutoFocus?.(event); }}
+      onCloseAutoFocus={event => {
+        onCloseAutoFocus?.(event);
+        // Programmatically opened record drawers have no Radix Trigger to restore.
+        if (!event.defaultPrevented && opener.current?.isConnected && opener.current !== document.body) {
+          event.preventDefault(); opener.current.focus();
+        }
+      }}>
+      {description && <SheetPrimitive.Description className="sr-only">{description}</SheetPrimitive.Description>}
       <SheetPrimitive.Close
         className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
         <X className="h-4 w-4" />
@@ -56,7 +67,8 @@ const SheetContent = React.forwardRef(({ side = "right", className, children, ..
       {children}
     </SheetPrimitive.Content>
   </SheetPortal>
-))
+  );
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({

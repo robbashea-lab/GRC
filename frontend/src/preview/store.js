@@ -14,6 +14,8 @@ import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
 import {validateGovernanceContext} from '../lib/requirementBasis';
 import {actionTitle} from '../lib/actionItems';
+import {demoStorageError} from '../lib/demoStorageErrors';
+import {lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
 export const STORE_KEY = 'grc_interactive_demo_v2';
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
@@ -53,8 +55,16 @@ export function seedStore(clock=new Date()) {
   return finishDemoStore(db,clock,{action,write,frameworkRequest});
 }
 export function readStore() {
-  const saved = sessionStorage.getItem(STORE_KEY);
-  if (saved) return normalizePolicyDates(initializeRiskIds(JSON.parse(saved)));
+  let saved;
+  try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
+  if (saved) {
+    let db;try{db=JSON.parse(saved);}catch(error){throw demoStorageError(error,'parse');}
+    if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
+    const light=lightweightStore(db);
+    if(light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
+    return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
+  }
+  clearFileCache();
   const db = seedStore();
   saveStore(db);
   return db;
@@ -62,13 +72,26 @@ export function readStore() {
 export function saveStore(db) {
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
-    sessionStorage.setItem(STORE_KEY, JSON.stringify(db));
-  } catch {
-    throw new Error('Demo storage is full or unavailable. Remove large evidence files or reset the demo, then try again. Changes were not saved.');
+    sessionStorage.setItem(STORE_KEY, JSON.stringify(lightweightStore(db)));
+    rememberFiles(db);
+  } catch (error) {
+    throw demoStorageError(error);
   }
 }
 export function resetStore() {
   saveStore(seedStore());
+  clearFileCache();
+}
+export function clearEvidenceFiles(){
+  let db;
+  try{db=JSON.parse(sessionStorage.getItem(STORE_KEY));}catch(error){throw demoStorageError(error,'read');}
+  if(!db)throw demoStorageError(null,'read');
+  db.evidence=(db.evidence||[]).map(({content_base64,...metadata})=>({...metadata,demo_file_storage:'cleared'}));
+  saveStore(db);clearFileCache();
+}
+export function demoDiagnostics(){
+  try{const saved=sessionStorage.getItem(STORE_KEY)||'{}';return storageDiagnostics(saved,JSON.parse(saved));}
+  catch(error){const failure=demoStorageError(error,'read');return {storage:'sessionStorage',last_error:failure.storage_code};}
 }
 export const list = (db, kind, cid) => (db[kind] || []).filter(r => !cid || r.client_id === cid);
 export function record(db, kind, id) {

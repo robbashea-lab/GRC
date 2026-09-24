@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
-import api, { formatError, PREVIEW_MODE, setWorkspaceMode, STANDARD_AUTH_ENABLED, STANDARD_AUTH_NOTICE } from "@/lib/api";
+import api, { formatError, PREVIEW_MODE, setWorkspaceMode, setAccessToken, STANDARD_AUTH_ENABLED, STANDARD_AUTH_NOTICE } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 
 const AuthContext = createContext(null);
@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
 
   const checkAuth = useCallback(async () => {
     if (!STANDARD_AUTH_ENABLED && !PREVIEW_MODE) {
-      localStorage.removeItem("grc_token");
+      try{localStorage.removeItem("grc_token");}catch{/* Sign-in stays disabled even when browser storage is unavailable. */}
       setUser(null);
       setLoading(false);
       return;
@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
     setWorkspaceMode("standard");
     queryClient.clear();
     const { data } = await api.post("/auth/login", { email, password });
-    if (data.access_token) localStorage.setItem("grc_token", data.access_token);
+    if (data.access_token) setAccessToken(data.access_token);
     setUser(data.user);
     return data.user;
   };
@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
     setWorkspaceMode("standard");
     queryClient.clear();
     const { data } = await api.post("/auth/register", { email, password, name });
-    if (data.access_token) localStorage.setItem("grc_token", data.access_token);
+    if (data.access_token) setAccessToken(data.access_token);
     setUser(data.user);
     return data.user;
   };

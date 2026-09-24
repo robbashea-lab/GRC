@@ -1,3 +1,4 @@
+import {readEvidenceFile as readFile} from '@/lib/evidenceFile';
 import {useEffect,useState} from 'react';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
@@ -19,16 +20,18 @@ import {SocManagementControls} from './SocReadiness';
 import FrameworkContext from './FrameworkContext';
 import {operatorStatuses,operatorProgram,STATUS_HELP} from '@/lib/frameworkOperator';
 import FrameworkReviewSetup from './FrameworkReviewSetup';
+import BrawndoCisAssessment,{isBrawndoCisPrototype} from './BrawndoCisAssessment';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from './ui/alert-dialog';
 
 const IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',evidence:'evidence_id',vendors:'vendor_id'};
 const SELECT='w-full border border-line bg-surface-card rounded p-2 text-sm';
-const readFile=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
 export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position}){
   const {user}=useAuth(),aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
   const catalog=frameworkCatalog(record.framework_key),isCsf=record.framework_key==='nist-csf-2',isSoc=record.framework_key==='soc-2',isCis=record.framework_key==='cis-ig1',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement'),program=operatorProgram(record.framework_key);
   const statuses=operatorStatuses(record.framework_key);
-  const writable=['super_admin','platform_admin','client_contributor'].includes(user?.role);
+  const prototype=isBrawndoCisPrototype(clientId,record,user);
+  const writable=['super_admin','platform_admin','client_grc_manager'].includes(user?.role) ||
+    user?.role==='client_contributor' && record?.owner_id===user?.user_id;
   const [tab,setTab]=useState(''),[form,setForm]=useState(record),[ctx,setCtx]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[nested,setNested]=useState(null),[comment,setComment]=useState(''),[finding,setFinding]=useState(null),[link,setLink]=useState({kind:'risks',id:''});
   const [reviewDraft,setReviewDraft]=useState(false);
   const [savedForm,setSavedForm]=useState(record),[feedback,setFeedback]=useState(''),[pending,setPending]=useState(null);
@@ -36,11 +39,15 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const leave=fn=>{if(busy)return;if(dirty||reviewDraft||finding||comment.trim())setPending(()=>fn);else fn();};
   useEffect(()=>{if(!dirty&&!reviewDraft&&!finding&&!comment.trim())return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty,reviewDraft,finding,comment]);
   useEffect(()=>{
-    const c=new AbortController();setCtx(null);setError('');const opts={params:{client_id:clientId},signal:c.signal};
+    const c=new AbortController();
+    // Keep the same prototype's linked rows mounted during refresh so closing a
+    // nested drawer can restore its opener and does not jump the reading position.
+    setCtx(old=>prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old:null);
+    setError('');const opts={params:{client_id:clientId},signal:c.signal};
     Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),api.get('/contacts',opts),api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+record.framework_key,opts)]).then(([related,users,contacts,comments,activity,workspace])=>{
-      if(!c.signal.aborted)setCtx({related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:workspace.data.configuration||{},current:workspace.data.assessments.find(a=>a.framework_assessment_id===aid),options:{reviews:related.data.reviews||[]}});
-    }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
-  },[aid,clientId,record.framework_key,revision]);
+      if(!c.signal.aborted)setCtx(old=>({related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:workspace.data.configuration||{},current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid)),options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
+    }).catch(e=>{if(!c.signal.aborted){setCtx(null);setError(formatError(e));}});return()=>c.abort();
+  },[aid,clientId,record.framework_key,revision,prototype]);
   const contextLoaded=!!ctx;
   useEffect(()=>{
     if(!contextLoaded)return;
@@ -52,12 +59,20 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
     return()=>c.abort();
   },[contextLoaded,clientId,aid,tab,link.kind,reviewDraft,revision]);
-  async function run(fn){setBusy(true);setError('');try{await fn();setRevision(n=>n+1);onSaved?.();}catch(e){setError(formatError(e));}finally{setBusy(false);}}
+  async function run(fn){setBusy(true);setError('');try{await fn();setRevision(n=>n+1);onSaved?.();return true;}catch(e){setError(formatError(e));return false;}finally{setBusy(false);}}
   const put=(key,value)=>{setFeedback('');setForm(p=>({...p,[key]:value}));};
   const who=id=>ctx?.users.find(u=>u.user_id===id)?.name||(id?'Former / unavailable user':'Not recorded');
-  async function save(){await run(async()=>{const body=Object.fromEntries(['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isSoc?['management_controls']:[]),...(isCsf?['csf_profile']:[])].map(k=>[k,form[k]??(k==='csf_profile'?EMPTY_CSF_PROFILE:k==='management_controls'?[]:k.endsWith('_id')?null:'')]));const {data}=await api.patch(`/framework_assessments/${aid}`,{...body,expected_last_assessed:savedForm.last_assessed??null});setForm(data);setSavedForm(data);setFeedback('Assessment saved.');});}
+  async function save(){return run(async()=>{const body=Object.fromEntries(['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isSoc?['management_controls']:[]),...(isCsf?['csf_profile']:[])].map(k=>[k,form[k]??(k==='csf_profile'?EMPTY_CSF_PROFILE:k==='management_controls'?[]:k.endsWith('_id')?null:'')]));const {data}=await api.patch(`/framework_assessments/${aid}`,{...body,expected_last_assessed:savedForm.last_assessed??null});setForm(data);setSavedForm(data);setFeedback('Assessment saved.');});}
   async function download(e){await run(async()=>{const {data}=await api.get(`/evidence/${e.evidence_id}/download`);const a=document.createElement('a');a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type};base64,${data.content_base64}`;a.download=data.filename;a.click();});}
   const current=ctx?.current||record,related=ctx?.related||{};
+  if(prototype)return <><BrawndoCisAssessment
+    state={{open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,otherDraft:reviewDraft||!!finding||!!comment.trim()}}
+    actions={{put,save,run,download,setComment,setFinding,setTab,setNested,setReviewDraft,setLink,
+      retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),
+      previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,
+      saveAndNext:onNext?async()=>{if(!reviewDraft&&!finding&&!comment.trim()&&await save())onNext();}:null,
+      reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}
+  /><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
   return <><Sheet open={open} onOpenChange={v=>{if(!v)leave(()=>onOpenChange(false));}}><SheetContent className="w-full sm:max-w-3xl overflow-y-auto bg-surface-card" data-testid="framework-drawer"><SheetHeader><SheetTitle>{program} {definition.id} · {definition.title}</SheetTitle><SheetDescription>Assess the scoped implementation, link evidence and follow remediation.</SheetDescription></SheetHeader>
     <div className="sticky top-0 z-10 bg-surface-card py-2 flex flex-wrap items-center justify-between gap-2 mt-3"><div className="text-xs text-ink-secondary"><p>{position||'Assessment record'}</p><p className="font-medium text-ink-primary mt-1" aria-label="Saved conclusion">Saved assessment: {statuses[current.status]||'Status not recorded'}</p><p>Owner: {current.owner_id?who(current.owner_id):'Unassigned'} · Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}</p></div><div className="flex gap-1"><Button variant="ghost" size="sm" disabled={!onPrevious||busy} onClick={()=>leave(onPrevious)}>Previous</Button><Button variant="ghost" size="sm" disabled={!onNext||busy} onClick={()=>leave(onNext)}>Next</Button></div></div>
     {!ctx&&!error&&<p role="status" className="text-xs text-ink-secondary mb-3">Loading linked work…</p>}

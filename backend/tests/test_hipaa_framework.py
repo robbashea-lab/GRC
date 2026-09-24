@@ -152,6 +152,7 @@ class HipaaTests(unittest.IsolatedAsyncioTestCase):
         a=(await self.configure())['assessments'][0]['framework_assessment_id']
         b=(await self.configure(cid='b'))['assessments'][0]['framework_assessment_id']
         await server.db.vendors.insert_many([{'vendor_id':'va','client_id':'a','name':'Scoped BA'}, {'vendor_id':'vb','client_id':'b','name':'Other BA'}])
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'platform_admin'}})
         self.sign_in('member');base='/api/framework_assessments/'+a
         self.assertEqual((await self.client.post(base+'/links',json={'kind':'vendors','id':'va'})).status_code,200)
         self.assertEqual((await self.client.post(base+'/links',json={'kind':'vendors','id':'vb'})).status_code,403)

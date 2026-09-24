@@ -43,3 +43,17 @@ test('successful completion becomes a read-only baseline and operational handoff
   expect(container.textContent).toContain('View onboarding baseline');
   expect(container.querySelector('a[href="/dashboard"]')).toBeTruthy();
 });
+
+test('entered first due date remains visible and reaches draft and final submission',async()=>{
+  mockState.step=2;mockState.requirements={'cis-ig1':'applies'};
+  mockState.policies=Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure']));
+  await act(async()=>root.render(<Onboarding/>));
+  const date=container.querySelector('[aria-label="First due date — Enterprise Asset Inventory Review"]');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(date,'2028-02-29');date.dispatchEvent(new Event('input',{bubbles:true}));});
+  expect(date.value).toBe('2028-02-29');
+  expect(Object.values(api.post.mock.calls.at(-1)[1].state.framework_reviews)[0].due_date).toBe('2028-02-29');
+  await act(async()=>button('Next').click());
+  await act(async()=>button('Complete onboarding').click());
+  const final=api.post.mock.calls.find(([,body])=>body.finalize)[1];
+  expect(Object.values(final.state.framework_reviews)[0].due_date).toBe('2028-02-29');
+});

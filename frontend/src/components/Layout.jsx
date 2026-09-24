@@ -76,7 +76,7 @@ function ContextHeader({ isInternal, atPlatform }) {
           {initial}
         </div>
         <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wider text-ink-onDarkMuted font-mono">Client Org</div>
+          <div className="text-xs uppercase tracking-wider text-ink-onDark2 font-mono">Client Org</div>
           <div className="text-sm text-ink-onDark font-medium truncate">
             {currentClient?.name || "Select a client…"}
           </div>

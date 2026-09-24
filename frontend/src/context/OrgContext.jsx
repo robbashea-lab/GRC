@@ -2,10 +2,12 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import api from "@/lib/api";
 
 const OrgContext = createContext(null);
+const selectedClient=()=>{try{return localStorage.getItem('grc_client_id')||'';}catch{return '';}};
+const rememberClient=id=>{try{localStorage.setItem('grc_client_id',id);}catch{/* Selection is a preference, never proof of authorization. */}};
 
 export function OrgProvider({ children }) {
   const [clients, setClients] = useState([]);
-  const [currentClientId, setCurrentClientId] = useState(() => localStorage.getItem("grc_client_id") || "");
+  const [currentClientId, setCurrentClientId] = useState(selectedClient);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -15,13 +17,13 @@ export function OrgProvider({ children }) {
       setClients(data);
       // Keep the previously-selected client if still authorized; otherwise fall back to the first client.
       // Internal users (super/platform admin) may land on /clients with no active selection — that's fine.
-      const stored = localStorage.getItem("grc_client_id") || "";
+      const stored = selectedClient();
       const found = data.find((c) => c.client_id === stored);
       if (found) {
         setCurrentClientId(stored);
       } else if (data.length) {
         setCurrentClientId(data[0].client_id);
-        localStorage.setItem("grc_client_id", data[0].client_id);
+        rememberClient(data[0].client_id);
       } else {
         setCurrentClientId("");
       }
@@ -34,7 +36,7 @@ export function OrgProvider({ children }) {
 
   const switchClient = (id) => {
     setCurrentClientId(id);
-    localStorage.setItem("grc_client_id", id);
+    rememberClient(id);
   };
 
   const currentClient = clients.find((c) => c.client_id === currentClientId) || null;

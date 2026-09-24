@@ -118,12 +118,14 @@ class ReviewSetup(BaseModel):
     due_date: Optional[str]=Field(default=None,max_length=10)
 
 async def workspace_work(s,cid,rows):
-    """Three bounded-field reads, no occurrence/evidence/history payloads or per-row queries."""
+    """Four bounded-field reads, no occurrence/evidence/history payloads or per-row queries."""
     if not rows:return {}
     projection={'_id':0,'client_id':1,'review_id':1,'finding_id':1,'task_id':1,'framework_assessment_id':1,'framework_key':1,'framework_safeguards':1,'status':1,'due_date':1}
     reviews=await s.db.reviews.find({'client_id':cid},projection).to_list(None)
     findings=await s.db.findings.find({'client_id':cid,'status':{'$nin':['closed','accepted']}},projection).to_list(None)
     tasks=await s.db.tasks.find({'client_id':cid,'status':{'$nin':['done','cancelled']}},projection).to_list(None)
+    # Evidence dates only (no content): supports derived validation freshness.
+    evidence=await s.db.evidence.find({'client_id':cid},{'_id':0,'evidence_id':1,'linked_type':1,'linked_id':1,'evidence_date':1,'created_at':1}).to_list(None)
     today=datetime.now(timezone.utc).date().isoformat()
     result={}
     for row in rows:
@@ -134,9 +136,13 @@ async def workspace_work(s,cid,rows):
         fs=[f for f in findings if linked('findings',f['finding_id']) or f.get('framework_assessment_id')==aid or f.get('review_id') in rids]
         fids={f['finding_id'] for f in fs}
         def overdue(r):return bool(r.get('due_date')) and r['due_date'][:10]<today
+        ts=[t for t in tasks if linked('tasks',t['task_id']) or t.get('framework_assessment_id')==aid or t.get('review_id') in rids or t.get('finding_id') in fids]
+        es=[e for e in evidence if linked('evidence',e['evidence_id']) or (e.get('linked_type') in ('framework_assessment','framework_assessments') and e.get('linked_id')==aid)]
+        dates=sorted(str(e.get('evidence_date') or e.get('created_at') or '')[:10] for e in es if e.get('evidence_date') or e.get('created_at'))
         result[aid]={'review_ids':sorted(rids),'finding_ids':sorted(fids),'open_findings':len(fs),
           'overdue_reviews':sum(overdue(r) for r in rs if r.get('status') not in ('completed','cancelled')),
-          'overdue_actions':sum(overdue(t) for t in tasks if linked('tasks',t['task_id']) or t.get('framework_assessment_id')==aid or t.get('review_id') in rids or t.get('finding_id') in fids)}
+          'overdue_actions':sum(overdue(t) for t in ts),'open_actions':len(ts),
+          'evidence_count':len(es),'latest_evidence_at':dates[-1] if dates else None}
     return result
 
 class FindingInput(BaseModel):

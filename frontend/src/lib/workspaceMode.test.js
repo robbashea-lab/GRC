@@ -22,9 +22,10 @@ test('deferred preview blocks standard requests even with a stale real token',as
   expect(localStorage.getItem('grc_token')).toBeNull();
 });
 test('standard mode uses HTTP; demo has no bearer token or HTTP writes',async()=>{
-  localStorage.setItem('grc_token','generated-test-token');
+  require('./api').setAccessToken('generated-test-token');
   await api.get('/clients');expect(http).toHaveBeenCalledTimes(1);
   expect(http.mock.calls[0][0].headers.Authorization).toBe('Bearer generated-test-token');
+  expect(localStorage.getItem('grc_token')).toBeNull();
   setWorkspaceMode('demo');await api.post('/demo/enter');
   const {data:clients}=await api.get('/clients');expect(clients).toHaveLength(7);
   await api.post('/clients',{name:'Isolated test client'});

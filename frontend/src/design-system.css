@@ -588,3 +588,6 @@ td:last-child > button[aria-label="Row actions"] {
 :root :is(.app-sidebar, .login-shell) .ui-control { background: var(--color-sidebar-hover-bg); color: var(--color-text-on-dark); border-color: var(--color-input-border); }
 :root :is(.app-sidebar, .login-shell) .ui-control::placeholder { color: var(--color-sidebar-text); }
 :root :is(.app-sidebar, .login-shell) .ui-control:disabled { color: var(--color-text-on-dark-muted); }
+.summary-card-button { transition: border-color var(--duration-feedback), box-shadow var(--duration-feedback); }
+.summary-card-button:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-floating); }
+.summary-card-button:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }

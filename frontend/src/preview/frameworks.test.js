@@ -11,6 +11,20 @@ const state=(programs=['cis-ig1'])=>({version:3,step:3,policies:Object.fromEntri
 const configure=async(s=state(),id=cid)=>{await api.post('/onboarding/baseline',{client_id:id,state:s,finalize:true});return get('frameworks/cis-ig1',id);};
 beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');cid=(await api.post('/clients',{name:'CIS framework QA'})).data.client_id;});
 
+test.each(['2028-02-29','2027-11-07',''])('onboarding first due date %s survives persistence and retrieval',async due_date=>{
+  const s=state(),plan=cis.review_plans[0];
+  s.framework_reviews[plan.key]={enabled:true,recurrence:plan.default_cadence,due_date};
+  await api.post('/onboarding/baseline',{client_id:cid,state:s,finalize:false});
+  const draft=(await get('onboarding/baseline')).state;
+  expect(draft.framework_reviews[plan.key].due_date).toBe(due_date);
+  await configure(draft);
+  const review=(await get('reviews')).find(r=>r.framework_plan_key===plan.key);
+  expect(review.due_date).toBe(due_date||null);
+  expect(review.status).toBe(due_date?'upcoming':'needs_scheduling');
+  expect(JSON.parse(sessionStorage.getItem(STORE_KEY)).reviews.find(r=>r.review_id===review.review_id).due_date).toBe(due_date||null);
+  expect((await api.get('/reviews/'+review.review_id)).data.due_date).toBe(due_date||null);
+});
+
 test('workspace Review setup reuses onboarding, creates normal scheduled work and survives retries',async()=>{
   const w=await configure(),row=w.assessments[0],base='/framework_assessments/'+row.framework_assessment_id+'/reviews';
   const plan=cis.review_plans.find(p=>p.safeguards.includes(row.definition_id));

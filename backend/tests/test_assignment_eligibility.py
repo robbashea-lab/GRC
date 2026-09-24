@@ -34,7 +34,7 @@ class AssignmentEligibilityTests(unittest.IsolatedAsyncioTestCase):
     async def test_candidates_authorized_minimal_and_same_name_isolated(self):
         response = await self.client.get('/api/clients/a/assignees')
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertEqual({u['user_id'] for u in response.json()['items']}, {'admin', 'member', 'alex', 'internal', 'global'})
+        self.assertEqual({u['user_id'] for u in response.json()['items']}, {'admin', 'member', 'alex', 'internal'})
         for row in response.json()['items']:
             self.assertEqual(set(row), {'user_id', 'name', 'email'})
         self.assertFalse(response.json()['has_more'])
@@ -56,10 +56,10 @@ class AssignmentEligibilityTests(unittest.IsolatedAsyncioTestCase):
     async def test_all_operational_fields_share_contract(self):
         for kind, fields in FIELDS.items():
             for field in fields:
-                for uid in ('alex', 'internal', 'global', 'admin', None):
+                for uid in ('alex', 'internal', 'admin', None):
                     with self.subTest(kind=kind, field=field, eligible=uid):
                         await validate(server.db, kind, {'client_id': 'a', field: uid}, server._can_access_client)
-                for uid in ('maya', 'foreign', 'foreign_internal', 'former', 'invited', 'unknown', 'missing'):
+                for uid in ('global', 'maya', 'foreign', 'foreign_internal', 'former', 'invited', 'unknown', 'missing'):
                     with self.subTest(kind=kind, field=field, excluded=uid):
                         with self.assertRaises(HTTPException) as error:
                             await validate(server.db, kind, {'client_id': 'a', field: uid}, server._can_access_client)

@@ -8,6 +8,7 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
             {"review_id": "tabletop", "client_id": "a", "title": "Incident Response Tabletop Exercise", "review_type": "incident_response", "status": "in_progress", "recurrence": "annual", "due_date": "2026-09-08", "next_review_date": "2027-09-08", "notes": "Historical exercise results", "period": "2026"},
             {"review_id": "private", "client_id": "b", "title": "Private review"},
         ])
+        await server.db.reviews.update_one({'review_id':'tabletop'},{'$set':{'owner_id':'member'}})
         result = await self.client.post("/api/reviews/tabletop/create-finding", json={"title": "Business Impact Analysis has not been documented", "remediation_title": "Develop and approve a Business Impact Analysis", "severity": "medium", "occurrence_id":"occ_tabletop"})
         self.assertEqual(result.status_code, 200, result.text)
         finding = result.json()
@@ -18,8 +19,10 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
         self.assertEqual(task["finding_id"], finding["finding_id"])
         self.assertEqual(task["review_id"], "tabletop")
         self.assertEqual(task["title"], "Develop and approve a Business Impact Analysis")
+        self.sign_in('admin')
         repeated = await self.client.post(f'/api/findings/{finding["finding_id"]}/create-task', json={})
         self.assertEqual(repeated.json()["task_id"], task["task_id"])
+        self.sign_in('member')
         completed = await self.client.post("/api/reviews/tabletop/complete", json={"occurrence_id":"occ_tabletop", "spawn_next": True, "conclusion": "BIA gap identified", "tested_period": "2026", "tested_scope": "Incident response tabletop", "checklist_confirmed": True, "no_evidence_reason": "Facilitated interview recorded in conclusion"})
         self.assertEqual(completed.status_code, 200, completed.text)
         old, next_review = completed.json()["occurrence"], completed.json()["review"]
@@ -44,13 +47,16 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
         denied = await self.client.get("/api/related?entity_type=reviews&entity_id=private")
         self.assertEqual(denied.status_code, 403)
         moved = await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"client_id": "b"})
+        self.assertEqual(moved.status_code, 403)
+        self.sign_in('admin')
+        moved = await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"client_id": "b"})
         self.assertEqual(moved.status_code, 422)
         cross_link = await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"review_id": "private"})
         self.assertEqual(cross_link.status_code, 422)
 
     async def test_empty_finding_does_not_create_records(self):
         self.sign_in("member")
-        await server.db.reviews.insert_one({"review_id": "r", "client_id": "a", "title": "Review"})
+        await server.db.reviews.insert_one({"review_id": "r", "client_id": "a", "title": "Review", "owner_id":"member"})
         result = await self.client.post("/api/reviews/r/create-finding", json={})
         self.assertEqual(result.status_code, 422)
         self.assertEqual(await server.db.findings.count_documents({}), 0)

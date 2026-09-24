@@ -137,6 +137,8 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         f=await self.client.post(base+'/findings',json=payload);self.assertEqual(f.status_code,200,f.text)
         again=await self.client.post(base+'/findings',json=payload);self.assertEqual(again.json()['finding_id'],f.json()['finding_id'])
         related=(await self.client.get(base+'/related')).json();self.assertEqual(len(related['tasks']),1);self.assertEqual(len(related['evidence']),1)
+        work=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()['work'][aid]
+        self.assertEqual((work['evidence_count'],work['open_actions'],work['open_findings']),(1,1,1));self.assertTrue(work['latest_evidence_at'])
         task=related['tasks'][0]
         response=await self.client.patch('/api/tasks/'+task['task_id'],json={'status':'done'});self.assertEqual(response.status_code,200,response.text)
         related=(await self.client.get(base+'/related')).json()
@@ -175,6 +177,8 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         for path in ['/api/frameworks/cis-ig1?client_id=b','/api/framework_assessments/'+b+'/related','/api/framework_assessments/'+b+'/activity','/api/comments?entity_type=framework_assessments&entity_id='+b]:
             self.assertEqual((await self.client.get(path)).status_code,403,path)
         self.assertEqual((await self.client.post('/api/evidence',json={'client_id':'a','linked_type':'framework_assessment','linked_id':b,'filename':'foreign.txt','content_base64':'eA=='})).status_code,403)
+        self.assertEqual((await self.client.patch(base,json={'notes':'Contributor update'})).status_code,403)
+        await server.db.framework_assessments.update_one({'framework_assessment_id':a},{'$set':{'owner_id':'member'}})
         self.assertEqual((await self.client.patch(base,json={'notes':'Contributor update'})).status_code,200)
         await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
         self.assertEqual((await self.client.patch(base,json={'notes':'Forbidden'})).status_code,403)

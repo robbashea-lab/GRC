@@ -23,6 +23,7 @@ export function riskMatchesView(risk, view, now = new Date()) {
   if (view === 'review_due') return riskReviewDue(risk, now);
   if (view === 'accepted') return risk.status === 'accepted';
   if (['critical','high'].includes(view)) return assessedRisk(risk).risk_level === view;
+  if (view === 'significant') return ['critical','high'].includes(assessedRisk(risk).risk_level);
   return true;
 }
 export function riskSummary(rows, now = new Date()) {
