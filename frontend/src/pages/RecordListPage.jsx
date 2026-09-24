@@ -606,6 +606,7 @@ export default function RecordListPage({ kind }) {
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
+                             : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
                              : <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (
                              <span
