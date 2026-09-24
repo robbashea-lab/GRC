@@ -456,7 +456,7 @@ export default function RecordListPage({ kind }) {
         ) : (
           statusOptions.length > 0 && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectTrigger aria-label="Filter by status" data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
                 {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
@@ -549,7 +549,7 @@ export default function RecordListPage({ kind }) {
                     checked={allChecked || (someChecked ? "indeterminate" : false)}
                     onCheckedChange={toggleAll}
                     data-testid={`${kind}-select-all`}
-                    aria-label={isReviews ? 'Select all reviews' : undefined}
+                    aria-label={`Select all ${kind.replaceAll('_',' ')}`}
                   />
                 </th>
                 {columns.map(c => <th key={c.key} data-column={isReviews ? c.key : undefined} className="tbl-head" aria-sort={table.state.sort?.key === c.key ? (table.state.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}><ColumnControl table={table} column={c} /></th>)}
@@ -575,7 +575,7 @@ export default function RecordListPage({ kind }) {
                       checked={checked.has(row[idField])}
                       onCheckedChange={() => toggleOne(row[idField])}
                       data-testid={`${kind}-select-${i}`}
-                      aria-label={isReviews ? `Select ${row.title}` : undefined}
+                      aria-label={`Select ${row.title || row.name || 'record'}`}
                     />
                   </td>
                   {schema.columns.map((c) => {
