@@ -64,8 +64,8 @@ export const BRAWNDO_CIS={
 // [safeguard, title, severity, action title, assignee index, action due (days), finding age]
 export const BRAWNDO_CIS_FINDINGS=[
   ['1.1','Asset inventory excludes plant-floor, mobile and network devices','high','Extend inventory to all asset classes and reconcile against EDR and DHCP',2,-12,50],
-  ['11.4','No isolated or immutable copy of recovery data','high','Configure immutable backup copy and verify isolation',2,-5,140],
-  ['6.2','SaaS access not revoked consistently at termination','medium','Add non-SSO SaaS applications to offboarding checklist',0,21,28],
+  ['11.4','No isolated or immutable copy of recovery data','high','Configure immutable backup copy and verify isolation',2,20,140],
+  ['6.2','SaaS access not revoked consistently at termination','medium','Add non-SSO SaaS applications to offboarding checklist',0,35,28],
   ['7.4','Third-party application patching is manual and irregular','medium','Automate third-party application patching for managed endpoints',2,40,18],
   ['14.1','Awareness training completion not tracked for the current year','medium','Report training completion and follow up non-completers',1,-30,90],
 ];

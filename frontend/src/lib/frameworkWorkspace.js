@@ -27,7 +27,7 @@ export const needsAttention=r=>incomplete(r)||(r.work?.overdue_reviews||0)>0||(r
 export const nextAssessment=(rows,lastId)=>rows.find(r=>r.framework_assessment_id===lastId&&incomplete(r))||rows.find(incomplete)||rows.find(needsAttention)||null;
 // Derived operational views (reference workspace). They never alter assessment conclusions.
 const VIEWS={
-  attention:needsAttention,assessed:r=>r.status!=='not_assessed',
+  attention:needsAttention,assessed:r=>r.status!=='not_assessed',gaps:r=>['in_progress','needs_attention'].includes(r.status),
   stale:r=>isStale(r),unevidenced:lacksEvidence,
   unremediated:r=>['in_progress','needs_attention'].includes(r.status)&&!r.work?.open_findings,
   overdue_actions:r=>(r.work?.overdue_actions||0)>0,

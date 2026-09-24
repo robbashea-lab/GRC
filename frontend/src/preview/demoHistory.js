@@ -394,11 +394,19 @@ export function finishDemoStore(db, clock, {
         title, severity, remediation_title: remediation, request_id: 'brawndo-cis-' + id,
         description: a.implementation
       });
-      Object.assign(f, {created_by: owner, created_at: date(-age), updated_at: date(-Math.min(age, 7)), status: due < 0 ? 'in_remediation' : 'open'});
-      for (const t of db.tasks.filter(t => t.finding_id === f.finding_id)) Object.assign(t, {
+      Object.assign(f, {created_by: owner, due_date: date(due + 14), created_at: date(-age), updated_at: date(-Math.min(age, 7)), status: due < 0 ? 'in_remediation' : 'open'});
+      for (const t of db.tasks.filter(t => t.finding_id === f.finding_id)) {
+        const old = t.task_id;
+        t.task_id = cid + '_cis_action_' + id;
+        for (const l of db.logs) {
+          if (l.entity_id === old) l.entity_id = t.task_id;
+          if (l.meta?.task_id === old) l.meta.task_id = t.task_id;
+        }
+        Object.assign(t, {
         assignee_id: users[who].user_id, due_date: date(due), created_by: owner, created_at: date(-age), updated_at: date(-Math.min(age, 7)),
         status: due < 0 ? 'in_progress' : 'open'
       });
+      }
     }
   }
   // Replace wall-clock workflow telemetry with explicit, internally consistent

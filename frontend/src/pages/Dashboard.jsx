@@ -16,6 +16,7 @@ import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
 import { loadClientDashboard, labelDashboardRows } from "@/lib/loadClientDashboard";
 import { calendarDay } from "@/lib/clientDashboard";
+import { isBrawndoReference } from "@/components/BrawndoCisAssessment";
 
 const ORGANIZATION_SCOPE = {kind:'org'};
 
@@ -96,7 +97,9 @@ export default function Dashboard() {
     setSelected(null);
     setScope(next.kind==="framework"?{kind:"org"}:next);
   }
-  const clientSubtitle = scope.kind === "org"
+  const reference = isBrawndoReference(currentClientId, user);
+  const clientSubtitle = reference && scope.kind === "org" ? `${currentClient?.name} · ${(data.programs||[]).map(p=>p.label).join(", ")||"GRC program"}`
+    : scope.kind === "org"
     ? `${currentClient?.name || "All clients"} · Current GRC program status, priorities, and upcoming activity`
     : `${currentClient?.name || "All clients"} · ${data.scope_label || ""}`;
 
@@ -133,7 +136,7 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader
-        title="GRC Program Overview"
+        title={reference ? "Program Overview" : "GRC Program Overview"}
         subtitle={clientSubtitle}
         action={
           <div className="flex flex-wrap items-center gap-2">
@@ -166,10 +169,10 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="page-gutter pt-4 text-sm">
-        {!data.onboardingCompleted ? <div className="border border-line rounded-lg bg-surface-card p-3"><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program. </span><Link className="text-link underline" to="/client-profile">Continue onboarding</Link></div> : <Link className="text-link underline" to="/client-profile?tab=program">View Client Profile & program configuration</Link>}
-      </div>
-      <DashboardManagement key={requestKey+":"+framework} clientId={currentClientId} posture={data.posture} programs={data.programs} framework={framework} onOpen={openItem} loadDetail={data.contract_version===2?loadDetail:undefined} Table={OperationalTable} />
+      {(!reference || !data.onboardingCompleted) && <div className="page-gutter pt-4 text-sm">
+        {!data.onboardingCompleted ? <div className="border border-line rounded-lg bg-surface-card p-3"><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program. </span><Link className="text-link underline" to="/client-profile">Continue onboarding</Link></div> : !reference && <Link className="text-link underline" to="/client-profile?tab=program">View Client Profile & program configuration</Link>}
+      </div>}
+      <DashboardManagement key={requestKey+":"+framework} clientId={currentClientId} posture={data.posture} programs={data.programs} framework={framework} onOpen={openItem} loadDetail={data.contract_version===2?loadDetail:undefined} Table={OperationalTable} reference={reference} />
       {selected && selected.record.client_id === currentClientId && (
         <RecordDrawer key={selected.key} open onOpenChange={open => { if (!open) setSelected(null); }}
           kind={selected.kind} record={selected.record} schema={SCHEMAS[selected.kind]?.fields}

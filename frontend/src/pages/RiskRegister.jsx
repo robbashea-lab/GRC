@@ -110,6 +110,8 @@ export default function RiskRegister() {
   },[portfolioSignificant,currentClientId,table]);
 
   const summary = useMemo(() => riskSummary(rows, new Date(now)), [rows, now]);
+  function selectView(id) { const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',significant:'risk_level',review_due:'next_review'})[id]; if (key) table.setFilter(key, []); setView(id); }
+  const toggleView = id => selectView(view === id ? 'all_active' : id);
 
   async function exportCsv() {
     const cols = ["display_id", "risk_id", "title", "category", "likelihood_score", "impact_score", "risk_score", "risk_level", "owner", "status", "treatment", "date_identified", "last_reviewed", "next_review"];
@@ -157,10 +159,10 @@ export default function RiskRegister() {
       <div className="page-gutter pt-4">
         {portfolioSignificant&&<div className="mb-3 text-sm text-ink-secondary" data-testid="portfolio-risk-filter">Active High / Critical Risks · includes accepted Risks <button className="ml-2 underline" onClick={()=>{const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}}>Clear portfolio filter</button></div>}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="risk-summary">
-          <SummaryCard label="Active Risks" value={summary.open} icon={ShieldAlert} tone="neutral" />
-          <SummaryCard label="High / Critical" value={summary.high_crit} icon={AlertOctagon} tone="critical" />
-          <SummaryCard label="Accepted" value={summary.accepted} icon={Handshake} tone="info" />
-          <SummaryCard label="Due for Review" value={summary.review_due} icon={CalendarClock} tone="duesoon" />
+          <SummaryCard label="Active Risks" value={summary.open} icon={ShieldAlert} tone="neutral" onClick={() => toggleView("all_active")} pressed={view === "all_active"} />
+          <SummaryCard label="High / Critical" value={summary.high_crit} icon={AlertOctagon} tone="critical" onClick={() => toggleView("significant")} pressed={view === "significant"} />
+          <SummaryCard label="Accepted" value={summary.accepted} icon={Handshake} tone="info" onClick={() => toggleView("accepted")} pressed={view === "accepted"} />
+          <SummaryCard label="Due for Review" value={summary.review_due} icon={CalendarClock} tone="duesoon" onClick={() => toggleView("review_due")} pressed={view === "review_due"} />
         </div>
       </div>
 
@@ -173,7 +175,7 @@ export default function RiskRegister() {
           {VIEWS.map((v) => {
             const active = view === v.id;
             return (
-              <button key={v.id} aria-pressed={active} onClick={() => { const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',review_due:'next_review'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`risk-view-${v.id}`}
+              <button key={v.id} aria-pressed={active} onClick={() => selectView(v.id)} data-testid={`risk-view-${v.id}`}
                 className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
                 {v.label}
               </button>
@@ -244,7 +246,7 @@ export default function RiskRegister() {
   );
 }
 
-function SummaryCard({ label, value, icon: Icon, tone }) {
+function SummaryCard({ label, value, icon: Icon, tone, onClick, pressed }) {
   const tones = {
     critical: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
     duesoon: "text-semantic-duesoon-text bg-semantic-duesoon-bg border-semantic-duesoon-border",
@@ -252,7 +254,7 @@ function SummaryCard({ label, value, icon: Icon, tone }) {
     neutral: "text-ink-secondary bg-surface-subtle border-line",
   };
   return (
-    <div className="bg-surface-card border border-line rounded-lg p-3.5 flex items-start justify-between gap-3">
+    <button type="button" onClick={onClick} aria-pressed={pressed} aria-label={`${label}: ${value}. Show in register`} className={`summary-card-button bg-surface-card border rounded-lg p-3.5 flex items-start justify-between gap-3 text-left w-full ${pressed ? 'border-ink-primary shadow-sm' : 'border-line'}`}>
       <div>
         <div className="metric-label">{label}</div>
         <div className="metric-value mt-1">{value}</div>
@@ -260,7 +262,7 @@ function SummaryCard({ label, value, icon: Icon, tone }) {
       <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}>
         <Icon className="h-4 w-4" />
       </div>
-    </div>
+    </button>
   );
 }
 

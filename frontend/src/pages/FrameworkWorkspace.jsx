@@ -17,7 +17,7 @@ import '@/components/BrawndoCisWorkspace.css';
 import {groupRequirements,nextAssessment,matchesAssessment,sectionSummary,needsAttention,hierarchyPath,visibleSections} from '@/lib/frameworkWorkspace';
 
 const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',not_assessed:'Not Assessed',assessed:'Assessed'};
-const VIEW_LABELS={attention:'Needs attention',addressed:'Implemented',in_progress:'Partially implemented',needs_attention:'Not implemented / needs validation',not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:'Implemented without evidence',unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation actions',assessed:'Assessed'};
+const VIEW_LABELS={attention:'Needs attention',gaps:'Partial or not implemented',addressed:'Implemented',in_progress:'Partially implemented',needs_attention:'Not implemented / needs validation',not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:'Implemented without evidence',unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation actions',assessed:'Assessed'};
 const ISO_VIEWS={
   isms_clause:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
   annex_control:{label:'Annex A / SoA',matches:r=>r.specification==='annex_control'},
@@ -81,7 +81,9 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
   const [data,setData]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[search,setSearch]=useState(''),[filter,setFilter]=useState('all');
   const [view,setView]=useState('all'),[showRetained,setShowRetained]=useState(false);
-  useEffect(()=>{const p=readPreference(preferenceKey);setPreference(p);setExpanded(p.section?[p.section]:[]);setData(null);setSearch('');setFilter('all');setView('all');setShowRetained(false);},[preferenceKey]);
+  // A dashboard deep link (?view=) opens the reference workspace on that derived view.
+  const initialView=prototype?params.get('view'):null;
+  useEffect(()=>{const p=readPreference(preferenceKey);setPreference(p);setExpanded(p.section?[p.section]:[]);setData(null);setSearch('');setFilter(initialView&&VIEW_LABELS[initialView]?initialView:'all');setView('all');setShowRetained(false);},[preferenceKey]);// eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{const c=new AbortController();setError('');if(!clientId)return;api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}).then(r=>{if(!c.signal.aborted)setData(r.data);}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[frameworkKey,clientId,revision]);
   const remember=value=>{const p={...preference,...value};setPreference(p);try{sessionStorage.setItem(preferenceKey,JSON.stringify(p));}catch{/* UI preference only; assessment persistence is server-owned. */}};
   const catalog=frameworkCatalog(frameworkKey),statuses=operatorStatuses(frameworkKey);
@@ -96,12 +98,15 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     return true;
   });
   const visible=scoped.filter(r=>matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
+  const linkedViewKey=prototype&&data&&filter!=='all'&&filter===initialView?`${clientId}:${filter}`:null;
+  useEffect(()=>{if(linkedViewKey)setExpanded(groupRequirements(frameworkKey,visible).map(n=>n.key));},[linkedViewKey]);// eslint-disable-line react-hooks/exhaustive-deps
   const selected=rows.find(r=>r.framework_assessment_id===params.get('assessment'))||null;
   const openRecord=row=>{remember({lastId:row.framework_assessment_id,section:hierarchyPath(frameworkKey,row)[0].id});const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);setParams(next);};
   const closeRecord=()=>{const next=new URLSearchParams(params);next.delete('assessment');setParams(next,{replace:true});setRevision(n=>n+1);};
   const toggle=key=>{setExpanded(old=>old.includes(key)?old.filter(k=>k!==key):[...old,key]);remember({section:key.split('/')[0]});};
   const allKeys=ns=>ns.flatMap(n=>[n.key,...allKeys(n.children)]);
-  const chooseFilter=key=>{setFilter(key);if(prototype)setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,key,search)))));};
+  const dropLinkedView=()=>{if(params.get('view')){const n=new URLSearchParams(params);n.delete('view');setParams(n,{replace:true});}};
+  const chooseFilter=key=>{dropLinkedView();setFilter(key);if(prototype)setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,key,search)))));};
   const changeSearch=value=>{setSearch(value);if(prototype&&value.trim())setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,filter,value)))));};
   if(error)return <div role="alert" className="text-sm">{error}{prototype&&<Button variant="outline" onClick={()=>setRevision(n=>n+1)}>Retry workspace</Button>}</div>;
   if(!data)return <p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>;
@@ -121,7 +126,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     {prototype?<div className="cis-toolbar">
       <Input className="cis-search" aria-label="Search safeguards" placeholder="Search safeguard number or title…" value={search} onChange={e=>changeSearch(e.target.value)}/>
       {(search||filter!=='all')&&<p role="status" className="text-sm text-ink-secondary">{filter!=='all'&&<span className="cis-active-view">{VIEW_LABELS[filter]}</span>}Showing {visible.length} of {scoped.length} safeguards</p>}
-      {(search||filter!=='all')&&<Button size="sm" variant="ghost" onClick={()=>{setSearch('');setFilter('all');}}>Clear search and filters</Button>}
+      {(search||filter!=='all')&&<Button size="sm" variant="ghost" onClick={()=>{dropLinkedView();setSearch('');setFilter('all');}}>Clear search and filters</Button>}
       <div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div>
     </div>:<>
     <Input aria-label="Search requirements" placeholder="Search requirements…" value={search} onChange={e=>changeSearch(e.target.value)}/>

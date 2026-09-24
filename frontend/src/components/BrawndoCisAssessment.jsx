@@ -23,8 +23,9 @@ const LADDER_STATE={done:'confirmed',partial:'partly confirmed',missing:'not est
 
 // Explicit synthetic-client identity, not a mutable display-name match. This is
 // presentation gating only; the normal adapter/server still owns authorization.
+export const isBrawndoReference=(clientId,user)=>user?.workspace_mode==='demo'&&clientId==='demo_brawndo';
 export function isBrawndoCisPrototype(clientId,record,user){
-  return user?.workspace_mode==='demo' && clientId==='demo_brawndo' &&
+  return isBrawndoReference(clientId,user) &&
     record?.client_id===clientId && record.framework_key==='cis-ig1';
 }
 const RECORD_IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',vendors:'vendor_id'};

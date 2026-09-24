@@ -137,6 +137,8 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         f=await self.client.post(base+'/findings',json=payload);self.assertEqual(f.status_code,200,f.text)
         again=await self.client.post(base+'/findings',json=payload);self.assertEqual(again.json()['finding_id'],f.json()['finding_id'])
         related=(await self.client.get(base+'/related')).json();self.assertEqual(len(related['tasks']),1);self.assertEqual(len(related['evidence']),1)
+        work=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()['work'][aid]
+        self.assertEqual((work['evidence_count'],work['open_actions'],work['open_findings']),(1,1,1));self.assertTrue(work['latest_evidence_at'])
         task=related['tasks'][0]
         response=await self.client.patch('/api/tasks/'+task['task_id'],json={'status':'done'});self.assertEqual(response.status_code,200,response.text)
         related=(await self.client.get(base+'/related')).json()

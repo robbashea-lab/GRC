@@ -106,6 +106,8 @@ export default function VendorRegister() {
   const table = useTableControls({ columns, rows: tableSource, module: 'vendor-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status' || key === 'criticality') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
+  function selectView(id) { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
+  const toggleView = id => selectView(view === id ? 'all_active' : id);
   const summary = useMemo(() => {
     const s = { critical: 0, review_due: 0, contract_soon: 0, assurance: 0 };
     enriched.forEach((v) => {
@@ -149,10 +151,10 @@ export default function VendorRegister() {
       />
       <div className="page-gutter pt-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="vendor-summary">
-          <SummaryCard label="Critical Vendors" value={summary.critical} icon={Building2} tone="critical" />
-          <SummaryCard label="Reviews Due" value={summary.review_due} icon={CalendarClock} tone="duesoon" />
-          <SummaryCard label="Contracts Expiring" value={summary.contract_soon} icon={FileSignature} tone="duesoon" />
-          <SummaryCard label="Security Assurance Due" value={summary.assurance} icon={AlertOctagon} tone="critical" />
+          <SummaryCard label="Critical Vendors" value={summary.critical} icon={Building2} tone="critical" onClick={() => toggleView("critical")} pressed={view === "critical"} />
+          <SummaryCard label="Reviews Due" value={summary.review_due} icon={CalendarClock} tone="duesoon" onClick={() => toggleView("review_due")} pressed={view === "review_due"} />
+          <SummaryCard label="Contracts Expiring" value={summary.contract_soon} icon={FileSignature} tone="duesoon" onClick={() => toggleView("contract_soon")} pressed={view === "contract_soon"} />
+          <SummaryCard label="Security Assurance Due" value={summary.assurance} icon={AlertOctagon} tone="critical" onClick={() => toggleView("assurance")} pressed={view === "assurance"} />
         </div>
       </div>
       <div className="register-toolbar">
@@ -162,7 +164,7 @@ export default function VendorRegister() {
         </div>
         <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="vendor-views">
           {VIEWS.map((v) => (
-            <button key={v.id} aria-pressed={view === v.id} onClick={() => { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[v.id]; if (key) table.setFilter(key, []); setView(v.id); }} data-testid={`vendor-view-${v.id}`}
+            <button key={v.id} aria-pressed={view === v.id} onClick={() => selectView(v.id)} data-testid={`vendor-view-${v.id}`}
               className={`px-3 h-8 text-xs rounded-[6px] transition ${view === v.id ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>{v.label}</button>
           ))}
         </div>
@@ -240,7 +242,7 @@ export default function VendorRegister() {
   );
 }
 
-function SummaryCard({ label, value, icon: Icon, tone }) {
+function SummaryCard({ label, value, icon: Icon, tone, onClick, pressed }) {
   const tones = {
     critical: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
     duesoon: "text-semantic-duesoon-text bg-semantic-duesoon-bg border-semantic-duesoon-border",
@@ -248,13 +250,13 @@ function SummaryCard({ label, value, icon: Icon, tone }) {
     neutral: "text-ink-secondary bg-surface-subtle border-line",
   };
   return (
-    <div className="bg-surface-card border border-line rounded-lg p-3.5 flex items-start justify-between gap-3">
+    <button type="button" onClick={onClick} aria-pressed={pressed} aria-label={`${label}: ${value}. Show in register`} className={`summary-card-button bg-surface-card border rounded-lg p-3.5 flex items-start justify-between gap-3 text-left w-full ${pressed ? 'border-ink-primary shadow-sm' : 'border-line'}`}>
       <div>
         <div className="metric-label">{label}</div>
         <div className="metric-value mt-1">{value}</div>
       </div>
       <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}><Icon className="h-4 w-4" /></div>
-    </div>
+    </button>
   );
 }
 
