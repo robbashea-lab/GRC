@@ -1,3 +1,4 @@
+import {isStale,lacksEvidence} from './cisVerification';
 import {assessmentProgress} from './frameworkOperator';
 
 // Native hierarchy adapters; catalog order remains authoritative (never lexical ID sorting).
@@ -24,8 +25,15 @@ export function groupRequirements(key,rows){
 export const incomplete=r=>!['addressed','not_applicable'].includes(r.status);
 export const needsAttention=r=>incomplete(r)||(r.work?.overdue_reviews||0)>0||(r.work?.open_findings||0)>0||(r.work?.overdue_actions||0)>0;
 export const nextAssessment=(rows,lastId)=>rows.find(r=>r.framework_assessment_id===lastId&&incomplete(r))||rows.find(incomplete)||rows.find(needsAttention)||null;
+// Derived operational views (reference workspace). They never alter assessment conclusions.
+const VIEWS={
+  attention:needsAttention,assessed:r=>r.status!=='not_assessed',
+  stale:r=>isStale(r),unevidenced:lacksEvidence,
+  unremediated:r=>['in_progress','needs_attention'].includes(r.status)&&!r.work?.open_findings,
+  overdue_actions:r=>(r.work?.overdue_actions||0)>0,
+};
 export function matchesAssessment(row,filter,search=''){
-  const status=filter==='all'||(filter==='attention'?needsAttention(row):filter==='assessed'?row.status!=='not_assessed':row.status===filter);
+  const status=filter==='all'||(VIEWS[filter]?VIEWS[filter](row):row.status===filter);
   return status&&`${row.definition_id} ${row.title} ${row.control_name} ${row.function_name||''}`.toLowerCase().includes(search.trim().toLowerCase());
 }
 export function sectionSummary(rows){
@@ -48,13 +56,18 @@ export function recurrencePresentation(definition,catalog){
 }
 
 // Used by the Demo read model. Backend builds the same small operational projection.
-export function assessmentWork(row,{reviews=[],findings=[],tasks=[]},today=new Date().toISOString().slice(0,10)){
+export function assessmentWork(row,{reviews=[],findings=[],tasks=[],evidence=[]},today=new Date().toISOString().slice(0,10)){
   const linked=(kind,id)=>(row.related_links||[]).some(l=>l.kind===kind&&l.id===id);
   const rs=reviews.filter(r=>r.client_id===row.client_id&&(linked('reviews',r.review_id)||(r.framework_key===row.framework_key&&r.framework_safeguards?.includes(row.definition_id))));
   const rids=new Set(rs.map(r=>r.review_id));
   const fs=findings.filter(f=>f.client_id===row.client_id&&!['closed','accepted'].includes(f.status)&&(linked('findings',f.finding_id)||f.framework_assessment_id===row.framework_assessment_id||rids.has(f.review_id)));
   const fids=new Set(fs.map(f=>f.finding_id));
   const overdue=(r,closed)=>!closed.includes(r.status)&&!!r.due_date&&r.due_date.slice(0,10)<today;
+  const ts=tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||t.framework_assessment_id===row.framework_assessment_id||rids.has(t.review_id)||fids.has(t.finding_id)));
+  // Evidence directly supporting this assessment (uploaded to it or linked); dates only, never content.
+  const es=evidence.filter(e=>e.client_id===row.client_id&&(linked('evidence',e.evidence_id)||(['framework_assessment','framework_assessments'].includes(e.linked_type)&&e.linked_id===row.framework_assessment_id)));
+  const dates=es.map(e=>(e.evidence_date||e.created_at||'').slice(0,10)).filter(Boolean).sort();
   return {review_ids:[...rids],finding_ids:[...fids],open_findings:fs.length,overdue_reviews:rs.filter(r=>overdue(r,['completed','cancelled'])).length,
-    overdue_actions:tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||t.framework_assessment_id===row.framework_assessment_id||rids.has(t.review_id)||fids.has(t.finding_id))&&overdue(t,['done','cancelled'])).length};
+    overdue_actions:ts.filter(t=>overdue(t,['done','cancelled'])).length,open_actions:ts.filter(t=>!['done','cancelled'].includes(t.status)).length,
+    evidence_count:es.length,latest_evidence_at:dates.at(-1)||null};
 }

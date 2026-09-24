@@ -36,7 +36,8 @@ test('activation requires the exact synthetic client, framework, record tenant a
 });
 test('linear hierarchy, reference-only content, specific validation and retained metadata',async()=>{
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
- expect([...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent)).toEqual(['1What does CIS require?','2Do we do it?','3How do we do it?','4Evidence & Validation','5Gap / Remediation']);
+ expect([...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent)).toEqual(['1What CIS requires','2Client status','3Delivery & current state','4Verification','5Required actions']);
+ expect(container.textContent).toContain('Unknown devices are detected');expect(container.querySelector('[aria-label^="Verification status"]').children).toHaveLength(6);
  expect(container.textContent).toContain('Unknown-device records');expect(container.textContent).toContain('not official CIS text');
  expect(container.querySelector('a').href).toMatch(/^https:\/\/cas.docs.cisecurity.org\//);
  expect(container.querySelector('[aria-label="Technology / Processes Used"]').value).toBe('Recorded platform');
@@ -130,4 +131,11 @@ test('context refresh cannot erase an already refreshed evidence picker',async()
  await act(async()=>finishContext({data:{assessments:[record]}}));
  expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(false);
  expect(container.textContent).not.toContain('Loading available evidence');
+});
+
+test('verification ladder separates recorded capability from verified implementation',async()=>{
+ record={...record,status:'in_progress',technology:'',implementation:'Partial process'};await render();
+ const ladder=container.querySelector('[aria-label^="Verification status"]').textContent;
+ expect(ladder).toContain('Capability exists: not established');expect(ladder).toContain('Implementation verified: gap identified');
+ expect(container.textContent).toContain('recorded gap but no Finding');
 });

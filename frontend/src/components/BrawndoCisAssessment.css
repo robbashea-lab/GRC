@@ -12,7 +12,7 @@
   gap: 0;
 }
 .brawndo-assessment-header, .brawndo-assessment-footer { flex-shrink: 0; }
-.brawndo-assessment-header { padding: 24px 56px 20px 28px; border-bottom: 1px solid var(--color-input-border); display: flex; flex-direction: column; gap: 14px; }
+.brawndo-assessment-header { padding: 20px 56px 16px 28px; border-bottom: 1px solid var(--color-input-border); display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; }
 .brawndo-assessment-header h2 { font-size: 20px; line-height: 1.4; outline: none; }
 .brawndo-assessment-header p { margin-top: 5px; }
 .brawndo-assessment-scroll { overflow-y: auto; min-height: 0; flex: 1; overscroll-behavior: contain; }
@@ -59,3 +59,28 @@
   .brawndo-status-options { grid-template-columns: minmax(0,1fr); }
   .brawndo-assessment-footer { padding: 12px 18px; }
 }
+
+/* Reference hierarchy: status, verification ladder and required actions. */
+.brawndo-header-status { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.brawndo-disclosure summary { color: var(--color-link); }
+.brawndo-disclosure[open] > p { margin-top: 8px; }
+.brawndo-status-options label { transition: border-color var(--duration-feedback), background var(--duration-feedback); }
+.brawndo-status-options label.is-selected { border-color: var(--tone); box-shadow: inset 0 0 0 1px var(--tone); background: var(--tone-bg); color: var(--tone); }
+.brawndo-status-options label:hover:not(.is-selected) { background: var(--color-bg-subtle); }
+.brawndo-caution { font-size: 13px; padding: 8px 12px; border-radius: 6px; background: var(--color-moderate-bg); color: var(--color-moderate-text); border: 1px solid var(--color-moderate-border); }
+.brawndo-verify-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.brawndo-verify-grid h4, .brawndo-subhead h4 { margin-top: 0 !important; margin-bottom: 10px; }
+.brawndo-ladder { display: flex; flex-direction: column; gap: 10px; }
+.brawndo-ladder li { display: flex; gap: 10px; line-height: 1.4; font-size: 13px; }
+.brawndo-ladder-mark { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; border: 2px solid var(--color-border-strong); background: var(--color-bg-surface); position: relative; }
+.brawndo-ladder .is-done .brawndo-ladder-mark { background: #12B76A; border-color: #12B76A; }
+.brawndo-ladder .is-done .brawndo-ladder-mark::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.brawndo-ladder .is-partial .brawndo-ladder-mark { border-color: #F79009; background: linear-gradient(90deg, #F79009 50%, var(--color-bg-surface) 50%); }
+.brawndo-ladder .is-gap .brawndo-ladder-mark { border-color: #D92D20; background: #D92D20; }
+.brawndo-ladder .is-gap .brawndo-ladder-mark::after { content: '!'; position: absolute; inset: 0; color: #fff; font-size: 10px; font-weight: 700; line-height: 12px; text-align: center; }
+.brawndo-checks { display: flex; flex-direction: column; gap: 8px; }
+.brawndo-checks li { position: relative; padding-left: 22px; font-size: 13px; line-height: 1.5; }
+.brawndo-checks li::before { content: ''; position: absolute; left: 2px; top: 3px; width: 13px; height: 13px; border: 1.5px solid var(--color-input-border); border-radius: 3px; }
+.brawndo-subhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-top: 18px; margin-top: 18px; border-top: 1px dashed var(--color-border); }
+.brawndo-subhead h4 { margin-bottom: 0; }
+@media (max-width: 760px) { .brawndo-verify-grid { grid-template-columns: minmax(0, 1fr); } }

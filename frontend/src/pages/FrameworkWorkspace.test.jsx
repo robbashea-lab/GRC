@@ -15,13 +15,15 @@ beforeEach(()=>{
  api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:cis.requirements,assessments:cis.requirements.map((d,i)=>({framework_assessment_id:'a'+i,definition_id:d.id,client_id:'a',status:i===1?'not_assessed':'addressed'})),work:{}}});
 });
 
-test('only Brawndo Demo gets consistent filters, automatic result expansion and reset',async()=>{
+test('only Brawndo Demo gets the program summary, derived views, automatic expansion and reset',async()=>{
  mockUser.workspace_mode='demo';
  const response=(await api.get()).data;
  response.assessments=response.assessments.map(a=>({...a,client_id:'demo_brawndo'}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/>));
- expect(buttons('Partially Implemented')).toHaveLength(1);expect(buttons('In Progress')).toHaveLength(0);
- await act(async()=>buttons('Not Assessed')[0].click());
+ const summary=container.querySelector('[aria-labelledby="cis-summary-heading"]').textContent;
+ expect(summary).toContain('Assessment coverage98%');expect(summary).toContain('Implemented98%');expect(summary).toContain('Neither measure is a compliance percentage');
+ expect(buttons('In Progress')).toHaveLength(0);
+ await act(async()=>[...container.querySelectorAll('.cis-legend button')].find(b=>b.textContent.startsWith('Not Assessed')).click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);
  expect(container.textContent).toContain('Showing 1 of 56 safeguards');
  await act(async()=>buttons('Clear search and filters')[0].click());
@@ -42,6 +44,17 @@ test('Brawndo can reopen last viewed implemented safeguard without changing next
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 const buttons=label=>[...container.querySelectorAll('button')].filter(b=>b.textContent===label);
+test('Brawndo stale and unevidenced views are derived from dates and links, not stored flags',async()=>{
+ mockUser.workspace_mode='demo';const response=(await api.get()).data;
+ response.assessments=response.assessments.map((a,i)=>({...a,client_id:'demo_brawndo',last_assessed:i===0?'2020-01-01':new Date().toISOString()}));
+ response.work={a2:{evidence_count:1,latest_evidence_at:new Date().toISOString()}};
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/>));
+ const signal=label=>[...container.querySelectorAll('.cis-signal')].find(b=>b.textContent.startsWith(label));
+ expect(signal('Validation older than 12 months').textContent).toMatch(/1$/);
+ expect(signal('Implemented without evidence').textContent).toMatch(/54$/);
+ await act(async()=>signal('Validation older than 12 months').click());
+ expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);expect(container.querySelector('[data-testid="requirement-1.1"]')).toBeTruthy();
+});
 test('native groups start collapsed and expand/collapse all without changing assessment data',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
  expect(buttons('Expand')).toHaveLength(15);expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(0);
