@@ -18,7 +18,7 @@ import '@/components/BrawndoCisWorkspace.css';
 import {groupRequirements,nextAssessment,matchesAssessment,sectionSummary,needsAttention,hierarchyPath,visibleSections} from '@/lib/frameworkWorkspace';
 
 const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',not_assessed:'Not Assessed',assessed:'Assessed'};
-const VIEW_LABELS={attention:'Needs attention',gaps:'Partial or not implemented',addressed:'Implemented',in_progress:'Partially implemented',needs_attention:'Not implemented / needs validation',not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:'Implemented without evidence',unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation actions',assessed:'Assessed'};
+const VIEW_LABELS={attention:'Needs attention',gaps:'Partial or not implemented',addressed:'Implemented',in_progress:'Partially implemented',needs_attention:'Not implemented / needs validation',not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:'Implemented without evidence',unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation',assessed:'Assessed'};
 const ISO_VIEWS={
   isms_clause:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
   annex_control:{label:'Annex A / SoA',matches:r=>r.specification==='annex_control'},
