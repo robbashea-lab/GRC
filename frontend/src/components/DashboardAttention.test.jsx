@@ -15,3 +15,12 @@ test('attention tiles open their contributing records and CIS gaps deep-link to 
   expect(tile('CIS safeguards not fully implemented: 16').getAttribute('href')).toBe('/compliance/cis-ig1?view=gaps');
   await act(async()=>root.unmount());
 });
+test('past-due vendor Reviews open the matching past-due register view, not the 90-day view',async()=>{
+  global.IS_REACT_ACT_ENVIRONMENT=true;
+  const container=document.createElement('div'),root=createRoot(container);
+  const posture={totals:{pastDue:1,due30:0,materialFindings:0,significantRisks:0},vendorHealth:[{key:'vendorReviewsPast',items:[{key:'r'}],total:1},{key:'assurance',items:[],total:0}]};
+  await act(async()=>root.render(<DashboardAttention posture={posture} programs={[]} onShow={jest.fn()}/>));
+  const tile=[...container.querySelectorAll('a')].find(b=>b.getAttribute('aria-label').startsWith('Vendor reviews past due'));
+  expect(tile.getAttribute('href')).toBe('/vendors?view=review_overdue');
+  await act(async()=>root.unmount());
+});

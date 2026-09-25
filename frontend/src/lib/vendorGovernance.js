@@ -22,10 +22,14 @@ export function vendorSignals(v,reviews,today=new Date()) {
   const days=value=>calendarDay(value)!==null?calendarDay(value)-now:null;
   const next=days(value.next_review),contract=days(value.contract_renewal||value.contract_expiration||value.contract_end);
   const active=value.status!=='inactive';
+  // Assurance refresh is not a management obligation while offboarding (management-obligation-contract);
+  // the Dashboard assurance tile links here, so both use the same Vendor population.
+  const assuranceManaged=active&&value.status!=='offboarding';
   const primary=reviews.some(r=>r.vendor_id===v.vendor_id&&r.client_id===v.client_id&&(r.vendor_purpose||'vendor')==='vendor'&&!['completed','cancelled'].includes(r.status));
   return {...value,_nextReviewDays:next,_contractDays:contract,_reviewDue:active&&primary&&next!==null&&next<=90,
+    _reviewOverdue:active&&primary&&next!==null&&next<0,
     _contractSoon:active&&contract!==null&&contract<=(v.contract_lead_days||90),
-    _assuranceIssue:active&&!!v.assurance_required&&(v.assurance_records||[]).some(a=>['missing','expired','due_soon'].includes(assuranceStatus(v,a,today)))};
+    _assuranceIssue:assuranceManaged&&!!v.assurance_required&&(v.assurance_records||[]).some(a=>['missing','expired','due_soon'].includes(assuranceStatus(v,a,today)))};
 }
 export function vendorPlans(v) {
   const frequency=v.review_frequency||'annual';
