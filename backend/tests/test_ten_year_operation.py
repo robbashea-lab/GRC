@@ -287,6 +287,27 @@ class TenYearOperationTests(unittest.IsolatedAsyncioTestCase):
             if plan['done'] <= self.today and await self.call('PATCH', '/tasks/' + task['task_id'], json={'status': 'done'}, label='complete action'):
                 self.counts['tasks_done'] += 1
 
+    async def upkeep(self):
+        """Contract renewals and expired Risk acceptances are re-decided with the program's discipline."""
+        for vendor in await self.call('GET', '/vendors', params={'client_id': A}) or []:
+            due = day(vendor.get('contract_renewal'))
+            if vendor.get('status') == 'inactive' or not due or due > add_days(self.today, 21):
+                continue
+            key = 'contract|' + vendor['vendor_id'] + '|' + due
+            self.plans.setdefault(key, self.plan_review({'review_id': key}))
+            if self.plans[key] <= self.today:
+                await self.call('PATCH', '/vendors/' + vendor['vendor_id'], json={'contract_renewal': add_days(max(due, self.today), 365)}, label='renew contract')
+        for risk in await self.call('GET', '/risks', params={'client_id': A}) or []:
+            expiry = day(risk.get('acceptance_expires_at'))
+            if risk.get('status') != 'accepted' or not expiry or expiry > self.today:
+                continue
+            key = 'acceptance|' + risk['risk_id'] + '|' + expiry
+            self.plans.setdefault(key, self.plan_review({'review_id': key}))
+            if self.plans[key] <= self.today:
+                saved = await self.call('POST', f"/risks/{risk['risk_id']}/accept", json={'rationale': 'Re-evaluated at expiry.', 'expiry_date': add_days(self.today, 365)}, label='renew acceptance')
+                if saved:
+                    self.ledger['decisions']['risk:' + risk['risk_id']] = list(saved.get('decision_history') or [])
+
     async def validate(self):
         for finding in await self.call('GET', '/findings', params={'client_id': A}) or []:
             if finding['status'] != 'remediated':
@@ -495,6 +516,7 @@ class TenYearOperationTests(unittest.IsolatedAsyncioTestCase):
             Clock.now = REAL_DATETIME.combine(current, time(14), tzinfo=timezone.utc)
             await self.events()
             await self.work_reviews()
+            await self.upkeep()
             await self.work_tasks()
             await self.validate()
             if current >= next_checkpoint:

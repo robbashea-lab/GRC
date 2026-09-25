@@ -235,6 +235,26 @@ async function workTasks() {
     }
   }
 }
+// Contract renewals and expired Risk acceptances are re-decided with the program's usual discipline.
+const upkeepPlans = new Map();
+async function governanceUpkeep() {
+  for (const v of (await get('/vendors', {client_id: CID})) || []) {
+    if (v.status === 'inactive' || !v.contract_renewal || day(v.contract_renewal) > addDays(today, 21)) continue;
+    const key = 'contract|' + v.vendor_id + '|' + day(v.contract_renewal);
+    if (!upkeepPlans.has(key)) upkeepPlans.set(key, planReview({review_id: key}));
+    if (upkeepPlans.get(key) > today) continue;
+    const term = v.criticality === 'critical' ? 730 : 365;
+    const saved = await call('patch', `/vendors/${v.vendor_id}`, {contract_renewal: addDays(day(v.contract_renewal) < today ? today : day(v.contract_renewal), term), expected_updated_at: v.updated_at}, null, {label: 'renew contract'});
+    if (saved) report.vendors.events.push({today, vendor: v.name, event: 'contract renewed', late: day(v.contract_renewal) < today});
+  }
+  for (const r of (await get('/risks', {client_id: CID})) || []) {
+    if (r.status !== 'accepted' || !r.acceptance_expires_at || day(r.acceptance_expires_at) > today) continue;
+    const key = 'acceptance|' + r.risk_id + '|' + day(r.acceptance_expires_at);
+    if (!upkeepPlans.has(key)) upkeepPlans.set(key, planReview({review_id: key}));
+    if (upkeepPlans.get(key) > today) continue;
+    await acceptRisk(r.risk_id, addDays(today, 365), 'Acceptance re-evaluated at expiry; compensating controls confirmed.');
+  }
+}
 async function validateFindings() {
   const findings = await get('/findings', {client_id: CID});
   for (const f of (findings || []).filter(f => f.status === 'remediated')) {
@@ -915,6 +935,7 @@ async function runSimulation() {
     for (const e of events.filter(e => !e.done && e.on <= d)) { e.done = true; await e.run(); }
     await workReviews();
     await policyCycle();
+    await governanceUpkeep();
     await workTasks();
     await validateFindings();
     if (d >= nextCheckpoint) { await checkpoint('quarterly'); nextCheckpoint = addDays(nextCheckpoint, 91); }
