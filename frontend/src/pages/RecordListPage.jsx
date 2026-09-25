@@ -52,6 +52,9 @@ const DEFAULT_SORT = {
 };
 
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+// Findings open on current deficiencies; closed and accepted history stays one selection away.
+const DEFAULT_STATUS = { findings: "active" };
+const TERMINAL_STATUS = { findings: ["closed", "accepted"] };
 
 // Human-friendly due-date helper. Returns { primary, secondary, tone }.
 // `closed` records get neutral treatment (no "overdue" callout).
@@ -123,7 +126,7 @@ export default function RecordListPage({ kind }) {
   const loadSequence = useRef(0);
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
-  const statusFilter = params.get("status") || "all";
+  const statusFilter = params.get("status") || DEFAULT_STATUS[kind] || "all";
   const reference = isBrawndoReference(currentClientId, user);
   const signals = useMemo(() => reference ? registerSignals(kind) : [], [reference, kind]);
   const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
@@ -134,7 +137,7 @@ export default function RecordListPage({ kind }) {
 
   function setParam(key, value) {
     const next = new URLSearchParams(params);
-    if (value == null || value === "" || (key === "status" && value === "all")) next.delete(key);
+    if (value == null || value === "" || (key === "status" && value === (DEFAULT_STATUS[kind] || "all"))) next.delete(key);
     else next.set(key, value);
     setParams(next, { replace: true });
   }
@@ -291,7 +294,7 @@ export default function RecordListPage({ kind }) {
 
       if (signal && !signal.test(r)) return false;
       if (isReviews && !signal && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
-      if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && r.status !== statusFilter) return false;
+      if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && (statusFilter === "active" ? (TERMINAL_STATUS[kind] || []).includes(r.status) : r.status !== statusFilter)) return false;
       if (!s) return true;
       const {occurrences, ...searchable} = r;
       return JSON.stringify(searchable).toLowerCase().includes(s);
@@ -472,6 +475,7 @@ export default function RecordListPage({ kind }) {
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger aria-label="Filter by status" data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
               <SelectContent>
+                {DEFAULT_STATUS[kind] === "active" && <SelectItem value="active">Active</SelectItem>}
                 <SelectItem value="all">All statuses</SelectItem>
                 {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
