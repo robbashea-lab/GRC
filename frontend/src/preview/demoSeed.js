@@ -5,6 +5,11 @@ import { assessedRisk } from '../lib/grcWork';
 import { demoOrganizations, demoDates, demoProfile } from './demoPortfolio';
 export { demoOrganizations } from './demoPortfolio';
 
+// The current occurrence is the next unfinished period. A first due date more than
+// one cadence ahead would leave the seeded history with silently missing periods.
+const CADENCE_DAYS = {monthly: 25, quarterly: 85, semiannual: 175, annual: 355};
+const withinCadence = (days, cadence) => Math.min(days, CADENCE_DAYS[cadence] ?? days);
+
 // Explicit Demo initialization/reset only; no persistent backend writes.
 export function buildDemoStore(tableNames, clock = new Date()) {
   const date = demoDates(clock),
@@ -158,7 +163,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         owner_id: users[index % 3],
         reviewer_id: users[(index + 1) % 3],
         status: index === 1 ? 'in_progress' : 'upcoming',
-        due_date: date(index === 0 ? -8 : index === 1 ? 12 : index === 2 ? 24 : 45 + index * 3),
+        due_date: date(withinCadence(index === 0 ? -8 : index === 1 ? 12 : index === 2 ? 24 : 45 + index * 3, p.default_cadence)),
         recurrence: p.default_cadence,
         governance_context: {
           category: 'organizational',
@@ -224,7 +229,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       treatment: i === 2 ? 'accept' : 'mitigate',
       treatment_plan: i === 0 ? 'Validate recovery dependencies and retain exercise evidence.' : 'Maintain controls and verify at the next governance review.',
       last_reviewed: date(i === 3 ? -90 : -45),
-      next_review: i === 3 ? null : date(65 + i * 20),
+      next_review: i === 3 ? null : date(withinCadence(65 + i * 20, 'quarterly')),
       review_cadence: 'quarterly',
       ...(i === 2 ? {
         acceptance_rationale: 'Time-limited acceptance with quarterly monitoring; alternative provider evaluated.',
