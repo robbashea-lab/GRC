@@ -11,7 +11,10 @@ import {occurrenceId} from '@/lib/reviewOccurrences';
 import {CALENDAR_SCOPES,calendarStatus,calendarType,calendarSelection,canMoveCalendar,rescheduledDate} from '@/lib/calendarView';
 import {toast} from 'sonner';
 
-const KIND_COLOR={review:'bg-semantic-info-bg text-semantic-info border-semantic-info-border',finding:'bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border',task:'bg-semantic-success-bg text-semantic-success border-semantic-success-border'};
+const KIND_COLOR={review:'bg-semantic-info-bg text-semantic-info border-semantic-info-border',finding:'bg-semantic-moderate-bg text-semantic-moderate-text border-semantic-moderate-border',task:'bg-surface-card text-ink-primary border-line-strong'};
+// Type is encoded by color; red is reserved for overdue work.
+const LEGEND=[['review','Review'],['finding','Finding'],['task','Action Item']];
+const overdue=(item,date)=>!item.historical&&date<new Date().toISOString().slice(0,10);
 const emptyBuckets=()=>({reviews:{},findings:{},tasks:{}});
 function monthGrid(anchor) {
   const first=new Date(anchor.getFullYear(),anchor.getMonth(),1);
@@ -91,7 +94,7 @@ export default function Calendar() {
         <div role="group" aria-label="Calendar scope" className="flex flex-wrap gap-1">{CALENDAR_SCOPES.map(([value,label])=><Button key={value} size="sm" variant={scope===value?'secondary':'ghost'} aria-pressed={scope===value} onClick={()=>setScope(value)}>{label}</Button>)}</div>
       </div>
       <div className="flex flex-wrap items-center gap-3 text-xs text-ink-secondary">
-        <span>Reviews · Findings · Action Items</span>
+        <ul className="flex flex-wrap items-center gap-3" aria-label="Legend">{LEGEND.map(([kind,label])=><li key={kind} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className={`inline-block h-3 w-3 rounded-sm border ${KIND_COLOR[kind]}`}/>{label}</li>)}<li className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-3 w-1 rounded-sm bg-semantic-critical"/>Overdue</li></ul>
         {scope!=='active'&&<span>Historical items stay on their due dates; includes cancelled work and accepted Findings.</span>}
         {busy&&<span role="status">Saving…</span>}
       </div>
@@ -110,8 +113,8 @@ export default function Calendar() {
               <ul className="space-y-1">{items.slice(0,expanded[date]?items.length:3).map(item=><li key={item.key}>
                 <button type="button" draggable={item.can_reschedule&&!busy} onDragStart={e=>onDragStart(e,item)} onDragEnd={()=>{setDragging(null);setDragOverDay('');}} onClick={()=>openRecord(item)} data-testid={`cal-item-${item.key}`}
                   aria-label={`${calendarType(item)}: ${item.title} — ${calendarStatus(item)} — ${date}${item.period?' · '+item.period:''}`} title={`${item.title} · ${calendarStatus(item)}${item.can_reschedule?' · Drag or open to reschedule':''}`}
-                  className={`w-full min-w-0 text-left rounded border px-1.5 py-1 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring ${item.historical?'bg-surface-subtle text-ink-secondary border-line':KIND_COLOR[item.kind]} ${item.can_reschedule&&!busy?'cursor-grab active:cursor-grabbing':''}`}>
-                  <span className="block truncate font-medium">{item.title}</span><span className="block leading-snug">{calendarType(item)} · {calendarStatus(item)}</span>{item.kind==='review'&&<span className="block truncate">{item.period}</span>}
+                  className={`w-full min-w-0 text-left rounded border px-1.5 py-1 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring ${item.historical?'bg-surface-subtle text-ink-secondary border-line':KIND_COLOR[item.kind]} ${overdue(item,date)?'border-l-4 border-l-semantic-critical':''} ${item.can_reschedule&&!busy?'cursor-grab active:cursor-grabbing':''}`}>
+                  <span className="block truncate font-medium">{item.title}</span><span className="block leading-snug">{calendarType(item)} · {overdue(item,date)?<strong className="text-semantic-critical">Overdue</strong>:calendarStatus(item)}</span>{item.kind==='review'&&<span className="block truncate">{item.period}</span>}
                 </button>
               </li>)}</ul>
               {items.length>3&&<button type="button" className="text-xs text-link underline mt-1" aria-label={`${expanded[date]?'Show fewer':'Show all '+items.length+' items'} on ${date}`} onClick={()=>setExpanded(value=>({...value,[date]:!value[date]}))}>{expanded[date]?'Show fewer':`+${items.length-3} more`}</button>}

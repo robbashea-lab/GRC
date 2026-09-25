@@ -16,6 +16,10 @@ import RegisterSignalBar from "@/components/RegisterSignalBar";
 import ContactCoverage from "@/components/ContactCoverage";
 import { registerSignals } from "@/lib/registerSignals";
 import { isBrawndoReference } from "@/lib/reference";
+import { frameworkCatalog } from "@/lib/frameworks";
+
+// Catalog-owned policy → safeguard mappings (reference workspace shows CIS relevance).
+const policySupports = row => { const ids = [...new Set((frameworkCatalog("cis-ig1")?.policy_mappings || []).filter(m => m.policy_key === row.baseline_key).flatMap(m => m.safeguards))]; return ids.length ? (ids.length > 4 ? `${ids.slice(0, 4).join(", ")} +${ids.length - 4}` : ids.join(", ")) : ""; };
 import PolicyPendingDecisions from '@/components/PolicyPendingDecisions';
 import StatusBadge from "@/components/StatusBadge";
 import RecordDrawer from "@/components/RecordDrawer";
@@ -412,7 +416,7 @@ export default function RecordListPage({ kind }) {
             </Button>
             {canWrite && (
               <Button data-testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }}>
-                <Plus className="h-4 w-4 mr-1" /> New {kind === "policies" ? "policy" : kind.slice(0, -1)}
+                <Plus className="h-4 w-4 mr-1" /> New {kind === "policies" ? "policy" : kind === "assets" ? "system" : kind.slice(0, -1)}
               </Button>
             )}
           </div>
@@ -615,6 +619,7 @@ export default function RecordListPage({ kind }) {
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
+                             : c.primary && kind === "policies" && signals.length && policySupports(row) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports CIS {policySupports(row)}</span></span>
                              : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
                              : <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (

@@ -9,9 +9,7 @@ export function registerSignals(kind,today=new Date()){
   const t=ymd(today),soon=ymd(new Date(today.getTime()+14*DAY)),month=ymd(new Date(today.getTime()+30*DAY)),recent=ymd(new Date(today.getTime()-30*DAY));
   const owner=r=>r.owner_id||r.assignee_id||r.business_owner_id;
   if(kind==='reviews')return [
-    {id:'overdue',label:'Overdue',tone:'critical',test:r=>open(r)&&due(r,'due_date')&&due(r,'due_date')<t},
     {id:'due14',label:'Due in 14 days',tone:'moderate',test:r=>open(r)&&due(r,'due_date')>=t&&due(r,'due_date')<=soon},
-    {id:'working',label:'In progress',tone:'info',test:r=>r.status==='in_progress'},
     {id:'unowned',label:'No owner',tone:'moderate',test:r=>open(r)&&!owner(r)},
     {id:'recent',label:'Completed in last 30 days',tone:'success',test:r=>(r.occurrences||[]).some(o=>o.completed_at&&String(o.completed_at).slice(0,10)>=recent)},
   ];

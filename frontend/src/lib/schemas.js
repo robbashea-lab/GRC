@@ -261,11 +261,12 @@ export const SCHEMAS = {
       { key: "name", label: "System", primary: true },
       { key: "asset_type", label: "Type" },
       { key: "criticality", label: "Criticality", badge: true },
+      { key: "owner_id", label: "Owner", user: true },
       { key: "location", label: "Location" },
       { key: "status", label: "Status", badge: true },
     ],
     fields: [
-      { name: "name", label: "Asset name", required: true },
+      { name: "name", label: "System name", required: true },
       { name: "asset_type", label: "Type", type: "select", options: [
         { value: "server", label: "Server" }, { value: "workstation", label: "Workstation" },
         { value: "database", label: "Database" }, { value: "application", label: "Application" },
