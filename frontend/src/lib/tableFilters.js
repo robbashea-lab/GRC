@@ -28,6 +28,7 @@ export function dateMatches(value, range, now = new Date()) {
   if (range === 'last30') return delta >= -30 && delta <= 0;
   if (range === 'last90') return delta >= -90 && delta <= 0;
   if (range === 'last12') return day >= Date.UTC(now.getFullYear() - 1, now.getMonth(), now.getDate()) && delta <= 0;
+  if (range === 'older12') return day < Date.UTC(now.getFullYear() - 1, now.getMonth(), now.getDate());
   return false;
 }
 export function reviewMatches(row, status) {
@@ -43,7 +44,7 @@ export function reviewMatches(row, status) {
 }
 export function dateOptions(column) {
   const options = column.dateKind === 'history'
-    ? [['last30', 'Last 30 Days'], ['last90', 'Last 90 Days'], ['last12', 'Last 12 Months']]
+    ? [['last30', 'Last 30 Days'], ['last90', 'Last 90 Days'], ['last12', 'Last 12 Months'], ['older12', 'Older than 12 Months']]
     : [['overdue', 'Overdue'], ...(column.dateKind === 'due' ? [['today', 'Due Today'], ['next7', 'Next 7 Days']] : []), ['next30', 'Next 30 Days'], ['next31_90', 'Next 31–90 Days'], ...(column.renewal ? [['next90', 'Next 90 Days']] : [])];
   return [...options.map(([value, label]) => ({ value, label })), { value: EMPTY, label: column.emptyLabel || 'No Date' }];
 }

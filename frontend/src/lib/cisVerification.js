@@ -14,6 +14,9 @@ export function freshness(row,today=new Date()){
   return days>STALE_DAYS?{state:'stale',days,label:`Stale · ${Math.round(days/30)} months`}:days>AGING_DAYS?{state:'aging',days,label:`Aging · ${Math.round(days/30)} months`}:{state:'current',days,label:days<1?'Assessed today':`Assessed ${days}d ago`};
 }
 export const isStale=(row,today)=>freshness(row,today).state==='stale';
+// Only Findings raised on or explicitly linked to this safeguard track its gap; inherited Review Findings do not.
+export const directFindings=w=>w?.direct_findings??w?.open_findings??0;
+export const gapUntracked=r=>['in_progress','needs_attention'].includes(r.status)&&!directFindings(r.work);
 export const lacksEvidence=row=>row.status==='addressed'&&!(row.work?.evidence_count>0);
 export const evidenceCurrent=(row,today)=>row.work?.evidence_count>0&&(ageDays(row.work.latest_evidence_at,today)??Infinity)<=STALE_DAYS;
 
@@ -32,8 +35,8 @@ export function verificationLadder(row,{stack=[],today=new Date()}={}){
       detail:!reviews?'No linked recurring Review':w.overdue_reviews?`${w.overdue_reviews} linked Review overdue`:`${reviews} linked Review${reviews===1?'':'s'} on schedule`},
     {key:'validated',label:'Implementation verified',state:row.status==='addressed'&&fresh.state!=='stale'&&w.evidence_count?'done':row.status==='addressed'?'partial':['in_progress','needs_attention'].includes(row.status)?'gap':'missing',
       detail:row.status==='addressed'?(fresh.state==='stale'?'Concluded Implemented, but the assessment is stale':!w.evidence_count?'Concluded Implemented without linked evidence':`Verified ${row.last_assessed.slice(0,10)}`):row.status==='not_applicable'?'Not applicable':row.status==='not_assessed'?'Not yet assessed':'Assessment identified a gap'},
-    {key:'remediation',label:'Gaps tracked to remediation',state:w.open_findings?(w.overdue_actions?'gap':'partial'):['in_progress','needs_attention'].includes(row.status)?'missing':'done',
-      detail:w.open_findings?`${w.open_findings} open Finding${w.open_findings===1?'':'s'}${w.overdue_actions?` · ${w.overdue_actions} overdue Action${w.overdue_actions===1?'':'s'}`:''}`:['in_progress','needs_attention'].includes(row.status)?'Gap identified but no Finding raised':'No open gaps'},
+    {key:'remediation',label:'Gaps tracked to remediation',state:directFindings(w)?(w.overdue_actions?'gap':'partial'):['in_progress','needs_attention'].includes(row.status)?'missing':'done',
+      detail:directFindings(w)?`${directFindings(w)} open Finding${directFindings(w)===1?'':'s'} for this safeguard${w.overdue_actions?` · ${w.overdue_actions} overdue Action${w.overdue_actions===1?'':'s'}`:''}`:['in_progress','needs_attention'].includes(row.status)?(w.open_findings?'Gap not tracked: linked Findings come from related Reviews, not this safeguard':'Gap identified but no Finding raised'):'No open gaps'},
   ];
 }
 
@@ -51,5 +54,5 @@ export function cisSummary(rows,today=new Date()){
     findings:new Set(rows.flatMap(r=>r.work?.finding_ids||[])).size,
     overdueActions:rows.reduce((n,r)=>n+(r.work?.overdue_actions||0),0),
     overdueReviews:rows.filter(r=>r.work?.overdue_reviews).length,
-    unremediated:rows.filter(r=>['in_progress','needs_attention'].includes(r.status)&&!r.work?.open_findings).length};
+    unremediated:rows.filter(gapUntracked).length};
 }

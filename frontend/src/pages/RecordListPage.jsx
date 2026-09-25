@@ -12,6 +12,14 @@ import { useAuth } from "@/context/AuthContext";
 import { ContactAccessStatus, useContactAccess } from '@/components/ContactAccess';
 import { contactResponsibilities } from '@/lib/contactAccess';
 import PageHeader from "@/components/PageHeader";
+import RegisterSignalBar from "@/components/RegisterSignalBar";
+import ContactCoverage from "@/components/ContactCoverage";
+import { registerSignals } from "@/lib/registerSignals";
+import { isBrawndoReference } from "@/lib/reference";
+import { frameworkCatalog } from "@/lib/frameworks";
+
+// Catalog-owned policy → safeguard mappings (reference workspace shows CIS relevance).
+const policySupports = row => { const ids = [...new Set((frameworkCatalog("cis-ig1")?.policy_mappings || []).filter(m => m.policy_key === row.baseline_key).flatMap(m => m.safeguards))]; return ids.length ? (ids.length > 4 ? `${ids.slice(0, 4).join(", ")} +${ids.length - 4}` : ids.join(", ")) : ""; };
 import PolicyPendingDecisions from '@/components/PolicyPendingDecisions';
 import StatusBadge from "@/components/StatusBadge";
 import RecordDrawer from "@/components/RecordDrawer";
@@ -116,6 +124,9 @@ export default function RecordListPage({ kind }) {
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
   const statusFilter = params.get("status") || "all";
+  const reference = isBrawndoReference(currentClientId, user);
+  const signals = useMemo(() => reference ? registerSignals(kind) : [], [reference, kind]);
+  const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
   const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
@@ -278,7 +289,8 @@ export default function RecordListPage({ kind }) {
       if (urlFilters.severities.length && !urlFilters.severities.includes(r.severity)) return false;
       if (!columnStatusActive && urlFilters.status && r.status !== urlFilters.status) return false;
 
-      if (isReviews && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
+      if (signal && !signal.test(r)) return false;
+      if (isReviews && !signal && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
       if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && r.status !== statusFilter) return false;
       if (!s) return true;
       const {occurrences, ...searchable} = r;
@@ -319,7 +331,7 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal]);
   const filtered = table.apply(presetRows);
 
   const reviewTabCounts = useMemo(() => {
@@ -405,13 +417,15 @@ export default function RecordListPage({ kind }) {
             </Button>
             {canWrite && (
               <Button data-testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }}>
-                <Plus className="h-4 w-4 mr-1" /> New {kind === "policies" ? "policy" : kind.slice(0, -1)}
+                <Plus className="h-4 w-4 mr-1" /> New {kind === "policies" ? "policy" : kind === "assets" ? "system" : kind.slice(0, -1)}
               </Button>
             )}
           </div>
         }
       />
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
+      {kind === "contacts" && isBrawndoReference(currentClientId, user) && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
+      {signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
       <div className="sticky top-0 z-20 register-toolbar">
         <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
@@ -606,6 +620,7 @@ export default function RecordListPage({ kind }) {
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
+                             : c.primary && kind === "policies" && signals.length && policySupports(row) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports CIS {policySupports(row)}</span></span>
                              : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
                              : <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (

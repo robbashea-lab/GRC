@@ -1,0 +1,14 @@
+.record-summary { border: 1px solid var(--color-border); border-radius: var(--radius-panel); background: var(--color-bg-surface); overflow: hidden; }
+.record-attention { display: flex; flex-direction: column; }
+.record-attention li { display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 13px; font-weight: 500; border-bottom: 1px solid var(--color-border); }
+.record-attention .is-critical { background: var(--color-critical-bg); color: var(--color-critical); }
+.record-attention .is-moderate { background: var(--color-moderate-bg); color: var(--color-moderate-text); }
+.record-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; padding: 14px; }
+.record-facts > div { min-width: 0; }
+.record-facts .is-wide { grid-column: 1 / -1; }
+.record-facts dt { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--color-text-muted); }
+.record-facts dd { margin-top: 3px; font-size: 13px; color: var(--color-text-primary); white-space: pre-line; overflow-wrap: anywhere; }
+.record-facts dd.is-critical { color: var(--color-critical); font-weight: 600; }
+.record-facts dd.is-moderate { color: var(--color-moderate-text); font-weight: 500; }
+.record-facts dd.is-muted { color: var(--color-text-muted); }
+@media (max-width: 640px) { .record-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

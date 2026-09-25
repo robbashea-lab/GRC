@@ -170,6 +170,8 @@ def date_match(value, selected, today):
         # Matches the shared JS calendar-date rule, including leap-day rollover.
         start = date(today.year - 1, today.month, 1) + timedelta(days=today.day - 1)
         return start <= day <= today
+    if selected == 'older12':
+        return day < date(today.year - 1, today.month, 1) + timedelta(days=today.day - 1)
     return selected in ('last30', 'last90') and 0 <= (today - day).days <= int(selected[4:])
 
 

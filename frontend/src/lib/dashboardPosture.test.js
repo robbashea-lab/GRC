@@ -69,3 +69,14 @@ test('vendor health reuses review, assurance and contract windows and excludes i
   expect(result.due30.filter(r=>r.type==='Vendor Review')).toHaveLength(0);
   expect(result.due30.filter(r=>r.id==='vr')).toHaveLength(1);
 });
+
+test('a Finding whose own open Action is listed appears once, as the Action',()=>{
+  const {dashboardPosture}=require('./dashboardPosture');
+  const {aggregateClientDashboard}=require('./clientDashboard');
+  const f={finding_id:'f',client_id:'c',title:'Gap',severity:'high',status:'open',due_date:'2020-01-10',owner_id:'a'};
+  const t={task_id:'t',client_id:'c',title:'Fix gap',finding_id:'f',status:'open',due_date:'2020-01-01',assignee_id:'b'};
+  const records={reviews:[],findings:[f],tasks:[t],risks:[],vendors:[],policies:[],requirements:[],exceptions:[],assets:[]};
+  const agg=aggregateClientDashboard(records,{clientId:'c',members:[],user:{user_id:'x'},today:new Date('2026-01-01'),scope:{kind:'org'}});
+  const rows=dashboardPosture(agg,{today:new Date('2026-01-01')}).priority;
+  expect(rows.map(r=>`${r.kind}:${r.id}`)).toEqual(['tasks:t']);
+});

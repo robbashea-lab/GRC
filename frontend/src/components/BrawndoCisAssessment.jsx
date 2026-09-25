@@ -13,6 +13,7 @@ import {actionStatus} from '@/lib/actionItems';
 import {recordUuid} from '@/lib/recordUuid';
 import {readEvidenceFile} from '@/lib/evidenceFile';
 import api from '@/lib/api';
+import {isBrawndoReference} from '@/lib/reference';
 import {useOrg} from '@/context/OrgContext';
 import {CIS_TONE,CisStatusPill} from './CisStatus';
 import {verificationLadder,verificationChecks,stackCapability,freshness,ageDays,STALE_DAYS} from '@/lib/cisVerification';
@@ -23,7 +24,7 @@ const LADDER_STATE={done:'confirmed',partial:'partly confirmed',missing:'not est
 
 // Explicit synthetic-client identity, not a mutable display-name match. This is
 // presentation gating only; the normal adapter/server still owns authorization.
-export const isBrawndoReference=(clientId,user)=>user?.workspace_mode==='demo'&&clientId==='demo_brawndo';
+export {isBrawndoReference};
 export function isBrawndoCisPrototype(clientId,record,user){
   return isBrawndoReference(clientId,user) &&
     record?.client_id===clientId && record.framework_key==='cis-ig1';
@@ -56,7 +57,7 @@ export default function BrawndoCisAssessment({state,actions}){
   const today=new Date(),ladder=verificationLadder(current,{stack,today}),fresh=freshness(current,today),checks=verificationChecks(definition.id),presumed=stackCapability(definition.id,stack);
   const evidenceAge=e=>ageDays(e.evidence_date||e.created_at,today)??0;
   const overdueTask=t=>!['done','cancelled'].includes(t.status)&&t.due_date&&t.due_date.slice(0,10)<today.toISOString().slice(0,10);
-  const gapWithoutFinding=['in_progress','needs_attention'].includes(current.status)&&!related.findings?.some(f=>!['closed','accepted'].includes(f.status));
+  const gapWithoutFinding=['in_progress','needs_attention'].includes(current.status)&&!related.findings?.some(f=>!['closed','accepted'].includes(f.status)&&(f.framework_assessment_id===aid||current.related_links?.some(l=>l.kind==='findings'&&l.id===f.finding_id)));
   const startFinding=()=>setFinding({title:`${definition.id} · ${definition.title} — implementation gap`,description:form.implementation||'',remediation_title:`Address ${definition.id} implementation gap`,severity:'medium',request_id:recordUuid()});
   return <Dialog open={open} onOpenChange={value=>{if(!value)close();}}>
     <DialogContent className="brawndo-cis-assessment bg-surface-card" data-testid="brawndo-cis-assessment"

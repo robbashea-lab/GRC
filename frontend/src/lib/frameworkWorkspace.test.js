@@ -33,5 +33,5 @@ test('a grouped plan interval is attributed only to its cited requirement',()=>{
 test('operational projection follows relationships without leaking other clients',()=>{
   const row={client_id:'a',framework_assessment_id:'assessment',related_links:[{kind:'reviews',id:'r'}]};
   const work=assessmentWork(row,{reviews:[{client_id:'a',review_id:'r',status:'upcoming',due_date:'2026-01-01'},{client_id:'b',review_id:'r',status:'upcoming',due_date:'2026-01-01'}],findings:[{client_id:'a',finding_id:'f',review_id:'r',status:'open'}],tasks:[{client_id:'a',task_id:'t',finding_id:'f',due_date:'2026-01-01',status:'open'}],evidence:[{client_id:'a',evidence_id:'e',linked_type:'framework_assessment',linked_id:'assessment',created_at:'2025-12-01T00:00:00Z'},{client_id:'b',evidence_id:'x',linked_type:'framework_assessment',linked_id:'assessment',created_at:'2026-01-01'}]},'2026-01-02');
-  expect(work).toEqual({review_ids:['r'],finding_ids:['f'],open_findings:1,overdue_reviews:1,overdue_actions:1,open_actions:1,evidence_count:1,latest_evidence_at:'2025-12-01'});
+  expect(work).toEqual({review_ids:['r'],finding_ids:['f'],open_findings:1,direct_findings:0,overdue_reviews:1,overdue_actions:1,open_actions:1,evidence_count:1,latest_evidence_at:'2025-12-01'});
 });

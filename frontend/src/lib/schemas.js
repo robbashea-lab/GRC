@@ -255,17 +255,18 @@ export const SCHEMAS = {
     ],
   },
   assets: {
-    title: "Assets",
-    subtitle: "IT & business assets with owner, criticality and lifecycle status.",
+    title: "Systems & Scope",
+    subtitle: "In-scope systems with owner, criticality and lifecycle status.",
     columns: [
-      { key: "name", label: "Asset", primary: true },
+      { key: "name", label: "System", primary: true },
       { key: "asset_type", label: "Type" },
       { key: "criticality", label: "Criticality", badge: true },
+      { key: "owner_id", label: "Owner", user: true },
       { key: "location", label: "Location" },
       { key: "status", label: "Status", badge: true },
     ],
     fields: [
-      { name: "name", label: "Asset name", required: true },
+      { name: "name", label: "System name", required: true },
       { name: "asset_type", label: "Type", type: "select", options: [
         { value: "server", label: "Server" }, { value: "workstation", label: "Workstation" },
         { value: "database", label: "Database" }, { value: "application", label: "Application" },

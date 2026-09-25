@@ -11,7 +11,7 @@ test('attention tiles open their contributing records and CIS gaps deep-link to 
   const tile=label=>[...container.querySelectorAll('button,a')].find(b=>b.getAttribute('aria-label').startsWith(label));
   expect(tile('Due in 30 days: 0').className).toContain('is-clear');
   await act(async()=>tile('Past due').click());expect(onShow).toHaveBeenCalledWith('Past due',[{key:'x'}],'pastDue');
-  await act(async()=>tile('Vendor assurance').click());expect(onShow).toHaveBeenLastCalledWith('Vendor assurance',[{key:'v'}],'assurance');
+  expect(tile('Vendor assurance').getAttribute('href')).toBe('/vendors?view=assurance');expect(tile('Significant risks').getAttribute('href')).toBe('/risks?view=significant');
   expect(tile('CIS safeguards not fully implemented: 16').getAttribute('href')).toBe('/compliance/cis-ig1?view=gaps');
   await act(async()=>root.unmount());
 });
