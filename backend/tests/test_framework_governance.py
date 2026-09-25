@@ -224,3 +224,16 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await server.db.framework_assessments.find_one({'framework_assessment_id':row['framework_assessment_id']}))['owner_id'],'member')
         dashboard=(await self.client.get('/api/dashboard',params={'client_id':'a'})).json()
         self.assertGreaterEqual(dashboard['kpis']['unassigned'],1)
+
+    async def test_unlinked_or_deleted_evidence_is_not_current_support(self):
+        workspace=await self.configure()
+        row=workspace['assessments'][0];aid=row['framework_assessment_id']
+        upload=lambda name:self.client.post('/api/evidence',json={'client_id':'a','linked_type':'framework_assessment','linked_id':aid,'filename':name,'content_base64':'eA=='})
+        kept,wrong,deleted=[(await upload(n)).json()['evidence_id'] for n in ('kept.txt','wrong.txt','duplicate.txt')]
+        self.assertEqual((await self.client.request('DELETE','/api/framework_assessments/'+aid+'/links',json={'kind':'evidence','id':wrong})).status_code,200)
+        self.assertEqual((await self.client.delete('/api/evidence/'+deleted)).status_code,200)
+        work=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()['work'][aid]
+        self.assertEqual(work['evidence_count'],1)
+        related=(await self.client.get('/api/framework_assessments/'+aid+'/related')).json()
+        self.assertEqual([e['evidence_id'] for e in related['evidence']],[kept])
+

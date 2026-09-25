@@ -68,7 +68,7 @@ export function frameworkRelated(db,row){
   const fids=result.findings.map(f=>f.finding_id);
   result.tasks=[...new Map([...result.tasks,...db.tasks.filter(t=>t.client_id===cid&&(fids.includes(t.finding_id)||rids.includes(t.review_id)))].map(r=>[r.task_id,r])).values()];
   result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&['review','reviews'].includes(e.linked_type)&&rids.includes(e.linked_id))].map(r=>[r.evidence_id,r])).values()];
-  result.evidence=result.evidence.filter(e=>!row.unlinked_evidence_ids?.includes(e.evidence_id));
+  result.evidence=result.evidence.filter(e=>!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id));
   return result;
 }
 export function frameworkReverse(db,kind,source,result){

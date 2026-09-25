@@ -35,3 +35,10 @@ test('operational projection follows relationships without leaking other clients
   const work=assessmentWork(row,{reviews:[{client_id:'a',review_id:'r',status:'upcoming',due_date:'2026-01-01'},{client_id:'b',review_id:'r',status:'upcoming',due_date:'2026-01-01'}],findings:[{client_id:'a',finding_id:'f',review_id:'r',status:'open'}],tasks:[{client_id:'a',task_id:'t',finding_id:'f',due_date:'2026-01-01',status:'open'}],evidence:[{client_id:'a',evidence_id:'e',linked_type:'framework_assessment',linked_id:'assessment',created_at:'2025-12-01T00:00:00Z'},{client_id:'b',evidence_id:'x',linked_type:'framework_assessment',linked_id:'assessment',created_at:'2026-01-01'}]},'2026-01-02');
   expect(work).toEqual({review_ids:['r'],finding_ids:['f'],open_findings:1,direct_findings:0,overdue_reviews:1,overdue_actions:1,open_actions:1,evidence_count:1,latest_evidence_at:'2025-12-01'});
 });
+test('unlinked or deleted Evidence no longer counts as current support for a safeguard',()=>{
+  const row={client_id:'a',framework_assessment_id:'assessment',related_links:[],unlinked_evidence_ids:['wrong']};
+  const upload=(id,at,extra={})=>({client_id:'a',evidence_id:id,linked_type:'framework_assessment',linked_id:'assessment',created_at:at,...extra});
+  const work=assessmentWork(row,{evidence:[upload('kept','2025-06-01T00:00:00Z'),upload('wrong','2026-01-01T00:00:00Z'),upload('deleted','2026-02-01T00:00:00Z',{archived_at:'2026-02-02T00:00:00Z'})]},'2026-03-01');
+  expect(work.evidence_count).toBe(1);
+  expect(work.latest_evidence_at).toBe('2025-06-01');
+});

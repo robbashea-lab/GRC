@@ -125,7 +125,8 @@ async def workspace_work(s,cid,rows):
     findings=await s.db.findings.find({'client_id':cid,'status':{'$nin':['closed','accepted']}},projection).to_list(None)
     tasks=await s.db.tasks.find({'client_id':cid,'status':{'$nin':['done','cancelled']}},projection).to_list(None)
     # Evidence dates only (no content): supports derived validation freshness.
-    evidence=await s.db.evidence.find({'client_id':cid},{'_id':0,'evidence_id':1,'linked_type':1,'linked_id':1,'evidence_date':1,'created_at':1}).to_list(None)
+    # Deleted (archived) Evidence is not current support.
+    evidence=await s.db.evidence.find({'client_id':cid,'archived_at':None},{'_id':0,'evidence_id':1,'linked_type':1,'linked_id':1,'evidence_date':1,'created_at':1}).to_list(None)
     today=datetime.now(timezone.utc).date().isoformat()
     result={}
     for row in rows:
@@ -137,7 +138,9 @@ async def workspace_work(s,cid,rows):
         fids={f['finding_id'] for f in fs}
         def overdue(r):return bool(r.get('due_date')) and r['due_date'][:10]<today
         ts=[t for t in tasks if linked('tasks',t['task_id']) or t.get('framework_assessment_id')==aid or t.get('review_id') in rids or t.get('finding_id') in fids]
-        es=[e for e in evidence if linked('evidence',e['evidence_id']) or (e.get('linked_type') in ('framework_assessment','framework_assessments') and e.get('linked_id')==aid)]
+        unlinked=set(row.get('unlinked_evidence_ids') or [])
+        # Evidence the operator unlinked from this assessment no longer supports it.
+        es=[e for e in evidence if e['evidence_id'] not in unlinked and (linked('evidence',e['evidence_id']) or (e.get('linked_type') in ('framework_assessment','framework_assessments') and e.get('linked_id')==aid))]
         dates=sorted(str(e.get('evidence_date') or e.get('created_at') or '')[:10] for e in es if e.get('evidence_date') or e.get('created_at'))
         direct=[f for f in fs if linked('findings',f['finding_id']) or f.get('framework_assessment_id')==aid]
         result[aid]={'review_ids':sorted(rids),'finding_ids':sorted(fids),'open_findings':len(fs),'direct_findings':len(direct),
@@ -172,7 +175,7 @@ async def related(s,row):
     review_evidence=await s.db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}},{'_id':0,'content_base64':0}).to_list(None)
     out['evidence']=list({e['evidence_id']:e for e in out['evidence']+review_evidence}.values())
     excluded=set(row.get('unlinked_evidence_ids',[]))
-    out['evidence']=[e for e in out['evidence'] if e['evidence_id'] not in excluded]
+    out['evidence']=[e for e in out['evidence'] if e['evidence_id'] not in excluded and not e.get('archived_at')]
     return out
 
 def router_for(s):
