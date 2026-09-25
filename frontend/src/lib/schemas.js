@@ -255,10 +255,10 @@ export const SCHEMAS = {
     ],
   },
   assets: {
-    title: "Assets",
-    subtitle: "IT & business assets with owner, criticality and lifecycle status.",
+    title: "Systems & Scope",
+    subtitle: "In-scope systems with owner, criticality and lifecycle status.",
     columns: [
-      { key: "name", label: "Asset", primary: true },
+      { key: "name", label: "System", primary: true },
       { key: "asset_type", label: "Type" },
       { key: "criticality", label: "Criticality", badge: true },
       { key: "location", label: "Location" },

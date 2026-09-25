@@ -1,4 +1,4 @@
-import {isStale,lacksEvidence} from './cisVerification';
+import {isStale,lacksEvidence,gapUntracked} from './cisVerification';
 import {assessmentProgress} from './frameworkOperator';
 
 // Native hierarchy adapters; catalog order remains authoritative (never lexical ID sorting).
@@ -29,7 +29,7 @@ export const nextAssessment=(rows,lastId)=>rows.find(r=>r.framework_assessment_i
 const VIEWS={
   attention:needsAttention,assessed:r=>r.status!=='not_assessed',gaps:r=>['in_progress','needs_attention'].includes(r.status),
   stale:r=>isStale(r),unevidenced:lacksEvidence,
-  unremediated:r=>['in_progress','needs_attention'].includes(r.status)&&!r.work?.open_findings,
+  unremediated:gapUntracked,
   overdue_actions:r=>(r.work?.overdue_actions||0)>0,
 };
 export function matchesAssessment(row,filter,search=''){
@@ -67,7 +67,8 @@ export function assessmentWork(row,{reviews=[],findings=[],tasks=[],evidence=[]}
   // Evidence directly supporting this assessment (uploaded to it or linked); dates only, never content.
   const es=evidence.filter(e=>e.client_id===row.client_id&&(linked('evidence',e.evidence_id)||(['framework_assessment','framework_assessments'].includes(e.linked_type)&&e.linked_id===row.framework_assessment_id)));
   const dates=es.map(e=>(e.evidence_date||e.created_at||'').slice(0,10)).filter(Boolean).sort();
-  return {review_ids:[...rids],finding_ids:[...fids],open_findings:fs.length,overdue_reviews:rs.filter(r=>overdue(r,['completed','cancelled'])).length,
+  const direct=fs.filter(f=>linked('findings',f.finding_id)||f.framework_assessment_id===row.framework_assessment_id);
+  return {review_ids:[...rids],finding_ids:[...fids],open_findings:fs.length,direct_findings:direct.length,overdue_reviews:rs.filter(r=>overdue(r,['completed','cancelled'])).length,
     overdue_actions:ts.filter(t=>overdue(t,['done','cancelled'])).length,open_actions:ts.filter(t=>!['done','cancelled'].includes(t.status)).length,
     evidence_count:es.length,latest_evidence_at:dates.at(-1)||null};
 }

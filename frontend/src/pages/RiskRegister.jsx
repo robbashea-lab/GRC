@@ -52,7 +52,8 @@ export default function RiskRegister() {
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
-  const [view, setView] = useState("all_active");
+  // ?view= deep links (dashboard signals) open the register already filtered.
+  const [view, setView] = useState(() => ["all_active","review_due","critical","high","significant","accepted","closed"].includes(searchParams.get("view")) ? searchParams.get("view") : "all_active");
   const [loading, setLoading] = useState(true);
   const [drawer, setDrawer] = useState({ open: false, record: null });
   const [addOpen, setAddOpen] = useState(false);

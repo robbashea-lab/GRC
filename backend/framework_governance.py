@@ -139,7 +139,8 @@ async def workspace_work(s,cid,rows):
         ts=[t for t in tasks if linked('tasks',t['task_id']) or t.get('framework_assessment_id')==aid or t.get('review_id') in rids or t.get('finding_id') in fids]
         es=[e for e in evidence if linked('evidence',e['evidence_id']) or (e.get('linked_type') in ('framework_assessment','framework_assessments') and e.get('linked_id')==aid)]
         dates=sorted(str(e.get('evidence_date') or e.get('created_at') or '')[:10] for e in es if e.get('evidence_date') or e.get('created_at'))
-        result[aid]={'review_ids':sorted(rids),'finding_ids':sorted(fids),'open_findings':len(fs),
+        direct=[f for f in fs if linked('findings',f['finding_id']) or f.get('framework_assessment_id')==aid]
+        result[aid]={'review_ids':sorted(rids),'finding_ids':sorted(fids),'open_findings':len(fs),'direct_findings':len(direct),
           'overdue_reviews':sum(overdue(r) for r in rs if r.get('status') not in ('completed','cancelled')),
           'overdue_actions':sum(overdue(t) for t in ts),'open_actions':len(ts),
           'evidence_count':len(es),'latest_evidence_at':dates[-1] if dates else None}

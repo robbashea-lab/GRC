@@ -22,6 +22,7 @@ import StatusBadge from './StatusBadge';
 import RecordDrawer from './RecordDrawer';
 import { historicalRemediation, reviewRemediation, remediationOrigin } from '@/lib/remediation';
 import CorrectiveActions from './CorrectiveActions';
+import RecordSummary from './RecordSummary';
 import EvidencePanel from './EvidencePanel';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 
@@ -153,6 +154,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
+          {!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
           <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members}/>
           {current?.risk_id&&<section className="space-y-3 border border-line rounded-md p-3"><h3 className="font-medium text-sm">Risk reassessment</h3><p className="text-sm text-ink-secondary">Confirm the current assessment or record what changed. Use the linked Risk for acceptance, closure, and treatment work.</p>
             {selected?.risk_after?<div className="text-sm">{outcome(selected)} · Score {selected.risk_before?.risk_score??'—'} → {selected.risk_after.risk_score??'—'}<p>{selected.risk_after.assessment_rationale}</p><p>Treatment: {selected.risk_before?.treatment} → {selected.risk_after.treatment}</p></div>:riskDraft&&<><div className="grid grid-cols-2 gap-3">{['likelihood_score','impact_score'].map(k=><div key={k}>{picker(k==='likelihood_score'?'Risk likelihood':'Risk impact',String(riskDraft[k]||''),v=>setRiskDraft({...riskDraft,[k]:v?Number(v):null}),[1,2,3,4,5].map(n=>({value:String(n),label:String(n)})),frozen||!writable)}</div>)}</div><p className="text-sm">Score {assessedRisk(riskDraft).risk_score??'—'} · {assessedRisk(riskDraft).risk_level||'Needs assessment'}</p><Label>Assessment rationale</Label><Textarea aria-label="Review assessment rationale" disabled={frozen||!writable} value={riskDraft.assessment_rationale} onChange={e=>setRiskDraft({...riskDraft,assessment_rationale:e.target.value})}/>{picker('Risk treatment',riskDraft.treatment,v=>setRiskDraft({...riskDraft,treatment:v}),['mitigate','transfer','avoid','monitor',...(riskDraft.treatment==='accept'?['accept']:[])].map(v=>({value:v,label:v})),frozen||!writable)}</>}

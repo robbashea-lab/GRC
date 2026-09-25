@@ -23,6 +23,7 @@ import {RiskSourceFields,RiskScheduleFields} from "./RiskGovernanceFields";
 import {riskLevel} from "@/lib/grcWork";
 import RelatedAssessment from "./RelatedAssessment";
 import ReviewDrawer from "./ReviewDrawer";
+import RecordSummary from "./RecordSummary";
 import AIDrawer from './AIDrawer';
 import FrameworkDrawer from './FrameworkDrawer';
 import ActionItemFields from "./ActionItemFields";
@@ -981,7 +982,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Tab content dispatch --------
   function renderTabContent() {
-    if (tab === "overview") return renderOverview();
+    if (tab === "overview") return <>{record && <div className="mb-4"><RecordSummary kind={kind} record={record} clientId={clientId} related={related} users={users} /></div>}{renderOverview()}</>;
     if (tab === "activity") return renderActivity();
     // Kind-specific
     if (kind === "risks") {

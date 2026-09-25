@@ -12,6 +12,10 @@ import { useAuth } from "@/context/AuthContext";
 import { ContactAccessStatus, useContactAccess } from '@/components/ContactAccess';
 import { contactResponsibilities } from '@/lib/contactAccess';
 import PageHeader from "@/components/PageHeader";
+import RegisterSignalBar from "@/components/RegisterSignalBar";
+import ContactCoverage from "@/components/ContactCoverage";
+import { registerSignals } from "@/lib/registerSignals";
+import { isBrawndoReference } from "@/lib/reference";
 import PolicyPendingDecisions from '@/components/PolicyPendingDecisions';
 import StatusBadge from "@/components/StatusBadge";
 import RecordDrawer from "@/components/RecordDrawer";
@@ -116,6 +120,8 @@ export default function RecordListPage({ kind }) {
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
   const statusFilter = params.get("status") || "all";
+  const signals = isBrawndoReference(currentClientId, user) ? registerSignals(kind) : [];
+  const signal = signals.find(x => x.id === params.get("signal"));
   const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
@@ -278,7 +284,8 @@ export default function RecordListPage({ kind }) {
       if (urlFilters.severities.length && !urlFilters.severities.includes(r.severity)) return false;
       if (!columnStatusActive && urlFilters.status && r.status !== urlFilters.status) return false;
 
-      if (isReviews && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
+      if (signal && !signal.test(r)) return false;
+      if (isReviews && !signal && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
       if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && r.status !== statusFilter) return false;
       if (!s) return true;
       const {occurrences, ...searchable} = r;
@@ -412,6 +419,8 @@ export default function RecordListPage({ kind }) {
         }
       />
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
+      {kind === "contacts" && isBrawndoReference(currentClientId, user) && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
+      {signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
       <div className="sticky top-0 z-20 register-toolbar">
         <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />

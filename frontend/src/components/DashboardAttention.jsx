@@ -13,18 +13,19 @@ export default function DashboardAttention({posture,programs=[],onShow}){
   const tiles=[
     {key:'pastDue',label:'Past due',sub:'Reviews, findings and actions',n:count('pastDue'),tone:'critical',Icon:AlertOctagon},
     {key:'due30',label:'Due in 30 days',sub:'Upcoming obligations',n:count('due30'),tone:'duesoon',Icon:CalendarClock},
-    {key:'materialFindings',label:'High / critical findings',sub:'Open, not yet validated',n:count('materialFindings'),tone:'critical',Icon:FileWarning},
-    {key:'significantRisks',label:'Significant risks',sub:'High or critical exposure',n:count('significantRisks'),tone:'critical',Icon:ShieldAlert},
-    {key:vendorKey,label:vendorKey==='assurance'?'Vendor assurance':'Vendor reviews past due',sub:vendorKey==='assurance'?'Expired, due or missing':'Third-party oversight',n:vendorGroup?.total??vendorGroup?.items?.length??0,tone:'duesoon',Icon:Building2,items:vendorGroup?.items},
+    {key:'materialFindings',label:'High / critical findings',sub:'Open, not yet validated',n:count('materialFindings'),tone:'critical',Icon:FileWarning,to:'/findings?signal=material'},
+    {key:'significantRisks',label:'Significant risks',sub:'High or critical exposure',n:count('significantRisks'),tone:'critical',Icon:ShieldAlert,to:'/risks?view=significant'},
+    {key:vendorKey,label:vendorKey==='assurance'?'Vendor assurance':'Vendor reviews past due',sub:vendorKey==='assurance'?'Expired, due or missing':'Third-party oversight',n:vendorGroup?.total??vendorGroup?.items?.length??0,tone:'duesoon',Icon:Building2,to:`/vendors?view=${vendorKey==='assurance'?'assurance':'review_due'}`},
   ];
   const cisGap=cis?(cis.status_counts.needs_attention||0)+(cis.status_counts.in_progress||0):null;
   return <section aria-labelledby="attention-heading" className="space-y-2">
     <h2 id="attention-heading" className="text-sm font-heading font-semibold text-ink-primary">Requires attention</h2>
     <div className="dash-attention">
-      {tiles.map(({key,label,sub,n,tone,Icon,items})=><button key={key} type="button" onClick={()=>onShow(label,items||posture[key]||[],key)} className={`dash-tile ${n?`is-${tone}`:'is-clear'}`} aria-label={`${label}: ${n}. View records`}>
-        <span className="dash-tile-top"><Icon className="h-4 w-4" aria-hidden="true"/><span className="dash-tile-label">{label}</span></span>
-        <span className="dash-tile-value">{n}</span><span className="dash-tile-sub">{n?sub:'None open'}</span>
-      </button>)}
+      {tiles.map(({key,label,sub,n,tone,Icon,to})=>{const body=<><span className="dash-tile-top"><Icon className="h-4 w-4" aria-hidden="true"/><span className="dash-tile-label">{label}</span></span>
+        <span className="dash-tile-value">{n}</span><span className="dash-tile-sub">{n?sub:'None open'}</span></>,cls=`dash-tile ${n?`is-${tone}`:'is-clear'}`;
+        // Single-type collections open their full-width register; mixed obligations open the cross-module list.
+        return to?<Link key={key} to={to} className={cls} aria-label={`${label}: ${n}. Open register`}>{body}</Link>
+          :<button key={key} type="button" onClick={()=>onShow(label,posture[key]||[],key)} className={cls} aria-label={`${label}: ${n}. View records`}>{body}</button>;})}
       {cisGap!=null&&<Link to="/compliance/cis-ig1?view=gaps" className={`dash-tile ${cisGap?'is-duesoon':'is-clear'}`} aria-label={`CIS safeguards not fully implemented: ${cisGap}. Open CIS IG1`}>
         <span className="dash-tile-top"><ShieldCheck className="h-4 w-4" aria-hidden="true"/><span className="dash-tile-label">CIS safeguards with gaps</span></span>
         <span className="dash-tile-value">{cisGap}</span><span className="dash-tile-sub inline-flex items-center gap-1">Partial or not implemented<ArrowRight className="h-3 w-3" aria-hidden="true"/></span>

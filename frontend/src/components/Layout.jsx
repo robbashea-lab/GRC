@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Sparkles, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
+  LogOut, Sparkles, FileWarning, Server, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
   ClipboardList, ShieldCheck, Lock, Search,
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
@@ -23,12 +23,14 @@ const CLIENT_NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testid: "nav-dashboard" },
   { to: "/calendar", label: "Calendar", icon: CalendarDays, testid: "nav-calendar" },
   { to: "/reviews", label: "Reviews", icon: ClipboardCheck, testid: "nav-reviews" },
+  { to: "/findings", label: "Findings", icon: FileWarning, testid: "nav-findings" },
   { to: "/action-items", label: "Action Items", icon: ListChecks, testid: "nav-action-items" },
   { to: "/risks", label: "Risks", icon: ShieldAlert, testid: "nav-risks" },
   { to: "/policies", label: "Policies", icon: FileText, testid: "nav-policies" },
   { to: "/vendors", label: "Vendors", icon: Building2, testid: "nav-vendors" },
   { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
   { to: "/contacts", label: "Contacts & Roles", icon: Users, testid: "nav-contacts" },
+  { to: "/systems", label: "Systems & Scope", icon: Server, testid: "nav-systems" },
   { to: "/evidence", label: "Evidence Library", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/client-profile", label: "Client Profile", icon: Settings2, testid: "nav-client-profile" },
 ];

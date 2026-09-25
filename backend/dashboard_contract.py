@@ -101,7 +101,9 @@ def populations(model):
     priority.sort(key=lambda r:(rank(r),r['day'] if r['day'] is not None else float('inf'),r['title'],r['key']))
     unique={}
     for row in priority:unique.setdefault((row['kind'],row['id']),row)
-    groups['priority']=list(unique.values())
+    # A Finding whose own open Action is already listed is the same remediation work; list it once, as the Action.
+    listed_findings={row['record'].get('finding_id') for row in unique.values() if row['kind']=='tasks'}
+    groups['priority']=[row for row in unique.values() if not (row['kind']=='findings' and row['id'] in listed_findings)]
     for key, rows in groups.items():
         if key != 'priority':
             rows.sort(key=lambda r:(r['day'] if r['day'] is not None else float('inf'),r['key']))

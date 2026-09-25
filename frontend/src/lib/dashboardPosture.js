@@ -40,5 +40,7 @@ export function dashboardPosture(aggregation, {members=[], today=new Date()}={})
   const rank=r=>r.day!==null&&r.day<day?(r.severity==='critical'?0:r.severity==='high'?1:2):['critical','high'].includes(r.severity)?3:r.unassigned?4:5;
   priority.sort((a,b)=>rank(a)-rank(b)||(a.day??Infinity)-(b.day??Infinity)||a.title.localeCompare(b.title));
   for(const item of priority)if(!byRecord.has(`${item.kind}:${item.id}`))byRecord.set(`${item.kind}:${item.id}`,{...item,priority_label:item.priority_label||(['critical','high'].includes(item.severity)?item.severity[0].toUpperCase()+item.severity.slice(1):item.unassigned?'Unassigned':'Attention')});
-  return {pastDue,due30,due3190,materialFindings,significantRisks,acceptedRisks:risks.filter(r=>r.status==='accepted'),buckets,riskLevels,vendorHealth,priority:[...byRecord.values()],work,management};
+  // A Finding whose own open Action is already listed is the same remediation work; list it once, as the Action.
+  const listedFindings=new Set([...byRecord.values()].filter(r=>r.kind==='tasks').map(r=>r.record.finding_id).filter(Boolean));
+  return {pastDue,due30,due3190,materialFindings,significantRisks,acceptedRisks:risks.filter(r=>r.status==='accepted'),buckets,riskLevels,vendorHealth,priority:[...byRecord.values()].filter(r=>!(r.kind==='findings'&&listedFindings.has(r.id))),work,management};
 }

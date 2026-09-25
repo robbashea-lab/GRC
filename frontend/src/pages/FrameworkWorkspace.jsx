@@ -11,6 +11,7 @@ import {SocProgramSettings} from '@/components/SocReadiness';
 import {socConfiguration} from '@/lib/socReadiness';
 import {operatorStatuses,assessmentProgress} from '@/lib/frameworkOperator';
 import CisWorkspaceSummary from '@/components/CisWorkspaceSummary';
+import CisResultTable from '@/components/CisResultTable';
 import {CisStatusBar,CisStatusPill,statusCounts} from '@/components/CisStatus';
 import {cisSummary,freshness,lacksEvidence} from '@/lib/cisVerification';
 import '@/components/BrawndoCisWorkspace.css';
@@ -133,7 +134,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>chooseFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div></>}
     {!visible.length&&<p role="status" className="text-sm">{prototype?'No safeguards match this view.':'No requirements match these filters.'}</p>}
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
-    <Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype}}/>
+    {prototype&&(filter!=='all'||search.trim())?<CisResultTable rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype}}/>}
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}} onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null} position={index>=0?`${index+1} of ${scoped.length} in framework order`:'Retained assessment'}/>}
   </div>;
 }

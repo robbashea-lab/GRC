@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import AssigneeSelect from '@/components/AssigneeSelect';
 import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
@@ -56,7 +57,9 @@ export default function VendorRegister() {
   const generation=useRef(0);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
-  const [view, setView] = useState("all_active");
+  const [searchParams] = useSearchParams();
+  // ?view= deep links (dashboard signals) open the register already filtered.
+  const [view, setView] = useState(() => VIEWS.some(v => v.id === searchParams.get("view")) ? searchParams.get("view") : "all_active");
   const [loading, setLoading] = useState(true);
   const [drawer, setDrawer] = useState({ open: false, record: null });
   const [addOpen, setAddOpen] = useState(false);
