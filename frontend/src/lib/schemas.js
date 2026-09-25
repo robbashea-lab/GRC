@@ -280,7 +280,7 @@ export const SCHEMAS = {
       { name: "owner_id", label: "Owner", type: "user" },
       { name: "status", label: "Status", type: "select", options: [
         { value: "active", label: "Active" }, { value: "under_review", label: "Under review" },
-        { value: "terminated", label: "Retired" },
+        { value: "retired", label: "Retired" },
       ]},
     ],
   },

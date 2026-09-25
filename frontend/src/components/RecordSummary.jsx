@@ -12,7 +12,7 @@ import './RecordSummary.css';
 const DAY=86400000;
 const day=v=>v?String(v).slice(0,10):null;
 const until=(v,today)=>{const d=day(v);if(!d)return null;return Math.round((Date.parse(d+'T00:00:00Z')-Date.parse(today+'T00:00:00Z'))/DAY);};
-const closedStatus=s=>['completed','cancelled','closed','done','accepted','retired','inactive','validated'].includes(s);
+const closedStatus=s=>['completed','cancelled','closed','done','accepted','retired','terminated','inactive','validated'].includes(s);
 function dueText(v,today,closed){
   const n=until(v,today);if(n==null)return {text:'Not scheduled',tone:'muted'};
   const date=new Date(day(v)+'T12:00:00Z').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});

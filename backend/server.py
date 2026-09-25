@@ -4663,7 +4663,7 @@ async def export_csv(kind: str = Path(..., pattern=KIND_REGEX),
 CLOSE_STATUS = {
     "findings": "closed", "tasks": "done", "reviews": "completed",
     "risks": "closed", "exceptions": "revoked", "policies": "retired",
-    "vendors": "terminated", "assets": "under_review",
+    "vendors": "terminated", "assets": "retired",
 }
 
 

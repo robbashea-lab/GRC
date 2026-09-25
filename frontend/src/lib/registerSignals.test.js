@@ -22,3 +22,14 @@ test('evidence older than 12 months is a distinct date range',()=>{
   expect(dateMatches('2025-08-01','older12',today)).toBe(true);
   expect(dateMatches('2026-01-01','older12',today)).toBe(false);
 });
+test('a System retired from its drawer leaves the critical and no-owner signals, including legacy terminated records',()=>{
+  const {SCHEMAS}=require('./schemas');
+  const option=SCHEMAS.assets.fields.find(f=>f.name==='status').options.find(o=>o.label==='Retired');
+  expect(option.value).toBe('retired');
+  for(const status of [option.value,'terminated']){
+    expect(pick('assets','critical')({criticality:'critical',status})).toBe(false);
+    expect(pick('assets','unowned')({status})).toBe(false);
+    expect(summarize('assets',{status,criticality:'critical'},{today:'2026-09-25'}).facts.find(f=>f.label==='Status').badge).toBe(status);
+  }
+  expect(pick('assets','critical')({criticality:'critical',status:'active'})).toBe(true);
+});
