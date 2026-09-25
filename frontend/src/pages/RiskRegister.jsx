@@ -3,6 +3,7 @@ import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
+import { displayDay } from '@/lib/managementDates';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useSearchParams} from 'react-router-dom';
 import managementRules from '@/lib/managementRules.json';
@@ -230,7 +231,7 @@ export default function RiskRegister() {
                       </StatusPill>
                     </td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">
-                      {r.last_reviewed ? new Date(r.last_reviewed).toLocaleDateString() : <span className="text-ink-help">—</span>}
+                      {displayDay(r.last_reviewed) || <span className="text-ink-help">—</span>}
                     </td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">{r.next_review ? new Date(r.next_review.slice(0,10) + "T12:00:00").toLocaleDateString() : "Not scheduled"}</td>
                   </tr>

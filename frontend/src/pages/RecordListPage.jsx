@@ -4,6 +4,7 @@ import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
+import { displayDay } from '@/lib/managementDates';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
@@ -618,7 +619,7 @@ export default function RecordListPage({ kind }) {
                        ) :
                        isReviews && c.key==='basis' ? <span className="text-xs text-ink-secondary" title={basisSummary(row)}>{basisSummary(row)}</span> :
                        isDueLike ? <DueCell iso={row[c.key]} closed={closed} /> :
-                       c.date ? (row[c.key] ? <span className="font-mono text-ink-secondary">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-ink-help">—</span>) :
+                       c.date ? (displayDay(row[c.key]) ? <span className="font-mono text-ink-secondary">{displayDay(row[c.key])}</span> : <span className="text-ink-help">—</span>) :
                        (
                          <span className="inline-flex items-center gap-2">
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>

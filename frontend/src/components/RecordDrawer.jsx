@@ -21,6 +21,7 @@ import { SCHEMAS } from "@/lib/schemas";
 import rules from "@/lib/grcRules.json";
 import {RiskSourceFields,RiskScheduleFields} from "./RiskGovernanceFields";
 import {riskLevel} from "@/lib/grcWork";
+import {displayDay} from "@/lib/managementDates";
 import RelatedAssessment from "./RelatedAssessment";
 import ReviewDrawer from "./ReviewDrawer";
 import RecordSummary from "./RecordSummary";
@@ -505,7 +506,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (scheduleForm.recurrence) body.recurrence = scheduleForm.recurrence;
       const { data } = await api.post(`/vendors/${record[idField]}/schedule-review`, {...body,expected_updated_at:record.updated_at??null});
       if (data.vendor) Object.assign(record, data.vendor);
-      toast.success(`Vendor review scheduled for ${new Date(data.review.due_date).toLocaleDateString()}`);
+      toast.success(`Vendor review scheduled for ${displayDay(data.review.due_date)}`);
       setScheduleOpen(false);
       setScheduleForm({ due_date: "", owner_id: "", recurrence: "" });
       if (record) record.next_review = data.review.due_date;
@@ -687,8 +688,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <div className="border border-line rounded-md p-3 bg-surface-subtle text-xs space-y-1" data-testid="risk-acceptance-info">
             <div className="text-xs font-mono uppercase tracking-widest text-ink-help">Acceptance</div>
             <div><span className="text-ink-secondary">Approved by:</span> <span className="text-ink-primary font-medium">{userMap[record.accepted_by] || record.accepted_by || "—"}</span></div>
-            <div><span className="text-ink-secondary">Accepted on:</span> <span className="font-mono">{new Date(record.acceptance_date).toLocaleDateString()}</span></div>
-            {record.acceptance_expires_at && <div><span className="text-ink-secondary">Expires:</span> <span className="font-mono">{new Date(record.acceptance_expires_at).toLocaleDateString()}</span></div>}
+            <div><span className="text-ink-secondary">Accepted on:</span> <span className="font-mono">{displayDay(record.acceptance_date)}</span></div>
+            {record.acceptance_expires_at && <div><span className="text-ink-secondary">Expires:</span> <span className="font-mono">{displayDay(record.acceptance_expires_at)}</span></div>}
           </div>
         )}
       </div>
