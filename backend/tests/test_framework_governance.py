@@ -204,3 +204,23 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(history),1);self.assertEqual(history[0]['framework_safeguards'],current['framework_safeguards'])
         reverse=(await self.client.get('/api/related',params={'entity_type':'reviews','entity_id':'existing'})).json()
         self.assertEqual(len(reverse['framework_assessments']),9)
+
+    async def test_finding_on_safeguard_owned_by_departed_user_starts_unassigned(self):
+        workspace=await self.configure()
+        row=workspace['assessments'][0]
+        base='/api/framework_assessments/'+row['framework_assessment_id']
+        owned=await self.client.patch(base,json={'owner_id':'member'})
+        self.assertEqual(owned.status_code,200,owned.text)
+        active=await self.client.post(base+'/findings',json={'title':'Coverage gap','remediation_title':'Close gap','request_id':'while-active'})
+        self.assertEqual(active.status_code,200,active.text)
+        self.assertEqual(active.json()['owner_id'],'member')
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'status':'disabled'}})
+        raised=await self.client.post(base+'/findings',json={'title':'Gap found after owner left','remediation_title':'Restore coverage','request_id':'after-departure'})
+        self.assertEqual(raised.status_code,200,raised.text)
+        self.assertIsNone(raised.json()['owner_id'])
+        task=await server.db.tasks.find_one({'finding_id':raised.json()['finding_id']})
+        self.assertIsNone(task['assignee_id'])
+        # The safeguard's historical accountability is unchanged; only new work is not copied to a departed User.
+        self.assertEqual((await server.db.framework_assessments.find_one({'framework_assessment_id':row['framework_assessment_id']}))['owner_id'],'member')
+        dashboard=(await self.client.get('/api/dashboard',params={'client_id':'a'})).json()
+        self.assertGreaterEqual(dashboard['kpis']['unassigned'],1)

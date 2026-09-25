@@ -23,6 +23,14 @@ FIELDS = {
 }
 
 
+async def eligible(db, ident, client_id, can_access):
+    """An active User with access to the client may receive new work."""
+    account = await db.users.find_one({"user_id": ident}, {
+        "_id": 0, "user_id": 1, "status": 1, "role": 1, "client_ids": 1,
+    })
+    return bool(account) and account.get("status") == "active" and can_access(account, client_id)
+
+
 async def validate(db, kind, row, can_access, previous=None):
     """Validate changed/new references; preserve the exact persisted old value."""
     for field in FIELDS.get(kind, ()):
@@ -32,10 +40,7 @@ async def validate(db, kind, row, can_access, previous=None):
             old_ident = old_ident or previous.get("owner_id")
         if not ident or (previous is not None and ident == old_ident):
             continue
-        account = await db.users.find_one({"user_id": ident}, {
-            "_id": 0, "user_id": 1, "status": 1, "role": 1, "client_ids": 1,
-        })
-        if not account or account.get("status") != "active" or not can_access(account, row["client_id"]):
+        if not await eligible(db, ident, row["client_id"], can_access):
             raise HTTPException(422, "Choose an active platform user with access to this client")
 
 

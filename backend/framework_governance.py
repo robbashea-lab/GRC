@@ -337,8 +337,12 @@ def router_for(s):
         row=await parent(aid,user,True)
         if not body.title.strip() or not body.remediation_title.strip():raise HTTPException(422,'Finding and Action titles are required')
         fid=stable(row['client_id'],'finding',aid+':'+body.request_id)
+        # A departed or out-of-scope safeguard owner is never copied onto new work:
+        # the Finding and its Action start visibly unassigned instead of failing.
+        owner=row.get('owner_id')
+        if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):owner=None
         doc={'finding_id':fid,'client_id':row['client_id'],'title':body.title.strip(),'description':body.description,'severity':body.severity,
-             'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':row.get('owner_id'),
+             'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':owner,
              'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'remediation_title':body.remediation_title.strip()}
         previous=await s.db.findings.find_one({'finding_id':fid,'client_id':row['client_id']})
         if not previous:
