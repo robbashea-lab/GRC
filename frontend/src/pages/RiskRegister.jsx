@@ -53,7 +53,8 @@ export default function RiskRegister() {
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const [view, setView] = useState(() => ["all_active","review_due","critical","high","significant","accepted","closed"].includes(searchParams.get("view")) ? searchParams.get("view") : "all_active");
+  const linkedView = ["all_active","review_due","critical","high","significant","accepted","closed"].includes(searchParams.get("view")) ? searchParams.get("view") : "all_active";
+  const [view, setView] = useState(linkedView);
   const [loading, setLoading] = useState(true);
   const [drawer, setDrawer] = useState({ open: false, record: null });
   const [addOpen, setAddOpen] = useState(false);
@@ -77,7 +78,7 @@ export default function RiskRegister() {
     } catch (e) { toast.error(formatError(e)); }
     finally { if(version===generation.current)setLoading(false); }
   },[currentClientId,portfolioSignificant]);
-  useEffect(() => { const scopeGeneration=generation;setRows([]);setUsers([]);setView("all_active");setQ("");setDrawer({open:false,record:null});setAddOpen(false);load();return()=>{scopeGeneration.current++;}; }, [currentClientId,load]);
+  useEffect(() => { const scopeGeneration=generation;setRows([]);setUsers([]);setView(linkedView);setQ("");setDrawer({open:false,record:null});setAddOpen(false);load();return()=>{scopeGeneration.current++;}; }, [currentClientId,load]); // eslint-disable-line react-hooks/exhaustive-deps -- deep-linked view applies on client change only
 
   const now = Date.now();
   const presetRows = useMemo(() => {

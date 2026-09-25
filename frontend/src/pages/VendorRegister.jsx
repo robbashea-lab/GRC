@@ -59,7 +59,8 @@ export default function VendorRegister() {
   const [q, setQ] = useState("");
   const [searchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const [view, setView] = useState(() => VIEWS.some(v => v.id === searchParams.get("view")) ? searchParams.get("view") : "all_active");
+  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) ? searchParams.get("view") : "all_active";
+  const [view, setView] = useState(linkedView);
   const [loading, setLoading] = useState(true);
   const [drawer, setDrawer] = useState({ open: false, record: null });
   const [addOpen, setAddOpen] = useState(false);
@@ -82,7 +83,7 @@ export default function VendorRegister() {
     } catch (e) { toast.error(formatError(e)); }
     finally { setLoading(false); }
   }
-  useEffect(() => { const activeGeneration=generation; setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView("all_active");load();return()=>{activeGeneration.current++;};
+  useEffect(() => { const activeGeneration=generation; setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClientId]);
 

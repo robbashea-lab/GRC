@@ -124,8 +124,9 @@ export default function RecordListPage({ kind }) {
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
   const statusFilter = params.get("status") || "all";
-  const signals = isBrawndoReference(currentClientId, user) ? registerSignals(kind) : [];
-  const signal = signals.find(x => x.id === params.get("signal"));
+  const reference = isBrawndoReference(currentClientId, user);
+  const signals = useMemo(() => reference ? registerSignals(kind) : [], [reference, kind]);
+  const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
   const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
@@ -330,7 +331,7 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal]);
   const filtered = table.apply(presetRows);
 
   const reviewTabCounts = useMemo(() => {

@@ -65,6 +65,10 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200, response.text)
         return (await self.client.get('/api/frameworks/cis-ig1', params={'client_id': (body or self.body())['client_id']})).json()
 
+    def test_evidence_older_than_twelve_months_range(self):
+        from datetime import date
+        from evidence_context import date_match
+        self.assertTrue(date_match('2025-08-01','older12',date(2026,9,25)));self.assertFalse(date_match('2026-01-01','older12',date(2026,9,25)))
     def test_verified_membership_and_mapping_integrity(self):
         counts = {1:2,2:3,3:6,4:7,5:4,6:5,7:4,8:3,9:2,10:3,11:4,12:1,14:8,15:1,17:3}
         expected = {f'{control}.{n}' for control, count in counts.items() for n in range(1, count+1)}
@@ -138,7 +142,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         again=await self.client.post(base+'/findings',json=payload);self.assertEqual(again.json()['finding_id'],f.json()['finding_id'])
         related=(await self.client.get(base+'/related')).json();self.assertEqual(len(related['tasks']),1);self.assertEqual(len(related['evidence']),1)
         work=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()['work'][aid]
-        self.assertEqual((work['evidence_count'],work['open_actions'],work['open_findings']),(1,1,1));self.assertTrue(work['latest_evidence_at'])
+        self.assertEqual((work['evidence_count'],work['open_actions'],work['open_findings'],work['direct_findings']),(1,1,1,1));self.assertTrue(work['latest_evidence_at'])
         task=related['tasks'][0]
         response=await self.client.patch('/api/tasks/'+task['task_id'],json={'status':'done'});self.assertEqual(response.status_code,200,response.text)
         related=(await self.client.get(base+'/related')).json()
