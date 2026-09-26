@@ -65,7 +65,8 @@ export function assessmentWork(row,{reviews=[],findings=[],tasks=[],evidence=[]}
   const overdue=(r,closed)=>!closed.includes(r.status)&&!!r.due_date&&r.due_date.slice(0,10)<today;
   const ts=tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||t.framework_assessment_id===row.framework_assessment_id||rids.has(t.review_id)||fids.has(t.finding_id)));
   // Evidence directly supporting this assessment (uploaded to it or linked); dates only, never content.
-  const es=evidence.filter(e=>e.client_id===row.client_id&&(linked('evidence',e.evidence_id)||(['framework_assessment','framework_assessments'].includes(e.linked_type)&&e.linked_id===row.framework_assessment_id)));
+  // Deleted (archived) Evidence and Evidence unlinked from this assessment are not current support.
+  const es=evidence.filter(e=>e.client_id===row.client_id&&!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id)&&(linked('evidence',e.evidence_id)||(['framework_assessment','framework_assessments'].includes(e.linked_type)&&e.linked_id===row.framework_assessment_id)));
   const dates=es.map(e=>(e.evidence_date||e.created_at||'').slice(0,10)).filter(Boolean).sort();
   const direct=fs.filter(f=>linked('findings',f.finding_id)||f.framework_assessment_id===row.framework_assessment_id);
   return {review_ids:[...rids],finding_ids:[...fids],open_findings:fs.length,direct_findings:direct.length,overdue_reviews:rs.filter(r=>overdue(r,['completed','cancelled'])).length,

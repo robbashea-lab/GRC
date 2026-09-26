@@ -26,24 +26,24 @@ function OperationalTable({ items, upcoming = false, onOpen }) {
   const columns = [{key:'priority',label:'Priority',rank:ranks,value:r=>r.severity},{key:'type',label:'Type'},{key:'owner',label:'Owner'},{key:'due_date',label:upcoming?'Due / Review Date':'Due',dateKind:'due'},{key:'status',label:'Status'}];
   const table = useTableControls({ columns, rows:items, module:upcoming?'dashboard-watch':'dashboard-attention', scope:`${user?.user_id}:${currentClientId}` });
   return (
-    <div className="overflow-x-auto">
+    <div className="ops-table overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-surface-subtle border-b border-line"><tr>
           <th className="tbl-head"><ColumnControl table={table} columnKey={upcoming ? "due_date" : "priority"} /></th>
-          <th className="tbl-head">Item</th><th className="tbl-head"><ColumnControl table={table} columnKey="type" /></th>
+          <th className="tbl-head ops-table-static">Item</th><th className="tbl-head"><ColumnControl table={table} columnKey="type" /></th>
           <th className="tbl-head"><ColumnControl table={table} columnKey="owner" /></th>
           {!upcoming && <th className="tbl-head"><ColumnControl table={table} columnKey="due_date" /></th>}
-          <th className="tbl-head"><ColumnControl table={table} columnKey="status" /></th><th className="tbl-head">Action</th>
+          <th className="tbl-head"><ColumnControl table={table} columnKey="status" /></th><th className="tbl-head ops-table-static">Action</th>
         </tr></thead>
         <tbody className="divide-y divide-line">
           {table.apply(items).map(item => (
             <tr key={item.key} className="row-hover" data-testid={`obligation-${item.key}`}>
-              <td className="tbl-cell text-xs">{upcoming ? <DateCell iso={item.due_date} /> : item.priority_label}</td>
-              <td className="tbl-cell font-medium text-ink-primary">{item.title}</td>
-              <td className="tbl-cell text-xs text-ink-secondary">{item.type}</td>
-              <td className="tbl-cell text-xs text-ink-secondary">{item.owner}</td>
-              {!upcoming && <td className="tbl-cell"><DateCell iso={item.due_date} /></td>}
-              <td className="tbl-cell">{item.status ? <StatusBadge value={item.status} /> : "—"}</td>
+              <td className="tbl-cell text-xs" data-label={upcoming ? "Due / Review Date" : "Priority"}>{upcoming ? <DateCell iso={item.due_date} /> : item.priority_label}</td>
+              <td className="tbl-cell font-medium text-ink-primary ops-table-item">{item.title}</td>
+              <td className="tbl-cell text-xs text-ink-secondary" data-label="Type">{item.type}</td>
+              <td className="tbl-cell text-xs text-ink-secondary" data-label="Owner">{item.owner}</td>
+              {!upcoming && <td className="tbl-cell" data-label="Due"><DateCell iso={item.due_date} /></td>}
+              <td className="tbl-cell" data-label="Status">{item.status ? <StatusBadge value={item.status} /> : "—"}</td>
               <td className="tbl-cell"><button type="button" onClick={() => onOpen(item)} className="text-xs text-link hover:text-link-hover whitespace-nowrap">{item.action}</button></td>
             </tr>
           ))}

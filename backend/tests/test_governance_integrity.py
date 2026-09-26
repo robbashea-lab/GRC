@@ -117,3 +117,12 @@ class GovernanceIntegrityTests(ClientDashboardSourcesTests):
         response = await self.client.post('/api/bulk',json={'kind':'tasks','ids':['same','distinct'],'action':'close'})
         self.assertEqual(response.status_code,200,response.text)
         self.assertEqual((await server.db.findings.find_one({'finding_id':'f'}))['status'],'remediated')
+
+    async def test_bulk_close_retires_systems(self):
+        self.sign_in('admin')
+        created = await self.client.post('/api/assets', json={'client_id': 'a', 'name': 'Legacy file server', 'criticality': 'critical'})
+        self.assertEqual(created.status_code, 200, created.text)
+        closed = await self.client.post('/api/bulk', json={'kind': 'assets', 'ids': [created.json()['asset_id']], 'action': 'close'})
+        self.assertEqual(closed.status_code, 200, closed.text)
+        self.assertEqual((await server.db.assets.find_one({'asset_id': created.json()['asset_id']}))['status'], 'retired')
+

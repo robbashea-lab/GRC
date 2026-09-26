@@ -3,6 +3,7 @@ import {portfolio} from './summaries';
 import {validateVendor} from './vendors';
 import {assuranceStatus} from '../lib/vendorGovernance';
 import {evidenceKind} from '../lib/evidenceReferences';
+import {reviewSchedule} from '../lib/reviewOccurrences';
 
 beforeEach(()=>sessionStorage.clear());
 test('canonical clients reset independently of standard session material',()=>{
@@ -38,9 +39,20 @@ test('every relationship, owner and occurrence belongs to its client',()=>{
 });
 test('Year-2 portfolios have limited derived work instead of abandoned programs',()=>{
   const db=seedStore(),result=portfolio(db,false);
-  for(const row of result.clients){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(8);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
+  // Monthly Reviews always fall due within 30 days; Brawndo and Globo each carry two, hence 10 (not 8).
+  for(const row of result.clients){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(10);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
   for(const key of ['past_due','critical_high_open','unassigned'])expect(result.portfolio[key]).toBe(result.clients.reduce((sum,c)=>sum+c[key],0));
   const assurance=db.vendors.flatMap(v=>v.assurance_records.map(a=>assuranceStatus(v,a)));
   expect(assurance).toEqual(expect.arrayContaining(['current','due_soon']));
   expect(db.contacts.length).toBeGreaterThan(db.users.length);
+});
+test('seeded recurring Review history has no silently missing periods',()=>{
+  const db=seedStore(new Date('2026-09-28T14:00:00Z'));
+  const recurring=db.reviews.filter(r=>['monthly','quarterly','semiannual','annual'].includes(r.recurrence)&&!['completed','cancelled'].includes(r.status)&&r.occurrences?.length);
+  expect(recurring.length).toBeGreaterThan(50);
+  for(const r of recurring){
+    const last=[...r.occurrences].sort((a,b)=>a.due_date.localeCompare(b.due_date)).at(-1);
+    // The current occurrence is the period directly after the latest completed one.
+    expect({review:r.review_id,next:reviewSchedule({...r,due_date:last.due_date.slice(0,10)}).next_review_date.slice(0,10)}).toEqual({review:r.review_id,next:r.due_date.slice(0,10)});
+  }
 });

@@ -5,6 +5,8 @@ const ymd=d=>d.toISOString().slice(0,10);
 const due=(r,key)=>r[key]?String(r[key]).slice(0,10):null;
 const done=['completed','cancelled','closed','done','accepted','retired','validated'];
 const open=r=>!done.includes(r.status);
+// Legacy Systems retired through the former form option were stored as "terminated".
+const inScope=r=>!['retired','terminated'].includes(r.status);
 export function registerSignals(kind,today=new Date()){
   const t=ymd(today),soon=ymd(new Date(today.getTime()+14*DAY)),month=ymd(new Date(today.getTime()+30*DAY)),recent=ymd(new Date(today.getTime()-30*DAY));
   const owner=r=>r.owner_id||r.assignee_id||r.business_owner_id;
@@ -25,8 +27,8 @@ export function registerSignals(kind,today=new Date()){
     {id:'unapproved',label:'Not approved',tone:'moderate',test:r=>['draft','pending_approval','in_review'].includes(r.status)},
   ];
   if(kind==='assets')return [
-    {id:'critical',label:'Critical systems',tone:'critical',test:r=>r.criticality==='critical'&&r.status!=='retired'},
-    {id:'unowned',label:'No owner',tone:'moderate',test:r=>r.status!=='retired'&&!owner(r)},
+    {id:'critical',label:'Critical systems',tone:'critical',test:r=>r.criticality==='critical'&&inScope(r)},
+    {id:'unowned',label:'No owner',tone:'moderate',test:r=>inScope(r)&&!owner(r)},
   ];
   return [];
 }

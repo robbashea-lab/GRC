@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react';
-import {Link,useSearchParams} from 'react-router-dom';
+import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
 import {frameworkCatalog} from '@/lib/frameworks';
@@ -18,7 +18,7 @@ import '@/components/BrawndoCisWorkspace.css';
 import {groupRequirements,nextAssessment,matchesAssessment,sectionSummary,needsAttention,hierarchyPath,visibleSections} from '@/lib/frameworkWorkspace';
 
 const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',not_assessed:'Not Assessed',assessed:'Assessed'};
-const VIEW_LABELS={attention:'Needs attention',gaps:'Partial or not implemented',addressed:'Implemented',in_progress:'Partially implemented',needs_attention:'Not implemented / needs validation',not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:'Implemented without evidence',unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation actions',assessed:'Assessed'};
+const VIEW_LABELS={attention:'Needs attention',gaps:'Partial or not implemented',addressed:'Implemented',in_progress:'Partially implemented',needs_attention:'Not implemented / needs validation',not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:'Implemented without evidence',unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation',assessed:'Assessed'};
 const ISO_VIEWS={
   isms_clause:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
   annex_control:{label:'Annex A / SoA',matches:r=>r.specification==='annex_control'},
@@ -75,7 +75,7 @@ function Sections({nodes,expanded,toggle,openRecord,statuses,prototype}){
   })}</div>;
 }
 export default function FrameworkWorkspace({frameworkKey,clientId}){
-  const [params,setParams]=useSearchParams(),{user}=useAuth();
+  const [params,setParams]=useSearchParams(),{user}=useAuth(),location=useLocation(),navigate=useNavigate();
   const prototype=isBrawndoCisPrototype(clientId,{client_id:clientId,framework_key:frameworkKey},user);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
@@ -102,8 +102,10 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const linkedViewKey=prototype&&data&&filter!=='all'&&filter===initialView?`${clientId}:${filter}`:null;
   useEffect(()=>{if(linkedViewKey)setExpanded(groupRequirements(frameworkKey,visible).map(n=>n.key));},[linkedViewKey]);// eslint-disable-line react-hooks/exhaustive-deps
   const selected=rows.find(r=>r.framework_assessment_id===params.get('assessment'))||null;
-  const openRecord=row=>{remember({lastId:row.framework_assessment_id,section:hierarchyPath(frameworkKey,row)[0].id});const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);setParams(next);};
-  const closeRecord=()=>{const next=new URLSearchParams(params);next.delete('assessment');setParams(next,{replace:true});setRevision(n=>n+1);};
+  // A requirement opened here is one history entry: Previous/Next replace it and closing steps back to the view it
+  // was opened from. A deep-linked requirement has no such entry, so closing replaces the URL instead.
+  const openRecord=row=>{remember({lastId:row.framework_assessment_id,section:hierarchyPath(frameworkKey,row)[0].id});const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);const within=params.has('assessment');setParams(next,{replace:within,state:{fromWorkspace:within?!!location.state?.fromWorkspace:true}});};
+  const closeRecord=()=>{if(location.state?.fromWorkspace)navigate(-1);else{const next=new URLSearchParams(params);next.delete('assessment');setParams(next,{replace:true});}setRevision(n=>n+1);};
   const toggle=key=>{setExpanded(old=>old.includes(key)?old.filter(k=>k!==key):[...old,key]);remember({section:key.split('/')[0]});};
   const allKeys=ns=>ns.flatMap(n=>[n.key,...allKeys(n.children)]);
   const dropLinkedView=()=>{if(params.get('view')){const n=new URLSearchParams(params);n.delete('view');setParams(n,{replace:true});}};

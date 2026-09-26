@@ -220,7 +220,7 @@ export function action(db, kind, id, name, body) {
       source_type:"finding",source_id:id,finding_id:id,
       related_finding_ids: [id],
       treatment: 'mitigate',
-      category: 'Compliance'
+      category: 'compliance'
     });
     patch({
       risk_id: risk.risk_id

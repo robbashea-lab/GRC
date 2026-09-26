@@ -6,11 +6,12 @@ import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:e=>e.message}));
-jest.mock('@/components/FrameworkDrawer',()=>({record,onNext})=><div data-testid="opened">{record.definition_id}<button onClick={onNext}>Next</button></div>);
-jest.mock('react-router-dom',()=>({useSearchParams:()=>require('react').useState(new URLSearchParams()),Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
+jest.mock('@/components/FrameworkDrawer',()=>({record,onNext,onOpenChange})=><div data-testid="opened">{record.definition_id}<button onClick={onNext}>Next</button><button onClick={()=>onOpenChange(false)}>Close</button></div>);
+let mockNavigate,mockHistory,mockLocation;
+jest.mock('react-router-dom',()=>({useSearchParams:()=>{const [p,set]=require('react').useState(mockLocation.params);return [p,(next,options={})=>{mockHistory.push({search:String(next),...options});mockLocation.state=options.state??null;set(new URLSearchParams(next));}];},useLocation:()=>mockLocation,useNavigate:()=>mockNavigate,Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 let root,container;
 beforeEach(()=>{
- mockUser={user_id:'u',role:'super_admin'};
+ mockUser={user_id:'u',role:'super_admin'};mockNavigate=jest.fn();mockHistory=[];mockLocation={pathname:'/compliance/cis-ig1',search:'',state:null,params:new URLSearchParams()};
  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
  api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:cis.requirements,assessments:cis.requirements.map((d,i)=>({framework_assessment_id:'a'+i,definition_id:d.id,client_id:'a',status:i===1?'not_assessed':'addressed'})),work:{}}});
 });
@@ -69,4 +70,28 @@ test('native groups start collapsed and expand/collapse all without changing ass
 test('a mismatched client response cannot populate the workspace or resume selection',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="b"/>));
  expect(buttons('Expand')).toHaveLength(0);expect(container.textContent).toContain('No pending assessments');
+});
+
+test('a requirement opened here is one history entry: Next replaces it and closing steps back to the view',async()=>{
+ mockUser.workspace_mode='demo';const response=(await api.get()).data;
+ response.assessments=response.assessments.map(a=>({...a,client_id:'demo_brawndo'}));
+ sessionStorage.setItem('framework-workspace:u:demo_brawndo:cis-ig1',JSON.stringify({lastId:'a0'}));
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/>));
+ await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Return to last opened: 1.1')).click());
+ expect(mockHistory.at(-1)).toMatchObject({search:'assessment=a0',replace:false,state:{fromWorkspace:true}});
+ await act(async()=>buttons('Next')[0].click());
+ expect(mockHistory.at(-1)).toMatchObject({replace:true,state:{fromWorkspace:true}});
+ await act(async()=>buttons('Close')[0].click());
+ expect(mockNavigate).toHaveBeenCalledWith(-1);
+});
+
+test('a deep-linked requirement closes in place without leaving the workspace',async()=>{
+ mockUser.workspace_mode='demo';const response=(await api.get()).data;
+ response.assessments=response.assessments.map(a=>({...a,client_id:'demo_brawndo'}));
+ mockLocation.params=new URLSearchParams('assessment=a0');
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/>));
+ expect(container.querySelector('[data-testid="opened"]').textContent).toContain('1.1');
+ await act(async()=>buttons('Close')[0].click());
+ expect(mockNavigate).not.toHaveBeenCalled();
+ expect(mockHistory.at(-1)).toMatchObject({search:'',replace:true});
 });

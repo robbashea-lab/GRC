@@ -1,8 +1,10 @@
 import AssigneeSelect from '@/components/AssigneeSelect';
+import { OwnerAccountNote } from '@/components/ContactAccess';
 import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
+import { displayDay } from '@/lib/managementDates';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useSearchParams} from 'react-router-dom';
 import managementRules from '@/lib/managementRules.json';
@@ -213,24 +215,22 @@ export default function RiskRegister() {
                 return (
                   <tr key={r.risk_id} onClick={() => setDrawer({ open: true, record: r })} className="row-hover cursor-pointer" data-testid={`risk-row-${i}`}>
                     <td className="tbl-cell font-mono text-xs text-ink-help">{r.display_id || "ID pending"}</td>
-                    <td className="tbl-cell font-medium text-ink-primary min-w-0">
-                      <span className="truncate">{r.title}</span>
-                    </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{r.category || <span className="text-ink-help">—</span>}</td>
+                    <td className="tbl-cell font-medium text-ink-primary min-w-0">{r.title}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{r.category ? CATEGORIES.find(o => o.value === r.category)?.label || r.category : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell">
                       {level ? (
                         <span className={`pill capitalize ${tone}`}>{level}</span>
                       ) : <span className="text-ink-help">—</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-ink-help">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-ink-help">—</span>}<OwnerAccountNote users={users} id={r.owner_id} status={r.status} /></td>
                     <td className="tbl-cell">
                       <StatusPill className="border-line bg-surface-subtle">
                         {riskStatus(r.status || "open")}
                       </StatusPill>
                     </td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">
-                      {r.last_reviewed ? new Date(r.last_reviewed).toLocaleDateString() : <span className="text-ink-help">—</span>}
+                      {displayDay(r.last_reviewed) || <span className="text-ink-help">—</span>}
                     </td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">{r.next_review ? new Date(r.next_review.slice(0,10) + "T12:00:00").toLocaleDateString() : "Not scheduled"}</td>
                   </tr>

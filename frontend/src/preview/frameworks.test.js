@@ -120,3 +120,19 @@ test('tenant relationships, owner and readonly boundaries; no automatic retrofit
   await expect(api.post('/comments',{entity_type:'framework_assessments',entity_id:a.framework_assessment_id,body:'Readonly edit'})).rejects.toThrow(/Read-only/);
   await expect(api.post('/evidence',{client_id:cid,linked_type:'framework_assessment',linked_id:a.framework_assessment_id,filename:'readonly.txt',content_base64:'eA=='})).rejects.toThrow(/Read-only/);
 });
+
+test('a Finding raised on a safeguard owned by a departed user starts unassigned instead of failing',async()=>{
+  const w=await configure(),row=w.assessments[0],base='/framework_assessments/'+row.framework_assessment_id;
+  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  db.users.push({user_id:'leaver',name:'Leaver',email:'leaver@example.test',role:'client_contributor',status:'active',client_ids:[cid]});
+  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  await api.patch(base,{owner_id:'leaver'});
+  expect((await api.post(base+'/findings',{title:'Gap',remediation_title:'Fix',request_id:'active'})).data.owner_id).toBe('leaver');
+  const later=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  later.users.find(u=>u.user_id==='leaver').status='disabled';
+  sessionStorage.setItem(STORE_KEY,JSON.stringify(later));
+  const f=(await api.post(base+'/findings',{title:'Gap after departure',remediation_title:'Restore coverage',request_id:'departed'})).data;
+  expect(f.owner_id).toBeNull();
+  expect((await get('tasks')).find(t=>t.finding_id===f.finding_id).assignee_id).toBeNull();
+  expect((await api.get(base)).data.owner_id).toBe('leaver');
+});

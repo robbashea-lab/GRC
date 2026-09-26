@@ -8,3 +8,8 @@ export function calendarDay(value) {
   return date.getUTCFullYear()===y && date.getUTCMonth()===m-1 && date.getUTCDate()===d ? date.getTime()/86400000 : null;
 }
 export const managementDay = (today=new Date()) => calendarDay(today instanceof Date ? today.toISOString() : today);
+// Calendar days display as their literal date in the viewer's locale; never shifted a day by timezone.
+export function displayDay(value) {
+  const day = calendarDay(value);
+  return day === null ? null : new Date(day * 86400000).toLocaleDateString(undefined, {timeZone: 'UTC'});
+}

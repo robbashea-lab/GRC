@@ -48,3 +48,10 @@ test('floating surfaces keep viewport limits, keyboard focus, and trigger origin
   expect(css).toContain('transform-origin: var(--radix-dropdown-menu-content-transform-origin)');
   expect(css).toContain('.ui-tooltip[data-state="instant-open"] { animation: none; }');
 });
+test('dashboard work tables stack before their minimum width instead of clipping due dates and actions', () => {
+  const base = fs.readFileSync(path.join(process.cwd(), 'src/index.css'), 'utf8');
+  const min = Number(base.match(/\.app-workspace \.overflow-x-auto > table \{ min-width: (\d+)px; \}/)[1]);
+  expect(css).toContain('.ops-table { container-type: inline-size; }');
+  expect(css).toContain(`@container (max-width: ${min - 1}px)`);
+  expect(css).toContain(':root .ops-table.overflow-x-auto > table { min-width: 0; }');
+});

@@ -22,3 +22,39 @@ test('evidence older than 12 months is a distinct date range',()=>{
   expect(dateMatches('2025-08-01','older12',today)).toBe(true);
   expect(dateMatches('2026-01-01','older12',today)).toBe(false);
 });
+test('a System retired from its drawer leaves the critical and no-owner signals, including legacy terminated records',()=>{
+  const {SCHEMAS}=require('./schemas');
+  const option=SCHEMAS.assets.fields.find(f=>f.name==='status').options.find(o=>o.label==='Retired');
+  expect(option.value).toBe('retired');
+  for(const status of [option.value,'terminated']){
+    expect(pick('assets','critical')({criticality:'critical',status})).toBe(false);
+    expect(pick('assets','unowned')({status})).toBe(false);
+    expect(summarize('assets',{status,criticality:'critical'},{today:'2026-09-25'}).facts.find(f=>f.label==='Status').badge).toBe(status);
+  }
+  expect(pick('assets','critical')({criticality:'critical',status:'active'})).toBe(true);
+});
+
+test('an open Review past its due day reads Overdue in its summary, as in the register', () => {
+  const status = r => summarize('reviews', r, {today: '2036-09-29'}).facts.find(f => f.label === 'Status').badge;
+  expect(status({status: 'upcoming', due_date: '2036-07-30'})).toBe('overdue');
+  expect(status({status: 'upcoming', due_date: '2036-10-10'})).toBe('upcoming');
+  expect(status({status: 'completed', due_date: '2036-07-30'})).toBe('completed');
+  expect(status({status: 'needs_scheduling', due_date: '2036-07-30'})).toBe('needs_scheduling');
+});
+
+test('summary dates read one way, including history and renewal dates', () => {
+  const facts = summarize('reviews', {status: 'upcoming', due_date: '2036-10-10', occurrences: [{completed_at: '2036-06-30T14:00:00.000Z'}]}, {today: '2036-09-29'}).facts;
+  const expected = new Date('2036-06-30T12:00:00Z').toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'});
+  expect(facts.find(f => f.label === 'Last completed').value).toBe(expected);
+  expect(facts.find(f => f.label === 'Due').value).toContain(new Date('2036-10-10T12:00:00Z').toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'}));
+});
+
+test('a disabled owner on open work is shown and asks for reassignment, without clearing ownership', () => {
+  const users = [{ user_id: 'frito', name: 'Frito Pendejo', status: 'disabled' }];
+  const open = summarize('reviews', {status: 'upcoming', owner_id: 'frito', due_date: '2036-10-10'}, {users, today: '2036-09-29'});
+  expect(open.facts.find(f => f.label === 'Owner').value).toBe('Frito Pendejo · Disabled account');
+  expect(open.attention.map(a => a.text)).toContain('Owner account is disabled; reassign active work');
+  const done = summarize('reviews', {status: 'completed', owner_id: 'frito', due_date: '2030-10-10'}, {users, today: '2036-09-29'});
+  expect(done.facts.find(f => f.label === 'Owner').value).toBe('Frito Pendejo');
+  expect(done.attention.map(a => a.text)).not.toContain('Owner account is disabled; reassign active work');
+});

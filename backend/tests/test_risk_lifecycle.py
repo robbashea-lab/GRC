@@ -86,3 +86,11 @@ class RiskLifecycleTests(ClientDashboardSourcesTests):
         for suffix in ['activity','review-history']:
             self.assertEqual((await self.client.get('/api/risks/'+risk['risk_id']+'/'+suffix)).status_code,403)
         self.assertEqual((await self.client.post('/api/risks/'+risk['risk_id']+'/review')).status_code,403)
+
+    async def test_risk_raised_from_finding_uses_the_category_vocabulary(self):
+        self.sign_in('admin')
+        finding = (await self.client.post('/api/findings',json={'title':'Backup lock disabled','client_id':'a','severity':'high'})).json()
+        raised = await self.client.post('/api/findings/'+finding['finding_id']+'/raise-risk')
+        self.assertEqual(raised.status_code,200,raised.text)
+        risk = await server.db.risks.find_one({'finding_id':finding['finding_id']})
+        self.assertEqual(risk['category'],'compliance')

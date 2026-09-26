@@ -1,6 +1,6 @@
 import {validateCsfProfile} from '../lib/csfProfile';
 import {calendarDay} from '../lib/managementDates';
-import { validateAssignment } from './assignmentEligibility';
+import { validateAssignment, eligible } from './assignmentEligibility';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
@@ -68,7 +68,7 @@ export function frameworkRelated(db,row){
   const fids=result.findings.map(f=>f.finding_id);
   result.tasks=[...new Map([...result.tasks,...db.tasks.filter(t=>t.client_id===cid&&(fids.includes(t.finding_id)||rids.includes(t.review_id)))].map(r=>[r.task_id,r])).values()];
   result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&['review','reviews'].includes(e.linked_type)&&rids.includes(e.linked_id))].map(r=>[r.evidence_id,r])).values()];
-  result.evidence=result.evidence.filter(e=>!row.unlinked_evidence_ids?.includes(e.evidence_id));
+  result.evidence=result.evidence.filter(e=>!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id));
   return result;
 }
 export function frameworkReverse(db,kind,source,result){
@@ -182,7 +182,9 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='post'&&operation==='findings'){
     if(!body.title?.trim()||!body.remediation_title?.trim()||!body.request_id||!['low','medium','high','critical'].includes(body.severity||'medium'))throw new Error('Finding and Action titles, valid severity and request ID are required');
     const fid=stable(row.client_id,'finding',id+':'+body.request_id);let f=db.findings.find(f=>f.finding_id===fid);
-    if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:row.owner_id,remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
+    // A departed or out-of-scope safeguard owner is never copied onto new work; the Finding starts unassigned.
+    const owner=row.owner_id&&eligible(db.users.find(u=>u.user_id===row.owner_id),row.client_id)?row.owner_id:null;
+    if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:owner,remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
     action(db,'findings',fid,'create-task',{title:f.remediation_title});return f;
   }
   throw new Error('Unsupported framework operation; assessment history is retained');

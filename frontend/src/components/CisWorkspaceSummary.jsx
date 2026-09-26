@@ -8,7 +8,7 @@ const FIELD={addressed:'addressed',in_progress:'partial',needs_attention:'gap',n
 const SIGNALS=[
   ['needs_attention','Not implemented / needs validation','gap',AlertTriangle,'critical'],
   ['unremediated','Gaps without a Finding','unremediated',FlagOff,'critical'],
-  ['overdue_actions','Overdue remediation actions','overdueActions',Clock3,'critical'],
+  ['overdue_actions','Overdue remediation','overdueActions',Clock3,'critical'],
   ['stale','Validation older than 12 months','stale',SearchCheck,'moderate'],
   ['unevidenced','Implemented without evidence','unevidenced',FileX2,'moderate'],
   ['in_progress','Partially implemented','partial',ListChecks,'moderate'],

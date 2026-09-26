@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
+import { OwnerAccountNote } from '@/components/ContactAccess';
 import AssigneeSelect from '@/components/AssigneeSelect';
 import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
@@ -35,6 +36,7 @@ const DATA_TYPES = VENDOR_DATA_TYPES;
 const VIEWS = [
   { id: "all_active", label: "All Active" },
   { id: "review_due", label: "Reviews Due" },
+  { id: "review_overdue", label: "Reviews Past Due" },
   { id: "critical", label: "Critical" },
   { id: "high", label: "High" },
   { id: "contract_soon", label: "Contracts Expiring" },
@@ -97,6 +99,7 @@ export default function VendorRegister() {
       if (view === "critical" && v.criticality !== "critical") return false;
       if (view === "high" && v.criticality !== "high") return false;
       if (view === "review_due" && !v._reviewDue) return false;
+      if (view === "review_overdue" && !v._reviewOverdue) return false;
       if (view === "contract_soon" && !v._contractSoon) return false;
       if (view === "assurance" && !v._assuranceIssue) return false;
       if (view === "inactive" && status !== "inactive") return false;
@@ -110,7 +113,7 @@ export default function VendorRegister() {
   const table = useTableControls({ columns, rows: tableSource, module: 'vendor-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status' || key === 'criticality') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
-  function selectView(id) { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
+  function selectView(id) { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',review_overdue:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
   const toggleView = id => selectView(view === id ? 'all_active' : id);
   const summary = useMemo(() => {
     const s = { critical: 0, review_due: 0, contract_soon: 0, assurance: 0 };
@@ -212,7 +215,7 @@ export default function VendorRegister() {
                     <td className="tbl-cell text-xs text-ink-secondary">
                       {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="text-ink-help">—</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[v.business_owner_id] || <span className="text-ink-help">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[v.business_owner_id] || <span className="text-ink-help">—</span>}<OwnerAccountNote users={users} id={v.business_owner_id} status={v.status} /></td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">{v.last_review ? displayDate(v.last_review) : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-xs font-mono">
                       {v.next_review ? (

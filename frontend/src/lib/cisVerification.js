@@ -52,7 +52,9 @@ export function cisSummary(rows,today=new Date()){
     stale:rows.filter(r=>isStale(r,today)).length,
     unevidenced:rows.filter(lacksEvidence).length,
     findings:new Set(rows.flatMap(r=>r.work?.finding_ids||[])).size,
-    overdueActions:rows.reduce((n,r)=>n+(r.work?.overdue_actions||0),0),
+    // Safeguards with overdue linked remediation: the same population as the filtered view.
+    // A Review Action inherited by several safeguards must not be multiplied into a larger number.
+    overdueActions:rows.filter(r=>(r.work?.overdue_actions||0)>0).length,
     overdueReviews:rows.filter(r=>r.work?.overdue_reviews).length,
     unremediated:rows.filter(gapUntracked).length};
 }

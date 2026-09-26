@@ -4,12 +4,13 @@ import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
+import { displayDay } from '@/lib/managementDates';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
-import { ContactAccessStatus, useContactAccess } from '@/components/ContactAccess';
+import { ContactAccessStatus, OwnerAccountNote, useContactAccess } from '@/components/ContactAccess';
 import { contactResponsibilities } from '@/lib/contactAccess';
 import PageHeader from "@/components/PageHeader";
 import RegisterSignalBar from "@/components/RegisterSignalBar";
@@ -52,6 +53,11 @@ const DEFAULT_SORT = {
 };
 
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+// Findings open on current deficiencies; closed and accepted history stays one selection away.
+const DEFAULT_STATUS = { findings: "active" };
+const TERMINAL_STATUS = { findings: ["closed", "accepted"] };
+// Cells show a field's vocabulary label, as the form and the column filter do; unknown values show as recorded.
+const optionLabel = (schema, key, value) => schema.fields?.find((f) => f.name === key)?.options?.find((o) => o.value === value)?.label ?? value;
 
 // Human-friendly due-date helper. Returns { primary, secondary, tone }.
 // `closed` records get neutral treatment (no "overdue" callout).
@@ -123,7 +129,7 @@ export default function RecordListPage({ kind }) {
   const loadSequence = useRef(0);
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
-  const statusFilter = params.get("status") || "all";
+  const statusFilter = params.get("status") || DEFAULT_STATUS[kind] || "all";
   const reference = isBrawndoReference(currentClientId, user);
   const signals = useMemo(() => reference ? registerSignals(kind) : [], [reference, kind]);
   const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
@@ -134,7 +140,7 @@ export default function RecordListPage({ kind }) {
 
   function setParam(key, value) {
     const next = new URLSearchParams(params);
-    if (value == null || value === "" || (key === "status" && value === "all")) next.delete(key);
+    if (value == null || value === "" || (key === "status" && value === (DEFAULT_STATUS[kind] || "all"))) next.delete(key);
     else next.set(key, value);
     setParams(next, { replace: true });
   }
@@ -229,7 +235,8 @@ export default function RecordListPage({ kind }) {
       owner,
       unassigned: !carriedClientChanged && p.get("unassigned") === "1",
       severities: (p.get("severity") || "").split(",").map((s) => s.trim()).filter(Boolean),
-      status: p.get("status") || "",
+      // "all" and "active" are status-selector views, not record statuses.
+      status: ["all", "active"].includes(p.get("status")) ? "" : p.get("status") || "",
       setup: SETUP_FILTERS[kind]?.[p.get('setup')] || null,
     };
   }, [location.search, user, carriedClientChanged, kind]);
@@ -291,7 +298,7 @@ export default function RecordListPage({ kind }) {
 
       if (signal && !signal.test(r)) return false;
       if (isReviews && !signal && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
-      if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && r.status !== statusFilter) return false;
+      if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && (statusFilter === "active" ? (TERMINAL_STATUS[kind] || []).includes(r.status) : r.status !== statusFilter)) return false;
       if (!s) return true;
       const {occurrences, ...searchable} = r;
       return JSON.stringify(searchable).toLowerCase().includes(s);
@@ -331,7 +338,7 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind]);
   const filtered = table.apply(presetRows);
 
   const reviewTabCounts = useMemo(() => {
@@ -472,6 +479,7 @@ export default function RecordListPage({ kind }) {
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger aria-label="Filter by status" data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
               <SelectContent>
+                {DEFAULT_STATUS[kind] === "active" && <SelectItem value="active">Active</SelectItem>}
                 <SelectItem value="all">All statuses</SelectItem>
                 {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
@@ -604,9 +612,9 @@ export default function RecordListPage({ kind }) {
                       ) :
                        c.user ? (
                          isReviews ? <span className={`register-owner ${row[c.key] ? '' : 'register-owner--unassigned'}`} data-testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined}>
-                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{row[c.key] ? userMap[row[c.key]] || row[c.key] : 'Unassigned'}</span>
+                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{row[c.key] ? userMap[row[c.key]] || row[c.key] : 'Unassigned'}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
                          </span> : row[c.key]
-                           ? <span className="text-ink-secondary">{userMap[row[c.key]] || row[c.key]}</span>
+                           ? <span className="text-ink-secondary">{userMap[row[c.key]] || row[c.key]}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
                            : <span
                                className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-xs font-mono uppercase tracking-wider"
                                data-testid={`${kind}-unassigned-${i}`}
@@ -614,7 +622,7 @@ export default function RecordListPage({ kind }) {
                        ) :
                        isReviews && c.key==='basis' ? <span className="text-xs text-ink-secondary" title={basisSummary(row)}>{basisSummary(row)}</span> :
                        isDueLike ? <DueCell iso={row[c.key]} closed={closed} /> :
-                       c.date ? (row[c.key] ? <span className="font-mono text-ink-secondary">{new Date(row[c.key]).toLocaleDateString()}</span> : <span className="text-ink-help">—</span>) :
+                       c.date ? (displayDay(row[c.key]) ? <span className="font-mono text-ink-secondary">{displayDay(row[c.key])}</span> : <span className="text-ink-help">—</span>) :
                        (
                          <span className="inline-flex items-center gap-2">
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
@@ -622,7 +630,7 @@ export default function RecordListPage({ kind }) {
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
                              : c.primary && kind === "policies" && signals.length && policySupports(row) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports CIS {policySupports(row)}</span></span>
                              : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
-                             : <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>}
+                             : <span>{row[c.key] ? optionLabel(schema, c.key, row[c.key]) : <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (
                              <span
                                className="inline-flex items-center px-1.5 py-0 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-mono uppercase tracking-widest"

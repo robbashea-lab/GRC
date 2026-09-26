@@ -15,7 +15,7 @@ export default function DashboardAttention({posture,programs=[],onShow}){
     {key:'due30',label:'Due in 30 days',sub:'Upcoming obligations',n:count('due30'),tone:'duesoon',Icon:CalendarClock},
     {key:'materialFindings',label:'High / critical findings',sub:'Open, not yet validated',n:count('materialFindings'),tone:'critical',Icon:FileWarning,to:'/findings?signal=material'},
     {key:'significantRisks',label:'Significant risks',sub:'High or critical exposure',n:count('significantRisks'),tone:'critical',Icon:ShieldAlert,to:'/risks?view=significant'},
-    {key:vendorKey,label:vendorKey==='assurance'?'Vendor assurance':'Vendor reviews past due',sub:vendorKey==='assurance'?'Expired, due or missing':'Third-party oversight',n:vendorGroup?.total??vendorGroup?.items?.length??0,tone:'duesoon',Icon:Building2,to:`/vendors?view=${vendorKey==='assurance'?'assurance':'review_due'}`},
+    {key:vendorKey,label:vendorKey==='assurance'?'Vendor assurance':'Vendor reviews past due',sub:vendorKey==='assurance'?'Expired, due or missing':'Third-party oversight',n:vendorGroup?.total??vendorGroup?.items?.length??0,tone:'duesoon',Icon:Building2,to:`/vendors?view=${vendorKey==='assurance'?'assurance':'review_overdue'}`},
   ];
   const cisGap=cis?(cis.status_counts.needs_attention||0)+(cis.status_counts.in_progress||0):null;
   return <section aria-labelledby="attention-heading" className="space-y-2">

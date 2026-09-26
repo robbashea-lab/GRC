@@ -48,3 +48,16 @@ test('assurance is proportionate; operational cards use linked Reviews and calen
   expect(vendorSignals({...v,next_review:r.due_date},[],today)._reviewDue).toBe(false);
   expect(vendorPlans({contract_review_enabled:true,contract_renewal:'2027-03-25'}).contract[0]).toBe('2026-12-25');
 });
+
+test('Dashboard vendor tiles and the register views they open use the same populations',()=>{
+  const today=new Date('2026-09-14T12:00:00Z');
+  const review=due=>({review_id:'r',vendor_id:'v',client_id:'a',due_date:due,status:'upcoming'});
+  const active={vendor_id:'v',client_id:'a',status:'active',assurance_required:true,assurance_records:[{type:'SOC 2',required:true,evidence_ids:['e'],received_at:'2025-01-01',refresh_due:'2026-01-01'}]};
+  // "Vendor reviews past due" counts only past-due primary Reviews; "Reviews Due" also includes the next 90 days.
+  expect(vendorSignals(active,[review('2026-09-01')],today)).toMatchObject({_reviewOverdue:true,_reviewDue:true});
+  expect(vendorSignals(active,[review('2026-10-01')],today)).toMatchObject({_reviewOverdue:false,_reviewDue:true});
+  expect(vendorSignals({...active,status:'inactive'},[review('2026-09-01')],today)._reviewOverdue).toBe(false);
+  // Assurance is not a management obligation while offboarding, matching the Dashboard assurance tile.
+  expect(vendorSignals(active,[],today)._assuranceIssue).toBe(true);
+  expect(vendorSignals({...active,status:'offboarding'},[],today)._assuranceIssue).toBe(false);
+});
