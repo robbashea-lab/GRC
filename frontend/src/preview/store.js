@@ -25,6 +25,7 @@ function dropLegacyStores() {
 }
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
+  organizational_controls:'control_id',
   framework_assessments:'framework_assessment_id',
   ai_systems:'ai_system_id',
   clients: 'client_id',

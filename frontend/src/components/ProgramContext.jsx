@@ -14,14 +14,28 @@ export function socPeriod(configuration, today = new Date()) {
     state: now < start ? 'upcoming' : now > end ? 'ended' : 'current'};
 }
 
-export function socControlExceptions(rows) {
+export function socControlExceptions(rows, shared = []) {
   const seen = new Map();
+  const migrated = new Set(shared.map(c=>c.legacy_id));
+  const legacyExceptions = new Set();
   for (const row of rows) for (const c of row.management_controls || []) {
     const short = Number.isInteger(c.expected_instances) && Number.isInteger(c.collected_instances) && c.collected_instances < c.expected_instances;
-    if (!seen.has(c.control_id)) seen.set(c.control_id, {operating: c.operating === 'gap' || c.design === 'gap', short});
+    if(migrated.has(c.control_id)){
+      if(short||c.operating==='gap'||c.design==='gap')legacyExceptions.add(c.control_id);
+      continue;
+    }
+    const previous = seen.get(c.control_id);
+    // A healthy observation in one criterion must not conceal another's gap.
+    seen.set(c.control_id, {operating: previous?.operating || c.operating === 'gap' || c.design === 'gap', short: previous?.short || short});
+  }
+  const scope = new Set(rows.map(r=>r.framework_assessment_id));
+  for(const c of shared.filter(c=>c.assessment_ids.some(id=>scope.has(id)))) {
+    const o=c.observations?.at(-1);
+    seen.set(c.control_id,{operating:c.design==='gap'||o?.operating==='gap'||!!c.conflicts?.length,
+      short:Number.isInteger(o?.expected_instances)&&Number.isInteger(o?.collected_instances)&&o.collected_instances<o.expected_instances});
   }
   const controls = [...seen.values()];
-  return {controls: controls.length, gaps: controls.filter(c => c.operating).length, short: controls.filter(c => c.short).length};
+  return {controls: controls.length, gaps: controls.filter(c => c.operating).length, short: controls.filter(c => c.short).length, legacyExceptions:legacyExceptions.size};
 }
 
 export function isoPosture(rows) {
@@ -32,16 +46,17 @@ export function isoPosture(rows) {
     annex: annex.length, included: soa('included'), excluded: soa('excluded'), undetermined: soa('')};
 }
 
-export default function ProgramContext({frameworkKey, rows, configuration}) {
+export default function ProgramContext({frameworkKey, rows, configuration, controls}) {
   if (frameworkKey === 'soc-2') {
-    const period = socPeriod(configuration), exceptions = socControlExceptions(rows);
+    const period = socPeriod(configuration), exceptions = socControlExceptions(rows, controls);
     return <div className="program-context" data-testid="soc-period">
       <p className="cis-measure-label">Observation period</p>
       <p className="text-sm">{period ? <>
         <strong>{period.start} to {period.end}</strong> · {period.state === 'current' ? `day ${period.elapsed} of ${period.length}` : period.state === 'upcoming' ? 'not started' : 'ended'}
         {' · '}{(configuration?.categories || []).map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')}
       </> : 'Not defined. Set the scope and observation period below.'}</p>
-      <p className="text-sm text-ink-secondary">{plural(exceptions.controls, 'management control')} · {plural(exceptions.gaps, 'with a design or operating gap', 'with a design or operating gap')} · {plural(exceptions.short, 'short of expected instances', 'short of expected instances')}</p>
+      <p className="text-sm text-ink-secondary">{plural(exceptions.controls, 'Control reference')} · {exceptions.gaps} with a design / operating gap or reconciliation need · {exceptions.short} short of expected instances</p>
+      {!!exceptions.legacyExceptions&&<p className="text-sm text-ink-secondary">{exceptions.legacyExceptions} Controls retain legacy exceptions. Inspect preserved criterion observations; migration does not resolve them or establish shared operating effectiveness.</p>}
       <p className="cis-footnote">Internal readiness based on management's own testing. A SOC 2 report and its opinion come only from an independent CPA firm.</p>
     </div>;
   }

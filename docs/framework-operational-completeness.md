@@ -78,3 +78,34 @@ an unresolved operational failure, or an unexecuted material gate still does.
 
 The live public-source working baseline and material manual verification list are
 in [framework-public-source-baseline.md](framework-public-source-baseline.md).
+
+## Shared-Control implementation checkpoint
+
+User-approved client-owned Controls are implemented in the existing API/Demo paths.
+See [organizational-controls.md](organizational-controls.md) for migration and
+authorization contracts. Conflicts remain explicit; original criterion snapshots
+are unchanged. Evidence navigates both ways and remains in its original occurrence.
+An interleaving regression verifies the migration fence rejects a concurrent legacy
+edit rather than losing it. No dependencies or destructive schema changes.
+
+Verification so far (not the final acceptance decision):
+
+- Full frontend: 112 suites / 616 tests passed before the last browser fixes.
+- Expanded five-year lifecycle: three framework tests pass, exercising 201 CIS,
+  65 ISO and 55 SOC Review occurrences and Evidence artifacts, first-year history,
+  policy approval, later exceptions, stale Evidence, ISO internal audit/corrective
+  action, management-review improvement, supplier/owner/scope changes and SoA.
+- Full isolated backend: 403 tests / 567 subtests passed; subsequently the new
+  migration-interleaving case passed in the focused eight-test suite.
+- Normal and Demo optimized builds passed. Existing PlatformAdmin dependency and
+  Node fs.F_OK warnings remain; no new warning introduced.
+- Browser: explicit migration of Prestige's 49 legacy Controls; four-criterion
+  shared access Control; preserved eight source observations; Review occurrence
+  and original Evidence navigation; saved period observation; unchanged criterion
+  counts. Browser-discovered legacy-exception visibility, date-only Evidence
+  timezone display and same-scope refresh focus defects have regression fixes.
+- Remaining final gates include dense-state/browser role/responsive checks,
+  final retest after those fixes, diff review and temporary-client cleanup.
+
+This checkpoint is neither merged nor published. Persistent staging durability and
+independent assurance remain outside isolated API and browser-Demo evidence.

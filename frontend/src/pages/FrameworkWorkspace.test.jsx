@@ -1,7 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkWorkspace from './FrameworkWorkspace';
-import {cis} from '@/lib/frameworks';
+import {cis, frameworkCatalog} from '@/lib/frameworks';
 import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -94,4 +94,16 @@ test('a deep-linked requirement closes in place without leaving the workspace',a
  await act(async()=>buttons('Close')[0].click());
  expect(mockNavigate).not.toHaveBeenCalled();
  expect(mockHistory.at(-1)).toMatchObject({search:'',replace:true});
+});
+
+test('ISO filtered summaries name the selected view rather than claiming whole-program coverage',async()=>{
+ const definitions=frameworkCatalog('iso-27001').requirements;
+ api.get.mockResolvedValue({data:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed'})),work:{}}});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="a"/>));
+ const view=container.querySelector('[aria-label="ISO workspace view"]');
+ await act(async()=>{view.value='audit';view.dispatchEvent(new Event('change',{bubbles:true}));});
+ const summary=container.querySelector('[aria-labelledby="cis-summary-heading"]');
+ expect(summary.querySelector('h2').textContent).toBe('Internal Audit condition');
+ expect(summary.textContent).toContain('Coverage is limited to the Internal Audit view');
+ expect(summary.textContent).toContain('3 of 3 applicable');
 });

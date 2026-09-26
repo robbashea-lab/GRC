@@ -211,7 +211,8 @@ def router_for(s):
         catalog=CATALOGS.get(key,{})
         config=soc_configuration(client) if key=='soc-2' else {}
         retained={a['definition_id'] for a in rows}
-        return {'framework':framework,'selected':bool(program),'configured':bool(rows),
+        controls = await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1,'legacy_id':1,'assessment_ids':1,'design':1,'conflicts':1,'observations.operating':1,'observations.expected_instances':1,'observations.collected_instances':1}).to_list(None) if key=='soc-2' else []
+        return {'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
                 'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows),
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
@@ -277,6 +278,8 @@ def router_for(s):
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
         if 'management_controls' in changes:
             if old['framework_key']!='soc-2':raise HTTPException(422,'Management control readiness fields apply only to SOC 2')
+            if changes['management_controls'] != old.get('management_controls', []) and (old.get('controls_migrated') or await s.db.organizational_controls.find_one({'client_id':old['client_id'],'$or':[{'assessment_ids':aid},{'legacy_sources.assessment_id':aid}]})):
+                raise HTTPException(409,'Legacy descriptions are preserved. Edit the shared organizational Control instead')
             ids=[c['control_id'] for c in changes['management_controls']]
             if len(ids)!=len(set(ids)):raise HTTPException(422,'Management control identifiers must be unique')
         if data['status'] not in STATUSES or any(data.get(k) is None for k in ('implementation','technology','notes','na_rationale')):raise HTTPException(422,'Invalid assessment fields')
@@ -305,7 +308,9 @@ def router_for(s):
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed:
             at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed'};snapshot.update(at=at,by=user['user_id'])
-            result=await s.db.framework_assessments.update_one({'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')},{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
+            predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}
+            if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
+            result=await s.db.framework_assessments.update_one(predicate,{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
             if not result.matched_count:raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status']})
         return await parent(aid,user)

@@ -11,7 +11,7 @@ DATES = ('created_at','evidence_date','effective_date')
 FILTERS = ('mime_type', 'uploaded_by_email', 'linked_type', *DATES, 'program_areas', 'evidence_type', 'years', 'frameworks', 'refresh_status')
 SORTS = ('filename', *FILTERS)
 BATCH = 100
-AREAS = {'reviews':'Reviews', 'policies':'Policies', 'vendors':'Vendors', 'risks':'Risks', 'findings':'Findings', 'framework_assessments':'Frameworks', 'requirements':'Frameworks'}
+AREAS = {'reviews':'Reviews', 'policies':'Policies', 'vendors':'Vendors', 'risks':'Risks', 'findings':'Findings', 'framework_assessments':'Frameworks', 'requirements':'Frameworks', 'organizational_controls':'Controls'}
 
 
 def direct_links(row):
@@ -63,6 +63,7 @@ async def enrich(db, rows, cid, can_access):
         'vendors': {'$or':[{'contract_evidence_ids':{'$in':eids}}, {'assurance_records.evidence_ids':{'$in':eids}}]},
         'policies': {'$or':[{'approval_source.evidence_id':{'$in':eids}}, {'approval_subject.basis.evidence_id':{'$in':eids}}, {'approval_history.subject.basis.evidence_id':{'$in':eids}}]},
         'framework_assessments': {'related_links':{'$elemMatch':{'kind':'evidence','id':{'$in':eids}}}},
+        'organizational_controls': {'$or':[{field:{'$elemMatch':{'kind':'evidence','id':{'$in':eids}}}} for field in ('related_links','history.related_links','observations.design_snapshot.related_links')]},
     }
     for kind, query in queries.items():
         async for doc in db[kind].find({'client_id':cid, **query}, {'_id':0}):
@@ -70,6 +71,9 @@ async def enrich(db, rows, cid, can_access):
             catalog[kind][ident] = doc
             if kind == 'vendors': ids = set(doc.get('contract_evidence_ids', [])) | {x for a in doc.get('assurance_records', []) for x in a.get('evidence_ids', [])}
             elif kind == 'policies': ids = {doc.get('approval_source', {}).get('evidence_id') if doc.get('approval_source') else None, (doc.get('approval_subject') or {}).get('basis', {}).get('evidence_id')} | {(h.get('subject') or {}).get('basis', {}).get('evidence_id') for h in doc.get('approval_history', [])}
+            elif kind == 'organizational_controls':
+                versions = [doc, *doc.get('history', []), *[o.get('design_snapshot', {}) for o in doc.get('observations', [])]]
+                ids = {r['id'] for version in versions for r in version.get('related_links', []) if r['kind']=='evidence'}
             else: ids = {r['id'] for r in doc.get('related_links', []) if r['kind'] == 'evidence'} - set(doc.get('unlinked_evidence_ids', []))
             for eid in ids.intersection(external): external[eid].append({'kind':kind,'id':ident,'origin':'module'})
     for _ in range(3):
@@ -110,6 +114,8 @@ async def enrich(db, rows, cid, can_access):
             parent = catalog[link['kind']].get(link['id'])
             ref = reference(link['kind'], parent, link['id'], link.get('occurrence_id'))
             ref['origin'] = link['origin']
+            if parent and link['kind']=='organizational_controls':
+                ref['document_context'] = 'Current Control relationship' if any(r['kind']=='evidence' and r['id']==evidence['evidence_id'] for r in parent.get('related_links', [])) else 'Historical Control relationship'
             if parent and link['kind']=='policies':
                 ref['document_context'] = 'Current approval document' if (parent.get('approval_source') or {}).get('evidence_id')==evidence['evidence_id'] else 'Previous approval document' if any((h.get('subject') or {}).get('basis',{}).get('evidence_id')==evidence['evidence_id'] for h in parent.get('approval_history',[])) else 'Supporting document'
             if parent and link['kind'] == 'framework_assessments': ref['framework_key'] = parent.get('framework_key')

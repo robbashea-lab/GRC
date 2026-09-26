@@ -102,7 +102,9 @@ export function frameworkRequest(db,path,method,params,body){
     const assessments=framework.implemented?db.framework_assessments.filter(a=>a.client_id===params.client_id&&a.framework_key===id):[];
     const configuration=id==='soc-2'?socConfiguration(record(db,'clients',params.client_id)):{};
     return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
-      definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,work:Object.fromEntries(assessments.map(a=>[a.framework_assessment_id,assessmentWork(a,db)])),active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
+      definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,
+      organizational_controls:id==='soc-2'?(db.organizational_controls||[]).filter(c=>c.client_id===params.client_id).map(c=>({control_id:c.control_id,legacy_id:c.legacy_id,assessment_ids:c.assessment_ids,design:c.design,conflicts:c.conflicts,observations:c.observations.map(o=>({operating:o.operating,expected_instances:o.expected_instances,collected_instances:o.collected_instances}))})):[],
+      work:Object.fromEntries(assessments.map(a=>[a.framework_assessment_id,assessmentWork(a,db)])),active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
   }
   const row=record(db,'framework_assessments',id);frameworkScope(db,row.client_id);if(method!=='get')writable(db);
   if(method==='post'&&operation==='reviews'){
@@ -139,6 +141,7 @@ export function frameworkRequest(db,path,method,params,body){
     }
     if('management_controls' in body){
       if(row.framework_key!=='soc-2')throw new Error('Management control readiness fields apply only to SOC 2');
+      if(JSON.stringify(body.management_controls)!==JSON.stringify(row.management_controls||[])&&(row.controls_migrated||db.organizational_controls?.some(c=>c.client_id===row.client_id&&(c.assessment_ids.includes(id)||c.legacy_sources.some(s=>s.assessment_id===id)))))throw new Error('Legacy descriptions are preserved. Edit the shared organizational Control instead');
       body={...body,management_controls:validateManagementControls(body.management_controls)};
     }
     const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');

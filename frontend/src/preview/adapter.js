@@ -1,5 +1,6 @@
 import catalog from '@/lib/onboardingCatalog.json';
 import { authorizeDemo } from './authorization';
+import {organizationalControlRequest} from './organizationalControls';
 import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
@@ -20,7 +21,7 @@ import { onboard, action } from './workflows';
 import { guardEdit } from './decisions';
 import { history, reviewEvent } from './reviews';
 import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
-import {evidencePage,evidenceAccess,evidenceLibraryRequest} from './evidence';
+import {evidencePage,evidenceAccess,evidenceLibraryRequest,controlEvidenceLinks} from './evidence';
 import {evidenceKind} from '../lib/evidenceReferences';
 import {clearEvidenceFiles,demoDiagnostics} from './store';
 import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
@@ -108,6 +109,10 @@ export async function previewAdapter(config) {
       saveStore(db);
       return respond(data);
     };
+    if(kind==='organizational-controls'){
+      const data=organizationalControlRequest(db,parts,method,params,body);
+      return method==='get'?respond(data):save(data);
+    }
     const identity = identityRequest(db, path, method, params, body);
     if(kind==='clients'&&id&&name==='profile')return method==='get'?respond(clientProfileRequest(db,id,method,body)):save(clientProfileRequest(db,id,method,body));
     if(kind==='clients'&&method!=='get'&&['profile','initial_program_baseline','onboarding_baseline'].some(k=>k in body))return fail(422,'Use the dedicated profile or onboarding workflow');
@@ -369,6 +374,7 @@ export async function previewAdapter(config) {
         if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw new Error('Record changed; reload before deleting');
         if(kind==='policies'&&retainedPolicy(r))throw new Error('Policy approval history must be retained; retire the Policy instead');
         if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
+        if(kind==='evidence'&&(db.organizational_controls||[]).some(c=>c.client_id===r.client_id&&controlEvidenceLinks(c).some(l=>l.id===id)))throw new Error('Control design and operation evidence must be retained.');
         if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
         if(kind==='evidence'&&['ai_system','ai_systems'].includes(r.linked_type)&&(db.ai_systems||[]).some(x=>x.ai_system_id===r.linked_id&&x.status==='retired'))throw new Error('Retired AI evidence must be retained');

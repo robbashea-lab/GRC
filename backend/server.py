@@ -1604,6 +1604,8 @@ async def client_members(client_id: str, user: Dict = Depends(get_current_user))
         for field in (*assignment_fields, *(("owner_id",) if coll == "tasks" else ()), *MEMBER_ACTOR_FIELDS):
             referenced.update(v for v in await db[coll].distinct(field, {"client_id": client_id}) if isinstance(v, str) and v)
     orphan_ids = referenced - known_ids
+    for field in ('owner_id','created_by','history.owner_id','history.changed_by','legacy_sources.by','observations.by','observations.design_snapshot.owner_id'):
+        orphan_ids.update(v for v in await db.organizational_controls.distinct(field, {'client_id':client_id}) if isinstance(v,str) and v not in known_ids)
     if orphan_ids:
         orphans = await db.users.find(
             {"user_id": {"$in": sorted(orphan_ids)}},
@@ -4944,6 +4946,8 @@ app.include_router(api)
 import sys
 app.include_router(ai_governance.router_for(sys.modules[__name__]))
 app.include_router(framework_governance.router_for(sys.modules[__name__]))
+import organizational_controls
+app.include_router(organizational_controls.router_for(sys.modules[__name__]))
 app.include_router(policy_approval.router_for(sys.modules[__name__]))
 app.include_router(evidence_library.router_for(sys.modules[__name__]))
 import client_profile

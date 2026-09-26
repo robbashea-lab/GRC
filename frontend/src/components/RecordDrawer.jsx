@@ -27,6 +27,7 @@ import ReviewDrawer from "./ReviewDrawer";
 import RecordSummary from "./RecordSummary";
 import AIDrawer from './AIDrawer';
 import FrameworkDrawer from './FrameworkDrawer';
+import {OrganizationalControlDrawer} from './OrganizationalControls';
 import ActionItemFields from "./ActionItemFields";
 import { taskSource, SOURCE_RECORDS, actionStatus } from "@/lib/actionItems";
 import { relatedReviewInitialValues } from "@/lib/reviewOccurrences";
@@ -108,6 +109,7 @@ function toDateInput(v) {
 }
 
 export default function RecordDrawer(props) {
+  if(props.kind==='organizational_controls')return <OrganizationalControlDrawer {...props}/>;
   if(props.kind==='framework_assessments')return <FrameworkDrawer {...props}/>;
   if(props.kind==='ai_systems') return <AIDrawer {...props}/>;
   if(props.kind==="assessments") return <RelatedAssessment {...props}/>;
