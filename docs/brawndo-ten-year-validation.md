@@ -48,7 +48,7 @@ Representative CIS lifecycle (11.4, isolated recovery data): Implemented 2027 â†
 | `fix: show every Finding when All statuses is selected` | Regression from the Active default, caught in browser QA: All statuses showed 0 |
 | `fix: return to the originating view in one stepâ€¦` | Closing a requirement left a duplicate history entry; Next pushed one entry per requirement |
 
-UI refinements (`polish:`) from the single design review: Findings open on Active; dashboard work tables stack instead of clipping their actions; Risk titles wrap; Review drawer shows Overdue as the register does; open work owned by a disabled account is flagged; vocabulary labels and one summary date format.
+UI refinements (`polish:`) from the single design review: Findings open on Active; dashboard work tables stack instead of clipping their actions; Risk titles and Action Item sources wrap; Review drawer shows Overdue as the register does; open work owned by a disabled account is flagged; vocabulary labels and one summary date format.
 
 ## Characterized limits (unchanged)
 
