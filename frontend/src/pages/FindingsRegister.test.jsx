@@ -6,7 +6,7 @@ let mockParams;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'admin',role:'super_admin'}})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'c',currentClient:{name:'Test client'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
-jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/findings',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>{const [value,set]=require('react').useState(mockParams);return [value,next=>set(new URLSearchParams(next))];}}),{virtual:true});
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/findings',search:'?'+mockParams}),useNavigate:()=>jest.fn(),useSearchParams:()=>{const [value,set]=require('react').useState(mockParams);return [value,next=>set(new URLSearchParams(next))];}}),{virtual:true});
 jest.mock('@/components/RecordDrawer',()=>()=>null);
 let root, container;
 const finding=(id,status,severity='critical')=>({finding_id:id,client_id:'c',title:id,status,severity,due_date:'2030-01-01'});
@@ -36,4 +36,8 @@ test('closed Finding history remains one explicit selection away',async()=>{
   await act(async()=>root.render(<RecordListPage kind="findings"/>));
   expect(titles()).toHaveLength(1);
   expect(titles()[0]).toContain('closed-2029');
+  mockParams=new URLSearchParams('status=active');
+  await act(async()=>root.unmount());root=createRoot(container);
+  await act(async()=>root.render(<RecordListPage kind="findings"/>));
+  expect(titles()).toHaveLength(2);
 });

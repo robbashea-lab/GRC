@@ -235,7 +235,8 @@ export default function RecordListPage({ kind }) {
       owner,
       unassigned: !carriedClientChanged && p.get("unassigned") === "1",
       severities: (p.get("severity") || "").split(",").map((s) => s.trim()).filter(Boolean),
-      status: p.get("status") || "",
+      // "all" and "active" are status-selector views, not record statuses.
+      status: ["all", "active"].includes(p.get("status")) ? "" : p.get("status") || "",
       setup: SETUP_FILTERS[kind]?.[p.get('setup')] || null,
     };
   }, [location.search, user, carriedClientChanged, kind]);
