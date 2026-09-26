@@ -56,6 +56,8 @@ const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
 // Findings open on current deficiencies; closed and accepted history stays one selection away.
 const DEFAULT_STATUS = { findings: "active" };
 const TERMINAL_STATUS = { findings: ["closed", "accepted"] };
+// Cells show a field's vocabulary label, as the form and the column filter do; unknown values show as recorded.
+const optionLabel = (schema, key, value) => schema.fields?.find((f) => f.name === key)?.options?.find((o) => o.value === value)?.label ?? value;
 
 // Human-friendly due-date helper. Returns { primary, secondary, tone }.
 // `closed` records get neutral treatment (no "overdue" callout).
@@ -627,7 +629,7 @@ export default function RecordListPage({ kind }) {
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
                              : c.primary && kind === "policies" && signals.length && policySupports(row) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports CIS {policySupports(row)}</span></span>
                              : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
-                             : <span>{row[c.key] || <span className="text-ink-help">—</span>}</span>}
+                             : <span>{row[c.key] ? optionLabel(schema, c.key, row[c.key]) : <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (
                              <span
                                className="inline-flex items-center px-1.5 py-0 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-mono uppercase tracking-widest"
