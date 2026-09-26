@@ -154,7 +154,7 @@ a:hover { color: var(--color-link-hover); }
 .brand-lockup { display: flex; align-items: center; gap: 11px; }
 .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #66758b; border-radius: 8px; color: #f7f9fc; font-size: 23px; line-height: 1; font-weight: 500; }
 .brand-name { font-size: 18px; font-weight: 600; letter-spacing: -.045em; color: #f7f9fc; }
-.brand-owner { font-size: 10px; font-weight: 600; letter-spacing: .12em; color: #aebccc; margin-top: 2px; }
+.brand-owner { font-size: 9.5px; font-weight: 600; letter-spacing: .07em; white-space: nowrap; color: #aebccc; margin-top: 2px; }
 .brand-on-light .brand-name, .brand-on-light .brand-mark { color: var(--color-text-primary); }
 .brand-on-light .brand-owner { color: var(--color-text-secondary); }
 .login-shell { min-height: 100dvh; }
