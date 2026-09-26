@@ -39,9 +39,9 @@ test('every relationship, owner and occurrence belongs to its client',()=>{
 });
 test('Year-2 portfolios have limited derived work instead of abandoned programs',()=>{
   const db=seedStore(),result=portfolio(db,false);
-  // Monthly Reviews always fall due within 30 days; Brawndo carries two, and every client has a
-  // departing employee's handover item due within two weeks, hence 11 (not 8).
-  for(const row of result.clients){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(11);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
+  // Due-soon work is bounded but real: monthly Reviews, a departing employee's handover item and each
+  // program's own remediation (Prestige: SOC exceptions inside the observation period) keep it at most 15.
+  for(const row of result.clients){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(15);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
   for(const key of ['past_due','critical_high_open','unassigned'])expect(result.portfolio[key]).toBe(result.clients.reduce((sum,c)=>sum+c[key],0));
   const assurance=db.vendors.flatMap(v=>v.assurance_records.map(a=>assuranceStatus(v,a)));
   expect(assurance).toEqual(expect.arrayContaining(['current','due_soon']));

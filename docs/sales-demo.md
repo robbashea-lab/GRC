@@ -15,15 +15,22 @@ Existing session edits are not silently discarded on upgrade. Use **Reset sample
 
 ## Canonical coverage
 
-| Client | Universe | Program | Contacts | Reviews | Framework assessments |
-| --- | --- | --- | ---: | ---: | ---: |
-| Brawndo | Idiocracy | CIS IG1 | 4 | 24 | 56 |
-| Dunder Mifflin | The Office | ISO 27001 | 9 | 21 | 123 |
-| Prestige Worldwide | Step Brothers | SOC 2 | 6 | 19 | 36 |
+| Client | Universe | Program | Contacts | Reviews | Framework assessments | Risks | Findings (open) | Vendors | Evidence |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Brawndo | Idiocracy | CIS IG1 | 4 | 24 | 56 | 4 | 9 (7) | 3 | 40 |
+| Dunder Mifflin | The Office | ISO/IEC 27001:2022 | 9 | 27 | 123 | 9 | 11 (5) | 4 | 112 |
+| Prestige Worldwide | Step Brothers | SOC 2 (Security, Availability, Confidentiality) | 6 | 23 | 38 | 7 | 12 (7) | 4 | 49 |
 
 **Scope change (2026-09-26).** The Demo was reduced to these three reference clients. Initech (NIST CSF 2.0), Sacred Heart Hospital (HIPAA), Cyberdyne Systems (CMMC applicability) and Globo Gym (multi-framework) were removed as demo organizations only; HIPAA, NIST CSF 2.0, CMMC applicability and multi-framework support remain in the product and its tests. The session store key moved to `grc_interactive_demo_v3`, and reading it discards the retired seven-client `v2` store.
 
-Each client also has 17 policies, 4 risks, 4 findings, 7 actions, 3 vendors, 6 assets, 14 downloadable evidence items, one annual assessment context, and three scoped demo users. Contacts beyond those three are not automatically platform users. Responsibilities rotate; reviewers and owners differ. Existing Prestige and other retained client IDs are reused.
+**People.** Two fictional provider GRC staff (a vCISO and a GRC Consultant, platform administrators scoped to their assigned clients) lead the programs and record governance decisions. Each client has a GRC manager, two contributors, a read-only user and a departed employee whose disabled account still owns a closed Finding and one open handover item. Other contacts are business responsibilities without platform access.
+
+**Program data.** Brawndo uses its validated reference tables (`brawndoProgram.js`). Dunder Mifflin and Prestige Worldwide use client program modules (`preview/programs/`) with their own assessment conclusions, narratives, evidence ages, risks, vendors and assessment-derived Findings:
+
+- *Dunder Mifflin*: an ISMS scoped to the Scranton branch, warehouse and supporting corporate IT. All 30 clauses assessed (24 implemented); Statement of Applicability with 90 included, 2 excluded with justification (no in-house development) and 1 undetermined control; 7 nonconformities and OFIs, 4 closed and validated, 1 corrective action overdue; an accepted SaaS concentration risk.
+- *Prestige Worldwide*: a SaaS service organization in day ~180 of a 12-month Type 2 observation period, with Confidentiality newly in scope (2 criteria not yet assessed). 49 management controls with instance counts, shared across criteria where one control supports several; 5 open exceptions and 3 closed prior-period exceptions. Readiness conclusions are internal, never a CPA opinion.
+
+Each client also has 17 policies, 6 assets and one annual assessment context.
 
 ## Operating story
 
@@ -32,9 +39,8 @@ Each client also has 17 policies, 4 risks, 4 findings, 7 actions, 3 vendors, 6 a
 - Policies use existing externally recorded approval provenance, not fabricated in-application approval authority. Sixteen are approved; one is a draft revision. Owners and reported approvers remain distinct concepts.
 - Risks include active treatment, assessed exposure, accepted exposure, and closed history. Risk posture uses existing scoring/status logic.
 - Each Finding uses the existing create-task workflow: one remediation action per Finding. Two findings have validated closure; one awaits validation; one has work in progress. Additional actions show risk, assessment, and manual management origins.
-- Vendors have current, due-soon, and (Cyberdyne) overdue/expired governance conditions, assurance references and contracts. Shared vendor/occurrence evidence is one stored Evidence Item.
+- Vendors have current, due-soon and overdue governance conditions, assurance references and contracts. Shared vendor/occurrence evidence is one stored Evidence Item.
 - Framework assessments use actual catalog definitions, statuses, native HIPAA Addressable decisions, ISO SoA inclusion, NIST profiles and SOC readiness fields. Assessment results are simulated, not claims of certification or legal compliance.
-- Globo Gym shares base policies and reviews across validated framework mappings. Evidence and risks link into multiple programs without cloning the base records.
 
 Portfolio, Dashboard and Calendar continue to derive values from the normal records/selectors. No display counters or demo-specific health scores were introduced. The portfolio tests assert bounded operational debt, meaningful recent activity, and total reconciliation.
 
