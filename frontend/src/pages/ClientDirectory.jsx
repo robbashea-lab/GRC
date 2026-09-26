@@ -119,7 +119,9 @@ function Portfolio({
   const scopeRows = rows.filter(r => !view.mine || r.grc_lead_id === user.user_id);
   const activeSignal = QUICK.map(([key]) => key).find(key => table.state.filters[key]?.includes('some'));
   // One signal at a time, like the register signal bars; the column menus still combine filters.
-  const pickSignal = key => QUICK.forEach(([k]) => table.setFilter(k, k === key && activeSignal !== key ? ['some'] : []));
+  // One state update: sequential setFilter calls would each start from the same stale state.
+  const withoutViews = filters => Object.fromEntries(Object.entries(filters || {}).filter(([k]) => !QUICK.some(([q]) => q === k)));
+  const pickSignal = key => table.replaceState({ ...table.state, filters: { ...withoutViews(table.state.filters), ...(key && activeSignal !== key ? { [key]: ['some'] } : {}) } });
   const filtered = table.apply([...rows].sort(portfolioOrder).filter(r => (!view.mine || r.grc_lead_id === user.user_id) && (!query || [r.name, r.industry, grcLead(r).name].some(v => v?.toLowerCase().includes(query)))));
   const hasFilters = !!(query || view.mine || Object.keys(view.table.filters).length);
   const clear = () => update({
