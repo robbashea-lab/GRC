@@ -47,6 +47,34 @@ and mock tests do not establish persistent-backend readiness.
 4. Exercise fresh-client onboarding and five-year transitions; persona and shared regression.
 5. One final usability review, cleanup, full checks and gate decision.
 
-Do not progress a failed framework acceptance gate as though it passed. If
-authorized source content remains unavailable, record the exact boundary and
-retain the PR as a draft; do not manufacture mappings or approve a merge.
+Do not progress a failed operational gate as though it passed. The user's
+2026-09-26 clarification supersedes the initial full-text source gate: legitimate
+public evidence can establish an operating baseline. Exact licensed-text comparison
+and operational validation are separate results. Missing full text alone does not
+block engineering or merge. A material interpretation with insufficient evidence,
+an unresolved operational failure, or an unexecuted material gate still does.
+
+## Current verification checkpoint
+
+- CIS publisher comparison: 56 IG1 identifiers/titles match the current public CIS
+  Assessment Specification control pages; no extra/missing entries found.
+- Reproduced and fixed misleading verification summaries for stale Evidence,
+  missing/invalid assessment dates and Review-link-only operation claims. No saved
+  assessment status or cadence changed. Three regression cases failed before fix;
+  31 focused verification/workspace/component tests passed afterward.
+- Full frontend baseline: 108/109 suites, 602/603 tests passed. The failure exposed
+  random opaque IDs contaminating Evidence period search. Deterministic regression
+  reproduced it in Demo and server paths. Both now search meaningful fields rather
+  than internal IDs; 13 focused frontend and 12 backend Evidence tests passed.
+- Browser reproduced completed Action summary showing the previous status and
+  failing to load its Finding. Root causes: stale prop used by summary; Demo route
+  parameters not URL-decoded despite encoded colon-containing framework IDs.
+  Regression failed before fix; 12 remediation/authorization tests passed after.
+  Finding validation remains independent; assessment remains unchanged.
+- Initial isolated backend run: 395 tests and 567 subtests passed. This is isolated
+  API verification, not browser-to-persistent-Mongo or deployed staging validation.
+- Initial Demo optimized build passed. Existing PlatformAdmin hook warning remains.
+- Full final retest and remaining lifecycle/browser gates are still pending.
+
+The live public-source working baseline and material manual verification list are
+in [framework-public-source-baseline.md](framework-public-source-baseline.md).

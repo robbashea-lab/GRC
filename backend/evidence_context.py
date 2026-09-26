@@ -177,8 +177,9 @@ def date_match(value, selected, today):
 
 def matches(row, state, query, today):
     context = row['context']
+    # Random storage IDs are not examination periods or operator-visible references.
     text = ' '.join(str(v or '') for v in [row.get('filename'), row.get('display_name'), row.get('evidence_type'), row.get('uploader'), row.get('uploaded_by_email'), *row.get('years',[]),
-        *[r.get(k) for r in [*context.values(), *row.get('references', [])] if r and r.get('available') for k in ('title', 'period', 'label', 'id', 'display_id', 'year', 'framework_key')]]).casefold()
+        *[r.get(k) for r in [*context.values(), *row.get('references', [])] if r and r.get('available') for k in ('title', 'period', 'label', 'display_id', 'year', 'framework_key')]]).casefold()
     if query.casefold() not in text: return False
     for key, values in state.get('filters', {}).items():
         if key not in FILTERS or not values: continue

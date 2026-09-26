@@ -68,7 +68,8 @@ export function evidencePage(db,params){
   const unfiltered_total=rows.length,program_counts={};rows.forEach(r=>r.program_areas.forEach(a=>{program_counts[a]=(program_counts[a]||0)+1;}));
   rows.forEach(r=>{counts[r.category]=(counts[r.category]||0)+1;Object.entries(facets).forEach(([k,set])=>{for(const value of Array.isArray(r[k])?r[k]:[r[k]])if(value&&!set.has(value)){if(set.size<200)set.add(value);else facets_limited=true;}});});
   rows=rows.filter(r=>{
-    const text=[r.filename,r.display_name,r.evidence_type,r.uploader,r.uploaded_by_email,...r.years,...[...Object.values(r.context),...r.references].filter(v=>v?.available).flatMap(v=>[v.title,v.period,v.label,v.id,v.display_id,v.year,v.framework_key])].filter(Boolean).join(' ').toLowerCase();
+    // Search operator-visible context, not random record IDs that can match a quarter by accident.
+    const text=[r.filename,r.display_name,r.evidence_type,r.uploader,r.uploaded_by_email,...r.years,...[...Object.values(r.context),...r.references].filter(v=>v?.available).flatMap(v=>[v.title,v.period,v.label,v.display_id,v.year,v.framework_key])].filter(Boolean).join(' ').toLowerCase();
     return text.includes(query)&&Object.entries(state.filters||{}).every(([k,values])=>!values.length||!(k in facets||dates.includes(k))||values.some(v=>dates.includes(k)?dateMatches(r[k],v,today):v==='__empty__'?!r[k]:Array.isArray(r[k])?r[k].includes(v):r[k]===v));
   });
   const key=['filename','mime_type','uploaded_by_email','linked_type',...dates].includes(state.sort?.key)?state.sort.key:'created_at',direction=state.sort?.dir==='asc'?1:-1;

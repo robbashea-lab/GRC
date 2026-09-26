@@ -11,6 +11,7 @@ export function ageDays(iso,today=new Date()){const t=Date.parse(iso);return Num
 export function freshness(row,today=new Date()){
   if(!row.last_assessed||row.status==='not_assessed')return {state:'never',days:null,label:'Never assessed'};
   const days=ageDays(row.last_assessed,today);
+  if(days===null)return {state:'unknown',days:null,label:'Assessment date unavailable'};
   return days>STALE_DAYS?{state:'stale',days,label:`Stale · ${Math.round(days/30)} months`}:days>AGING_DAYS?{state:'aging',days,label:`Aging · ${Math.round(days/30)} months`}:{state:'current',days,label:days<1?'Assessed today':`Assessed ${days}d ago`};
 }
 export const isStale=(row,today)=>freshness(row,today).state==='stale';
@@ -24,17 +25,30 @@ export const evidenceCurrent=(row,today)=>row.work?.evidence_count>0&&(ageDays(r
 export function verificationLadder(row,{stack=[],today=new Date()}={}){
   const w=row.work||{},fresh=freshness(row,today),presumed=stackCapability(row.definition_id,stack);
   const reviews=w.review_ids?.length||0;
+  const currentEvidence=evidenceCurrent(row,today);
+  const datedAssessment=['current','aging'].includes(fresh.state);
+  const evidenceDateKnown=ageDays(w.latest_evidence_at,today)!==null;
+  let validationDetail='Assessment identified a gap';
+  if(row.status==='addressed'){
+    validationDetail=fresh.state==='stale'?'Concluded Implemented, but the assessment is stale'
+      :!datedAssessment?'Concluded Implemented, but the assessment date is unavailable'
+      :!w.evidence_count?'Concluded Implemented without linked evidence'
+      :!currentEvidence?'Concluded Implemented, but current evidence has not been established'
+      :`Verified ${row.last_assessed.slice(0,10)}`;
+  }else if(row.status==='not_applicable')validationDetail='Not applicable';
+  else if(row.status==='not_assessed')validationDetail='Not yet assessed';
   return [
     {key:'capability',label:'Capability exists',state:row.technology?.trim()?'done':presumed?'partial':'missing',
       detail:row.technology?.trim()?row.technology:presumed?`Presumed from service stack (${presumed}) — not verified`:'No delivering technology or process recorded'},
     {key:'documented',label:'Implementation documented',state:row.implementation?.trim()?'done':'missing',
       detail:row.implementation?.trim()?'Current-state narrative recorded':'No implementation narrative'},
-    {key:'evidence',label:'Evidence current',state:!w.evidence_count?'missing':evidenceCurrent(row,today)?'done':'partial',
-      detail:!w.evidence_count?'No linked evidence':evidenceCurrent(row,today)?`${w.evidence_count} linked · latest ${w.latest_evidence_at.slice(0,10)}`:`Latest evidence ${w.latest_evidence_at?.slice(0,10)} is over 12 months old`},
-    {key:'operating',label:'Recurring process operating',state:!reviews?'missing':w.overdue_reviews?'gap':'done',
-      detail:!reviews?'No linked recurring Review':w.overdue_reviews?`${w.overdue_reviews} linked Review overdue`:`${reviews} linked Review${reviews===1?'':'s'} on schedule`},
-    {key:'validated',label:'Implementation verified',state:row.status==='addressed'&&fresh.state!=='stale'&&w.evidence_count?'done':row.status==='addressed'?'partial':['in_progress','needs_attention'].includes(row.status)?'gap':'missing',
-      detail:row.status==='addressed'?(fresh.state==='stale'?'Concluded Implemented, but the assessment is stale':!w.evidence_count?'Concluded Implemented without linked evidence':`Verified ${row.last_assessed.slice(0,10)}`):row.status==='not_applicable'?'Not applicable':row.status==='not_assessed'?'Not yet assessed':'Assessment identified a gap'},
+    {key:'evidence',label:'Evidence current',state:!w.evidence_count?'missing':currentEvidence?'done':'partial',
+      detail:!w.evidence_count?'No linked evidence':currentEvidence?`${w.evidence_count} linked · latest ${w.latest_evidence_at.slice(0,10)}`:!evidenceDateKnown?'Linked evidence has no usable collection date':`Latest evidence ${w.latest_evidence_at.slice(0,10)} is over 12 months old`},
+    // A relationship and a future due date do not prove that a process operated.
+    {key:'operating',label:'Governance linked',state:!reviews?'missing':w.overdue_reviews?'gap':'done',
+      detail:!reviews?'No linked Review':w.overdue_reviews?`${w.overdue_reviews} linked Review overdue`:`${reviews} linked Review${reviews===1?'':'s'} · Inspect occurrence history to verify operation`},
+    {key:'validated',label:'Implementation verified',state:row.status==='addressed'&&datedAssessment&&currentEvidence?'done':row.status==='addressed'?'partial':['in_progress','needs_attention'].includes(row.status)?'gap':'missing',
+      detail:validationDetail},
     {key:'remediation',label:'Gaps tracked to remediation',state:directFindings(w)?(w.overdue_actions?'gap':'partial'):['in_progress','needs_attention'].includes(row.status)?'missing':'done',
       detail:directFindings(w)?`${directFindings(w)} open Finding${directFindings(w)===1?'':'s'} for this safeguard${w.overdue_actions?` · ${w.overdue_actions} overdue Action${w.overdue_actions===1?'':'s'}`:''}`:['in_progress','needs_attention'].includes(row.status)?(w.open_findings?'Gap not tracked: linked Findings come from related Reviews, not this safeguard':'Gap identified but no Finding raised'):'No open gaps'},
   ];

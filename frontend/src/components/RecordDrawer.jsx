@@ -254,9 +254,13 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     setRelatedLoading(true);
     try {
       const { data } = await api.get("/related", { params: { entity_type: kind, entity_id: record[idField] } });
-      if(generation===loadGeneration.current) {setRelated(data);setRelatedError('');}
+      if(generation===loadGeneration.current) {
+        setRelated(data);setRelatedError('');
+        // A nested Finding can be validated while its completed Action stays open.
+        setTaskCompletion(previous=>previous?{...previous,finding:(data.findings||[]).find(f=>f.finding_id===previous.task.finding_id&&f.client_id===previous.task.client_id)||null}:previous);
+      }
       return data;
-    } catch (e) { if(generation===loadGeneration.current){setRelated({});setRelatedError(formatError(e));}return null; }
+    } catch (e) { if(generation===loadGeneration.current){setRelated({});setRelatedError(formatError(e));setTaskCompletion(previous=>previous?{...previous,finding:null}:previous);}return null; }
     finally {if(generation===loadGeneration.current)setRelatedLoading(false);}
   }
 
@@ -990,7 +994,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Tab content dispatch --------
   function renderTabContent() {
-    if (tab === "overview") return <>{record && <div className="mb-4"><RecordSummary kind={kind} record={record} clientId={clientId} related={related} users={users} /></div>}{renderOverview()}</>;
+    if (tab === "overview") return <>{record && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{renderOverview()}</>;
     if (tab === "activity") return renderActivity();
     // Kind-specific
     if (kind === "risks") {

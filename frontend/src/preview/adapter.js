@@ -74,7 +74,8 @@ export async function previewAdapter(config) {
     }
     if (sessionStorage.getItem(SESSION) !== 'true') return fail(401, 'Choose Explore Demo to enter the sample workspace.');
     if (params.client_id && !db.clients.some(c => c.client_id === params.client_id)) return fail(404, 'Demo client not found.');
-    const parts = path.split('/').filter(Boolean),
+    // Decode route parameters as the real router does (framework Finding IDs contain colons).
+    const parts = path.split('/').filter(Boolean).map(decodeURIComponent),
       [kind, id, name] = parts;
     const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
     if(kind==='evidence-library'){const data=evidenceLibraryRequest(db,method,parts,params,body);if(method!=='get')saveStore(db);return respond(data);}

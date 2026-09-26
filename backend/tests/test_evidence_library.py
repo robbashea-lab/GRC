@@ -3,6 +3,16 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class EvidenceLibraryTests(ClientDashboardSourcesTests):
+    async def test_opaque_source_ids_do_not_manufacture_period_search_matches(self):
+        self.sign_in('admin')
+        await server.db.reviews.insert_one({'review_id':'opaque-q3','client_id':'a','title':'Quarterly Access Review',
+            'recurrence':'quarterly','due_date':'2026-12-31','current_occurrence_id':'q4-occurrence','status':'upcoming','occurrences':[]})
+        await self.upload(linked_type='review',linked_id='opaque-q3',occurrence_id='q4-occurrence')
+        for query, expected in [('Q3',0),('Q3 2026',0),('Q4 2026',1),('Quarterly Access Review',1)]:
+            response=await self.client.get('/api/evidence/catalog',params={'client_id':'a','q':query})
+            self.assertEqual(response.status_code,200,response.text)
+            self.assertEqual(response.json()['total'],expected,query)
+
     async def upload(self, **fields):
         r=await self.client.post('/api/evidence',json={'client_id':'a','filename':'proof.txt','content_base64':'VEVTVA==',**fields})
         self.assertEqual(r.status_code,200,r.text)

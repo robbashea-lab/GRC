@@ -74,6 +74,25 @@ test('multiple Actions keep one group and unfinished work prevents a false valid
   expect(container.querySelectorAll('[data-testid="review-corrective-action"]')).toHaveLength(3);
 });
 
+test('seeded framework Action completion opens its Finding and shows the saved status',async()=>{
+  const seeded=(await api.get('/tasks',{params:{client_id:'demo_brawndo'}})).data.find(t=>t.task_id==='demo_brawndo_cis_action_1.1');
+  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={seeded} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+  await click('Complete Action Item');
+  expect(container.querySelector('[data-testid="action-completion-handoff"]').textContent).toContain('is now awaiting validation');
+  const summary=container.querySelector('[aria-label="Record summary"]');
+  expect(summary.textContent).toContain('Completed');
+  expect(summary.textContent).not.toContain('Action is overdue');
+  expect(summary.textContent).not.toContain('In Progress');
+  await click('View Finding');
+  expect(container.querySelector('[data-testid="finding-validate"]')).toBeTruthy();
+  expect((await api.get('/findings/'+encodeURIComponent(seeded.finding_id))).data.status).toBe('remediated');
+  await api.post('/findings/'+seeded.finding_id+'/validate',{rationale:'Synthetic validation of the corrective work'});
+  await act(async()=>container.querySelector('[data-testid="findings-drawer"] [data-testid="drawer-close"]').click());
+  expect(container.querySelector('[data-testid="action-completion-handoff"]').textContent).toContain('is Closed.');
+  const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data;
+  expect(workspace.assessments.find(a=>a.definition_id==='1.1').status).toBe('needs_attention');
+});
+
 test('standalone completion closes normally without Finding handoff or creation',async()=>{
   const manual=(await api.post('/tasks',{client_id:client.client_id,title:'Manual work',source_type:'manual'})).data,onClose=jest.fn();
   await act(async()=>root.render(<RecordDrawer open kind="tasks" record={manual} clientId={client.client_id} onOpenChange={onClose}/>));
