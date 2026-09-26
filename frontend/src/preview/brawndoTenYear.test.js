@@ -130,7 +130,7 @@ function planReview(r) {
   return addDays(today, 7 * between(6, 16));
 }
 function findingRate(r) {
-  const base = ['access', 'vendor', 'restore', 'bcp_dr', 'vulnerability'].includes(r.review_type) ? 0.16 : 0.08;
+  const base = ['access', 'vendor', 'backup', 'bcp_dr', 'vulnerability'].includes(r.review_type) ? 0.16 : 0.08;
   return base * ([2, 5, 8].includes(yearIndex(today)) ? 1.8 : 1);
 }
 const SLA = {critical: 30, high: 60, medium: 90, low: 120};
@@ -322,7 +322,7 @@ function nextExpected(d, recurrence, anchor) {
 const BOUNDARY = [
   {title: 'Monthly Firewall Rule Review', review_type: 'configuration', recurrence: 'monthly', due: '2026-10-31', owner: FRITO},
   {title: 'Monthly Privileged Access Check', review_type: 'access', recurrence: 'monthly', due: '2027-01-29', owner: CAMACHO},
-  {title: 'Monthly Backup Job Exception Review', review_type: 'restore', recurrence: 'monthly', due: '2026-10-30', owner: JOE},
+  {title: 'Monthly Backup Job Exception Review', review_type: 'backup', recurrence: 'monthly', due: '2026-10-30', owner: JOE},
   {title: 'Semiannual ERP Access Recertification', review_type: 'access', recurrence: 'semiannual', due: '2027-02-28', owner: CAMACHO},
   {title: 'Quarterly Security Metrics Report', review_type: 'management', recurrence: 'quarterly', due: '2026-12-31', owner: JOE},
   {title: 'Annual Leap-Day Key Rotation Attestation', review_type: 'configuration', recurrence: 'annual', due: '2028-02-29', owner: FRITO},
@@ -620,7 +620,7 @@ async function backupFailure() {
     const r = await call('post', `/findings/${created.finding.finding_id}/raise-risk`, {}, null, {label: 'raise risk from finding'});
     if (r) { createdIds.risk_backup = r.risk.risk_id; report.risks.events.push({today, risk: r.risk.risk_id, event: 'raised from Finding (unassessed)'}); }
   }
-  const post = await call('post', '/reviews', {client_id: CID, title: 'Incident Post-Mortem: Backup Retention Failure', review_type: 'incident_response', recurrence: 'none', due_date: '2032-03-15', owner_id: JOE,
+  const post = await call('post', '/reviews', {client_id: CID, title: 'Incident Post-Mortem: Backup Retention Failure', review_type: 'incident', recurrence: 'none', due_date: '2032-03-15', owner_id: JOE,
     governance_context: {category: 'organizational', rationale: 'One-time incident review.', cadence_source: 'organization_defined', cadence_rationale: 'Event-driven.'}}, null, {label: 'one-time incident review'});
   if (post) createdIds.postMortem = post.review_id;
 }
