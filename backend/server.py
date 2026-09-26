@@ -4924,14 +4924,19 @@ async def reports_board(client_id: str = Query(...), user: Dict = Depends(get_cu
                              headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
-@api.get("/{kind}/{item_id}/activity")
-async def record_activity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(..., max_length=200),
-                          user: Dict = Depends(get_current_user)):
-    """Activity for one record, scoped to its client and visible to every role that can read it.
-    Kinds with a dedicated activity route (tasks, risks, vendors, reviews) match that route first."""
-    record = await _authorized_parent(kind, item_id, user)
-    return await _bounded(db.audit_logs.find({"client_id": record["client_id"], "entity_id": item_id,
-        "entity_type": {"$in": [ENTITY_MAP[kind][0], kind]}}, {"_id": 0}).sort("at", -1), 500, "activity entries")
+def _record_activity_route(kind: str):
+    async def record_activity(item_id: str = Path(..., max_length=200), user: Dict = Depends(get_current_user)):
+        """Activity for one record, scoped to its client and visible to every role that can read it."""
+        record = await _authorized_parent(kind, item_id, user)
+        return await _bounded(db.audit_logs.find({"client_id": record["client_id"], "entity_id": item_id,
+            "entity_type": {"$in": [ENTITY_MAP[kind][0], kind]}}, {"_id": 0}).sort("at", -1), 500, "activity entries")
+    return record_activity
+
+
+# Literal routes, so they never shadow another router's /{...}/activity (e.g. framework assessments).
+# tasks, risks, vendors and reviews keep their dedicated activity routes above.
+for _kind in ("findings", "policies", "assets", "exceptions", "requirements", "contacts"):
+    api.add_api_route(f"/{_kind}/{{item_id}}/activity", _record_activity_route(_kind), methods=["GET"])
 
 
 # Actually mount the routers now — after all literal routes are declared.
