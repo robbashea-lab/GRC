@@ -25,6 +25,7 @@ helper, not a new authorization model. This route has positive and negative test
 | Frameworks | Finalized onboarding plus tenant requirement `baseline_response=applies`; existing client framework routes |
 | Past Due | Existing management obligation population before today; exact contributing-item drawer |
 | Due <=30d | Existing management upcoming population through its inclusive 30-day boundary; exact contributing-item drawer |
+| Upcoming (31–90d) | Existing shared `due_31_90d` population (due day +31 through +90, open work only), the same window the client Dashboard uses; exact contributing-item drawer |
 | Critical / High | Existing material Findings and standalone high-priority Actions; Risk entries removed from this projection only |
 | Significant Risks | Active assessed High/Critical Risks, including accepted and excluding closed/archived; client Risk Register with explicit URL constraint |
 | Unassigned | Existing management unassigned obligation population, not new ownership rules |
@@ -147,3 +148,41 @@ GitHub main and Sites use their existing separate histories with identical sourc
 trees; no force-push or history rewrite. Exact commit hashes and actual publication
 outcome belong in the release handoff. This report does not assert that hosting
 succeeded before the deployment service returns its terminal result.
+
+## Simplification (2026-09-26)
+
+The Portfolio is an internal triage index: *which clients need my attention and why*. The client Dashboard explains one client; the registers say what to do.
+
+- **Removed:** the "Platform" eyebrow, the explanatory subtitle, the four summary cards above the table (their counts are the quick views and columns), and the per-client status line ("Action required · 4 past due …"), which repeated the columns.
+- **Heading:** "Client Portfolio".
+- **View bar:** All Clients · Assigned to Me · Past Due · Critical / High · Significant Risks · Unassigned. Assigned to Me combines with one work view. All Clients clears both. Secondary filters are GRC Lead, Frameworks and Include archived.
+- **Columns:** Client (name, industry) · GRC Lead · Frameworks · Past Due · Due ≤30d · Upcoming · Critical / High · Significant Risks · Unassigned · Last Activity.
+- **Colour:** red only for non-zero Past Due and Critical / High. Other non-zero counts are neutral, and zeros recede.
+- **Drill-down:** every number opens its exact contributing records in the existing drawer (these populations mix Reviews, Findings, Actions, Policies and Vendors, so no single register filter can represent them). Significant Risks opens the client Risk register (`/risks?portfolio=significant`). The client name opens the client Dashboard, and a framework chip opens its workspace.
+
+### Upcoming
+
+Upcoming is `due_31_90d`: open work due 31–90 days from today. It is not the suggested 31–60 days. The shared management model already defines exactly one forward window beyond 30 days, which the client Dashboard uses, so a second 31–60 window would have created competing definitions. Changing the window means changing it once in the shared model (`managementMetrics.js` / `management_obligations.py`), which also changes the Dashboard.
+
+### Last Activity and staleness
+
+Last Activity is the latest audit event on the `portfolioRules.json` `activity` whitelist, shared by the server (`portfolio_overview.latest_activity`) and the Demo. The whitelist covers:
+
+- Review started or completed
+- Finding raised or validated
+- Action Item started or completed
+- Risk reassessed, reviewed, accepted or closed
+- Vendor or Policy Review completed
+- Evidence added
+
+Logins, page views, generic `update` edits and future-dated events are excluded. Evidence *upload* counts; reviewing or linking existing evidence is not a distinct audited event today.
+
+A client is **stale** after `staleAfterDays` (30) days without such an event, or when none is recorded. The row shows "Nd inactive" in a muted amber beneath the date. This marks a neglected program, not noncompliance.
+
+### Default order
+
+The default order is: Past Due, then Critical / High, then Due ≤30d, then Significant Risks, then Unassigned (each descending). Ties go to the least recently active program (no recorded activity first), then client name. The order is defined once in `portfolioRules.json` `priorityOrder` and used by both server and Demo. Column sorting remains available.
+
+### My Team: not supported yet
+
+The data model has users, roles and client memberships, but no manager-to-team relationship (no `manager_id`, team or reporting line). A My Team view would need that relationship to be authoritative, so it was not invented. The view bar's scope options are a list, so My Team can be added there once the relationship exists. Until then, a team member uses Assigned to Me, and a manager can use the GRC Lead filter with several leads selected.

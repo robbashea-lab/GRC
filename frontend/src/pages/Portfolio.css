@@ -11,11 +11,10 @@
 /* Frequent investigation controls are immediate, including mixed mouse/keyboard
    closing. No exit animation can retain a visually closed menu over the rows. */
 :root .portfolio-column-menu[data-state] { animation: none; }
-/* Status line under each client: label carries meaning, the dot and color only reinforce it. */
-.portfolio-status { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-top: 5px; font-size: 12px; line-height: 1.35; }
-.portfolio-status-label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--tone); }
-.portfolio-status-label::before { content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--tone); flex: none; }
-.portfolio-status-reason { color: var(--color-text-secondary); }
-.portfolio-status.is-critical { --tone: var(--color-critical); }
-.portfolio-status.is-moderate { --tone: var(--color-moderate-text); }
-.portfolio-status.is-success { --tone: var(--color-success); }
+/* One compact view bar: scope, then work views. */
+.portfolio-view { height: 2rem; padding: 0 0.625rem; border-radius: 6px; font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; }
+.portfolio-view:not(.is-active):hover { background: var(--color-surface-subtle); }
+.portfolio-view:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.portfolio-view-divider { width: 1px; align-self: stretch; margin: 4px 6px; background: var(--color-border); }
+/* Stale programs: a quiet note, not a status badge. */
+.portfolio-stale { color: var(--color-moderate-text); font-weight: 500; }

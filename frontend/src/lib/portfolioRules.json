@@ -1,5 +1,6 @@
 {
-  "priorityOrder": ["critical_high_issues", "past_due", "significant_risks", "unassigned", "due_30d"],
+  "priorityOrder": ["past_due", "critical_high_issues", "due_30d", "significant_risks", "unassigned"],
+  "staleAfterDays": 30,
   "activity": [
     {"kind":"review", "actions":["Review started", "Review completed"]},
     {"kind":"finding", "actions":["create", "validate"], "labels":{"create":"Finding raised", "validate":"Finding validated"}},

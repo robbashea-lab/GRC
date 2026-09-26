@@ -90,7 +90,11 @@ class PortfolioOverviewTests(ClientDashboardSourcesTests):
     def test_explainable_stable_default_order(self):
         base={'critical_high_issues':0,'past_due':0,'significant_risks':0,'unassigned':0,'due_30d':0}
         rows=[{**base,'name':str(i),'client_id':str(i),key:1} for i,key in enumerate(['due_30d','unassigned','significant_risks','past_due','critical_high_issues'])]
-        self.assertEqual([r['client_id'] for r in sorted(rows,key=attention_order)],['4','3','2','1','0'])
+        # Past due, critical/high, due within 30 days, significant risks, unassigned.
+        self.assertEqual([r['client_id'] for r in sorted(rows,key=attention_order)],['3','4','0','2','1'])
+        # Otherwise equal programs: no recorded activity first, then the least recently active, then name.
+        quiet=[{**base,'name':n,'client_id':n,'last_activity':a} for n,a in [('b',{'at':'2026-09-20T00:00:00Z'}),('a',{'at':'2026-07-01T00:00:00Z'}),('c',None)]]
+        self.assertEqual([r['client_id'] for r in sorted(quiet,key=attention_order)],['c','a','b'])
 
     async def test_authoritative_drill_record_reads_are_scoped_read_only_and_uncapped(self):
         for kind,key in [('reviews','review_id'),('findings','finding_id'),('tasks','task_id'),('risks','risk_id'),('vendors','vendor_id'),('policies','policy_id'),('exceptions','exception_id'),('requirements','requirement_id')]:
