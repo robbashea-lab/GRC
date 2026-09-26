@@ -6,6 +6,8 @@ if(new URL(base).hostname!=='127.0.0.1')throw new Error('Onboarding QA requires 
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],results=[];
+ // Loopback only: synthetic QA activity never reaches an external service.
+ await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.fulfill({status:204,body:''}));
  page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
  const go=async route=>{await page.goto(base+'/'+route);await expect(page.locator('main')).not.toBeEmpty();};
  const store=()=>page.evaluate(key=>JSON.parse(sessionStorage.getItem(key)),key);

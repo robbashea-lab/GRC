@@ -7,6 +7,8 @@ let policyId;
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+ // Loopback only: synthetic QA activity never reaches an external service.
+ await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.fulfill({status:204,body:''}));
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  const store=()=>page.evaluate(key=>JSON.parse(sessionStorage.getItem(key)),key);
  const policy=async()=>(await store()).policies.find(p=>p.policy_id===policyId);

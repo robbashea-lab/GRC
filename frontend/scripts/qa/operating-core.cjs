@@ -4,6 +4,8 @@ const assert=require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
  const page=await browser.newPage({viewport:{width:1440,height:1050}}),errors=[];
+ // Loopback only: synthetic QA activity never reaches an external service.
+ await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.fulfill({status:204,body:''}));
  const base=process.env.CORE_QA_URL||'http://127.0.0.1:4174';
  if(new URL(base).hostname!=='127.0.0.1')throw new Error('Core QA requires an isolated local preview.');
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
