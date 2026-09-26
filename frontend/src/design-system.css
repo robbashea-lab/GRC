@@ -591,3 +591,16 @@ td:last-child > button[aria-label="Row actions"] {
 .summary-card-button { transition: border-color var(--duration-feedback), box-shadow var(--duration-feedback); }
 .summary-card-button:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-floating); }
 .summary-card-button:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+/* Dashboard work tables stack into labelled rows when their panel is narrower than the table,
+   so due dates, status and the action are never clipped behind a horizontal scroll. */
+.ops-table { container-type: inline-size; }
+@container (max-width: 759px) {
+  .ops-table :is(table, thead, tbody, tr, th, td) { display: block; }
+  :root .ops-table.overflow-x-auto > table { min-width: 0; }
+  .ops-table thead tr { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 6px 12px; }
+  .ops-table .ops-table-static { display: none; }
+  .ops-table tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; padding: 10px 12px; }
+  :root .ops-table :is(th.tbl-head, td.tbl-cell) { height: auto; padding: 0; border: 0; }
+  .ops-table .ops-table-item { grid-column: 1 / -1; order: -1; }
+  .ops-table td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 3px; font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-muted); }
+}
