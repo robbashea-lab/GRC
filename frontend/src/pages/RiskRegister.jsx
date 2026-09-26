@@ -214,9 +214,7 @@ export default function RiskRegister() {
                 return (
                   <tr key={r.risk_id} onClick={() => setDrawer({ open: true, record: r })} className="row-hover cursor-pointer" data-testid={`risk-row-${i}`}>
                     <td className="tbl-cell font-mono text-xs text-ink-help">{r.display_id || "ID pending"}</td>
-                    <td className="tbl-cell font-medium text-ink-primary min-w-0">
-                      <span className="truncate">{r.title}</span>
-                    </td>
+                    <td className="tbl-cell font-medium text-ink-primary min-w-0">{r.title}</td>
                     <td className="tbl-cell text-xs text-ink-secondary">{r.category ? CATEGORIES.find(o => o.value === r.category)?.label || r.category : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell">
