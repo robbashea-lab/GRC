@@ -154,10 +154,18 @@ a:hover { color: var(--color-link-hover); }
 .brand-lockup { display: flex; align-items: center; gap: 11px; }
 .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #66758b; border-radius: 8px; color: #f7f9fc; font-size: 23px; line-height: 1; font-weight: 500; }
 .brand-name { font-size: 18px; font-weight: 600; letter-spacing: -.045em; color: #f7f9fc; }
-.brand-owner { font-size: 8px; font-weight: 600; letter-spacing: .13em; color: #aebccc; margin-top: 2px; }
+.brand-owner { font-size: 10px; font-weight: 600; letter-spacing: .12em; color: #aebccc; margin-top: 2px; }
 .brand-on-light .brand-name, .brand-on-light .brand-mark { color: var(--color-text-primary); }
 .brand-on-light .brand-owner { color: var(--color-text-secondary); }
 .login-shell { min-height: 100dvh; }
+/* Buttons on the dark access pane: one light primary action, one quiet secondary. */
+:root .login-shell .ui-button.login-primary { background: #f7f9fc; color: var(--color-brand-charcoal); border: 1px solid transparent; }
+:root .login-shell .ui-button.login-primary:not(:disabled):hover { background: #e3e9f0; }
+:root .login-shell .ui-button.login-quiet { background: transparent; color: var(--color-text-on-dark); border: 1px solid var(--color-brand-metallic-3); }
+:root .login-shell .ui-button.login-quiet:not(:disabled):hover { background: var(--color-brand-metallic); }
+:root .login-shell .ui-button.login-quiet:disabled { color: var(--color-text-on-dark-muted); opacity: .75; }
+.login-points li { position: relative; padding-left: 18px; line-height: 1.5; }
+.login-points li::before { content: ""; position: absolute; left: 0; top: .6em; width: 7px; height: 7px; border-radius: 2px; background: var(--color-brand-lime); opacity: .85; }
 .login-shell .border-t { border-color: var(--color-brand-metallic-3); }
 .metric-label { font-size: 13px; font-weight: 500; line-height: 1.45; color: var(--color-text-secondary); }
 .metric-value { font-size: 29px; font-weight: 650; letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: var(--color-text-primary); }
