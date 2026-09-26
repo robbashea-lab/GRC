@@ -2,7 +2,7 @@
 :root {
   color-scheme: light;
   --register-gutter: 20px;
-  --register-row: 44px;
+  --register-row: 46px;
   --background: 200 23% 97%;
   --foreground: 214 16% 19%;
   --card: 0 0% 100%;
@@ -606,3 +606,59 @@ td:last-child > button[aria-label="Row actions"] {
   .ops-table .ops-table-item { grid-column: 1 / -1; order: -1; }
   .ops-table td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 3px; font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-muted); }
 }
+
+/* Client-section system (docs/client-section-design-system.md). One grammar for every client page:
+   header → optional summary strip → toolbar → content. Registers are the default; the dashboard,
+   calendar, evidence repository and framework workspaces reuse the same header, toolbar and type. */
+:root .page-header { padding: 12px var(--register-gutter) 8px; }
+.page-subtitle { max-width: 80ch; }
+.header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+/* Toolbar: search first, views and filters next, count last; stays in view while the table scrolls. */
+:root .register-toolbar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; }
+:root .register-search input.ui-control { width: 240px; height: var(--register-control); min-height: var(--register-control); }
+.register-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--color-text-help); pointer-events: none; }
+.register-count { margin-left: auto; font-size: var(--register-detail); color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Content area below the toolbar on repository, workspace and specialized pages. */
+.section-body { padding: 12px var(--register-gutter) 20px; }
+/* Cells */
+.register-empty { color: var(--color-text-help); }
+.register-date.is-critical > span { color: var(--color-critical); }
+.register-date.is-critical > span:first-child { font-weight: 600; }
+.register-date.is-duesoon > span { color: var(--color-duesoon-text); }
+.register-subline { display: block; margin-top: 1px; font-size: var(--register-detail); color: var(--color-text-muted); font-weight: 400; }
+.register-link { color: var(--color-text-primary); text-align: left; text-decoration: underline; text-decoration-color: var(--color-border); text-underline-offset: 3px; }
+.register-link:hover { text-decoration-color: currentColor; }
+/* Rows that open a record look and behave the same on every register. */
+.row-open { cursor: pointer; }
+/* Severity: Critical is the solid badge; High is amber; Medium and Low stay gray. */
+:root .pill-high { color: var(--color-moderate); font-weight: 600; }
+:root .pill-moderate { color: var(--color-moderate-text); }
+/* A register notice: one compact line above the table for something waiting on the viewer. */
+.register-notice { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 6px var(--register-gutter) 0; padding: 7px 12px;
+  border: 1px solid var(--color-border); border-left: 3px solid var(--color-moderate); border-radius: var(--register-radius); background: var(--color-bg-surface); font-size: var(--register-detail); }
+.register-notice-title { font-weight: 600; color: var(--color-text-primary); }
+/* A record needing attention inside a register: amber marker, always paired with screen-reader text. */
+.attention-dot { display: inline-block; width: 6px; height: 6px; border-radius: 999px; background: var(--color-moderate); flex: none; }
+/* History dates are reference data, not deadlines: regular weight, secondary color. */
+:root .register-date.is-history > span { font-weight: 400; color: var(--color-text-secondary); }
+/* Evidence repository: browse-by-source bar and secondary filters, in the register grammar. */
+.evidence-areas { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 8px var(--register-gutter) 0; }
+.evidence-areas-label { font-size: var(--register-detail); font-weight: 600; color: var(--color-text-secondary); margin-right: 4px; }
+.evidence-area { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 9px; border: 1px solid var(--color-border); border-radius: var(--register-radius);
+  background: var(--color-bg-surface); font-size: var(--register-detail); color: var(--color-text-primary); }
+.evidence-area:hover { border-color: var(--color-control-active-border); background: var(--color-bg-row-hover); }
+.evidence-area > svg { width: 13px; height: 13px; color: var(--color-text-muted); }
+.evidence-area > span { font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+.evidence-more { position: relative; }
+.evidence-more-panel { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; display: flex; flex-wrap: wrap; gap: 12px; width: max-content; max-width: min(520px, 90vw);
+  padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--register-radius); background: var(--color-bg-surface); box-shadow: 0 8px 24px rgb(16 24 40 / .12); }
+.register-subline.is-attention { color: var(--color-moderate-text); font-weight: 500; }
+/* Icon-only row actions share one size, focus ring and hover. */
+.register-icon-button { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: var(--register-radius); color: var(--color-text-secondary); }
+.register-icon-button:hover { background: var(--color-bg-subtle); color: var(--color-text-primary); }
+.register-icon-button.is-destructive:hover { background: var(--color-critical-bg); color: var(--color-critical); }
+/* Calendar: navigation, month, scope and legend share one toolbar row so the grid dominates. */
+.calendar-month { font-size: 15px; font-weight: 600; color: var(--color-text-primary); min-width: 9.5rem; }
+.calendar-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: var(--register-detail); color: var(--color-text-secondary); }
+.calendar-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.calendar-caption { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; font-size: var(--register-detail); color: var(--color-text-secondary); }

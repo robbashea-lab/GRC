@@ -1,11 +1,11 @@
 import { useSearchParams } from 'react-router-dom';
+import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
+import { DueDate, HistoryDate, OwnerCell } from "@/components/RegisterCells";
+import StatusBadge, { SeverityBadge } from "@/components/StatusBadge";
 import RegisterLoadError from '@/components/RegisterLoadError';
-import { personLabel } from '@/lib/people';
-import { OwnerAccountNote } from '@/components/ContactAccess';
 import AssigneeSelect from '@/components/AssigneeSelect';
-import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
-import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGovernance';
 import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -21,37 +21,40 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Download, Building2, CalendarClock, FileSignature, AlertOctagon } from "lucide-react";
+import { Download } from "lucide-react";
 import { toast } from "sonner";
 
-const CRIT_TONE = {
-  critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "pill-high",
-  medium: "pill-moderate",
-  moderate: "pill-moderate",
-  low: "bg-surface-subtle text-ink-secondary border-line",
-};
 const CRIT_LABEL = { critical: "Critical", high: "High", medium: "Moderate", moderate: "Moderate", low: "Low" };
 const CATEGORIES = ["SaaS", "Cloud / Hosting", "Managed Service Provider", "Security Provider", "HR / Payroll",
   "Financial", "Legal", "Marketing", "Communications", "Infrastructure", "Professional Services", "Other"];
 const DATA_TYPES = VENDOR_DATA_TYPES;
+// Register views. Their counts are the register's summary; Critical-only and High-only stay available
+// through ?view= links and the Criticality column filter.
 const VIEWS = [
   { id: "all_active", label: "All Active" },
   { id: "review_due", label: "Reviews Due" },
   { id: "review_overdue", label: "Reviews Past Due" },
-  { id: "critical", label: "Critical" },
-  { id: "high", label: "High" },
+  { id: "critical_high", label: "Critical / High" },
   { id: "contract_soon", label: "Contracts Expiring" },
-  { id: "assurance", label: "Security Assurance Due" },
+  { id: "assurance", label: "Assurance Due" },
   { id: "inactive", label: "Inactive" },
 ];
-
-const displayDate = value => new Date(String(value).slice(0,10)+"T12:00:00").toLocaleDateString();
-
-function daysUntil(iso) {
-  if (!iso) return null;
-  return Math.round((new Date(iso).getTime() - Date.now()) / 86400000);
+const LINKED_VIEWS = { critical: "Critical", high: "High" };
+function vendorMatchesView(v, view) {
+  const status = v.status || "active";
+  if (view !== "inactive" && view !== "all" && status === "inactive") return false;
+  if (view === "critical") return v.criticality === "critical";
+  if (view === "high") return v.criticality === "high";
+  if (view === "critical_high") return ["critical", "high"].includes(v.criticality);
+  if (view === "review_due") return !!v._reviewDue;
+  if (view === "review_overdue") return !!v._reviewOverdue;
+  if (view === "contract_soon") return !!v._contractSoon;
+  if (view === "assurance") return !!v._assuranceIssue;
+  if (view === "inactive") return status === "inactive";
+  return true;
 }
+
+
 
 export default function VendorRegister() {
   const { user } = useAuth();
@@ -63,7 +66,7 @@ export default function VendorRegister() {
   const [q, setQ] = useState("");
   const [searchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) ? searchParams.get("view") : "all_active";
+  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -97,15 +100,7 @@ export default function VendorRegister() {
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return enriched.filter((v) => {
-      const status = v.status || "active";
-      if (view !== "inactive" && view !== "all" && status === "inactive") return false;
-      if (view === "critical" && v.criticality !== "critical") return false;
-      if (view === "high" && v.criticality !== "high") return false;
-      if (view === "review_due" && !v._reviewDue) return false;
-      if (view === "review_overdue" && !v._reviewOverdue) return false;
-      if (view === "contract_soon" && !v._contractSoon) return false;
-      if (view === "assurance" && !v._assuranceIssue) return false;
-      if (view === "inactive" && status !== "inactive") return false;
+      if (!vendorMatchesView(v, view)) return false;
       if (!s) return true;
       return (v.name || "").toLowerCase().includes(s) || (v.service || v.services || "").toLowerCase().includes(s) || (v.category || "").toLowerCase().includes(s) || (userMap[v.business_owner_id] || "").toLowerCase().includes(s);
     }).sort((a, b) => (b._attention - a._attention) || ({critical:0,high:1,medium:2,moderate:2,low:3}[a.criticality]??9) - ({critical:0,high:1,medium:2,moderate:2,low:3}[b.criticality]??9) || (a.name || "").localeCompare(b.name || ""));
@@ -116,19 +111,9 @@ export default function VendorRegister() {
   const table = useTableControls({ columns, rows: tableSource, module: 'vendor-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status' || key === 'criticality') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
-  function selectView(id) { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',review_due:'next_review',review_overdue:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
-  const toggleView = id => selectView(view === id ? 'all_active' : id);
-  const summary = useMemo(() => {
-    const s = { critical: 0, review_due: 0, contract_soon: 0, assurance: 0 };
-    enriched.forEach((v) => {
-      const active = v.status !== "inactive";
-      if (v.criticality === "critical" && active) s.critical += 1;
-      if (v._reviewDue && active) s.review_due += 1;
-      if (v._contractSoon && active) s.contract_soon += 1;
-      if (v._assuranceIssue && active) s.assurance += 1;
-    });
-    return s;
-  }, [enriched]);
+  function selectView(id) { const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',critical_high:'criticality',review_due:'next_review',review_overdue:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
+  const counts = useMemo(() => Object.fromEntries([...VIEWS.map(v => v.id), ...Object.keys(LINKED_VIEWS)].map(id => [id, tableSource.filter(v => vendorMatchesView(v, id)).length])), [tableSource]);
+  const tabs = LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: LINKED_VIEWS[view] }] : VIEWS;
 
   function exportCsv() {
     const cols = ["vendor", "service", "category", "criticality", "data_types", "business_owner", "status", "review_frequency", "last_review", "next_review", "contract_start", "contract_renewal", "contract_expiration", "auto_renewal", "assurance_status"];
@@ -149,97 +134,62 @@ export default function VendorRegister() {
   return (
     <div>
       <PageHeader
-        eyebrow="Client workspace"
-        title="Vendor Register"
-        subtitle={`${currentClient?.name || ""} · Central register for third-party services, criticality, data handling, security assurance, and review status.`}
+        title="Vendors"
+        subtitle="Third-party services, criticality, assurance and review status."
         action={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={exportCsv} data-testid="vendors-export"><Download className="h-3.5 w-3.5 mr-1" /> Export CSV</Button>
-            {canWrite && <Button size="sm" onClick={() => setAddOpen(true)} data-testid="new-vendor" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> New Vendor</Button>}
-          </div>
+          <HeaderActions>
+            <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} testid="vendors-export" />
+            {canWrite && <PrimaryAction label="New Vendor" onClick={() => setAddOpen(true)} testid="new-vendor" />}
+          </HeaderActions>
         }
       />
-      <div className="page-gutter pt-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="vendor-summary">
-          <SummaryCard label="Critical Vendors" value={summary.critical} icon={Building2} tone="critical" onClick={() => toggleView("critical")} pressed={view === "critical"} />
-          <SummaryCard label="Reviews Due" value={summary.review_due} icon={CalendarClock} tone="duesoon" onClick={() => toggleView("review_due")} pressed={view === "review_due"} />
-          <SummaryCard label="Contracts Expiring" value={summary.contract_soon} icon={FileSignature} tone="duesoon" onClick={() => toggleView("contract_soon")} pressed={view === "contract_soon"} />
-          <SummaryCard label="Security Assurance Due" value={summary.assurance} icon={AlertOctagon} tone="critical" onClick={() => toggleView("assurance")} pressed={view === "assurance"} />
-        </div>
-      </div>
       <div className="register-toolbar">
-        <div className="register-search relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search vendors…" className="pl-8 h-9 w-72 text-sm" data-testid="vendor-search" />
-        </div>
-        <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="vendor-views">
-          {VIEWS.map((v) => (
-            <button key={v.id} aria-pressed={view === v.id} onClick={() => selectView(v.id)} data-testid={`vendor-view-${v.id}`}
-              className={`px-3 h-8 text-xs rounded-[6px] transition ${view === v.id ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>{v.label}</button>
-          ))}
-        </div>
-        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
+        <SearchField label="Search vendors" placeholder="Search vendors…" value={q} onChange={setQ} testid="vendor-search" />
+        <ViewTabs views={tabs} active={view} onPick={selectView} counts={counts} label="Vendor views" testid="vendor-views" testIdPrefix="vendor-view-" />
+        <RegisterCount shown={filtered.length} total={tableSource.length} />
       </div>
       <div className="register-body">
         <TableFilterChips table={table} />
         <RegisterLoadError error={loadError} onRetry={load} name="vendors" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead>
               <tr>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="service" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="criticality" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="data_types" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="business_owner_id" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="last_review" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="next_review" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="contract_renewal" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
+                <SortableHeader table={table} columnKey="name" />
+                <SortableHeader table={table} columnKey="service" />
+                <SortableHeader table={table} columnKey="criticality" />
+                <SortableHeader table={table} columnKey="data_types" />
+                <SortableHeader table={table} columnKey="business_owner_id" />
+                <SortableHeader table={table} columnKey="last_review" />
+                <SortableHeader table={table} columnKey="next_review" />
+                <SortableHeader table={table} columnKey="contract_renewal" />
+                <SortableHeader table={table} columnKey="status" />
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {loading && <TableLoadingRow colSpan={9} />}
               {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((v, i) => {
-                const tone = CRIT_TONE[v.criticality] || CRIT_TONE.medium;
                 const dt = v.data_types || [];
+                const renewal = v.contract_renewal || v.contract_expiration || v.contract_end;
                 return (
-                  <tr key={v.vendor_id} className="row-hover cursor-pointer" onClick={() => setDrawer({ open: true, record: v })} data-testid={`vendor-row-${i}`}>
+                  <tr key={v.vendor_id} className="row-hover row-open" onClick={() => setDrawer({ open: true, record: v })} data-testid={`vendor-row-${i}`}>
                     <td className="tbl-cell font-medium text-ink-primary">
                       <span className="inline-flex items-center gap-2">
                         {v.name}
-                        {v._attention && <span className="inline-block h-1.5 w-1.5 rounded-full bg-semantic-critical" title="Needs attention" />}
+                        {v._attention && <><span className="attention-dot" aria-hidden="true" title="Needs attention" /><span className="sr-only">Needs attention</span></>}
                       </span>
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{v.service || v.services || <span className="text-ink-help">—</span>}</td>
-                    <td className="tbl-cell">
-                      <span className={`pill ${tone}`}>{CRIT_LABEL[v.criticality] || v.criticality}</span>
+                    <td className="tbl-cell text-ink-secondary">{v.service || v.services || <span className="register-empty">—</span>}</td>
+                    <td className="tbl-cell"><SeverityBadge value={v.criticality} label={CRIT_LABEL[v.criticality]} /></td>
+                    <td className="tbl-cell text-ink-secondary">
+                      {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="register-empty">—</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">
-                      {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="text-ink-help">—</span>}
-                    </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{v.business_owner_id ? personLabel(users, v.business_owner_id) : <span className="text-ink-help">Unassigned</span>}<OwnerAccountNote users={users} id={v.business_owner_id} status={v.status} /></td>
-                    <td className="tbl-cell text-xs font-mono text-ink-secondary">{v.last_review ? displayDate(v.last_review) : <span className="text-ink-help">—</span>}</td>
-                    <td className="tbl-cell text-xs font-mono">
-                      {v.next_review ? (
-                        <span className={v._nextReviewDays < 0 ? "text-semantic-critical font-medium" : v._reviewDue ? "text-semantic-duesoon-text font-medium" : "text-ink-secondary"}>
-                          {displayDate(v.next_review)}
-                        </span>
-                      ) : <span className="text-ink-help">—</span>}
-                    </td>
-                    <td className="tbl-cell text-xs font-mono">
-                      {(v.contract_renewal || v.contract_expiration || v.contract_end) ? (
-                        <span className={v._contractSoon ? "text-semantic-duesoon-text font-medium" : "text-ink-secondary"}>
-                          {displayDate(v.contract_renewal || v.contract_expiration || v.contract_end)}
-                        </span>
-                      ) : <span className="text-ink-help">—</span>}
-                    </td>
-                    <td className="tbl-cell">
-                      <StatusPill className="border-line bg-surface-subtle">
-                        {(v.status || "active").replace("_", " ")}
-                      </StatusPill>
-                    </td>
+                    <td className="tbl-cell"><OwnerCell people={users} id={v.business_owner_id} status={v.status} /></td>
+                    <td className="tbl-cell"><HistoryDate value={v.last_review} empty="Never reviewed" /></td>
+                    <td className="tbl-cell">{v.next_review ? <DueDate iso={v.next_review} closed={v.status === "inactive"} /> : <span className="register-empty">Not scheduled</span>}</td>
+                    <td className="tbl-cell">{renewal ? <DueDate iso={renewal} closed={v.status === "inactive"} /> : <span className="register-empty">—</span>}</td>
+                    <td className="tbl-cell"><StatusBadge value={v.status || "active"} /></td>
                   </tr>
                 );
               })}
@@ -253,23 +203,6 @@ export default function VendorRegister() {
   );
 }
 
-function SummaryCard({ label, value, icon: Icon, tone, onClick, pressed }) {
-  const tones = {
-    critical: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
-    duesoon: "text-semantic-duesoon-text bg-semantic-duesoon-bg border-semantic-duesoon-border",
-    info: "text-semantic-info bg-semantic-info-bg border-semantic-info-border",
-    neutral: "text-ink-secondary bg-surface-subtle border-line",
-  };
-  return (
-    <button type="button" onClick={onClick} aria-pressed={pressed} aria-label={`${label}: ${value}. Show in register`} className={`summary-card-button bg-surface-card border rounded-lg p-3.5 flex items-start justify-between gap-3 text-left w-full ${pressed ? 'border-ink-primary shadow-sm' : 'border-line'}`}>
-      <div>
-        <div className="metric-label">{label}</div>
-        <div className="metric-value mt-1">{value}</div>
-      </div>
-      <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}><Icon className="h-4 w-4" /></div>
-    </button>
-  );
-}
 
 function NewVendorDialog({ open, onOpenChange, clientId, users, onCreated }) {
   const [form, setForm] = useState({ name: "", service: "", category: "SaaS", criticality: "medium", status: "onboarding", data_types: [], business_owner_id: "", review_frequency: "annual", contract_renewal: "", next_review:"", assurance_required:false, assurance_records:[], notes: "" });

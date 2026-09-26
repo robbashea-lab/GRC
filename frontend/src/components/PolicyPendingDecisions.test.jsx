@@ -35,3 +35,14 @@ test('unexpected tenant or record response fails closed',async()=>{
   await open();await resolve(requests[1],{...policy,client_id:'b'});expect(onOpen).not.toHaveBeenCalled();
   expect(host.querySelector('[role=alert]').textContent).toContain('unavailable');
 });
+test('nothing awaiting a decision renders nothing, not an empty bar',async()=>{
+  await render();await resolve(requests[0],[]);
+  expect(host.innerHTML).toBe('');
+});
+test('pending decisions render as one compact notice with a count',async()=>{
+  await render();await resolve(requests[0],[{policy_id:'p',title:'Security policy'},{policy_id:'q',title:'Access policy'}]);
+  const notice=host.querySelector('section.register-notice');
+  expect(notice.getAttribute('aria-label')).toBe('Policies awaiting my approval');
+  expect(notice.querySelector('.register-notice-title').textContent).toBe('Awaiting my approval (2)');
+  expect([...notice.querySelectorAll('button')].map(b=>b.textContent)).toEqual(['Security policy','Access policy']);
+});

@@ -4,9 +4,12 @@ import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
 import PageHeader from '@/components/PageHeader';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {useTableControls,ColumnControl,TableFilterChips} from '@/components/TableControls';
+import {useTableControls,TableFilterChips,FilterEmpty} from '@/components/TableControls';
+import {HeaderActions,PrimaryAction,SearchField,ViewTabs,RegisterCount,SortableHeader} from '@/components/Register';
+import {DueDate,HistoryDate,OwnerCell} from '@/components/RegisterCells';
+import StatusBadge,{SeverityBadge} from '@/components/StatusBadge';
+import TableLoadingRow from '@/components/TableLoadingRow';
+import RegisterLoadError from '@/components/RegisterLoadError';
 import AIDrawer from '@/components/AIDrawer';
 import AIIntake from '@/components/AIIntake';
 import {ranks} from '@/lib/tableFilters';
@@ -27,11 +30,39 @@ export default function AIGovernance(){
   const writable=isInternal(user);
   function clear(){table.clear();setSearch('');setQuick('active');}
   if(!currentClientId)return <p className="page-content">Select a client.</p>;
-  return <div><PageHeader title="AI Governance" subtitle="AI Systems & Use Cases Register · Internal governance screening, not legal classification" action={writable&&data?.intake.usage!=='no'?<Button onClick={()=>setSelected({})}>Add AI System</Button>:null}/><div className="page-content space-y-4">{error?<p role="alert">{error} <button onClick={()=>setRevision(n=>n+1)}>Retry</button></p>:!data?<p>Loading AI Governance…</p>:<>
-    {data.intake.usage==='no'&&<div className="text-sm text-ink-muted">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntake clientId={currentClientId} canWrite={writable} onSaved={()=>setRevision(n=>n+1)}/></div>}
-    {data.intake.usage==='unsure'&&<p className="text-sm text-ink-muted">AI applicability is not yet confirmed. Record known use cases and confirm intake in Onboarding.</p>}
-    <div className="flex flex-wrap gap-2 items-center"><Input className="max-w-xs" aria-label="Search AI systems" placeholder="Search AI systems…" value={search} onChange={e=>setSearch(e.target.value)}/>{presets.map(([id,label])=><button type="button" key={id} aria-pressed={quick===id} onClick={()=>setQuick(id)} className={`text-sm px-3 py-2 border border-line rounded ${quick===id?'bg-selected-bg':'bg-surface-card'}`}>{label}</button>)}</div><TableFilterChips table={table}/>
-    <div className="register-table-frame border border-line rounded-md bg-surface-card overflow-x-auto"><table className="w-full text-sm"><thead><tr>{columns.map(c=><th className="tbl-head" key={c.key}><ColumnControl table={table} column={c}/></th>)}</tr></thead><tbody>{visible.map(r=><tr key={r.ai_system_id} className="row-hover border-t border-line" data-testid={`ai-row-${r.display_id}`}><td className="tbl-cell font-mono text-xs">{r.display_id}</td><td className="tbl-cell"><button className="text-link text-left font-medium" onClick={()=>setSelected(r)}>{r.name}</button></td><td className="tbl-cell">{members.find(u=>u.user_id===r.owner_id)?.name|| (r.owner_id?'Assigned user':'Unassigned')}</td><td className="tbl-cell">{r.provider||'—'}</td><td className="tbl-cell">{r.purposes?.join(', ')||'—'}</td><td className="tbl-cell capitalize">{r.risk_tier||'Not screened'}</td><td className="tbl-cell capitalize">{r.status.replaceAll('_',' ')}</td><td className="tbl-cell">{r.last_review?.slice(0,10)||'Never reviewed'}</td><td className="tbl-cell">{r.next_review?.slice(0,10)||'Not scheduled'}</td></tr>)}</tbody></table>{!visible.length&&<div className="p-6 text-sm text-ink-muted">{rows.length?'No AI systems match the current filters.':'No AI systems recorded yet.'}{rows.length>0&&<button className="text-link ml-2" onClick={clear}>Clear filters</button>}</div>}</div>
-    <p className="text-xs text-ink-muted">Screening tiers prioritize governance attention. Organizational exposure belongs in Risks; deficiencies and remediation remain in Findings and Action Items.</p>
-  </>}</div>{selected&&data&&<AIDrawer key={`${currentClientId}:${selected.ai_system_id||'new'}`} open record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</div>;
+  const counts=Object.fromEntries(presets.map(([id,,test])=>[id,rows.filter(test).length]));
+  const canAdd=writable&&data?.intake.usage!=='no';
+  return <div className="register-surface"><PageHeader title="AI Governance" subtitle="AI systems and use cases, screened for governance attention. Not a legal classification."
+      action={canAdd?<HeaderActions><PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/></HeaderActions>:null}/>
+    {data?.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntake clientId={currentClientId} canWrite={writable} onSaved={()=>setRevision(n=>n+1)}/></div>}
+    {data?.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
+    <div className="register-toolbar">
+      <SearchField label="Search AI systems" placeholder="Search AI systems…" value={search} onChange={setSearch} testid="ai-system-search"/>
+      <ViewTabs views={presets.map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>
+      <RegisterCount shown={visible.length} total={rows.length}/>
+    </div>
+    <div className="register-body">
+      <TableFilterChips table={table}/>
+      <RegisterLoadError error={error} onRetry={()=>setRevision(n=>n+1)} name="AI systems"/>
+      <div className="register-table-frame overflow-x-auto"><table className="w-full">
+        <caption className="sr-only">AI systems and use cases. Screening tiers prioritize governance attention; organizational exposure belongs in Risks, and deficiencies and remediation in Findings and Action Items.</caption>
+        <thead><tr>{columns.map(c=><SortableHeader key={c.key} table={table} column={c}/>)}</tr></thead>
+        <tbody className="divide-y divide-line">
+          {!data&&!error&&<TableLoadingRow colSpan={columns.length}/>}
+          {data&&!visible.length&&<tr><td colSpan={columns.length} className="empty-state">{rows.length?<FilterEmpty table={table} name="AI systems" onClear={clear}/>:'No AI systems recorded yet.'}</td></tr>}
+          {data&&visible.map(r=><tr key={r.ai_system_id} className="row-hover row-open" data-testid={`ai-system-row-${r.display_id}`} onClick={()=>setSelected(r)}>
+            <td className="tbl-cell font-mono text-xs text-ink-help whitespace-nowrap">{r.display_id}</td>
+            <td className="tbl-cell"><button type="button" className="register-record-link" onClick={e=>{e.stopPropagation();setSelected(r);}}>{r.name}</button></td>
+            <td className="tbl-cell"><OwnerCell people={members} id={r.owner_id} status={r.status}/></td>
+            <td className="tbl-cell text-ink-secondary">{r.provider||<span className="register-empty">—</span>}</td>
+            <td className="tbl-cell text-ink-secondary">{r.purposes?.join(', ')||<span className="register-empty">—</span>}</td>
+            <td className="tbl-cell">{r.risk_tier?<SeverityBadge value={r.risk_tier}/>:<span className="register-empty">Not screened</span>}</td>
+            <td className="tbl-cell"><StatusBadge value={r.status}/></td>
+            <td className="tbl-cell"><HistoryDate value={r.last_review} empty="Never reviewed"/></td>
+            <td className="tbl-cell">{r.next_review?<DueDate iso={r.next_review} closed={['suspended','retired'].includes(r.status)}/>:<span className="register-empty">Not scheduled</span>}</td>
+          </tr>)}
+        </tbody>
+      </table></div>
+    </div>
+  {selected&&data&&<AIDrawer key={`${currentClientId}:${selected.ai_system_id||'new'}`} open record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</div>;
 }

@@ -5,7 +5,8 @@ export const SCHEMAS = {
   ai_systems: {title:'AI Governance',columns:[],fields:[]},
   reviews: {
     title: "Reviews",
-    subtitle: "Recurring review obligations and completion history.",
+    singular: "Review",
+    subtitle: "Recurring governance and compliance reviews.",
     columns: [
       { key: "title", label: "Title", primary: true },
       { key: "review_type", label: "Type" },
@@ -57,7 +58,8 @@ export const SCHEMAS = {
   },
   findings: {
     title: "Findings",
-    subtitle: "Issues raised from reviews, controls testing, or incidents. Connect to remediation tasks and risks.",
+    singular: "Finding",
+    subtitle: "Deficiencies from reviews, assessments and incidents, tracked to validation.",
     columns: [
       { key: "title", label: "Finding", primary: true },
       { key: "severity", label: "Severity", badge: true },
@@ -83,7 +85,8 @@ export const SCHEMAS = {
   },
   risks: {
     title: "Risks",
-    subtitle: "Risk register with likelihood, impact, treatment, and acceptance workflow.",
+    singular: "Risk",
+    subtitle: "Identified client risks and treatment status.",
     columns: [
       { key: "title", label: "Risk", primary: true },
       { key: "category", label: "Category" },
@@ -117,7 +120,8 @@ export const SCHEMAS = {
   },
   contacts: {
     title: "Contacts & Roles",
-    subtitle: "Business contacts and GRC responsibilities. Platform accounts are separate and optional.",
+    singular: "Contact",
+    subtitle: "Business contacts and GRC responsibilities. Contacts are not platform accounts.",
     columns: [
       { key: "name", label: "Contact", primary: true },
       { key: "title", label: "Title" },
@@ -153,7 +157,8 @@ export const SCHEMAS = {
   },
   requirements: {
     title: "Requirements",
-    subtitle: "Legal, regulatory, contractual, assurance, and insurance obligations with applicability and verification state.",
+    singular: "Requirement",
+    subtitle: "Legal, regulatory, contractual and assurance obligations.",
     columns: [
       { key: "title", label: "Requirement", primary: true },
       { key: "category", label: "Category" },
@@ -191,7 +196,8 @@ export const SCHEMAS = {
   },
   policies: {
     title: "Policies",
-    subtitle: "Policy baseline assessments and documents. Reported Missing records identify gaps; they are not existing policy documents.",
+    singular: "Policy",
+    subtitle: "Policy documents, reviews and approvals. Reported Missing marks a gap, not a document.",
     columns: [
       { key: "title", label: "Policy / Document", primary: true },
       { key: "presence", label: "Presence", badge: true },
@@ -231,7 +237,8 @@ export const SCHEMAS = {
   },
   vendors: {
     title: "Vendors",
-    subtitle: "Third-party vendors with criticality, contracts and review status.",
+    singular: "Vendor",
+    subtitle: "Third-party services, criticality, assurance and review status.",
     columns: [
       { key: "name", label: "Vendor", primary: true },
       { key: "services", label: "Services" },
@@ -256,7 +263,8 @@ export const SCHEMAS = {
   },
   assets: {
     title: "Systems & Scope",
-    subtitle: "In-scope systems with owner, criticality and lifecycle status.",
+    singular: "System",
+    subtitle: "In-scope systems, owners and criticality.",
     columns: [
       { key: "name", label: "System", primary: true },
       { key: "asset_type", label: "Type" },
@@ -286,7 +294,8 @@ export const SCHEMAS = {
   },
   tasks: {
     title: "Tasks",
-    subtitle: "Remediation & operational work items connected to findings and reviews.",
+    singular: "Task",
+    subtitle: "Remediation and operational tasks.",
     columns: [
       { key: "title", label: "Task", primary: true },
       { key: "priority", label: "Priority", badge: true },
@@ -310,7 +319,8 @@ export const SCHEMAS = {
   },
   exceptions: {
     title: "Exceptions",
-    subtitle: "Risk acceptances and control exceptions with expiry, linked to risks and findings.",
+    singular: "Exception",
+    subtitle: "Risk acceptances and control exceptions with expiry.",
     columns: [
       { key: "title", label: "Exception", primary: true },
       { key: "status", label: "Status", badge: true },

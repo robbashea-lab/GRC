@@ -1,20 +1,18 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
+import { HeaderActions, PrimaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
+import { DueDate, OwnerCell } from "@/components/RegisterCells";
+import StatusBadge, { SeverityBadge } from "@/components/StatusBadge";
 import RegisterLoadError from '@/components/RegisterLoadError';
-import { personLabel } from '@/lib/people';
-import { OwnerAccountNote } from '@/components/ContactAccess';
-import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
-import { ACTION_VIEWS, SOURCE_TYPES, actionMatches, actionOrder, actionStatus, daysDue, taskSource } from "@/lib/actionItems";
+import { ACTION_VIEWS, SOURCE_TYPES, actionMatches, actionOrder, actionStatus, taskSource } from "@/lib/actionItems";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
@@ -22,27 +20,10 @@ import { SCHEMAS } from "@/lib/schemas";
 // Only authoritative Task records are displayed here.
 const VIEWS = ACTION_VIEWS.map(id => ({id, label: id === "active" ? "Active" : id === "overdue" ? "Overdue" : id === "completed" ? "Completed" : actionStatus(id)}));
 
-const PRIORITY_TONE = {
-  immediate: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "pill-high",
-  medium: "pill-moderate",
-  moderate: "pill-moderate",
-  low: "bg-surface-subtle text-ink-secondary border-line",
-};
 
 const closedTask = ["done", "cancelled"];
 
-function isOverdue(due, status, closed) {
-  if (!due) return false;
-  if (closed.includes(status)) return false;
-  return daysUntil(due) < 0;
-}
 
-function daysUntil(due) {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  return due ? Math.round((new Date(due.slice(0, 10) + "T00:00:00") - today) / 86400000) : Infinity;
-}
 
 function priorityLabel(p) {
   if (!p) return "—";
@@ -145,44 +126,17 @@ export default function ActionItems() {
     <div>
       <PageHeader
         title="Action Items"
-        subtitle={`${currentClient?.name || ""} · Remediation and operational work.`}
+        subtitle="Remediation and operational work across Findings, Risks, Reviews and assessments."
         action={
-          canWrite && (
-            <Button
-              size="sm"
-              onClick={() => setDrawer({ open: true, kind: "tasks", record: null })}
-              data-testid="new-action-item"
-              className="bg-primary hover:bg-primary/90"
-            >
-              <ListChecks className="h-3.5 w-3.5 mr-1" /> New Action Item
-            </Button>
-          )
+          canWrite && <HeaderActions><PrimaryAction label="New Action Item" onClick={() => setDrawer({ open: true, kind: "tasks", record: null })} testid="new-action-item" /></HeaderActions>
         }
       />
       <div className="register-toolbar">
-        <div className="register-search relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search action items…" className="pl-8 h-9 w-72 text-sm" data-testid="ai-search" />
-        </div>
-        <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="ai-views">
-          {VIEWS.map((v) => {
-            const active = view === v.id;
-            const n = counts[v.id] || 0;
-            return (
-              <button
-                key={v.id} aria-pressed={active}
-                onClick={() => { const key = v.id === 'overdue' ? 'due_date' : 'status'; if (key) table.setFilter(key, []); setView(v.id); }}
-                data-testid={`ai-view-${v.id}`}
-                className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
-              >
-                {v.label}
-                <span className={`ml-1.5 font-mono text-xs ${active ? "text-ink-onDarkMuted" : "text-ink-help"}`}>{n}</span>
-              </button>
-            );
-          })}
-        </div>
+        <SearchField label="Search action items" placeholder="Search action items…" value={q} onChange={setQ} testid="ai-search" />
+        <ViewTabs views={VIEWS} active={view} counts={counts} label="Action Item views" testid="ai-views" testIdPrefix="ai-view-"
+          onPick={id => { table.setFilter(id === 'overdue' ? 'due_date' : 'status', []); setView(id); }} />
         <Select value={sort} onValueChange={v => { table.setSort(null); setParam("sort", v); }}><SelectTrigger className="w-40" aria-label="Sort actions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="operational">Operational order</SelectItem><SelectItem value="due">Due date</SelectItem><SelectItem value="priority">Priority</SelectItem><SelectItem value="title">Title</SelectItem></SelectContent></Select>
-        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
+        <RegisterCount shown={filtered.length} total={rows.length} />
       </div>
 
       <div className="register-body">
@@ -190,14 +144,14 @@ export default function ActionItems() {
         <RegisterLoadError error={loadError} onRetry={load} name="action items" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead>
               <tr>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="title" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="priority" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="owner_id" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="due_date" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="source_type" /></th>
+                <SortableHeader table={table} columnKey="title" />
+                <SortableHeader table={table} columnKey="priority" />
+                <SortableHeader table={table} columnKey="owner_id" />
+                <SortableHeader table={table} columnKey="due_date" />
+                <SortableHeader table={table} columnKey="status" />
+                <SortableHeader table={table} columnKey="source_type" />
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -206,33 +160,22 @@ export default function ActionItems() {
                 <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="action items" onClear={() => { const next=new URLSearchParams(params);next.delete('q');next.set('view','all');setParams(next,{replace:true}); }} /></td></tr>
               )}
               {!loading && filtered.map((r, i) => {
-                const overdue = isOverdue(r.due_date, r.status, r.closed);
-                const tone = PRIORITY_TONE[(r.priority || "").toLowerCase()] || PRIORITY_TONE.medium;
+                const typeLabel = SOURCE_TYPES[r.source_type] || 'Historical source';
                 return (
-                  <tr key={`${r._kind}-${r.id}`} className="row-hover cursor-pointer" onClick={() => open(r)} data-testid={`ai-row-${i}`}>
+                  <tr key={`${r._kind}-${r.id}`} className="row-hover row-open" onClick={() => open(r)} data-testid={`ai-row-${i}`}>
                     <td className="tbl-cell font-medium text-ink-primary">
-                      <button type="button" className="text-left hover:underline focus-visible:underline" onClick={e => { e.stopPropagation(); open(r); }}>{r.title}</button>
+                      <button type="button" className="register-record-link" onClick={e => { e.stopPropagation(); open(r); }}>{r.title}</button>
                     </td>
-                    <td className="tbl-cell">
-                      <span className={`pill ${tone}`}>
-                        {priorityLabel(r.priority)}
-                      </span>
+                    <td className="tbl-cell"><SeverityBadge value={(r.priority || "medium").toLowerCase()} label={priorityLabel(r.priority)} /></td>
+                    <td className="tbl-cell"><OwnerCell people={users} id={r.owner_id} status={r.status} /></td>
+                    <td className="tbl-cell"><DueDate iso={r.due_date} closed={r.closed.includes(r.status)} /></td>
+                    <td className="tbl-cell"><StatusBadge value={r.status} label={actionStatus(r.status)} /></td>
+                    <td className="tbl-cell !whitespace-normal">
+                      {r.sourceRecord.target && (SCHEMAS[r.sourceRecord.kind]||r.sourceRecord.kind==='assessments')
+                        ? <button className="register-link" onClick={e=>{e.stopPropagation();setDrawer({open:true,kind:r.sourceRecord.kind,record:r.sourceRecord.target});}}>{r.source}</button>
+                        : <span className="text-ink-secondary">{r.sourceRecord.id?'Linked record unavailable':r.source}</span>}
+                      {r.source !== typeLabel && <span className="register-subline">{typeLabel}</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{r.owner_id ? personLabel(users, r.owner_id) : <span className="text-ink-help">Unassigned</span>}<OwnerAccountNote users={users} id={r.owner_id} status={r.status} /></td>
-                    <td className="tbl-cell text-xs font-mono">
-                      {r.due_date ? (
-                        <span className={overdue ? "text-semantic-critical font-medium" : "text-ink-secondary"}>
-                          {new Date(r.due_date.slice(0, 10) + "T00:00:00").toLocaleDateString()}
-                          {overdue && <span className="block text-xs">{Math.abs(daysDue(r))} days overdue</span>}
-                        </span>
-                      ) : <span className="text-ink-help">—</span>}
-                    </td>
-                    <td className="tbl-cell">
-                      <span className="pill pill-neutral">
-                        {actionStatus(r.status)}
-                      </span>
-                    </td>
-                    <td className="tbl-cell text-xs text-ink-secondary !whitespace-normal">{r.sourceRecord.target && (SCHEMAS[r.sourceRecord.kind]||r.sourceRecord.kind==='assessments') ? <button className="text-left text-link hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,kind:r.sourceRecord.kind,record:r.sourceRecord.target});}}>{r.source}</button> : r.sourceRecord.id?'Linked record unavailable':r.source}<span className="block text-ink-help">{SOURCE_TYPES[r.source_type]||'Historical source'}</span></td>
                   </tr>
                 );
               })}

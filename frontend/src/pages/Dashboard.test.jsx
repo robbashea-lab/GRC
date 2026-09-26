@@ -46,7 +46,7 @@ test("populated client row opens the existing authoritative record drawer", asyn
   const item = { key: "tasks:t:due", id: "t", kind: "tasks", title: "Remediate", type: "Action Item", action: "Open Action", priority_label: "Overdue", owner: "Test Owner", status: "open", due_date: "2026-09-01", record: { task_id: "t", client_id: "a" } };
   loadClientDashboard.mockResolvedValue({ ...empty, posture: {...empty.posture, priority:[item], pastDue:[item]} });
   await act(async () => root.render(<Dashboard />));
-  const button = [...container.querySelectorAll("button")].find(b => b.textContent === "Open Action");
+  const button = [...container.querySelectorAll("tbody button")].find(b => b.textContent === "Remediate");
   await act(async () => button.click());
   expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe("tasks:t:a");
 });
@@ -60,7 +60,7 @@ test("cards open exact contributing rows; the priority table is capped at six", 
   const drawer=document.querySelector('[data-testid="dashboard-drilldown"]');
   expect(drawer.textContent).toContain('7 contributing records');
   expect(drawer.querySelectorAll('tbody tr')).toHaveLength(7);
-  await act(async()=>[...drawer.querySelectorAll('button')].find(b=>b.textContent==='Open Action').click());
+  await act(async()=>[...drawer.querySelectorAll('tbody button')].find(b=>b.textContent==='Action 0').click());
   expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe('tasks:0:a');
 });
 
@@ -77,7 +77,7 @@ test('bounded dashboard displays full totals, pages detail and fetches the autho
   await act(async()=>[...drawer.querySelectorAll('button')].find(button=>button.textContent==='Next').click());
   expect(drawer.textContent).toContain('Showing 26–26 of 26');
   expect(drawer.querySelectorAll('tbody tr')).toHaveLength(1);
-  await act(async()=>[...drawer.querySelectorAll('button')].find(button=>button.textContent==='Open Action').click());
+  await act(async()=>[...drawer.querySelectorAll('tbody button')].find(button=>button.textContent==='Action 25').click());
   expect(api.get).toHaveBeenCalledWith('/tasks/25');
   expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe('tasks:25:a');
 });
@@ -93,7 +93,9 @@ test("tenant switching hides old data and ignores a late response from the previ
   expect(signal.aborted).toBe(true);
   await act(async () => finishA({ ...empty, attention: [{ title: "Client A secret" }] }));
   expect(container.textContent).not.toContain("Client A secret");
-  expect(container.textContent).toContain("Client B");
+  // The rendered snapshot is Client B's (the page no longer repeats the client name the sidebar shows).
+  expect(loadClientDashboard.mock.calls.at(-1)[1].clientId).toBe("b");
+  expect(container.textContent).toContain("No items require immediate attention right now.");
 });
 
 test("failed sources show a recoverable error instead of blank panels", async () => {

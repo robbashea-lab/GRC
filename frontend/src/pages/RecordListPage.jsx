@@ -1,20 +1,21 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import {SETUP_FILTERS} from '@/lib/onboardingHandoff';
-import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
-import { displayDay } from '@/lib/managementDates';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
-import { ContactAccessStatus, OwnerAccountNote, useContactAccess } from '@/components/ContactAccess';
+import { ContactAccessStatus, useContactAccess } from '@/components/ContactAccess';
 import { contactResponsibilities } from '@/lib/contactAccess';
 import { personLabel, peopleMap, useClientPeople } from '@/lib/people';
 import PageHeader from "@/components/PageHeader";
+import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from '@/components/Register';
+import { DueDate, HistoryDate, OwnerCell } from '@/components/RegisterCells';
 import RegisterSignalBar from "@/components/RegisterSignalBar";
 import ContactCoverage from "@/components/ContactCoverage";
 import { registerSignals } from "@/lib/registerSignals";
@@ -38,7 +39,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import AssigneeSelect from "@/components/AssigneeSelect";
-import { Plus, Search, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, UserRound, CircleDashed, X, CalendarDays, MoreVertical, Pencil, Filter, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
+import { Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 const ID_FIELD = {
@@ -63,43 +64,6 @@ const DEFAULT_STATUS = { findings: "active" };
 const TERMINAL_STATUS = { findings: ["closed", "accepted"] };
 // Cells show a field's vocabulary label, as the form and the column filter do; unknown values show as recorded.
 const optionLabel = (schema, key, value) => schema.fields?.find((f) => f.name === key)?.options?.find((o) => o.value === value)?.label ?? value;
-
-// Human-friendly due-date helper. Returns { primary, secondary, tone }.
-// `closed` records get neutral treatment (no "overdue" callout).
-function formatDue(iso, closed = false) {
-  if (!iso) return { primary: "—", secondary: "", tone: "neutral" };
-  const d = new Date(String(iso).slice(0, 10) + "T00:00:00");
-  if (Number.isNaN(d.getTime())) return { primary: "—", secondary: "", tone: "neutral" };
-  const primary = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  if (closed) return { primary, secondary: "", tone: "neutral" };
-  const now = new Date();
-  const midnightToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const midnightDue = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const days = Math.round((midnightDue - midnightToday) / 86400000);
-  let secondary = "";
-  let tone = "neutral";
-  if (days < 0) { secondary = `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue`; tone = "critical"; }
-  else if (days === 0) { secondary = "today"; tone = "duesoon"; }
-  else if (days <= 7) { secondary = `in ${days} day${days === 1 ? "" : "s"}`; tone = "duesoon"; }
-  else if (days <= 30) { secondary = `in ${days} days`; tone = "info"; }
-  else { secondary = `in ${days} days`; tone = "neutral"; }
-  return { primary, secondary, tone };
-}
-
-function DueCell({ iso, closed = false }) {
-  const { primary, secondary, tone } = formatDue(iso, closed);
-  const toneCls = {
-    critical: "text-semantic-critical", duesoon: "text-semantic-duesoon-text",
-    info: "text-ink-secondary", neutral: "text-ink-secondary",
-  }[tone] || "text-ink-secondary";
-  if (primary === "—") return <span className="text-ink-help">—</span>;
-  return (
-    <span className="register-date inline-flex flex-col leading-tight">
-      <span className={`font-mono text-xs ${toneCls}`}>{primary}</span>
-      {secondary && <span className={`text-xs ${toneCls} opacity-80`}>{secondary}</span>}
-    </span>
-  );
-}
 
 import {basisSummary} from '@/lib/requirementBasis';
 // Tab definitions for reviews — order matters (displayed as segmented control)
@@ -415,33 +379,19 @@ export default function RecordListPage({ kind }) {
     <div className="register-surface" data-layout={isReviews ? 'reviews' : undefined}>
       <PageHeader
         title={schema.title}
-        subtitle={`${currentClient?.name || ""} · ${schema.subtitle}`}
+        subtitle={schema.subtitle}
         action={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={exportCsv}
-              disabled={!currentClientId || rows.length === 0}
-              data-testid={`export-${kind}-button`}
-            >
-              <Download className="h-4 w-4 mr-1" /> Export CSV
-            </Button>
-            {canWrite && (
-              <Button data-testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }}>
-                <Plus className="h-4 w-4 mr-1" /> New {kind === "policies" ? "policy" : kind === "assets" ? "system" : kind.slice(0, -1)}
-              </Button>
-            )}
-          </div>
+          <HeaderActions>
+            <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || rows.length === 0} testid={`export-${kind}-button`} />
+            {canWrite && <PrimaryAction label={`New ${schema.singular}`} testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }} />}
+          </HeaderActions>
         }
       />
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       {kind === "contacts" && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
       {signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
-      <div className="sticky top-0 z-20 register-toolbar">
-        <div className="register-search relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input aria-label={isReviews ? 'Search reviews' : undefined} data-testid={`${kind}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 h-9 w-72 text-sm" />
-        </div>
+      <div className="register-toolbar">
+        <SearchField label={`Search ${schema.title.toLowerCase()}`} testid={`${kind}-search`} value={q} onChange={setQ} placeholder={`Search ${schema.title.toLowerCase()}…`} />
         {hasUrlFilters && (
           <div
             className="inline-flex items-center gap-2 px-2.5 h-9 rounded-md border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-medium"
@@ -460,28 +410,11 @@ export default function RecordListPage({ kind }) {
           </div>
         )}
         {isReviews ? (
-          <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="reviews-tabs">
-            {REVIEW_TABS.map((t) => {
-              const active = !columnStatusActive && reviewTab === t.id;
-              const count = reviewTabCounts[t.id] ?? 0;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setReviewTab(t.id)}
-                  data-testid={`reviews-tab-${t.id}`}
-                  aria-pressed={active}
-                  className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}
-                >
-                  {t.label}
-                  <span className={`ml-1.5 font-mono text-xs ${active ? "text-ink-onDarkMuted" : "text-ink-help"}`}>{count}</span>
-                </button>
-              );
-            })}
-          </div>
+          <ViewTabs views={REVIEW_TABS} active={columnStatusActive ? null : reviewTab} onPick={setReviewTab} counts={reviewTabCounts} label="Review views" testid="reviews-tabs" testIdPrefix="reviews-tab-" />
         ) : (
           statusOptions.length > 0 && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger aria-label="Filter by status" data-testid={`${kind}-status-filter`} className="w-44 h-9 text-sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectTrigger aria-label="Filter by status" data-testid={`${kind}-status-filter`} className="w-44"><SelectValue placeholder="All statuses" /></SelectTrigger>
               <SelectContent>
                 {DEFAULT_STATUS[kind] === "active" && <SelectItem value="active">Active</SelectItem>}
                 <SelectItem value="all">All statuses</SelectItem>
@@ -491,12 +424,12 @@ export default function RecordListPage({ kind }) {
           )
         )}
         {isReviews && <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
-        <div className="register-count text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length}</div>
+        <RegisterCount shown={filtered.length} total={isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length} />
       </div>
 
       {/* Bulk action bar */}
       {checked.size > 0 && (
-        <div className="mx-8 mt-4 rounded-lg border border-brand-charcoal bg-primary text-primary-foreground px-4 py-2.5 flex items-center gap-3" data-testid="bulk-action-bar">
+        <div className="mx-[var(--register-gutter)] mt-2 rounded-md border border-brand-charcoal bg-primary text-primary-foreground px-3 py-2 flex items-center gap-3" data-testid="bulk-action-bar">
           <div className="text-sm"><span className="font-heading font-semibold text-primary-foreground" data-testid="bulk-selected-count">{checked.size}</span> selected</div>
           <div className="h-4 w-px bg-brand-metallic-3" />
           {canWrite && !isReviews && (
@@ -563,7 +496,7 @@ export default function RecordListPage({ kind }) {
         </div>
       )}
 
-      <div className="register-body page-gutter py-6">
+      <div className="register-body">
         <TableFilterChips table={table} />
         <RegisterLoadError error={loadError} onRetry={load} name="records" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
@@ -579,9 +512,9 @@ export default function RecordListPage({ kind }) {
                     aria-label={`Select all ${kind.replaceAll('_',' ')}`}
                   />
                 </th>
-                {columns.map(c => <th key={c.key} data-column={isReviews ? c.key : undefined} className="tbl-head" aria-sort={table.state.sort?.key === c.key ? (table.state.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}><ColumnControl table={table} column={c} /></th>)}
-                {kind === 'contacts' && <th className="tbl-head">Platform access</th>}
-                <th className="tbl-head w-10"></th>
+                {columns.map(c => <SortableHeader key={c.key} table={table} column={c} data-column={isReviews ? c.key : undefined} />)}
+                {kind === 'contacts' && <th scope="col" className="tbl-head">Platform access</th>}
+                <th scope="col" className="tbl-head w-10"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -592,9 +525,9 @@ export default function RecordListPage({ kind }) {
                 return (
                 <tr
                   key={row[idField] || `row-${i}`}
-                  className="row-hover cursor-pointer"
+                  className="row-hover row-open"
                   data-testid={`${kind}-row-${i}`}
-                  data-selected={isReviews ? checked.has(row[idField]) : undefined}
+                  data-selected={checked.has(row[idField]) || undefined}
                   onClick={() => { setSelected(row); setOpen(true); }}
                 >
                   <td className="tbl-cell" onClick={(e) => e.stopPropagation()}>
@@ -616,18 +549,11 @@ export default function RecordListPage({ kind }) {
                           : row[c.key] ? <StatusBadge value={row[c.key]} tone={isReviews && row[c.key] === 'needs_scheduling' ? 'duesoon' : undefined} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
                       ) :
                        c.user ? (
-                         isReviews ? <span className={`register-owner ${row[c.key] ? '' : 'register-owner--unassigned'}`} data-testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined}>
-                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{personLabel(users, row[c.key])}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
-                         </span> : row[c.key]
-                           ? <span className="text-ink-secondary">{personLabel(users, row[c.key])}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
-                           : <span
-                               className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-xs font-mono uppercase tracking-wider"
-                               data-testid={`${kind}-unassigned-${i}`}
-                             >Unassigned</span>
+                         <OwnerCell people={users} id={row[c.key]} status={row.status} testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined} />
                        ) :
                        isReviews && c.key==='basis' ? <span className="text-xs text-ink-secondary" title={basisSummary(row)}>{basisSummary(row)}</span> :
-                       isDueLike ? <DueCell iso={row[c.key]} closed={closed} /> :
-                       c.date ? (displayDay(row[c.key]) ? <span className="font-mono text-ink-secondary">{displayDay(row[c.key])}</span> : <span className="text-ink-help">—</span>) :
+                       isDueLike ? <DueDate iso={row[c.key]} closed={closed} /> :
+                       c.date ? <HistoryDate value={row[c.key]} /> :
                        (
                          <span className="inline-flex items-center gap-2">
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>

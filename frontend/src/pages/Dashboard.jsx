@@ -1,4 +1,4 @@
-import { useTableControls, ColumnControl } from '@/components/TableControls';
+import { useTableControls } from '@/components/TableControls';
 import { ranks } from '@/lib/tableFilters';
 import { useEffect, useState } from "react";
 import {Link} from 'react-router-dom';
@@ -7,7 +7,9 @@ import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
-import { Button } from "@/components/ui/button";
+import { HeaderActions, SecondaryAction, SortableHeader } from "@/components/Register";
+import RegisterLoadError from "@/components/RegisterLoadError";
+import { DueDate, OwnerCell } from "@/components/RegisterCells";
 import { FileDown, X } from "lucide-react";
 import DashboardManagement from "@/components/DashboardManagement";
 import { toast } from "sonner";
@@ -15,48 +17,41 @@ import DashboardScopeSelector from "@/components/DashboardScopeSelector";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
 import { loadClientDashboard, labelDashboardRows } from "@/lib/loadClientDashboard";
-import { calendarDay } from "@/lib/clientDashboard";
 
 const ORGANIZATION_SCOPE = {kind:'org'};
+const SUBTITLE = "Program health, priorities and upcoming work.";
 
 function OperationalTable({ items, upcoming = false, onOpen }) {
   const { user } = useAuth();
   const { currentClientId } = useOrg();
   const columns = [{key:'priority',label:'Priority',rank:ranks,value:r=>r.severity},{key:'type',label:'Type'},{key:'owner',label:'Owner'},{key:'due_date',label:upcoming?'Due / Review Date':'Due',dateKind:'due'},{key:'status',label:'Status'}];
   const table = useTableControls({ columns, rows:items, module:upcoming?'dashboard-watch':'dashboard-attention', scope:`${user?.user_id}:${currentClientId}` });
+  // Same row grammar as the registers: the title opens the record, the whole row is a click target.
   return (
     <div className="ops-table overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-surface-subtle border-b border-line"><tr>
-          <th className="tbl-head"><ColumnControl table={table} columnKey={upcoming ? "due_date" : "priority"} /></th>
-          <th className="tbl-head ops-table-static">Item</th><th className="tbl-head"><ColumnControl table={table} columnKey="type" /></th>
-          <th className="tbl-head"><ColumnControl table={table} columnKey="owner" /></th>
-          {!upcoming && <th className="tbl-head"><ColumnControl table={table} columnKey="due_date" /></th>}
-          <th className="tbl-head"><ColumnControl table={table} columnKey="status" /></th><th className="tbl-head ops-table-static">Action</th>
+          <SortableHeader table={table} columnKey={upcoming ? "due_date" : "priority"} />
+          <th scope="col" className="tbl-head ops-table-static">Item</th><SortableHeader table={table} columnKey="type" />
+          <SortableHeader table={table} columnKey="owner" />
+          {!upcoming && <SortableHeader table={table} columnKey="due_date" />}
+          <SortableHeader table={table} columnKey="status" />
         </tr></thead>
         <tbody className="divide-y divide-line">
           {table.apply(items).map(item => (
-            <tr key={item.key} className="row-hover" data-testid={`obligation-${item.key}`}>
-              <td className="tbl-cell text-xs" data-label={upcoming ? "Due / Review Date" : "Priority"}>{upcoming ? <DateCell iso={item.due_date} /> : item.priority_label}</td>
-              <td className="tbl-cell font-medium text-ink-primary ops-table-item">{item.title}</td>
-              <td className="tbl-cell text-xs text-ink-secondary" data-label="Type">{item.type}</td>
-              <td className="tbl-cell text-xs text-ink-secondary" data-label="Owner">{item.owner}</td>
-              {!upcoming && <td className="tbl-cell" data-label="Due"><DateCell iso={item.due_date} /></td>}
-              <td className="tbl-cell" data-label="Status">{item.status ? <StatusBadge value={item.status} /> : "—"}</td>
-              <td className="tbl-cell"><button type="button" onClick={() => onOpen(item)} className="text-xs text-link hover:text-link-hover whitespace-nowrap">{item.action}</button></td>
+            <tr key={item.key} className="row-hover row-open" data-testid={`obligation-${item.key}`} onClick={() => onOpen(item)}>
+              <td className="tbl-cell text-xs" data-label={upcoming ? "Due / Review Date" : "Priority"}>{upcoming ? <DueDate iso={item.due_date} /> : item.priority_label}</td>
+              <td className="tbl-cell ops-table-item"><button type="button" className="register-record-link text-left" onClick={event => { event.stopPropagation(); onOpen(item); }}>{item.title}</button></td>
+              <td className="tbl-cell text-ink-secondary" data-label="Type">{item.type}</td>
+              <td className="tbl-cell" data-label="Owner"><OwnerCell label={item.owner} assigned={!(item.unassigned ?? item.owner === "Unassigned")} /></td>
+              {!upcoming && <td className="tbl-cell" data-label="Due"><DueDate iso={item.due_date} /></td>}
+              <td className="tbl-cell" data-label="Status">{item.status ? <StatusBadge value={item.status} /> : <span className="register-empty">—</span>}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
-}
-
-function DateCell({ iso }) {
-  const day = calendarDay(iso);
-  if (day == null) return <span className="text-ink-disabled">—</span>;
-  const date = new Date(day * 86400000);
-  return <span className="font-mono text-xs text-ink-secondary">{date.toLocaleDateString(undefined, { timeZone: "UTC" })}</span>;
 }
 
 export default function Dashboard() {
@@ -85,9 +80,11 @@ export default function Dashboard() {
 
   // Never render the previous tenant's response while a new request is loading.
   const data = snapshot?.key === requestKey ? snapshot.result : null;
-  if (!currentClientId) return <div className="page-content text-sm text-ink-muted">Select a client to view its GRC program.</div>;
-  if (error?.key === requestKey) return <div className="page-content space-y-3" role="alert"><p>{error.message}</p><Button variant="outline" onClick={() => setRevision(n => n + 1)}>Retry dashboard</Button></div>;
-  if (!data) return <div className="page-content text-sm text-ink-muted">Loading dashboard…</div>;
+  // Loading, error and no-client states keep the page header so the layout does not jump.
+  const shell = body => <div><PageHeader title="Dashboard" subtitle={SUBTITLE} /><div className="section-body">{body}</div></div>;
+  if (!currentClientId) return shell(<p className="text-sm text-ink-muted">Select a client to view its GRC program.</p>);
+  if (error?.key === requestKey) return shell(<RegisterLoadError error={error.message} onRetry={() => setRevision(n => n + 1)} name="Dashboard" />);
+  if (!data) return shell(<p role="status" className="text-sm text-ink-muted">Loading dashboard…</p>);
 
   const framework = frameworkSelection?.clientId === currentClientId && data.programs?.some(p=>p.key===frameworkSelection.key) ? frameworkSelection.key : null;
   const view = framework ? {kind:"framework",key:framework} : scope;
@@ -96,11 +93,6 @@ export default function Dashboard() {
     setSelected(null);
     setScope(next.kind==="framework"?{kind:"org"}:next);
   }
-  const clientSubtitle = scope.kind === "org" ? `${currentClient?.name} · ${(data.programs||[]).map(p=>p.label).join(", ")||"GRC program"}`
-    : scope.kind === "org"
-    ? `${currentClient?.name || "All clients"} · Current GRC program status, priorities, and upcoming activity`
-    : `${currentClient?.name || "All clients"} · ${data.scope_label || ""}`;
-
   async function downloadBoardReport() {
     if (PREVIEW_MODE) { toast.info("Board PDF generation requires the reporting server and is not available in this browser demo."); return; }
     try {
@@ -134,20 +126,18 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader
-        title="Program Overview"
-        subtitle={clientSubtitle}
+        title="Dashboard"
+        subtitle={SUBTITLE}
         action={
-          <div className="flex flex-wrap items-center gap-2">
+          <HeaderActions>
             <DashboardScopeSelector clientId={currentClientId} value={view} onChange={changeView} programs={data.programs || []} />
-            <Button variant="outline" onClick={downloadBoardReport} data-testid="download-board-report">
-              <FileDown className="h-4 w-4 mr-1" /> Board Report PDF
-            </Button>
-          </div>
+            <SecondaryAction label="Board Report PDF" icon={FileDown} onClick={downloadBoardReport} testid="download-board-report" />
+          </HeaderActions>
         }
       />
 
       {scope.kind !== "org" && (
-        <div className="page-gutter pt-4">
+        <div className="page-gutter pt-3">
           <div
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-semantic-info-border bg-semantic-info-bg text-semantic-info text-xs font-medium"
             data-testid="active-scope-chip"
@@ -167,8 +157,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!data.onboardingCompleted && <div className="page-gutter pt-4 text-sm">
-        <div className="border border-line rounded-lg bg-surface-card p-3"><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program. </span><Link className="text-link underline" to="/client-profile">Continue onboarding</Link></div>
+      {!data.onboardingCompleted && <div className="register-notice">
+        <span><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program.</span></span><Link className="register-link" to="/client-profile">Continue onboarding</Link>
       </div>}
       <DashboardManagement key={requestKey+":"+framework} clientId={currentClientId} posture={data.posture} programs={data.programs} framework={framework} onOpen={openItem} loadDetail={data.contract_version===2?loadDetail:undefined} Table={OperationalTable} reference />
       {selected && selected.record.client_id === currentClientId && (
