@@ -3180,7 +3180,7 @@ async def finding_raise_risk(finding_id: str, user: Dict = Depends(get_current_u
         "display_id": await risk_ids.allocate(db, finding["client_id"]),
         "title": f"Risk raised from finding: {finding.get('title')}",
         "client_id": finding["client_id"],
-        "category": "Compliance",
+        "category": "compliance",
         "likelihood_score": None,
         "impact_score": None,
         "risk_score": None,

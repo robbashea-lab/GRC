@@ -245,6 +245,7 @@ test('review → finding → task → risk actions persist, update counts, prese
     }
   } = await api.post(`/findings/${f.finding_id}/raise-risk`);
   expect(risk.risk_score).toBeNull(); // finding severity is not a risk assessment
+  expect(risk.category).toBe('compliance'); // the Risk category vocabulary value, not its label
   await api.patch(`/risks/${risk.risk_id}`, {
     likelihood_score: 1,
     impact_score: 2
