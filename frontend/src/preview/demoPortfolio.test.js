@@ -2,7 +2,7 @@ import axios from 'axios';
 import { previewAdapter } from './adapter';
 import { seedStore, ids, saveStore, readStore } from './store';
 import { demoOrganizations, demoDates } from './demoPortfolio';
-import { CATALOGS, frameworkDefinition } from '../lib/frameworks';
+import { frameworkDefinition } from '../lib/frameworks';
 import { validateProfile } from '../lib/clientProfile';
 import { evidenceReferences } from './evidence';
 import { validateAssignment } from './assignmentEligibility';
@@ -81,16 +81,6 @@ test('historical occurrences, remediation chronology and downloadable evidence r
   }
   for (const risk of db.risks.filter(r => r.status === 'closed')) expect(risk.last_reviewed <= risk.closed_at).toBe(true);
   for (const c of db.clients) expect(db.evidence.filter(e => e.client_id === c.client_id).length).toBeGreaterThanOrEqual(8);
-});
-test('Globo shares operational records across all substantive frameworks without cloned base policies', () => {
-  const db = seedStore(),
-    cid = 'demo_globo',
-    assessments = db.framework_assessments.filter(a => a.client_id === cid);
-  expect(new Set(assessments.map(a => a.framework_key))).toEqual(new Set(Object.keys(CATALOGS)));
-  const shared = kind => db[kind].filter(r => r.client_id === cid).some(r => new Set(assessments.filter(a => a.related_links.some(l => l.kind === kind && l.id === r[ids[kind]])).map(a => a.framework_key)).size >= 3);
-  for (const kind of ['reviews', 'policies', 'evidence', 'risks']) expect(shared(kind)).toBe(true);
-  const policies = db.policies.filter(p => p.client_id === cid);
-  expect(new Set(policies.map(p => p.baseline_key)).size).toBe(policies.length);
 });
 test('reset recovers creations edits deletions completions and baseline without touching standard storage', async () => {
   await api.post('/demo/enter');

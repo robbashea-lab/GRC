@@ -11,7 +11,8 @@ import {portfolio} from '@/preview/summaries';
 const mockNavigate = jest.fn(), mockSwitch = jest.fn(), mockRefresh = jest.fn();
 let mockUser;
 jest.mock("@/context/AuthContext", () => ({ useAuth: () => ({ user: mockUser, logout: jest.fn() }) }));
-jest.mock("@/context/OrgContext", () => ({ useOrg: () => ({ clients: mockFixtures.responses["/clients"], switchClient: mockSwitch, refresh: mockRefresh }) }));
+let mockClients;
+jest.mock("@/context/OrgContext", () => ({ useOrg: () => ({ clients: mockClients, switchClient: mockSwitch, refresh: mockRefresh }) }));
 jest.mock("@/components/NotificationBell", () => () => null);
 jest.mock("@/lib/api", () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn(), patch: jest.fn() }, PREVIEW_MODE: false, formatError: e => e.message }));
 jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate, useLocation: () => ({ pathname: "/clients" }), Outlet: () => null, NavLink: ({ children, to }) => <a href={to}>{typeof children === "function" ? children({ isActive: false }) : children}</a> }), { virtual: true });
@@ -22,6 +23,7 @@ beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   window.scrollTo=jest.fn();
   mockUser = {...mockFixtures.responses["/auth/me"]};
+  mockClients = mockFixtures.responses["/clients"];
   api.get.mockImplementation(async path => ({ data: path==='/clients/directory'?portfolio(seedStore(),false):mockFixtures.responses[path] }));
   api.post.mockResolvedValue({ data: { client_id: "new", name: "Sample" } });
   api.patch.mockResolvedValue({ data: { ...mockFixtures.responses["/clients"][0] } });
@@ -42,14 +44,19 @@ test("portfolio is the dashboard, with combinable operational filters and preser
   await render(<ClientDirectory />);
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
   const filters = container.querySelector('[data-testid="client-directory-filters"]');
-  expect([...filters.querySelectorAll("button")].map(b => b.textContent)).toEqual(["Past Due", "Critical / High", "Significant Risks", "Unassigned"]);
+  expect([...filters.querySelectorAll(".register-signal-label")].map(b => b.textContent)).toEqual(["Past due", "Critical / high", "Significant risks", "Unassigned"]);
+  const rowsForSignals = portfolio(seedStore(),false).clients;
+  expect(filters.querySelector('[data-testid="client-filter-past_due"] .register-signal-value').textContent).toBe(String(rowsForSignals.filter(r=>r.past_due>0).length));
+  for(const r of rowsForSignals)expect(container.querySelector(`[data-testid="client-status-${r.client_id}"]`).textContent).toMatch(/Action required|Needs attention|On track/);
   expect(container.querySelector('[data-testid="portfolio-cards"]')).toBeNull();
   const rows = portfolio(seedStore(),false).clients;
   await click(container.querySelector('[data-testid="client-filter-assigned_to_me"]'));
   expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(rows.filter(r=>r.grc_lead_id===mockUser.user_id).length);
   await click(container.querySelector('[data-testid="client-filter-all"]'));
   for(const key of ['past_due','critical_high_issues','significant_risks','unassigned']){
-    await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
+    const signal=container.querySelector(`[data-testid="client-filter-${key}"]`);
+    if(signal.disabled){expect(rows.filter(r=>r[key]>0)).toHaveLength(0);continue;} // nothing to narrow to
+    await click(signal);
     expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(rows.filter(r=>r[key]>0).length);
     await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
   }
@@ -72,10 +79,16 @@ test("sidebar removes favorites and preserves ALL/MINE and navigation", async ()
   await click(container.querySelector('[data-testid="sidebar-filter-all"]'));
   expect(container.querySelector('a[href="/admin/clients"]')).toBeTruthy();
   const client = mockFixtures.responses["/clients"][0];
-  await change(container.querySelector('[data-testid="sidebar-client-search"]'), client.name);
-  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(1);
+  expect(container.querySelector('[data-testid="sidebar-client-search"]')).toBeNull(); // two clients: nothing to search
   await click(container.querySelector(`[data-testid="sidebar-open-${client.client_id}"]`));
   expect(mockSwitch).toHaveBeenCalledWith(client.client_id);
+});
+
+test("sidebar search appears once the client list is long enough to scan", async () => {
+  mockClients = Array.from({length: 9}, (_, i) => ({client_id: 'c' + i, name: 'Client ' + i, status: 'active'}));
+  await render(<Layout />);
+  await change(container.querySelector('[data-testid="sidebar-client-search"]'), 'Client 7');
+  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(1);
 });
 
 test("management reuses client form for add and edit; client role gets no controls", async () => {

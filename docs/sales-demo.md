@@ -18,12 +18,10 @@ Existing session edits are not silently discarded on upgrade. Use **Reset sample
 | Client | Universe | Program | Contacts | Reviews | Framework assessments |
 | --- | --- | --- | ---: | ---: | ---: |
 | Brawndo | Idiocracy | CIS IG1 | 4 | 24 | 56 |
-| Initech | Office Space | NIST CSF 2.0 | 8 | 20 | 106 |
 | Dunder Mifflin | The Office | ISO 27001 | 9 | 21 | 123 |
 | Prestige Worldwide | Step Brothers | SOC 2 | 6 | 19 | 36 |
-| Sacred Heart Hospital | Scrubs | HIPAA | 9 | 18 | 76 |
-| Cyberdyne Systems | Terminator | CMMC applicability / general GRC | 4 | 15 | 0 |
-| Globo Gym | Dodgeball | All five implemented catalogs | 8 | 32 | 397 |
+
+**Scope change (2026-09-26).** The Demo was reduced to these three reference clients. Initech (NIST CSF 2.0), Sacred Heart Hospital (HIPAA), Cyberdyne Systems (CMMC applicability) and Globo Gym (multi-framework) were removed as demo organizations only; HIPAA, NIST CSF 2.0, CMMC applicability and multi-framework support remain in the product and its tests. The session store key moved to `grc_interactive_demo_v3`, and reading it discards the retired seven-client `v2` store.
 
 Each client also has 17 policies, 4 risks, 4 findings, 7 actions, 3 vendors, 6 assets, 14 downloadable evidence items, one annual assessment context, and three scoped demo users. Contacts beyond those three are not automatically platform users. Responsibilities rotate; reviewers and owners differ. Existing Prestige and other retained client IDs are reused.
 

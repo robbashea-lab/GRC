@@ -203,7 +203,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
     Object.values(client.initial_program_baseline.state.framework_reviews).forEach((config, i) => {
       config.due_date = date(-580 + i);
     });
-    ['Identity and productivity tenant', 'Managed endpoint fleet', 'Backup and recovery platform', org.key === 'sacred' ? 'Clinical records application' : org.key === 'cyberdyne' ? 'Restricted engineering workspace' : 'Core service application', 'Finance and payroll application', 'Security monitoring platform'].forEach((name, i) => db.assets.push({
+    ['Identity and productivity tenant', 'Managed endpoint fleet', 'Backup and recovery platform', 'Core service application', 'Finance and payroll application', 'Security monitoring platform'].forEach((name, i) => db.assets.push({
       ...meta,
       asset_id: cid + '_asset_' + i,
       name,
@@ -212,7 +212,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       location: i === 1 ? 'Managed sites' : 'US hosted boundary',
       status: 'active',
       owner_id: users[i % 3],
-      description: 'Synthetic inventory. ' + (org.key === 'cyberdyne' ? 'Restricted engineering/CUI context; formal CMMC asset categorization is not implemented.' : org.frameworks.includes('hipaa') && i === 3 ? 'ePHI application boundary.' : 'In the defined organizational service scope.')
+      description: 'Synthetic inventory. ' + (org.frameworks.includes('hipaa') && i === 3 ? 'ePHI application boundary.' : 'In the defined organizational service scope.')
     }));
     ['Recovery testing has not validated application dependencies', 'Cloud administrative permissions exceed least-privilege requirements', 'Supplier recovery concentration remains within accepted tolerance', 'Legacy unsupported endpoints were removed from production'].forEach((title, i) => db.risks.push(assessedRisk({
       ...meta,
@@ -255,7 +255,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       owner_id: users[i],
       data_types: i === 1 ? ['Employee Data', 'Financial'] : ['Confidential'],
       last_review: date(-200),
-      next_review: date(i === 0 ? org.key === 'cyberdyne' ? -6 : 18 : 140 + i * 20),
+      next_review: date(i === 0 ? 18 : 140 + i * 20),
       review_frequency: 'annual',
       contract_renewal: date(i === 1 ? 55 : 180 + i * 30),
       contract_lead_days: 30,
@@ -265,7 +265,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         type: 'Security Questionnaire',
         required: true,
         received_at: date(-250),
-        refresh_due: date(i === 0 ? org.key === 'cyberdyne' ? -6 : 18 : 115 + i * 20),
+        refresh_due: date(i === 0 ? 18 : 115 + i * 20),
         evidence_ids: []
       }],
       notes: 'Fictional provider. ' + (org.frameworks.includes('hipaa') && i === 0 ? 'Business Associate oversight and agreement review recorded as program context.' : 'Assurance reviewed by internal relationship owner.')
@@ -273,7 +273,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
     db.assessments.push({
       ...meta,
       assessment_id: cid + '_annual_assessment',
-      name: org.key === 'sacred' ? 'Security Risk Analysis' : org.key === 'cyberdyne' ? 'Engineering Boundary Readiness Review' : 'Annual Program Assessment',
+      name: 'Annual Program Assessment',
       date: date(-45),
       status: 'completed',
       summary: 'Synthetic Year-2 scope, operating evidence and residual risk review. Follow-up remains in authoritative Risks and Action Items.'

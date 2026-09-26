@@ -97,7 +97,8 @@ that server; the engineering/browser scripts reject non-loopback hosts.
 Use the existing Playwright installation and an installed browser (QA_BROWSER).
 Run frontend/scripts/qa/framework-operator.cjs, engineering-reliability.cjs,
 operating-core.cjs (CORE_QA_URL), operating-onboarding.cjs and operating-policy.cjs.
-Keep synthetic activity off external analytics with a local request interceptor.
+The shell ships no analytics; every QA script still intercepts non-loopback
+requests so synthetic activity can never reach an external service.
 Never publish synthetic verification records.
 
 For bounded mock measurements, set PYTHONPATH to backend and backend/tests

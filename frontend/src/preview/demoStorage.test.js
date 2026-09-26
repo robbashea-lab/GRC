@@ -76,3 +76,11 @@ test('cache cannot hydrate another client and deleted files are pruned',()=>{
  expect(restoreFiles(other).evidence[0].content_base64).toBeUndefined();
  rememberFiles({evidence:[]});expect(storageDiagnostics('',{}).memory_file_count).toBe(0);
 });
+test('a retired seven-client store is discarded, never read back, and never recreated',()=>{
+ sessionStorage.clear();
+ sessionStorage.setItem('grc_interactive_demo_v2',JSON.stringify({clients:[{client_id:'demo_globo',name:'Globo Gym'}],evidence:[]}));
+ const db=readStore();
+ expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide']);
+ expect(sessionStorage.getItem('grc_interactive_demo_v2')).toBeNull();
+ expect(readStore().clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige']);
+});

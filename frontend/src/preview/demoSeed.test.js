@@ -8,10 +8,10 @@ import {reviewSchedule} from '../lib/reviewOccurrences';
 beforeEach(()=>sessionStorage.clear());
 test('canonical clients reset independently of standard session material',()=>{
   const db=seedStore();
-  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Initech','Dunder Mifflin','Prestige Worldwide','Sacred Heart Hospital','Cyberdyne Systems','Globo Gym']);
+  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide']);
   db.clients.push({client_id:'test-demo-only',name:'Session mutation'});saveStore(db);
   localStorage.setItem('grc_token','test-standard-token');resetStore();
-  expect(readStore().clients).toHaveLength(7);
+  expect(readStore().clients).toHaveLength(3);
   expect(localStorage.getItem('grc_token')).toBe('test-standard-token');localStorage.clear();
 });
 test('every relationship, owner and occurrence belongs to its client',()=>{
@@ -39,7 +39,7 @@ test('every relationship, owner and occurrence belongs to its client',()=>{
 });
 test('Year-2 portfolios have limited derived work instead of abandoned programs',()=>{
   const db=seedStore(),result=portfolio(db,false);
-  // Monthly Reviews always fall due within 30 days; Brawndo and Globo each carry two, hence 10 (not 8).
+  // Monthly Reviews always fall due within 30 days; Brawndo carries two, hence 10 (not 8).
   for(const row of result.clients){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(10);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
   for(const key of ['past_due','critical_high_open','unassigned'])expect(result.portfolio[key]).toBe(result.clients.reduce((sum,c)=>sum+c[key],0));
   const assurance=db.vendors.flatMap(v=>v.assurance_records.map(a=>assuranceStatus(v,a)));

@@ -62,6 +62,6 @@ UI refinements (`polish:`) from the single design review: Findings open on Activ
 
 - Disabled owners stay on existing work by contract (`assignment-eligibility.md`); this cycle surfaces them, but nothing signals them on the Dashboard.
 - `GET /users` is limited to Super/Platform Admins; the generic register falls back to raw user IDs for other roles (from code; not exercised in the browser).
-- `public/index.html` loads the Emergent platform script and PostHog with session recording to `ap.emergent.sh` in every build, including the Demo. This predates the cycle and needs an explicit decision before use with client data.
+- *Resolved in the product-finalization program:* the shell no longer loads PostHog, session recording, the Emergent script or Google Fonts (security-review.md, "Browser third parties").
 - The Reviews register's fixed geometry (1,056 px) hides the row menu at 1280 px; the row still opens. Several registers scroll horizontally at 1024 px by design.
 - Build-time `svgo` advisories (via `react-scripts`) and FastAPI `on_event` deprecation warnings are pre-existing.
