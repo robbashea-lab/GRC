@@ -144,9 +144,10 @@ export async function previewAdapter(config) {
       if (path === '/clients') return respond(db.clients.filter(c => evidenceAccess(db.user,c.client_id)&&(params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived')).map(c => clientProjection(db, c)));
       if (path === '/clients/grc-leads') return respond(leadCandidates(db, params.client_id));
       if (kind === 'risks' && name === 'review-history') return respond(db.reviews.filter(r=>r.risk_id===id&&r.client_id===record(db,'risks',id).client_id).flatMap(r=>(r.occurrences||[]).map(o=>({...o,review_id:r.review_id}))));
-      if (['risks','tasks','vendors'].includes(kind) && name === 'activity') {
-        const task=record(db,kind,id);
-        return respond(db.logs.filter(l=>l.entity_id===id&&l.client_id===task.client_id&&[kind,kind==='risks'?'risk':kind==='vendors'?'vendor':'task'].includes(l.entity_type)).map(l=>({...l,log_id:l.log_id||l.audit_id})));
+      // Mirrors backend record_activity: every register kind, scoped to the record's client.
+      if (['findings','risks','policies','vendors','assets','tasks','exceptions','requirements','contacts'].includes(kind) && name === 'activity') {
+        const row=record(db,kind,id),singular=kind==='policies'?'policy':kind.slice(0,-1);
+        return respond(db.logs.filter(l=>l.entity_id===id&&l.client_id===row.client_id&&[kind,singular].includes(l.entity_type)).sort((a,b)=>String(b.at).localeCompare(String(a.at))).map(l=>({...l,log_id:l.log_id||l.audit_id})));
       }
       if (kind === 'clients' && name === 'assignees') {
         record(db, 'clients', id);

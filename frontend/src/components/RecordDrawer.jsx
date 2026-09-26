@@ -131,6 +131,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [activity, setActivity] = useState([]);
+  const [activityError, setActivityError] = useState('');
   const [related, setRelated] = useState({});
   const [relatedError,setRelatedError]=useState('');
   const [relatedLoading,setRelatedLoading]=useState(false);
@@ -243,9 +244,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   async function loadActivity() {
     const generation=loadGeneration.current;
     try {
-      const { data } = await api.get(["tasks","risks","vendors"].includes(kind) ? `/${kind}/${record[idField]}/activity` : "/audit-logs");
-      if(generation===loadGeneration.current) setActivity(data.filter((a) => a.entity_id === record[idField]).slice(0, 30));
-    } catch (e) { void e; }
+      // Scoped per-record activity (every role that can read the record); never the admin audit log.
+      const { data } = await api.get(`/${kind}/${record[idField]}/activity`);
+      if(generation===loadGeneration.current) {setActivity(data.filter((a) => a.entity_id === record[idField]));setActivityError('');}
+    } catch (e) { if(generation===loadGeneration.current) setActivityError(formatError(e)); }
   }
   async function loadRelated() {
     const generation=loadGeneration.current;
@@ -972,7 +974,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   function renderActivity() {
     return (
       <div className="space-y-2">
-        {activity.length === 0 && <div className="text-sm text-ink-muted">No activity yet.</div>}
+        {activityError && <div role="alert" className="text-sm">Activity could not be loaded. {activityError}</div>}
+        {!activityError && activity.length === 0 && <div className="text-sm text-ink-muted">No activity yet.</div>}
         {activity.map((a) => (
           <div key={a.log_id || a.audit_id} className="text-xs flex items-center gap-3 py-2 border-b border-line">
             <span className="font-mono text-ink-help">{new Date(a.at).toLocaleString()}</span>

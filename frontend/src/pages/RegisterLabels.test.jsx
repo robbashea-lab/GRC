@@ -38,3 +38,10 @@ test('client roles see names, never raw account IDs, and never call the admin-on
   expect(api.get).not.toHaveBeenCalledWith('/users');
   expect(container.textContent).not.toMatch(/\bfrito\b|\bjoe\b/);
 });
+
+test('a register read refused above its limit shows a persistent error, never an empty register',async()=>{
+  api.get.mockImplementation(async path=>{if(path==='/assets'){const e=new Error('More than 1,000 records match this request. No partial results shown.');e.response={status:413};throw e;}return {data:[]};});
+  await act(async()=>root.render(<RecordListPage kind="assets"/>));
+  expect(container.querySelector('[data-testid="register-load-error"]').textContent).toContain('No partial results shown');
+  expect(container.querySelector('.empty-state')).toBeNull();
+});

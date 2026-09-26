@@ -1,4 +1,5 @@
-import {useRef,useState} from 'react';
+import {useRef} from 'react';
+import { EvidenceCatalogPicker } from './EvidencePanel';
 import { personLabel } from '@/lib/people';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
@@ -42,12 +43,9 @@ function Step({number,title,children}){
 export default function BrawndoCisAssessment({state,actions}){
   const {open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,otherDraft}=state;
   const {put,save,saveAndNext,run,download,setComment,setFinding,setTab,setNested,setReviewDraft,setLink,close,previous,next,reviewSaved,retry}=actions;
-  const [evidenceSearch,setEvidenceSearch]=useState('');
   const heading=useRef(null),opener=useRef(document.activeElement),clientId=record.client_id,aid=record.framework_assessment_id;
   const guide=operatorGuidance('cis-ig1',definition),source=sourcePresentation(definition),statuses=operatorStatuses('cis-ig1');
   const disabled=!writable||busy||!ctx;
-  const availableEvidence=ctx?.options.evidence?.filter(e=>!related.evidence?.some(r=>r.evidence_id===e.evidence_id));
-  const matchingEvidence=availableEvidence?.filter(e=>`${e.display_name||''} ${e.filename} ${e.evidence_type||''}`.toLowerCase().includes(evidenceSearch.trim().toLowerCase()));
   const evidenceLabel=e=>e.display_name||e.filename;
   const who=id=>personLabel(ctx?.users,id);
   const records=(kind,rows=[])=>rows.map(r=><li key={r[RECORD_IDS[kind]]} className="brawndo-linked-row">
@@ -126,9 +124,7 @@ export default function BrawndoCisAssessment({state,actions}){
               {ctx&&!related.evidence?.length&&<p className="text-sm text-ink-secondary">No evidence linked. Link an existing Library item or upload one.</p>}
               {tab==='Evidence'&&writable&&<fieldset disabled={disabled} className="brawndo-inset space-y-3">
                 <p className="text-xs text-ink-secondary">Evidence links and uploads save immediately. Assessment text is saved separately below.</p>
-                <label className="block">Find existing evidence<Input aria-label="Find existing evidence" value={evidenceSearch} onChange={e=>setEvidenceSearch(e.target.value)} placeholder="Search name, filename or type"/></label>
-                <label className="block">Link existing Evidence<select aria-label="Link existing Evidence" disabled={!matchingEvidence?.length} value="" onChange={e=>{const id=e.target.value;if(id)run(()=>api.post(`/framework_assessments/${aid}/links`,{kind:'evidence',id}));}}><option value="">Select Evidence Library item</option>{matchingEvidence?.map(e=><option key={e.evidence_id} value={e.evidence_id}>{evidenceLabel(e)}{e.created_at?` · ${e.created_at.slice(0,10)}`:''}</option>)}</select></label>
-                <p role="status" className="text-xs text-ink-secondary">{!availableEvidence?'Loading available evidence…':!availableEvidence.length?'No additional evidence available to link.':!matchingEvidence.length?'No evidence matches your search.':`${matchingEvidence.length} available to link`}</p>
+                <EvidenceCatalogPicker clientId={clientId} linkedIds={related.evidence?.map(e=>e.evidence_id)} disabled={disabled} onLink={id=>run(()=>api.post(`/framework_assessments/${aid}/links`,{kind:'evidence',id}))}/>
                 <label className="block">Upload Evidence<input className="block mt-2 max-w-full" aria-label="Upload Evidence" type="file" onChange={e=>{const f=e.target.files?.[0];if(f)run(async()=>api.post('/evidence',{client_id:clientId,linked_type:'framework_assessment',linked_id:aid,filename:f.name,mime_type:f.type||'application/octet-stream',content_base64:await readEvidenceFile(f)}));}}/></label>
                 {!!related.evidence?.length&&<details><summary>Manage current assessment links</summary>{related.evidence.map(e=><Button key={e.evidence_id} variant="ghost" size="sm" onClick={()=>run(()=>api.delete(`/framework_assessments/${aid}/links`,{data:{kind:'evidence',id:e.evidence_id}}))}>Unlink {e.filename}</Button>)}<p className="text-xs">Unlinking preserves the Library item and its original provenance.</p></details>}
               </fieldset>}

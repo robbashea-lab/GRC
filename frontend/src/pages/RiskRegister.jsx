@@ -1,4 +1,5 @@
 import AssigneeSelect from '@/components/AssigneeSelect';
+import RegisterLoadError from '@/components/RegisterLoadError';
 import { personLabel } from '@/lib/people';
 import { OwnerAccountNote } from '@/components/ContactAccess';
 import { StatusPill } from '@/components/StatusBadge';
@@ -59,6 +60,7 @@ export default function RiskRegister() {
   const linkedView = ["all_active","review_due","critical","high","significant","accepted","closed"].includes(searchParams.get("view")) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [drawer, setDrawer] = useState({ open: false, record: null });
   const [addOpen, setAddOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
@@ -71,14 +73,14 @@ export default function RiskRegister() {
   const load=useCallback(async () => {
     if (!currentClientId) return;
     const version=++generation.current;
-    setLoading(true);
+    setLoading(true); setLoadError('');
     try {
       const [r, u] = await Promise.all([
         api.get("/risks", { params: { client_id: currentClientId, ...(portfolioSignificant?{portfolio_significant:true}:{}) } }).then((r) => r.data),
         api.get(`/clients/${currentClientId}/members`).then((r) => r.data).catch(() => []),
       ]);
       if(version===generation.current){setRows((r || []).map(assessedRisk)); setUsers(u || []);}
-    } catch (e) { toast.error(formatError(e)); }
+    } catch (e) { if(version===generation.current){setRows([]);setLoadError(formatError(e));} }
     finally { if(version===generation.current)setLoading(false); }
   },[currentClientId,portfolioSignificant]);
   useEffect(() => { const scopeGeneration=generation;setRows([]);setUsers([]);setView(linkedView);setQ("");setDrawer({open:false,record:null});setAddOpen(false);load();return()=>{scopeGeneration.current++;}; }, [currentClientId,load]); // eslint-disable-line react-hooks/exhaustive-deps -- deep-linked view applies on client change only
@@ -192,6 +194,7 @@ export default function RiskRegister() {
 
       <div className="register-body">
         <TableFilterChips table={table} />
+        <RegisterLoadError error={loadError} onRetry={load} name="risks" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
@@ -209,7 +212,7 @@ export default function RiskRegister() {
             </thead>
             <tbody className="divide-y divide-line">
               {loading && <TableLoadingRow colSpan={9} />}
-              {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
+              {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((r, i) => {
                 const level = r.risk_level || levelFromScore(r.risk_score);
                 const tone = LEVEL_TONE[level] || LEVEL_TONE.low;

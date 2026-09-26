@@ -1,4 +1,5 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
+import RegisterLoadError from '@/components/RegisterLoadError';
 import {SETUP_FILTERS} from '@/lib/onboardingHandoff';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
@@ -126,6 +127,7 @@ export default function RecordListPage({ kind }) {
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const loadSequence = useRef(0);
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
@@ -184,7 +186,7 @@ export default function RecordListPage({ kind }) {
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
     if (!currentClientId) { setRows([]); setLoading(false); return; }
-    setLoading(true);
+    setLoading(true); setLoadError('');
     try {
       const { data } = await api.get(`/${kind}`, { params: { client_id: currentClientId,...(kind==='reviews'?{include_basis:true}:{}) } });
       if (kind === "policies") {
@@ -198,7 +200,7 @@ export default function RecordListPage({ kind }) {
       if (sequence !== loadSequence.current) return;
       setRows(data);
       setChecked(new Set());
-    } catch (e) { if (sequence === loadSequence.current) { setRows([]); toast.error(formatError(e)); } }
+    } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
     finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [kind, currentClientId]);
 
@@ -552,6 +554,7 @@ export default function RecordListPage({ kind }) {
 
       <div className="register-body page-gutter py-6">
         <TableFilterChips table={table} />
+        <RegisterLoadError error={loadError} onRetry={load} name="records" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
           <table className="w-full">
             {isReviews && <colgroup><col className="register-col-check" />{schema.columns.map(c => <col key={c.key} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
@@ -572,7 +575,7 @@ export default function RecordListPage({ kind }) {
             </thead>
             <tbody>
               {loading && <TableLoadingRow colSpan={columnCount} />}
-              {!loading && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity','setup'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
+              {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity','setup'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
               {!loading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);
                 return (

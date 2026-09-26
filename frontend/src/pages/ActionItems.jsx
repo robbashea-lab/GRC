@@ -1,4 +1,5 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
+import RegisterLoadError from '@/components/RegisterLoadError';
 import { personLabel } from '@/lib/people';
 import { OwnerAccountNote } from '@/components/ContactAccess';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
@@ -63,6 +64,7 @@ export default function ActionItems() {
   const setQ = value => setParam("q", value);
   const setView = value => setParam("view", value);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const loadSequence = useRef(0);
   const [drawer, setDrawer] = useState({ open: false, kind: null, record: null });
 
@@ -76,7 +78,7 @@ export default function ActionItems() {
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
     if (!currentClientId) { setRows([]); setLoading(false); return; }
-    setLoading(true);
+    setLoading(true); setLoadError('');
     try {
       const [tasks, findings, reviews, risks, vendors, policies, assessments, u] = await Promise.all([
         api.get("/tasks", { params: { client_id: currentClientId } }).then((r) => r.data),
@@ -96,7 +98,7 @@ export default function ActionItems() {
           priority:t.priority||"medium",status:t.status||"open",source:source.label,source_type:source.type,sourceRecord:source,closed:closedTask};
       });
       setRows(items);
-    } catch (e) { if (sequence === loadSequence.current) { setRows([]); toast.error(formatError(e)); } }
+    } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
     finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [currentClientId]);
 
@@ -185,6 +187,7 @@ export default function ActionItems() {
 
       <div className="register-body">
         <TableFilterChips table={table} />
+        <RegisterLoadError error={loadError} onRetry={load} name="action items" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
@@ -199,7 +202,7 @@ export default function ActionItems() {
             </thead>
             <tbody className="divide-y divide-line">
               {loading && <TableLoadingRow colSpan={6} />}
-              {!loading && filtered.length === 0 && (
+              {!loading && !loadError && filtered.length === 0 && (
                 <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="action items" onClear={() => { const next=new URLSearchParams(params);next.delete('q');next.set('view','all');setParams(next,{replace:true}); }} /></td></tr>
               )}
               {!loading && filtered.map((r, i) => {

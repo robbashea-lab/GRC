@@ -92,3 +92,24 @@ class PeopleVisibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ids(await self.client.get('/api/clients/a/assignees')), {'member', 'mgr', 'ro'})
         self.sign_in('admin')
         self.assertEqual(ids(await self.client.get('/api/clients/a/assignees')), {'member', 'mgr', 'ro', 'prov', 'admin'})
+
+    async def test_lists_above_their_bound_refuse_instead_of_truncating(self):
+        self.sign_in('admin')
+        await server.db.evidence.insert_many([{'evidence_id': f'e{i}', 'client_id': 'a', 'filename': f'f{i}.txt', 'archived_at': None, 'created_at': f'2026-01-01T00:00:{i % 60:02d}Z'} for i in range(1001)])
+        response = await self.client.get('/api/evidence', params={'client_id': 'a'})
+        self.assertEqual(response.status_code, 413, response.text)
+        self.assertIn('No partial results', response.json()['detail'])
+        await server.db.evidence.delete_one({'evidence_id': 'e0'})
+        self.assertEqual(len((await self.client.get('/api/evidence', params={'client_id': 'a'})).json()), 1000)
+
+    async def test_record_activity_is_scoped_and_readable_by_client_roles(self):
+        await server.db.findings.insert_many([{'finding_id': 'fa', 'client_id': 'a', 'title': 'A'}, {'finding_id': 'fb', 'client_id': 'b', 'title': 'B'}])
+        await server.db.audit_logs.insert_many([
+            {'audit_id': 'l1', 'client_id': 'a', 'entity_type': 'finding', 'entity_id': 'fa', 'action': 'create', 'at': '2026-09-01T00:00:00Z'},
+            {'audit_id': 'l2', 'client_id': 'a', 'entity_type': 'findings', 'entity_id': 'fa', 'action': 'validate', 'at': '2026-09-02T00:00:00Z'},
+            {'audit_id': 'l3', 'client_id': 'a', 'entity_type': 'policy', 'entity_id': 'fa', 'action': 'unrelated', 'at': '2026-09-03T00:00:00Z'},
+        ])
+        self.sign_in('member')
+        rows = (await self.client.get('/api/findings/fa/activity')).json()
+        self.assertEqual([r['audit_id'] for r in rows], ['l2', 'l1'])
+        self.assertEqual((await self.client.get('/api/findings/fb/activity')).status_code, 403)
