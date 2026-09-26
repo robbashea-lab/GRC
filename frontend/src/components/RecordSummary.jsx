@@ -13,6 +13,8 @@ const DAY=86400000;
 const day=v=>v?String(v).slice(0,10):null;
 const until=(v,today)=>{const d=day(v);if(!d)return null;return Math.round((Date.parse(d+'T00:00:00Z')-Date.parse(today+'T00:00:00Z'))/DAY);};
 const closedStatus=s=>['completed','cancelled','closed','done','accepted','retired','terminated','inactive','validated'].includes(s);
+// An open Review past its due day reads Overdue, as it does in the Reviews register.
+export const reviewStatus=(r,today=new Date().toISOString().slice(0,10))=>!closedStatus(r.status)&&r.status!=='needs_scheduling'&&until(r.due_date,today)<0?'overdue':r.status;
 function dueText(v,today,closed){
   const n=until(v,today);if(n==null)return {text:'Not scheduled',tone:'muted'};
   const date=new Date(day(v)+'T12:00:00Z').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
@@ -28,7 +30,7 @@ export function summarize(kind,r,{related={},users=[],today=new Date().toISOStri
   const due=(label,v,late)=>{const d=dueText(v,today,closed);facts.push({label,value:d.text,tone:d.tone});if(d.tone==='critical')attention.push({tone:'critical',Icon:Clock3,text:late});};
   const open=(rows=[],done=['done','cancelled','closed','accepted'])=>rows.filter(x=>!done.includes(x.status));
   if(kind==='reviews'){
-    facts.push({label:'Status',badge:r.status});owner('Owner',r.owner_id);due('Due',r.due_date,'Review is overdue');
+    facts.push({label:'Status',badge:reviewStatus(r,today)});owner('Owner',r.owner_id);due('Due',r.due_date,'Review is overdue');
     facts.push({label:'Cadence',value:reviewDisplayValue('recurrence',r.recurrence)||'One-time'});
     if(r.framework_key)facts.push({label:'Program',value:`${r.framework_key==='cis-ig1'?'CIS IG1':r.framework_key.toUpperCase()}${r.framework_safeguards?.length?` · ${r.framework_safeguards.join(', ')}`:''}`});
     const last=(r.occurrences||[]).map(o=>day(o.completed_at)).filter(Boolean).sort().at(-1);facts.push({label:'Last completed',value:last||'No completed occurrence'});

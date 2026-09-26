@@ -22,7 +22,7 @@ import StatusBadge from './StatusBadge';
 import RecordDrawer from './RecordDrawer';
 import { historicalRemediation, reviewRemediation, remediationOrigin } from '@/lib/remediation';
 import CorrectiveActions from './CorrectiveActions';
-import RecordSummary from './RecordSummary';
+import RecordSummary, {reviewStatus} from './RecordSummary';
 import EvidencePanel from './EvidencePanel';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 
@@ -147,7 +147,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     <SheetContent description="Inspect this Review's schedule, supporting evidence, related work and completion history. Save configuration changes separately from completing the Review." className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid="reviews-drawer">
       <SheetHeader className="px-6 py-4 border-b border-line">
         <div className="flex justify-between gap-3"><div><div className="text-xs text-ink-help">Review {selected ? '· Historical occurrence' : ''}</div><SheetTitle className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
-          {shown && <div className="mt-2"><StatusBadge value={shown.status} /></div>}</div>
+          {shown && <div className="mt-2"><StatusBadge value={selected ? shown.status : reviewStatus(shown)} /></div>}</div>
           <button aria-label="Close record" data-testid="drawer-close" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></button></div>
         {current && <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto">{tabs.map(t => <button key={t} data-testid={`tab-${t.toLowerCase()}`} className={`drawer-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); if (t === 'Related' || t === 'Activity') reload(); }}>{t}</button>)}</div>}
       </SheetHeader>

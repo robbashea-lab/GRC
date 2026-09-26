@@ -33,3 +33,11 @@ test('a System retired from its drawer leaves the critical and no-owner signals,
   }
   expect(pick('assets','critical')({criticality:'critical',status:'active'})).toBe(true);
 });
+
+test('an open Review past its due day reads Overdue in its summary, as in the register', () => {
+  const status = r => summarize('reviews', r, {today: '2036-09-29'}).facts.find(f => f.label === 'Status').badge;
+  expect(status({status: 'upcoming', due_date: '2036-07-30'})).toBe('overdue');
+  expect(status({status: 'upcoming', due_date: '2036-10-10'})).toBe('upcoming');
+  expect(status({status: 'completed', due_date: '2036-07-30'})).toBe('completed');
+  expect(status({status: 'needs_scheduling', due_date: '2036-07-30'})).toBe('needs_scheduling');
+});
