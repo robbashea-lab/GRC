@@ -346,6 +346,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-focus-ri
 }
 .register-body { padding: 0 var(--register-gutter) 20px; }
 .register-table-frame {
+  /* Contain absolutely positioned screen-reader text so it cannot widen the page. */
+  position: relative;
   background: transparent;
   border: 0;
   border-radius: 0;
