@@ -21,7 +21,10 @@ def frameworks(client, requirements):
 
 
 def attention_order(row):
-    return (*(-row[key] for key in RULES['priorityOrder']), row['name'].casefold(), row['client_id'])
+    # Open work first (portfolioRules priorityOrder), then the least recently active program, then name.
+    # Programs with no recorded lifecycle activity sort as the most stale.
+    return (*(-row[key] for key in RULES['priorityOrder']), (row.get('last_activity') or {}).get('at') or '',
+            row['name'].casefold(), row['client_id'])
 
 
 async def latest_activity(db, client_ids, now):

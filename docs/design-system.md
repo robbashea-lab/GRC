@@ -10,13 +10,17 @@ The user-approved, density-refined Reviews page is the visual reference. On 2026
 - Text: primary #293039, secondary #4A545E, supporting #666D74, disabled #A8ABB3.
 - Sidebar #293039, hover #333C46, selected #3E4852; selected text white. Lime #A3DB33 is limited to the brand glyph and 3px active-navigation rail; the logo outline is neutral.
 - Primary buttons charcoal; secondary buttons outlined white. Blue is reserved for links, focus and meaningful informational states. Red means critical/overdue/error; amber attention; green success. Upcoming remains a neutral label.
-- Titles 22px; register content 13px; metadata 12px; controls 32px; control radius 5px; rows minimum 44px with 5px vertical padding and natural growth for wrapping content; desktop gutters 20px.
+- Titles 22px; register content 13px; metadata 12px; controls 32px; control radius 5px; rows minimum 46px (44px until 2026-09-26) with 5px vertical padding and natural growth for wrapping content; desktop gutters 20px.
 - Sidebar remains 232px on desktop (already below the earlier 250–275px requested target); existing narrower responsive widths remain.
 - Selected quick filters retain the approved outlined-white treatment. Inactive hover/pressed states use neutral surfaces/borders, not permanent pills. Existing active-filter chips and visible focus remain.
 
 Shared classes include page-content, page-gutter, register-table-frame, register-search, register-toolbar, register-body, quick-filters, ui-control, ui-tabs-list, column-control and the existing status/menu/drawer primitives. Existing module handlers, labels, columns and workflows are unchanged.
 
 Reviews alone retains fixed column geometry through `data-layout="reviews"`: 936px minimum table width, flexible Title, 118px Next Due, 128px Owner. Other registers keep their existing column composition and contained scrolling; no columns are hidden. Dark login/sidebar controls use inverse text and surfaces, avoiding white-on-white text when standard login is enabled later.
+
+## Client-section register system (2026-09-26)
+
+Client-selected pages share one header, toolbar, table and cell grammar, defined in `client-section-design-system.md` with its shared components (`Register.jsx`, `RegisterCells.jsx`, `StatusBadge.jsx`). **Default to the register pattern; deviate only when the page's primary task needs a different interaction model, and keep the shared header, toolbar, type, spacing, pills and drawers even then.** The verification record below predates this change.
 
 ## Module coverage and intentional differences
 

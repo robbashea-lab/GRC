@@ -9,11 +9,15 @@ export function portfolioPopulations(model) {
     significant_risks: model.significantRisks
   };
 }
+// Open work first (priorityOrder), then the least recently active program, then name.
+// Programs with no recorded lifecycle activity sort as the most stale.
 export function portfolioOrder(a, b) {
   for (const key of rules.priorityOrder) {
     const difference = b[key] - a[key];
     if (difference) return difference;
   }
+  const activity = (a.last_activity?.at || '').localeCompare(b.last_activity?.at || '');
+  if (activity) return activity;
   return a.name.localeCompare(b.name, undefined, {
     sensitivity: 'base'
   }) || a.client_id.localeCompare(b.client_id);
@@ -47,3 +51,14 @@ export function latestPortfolioActivity(logs, now = new Date()) {
   }
   return latest;
 }
+
+export const STALE_AFTER_DAYS = rules.staleAfterDays;
+// Whole days since the last meaningful lifecycle event; null when none is recorded.
+export function inactiveDays(activity, now = new Date()) {
+  const at = Date.parse(activity?.at);
+  return Number.isFinite(at) ? Math.max(0, Math.floor((now.getTime() - at) / 86400000)) : null;
+}
+export const isStale = (activity, now = new Date()) => {
+  const days = inactiveDays(activity, now);
+  return days == null || days >= STALE_AFTER_DAYS;
+};

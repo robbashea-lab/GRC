@@ -1,10 +1,11 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
+import { SecondaryAction, ViewTabs } from '@/components/Register';
+import RegisterLoadError from '@/components/RegisterLoadError';
 import { canOperate } from '@/lib/permissions';
 import {ChevronLeft,ChevronRight,CalendarDays} from 'lucide-react';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
-import {Button} from '@/components/ui/button';
 import PageHeader from '@/components/PageHeader';
 import RecordDrawer from '@/components/RecordDrawer';
 import {SCHEMAS} from '@/lib/schemas';
@@ -25,7 +26,7 @@ function monthGrid(anchor) {
 const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
 export default function Calendar() {
-  const {currentClient,currentClientId}=useOrg(),{user}=useAuth();
+  const {currentClientId}=useOrg(),{user}=useAuth();
   const [anchor,setAnchor]=useState(()=>new Date()),[scope,setScope]=useState('active'),[revision,setRevision]=useState(0);
   const [result,setResult]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[drawer,setDrawer]=useState(null);
   const [dragging,setDragging]=useState(null),[dragOverDay,setDragOverDay]=useState(''),[expanded,setExpanded]=useState({});
@@ -82,25 +83,25 @@ export default function Calendar() {
     }catch(e){if(currentClientRef.current===cid)toast.error(formatError(e));}
     finally{setBusy(false);if(currentClientRef.current===cid)reload();}
   }
-  return <div>
-    <PageHeader title="Review Calendar" subtitle={`${currentClient?.name||''} · Due-dated Reviews, Findings and Action Items. ${writable?'Eligible active items can be dragged or opened to edit their dates.':'Read-only.'}`}
-      action={<div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" aria-label="Previous month" data-testid="cal-prev" onClick={()=>setAnchor(new Date(anchor.getFullYear(),anchor.getMonth()-1,1))}><ChevronLeft className="h-4 w-4"/></Button>
-        <Button variant="outline" size="sm" data-testid="cal-today" onClick={()=>setAnchor(new Date())}><CalendarDays className="h-4 w-4 mr-1"/>Today</Button>
-        <Button variant="outline" size="sm" aria-label="Next month" data-testid="cal-next" onClick={()=>setAnchor(new Date(anchor.getFullYear(),anchor.getMonth()+1,1))}><ChevronRight className="h-4 w-4"/></Button>
-      </div>}/>
-    <div className="page-content space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-lg font-heading font-semibold" data-testid="cal-month-label">{anchor.toLocaleString(undefined,{month:'long',year:'numeric'})}</div>
-        <div role="group" aria-label="Calendar scope" className="flex flex-wrap gap-1">{CALENDAR_SCOPES.map(([value,label])=><Button key={value} size="sm" variant={scope===value?'secondary':'ghost'} aria-pressed={scope===value} onClick={()=>setScope(value)}>{label}</Button>)}</div>
+  return <div className="register-surface">
+    <PageHeader title="Calendar" subtitle="Due dates for Reviews, Findings and Action Items."/>
+    <div className="register-toolbar">
+      <div className="inline-flex items-center gap-1">
+        <SecondaryAction aria-label="Previous month" testid="cal-prev" icon={ChevronLeft} onClick={()=>setAnchor(new Date(anchor.getFullYear(),anchor.getMonth()-1,1))}/>
+        <SecondaryAction label="Today" testid="cal-today" icon={CalendarDays} onClick={()=>setAnchor(new Date())}/>
+        <SecondaryAction aria-label="Next month" testid="cal-next" icon={ChevronRight} onClick={()=>setAnchor(new Date(anchor.getFullYear(),anchor.getMonth()+1,1))}/>
       </div>
-      <div className="flex flex-wrap items-center gap-3 text-xs text-ink-secondary">
-        <ul className="flex flex-wrap items-center gap-3" aria-label="Legend">{LEGEND.map(([kind,label])=><li key={kind} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className={`inline-block h-3 w-3 rounded-sm border ${KIND_COLOR[kind]}`}/>{label}</li>)}<li className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-3 w-1 rounded-sm bg-semantic-critical"/>Overdue</li></ul>
-        {scope!=='active'&&<span>Historical items stay on their due dates; includes cancelled work and accepted Findings.</span>}
-        {busy&&<span role="status">Saving…</span>}
+      <h2 className="calendar-month" data-testid="cal-month-label">{anchor.toLocaleString(undefined,{month:'long',year:'numeric'})}</h2>
+      <ViewTabs views={CALENDAR_SCOPES.map(([id,label])=>({id,label}))} active={scope} onPick={setScope} label="Calendar scope"/>
+      <span className="register-count" role="status">{busy?'Saving…':writable?'Drag or open an active item to change its date':'Read-only'}</span>
+    </div>
+    <div className="section-body space-y-2">
+      <div className="calendar-caption">
+        <ul className="calendar-legend" aria-label="Legend">{LEGEND.map(([kind,label])=><li key={kind}><span aria-hidden="true" className={`inline-block h-3 w-3 rounded-sm border ${KIND_COLOR[kind]}`}/>{label}</li>)}<li><span aria-hidden="true" className="inline-block h-3 w-1 rounded-sm bg-semantic-critical"/>Overdue</li></ul>
+        {scope!=='active'&&<p>Historical items stay on their due dates; includes cancelled work and accepted Findings.</p>}
       </div>
       {loading&&<p role="status" className="text-sm">Loading Calendar…</p>}
-      {error&&<div role="alert" className="text-sm">{error} <Button variant="outline" size="sm" onClick={reload}>Retry Calendar</Button></div>}
+      <RegisterLoadError error={error} onRetry={reload} name="Calendar"/>
       {!currentClientId&&<p className="text-sm">Select a client to view its Calendar.</p>}
       {currentClientId&&!loading&&!error&&!total&&<p role="status" className="text-sm">{scope==='active'?'No active items scheduled for this period.':scope==='history'?'No completed or closed items for this period.':'No dated items for this period.'}</p>}
       <div className="bg-surface-card border border-line rounded-lg overflow-x-auto">

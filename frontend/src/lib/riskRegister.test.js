@@ -1,4 +1,4 @@
-import {riskMatchesView,riskReviewDue,riskSummary} from './riskRegister';
+import {riskMatchesView,riskReviewDue,riskSummary,riskViewCounts,RISK_VIEWS} from './riskRegister';
 import {initializeRiskIds,allocateRiskId} from '../preview/riskIds';
 
 const now = new Date('2026-09-13T12:00:00');
@@ -31,4 +31,12 @@ test('demo identifiers are deterministic, stable and isolated by tenant',()=>{
   expect(allocateRiskId(db,'a')).toBe('RISK-003');
   db.risks = [];
   expect(allocateRiskId(db,'a')).toBe('RISK-004');
+});
+test('view counts are the register summary: one count per tab, linked views included, closed kept apart',()=>{
+  const rows=[risk,{...risk,likelihood_score:5,impact_score:5,status:'in_progress',next_review:'2027-06-01'},{...risk,likelihood_score:1,impact_score:2,status:'identified',next_review:null},{...risk,status:'closed'}];
+  const counts=riskViewCounts(rows,now);
+  expect(Object.keys(counts)).toEqual([...RISK_VIEWS.map(v=>v.id),'critical','high']);
+  expect(counts).toEqual({all_active:3,significant:2,review_due:1,accepted:1,closed:1,critical:1,high:1});
+  // Every count equals the rows its tab shows.
+  for(const [view,n] of Object.entries(counts)) expect(rows.filter(r=>riskMatchesView(r,view,now))).toHaveLength(n);
 });

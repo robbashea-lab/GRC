@@ -60,3 +60,15 @@ test('existing attention thresholds and onboarding/archived precedence remain ex
   expect(managementProgramStatus({status:'inactive'},populated)).toBe('inactive');
   expect(()=>model({tasks:[{client_id:'b'}]})).toThrow('different client');
 });
+test('due windows share one definition: past due < today, due ≤30d today..+30, upcoming +31..+90, closed work excluded',()=>{
+  // model() evaluates on 2026-09-15.
+  const due={'2026-09-14':'past_due','2026-09-15':'due_30d','2026-10-15':'due_30d','2026-10-16':'due_31_90d','2026-12-14':'due_31_90d','2026-12-15':null};
+  for(const [date,window] of Object.entries(due)){
+    const counts=model({tasks:[{task_id:'t',client_id:'a',title:'Boundary',status:'open',due_date:date}]}).counts;
+    for(const key of ['past_due','due_30d','due_31_90d'])expect([date,key,counts[key]]).toEqual([date,key,key===window?1:0]);
+  }
+  for(const status of ['done','cancelled'])for(const date of Object.keys(due)){
+    const counts=model({tasks:[{task_id:'t',client_id:'a',title:'Closed',status,due_date:date}]}).counts;
+    expect(counts.past_due+counts.due_30d+counts.due_31_90d).toBe(0);
+  }
+});

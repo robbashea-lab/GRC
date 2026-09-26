@@ -40,33 +40,49 @@ const change = async (node, value) => {
 };
 const click = async node => { expect(node).toBeTruthy(); await act(async () => node.click()); };
 
-test("portfolio is the dashboard, with combinable operational filters and preserved navigation", async () => {
+test("portfolio is a compact triage index: one heading, one view bar, the table, and drill-downs", async () => {
   await render(<ClientDirectory />);
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
+  expect(container.querySelector("h1").textContent).toBe("Client Portfolio");
+  // No eyebrow, explanatory subtitle or summary cards above the table.
+  expect(container.textContent).not.toMatch(/Platform|Where each client program needs attention/);
+  expect(container.querySelector(".register-signal, [data-testid=\"portfolio-cards\"]")).toBeNull();
   const filters = container.querySelector('[data-testid="client-directory-filters"]');
-  expect([...filters.querySelectorAll(".register-signal-label")].map(b => b.textContent)).toEqual(["Past due", "Critical / high", "Significant risks", "Unassigned"]);
-  const rowsForSignals = portfolio(seedStore(),false).clients;
-  expect(filters.querySelector('[data-testid="client-filter-past_due"] .register-signal-value').textContent).toBe(String(rowsForSignals.filter(r=>r.past_due>0).length));
-  for(const r of rowsForSignals)expect(container.querySelector(`[data-testid="client-status-${r.client_id}"]`).textContent).toMatch(/Action required|Needs attention|On track/);
-  expect(container.querySelector('[data-testid="portfolio-cards"]')).toBeNull();
+  expect([...filters.querySelectorAll(".portfolio-view")].map(b => b.textContent)).toEqual(["All Clients", "Assigned to Me", "Past Due", "Critical / High", "Significant Risks", "Unassigned"]);
   const rows = portfolio(seedStore(),false).clients;
+  // The Client column identifies the client; status text is not repeated there.
+  expect(container.querySelector('[data-testid^="client-status-"]')).toBeNull();
+  expect(container.textContent).not.toMatch(/Action required|Needs attention|On track/);
+  const shown = () => container.querySelectorAll('[data-testid^="client-open-"]').length;
   await click(container.querySelector('[data-testid="client-filter-assigned_to_me"]'));
-  expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(rows.filter(r=>r.grc_lead_id===mockUser.user_id).length);
+  const mine = rows.filter(r=>r.grc_lead_id===mockUser.user_id);
+  expect(shown()).toBe(mine.length);
+  // Assigned to Me combines with a work view; All Clients clears both.
+  await click(container.querySelector('[data-testid="client-filter-past_due"]'));
+  expect(shown()).toBe(mine.filter(r=>r.past_due>0).length);
   await click(container.querySelector('[data-testid="client-filter-all"]'));
+  expect(shown()).toBe(rows.length);
   for(const key of ['past_due','critical_high_issues','significant_risks','unassigned']){
-    const signal=container.querySelector(`[data-testid="client-filter-${key}"]`);
-    if(signal.disabled){expect(rows.filter(r=>r[key]>0)).toHaveLength(0);continue;} // nothing to narrow to
-    await click(signal);
-    expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(rows.filter(r=>r[key]>0).length);
+    await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
+    expect(container.querySelector(`[data-testid="client-filter-${key}"]`).getAttribute('aria-pressed')).toBe('true');
+    expect(shown()).toBe(rows.filter(r=>r[key]>0).length);
     await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
   }
-  await click(container.querySelector(`[data-testid="client-open-${rows[0].client_id}"]`));
-  expect(mockSwitch).toHaveBeenCalledWith(rows[0].client_id);
+  // Numbers open the exact contributing records; Significant Risks opens the filtered Risk register.
+  const first = rows[0];
+  const metric = key => container.querySelector(`[data-client-id="${first.client_id}"] [data-metric="${key}"]`);
+  expect(metric('due_31_90d').textContent).toBe(String(first.due_31_90d));
+  await click(metric('due_31_90d'));
+  expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain(`${first.due_31_90d} contributing items`);
+  expect(document.querySelectorAll('[data-testid^="drill-row-"]').length).toBe(first.due_31_90d);
+  await click(metric('significant_risks'));
+  expect(mockSwitch).toHaveBeenCalledWith(first.client_id);
+  expect(mockNavigate).toHaveBeenCalledWith("/risks?portfolio=significant");
+  await click(container.querySelector(`[data-testid="client-open-${first.client_id}"]`));
   expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
-  expect(container.textContent).not.toContain("Needs Attention Across Clients");
   expect(container.querySelector('button[aria-label="GRC Lead: sort and filter"]')).toBeTruthy();
-  await change(container.querySelector('[data-testid="client-directory-search"]'), rows[0].name);
-  expect(container.querySelectorAll('[data-testid^="client-open-"]').length).toBe(1);
+  await change(container.querySelector('[data-testid="client-directory-search"]'), first.name);
+  expect(shown()).toBe(1);
 });
 
 test("sidebar removes favorites and preserves ALL/MINE and navigation", async () => {

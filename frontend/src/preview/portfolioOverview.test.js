@@ -42,3 +42,13 @@ test('archived clients are opt-in; empty scoped assignment does not fall back to
   expect(portfolio(db,true).clients).toEqual([]);
   db.user.role='client_readonly';expect(()=>portfolio(db,false)).toThrow('restricted');
 });
+test('every Portfolio number equals the client Dashboard population for that client',async()=>{
+  await api.post('/demo/enter');
+  const p=(await api.get('/clients/directory')).data;
+  for(const row of p.clients){
+    const d=(await api.get('/dashboard',{params:{client_id:row.client_id}})).data;
+    expect([row.client_id,row.past_due,row.due_30d,row.due_31_90d,row.unassigned,row.significant_risks])
+      .toEqual([row.client_id,d.kpis.past_due,d.kpis.due_30d,d.kpis.due_31_90d,d.kpis.unassigned,d.kpis.significant_risks]);
+    for(const key of ['past_due','due_30d','due_31_90d','unassigned','critical_high_issues'])expect(row.metric_items[key]).toHaveLength(row[key]);
+  }
+});

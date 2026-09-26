@@ -1,12 +1,8 @@
 import AssigneeSelect from '@/components/AssigneeSelect';
 import RegisterLoadError from '@/components/RegisterLoadError';
-import { personLabel } from '@/lib/people';
-import { OwnerAccountNote } from '@/components/ContactAccess';
-import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
-import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
-import { displayDay } from '@/lib/managementDates';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useSearchParams} from 'react-router-dom';
 import managementRules from '@/lib/managementRules.json';
@@ -17,7 +13,10 @@ import {RiskSourceFields,RiskScheduleFields} from "@/components/RiskGovernanceFi
 import PageHeader from "@/components/PageHeader";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
-import { RISK_VIEWS, riskMatchesView, riskSummary, riskStatus } from "@/lib/riskRegister";
+import { RISK_VIEWS, RISK_LINKED_VIEWS, riskMatchesView, riskViewCounts, riskStatus } from "@/lib/riskRegister";
+import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
+import { DueDate, HistoryDate, OwnerCell } from "@/components/RegisterCells";
+import StatusBadge, { SeverityBadge } from "@/components/StatusBadge";
 import { assessedRisk, riskLevel } from "@/lib/grcWork";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Grid3x3, Download, AlertOctagon, ShieldAlert, Handshake, CalendarClock, ArrowRight } from "lucide-react";
+import { Grid3x3, Download, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 const LIKELIHOOD_LABELS = { 1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely", 5: "Almost Certain" };
@@ -116,9 +115,9 @@ export default function RiskRegister() {
     portfolioEntry.current=key;
   },[portfolioSignificant,currentClientId,table]);
 
-  const summary = useMemo(() => riskSummary(rows, new Date(now)), [rows, now]);
+  const counts = useMemo(() => riskViewCounts(tableSource, new Date(now)), [tableSource, now]);
+  const tabs = RISK_LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: RISK_LINKED_VIEWS[view] }] : VIEWS;
   function selectView(id) { const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',significant:'risk_level',review_due:'next_review'})[id]; if (key) table.setFilter(key, []); setView(id); }
-  const toggleView = id => selectView(view === id ? 'all_active' : id);
 
   async function exportCsv() {
     const cols = ["display_id", "risk_id", "title", "category", "likelihood_score", "impact_score", "risk_score", "risk_level", "owner", "status", "treatment", "date_identified", "last_reviewed", "next_review"];
@@ -143,53 +142,21 @@ export default function RiskRegister() {
   return (
     <div>
       <PageHeader
-        eyebrow="Client workspace"
-        title="Risk Register"
-        subtitle={`${currentClient?.name || ""} · Central register for identified cybersecurity, operational, third-party, compliance, and business risks.`}
+        title="Risks"
+        subtitle="Identified client risks and treatment status."
         action={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setMatrixOpen(true)} data-testid="risk-matrix-btn">
-              <Grid3x3 className="h-3.5 w-3.5 mr-1" /> Risk Scale &amp; Matrix
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportCsv} data-testid="risks-export">
-              <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
-            </Button>
-            {canWrite && (
-              <Button size="sm" onClick={() => setAddOpen(true)} data-testid="new-risk" className="bg-primary hover:bg-primary/90">
-                <Plus className="h-3.5 w-3.5 mr-1" /> New Risk
-              </Button>
-            )}
-          </div>
+          <HeaderActions>
+            <SecondaryAction icon={Grid3x3} label="Risk Scale & Matrix" onClick={() => setMatrixOpen(true)} testid="risk-matrix-btn" />
+            <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} testid="risks-export" />
+            {canWrite && <PrimaryAction label="New Risk" onClick={() => setAddOpen(true)} testid="new-risk" />}
+          </HeaderActions>
         }
       />
-
-      <div className="page-gutter pt-4">
-        {portfolioSignificant&&<div className="mb-3 text-sm text-ink-secondary" data-testid="portfolio-risk-filter">Active High / Critical Risks · includes accepted Risks <button className="ml-2 underline" onClick={()=>{const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}}>Clear portfolio filter</button></div>}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="risk-summary">
-          <SummaryCard label="Active Risks" value={summary.open} icon={ShieldAlert} tone="neutral" onClick={() => toggleView("all_active")} pressed={view === "all_active"} />
-          <SummaryCard label="High / Critical" value={summary.high_crit} icon={AlertOctagon} tone="critical" onClick={() => toggleView("significant")} pressed={view === "significant"} />
-          <SummaryCard label="Accepted" value={summary.accepted} icon={Handshake} tone="info" onClick={() => toggleView("accepted")} pressed={view === "accepted"} />
-          <SummaryCard label="Due for Review" value={summary.review_due} icon={CalendarClock} tone="duesoon" onClick={() => toggleView("review_due")} pressed={view === "review_due"} />
-        </div>
-      </div>
-
+      {portfolioSignificant&&<p className="register-notice" role="status" data-testid="portfolio-risk-filter">Active High / Critical Risks · includes accepted Risks <button className="register-link" onClick={()=>{const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}}>Clear portfolio filter</button></p>}
       <div className="register-toolbar">
-        <div className="register-search relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search risks…" className="pl-8 h-9 w-72 text-sm" data-testid="risk-search" />
-        </div>
-        <div className="quick-filters inline-flex items-center rounded-md border border-line bg-surface-card p-0.5 gap-0.5" data-testid="risk-views">
-          {VIEWS.map((v) => {
-            const active = view === v.id;
-            return (
-              <button key={v.id} aria-pressed={active} onClick={() => selectView(v.id)} data-testid={`risk-view-${v.id}`}
-                className={`px-3 h-8 text-xs rounded-[6px] transition ${active ? "bg-primary text-primary-foreground font-medium" : "text-ink-secondary hover:bg-surface-subtle"}`}>
-                {v.label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="text-xs text-ink-muted ml-auto font-mono">{filtered.length} / {rows.length}</div>
+        <SearchField label="Search risks" placeholder="Search risks…" value={q} onChange={setQ} testid="risk-search" />
+        <ViewTabs views={tabs} active={view} onPick={selectView} counts={counts} label="Risk views" testid="risk-views" testIdPrefix="risk-view-" />
+        <RegisterCount shown={filtered.length} total={tableSource.length} />
       </div>
 
       <div className="register-body">
@@ -197,17 +164,17 @@ export default function RiskRegister() {
         <RegisterLoadError error={loadError} onRetry={load} name="risks" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
+            <thead>
               <tr>
-                <th className="tbl-cell text-left font-medium">ID</th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="title" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="category" /></th>
-                <th className="tbl-cell text-right font-medium"><ColumnControl table={table} columnKey="risk_score" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="risk_level" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="owner_id" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="last_reviewed" /></th>
-                <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="next_review" /></th>
+                <th scope="col" className="tbl-head">ID</th>
+                <SortableHeader table={table} columnKey="title" />
+                <SortableHeader table={table} columnKey="category" />
+                <SortableHeader table={table} columnKey="risk_score" className="text-right" />
+                <SortableHeader table={table} columnKey="risk_level" />
+                <SortableHeader table={table} columnKey="owner_id" />
+                <SortableHeader table={table} columnKey="status" />
+                <SortableHeader table={table} columnKey="last_reviewed" />
+                <SortableHeader table={table} columnKey="next_review" />
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -215,28 +182,17 @@ export default function RiskRegister() {
               {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((r, i) => {
                 const level = r.risk_level || levelFromScore(r.risk_score);
-                const tone = LEVEL_TONE[level] || LEVEL_TONE.low;
                 return (
-                  <tr key={r.risk_id} onClick={() => setDrawer({ open: true, record: r })} className="row-hover cursor-pointer" data-testid={`risk-row-${i}`}>
-                    <td className="tbl-cell font-mono text-xs text-ink-help">{r.display_id || "ID pending"}</td>
+                  <tr key={r.risk_id} onClick={() => setDrawer({ open: true, record: r })} className="row-hover row-open" data-testid={`risk-row-${i}`}>
+                    <td className="tbl-cell font-mono text-xs text-ink-help whitespace-nowrap">{r.display_id || "ID pending"}</td>
                     <td className="tbl-cell font-medium text-ink-primary min-w-0">{r.title}</td>
                     <td className="tbl-cell text-xs text-ink-secondary">{r.category ? CATEGORIES.find(o => o.value === r.category)?.label || r.category : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-ink-help">—</span>}</td>
-                    <td className="tbl-cell">
-                      {level ? (
-                        <span className={`pill capitalize ${tone}`}>{level}</span>
-                      ) : <span className="text-ink-help">—</span>}
-                    </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{r.owner_id ? personLabel(users, r.owner_id) : <span className="text-ink-help">Unassigned</span>}<OwnerAccountNote users={users} id={r.owner_id} status={r.status} /></td>
-                    <td className="tbl-cell">
-                      <StatusPill className="border-line bg-surface-subtle">
-                        {riskStatus(r.status || "open")}
-                      </StatusPill>
-                    </td>
-                    <td className="tbl-cell text-xs font-mono text-ink-secondary">
-                      {displayDay(r.last_reviewed) || <span className="text-ink-help">—</span>}
-                    </td>
-                    <td className="tbl-cell text-xs font-mono text-ink-secondary">{r.next_review ? new Date(r.next_review.slice(0,10) + "T12:00:00").toLocaleDateString() : "Not scheduled"}</td>
+                    <td className="tbl-cell">{level ? <SeverityBadge value={level} /> : <span className="register-empty">—</span>}</td>
+                    <td className="tbl-cell"><OwnerCell people={users} id={r.owner_id} status={r.status} /></td>
+                    <td className="tbl-cell"><StatusBadge value={r.status || "open"} label={riskStatus(r.status || "open")} /></td>
+                    <td className="tbl-cell"><HistoryDate value={r.last_reviewed} empty="Never reviewed" /></td>
+                    <td className="tbl-cell">{r.next_review ? <DueDate iso={r.next_review} closed={["closed", "retired"].includes(r.status)} /> : <span className="register-empty">Not scheduled</span>}</td>
                   </tr>
                 );
               })}
@@ -252,25 +208,6 @@ export default function RiskRegister() {
   );
 }
 
-function SummaryCard({ label, value, icon: Icon, tone, onClick, pressed }) {
-  const tones = {
-    critical: "text-semantic-critical bg-semantic-critical-bg border-semantic-critical-border",
-    duesoon: "text-semantic-duesoon-text bg-semantic-duesoon-bg border-semantic-duesoon-border",
-    info: "text-semantic-info bg-semantic-info-bg border-semantic-info-border",
-    neutral: "text-ink-secondary bg-surface-subtle border-line",
-  };
-  return (
-    <button type="button" onClick={onClick} aria-pressed={pressed} aria-label={`${label}: ${value}. Show in register`} className={`summary-card-button bg-surface-card border rounded-lg p-3.5 flex items-start justify-between gap-3 text-left w-full ${pressed ? 'border-ink-primary shadow-sm' : 'border-line'}`}>
-      <div>
-        <div className="metric-label">{label}</div>
-        <div className="metric-value mt-1">{value}</div>
-      </div>
-      <div className={`h-8 w-8 rounded-md border flex items-center justify-center ${tones[tone] || tones.neutral}`}>
-        <Icon className="h-4 w-4" />
-      </div>
-    </button>
-  );
-}
 
 function RiskMatrixModal({ open, onOpenChange }) {
   const cell = (l, i) => {

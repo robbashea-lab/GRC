@@ -31,7 +31,7 @@ export default function DashboardManagement({clientId,posture,programs=[],framew
   const selectedProgram=programs.find(p=>p.key===framework);
   const drawer=<Sheet open={!!drill} onOpenChange={open=>{if(!open)setDrill(null);}}><SheetContent className="w-full sm:max-w-4xl overflow-y-auto bg-surface-card" data-testid="dashboard-drilldown"><SheetHeader><SheetTitle>{drill?.title}</SheetTitle><SheetDescription>{drill?.total||0} contributing records. Open an item to view its authoritative record.</SheetDescription></SheetHeader><div className="mt-6">{drill?.loading?<p role="status">Loading contributing records…</p>:drill?.error?<p role="alert">{drill.error}</p>:drill?.items.length?<Table items={drill.items} onOpen={item=>{setDrill(null);onOpen(item);}}/>:<p className="text-sm text-ink-muted">No current items in this view.</p>}{loadDetail&&!!drill?.total&&<div className="flex items-center justify-between gap-3 mt-4 text-sm"><button type="button" disabled={drill.loading||!drill.offset} onClick={()=>setDrill(previous=>({...previous,offset:Math.max(0,previous.offset-25)}))}>Previous</button><span>Showing {drill.offset+1}–{Math.min(drill.offset+25,drill.total)} of {drill.total}</span><button type="button" disabled={drill.loading||drill.offset+25>=drill.total} onClick={()=>setDrill(previous=>({...previous,offset:previous.offset+25}))}>Next</button></div>}</div></SheetContent></Sheet>;
   // Reference layout (Brawndo): attention first, then next work beside program condition, then health detail.
-  if(reference&&!framework)return <div className="page-content space-y-6" data-testid="management-dashboard">
+  if(reference&&!framework)return <div className="section-body space-y-4" data-testid="management-dashboard">
     <DashboardAttention posture={posture} programs={programs} onShow={show}/>
     <div className="dash-primary">
       <Panel title="Highest priority items" description="Ranked by lateness, then severity. Open an item to work it in its source record.">
@@ -47,7 +47,7 @@ export default function DashboardManagement({clientId,posture,programs=[],framew
     </div></div>
     {drawer}
   </div>;
-  return <div className="page-content space-y-6" data-testid="management-dashboard">
+  return <div className="section-body space-y-4" data-testid="management-dashboard">
     {framework ? <Panel title={`${selectedProgram?.label||'Program'} Dashboard View`}><p className="text-sm text-ink-muted">{selectedProgram?.trackingAvailable?'The assessment progress and recurring obligations below come from this client’s framework records. Manage requirements, mapped Reviews and supporting Evidence in the framework workspace.':'Detailed assessment and mapping are not yet implemented for this program.'} Use Entire Organization for overall operational posture; organization-wide totals are not substituted for framework-specific work.</p></Panel>
       : <>
         <div><h2 className="text-base font-heading font-semibold text-ink-primary mb-3">Program Health</h2><div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

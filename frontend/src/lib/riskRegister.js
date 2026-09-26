@@ -1,10 +1,12 @@
 import { assessedRisk } from './grcWork';
 
+// Register views. Their counts are the register's summary; Critical-only and High-only stay available
+// through the Level column filter and ?view= links.
 export const RISK_VIEWS = [
-  {id:'all_active',label:'All Active'}, {id:'review_due',label:'Due for Review'},
-  {id:'critical',label:'Critical'}, {id:'high',label:'High'},
-  {id:'accepted',label:'Accepted'}, {id:'closed',label:'Closed'},
+  {id:'all_active',label:'All Active'}, {id:'significant',label:'High / Critical'},
+  {id:'review_due',label:'Due for Review'}, {id:'accepted',label:'Accepted'}, {id:'closed',label:'Closed'},
 ];
+export const RISK_LINKED_VIEWS = {critical:'Critical', high:'High'};
 export const riskStatus = status => ({in_progress:'In Treatment',treated:'In Treatment (legacy)',open:'Open (legacy)',identified:'Identified',assessed:'Assessed',accepted:'Accepted',closed:'Closed',retired:'Closed (legacy)',escalated:'Escalated (legacy)'})[status] || status;
 export const riskIsClosed = risk => ['closed','retired'].includes(risk.status);
 export function riskReviewDue(risk, now = new Date()) {
@@ -35,4 +37,8 @@ export function riskSummary(rows, now = new Date()) {
     if (riskReviewDue(risk,now)) result.review_due++;
     return result;
   }, {open:0,high_crit:0,accepted:0,review_due:0});
+}
+
+export function riskViewCounts(rows, now = new Date()) {
+  return Object.fromEntries([...RISK_VIEWS.map(v => v.id), ...Object.keys(RISK_LINKED_VIEWS)].map(id => [id, rows.filter(r => riskMatchesView(r, id, now)).length]));
 }

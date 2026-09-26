@@ -9,7 +9,8 @@ jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/policies',search
 jest.mock('@/components/RecordDrawer',()=>()=>null);
 // A viewer in America/Chicago is simulated for date formatting that names no timeZone (see managementDates.test.js).
 const format=Date.prototype.toLocaleDateString;
-const literal=(y,m,d)=>format.call(new Date(Date.UTC(y,m-1,d)),undefined,{timeZone:'UTC'});
+// Registers show history dates as "Oct 29, 2035": the literal recorded day, never shifted a day by timezone.
+const literal=(y,m,d)=>format.call(new Date(Date.UTC(y,m-1,d)),undefined,{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
 let root,container;
 beforeEach(()=>{
   jest.spyOn(Date.prototype,'toLocaleDateString').mockImplementation(function(locales,options){return format.call(this,locales,{timeZone:'America/Chicago',...options});});

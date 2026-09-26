@@ -23,5 +23,5 @@ export async function downloadEvidence(row){
 
 export function EvidenceSource({source,onOpen}){
   if(!source)return <span className="text-ink-help">Not linked to a record</span>;
-  return <div className="min-w-0"><span className="text-xs text-ink-secondary">{source.label} · </span>{source.available?<button type="button" className="text-link underline text-left break-words" aria-label={`Open ${source.label}: ${source.title}${source.period?' — '+source.period:''}`} onClick={()=>onOpen(source)}>{source.title}</button>:<span className="text-ink-help">Source unavailable</span>}{source.period&&<div className="text-xs text-ink-secondary">{source.period}</div>}{source.archived&&<div className="text-xs text-ink-help">Archived source</div>}</div>;
+  return <div className="min-w-0"><span className="text-xs text-ink-secondary">{source.label} · </span>{source.available?<button type="button" className="register-link break-words" aria-label={`Open ${source.label}: ${source.title}${source.period?' — '+source.period:''}`} onClick={()=>onOpen(source)}>{source.title}</button>:<span className="text-ink-help">Source unavailable</span>}{source.period&&<div className="text-xs text-ink-secondary">{source.period}</div>}{source.archived&&<div className="text-xs text-ink-help">Archived source</div>}</div>;
 }

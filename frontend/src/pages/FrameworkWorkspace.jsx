@@ -4,7 +4,8 @@ import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
 import {frameworkCatalog} from '@/lib/frameworks';
-import {Input} from '@/components/ui/input';
+import {SearchField} from '@/components/Register';
+import RegisterLoadError from '@/components/RegisterLoadError';
 import {Button} from '@/components/ui/button';
 import FrameworkDrawer from '@/components/FrameworkDrawer';
 import {SocProgramSettings} from '@/components/SocReadiness';
@@ -116,7 +117,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const dropLinkedView=()=>{if(params.get('view')){const n=new URLSearchParams(params);n.delete('view');setParams(n,{replace:true});}};
   const chooseFilter=key=>{dropLinkedView();setFilter(key);if(prototype)setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,key,search)))));};
   const changeSearch=value=>{setSearch(value);if(prototype&&value.trim())setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,filter,value)))));};
-  if(error)return <div role="alert" className="text-sm">{error}{prototype&&<Button variant="outline" onClick={()=>setRevision(n=>n+1)}>Retry workspace</Button>}</div>;
+  if(error)return <RegisterLoadError error={error} onRetry={prototype?()=>setRevision(n=>n+1):undefined} name="workspace"/>;
   if(!data)return <p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>;
   if(!data.configured)return <section className="border border-line bg-surface-card rounded p-6 text-sm"><p>{data.selected?'Program selected for this client.':'Program not currently selected.'}</p><p className="text-ink-secondary mt-2">Select Applies in Client Profile to initialize this program after onboarding. Existing records are not reset.</p><Link className="text-link underline" to="/client-profile?tab=program">Configure in Client Profile</Link></section>;
   const progress=assessmentProgress(scoped),resume=nextAssessment(scoped,preference.lastId),index=scoped.findIndex(r=>r.framework_assessment_id===selected?.framework_assessment_id);
@@ -132,12 +133,12 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     {frameworkKey==='soc-2'&&<><SocProgramSettings clientId={clientId} configuration={data.configuration||socConfiguration()} writable={data.selected&&isInternal(user)} onSaved={()=>setRevision(n=>n+1)}/><label className="text-xs flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope criteria</label></>}
     {['iso-27001','nist-csf-2'].includes(frameworkKey)&&<label className="text-sm">{frameworkKey==='iso-27001'?'ISO workspace view':'CSF profile view'}<select className="border border-line rounded p-2 ml-2 bg-surface-card" aria-label={frameworkKey==='iso-27001'?'ISO workspace view':'CSF profile view'} value={view} onChange={e=>setView(e.target.value)}><option value="all">{frameworkKey==='iso-27001'?'All ISMS & Annex A':'Current Profile'}</option>{(frameworkKey==='iso-27001'?Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label]):[['target','Target Profile'],['gaps','Recorded Gaps']]).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>}
     {prototype?<div className="cis-toolbar">
-      <Input className="cis-search" aria-label={`Search ${vocab.items}`} placeholder={`Search ${vocab.item} number or title…`} value={search} onChange={e=>changeSearch(e.target.value)}/>
+      <SearchField value={search} onChange={changeSearch} label={`Search ${vocab.items}`} placeholder="Search by number or title…"/>
       {(search||filter!=='all')&&<p role="status" className="text-sm text-ink-secondary">{filter!=='all'&&<span className="cis-active-view">{VIEW_LABELS[filter]}</span>}Showing {visible.length} of {scoped.length} {vocab.items}</p>}
       {(search||filter!=='all')&&<Button size="sm" variant="ghost" onClick={()=>{dropLinkedView();setSearch('');setFilter('all');}}>Clear search and filters</Button>}
       {!(search.trim()||filter!=='all')&&<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div>}
     </div>:<>
-    <Input aria-label="Search requirements" placeholder="Search requirements…" value={search} onChange={e=>changeSearch(e.target.value)}/>
+    <SearchField value={search} onChange={changeSearch} label="Search requirements" placeholder="Search requirements…"/>
     <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>chooseFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div></>}
     {!visible.length&&<p role="status" className="text-sm">{prototype?`No ${vocab.items} match this view.`:'No requirements match these filters.'}</p>}
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}

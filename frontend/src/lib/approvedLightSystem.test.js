@@ -21,7 +21,8 @@ test('authoritative neutral, brand and semantic values stay separate',()=>{
   expect(color('link')).toBe('#2A55C8');expect(color('focus-ring')).toBe('#4172F4');
 });
 test('approved density stays shared without hiding columns or changing selected All',()=>{
-  expect(palette['--register-row']).toBe('44px');
+  // Client-section system: 46px rows (readable, still data-dense; docs/client-section-design-system.md).
+  expect(palette['--register-row']).toBe('46px');
   expect(palette['--register-gutter']).toBe('20px');
   // The requested Basis column adds 120px without squeezing Title or Next Due.
   expect(css).toContain('min-width: 1056px');

@@ -25,10 +25,12 @@ export default function PolicyPendingDecisions({clientId,rows,onOpen}) {
     finally{if(!c.signal.aborted)setOpening(null);}
   }
   if(!result||result.clientId!==clientId)return null;
-  if(result.error)return <p role="alert" className="text-sm text-ink-secondary mb-3">Pending decisions could not be loaded: {result.error}</p>;
-  return <details className="mb-3 border border-line rounded-md p-3 text-sm" open={result.items.length>0||undefined}>
-    <summary className="cursor-pointer font-medium">Policies awaiting my approval ({result.items.length})</summary>
-    {openError&&<p role="alert" className="mt-2 text-ink-secondary">Policy could not be opened: {openError} Select it again to retry.</p>}
-    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">{result.items.map(p=><button type="button" key={p.policy_id} disabled={opening!==null} aria-busy={opening===p.policy_id} className="text-link underline text-left disabled:opacity-60" onClick={()=>openPolicy(p.policy_id)}>{p.title}{opening===p.policy_id?' · Loading…':''}</button>)}</div>
-  </details>;
+  if(result.error)return <p role="alert" className="register-notice">Pending decisions could not be loaded: {result.error}</p>;
+  // Nothing awaiting a decision: no empty bar. Otherwise one compact notice above the register.
+  if(!result.items.length)return null;
+  return <section className="register-notice" aria-label="Policies awaiting my approval">
+    <span className="register-notice-title">Awaiting my approval ({result.items.length})</span>
+    {result.items.map(p=><button type="button" key={p.policy_id} disabled={opening!==null} aria-busy={opening===p.policy_id} className="register-link disabled:opacity-60" onClick={()=>openPolicy(p.policy_id)}>{p.title}{opening===p.policy_id?' · Loading…':''}</button>)}
+    {openError&&<p role="alert" className="w-full text-ink-secondary">Policy could not be opened: {openError} Select it again to retry.</p>}
+  </section>;
 }

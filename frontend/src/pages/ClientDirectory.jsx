@@ -5,12 +5,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrg } from '@/context/OrgContext';
 import { grcLead } from '@/lib/clientRelationships';
 import { tableColumns } from '@/lib/tableColumns';
-import { portfolioOrder } from '@/lib/portfolioOverview';
+import { portfolioOrder, inactiveDays, isStale, STALE_AFTER_DAYS } from '@/lib/portfolioOverview';
 import { usePortfolioView } from '@/lib/usePortfolioView';
 import { loadPortfolioRecord } from '@/lib/portfolioRecord';
 import { useTableControls, ColumnControl, TableFilterChips } from '@/components/TableControls';
 import PageHeader from '@/components/PageHeader';
-import RegisterSignalBar from '@/components/RegisterSignalBar';
 import RecordDrawer from '@/components/RecordDrawer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,17 +18,14 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Search, MoreVertical, Archive, ExternalLink, ScrollText, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import './Portfolio.css';
-// Signals count clients, not items: each one narrows the table to the clients carrying that work.
-const QUICK = [['past_due', 'Past due', 'critical'], ['critical_high_issues', 'Critical / high', 'critical'], ['significant_risks', 'Significant risks', 'moderate'], ['unassigned', 'Unassigned', 'moderate']];
-const SIGNALS = QUICK.map(([id, label, tone]) => ({ id, label, tone, test: r => r[id] > 0 }));
-// One line under each client: the authoritative program status and the work that drives it.
-const STATUS = { action_required: ['Action required', 'critical'], needs_attention: ['Needs attention', 'moderate'], healthy: ['On track', 'success'] };
-function statusReason(r) {
-  const parts = [[r.past_due, 'past due'], [r.critical_high_issues, 'critical / high'], [r.unassigned, 'unassigned']].filter(([n]) => n > 0).map(([n, l]) => `${n} ${l}`);
-  if (parts.length) return parts.slice(0, 2).join(' · ');
-  return r.due_30d > 0 ? `${r.due_30d} due in 30 days` : 'No open issues';
-}
-const METRICS = [['past_due', 'Past Due'], ['due_30d', 'Due ≤30d'], ['critical_high_issues', 'Critical / High'], ['significant_risks', 'Significant Risks'], ['unassigned', 'Unassigned']];
+// Quick views narrow the table to clients carrying that kind of work (one at a time); the column
+// menus still combine filters. "My Team" needs a manager-to-team relationship the data model does not
+// have yet (docs/portfolio-command-center.md); scope options are a list so it can be added here without new logic.
+const QUICK = [['past_due', 'Past Due'], ['critical_high_issues', 'Critical / High'], ['significant_risks', 'Significant Risks'], ['unassigned', 'Unassigned']];
+const SCOPES = [[false, 'All Clients', 'all'], [true, 'Assigned to Me', 'assigned_to_me']];
+const METRICS = [['past_due', 'Past Due'], ['due_30d', 'Due ≤30d'], ['due_31_90d', 'Upcoming (31–90d)'], ['critical_high_issues', 'Critical / High'], ['significant_risks', 'Significant Risks'], ['unassigned', 'Unassigned']];
+// Red only where the number means genuine urgency; other non-zero counts stay neutral and zeros recede.
+const URGENT = ['past_due', 'critical_high_issues'];
 const fmtDate = value => value ? new Date(String(value).slice(0, 10) + 'T12:00:00').toLocaleDateString(undefined, {
   month: 'short',
   day: 'numeric'
@@ -116,10 +112,11 @@ function Portfolio({
     })
   });
   const query = view.search.trim().toLowerCase();
-  const scopeRows = rows.filter(r => !view.mine || r.grc_lead_id === user.user_id);
   const activeSignal = QUICK.map(([key]) => key).find(key => table.state.filters[key]?.includes('some'));
   // One signal at a time, like the register signal bars; the column menus still combine filters.
-  const pickSignal = key => QUICK.forEach(([k]) => table.setFilter(k, k === key && activeSignal !== key ? ['some'] : []));
+  // One state update: sequential setFilter calls would each start from the same stale state.
+  const withoutViews = filters => Object.fromEntries(Object.entries(filters || {}).filter(([k]) => !QUICK.some(([q]) => q === k)));
+  const pickSignal = key => table.replaceState({ ...table.state, filters: { ...withoutViews(table.state.filters), ...(key && activeSignal !== key ? { [key]: ['some'] } : {}) } });
   const filtered = table.apply([...rows].sort(portfolioOrder).filter(r => (!view.mine || r.grc_lead_id === user.user_id) && (!query || [r.name, r.industry, grcLead(r).name].some(v => v?.toLowerCase().includes(query)))));
   const hasFilters = !!(query || view.mine || Object.keys(view.table.filters).length);
   const clear = () => update({
@@ -165,25 +162,24 @@ function Portfolio({
     }
   };
   return <div className="portfolio-overview">
-    <PageHeader eyebrow="Platform" title="Portfolio" subtitle={`Where each client program needs attention, who leads it and what is due.${globalScope ? '' : ' Showing your authorized clients.'}`} />
-    <div data-testid="client-directory-filters">
-      <RegisterSignalBar signals={SIGNALS} rows={scopeRows} active={activeSignal} onPick={pickSignal} label="Clients requiring attention" testIdPrefix="client-filter-"
-        describe={(s, n) => `${s.label}: ${n} ${n === 1 ? 'client' : 'clients'}`} />
-    </div>
-    <div className="register-toolbar flex-wrap">
+    <PageHeader title="Client Portfolio" />
+    <div className="register-toolbar flex-wrap" data-testid="client-directory-filters">
       <div className="register-search relative">
         <Search aria-hidden="true" className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
         <Input aria-label="Search clients" data-testid="client-directory-search" placeholder="Search client, industry, lead…" value={view.search} onChange={e => update({
           search: e.target.value,
           scroll: 0
-        })} className="pl-8 h-9 w-64 text-sm" />
+        })} className="pl-8 h-9 w-56 text-sm" />
       </div>
-      {globalScope && <div className="quick-filters inline-flex gap-0.5" aria-label="Portfolio scope">
-        {[[false, 'All Clients', 'all'], [true, 'Assigned to Me', 'assigned_to_me']].map(([mine, label, id]) => <button key={id} type="button" data-testid={`client-filter-${id}`} aria-pressed={view.mine === mine} onClick={() => update({
-          mine,
-          scroll: 0
-        })} className={`px-2.5 h-8 rounded-md text-xs ${view.mine === mine ? 'bg-primary text-primary-foreground' : 'text-ink-secondary hover:bg-surface-subtle'}`}>{label}</button>)}
-      </div>}
+      <div className="quick-filters inline-flex flex-wrap gap-0.5" role="group" aria-label="Portfolio views">
+        {SCOPES.map(([mine, label, id]) => {
+          // All Clients clears every narrowing view; Assigned to Me combines with a work view.
+          const pressed = mine ? view.mine : !view.mine && !activeSignal;
+          return <button key={id} type="button" data-testid={`client-filter-${id}`} aria-pressed={pressed} onClick={() => update(mine ? { mine, scroll: 0 } : { mine, scroll: 0, table: { ...view.table, filters: withoutViews(view.table.filters) } })} className={`portfolio-view ${pressed ? 'is-active bg-primary text-primary-foreground' : ''}`}>{label}</button>;
+        })}
+        <span className="portfolio-view-divider" aria-hidden="true" />
+        {QUICK.map(([key, label]) => <button key={key} type="button" data-testid={`client-filter-${key}`} aria-pressed={activeSignal === key} onClick={() => pickSignal(key)} className={`portfolio-view ${activeSignal === key ? 'is-active bg-primary text-primary-foreground' : ''}`}>{label}</button>)}
+      </div>
       <div className="flex items-center gap-3 text-xs">
         <ColumnControl table={table} columnKey="grc_lead_id" menuClassName="portfolio-column-menu" />
         <ColumnControl table={table} columnKey="frameworks" menuClassName="portfolio-column-menu" />
@@ -196,27 +192,26 @@ function Portfolio({
     <div className="page-gutter pb-5">
       <TableFilterChips table={table} />
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-secondary py-2">
-        <span>{loading ? 'Loading clients…' : `${filtered.length} ${filtered.length === 1 ? 'client' : 'clients'}${hasFilters ? ` · ${rows.length} available` : ''}`}</span>
+        <span>{loading ? 'Loading clients…' : `${filtered.length} ${filtered.length === 1 ? 'client' : 'clients'}${hasFilters ? ` · ${rows.length} available` : ''}${globalScope ? '' : ' · your authorized clients'}`}</span>
         <span>{table.state.sort ? 'Sorted by column' : 'Most urgent first'}{hasFilters && <button onClick={clear} className="ml-3 underline underline-offset-2">Clear filters</button>}</span>
       </div>
       {error ? <div role="alert" className="border border-line rounded-lg p-5 text-sm">{error}<Button variant="outline" size="sm" onClick={load} className="ml-3">Retry</Button></div> : <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table" tabIndex={0} role="region" aria-label="Client portfolio, scroll horizontally for additional columns">
         <table className="portfolio-table w-full text-sm">
-          <caption className="sr-only">Authorized client GRC priorities. Critical / High counts open Findings and standalone high-priority Actions; Risks are counted separately.</caption>
+          <caption className="sr-only">Authorized client GRC priorities. Upcoming counts work due in 31 to 90 days. Critical / High counts open Findings and standalone high-priority Actions; Risks are counted separately. Last Activity is the latest lifecycle event; logins and generic edits are excluded.</caption>
           <thead><tr>{columns.map(c => <th key={c.key} scope="col" aria-sort={table.state.sort?.key === c.key ? table.state.sort.dir === 'asc' ? 'ascending' : 'descending' : undefined} className={`tbl-cell font-medium ${c.numeric ? 'text-right' : 'text-left'}`}><ColumnControl table={table} column={c} menuClassName="portfolio-column-menu" /></th>)}<th scope="col" className="tbl-cell"><span className="sr-only">Actions</span></th></tr></thead>
           <tbody className="divide-y divide-line">
-            {loading ? <tr><td colSpan={10} className="tbl-cell py-8 text-center text-ink-secondary">Loading directory…</td></tr> : filtered.length === 0 ? <tr><td colSpan={10} className="tbl-cell py-8 text-center text-ink-secondary">
+            {loading ? <tr><td colSpan={11} className="tbl-cell py-8 text-center text-ink-secondary">Loading directory…</td></tr> : filtered.length === 0 ? <tr><td colSpan={11} className="tbl-cell py-8 text-center text-ink-secondary">
               <p>{view.mine ? 'No clients are currently assigned to you.' : rows.length ? 'No clients match the current filters.' : 'No clients are currently available to you.'}</p>
               {hasFilters && <button onClick={clear} className="mt-2 underline underline-offset-2">Clear filters</button>}
               {canManage && <button onClick={() => nav('/admin/clients')} className="ml-3 mt-2 underline underline-offset-2">Client Management →</button>}
             </td></tr> : filtered.map((r, i) => {
               const lead = grcLead(r);
               return <tr key={r.client_id} className="row-hover" data-testid={`client-row-${i}`} data-client-id={r.client_id}>
-              <td className="tbl-cell"><button onClick={() => enter(r)} data-testid={`client-open-${r.client_id}`} className="text-left hover:underline underline-offset-2 font-medium text-ink-primary">{r.name}</button><div className="text-xs text-ink-secondary">{r.industry || '—'}{['archived', 'inactive', 'onboarding'].includes(r.client_status) && <span className="ml-1 capitalize">· {r.client_status}</span>}</div>
-                {STATUS[r.program_status] && <div className={`portfolio-status is-${STATUS[r.program_status][1]}`} data-testid={`client-status-${r.client_id}`}><span className="portfolio-status-label">{STATUS[r.program_status][0]}</span><span className="portfolio-status-reason">{statusReason(r)}</span></div>}</td>
+              <td className="tbl-cell"><button onClick={() => enter(r)} data-testid={`client-open-${r.client_id}`} className="text-left hover:underline underline-offset-2 font-medium text-ink-primary">{r.name}</button><div className="text-xs text-ink-secondary">{r.industry || '—'}{['archived', 'inactive', 'onboarding'].includes(r.client_status) && <span className="ml-1 capitalize">· {r.client_status}</span>}</div></td>
               <td className="tbl-cell"><span className="font-medium text-ink-primary">{lead.name}</span>{lead.notice && <span title={lead.notice} className="inline-flex ml-1"><AlertTriangle className="h-3 w-3 text-ink-secondary" aria-hidden="true" /><span className="sr-only">{lead.notice}</span></span>}</td>
               <td className="tbl-cell"><div className="flex flex-wrap gap-1">{r.frameworks?.length ? r.frameworks.map(f => <button key={f.key} onClick={() => enter(r, f.to)} className="portfolio-framework rounded border border-line bg-surface-subtle text-ink-secondary px-1.5 py-0.5 text-xs hover:bg-surface-hover" aria-label={`Open ${f.label} for ${r.name}`} title={`${f.label} applies. Open the framework workspace for recorded assessments and linked work.`}>{f.label}</button>) : <span className="text-xs text-ink-help">None selected</span>}</div></td>
-              {METRICS.map(([key, label]) => <td key={key} className="tbl-cell text-right"><button type="button" data-metric={key} aria-label={`${r.name}: ${label}, ${r[key] ?? 'unavailable'} items`} className={`portfolio-metric font-mono tabular-nums font-medium underline-offset-2 hover:underline ${r[key] > 0 ? ['past_due', 'critical_high_issues'].includes(key) ? 'text-semantic-critical' : key === 'unassigned' ? 'text-semantic-duesoon-text' : 'text-ink-primary' : 'text-ink-help'}`} onClick={() => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)}>{r[key] ?? '—'}</button></td>)}
-              <td className="tbl-cell text-xs text-ink-secondary">{r.last_activity ? <time dateTime={r.last_activity.at} title={`${r.last_activity.label} · ${new Date(r.last_activity.at).toLocaleString()}`}>{fmtDate(r.last_activity.at)}<span className="sr-only"> · {r.last_activity.label}</span></time> : <span title="No supported lifecycle event has been recorded. Generic edits and logins are excluded.">Not recorded</span>}</td>
+              {METRICS.map(([key, label]) => <td key={key} className="tbl-cell text-right"><button type="button" data-metric={key} aria-label={`${r.name}: ${label}, ${r[key] ?? 'unavailable'} items`} className={`portfolio-metric font-mono tabular-nums underline-offset-2 hover:underline ${r[key] > 0 ? URGENT.includes(key) ? 'text-semantic-critical font-semibold' : 'text-ink-primary font-medium' : 'text-ink-help'}`} onClick={() => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)}>{r[key] ?? '—'}</button></td>)}
+              <td className="tbl-cell text-xs"><LastActivity activity={r.last_activity} /></td>
               <td className="tbl-cell"><ClientRowMenu row={r} index={i} onOpen={() => enter(r)} onArchived={() => { load(); refreshClients(); }} canEdit={canManage} /></td>
             </tr>;
             })}
@@ -246,6 +241,17 @@ function Portfolio({
       }
     }} />}
   </div>;
+}
+// Latest meaningful lifecycle event. Quiet by default; flagged once the program has gone stale.
+function LastActivity({ activity }) {
+  const days = inactiveDays(activity);
+  if (!activity) return <span className="portfolio-stale" title="No lifecycle event has been recorded. Logins and generic edits are excluded.">No activity recorded</span>;
+  const stale = isStale(activity);
+  return <time dateTime={activity.at} title={`${activity.label} · ${new Date(activity.at).toLocaleString()}`} className="block whitespace-nowrap">
+    <span className={stale ? 'text-ink-primary' : 'text-ink-secondary'}>{fmtDate(activity.at)}</span>
+    {stale && <span className="portfolio-stale block">{days}d inactive</span>}
+    <span className="sr-only"> · {activity.label}{stale ? ` · no lifecycle activity for ${days} days (stale after ${STALE_AFTER_DAYS})` : ''}</span>
+  </time>;
 }
 function ClientRowMenu({
   row,
