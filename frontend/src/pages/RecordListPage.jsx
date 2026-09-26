@@ -335,7 +335,7 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind]);
   const filtered = table.apply(presetRows);
 
   const reviewTabCounts = useMemo(() => {
