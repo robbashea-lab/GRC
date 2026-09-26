@@ -228,7 +228,7 @@ export default function ActionItems() {
                         {actionStatus(r.status)}
                       </span>
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{r.sourceRecord.target && (SCHEMAS[r.sourceRecord.kind]||r.sourceRecord.kind==='assessments') ? <button className="text-left text-link hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,kind:r.sourceRecord.kind,record:r.sourceRecord.target});}}>{r.source}</button> : r.sourceRecord.id?'Linked record unavailable':r.source}<span className="block text-ink-help">{SOURCE_TYPES[r.source_type]||'Historical source'}</span></td>
+                    <td className="tbl-cell text-xs text-ink-secondary !whitespace-normal">{r.sourceRecord.target && (SCHEMAS[r.sourceRecord.kind]||r.sourceRecord.kind==='assessments') ? <button className="text-left text-link hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,kind:r.sourceRecord.kind,record:r.sourceRecord.target});}}>{r.source}</button> : r.sourceRecord.id?'Linked record unavailable':r.source}<span className="block text-ink-help">{SOURCE_TYPES[r.source_type]||'Historical source'}</span></td>
                   </tr>
                 );
               })}
