@@ -56,20 +56,20 @@ test('Brawndo stale and unevidenced views are derived from dates and links, not 
  await act(async()=>signal('Validation older than 12 months').click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);expect(container.querySelector('[data-testid="requirement-1.1"]')).toBeTruthy();
 });
-test('native groups start collapsed and expand/collapse all without changing assessment data',async()=>{
+test('every client gets the reference workspace: sections start collapsed; expand, resume and Next keep assessment data',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
- expect(buttons('Expand')).toHaveLength(15);expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(0);
- await act(async()=>buttons('Expand all')[0].click());expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(56);
- await act(async()=>buttons('Needs Attention')[0].click());expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);
- expect(container.querySelector('[data-testid="requirement-1.2"]')).toBeTruthy();
- await act(async()=>buttons('All')[0].click());await act(async()=>buttons('Collapse all')[0].click());expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(0);
- await act(async()=>buttons('Continue Assessment')[0].click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('1.2');
+ const toggles=()=>[...container.querySelectorAll('.cis-section-toggle')],rows=()=>container.querySelectorAll('[data-testid^="requirement-"]');
+ expect(toggles()).toHaveLength(15);expect(rows()).toHaveLength(0);
+ await act(async()=>buttons('Expand all')[0].click());expect(rows()).toHaveLength(56);
+ await act(async()=>buttons('Collapse all')[0].click());expect(rows()).toHaveLength(0);
+ await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('1.2');
  await act(async()=>buttons('Next')[0].click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('2.1');
  expect(JSON.parse(sessionStorage.getItem('framework-workspace:u:a:cis-ig1')).lastId).toBe('a2');
 });
 test('a mismatched client response cannot populate the workspace or resume selection',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="b"/>));
- expect(buttons('Expand')).toHaveLength(0);expect(container.textContent).toContain('No pending assessments');
+ expect(container.querySelectorAll('.cis-section-toggle')).toHaveLength(0);expect(container.textContent).toContain('0 of 0 applicable safeguards assessed');
+ expect([...container.querySelectorAll('button')].some(b=>b.textContent.startsWith('Continue with'))).toBe(false);
 });
 
 test('a requirement opened here is one history entry: Next replaces it and closing steps back to the view',async()=>{

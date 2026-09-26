@@ -1048,6 +1048,15 @@ class ClientMembershipIn(BaseModel):
     expected_updated_at: Optional[str] = Field(default=None, max_length=100)
 
 
+async def _bounded(cursor, limit: int, what: str):
+    """Read at most `limit` rows. Above that, refuse with 413 rather than return a silently
+    truncated list that reads as complete. The caller narrows the request or pages."""
+    rows = await cursor.to_list(limit + 1)
+    if len(rows) > limit:
+        raise HTTPException(413, f"More than {limit:,} {what} match this request. Narrow the request or use a paged view. No partial results shown.")
+    return rows
+
+
 def _account_summary(account, actor):
     fields = ("user_id", "name", "email", "role", "status", "last_login_at", "orphaned", "updated_at")
     row = {field: account[field] for field in fields if field in account}
@@ -1460,7 +1469,7 @@ async def list_clients(
     q: Dict = _scope_filter(user)
     if not include_archived:
         q["status"] = {"$ne": "archived"}
-    docs = await db.clients.find(q, {"_id": 0}).to_list(500)
+    docs = await _bounded(db.clients.find(q, {"_id": 0}), 500, "clients")
     return await client_relationships.project(db, docs)
 
 
@@ -1563,39 +1572,48 @@ async def eligible_assignees(client_id: str, search: str = Query("", max_length=
         raise HTTPException(403, "Forbidden")
     if not await db.clients.find_one({"client_id": client_id}, {"_id": 1}):
         raise HTTPException(404, "Client not found")
-    return await assignment_eligibility.candidates(db, client_id, search, offset, limit)
+    return await assignment_eligibility.candidates(db, client_id, search, offset, limit, caller=user)
+
+
+# Top-level actor fields that name a person on a client record. Assignment fields come
+# from assignment_eligibility.FIELDS; nested histories keep their own name snapshots.
+MEMBER_ACTOR_FIELDS = ("accepted_by", "closed_by", "validated_by", "verified_by", "approved_by", "completed_by")
+
+
+def _member_summary(account, actor):
+    """Client roles need a label and account state for display, nothing more."""
+    if authorization.role_of(actor) in authorization.CLIENT_ROLES:
+        row = {"user_id": account["user_id"], "name": account.get("name") or "Former user", "status": account.get("status") or "active"}
+        if account.get("orphaned"):
+            row["orphaned"] = True
+        return row
+    return _account_summary(account, actor)
 
 
 @api.get("/clients/{client_id}/members")
 async def client_members(client_id: str, user: Dict = Depends(get_current_user)):
-    """Users associated with the tenant. Client users see only their client members; internal admins additionally see 'orphaned' users who still own records but are not formal members."""
+    """People associated with the tenant: formal members plus 'orphaned' accounts that still own
+    or acted on this client's records. Admins get the account summary; client roles get only
+    user_id, name and status so names resolve without exposing contact or login details."""
     if not _can_access_client(user, client_id):
         raise HTTPException(403, "Forbidden")
-    members = await db.users.find({"client_ids": client_id}, {"_id": 0, "password_hash": 0}).to_list(1000)
+    members = await db.users.find({"client_ids": client_id}, {"_id": 0, "password_hash": 0}).to_list(None)
     known_ids = {u["user_id"] for u in members}
-    if user.get("role") in ("super_admin", "platform_admin"):
-        owner_ids: set = set()
-        for coll, assignment_fields in assignment_eligibility.FIELDS.items():
-            for field in (*assignment_fields, *(("owner_id",) if coll == "tasks" else ())):
-                docs = await db[coll].find(
-                    {"client_id": client_id, field: {"$nin": [None, ""]}},
-                    {field: 1, "_id": 0},
-                ).to_list(20000)
-                for d in docs:
-                    v = d.get(field)
-                    if v:
-                        owner_ids.add(v)
-        orphan_ids = owner_ids - known_ids
-        if orphan_ids:
-            orphans = await db.users.find(
-                {"user_id": {"$in": list(orphan_ids)}},
-                {"_id": 0, "password_hash": 0},
-            ).to_list(500)
-            for u in orphans:
-                u["orphaned"] = True
-            members.extend(orphans)
+    referenced: set = set()
+    for coll, assignment_fields in assignment_eligibility.FIELDS.items():
+        for field in (*assignment_fields, *(("owner_id",) if coll == "tasks" else ()), *MEMBER_ACTOR_FIELDS):
+            referenced.update(v for v in await db[coll].distinct(field, {"client_id": client_id}) if isinstance(v, str) and v)
+    orphan_ids = referenced - known_ids
+    if orphan_ids:
+        orphans = await db.users.find(
+            {"user_id": {"$in": sorted(orphan_ids)}},
+            {"_id": 0, "password_hash": 0},
+        ).to_list(None)
+        for u in orphans:
+            u["orphaned"] = True
+        members.extend(orphans)
     members.sort(key=lambda u: (u.get("name") or u.get("email") or "").lower())
-    return [_account_summary(member, user) for member in members]
+    return [_member_summary(member, user) for member in members]
 
 # ---------------- Generic list/create/update/delete factory ----------------
 ENTITY_MAP = {
@@ -1668,8 +1686,8 @@ async def list_evidence(client_id: Optional[str] = Query(None), linked_type: Opt
         if historical:
             return await db.evidence.find({"client_id": review["client_id"],
                 "evidence_id": {"$in": [e["evidence_id"] for e in historical.get("evidence", [])]}},
-                {"_id": 0, "content_base64": 0}).to_list(1000)
-    docs = await db.evidence.find({**q, "archived_at": None}, {"_id": 0, "content_base64": 0}).sort("created_at", -1).to_list(1000)
+                {"_id": 0, "content_base64": 0}).to_list(None)
+    docs = await _bounded(db.evidence.find({**q, "archived_at": None}, {"_id": 0, "content_base64": 0}).sort("created_at", -1), 1000, "evidence records")
     return docs
 
 
@@ -1784,7 +1802,7 @@ async def list_comments(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type in ("review", "reviews"):
         selected = await _review_selection(parent, occurrence_id)
         scope = review_occurrences.occurrence_query(parent, selected)
-    docs = await db.comments.find({"entity_type": entity_type, "entity_id": entity_id, "client_id": parent["client_id"], **scope}, {"_id": 0}).sort("created_at", 1).to_list(500)
+    docs = await _bounded(db.comments.find({"entity_type": entity_type, "entity_id": entity_id, "client_id": parent["client_id"], **scope}, {"_id": 0}).sort("created_at", 1), 500, "comments")
     return docs
 
 
@@ -2062,8 +2080,8 @@ async def list_users(user: Dict = Depends(get_current_user)):
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Forbidden")
     query = {} if user.get("role") == "super_admin" else {"client_ids": {"$in": user.get("client_ids") or []}}
-    docs = await db.users.find(query, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1,
-                                      "status": 1, "client_ids": 1, "last_login_at": 1}).to_list(500)
+    docs = await _bounded(db.users.find(query, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1,
+                                      "status": 1, "client_ids": 1, "last_login_at": 1}), 500, "users")
     if user.get("role") == "platform_admin":
         for doc in docs:
             doc["client_ids"] = [cid for cid in (doc.get("client_ids") or []) if cid in user["client_ids"]]
@@ -2946,8 +2964,9 @@ async def cron_overdue_reminders(request: Request):
 
 async def _send_overdue_digest():
     now_iso = _now()
-    reviews = await db.reviews.find({"status": {"$nin": ["completed", "cancelled"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(5000)
-    findings = await db.findings.find({"status": {"$in": ["open", "in_remediation"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(5000)
+    # Reminder runs read every overdue item; a cap would silently skip reminders.
+    reviews = await db.reviews.find({"status": {"$nin": ["completed", "cancelled"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(None)
+    findings = await db.findings.find({"status": {"$in": ["open", "in_remediation"]}, "due_date": {"$lt": now_iso}}, {"_id": 0}).to_list(None)
     # Group by owner
     by_owner: Dict[str, Dict[str, List]] = {}
     for r in reviews:
@@ -3140,15 +3159,15 @@ async def link_risk_task(risk_id: str, body: Dict[str, Any], user: Dict = Depend
 @api.get("/vendors/{vendor_id}/activity")
 async def vendor_activity(vendor_id: str, user: Dict = Depends(get_current_user)):
     vendor = await _authorized_parent("vendors",vendor_id,user)
-    return await db.audit_logs.find({"client_id":vendor["client_id"],"entity_id":vendor_id,
-        "entity_type":{"$in":["vendor","vendors"]}},{"_id":0}).sort("at",-1).to_list(500)
+    return await _bounded(db.audit_logs.find({"client_id":vendor["client_id"],"entity_id":vendor_id,
+        "entity_type":{"$in":["vendor","vendors"]}},{"_id":0}).sort("at",-1), 500, "activity entries")
 
 
 @api.get("/risks/{risk_id}/activity")
 async def risk_activity(risk_id: str, user: Dict = Depends(get_current_user)):
     risk = await _authorized_parent("risks",risk_id,user)
-    return await db.audit_logs.find({"client_id":risk["client_id"],"entity_id":risk_id,
-        "entity_type":{"$in":["risk","risks"]}},{"_id":0}).sort("at",-1).to_list(500)
+    return await _bounded(db.audit_logs.find({"client_id":risk["client_id"],"entity_id":risk_id,
+        "entity_type":{"$in":["risk","risks"]}},{"_id":0}).sort("at",-1), 500, "activity entries")
 
 
 @api.get("/risks/{risk_id}/review-history")
@@ -3275,7 +3294,7 @@ async def _send_weekly_digest() -> Dict:
     users = await db.users.find(
         {"weekly_digest_optout": {"$ne": True}, "status": "active"},
         {"_id": 0, "password_hash": 0},
-    ).to_list(5000)
+    ).to_list(None)  # every opted-in user; a cap would silently skip digests
 
     app_base_url = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
     stats = {"users_considered": len(users), "emails_sent": 0, "users_empty": 0, "errors": 0}
@@ -3582,7 +3601,7 @@ async def review_activity(review_id: str, occurrence_id: Optional[str] = None, u
              "action": {"$nin": ["update"]},
              "entity_type": {"$in": ["review", "reviews"]},
              **(review_occurrences.occurrence_query(review, selected, "meta.occurrence_id") if occurrence_id else {})}
-    return await db.audit_logs.find(query, {"_id": 0}).sort("at", -1).to_list(500)
+    return await _bounded(db.audit_logs.find(query, {"_id": 0}).sort("at", -1), 500, "activity entries")
 
 
 class ReviewOccurrenceAction(BaseModel):
@@ -3818,7 +3837,7 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
 @api.get("/tasks/{task_id}/activity")
 async def task_activity(task_id: str, user: Dict = Depends(get_current_user)):
     task = await _authorized_parent("tasks", task_id, user)
-    return await db.audit_logs.find({"client_id": task["client_id"], "entity_id": task_id, "entity_type": {"$in": ["task", "tasks"]}}, {"_id": 0}).sort("at", -1).to_list(500)
+    return await _bounded(db.audit_logs.find({"client_id": task["client_id"], "entity_id": task_id, "entity_type": {"$in": ["task", "tasks"]}}, {"_id": 0}).sort("at", -1), 500, "activity entries")
 
 
 @api.get("/related")
@@ -3883,13 +3902,13 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
             elif review_occurrences.occurrence_id(review) == source["occurrence_id"]:
                 review["linked_occurrence"] = {"period": review_occurrences.view(review).get("period"), "status": review.get("status")}
     singular = "policy" if entity_type == "policies" else entity_type[:-1]
-    linked["evidence"] = await db.evidence.find({"client_id": cid, "linked_type": singular, "linked_id": entity_id}, {"_id": 0, "content_base64": 0}).to_list(200)
+    linked["evidence"] = await _bounded(db.evidence.find({"client_id": cid, "linked_type": singular, "linked_id": entity_id}, {"_id": 0, "content_base64": 0}), 1000, "linked evidence records")
     if entity_type == "reviews":
         # Reuse the Evidence tab's current/history projection, including snapshots.
         linked["evidence"] = await list_evidence(client_id=cid, linked_type="review", linked_id=entity_id,
                                                  user=user, occurrence_id=occurrence_id)
     if entity_type == 'ai_systems' and ai_reviews:
-        linked['evidence'] += await db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':[r['review_id'] for r in ai_reviews]}},{'_id':0,'content_base64':0}).to_list(200)
+        linked['evidence'] += await _bounded(db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':[r['review_id'] for r in ai_reviews]}},{'_id':0,'content_base64':0}), 1000, "linked evidence records")
     assessment_clauses=[{'related_links':{'$elemMatch':{'kind':entity_type,'id':entity_id}}}]
     if entity_type=='policies' and source.get('baseline_key'):
         for framework_key,catalog in framework_governance.CATALOGS.items():
@@ -4626,7 +4645,7 @@ async def export_csv(kind: str = Path(..., pattern=KIND_REGEX),
                      client_id: Optional[str] = Query(None),
                      user: Dict = Depends(get_current_user)):
     q = _scope_filter(user, client_id)
-    docs = await db[_coll_for(kind)].find(q, {"_id": 0}).sort("created_at", -1).to_list(10000)
+    docs = await _bounded(db[_coll_for(kind)].find(q, {"_id": 0}).sort("created_at", -1), 10000, "records")
     # Column order: id + core fields first, then everything else
     id_field = ID_FIELD_MAP.get(kind, "id")
     preferred = [id_field, "title", "name", "status", "severity", "criticality", "priority",
@@ -4903,6 +4922,21 @@ async def reports_board(client_id: str = Query(...), user: Dict = Depends(get_cu
     await audit(user, "generate", "board-report", client_id, client_id)
     return StreamingResponse(iter([pdf_bytes]), media_type="application/pdf",
                              headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+def _record_activity_route(kind: str):
+    async def record_activity(item_id: str = Path(..., max_length=200), user: Dict = Depends(get_current_user)):
+        """Activity for one record, scoped to its client and visible to every role that can read it."""
+        record = await _authorized_parent(kind, item_id, user)
+        return await _bounded(db.audit_logs.find({"client_id": record["client_id"], "entity_id": item_id,
+            "entity_type": {"$in": [ENTITY_MAP[kind][0], kind]}}, {"_id": 0}).sort("at", -1), 500, "activity entries")
+    return record_activity
+
+
+# Literal routes, so they never shadow another router's /{...}/activity (e.g. framework assessments).
+# tasks, risks, vendors and reviews keep their dedicated activity routes above.
+for _kind in ("findings", "policies", "assets", "exceptions", "requirements", "contacts"):
+    api.add_api_route(f"/{_kind}/{{item_id}}/activity", _record_activity_route(_kind), methods=["GET"])
 
 
 # Actually mount the routers now — after all literal routes are declared.

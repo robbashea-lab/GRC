@@ -2,7 +2,7 @@
 
 ## Inspected architecture
 
-Demo records use one JSON entry, `grc_interactive_demo_v2`, in sessionStorage.
+Demo records use one JSON entry, `grc_interactive_demo_v3`, in sessionStorage. Reading it removes the retired `grc_interactive_demo_v2` entry (the former seven-client portfolio).
 Previously this included every uploaded base64 file. A 1 MiB per-file limit did
 not limit their aggregate size. All storage write failures shared one message.
 There is no Demo IndexedDB, persistent blob store, or Safari-specific path.
@@ -33,12 +33,12 @@ The Demo banner's **Demo storage** menu provides diagnostics and two confirmatio
    the memory cache, retaining evidence metadata and every other business record,
    user, role, membership, assessment and relationship.
 2. **Reset Demo Data** atomically replaces mutable Demo records with the canonical
-   relative-date seed and clears the cache. It restores seven clients, 22 users
-   and 98 synthetic evidence items in the current seed. Non-demo stores are not
+   relative-date seed and clears the cache. It restores three clients (Brawndo, Dunder Mifflin,
+   Prestige Worldwide), 18 users (the Demo explorer, two provider GRC staff, and per client a GRC manager, two contributors, a read-only user and a departed employee's disabled account) and 201 synthetic evidence items in the current seed. Non-demo stores are not
    reset. Selection is returned to the client portfolio.
 
-Canonical application roles remain super_admin, platform_admin,
-client_contributor and client_readonly. No new RBAC roles or accounts are created.
+Canonical application roles are super_admin, platform_admin, client_grc_manager,
+client_contributor and client_readonly (backend/authorization.py). No new RBAC roles are created.
 Existing persona assignments and client scopes survive clearing; reset reseeds
 them. Recovery endpoints operate only inside the explicitly selected Demo adapter.
 

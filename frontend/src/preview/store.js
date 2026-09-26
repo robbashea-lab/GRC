@@ -16,7 +16,13 @@ import {validateGovernanceContext} from '../lib/requirementBasis';
 import {actionTitle} from '../lib/actionItems';
 import {demoStorageError} from '../lib/demoStorageErrors';
 import {lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
-export const STORE_KEY = 'grc_interactive_demo_v2';
+export const STORE_KEY = 'grc_interactive_demo_v3';
+// v2 held the retired seven-client portfolio. Drop it so those clients never reappear
+// and two full stores never compete for the session quota.
+const LEGACY_STORE_KEYS = ['grc_interactive_demo_v2'];
+function dropLegacyStores() {
+  for (const key of LEGACY_STORE_KEYS) { try { sessionStorage.removeItem(key); } catch { /* unavailable storage is reported by the read below */ } }
+}
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
   framework_assessments:'framework_assessment_id',
@@ -55,6 +61,7 @@ export function seedStore(clock=new Date()) {
   return finishDemoStore(db,clock,{action,write,frameworkRequest});
 }
 export function readStore() {
+  dropLegacyStores();
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {

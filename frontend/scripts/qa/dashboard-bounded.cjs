@@ -11,7 +11,7 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Use an isolated loopback pr
     page.on('pageerror',error=>errors.push(error.message));
     await page.goto(base+'/login');await page.getByTestId('explore-demo').click();await page.waitForURL('**/clients');
     const ids=await page.evaluate(()=>{
-      const key='grc_interactive_demo_v2',db=JSON.parse(sessionStorage.getItem(key));
+      const key='grc_interactive_demo_v3',db=JSON.parse(sessionStorage.getItem(key));
       const client=db.clients[0].client_id,other=db.clients[1].client_id;
       // Dedicated session-only fixture: no source records or shared persistent data touched.
       for(const kind of ['reviews','tasks','findings','risks','vendors','policies'])db[kind]=db[kind].filter(row=>row.client_id!==client);

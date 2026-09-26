@@ -7,7 +7,7 @@ import {managementMetrics} from '../lib/managementMetrics';
 const api=axios.create({adapter:previewAdapter});
 beforeEach(()=>{sessionStorage.clear();localStorage.clear();});
 
-test('all seven Demo portfolios reconcile to source records and remain read-only',()=>{
+test('every Demo portfolio reconciles to source records and remains read-only',()=>{
   const db=seedStore(),before=JSON.stringify(db),today=new Date(),result=portfolio(db,false,today);
   for(const row of result.clients){
     const records=Object.fromEntries(DASHBOARD_KINDS.map(kind=>[kind,db[kind].filter(r=>r.client_id===row.client_id)]));
@@ -36,8 +36,8 @@ test('scoped Demo client lists and drill-ins exclude unrelated clients even if t
 });
 test('archived clients are opt-in; empty scoped assignment does not fall back to all',()=>{
   const db=seedStore();db.clients[0].status='archived';
-  expect(portfolio(db,false).clients).toHaveLength(6);
-  expect(portfolio(db,true).clients).toHaveLength(7);
+  expect(portfolio(db,false).clients).toHaveLength(2);
+  expect(portfolio(db,true).clients).toHaveLength(3);
   db.user={...db.user,role:'platform_admin',client_ids:['nonexistent-assignment']};
   expect(portfolio(db,true).clients).toEqual([]);
   db.user.role='client_readonly';expect(()=>portfolio(db,false)).toThrow('restricted');

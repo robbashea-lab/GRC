@@ -55,3 +55,10 @@ test('dashboard work tables stack before their minimum width instead of clipping
   expect(css).toContain(`@container (max-width: ${min - 1}px)`);
   expect(css).toContain(':root .ops-table.overflow-x-auto > table { min-width: 0; }');
 });
+test('login fields on the dark access pane are never given the light workspace surface', () => {
+  // The light-surface input rule once out-ranked the dark login rule and left typed text white on white.
+  const lightInputRule = css.split('\n').find(line => line.includes('input:not([type="checkbox"])') && line.includes('background: var(--color-bg-surface)'));
+  expect(lightInputRule).toBeDefined();
+  expect(lightInputRule).not.toContain('.login-shell');
+  expect(css).toMatch(/:root :is\(\.app-sidebar, \.login-shell\) \.ui-control \{ background: var\(--color-sidebar-hover-bg\); color: var\(--color-text-on-dark\)/);
+});

@@ -1,5 +1,5 @@
 import {calendarBuckets,calendarItem,calendarSelection,calendarStatus,canMoveCalendar,rescheduledDate} from './calendarView';
-const admin={role:'super_admin'},member={role:'client_contributor'};
+const admin={role:'super_admin'},member={role:'client_contributor',user_id:'member'};
 const review={review_id:'r',client_id:'a',title:'Access review',status:'upcoming',due_date:'2026-12-31',recurrence:'quarterly',current_occurrence_id:'next'};
 const prior={...review,occurrence_id:'prior',due_date:'2026-09-30',status:'completed',completed_at:'2026-10-04'};
 const records={reviews:[{...review,occurrences:[prior]}],findings:[{finding_id:'f',client_id:'a',title:'Gap',status:'remediated',due_date:'2026-10-02'}],tasks:[{task_id:'t',client_id:'a',title:'Action',status:'done',due_date:'2026-10-02'}]};
@@ -22,7 +22,10 @@ test('client contributors cannot move Reviews; source-controlled and terminal da
   expect(canMoveCalendar('review',review,admin)).toBe(true);
   expect(canMoveCalendar('review',{...review,vendor_purpose:'contract'},admin)).toBe(false);
   for(const [kind,status] of [['review','completed'],['review','cancelled'],['finding','closed'],['finding','accepted'],['task','done'],['task','cancelled']])expect(canMoveCalendar(kind,{status},admin)).toBe(false);
-  expect(canMoveCalendar('task',{status:'open'},member)).toBe(true);
+  expect(canMoveCalendar('task',{status:'open',assignee_id:member.user_id},member)).toBe(true);
+  // The server accepts client due-date changes only on the contributor's own Action Items, never on Findings.
+  expect(canMoveCalendar('task',{status:'open',assignee_id:'someone-else'},member)).toBe(false);
+  expect(canMoveCalendar('finding',{status:'open',owner_id:member.user_id},member)).toBe(false);
   expect(canMoveCalendar('finding',{status:'remediated'},{role:'client_viewer'})).toBe(false);
 });
 test('record selection retains authorized historical occurrence and rejects foreign or unavailable records',()=>{

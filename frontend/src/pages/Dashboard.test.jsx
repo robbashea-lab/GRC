@@ -29,13 +29,15 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 
-test("minimal client has zero cards, three health panels and a compact priority section", async () => {
+test("minimal client: attention strip, priority panel and three health panels, all empty", async () => {
   loadClientDashboard.mockResolvedValue(empty);
   await act(async () => root.render(<Dashboard />));
   expect(container.textContent).toContain("No items require immediate attention right now.");
   expect(container.textContent).not.toContain("Upcoming & Watch");
   expect(container.textContent).not.toContain("Compliance & Readiness");
-  expect(container.querySelectorAll("section")).toHaveLength(4);
+  // Reference layout for every client: Requires attention, Highest priority items, three health panels.
+  expect(container.querySelectorAll("section")).toHaveLength(5);
+  expect(container.textContent).toContain("Requires attention");
   expect(container.querySelector('[data-testid="kpi-overdue"]')).toBeNull();
   expect(container.querySelector('button[aria-label="Past Due: 0 items"]')).not.toBeNull();
 });
@@ -49,11 +51,11 @@ test("populated client row opens the existing authoritative record drawer", asyn
   expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe("tasks:t:a");
 });
 
-test("cards open exact contributing rows; the priority table is capped at five", async () => {
+test("cards open exact contributing rows; the priority table is capped at six", async () => {
   const items=Array.from({length:7},(_,i)=>({key:`tasks:${i}:due`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',action:'Open Action',owner:'Unassigned',status:'open',priority_label:'Overdue',record:{task_id:String(i),client_id:'a'}}));
   loadClientDashboard.mockResolvedValue({...empty,posture:{...empty.posture,pastDue:items,priority:items,buckets:[{key:'pastDue',label:'Past Due',items}]}});
   await act(async()=>root.render(<Dashboard/>));
-  expect(container.querySelectorAll('tbody tr')).toHaveLength(5);
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(6);
   await act(async()=>container.querySelector('button[aria-label="Past Due: 7 items"]').click());
   const drawer=document.querySelector('[data-testid="dashboard-drilldown"]');
   expect(drawer.textContent).toContain('7 contributing records');

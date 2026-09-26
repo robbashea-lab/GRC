@@ -1,11 +1,13 @@
 const {chromium}=require('playwright');
 const {expect}=require('playwright/test');
 const assert=require('assert/strict');
-const base=process.env.QA_BASE_URL||'http://127.0.0.1:4174',key='grc_interactive_demo_v2';
+const base=process.env.QA_BASE_URL||'http://127.0.0.1:4174',key='grc_interactive_demo_v3';
 if(new URL(base).hostname!=='127.0.0.1')throw new Error('Onboarding QA requires an isolated local preview.');
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],results=[];
+ // Loopback only: synthetic QA activity never reaches an external service.
+ await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.fulfill({status:204,body:''}));
  page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
  const go=async route=>{await page.goto(base+'/'+route);await expect(page.locator('main')).not.toBeEmpty();};
  const store=()=>page.evaluate(key=>JSON.parse(sessionStorage.getItem(key)),key);
@@ -65,7 +67,7 @@ if(new URL(base).hostname!=='127.0.0.1')throw new Error('Onboarding QA requires 
   for(const width of [1440,1280,1024,768]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));}
   await page.setViewportSize({width:1440,height:1000});
   for(const route of ['dashboard','calendar','reviews','findings','action-items','risks','policies','vendors','contacts','evidence','client-settings','compliance/soc-2','admin/clients','admin/users'])await go(route);
-  await page.evaluate(()=>localStorage.setItem('grc_client_id','demo_initech'));await go('onboarding');await expect(main).not.toContainText('Northstar Manufacturing');await expect(main).not.toContainText('Maya Chen');
+  await page.evaluate(()=>localStorage.setItem('grc_client_id','demo_prestige'));await go('onboarding');await expect(main).not.toContainText('Northstar Manufacturing');await expect(main).not.toContainText('Maya Chen');
   assert.deepEqual((await store()).reviews.filter(r=>r.client_id!==cid),original.reviews);
   await go('admin/clients');await page.getByTestId('add-client-button').click();await page.getByTestId('new-client-name').fill('Plain Program QA');await expect(page.getByTestId('new-client-owner')).toBeEnabled();await page.getByTestId('new-client-save').click();await expect(page.getByTestId('add-client-dialog')).not.toBeVisible();await page.getByRole('button',{name:'Continue onboarding',exact:true}).click();await page.waitForURL('**/onboarding');
   await main.getByRole('button',{name:'Next',exact:true}).click();

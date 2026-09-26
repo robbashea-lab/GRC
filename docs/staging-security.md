@@ -40,6 +40,11 @@ timeouts/size limits, frontend security headers/CSP, centralized protected logs,
 resource monitoring, backup/restore and a tested rollback procedure. Do not treat
 application response headers as validation of the ingress or static frontend.
 
+The frontend shell ships no analytics, session replay, remote scripts or remote
+fonts (see security-review.md, "Browser third parties"). A frontend CSP can
+therefore be restrictive (`script-src 'self'` plus a hash for the single inline
+error handler); validate it against the hosting provider before enabling it.
+
 Use the committed lockfile and runtime manifest in a clean build environment.
 Audit container layers and transitive packages. Do not reuse the stale shared
 development node_modules junction as release evidence.

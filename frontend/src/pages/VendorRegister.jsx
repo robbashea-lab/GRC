@@ -1,4 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
+import RegisterLoadError from '@/components/RegisterLoadError';
+import { personLabel } from '@/lib/people';
 import { OwnerAccountNote } from '@/components/ContactAccess';
 import AssigneeSelect from '@/components/AssigneeSelect';
 import { StatusPill } from '@/components/StatusBadge';
@@ -64,6 +66,7 @@ export default function VendorRegister() {
   const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [drawer, setDrawer] = useState({ open: false, record: null });
   const [addOpen, setAddOpen] = useState(false);
 
@@ -73,7 +76,7 @@ export default function VendorRegister() {
   async function load() {
     if (!currentClientId) return;
     const token=++generation.current;
-    setLoading(true);
+    setLoading(true); setLoadError('');
     try {
       const [v, u, r] = await Promise.all([
         api.get("/vendors", { params: { client_id: currentClientId } }).then((r) => r.data),
@@ -82,8 +85,8 @@ export default function VendorRegister() {
       ]);
       if(token!==generation.current) return;
       setRows(v || []); setUsers(u || []); setReviews(r||[]);
-    } catch (e) { toast.error(formatError(e)); }
-    finally { setLoading(false); }
+    } catch (e) { if(token===generation.current){setRows([]);setLoadError(formatError(e));} }
+    finally { if(token===generation.current)setLoading(false); }
   }
   useEffect(() => { const activeGeneration=generation; setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,6 +182,7 @@ export default function VendorRegister() {
       </div>
       <div className="register-body">
         <TableFilterChips table={table} />
+        <RegisterLoadError error={loadError} onRetry={load} name="vendors" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
@@ -196,7 +200,7 @@ export default function VendorRegister() {
             </thead>
             <tbody className="divide-y divide-line">
               {loading && <TableLoadingRow colSpan={9} />}
-              {!loading && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
+              {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((v, i) => {
                 const tone = CRIT_TONE[v.criticality] || CRIT_TONE.medium;
                 const dt = v.data_types || [];
@@ -215,7 +219,7 @@ export default function VendorRegister() {
                     <td className="tbl-cell text-xs text-ink-secondary">
                       {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="text-ink-help">—</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[v.business_owner_id] || <span className="text-ink-help">—</span>}<OwnerAccountNote users={users} id={v.business_owner_id} status={v.status} /></td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{v.business_owner_id ? personLabel(users, v.business_owner_id) : <span className="text-ink-help">Unassigned</span>}<OwnerAccountNote users={users} id={v.business_owner_id} status={v.status} /></td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">{v.last_review ? displayDate(v.last_review) : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-xs font-mono">
                       {v.next_review ? (

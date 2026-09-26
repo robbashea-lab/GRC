@@ -83,7 +83,8 @@ def router_for(s):
                 "linked_account": await account(contact.get("linked_user_id")) if contact else None,
                 "authorized_account": await account(p.get("approval_account_id")),
                 "can_configure": user.get("role") in INTERNAL,
-                "can_submit": s._writable(user),
+                # Submission is a provider operation (authorization.CLIENT_OPERATIONS excludes it).
+                "can_submit": user.get("role") in INTERNAL,
                 "can_decide": may_decide(s, user, p),
                 "internal_approval": user.get("role") in INTERNAL,
                 "history": p.get("approval_history", []),

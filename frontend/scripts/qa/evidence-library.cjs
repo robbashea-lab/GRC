@@ -11,7 +11,7 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Use a loopback Demo preview
     page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('dialog',dialog=>dialog.accept());
     await page.goto(base+'/login');await page.getByTestId('explore-demo').click();await page.waitForURL('**/clients');
     const scope=await page.evaluate(()=>{
-      const key='grc_interactive_demo_v2',db=JSON.parse(sessionStorage.getItem(key)),cid=db.clients[0].client_id,other=db.clients[1].client_id,at=new Date().toISOString();
+      const key='grc_interactive_demo_v3',db=JSON.parse(sessionStorage.getItem(key)),cid=db.clients[0].client_id,other=db.clients[1].client_id,at=new Date().toISOString();
       for(const kind of ['reviews','policies','findings','tasks','evidence'])db[kind]=db[kind].filter(r=>r.client_id!==cid);
       db.reviews.push({review_id:'library-review',client_id:cid,title:'Library User Access Review',review_type:'access',recurrence:'quarterly',due_date:'2027-03-31',status:'upcoming',current_occurrence_id:'occ_library-review',occurrences:[],created_at:at,updated_at:at});
       db.policies.push({policy_id:'library-policy',client_id:cid,title:'Library Risk Management Policy',status:'draft',version:'1.0',created_at:at,updated_at:at});
@@ -34,8 +34,8 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Use a loopback Demo preview
     const vendorReview=page.getByTestId('reviews-drawer');await vendorReview.getByTestId('tab-evidence').click();await vendorReview.getByRole('button',{name:'Link existing Evidence',exact:true}).click();
     await vendorReview.getByLabel('Find existing Evidence').fill('vendor-assurance-library');await vendorReview.getByRole('button',{name:'Link file',exact:true}).click();
     await expect(vendorReview.getByText('vendor-assurance-library.txt',{exact:true})).toBeVisible();await vendorReview.getByTestId('tab-overview').click();await vendorReview.getByTestId('review-complete').click();
-    await expect.poll(()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2')).reviews.find(r=>r.review_id==='library-vendor-review').occurrences.length)).toBe(1);
-    const shared=await page.evaluate(()=>{const db=JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2'));return {files:db.evidence.filter(e=>e.filename==='vendor-assurance-library.txt'),snapshot:db.reviews.find(r=>r.review_id==='library-vendor-review').occurrences[0]};});
+    await expect.poll(()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')).reviews.find(r=>r.review_id==='library-vendor-review').occurrences.length)).toBe(1);
+    const shared=await page.evaluate(()=>{const db=JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3'));return {files:db.evidence.filter(e=>e.filename==='vendor-assurance-library.txt'),snapshot:db.reviews.find(r=>r.review_id==='library-vendor-review').occurrences[0]};});
     assert.equal(shared.files.length,1);assert.equal(shared.snapshot.evidence[0].evidence_id,shared.files[0].evidence_id);await vendorReview.getByTestId('drawer-close').click();
     for(let q=1;q<=4;q++){
       await page.goto(base+'/reviews');await page.getByText('Library User Access Review',{exact:true}).click();
@@ -43,7 +43,7 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Use a loopback Demo preview
       await expect(drawer.getByText(/q[1-4]-library.txt/)).toHaveCount(0);
       const name=`q${q}-library.txt`;await drawer.getByTestId('drawer-evidence-input').setInputFiles({name,mimeType:'text/plain',buffer:Buffer.from('Synthetic Q'+q)});
       await expect(drawer.getByText(name,{exact:true})).toBeVisible();await drawer.getByTestId('tab-overview').click();await drawer.getByTestId('review-complete').click();
-      await expect.poll(()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2')).reviews.find(r=>r.review_id==='library-review').occurrences.length)).toBe(q);await drawer.getByTestId('drawer-close').click();
+      await expect.poll(()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')).reviews.find(r=>r.review_id==='library-review').occurrences.length)).toBe(q);await drawer.getByTestId('drawer-close').click();
     }
     await page.goto(base+'/evidence');await expect(page.getByRole('heading',{name:'Evidence Library',exact:true})).toBeVisible();await expect(page.getByTestId('evidence-dropzone')).toHaveCount(0);
     await page.getByRole('button',{name:/^Reviews \d+ files$/}).click();await page.getByRole('button',{name:/^Library User Access Review Current occurrence/}).click();
@@ -53,7 +53,7 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Use a loopback Demo preview
     await page.getByRole('button',{name:'q2-library.txt',exact:true}).click();let detail=page.getByRole('dialog').last();await detail.getByRole('button',{name:'Related',exact:true}).click();
     await detail.getByText('Link another record',{exact:true}).click();await detail.getByLabel('Record type').selectOption('findings');await detail.getByLabel('Find source record').fill('Library Access Gap');await detail.getByRole('button',{name:'Library Access Gap',exact:true}).click();
     await expect(detail.getByRole('button',{name:'Unlink',exact:true})).toBeVisible();
-    assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2')).evidence.filter(e=>e.filename==='q2-library.txt').length),1);
+    assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')).evidence.filter(e=>e.filename==='q2-library.txt').length),1);
     await detail.getByRole('button',{name:'Unlink',exact:true}).click();await expect(detail.getByRole('button',{name:'Unlink',exact:true})).toHaveCount(0);
     await detail.getByRole('button',{name:'Overview',exact:true}).click();const downloadPromise=page.waitForEvent('download');await detail.getByRole('button',{name:'Download file',exact:true}).click();const download=await downloadPromise;assert.equal(download.suggestedFilename(),'q2-library.txt');assert.equal(await download.failure(),null);
     await page.keyboard.press('Escape');await page.getByRole('button',{name:'Evidence Library',exact:true}).click();

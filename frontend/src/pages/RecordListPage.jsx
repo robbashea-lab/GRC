@@ -1,4 +1,5 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
+import RegisterLoadError from '@/components/RegisterLoadError';
 import {SETUP_FILTERS} from '@/lib/onboardingHandoff';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
@@ -12,15 +13,19 @@ import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import { ContactAccessStatus, OwnerAccountNote, useContactAccess } from '@/components/ContactAccess';
 import { contactResponsibilities } from '@/lib/contactAccess';
+import { personLabel, peopleMap, useClientPeople } from '@/lib/people';
 import PageHeader from "@/components/PageHeader";
 import RegisterSignalBar from "@/components/RegisterSignalBar";
 import ContactCoverage from "@/components/ContactCoverage";
 import { registerSignals } from "@/lib/registerSignals";
-import { isBrawndoReference } from "@/lib/reference";
 import { frameworkCatalog } from "@/lib/frameworks";
 
-// Catalog-owned policy → safeguard mappings (reference workspace shows CIS relevance).
-const policySupports = row => { const ids = [...new Set((frameworkCatalog("cis-ig1")?.policy_mappings || []).filter(m => m.policy_key === row.baseline_key).flatMap(m => m.safeguards))]; return ids.length ? (ids.length > 4 ? `${ids.slice(0, 4).join(", ")} +${ids.length - 4}` : ids.join(", ")) : ""; };
+// Catalog-owned policy → requirement mappings for each program this client runs.
+const SHORT = { 'cis-ig1': 'CIS', 'iso-27001': 'ISO 27001', 'soc-2': 'SOC 2', hipaa: 'HIPAA', 'nist-csf-2': 'CSF' };
+const policySupports = (row, programs) => programs.map(key => {
+  const ids = [...new Set((frameworkCatalog(key)?.policy_mappings || []).filter(m => m.policy_key === row.baseline_key).flatMap(m => m.safeguards))];
+  return ids.length ? `${SHORT[key] || key} ${ids.length > 4 ? `${ids.slice(0, 4).join(", ")} +${ids.length - 4}` : ids.join(", ")}` : "";
+}).filter(Boolean).join(" · ");
 import PolicyPendingDecisions from '@/components/PolicyPendingDecisions';
 import StatusBadge from "@/components/StatusBadge";
 import RecordDrawer from "@/components/RecordDrawer";
@@ -124,14 +129,22 @@ export default function RecordListPage({ kind }) {
   const [params, setParams] = useSearchParams();
 
   const [rows, setRows] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const loadSequence = useRef(0);
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
   const statusFilter = params.get("status") || DEFAULT_STATUS[kind] || "all";
-  const reference = isBrawndoReference(currentClientId, user);
-  const signals = useMemo(() => reference ? registerSignals(kind) : [], [reference, kind]);
+  const signals = useMemo(() => registerSignals(kind), [kind]);
+  const [programs, setPrograms] = useState([]);
+  useEffect(() => {
+    if (kind !== 'policies' || !currentClientId) { setPrograms([]); return undefined; }
+    const controller = new AbortController();
+    api.get('/frameworks/summary', { params: { client_id: currentClientId }, signal: controller.signal })
+      .then(({ data }) => { if (!controller.signal.aborted && data.client_id === currentClientId) setPrograms((data.items || []).filter(p => p.tracking_available).map(p => p.key)); })
+      .catch(() => { if (!controller.signal.aborted) setPrograms([]); });
+    return () => controller.abort();
+  }, [kind, currentClientId]);
   const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
   const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
@@ -178,16 +191,13 @@ export default function RecordListPage({ kind }) {
   const idField = ID_FIELD[kind];
   const ownerField = kind === "tasks" ? "assignee_id" : "owner_id";
   const isReviews = kind === "reviews";
-  const userMap = useMemo(() => {
-    const m = {};
-    users.forEach((u) => { m[u.user_id] = u.name || u.email; });
-    return m;
-  }, [users]);
+  const users = useClientPeople(currentClientId);
+  const userMap = useMemo(() => peopleMap(users), [users]);
 
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
     if (!currentClientId) { setRows([]); setLoading(false); return; }
-    setLoading(true);
+    setLoading(true); setLoadError('');
     try {
       const { data } = await api.get(`/${kind}`, { params: { client_id: currentClientId,...(kind==='reviews'?{include_basis:true}:{}) } });
       if (kind === "policies") {
@@ -201,17 +211,11 @@ export default function RecordListPage({ kind }) {
       if (sequence !== loadSequence.current) return;
       setRows(data);
       setChecked(new Set());
-    } catch (e) { if (sequence === loadSequence.current) { setRows([]); toast.error(formatError(e)); } }
+    } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
     finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [kind, currentClientId]);
 
   useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setRows([]); load(); return () => { sequence.current++; }; }, [load]);
-  useEffect(() => {
-    (async () => {
-      try { const { data } = await api.get("/users"); setUsers(data); }
-      catch { setUsers([]); }
-    })();
-  }, []);
 
   const statusOptions = useMemo(() => schema.fields.find((x) => x.name === "status")?.options || [], [schema]);
   const filterClient = useRef(currentClientId);
@@ -248,7 +252,7 @@ export default function RecordListPage({ kind }) {
     if (urlFilters.owner) {
       const name = urlFilters.rawOwner === "__me__"
         ? (user?.name || user?.email || "You")
-        : (userMap[urlFilters.owner] || urlFilters.owner);
+        : personLabel(users, urlFilters.owner);
       parts.push(`Owner: ${name}`);
     }
     if (urlFilters.unassigned) parts.push("Unassigned");
@@ -256,7 +260,7 @@ export default function RecordListPage({ kind }) {
     if (urlFilters.status) parts.push(`Status: ${urlFilters.status}`);
     if (urlFilters.setup) parts.push(urlFilters.setup.label);
     return parts.join(" · ");
-  }, [hasUrlFilters, urlFilters, userMap, user]);
+  }, [hasUrlFilters, urlFilters, users, user]);
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const contactAccessContext = useContactAccess(currentClientId, kind === 'contacts', rows);
@@ -431,7 +435,7 @@ export default function RecordListPage({ kind }) {
         }
       />
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
-      {kind === "contacts" && isBrawndoReference(currentClientId, user) && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
+      {kind === "contacts" && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
       {signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
       <div className="sticky top-0 z-20 register-toolbar">
         <div className="register-search relative">
@@ -561,6 +565,7 @@ export default function RecordListPage({ kind }) {
 
       <div className="register-body page-gutter py-6">
         <TableFilterChips table={table} />
+        <RegisterLoadError error={loadError} onRetry={load} name="records" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
           <table className="w-full">
             {isReviews && <colgroup><col className="register-col-check" />{schema.columns.map(c => <col key={c.key} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
@@ -581,7 +586,7 @@ export default function RecordListPage({ kind }) {
             </thead>
             <tbody>
               {loading && <TableLoadingRow colSpan={columnCount} />}
-              {!loading && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity','setup'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
+              {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity','setup'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
               {!loading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);
                 return (
@@ -612,9 +617,9 @@ export default function RecordListPage({ kind }) {
                       ) :
                        c.user ? (
                          isReviews ? <span className={`register-owner ${row[c.key] ? '' : 'register-owner--unassigned'}`} data-testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined}>
-                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{row[c.key] ? userMap[row[c.key]] || row[c.key] : 'Unassigned'}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
+                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{personLabel(users, row[c.key])}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
                          </span> : row[c.key]
-                           ? <span className="text-ink-secondary">{userMap[row[c.key]] || row[c.key]}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
+                           ? <span className="text-ink-secondary">{personLabel(users, row[c.key])}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
                            : <span
                                className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-xs font-mono uppercase tracking-wider"
                                data-testid={`${kind}-unassigned-${i}`}
@@ -628,7 +633,7 @@ export default function RecordListPage({ kind }) {
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
-                             : c.primary && kind === "policies" && signals.length && policySupports(row) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports CIS {policySupports(row)}</span></span>
+                             : c.primary && kind === "policies" && policySupports(row, programs) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports {policySupports(row, programs)}</span></span>
                              : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
                              : <span>{row[c.key] ? optionLabel(schema, c.key, row[c.key]) : <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (

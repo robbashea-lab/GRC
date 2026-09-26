@@ -75,3 +75,16 @@ test('Contact-only and business role cannot invite or grant access', () => {
   expect(() => call('/contacts/maya/invite', 'post', {role:'client_readonly', client_id:'a', confirmed:true})).toThrow('Not authorized');
   expect(invitationFeedback({delivery:'unavailable'})).toContain('unavailable');
 });
+
+test('members match the backend contract: referenced former accounts included, client roles get names and status only', () => {
+  db.risks = [{risk_id:'r', client_id:'a', owner_id:'alex', accepted_by:'super'}];
+  const admin = call('/clients/a/members');
+  expect(admin.map(u => u.user_id).sort()).toEqual(['alex', 'former', 'shared', 'super']);
+  expect(admin.find(u => u.user_id === 'super').orphaned).toBe(true);
+  expect(admin.find(u => u.user_id === 'alex').email).toBe('alex@example.com');
+  db.user = {user_id:'alex', role:'client_readonly', client_ids:['a']};
+  const reader = call('/clients/a/members');
+  expect(reader.map(u => u.user_id).sort()).toEqual(['alex', 'former', 'shared', 'super']);
+  reader.forEach(row => expect(Object.keys(row).every(k => ['user_id', 'name', 'status', 'orphaned'].includes(k))).toBe(true));
+  expect(reader.find(u => u.user_id === 'former').status).toBe('disabled');
+});

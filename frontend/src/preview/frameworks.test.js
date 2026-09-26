@@ -39,7 +39,7 @@ test('workspace Review setup reuses onboarding, creates normal scheduled work an
   expect((await api.post(base,body)).data.review_id).toBe(created.review_id);
   expect((await get('reviews')).length).toBe(count+1);
   expect((await get('frameworks/cis-ig1')).work[row.framework_assessment_id].review_ids).toContain(created.review_id);
-  const foreign=(await api.get('/reviews',{params:{client_id:'demo_globo'}})).data[0];
+  const foreign=(await api.get('/reviews',{params:{client_id:'demo_dunder'}})).data[0];
   await expect(api.post(base,{review_id:foreign.review_id})).rejects.toThrow('Relationship must belong to this client');
 });
 

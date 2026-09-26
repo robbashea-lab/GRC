@@ -3,16 +3,19 @@ import {createRoot} from 'react-dom/client';
 import DashboardAttention from './DashboardAttention';
 jest.mock('react-router-dom',()=>({Link:({children,to,...p})=><a href={to} {...p}>{children}</a>}),{virtual:true});
 
-test('attention tiles open their contributing records and CIS gaps deep-link to the derived view',async()=>{
+test('attention tiles open their contributing records; each tracked program deep-links its gaps',async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
   const container=document.createElement('div'),root=createRoot(container),onShow=jest.fn();
   const posture={totals:{pastDue:4,due30:0,materialFindings:2,significantRisks:1},pastDue:[{key:'x'}],vendorHealth:[{key:'vendorReviewsPast',items:[],total:0},{key:'assurance',items:[{key:'v'}],total:1}]};
-  await act(async()=>root.render(<DashboardAttention posture={posture} programs={[{key:'cis-ig1',assessment:{status_counts:{needs_attention:5,in_progress:11}}}]} onShow={onShow}/>));
+  await act(async()=>root.render(<DashboardAttention posture={posture} programs={[{key:'cis-ig1',label:'CIS IG1',to:'/compliance/cis-ig1',trackingAvailable:true,assessment:{status_counts:{needs_attention:5,in_progress:11}}},{key:'iso-27001',label:'ISO/IEC 27001',to:'/compliance/iso-27001',trackingAvailable:true,assessment:{status_counts:{needs_attention:4,in_progress:19}}},{key:'cmmc',label:'CMMC',to:'/compliance/cmmc',trackingAvailable:false}]} onShow={onShow}/>));
   const tile=label=>[...container.querySelectorAll('button,a')].find(b=>b.getAttribute('aria-label').startsWith(label));
   expect(tile('Due in 30 days: 0').className).toContain('is-clear');
   await act(async()=>tile('Past due').click());expect(onShow).toHaveBeenCalledWith('Past due',[{key:'x'}],'pastDue');
   expect(tile('Vendor assurance').getAttribute('href')).toBe('/vendors?view=assurance');expect(tile('Significant risks').getAttribute('href')).toBe('/risks?view=significant');
-  expect(tile('CIS safeguards not fully implemented: 16').getAttribute('href')).toBe('/compliance/cis-ig1?view=gaps');
+  expect(tile('CIS IG1 safeguards with gaps: 16').getAttribute('href')).toBe('/compliance/cis-ig1?view=gaps');
+  expect(tile('ISO/IEC 27001 requirements with gaps: 23').getAttribute('href')).toBe('/compliance/iso-27001?view=gaps');
+  // A program without assessment tracking gets no gap tile.
+  expect(tile('CMMC')).toBeUndefined();
   await act(async()=>root.unmount());
 });
 test('past-due vendor Reviews open the matching past-due register view, not the 90-day view',async()=>{

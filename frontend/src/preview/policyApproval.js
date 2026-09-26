@@ -4,7 +4,8 @@ import {eligible, clientAccess} from './assignmentEligibility';
 import {approvalSnapshot} from './policyProvenance';
 import {clone} from './store';
 const internal = user => ['super_admin','platform_admin'].includes(user.role);
-const decide = (db, p) => eligible(db.user,p.client_id) && (internal(db.user) || p.approval_account_id === db.user.user_id);
+// Mirrors backend may_decide: the designated account is recorded, decisions are internal.
+const decide = (db, p) => eligible(db.user,p.client_id) && internal(db.user);
 export function policyApprovalRequest(db,path,method,params,body) {
   const [,kind,id,action] = path.split('/');
   if (kind !== 'policies' || !['approval-context','approval-authority','approval-subject','submit-review','return-draft','approve','reject'].includes(action) && id !== 'pending-decisions') return undefined;
@@ -24,7 +25,7 @@ export function policyApprovalRequest(db,path,method,params,body) {
     return {policy_id:id,status:p.status,approval_request_id:p.approval_request_id,updated_at:p.updated_at,
       named_approver:contact?{contact_id:contact.contact_id,name:contact.name}:null,
       linked_account:account(contact?.linked_user_id),authorized_account:account(p.approval_account_id),
-      can_configure:internal(db.user),can_submit:['super_admin','platform_admin','client_contributor'].includes(db.user.role),
+      can_configure:internal(db.user),can_submit:internal(db.user),
       can_decide:decide(db,p),internal_approval:internal(db.user),history:p.approval_history||[],external_history:p.decision_history||[],source:p.approval_source,subject:p.approval_subject};
   }
   if (action==='approval-context' && method==='get') return context();

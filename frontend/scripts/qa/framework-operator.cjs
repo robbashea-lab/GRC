@@ -10,8 +10,10 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
 (async()=>{
   const browser=await chromium.launch({headless:true,...(process.env.QA_BROWSER?{executablePath:process.env.QA_BROWSER}:{})});
   const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];
+  // Loopback only: synthetic QA activity never reaches an external service.
+  await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.fulfill({status:204,body:''}));
   page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-  const go=p=>page.goto(base+p),db=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2'))),drawer=()=>page.getByTestId('framework-drawer');
+  const go=p=>page.goto(base+p),db=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3'))),drawer=()=>page.getByTestId('framework-drawer');
   const tab=name=>drawer().getByRole('tab',{name,exact:true}).click();
   try{
     await go('/login');await expect(page.locator('input[type=email]')).toHaveValue('');await expect(page.locator('input[type=password]')).toHaveValue('');

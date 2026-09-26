@@ -1,4 +1,5 @@
 import {readEvidenceFile} from '@/lib/evidenceFile';
+import { isInternal } from '@/lib/permissions';
 import {cloneElement,useEffect,useState} from 'react';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
@@ -22,7 +23,7 @@ export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onS
   const createRecord=useCreateIntent((...args)=>api.post(...args),clientId);
   const [form,setForm]=useState(()=>({...AI_DEFAULTS,...record})),[tab,setTab]=useState('Overview'),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[context,setContext]=useState(null),[nested,setNested]=useState(null);
   const [schedule,setSchedule]=useState({due_date:'',recurrence:'annual',custom_recurrence_days:90}),[change,setChange]=useState(''),[link,setLink]=useState({kind:'risks',id:'',classification:'Context',source:'',rationale:''});
-  const admin=['super_admin','platform_admin'].includes(user?.role),writable=['super_admin','platform_admin','client_contributor'].includes(user?.role),historical=(context?.row||record)?.status==='retired',editable=writable&&!historical;
+  const admin=['super_admin','platform_admin'].includes(user?.role),writable=isInternal(user),historical=(context?.row||record)?.status==='retired',editable=writable&&!historical;
   const current=context?.row||record,screen=aiScreening(form);
   useEffect(()=>{const c=new AbortController();setContext(null);setError('');
     const opts={params:{client_id:clientId},signal:c.signal};

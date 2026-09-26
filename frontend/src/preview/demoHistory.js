@@ -3,6 +3,7 @@ import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { frameworkDefinition, CATALOGS } from '../lib/frameworks';
 import { approvalSnapshot } from './policyProvenance';
 import { BRAWNDO_CIS, BRAWNDO_CIS_FINDINGS } from './brawndoProgram';
+import { clientProgram } from './programs';
 function previousDate(value, months) {
   const d = new Date(value + 'T12:00:00Z'),
     day = d.getUTCDate();
@@ -49,8 +50,13 @@ export function finishDemoStore(db, clock, {
   for (const org of demoOrganizations) {
     const cid = 'demo_' + org.key,
       client = db.clients.find(c => c.client_id === cid),
-      users = db.users.filter(u => u.client_ids?.length === 1 && u.client_ids[0] === cid),
-      owner = users[0].user_id;
+      users = db.users.filter(u => u.client_ids?.length === 1 && u.client_ids[0] === cid && u.status === 'active' && u.role !== 'client_readonly'),
+      owner = users[0].user_id,
+      lead = client.assigned_owner_id,
+      former = cid + '_former',
+      explorer = db.user;
+    // Program history is recorded by the provider's GRC lead, never by whoever opens the Demo.
+    db.user = db.users.find(u => u.user_id === lead);
     const reviews = db.reviews.filter(r => r.client_id === cid),
       policies = db.policies.filter(p => p.client_id === cid),
       risks = db.risks.filter(r => r.client_id === cid);
@@ -137,8 +143,8 @@ export function finishDemoStore(db, clock, {
         p.effective_date = date(-255);
         p.decision_history = [{
           action: 'external_approval_recorded',
-          recorded_by: owner,
-          recorded_by_name: users[0].name,
+          recorded_by: lead,
+          recorded_by_name: db.user.name,
           recorded_at: date(-260),
           reported_approver_id: users[1].user_id,
           reported_approved_at: date(-260),
@@ -175,8 +181,9 @@ export function finishDemoStore(db, clock, {
     evidence(db, client, 'program-assessment', assessment.name, frameworkAssessment ? 'framework_assessment' : 'risk', frameworkAssessment?.framework_assessment_id || risks[0].risk_id, date(-45), owner, {
       evidence_type: 'Assessment'
     });
-    const findingTitles = ['Access termination evidence was incomplete', 'Backup restoration test omitted a critical application dependency', 'Supplier review documentation lacked approval', 'Asset inventory contained stale ownership records'];
-    const actionTitles = ['Complete access termination evidence', 'Validate backup restoration dependencies', 'Record supplier review approval', 'Update asset ownership records'];
+    const program = clientProgram(cid);
+    const findingTitles = program?.review_findings.map(f => f.title) || ['Access termination evidence was incomplete', 'Backup restoration test omitted a critical application dependency', 'Supplier review documentation lacked approval', 'Asset inventory contained stale ownership records'];
+    const actionTitles = program?.review_findings.map(f => f.action) || ['Complete access termination evidence', 'Validate backup restoration dependencies', 'Record supplier review approval', 'Update asset ownership records'];
     for (let i = 0; i < 4; i++) {
       const r = reviews.find(r => r.baseline_key === ['user-access', 'restore', 'vendor', 'inventory'][i]),
         o = r.occurrences.at(i >= 2 ? -2 : -1),
@@ -227,6 +234,8 @@ export function finishDemoStore(db, clock, {
         t.completed_by = users[2].user_id;
       }
       if (i >= 2) {
+        // The finding owner has since left; the closed record keeps them.
+        if (i === 2) f.owner_id = former;
         Object.assign(f, {
           closed_at: date(-34),
           validated_at: date(-34),
@@ -285,6 +294,21 @@ export function finishDemoStore(db, clock, {
     followup.created_at = date(-45);
     followup.updated_at = date(-22);
     followup.completed_at = date(-22);
+    followup.completed_by = former;
+    // Assigned before the employee left (day -15). Ownership is retained, never cleared automatically;
+    // registers flag the disabled account so the work gets reassigned.
+    const handover = write(db, 'tasks', {
+      client_id: cid,
+      title: 'Hand over vendor renewal file and open access requests',
+      source_type: 'manual',
+      assignee_id: owner,
+      due_date: date(12),
+      governance_context: {
+        category: 'management',
+        rationale: 'Departing employee knowledge transfer.'
+      }
+    });
+    Object.assign(handover, {task_id: cid + '_handover_action', assignee_id: former, owner_id: former, created_at: date(-40), updated_at: date(-16), created_by: owner});
     const baseline = reviewView({
       review_id: cid + '_initial_program_review',
       client_id: cid,
@@ -319,17 +343,25 @@ export function finishDemoStore(db, clock, {
         technology: 'Managed identity, endpoint and service environment.',
         notes: 'DEMO - SYNTHETIC DATA. Assessment progress is not certification.'
       };
-      const reference = cid === 'demo_brawndo' && a.framework_key === 'cis-ig1' ? BRAWNDO_CIS[a.definition_id] : null;
+      const brawndo = cid === 'demo_brawndo' && a.framework_key === 'cis-ig1' ? BRAWNDO_CIS[a.definition_id] : null;
+      const row = program?.framework === a.framework_key ? program.assessments[a.definition_id] : null;
+      // Both sources reduce to [status, assessed_ago, technology, narrative, evidence_ago].
+      const reference = brawndo || (row && [row.status, row.assessed_ago, row.technology, row.narrative, row.evidence_ago]);
       if (reference) Object.assign(patch, {
         status: reference[0],
         technology: reference[2],
         implementation: reference[3],
         notes: ''
       });
-      if (d.specification === 'annex_control') Object.assign(patch, {
+      if (row) patch.owner_id = users[row.owner].user_id;
+      if (d.specification === 'annex_control') Object.assign(patch, row ? {
+        soa_applicability: row.soa,
+        soa_justification: row.justification || ''
+      } : {
         soa_applicability: 'included',
         soa_justification: 'Included for the documented service boundary and identified information risks.'
       });
+      if (row?.status === 'not_applicable' && d.specification !== 'annex_control') patch.na_rationale = row.narrative;
       if (d.specification === 'addressable') Object.assign(patch, {
         addressable_decision: 'as_written',
         addressable_rationale: 'The specification is reasonable and appropriate for this synthetic environment; implemented as written.'
@@ -341,7 +373,20 @@ export function finishDemoStore(db, clock, {
         gap_state: status === 'addressed' ? 'aligned' : 'gap',
         gap_notes: status === 'addressed' ? 'Operating process matches the selected target.' : 'Document and validate the remaining operating evidence.'
       };
-      if (a.framework_key === 'soc-2') patch.management_controls = [{
+      if (a.framework_key === 'soc-2' && row) patch.management_controls = (row.controls || []).map(c => ({
+        control_id: c.control_id,
+        name: c.name,
+        description: c.description || '',
+        design: c.design,
+        operating: c.operating,
+        frequency: c.frequency,
+        ...(c.expected == null && c.collected == null ? {} : {period_start: client.framework_settings['soc-2'].period_start, period_end: client.framework_settings['soc-2'].period_end}),
+        expected_instances: c.expected ?? null,
+        collected_instances: c.collected ?? null,
+        population_notes: [c.population_notes, 'Owner: ' + users[c.owner].name].filter(Boolean).join(' · '),
+        testing_notes: c.testing_notes || ''
+      }));
+      else if (a.framework_key === 'soc-2') patch.management_controls = [{
         control_id: cid + '_control_' + a.definition_id,
         name: d.title,
         description: 'Management-defined operating implementation; not a new AICPA criterion.',
@@ -363,7 +408,8 @@ export function finishDemoStore(db, clock, {
         a.last_assessed = reference[1] == null ? null : date(-reference[1]);
         if (reference[1] == null) a.assessment_history = [];
         a.assessment_history.forEach(h => h.at = a.last_assessed);
-        if (reference[4] != null) evidence(db, client, 'cis-' + a.definition_id, 'CIS ' + a.definition_id + ' ' + d.title + ' - validation record', 'framework_assessment', a.framework_assessment_id, date(-reference[4]), owner);
+        const label = {'cis-ig1': 'CIS', 'iso-27001': 'ISO 27001', 'soc-2': 'SOC 2'}[a.framework_key] || a.framework_key;
+        if (reference[4] != null) evidence(db, client, a.framework_key + '-' + a.definition_id, label + ' ' + a.definition_id + ' ' + d.title + ' - validation record', 'framework_assessment', a.framework_assessment_id, date(-reference[4]), row ? users[row.owner].user_id : owner);
       }
       for (const m of CATALOGS[a.framework_key].policy_mappings.filter(m => m.safeguards.includes(a.definition_id))) {
         const p = policies.find(p => p.baseline_key === m.policy_key);
@@ -388,16 +434,19 @@ export function finishDemoStore(db, clock, {
         id: risks[1].risk_id
       });
     }
-    if (cid === 'demo_brawndo') for (const [id, title, severity, remediation, who, due, age] of BRAWNDO_CIS_FINDINGS) {
-      const a = db.framework_assessments.find(a => a.client_id === cid && a.framework_key === 'cis-ig1' && a.definition_id === id);
+    const gapFindings = cid === 'demo_brawndo' ? BRAWNDO_CIS_FINDINGS.map(([id, title, severity, remediation, who, due, age]) => ({framework: 'cis-ig1', id, title, severity, remediation, who, due, age}))
+      : (program?.findings || []).map((f, n) => ({framework: program.framework, id: f.definition, title: f.title, severity: f.severity, remediation: f.action, who: f.assignee, due: f.due_in, age: f.age, description: f.description, closed: f.closed_ago, n}));
+    // A requirement can carry a closed prior-period Finding and a current one: each needs its own identity.
+    for (const {framework, id, title, severity, remediation, who, due, age, description, closed, n} of gapFindings) {
+      const a = db.framework_assessments.find(a => a.client_id === cid && a.framework_key === framework && a.definition_id === id);
       const f = frameworkRequest(db, '/framework-assessments/' + a.framework_assessment_id + '/findings', 'post', {}, {
-        title, severity, remediation_title: remediation, request_id: 'brawndo-cis-' + id,
-        description: a.implementation
+        title, severity, remediation_title: remediation, request_id: cid === 'demo_brawndo' ? 'brawndo-cis-' + id : `${cid}-${framework}-${id}-${n}`,
+        description: description || a.implementation
       });
       Object.assign(f, {created_by: owner, due_date: date(due + 14), created_at: date(-age), updated_at: date(-Math.min(age, 7)), status: due < 0 ? 'in_remediation' : 'open'});
       for (const t of db.tasks.filter(t => t.finding_id === f.finding_id)) {
         const old = t.task_id;
-        t.task_id = cid + '_cis_action_' + id;
+        t.task_id = cid === 'demo_brawndo' ? cid + '_cis_action_' + id : cid + '_gap_action_' + n;
         for (const l of db.logs) {
           if (l.entity_id === old) l.entity_id = t.task_id;
           if (l.meta?.task_id === old) l.meta.task_id = t.task_id;
@@ -406,8 +455,20 @@ export function finishDemoStore(db, clock, {
         assignee_id: users[who].user_id, due_date: date(due), created_by: owner, created_at: date(-age), updated_at: date(-Math.min(age, 7)),
         status: due < 0 ? 'in_progress' : 'open'
       });
+        if (closed != null) {
+          // Completing the corrective action through the workflow moves the Finding to pending validation.
+          write(db, 'tasks', {status: 'done'}, t.task_id);
+          Object.assign(t, {completed_at: date(-closed - 5), completed_by: users[who].user_id, updated_at: date(-closed - 5)});
+        }
+      }
+      // A remediated gap is validated by the provider lead through the live workflow, then dated.
+      if (closed != null) {
+        action(db, 'findings', f.finding_id, 'validate', {rationale: 'Corrective action evidence inspected; the nonconformity did not recur in the follow-up sample.'});
+        Object.assign(f, {closed_at: date(-closed), validated_at: date(-closed), updated_at: date(-closed)});
+        (f.decision_history || []).forEach(h => h.at = date(-closed));
       }
     }
+    db.user = explorer;
   }
   // Replace wall-clock workflow telemetry with explicit, internally consistent
   // historical simulation events. Never used for standard workspace audit data.
@@ -434,14 +495,14 @@ export function finishDemoStore(db, clock, {
       occurrence_id: o.occurrence_id,
       outcome: o.outcome
     });
-    for (const a of db.framework_assessments.filter(a => a.client_id === c.client_id && a.last_assessed)) log('framework_assessments', a.framework_assessment_id, c.client_id, a.last_assessed.slice(0, 10), db.user, 'Framework assessment updated', {
+    for (const a of db.framework_assessments.filter(a => a.client_id === c.client_id && a.last_assessed)) log('framework_assessments', a.framework_assessment_id, c.client_id, a.last_assessed.slice(0, 10), u, 'Framework assessment updated', {
       status: a.status
     });
-    for (const t of db.tasks.filter(t => t.client_id === c.client_id)) log('tasks', t.task_id, c.client_id, t.completed_at || date(-3), db.users.find(user => user.user_id === (t.completed_by || t.created_by)) || db.user, t.status === 'done' ? 'Action Item completed' : 'Action Item updated');
+    for (const t of db.tasks.filter(t => t.client_id === c.client_id)) log('tasks', t.task_id, c.client_id, t.completed_at || date(-3), db.users.find(user => user.user_id === (t.completed_by || t.created_by)) || u, t.status === 'done' ? 'Action Item completed' : 'Action Item updated');
     for (const e of db.evidence.filter(e => e.client_id === c.client_id)) log('evidence', e.evidence_id, c.client_id, e.created_at, db.users.find(u => u.user_id === e.uploaded_by), 'upload');
     for (const f of db.findings.filter(f => f.client_id === c.client_id)) {
       log('findings', f.finding_id, c.client_id, f.created_at, db.users.find(u => u.user_id === f.created_by), 'create');
-      if (f.closed_at) log('findings', f.finding_id, c.client_id, f.closed_at, db.user, 'validate');
+      if (f.closed_at) log('findings', f.finding_id, c.client_id, f.closed_at, u, 'validate');
     }
     for (const p of db.policies.filter(p => p.client_id === c.client_id && p.status === 'approved')) log('policies', p.policy_id, c.client_id, p.approved_at, u, 'External approval recorded', {
       provenance: 'Synthetic external decision, not in-app approval'

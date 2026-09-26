@@ -7,6 +7,12 @@ import isoGuidance from './operatorGuidance/iso.json';
 import socGuidance from './operatorGuidance/soc.json';
 
 export const operatorStatuses=key=>key==='nist-csf-2'?CSF_STATUSES:key==='soc-2'?{...ASSESSMENT_STATUSES,in_progress:'Partially Addressed',addressed:'Addressed (Readiness)',needs_attention:'Needs Remediation / Validation'}:{...ASSESSMENT_STATUSES,in_progress:'Partially Implemented',addressed:'Implemented',needs_attention:'Not Implemented / Needs Validation'};
+// Each workspace speaks its framework's language: its item nouns and conclusion labels.
+const ITEM_WORDS={'cis-ig1':['safeguard','safeguards','IG1'],'iso-27001':['requirement','requirements','the ISMS scope'],'soc-2':['criterion','criteria','the SOC 2 scope'],'hipaa':['specification','specifications','the Security Rule'],'nist-csf-2':['outcome','outcomes','the target profile']};
+export function operatorVocabulary(key){
+  const [item,items,scope]=ITEM_WORDS[key]||['requirement','requirements','the program'];
+  return {key,item,items,scope,statuses:operatorStatuses(key)};
+}
 export const STATUS_HELP={
   not_assessed:'No assessment conclusion has been recorded yet.',
   in_progress:'Some elements exist, but meaningful coverage, documentation, operation or validation gaps remain. Describe those limits in Assessment notes.',

@@ -9,24 +9,29 @@ export function OrgProvider({ children }) {
   const [clients, setClients] = useState([]);
   const [currentClientId, setCurrentClientId] = useState(selectedClient);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
-      const { data } = await api.get("/clients");
+      // Archived clients are included so an archived workspace opened from the Portfolio keeps its identity;
+      // navigation lists and the default selection use active clients only.
+      const { data } = await api.get("/clients", { params: { include_archived: true } });
       setClients(data);
-      // Keep the previously-selected client if still authorized; otherwise fall back to the first client.
-      // Internal users (super/platform admin) may land on /clients with no active selection — that's fine.
+      const active = data.filter((c) => (c.status || "active") !== "archived");
       const stored = selectedClient();
       const found = data.find((c) => c.client_id === stored);
       if (found) {
         setCurrentClientId(stored);
-      } else if (data.length) {
-        setCurrentClientId(data[0].client_id);
-        rememberClient(data[0].client_id);
+      } else if (active.length) {
+        setCurrentClientId(active[0].client_id);
+        rememberClient(active[0].client_id);
       } else {
         setCurrentClientId("");
       }
+    } catch (e) {
+      setError(e?.response?.data?.detail || e?.message || "Clients could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -42,7 +47,7 @@ export function OrgProvider({ children }) {
   const currentClient = clients.find((c) => c.client_id === currentClientId) || null;
 
   return (
-    <OrgContext.Provider value={{ clients, currentClient, currentClientId, switchClient, loading, refresh: load }}>
+    <OrgContext.Provider value={{ clients, currentClient, currentClientId, switchClient, loading, error, refresh: load }}>
       {children}
     </OrgContext.Provider>
   );

@@ -1,4 +1,5 @@
 import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
+import { personLabel } from '@/lib/people';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {useCreateIntent} from '@/lib/createIntent';
@@ -55,7 +56,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const rid = shown?.review_id;
   const oid = selected?.occurrence_id || (shown ? occurrenceId(shown) : null);
   const frozen = !!selected || ['completed','cancelled'].includes(current?.status);
-  const person = id => members.find(m => m.user_id === id)?.name || members.find(m => m.user_id === id)?.email || id || 'Unassigned';
+  const person = id => personLabel(members, id);
 
   useEffect(() => {
     if (!open) return;

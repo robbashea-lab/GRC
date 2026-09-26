@@ -1,5 +1,5 @@
 import Brand from "@/components/Brand";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export default function ResetPassword() {
-  const [params] = useSearchParams();
-  const token = params.get("token") || "";
+  const [params, setParams] = useSearchParams();
+  // Keep the one-time token in memory and remove it from the address bar and history.
+  const [token] = useState(() => params.get("token") || "");
+  useEffect(() => { if (params.has("token")) setParams({}, { replace: true }); }, [params, setParams]);
   const nav = useNavigate();
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");

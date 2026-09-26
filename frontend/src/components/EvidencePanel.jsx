@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import { isInternal } from '@/lib/permissions';
 import {Download} from 'lucide-react';
 import {Button} from './ui/button';
 import api,{formatError} from '@/lib/api';
@@ -23,6 +24,21 @@ export function useEvidenceCatalog(params,refreshKey=0){
   },[key,version,refreshKey]);
   return {...(result.key===key?result:{loading:true}),reload:()=>setVersion(v=>v+1)};
 }
+// Link picker over the paged, searchable Evidence Library catalog. It never loads the whole
+// Library, so a large client cannot silently lose items off the end of a capped list.
+export function EvidenceCatalogPicker({clientId,linkedIds=[],onLink,disabled=false,label='Link existing Evidence'}){
+  const [q,setQ]=useState(''),[page,setPage]=useState(1);
+  const {data,error,loading}=useEvidenceCatalog({client_id:clientId,q,page,page_size:25});
+  const linked=new Set(linkedIds),items=(data?.items||[]).filter(e=>!linked.has(e.evidence_id));
+  const name=e=>e.display_name||e.filename;
+  const status=loading?'Loading available evidence…':!data?.total?(q.trim()?'No evidence matches your search.':'No evidence in this client’s Library yet.'):`${data.total} Library item${data.total===1?'':'s'}${q.trim()?' match':''}${data.total>data.page_size?` · page ${page} of ${Math.ceil(data.total/data.page_size)}`:''}${items.length<data.items.length?` · ${data.items.length-items.length} already linked`:''}`;
+  return <div className="space-y-2">
+    <label className="block">Find existing evidence<Input aria-label="Find existing evidence" value={q} onChange={e=>{setQ(e.target.value);setPage(1);}} placeholder="Search name, filename or type"/></label>
+    <label className="block">{label}<select aria-label={label} className="block mt-1 w-full max-w-full rounded-md border border-line bg-surface-card px-2 py-1.5 text-sm" disabled={disabled||!items.length} value="" onChange={e=>{if(e.target.value)onLink(e.target.value);}}><option value="">Select Evidence Library item</option>{items.map(e=><option key={e.evidence_id} value={e.evidence_id}>{name(e)}{e.created_at?` · ${String(e.created_at).slice(0,10)}`:''}</option>)}</select></label>
+    {error?<p role="alert" className="text-xs">{error}</p>:<p role="status" className="text-xs text-ink-secondary">{status}</p>}
+    {data?.total>data?.page_size&&<EvidencePagination data={data} page={page} setPage={setPage}/>}
+  </div>;
+}
 export function EvidencePagination({data,page,setPage}){
   return <div className="flex items-center justify-between gap-3 text-xs text-ink-secondary" aria-label="Evidence pagination"><span>{data.total?`${(page-1)*data.page_size+1}–${Math.min(page*data.page_size,data.total)}`:'0'} of {data.total} files</span><div className="flex gap-2"><Button type="button" size="sm" variant="outline" disabled={page<=1} onClick={()=>setPage(page-1)}>Previous</Button><Button type="button" size="sm" variant="outline" disabled={page*data.page_size>=data.total} onClick={()=>setPage(page+1)}>Next</Button></div></div>;
 }
@@ -32,7 +48,7 @@ export function EvidenceDownload({row}){
 function RelationshipAction({row,kind,id,occurrenceId,onDelete,onChanged,allowLink}){
   const {user}=useAuth(),[busy,setBusy]=useState(false);
   const ref=row.references?.find(r=>r.kind===kind&&r.id===id&&(kind!=='reviews'||r.occurrence_id===occurrenceId));
-  if(ref?.origin==='supporting'&&!ref.module_owned&&allowLink&&['super_admin','platform_admin','client_contributor'].includes(user?.role))return <button type="button" className="text-xs underline p-2" disabled={busy} onClick={async()=>{if(!window.confirm('Unlink this supporting Evidence? The file and other relationships remain.'))return;setBusy(true);try{await api.post(`/evidence-library/items/${row.evidence_id}/relationships`,{linked_type:kind,linked_id:id,occurrence_id:occurrenceId||null,remove:true,expected_updated_at:row.updated_at||null});onChanged();}catch(e){toast.error(formatError(e));}finally{setBusy(false);}}}>Unlink</button>;
+  if(ref?.origin==='supporting'&&!ref.module_owned&&allowLink&&isInternal(user))return <button type="button" className="text-xs underline p-2" disabled={busy} onClick={async()=>{if(!window.confirm('Unlink this supporting Evidence? The file and other relationships remain.'))return;setBusy(true);try{await api.post(`/evidence-library/items/${row.evidence_id}/relationships`,{linked_type:kind,linked_id:id,occurrence_id:occurrenceId||null,remove:true,expected_updated_at:row.updated_at||null});onChanged();}catch(e){toast.error(formatError(e));}finally{setBusy(false);}}}>Unlink</button>;
   return ref?.origin==='upload'&&onDelete?<button type="button" className="text-xs underline p-2" aria-label={`Delete ${row.filename}`} onClick={async()=>{await onDelete(row);onChanged();}}>Delete</button>:null;
 }
 const headings={direct:'Direct Evidence',actions:'Evidence from Corrective Actions',findings:'Evidence from Linked Findings',review:'Evidence from Source Review',treatment:'Related Treatment Evidence'};
@@ -47,7 +63,7 @@ export default function EvidencePanel({clientId,kind,id,occurrenceId,onOpen,refr
   if(!data)return null;
   return <section aria-label="Evidence context" className="space-y-4 text-sm">
     <p className="text-xs text-ink-secondary">Files remain attached to their stated source. Related Evidence is shown here without copying it.</p>
-    {allowLink&&['super_admin','platform_admin','client_contributor'].includes(user?.role)&&<div><Button size="sm" variant="outline" onClick={()=>setReuse(!reuse)}>{reuse?'Cancel linking':'Link existing Evidence'}</Button>{reuse&&<ReuseEvidence clientId={clientId} kind={kind} id={id} occurrenceId={occurrenceId} onSaved={()=>{setReuse(false);result.reload();}}/>}</div>}
+    {allowLink&&isInternal(user)&&<div><Button size="sm" variant="outline" onClick={()=>setReuse(!reuse)}>{reuse?'Cancel linking':'Link existing Evidence'}</Button>{reuse&&<ReuseEvidence clientId={clientId} kind={kind} id={id} occurrenceId={occurrenceId} onSaved={()=>{setReuse(false);result.reload();}}/>}</div>}
     {validatedAt&&<p className="text-xs text-ink-secondary">Current retained Evidence; not an immutable snapshot of files inspected at validation. Validation recorded {new Date(validatedAt).toLocaleDateString()}.</p>}
     {Object.entries(headings).filter(([key])=>key==='direct'||data.counts[key]).map(([key,label])=>{
       const rows=data.items.filter(r=>r.category===key),groups=new Map();

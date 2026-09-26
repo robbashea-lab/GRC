@@ -1,3 +1,4 @@
+import { personLabel } from '@/lib/people';
 import StatusBadge from './StatusBadge';
 import {actionStatus} from '@/lib/actionItems';
 
@@ -5,7 +6,7 @@ const date=value=>value?new Date(String(value).slice(0,10)+'T00:00:00').toLocale
 
 // Current authoritative task records; no copied remediation status or evidence store.
 export default function CorrectiveActions({actions=[],members=[],onOpen,itemTestId='corrective-action'}) {
-  const person=id=>members.find(m=>m.user_id===id)?.name||members.find(m=>m.user_id===id)?.email||(id?'Assigned user':'Not recorded');
+  const person=id=>personLabel(members,id,'Not recorded');
   return actions.length?actions.map(action=><div key={action.task_id} data-testid={itemTestId} className="border-t border-line pt-2 space-y-1 text-sm">
     <div><span className="text-ink-secondary">Corrective Action: </span>{onOpen?<button type="button" className="underline text-left" onClick={()=>onOpen(action)}>{action.title}</button>:<span>{action.title}</span>}</div>
     <div>Current Action Status: <StatusBadge value={action.status==='done'?'completed':action.status}/></div>

@@ -67,7 +67,7 @@ function ContextHeader({ isInternal, atPlatform }) {
           data-testid="return-to-portfolio"
           className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-brand-metallic-3 bg-brand-charcoal hover:bg-brand-metallic-2 text-xs font-mono uppercase tracking-widest text-ink-onDarkMuted hover:text-ink-onDark transition-colors"
         >
-          <ArrowLeft className="h-3 w-3" /> All Clients
+          <ArrowLeft className="h-3 w-3" /> Portfolio
         </button>
       )}
       <div
@@ -78,7 +78,7 @@ function ContextHeader({ isInternal, atPlatform }) {
           {initial}
         </div>
         <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wider text-ink-onDark2 font-mono">Client Org</div>
+          <div className="text-xs uppercase tracking-wider text-ink-onDark2 font-mono">Client{currentClient?.status === "archived" && <span className="ml-1.5 normal-case tracking-normal font-sans text-semantic-duesoon-bg" data-testid="context-client-archived">· Archived</span>}</div>
           <div className="text-sm text-ink-onDark font-medium truncate">
             {currentClient?.name || "Select a client…"}
           </div>
@@ -96,7 +96,7 @@ const CLIENT_FILTERS = [
 function PlatformClientsSection() {
   // The permanent Clients navigator in the Platform sidebar. Header links to
   // /clients (GRC Portfolio Overview); ALL/MINE tabs and compact search.
-  const { clients, switchClient } = useOrg();
+  const { clients, switchClient, loading, error, refresh } = useOrg();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -110,7 +110,8 @@ function PlatformClientsSection() {
 
   const scoped = useMemo(() => {
     let list = active;
-    if (filter === "assigned") list = list.filter((c) => c.assigned_owner_id === user?.user_id);
+    // Same definition as the Portfolio's Assigned to Me: the client's GRC lead.
+    if (filter === "assigned") list = list.filter((c) => (c.grc_lead_id || c.assigned_owner_id) === user?.user_id);
     const s = q.trim().toLowerCase();
     if (s) list = list.filter((c) => (c.name || "").toLowerCase().includes(s));
     return [...list].sort((a, b) => (a.name || "").trim().localeCompare((b.name || "").trim()));
@@ -118,7 +119,9 @@ function PlatformClientsSection() {
 
   const onClientsPage = location.pathname === "/clients";
 
-  const emptyLabel = filter === "assigned"
+  // Search earns its space only once the list is long enough to scan.
+  const searchable = active.length > 8;
+  const emptyLabel = loading ? "Loading clients…" : filter === "assigned"
       ? "None assigned to you."
       : q ? "No matches." : "No clients available.";
 
@@ -131,7 +134,7 @@ function PlatformClientsSection() {
         className={`w-full side-link ${onClientsPage ? "active" : ""}`}
       >
         <Users className="h-4 w-4 shrink-0" style={{ color: "inherit" }} />
-        <span>Clients</span>
+        <span>Portfolio</span>
       </button>
 
       <div className="pl-2 pr-1 py-1.5 space-y-1.5">
@@ -150,7 +153,7 @@ function PlatformClientsSection() {
             );
           })}
         </div>
-        <div className="relative">
+        {searchable && <div className="relative">
           <Search className="h-3 w-3 absolute left-2 top-1/2 -translate-y-1/2 text-ink-onDarkMuted" />
           <Input
             value={q}
@@ -159,10 +162,14 @@ function PlatformClientsSection() {
             className="pl-6 h-7 text-xs bg-brand-charcoal/40 border-brand-metallic-3 text-ink-onDark placeholder:text-ink-onDarkMuted focus-visible:ring-brand-metallic"
             data-testid="sidebar-client-search"
           />
-        </div>
+        </div>}
 
         <div className="max-h-64 overflow-y-auto -mx-1 px-1" data-testid="sidebar-client-list">
-          {scoped.length === 0 ? (
+          {error ? (
+            <div className="text-xs text-ink-onDarkMuted py-2 px-1" role="alert" data-testid="sidebar-client-error">
+              Clients could not be loaded. <button type="button" className="underline text-ink-onDark" onClick={refresh}>Retry</button>
+            </div>
+          ) : scoped.length === 0 ? (
             <div className="text-xs text-ink-onDarkMuted text-center py-2" data-testid="sidebar-client-empty">
               {emptyLabel}
             </div>

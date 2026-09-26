@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import { authorizeDemo } from './authorization';
 import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
@@ -86,6 +87,8 @@ export async function previewAdapter(config) {
       const relationKind=evidenceKind(params.entity_type||body.entity_type),relationId=params.entity_id||body.entity_id;
       if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))return fail(403,'Forbidden for this client');}
     }
+    // Role limits mirror the server so persona QA in the Demo sees the same refusals.
+    try { authorizeDemo(db, method, parts, body); } catch (error) { return fail(403, error.message); }
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
@@ -141,13 +144,14 @@ export async function previewAdapter(config) {
       if (path === '/clients') return respond(db.clients.filter(c => evidenceAccess(db.user,c.client_id)&&(params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived')).map(c => clientProjection(db, c)));
       if (path === '/clients/grc-leads') return respond(leadCandidates(db, params.client_id));
       if (kind === 'risks' && name === 'review-history') return respond(db.reviews.filter(r=>r.risk_id===id&&r.client_id===record(db,'risks',id).client_id).flatMap(r=>(r.occurrences||[]).map(o=>({...o,review_id:r.review_id}))));
-      if (['risks','tasks','vendors'].includes(kind) && name === 'activity') {
-        const task=record(db,kind,id);
-        return respond(db.logs.filter(l=>l.entity_id===id&&l.client_id===task.client_id&&[kind,kind==='risks'?'risk':kind==='vendors'?'vendor':'task'].includes(l.entity_type)).map(l=>({...l,log_id:l.log_id||l.audit_id})));
+      // Mirrors backend record_activity: every register kind, scoped to the record's client.
+      if (['findings','risks','policies','vendors','assets','tasks','exceptions','requirements','contacts'].includes(kind) && name === 'activity') {
+        const row=record(db,kind,id),singular=kind==='policies'?'policy':kind.slice(0,-1);
+        return respond(db.logs.filter(l=>l.entity_id===id&&l.client_id===row.client_id&&[kind,singular].includes(l.entity_type)).sort((a,b)=>String(b.at).localeCompare(String(a.at))).map(l=>({...l,log_id:l.log_id||l.audit_id})));
       }
       if (kind === 'clients' && name === 'assignees') {
         record(db, 'clients', id);
-        return respond(assignmentCandidates(db, id, params));
+        return respond(assignmentCandidates(db, id, params, db.user));
       }
       if (path === '/dashboard') return respond(dashboard(db, params));
       if (path === '/onboarding/policy-library') return respond(library(db, 'policy', params.client_id));

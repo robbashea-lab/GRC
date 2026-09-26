@@ -218,6 +218,21 @@ production. These API headers do not configure a separately hosted frontend's CS
 or TLS. Hosted ingress, cache, proxy headers, CORS and browser variations remain
 NOT YET DYNAMICALLY VALIDATED.
 
+**Browser third parties (decision, 2026-09-26).** The application shell
+(`frontend/public/index.html`) previously loaded, in every build, PostHog analytics
+with a session-recording configuration (`api_host` `ap.emergent.sh`, Emergent's key),
+an unpinned `assets.emergent.sh/scripts/emergent-main.js` with full same-origin
+access, and an unused Google Fonts stylesheet. None had masking, environment gating,
+consent or a vendor record, and password-reset and invitation tokens remained in the
+page URL where default pageview capture could collect them. Disposition: all three
+loads are removed from the shell, the reset page removes its one-time token from
+the address bar on load, and `lib/publicShell.test.js` fails if a remote script,
+stylesheet, analytics or replay reference returns. Any future telemetry requires a
+product decision, an iVenture-owned project, vendor review, masking, environment
+gating and documentation here before it ships. Whether sessions were already
+recorded under Emergent's PostHog project cannot be determined from the repository
+and is an open question for leadership.
+
 ## 17–19. Adversarial campaigns
 
 The new suite uses real FastAPI auth/route code, no authentication dependency

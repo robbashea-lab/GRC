@@ -346,6 +346,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-focus-ri
 }
 .register-body { padding: 0 var(--register-gutter) 20px; }
 .register-table-frame {
+  /* Contain absolutely positioned screen-reader text so it cannot widen the page. */
+  position: relative;
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -582,7 +584,7 @@ td:last-child > button[aria-label="Row actions"] {
   :root { --register-gutter: 16px; }
 }
 :root .register-table-frame:not([data-layout="reviews"]) :is(th, td):first-child { padding-left: 10px; }
-:root :is(.app-workspace, .login-shell, [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select, [role="combobox"]) { background: var(--color-bg-surface); }
+:root :is(.app-workspace, [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select, [role="combobox"]) { background: var(--color-bg-surface); }
 /* Search and login fields on inverse surfaces keep readable inverse ink,
    including when standard authentication is enabled in a future environment. */
 :root :is(.app-sidebar, .login-shell) .ui-control { background: var(--color-sidebar-hover-bg); color: var(--color-text-on-dark); border-color: var(--color-input-border); }

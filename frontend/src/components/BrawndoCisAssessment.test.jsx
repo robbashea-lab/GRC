@@ -21,7 +21,7 @@ beforeEach(()=>{
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);close=jest.fn();next=jest.fn();
  record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.2',client_id:'demo_brawndo',status:'addressed',implementation:'Current process',technology:'Recorded platform',notes:'Older notes',assessment_history:[],last_assessed:null};
  related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
- api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/evidence'?[{evidence_id:'e',filename:'Validation.txt'}]:[]}));
+ api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/evidence/catalog'?{items:[{evidence_id:'e',filename:'Validation.txt'}],total:1,page:1,page_size:25}:[]}));
  api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-09-23',assessment_history:[{...body,at:'2026-09-23',by:'u'}]};return {data:record};});
  api.post.mockResolvedValue({data:{}});
 });
@@ -30,8 +30,8 @@ async function render(){await act(async()=>root.render(<FrameworkDrawer open rec
 
 test('activation requires the exact synthetic client, framework, record tenant and Demo identity',()=>{
  expect(isBrawndoCisPrototype('demo_brawndo',record,mockUser)).toBe(true);
- for(const candidate of [{...record,client_id:'demo_globo'},{...record,framework_key:'iso-27001'}])expect(isBrawndoCisPrototype('demo_brawndo',candidate,mockUser)).toBe(false);
- expect(isBrawndoCisPrototype('demo_globo',record,mockUser)).toBe(false);
+ for(const candidate of [{...record,client_id:'demo_dunder'},{...record,framework_key:'iso-27001'}])expect(isBrawndoCisPrototype('demo_brawndo',candidate,mockUser)).toBe(false);
+ expect(isBrawndoCisPrototype('demo_dunder',record,mockUser)).toBe(false);
  expect(isBrawndoCisPrototype('demo_brawndo',record,{...mockUser,workspace_mode:'standard'})).toBe(false);
 });
 test('linear hierarchy, reference-only content, specific validation and retained metadata',async()=>{
@@ -101,7 +101,9 @@ test('Save & next cannot discard a separate Finding or comment draft',async()=>{
 });
 
 test('evidence picker searches display name, distinguishes no match, and retains filename',async()=>{
- api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/evidence'?[{evidence_id:'e',filename:'report.txt',display_name:'Asset reconciliation',created_at:'2026-09-01',evidence_type:'Report'}]:[]}));
+ // The catalog searches server-side; the mock filters on the query the picker sends.
+ const libraryItem={evidence_id:'e',filename:'report.txt',display_name:'Asset reconciliation',created_at:'2026-09-01',evidence_type:'Report'};
+ api.get.mockImplementation(async(path,config)=>{if(path==='/evidence/catalog'){const items=`${libraryItem.display_name} ${libraryItem.filename} ${libraryItem.evidence_type}`.toLowerCase().includes((config?.params?.q||'').toLowerCase())?[libraryItem]:[];return {data:{items,total:items.length,page:1,page_size:25}};}return {data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:[]};});
  await render();await act(async()=>button('Link Evidence').click());
  expect(container.textContent).toContain('Asset reconciliation · 2026-09-01');
  await input('Find existing evidence','no-match');expect(container.textContent).toContain('No evidence matches your search');
@@ -124,7 +126,7 @@ test('same-record refresh retains linked opener; refresh failure still disables 
 test('context refresh cannot erase an already refreshed evidence picker',async()=>{
  await render();await act(async()=>button('Link Evidence').click());
  const normalGet=api.get.getMockImplementation();let finishContext;
- api.get.mockImplementation(path=>path==='/frameworks/cis-ig1'?new Promise(resolve=>{finishContext=resolve;}):normalGet(path));
+ api.get.mockImplementation((path,config)=>path==='/frameworks/cis-ig1'?new Promise(resolve=>{finishContext=resolve;}):normalGet(path,config));
  const select=container.querySelector('[aria-label="Link existing Evidence"]');
  await act(async()=>{select.value='e';select.dispatchEvent(new Event('change',{bubbles:true}));});
  expect(select.disabled).toBe(false);

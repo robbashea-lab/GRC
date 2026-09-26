@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
+import { canOperate } from '@/lib/permissions';
 import {ChevronLeft,ChevronRight,CalendarDays} from 'lucide-react';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
@@ -32,7 +33,7 @@ export default function Calendar() {
   const start=ymd(days[0]),end=ymd(days[41]),requestKey=`${currentClientId}:${start}:${scope}:${revision}`;
   const activeRequest=useRef(requestKey);activeRequest.current=requestKey;
   const currentClientRef=useRef(currentClientId);currentClientRef.current=currentClientId;
-  const writable=['super_admin','platform_admin','client_contributor'].includes(user?.role);
+  const writable=canOperate(user);
   const reload=()=>setRevision(n=>n+1);
   useEffect(()=>{setDrawer(null);setScope('active');setDragging(null);},[currentClientId]);
   useEffect(()=>{

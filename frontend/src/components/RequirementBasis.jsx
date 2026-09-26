@@ -1,3 +1,4 @@
+import { personLabel } from '@/lib/people';
 import {BUSINESS_BASIS,CADENCE_BASIS,requirementBasis,cadenceBasis,referenceUrl} from '@/lib/requirementBasis';
 import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
@@ -25,7 +26,7 @@ export default function RequirementBasis({kind,record,related={},onOpen,loading=
     <h3 className="font-semibold">{kind==='policies'?'Governance basis':'Requirement basis'}</h3>
     {loading&&<p role="status">Loading linked requirements…</p>}{error&&<p role="alert">Requirement relationships could not be loaded. {error}</p>}
     {historical&&<p className="text-xs text-ink-secondary">Occurrence context is preserved; linked assessments and catalog references show their current state.</p>}
-    {record.created_at&&<p className="text-xs text-ink-secondary">Created {String(record.created_at).slice(0,10)}{record.created_by? ` · ${users.find(u=>u.user_id===record.created_by)?.name||'Recorded actor: '+record.created_by}`:''}</p>}
+    {record.created_at&&<p className="text-xs text-ink-secondary">Created {String(record.created_at).slice(0,10)}{record.created_by? ` · ${personLabel(users,record.created_by)}`:''}</p>}
     {(record.framework_plan_key||record.baseline_key)&&<p className="text-xs text-ink-secondary">{record.framework_plan_key?'Linked framework plan':'Program baseline relationship'} · association does not establish the original creation method.</p>}
     {kind!=='tasks'&&['review','finding','risk','policy','vendor'].filter(type=>record[type+'_id']&&type+'s'!==kind&&!(type==='policy'&&kind==='policies')).map(type=>{
       const sourceKind=type==='policy'?'policies':type+'s',key=type+'_id',target=(related[sourceKind]||[]).find(r=>r[key]===record[key]&&r.client_id===record.client_id);
@@ -43,7 +44,7 @@ export default function RequirementBasis({kind,record,related={},onOpen,loading=
         <div className="font-medium">{assessment&&onOpen?<button className="text-link underline text-left" onClick={()=>onOpen({kind:'framework_assessments',record:assessment})}>{d.id} · {d.title}</button>:`${d.id} · ${d.title}`}</div>
         <p className="text-xs text-ink-secondary">Requirement classification: {classification}{assessment?.soa_applicability?` · SoA: ${assessment.soa_applicability}`:''}{assessment?.status==='not_applicable'?' · Assessed Not Applicable':''}</p>
         {d.specification==='addressable'&&<p className="text-xs">Addressable is not optional; the assessment records the scoped decision and rationale.</p>}
-        <p className="text-xs"><SourceReference url={d.source}>{d.source_organization||group.label} · {d.id}</SourceReference>{d.verified_on&&` · Catalog verified ${d.verified_on}`}</p>
+        <p className="text-xs"><SourceReference url={d.source}>{d.source_organization||group.label} · {d.id}</SourceReference>{d.verified_on&&` · Catalog researched ${d.verified_on}`}</p>
       </li>)}</ul>
     </details>)}
     {kind==='reviews'&&<div className="border-t border-line pt-3 space-y-2"><h4 className="font-medium">Cadence · {cadence.current}</h4><p className="text-xs text-ink-secondary">{cadence.classification}</p>{cadence.rationale&&<p>{cadence.rationale}</p>}

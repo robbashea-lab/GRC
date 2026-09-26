@@ -2,13 +2,18 @@ import catalog from '../lib/onboardingCatalog.json';
 import { CATALOGS } from '../lib/frameworks';
 import { reviewView } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
-import { demoOrganizations, demoDates, demoProfile } from './demoPortfolio';
+import { demoOrganizations, demoDates, demoProfile, providerStaff, clientPersonaRoles } from './demoPortfolio';
+import { clientProgram } from './programs';
 export { demoOrganizations } from './demoPortfolio';
 
 // The current occurrence is the next unfinished period. A first due date more than
 // one cadence ahead would leave the seeded history with silently missing periods.
 const CADENCE_DAYS = {monthly: 25, quarterly: 85, semiannual: 175, annual: 355};
 const withinCadence = (days, cadence) => Math.min(days, CADENCE_DAYS[cadence] ?? days);
+
+// A client program's profile sections refine the generic profile field by field.
+const programProfile = (base, overrides = {}) => Object.fromEntries(Object.entries(base).map(([section, fields]) =>
+  [section, overrides[section] ? {...fields, ...overrides[section]} : fields]));
 
 // Explicit Demo initialization/reset only; no persistent backend writes.
 export function buildDemoStore(tableNames, clock = new Date()) {
@@ -27,6 +32,15 @@ export function buildDemoStore(tableNames, clock = new Date()) {
   db.users.push({
     ...db.user
   });
+  for (const staff of providerStaff) db.users.push({
+    user_id: staff.user_id,
+    name: staff.name,
+    email: staff.user_id.replace('demo_', '') + '@provider.example.test',
+    role: 'platform_admin',
+    status: 'active',
+    client_ids: staff.clients.map(key => 'demo_' + key),
+    workspace_mode: 'demo'
+  });
   Object.assign(db, {
     logs: [],
     notifications: [],
@@ -35,22 +49,23 @@ export function buildDemoStore(tableNames, clock = new Date()) {
   });
   for (const org of demoOrganizations) {
     const cid = 'demo_' + org.key,
-      owner = 'demo_owner_' + org.key,
-      users = [owner, cid + '_user_1', cid + '_user_2'];
+      program = clientProgram(cid),
+      lead = org.lead,
+      users = [cid + '_user_0', cid + '_user_1', cid + '_user_2'];
     const meta = {
       client_id: cid,
       created_at: date(-600),
       updated_at: date(-3),
-      created_by: owner
+      created_by: lead
     };
     org.people.forEach((name, i) => {
-      const user_id = users[i],
+      const user_id = clientPersonaRoles[i] ? cid + '_user_' + i : null,
         contact_id = cid + '_contact_' + i;
       if (user_id) db.users.push({
         user_id,
         name,
         email: org.key + '.person' + i + '@example.test',
-        role: i === 0 ? 'platform_admin' : 'client_contributor',
+        role: clientPersonaRoles[i],
         status: 'active',
         client_ids: [cid],
         workspace_mode: 'demo'
@@ -68,6 +83,16 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         title: ['Security Program Lead', 'Executive Sponsor', 'Operations and Technology Lead', 'Business Stakeholder'][i % 4]
       });
     });
+    // A departed employee: the account is disabled, membership and history are retained.
+    db.users.push({
+      user_id: cid + '_former',
+      name: org.former,
+      email: org.key + '.former@example.test',
+      role: 'client_contributor',
+      status: 'disabled',
+      client_ids: [cid],
+      workspace_mode: 'demo'
+    });
     const client = {
       ...meta,
       client_id: cid,
@@ -75,13 +100,18 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       industry: org.industry,
       status: 'active',
       environment: 'Demo',
-      assigned_owner_id: owner,
+      assigned_owner_id: lead,
       primary_contact_id: cid + '_contact_0',
-      profile: demoProfile(org, date),
+      profile: programProfile(demoProfile(org, date), program?.profile),
       notes: 'Fictional Year-2 program. Progress is not certification or a determination of compliance.'
     };
     if (org.frameworks.includes('soc-2')) client.framework_settings = {
-      'soc-2': {
+      'soc-2': program?.soc ? {
+        categories: program.soc.categories,
+        system_description: program.soc.system_description,
+        period_start: date(-program.soc.period_start_ago),
+        period_end: date(program.soc.period_end_in)
+      } : {
         categories: ['security', 'availability'],
         system_description: 'Synthetic service boundary: identity, endpoints, service platform, backup and support operations.',
         period_start: date(-180),
@@ -133,7 +163,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         baseline_response: requirementResponses[item.key],
         applicability: applies ? 'applicable' : 'not_applicable',
         status: applies ? 'active' : 'retired',
-        owner_id: owner,
+        owner_id: users[0],
         description: 'Synthetic applicability decision only; no legal or certification claim.'
       });
     });
@@ -192,7 +222,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
     };
     client.initial_program_baseline = {
       completed_at: date(-590),
-      completed_by: owner,
+      completed_by: lead,
       state: JSON.parse(JSON.stringify(db.baselines[cid])),
       counts: {
         policies: catalog.policies.length,
@@ -203,7 +233,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
     Object.values(client.initial_program_baseline.state.framework_reviews).forEach((config, i) => {
       config.due_date = date(-580 + i);
     });
-    ['Identity and productivity tenant', 'Managed endpoint fleet', 'Backup and recovery platform', org.key === 'sacred' ? 'Clinical records application' : org.key === 'cyberdyne' ? 'Restricted engineering workspace' : 'Core service application', 'Finance and payroll application', 'Security monitoring platform'].forEach((name, i) => db.assets.push({
+    ['Identity and productivity tenant', 'Managed endpoint fleet', 'Backup and recovery platform', 'Core service application', 'Finance and payroll application', 'Security monitoring platform'].forEach((name, i) => db.assets.push({
       ...meta,
       asset_id: cid + '_asset_' + i,
       name,
@@ -212,9 +242,40 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       location: i === 1 ? 'Managed sites' : 'US hosted boundary',
       status: 'active',
       owner_id: users[i % 3],
-      description: 'Synthetic inventory. ' + (org.key === 'cyberdyne' ? 'Restricted engineering/CUI context; formal CMMC asset categorization is not implemented.' : org.frameworks.includes('hipaa') && i === 3 ? 'ePHI application boundary.' : 'In the defined organizational service scope.')
+      description: 'Synthetic inventory. ' + (org.frameworks.includes('hipaa') && i === 3 ? 'ePHI application boundary.' : 'In the defined organizational service scope.')
     }));
-    ['Recovery testing has not validated application dependencies', 'Cloud administrative permissions exceed least-privilege requirements', 'Supplier recovery concentration remains within accepted tolerance', 'Legacy unsupported endpoints were removed from production'].forEach((title, i) => db.risks.push(assessedRisk({
+    if (program?.risks) program.risks.forEach((r, i) => db.risks.push(assessedRisk({
+      ...meta,
+      risk_id: cid + '_risk_' + i,
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      source_type: 'manual',
+      status: r.status,
+      owner_id: users[r.owner],
+      likelihood_score: r.likelihood,
+      impact_score: r.impact,
+      assessment_rationale: r.description,
+      treatment: r.treatment,
+      treatment_plan: r.plan,
+      // A closed risk is last reviewed no later than its closure.
+      last_reviewed: date(-(r.closure ? Math.max(r.reviewed_ago, r.closure.ago) : r.reviewed_ago)),
+      next_review: r.next_in == null || r.closure ? null : date(withinCadence(r.next_in, 'quarterly')),
+      review_cadence: 'quarterly',
+      ...(r.acceptance ? {
+        acceptance_rationale: r.acceptance.rationale + ' Recorded by the provider GRC lead.',
+        accepted_by: lead,
+        acceptance_date: date(-r.acceptance.ago),
+        acceptance_expires_at: date(r.acceptance.expires_in)
+      } : {}),
+      ...(r.closure ? {
+        closed_at: date(-r.closure.ago),
+        closed_by: lead,
+        closure_reason: r.closure.reason,
+        closure_rationale: r.closure.rationale
+      } : {})
+    })));
+    else ['Recovery testing has not validated application dependencies', 'Cloud administrative permissions exceed least-privilege requirements', 'Supplier recovery concentration remains within accepted tolerance', 'Legacy unsupported endpoints were removed from production'].forEach((title, i) => db.risks.push(assessedRisk({
       ...meta,
       risk_id: cid + '_risk_' + i,
       title,
@@ -232,19 +293,45 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       next_review: i === 3 ? null : date(withinCadence(65 + i * 20, 'quarterly')),
       review_cadence: 'quarterly',
       ...(i === 2 ? {
-        acceptance_rationale: 'Time-limited acceptance with quarterly monitoring; alternative provider evaluated.',
-        accepted_by: users[1],
+        acceptance_rationale: 'Time-limited acceptance approved by the executive sponsor, with quarterly monitoring; alternative provider evaluated. Recorded by the provider GRC lead.',
+        accepted_by: lead,
         acceptance_date: date(-45),
         acceptance_expires_at: date(140)
       } : {}),
       ...(i === 3 ? {
         closed_at: date(-80),
-        closed_by: owner,
+        closed_by: lead,
         closure_reason: 'remediated',
         closure_rationale: 'Asset retirement verified and exposure removed.'
       } : {})
     })));
-    for (let i = 0; i < 3; i++) db.vendors.push({
+    if (program?.vendors) program.vendors.forEach((v, i) => db.vendors.push({
+      ...meta,
+      vendor_id: cid + '_vendor_' + i,
+      name: v.name,
+      services: v.services,
+      criticality: v.criticality,
+      status: 'active',
+      business_owner_id: users[v.owner],
+      owner_id: users[v.owner],
+      data_types: v.data_types,
+      last_review: date(-v.last_review_ago),
+      next_review: date(v.next_review_in),
+      review_frequency: 'annual',
+      contract_renewal: date(v.renewal_in),
+      contract_lead_days: 30,
+      assurance_required: true,
+      assurance_records: [{
+        assurance_id: cid + '_assurance_' + i,
+        type: v.assurance.type,
+        required: true,
+        received_at: date(-v.assurance.received_ago),
+        refresh_due: date(v.assurance.refresh_in),
+        evidence_ids: []
+      }],
+      notes: v.notes
+    }));
+    else for (let i = 0; i < 3; i++) db.vendors.push({
       ...meta,
       vendor_id: cid + '_vendor_' + i,
       name: ['Sentinel Recovery Services', 'Northstar Payroll', 'Harbor Collaboration Services'][i],
@@ -255,7 +342,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       owner_id: users[i],
       data_types: i === 1 ? ['Employee Data', 'Financial'] : ['Confidential'],
       last_review: date(-200),
-      next_review: date(i === 0 ? org.key === 'cyberdyne' ? -6 : 18 : 140 + i * 20),
+      next_review: date(i === 0 ? 18 : 140 + i * 20),
       review_frequency: 'annual',
       contract_renewal: date(i === 1 ? 55 : 180 + i * 30),
       contract_lead_days: 30,
@@ -265,7 +352,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         type: 'Security Questionnaire',
         required: true,
         received_at: date(-250),
-        refresh_due: date(i === 0 ? org.key === 'cyberdyne' ? -6 : 18 : 115 + i * 20),
+        refresh_due: date(i === 0 ? 18 : 115 + i * 20),
         evidence_ids: []
       }],
       notes: 'Fictional provider. ' + (org.frameworks.includes('hipaa') && i === 0 ? 'Business Associate oversight and agreement review recorded as program context.' : 'Assurance reviewed by internal relationship owner.')
@@ -273,7 +360,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
     db.assessments.push({
       ...meta,
       assessment_id: cid + '_annual_assessment',
-      name: org.key === 'sacred' ? 'Security Risk Analysis' : org.key === 'cyberdyne' ? 'Engineering Boundary Readiness Review' : 'Annual Program Assessment',
+      name: 'Annual Program Assessment',
       date: date(-45),
       status: 'completed',
       summary: 'Synthetic Year-2 scope, operating evidence and residual risk review. Follow-up remains in authoritative Risks and Action Items.'
