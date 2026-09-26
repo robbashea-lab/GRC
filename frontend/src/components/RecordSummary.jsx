@@ -1,7 +1,6 @@
 import { personLabel } from '@/lib/people';
 import {AlertTriangle,Clock3,UserX,CheckCircle2} from 'lucide-react';
-import {useAuth} from '@/context/AuthContext';
-import {isBrawndoReference} from '@/lib/reference';
+import {operatorProgram} from '@/lib/frameworkOperator';
 import StatusBadge from './StatusBadge';
 import {assessedRisk} from '@/lib/grcWork';
 import {actionStatus} from '@/lib/actionItems';
@@ -36,7 +35,7 @@ export function summarize(kind,r,{related={},users=[],today=new Date().toISOStri
   if(kind==='reviews'){
     facts.push({label:'Status',badge:reviewStatus(r,today)});owner('Owner',r.owner_id);due('Due',r.due_date,'Review is overdue');
     facts.push({label:'Cadence',value:reviewDisplayValue('recurrence',r.recurrence)||'One-time'});
-    if(r.framework_key)facts.push({label:'Program',value:`${r.framework_key==='cis-ig1'?'CIS IG1':r.framework_key.toUpperCase()}${r.framework_safeguards?.length?` · ${r.framework_safeguards.join(', ')}`:''}`});
+    if(r.framework_key)facts.push({label:'Program',value:`${operatorProgram(r.framework_key)}${r.framework_safeguards?.length?` · ${r.framework_safeguards.join(', ')}`:''}`});
     const last=(r.occurrences||[]).map(o=>day(o.completed_at)).filter(Boolean).sort().at(-1);facts.push({label:'Last completed',value:dateText(last)||'No completed occurrence'});
     const f=open(related.findings);if(f.length)attention.push({tone:'moderate',Icon:AlertTriangle,text:`${f.length} open Finding${f.length===1?'':'s'} from this Review`});
   }else if(kind==='findings'){
@@ -71,9 +70,8 @@ export function summarize(kind,r,{related={},users=[],today=new Date().toISOStri
   return {facts,attention};
 }
 
-export default function RecordSummary({kind,record,clientId,related,users}){
-  const {user}=useAuth()||{};
-  if(!record||!isBrawndoReference(clientId,user))return null;
+export default function RecordSummary({kind,record,related,users}){
+  if(!record)return null;
   const s=summarize(kind,record,{related,users});
   if(!s)return null;
   return <section className="record-summary" aria-label="Record summary">

@@ -44,7 +44,7 @@ export default function RequirementBasis({kind,record,related={},onOpen,loading=
         <div className="font-medium">{assessment&&onOpen?<button className="text-link underline text-left" onClick={()=>onOpen({kind:'framework_assessments',record:assessment})}>{d.id} · {d.title}</button>:`${d.id} · ${d.title}`}</div>
         <p className="text-xs text-ink-secondary">Requirement classification: {classification}{assessment?.soa_applicability?` · SoA: ${assessment.soa_applicability}`:''}{assessment?.status==='not_applicable'?' · Assessed Not Applicable':''}</p>
         {d.specification==='addressable'&&<p className="text-xs">Addressable is not optional; the assessment records the scoped decision and rationale.</p>}
-        <p className="text-xs"><SourceReference url={d.source}>{d.source_organization||group.label} · {d.id}</SourceReference>{d.verified_on&&` · Catalog verified ${d.verified_on}`}</p>
+        <p className="text-xs"><SourceReference url={d.source}>{d.source_organization||group.label} · {d.id}</SourceReference>{d.verified_on&&` · Catalog researched ${d.verified_on}`}</p>
       </li>)}</ul>
     </details>)}
     {kind==='reviews'&&<div className="border-t border-line pt-3 space-y-2"><h4 className="font-medium">Cadence · {cadence.current}</h4><p className="text-xs text-ink-secondary">{cadence.classification}</p>{cadence.rationale&&<p>{cadence.rationale}</p>}

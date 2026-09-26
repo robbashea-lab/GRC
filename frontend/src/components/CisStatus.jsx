@@ -5,8 +5,8 @@ export const CIS_ORDER=['addressed','in_progress','needs_attention','not_assesse
 export const CIS_TONE={addressed:'success',in_progress:'moderate',needs_attention:'critical',not_assessed:'neutral',not_applicable:'info'};
 export const cisLabel=status=>operatorStatuses('cis-ig1')[status]||'Not Assessed';
 
-export function CisStatusPill({status}){
-  return <span className={`cis-pill cis-tone-${CIS_TONE[status]||'neutral'}`}><span className="cis-dot" aria-hidden="true"/>{cisLabel(status)}</span>;
+export function CisStatusPill({status,framework='cis-ig1'}){
+  return <span className={`cis-pill cis-tone-${CIS_TONE[status]||'neutral'}`}><span className="cis-dot" aria-hidden="true"/>{operatorStatuses(framework)[status]||'Not Assessed'}</span>;
 }
 
 export const statusCounts=rows=>Object.fromEntries(CIS_ORDER.map(s=>[s,rows.filter(r=>r.status===s).length]));

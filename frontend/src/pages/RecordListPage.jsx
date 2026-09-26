@@ -18,11 +18,14 @@ import PageHeader from "@/components/PageHeader";
 import RegisterSignalBar from "@/components/RegisterSignalBar";
 import ContactCoverage from "@/components/ContactCoverage";
 import { registerSignals } from "@/lib/registerSignals";
-import { isBrawndoReference } from "@/lib/reference";
 import { frameworkCatalog } from "@/lib/frameworks";
 
-// Catalog-owned policy → safeguard mappings (reference workspace shows CIS relevance).
-const policySupports = row => { const ids = [...new Set((frameworkCatalog("cis-ig1")?.policy_mappings || []).filter(m => m.policy_key === row.baseline_key).flatMap(m => m.safeguards))]; return ids.length ? (ids.length > 4 ? `${ids.slice(0, 4).join(", ")} +${ids.length - 4}` : ids.join(", ")) : ""; };
+// Catalog-owned policy → requirement mappings for each program this client runs.
+const SHORT = { 'cis-ig1': 'CIS', 'iso-27001': 'ISO 27001', 'soc-2': 'SOC 2', hipaa: 'HIPAA', 'nist-csf-2': 'CSF' };
+const policySupports = (row, programs) => programs.map(key => {
+  const ids = [...new Set((frameworkCatalog(key)?.policy_mappings || []).filter(m => m.policy_key === row.baseline_key).flatMap(m => m.safeguards))];
+  return ids.length ? `${SHORT[key] || key} ${ids.length > 4 ? `${ids.slice(0, 4).join(", ")} +${ids.length - 4}` : ids.join(", ")}` : "";
+}).filter(Boolean).join(" · ");
 import PolicyPendingDecisions from '@/components/PolicyPendingDecisions';
 import StatusBadge from "@/components/StatusBadge";
 import RecordDrawer from "@/components/RecordDrawer";
@@ -132,8 +135,16 @@ export default function RecordListPage({ kind }) {
   // URL-backed filter/sort state so back-nav restores what the user had.
   const q = params.get("q") || "";
   const statusFilter = params.get("status") || DEFAULT_STATUS[kind] || "all";
-  const reference = isBrawndoReference(currentClientId, user);
-  const signals = useMemo(() => reference ? registerSignals(kind) : [], [reference, kind]);
+  const signals = useMemo(() => registerSignals(kind), [kind]);
+  const [programs, setPrograms] = useState([]);
+  useEffect(() => {
+    if (kind !== 'policies' || !currentClientId) { setPrograms([]); return undefined; }
+    const controller = new AbortController();
+    api.get('/frameworks/summary', { params: { client_id: currentClientId }, signal: controller.signal })
+      .then(({ data }) => { if (!controller.signal.aborted && data.client_id === currentClientId) setPrograms((data.items || []).filter(p => p.tracking_available).map(p => p.key)); })
+      .catch(() => { if (!controller.signal.aborted) setPrograms([]); });
+    return () => controller.abort();
+  }, [kind, currentClientId]);
   const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
   const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
@@ -424,7 +435,7 @@ export default function RecordListPage({ kind }) {
         }
       />
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
-      {kind === "contacts" && isBrawndoReference(currentClientId, user) && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
+      {kind === "contacts" && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
       {signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
       <div className="sticky top-0 z-20 register-toolbar">
         <div className="register-search relative">
@@ -622,7 +633,7 @@ export default function RecordListPage({ kind }) {
                            {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
-                             : c.primary && kind === "policies" && signals.length && policySupports(row) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports CIS {policySupports(row)}</span></span>
+                             : c.primary && kind === "policies" && policySupports(row, programs) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports {policySupports(row, programs)}</span></span>
                              : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
                              : <span>{row[c.key] ? optionLabel(schema, c.key, row[c.key]) : <span className="text-ink-help">—</span>}</span>}
                            {c.primary && kind === "findings" && row.risk_id && (

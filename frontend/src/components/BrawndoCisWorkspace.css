@@ -107,3 +107,5 @@
   .cis-results td:first-child { grid-column: 1 / -1; }
   .cis-results td[data-label]::before { content: attr(data-label); display: block; font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 3px; }
 }
+/* Framework-native context inside the workspace summary (SOC period, ISO clauses and SoA). */
+.program-context { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border); display: grid; gap: 4px; }
