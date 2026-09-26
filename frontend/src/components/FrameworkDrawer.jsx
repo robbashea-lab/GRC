@@ -1,4 +1,5 @@
 import {readEvidenceFile as readFile} from '@/lib/evidenceFile';
+import { personLabel } from '@/lib/people';
 import {useEffect,useState} from 'react';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
@@ -61,7 +62,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   },[contextLoaded,clientId,aid,tab,link.kind,reviewDraft,revision]);
   async function run(fn){setBusy(true);setError('');try{await fn();setRevision(n=>n+1);onSaved?.();return true;}catch(e){setError(formatError(e));return false;}finally{setBusy(false);}}
   const put=(key,value)=>{setFeedback('');setForm(p=>({...p,[key]:value}));};
-  const who=id=>ctx?.users.find(u=>u.user_id===id)?.name||(id?'Former / unavailable user':'Not recorded');
+  const who=id=>personLabel(ctx?.users,id,'Not recorded');
   async function save(){return run(async()=>{const body=Object.fromEntries(['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isSoc?['management_controls']:[]),...(isCsf?['csf_profile']:[])].map(k=>[k,form[k]??(k==='csf_profile'?EMPTY_CSF_PROFILE:k==='management_controls'?[]:k.endsWith('_id')?null:'')]));const {data}=await api.patch(`/framework_assessments/${aid}`,{...body,expected_last_assessed:savedForm.last_assessed??null});setForm(data);setSavedForm(data);setFeedback('Assessment saved.');});}
   async function download(e){await run(async()=>{const {data}=await api.get(`/evidence/${e.evidence_id}/download`);const a=document.createElement('a');a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type};base64,${data.content_base64}`;a.download=data.filename;a.click();});}
   const current=ctx?.current||record,related=ctx?.related||{};

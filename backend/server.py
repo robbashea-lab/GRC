@@ -1563,39 +1563,48 @@ async def eligible_assignees(client_id: str, search: str = Query("", max_length=
         raise HTTPException(403, "Forbidden")
     if not await db.clients.find_one({"client_id": client_id}, {"_id": 1}):
         raise HTTPException(404, "Client not found")
-    return await assignment_eligibility.candidates(db, client_id, search, offset, limit)
+    return await assignment_eligibility.candidates(db, client_id, search, offset, limit, caller=user)
+
+
+# Top-level actor fields that name a person on a client record. Assignment fields come
+# from assignment_eligibility.FIELDS; nested histories keep their own name snapshots.
+MEMBER_ACTOR_FIELDS = ("accepted_by", "closed_by", "validated_by", "verified_by", "approved_by", "completed_by")
+
+
+def _member_summary(account, actor):
+    """Client roles need a label and account state for display, nothing more."""
+    if authorization.role_of(actor) in authorization.CLIENT_ROLES:
+        row = {"user_id": account["user_id"], "name": account.get("name") or "Former user", "status": account.get("status") or "active"}
+        if account.get("orphaned"):
+            row["orphaned"] = True
+        return row
+    return _account_summary(account, actor)
 
 
 @api.get("/clients/{client_id}/members")
 async def client_members(client_id: str, user: Dict = Depends(get_current_user)):
-    """Users associated with the tenant. Client users see only their client members; internal admins additionally see 'orphaned' users who still own records but are not formal members."""
+    """People associated with the tenant: formal members plus 'orphaned' accounts that still own
+    or acted on this client's records. Admins get the account summary; client roles get only
+    user_id, name and status so names resolve without exposing contact or login details."""
     if not _can_access_client(user, client_id):
         raise HTTPException(403, "Forbidden")
-    members = await db.users.find({"client_ids": client_id}, {"_id": 0, "password_hash": 0}).to_list(1000)
+    members = await db.users.find({"client_ids": client_id}, {"_id": 0, "password_hash": 0}).to_list(None)
     known_ids = {u["user_id"] for u in members}
-    if user.get("role") in ("super_admin", "platform_admin"):
-        owner_ids: set = set()
-        for coll, assignment_fields in assignment_eligibility.FIELDS.items():
-            for field in (*assignment_fields, *(("owner_id",) if coll == "tasks" else ())):
-                docs = await db[coll].find(
-                    {"client_id": client_id, field: {"$nin": [None, ""]}},
-                    {field: 1, "_id": 0},
-                ).to_list(20000)
-                for d in docs:
-                    v = d.get(field)
-                    if v:
-                        owner_ids.add(v)
-        orphan_ids = owner_ids - known_ids
-        if orphan_ids:
-            orphans = await db.users.find(
-                {"user_id": {"$in": list(orphan_ids)}},
-                {"_id": 0, "password_hash": 0},
-            ).to_list(500)
-            for u in orphans:
-                u["orphaned"] = True
-            members.extend(orphans)
+    referenced: set = set()
+    for coll, assignment_fields in assignment_eligibility.FIELDS.items():
+        for field in (*assignment_fields, *(("owner_id",) if coll == "tasks" else ()), *MEMBER_ACTOR_FIELDS):
+            referenced.update(v for v in await db[coll].distinct(field, {"client_id": client_id}) if isinstance(v, str) and v)
+    orphan_ids = referenced - known_ids
+    if orphan_ids:
+        orphans = await db.users.find(
+            {"user_id": {"$in": sorted(orphan_ids)}},
+            {"_id": 0, "password_hash": 0},
+        ).to_list(None)
+        for u in orphans:
+            u["orphaned"] = True
+        members.extend(orphans)
     members.sort(key=lambda u: (u.get("name") or u.get("email") or "").lower())
-    return [_account_summary(member, user) for member in members]
+    return [_member_summary(member, user) for member in members]
 
 # ---------------- Generic list/create/update/delete factory ----------------
 ENTITY_MAP = {

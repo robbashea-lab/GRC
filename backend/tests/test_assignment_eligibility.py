@@ -29,7 +29,9 @@ class AssignmentEligibilityTests(unittest.IsolatedAsyncioTestCase):
             for uid, role, clients, status in users
         ])
         await server.db.contacts.insert_one({'contact_id': 'maya', 'client_id': 'a', 'name': 'Maya Chen', 'status': 'active'})
-        self.sign_in('member')
+        # The full candidate contract is what an administrator may assign; client roles see
+        # narrower lists (test_people_visibility.test_assignee_candidates_follow_what_each_role_may_assign).
+        self.sign_in('admin')
 
     async def test_candidates_authorized_minimal_and_same_name_isolated(self):
         response = await self.client.get('/api/clients/a/assignees')
@@ -38,6 +40,7 @@ class AssignmentEligibilityTests(unittest.IsolatedAsyncioTestCase):
         for row in response.json()['items']:
             self.assertEqual(set(row), {'user_id', 'name', 'email'})
         self.assertFalse(response.json()['has_more'])
+        self.sign_in('member')
         self.assertEqual((await self.client.get('/api/clients/b/assignees')).status_code, 403)
         self.client.headers.clear()
         self.assertIn((await self.client.get('/api/clients/a/assignees')).status_code, (401, 403))

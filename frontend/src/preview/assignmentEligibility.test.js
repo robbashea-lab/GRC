@@ -36,3 +36,12 @@ test('legacy Action attribution and intentional business/approval exceptions sur
   expect(assignmentFields.policies).not.toContain('approver_id');
   expect(assignmentFields.contacts).toBeUndefined();
 });
+
+test('candidates offered to a caller are only the people that caller may assign', () => {
+  const d = db();
+  const idsFor = caller => assignmentCandidates(d, 'a', {}, caller).items.map(u => u.user_id).sort();
+  expect(idsFor(account('ro', 'client_readonly', ['a']))).toEqual([]);
+  expect(idsFor(account('alex', 'client_contributor', ['a']))).toEqual(['alex']);
+  expect(idsFor(account('mgr', 'client_grc_manager', ['a']))).toEqual(['alex']);
+  expect(idsFor(account('super', 'super_admin', []))).toEqual(['alex', 'internal', 'super']);
+});

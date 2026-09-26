@@ -1,3 +1,4 @@
+import { personLabel } from '@/lib/people';
 import {AlertTriangle,Clock3,UserX,CheckCircle2} from 'lucide-react';
 import {useAuth} from '@/context/AuthContext';
 import {isBrawndoReference} from '@/lib/reference';
@@ -26,7 +27,7 @@ function dueText(v,today,closed){
 }
 
 export function summarize(kind,r,{related={},users=[],today=new Date().toISOString().slice(0,10)}={}){
-  const who=id=>id?(users.find(u=>u.user_id===id)?.name||'Assigned user'):null;
+  const who=id=>id?personLabel(users,id):null;
   const closed=closedStatus(r.status);
   const facts=[],attention=[];
   const owner=(label,id)=>{const note=!closed&&ownerAccountNote(users,id,r.status);facts.push({label,value:note?`${who(id)} · ${note}`:who(id)||'Unassigned',tone:id&&!note?'':'moderate'});if(!id&&!closed)attention.push({tone:'moderate',Icon:UserX,text:'No accountable owner assigned'});if(note)attention.push({tone:'moderate',Icon:UserX,text:'Owner account is disabled; reassign active work'});};

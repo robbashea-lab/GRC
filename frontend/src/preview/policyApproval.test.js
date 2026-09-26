@@ -19,11 +19,12 @@ test('linked business identity is distinct from narrow explicit authority',async
   expect((await api.get('/policies/p/approval-context')).data).toMatchObject({can_decide:false,linked_account:{eligible:true}});
   await expect(authority('executive')).rejects.toBeTruthy();
   actor(admin);await authority('executive');const decision=await submit();actor('executive');
-  expect((await api.get('/policies/pending-decisions',{params:{client_id:cid}})).data).toHaveLength(1);
-  await expect(api.patch('/policies/p',{title:'Unauthorized edit'})).rejects.toBeTruthy();
-  const approved=(await api.post('/policies/p/approve',decision)).data;
-  expect(approved.approver_id).toBe('historical');expect(approved.approval_history.at(-1).authority).toBe('delegated_policy');
-  await expect(api.post('/policies/p/approve',decision)).rejects.toBeTruthy();
+  // Same contract as backend test_delegated_readonly_decision_does_not_grant_write_and_preserves_designation.
+  expect((await api.get('/policies/pending-decisions',{params:{client_id:cid}})).data).toEqual([]);
+  await expect(api.patch('/policies/p',{title:'Unauthorized edit'})).rejects.toMatchObject({response:{status:403}});
+  await expect(api.post('/policies/p/approve',decision)).rejects.toMatchObject({response:{status:403}});
+  const unchanged=readStore().policies.find(p=>p.policy_id==='p');
+  expect(unchanged).toMatchObject({status:'in_review',approver_id:'historical',approval_account_id:'executive'});
 });
 test('cross-client disabled contact and forged authority denied',async()=>{
   for(const id of ['foreign','disabled','business'])await expect(authority(id)).rejects.toBeTruthy();

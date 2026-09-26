@@ -1,4 +1,5 @@
 import {useRef,useState} from 'react';
+import { personLabel } from '@/lib/people';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
 import {Input} from './ui/input';
@@ -48,7 +49,7 @@ export default function BrawndoCisAssessment({state,actions}){
   const availableEvidence=ctx?.options.evidence?.filter(e=>!related.evidence?.some(r=>r.evidence_id===e.evidence_id));
   const matchingEvidence=availableEvidence?.filter(e=>`${e.display_name||''} ${e.filename} ${e.evidence_type||''}`.toLowerCase().includes(evidenceSearch.trim().toLowerCase()));
   const evidenceLabel=e=>e.display_name||e.filename;
-  const who=id=>ctx?.users.find(u=>u.user_id===id)?.name||(id?'Former / unavailable user':'Unassigned');
+  const who=id=>personLabel(ctx?.users,id);
   const records=(kind,rows=[])=>rows.map(r=><li key={r[RECORD_IDS[kind]]} className="brawndo-linked-row">
     <button type="button" className="text-link text-left" disabled={busy} onClick={()=>setNested({kind,record:r})}>{r.title||r.name}</button>
     {kind==='tasks'?<span className="text-xs text-ink-secondary">{actionStatus(r.status)}</span>:<StatusBadge value={r.status}/>}

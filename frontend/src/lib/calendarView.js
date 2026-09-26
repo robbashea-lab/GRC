@@ -1,4 +1,5 @@
 import rules from './grcRules.json';
+import {isInternal,isAssignedTo} from './permissions';
 import {occurrenceId,reviewView} from './reviewOccurrences';
 import {actionStatus} from './actionItems';
 import {calendarDay} from './tableFilters';
@@ -6,8 +7,11 @@ import {calendarDay} from './tableFilters';
 export const CALENDAR_SCOPES=[['active','Active'],['history','Completed / Closed'],['all','All']];
 export const calendarTerminal=(kind,row)=>rules.closed[kind+'s']?.includes(row.status);
 export function canMoveCalendar(kind,row,user) {
-  const admin=['super_admin','platform_admin'].includes(user?.role);
-  return (admin||user?.role==='client_contributor')&&!calendarTerminal(kind,row)&&(kind!=='review'||admin&&row.vendor_purpose!=='contract');
+  // Server field allowlist: client roles may move Action Item due dates only, contributors only on their own.
+  if(calendarTerminal(kind,row))return false;
+  if(isInternal(user))return kind!=='review'||row.vendor_purpose!=='contract';
+  if(kind!=='task')return false;
+  return user?.role==='client_grc_manager'||(user?.role==='client_contributor'&&isAssignedTo(user,row));
 }
 export function calendarItem(row,kind,user,historical=false) {
   const source=kind==='review'?reviewView(row):row;

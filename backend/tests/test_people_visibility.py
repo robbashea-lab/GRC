@@ -53,3 +53,42 @@ class PeopleVisibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(created.status_code, 200, created.text)
         self.assertFalse(created.json().get('linked_user_id'))
         self.assertEqual(await server.db.users.find({}).to_list(None), before)
+
+    async def test_client_roles_get_names_and_status_only_including_former_owners(self):
+        await server.db.users.insert_many([
+            {'user_id': 'alex', 'name': 'Alex Morgan', 'email': 'alex@example.test', 'client_ids': ['a'], 'role': 'client_contributor', 'status': 'active', 'last_login_at': '2026-09-01T00:00:00Z'},
+            {'user_id': 'gone', 'name': 'Departed Lead', 'email': 'gone@example.test', 'client_ids': [], 'role': 'client_contributor', 'status': 'disabled'},
+            {'user_id': 'owner2', 'name': 'Provider Owner', 'email': 'po@example.test', 'client_ids': [], 'role': 'super_admin', 'status': 'active'},
+            {'user_id': 'unrelated', 'name': 'Unrelated', 'email': 'u@example.test', 'client_ids': ['b'], 'role': 'client_contributor', 'status': 'active'},
+        ])
+        await server.db.findings.insert_one({'finding_id': 'f1', 'client_id': 'a', 'owner_id': 'gone', 'title': 'Old'})
+        await server.db.risks.insert_one({'risk_id': 'r1', 'client_id': 'a', 'owner_id': 'alex', 'accepted_by': 'owner2', 'title': 'Accepted'})
+        await server.db.findings.insert_one({'finding_id': 'f2', 'client_id': 'b', 'owner_id': 'unrelated', 'title': 'Other client'})
+        self.sign_in('member')
+        rows = (await self.client.get('/api/clients/a/members')).json()
+        people = {u['user_id']: u for u in rows}
+        self.assertEqual(set(people), {'admin', 'alex', 'member', 'gone', 'owner2'})
+        for row in rows:
+            self.assertLessEqual(set(row), {'user_id', 'name', 'status', 'orphaned'}, row)
+        self.assertEqual(people['gone'], {'user_id': 'gone', 'name': 'Departed Lead', 'status': 'disabled', 'orphaned': True})
+        self.assertTrue(people['owner2']['orphaned'])
+        self.sign_in('admin')
+        admin_rows = {u['user_id']: u for u in (await self.client.get('/api/clients/a/members')).json()}
+        self.assertEqual(admin_rows['alex']['email'], 'alex@example.test')
+        self.assertIn('last_login_at', admin_rows['alex'])
+
+    async def test_assignee_candidates_follow_what_each_role_may_assign(self):
+        await server.db.users.insert_many([
+            {'user_id': 'mgr', 'name': 'Manager', 'client_ids': ['a'], 'role': 'client_grc_manager', 'status': 'active'},
+            {'user_id': 'ro', 'name': 'Reader', 'client_ids': ['a'], 'role': 'client_readonly', 'status': 'active'},
+            {'user_id': 'prov', 'name': 'Provider', 'client_ids': ['a'], 'role': 'platform_admin', 'status': 'active'},
+        ])
+        ids = lambda r: {u['user_id'] for u in r.json()['items']}
+        self.sign_in('ro')
+        self.assertEqual(ids(await self.client.get('/api/clients/a/assignees')), set())
+        self.sign_in('member')
+        self.assertEqual(ids(await self.client.get('/api/clients/a/assignees')), {'member'})
+        self.sign_in('mgr')
+        self.assertEqual(ids(await self.client.get('/api/clients/a/assignees')), {'member', 'mgr', 'ro'})
+        self.sign_in('admin')
+        self.assertEqual(ids(await self.client.get('/api/clients/a/assignees')), {'member', 'mgr', 'ro', 'prov', 'admin'})

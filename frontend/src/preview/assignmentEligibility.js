@@ -16,12 +16,19 @@ export function validateAssignment(db, kind, row, previous) {
     if (!eligible(db.users.find(u => u.user_id === value), row.client_id)) throw new Error('Choose an active platform user with access to this client');
   }
 }
-export function assignmentCandidates(db, cid, params = {}) {
+export function assignmentCandidates(db, cid, params = {}, caller = null) {
   if (!clientAccess(db.user, cid)) throw new Error('Forbidden for this client');
   const search = String(params.search || '').trim().toLowerCase();
   const offset = Number(params.offset || 0), limit = Number(params.limit || 50);
   if (search.length > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error('Invalid candidate query');
-  const rows = db.users.filter(u => eligible(u, cid) && [u.name, u.email].some(v => (v || '').toLowerCase().includes(search)))
+  // Mirrors backend candidates(caller=...): read-only assigns nobody, contributors only
+  // themselves, managers only client users of this client.
+  const role = caller?.role;
+  if (role === 'client_readonly') return { items: [], has_more: false };
+  const clientRole = r => ['client_grc_manager', 'client_contributor', 'client_readonly'].includes(r);
+  const allowed = u => role === 'client_contributor' ? u.user_id === caller.user_id
+    : role === 'client_grc_manager' ? clientRole(u.role) && !!u.client_ids?.includes(cid) : true;
+  const rows = db.users.filter(u => eligible(u, cid) && allowed(u) && [u.name, u.email].some(v => (v || '').toLowerCase().includes(search)))
     .sort((a, b) => (a.name || '').localeCompare(b.name || '') || a.user_id.localeCompare(b.user_id));
   return { items: rows.slice(offset, offset + limit).map(({user_id, name, email}) => ({user_id, name, email})), has_more: rows.length > offset + limit };
 }

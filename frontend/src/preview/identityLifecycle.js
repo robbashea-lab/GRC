@@ -6,6 +6,7 @@ import cis from '@/lib/cisIG1.json';
 
 const clientRoles = ['client_grc_manager', 'client_contributor', 'client_readonly'];
 const roles = ['super_admin', 'platform_admin', ...clientRoles];
+const memberActorFields = ['accepted_by', 'closed_by', 'validated_by', 'verified_by', 'approved_by', 'completed_by'];
 const admin = (db, cid) => {
   if (!['super_admin', 'platform_admin'].includes(db.user.role) || cid && !clientAccess(db.user, cid)) throw new Error('Not authorized to manage accounts for this client');
 };
@@ -40,17 +41,20 @@ export function identityRequest(db, path, method, params, body) {
   if (kind === 'clients' && action === 'members' && method === 'get') {
     if (!clientAccess(db.user, id)) throw new Error('Forbidden for this client');
     record(db, 'clients', id);
-    const historicalOwners = new Set();
-    if (['super_admin', 'platform_admin'].includes(db.user.role)) {
-      for (const [type, fields] of Object.entries(assignmentFields)) for (const row of db[type] || []) {
-        if (row.client_id === id) for (const field of [...fields, ...(type === 'tasks' ? ['owner_id'] : [])]) if (row[field]) historicalOwners.add(row[field]);
-      }
+    // Mirrors backend client_members: members plus accounts still referenced by this client's records.
+    const referenced = new Set();
+    for (const [type, fields] of Object.entries(assignmentFields)) for (const row of db[type] || []) {
+      if (row.client_id === id) for (const field of [...fields, ...(type === 'tasks' ? ['owner_id'] : []), ...memberActorFields]) if (typeof row[field] === 'string' && row[field]) referenced.add(row[field]);
     }
-    return db.users.filter(u => u.role === 'super_admin' || u.client_ids?.includes(id) || historicalOwners.has(u.user_id)).map(u => ({
-      user_id: u.user_id, name: u.name, email: u.email, status: u.status, role: u.role,
-      client_ids: (u.client_ids || []).filter(cid => clientAccess(db.user, cid)),
-      ...(!clientAccess(u, id) ? {orphaned: true} : {}),
-    }));
+    const minimal = clientRoles.includes(db.user.role);
+    return db.users.filter(u => u.client_ids?.includes(id) || referenced.has(u.user_id))
+      .sort((a, b) => (a.name || a.email || '').toLowerCase().localeCompare((b.name || b.email || '').toLowerCase()))
+      .map(u => {
+        const orphaned = !u.client_ids?.includes(id);
+        if (minimal) return { user_id: u.user_id, name: u.name || 'Former user', status: u.status || 'active', ...(orphaned ? {orphaned: true} : {}) };
+        return { user_id: u.user_id, name: u.name, email: u.email, status: u.status, role: u.role,
+          client_ids: (u.client_ids || []).filter(cid => clientAccess(db.user, cid)), ...(orphaned ? {orphaned: true} : {}) };
+      });
   }
   if (kind === 'clients' && action === 'contact-accounts' && method === 'get') {
     if (!clientAccess(db.user, id)) throw new Error('Forbidden for this client');

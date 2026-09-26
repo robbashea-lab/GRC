@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import { isInternal } from '@/lib/permissions';
 import api,{formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
@@ -12,7 +13,7 @@ export default function EvidenceItemDrawer({id,onClose,onOpen,onChanged}){
   const {user}=useAuth(),[refresh,setRefresh]=useState(0),[tab,setTab]=useState('Overview'),[draft,setDraft]=useState(null),[draftVersion,setDraftVersion]=useState(null),[kind,setKind]=useState('findings'),[busy,setBusy]=useState(false),[activityPage,setActivityPage]=useState(1);
   const {data:item,error,loading}=useLibraryRequest(`/evidence-library/items/${encodeURIComponent(id)}`,{},refresh);
   const activity=useLibraryRequest(tab==='Activity'?`/evidence-library/items/${encodeURIComponent(id)}/activity`:null,{page:activityPage},refresh);
-  const canWrite=!item?.archived_at&&['super_admin','platform_admin','client_contributor'].includes(user?.role),canDelete=!item?.archived_at&&['super_admin','platform_admin'].includes(user?.role);
+  const canWrite=!item?.archived_at&&isInternal(user),canDelete=!item?.archived_at&&['super_admin','platform_admin'].includes(user?.role);
   const changed=()=>{setRefresh(v=>v+1);onChanged();};
   async function mutate(fn){setBusy(true);try{await fn();changed();return true;}catch(e){toast.error(formatError(e));return false;}finally{setBusy(false);}}
   async function link(ref,remove=false){await mutate(()=>ref.kind==='framework_assessments'?api.post(`/framework_assessments/${ref.id}/links`,{kind:'evidence',id}):api.post(`/evidence-library/items/${id}/relationships`,{linked_type:ref.kind,linked_id:ref.id,occurrence_id:ref.occurrence_id||null,remove,expected_updated_at:item.updated_at||null}));}

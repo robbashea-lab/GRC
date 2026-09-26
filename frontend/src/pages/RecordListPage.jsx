@@ -12,6 +12,7 @@ import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import { ContactAccessStatus, OwnerAccountNote, useContactAccess } from '@/components/ContactAccess';
 import { contactResponsibilities } from '@/lib/contactAccess';
+import { personLabel, peopleMap, useClientPeople } from '@/lib/people';
 import PageHeader from "@/components/PageHeader";
 import RegisterSignalBar from "@/components/RegisterSignalBar";
 import ContactCoverage from "@/components/ContactCoverage";
@@ -124,7 +125,6 @@ export default function RecordListPage({ kind }) {
   const [params, setParams] = useSearchParams();
 
   const [rows, setRows] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const loadSequence = useRef(0);
   // URL-backed filter/sort state so back-nav restores what the user had.
@@ -178,11 +178,8 @@ export default function RecordListPage({ kind }) {
   const idField = ID_FIELD[kind];
   const ownerField = kind === "tasks" ? "assignee_id" : "owner_id";
   const isReviews = kind === "reviews";
-  const userMap = useMemo(() => {
-    const m = {};
-    users.forEach((u) => { m[u.user_id] = u.name || u.email; });
-    return m;
-  }, [users]);
+  const users = useClientPeople(currentClientId);
+  const userMap = useMemo(() => peopleMap(users), [users]);
 
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
@@ -206,12 +203,6 @@ export default function RecordListPage({ kind }) {
   }, [kind, currentClientId]);
 
   useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setRows([]); load(); return () => { sequence.current++; }; }, [load]);
-  useEffect(() => {
-    (async () => {
-      try { const { data } = await api.get("/users"); setUsers(data); }
-      catch { setUsers([]); }
-    })();
-  }, []);
 
   const statusOptions = useMemo(() => schema.fields.find((x) => x.name === "status")?.options || [], [schema]);
   const filterClient = useRef(currentClientId);
@@ -248,7 +239,7 @@ export default function RecordListPage({ kind }) {
     if (urlFilters.owner) {
       const name = urlFilters.rawOwner === "__me__"
         ? (user?.name || user?.email || "You")
-        : (userMap[urlFilters.owner] || urlFilters.owner);
+        : personLabel(users, urlFilters.owner);
       parts.push(`Owner: ${name}`);
     }
     if (urlFilters.unassigned) parts.push("Unassigned");
@@ -256,7 +247,7 @@ export default function RecordListPage({ kind }) {
     if (urlFilters.status) parts.push(`Status: ${urlFilters.status}`);
     if (urlFilters.setup) parts.push(urlFilters.setup.label);
     return parts.join(" · ");
-  }, [hasUrlFilters, urlFilters, userMap, user]);
+  }, [hasUrlFilters, urlFilters, users, user]);
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const contactAccessContext = useContactAccess(currentClientId, kind === 'contacts', rows);
@@ -612,9 +603,9 @@ export default function RecordListPage({ kind }) {
                       ) :
                        c.user ? (
                          isReviews ? <span className={`register-owner ${row[c.key] ? '' : 'register-owner--unassigned'}`} data-testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined}>
-                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{row[c.key] ? userMap[row[c.key]] || row[c.key] : 'Unassigned'}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
+                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{personLabel(users, row[c.key])}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
                          </span> : row[c.key]
-                           ? <span className="text-ink-secondary">{userMap[row[c.key]] || row[c.key]}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
+                           ? <span className="text-ink-secondary">{personLabel(users, row[c.key])}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
                            : <span
                                className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-xs font-mono uppercase tracking-wider"
                                data-testid={`${kind}-unassigned-${i}`}

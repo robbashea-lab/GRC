@@ -56,7 +56,7 @@ test('saved conclusion does not change until the draft is saved',async()=>{
 test('unavailable historical actors remain distinct from missing attribution',async()=>{
   record.assessment_history=[{status:'in_progress',at:'2026-09-01',by:'former',implementation:'Earlier assessment retained'},{status:'not_assessed',at:'2026-08-01'}];
   await render();await act(async()=>{button('Activity / History').click();});
-  expect(container.textContent).toContain('Former / unavailable user');
+  expect(container.textContent).toContain('Former user');
   expect(container.textContent).toContain('Not recorded');
   expect(container.textContent).toContain('Earlier assessment retained');
   expect(api.patch).not.toHaveBeenCalled();

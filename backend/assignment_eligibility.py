@@ -44,14 +44,24 @@ async def validate(db, kind, row, can_access, previous=None):
             raise HTTPException(422, "Choose an active platform user with access to this client")
 
 
-async def candidates(db, client_id, search="", offset=0, limit=50):
+async def candidates(db, client_id, search="", offset=0, limit=50, caller=None):
+    """Active users the caller may actually assign. Mirrors authorization.authorize_request:
+    read-only users assign nobody, contributors only themselves, managers only client users."""
+    from authorization import ROLES, CLIENT_ROLES, CONTRIBUTOR, MANAGER, READER, role_of
+    role = role_of(caller) if caller else None
+    if role == READER:
+        return {"items": [], "has_more": False}
     # Only Platform Owners have global scope; provider assignments are explicit.
     scope = {"$or": [
         {"client_ids": client_id},
         {"role": "super_admin"},
     ]}
-    from authorization import ROLES
-    query = {"$and": [{"status": "active", "role": {"$in": list(ROLES)}}, scope]}
+    allowed_roles = list(CLIENT_ROLES) if role == MANAGER else list(ROLES)
+    query = {"$and": [{"status": "active", "role": {"$in": allowed_roles}}, scope]}
+    if role == CONTRIBUTOR:
+        query["$and"].append({"user_id": caller.get("user_id")})
+    if role in CLIENT_ROLES:
+        query["$and"].append({"client_ids": client_id})
     if search.strip():
         pattern = {"$regex": re.escape(search.strip()), "$options": "i"}
         query["$and"].append({"$or": [{"name": pattern}, {"email": pattern}]})

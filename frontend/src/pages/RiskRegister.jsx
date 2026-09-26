@@ -1,4 +1,5 @@
 import AssigneeSelect from '@/components/AssigneeSelect';
+import { personLabel } from '@/lib/people';
 import { OwnerAccountNote } from '@/components/ContactAccess';
 import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
@@ -223,7 +224,7 @@ export default function RiskRegister() {
                         <span className={`pill capitalize ${tone}`}>{level}</span>
                       ) : <span className="text-ink-help">—</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-ink-help">—</span>}<OwnerAccountNote users={users} id={r.owner_id} status={r.status} /></td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{r.owner_id ? personLabel(users, r.owner_id) : <span className="text-ink-help">Unassigned</span>}<OwnerAccountNote users={users} id={r.owner_id} status={r.status} /></td>
                     <td className="tbl-cell">
                       <StatusPill className="border-line bg-surface-subtle">
                         {riskStatus(r.status || "open")}

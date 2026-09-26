@@ -1,3 +1,4 @@
+import { personLabel } from '@/lib/people';
 import {BUSINESS_BASIS,CADENCE_BASIS,requirementBasis,cadenceBasis,referenceUrl} from '@/lib/requirementBasis';
 import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
@@ -25,7 +26,7 @@ export default function RequirementBasis({kind,record,related={},onOpen,loading=
     <h3 className="font-semibold">{kind==='policies'?'Governance basis':'Requirement basis'}</h3>
     {loading&&<p role="status">Loading linked requirements…</p>}{error&&<p role="alert">Requirement relationships could not be loaded. {error}</p>}
     {historical&&<p className="text-xs text-ink-secondary">Occurrence context is preserved; linked assessments and catalog references show their current state.</p>}
-    {record.created_at&&<p className="text-xs text-ink-secondary">Created {String(record.created_at).slice(0,10)}{record.created_by? ` · ${users.find(u=>u.user_id===record.created_by)?.name||'Recorded actor: '+record.created_by}`:''}</p>}
+    {record.created_at&&<p className="text-xs text-ink-secondary">Created {String(record.created_at).slice(0,10)}{record.created_by? ` · ${personLabel(users,record.created_by)}`:''}</p>}
     {(record.framework_plan_key||record.baseline_key)&&<p className="text-xs text-ink-secondary">{record.framework_plan_key?'Linked framework plan':'Program baseline relationship'} · association does not establish the original creation method.</p>}
     {kind!=='tasks'&&['review','finding','risk','policy','vendor'].filter(type=>record[type+'_id']&&type+'s'!==kind&&!(type==='policy'&&kind==='policies')).map(type=>{
       const sourceKind=type==='policy'?'policies':type+'s',key=type+'_id',target=(related[sourceKind]||[]).find(r=>r[key]===record[key]&&r.client_id===record.client_id);

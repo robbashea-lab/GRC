@@ -1,4 +1,5 @@
 import catalog from '@/lib/onboardingCatalog.json';
+import { authorizeDemo } from './authorization';
 import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
@@ -86,6 +87,8 @@ export async function previewAdapter(config) {
       const relationKind=evidenceKind(params.entity_type||body.entity_type),relationId=params.entity_id||body.entity_id;
       if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))return fail(403,'Forbidden for this client');}
     }
+    // Role limits mirror the server so persona QA in the Demo sees the same refusals.
+    try { authorizeDemo(db, method, parts, body); } catch (error) { return fail(403, error.message); }
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
@@ -147,7 +150,7 @@ export async function previewAdapter(config) {
       }
       if (kind === 'clients' && name === 'assignees') {
         record(db, 'clients', id);
-        return respond(assignmentCandidates(db, id, params));
+        return respond(assignmentCandidates(db, id, params, db.user));
       }
       if (path === '/dashboard') return respond(dashboard(db, params));
       if (path === '/onboarding/policy-library') return respond(library(db, 'policy', params.client_id));

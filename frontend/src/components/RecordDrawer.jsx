@@ -39,6 +39,8 @@ import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import { ContactAccessDetails } from './ContactAccess';
 import ContactAccountActions from './ContactAccountActions';
 import AssignmentHelp from './AssignmentHelp';
+import { personLabel, useClientPeople } from '@/lib/people';
+import { editableFields } from '@/lib/permissions';
 
 const ID_FIELD = {
   framework_assessments:'framework_assessment_id',
@@ -112,7 +114,10 @@ export default function RecordDrawer(props) {
   return props.kind === "reviews" ? <ReviewDrawer {...props} /> : <EntityDrawer {...props} />;
 }
 
-function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users = [], onSaved, initialValues }) {
+function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users: passedUsers = [], onSaved, initialValues }) {
+  // Callers that already hold the client's people pass them; others (Calendar, deep links) load them here.
+  const loadedPeople = useClientPeople(passedUsers.length ? '' : (record?.client_id || clientId));
+  const users = passedUsers.length ? passedUsers : loadedPeople;
   schema = schema || SCHEMAS[kind]?.fields || [];
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -154,6 +159,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const clientMayWork = user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
     (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id));
   const canWrite = (isPlatformAdmin || clientMayWork && (isEdit || kind === 'tasks')) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
+  const clientFields = editableFields(kind, user, record);
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
   const evidenceKind = kind === "tasks" ? "task" : singular;
   const tabList = TABS_BY_KIND[kind];
@@ -545,10 +551,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const relatedTotal = Object.values(related).reduce((a, b) => a + (b?.length || 0), 0);
   const isPolicy = kind === "policies";
   const status = form.status || record?.status;
-  const userMap = useMemo(() => {
-    const m = {}; users.forEach((u) => { m[u.user_id] = u.name || u.email; }); return m;
-  }, [users]);
-
   const liveScore = (parseInt(form.likelihood_score) || 0) * (parseInt(form.impact_score) || 0);
   const liveLevel = levelFromScore(liveScore || null);
 
@@ -565,8 +567,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       const [k, v] = Object.entries(f.showIf)[0];
       if (form[k] !== v) return null;
     }
+    // Client roles see every field but may change only what the server accepts from them.
+    const locked = !!clientFields && !clientFields.has(f.name);
     return (
-      <div key={f.name} className={`space-y-1.5 min-w-0 ${f.type === "textarea" || ["title", "name", "policy_id"].includes(f.name) ? "record-field-wide" : ""}`}>
+      <fieldset key={f.name} disabled={locked} className={`space-y-1.5 min-w-0 ${f.type === "textarea" || ["title", "name", "policy_id"].includes(f.name) ? "record-field-wide" : ""}`}>
         <Label className="text-xs text-ink-secondary">{f.label}{f.required && <span className="text-semantic-critical ml-0.5">*</span>}</Label>
         {f.type === "textarea" ? (
           <Textarea value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
@@ -594,7 +598,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <Input type={f.type || "text"} value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
         )}
         {f.type === 'user' && f.name === 'approver_id' && <AssignmentHelp policy={kind === 'policies'} />}
-      </div>
+      </fieldset>
     );
   }
   function renderFieldsByNames(names) {
@@ -687,7 +691,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {record?.acceptance_date && (
           <div className="border border-line rounded-md p-3 bg-surface-subtle text-xs space-y-1" data-testid="risk-acceptance-info">
             <div className="text-xs font-mono uppercase tracking-widest text-ink-help">Acceptance</div>
-            <div><span className="text-ink-secondary">Approved by:</span> <span className="text-ink-primary font-medium">{userMap[record.accepted_by] || record.accepted_by || "—"}</span></div>
+            <div><span className="text-ink-secondary">Approved by:</span> <span className="text-ink-primary font-medium">{record.accepted_by ? personLabel(users, record.accepted_by) : "—"}</span></div>
             <div><span className="text-ink-secondary">Accepted on:</span> <span className="font-mono">{displayDay(record.acceptance_date)}</span></div>
             {record.acceptance_expires_at && <div><span className="text-ink-secondary">Expires:</span> <span className="font-mono">{displayDay(record.acceptance_expires_at)}</span></div>}
           </div>
@@ -709,7 +713,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <div>
           <h3 className="text-sm font-medium mb-2">Completed Risk Reviews</h3>
           {!riskHistory.length&&<p className="text-sm text-ink-secondary">No completed Risk Reviews recorded.</p>}
-          {riskHistory.map(o=><button key={o.occurrence_id} className="block w-full text-left border border-line rounded-md p-3 mb-2 text-sm" onClick={async()=>{const {data}=await api.get("/reviews",{params:{client_id:clientId}});const r=data.find(r=>r.review_id===o.review_id);if(r)setRelatedDrawer({kind:"reviews",record:r,initialValues:{occurrence:o}});}}><strong>{o.period}</strong><div>Scheduled {o.due_date?.slice(0,10)} · Completed {o.completed_at?.slice(0,10)} · {o.completed_by_name||userMap[o.completed_by]||o.completed_by}</div><div>{o.outcome}</div></button>)}
+          {riskHistory.map(o=><button key={o.occurrence_id} className="block w-full text-left border border-line rounded-md p-3 mb-2 text-sm" onClick={async()=>{const {data}=await api.get("/reviews",{params:{client_id:clientId}});const r=data.find(r=>r.review_id===o.review_id);if(r)setRelatedDrawer({kind:"reviews",record:r,initialValues:{occurrence:o}});}}><strong>{o.period}</strong><div>Scheduled {o.due_date?.slice(0,10)} · Completed {o.completed_at?.slice(0,10)} · {o.completed_by_name||personLabel(users,o.completed_by,'Not recorded')}</div><div>{o.outcome}</div></button>)}
           <div className="text-xs font-mono uppercase tracking-widest text-ink-help mb-2 mt-4">Rating history</div>
           {history.length === 0 ? (
             <div className="text-sm text-ink-muted">No rating changes recorded yet.</div>
@@ -718,7 +722,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               {[...history].reverse().map((h, i) => (
                 <li key={i} className="border border-line rounded-md p-3 text-xs">
                   <div className="flex justify-between mb-1">
-                    <span className="font-medium text-ink-primary">{h.by_name || userMap[h.by] || h.by || "user"}</span>
+                    <span className="font-medium text-ink-primary">{h.by_name || personLabel(users, h.by, 'Not recorded')}</span>
                     <span className="font-mono text-ink-help">{new Date(h.at).toLocaleString()}</span>
                   </div>
                   <div className="text-ink-secondary">
@@ -763,7 +767,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <div className="grid grid-cols-2 gap-3"><DateReadonly label="Created" value={record?.created_at}/><DateReadonly label="Last Reviewed" value={record?.last_reviewed}/></div>
           <RiskSourceFields form={form} setForm={setForm} clientId={clientId} disabled={!canWrite}/>
           <RiskScheduleFields form={form} setForm={setForm} disabled={!canWrite||!isPlatformAdmin}/>
-          {record?.closed_at&&<div className="text-sm">Closed: {record.closure_reason?.replaceAll("_"," ")} · {userMap[record.closed_by] || record.closed_by}<DateReadonly label="Closed on" value={record.closed_at}/>{record.closure_note}</div>}
+          {record?.closed_at&&<div className="text-sm">Closed: {record.closure_reason?.replaceAll("_"," ")} · {personLabel(users, record.closed_by, 'Not recorded')}<DateReadonly label="Closed on" value={record.closed_at}/>{record.closure_note}</div>}
         </div>
       );
     }
@@ -780,10 +784,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {kind === "contacts" && renderContactActions()}
         {kind === "exceptions" && isEdit && isPlatformAdmin && record.status !== "approved" && <Button onClick={() => { setDecisionForm({action:'approve',rationale:''}); setDecisionOpen(true); }}>Approve exception</Button>}
         {kind === "reviews" && record?.status === "completed" && <div className="rounded-md border border-line p-4 space-y-2 text-sm" data-testid="review-outcome">
-          {record.completion_snapshot ? <><p>Completed by {userMap[record.completion_snapshot.by] || record.completion_snapshot.by} · {record.completion_snapshot.at?.slice(0,10)}</p><p>Period: {record.completion_snapshot.tested_period}</p><p>Examined: {record.completion_snapshot.tested_scope}</p><p className="whitespace-pre-wrap">Conclusion: {record.completion_snapshot.conclusion}</p><p>{record.completion_snapshot.evidence?.length || 0} preserved evidence version(s){record.completion_snapshot.no_evidence_reason ? ` · ${record.completion_snapshot.no_evidence_reason}` : ''}</p></> : <p>Historical completion: structured outcome and decision provenance were not captured.</p>}
-          {(record.amendments || []).map((a,i) => <p key={i}>Amendment · {a.at?.slice(0,10)} · {userMap[a.by] || a.by}: {a.rationale}</p>)}
+          {record.completion_snapshot ? <><p>Completed by {personLabel(users, record.completion_snapshot.by, 'Not recorded')} · {record.completion_snapshot.at?.slice(0,10)}</p><p>Period: {record.completion_snapshot.tested_period}</p><p>Examined: {record.completion_snapshot.tested_scope}</p><p className="whitespace-pre-wrap">Conclusion: {record.completion_snapshot.conclusion}</p><p>{record.completion_snapshot.evidence?.length || 0} preserved evidence version(s){record.completion_snapshot.no_evidence_reason ? ` · ${record.completion_snapshot.no_evidence_reason}` : ''}</p></> : <p>Historical completion: structured outcome and decision provenance were not captured.</p>}
+          {(record.amendments || []).map((a,i) => <p key={i}>Amendment · {a.at?.slice(0,10)} · {personLabel(users, a.by, 'Not recorded')}: {a.rationale}</p>)}
         </div>}
-        {!!record?.decision_history?.length && <div className="rounded-md border border-line p-3 text-sm space-y-2">{record.decision_history.map((d,i) => <p key={i}>{d.action?.replaceAll('_',' ')} · {userMap[d.by || d.recorded_by] || d.by || d.recorded_by} · {(d.at || d.recorded_at)?.slice(0,10)}{d.rationale ? `: ${d.rationale}` : ''}{d.provenance ? ` · ${d.provenance}` : ''}</p>)}</div>}
+        {!!record?.decision_history?.length && <div className="rounded-md border border-line p-3 text-sm space-y-2">{record.decision_history.map((d,i) => <p key={i}>{d.action?.replaceAll('_',' ')} · {personLabel(users, d.by || d.recorded_by, 'Not recorded')} · {(d.at || d.recorded_at)?.slice(0,10)}{d.rationale ? `: ${d.rationale}` : ''}{d.provenance ? ` · ${d.provenance}` : ''}</p>)}</div>}
         <fieldset disabled={kind === "reviews" && record?.status === "completed"} className="record-fields">{(schema || []).map((f) => renderField(f))}</fieldset>
       </div>
     );

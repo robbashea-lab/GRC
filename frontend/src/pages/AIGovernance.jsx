@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import { isInternal } from '@/lib/permissions';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
@@ -23,7 +24,7 @@ export default function AIGovernance(){
   const today=new Date().toISOString().slice(0,10),active=r=>!['suspended','retired'].includes(r.status);
   const presets=[['active','All Active',active],['due','Due for Review',r=>active(r)&&(!r.next_review||r.next_review.slice(0,10)<=today)],['high','High Risk',r=>active(r)&&r.risk_tier==='high'],['third','Third-Party',r=>active(r)&&(r.vendor_id||r.provider||r.screening?.third_party)],['customer','Customer-Facing',r=>active(r)&&(r.purposes?.includes('Customer-Facing')||r.screening?.customer_facing)],['inactive','Inactive',r=>!active(r)]];
   const visible=table.apply(rows.filter(presets.find(p=>p[0]===quick)[2]).filter(r=>[r.display_id,r.name,r.provider,r.description,...(r.purposes||[])].join(' ').toLowerCase().includes(search.toLowerCase())));
-  const writable=['super_admin','platform_admin','client_contributor'].includes(user?.role);
+  const writable=isInternal(user);
   function clear(){table.clear();setSearch('');setQuick('active');}
   if(!currentClientId)return <p className="page-content">Select a client.</p>;
   return <div><PageHeader title="AI Governance" subtitle="AI Systems & Use Cases Register · Internal governance screening, not legal classification" action={writable&&data?.intake.usage!=='no'?<Button onClick={()=>setSelected({})}>Add AI System</Button>:null}/><div className="page-content space-y-4">{error?<p role="alert">{error} <button onClick={()=>setRevision(n=>n+1)}>Retry</button></p>:!data?<p>Loading AI Governance…</p>:<>

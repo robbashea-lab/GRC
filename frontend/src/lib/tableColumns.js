@@ -3,6 +3,7 @@ import { SOURCE_TYPES, actionStatus, actionPriority, actionMatches } from './act
 import { SCHEMAS } from './schemas';
 import { ranks, reviewMatches, dateMatches } from './tableFilters';
 import {grcLead} from './clientRelationships';
+import { personLabel } from './people';
 
 const text = (key,label) => ({ key,label,sortable:true });
 const select = (key,label,extra={}) => ({ ...text(key,label),filter:true,emptyLabel:'Not specified',...extra });
@@ -11,7 +12,7 @@ const numeric = (key,label,filter=false) => ({...text(key,label),numeric:true,fi
 // Options come only from the module schema and the authorized rows passed by its page.
 export function tableColumns(module, { rows=[], users=[], clients=[], programs={} } = {}) {
   const person = (key,label='Owner') => select(key,label,{emptyLabel:'Unassigned',optionsOnly:true,
-    options:[...new Set(rows.map(r => r[key]).filter(Boolean))].map(id => ({value:String(id),label:users.find(u => u.user_id === id)?.name || users.find(u => u.user_id === id)?.email || 'Unknown owner'}))});
+    options:[...new Set(rows.map(r => r[key]).filter(Boolean))].map(id => ({value:String(id),label:personLabel(users,id)}))});
   const severity = (key,label) => select(key,label,{rank:ranks,emptyLabel:'Not assessed'});
   const lead = key => select(key,'GRC Lead',{emptyLabel:'Unassigned',optionsOnly:true,
     options:[...new Map(rows.filter(r=>r[key]).map(r=>[r[key],{value:String(r[key]),label:grcLead(r).name}])).values()]});
