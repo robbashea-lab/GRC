@@ -41,3 +41,10 @@ test('an open Review past its due day reads Overdue in its summary, as in the re
   expect(status({status: 'completed', due_date: '2036-07-30'})).toBe('completed');
   expect(status({status: 'needs_scheduling', due_date: '2036-07-30'})).toBe('needs_scheduling');
 });
+
+test('summary dates read one way, including history and renewal dates', () => {
+  const facts = summarize('reviews', {status: 'upcoming', due_date: '2036-10-10', occurrences: [{completed_at: '2036-06-30T14:00:00.000Z'}]}, {today: '2036-09-29'}).facts;
+  const expected = new Date('2036-06-30T12:00:00Z').toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'});
+  expect(facts.find(f => f.label === 'Last completed').value).toBe(expected);
+  expect(facts.find(f => f.label === 'Due').value).toContain(new Date('2036-10-10T12:00:00Z').toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'}));
+});
