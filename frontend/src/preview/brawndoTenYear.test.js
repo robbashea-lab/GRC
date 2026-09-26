@@ -39,7 +39,7 @@ const BROWSER_QUOTA_CHARS = 5242880;
 
 const START = '2026-09-28', END = process.env.SIM_END || '2036-09-29';
 const CID = 'demo_brawndo', JOE = 'demo_owner_brawndo', CAMACHO = 'demo_brawndo_user_1', FRITO = 'demo_brawndo_user_2', ADMIN = 'demo_admin';
-const OTHER_CLIENT = 'demo_initech';
+const OTHER_CLIENT = 'demo_dunder';
 const DAY = 86400000;
 const addDays = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * DAY).toISOString().slice(0, 10);
 const day = v => (v ? String(v).slice(0, 10) : null);

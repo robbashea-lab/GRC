@@ -30,8 +30,8 @@ async function render(){await act(async()=>root.render(<FrameworkDrawer open rec
 
 test('activation requires the exact synthetic client, framework, record tenant and Demo identity',()=>{
  expect(isBrawndoCisPrototype('demo_brawndo',record,mockUser)).toBe(true);
- for(const candidate of [{...record,client_id:'demo_globo'},{...record,framework_key:'iso-27001'}])expect(isBrawndoCisPrototype('demo_brawndo',candidate,mockUser)).toBe(false);
- expect(isBrawndoCisPrototype('demo_globo',record,mockUser)).toBe(false);
+ for(const candidate of [{...record,client_id:'demo_dunder'},{...record,framework_key:'iso-27001'}])expect(isBrawndoCisPrototype('demo_brawndo',candidate,mockUser)).toBe(false);
+ expect(isBrawndoCisPrototype('demo_dunder',record,mockUser)).toBe(false);
  expect(isBrawndoCisPrototype('demo_brawndo',record,{...mockUser,workspace_mode:'standard'})).toBe(false);
 });
 test('linear hierarchy, reference-only content, specific validation and retained metadata',async()=>{

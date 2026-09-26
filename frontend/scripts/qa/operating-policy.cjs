@@ -1,7 +1,7 @@
 const {chromium}=require('playwright');
 const {expect}=require('playwright/test');
 const assert=require('node:assert/strict'),{createHash}=require('node:crypto');
-const key='grc_interactive_demo_v2',base=process.env.QA_BASE_URL||'http://127.0.0.1:4174';
+const key='grc_interactive_demo_v3',base=process.env.QA_BASE_URL||'http://127.0.0.1:4174';
 if(new URL(base).hostname!=='127.0.0.1')throw new Error('Policy QA requires an isolated local preview.');
 let policyId;
 (async()=>{

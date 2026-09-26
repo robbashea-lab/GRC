@@ -11,7 +11,7 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
   const browser=await chromium.launch({headless:true,...(process.env.QA_BROWSER?{executablePath:process.env.QA_BROWSER}:{})});
   const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-  const go=p=>page.goto(base+p),db=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2'))),drawer=()=>page.getByTestId('framework-drawer');
+  const go=p=>page.goto(base+p),db=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3'))),drawer=()=>page.getByTestId('framework-drawer');
   const tab=name=>drawer().getByRole('tab',{name,exact:true}).click();
   try{
     await go('/login');await expect(page.locator('input[type=email]')).toHaveValue('');await expect(page.locator('input[type=password]')).toHaveValue('');
@@ -46,7 +46,7 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
       console.log('PASS visual '+key+': empty filters/evidence/history, hover and active tabs, four drawer widths, entry motion at 10%, reduced motion. Durations '+JSON.stringify(timings));
     }
     const before=await db(),adminId=before.user.user_id;
-    await page.evaluate(cid=>{const key='grc_interactive_demo_v2',data=JSON.parse(sessionStorage.getItem(key));const reader={user_id:'framework-qa-reader',name:'Synthetic Read-only Assessor',email:'reader@example.test',role:'client_readonly',status:'active',client_ids:[cid]};data.users.push(reader);data.user=reader;sessionStorage.setItem(key,JSON.stringify(data));},cid);
+    await page.evaluate(cid=>{const key='grc_interactive_demo_v3',data=JSON.parse(sessionStorage.getItem(key));const reader={user_id:'framework-qa-reader',name:'Synthetic Read-only Assessor',email:'reader@example.test',role:'client_readonly',status:'active',client_ids:[cid]};data.users.push(reader);data.user=reader;sessionStorage.setItem(key,JSON.stringify(data));},cid);
     for(const [key,id,type] of cases){
       await go('/compliance/'+key);await page.getByTestId(type+'-'+id).getByRole('button').first().click();
       await expect(drawer().getByLabel('Assessment Status',{exact:true})).toBeDisabled();
@@ -55,7 +55,7 @@ const cases=[['cis-ig1','1.1','safeguard'],['nist-csf-2','GV.OC-01','subcategory
       await tab('Evidence');await expect(drawer().getByLabel('Upload Evidence',{exact:true})).toHaveCount(0);
       await page.keyboard.press('Escape');
     }
-    await page.evaluate(id=>{const key='grc_interactive_demo_v2',data=JSON.parse(sessionStorage.getItem(key));data.user=data.users.find(u=>u.user_id===id);sessionStorage.setItem(key,JSON.stringify(data));},adminId);
+    await page.evaluate(id=>{const key='grc_interactive_demo_v3',data=JSON.parse(sessionStorage.getItem(key));data.user=data.users.find(u=>u.user_id===id);sessionStorage.setItem(key,JSON.stringify(data));},adminId);
     console.log('PASS read-only Demo assessment, Related and Evidence controls across five frameworks; no record changes.');
     await go('/client-settings?tab=compliance');
     for(const label of ['CIS Controls v8.1 IG1','NIST CSF 2.0','HIPAA','ISO/IEC 27001','SOC 2 Type 2']){
