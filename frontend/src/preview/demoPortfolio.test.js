@@ -33,10 +33,16 @@ test('canonical framework programs, real profiles, scoped people and valid asses
     for (const [section, values] of Object.entries(c.profile)) expect(() => validateProfile(section, values)).not.toThrow();
     expect(() => validateClientRelationships(db, c)).not.toThrow();
     expect(db.contacts.filter(p => p.client_id === cid).map(p => p.name)).toEqual(org.people);
+    // A departed employee's disabled account keeps the work it owned (never reassigned automatically);
+    // every other seeded assignment must be one the product would accept today.
+    const former = cid + '_former';
     for (const [kind, field] of Object.entries(ids)) for (const r of db[kind].filter(r => r.client_id === cid)) {
-      expect(() => validateAssignment(db, kind, r)).not.toThrow();
+      if (![r.owner_id, r.assignee_id].includes(former)) expect(() => validateAssignment(db, kind, r)).not.toThrow();
       expect(r[field]).toBeTruthy();
     }
+    expect(db.users.find(u => u.user_id === former)).toMatchObject({status: 'disabled', client_ids: [cid]});
+    expect(db.tasks.filter(t => t.client_id === cid && t.assignee_id === former && t.status !== 'done')).toHaveLength(1);
+    expect(db.users.filter(u => u.client_ids?.includes(cid)).map(u => u.role).sort()).toEqual(expect.arrayContaining(['client_grc_manager', 'client_contributor', 'client_readonly', 'platform_admin']));
     for (const a of db.framework_assessments.filter(a => a.client_id === cid)) {
       const d = frameworkDefinition(a.framework_key, a.definition_id);
       expect(d).toBeTruthy();

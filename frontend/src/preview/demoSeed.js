@@ -2,7 +2,7 @@ import catalog from '../lib/onboardingCatalog.json';
 import { CATALOGS } from '../lib/frameworks';
 import { reviewView } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
-import { demoOrganizations, demoDates, demoProfile } from './demoPortfolio';
+import { demoOrganizations, demoDates, demoProfile, providerStaff, clientPersonaRoles } from './demoPortfolio';
 export { demoOrganizations } from './demoPortfolio';
 
 // The current occurrence is the next unfinished period. A first due date more than
@@ -27,6 +27,15 @@ export function buildDemoStore(tableNames, clock = new Date()) {
   db.users.push({
     ...db.user
   });
+  for (const staff of providerStaff) db.users.push({
+    user_id: staff.user_id,
+    name: staff.name,
+    email: staff.user_id.replace('demo_', '') + '@provider.example.test',
+    role: 'platform_admin',
+    status: 'active',
+    client_ids: staff.clients.map(key => 'demo_' + key),
+    workspace_mode: 'demo'
+  });
   Object.assign(db, {
     logs: [],
     notifications: [],
@@ -35,22 +44,22 @@ export function buildDemoStore(tableNames, clock = new Date()) {
   });
   for (const org of demoOrganizations) {
     const cid = 'demo_' + org.key,
-      owner = 'demo_owner_' + org.key,
-      users = [owner, cid + '_user_1', cid + '_user_2'];
+      lead = org.lead,
+      users = [cid + '_user_0', cid + '_user_1', cid + '_user_2'];
     const meta = {
       client_id: cid,
       created_at: date(-600),
       updated_at: date(-3),
-      created_by: owner
+      created_by: lead
     };
     org.people.forEach((name, i) => {
-      const user_id = users[i],
+      const user_id = clientPersonaRoles[i] ? cid + '_user_' + i : null,
         contact_id = cid + '_contact_' + i;
       if (user_id) db.users.push({
         user_id,
         name,
         email: org.key + '.person' + i + '@example.test',
-        role: i === 0 ? 'platform_admin' : 'client_contributor',
+        role: clientPersonaRoles[i],
         status: 'active',
         client_ids: [cid],
         workspace_mode: 'demo'
@@ -68,6 +77,16 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         title: ['Security Program Lead', 'Executive Sponsor', 'Operations and Technology Lead', 'Business Stakeholder'][i % 4]
       });
     });
+    // A departed employee: the account is disabled, membership and history are retained.
+    db.users.push({
+      user_id: cid + '_former',
+      name: org.former,
+      email: org.key + '.former@example.test',
+      role: 'client_contributor',
+      status: 'disabled',
+      client_ids: [cid],
+      workspace_mode: 'demo'
+    });
     const client = {
       ...meta,
       client_id: cid,
@@ -75,7 +94,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       industry: org.industry,
       status: 'active',
       environment: 'Demo',
-      assigned_owner_id: owner,
+      assigned_owner_id: lead,
       primary_contact_id: cid + '_contact_0',
       profile: demoProfile(org, date),
       notes: 'Fictional Year-2 program. Progress is not certification or a determination of compliance.'
@@ -133,7 +152,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         baseline_response: requirementResponses[item.key],
         applicability: applies ? 'applicable' : 'not_applicable',
         status: applies ? 'active' : 'retired',
-        owner_id: owner,
+        owner_id: users[0],
         description: 'Synthetic applicability decision only; no legal or certification claim.'
       });
     });
@@ -192,7 +211,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
     };
     client.initial_program_baseline = {
       completed_at: date(-590),
-      completed_by: owner,
+      completed_by: lead,
       state: JSON.parse(JSON.stringify(db.baselines[cid])),
       counts: {
         policies: catalog.policies.length,
@@ -232,14 +251,14 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       next_review: i === 3 ? null : date(withinCadence(65 + i * 20, 'quarterly')),
       review_cadence: 'quarterly',
       ...(i === 2 ? {
-        acceptance_rationale: 'Time-limited acceptance with quarterly monitoring; alternative provider evaluated.',
-        accepted_by: users[1],
+        acceptance_rationale: 'Time-limited acceptance approved by the executive sponsor, with quarterly monitoring; alternative provider evaluated. Recorded by the provider GRC lead.',
+        accepted_by: lead,
         acceptance_date: date(-45),
         acceptance_expires_at: date(140)
       } : {}),
       ...(i === 3 ? {
         closed_at: date(-80),
-        closed_by: owner,
+        closed_by: lead,
         closure_reason: 'remediated',
         closure_rationale: 'Asset retirement verified and exposure removed.'
       } : {})

@@ -5,22 +5,36 @@ export const demoOrganizations = [{
   frameworks: ['cis-ig1'],
   industry: 'Consumer products / beverage',
   employees: 180,
-  people: ['Joe Bowers', 'President Camacho', 'Frito Pendejo', 'Rita']
+  people: ['Joe Bowers', 'President Camacho', 'Frito Pendejo', 'Rita'],
+  lead: 'demo_provider_lead',
+  former: 'Dr. Lexus'
 }, {
   key: 'dunder',
   name: 'Dunder Mifflin',
   frameworks: ['iso-27001'],
   industry: 'Business supplies / distribution',
   employees: 450,
-  people: ['Dwight Schrute', 'David Wallace', 'Pam Beesly', 'Michael Scott', 'Jim Halpert', 'Angela Martin', 'Oscar Martinez', 'Toby Flenderson', 'Darryl Philbin']
+  people: ['Dwight Schrute', 'David Wallace', 'Pam Beesly', 'Michael Scott', 'Jim Halpert', 'Angela Martin', 'Oscar Martinez', 'Toby Flenderson', 'Darryl Philbin'],
+  lead: 'demo_provider_consultant',
+  former: 'Ryan Howard'
 }, {
   key: 'prestige',
   name: 'Prestige Worldwide',
   frameworks: ['soc-2'],
   industry: 'Media / technology services',
   employees: 130,
-  people: ['Dale Doback', 'Robert Doback', 'Brennan Huff', 'Nancy Huff', 'Derek Huff', 'Alice Huff']
+  people: ['Dale Doback', 'Robert Doback', 'Brennan Huff', 'Nancy Huff', 'Derek Huff', 'Alice Huff'],
+  lead: 'demo_provider_lead',
+  former: 'Randy'
 }];
+// The service provider's GRC team runs each program (platform_admin, assigned clients only).
+// Client staff hold client roles: people[0] is the client's GRC manager, people[1-2] contributors,
+// people[3] read-only; `former` is a departed employee whose disabled account still owns history.
+export const providerStaff = [
+  {user_id: 'demo_provider_lead', name: 'Morgan Ellis', title: 'vCISO', clients: ['brawndo', 'prestige']},
+  {user_id: 'demo_provider_consultant', name: 'Sam Okafor', title: 'GRC Consultant', clients: ['dunder', 'brawndo']},
+];
+export const clientPersonaRoles = ['client_grc_manager', 'client_contributor', 'client_contributor', 'client_readonly'];
 export function demoDates(clock = new Date()) {
   const anchor = new Date(clock);
   anchor.setUTCHours(12, 0, 0, 0);

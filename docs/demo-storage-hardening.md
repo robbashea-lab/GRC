@@ -34,11 +34,11 @@ The Demo banner's **Demo storage** menu provides diagnostics and two confirmatio
    user, role, membership, assessment and relationship.
 2. **Reset Demo Data** atomically replaces mutable Demo records with the canonical
    relative-date seed and clears the cache. It restores three clients (Brawndo, Dunder Mifflin,
-   Prestige Worldwide), 10 users and 68 synthetic evidence items in the current seed. Non-demo stores are not
+   Prestige Worldwide), 18 users (the Demo explorer, two provider GRC staff, and per client a GRC manager, two contributors, a read-only user and a departed employee's disabled account) and 68 synthetic evidence items in the current seed. Non-demo stores are not
    reset. Selection is returned to the client portfolio.
 
-Canonical application roles remain super_admin, platform_admin,
-client_contributor and client_readonly. No new RBAC roles or accounts are created.
+Canonical application roles are super_admin, platform_admin, client_grc_manager,
+client_contributor and client_readonly (backend/authorization.py). No new RBAC roles are created.
 Existing persona assignments and client scopes survive clearing; reset reseeds
 them. Recovery endpoints operate only inside the explicitly selected Demo adapter.
 

@@ -49,8 +49,13 @@ export function finishDemoStore(db, clock, {
   for (const org of demoOrganizations) {
     const cid = 'demo_' + org.key,
       client = db.clients.find(c => c.client_id === cid),
-      users = db.users.filter(u => u.client_ids?.length === 1 && u.client_ids[0] === cid),
-      owner = users[0].user_id;
+      users = db.users.filter(u => u.client_ids?.length === 1 && u.client_ids[0] === cid && u.status === 'active' && u.role !== 'client_readonly'),
+      owner = users[0].user_id,
+      lead = client.assigned_owner_id,
+      former = cid + '_former',
+      explorer = db.user;
+    // Program history is recorded by the provider's GRC lead, never by whoever opens the Demo.
+    db.user = db.users.find(u => u.user_id === lead);
     const reviews = db.reviews.filter(r => r.client_id === cid),
       policies = db.policies.filter(p => p.client_id === cid),
       risks = db.risks.filter(r => r.client_id === cid);
@@ -137,8 +142,8 @@ export function finishDemoStore(db, clock, {
         p.effective_date = date(-255);
         p.decision_history = [{
           action: 'external_approval_recorded',
-          recorded_by: owner,
-          recorded_by_name: users[0].name,
+          recorded_by: lead,
+          recorded_by_name: db.user.name,
           recorded_at: date(-260),
           reported_approver_id: users[1].user_id,
           reported_approved_at: date(-260),
@@ -227,6 +232,8 @@ export function finishDemoStore(db, clock, {
         t.completed_by = users[2].user_id;
       }
       if (i >= 2) {
+        // The finding owner has since left; the closed record keeps them.
+        if (i === 2) f.owner_id = former;
         Object.assign(f, {
           closed_at: date(-34),
           validated_at: date(-34),
@@ -285,6 +292,21 @@ export function finishDemoStore(db, clock, {
     followup.created_at = date(-45);
     followup.updated_at = date(-22);
     followup.completed_at = date(-22);
+    followup.completed_by = former;
+    // Assigned before the employee left (day -15). Ownership is retained, never cleared automatically;
+    // registers flag the disabled account so the work gets reassigned.
+    const handover = write(db, 'tasks', {
+      client_id: cid,
+      title: 'Hand over vendor renewal file and open access requests',
+      source_type: 'manual',
+      assignee_id: owner,
+      due_date: date(12),
+      governance_context: {
+        category: 'management',
+        rationale: 'Departing employee knowledge transfer.'
+      }
+    });
+    Object.assign(handover, {task_id: cid + '_handover_action', assignee_id: former, owner_id: former, created_at: date(-40), updated_at: date(-16), created_by: owner});
     const baseline = reviewView({
       review_id: cid + '_initial_program_review',
       client_id: cid,
@@ -408,6 +430,7 @@ export function finishDemoStore(db, clock, {
       });
       }
     }
+    db.user = explorer;
   }
   // Replace wall-clock workflow telemetry with explicit, internally consistent
   // historical simulation events. Never used for standard workspace audit data.
@@ -434,14 +457,14 @@ export function finishDemoStore(db, clock, {
       occurrence_id: o.occurrence_id,
       outcome: o.outcome
     });
-    for (const a of db.framework_assessments.filter(a => a.client_id === c.client_id && a.last_assessed)) log('framework_assessments', a.framework_assessment_id, c.client_id, a.last_assessed.slice(0, 10), db.user, 'Framework assessment updated', {
+    for (const a of db.framework_assessments.filter(a => a.client_id === c.client_id && a.last_assessed)) log('framework_assessments', a.framework_assessment_id, c.client_id, a.last_assessed.slice(0, 10), u, 'Framework assessment updated', {
       status: a.status
     });
-    for (const t of db.tasks.filter(t => t.client_id === c.client_id)) log('tasks', t.task_id, c.client_id, t.completed_at || date(-3), db.users.find(user => user.user_id === (t.completed_by || t.created_by)) || db.user, t.status === 'done' ? 'Action Item completed' : 'Action Item updated');
+    for (const t of db.tasks.filter(t => t.client_id === c.client_id)) log('tasks', t.task_id, c.client_id, t.completed_at || date(-3), db.users.find(user => user.user_id === (t.completed_by || t.created_by)) || u, t.status === 'done' ? 'Action Item completed' : 'Action Item updated');
     for (const e of db.evidence.filter(e => e.client_id === c.client_id)) log('evidence', e.evidence_id, c.client_id, e.created_at, db.users.find(u => u.user_id === e.uploaded_by), 'upload');
     for (const f of db.findings.filter(f => f.client_id === c.client_id)) {
       log('findings', f.finding_id, c.client_id, f.created_at, db.users.find(u => u.user_id === f.created_by), 'create');
-      if (f.closed_at) log('findings', f.finding_id, c.client_id, f.closed_at, db.user, 'validate');
+      if (f.closed_at) log('findings', f.finding_id, c.client_id, f.closed_at, u, 'validate');
     }
     for (const p of db.policies.filter(p => p.client_id === c.client_id && p.status === 'approved')) log('policies', p.policy_id, c.client_id, p.approved_at, u, 'External approval recorded', {
       provenance: 'Synthetic external decision, not in-app approval'
