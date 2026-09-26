@@ -7,7 +7,7 @@ let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:e=>e.message}));
 jest.mock('@/components/FrameworkDrawer',()=>({record,onNext})=><div data-testid="opened">{record.definition_id}<button onClick={onNext}>Next</button></div>);
-jest.mock('react-router-dom',()=>({useSearchParams:()=>require('react').useState(new URLSearchParams()),Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
+jest.mock('react-router-dom',()=>({useSearchParams:()=>require('react').useState(new URLSearchParams()),useLocation:()=>({pathname:'/compliance/cis-ig1',search:'',state:null}),useNavigate:()=>jest.fn(),Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 let root,container;
 beforeEach(()=>{
  mockUser={user_id:'u',role:'super_admin'};
