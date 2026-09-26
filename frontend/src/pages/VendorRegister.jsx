@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
+import { OwnerAccountNote } from '@/components/ContactAccess';
 import AssigneeSelect from '@/components/AssigneeSelect';
 import { StatusPill } from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
@@ -214,7 +215,7 @@ export default function VendorRegister() {
                     <td className="tbl-cell text-xs text-ink-secondary">
                       {dt.length ? dt.slice(0, 2).join(", ") + (dt.length > 2 ? ` +${dt.length - 2}` : "") : <span className="text-ink-help">—</span>}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[v.business_owner_id] || <span className="text-ink-help">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[v.business_owner_id] || <span className="text-ink-help">—</span>}<OwnerAccountNote users={users} id={v.business_owner_id} status={v.status} /></td>
                     <td className="tbl-cell text-xs font-mono text-ink-secondary">{v.last_review ? displayDate(v.last_review) : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-xs font-mono">
                       {v.next_review ? (

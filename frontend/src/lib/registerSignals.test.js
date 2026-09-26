@@ -48,3 +48,13 @@ test('summary dates read one way, including history and renewal dates', () => {
   expect(facts.find(f => f.label === 'Last completed').value).toBe(expected);
   expect(facts.find(f => f.label === 'Due').value).toContain(new Date('2036-10-10T12:00:00Z').toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'}));
 });
+
+test('a disabled owner on open work is shown and asks for reassignment, without clearing ownership', () => {
+  const users = [{ user_id: 'frito', name: 'Frito Pendejo', status: 'disabled' }];
+  const open = summarize('reviews', {status: 'upcoming', owner_id: 'frito', due_date: '2036-10-10'}, {users, today: '2036-09-29'});
+  expect(open.facts.find(f => f.label === 'Owner').value).toBe('Frito Pendejo · Disabled account');
+  expect(open.attention.map(a => a.text)).toContain('Owner account is disabled; reassign active work');
+  const done = summarize('reviews', {status: 'completed', owner_id: 'frito', due_date: '2030-10-10'}, {users, today: '2036-09-29'});
+  expect(done.facts.find(f => f.label === 'Owner').value).toBe('Frito Pendejo');
+  expect(done.attention.map(a => a.text)).not.toContain('Owner account is disabled; reassign active work');
+});

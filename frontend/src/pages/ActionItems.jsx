@@ -1,4 +1,5 @@
 import TableLoadingRow from '@/components/TableLoadingRow';
+import { OwnerAccountNote } from '@/components/ContactAccess';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -213,7 +214,7 @@ export default function ActionItems() {
                         {priorityLabel(r.priority)}
                       </span>
                     </td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-ink-help">—</span>}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{userMap[r.owner_id] || <span className="text-ink-help">—</span>}<OwnerAccountNote users={users} id={r.owner_id} status={r.status} /></td>
                     <td className="tbl-cell text-xs font-mono">
                       {r.due_date ? (
                         <span className={overdue ? "text-semantic-critical font-medium" : "text-ink-secondary"}>

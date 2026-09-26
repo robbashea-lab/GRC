@@ -37,3 +37,11 @@ export function contactAccess(contact, clientId, context) {
 export function contactResponsibilities(contact) {
   return [...new Set([contact.role, ...(Array.isArray(contact.grc_roles) ? contact.grc_roles : [])].filter(Boolean))].join(' · ') || 'Not specified';
 }
+
+// Open work owned by a disabled platform account is surfaced wherever the owner is shown. Nothing is
+// cleared or reassigned automatically: existing assignments are retained (assignment-eligibility).
+const FINISHED = ['completed', 'cancelled', 'closed', 'done', 'retired', 'terminated', 'inactive', 'validated'];
+export function ownerAccountNote(users, id, status) {
+  if (!id || FINISHED.includes(status)) return null;
+  return users?.find(u => u.user_id === id)?.status === 'disabled' ? 'Disabled account' : null;
+}

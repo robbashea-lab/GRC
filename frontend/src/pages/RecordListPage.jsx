@@ -10,7 +10,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
-import { ContactAccessStatus, useContactAccess } from '@/components/ContactAccess';
+import { ContactAccessStatus, OwnerAccountNote, useContactAccess } from '@/components/ContactAccess';
 import { contactResponsibilities } from '@/lib/contactAccess';
 import PageHeader from "@/components/PageHeader";
 import RegisterSignalBar from "@/components/RegisterSignalBar";
@@ -612,9 +612,9 @@ export default function RecordListPage({ kind }) {
                       ) :
                        c.user ? (
                          isReviews ? <span className={`register-owner ${row[c.key] ? '' : 'register-owner--unassigned'}`} data-testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined}>
-                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{row[c.key] ? userMap[row[c.key]] || row[c.key] : 'Unassigned'}</span>
+                           {row[c.key] ? <UserRound aria-hidden="true" /> : <CircleDashed aria-hidden="true" />}<span>{row[c.key] ? userMap[row[c.key]] || row[c.key] : 'Unassigned'}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
                          </span> : row[c.key]
-                           ? <span className="text-ink-secondary">{userMap[row[c.key]] || row[c.key]}</span>
+                           ? <span className="text-ink-secondary">{userMap[row[c.key]] || row[c.key]}<OwnerAccountNote users={users} id={row[c.key]} status={row.status} /></span>
                            : <span
                                className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-semantic-duesoon-border bg-semantic-duesoon-bg text-semantic-duesoon-text text-xs font-mono uppercase tracking-wider"
                                data-testid={`${kind}-unassigned-${i}`}

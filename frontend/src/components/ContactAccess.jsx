@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { contactAccess, contactResponsibilities } from '@/lib/contactAccess';
+import { contactAccess, contactResponsibilities, ownerAccountNote } from '@/lib/contactAccess';
 
 export function useContactAccess(clientId, enabled, revision) {
   const { user, workspaceMode } = useAuth();
@@ -45,4 +45,9 @@ export function ContactAccessDetails({ contact, clientId, open }) {
     {contact && <p><span className="font-medium">Business responsibilities:</span> {contactResponsibilities(contact)}</p>}
     <p>Contact status and business roles do not grant platform access or approval permission.</p>
   </section>;
+}
+
+export function OwnerAccountNote({ users, id, status }) {
+  const note = ownerAccountNote(users, id, status);
+  return note ? <span className="block text-xs text-semantic-duesoon-text" title="Existing ownership is retained; reassign active work.">{note}</span> : null;
 }

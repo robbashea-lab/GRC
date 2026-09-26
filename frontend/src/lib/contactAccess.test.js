@@ -1,4 +1,4 @@
-import { contactAccess, contactResponsibilities } from './contactAccess';
+import { contactAccess, contactResponsibilities, ownerAccountNote } from './contactAccess';
 
 const contact = { client_id: 'a', linked_user_id: 'alex', name: 'Alex Morgan', email: 'alex@example.test' };
 const account = { user_id: 'alex', status: 'active', client_ids: ['a'], role: 'client_contributor' };
@@ -48,4 +48,14 @@ test('exposes no unrelated identity or membership details and mutates nothing', 
 test('business responsibilities are preserved, deduplicated and optional', () => {
   expect(contactResponsibilities({ role: 'Executive Sponsor', grc_roles: ['Executive Sponsor', 'Policy Approver'] })).toBe('Executive Sponsor · Policy Approver');
   expect(contactResponsibilities({})).toBe('Not specified');
+});
+
+test('open work owned by a disabled account is surfaced; finished history is not flagged', () => {
+  const users = [{ user_id: 'frito', status: 'disabled' }, { user_id: 'joe', status: 'active' }];
+  expect(ownerAccountNote(users, 'frito', 'open')).toBe('Disabled account');
+  expect(ownerAccountNote(users, 'frito', 'accepted')).toBe('Disabled account');
+  expect(ownerAccountNote(users, 'frito', 'completed')).toBeNull();
+  expect(ownerAccountNote(users, 'joe', 'open')).toBeNull();
+  expect(ownerAccountNote(users, 'unknown', 'open')).toBeNull();
+  expect(ownerAccountNote([], null, 'open')).toBeNull();
 });

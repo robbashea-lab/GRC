@@ -5,6 +5,7 @@ import StatusBadge from './StatusBadge';
 import {assessedRisk} from '@/lib/grcWork';
 import {actionStatus} from '@/lib/actionItems';
 import {reviewDisplayValue} from '@/lib/reviewPresentation';
+import {ownerAccountNote} from '@/lib/contactAccess';
 import './RecordSummary.css';
 
 // Read-first record identity for the reference workspace: what this is, its state,
@@ -28,7 +29,7 @@ export function summarize(kind,r,{related={},users=[],today=new Date().toISOStri
   const who=id=>id?(users.find(u=>u.user_id===id)?.name||'Assigned user'):null;
   const closed=closedStatus(r.status);
   const facts=[],attention=[];
-  const owner=(label,id)=>{facts.push({label,value:who(id)||'Unassigned',tone:id?'':'moderate'});if(!id&&!closed)attention.push({tone:'moderate',Icon:UserX,text:'No accountable owner assigned'});};
+  const owner=(label,id)=>{const note=!closed&&ownerAccountNote(users,id,r.status);facts.push({label,value:note?`${who(id)} · ${note}`:who(id)||'Unassigned',tone:id&&!note?'':'moderate'});if(!id&&!closed)attention.push({tone:'moderate',Icon:UserX,text:'No accountable owner assigned'});if(note)attention.push({tone:'moderate',Icon:UserX,text:'Owner account is disabled; reassign active work'});};
   const due=(label,v,late)=>{const d=dueText(v,today,closed);facts.push({label,value:d.text,tone:d.tone});if(d.tone==='critical')attention.push({tone:'critical',Icon:Clock3,text:late});};
   const open=(rows=[],done=['done','cancelled','closed','accepted'])=>rows.filter(x=>!done.includes(x.status));
   if(kind==='reviews'){
