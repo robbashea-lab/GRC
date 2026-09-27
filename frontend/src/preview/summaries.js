@@ -10,6 +10,8 @@ import {portfolioPopulations,portfolioFrameworks,portfolioOrder,latestPortfolioA
 import {evidenceAccess} from './evidence';
 import {dashboardPosture} from '../lib/dashboardPosture';
 import {COMPLIANCE_SECTIONS} from '../lib/complianceNavigation';
+import {dashboardWorkQueue} from '../lib/dashboardWorkQueue';
+import {eligible} from './assignmentEligibility';
 
 const sources=(db,cid)=>Object.fromEntries(DASHBOARD_KINDS.map(k=>[k,list(db,k,cid)]));
 const model=(db,cid,today,scope={kind:'org'})=>{
@@ -57,6 +59,18 @@ export function dashboard(db,params) {
   const aggregation=aggregateClientDashboard(records,{clientId:params.client_id,members:db.users,user:db.user,today,scope});
   const full=dashboardPosture(aggregation,{members:db.users,today}),m=full.management;
   m.activeRecords=aggregation.activeRecords;
+  // Opt-in read-only queue contract; ordinary dashboards keep their current view.
+  if(params.work_queue) {
+    const groups=dashboardWorkQueue(m,new Set(db.users.filter(u=>eligible(u,params.client_id)).map(u=>u.user_id)),records);
+    const brief=row=>({...Object.fromEntries(['key','id','kind','type','due_date','owner_id','unassigned','status','severity'].map(key=>[key,row[key]])),
+      title:String(row.title||'').slice(0,240),owner:String(row.owner||'Unassigned').slice(0,200),source_label:String(row.source_label||'').slice(0,240)});
+    if(params.detail) {
+      const rows=groups[params.detail],offset=Number(params.offset||0),limit=Number(params.limit||25);
+      if(!rows||!Number.isInteger(offset)||offset<0||!Number.isInteger(limit)||limit<1||limit>100)throw new Error('Invalid dashboard detail page');
+      return {client_id:params.client_id,as_of:m.as_of,items:rows.slice(offset,offset+limit).map(brief),total:rows.length,offset,limit,has_more:offset+limit<rows.length};
+    }
+    return {client_id:params.client_id,as_of:m.as_of,groups:Object.fromEntries(Object.entries(groups).map(([key,rows])=>[key,{total:rows.length,items:rows.slice(0,9).map(brief)}]))};
+  }
   const groups=Object.fromEntries(['pastDue','due30','due3190','materialFindings','significantRisks','acceptedRisks','priority'].map(key=>[key,full[key]]));
   const buckets=full.buckets.map(group=>({...group,key:group.key==='due30'?'otherDue30':group.key}));
   const riskLevels=full.riskLevels.map(group=>({...group,key:'risk-'+group.key}));

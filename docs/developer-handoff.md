@@ -1,5 +1,35 @@
 # Developer handoff
 
+## Current publishing workflow — 2026-09-27
+
+The authoritative development workflow is **GitHub `main` → ChatGPT preview**.
+See [publishing workflow](publishing-workflow.md). Railway is retired from the
+intended architecture, not a staging target or recurring release gate. The one-time
+source-disconnection transition is still pending; keep PR #6 unmerged meanwhile.
+
+## 2026-09-26 framework validation checkpoint
+
+The follow-on [multi-framework coexistence report](multi-framework-validation.md)
+covers one fourth synthetic client, shared cadence provenance, CIS/ISO/SOC Control
+mappings and five-year coexistence. This is historical validation evidence;
+current publication authority is defined by the publishing workflow above.
+
+See [the final CIS/ISO/SOC operational report](framework-operational-final-report.md)
+and [shared Controls contract](organizational-controls.md) for current branch
+results, source-confidence limits and release status. Older deployment/credential
+statements below are dated observations, not current live status. GitHub branch
+push now works. Historical release restrictions do not override the current workflow.
+
+Optional synthetic browser inspection: run the frameworkFiveYear.test.js suite
+with FRAMEWORK_LIFECYCLE_EXPORT_DIR pointing to an ignored local directory, build
+the normal frontend, then run backend/tests/serve_lifecycle_qa.py --fixtures DIR.
+Run multiFrameworkLifecycle.test.js with the same export directory to include the
+fourth reference client. Both generators create operational data through normal
+Demo API workflows; no finished fourth client is added to the canonical seed.
+This manual harness binds 127.0.0.1:4180 and prints ephemeral test credentials.
+It keeps normal auth/routes but uses an in-memory Mongo substitute. Stop it after
+QA; do not deploy it or mistake it for persistence/staging validation.
+
 ## Read this first
 
 This is not a production-readiness approval. See the engineering health report
@@ -135,20 +165,16 @@ Dashboard payloads still grow substantially; do not raise limits blindly.
 
 ## Deployment and recovery
 
-The existing Railway Omnisciente Development project is the authorized staging
-target; its environment happens to be named production. Do not confuse it with
-an older iVenture project. Its latest API deployment is failed; the current 500 MB
-Mongo volume cannot meet required index free-space checks. Resolve capacity with
-owner authorization. Never drop indexes, reduce safety checks, reset data or
-reconnect an uncertain database.
+The private Sites preview uses .openai/hosting.json. After the one-time retirement
+transition, validate approved work, merge to main, verify its SHA, and publish that
+exact source using the normal Demo build. Preserve the existing URL and audience;
+verify the saved version and successful deployment. A source push or build alone
+is not publication. Do not perform routine Railway checks or ask Railway-related
+merge questions after the transition is recorded complete.
 
-The private Sites preview uses .openai/hosting.json. Build/publish from the tested
-clean checkout only, preserve owner-private access, and verify deployment/version
-success. A Git source push or build success is not a published preview.
-Current local publication is blocked by unavailable bash for the bundled packager;
-normal GitHub push is blocked by unavailable Git credentials.
-
-Before a real pilot: recover approved capacity; deploy exact tested API; use
+The static Demo does not deploy the FastAPI/MongoDB backend or establish persistent
+non-demo staging. A future real-data environment requires separate authorization.
+Before a real pilot, deploy the exact tested API in that approved environment; use
 authorized role accounts; verify real browser/API authentication, cross-tenant
 denials, persistence after restart, failure recovery, backup/restore and multi-user
 edits. Roll back source only through normal Git history; it does not undo data.

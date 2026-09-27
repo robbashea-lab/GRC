@@ -8,35 +8,36 @@ jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'u',role:moc
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
 jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('./AssigneeSelect',()=>()=>null);
+jest.mock('./ui/dialog',()=>{const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};});
 jest.mock('./ui/sheet',()=>({Sheet:({children})=><div>{children}</div>,SheetContent:({children,...props})=><section {...props}>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>,SheetDescription:({children})=><p>{children}</p>}));
 let root,container,record;
 beforeEach(()=>{
   mockRole='super_admin';
   global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.1',client_id:'client',status:'not_assessed',implementation:'',notes:'Legacy narrative retained',assessment_history:[]};
-  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?{reviews:[],evidence:[]}:path==='/frameworks/cis-ig1'?{assessments:[record]}:[]}));
+  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?{reviews:[],evidence:[]}:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:[]}));
   api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-09-22',assessment_history:[{...body,at:'2026-09-22',by:'u'}]};return {data:record};});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 const button=name=>[...container.querySelectorAll('button')].find(b=>b.textContent===name);
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="client" onOpenChange={()=>{}}/>));}
 test('default assessment combines source context, narrative and status with progressive guidance',async()=>{
-  await render();expect(container.textContent).toContain('Framework Reference');expect(container.textContent).toContain('Implementation Guidance');
-  expect(container.querySelector('[aria-label="Assessment notes"]')).toBeTruthy();expect(container.querySelector('[aria-label="Assessment Status"]')).toBeTruthy();
+  await render();expect(container.textContent).toContain('What CIS requires');expect(container.textContent).toContain('Implementation guidance');
+  expect(container.querySelector('[aria-label="How is this requirement implemented?"]')).toBeTruthy();expect(container.querySelector('input[value="in_progress"]')).toBeTruthy();
   expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Not Assessed');
-  expect(container.textContent).toContain('Open official reference');
-  expect(container.textContent).not.toContain('What to ask the client');expect(container.querySelector('details')).toBeNull();
-  expect(container.querySelector('[aria-label="Additional notes (previously recorded)"]').value).toBe('Legacy narrative retained');
+  expect(container.textContent).toContain('Official CIS');
+  expect(container.textContent).not.toContain('What to ask the client');expect(container.querySelector('details')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe('Legacy narrative retained');
 });
 test('notes save once, confirm success and remain readable in history including legacy notes',async()=>{
-  await render();const field=container.querySelector('[aria-label="Assessment notes"]');
+  await render();const field=container.querySelector('[aria-label="How is this requirement implemented?"]');
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(field,'Inventory omits remote devices.');field.dispatchEvent(new Event('input',{bubbles:true}));});
   expect(container.textContent).toContain('Unsaved assessment changes');
   await act(async()=>button('Save assessment').click());
   expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({implementation:'Inventory omits remote devices.',notes:'Legacy narrative retained'}));
   expect(container.textContent).toContain('Assessment saved.');
-  await act(async()=>{button('Activity / History').click();});
-  expect(container.textContent).toContain('Inventory omits remote devices.');expect(container.textContent).toContain('Additional notes: Legacy narrative retained');
+  await act(async()=>{[...container.querySelectorAll('summary')].find(s=>s.textContent==='View History').click();});
+  expect(container.textContent).toContain('Inventory omits remote devices.');expect(container.textContent).toContain('Legacy narrative retained');
 });
 test.each(['client_readonly','client_viewer'])('%s retains context but cannot save an assessment',async role=>{
   mockRole=role;await render();
@@ -45,8 +46,8 @@ test.each(['client_readonly','client_viewer'])('%s retains context but cannot sa
 });
 
 test('saved conclusion does not change until the draft is saved',async()=>{
-  await render();const field=container.querySelector('[aria-label="Assessment Status"]');
-  await act(async()=>{field.value='in_progress';field.dispatchEvent(new Event('change',{bubbles:true}));});
+  await render();const field=container.querySelector('input[value="in_progress"]');
+  await act(async()=>{field.click();});
   expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Not Assessed');
   expect(container.textContent).toContain('Unsaved assessment changes');
   await act(async()=>button('Save assessment').click());
@@ -55,7 +56,7 @@ test('saved conclusion does not change until the draft is saved',async()=>{
 
 test('unavailable historical actors remain distinct from missing attribution',async()=>{
   record.assessment_history=[{status:'in_progress',at:'2026-09-01',by:'former',implementation:'Earlier assessment retained'},{status:'not_assessed',at:'2026-08-01'}];
-  await render();await act(async()=>{button('Activity / History').click();});
+  await render();await act(async()=>{[...container.querySelectorAll('summary')].find(s=>s.textContent==='View History').click();});
   expect(container.textContent).toContain('Former user');
   expect(container.textContent).toContain('Not recorded');
   expect(container.textContent).toContain('Earlier assessment retained');

@@ -46,6 +46,9 @@ export function identityRequest(db, path, method, params, body) {
     for (const [type, fields] of Object.entries(assignmentFields)) for (const row of db[type] || []) {
       if (row.client_id === id) for (const field of [...fields, ...(type === 'tasks' ? ['owner_id'] : []), ...memberActorFields]) if (typeof row[field] === 'string' && row[field]) referenced.add(row[field]);
     }
+    for(const c of db.organizational_controls||[])if(c.client_id===id){
+      for(const v of [c.owner_id,c.created_by,...(c.history||[]).flatMap(h=>[h.owner_id,h.changed_by]),...(c.legacy_sources||[]).map(s=>s.by),...(c.observations||[]).flatMap(o=>[o.by,o.design_snapshot?.owner_id])])if(typeof v==='string'&&v)referenced.add(v);
+    }
     const minimal = clientRoles.includes(db.user.role);
     return db.users.filter(u => u.client_ids?.includes(id) || referenced.has(u.user_id))
       .sort((a, b) => (a.name || a.email || '').toLowerCase().localeCompare((b.name || b.email || '').toLowerCase()))
@@ -89,7 +92,7 @@ export function identityRequest(db, path, method, params, body) {
     if (params.client_id && !clientAccess(db.user, params.client_id)) throw new Error('Forbidden for this client');
     const counts = {}, items = [];
     for (const [type, fields] of Object.entries(assignmentFields)) {
-      const terminal = [...(rules.closed[type] || []), ...({ vendors: ['inactive', 'terminated'], policies: ['retired', 'not_applicable'], framework_assessments: ['not_applicable'], ai_systems: ['retired'] }[type] || [])];
+      const terminal = [...(rules.closed[type] || []), ...({ vendors: ['inactive', 'terminated'], policies: ['retired', 'not_applicable'], framework_assessments: ['not_applicable'], ai_systems: ['retired'], assets: ['retired'] }[type] || [])];
       const rows = (db[type] || []).filter(row => clientAccess(db.user, row.client_id) && (!params.client_id || row.client_id === params.client_id) &&
         !terminal.includes(row.status) && (fields.some(f => row[f] === id) || type === 'tasks' && !row.assignee_id && row.owner_id === id));
       counts[type] = rows.length;

@@ -13,10 +13,10 @@ jest.mock("@/context/AuthContext", () => {
   return { useAuth: () => ({ user }) };
 });
 jest.mock("@/lib/loadClientDashboard", () => ({ loadClientDashboard: jest.fn(), labelDashboardRows:rows=>rows }));
-jest.mock("@/lib/api", () => ({ __esModule: true, default: {get:jest.fn()}, API: "/api", formatError: err => err.message }));
-jest.mock("react-router-dom", () => ({ Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a> }), { virtual: true });
+jest.mock("@/lib/api", () => ({ __esModule: true, default: {get:jest.fn()}, PREVIEW_MODE:true, API: "/api", formatError: err => err.message }));
+jest.mock("react-router-dom", () => ({ Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a> }));
 jest.mock("@/components/DashboardScopeSelector", () => () => null);
-jest.mock("@/components/RecordDrawer", () => props => <div data-testid="record-drawer">{props.kind}:{props.record.task_id}:{props.clientId}</div>);
+jest.mock("@/components/RecordDrawer", () => props => <><div data-testid="record-drawer">{props.kind}:{props.record.task_id}:{props.clientId}</div><button onClick={()=>props.onOpenChange(false)}>Close test record</button></>);
 
 const empty = { members: [], programs: [], posture: dashboardPosture(aggregateClientDashboard({}, {clientId:'a'})) };
 let root, container;
@@ -40,6 +40,30 @@ test("minimal client: attention strip, priority panel and three health panels, a
   expect(container.textContent).toContain("Requires attention");
   expect(container.querySelector('[data-testid="kpi-overdue"]')).toBeNull();
   expect(container.querySelector('button[aria-label="Past Due: 0 items"]')).not.toBeNull();
+});
+
+test('only Brawndo gets the queue pilot; opening and closing a record retains its filter',async()=>{
+  const item={key:'tasks:t',id:'t',kind:'tasks',title:'Brawndo work',status:'open',owner:'Unassigned',unassigned:true};
+  const queue={as_of:'2026-09-27',groups:Object.fromEntries(['all','pastDue','due30','unassigned'].map(key=>[key,{total:1,items:[item]}]))};
+  useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{name:'Brawndo'}});
+  loadClientDashboard.mockResolvedValue({...empty,contract_version:2,queue});
+  api.get.mockResolvedValue({data:{client_id:'demo_brawndo',task_id:'t',title:'Brawndo work'}});
+  await act(async()=>root.render(<Dashboard/>));
+  expect(container.textContent).toContain('Brawndo Dashboard');
+  expect(container.textContent).not.toContain('Board Report PDF');
+  expect(loadClientDashboard.mock.calls.at(-1)[1].workQueue).toBe(true);
+  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Unassigned')).click());
+  await act(async()=>container.querySelector('tbody button').click());
+  expect(container.querySelector('[data-testid="record-drawer"]').textContent).toBe('tasks:t:demo_brawndo');
+  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent==='Close test record').click());
+  expect(container.querySelector('[data-testid="record-drawer"]')).toBeNull();
+  expect(container.querySelector('[aria-pressed=true]').textContent).toContain('Unassigned');
+  useOrg.mockReturnValue({currentClientId:'demo_initech',currentClient:{name:'Initech'}});
+  loadClientDashboard.mockResolvedValue(empty);
+  await act(async()=>root.render(<Dashboard/>));
+  expect(container.textContent).toContain('Board Report PDF');
+  expect(container.textContent).toContain('Requires attention');
+  expect(loadClientDashboard.mock.calls.at(-1)[1].workQueue).toBe(false);
 });
 
 test("populated client row opens the existing authoritative record drawer", async () => {

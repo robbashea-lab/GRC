@@ -1330,7 +1330,7 @@ async def user_open_assignments(user_id: str, client_id: Optional[str] = Query(N
         terminal = list(CLOSED.get(kind, []))
         terminal += {
             "vendors": ["inactive", "terminated"], "policies": ["retired", "not_applicable"],
-            "framework_assessments": ["not_applicable"], "ai_systems": ["retired"],
+            "framework_assessments": ["not_applicable"], "ai_systems": ["retired"], "assets": ["retired"],
         }.get(kind, [])
         query = {"$and": [scope, {"$or": references}, {"status": {"$nin": terminal}}]}
         counts[kind] = await db[kind].count_documents(query)
@@ -1604,6 +1604,8 @@ async def client_members(client_id: str, user: Dict = Depends(get_current_user))
         for field in (*assignment_fields, *(("owner_id",) if coll == "tasks" else ()), *MEMBER_ACTOR_FIELDS):
             referenced.update(v for v in await db[coll].distinct(field, {"client_id": client_id}) if isinstance(v, str) and v)
     orphan_ids = referenced - known_ids
+    for field in ('owner_id','created_by','history.owner_id','history.changed_by','legacy_sources.by','observations.by','observations.design_snapshot.owner_id'):
+        orphan_ids.update(v for v in await db.organizational_controls.distinct(field, {'client_id':client_id}) if isinstance(v,str) and v not in known_ids)
     if orphan_ids:
         orphans = await db.users.find(
             {"user_id": {"$in": sorted(orphan_ids)}},
@@ -3660,7 +3662,8 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     evidence = await db.evidence.find({"client_id": review["client_id"], "archived_at": None,
         **evidence_context.review_evidence_query(review, body.occurrence_id)}, {"_id": 0, "content_base64": 0}).to_list(None)
     findings = await db.findings.count_documents({"client_id": review["client_id"], "review_id": review_id, **scope})
-    completed = review_occurrences.snapshot(review, evidence, findings, user, _now())
+    iso_snapshot = await iso_audit.completion_snapshot(sys.modules[__name__], review)
+    completed = {**review_occurrences.snapshot(review, evidence, findings, user, _now()), **iso_snapshot}
     if body.completion_notes is not None:
         completed["notes"] = body.completion_notes
     if review.get("risk_id"):
@@ -3683,6 +3686,8 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
         updates.update({"due_date": next_due, "current_occurrence_id": _uid("occ"), "status": "upcoming",
                         "notes": None, "started_at": None, "started_by": None, "completion_date": None,
                         "completion_snapshot": None, "risk_baseline": None})
+        if review.get("iso_audit"):
+            updates["iso_audit"] = iso_audit.initial_state(review["iso_audit"]["package_key"], review["iso_audit"].get("cycle", 1) + 1)
         updates.update(review_occurrences.schedule({**current, **updates}))
     else:
         updates.update({"current_occurrence_id": body.occurrence_id, "status": "completed",
@@ -3922,7 +3927,13 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         finding=await db.findings.find_one({'finding_id':source['finding_id'],'client_id':cid})
         if finding and finding.get('framework_assessment_id'):
             assessment_clauses.append({'framework_assessment_id':finding['framework_assessment_id']})
-    if entity_type in ('tasks','findings') and source.get('review_id'):
+    explicit_finding=[]
+    if entity_type in ('tasks','findings'):
+        fid=source.get('finding_id')
+        if fid:
+            explicit_finding=await db.framework_assessments.find({'client_id':cid,'related_links':{'$elemMatch':{'kind':'findings','id':fid}}},{'_id':0,'framework_assessment_id':1}).to_list(None)
+            if explicit_finding:assessment_clauses.append({'framework_assessment_id':{'$in':[a['framework_assessment_id'] for a in explicit_finding]}})
+    if entity_type in ('tasks','findings') and source.get('review_id') and not explicit_finding and not any('framework_assessment_id' in clause for clause in assessment_clauses):
         parent_review=await db.reviews.find_one({'review_id':source['review_id'],'client_id':cid},{'_id':0})
         if parent_review:
             assessment_clauses.append({'related_links':{'$elemMatch':{'kind':'reviews','id':parent_review['review_id']}}})
@@ -4944,6 +4955,10 @@ app.include_router(api)
 import sys
 app.include_router(ai_governance.router_for(sys.modules[__name__]))
 app.include_router(framework_governance.router_for(sys.modules[__name__]))
+import iso_audit
+app.include_router(iso_audit.router_for(sys.modules[__name__]))
+import organizational_controls
+app.include_router(organizational_controls.router_for(sys.modules[__name__]))
 app.include_router(policy_approval.router_for(sys.modules[__name__]))
 app.include_router(evidence_library.router_for(sys.modules[__name__]))
 import client_profile

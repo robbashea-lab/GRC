@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 import review_occurrences
 import assignment_eligibility
+import shared_review_plans
 from framework_catalog import CATALOGS, CIS, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
@@ -40,9 +41,33 @@ async def reconcile(s,cid,state,user):
         if key not in state.get('requirements',{}):
             continue
         if state['requirements'][key]!='applies':
-            await s.db.reviews.update_many({'client_id':cid,'framework_key':key},{'$set':{'framework_driver_active':False}})
+            rows=await s.db.reviews.find({'client_id':cid,'$or':[{'framework_key':key},{'framework_drivers.framework_key':key}]},{'_id':0}).to_list(None)
+            for row in rows:
+                drivers=[{**d,'framework_driver_active':False} if d['framework_key']==key else d for d in shared_review_plans.drivers(row)]
+                await save_drivers(s,row,drivers)
             continue
         await reconcile_catalog(s,cid,state,user,key,catalog)
+
+
+async def save_drivers(s,row,drivers):
+    """Only current provenance changes; completed occurrences keep their snapshot."""
+    drivers=sorted(drivers,key=lambda d:d['framework_plan_key'])
+    if row.get('framework_drivers')==drivers:return
+    # The legacy scalar describes the original framework, not the whole driver set.
+    primary=next((d for d in drivers if d['framework_plan_key']==row.get('framework_plan_key')),None)
+    updates={'framework_drivers':drivers,'framework_driver_active':primary['framework_driver_active'] if primary else row.get('framework_driver_active',True),
+             'updated_at':s._next_write_time(row.get('updated_at'))}
+    changed=await s.db.reviews.update_one({'client_id':row['client_id'],'review_id':row['review_id'],
+        'framework_drivers':row.get('framework_drivers'),'updated_at':row.get('updated_at')},{'$set':updates})
+    if not changed.matched_count:raise HTTPException(409,'Review drivers changed; reload configuration before retrying')
+
+
+async def add_driver(s,cid,rid,key,plan,active=True):
+    row=await s.db.reviews.find_one({'client_id':cid,'review_id':rid},{'_id':0})
+    drivers=shared_review_plans.drivers(row)
+    updated=shared_review_plans.driver(key,plan,active)
+    drivers=[d for d in drivers if d['framework_plan_key']!=plan['key']]+[updated]
+    await save_drivers(s,row,drivers)
 
 
 async def reconcile_catalog(s,cid,state,user,key,catalog):
@@ -55,14 +80,15 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
             'framework_version':catalog['version'],'status':'not_assessed','implementation':'','technology':'','notes':'','na_rationale':'',
             'owner_id':None,'process_owner_id':None,'created_at':s._now(),'related_links':[],'assessment_history':[]}},upsert=True)
     for plan in catalog['review_plans']:
-        config={'enabled':True,'recurrence':plan['default_cadence'],**state.get('framework_reviews',{}).get(plan['key'],{})}
+        try:config=shared_review_plans.shared_config(state,plan)
+        except ValueError as error:raise HTTPException(422,str(error)) from error
         old=await s.db.reviews.find_one({'client_id':cid,'framework_plan_key':plan['key']},{'_id':0})
-        if not config['enabled']:
-            if old: await s.db.reviews.update_one({'review_id':old['review_id']},{'$set':{'framework_driver_active':False}})
-            continue
         if not old and plan.get('baseline_key'):
             equivalent=[p['key'] for c in CATALOGS.values() for p in c['review_plans'] if p.get('baseline_key')==plan['baseline_key']]
             old=await s.db.reviews.find_one({'client_id':cid,'$or':[{'baseline_key':plan['baseline_key']},{'framework_plan_key':{'$in':equivalent}}]},{'_id':0})
+        if not config['enabled']:
+            if old:await add_driver(s,cid,old['review_id'],key,plan,False)
+            continue
         mapping={'framework_key':key,'framework_version':catalog['version'],'framework_plan_key':plan['key'],'framework_driver_active':True,
                  'framework_safeguards':plan['safeguards'],'framework_basis':plan['basis'],'framework_source_cadence':plan['source_cadence'],
                  'framework_default_cadence':plan['default_cadence']}
@@ -81,6 +107,7 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
                  'owner_id':None,'created_at':s._now(),'created_by':user['user_id'],**mapping}
             row.update(review_occurrences.schedule(row));row['current_occurrence_id']=review_occurrences.occurrence_id(row)
             await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':row},upsert=True)
+        await add_driver(s,cid,rid,key,plan)
         await s.db.framework_assessments.update_many(
             {'client_id':cid,'framework_key':key,'definition_id':{'$in':plan['safeguards']}},
             {'$addToSet':{'related_links':{'kind':'reviews','id':rid}}})
@@ -117,12 +144,26 @@ class ReviewSetup(BaseModel):
     custom_recurrence_days: Optional[int]=Field(default=None,ge=1,le=3650)
     due_date: Optional[str]=Field(default=None,max_length=10)
 
+async def explicit_finding_scopes(s,cid):
+    rows=await s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1}).to_list(None)
+    scopes={}
+    for a in rows:
+        for link in a.get('related_links',[]):
+            if link['kind']=='findings':scopes.setdefault(link['id'],set()).add(a['framework_assessment_id'])
+    return scopes
+
+def finding_applies(row,f,rids,scopes):
+    explicit=set(scopes.get(f['finding_id'],set()))
+    if f.get('framework_assessment_id'):explicit.add(f['framework_assessment_id'])
+    return row['framework_assessment_id'] in explicit if explicit else f.get('review_id') in rids
+
 async def workspace_work(s,cid,rows):
-    """Four bounded-field reads, no occurrence/evidence/history payloads or per-row queries."""
+    """Bounded-field reads, no occurrence/evidence/history payloads or per-row queries."""
     if not rows:return {}
     projection={'_id':0,'client_id':1,'review_id':1,'finding_id':1,'task_id':1,'framework_assessment_id':1,'framework_key':1,'framework_safeguards':1,'status':1,'due_date':1}
     reviews=await s.db.reviews.find({'client_id':cid},projection).to_list(None)
-    findings=await s.db.findings.find({'client_id':cid,'status':{'$nin':['closed','accepted']}},projection).to_list(None)
+    findings=await s.db.findings.find({'client_id':cid},projection).to_list(None)
+    scopes=await explicit_finding_scopes(s,cid)
     tasks=await s.db.tasks.find({'client_id':cid,'status':{'$nin':['done','cancelled']}},projection).to_list(None)
     # Evidence dates only (no content): supports derived validation freshness.
     # Deleted (archived) Evidence is not current support.
@@ -134,10 +175,12 @@ async def workspace_work(s,cid,rows):
         def linked(kind,ident):return {'kind':kind,'id':ident} in links
         rs=[r for r in reviews if linked('reviews',r['review_id']) or (r.get('framework_key')==row['framework_key'] and row['definition_id'] in r.get('framework_safeguards',[]))]
         rids={r['review_id'] for r in rs}
-        fs=[f for f in findings if linked('findings',f['finding_id']) or f.get('framework_assessment_id')==aid or f.get('review_id') in rids]
+        relevant={f['finding_id'] for f in findings if finding_applies(row,f,rids,scopes)}
+        fs=[f for f in findings if f['finding_id'] in relevant and f.get('status') not in ('closed','accepted')]
         fids={f['finding_id'] for f in fs}
         def overdue(r):return bool(r.get('due_date')) and r['due_date'][:10]<today
-        ts=[t for t in tasks if linked('tasks',t['task_id']) or t.get('framework_assessment_id')==aid or t.get('review_id') in rids or t.get('finding_id') in fids]
+        ts=[t for t in tasks if linked('tasks',t['task_id']) or t.get('framework_assessment_id')==aid or
+            (t.get('finding_id') in relevant if t.get('finding_id') else not t.get('framework_assessment_id') and t.get('review_id') in rids)]
         unlinked=set(row.get('unlinked_evidence_ids') or [])
         # Evidence the operator unlinked from this assessment no longer supports it.
         es=[e for e in evidence if e['evidence_id'] not in unlinked and (linked('evidence',e['evidence_id']) or (e.get('linked_type') in ('framework_assessment','framework_assessments') and e.get('linked_id')==aid))]
@@ -169,8 +212,12 @@ async def related(s,row):
         out[kind]=await s.db[kind].find({'client_id':cid,'$or':clauses},{'_id':0,'content_base64':0}).to_list(None)
     rids=[r['review_id'] for r in out['reviews']]
     findings=await s.db.findings.find({'client_id':cid,'review_id':{'$in':rids}},{'_id':0}).to_list(None)
+    scopes=await explicit_finding_scopes(s,cid)
+    findings=[f for f in findings if finding_applies(row,f,rids,scopes)]
     out['findings']=list({r['finding_id']:r for r in out['findings']+findings}.values())
     tasks=await s.db.tasks.find({'client_id':cid,'$or':[{'finding_id':{'$in':[f['finding_id'] for f in out['findings']]}},{'review_id':{'$in':rids}}]},{'_id':0}).to_list(None)
+    tasks=[t for t in tasks if t.get('framework_assessment_id')==aid or
+        (t.get('finding_id') in {f['finding_id'] for f in out['findings']} if t.get('finding_id') else not t.get('framework_assessment_id'))]
     out['tasks']=list({r['task_id']:r for r in out['tasks']+tasks}.values())
     review_evidence=await s.db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}},{'_id':0,'content_base64':0}).to_list(None)
     out['evidence']=list({e['evidence_id']:e for e in out['evidence']+review_evidence}.values())
@@ -211,7 +258,8 @@ def router_for(s):
         catalog=CATALOGS.get(key,{})
         config=soc_configuration(client) if key=='soc-2' else {}
         retained={a['definition_id'] for a in rows}
-        return {'framework':framework,'selected':bool(program),'configured':bool(rows),
+        controls = await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1,'legacy_id':1,'assessment_ids':1,'design':1,'conflicts':1,'observations.operating':1,'observations.expected_instances':1,'observations.collected_instances':1}).to_list(None) if key=='soc-2' else []
+        return {'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
                 'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows),
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
@@ -262,6 +310,7 @@ def router_for(s):
             draft.update(review_occurrences.schedule(draft));draft['current_occurrence_id']=review_occurrences.occurrence_id(draft)
             inserted=await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':draft},upsert=True)
             if inserted.upserted_id:await s.audit(user,'create','reviews',rid,cid,meta={'framework_assessment_id':aid})
+        if plan:await add_driver(s,cid,rid,key,plan)
         mapped=plan['safeguards'] if plan else [row['definition_id']]
         linked=await s.db.framework_assessments.update_many({'client_id':cid,'framework_key':key,'definition_id':{'$in':mapped}},{'$addToSet':{'related_links':{'kind':'reviews','id':rid}}})
         if linked.modified_count:await s.audit(user,'Framework Review linked','framework_assessments',aid,cid,meta={'review_id':rid})
@@ -277,6 +326,8 @@ def router_for(s):
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
         if 'management_controls' in changes:
             if old['framework_key']!='soc-2':raise HTTPException(422,'Management control readiness fields apply only to SOC 2')
+            if changes['management_controls'] != old.get('management_controls', []) and (old.get('controls_migrated') or await s.db.organizational_controls.find_one({'client_id':old['client_id'],'$or':[{'assessment_ids':aid},{'legacy_sources.assessment_id':aid}]})):
+                raise HTTPException(409,'Legacy descriptions are preserved. Edit the shared organizational Control instead')
             ids=[c['control_id'] for c in changes['management_controls']]
             if len(ids)!=len(set(ids)):raise HTTPException(422,'Management control identifiers must be unique')
         if data['status'] not in STATUSES or any(data.get(k) is None for k in ('implementation','technology','notes','na_rationale')):raise HTTPException(422,'Invalid assessment fields')
@@ -289,10 +340,8 @@ def router_for(s):
             applicability=data.get('soa_applicability') or ''
             if applicability and not (data.get('soa_justification') or '').strip():
                 raise HTTPException(422,'Document the SoA inclusion or exclusion justification')
-            if (applicability=='excluded') != (data['status']=='not_applicable'):
-                raise HTTPException(422,'An excluded Annex A control must be Not Applicable; other controls cannot be Not Applicable')
-            if data['status']=='addressed' and applicability!='included':
-                raise HTTPException(422,'Record SoA inclusion before marking Addressed')
+            # Applicability is a separate risk-treatment decision. Preserve any
+            # existing implementation conclusion when inclusion/exclusion changes.
         elif changes.get('soa_applicability') or changes.get('soa_justification'):
             raise HTTPException(422,'SoA fields apply only to Annex A controls')
         if definition.get('specification')=='addressable':
@@ -305,7 +354,9 @@ def router_for(s):
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed:
             at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed'};snapshot.update(at=at,by=user['user_id'])
-            result=await s.db.framework_assessments.update_one({'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')},{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
+            predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}
+            if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
+            result=await s.db.framework_assessments.update_one(predicate,{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
             if not result.matched_count:raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status']})
         return await parent(aid,user)

@@ -13,3 +13,12 @@ export function displayDay(value) {
   const day = calendarDay(value);
   return day === null ? null : new Date(day * 86400000).toLocaleDateString(undefined, {timeZone: 'UTC'});
 }
+
+// Legacy artifacts may record only a day. Do not invent a midnight instant and
+// shift it into the preceding day in a western timezone.
+export function displayRecordedAt(value) {
+  if(typeof value!=='string'||!value)return null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(value))return displayDay(value);
+  const date=new Date(value);
+  return Number.isNaN(date.getTime())?null:date.toLocaleString();
+}

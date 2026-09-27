@@ -21,7 +21,7 @@ beforeEach(()=>{
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);close=jest.fn();next=jest.fn();
  record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.2',client_id:'demo_brawndo',status:'addressed',implementation:'Current process',technology:'Recorded platform',notes:'Older notes',assessment_history:[],last_assessed:null};
  related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
- api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/evidence/catalog'?{items:[{evidence_id:'e',filename:'Validation.txt'}],total:1,page:1,page_size:25}:[]}));
+ api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:path==='/evidence/catalog'?{items:[{evidence_id:'e',filename:'Validation.txt'}],total:1,page:1,page_size:25}:[]}));
  api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-09-23',assessment_history:[{...body,at:'2026-09-23',by:'u'}]};return {data:record};});
  api.post.mockResolvedValue({data:{}});
 });
@@ -36,9 +36,9 @@ test('activation requires the exact synthetic client, framework, record tenant a
 });
 test('linear hierarchy, reference-only content, specific validation and retained metadata',async()=>{
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
- expect([...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent)).toEqual(['1What CIS requires','2Client status','3Delivery & current state','4Verification','5Required actions']);
+ expect([...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent)).toEqual(['1What CIS requires','2Client status','3Delivery & current state','4Verification','5Required actions','Organizational Controls']);
  expect(container.textContent).toContain('Unknown devices are detected');expect(container.querySelector('[aria-label^="Verification status"]').children).toHaveLength(6);
- expect(container.textContent).toContain('Unknown-device records');expect(container.textContent).toContain('not official CIS text');
+ expect(container.textContent).toContain('Unknown-device records');expect(container.textContent).toContain('not official framework text');
  expect(container.querySelector('a').href).toMatch(/^https:\/\/cas.docs.cisecurity.org\//);
  expect(container.querySelector('[aria-label="Technology / Processes Used"]').value).toBe('Recorded platform');
  expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe('Older notes');
@@ -103,7 +103,7 @@ test('Save & next cannot discard a separate Finding or comment draft',async()=>{
 test('evidence picker searches display name, distinguishes no match, and retains filename',async()=>{
  // The catalog searches server-side; the mock filters on the query the picker sends.
  const libraryItem={evidence_id:'e',filename:'report.txt',display_name:'Asset reconciliation',created_at:'2026-09-01',evidence_type:'Report'};
- api.get.mockImplementation(async(path,config)=>{if(path==='/evidence/catalog'){const items=`${libraryItem.display_name} ${libraryItem.filename} ${libraryItem.evidence_type}`.toLowerCase().includes((config?.params?.q||'').toLowerCase())?[libraryItem]:[];return {data:{items,total:items.length,page:1,page_size:25}};}return {data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:[]};});
+ api.get.mockImplementation(async(path,config)=>{if(path==='/evidence/catalog'){const items=`${libraryItem.display_name} ${libraryItem.filename} ${libraryItem.evidence_type}`.toLowerCase().includes((config?.params?.q||'').toLowerCase())?[libraryItem]:[];return {data:{items,total:items.length,page:1,page_size:25}};}return {data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:[]};});
  await render();await act(async()=>button('Link Evidence').click());
  expect(container.textContent).toContain('Asset reconciliation · 2026-09-01');
  await input('Find existing evidence','no-match');expect(container.textContent).toContain('No evidence matches your search');

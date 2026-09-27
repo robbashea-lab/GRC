@@ -59,13 +59,14 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       created_by: lead
     };
     org.people.forEach((name, i) => {
-      const user_id = clientPersonaRoles[i] ? cid + '_user_' + i : null,
+      const role = (org.roles || clientPersonaRoles)[i];
+      const user_id = role ? cid + '_user_' + i : null,
         contact_id = cid + '_contact_' + i;
       if (user_id) db.users.push({
         user_id,
         name,
         email: org.key + '.person' + i + '@example.test',
-        role: clientPersonaRoles[i],
+        role,
         status: 'active',
         client_ids: [cid],
         workspace_mode: 'demo'

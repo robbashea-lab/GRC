@@ -46,6 +46,18 @@ test('classification, filters, scoped sources and stale metadata match the serve
   await expect(api.patch(`/evidence-library/items/${e.evidence_id}`,{expected_updated_at:updated.updated_at,display_name:'forbidden'})).rejects.toThrow('Read-only');
 });
 
+test('opaque source IDs cannot manufacture a different examination period in search',async()=>{
+  const db=readStore();
+  db.reviews.push({review_id:'opaque-q3',client_id:cid,title:'Quarterly Access Review',recurrence:'quarterly',due_date:'2026-12-31',current_occurrence_id:'q4-occurrence',status:'upcoming',occurrences:[]});
+  saveStore(db);
+  await upload({linked_type:'review',linked_id:'opaque-q3',occurrence_id:'q4-occurrence'});
+  const search=async q=>(await api.get('/evidence/catalog',{params:{client_id:cid,q}})).data;
+  expect((await search('Q3')).total).toBe(0);
+  expect((await search('Q3 2026')).total).toBe(0);
+  expect((await search('Q4 2026')).total).toBe(1);
+  expect((await search('Quarterly Access Review')).total).toBe(1);
+});
+
 test('module-owned framework links and archived Policy approval files remain authoritative',async()=>{
   const p=(await api.post('/policies',{client_id:cid,title:'Policy',version:'1.0'})).data;
   const e=await upload({linked_type:'policy',linked_id:p.policy_id});

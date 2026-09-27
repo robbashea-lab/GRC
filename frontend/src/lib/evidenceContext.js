@@ -4,7 +4,8 @@ export {evidenceSources,evidenceKind,evidenceSourceLabel,uploaderLabel,sourceRef
 
 export async function resolveEvidenceSource(ref,clientId){
   if(!ref?.available)throw new Error('Source unavailable.');
-  const {data}=await api.get(`/${ref.kind}/${encodeURIComponent(ref.id)}`);
+  const route=ref.kind==='organizational_controls'?'organizational-controls':ref.kind;
+  const {data}=await api.get(`/${route}/${encodeURIComponent(ref.id)}`);
   if(data.client_id!==clientId)throw new Error('Source not found for this client.');
   let initialValues={};
   if(ref.kind==='reviews'){

@@ -2,18 +2,24 @@ import {evidenceKind,evidenceSources,sourceReference} from '../lib/evidenceRefer
 import {dateMatches} from '../lib/tableFilters';
 import {occurrenceId,reviewView,assertCurrentOccurrence,belongsToOccurrence} from '../lib/reviewOccurrences';
 import {audit,record} from './store';
+import {auditEvidenceIds} from '../lib/isoAudit';
 
-export const areas={reviews:'Reviews',policies:'Policies',vendors:'Vendors',risks:'Risks',findings:'Findings',framework_assessments:'Frameworks',requirements:'Frameworks'};
+export const areas={reviews:'Reviews',policies:'Policies',vendors:'Vendors',risks:'Risks',findings:'Findings',framework_assessments:'Frameworks',requirements:'Frameworks',organizational_controls:'Controls'};
+export const controlEvidenceLinks=c=>[c,...c.history||[],...(c.observations||[]).map(o=>o.design_snapshot)].flatMap(v=>v?.related_links||[]).filter(l=>l.kind==='evidence');
+export const auditEvidenceLinks=r=>[r,...r.occurrences||[]].flatMap(o=>auditEvidenceIds(o.iso_audit).map(id=>({id,occurrence_id:o.occurrence_id||occurrenceId(r)})));
 export function evidenceReferences(db,e){
   const cid=e.client_id,kind=evidenceKind(e.linked_type),links=[...(kind?[{kind,id:e.linked_id,occurrence_id:e.occurrence_id,origin:'upload'}]:[]),...(e.relationships||[]).map(r=>({...r,origin:'supporting'}))];
   for(const v of db.vendors||[])if(v.client_id===cid&&(v.contract_evidence_ids?.includes(e.evidence_id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(e.evidence_id))))links.push({kind:'vendors',id:v.vendor_id,origin:'module'});
   for(const p of db.policies||[])if(p.client_id===cid&&(p.approval_source?.evidence_id===e.evidence_id||p.approval_subject?.basis?.evidence_id===e.evidence_id||p.approval_history?.some(h=>h.subject?.basis?.evidence_id===e.evidence_id)))links.push({kind:'policies',id:p.policy_id,origin:'module'});
   for(const a of db.framework_assessments||[])if(a.client_id===cid&&a.related_links?.some(l=>l.kind==='evidence'&&l.id===e.evidence_id)&&!a.unlinked_evidence_ids?.includes(e.evidence_id))links.push({kind:'framework_assessments',id:a.framework_assessment_id,origin:'module'});
+  for(const c of db.organizational_controls||[])if(c.client_id===cid&&controlEvidenceLinks(c).some(l=>l.id===e.evidence_id))links.push({kind:'organizational_controls',id:c.control_id,origin:'module'});
+  for(const r of db.reviews||[])if(r.client_id===cid)for(const l of auditEvidenceLinks(r))if(l.id===e.evidence_id)links.push({kind:'reviews',id:r.review_id,origin:'module',occurrence_id:l.occurrence_id});
   const refs=[];
   for(const link of links){
     const spec=evidenceSources[link.kind];if(!spec)continue;
     const parent=(db[link.kind]||[]).find(r=>r.client_id===cid&&r[spec.key]===link.id),ref={...sourceReference(link.kind,parent,link.id,link.occurrence_id),origin:link.origin};
     if(parent&&link.kind==='framework_assessments')ref.framework_key=parent.framework_key;
+    if(parent&&link.kind==='organizational_controls')ref.document_context=parent.related_links.some(l=>l.kind==='evidence'&&l.id===e.evidence_id)?'Current Control relationship':'Historical Control relationship';
     if(parent&&link.kind==='policies')ref.document_context=parent.approval_source?.evidence_id===e.evidence_id?'Current approval document':parent.approval_history?.some(h=>h.subject?.basis?.evidence_id===e.evidence_id)?'Previous approval document':'Supporting document';
     ref.module_owned=links.some(r=>r.kind===ref.kind&&r.id===ref.id&&r.origin==='module');refs.push(ref);
     if(parent&&link.kind==='reviews'){
@@ -68,7 +74,8 @@ export function evidencePage(db,params){
   const unfiltered_total=rows.length,program_counts={};rows.forEach(r=>r.program_areas.forEach(a=>{program_counts[a]=(program_counts[a]||0)+1;}));
   rows.forEach(r=>{counts[r.category]=(counts[r.category]||0)+1;Object.entries(facets).forEach(([k,set])=>{for(const value of Array.isArray(r[k])?r[k]:[r[k]])if(value&&!set.has(value)){if(set.size<200)set.add(value);else facets_limited=true;}});});
   rows=rows.filter(r=>{
-    const text=[r.filename,r.display_name,r.evidence_type,r.uploader,r.uploaded_by_email,...r.years,...[...Object.values(r.context),...r.references].filter(v=>v?.available).flatMap(v=>[v.title,v.period,v.label,v.id,v.display_id,v.year,v.framework_key])].filter(Boolean).join(' ').toLowerCase();
+    // Search operator-visible context, not random record IDs that can match a quarter by accident.
+    const text=[r.filename,r.display_name,r.evidence_type,r.uploader,r.uploaded_by_email,...r.years,...[...Object.values(r.context),...r.references].filter(v=>v?.available).flatMap(v=>[v.title,v.period,v.label,v.display_id,v.year,v.framework_key])].filter(Boolean).join(' ').toLowerCase();
     return text.includes(query)&&Object.entries(state.filters||{}).every(([k,values])=>!values.length||!(k in facets||dates.includes(k))||values.some(v=>dates.includes(k)?dateMatches(r[k],v,today):v==='__empty__'?!r[k]:Array.isArray(r[k])?r[k].includes(v):r[k]===v));
   });
   const key=['filename','mime_type','uploaded_by_email','linked_type',...dates].includes(state.sort?.key)?state.sort.key:'created_at',direction=state.sort?.dir==='asc'?1:-1;
@@ -107,6 +114,7 @@ export function evidenceLibraryRequest(db,method,parts,params,body){
   if(e.archived_at)throw Error('Archived Evidence cannot be changed');
   if(!Object.prototype.hasOwnProperty.call(body,'expected_updated_at')||(body.expected_updated_at||null)!==(e.updated_at||null))throw Error('Evidence changed; reload before saving');
   if(action==='relationships'){
+    if(evidenceKind(body.linked_type)==='organizational_controls')throw Error('Manage Control relationships through the organizational Control');
     const kind=evidenceKind(body.linked_type);if(!kind)throw Error('Unsupported source');const parent=record(db,kind,body.linked_id);
     if(parent.client_id!==e.client_id)throw Error('Evidence relationships must stay in the same client');
     if(kind==='framework_assessments')throw Error('Manage framework relationships through the framework assessment');

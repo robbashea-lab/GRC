@@ -23,8 +23,38 @@ export function onboardingDraft(state){
     framework_reviews:state.framework_reviews||{},reviews:state.version>=3||state.completed?state.reviews:[]};
 }
 export const selectedPrograms=state=>FRAMEWORKS.filter(f=>state.requirements?.[f.key]==='applies');
-export const reviewConfig=(state,plan)=>({enabled:true,recurrence:plan.default_cadence,custom_recurrence_days:90,due_date:'',...state.framework_reviews?.[plan.key]});
+export function reviewConfig(state,plan){
+  const drivers=plan.drivers||[plan];
+  const explicit=drivers.map(p=>p.source_minimum).filter(Boolean).sort((a,b)=>cadenceDays(a)-cadenceDays(b));
+  const defaults=drivers.map(p=>p.default_cadence).sort((a,b)=>cadenceDays(a)-cadenceDays(b));
+  const configured=drivers.map(p=>state.framework_reviews?.[p.key]).filter(Boolean);
+  const proposed=explicit[0]||defaults[0];
+  const result={enabled:true,recurrence:proposed,custom_recurrence_days:90,due_date:'',...configured[0]};
+  // Historical drafts can disagree. Make the conflict actionable, not first-wins.
+  const signature=c=>JSON.stringify([c.enabled??true,c.recurrence||proposed,c.recurrence==='custom'?c.custom_recurrence_days:null,c.due_date||'']);
+  return {...result,conflict:configured.some(c=>signature(c)!==signature(result))};
+}
 export function frameworkPlans(state){return Object.entries(CATALOGS).filter(([key])=>state.requirements?.[key]==='applies').flatMap(([key,catalog])=>catalog.review_plans.map(p=>({...p,framework_key:key})));}
+export function sharedFrameworkPlans(state){
+  const groups=new Map();
+  for(const p of frameworkPlans(state)){
+    const key=p.baseline_key||p.key;
+    if(!groups.has(key))groups.set(key,{...p,drivers:[]});
+    groups.get(key).drivers.push(p);
+  }
+  return [...groups.values()].map(p=>({...p,source_minimum:p.drivers.map(d=>d.source_minimum).filter(Boolean).sort((a,b)=>cadenceDays(a)-cadenceDays(b))[0]||null}));
+}
+export function reviewDriver(key,plan,active=true){
+  return {framework_key:key,framework_version:CATALOGS[key].version,framework_plan_key:plan.key,framework_driver_active:active,
+    framework_safeguards:plan.safeguards,framework_basis:plan.basis,framework_source_cadence:plan.source_cadence,
+    framework_default_cadence:plan.default_cadence,framework_source_minimum:plan.source_minimum||null,
+    framework_cadence_references:plan.cadence_references||[]};
+}
+export function reviewDrivers(row){
+  if(row.framework_drivers)return row.framework_drivers;
+  const plan=CATALOGS[row.framework_key]?.review_plans.find(p=>p.key===row.framework_plan_key);
+  return plan?[reviewDriver(row.framework_key,plan,row.framework_driver_active!==false)]:[];
+}
 export function existingFrameworkReview(rows,plan){
   const equivalent=Object.values(CATALOGS).flatMap(c=>c.review_plans).filter(p=>plan.baseline_key&&p.baseline_key===plan.baseline_key).map(p=>p.key);
   return rows.find(r=>r.framework_plan_key===plan.key)||rows.find(r=>plan.baseline_key&&(r.baseline_key===plan.baseline_key||equivalent.includes(r.framework_plan_key)));

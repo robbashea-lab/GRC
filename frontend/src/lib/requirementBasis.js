@@ -1,4 +1,4 @@
-import {CATALOGS, FRAMEWORKS, SPECIFICATION_LABELS} from './frameworks';
+import {CATALOGS, FRAMEWORKS, SPECIFICATION_LABELS, reviewDrivers, cadenceDays} from './frameworks';
 
 export const BUSINESS_BASIS={organizational:'Organizational requirement',management:'Management decision',contractual:'Contractual requirement',customer:'Customer requirement',risk:'Risk-driven',recommended:'Best practice / recommendation',enhancement:'Recommended enhancement'};
 export const CADENCE_BASIS={organization_defined:'Organization-defined',risk_based:'Risk-based',contractual:'Contractual',recommended:'Recommendation recorded by organization'};
@@ -31,6 +31,7 @@ export function requirementBasis(kind,row={},related={}) {
     group.requirements.push({definition,assessment,classification:nativeClassification(key,definition)});
   };
   for(const id of row.framework_safeguards||[])add(row.framework_key,id);
+  for(const d of row.framework_drivers||[])for(const id of d.framework_safeguards||[])add(d.framework_key,id);
   for(const a of related.framework_assessments||[])if(a.client_id===row.client_id)add(a.framework_key,a.definition_id,a);
   for(const group of groups.values()) {
     const catalog=CATALOGS[group.key]||{review_plans:[],policy_mappings:[]},ids=new Set(group.requirements.map(r=>r.definition.id));
@@ -48,7 +49,11 @@ export function basisSummary(row) {
 }
 export function cadenceBasis(row,groups=[]) {
   const context=row.governance_context||{};
+  const drivers=reviewDrivers(row);
+  const explicit=drivers.filter(d=>d.framework_driver_active&&d.framework_source_minimum).map(d=>d.framework_source_minimum).sort((a,b)=>cadenceDays(a)-cadenceDays(b));
   return {current:row.recurrence==='custom'?`Every ${row.custom_recurrence_days} days`:row.recurrence||'Not recorded',
     classification:CADENCE_BASIS[context.cadence_source]||'Client configuration · rationale not recorded',rationale:context.cadence_rationale,
-    sources:groups.flatMap(g=>g.plans.map(p=>({framework:g.label,key:p.key,basis:p.basis,source:p.source_cadence,minimum:p.source_minimum,recommended:p.default_cadence,reason:p.reason,refs:p.cadence_references||[]})))};
+    proposed:explicit[0]||null,belowSource:!!explicit[0]&&cadenceDays(row.recurrence,row.custom_recurrence_days)>cadenceDays(explicit[0]),
+    sources:row.framework_drivers?drivers.map(d=>({framework:FRAMEWORKS.find(f=>f.key===d.framework_key)?.label||d.framework_key,key:d.framework_plan_key,basis:d.framework_basis,source:d.framework_source_cadence,minimum:d.framework_source_minimum,recommended:d.framework_default_cadence,refs:d.framework_cadence_references||[],active:d.framework_driver_active})):
+      groups.flatMap(g=>g.plans.map(p=>({framework:g.label,key:p.key,basis:p.basis,source:p.source_cadence,minimum:p.source_minimum,recommended:p.default_cadence,reason:p.reason,refs:p.cadence_references||[]})))};
 }

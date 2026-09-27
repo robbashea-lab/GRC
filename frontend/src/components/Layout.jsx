@@ -1,5 +1,7 @@
 import { ComplianceProvider, useCompliance } from "@/context/ComplianceContext";
 import DemoNotice from "@/preview/DemoNotice";
+import {PREVIEW_MODE} from '@/lib/api';
+import {dashboardPilot} from '@/lib/dashboardWorkQueue';
 import Brand from "@/components/Brand";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -282,11 +284,13 @@ function Sidebar() {
 }
 
 export default function Layout() {
+  const {currentClientId}=useOrg();
+  const {pathname}=useLocation();
   return (
     <ComplianceProvider><div className="app-shell min-h-screen flex bg-surface-app">
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
-        <DemoNotice />
+        {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
         <Outlet />
       </main>
     </div></ComplianceProvider>

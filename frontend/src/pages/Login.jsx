@@ -43,7 +43,7 @@ export default function Login() {
     variant="ghost" className={`w-full h-10 font-semibold ${demoOnly ? "login-primary" : "login-quiet"}`}>
     {loading && demoOnly ? "Opening…" : "Explore the demo"}
   </Button>;
-  const demoNote = <p className="text-xs leading-relaxed text-ink-onDarkMuted">Three fictional client programs with about two years of history. Changes stay in this browser tab; no credentials required.</p>;
+  const demoNote = <p className="text-xs leading-relaxed text-ink-onDarkMuted">Four fictional client programs, including a multi-framework program with several years of history. Changes stay in this browser tab; no credentials required.</p>;
 
   return (
     <div className="login-shell min-h-screen bg-brand-charcoal text-ink-onDark flex flex-col lg:flex-row">

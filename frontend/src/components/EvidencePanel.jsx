@@ -7,6 +7,7 @@ import {downloadEvidence,EvidenceSource,uploaderLabel} from '@/lib/evidenceConte
 import {toast} from 'sonner';
 import {useAuth} from '@/context/AuthContext';
 import {Input} from './ui/input';
+import {displayRecordedAt} from '@/lib/managementDates';
 
 function ReuseEvidence({clientId,kind,id,occurrenceId,onSaved}){
   const [q,setQ]=useState(''),[page,setPage]=useState(1),[busy,setBusy]=useState(false);
@@ -71,7 +72,7 @@ export default function EvidencePanel({clientId,kind,id,occurrenceId,onOpen,refr
       return <section key={key} aria-label={label} className="space-y-2"><h3 className="font-medium">{label} <span className="text-ink-secondary font-normal">({data.counts[key]||0})</span></h3>
         {!data.counts[key]?<p className="text-ink-help">No Evidence is directly attached to this {kind==='tasks'?'Action Item':kind==='reviews'?'Review occurrence':kind==='findings'?'Finding':'record'}.</p>:!rows.length?<p className="text-ink-help">These files are on another page.</p>:Array.from(groups.entries()).map(([group,files])=><div key={group} className="border border-line rounded-md p-3 space-y-2">
           <EvidenceSource source={files[0].context?.source} onOpen={onOpen}/>
-          {files.map(row=><div key={row.evidence_id} className="flex items-start justify-between gap-2 border-t border-line pt-2" data-testid="context-evidence-file"><div className="min-w-0"><div className="font-medium break-words">{row.filename}</div><div className="text-xs text-ink-secondary">{uploaderLabel(row)} · {row.created_at?new Date(row.created_at).toLocaleString():'Upload date not recorded'}</div>{validatedAt&&row.created_at>validatedAt&&<div className="text-xs text-ink-secondary">Uploaded after validation</div>}</div><div className="flex items-center"><EvidenceDownload row={row}/>{key==='direct'&&<RelationshipAction row={row} kind={kind} id={id} occurrenceId={occurrenceId} onDelete={onDelete} allowLink={allowLink} onChanged={()=>{setPage(1);result.reload();}}/>}</div></div>)}
+          {files.map(row=><div key={row.evidence_id} className="flex items-start justify-between gap-2 border-t border-line pt-2" data-testid="context-evidence-file"><div className="min-w-0"><div className="font-medium break-words">{row.filename}</div><div className="text-xs text-ink-secondary">{uploaderLabel(row)} · {displayRecordedAt(row.created_at)||'Upload date not recorded'}</div>{validatedAt&&row.created_at>validatedAt&&<div className="text-xs text-ink-secondary">Uploaded after validation</div>}</div><div className="flex items-center"><EvidenceDownload row={row}/>{key==='direct'&&<RelationshipAction row={row} kind={kind} id={id} occurrenceId={occurrenceId} onDelete={onDelete} allowLink={allowLink} onChanged={()=>{setPage(1);result.reload();}}/>}</div></div>)}
         </div>)}
       </section>;
     })}

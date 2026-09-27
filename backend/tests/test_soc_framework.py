@@ -106,7 +106,13 @@ class SocTests(unittest.IsolatedAsyncioTestCase):
         w=await self.configure(('cis-ig1','hipaa','iso-27001','soc-2'))
         self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),288)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),23)
-        for row in before:self.assertEqual(await server.db.reviews.find_one({'review_id':row['review_id']},{'_id':0}),row)
+        for row in before:
+            after=await server.db.reviews.find_one({'review_id':row['review_id']},{'_id':0})
+            self.assertEqual({k:v for k,v in after.items() if k not in ('framework_drivers','updated_at')},
+                             {k:v for k,v in row.items() if k not in ('framework_drivers','updated_at')})
+            self.assertTrue(all(d in after['framework_drivers'] for d in row['framework_drivers']))
+        self.assertTrue(any(d['framework_key']=='soc-2' for r in await server.db.reviews.find({'client_id':'a'}).to_list(None)
+                            for d in r['framework_drivers']))
         aid=next(a['framework_assessment_id'] for a in w['assessments'] if a['definition_id']=='CC6.2')
         related=(await self.client.get('/api/framework_assessments/'+aid+'/related')).json()
         self.assertTrue(any(r['framework_key']=='cis-ig1' for r in related['reviews']))

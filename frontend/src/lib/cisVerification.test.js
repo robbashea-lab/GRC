@@ -24,6 +24,33 @@ test('Implemented without evidence or with stale validation is not shown as veri
   expect(verificationLadder(row({last_assessed:'2024-01-01'}),{today}).find(s=>s.key==='validated').state).toBe('partial');
   expect(verificationLadder(row(),{today}).find(s=>s.key==='validated').state).toBe('done');
 });
+
+test('a recent assessment with stale or undated evidence is not shown as verified',()=>{
+  for(const date of ['2024-01-01',null,'not-a-date']){
+    const assessment=row({work:{...row().work,latest_evidence_at:date}});
+    const ladder=verificationLadder(assessment,{today});
+    expect(ladder.find(s=>s.key==='validated').state).toBe('partial');
+    expect(ladder.find(s=>s.key==='evidence').state).toBe('partial');
+    expect(ladder.find(s=>s.key==='evidence').detail).not.toMatch(/undefined|null/);
+  }
+});
+
+test('legacy Implemented assessments with missing or invalid dates stay inspectable, not verified',()=>{
+  for(const date of [null,undefined,'not-a-date']){
+    const assessment=row({last_assessed:date});
+    expect(()=>verificationLadder(assessment,{today})).not.toThrow();
+    expect(verificationLadder(assessment,{today}).find(s=>s.key==='validated').state).toBe('partial');
+    expect(freshness(assessment,today).label).not.toMatch(/null|undefined|today/);
+  }
+});
+
+test('a linked Review proves a relationship, not that a recurring process operated',()=>{
+  const step=verificationLadder(row(),{today}).find(s=>s.key==='operating');
+  expect(step.label).toBe('Governance linked');
+  expect(step.detail).toContain('Inspect occurrence history');
+  expect(step.detail).not.toMatch(/on schedule|process operating/);
+  expect(verificationLadder(row({work:{...row().work,overdue_reviews:1}}),{today}).find(s=>s.key==='operating').state).toBe('gap');
+});
 test('overdue remediation counts safeguards, matching its filtered view, not inherited Actions per safeguard',()=>{
   const inherited={...row().work,overdue_actions:2};
   const rows=[row({work:inherited}),row({definition_id:'5.1',work:inherited}),row({definition_id:'6.1',work:{...inherited,overdue_actions:1}}),row({definition_id:'6.2'})];

@@ -37,6 +37,9 @@ class Link(BaseModel):
 async def protected(db, doc):
     """Retention includes supporting relationships as well as original provenance."""
     eid,cid = doc['evidence_id'],doc['client_id']
+    async for review in db.reviews.find({'client_id':cid,'iso_audit.package_key':{'$exists':True}}, {'_id':0,'iso_audit':1,'occurrences.iso_audit':1}):
+        if any(eid in ctx.audit_evidence_ids(o.get('iso_audit')) for o in [review,*review.get('occurrences',[])]): return True
+    if await db.organizational_controls.find_one({'client_id':cid,'$or':[{field:{'$elemMatch':{'kind':'evidence','id':eid}}} for field in ('related_links','history.related_links','observations.design_snapshot.related_links')]}): return True
     if await db.reviews.find_one({'client_id':cid,'$or':[{'occurrences.evidence.evidence_id':eid},{'completion_snapshot.evidence.evidence_id':eid}]}): return True
     for link in ctx.direct_links(doc):
         if link['kind'] in ('risks','tasks','vendors','ai_systems'):
@@ -121,6 +124,7 @@ def router_for(s):
         s._require_snapshot(body.model_dump(exclude_unset=True),doc)
         kind=ctx.ALIASES.get(body.linked_type)
         if not kind: raise HTTPException(422,'Unsupported source')
+        if kind=='organizational_controls': raise HTTPException(422,'Manage Control relationships through the organizational Control')
         parent=await s._authorized_parent(kind,body.linked_id,user,write=True)
         if parent['client_id']!=doc['client_id']: raise HTTPException(422,'Evidence relationships must stay in the same client')
         if kind=='framework_assessments': raise HTTPException(422,'Manage framework relationships through the framework assessment')

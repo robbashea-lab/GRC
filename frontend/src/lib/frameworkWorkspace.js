@@ -22,7 +22,9 @@ export function groupRequirements(key,rows){
   }}
   return roots;
 }
-export const incomplete=r=>!['addressed','not_applicable'].includes(r.status);
+export const incomplete=r=>r.specification==='annex_control'?
+  r.soa_applicability!=='excluded'&&(r.soa_applicability!=='included'||r.status!=='addressed'):
+  !['addressed','not_applicable'].includes(r.status);
 export const needsAttention=r=>incomplete(r)||(r.work?.overdue_reviews||0)>0||(r.work?.open_findings||0)>0||(r.work?.overdue_actions||0)>0;
 export const nextAssessment=(rows,lastId)=>rows.find(r=>r.framework_assessment_id===lastId&&incomplete(r))||rows.find(incomplete)||rows.find(needsAttention)||null;
 // Derived operational views (reference workspace). They never alter assessment conclusions.
@@ -56,14 +58,21 @@ export function recurrencePresentation(definition,catalog){
 }
 
 // Used by the Demo read model. Backend builds the same small operational projection.
-export function assessmentWork(row,{reviews=[],findings=[],tasks=[],evidence=[]},today=new Date().toISOString().slice(0,10)){
+export function findingApplies(row,f,rids,assessments=[]){
+  const explicit=new Set(assessments.filter(a=>a.client_id===row.client_id&&a.related_links?.some(l=>l.kind==='findings'&&l.id===f.finding_id)).map(a=>a.framework_assessment_id));
+  if(f.framework_assessment_id)explicit.add(f.framework_assessment_id);
+  if(row.related_links?.some(l=>l.kind==='findings'&&l.id===f.finding_id))explicit.add(row.framework_assessment_id);
+  return explicit.size?explicit.has(row.framework_assessment_id):rids.has(f.review_id);
+}
+export function assessmentWork(row,{reviews=[],findings=[],tasks=[],evidence=[],framework_assessments=[]},today=new Date().toISOString().slice(0,10)){
   const linked=(kind,id)=>(row.related_links||[]).some(l=>l.kind===kind&&l.id===id);
   const rs=reviews.filter(r=>r.client_id===row.client_id&&(linked('reviews',r.review_id)||(r.framework_key===row.framework_key&&r.framework_safeguards?.includes(row.definition_id))));
   const rids=new Set(rs.map(r=>r.review_id));
-  const fs=findings.filter(f=>f.client_id===row.client_id&&!['closed','accepted'].includes(f.status)&&(linked('findings',f.finding_id)||f.framework_assessment_id===row.framework_assessment_id||rids.has(f.review_id)));
+  const relevant=new Set(findings.filter(f=>f.client_id===row.client_id&&findingApplies(row,f,rids,framework_assessments)).map(f=>f.finding_id));
+  const fs=findings.filter(f=>relevant.has(f.finding_id)&&!['closed','accepted'].includes(f.status));
   const fids=new Set(fs.map(f=>f.finding_id));
   const overdue=(r,closed)=>!closed.includes(r.status)&&!!r.due_date&&r.due_date.slice(0,10)<today;
-  const ts=tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||t.framework_assessment_id===row.framework_assessment_id||rids.has(t.review_id)||fids.has(t.finding_id)));
+  const ts=tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||t.framework_assessment_id===row.framework_assessment_id||(t.finding_id?relevant.has(t.finding_id):!t.framework_assessment_id&&rids.has(t.review_id))));
   // Evidence directly supporting this assessment (uploaded to it or linked); dates only, never content.
   // Deleted (archived) Evidence and Evidence unlinked from this assessment are not current support.
   const es=evidence.filter(e=>e.client_id===row.client_id&&!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id)&&(linked('evidence',e.evidence_id)||(['framework_assessment','framework_assessments'].includes(e.linked_type)&&e.linked_id===row.framework_assessment_id)));

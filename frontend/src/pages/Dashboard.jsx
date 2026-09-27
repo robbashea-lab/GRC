@@ -17,6 +17,8 @@ import DashboardScopeSelector from "@/components/DashboardScopeSelector";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
 import { loadClientDashboard, labelDashboardRows } from "@/lib/loadClientDashboard";
+import {dashboardPilot} from '@/lib/dashboardWorkQueue';
+import ClientWorkDashboard from '@/components/ClientWorkDashboard';
 
 const ORGANIZATION_SCOPE = {kind:'org'};
 const SUBTITLE = "Program health, priorities and upcoming work.";
@@ -65,6 +67,9 @@ export default function Dashboard() {
   const scope = scopeSelection?.clientId === currentClientId ? scopeSelection.value : ORGANIZATION_SCOPE;
   const setScope = value => setScopeSelection({clientId:currentClientId,value});
   const [frameworkSelection, setFrameworkSelection] = useState(null);
+  const pilot=dashboardPilot(PREVIEW_MODE,currentClientId);
+  const [workSelection,setWorkSelection]=useState(null);
+  const workFilter=workSelection?.clientId===currentClientId?workSelection.filter:'all';
 
   const requestKey = JSON.stringify([currentClientId, scope, user?.user_id, revision]);
   useEffect(() => {
@@ -72,16 +77,16 @@ export default function Dashboard() {
     const controller = new AbortController();
     setError(null);
     setSelected(null);
-    loadClientDashboard(api, { clientId: currentClientId, user, scope, signal: controller.signal })
+    loadClientDashboard(api, { clientId: currentClientId, user, scope, signal: controller.signal, workQueue:pilot })
       .then(result => { if (!controller.signal.aborted) setSnapshot({ key: requestKey, result }); })
       .catch(err => { if (!controller.signal.aborted) setError({ key: requestKey, message: formatError(err) }); });
     return () => controller.abort();
-  }, [currentClientId, scope, user, requestKey]);
+  }, [currentClientId, scope, user, requestKey, pilot]);
 
   // Never render the previous tenant's response while a new request is loading.
   const data = snapshot?.key === requestKey ? snapshot.result : null;
   // Loading, error and no-client states keep the page header so the layout does not jump.
-  const shell = body => <div><PageHeader title="Dashboard" subtitle={SUBTITLE} /><div className="section-body">{body}</div></div>;
+  const shell = body => <div><PageHeader title={pilot?`${currentClient?.name||'Client'} Dashboard`:'Dashboard'} subtitle={pilot?'Your GRC work, at a glance.':SUBTITLE} /><div className="section-body">{body}</div></div>;
   if (!currentClientId) return shell(<p className="text-sm text-ink-muted">Select a client to view its GRC program.</p>);
   if (error?.key === requestKey) return shell(<RegisterLoadError error={error.message} onRetry={() => setRevision(n => n + 1)} name="Dashboard" />);
   if (!data) return shell(<p role="status" className="text-sm text-ink-muted">Loading dashboard…</p>);
@@ -118,10 +123,17 @@ export default function Dashboard() {
     } catch(error) {toast.error(formatError(error));}
   }
   async function loadDetail(key,offset,signal) {
-    const {data:result}=await api.get('/dashboard',{params:{client_id:currentClientId,scope:scope.kind,user_id:scope.user_id,detail:key,offset,limit:25},signal});
+    const {data:result}=await api.get('/dashboard',{params:{client_id:currentClientId,scope:scope.kind,user_id:scope.user_id,detail:key,offset,limit:25,...(pilot?{work_queue:true}:{})},signal});
     if(result.client_id!==currentClientId) throw new Error('Dashboard detail belongs to another client.');
-    return {...result,items:labelDashboardRows(result.items,data.members)};
+    return {...result,items:pilot?result.items:labelDashboardRows(result.items,data.members)};
   }
+
+  const drawer=selected&&selected.record.client_id===currentClientId&&<RecordDrawer key={selected.key} open onOpenChange={open=>{if(!open)setSelected(null);}}
+    kind={selected.kind} record={selected.record} schema={SCHEMAS[selected.kind]?.fields} clientId={currentClientId} users={data.members}
+    onSaved={()=>{setSelected(null);setRevision(n=>n+1);}}/>;
+  if(pilot)return <><PageHeader title={`${currentClient?.name||'Client'} Dashboard`} subtitle="Your GRC work, at a glance."/>
+    <ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} cisRows={data.cisRows}
+      filter={workFilter} onFilter={filter=>setWorkSelection({clientId:currentClientId,filter})} onOpen={openItem} loadDetail={loadDetail}/>{drawer}</>;
 
   return (
     <div>
@@ -161,12 +173,7 @@ export default function Dashboard() {
         <span><strong>Program setup not complete.</strong> <span className="text-ink-secondary">An empty work queue does not indicate a fully configured program.</span></span><Link className="register-link" to="/client-profile">Continue onboarding</Link>
       </div>}
       <DashboardManagement key={requestKey+":"+framework} clientId={currentClientId} posture={data.posture} programs={data.programs} framework={framework} onOpen={openItem} loadDetail={data.contract_version===2?loadDetail:undefined} Table={OperationalTable} reference />
-      {selected && selected.record.client_id === currentClientId && (
-        <RecordDrawer key={selected.key} open onOpenChange={open => { if (!open) setSelected(null); }}
-          kind={selected.kind} record={selected.record} schema={SCHEMAS[selected.kind]?.fields}
-          clientId={currentClientId} users={data.members}
-          onSaved={() => { setSelected(null); setRevision(n => n + 1); }} />
-      )}
+      {drawer}
     </div>
   );
 }

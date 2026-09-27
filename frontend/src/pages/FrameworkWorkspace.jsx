@@ -1,3 +1,6 @@
+import FrameworkCategoryNavigator,{SoaTable} from '@/components/FrameworkCategoryNavigator';
+import IsoAuditWorkspace from '@/components/IsoAuditWorkspace';
+import IsoGovernanceReviews from '@/components/IsoGovernanceReviews';
 import {useEffect,useMemo,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
 import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
@@ -14,6 +17,7 @@ import {operatorStatuses,operatorVocabulary,assessmentProgress} from '@/lib/fram
 import CisWorkspaceSummary from '@/components/CisWorkspaceSummary';
 import CisResultTable from '@/components/CisResultTable';
 import ProgramContext from '@/components/ProgramContext';
+import OrganizationalControls from '@/components/OrganizationalControls';
 import {CisStatusBar,CisStatusPill,statusCounts} from '@/components/CisStatus';
 import {cisSummary,freshness,lacksEvidence} from '@/lib/cisVerification';
 import '@/components/BrawndoCisWorkspace.css';
@@ -24,11 +28,8 @@ const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',n
 const viewLabels=v=>({attention:'Needs attention',gaps:`${v.statuses.in_progress} or ${v.statuses.needs_attention.toLowerCase()}`,addressed:v.statuses.addressed,in_progress:v.statuses.in_progress,needs_attention:v.statuses.needs_attention,not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:`${v.statuses.addressed} without evidence`,unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation',assessed:'Assessed'});
 const ISO_VIEWS={
   isms_clause:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
-  annex_control:{label:'Annex A / SoA',matches:r=>r.specification==='annex_control'},
-  audit:{label:'Internal Audit',matches:r=>['9.2.1','9.2.2','A.5.35'].includes(r.definition_id)},
-  management:{label:'Management Review',matches:r=>r.definition_id.startsWith('9.3.')},
-  treatment:{label:'Risk Treatment',matches:r=>['6.1.2','6.1.3','8.2','8.3'].includes(r.definition_id)},
-  corrections:{label:'Corrective Actions',matches:r=>['10.1','10.2'].includes(r.definition_id)},
+  annex_control:{label:'Statement of Applicability',matches:r=>r.specification==='annex_control'},
+  audit:{label:'Internal Audit Program',matches:()=>false},
 };
 function readPreference(key){try{return JSON.parse(sessionStorage.getItem(key))||{};}catch{return {};}}
 function SafeguardSignals({row}){
@@ -81,13 +82,14 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const [params,setParams]=useSearchParams(),{user}=useAuth(),location=useLocation(),navigate=useNavigate();
   // The reference workspace (summary, derived views, result table) serves every assessed framework,
   // in that framework's own vocabulary. CMMC has no assessment tracking yet.
-  const prototype=frameworkKey!=='cmmc';
+  const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
   const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels(vocab);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
   const [data,setData]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[search,setSearch]=useState(''),[filter,setFilter]=useState('all');
   const [view,setView]=useState('all'),[showRetained,setShowRetained]=useState(false);
+  const [controlsOpen,setControlsOpen]=useState(false);
   // A dashboard deep link (?view=) opens the reference workspace on that derived view.
   const initialView=prototype?params.get('view'):null;
   useEffect(()=>{const p=readPreference(preferenceKey);setPreference(p);setExpanded(p.section?[p.section]:[]);setData(null);setSearch('');setFilter(initialView&&VIEW_LABELS[initialView]?initialView:'all');setView('all');setShowRetained(false);},[preferenceKey]);// eslint-disable-line react-hooks/exhaustive-deps
@@ -98,10 +100,12 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     const byId=new Map((data?.assessments||[]).filter(a=>a.client_id===clientId).map(a=>[a.definition_id,a]));
     return (data?.definitions||[]).filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
   },[data,clientId]);
+  const isoView=frameworkKey==='iso-27001'?(rows.find(r=>r.framework_assessment_id===params.get('assessment'))?.specification||
+    (ISO_VIEWS[params.get('iso_view')]?params.get('iso_view'):'isms_clause')):'all';
   const scoped=rows.filter(r=>{
     if(frameworkKey==='soc-2'&&!showRetained&&!data?.active_definition_ids?.includes(r.definition_id))return false;
     if(frameworkKey==='nist-csf-2'&&view!=='all')return r.csf_profile?.target_selected&&(view==='target'||r.csf_profile.gap_state==='gap');
-    if(frameworkKey==='iso-27001'&&view!=='all')return ISO_VIEWS[view]?.matches(r);
+    if(frameworkKey==='iso-27001')return ISO_VIEWS[isoView].matches(r);
     return true;
   });
   const visible=scoped.filter(r=>matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
@@ -125,24 +129,28 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const lastOpened=prototype&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
   return <div className="space-y-4" data-testid={frameworkKey==='cis-ig1'?'cis-workspace':'framework-workspace'}>
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
-    {prototype&&<CisWorkspaceSummary framework={frameworkKey} summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={scoped} configuration={data.configuration}/></CisWorkspaceSummary>}
+    {prototype&&!(frameworkKey==='iso-27001'&&isoView==='audit')&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
+    {frameworkKey==='iso-27001'&&<><nav aria-label="ISO workspace sections" className="flex flex-wrap gap-2">{Object.entries(ISO_VIEWS).map(([key,v])=><Button key={key} variant={isoView===key?'default':'outline'} aria-pressed={isoView===key} onClick={()=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('assessment');n.delete('package');n.delete('audit_occurrence');setParams(n);setSearch('');setFilter('all');}}>{v.label}</Button>)}</nav>{isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:<IsoGovernanceReviews clientId={clientId} soa={isoView==='annex_control'}/>}</>}
+    {!(frameworkKey==='iso-27001'&&isoView==='audit')&&<>
     {lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}
     {!prototype&&<><section aria-label="Assessment progress" className="space-y-2"><h2 className="font-semibold">Assessment Progress</h2><p className="text-sm">{progress.assessed} / {progress.applicable} applicable {(catalog?.labels?.items||'requirements').toLowerCase()} assessed · {scoped.length-progress.assessed-progress.excluded} not assessed · {progress.excluded} N/A</p><p className="text-xs text-ink-secondary">Assessment coverage includes partial and unresolved results. It is not certification or a compliance percentage.</p></section>
     <section className="border border-line rounded-lg p-4 bg-surface-card flex flex-wrap justify-between items-center gap-3" aria-label="Continue where you left off"><div><h2 className="text-sm font-semibold">Continue where you left off</h2><p className="text-sm text-ink-secondary mt-1">{resume?`${resume.definition_id} · ${resume.title}`:'No pending assessments or linked work requiring attention.'}</p></div>{resume&&<Button onClick={()=>openRecord(resume)}>Continue Assessment</Button>}</section>
     <div className="flex flex-wrap items-center gap-3 text-sm"><button className="text-link" onClick={()=>chooseFilter('attention')}>Needs Attention · {attention} items</button><span className="text-xs text-ink-secondary">Assessment gaps and linked operational work are separate conditions.</span></div></>}
     {frameworkKey==='soc-2'&&<><SocProgramSettings clientId={clientId} configuration={data.configuration||socConfiguration()} writable={data.selected&&isInternal(user)} onSaved={()=>setRevision(n=>n+1)}/><label className="text-xs flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope criteria</label></>}
-    {['iso-27001','nist-csf-2'].includes(frameworkKey)&&<label className="text-sm">{frameworkKey==='iso-27001'?'ISO workspace view':'CSF profile view'}<select className="border border-line rounded p-2 ml-2 bg-surface-card" aria-label={frameworkKey==='iso-27001'?'ISO workspace view':'CSF profile view'} value={view} onChange={e=>setView(e.target.value)}><option value="all">{frameworkKey==='iso-27001'?'All ISMS & Annex A':'Current Profile'}</option>{(frameworkKey==='iso-27001'?Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label]):[['target','Target Profile'],['gaps','Recorded Gaps']]).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>}
+    {frameworkKey==='nist-csf-2'&&<label className="text-sm">CSF profile view<select className="border border-line rounded p-2 ml-2 bg-surface-card" aria-label="CSF profile view" value={view} onChange={e=>setView(e.target.value)}><option value="all">Current Profile</option>{[['target','Target Profile'],['gaps','Recorded Gaps']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>}
+    {['cis-ig1','iso-27001','soc-2'].includes(frameworkKey)&&<details className="border border-line rounded p-3" onToggle={e=>setControlsOpen(e.currentTarget.open)}><summary className="cursor-pointer font-medium text-sm">Client organizational Controls</summary>{controlsOpen&&<OrganizationalControls clientId={clientId} onSaved={()=>setRevision(n=>n+1)}/>}</details>}
     {prototype?<div className="cis-toolbar">
       <SearchField value={search} onChange={changeSearch} label={`Search ${vocab.items}`} placeholder="Search by number or title…"/>
       {(search||filter!=='all')&&<p role="status" className="text-sm text-ink-secondary">{filter!=='all'&&<span className="cis-active-view">{VIEW_LABELS[filter]}</span>}Showing {visible.length} of {scoped.length} {vocab.items}</p>}
       {(search||filter!=='all')&&<Button size="sm" variant="ghost" onClick={()=>{dropLinkedView();setSearch('');setFilter('all');}}>Clear search and filters</Button>}
-      {!(search.trim()||filter!=='all')&&<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div>}
+      {!categoryFirst&&!(search.trim()||filter!=='all')&&<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div>}
     </div>:<>
     <SearchField value={search} onChange={changeSearch} label="Search requirements" placeholder="Search requirements…"/>
     <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>chooseFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div></>}
     {!visible.length&&<p role="status" className="text-sm">{prototype?`No ${vocab.items} match this view.`:'No requirements match these filters.'}</p>}
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
-    {prototype&&(filter!=='all'||search.trim())?<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
+    {prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='annex_control'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='annex_control'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
+    </>}
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}} onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null} position={index>=0?`${index+1} of ${scoped.length} in framework order`:'Retained assessment'}/>}
   </div>;
 }

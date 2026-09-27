@@ -15,7 +15,7 @@
 import axios from 'axios';
 import {performance} from 'perf_hooks';
 import {previewAdapter} from './adapter';
-import {STORE_KEY} from './store';
+import {STORE_KEY,ids as ID_FIELDS} from './store';
 import {registerSignals} from '../lib/registerSignals';
 import {riskMatchesView} from '../lib/riskRegister';
 import {vendorSignals} from '../lib/vendorGovernance';
@@ -896,7 +896,6 @@ function clientFingerprint(cid) {
   for (const [k, v] of Object.entries(db)) if (Array.isArray(v) && k !== 'logs' && k !== 'notifications') out[k] = v.filter(r => r.client_id === cid).map(clone);
   return out;
 }
-const ID_FIELDS = {framework_assessments: 'framework_assessment_id', ai_systems: 'ai_system_id', clients: 'client_id', users: 'user_id', reviews: 'review_id', findings: 'finding_id', risks: 'risk_id', policies: 'policy_id', vendors: 'vendor_id', assets: 'asset_id', tasks: 'task_id', exceptions: 'exception_id', requirements: 'requirement_id', contacts: 'contact_id', evidence: 'evidence_id', assessments: 'assessment_id', comments: 'comment_id'};
 let evictedFileBytes = 0;
 function fingerprintDiff(before, after) {
   const changes = [];

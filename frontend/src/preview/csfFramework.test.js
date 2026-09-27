@@ -42,6 +42,12 @@ test('invalid and cross-framework profile fields are rejected',async()=>{
 test('five frameworks share work and preserve policy records on Settings activation',async()=>{
   await configure(['cis-ig1','hipaa','iso-27001','soc-2']);const reviews=await get('/reviews'),policies=await get('/policies');
   await api.patch('/onboarding/programs/nist-csf-2',{client_id:cid,applicability:'applies'});
-  expect(await get('/reviews')).toEqual(reviews);expect(await get('/policies')).toEqual(policies);
+  const after=await get('/reviews');expect(after).toHaveLength(reviews.length);
+  for(const r of reviews){
+    const saved=after.find(a=>a.review_id===r.review_id),{framework_drivers,...operational}=saved,{framework_drivers:prior,...original}=r;
+    expect(operational).toEqual(original);expect(framework_drivers).toEqual(expect.arrayContaining(prior));
+  }
+  expect(after.some(r=>r.framework_drivers.some(d=>d.framework_key==='nist-csf-2'))).toBe(true);
+  expect(await get('/policies')).toEqual(policies);
   const db=JSON.parse(sessionStorage.getItem(STORE_KEY));expect(db.framework_assessments.filter(a=>a.client_id===cid)).toHaveLength(394);
 });

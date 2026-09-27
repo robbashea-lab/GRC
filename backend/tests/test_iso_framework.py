@@ -61,9 +61,6 @@ class IsoTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.patch(path('4.3'),json={'soa_applicability':'included','soa_justification':'No'})).status_code,422)
         for body in [
             {'soa_applicability':'excluded','status':'not_applicable'},
-            {'soa_applicability':'excluded','soa_justification':'No need'},
-            {'soa_applicability':'included','status':'not_applicable','soa_justification':'Needed'},
-            {'status':'addressed','implementation':'Configured'},
             {'soa_applicability':'invalid'},
             {'soa_justification':'x'*4001}]:
             self.assertEqual((await self.client.patch(path('A.8.30'),json=body)).status_code,422,body)
@@ -76,6 +73,17 @@ class IsoTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(saved['assessment_history'][0]['soa_justification'],good['soa_justification'])
         self.assertEqual(len(saved['assessment_history']),2)
 
+    async def test_soa_applicability_changes_preserve_independent_implementation(self):
+        workspace = await self.configure()
+        aid = next(a['framework_assessment_id'] for a in workspace['assessments'] if a['definition_id']=='A.8.30')
+        path = '/api/framework_assessments/' + aid
+        response = await self.client.patch(path, json={'status':'addressed','implementation':'Supplier process operates'})
+        self.assertEqual(response.status_code,200,response.text)
+        response = await self.client.patch(path, json={'soa_applicability':'excluded','soa_justification':'New scope excludes outsourced development'})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(response.json()['status'],'addressed')
+        self.assertEqual(response.json()['assessment_history'][0]['implementation'],'Supplier process operates')
+
     async def test_three_frameworks_share_work_without_overwriting_it(self):
         await self.configure(('cis-ig1','hipaa'))
         before=await server.db.reviews.find({'client_id':'a'},{'_id':0}).to_list(None)
@@ -84,7 +92,12 @@ class IsoTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),22)
         for row in before:
             after=await server.db.reviews.find_one({'review_id':row['review_id']},{'_id':0})
-            self.assertEqual(after,row)
+            # Activation adds provenance only; schedules, owners and history stay intact.
+            self.assertEqual({k:v for k,v in after.items() if k not in ('framework_drivers','updated_at')},
+                             {k:v for k,v in row.items() if k not in ('framework_drivers','updated_at')})
+            self.assertTrue(all(d in after['framework_drivers'] for d in row['framework_drivers']))
+        self.assertTrue(any(d['framework_key']=='iso-27001' for r in await server.db.reviews.find({'client_id':'a'}).to_list(None)
+                            for d in r['framework_drivers']))
         a=next(a for a in workspace['assessments'] if a['definition_id']=='A.5.18')
         related=(await self.client.get('/api/framework_assessments/'+a['framework_assessment_id']+'/related')).json()
         self.assertEqual(len(related['reviews']),2)  # Access and SoA are different obligations.

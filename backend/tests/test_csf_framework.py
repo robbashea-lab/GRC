@@ -59,7 +59,13 @@ class CsfTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.patch('/api/onboarding/programs/nist-csf-2',json={'client_id':'a','applicability':'applies'})).status_code,200)
         self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),394)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),23)
-        for r in reviews:self.assertEqual(await server.db.reviews.find_one({'review_id':r['review_id']},{'_id':0}),r)
+        for r in reviews:
+            after=await server.db.reviews.find_one({'review_id':r['review_id']},{'_id':0})
+            self.assertEqual({k:v for k,v in after.items() if k not in ('framework_drivers','updated_at')},
+                             {k:v for k,v in r.items() if k not in ('framework_drivers','updated_at')})
+            self.assertTrue(all(d in after['framework_drivers'] for d in r['framework_drivers']))
+        self.assertTrue(any(d['framework_key']=='nist-csf-2' for r in await server.db.reviews.find({'client_id':'a'}).to_list(None)
+                            for d in r['framework_drivers']))
         self.assertEqual(await server.db.policies.find({'client_id':'a'},{'_id':0}).to_list(None),policies)
 
     async def test_client_authorization_and_link_boundaries(self):

@@ -30,6 +30,6 @@ export function operatorGuidance(key,definition){
   return {meaning:definition.guidance,implementation:group?.implementation||'Describe the scoped practice, accountable responsibility and exceptions. Evidence should demonstrate operation, not only the existence of a document.',evidence:cisGuidance.evidence?.[definition.id]||group?.evidence||definition.evidence_guidance||'Policies, configuration records and dated records of the activity may support the assessment.'};
 }
 export function assessmentProgress(rows){
-  const applicable=rows.filter(r=>r.status!=='not_applicable');
+  const applicable=rows.filter(r=>r.specification==='annex_control'?r.soa_applicability!=='excluded':r.status!=='not_applicable');
   return {total:rows.length,applicable:applicable.length,assessed:applicable.filter(r=>r.status!=='not_assessed').length,excluded:rows.length-applicable.length};
 }

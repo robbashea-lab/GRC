@@ -5,8 +5,8 @@ import {CATALOGS,frameworkCatalog,frameworkDefinition,activeDefinitions,FRAMEWOR
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
 import {action} from './workflows';
-import {assessmentWork} from '../lib/frameworkWorkspace';
-import {existingFrameworkReview} from '../lib/frameworks';
+import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
+import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers} from '../lib/frameworks';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
 const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
 const writable=db=>{if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');};
@@ -26,10 +26,14 @@ export function validateFrameworkConfig(state){
 }
 export function reconcileFramework(db,cid,state){
   db.framework_assessments||=[];
+  if(sharedFrameworkPlans(state).some(p=>reviewConfig(state,p).conflict))throw new Error('Choose one cadence and first due date for each shared Review');
   for(const [key,catalog] of Object.entries(CATALOGS)){
     if(!(key in (state.requirements||{})))continue;
     if(state.requirements[key]!=='applies'){
-      for(const r of db.reviews.filter(r=>r.client_id===cid&&r.framework_key===key))r.framework_driver_active=false;
+      for(const r of db.reviews.filter(r=>r.client_id===cid&&reviewDrivers(r).some(d=>d.framework_key===key))){
+        r.framework_drivers=reviewDrivers(r).map(d=>d.framework_key===key?{...d,framework_driver_active:false}:d);
+        r.framework_driver_active=r.framework_drivers.find(d=>d.framework_plan_key===r.framework_plan_key)?.framework_driver_active??r.framework_driver_active;
+      }
       continue;
     }
     reconcileCatalog(db,cid,state,key,catalog);
@@ -42,17 +46,23 @@ function reconcileCatalog(db,cid,state,key,catalog){
   }
   for(const p of catalog.review_plans){
     const equivalent=Object.values(CATALOGS).flatMap(c=>c.review_plans).filter(other=>p.baseline_key&&other.baseline_key===p.baseline_key).map(other=>other.key);
-    const c=reviewConfig(state,p),old=db.reviews.find(r=>r.client_id===cid&&r.framework_plan_key===p.key)||(p.baseline_key&&db.reviews.find(r=>r.client_id===cid&&(r.baseline_key===p.baseline_key||equivalent.includes(r.framework_plan_key))));
-    if(!c.enabled){if(old?.framework_key===key)old.framework_driver_active=false;continue;}
+    const shared=sharedFrameworkPlans(state).find(group=>group.drivers.some(d=>d.key===p.key))||p;
+    const c=reviewConfig(state,shared),old=db.reviews.find(r=>r.client_id===cid&&r.framework_plan_key===p.key)||(p.baseline_key&&db.reviews.find(r=>r.client_id===cid&&(r.baseline_key===p.baseline_key||equivalent.includes(r.framework_plan_key))));
+    if(!c.enabled){if(old)addReviewDriver(old,key,p,false);continue;}
     const mapping={framework_key:key,framework_version:catalog.version,framework_plan_key:p.key,framework_driver_active:true,framework_safeguards:p.safeguards,framework_basis:p.basis,framework_source_cadence:p.source_cadence,framework_default_cadence:p.default_cadence};
     let review=old;
     for(const field of ['purpose','evidence_expectations','completion_criteria'])if(p[field])mapping['framework_'+field]=p[field];
     if(old){if(!old.framework_key||old.framework_key===key)Object.assign(old,mapping);}
     else review=write(db,'reviews',{client_id:cid,title:p.title,review_type:p.review_type,status:'needs_scheduling',due_date:c.due_date||null,recurrence:c.recurrence,custom_recurrence_days:c.custom_recurrence_days,owner_id:null,...mapping});
+    addReviewDriver(review,key,p);
     for(const a of db.framework_assessments.filter(a=>a.client_id===cid&&a.framework_key===key&&p.safeguards.includes(a.definition_id))){
       if(!a.related_links.some(l=>l.kind==='reviews'&&l.id===review.review_id))a.related_links.push({kind:'reviews',id:review.review_id});
     }
   }
+}
+function addReviewDriver(review,key,plan,active=true){
+  review.framework_drivers=[...reviewDrivers(review).filter(d=>d.framework_plan_key!==plan.key),reviewDriver(key,plan,active)].sort((a,b)=>a.framework_plan_key.localeCompare(b.framework_plan_key));
+  review.framework_driver_active=review.framework_drivers.find(d=>d.framework_plan_key===review.framework_plan_key)?.framework_driver_active??review.framework_driver_active;
 }
 export function frameworkRelated(db,row){
   const cid=row.client_id,aid=row.framework_assessment_id,did=row.definition_id,result={};
@@ -64,9 +74,9 @@ export function frameworkRelated(db,row){
       (kind==='evidence'&&['framework_assessment','framework_assessments'].includes(r.linked_type)&&r.linked_id===aid)));
   }
   const rids=result.reviews.map(r=>r.review_id);
-  result.findings=[...new Map([...result.findings,...db.findings.filter(f=>f.client_id===cid&&rids.includes(f.review_id))].map(r=>[r.finding_id,r])).values()];
+  result.findings=[...new Map([...result.findings,...db.findings.filter(f=>f.client_id===cid&&findingApplies(row,f,new Set(rids),db.framework_assessments))].map(r=>[r.finding_id,r])).values()];
   const fids=result.findings.map(f=>f.finding_id);
-  result.tasks=[...new Map([...result.tasks,...db.tasks.filter(t=>t.client_id===cid&&(fids.includes(t.finding_id)||rids.includes(t.review_id)))].map(r=>[r.task_id,r])).values()];
+  result.tasks=[...new Map([...result.tasks,...db.tasks.filter(t=>t.client_id===cid&&(t.finding_id?fids.includes(t.finding_id):!t.framework_assessment_id&&rids.includes(t.review_id)))].map(r=>[r.task_id,r])).values()];
   result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&['review','reviews'].includes(e.linked_type)&&rids.includes(e.linked_id))].map(r=>[r.evidence_id,r])).values()];
   result.evidence=result.evidence.filter(e=>!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id));
   return result;
@@ -76,7 +86,10 @@ export function frameworkReverse(db,kind,source,result){
   const fid=source.finding_id,aid=source.framework_assessment_id||(kind==='evidence'&&['framework_assessment','framework_assessments'].includes(source.linked_type)?source.linked_id:null)||db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===fid)?.framework_assessment_id;
   result.framework_assessments=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(a.framework_assessment_id===aid||a.related_links?.some(l=>l.kind===kind&&l.id===source[ids[kind]])||(kind==='reviews'&&a.framework_key===source.framework_key&&source.framework_safeguards?.includes(a.definition_id))||(kind==='policies'&&frameworkCatalog(a.framework_key)?.policy_mappings.some(m=>m.policy_key===source.baseline_key&&m.safeguards.includes(a.definition_id)))))
     .filter(a=>kind!=='evidence'||!a.unlinked_evidence_ids?.includes(source.evidence_id)).map(a=>({...a,title:assessmentTitle(a)}));
-  if(['tasks','findings'].includes(kind)&&source.review_id){
+  const finding=kind==='tasks'?db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===source.finding_id):source;
+  const explicitFinding=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(a.framework_assessment_id===finding?.framework_assessment_id||a.related_links?.some(l=>l.kind==='findings'&&l.id===finding?.finding_id)));
+  if(['tasks','findings'].includes(kind))result.framework_assessments=[...new Map([...result.framework_assessments,...explicitFinding.map(a=>({...a,title:assessmentTitle(a)}))].map(a=>[a.framework_assessment_id,a])).values()];
+  if(['tasks','findings'].includes(kind)&&source.review_id&&!aid&&!explicitFinding.length){
     const review=db.reviews.find(r=>r.review_id===source.review_id&&r.client_id===source.client_id);
     if(review){const parent=frameworkReverse(db,'reviews',review,{}).framework_assessments;result.framework_assessments=[...new Map([...result.framework_assessments,...parent].map(a=>[a.framework_assessment_id,a])).values()];}
   }
@@ -102,7 +115,9 @@ export function frameworkRequest(db,path,method,params,body){
     const assessments=framework.implemented?db.framework_assessments.filter(a=>a.client_id===params.client_id&&a.framework_key===id):[];
     const configuration=id==='soc-2'?socConfiguration(record(db,'clients',params.client_id)):{};
     return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
-      definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,work:Object.fromEntries(assessments.map(a=>[a.framework_assessment_id,assessmentWork(a,db)])),active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
+      definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,
+      organizational_controls:id==='soc-2'?(db.organizational_controls||[]).filter(c=>c.client_id===params.client_id).map(c=>({control_id:c.control_id,legacy_id:c.legacy_id,assessment_ids:c.assessment_ids,design:c.design,conflicts:c.conflicts,observations:c.observations.map(o=>({operating:o.operating,expected_instances:o.expected_instances,collected_instances:o.collected_instances}))})):[],
+      work:Object.fromEntries(assessments.map(a=>[a.framework_assessment_id,assessmentWork(a,db)])),active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
   }
   const row=record(db,'framework_assessments',id);frameworkScope(db,row.client_id);if(method!=='get')writable(db);
   if(method==='post'&&operation==='reviews'){
@@ -121,6 +136,7 @@ export function frameworkRequest(db,path,method,params,body){
       if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3650))throw new Error('Custom cadence must be 1–3650 days');
       review=write(db,'reviews',{client_id:row.client_id,title:body.title.trim(),review_type:plan?.review_type||'requirements',owner_id:body.owner_id||null,recurrence:body.recurrence,custom_recurrence_days:body.custom_recurrence_days,due_date:body.due_date||null,status:body.due_date?'upcoming':'needs_scheduling',framework_key:row.framework_key,framework_plan_key:plan?.key,baseline_key:plan?.baseline_key,framework_safeguards:plan?.safeguards||[row.definition_id],framework_basis:plan?.basis,framework_source_cadence:plan?.source_cadence,framework_setup_key:rid});
     }
+    if(plan)addReviewDriver(review,row.framework_key,plan);
     let changed=false;
     for(const a of db.framework_assessments.filter(a=>a.client_id===row.client_id&&a.framework_key===row.framework_key&&(plan?.safeguards||[row.definition_id]).includes(a.definition_id))){a.related_links||=[];if(!a.related_links.some(l=>l.kind==='reviews'&&l.id===review.review_id)){a.related_links.push({kind:'reviews',id:review.review_id});changed=true;}}
     if(changed)audit(db,'Framework Review linked','framework_assessments',row,{review_id:review.review_id});return review;
@@ -139,6 +155,7 @@ export function frameworkRequest(db,path,method,params,body){
     }
     if('management_controls' in body){
       if(row.framework_key!=='soc-2')throw new Error('Management control readiness fields apply only to SOC 2');
+      if(JSON.stringify(body.management_controls)!==JSON.stringify(row.management_controls||[])&&(row.controls_migrated||db.organizational_controls?.some(c=>c.client_id===row.client_id&&(c.assessment_ids.includes(id)||c.legacy_sources.some(s=>s.assessment_id===id)))))throw new Error('Legacy descriptions are preserved. Edit the shared organizational Control instead');
       body={...body,management_controls:validateManagementControls(body.management_controls)};
     }
     const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
@@ -151,8 +168,7 @@ export function frameworkRequest(db,path,method,params,body){
     if(definition?.specification==='annex_control'){
       const applicability=data.soa_applicability||'';
       if(applicability&&!data.soa_justification?.trim())throw new Error('Document the SoA inclusion or exclusion justification');
-      if((applicability==='excluded')!==(data.status==='not_applicable'))throw new Error('An excluded Annex A control must be Not Applicable; other controls cannot be Not Applicable');
-      if(data.status==='addressed'&&applicability!=='included')throw new Error('Record SoA inclusion before marking Addressed');
+      // SoA applicability and implementation are independent decisions.
     }else if(body.soa_applicability||body.soa_justification)throw new Error('SoA fields apply only to Annex A controls');
     if(body.addressable_decision!=null&&!['','as_written','equivalent_alternative','not_reasonable_appropriate'].includes(body.addressable_decision))throw new Error('Invalid addressability decision');
     if(body.addressable_rationale!=null&&(typeof body.addressable_rationale!=='string'||body.addressable_rationale.length>4000))throw new Error('Invalid addressability rationale');
