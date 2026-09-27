@@ -9,7 +9,7 @@ export function labelDashboardRows(rows, members) {
 
 // Every source request includes client_id; the existing backend _scope_filter
 // rejects unauthorized tenants. Client-side validation is an additional guard.
-export async function loadClientDashboard(api, { clientId, user, scope, signal, today }) {
+export async function loadClientDashboard(api, { clientId, user, scope, signal, today, workQueue = false }) {
   if (!clientId) throw new Error("Select a client to view its dashboard.");
   const params = { client_id: clientId, scope: scope.kind };
   if (scope.kind === "user") params.user_id = scope.user_id;
@@ -25,10 +25,23 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
     const programs=complianceProgress(clientId,baselineResponse.data?.state,requirements);
     const frameworkSummary=programs.some(program=>program.trackingAvailable)
       ? (await api.get('/frameworks/summary',{params:{client_id:clientId},signal})).data : undefined;
-    return {...summary.data,members,onboardingCompleted:!!baselineResponse.data?.state?.completed,
+    let queue, cisRows;
+    if(workQueue) {
+      const response=await api.get('/dashboard',{params:{...params,work_queue:true},signal});
+      queue=response.data;
+      if(queue.client_id!==clientId||!queue.groups)throw new Error('Work queue could not be loaded for this client.');
+      if(programs.some(p=>p.key==='cis-ig1')) {
+        const {data}=await api.get('/frameworks/cis-ig1',{params:{client_id:clientId},signal});
+        if(data.assessments.some(a=>a.client_id!==clientId))throw new Error('Assessment belongs to another client.');
+        const byId=new Map(data.assessments.map(a=>[a.definition_id,a]));
+        cisRows=data.definitions.filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id)}));
+      }
+    }
+    return {...summary.data,members,queue,cisRows,onboardingCompleted:!!baselineResponse.data?.state?.completed,
       posture:Object.fromEntries(Object.entries(summary.data.posture).map(([key,value])=>[key,Array.isArray(value)?labelDashboardRows(value,members):value])),
       programs:complianceProgress(clientId,baselineResponse.data?.state,requirements,frameworkSummary)};
   }
+  if(workQueue)throw new Error('This dashboard requires the current work-queue contract.');
   const completeSnapshot=summary.data.management?.records;
   const sources=completeSnapshot?null:await Promise.all(DASHBOARD_KINDS.map(kind=>api.get(`/${kind}`,{params:{client_id:clientId},signal})));
   const records=completeSnapshot||Object.fromEntries(DASHBOARD_KINDS.map((kind,i)=>[kind,sources[i].data]));

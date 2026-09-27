@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import DashboardPrograms from './DashboardPrograms';
 import api from '@/lib/api';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:e=>e.message}));
-jest.mock('react-router-dom',()=>({Link:({to,children,...rest})=><a href={to} {...rest}>{children}</a>}),{virtual:true});
+jest.mock('react-router-dom',()=>({Link:({to,children,...rest})=><a href={to} {...rest}>{children}</a>}));
 let root,container;
 const program={key:'cis-ig1',label:'CIS IG1',to:'/compliance/cis-ig1',trackingAvailable:true,progress:40,assessment:{total:5,unrecognized_status_count:0,
   assessment_progress:{total:5,resolved:2,valid_na:1,invalid_na:0,percent:40},status_counts:{addressed:1,in_progress:1,not_assessed:1,needs_attention:1,not_applicable:1},ongoing:{total:1,counts:{past_due:1,due_soon:0,current:0,unscheduled:0},next:{id:'r',title:'Access Review',kind:'reviews',due_date:'2026-01-01'}}}};
