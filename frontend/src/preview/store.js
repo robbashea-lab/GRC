@@ -8,6 +8,7 @@ import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
+import {finishInitech} from './programs/initech';
 import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -59,7 +60,7 @@ export function seedStore(clock=new Date()) {
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
   // Only explicit Demo creation/reset seeds framework work; standard startup never calls this.
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
-  return finishDemoStore(db,clock,{action,write,frameworkRequest});
+  return finishInitech(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock,{action,write,frameworkRequest});
 }
 export function readStore() {
   dropLegacyStores();

@@ -7,7 +7,7 @@ import {FRAMEWORKS,sharedFrameworkPlans,reviewConfig} from '../lib/frameworks';
 const api=axios.create({adapter:previewAdapter});
 const {setImmediate:yieldEventLoop}=jest.requireActual('timers');
 const get=async(path,cid,params={})=>(await api.get(path,{params:{client_id:cid,...params}})).data;
-async function write(method,path,body){const r=await api[method](path,body);jest.runOnlyPendingTimers();await new Promise(resolve=>yieldEventLoop(resolve));return r.data;}
+async function write(method,path,body){let r;try{r=await api[method](path,body);}catch(error){console.info('Lifecycle failure context',{date:new Date().toISOString(),path,storeCharacters:sessionStorage.getItem(STORE_KEY)?.length});throw error;}jest.runOnlyPendingTimers();await new Promise(resolve=>yieldEventLoop(resolve));return r.data;}
 const post=(p,b)=>write('post',p,b),patch=(p,b)=>write('patch',p,b);
 const clock=date=>jest.setSystemTime(new Date(date+'T14:00:00Z'));
 const copy=v=>JSON.parse(JSON.stringify(v));

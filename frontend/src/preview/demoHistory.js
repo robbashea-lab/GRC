@@ -4,7 +4,7 @@ import { frameworkDefinition, CATALOGS } from '../lib/frameworks';
 import { approvalSnapshot } from './policyProvenance';
 import { BRAWNDO_CIS, BRAWNDO_CIS_FINDINGS } from './brawndoProgram';
 import { clientProgram } from './programs';
-function previousDate(value, months) {
+export function previousDate(value, months) {
   const d = new Date(value + 'T12:00:00Z'),
     day = d.getUTCDate();
   d.setUTCDate(1);
@@ -12,7 +12,7 @@ function previousDate(value, months) {
   d.setUTCDate(Math.min(day, new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()));
   return d.toISOString().slice(0, 10);
 }
-function evidence(db, client, key, title, kind, id, at, owner, extra = {}) {
+export function evidence(db, client, key, title, kind, id, at, owner, extra = {}) {
   const text = ['DEMO - SYNTHETIC DATA', client.name, title, 'Collected: ' + at, 'Scope: fictional internal operating environment.', 'Procedure: sample owner inspected the defined population and retained this demonstration summary.', 'Result: operating evidence retained; exceptions are tracked in linked Findings and Actions.', 'This document is not a real audit, certification, legal assessment or client artifact.'].join('\n');
   const bytes = encodeURIComponent(text).replace(/%([0-9A-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))),
     encoded = btoa(bytes);

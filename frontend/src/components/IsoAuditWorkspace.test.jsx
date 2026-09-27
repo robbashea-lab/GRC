@@ -52,3 +52,11 @@ test('sequential navigation provides a stable return target on the current audit
   await act(async()=>new Promise(resolve=>requestAnimationFrame(resolve)));
   expect(document.activeElement.getAttribute('data-audit-item')).toBe(key);
 });
+
+test('package cards distinguish completed history from the upcoming cycle',async()=>{
+  review.status='upcoming';review.occurrences=[{occurrence_id:'old-cycle',iso_audit:initialAuditState('governance-risk'),completed_at:'2029-12-30',finding_count:1}];
+  await act(async()=>button('Close assessment').click());
+  await act(async()=>button('All audit packages').click());
+  expect(container.textContent).toContain('Last completed 2029-12-30 · Findings raised');
+  expect(container.textContent).toContain('0 / 28 complete');
+});

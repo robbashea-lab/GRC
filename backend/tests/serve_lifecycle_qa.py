@@ -65,6 +65,17 @@ async def run(directory):
         password=secrets.token_urlsafe(18)
         for name,role,scope in [('owner','super_admin',cids),('provider','platform_admin',[cids[-1]]),
                                 ('contributor','client_contributor',[cids[-1]]),('reader','client_readonly',[cids[-1]])]:
+            # Opt-in synthetic personas retain their real assignments and roles.
+            # Only this loopback test process gives them ephemeral login credentials.
+            persona=fixtures[-1].get('qa_personas',{}).get(name)
+            if persona:
+                user=await server.db.users.find_one({'user_id':persona,'status':'active','role':role})
+                if not user or user.get('client_ids')!=scope:
+                    raise RuntimeError('Synthetic persona role/scope does not match the QA contract')
+                # Reserved .test addresses in Demo metadata are intentionally not
+                # accepted by the normal login validator. Use RFC example.com here.
+                await server.db.users.update_one({'user_id':persona},{'$set':{'email':name+'@example.com','password_hash':server.hash_password(password),'auth_provider':'password'}})
+                continue
             await server.db.users.insert_one({'user_id':'qa_'+name,'name':'Synthetic '+name,
                 'email':name+'@example.com','password_hash':server.hash_password(password),
                 'role':role,'client_ids':scope,'status':'active','auth_provider':'password'})

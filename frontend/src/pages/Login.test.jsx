@@ -25,6 +25,7 @@ test("blank standard sign-in and credentialless demo are separate paths", async 
     expect(container.querySelector('#password').disabled).toBe(true);
     expect(container.querySelector('[data-testid="submit-auth"]').disabled).toBe(true);
     expect(container.textContent).toContain('Standard sign-in is not enabled in this preview.');
+    expect(container.textContent).toContain('Four fictional client programs');
     const demo=container.querySelector('[data-testid="demo-entry"]'),form=container.querySelector('form');
     expect(demo.compareDocumentPosition(form)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // the usable path comes first
     await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})));

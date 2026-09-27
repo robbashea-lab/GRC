@@ -26,6 +26,16 @@ export const demoOrganizations = [{
   people: ['Dale Doback', 'Robert Doback', 'Brennan Huff', 'Nancy Huff', 'Derek Huff', 'Alice Huff'],
   lead: 'demo_provider_lead',
   former: 'Randy'
+}, {
+  key: 'initech',
+  name: 'Initech',
+  frameworks: ['cis-ig1', 'iso-27001', 'soc-2'],
+  industry: 'Software / managed business services',
+  employees: 320,
+  people: ['Peter Gibbons', 'Bill Lumbergh', 'Michael Bolton', 'Samir Nagheenanajar', 'Joanna', 'Bob Slydell', 'Bob Porter', 'Milton Waddams'],
+  roles: ['platform_admin', 'client_grc_manager', 'client_contributor', 'client_contributor', 'client_grc_manager', 'client_grc_manager', 'client_readonly'],
+  lead: 'demo_initech_user_0',
+  former: 'Dom Portwood'
 }];
 // The service provider's GRC team runs each program (platform_admin, assigned clients only).
 // Client staff hold client roles: people[0] is the client's GRC manager, people[1-2] contributors,
