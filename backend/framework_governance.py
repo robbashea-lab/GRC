@@ -340,10 +340,8 @@ def router_for(s):
             applicability=data.get('soa_applicability') or ''
             if applicability and not (data.get('soa_justification') or '').strip():
                 raise HTTPException(422,'Document the SoA inclusion or exclusion justification')
-            if (applicability=='excluded') != (data['status']=='not_applicable'):
-                raise HTTPException(422,'An excluded Annex A control must be Not Applicable; other controls cannot be Not Applicable')
-            if data['status']=='addressed' and applicability!='included':
-                raise HTTPException(422,'Record SoA inclusion before marking Addressed')
+            # Applicability is a separate risk-treatment decision. Preserve any
+            # existing implementation conclusion when inclusion/exclusion changes.
         elif changes.get('soa_applicability') or changes.get('soa_justification'):
             raise HTTPException(422,'SoA fields apply only to Annex A controls')
         if definition.get('specification')=='addressable':

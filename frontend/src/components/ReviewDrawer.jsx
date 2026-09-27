@@ -26,6 +26,7 @@ import CorrectiveActions from './CorrectiveActions';
 import RecordSummary, {reviewStatus} from './RecordSummary';
 import EvidencePanel from './EvidencePanel';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
+import {auditPackage,auditProgress} from '@/lib/isoAudit';
 
 const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
@@ -157,6 +158,16 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         {tab === 'Overview' && <>
           {!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
           <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members}/>
+          {shown?.iso_audit&&<section className="border border-line rounded p-3 space-y-2 text-sm" aria-label="Audit workpapers">
+            <h3 className="font-medium">{auditPackage(shown.iso_audit.package_key)?.title}</h3>
+            <p>Cycle {shown.iso_audit.cycle} · {auditProgress(shown.iso_audit).complete} of {auditProgress(shown.iso_audit).total} workpapers complete</p>
+            <p>Closure requires completed workpapers, Findings for recorded exceptions, and the issued report. Remediation remains independently tracked.</p>
+            <a className="text-link underline" target="_blank" rel="noopener noreferrer" href={'/compliance/iso-27001?iso_view=audit&package='+encodeURIComponent(shown.iso_audit.package_key)+(selected?'&audit_occurrence='+encodeURIComponent(oid):'')}>Open {selected?'historical':'current'} audit workpapers in a new tab ↗</a>
+          </section>}
+          {selected?.iso_soa_snapshot&&<details className="border border-line rounded p-3 text-sm"><summary>Statement of Applicability captured at completion</summary>
+            <p className="my-2">{selected.iso_soa_snapshot.assessments.length} control records · captured {date(selected.iso_soa_snapshot.captured_at)}. This historical snapshot does not change with the current SoA.</p>
+            <ul className="divide-y divide-line">{selected.iso_soa_snapshot.assessments.map(a=><li className="py-2" key={a.framework_assessment_id}><strong>{a.definition_id}</strong> · {({included:'Applicable',excluded:'Not Applicable'})[a.soa_applicability]||'Undetermined'} · {({addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Needs Validation',not_applicable:'Not Applicable'})[a.status]||'Not Assessed'}<p>{a.soa_justification}</p><p className="whitespace-pre-wrap">{a.implementation}</p></li>)}</ul>
+          </details>}
           {current?.risk_id&&<section className="space-y-3 border border-line rounded-md p-3"><h3 className="font-medium text-sm">Risk reassessment</h3><p className="text-sm text-ink-secondary">Confirm the current assessment or record what changed. Use the linked Risk for acceptance, closure, and treatment work.</p>
             {selected?.risk_after?<div className="text-sm">{outcome(selected)} · Score {selected.risk_before?.risk_score??'—'} → {selected.risk_after.risk_score??'—'}<p>{selected.risk_after.assessment_rationale}</p><p>Treatment: {selected.risk_before?.treatment} → {selected.risk_after.treatment}</p></div>:riskDraft&&<><div className="grid grid-cols-2 gap-3">{['likelihood_score','impact_score'].map(k=><div key={k}>{picker(k==='likelihood_score'?'Risk likelihood':'Risk impact',String(riskDraft[k]||''),v=>setRiskDraft({...riskDraft,[k]:v?Number(v):null}),[1,2,3,4,5].map(n=>({value:String(n),label:String(n)})),frozen||!writable)}</div>)}</div><p className="text-sm">Score {assessedRisk(riskDraft).risk_score??'—'} · {assessedRisk(riskDraft).risk_level||'Needs assessment'}</p><Label>Assessment rationale</Label><Textarea aria-label="Review assessment rationale" disabled={frozen||!writable} value={riskDraft.assessment_rationale} onChange={e=>setRiskDraft({...riskDraft,assessment_rationale:e.target.value})}/>{picker('Risk treatment',riskDraft.treatment,v=>setRiskDraft({...riskDraft,treatment:v}),['mitigate','transfer','avoid','monitor',...(riskDraft.treatment==='accept'?['accept']:[])].map(v=>({value:v,label:v})),frozen||!writable)}</>}
             {!frozen&&writable&&picker("Review recommendation",riskOutcome,setRiskOutcome,["Reviewed — No Change","Additional Action Required","Closure Recommended"].map(value=>({value,label:value})))}

@@ -1,4 +1,6 @@
 import {completeRiskReview,riskSnapshot} from './risks';
+import {isoCompletionSnapshot} from './isoAudit';
+import {initialAuditState,auditEvidenceIds} from '../lib/isoAudit';
 import { list, record, write, now, audit, uid, clone } from './store';
 import { occurrenceId, reviewView, reviewSchedule, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
 
@@ -36,9 +38,9 @@ export function reviewAction(db, id, name, body) {
     return reviewView(review);
   }
   const findings = list(db,'findings',review.client_id).filter(f => f.review_id === id && belongsToOccurrence(f,review));
-  const evidence = list(db,'evidence',review.client_id).filter(e => !e.archived_at&& ((e.linked_id === id && ['review','reviews'].includes(e.linked_type) && belongsToOccurrence(e,review)) || e.relationships?.some(r=>r.kind==='reviews'&&r.id===id&&r.occurrence_id===occurrenceId(review))));
+  const evidence = list(db,'evidence',review.client_id).filter(e => !e.archived_at&& (auditEvidenceIds(review.iso_audit).includes(e.evidence_id)||(e.linked_id === id && ['review','reviews'].includes(e.linked_type) && belongsToOccurrence(e,review)) || e.relationships?.some(r=>r.kind==='reviews'&&r.id===id&&r.occurrence_id===occurrenceId(review))));
   const {occurrences, ...execution} = current;
-  const completed = clone({...execution, occurrence_id:occurrenceId(review), status:'completed', completed_at:now(), completion_date:now(),
+  const completed = clone({...execution, ...isoCompletionSnapshot(db,review), occurrence_id:occurrenceId(review), status:'completed', completed_at:now(), completion_date:now(),
     completed_by:db.user.user_id, completed_by_name:db.user.name, notes:body.completion_notes ?? review.notes,
     outcome:findings.length ? 'findings_raised' : 'no_findings', finding_count:findings.length,
     evidence:evidence.map(e => ({evidence_id:e.evidence_id,filename:e.filename,version:e.version,sha256:e.sha256}))});
@@ -47,7 +49,7 @@ export function reviewAction(db, id, name, body) {
   write(db, 'reviews', {
     occurrences:[...(occurrences || []), completed], schedule_anchor:current.schedule_anchor,
     ...(next ? {status:'upcoming',due_date:next,current_occurrence_id:uid('occ'),notes:null,started_by:null,started_at:null,
-      completion_date:null,completion_snapshot:null,risk_baseline:null}
+      completion_date:null,completion_snapshot:null,risk_baseline:null,...(review.iso_audit?{iso_audit:initialAuditState(review.iso_audit.package_key,review.iso_audit.cycle+1)}:{})}
       : {status:'completed',current_occurrence_id:occurrenceId(review),completion_date:completed.completed_at})
   }, id);
   reviewEvent(db, review, 'Review completed', completed.occurrence_id, {period:completed.period, outcome:completed.outcome, finding_count:findings.length});

@@ -2,15 +2,18 @@ import {evidenceKind,evidenceSources,sourceReference} from '../lib/evidenceRefer
 import {dateMatches} from '../lib/tableFilters';
 import {occurrenceId,reviewView,assertCurrentOccurrence,belongsToOccurrence} from '../lib/reviewOccurrences';
 import {audit,record} from './store';
+import {auditEvidenceIds} from '../lib/isoAudit';
 
 export const areas={reviews:'Reviews',policies:'Policies',vendors:'Vendors',risks:'Risks',findings:'Findings',framework_assessments:'Frameworks',requirements:'Frameworks',organizational_controls:'Controls'};
 export const controlEvidenceLinks=c=>[c,...c.history||[],...(c.observations||[]).map(o=>o.design_snapshot)].flatMap(v=>v?.related_links||[]).filter(l=>l.kind==='evidence');
+export const auditEvidenceLinks=r=>[r,...r.occurrences||[]].flatMap(o=>auditEvidenceIds(o.iso_audit).map(id=>({id,occurrence_id:o.occurrence_id||occurrenceId(r)})));
 export function evidenceReferences(db,e){
   const cid=e.client_id,kind=evidenceKind(e.linked_type),links=[...(kind?[{kind,id:e.linked_id,occurrence_id:e.occurrence_id,origin:'upload'}]:[]),...(e.relationships||[]).map(r=>({...r,origin:'supporting'}))];
   for(const v of db.vendors||[])if(v.client_id===cid&&(v.contract_evidence_ids?.includes(e.evidence_id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(e.evidence_id))))links.push({kind:'vendors',id:v.vendor_id,origin:'module'});
   for(const p of db.policies||[])if(p.client_id===cid&&(p.approval_source?.evidence_id===e.evidence_id||p.approval_subject?.basis?.evidence_id===e.evidence_id||p.approval_history?.some(h=>h.subject?.basis?.evidence_id===e.evidence_id)))links.push({kind:'policies',id:p.policy_id,origin:'module'});
   for(const a of db.framework_assessments||[])if(a.client_id===cid&&a.related_links?.some(l=>l.kind==='evidence'&&l.id===e.evidence_id)&&!a.unlinked_evidence_ids?.includes(e.evidence_id))links.push({kind:'framework_assessments',id:a.framework_assessment_id,origin:'module'});
   for(const c of db.organizational_controls||[])if(c.client_id===cid&&controlEvidenceLinks(c).some(l=>l.id===e.evidence_id))links.push({kind:'organizational_controls',id:c.control_id,origin:'module'});
+  for(const r of db.reviews||[])if(r.client_id===cid)for(const l of auditEvidenceLinks(r))if(l.id===e.evidence_id)links.push({kind:'reviews',id:r.review_id,origin:'module',occurrence_id:l.occurrence_id});
   const refs=[];
   for(const link of links){
     const spec=evidenceSources[link.kind];if(!spec)continue;

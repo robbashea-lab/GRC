@@ -3662,7 +3662,8 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     evidence = await db.evidence.find({"client_id": review["client_id"], "archived_at": None,
         **evidence_context.review_evidence_query(review, body.occurrence_id)}, {"_id": 0, "content_base64": 0}).to_list(None)
     findings = await db.findings.count_documents({"client_id": review["client_id"], "review_id": review_id, **scope})
-    completed = review_occurrences.snapshot(review, evidence, findings, user, _now())
+    iso_snapshot = await iso_audit.completion_snapshot(sys.modules[__name__], review)
+    completed = {**review_occurrences.snapshot(review, evidence, findings, user, _now()), **iso_snapshot}
     if body.completion_notes is not None:
         completed["notes"] = body.completion_notes
     if review.get("risk_id"):
@@ -3685,6 +3686,8 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
         updates.update({"due_date": next_due, "current_occurrence_id": _uid("occ"), "status": "upcoming",
                         "notes": None, "started_at": None, "started_by": None, "completion_date": None,
                         "completion_snapshot": None, "risk_baseline": None})
+        if review.get("iso_audit"):
+            updates["iso_audit"] = iso_audit.initial_state(review["iso_audit"]["package_key"], review["iso_audit"].get("cycle", 1) + 1)
         updates.update(review_occurrences.schedule({**current, **updates}))
     else:
         updates.update({"current_occurrence_id": body.occurrence_id, "status": "completed",
@@ -4952,6 +4955,8 @@ app.include_router(api)
 import sys
 app.include_router(ai_governance.router_for(sys.modules[__name__]))
 app.include_router(framework_governance.router_for(sys.modules[__name__]))
+import iso_audit
+app.include_router(iso_audit.router_for(sys.modules[__name__]))
 import organizational_controls
 app.include_router(organizational_controls.router_for(sys.modules[__name__]))
 app.include_router(policy_approval.router_for(sys.modules[__name__]))

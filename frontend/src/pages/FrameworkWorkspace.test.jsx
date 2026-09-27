@@ -16,7 +16,7 @@ beforeEach(()=>{
  api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:cis.requirements,assessments:cis.requirements.map((d,i)=>({framework_assessment_id:'a'+i,definition_id:d.id,client_id:'a',status:i===1?'not_assessed':'addressed'})),work:{}}});
 });
 
-test('only Brawndo Demo gets the program summary, derived views, automatic expansion and reset',async()=>{
+test('Brawndo Demo retains the program summary, derived views, automatic expansion and reset',async()=>{
  mockUser.workspace_mode='demo';
  const response=(await api.get()).data;
  response.assessments=response.assessments.map(a=>({...a,client_id:'demo_brawndo'}));
@@ -56,12 +56,13 @@ test('Brawndo stale and unevidenced views are derived from dates and links, not 
  await act(async()=>signal('Validation older than 12 months').click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);expect(container.querySelector('[data-testid="requirement-1.1"]')).toBeTruthy();
 });
-test('every client gets the reference workspace: sections start collapsed; expand, resume and Next keep assessment data',async()=>{
+test('every client gets the reference workspace: categories start compact; open, resume and Next keep assessment data',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
- const toggles=()=>[...container.querySelectorAll('.cis-section-toggle')],rows=()=>container.querySelectorAll('[data-testid^="requirement-"]');
+ const toggles=()=>buttons('Open category'),rows=()=>container.querySelectorAll('[data-testid^="requirement-"]');
  expect(toggles()).toHaveLength(15);expect(rows()).toHaveLength(0);
- await act(async()=>buttons('Expand all')[0].click());expect(rows()).toHaveLength(56);
- await act(async()=>buttons('Collapse all')[0].click());expect(rows()).toHaveLength(0);
+ await act(async()=>buttons('Open category')[0].click());expect(rows()).toHaveLength(2);
+ await act(async()=>buttons('All requirements')[0].click());expect(rows()).toHaveLength(56);
+ await act(async()=>buttons('Categories')[0].click());expect(rows()).toHaveLength(0);
  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('1.2');
  await act(async()=>buttons('Next')[0].click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('2.1');
  expect(JSON.parse(sessionStorage.getItem('framework-workspace:u:a:cis-ig1')).lastId).toBe('a2');
@@ -96,14 +97,16 @@ test('a deep-linked requirement closes in place without leaving the workspace',a
  expect(mockHistory.at(-1)).toMatchObject({search:'',replace:true});
 });
 
-test('ISO filtered summaries name the selected view rather than claiming whole-program coverage',async()=>{
+test('ISO has three primary views; SoA retains all 93 controls and audit is a separate program',async()=>{
  const definitions=frameworkCatalog('iso-27001').requirements;
- api.get.mockResolvedValue({data:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed'})),work:{}}});
+ api.get.mockImplementation(async path=>({data:path==='/reviews'||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="a"/>));
- const view=container.querySelector('[aria-label="ISO workspace view"]');
- await act(async()=>{view.value='audit';view.dispatchEvent(new Event('change',{bubbles:true}));});
- const summary=container.querySelector('[aria-labelledby="cis-summary-heading"]');
- expect(summary.querySelector('h2').textContent).toBe('Internal Audit condition');
- expect(summary.textContent).toContain('Coverage is limited to the Internal Audit view');
- expect(summary.textContent).toContain('3 of 3 applicable');
+ expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(3);
+ expect(container.querySelector('[aria-labelledby="cis-summary-heading"]').textContent).toContain('30 of 30');
+ await act(async()=>buttons('Statement of Applicability')[0].click());
+ await act(async()=>buttons('All requirements')[0].click());
+ expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
+ await act(async()=>buttons('Internal Audit Program')[0].click());
+ expect(container.textContent).toContain('Program not activated');
+ expect(container.querySelector('[aria-labelledby="cis-summary-heading"]')).toBeNull();
 });

@@ -168,8 +168,7 @@ export function frameworkRequest(db,path,method,params,body){
     if(definition?.specification==='annex_control'){
       const applicability=data.soa_applicability||'';
       if(applicability&&!data.soa_justification?.trim())throw new Error('Document the SoA inclusion or exclusion justification');
-      if((applicability==='excluded')!==(data.status==='not_applicable'))throw new Error('An excluded Annex A control must be Not Applicable; other controls cannot be Not Applicable');
-      if(data.status==='addressed'&&applicability!=='included')throw new Error('Record SoA inclusion before marking Addressed');
+      // SoA applicability and implementation are independent decisions.
     }else if(body.soa_applicability||body.soa_justification)throw new Error('SoA fields apply only to Annex A controls');
     if(body.addressable_decision!=null&&!['','as_written','equivalent_alternative','not_reasonable_appropriate'].includes(body.addressable_decision))throw new Error('Invalid addressability decision');
     if(body.addressable_rationale!=null&&(typeof body.addressable_rationale!=='string'||body.addressable_rationale.length>4000))throw new Error('Invalid addressability rationale');

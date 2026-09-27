@@ -28,7 +28,7 @@ export default function CisWorkspaceSummary({summary:s,filter,onFilter,resume,on
     <div className="cis-summary-grid">
       <div className="cis-summary-measures">
         <div className="cis-measure-pair">
-          <div><p className="cis-measure-label">Assessment coverage</p><p className="cis-measure-value">{s.coverage}%</p><p className="cis-measure-sub">{s.assessed} of {s.applicable} applicable {v.items} assessed</p></div>
+          <div><p className="cis-measure-label">Assessment coverage</p><p className="cis-measure-value">{s.coverage}%</p><p className="cis-measure-sub">{s.assessed} of {s.applicable} {scopeLabel==='Statement of Applicability'?'non-excluded controls':`applicable ${v.items}`} assessed</p></div>
           <div><p className="cis-measure-label">{v.statuses.addressed}</p><p className="cis-measure-value text-semantic-success">{s.implemented}%</p><p className="cis-measure-sub">{s.addressed} of {s.applicable} concluded {v.statuses.addressed}</p></div>
         </div>
         <CisStatusBar counts={Object.fromEntries(CIS_ORDER.map(k=>[k,s[FIELD[k]]]))} className="h-2.5"/>

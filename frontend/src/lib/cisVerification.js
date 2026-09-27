@@ -56,11 +56,11 @@ export function verificationLadder(row,{stack=[],today=new Date()}={}){
 
 /** Workspace summary. Coverage (assessed) is deliberately separate from implementation. */
 export function cisSummary(rows,today=new Date()){
-  const count=s=>rows.filter(r=>r.status===s).length;
-  const applicable=rows.filter(r=>r.status!=='not_applicable');
+  const applicable=rows.filter(r=>r.specification==='annex_control'?r.soa_applicability!=='excluded':r.status!=='not_applicable');
+  const count=s=>applicable.filter(r=>r.status===s).length;
   const assessed=applicable.filter(r=>r.status!=='not_assessed').length;
   return {total:rows.length,applicable:applicable.length,assessed,
-    addressed:count('addressed'),partial:count('in_progress'),gap:count('needs_attention'),na:count('not_applicable'),notAssessed:count('not_assessed'),
+    addressed:count('addressed'),partial:count('in_progress'),gap:count('needs_attention'),na:rows.length-applicable.length,notAssessed:count('not_assessed'),
     coverage:applicable.length?Math.round(assessed/applicable.length*100):0,
     implemented:applicable.length?Math.round(count('addressed')/applicable.length*100):0,
     stale:rows.filter(r=>isStale(r,today)).length,

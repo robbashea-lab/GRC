@@ -36,7 +36,7 @@ test('explicit activation and toggles retain state, with no mutating GET',async(
 test('SoA decisions are separate from mandatory ISMS status and require justification',async()=>{
   const w=await configure(),p=path(w,'A.8.30');
   await expect(api.patch(path(w,'4.3'),{status:'not_applicable',na_rationale:'Not permitted'})).rejects.toThrow();
-  for(const body of [{status:'addressed',implementation:'Operating'},{status:'not_applicable',soa_applicability:'excluded'},{soa_applicability:'excluded',soa_justification:'No outsourcing'},{soa_applicability:'invalid'}])await expect(api.patch(p,body)).rejects.toThrow();
+  for(const body of [{status:'not_applicable',soa_applicability:'excluded'},{soa_applicability:'invalid'}])await expect(api.patch(p,body)).rejects.toThrow();
   await api.patch(p,{status:'not_applicable',soa_applicability:'excluded',soa_justification:'No outsourced development in scope'});
   expect(await get(p)).toMatchObject({status:'not_applicable',soa_applicability:'excluded'});
   await api.patch(p,{status:'in_progress',soa_applicability:'included',soa_justification:'New development supplier in scope'});

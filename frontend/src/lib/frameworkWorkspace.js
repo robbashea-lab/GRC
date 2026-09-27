@@ -22,7 +22,9 @@ export function groupRequirements(key,rows){
   }}
   return roots;
 }
-export const incomplete=r=>!['addressed','not_applicable'].includes(r.status);
+export const incomplete=r=>r.specification==='annex_control'?
+  r.soa_applicability!=='excluded'&&(r.soa_applicability!=='included'||r.status!=='addressed'):
+  !['addressed','not_applicable'].includes(r.status);
 export const needsAttention=r=>incomplete(r)||(r.work?.overdue_reviews||0)>0||(r.work?.open_findings||0)>0||(r.work?.overdue_actions||0)>0;
 export const nextAssessment=(rows,lastId)=>rows.find(r=>r.framework_assessment_id===lastId&&incomplete(r))||rows.find(incomplete)||rows.find(needsAttention)||null;
 // Derived operational views (reference workspace). They never alter assessment conclusions.

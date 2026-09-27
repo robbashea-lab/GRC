@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from datetime import date, timedelta
 import review_occurrences
+from iso_audit import evidence_ids as audit_evidence_ids
 from framework_catalog import assessment_title
 
 SOURCES = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/evidenceSources.json').read_text())
@@ -24,7 +25,9 @@ def direct_links(row):
 
 
 def review_evidence_query(review, oid):
+    occurrence = next((o for o in review.get('occurrences', []) if o.get('occurrence_id') == oid), review if review_occurrences.occurrence_id(review) == oid else {})
     return {'$or': [
+        {'evidence_id': {'$in': list(audit_evidence_ids(occurrence.get('iso_audit')))}},
         {'linked_type': {'$in':['review','reviews']}, 'linked_id':review['review_id'], **review_occurrences.occurrence_query(review, oid)},
         {'relationships': {'$elemMatch': {'kind':'reviews', 'id':review['review_id'], 'occurrence_id':oid}}},
     ]}
@@ -59,6 +62,12 @@ async def enrich(db, rows, cid, can_access):
     # Existing module-owned relationships stay authoritative; batch reverse lookups.
     eids = [row['evidence_id'] for row in rows]
     external = {eid: [] for eid in eids}
+    async for review in db.reviews.find({'client_id':cid,'iso_audit.package_key':{'$exists':True}}, {'_id':0,'_execution_lock':0}):
+        for occurrence in [review, *review.get('occurrences', [])]:
+            for eid in audit_evidence_ids(occurrence.get('iso_audit')).intersection(external):
+                external[eid].append({'kind':'reviews','id':review['review_id'],'origin':'module',
+                    'occurrence_id':occurrence.get('occurrence_id') or review_occurrences.occurrence_id(review)})
+                catalog['reviews'][review['review_id']] = review
     queries = {
         'vendors': {'$or':[{'contract_evidence_ids':{'$in':eids}}, {'assurance_records.evidence_ids':{'$in':eids}}]},
         'policies': {'$or':[{'approval_source.evidence_id':{'$in':eids}}, {'approval_subject.basis.evidence_id':{'$in':eids}}, {'approval_history.subject.basis.evidence_id':{'$in':eids}}]},
