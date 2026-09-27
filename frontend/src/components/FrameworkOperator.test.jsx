@@ -14,7 +14,7 @@ beforeEach(()=>{
   mockRole='super_admin';
   global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.1',client_id:'client',status:'not_assessed',implementation:'',notes:'Legacy narrative retained',assessment_history:[]};
-  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?{reviews:[],evidence:[]}:path==='/frameworks/cis-ig1'?{assessments:[record]}:[]}));
+  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?{reviews:[],evidence:[]}:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:[]}));
   api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-09-22',assessment_history:[{...body,at:'2026-09-22',by:'u'}]};return {data:record};});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});

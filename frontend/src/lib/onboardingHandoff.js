@@ -1,4 +1,4 @@
-import {FRAMEWORKS, CATALOGS, activeDefinitions, frameworkPlans, reviewConfig, genericReviews,existingFrameworkReview} from './frameworks';
+import {FRAMEWORKS, CATALOGS, activeDefinitions, sharedFrameworkPlans, reviewConfig, genericReviews,existingFrameworkReview} from './frameworks';
 import {reviewView} from './reviewOccurrences';
 
 export const APPLICABILITY = [['applies','Applies'],['does_not_apply','Does Not Apply'],['unsure','Unsure']];
@@ -14,9 +14,9 @@ export const SETUP_FILTERS = {
 };
 export const unansweredPolicies = (catalog, state) => catalog.policies.filter(p => !['yes','no','unsure'].includes(state.policies[p.key]));
 export function reviewConfigurationIssues(state) {
-  return frameworkPlans(state).filter(p => {
+  return sharedFrameworkPlans(state).filter(p => {
     const config=reviewConfig(state,p);
-    return config.recurrence==='custom' && (!Number.isInteger(config.custom_recurrence_days) || config.custom_recurrence_days<1 || config.custom_recurrence_days>3650);
+    return config.conflict || config.recurrence==='custom' && (!Number.isInteger(config.custom_recurrence_days) || config.custom_recurrence_days<1 || config.custom_recurrence_days>3650);
   });
 }
 export function existingBaseline(rows, item) {
@@ -24,7 +24,7 @@ export function existingBaseline(rows, item) {
 }
 export function onboardingPreview(catalog, state, records) {
   const policies = catalog.policies.map(p => ({existing:!!existingBaseline(records.policies,p), response:state.policies[p.key]}));
-  const uniquePlans=[...new Map(frameworkPlans(state).filter(p=>reviewConfig(state,p).enabled).map(p=>[p.baseline_key||p.key,p])).values()];
+  const uniquePlans=sharedFrameworkPlans(state).filter(p=>reviewConfig(state,p).enabled);
   const reviews = uniquePlans.map(p => {
     const old = existingFrameworkReview(records.reviews,p);
     return {existing:!!old, row:old || {status:'needs_scheduling', ...reviewConfig(state,p)}};

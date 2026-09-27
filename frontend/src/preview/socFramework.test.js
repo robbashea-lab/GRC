@@ -54,7 +54,11 @@ test('four frameworks reuse existing work and control descriptions do not imply 
   await configure(['cis-ig1','hipaa','iso-27001']);const before=JSON.parse(JSON.stringify(await get('/reviews')));
   await configure(['cis-ig1','hipaa','iso-27001','soc-2']);
   const after=await get('/reviews');expect(after).toHaveLength(23);
-  for(const r of before)expect(after.find(a=>a.review_id===r.review_id)).toEqual(r);
+  for(const r of before){
+    const saved=after.find(a=>a.review_id===r.review_id),{framework_drivers,...operational}=saved,{framework_drivers:prior,...original}=r;
+    expect(operational).toEqual(original);expect(framework_drivers).toEqual(expect.arrayContaining(prior));
+  }
+  expect(after.some(r=>r.framework_drivers.some(d=>d.framework_key==='soc-2'))).toBe(true);
   const snapshot=JSON.parse(sessionStorage.getItem(STORE_KEY));
   expect(snapshot.framework_assessments.filter(a=>a.client_id===cid)).toHaveLength(288);
   expect(snapshot.framework_assessments.filter(a=>a.client_id===cid).every(a=>a.status==='not_assessed')).toBe(true);

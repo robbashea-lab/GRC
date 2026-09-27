@@ -1330,7 +1330,7 @@ async def user_open_assignments(user_id: str, client_id: Optional[str] = Query(N
         terminal = list(CLOSED.get(kind, []))
         terminal += {
             "vendors": ["inactive", "terminated"], "policies": ["retired", "not_applicable"],
-            "framework_assessments": ["not_applicable"], "ai_systems": ["retired"],
+            "framework_assessments": ["not_applicable"], "ai_systems": ["retired"], "assets": ["retired"],
         }.get(kind, [])
         query = {"$and": [scope, {"$or": references}, {"status": {"$nin": terminal}}]}
         counts[kind] = await db[kind].count_documents(query)
@@ -3924,7 +3924,13 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         finding=await db.findings.find_one({'finding_id':source['finding_id'],'client_id':cid})
         if finding and finding.get('framework_assessment_id'):
             assessment_clauses.append({'framework_assessment_id':finding['framework_assessment_id']})
-    if entity_type in ('tasks','findings') and source.get('review_id'):
+    explicit_finding=[]
+    if entity_type in ('tasks','findings'):
+        fid=source.get('finding_id')
+        if fid:
+            explicit_finding=await db.framework_assessments.find({'client_id':cid,'related_links':{'$elemMatch':{'kind':'findings','id':fid}}},{'_id':0,'framework_assessment_id':1}).to_list(None)
+            if explicit_finding:assessment_clauses.append({'framework_assessment_id':{'$in':[a['framework_assessment_id'] for a in explicit_finding]}})
+    if entity_type in ('tasks','findings') and source.get('review_id') and not explicit_finding and not any('framework_assessment_id' in clause for clause in assessment_clauses):
         parent_review=await db.reviews.find_one({'review_id':source['review_id'],'client_id':cid},{'_id':0})
         if parent_review:
             assessment_clauses.append({'related_links':{'$elemMatch':{'kind':'reviews','id':parent_review['review_id']}}})

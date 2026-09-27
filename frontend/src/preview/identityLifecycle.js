@@ -92,7 +92,7 @@ export function identityRequest(db, path, method, params, body) {
     if (params.client_id && !clientAccess(db.user, params.client_id)) throw new Error('Forbidden for this client');
     const counts = {}, items = [];
     for (const [type, fields] of Object.entries(assignmentFields)) {
-      const terminal = [...(rules.closed[type] || []), ...({ vendors: ['inactive', 'terminated'], policies: ['retired', 'not_applicable'], framework_assessments: ['not_applicable'], ai_systems: ['retired'] }[type] || [])];
+      const terminal = [...(rules.closed[type] || []), ...({ vendors: ['inactive', 'terminated'], policies: ['retired', 'not_applicable'], framework_assessments: ['not_applicable'], ai_systems: ['retired'], assets: ['retired'] }[type] || [])];
       const rows = (db[type] || []).filter(row => clientAccess(db.user, row.client_id) && (!params.client_id || row.client_id === params.client_id) &&
         !terminal.includes(row.status) && (fields.some(f => row[f] === id) || type === 'tasks' && !row.assignee_id && row.owner_id === id));
       counts[type] = rows.length;

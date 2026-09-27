@@ -2,6 +2,11 @@
 
 ## 2026-09-26 framework validation checkpoint
 
+The follow-on [multi-framework coexistence report](multi-framework-validation.md)
+covers one fourth synthetic client, shared cadence provenance, CIS/ISO/SOC Control
+mappings and five-year coexistence. PR #6 must remain unmerged: a main merge may
+trigger Railway. No Sites publication or deployment is authorized.
+
 See [the final CIS/ISO/SOC operational report](framework-operational-final-report.md)
 and [shared Controls contract](organizational-controls.md) for current branch
 results, source-confidence limits and release status. Older deployment/credential
@@ -11,6 +16,9 @@ push now works. No Sites or Railway update is part of this program.
 Optional synthetic browser inspection: run the frameworkFiveYear.test.js suite
 with FRAMEWORK_LIFECYCLE_EXPORT_DIR pointing to an ignored local directory, build
 the normal frontend, then run backend/tests/serve_lifecycle_qa.py --fixtures DIR.
+Run multiFrameworkLifecycle.test.js with the same export directory to include the
+fourth reference client. Both generators create operational data through normal
+Demo API workflows; no finished fourth client is added to the canonical seed.
 This manual harness binds 127.0.0.1:4180 and prints ephemeral test credentials.
 It keeps normal auth/routes but uses an in-memory Mongo substitute. Stop it after
 QA; do not deploy it or mistake it for persistence/staging validation.

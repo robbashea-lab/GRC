@@ -2,8 +2,10 @@
 import {clone, now, audit} from './store';
 import {clientAccess, eligible} from './assignmentEligibility';
 import {validateManagementControls} from '../lib/socReadiness';
+import {frameworkDefinition} from '../lib/frameworks';
 
 const DESIGN = ['name','description','frequency','design'];
+const SUPPORTED_FRAMEWORKS = ['cis-ig1','iso-27001','soc-2'];
 const SNAPSHOT = [...DESIGN,'owner_id','assessment_ids','related_links'];
 const KEYS = {reviews:'review_id',evidence:'evidence_id',policies:'policy_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',vendors:'vendor_id'};
 const identity = (cid,key) => 'ctrl_'+[cid,key].map(encodeURIComponent).join(':');
@@ -41,7 +43,7 @@ function validateDesign(db,cid,body,old) {
     owner_id:body.owner_id??null,assessment_ids:body.assessment_ids??[],related_links:body.related_links??[]};
   validateManagementControls([{control_id:'validation',...Object.fromEntries(DESIGN.map(k=>[k,values[k]]))}]);
   if(values.owner_id&&values.owner_id!==old?.owner_id&&!eligible(db.users.find(u=>u.user_id===values.owner_id),cid))fail('Choose an active platform user with access to this client');
-  if(!Array.isArray(values.assessment_ids)||values.assessment_ids.length>500||new Set(values.assessment_ids).size!==values.assessment_ids.length||values.assessment_ids.some(a=>!db.framework_assessments.some(r=>r.client_id===cid&&r.framework_key==='soc-2'&&r.framework_assessment_id===a)))fail('Map only SOC 2 assessments belonging to this client');
+  if(!Array.isArray(values.assessment_ids)||values.assessment_ids.length>500||new Set(values.assessment_ids).size!==values.assessment_ids.length||values.assessment_ids.some(a=>!db.framework_assessments.some(r=>r.client_id===cid&&SUPPORTED_FRAMEWORKS.includes(r.framework_key)&&r.framework_assessment_id===a)))fail('Map only CIS, ISO or SOC 2 assessments belonging to this client');
   if(!Array.isArray(values.related_links)||values.related_links.length>500||new Set(values.related_links.map(l=>JSON.stringify(l))).size!==values.related_links.length)fail('Use unique record relationships');
   for(const l of values.related_links)if(!l||Object.keys(l).some(k=>!['kind','id'].includes(k))||!KEYS[l.kind]||!(db[l.kind]||[]).some(r=>r.client_id===cid&&r[KEYS[l.kind]]===l.id))fail('Linked record is unavailable in this client');
   return values;
@@ -49,7 +51,7 @@ function validateDesign(db,cid,body,old) {
 
 export function organizationalControlRequest(db,parts,method,params,body) {
   const [,id,operation]=parts;db.organizational_controls||=[];
-  const special=['migrate','candidates'];
+  const special=['migrate','candidates','assessments'];
   const row=id&&!special.includes(id)?db.organizational_controls.find(c=>c.control_id===id):null;
   const cid=row?.client_id||params.client_id||body.client_id;
   if(!clientAccess(db.user,cid))fail('Forbidden for this client');
@@ -65,6 +67,11 @@ export function organizationalControlRequest(db,parts,method,params,body) {
     const rows=db.organizational_controls.filter(c=>c.client_id===cid&&(!params.assessment_id||c.assessment_ids.includes(params.assessment_id))).sort((a,b)=>a.control_id.localeCompare(b.control_id));
     return {items:rows.slice(offset,offset+limit).map(({history,legacy_sources,observations,...r})=>r),has_more:rows.length>offset+limit,
       migration_pending:controlMigrationPlan(db.framework_assessments,cid,'','').filter(c=>!db.organizational_controls.some(r=>r.control_id===c.control_id)).length};
+  }
+  if(method==='get'&&id==='assessments'){
+    const rows=db.framework_assessments.filter(r=>r.client_id===cid&&SUPPORTED_FRAMEWORKS.includes(r.framework_key));
+    if(rows.length>2000)fail('Too many assessment mappings; narrow the client scope');
+    return rows.map(r=>({framework_assessment_id:r.framework_assessment_id,framework_key:r.framework_key,definition_id:r.definition_id,status:r.status,title:frameworkDefinition(r.framework_key,r.definition_id)?.title||r.definition_id}));
   }
   if(method==='get'&&id==='candidates'){
     if(!KEYS[params.kind]||params.kind==='evidence')fail('Unsupported relationship');

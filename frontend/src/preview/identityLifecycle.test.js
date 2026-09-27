@@ -48,6 +48,11 @@ test('disabled work preserved; report counts once and excludes historical and un
   expect(JSON.stringify(db.reviews)).toBe(before);
   expect(call('/users/alex/open_assignments').total).toBe(1);
   expect(call('/users/alex/open_assignments').items[0].id).toBe('review');
+  db.assets.push({asset_id:'system',client_id:'a',owner_id:'alex',status:'active'});
+  expect(call('/users/alex/open_assignments').assets).toBe(1);
+  db.assets[0].status='retired';
+  expect(call('/users/alex/open_assignments').assets).toBe(0);
+  expect(db.assets[0].owner_id).toBe('alex');
   expect(call('/contacts/maya/account-candidates').items.some(u => u.user_id === 'alex')).toBe(false);
 });
 test('visible membership edit preserves other clients and Contact association', () => {

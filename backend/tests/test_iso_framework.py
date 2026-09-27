@@ -84,7 +84,12 @@ class IsoTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),22)
         for row in before:
             after=await server.db.reviews.find_one({'review_id':row['review_id']},{'_id':0})
-            self.assertEqual(after,row)
+            # Activation adds provenance only; schedules, owners and history stay intact.
+            self.assertEqual({k:v for k,v in after.items() if k not in ('framework_drivers','updated_at')},
+                             {k:v for k,v in row.items() if k not in ('framework_drivers','updated_at')})
+            self.assertTrue(all(d in after['framework_drivers'] for d in row['framework_drivers']))
+        self.assertTrue(any(d['framework_key']=='iso-27001' for r in await server.db.reviews.find({'client_id':'a'}).to_list(None)
+                            for d in r['framework_drivers']))
         a=next(a for a in workspace['assessments'] if a['definition_id']=='A.5.18')
         related=(await self.client.get('/api/framework_assessments/'+a['framework_assessment_id']+'/related')).json()
         self.assertEqual(len(related['reviews']),2)  # Access and SoA are different obligations.

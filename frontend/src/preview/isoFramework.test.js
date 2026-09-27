@@ -47,7 +47,11 @@ test('CIS and HIPAA work is reused without changes; ISO-specific obligations rem
   await configure(['cis-ig1','hipaa']);const before=JSON.parse(JSON.stringify(await get('/reviews')));
   const w=await configure(['cis-ig1','hipaa','iso-27001']);
   const after=await get('/reviews');expect(after).toHaveLength(22);
-  for(const row of before)expect(after.find(r=>r.review_id===row.review_id)).toEqual(row);
+  for(const row of before){
+    const saved=after.find(r=>r.review_id===row.review_id),{framework_drivers,...operational}=saved,{framework_drivers:prior,...original}=row;
+    expect(operational).toEqual(original);expect(framework_drivers).toEqual(expect.arrayContaining(prior));
+  }
+  expect(after.some(r=>r.framework_drivers.some(d=>d.framework_key==='iso-27001'))).toBe(true);
   const related=await get(path(w,'A.5.18')+'/related');
   expect(related.reviews).toHaveLength(2);
   expect(related.reviews.some(r=>r.framework_key==='cis-ig1')).toBe(true);

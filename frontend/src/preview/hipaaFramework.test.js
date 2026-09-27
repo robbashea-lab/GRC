@@ -39,7 +39,11 @@ test('shared Review counts match onboarding preview and CIS operational records 
   expect(preview.assessmentsByProgram).toEqual({'cis-ig1':0,hipaa:76,'iso-27001':0,'soc-2':0,'nist-csf-2':0});
   await configure(['cis-ig1','hipaa']);
   const after=await get('/reviews');expect(after).toHaveLength(18);
-  for(const r of before)expect(after.find(a=>a.review_id===r.review_id)).toEqual(r);
+  for(const r of before){
+    const saved=after.find(a=>a.review_id===r.review_id),{framework_drivers,...operational}=saved,{framework_drivers:prior,...original}=r;
+    expect(operational).toEqual(original);expect(framework_drivers).toEqual(expect.arrayContaining(prior));
+  }
+  expect(after.some(r=>r.framework_drivers.some(d=>d.framework_key==='hipaa'))).toBe(true);
 });
 
 test('addressable is not optional; rationale and decision remain in assessment history',async()=>{

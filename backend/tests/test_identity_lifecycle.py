@@ -223,6 +223,11 @@ class IdentityLifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.status_code, 200, result.text)
         self.assertEqual(result.json()['total'], 1)
         self.assertEqual([i['id'] for i in result.json()['items']], ['active-a'])
+        await server.db.assets.insert_one({'asset_id':'system','client_id':'a','owner_id':'shared','status':'active'})
+        self.assertEqual((await self.client.get('/api/users/shared/open_assignments')).json()['assets'],1)
+        await server.db.assets.update_one({'asset_id':'system'},{'$set':{'status':'retired'}})
+        self.assertEqual((await self.client.get('/api/users/shared/open_assignments')).json()['assets'],0)
+        self.assertEqual((await server.db.assets.find_one({'asset_id':'system'}))['owner_id'],'shared')
         self.assertEqual((await self.client.get('/api/users/shared/open_assignments?client_id=b')).status_code, 403)
 
     async def test_visible_membership_endpoint_preserves_hidden_memberships(self):

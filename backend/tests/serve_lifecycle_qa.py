@@ -25,7 +25,9 @@ async def run(directory):
     build=backend.parent/'frontend'/'build'
     if not (build/'index.html').is_file():
         raise RuntimeError('Build the normal, non-Demo frontend first')
-    fixtures=[json.loads((directory/(key+'.json')).read_text(encoding='utf-8')) for key in ('cis-ig1','iso-27001','soc-2')]
+    fixtures=[json.loads(path.read_text(encoding='utf-8')) for key in ('cis-ig1','iso-27001','soc-2','multi-framework')
+              if (path:=directory/(key+'.json')).is_file()]
+    if not fixtures:raise RuntimeError('Generate a reviewed lifecycle fixture first')
     if not all(f.get('synthetic_lifecycle_fixture') is True for f in fixtures):
         raise RuntimeError('Only generated synthetic lifecycle fixtures are accepted')
     # No ambient .env, real database, mail/OAuth credentials or auth bypass.
@@ -61,8 +63,8 @@ async def run(directory):
                 await server.db.users.update_one({'user_id':user['user_id']},{'$setOnInsert':user},upsert=True)
         cids=[f['client_id'] for f in fixtures]
         password=secrets.token_urlsafe(18)
-        for name,role,scope in [('owner','super_admin',cids),('provider','platform_admin',[cids[2]]),
-                                ('contributor','client_contributor',[cids[2]]),('reader','client_readonly',[cids[2]])]:
+        for name,role,scope in [('owner','super_admin',cids),('provider','platform_admin',[cids[-1]]),
+                                ('contributor','client_contributor',[cids[-1]]),('reader','client_readonly',[cids[-1]])]:
             await server.db.users.insert_one({'user_id':'qa_'+name,'name':'Synthetic '+name,
                 'email':name+'@example.com','password_hash':server.hash_password(password),
                 'role':role,'client_ids':scope,'status':'active','auth_provider':'password'})

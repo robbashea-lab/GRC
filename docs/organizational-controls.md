@@ -8,7 +8,8 @@ organizational Controls are reusable client-owned operating records.
 - Add an additive `organizational_controls` collection, not another Review,
   Evidence or remediation engine. Each Control maps to one or more assessment IDs
   and references existing Reviews, Evidence, Policies, Findings, Actions, Risks
-  and Vendors. Only SOC 2 exposes this workflow in this release.
+  and Vendors. The coexistence extension exposes this workflow for CIS IG1,
+  ISO 27001 and SOC 2. No other framework is enabled for Control mappings.
 - Program administrators create, reconcile, map and edit Controls. Existing
   authorized client readers may inspect them. This matches existing framework
   configuration/link administration; no new client privilege is inferred.
@@ -22,6 +23,14 @@ organizational Controls are reusable client-owned operating records.
 - Mapping a Control, revising its design or recording operation never changes a
   criterion's status, applicability or assessment history. Original criterion
   annotations become read-only after migration to avoid competing authorities.
+- Requirement candidates come from one tenant-scoped minimal projection at
+  `GET /organizational-controls/assessments`. It includes only identifier, framework,
+  title and status, not assessment narratives/history. The editor searches these
+  candidates; current and retained assessment mappings remain independently owned.
+- Explicit Finding-to-assessment relationships take precedence over inheritance
+  through a shared Review. A generic Review Finding still inherits its Review's
+  scope until specifically mapped. This prevents an ISO-only deficiency from
+  automatically appearing as a CIS/SOC gap; it does not alter Finding status.
 - Revision history retains design, owner, frequency, mappings and relationships.
   New period observations snapshot the actual Control revision at recording time.
   Legacy observations are explicitly legacy criterion observations, not inferred
@@ -47,3 +56,6 @@ to two criteria without copying conclusions; design changes across observation
 periods; shared Evidence; persistence and browser conflict reconciliation.
 
 No deployment or destructive migration is part of this change.
+
+See [multi-framework validation](multi-framework-validation.md) for shared Review
+drivers, five-year evidence, conflict handling and the fourth synthetic client.

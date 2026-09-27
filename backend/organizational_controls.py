@@ -15,6 +15,7 @@ DESIGN_FIELDS = ('name', 'description', 'frequency', 'design')
 SNAPSHOT_FIELDS = (*DESIGN_FIELDS, 'owner_id', 'assessment_ids', 'related_links')
 KEYS = {'reviews':'review_id', 'evidence':'evidence_id', 'policies':'policy_id',
         'findings':'finding_id', 'tasks':'task_id', 'risks':'risk_id', 'vendors':'vendor_id'}
+SUPPORTED_FRAMEWORKS = ('cis-ig1', 'iso-27001', 'soc-2')
 
 
 def identity(cid, key):
@@ -153,9 +154,9 @@ def router_for(s):
                 raise HTTPException(422, 'Choose an active platform user with access to this client')
         aids = data['assessment_ids']
         rows = await s.db.framework_assessments.find(
-            {'client_id':cid, 'framework_assessment_id':{'$in':aids}, 'framework_key':'soc-2'}, {'_id':0}).to_list(len(aids)) if aids else []
+            {'client_id':cid, 'framework_assessment_id':{'$in':aids}, 'framework_key':{'$in':SUPPORTED_FRAMEWORKS}}, {'_id':0}).to_list(len(aids)) if aids else []
         if len(rows) != len(aids):
-            raise HTTPException(422, 'Map only SOC 2 assessments belonging to this client')
+            raise HTTPException(422, 'Map only CIS, ISO or SOC 2 assessments belonging to this client')
         for link in data['related_links']:
             target = await s.db[link['kind']].find_one(
                 {'client_id':cid, KEYS[link['kind']]:link['id']}, {'_id':0, 'client_id':1})
@@ -219,6 +220,17 @@ def router_for(s):
             query['$or']=[{'title':pattern},{'name':pattern}]
         items=await s.db[kind].find(query,{'_id':0,KEYS[kind]:1,'title':1,'name':1,'status':1}).sort(KEYS[kind],1).skip(offset).to_list(26)
         return {'items':items[:25],'has_more':len(items)>25}
+
+    @router.get('/assessments')
+    async def assessment_candidates(client_id:str, user=Depends(s.get_current_user)):
+        from framework_catalog import definition_for
+        await scope(client_id,user)
+        rows = await s.db.framework_assessments.find(
+            {'client_id':client_id,'framework_key':{'$in':SUPPORTED_FRAMEWORKS}},
+            {'_id':0,'framework_assessment_id':1,'framework_key':1,'definition_id':1,'status':1}).to_list(2001)
+        if len(rows)>2000:
+            raise HTTPException(413,'Too many assessment mappings; narrow the client scope')
+        return [{**r,'title':(definition_for(r['framework_key'],r['definition_id']) or {}).get('title',r['definition_id'])} for r in rows]
 
     @router.post('')
     async def create(body:Create, user=Depends(s.get_current_user)):

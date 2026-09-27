@@ -573,6 +573,12 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
         raise HTTPException(400, 'Invalid review selection')
     state['reviews'] = list(dict.fromkeys(state['reviews']))
     if body.finalize:
+        import shared_review_plans
+        try:
+            for plan in shared_review_plans.selected_plans(state):
+                shared_review_plans.shared_config(state,plan)
+        except ValueError as error:
+            raise HTTPException(422,str(error)) from error
         if body.expected_records is None:
             raise HTTPException(428,'Reload setup before finalizing; source record versions are required')
         if body.expected_records != await baseline_record_versions(cid):

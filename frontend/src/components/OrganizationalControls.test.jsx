@@ -2,6 +2,8 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import OrganizationalControls from './OrganizationalControls';
 import api from '@/lib/api';
+import catalog from '@/lib/onboardingCatalog.json';
+import {FRAMEWORKS} from '@/lib/frameworks';
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'demo_admin',role:'super_admin'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/adapter').previewAdapter}),formatError:e=>e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
@@ -16,10 +18,26 @@ test('create, save, reopen, guard draft and retain an independent criterion asse
   await act(async()=>root.render(<OrganizationalControls clientId={cid} assessmentId={a.framework_assessment_id} onDraftChange={onDraft}/>));
   await click('Create organizational Control');await fill('Organizational Control name','Browser-equivalent control');await fill('Organizational Control design','Synthetic operating design');
   await click('Close Control');expect(document.body.textContent).toContain('Leave unsaved Control work?');await click('Keep editing');
-  await click('Save Control');expect(document.body.textContent).toContain('Criterion assessments are unchanged.');await click('Close Control');
+  await click('Save Control');expect(document.body.textContent).toContain('Framework assessments are unchanged.');await click('Close Control');
   await click('Browser-equivalent control');expect(document.querySelector('[aria-label="Organizational Control design"]').value).toBe('Synthetic operating design');
   expect((await api.get('/framework_assessments/'+a.framework_assessment_id)).data.status).toBe(a.status);
   expect(onDraft).toHaveBeenCalledWith(true);expect(document.querySelector('[role="dialog"]').getAttribute('aria-describedby')).toBeTruthy();
+});
+
+test('searching cross-framework mappings retains selected requirements outside the search',async()=>{
+  const {data:client}=await api.post('/clients',{name:'Synthetic mapping search'}),cid=client.client_id;
+  await api.post('/onboarding/baseline',{client_id:cid,finalize:true,state:{version:3,step:3,policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'yes'])),requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,['cis-ig1','iso-27001','soc-2'].includes(f.key)?'applies':'does_not_apply'])),reviews:[],framework_reviews:{}}});
+  await act(async()=>root.render(<OrganizationalControls clientId={cid}/>));
+  await click('Create organizational Control');await fill('Organizational Control name','Shared access operation');
+  await act(async()=>[...document.querySelectorAll('summary')].find(e=>e.textContent.startsWith('Supported requirements')).click());
+  for(const [search,label] of [['cis-ig1 5.1','Supports cis-ig1 5.1'],['iso-27001 A.5.18','Supports iso-27001 A.5.18'],['soc-2 CC6.2','Supports soc-2 CC6.2']]){
+    await fill('Search supported requirements',search);
+    await act(async()=>document.querySelector(`[aria-label="${label}"]`).click());
+  }
+  await click('Save Control');
+  expect((await api.get('/organizational-controls',{params:{client_id:cid}})).data.items[0].assessment_ids).toHaveLength(3);
+  await fill('Search supported requirements','cis-ig1 5.1');
+  expect(document.querySelector('[aria-label="Supports cis-ig1 5.1"]').checked).toBe(true);
 });
 
 test('conflicting source designs require an explicit decision and remain visible after reconciliation',async()=>{
