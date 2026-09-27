@@ -1,5 +1,10 @@
 # Framework operational completeness — acceptance ledger
 
+> Historical task report: deployment restrictions below applied to that task only.
+> Current merge/publication authority is [GitHub main → ChatGPT preview](publishing-workflow.md).
+> Railway is retired from the intended workflow; the one-time disconnection hold
+> is tracked there, not a recurring release requirement.
+
 Final evidence and limitations: [consolidated report](framework-operational-final-report.md).
 The historical checkpoints below are retained. The final run passed 112 frontend
 suites / 619 tests and 404 isolated Python tests / 567 subtests; both optimized

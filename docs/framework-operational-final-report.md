@@ -1,5 +1,10 @@
 # CIS, ISO and SOC 2 operational validation — final engineering report
 
+> Historical task report: deployment restrictions below applied to that task only.
+> Current merge/publication authority is [GitHub main → ChatGPT preview](publishing-workflow.md).
+> Railway is retired from the intended workflow; the one-time disconnection hold
+> is tracked there, not a recurring release requirement.
+
 Date: 2026-09-26. Scope: Brawndo CIS IG1, Dunder Mifflin ISO/IEC 27001,
 Prestige Worldwide SOC 2 and isolated fresh-client lifecycle scenarios.
 

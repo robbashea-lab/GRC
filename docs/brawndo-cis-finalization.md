@@ -1,5 +1,10 @@
 # Brawndo CIS IG1 finalization — 2026-09-23
 
+> Historical task report: deployment restrictions below applied to that task only.
+> Current merge/publication authority is [GitHub main → ChatGPT preview](publishing-workflow.md).
+> Railway is retired from the intended workflow; the one-time disconnection hold
+> is tracked there, not a recurring release requirement.
+
 ## Scope and evidence boundary
 
 Six-phase follow-up to [the product review](brawndo-cis-product-review.md). The prototype remains restricted by exact client ID `demo_brawndo`, record tenant, `cis-ig1`, and Demo identity. No other framework/client was activated. Shared Sheet accessibility improvements are the explicitly permitted exception. No dependencies, schemas, seed records, permissions, scoring, mappings, or scheduling business rules changed.

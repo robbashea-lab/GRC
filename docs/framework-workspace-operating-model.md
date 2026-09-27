@@ -1,5 +1,10 @@
 # Framework workspace operating model
 
+> Historical task report: deployment restrictions below applied to that task only.
+> Current merge/publication authority is [GitHub main → ChatGPT preview](publishing-workflow.md).
+> Railway is retired from the intended workflow; the one-time disconnection hold
+> is tracked there, not a recurring release requirement.
+
 ## Scope and preservation
 
 This change covers CIS IG1, ISO/IEC 27001 and SOC 2 only. Existing assessments,

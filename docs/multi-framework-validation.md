@@ -1,5 +1,10 @@
 # Multi-framework reference validation
 
+> Historical task report: deployment restrictions below applied to that task only.
+> Current merge/publication authority is [GitHub main → ChatGPT preview](publishing-workflow.md).
+> Railway is retired from the intended workflow; the one-time disconnection hold
+> is tracked there, not a recurring release requirement.
+
 Scope: CIS v8.1 IG1, ISO/IEC 27001:2022 and SOC 2 only. Start at
 26a9f4a33699e4b87d06b7fb8a600ee9416dcccd on the existing unmerged PR #6 branch.
 No main merge, Railway/settings/deployment, Sites publication or reference-client reset.

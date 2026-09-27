@@ -1,5 +1,10 @@
 # Brawndo CIS IG1 product review — 2026-09-23
 
+> Historical task report: deployment restrictions below applied to that task only.
+> Current merge/publication authority is [GitHub main → ChatGPT preview](publishing-workflow.md).
+> Railway is retired from the intended workflow; the one-time disconnection hold
+> is tracked there, not a recurring release requirement.
+
 Follow-up: [six-phase finalization](brawndo-cis-finalization.md) traced the suspected date loss to uncommitted browser-automation input, verified scheduling persistence, fixed shared dialog descriptions/focus, and froze the reference pattern. The observations below are retained as the original review record; consult the follow-up for current resolution and test results.
 
 ## Scope and method

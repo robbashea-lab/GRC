@@ -1,5 +1,10 @@
 # Initech multi-framework Demo — implementation and validation
 
+> Historical task report: deployment restrictions below applied to that task only.
+> Current merge/publication authority is [GitHub main → ChatGPT preview](publishing-workflow.md).
+> Railway is retired from the intended workflow; the one-time disconnection hold
+> is tracked there, not a recurring release requirement.
+
 Validation date: 2026-09-27. Scope: permanent synthetic Initech plus preservation
 of Brawndo, Dunder Mifflin and Prestige Worldwide. This follows the completed
 [framework-workspace refinement](framework-workspace-operating-model.md).
