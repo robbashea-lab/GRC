@@ -91,16 +91,16 @@ established from current AICPA listings. The September 2026 AI Q&A is supplement
 
 | Concept / identifier scope | Working expectation | Sources / confidence | Omnisciente operating record and validation impact |
 | --- | --- | --- | --- |
-| TSC vs controls | Criteria evaluate organization-designed controls; they are not one universal control library. | S1/S3 V | Preserve management control descriptions separately from criterion assessments. Shared Reviews/Evidence can support several criteria without shared conclusions. |
+| TSC vs controls | Criteria evaluate organization-designed controls; they are not one universal control library. | S1/S3 V | Client-owned organizational Controls map many-to-many to independently assessed criteria. Migration preserves original descriptions and flags disagreements; shared Reviews/Evidence never transfer conclusions. |
 | Security / selected categories | Deliberately scope Security/Common Criteria and relevant optional categories. | S1/S2 V for categories; S4/S5 H for operation | Keep existing category selection; deselection retains history. Exact optional inventory remains manual verification, not fabricated correction. |
 | Description / boundary | Describe scoped system and service commitments. | S2/S3 V; S5 H | Client configuration plus retained system-description evidence. Plain scope text is not an issued examination report. |
 | Type 1 / Type 2 | Point-in-time design differs from operation across a period. | S3/S4/S5 H | Current product is Type 2 readiness; no new attestation or Type 1 conclusion inferred. |
-| Design / implementation / ownership | Document who operates the organization's control and how. | S3/S5 H | Criterion control descriptions and linked Review/Policy owners; do not infer effective operation from adequate design. |
+| Design / implementation / ownership | Document who operates the organization's control and how. | S3/S5 H | Authoritative organizational Control design, owner and operating-record links; do not infer effective operation from adequate design. |
 | Cadence | Control frequency follows the organization's design and commitments. | S3/S5/S6 H | Product-suggested Reviews remain recommendations; record actual selected recurrence and occurrences. |
 | Period evidence | Support operating history across the relevant observation period. | S4/S5/S6 H | Evidence links retain period/occurrence; later program dates cannot rewrite original observations. File count does not equal a valid sample population. |
 | Exceptions / remediation | Evaluate gaps, corrective work and subsequent operation. | S3/S5 H | Findings and Actions; readiness status is separately reassessed, not automatically passed. |
 | Providers / subservices | Dependencies and their treatment affect scope and evidence. | S5/S6 H | Vendor records and scope evidence; no automated carve-out/inclusive decision. |
-| Historical control changes | Earlier design/operation needs to remain reviewable. | S3/S5/S6 H for period concept; W for product representation | Existing control observation snapshots and immutable Review occurrences; annual evidence must not silently move periods. |
+| Historical control changes | Earlier design/operation needs to remain reviewable. | S3/S5/S6 H for period concept; W for product representation | Shared Control revisions and period observations snapshot the saved design, owner, mappings and relationships at recording time; original criterion observations and immutable Review occurrences remain. The operator must evaluate whether that design actually operated throughout the stated period. |
 | Individual CC/A/C/PI/P mappings | Existing authored paraphrases are working aids, not verified complete criteria/points of focus. | S1 metadata only; W | Retain 61 IDs and original language distinction. No score/certification or universal mandatory artifact list. |
 
 ## Licensed-source verification list for Robb

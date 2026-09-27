@@ -1,4 +1,13 @@
-# Framework operational completeness — work in progress
+# Framework operational completeness — acceptance ledger
+
+Final evidence and limitations: [consolidated report](framework-operational-final-report.md).
+The historical checkpoints below are retained. The final run passed 112 frontend
+suites / 619 tests and 404 isolated Python tests / 567 subtests; both optimized
+builds passed. Final browser/role/lifecycle checks are documented in the report.
+Operational gates pass for the exercised baseline; licensed-content checks remain
+separate. Robb's final instruction explicitly keeps PR #6 unmerged and ready for
+review because main is Railway-connected. This supersedes the original merge
+authority. No production, Railway or Sites publication.
 
 Starting main: `66242b89359de886d1b654ec7b146bd4703a44c8`.
 Branch: `codex/framework-operational-completeness`.
