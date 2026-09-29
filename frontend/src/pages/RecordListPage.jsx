@@ -5,6 +5,9 @@ import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/Ta
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
+import {isBrawndoReference} from '@/lib/reference';
+import {pilotReviewStatus,pilotReviewMatches,pilotReviewColumns,reviewSource,REVIEW_STATUS} from '@/lib/brawndoReviews';
+import BrawndoReviewSummary from '@/components/BrawndoReviewSummary';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
@@ -88,6 +91,7 @@ export default function RecordListPage({ kind }) {
   const schema = SCHEMAS[kind];
   const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
+  const reviewsPilot = kind==='reviews' && isBrawndoReference(currentClientId,user);
   const location = useLocation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -111,6 +115,7 @@ export default function RecordListPage({ kind }) {
   }, [kind, currentClientId]);
   const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
   const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
+  const reviewView = params.get('reviewView') || '';
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
   const sortDir = params.get("sortDir") || defaultSort.dir;
@@ -186,11 +191,13 @@ export default function RecordListPage({ kind }) {
   const carriedClientChanged = filterClient.current !== currentClientId;
   useEffect(() => {
     if (filterClient.current === currentClientId) return;
+    const pilotSwitch=reviewsPilot||isBrawndoReference(filterClient.current,user);
     filterClient.current = currentClientId;
     const next = new URLSearchParams(params);
-    next.delete('owner'); next.delete('unassigned');
+    next.delete('owner'); next.delete('unassigned'); next.delete('reviewView');
+    if(kind==='reviews'&&pilotSwitch) ['q','tab','status','signal','sortBy','sortDir','setup'].forEach(key=>next.delete(key));
     setParams(next, { replace: true });
-  }, [currentClientId, params, setParams]);
+  }, [currentClientId, params, setParams, kind, reviewsPilot, user]);
 
   // Carried-scope filters from URL (?owner=<uid>|__me__ &unassigned=1 &severity=critical,high &status=open)
   const urlFilters = useMemo(() => {
@@ -217,19 +224,20 @@ export default function RecordListPage({ kind }) {
       const name = urlFilters.rawOwner === "__me__"
         ? (user?.name || user?.email || "You")
         : personLabel(users, urlFilters.owner);
-      parts.push(`Owner: ${name}`);
+      parts.push(`${reviewsPilot?'Assigned Reviewer':'Owner'}: ${name}`);
     }
     if (urlFilters.unassigned) parts.push("Unassigned");
     if (urlFilters.severities.length) parts.push(`Severity: ${urlFilters.severities.join(" / ")}`);
     if (urlFilters.status) parts.push(`Status: ${urlFilters.status}`);
     if (urlFilters.setup) parts.push(urlFilters.setup.label);
     return parts.join(" · ");
-  }, [hasUrlFilters, urlFilters, users, user]);
+  }, [hasUrlFilters, urlFilters, users, user, reviewsPilot]);
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const contactAccessContext = useContactAccess(currentClientId, kind === 'contacts', rows);
   const columnCount = schema.columns.length + (kind === 'contacts' ? 3 : 2);
-  const columns = tableColumns(kind, { rows: tableSource, users });
+  const baseColumns = tableColumns(kind, { rows: tableSource, users });
+  const columns = reviewsPilot ? pilotReviewColumns(baseColumns,tableSource) : baseColumns;
   const table = useTableControls({ columns, rows: tableSource, module: kind, scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key, values) => {
     if (key !== 'status' || !values.length) return;
     const next = new URLSearchParams(params);
@@ -252,7 +260,7 @@ export default function RecordListPage({ kind }) {
     const passed = rows.filter((r) => {
       if (r.client_id !== currentClientId) return false;
       if (urlFilters.setup && !urlFilters.setup.matches(r)) return false;
-      if (isReviews && !reviewMatches(r, reviewTab === 'history' ? 'history' : 'all')) return false;
+      if (reviewsPilot ? !pilotReviewMatches(r,carriedClientChanged?'':reviewView) : isReviews && !reviewMatches(r, reviewTab === 'history' ? 'history' : 'all')) return false;
       // URL-carried filters (from the scoped dashboard). These are additive.
       if (urlFilters.owner) {
         const rOwner = r[ownerField] || r.owner_id || r.assignee_id;
@@ -262,10 +270,10 @@ export default function RecordListPage({ kind }) {
         if (r[ownerField] || r.owner_id || r.assignee_id) return false;
       }
       if (urlFilters.severities.length && !urlFilters.severities.includes(r.severity)) return false;
-      if (!columnStatusActive && urlFilters.status && r.status !== urlFilters.status) return false;
+      if (!columnStatusActive && urlFilters.status && (reviewsPilot?pilotReviewStatus(r):r.status) !== urlFilters.status) return false;
 
-      if (signal && !signal.test(r)) return false;
-      if (isReviews && !signal && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
+      if (!reviewsPilot && signal && !signal.test(r)) return false;
+      if (isReviews && !reviewsPilot && !signal && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
       if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && (statusFilter === "active" ? (TERMINAL_STATUS[kind] || []).includes(r.status) : r.status !== statusFilter)) return false;
       if (!s) return true;
       const {occurrences, ...searchable} = r;
@@ -306,8 +314,10 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, reviewsPilot, reviewView, carriedClientChanged]);
   const filtered = table.apply(presetRows);
+  // Keep the register's geometry/opener during an in-place modal save refresh.
+  const showLoading = loading && (!reviewsPilot || !tableSource.length);
 
   const reviewTabCounts = useMemo(() => {
     if (!isReviews) return {};
@@ -376,8 +386,13 @@ export default function RecordListPage({ kind }) {
   }
 
   return (
-    <div className="register-surface" data-layout={isReviews ? 'reviews' : undefined}>
-      <PageHeader
+    <div className={`register-surface${reviewsPilot?' brawndo-reviews':''}`} data-layout={isReviews ? 'reviews' : undefined}>
+      {reviewsPilot ? <div className="flex justify-end px-[var(--register-gutter)] pt-3">
+        <h1 className="sr-only">Reviews</h1><HeaderActions>
+          <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || !rows.length} testid="export-reviews-button"/>
+          {canWrite&&<PrimaryAction label="New Review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}
+        </HeaderActions>
+      </div> : <PageHeader
         title={schema.title}
         subtitle={schema.subtitle}
         action={
@@ -386,10 +401,10 @@ export default function RecordListPage({ kind }) {
             {canWrite && <PrimaryAction label={`New ${schema.singular}`} testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }} />}
           </HeaderActions>
         }
-      />
+      />}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       {kind === "contacts" && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
-      {signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
+      {reviewsPilot ? <BrawndoReviewSummary rows={tableSource} active={reviewView} loading={loading} onPick={v=>setParam('reviewView',v)}/> : signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
       <div className="register-toolbar">
         <SearchField label={`Search ${schema.title.toLowerCase()}`} testid={`${kind}-search`} value={q} onChange={setQ} placeholder={`Search ${schema.title.toLowerCase()}…`} />
         {hasUrlFilters && (
@@ -409,7 +424,7 @@ export default function RecordListPage({ kind }) {
             </button>
           </div>
         )}
-        {isReviews ? (
+        {reviewsPilot ? <Button variant="ghost" size="sm" disabled={!reviewView} onClick={()=>setParam('reviewView','')}>Clear summary filter</Button> : isReviews ? (
           <ViewTabs views={REVIEW_TABS} active={columnStatusActive ? null : reviewTab} onPick={setReviewTab} counts={reviewTabCounts} label="Review views" testid="reviews-tabs" testIdPrefix="reviews-tab-" />
         ) : (
           statusOptions.length > 0 && (
@@ -423,8 +438,8 @@ export default function RecordListPage({ kind }) {
             </Select>
           )
         )}
-        {isReviews && <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
-        <RegisterCount shown={filtered.length} total={isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length} />
+        {isReviews && <Button variant="link" size="sm" onClick={() => reviewsPilot ? setParam('reviewView',reviewView==='history'?'':'history') : setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewsPilot ? (reviewView==='history'?'All Reviews':'Completed / cancelled history') : reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
+        <RegisterCount shown={filtered.length} total={isReviews && !reviewsPilot ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length} />
       </div>
 
       {/* Bulk action bar */}
@@ -441,13 +456,13 @@ export default function RecordListPage({ kind }) {
             <DropdownMenu open={ownerPicker} onOpenChange={setOwnerPicker}>
               <DropdownMenuTrigger asChild>
                 <button data-testid="bulk-set-owner" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-primary-foreground">
-                  <UserPlus className="h-3.5 w-3.5" /> Set {ownerField === "assignee_id" ? "assignee" : "owner"}
+                  <UserPlus className="h-3.5 w-3.5" /> Set {reviewsPilot ? 'Assigned Reviewer' : ownerField === "assignee_id" ? "assignee" : "owner"}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64 max-h-72 overflow-y-auto">
                 <DropdownMenuLabel className="text-xs">Choose a user</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <div className="p-2"><AssigneeSelect clientId={currentClientId} label="Bulk owner" value={null} onChange={v=>bulk("set-owner",{owner_id:v})}/></div>
+                <div className="p-2"><AssigneeSelect clientId={currentClientId} label={reviewsPilot?'Assigned Reviewer':'Bulk owner'} value={null} onChange={v=>bulk("set-owner",{owner_id:v})}/></div>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -518,9 +533,9 @@ export default function RecordListPage({ kind }) {
               </tr>
             </thead>
             <tbody>
-              {loading && <TableLoadingRow colSpan={columnCount} />}
-              {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity','setup'].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
-              {!loading && filtered.map((row, i) => {
+              {showLoading && <TableLoadingRow colSpan={columnCount} />}
+              {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={columnCount} className="empty-state">{rows.length ? <FilterEmpty table={table} name={kind.replaceAll('_',' ')} onClear={() => { const next = new URLSearchParams(params); ['q','tab','status','owner','unassigned','severity','setup',...(reviewsPilot?['reviewView','signal']:[])].forEach(k => next.delete(k)); if (isReviews) next.set('tab','all'); setParams(next,{replace:true}); }} /> : kind === 'contacts' ? <><p>No business contacts yet.</p><p className="mt-1 text-xs text-ink-secondary">Add people and GRC responsibilities for this client. Platform accounts are optional and separate.</p></> : `No ${kind.replaceAll("_", " ")} have been added for this client.`}</td></tr>}
+              {!showLoading && filtered.map((row, i) => {
                 const overdueReview = isReviews && isReviewOverdue(row);
                 return (
                 <tr
@@ -544,14 +559,14 @@ export default function RecordListPage({ kind }) {
                     return (
                     <td key={`${row[idField] || i}-${c.key}`} data-column={isReviews ? c.key : undefined} className={`tbl-cell ${c.primary ? "font-medium text-ink-primary" : ""}`}>
                       {c.badge ? (
-                        overdueReview && c.key === "status"
+                        reviewsPilot && c.key==="status" ? <StatusBadge value={pilotReviewStatus(row)} label={REVIEW_STATUS[pilotReviewStatus(row)]} testid={`${kind}-status-${i}`}/> : overdueReview && c.key === "status"
                           ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
                           : row[c.key] ? <StatusBadge value={row[c.key]} tone={isReviews && row[c.key] === 'needs_scheduling' ? 'duesoon' : undefined} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
                       ) :
                        c.user ? (
                          <OwnerCell people={users} id={row[c.key]} status={row.status} testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined} />
                        ) :
-                       isReviews && c.key==='basis' ? <span className="text-xs text-ink-secondary" title={basisSummary(row)}>{basisSummary(row)}</span> :
+                       isReviews && c.key==='basis' ? <span className="text-xs text-ink-secondary" title={reviewsPilot?reviewSource(row):basisSummary(row)}>{reviewsPilot?reviewSource(row):basisSummary(row)}</span> :
                        isDueLike ? <DueDate iso={row[c.key]} closed={closed} /> :
                        c.date ? <HistoryDate value={row[c.key]} /> :
                        (
@@ -630,6 +645,7 @@ export default function RecordListPage({ kind }) {
       </div>
 
       <RecordDrawer
+        reviewsPilot={reviewsPilot}
         open={open}
         onOpenChange={setOpen}
         kind={kind}

@@ -34,9 +34,9 @@ export function ColumnControl({ table, column: supplied, columnKey, menuClassNam
   const selected = table.state.filters[c.key] || [];
   const sorting = table.state.sort?.key === c.key;
   const options = c.filter ? table.options(c) : [];
-  const labels = c.rank || c.numeric ? ['Lowest First', 'Highest First'] : c.dateKind === 'history' ? ['Oldest', 'Most Recent'] : c.dateKind === 'due' ? ['Soonest Due', 'Furthest Due'] : c.dateKind ? ['Soonest', 'Furthest'] : ['A → Z', 'Z → A'];
+  const labels = c.sortLabels || (c.rank || c.numeric ? ['Lowest First', 'Highest First'] : c.dateKind === 'history' ? ['Oldest', 'Most Recent'] : c.dateKind === 'due' ? ['Soonest Due', 'Furthest Due'] : c.dateKind ? ['Soonest', 'Furthest'] : ['A → Z', 'Z → A']);
   return <DropdownMenu modal={false} onOpenChange={() => setQuery('')}>
-    <DropdownMenuTrigger asChild><button type="button" data-active={!!(selected.length || sorting)} aria-label={`${c.label}: sort and filter`} className={`column-control inline-flex items-center gap-1 whitespace-nowrap rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 normal-case tracking-normal ${selected.length || sorting ? 'text-ink-primary underline decoration-current underline-offset-4' : 'hover:text-ink-primary'}`}>
+    <DropdownMenuTrigger asChild><button type="button" data-active={!!(selected.length || sorting)} aria-label={`${c.label}: ${c.filterOnly?'filter':'sort and filter'}`} className={`column-control inline-flex items-center gap-1 whitespace-nowrap rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 normal-case tracking-normal ${selected.length || sorting ? 'text-ink-primary underline decoration-current underline-offset-4' : 'hover:text-ink-primary'}`}>
       {c.label}<ChevronDown aria-hidden="true" className={`h-3 w-3 ${selected.length || sorting ? 'opacity-100' : 'opacity-40'}`} />
     </button></DropdownMenuTrigger>
     <DropdownMenuContent align="start" className={`w-56 max-h-80 ${menuClassName}`} aria-label={`${c.label} options`}>

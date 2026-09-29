@@ -1,0 +1,4 @@
+.brawndo-reviews .register-col-basis { width: 164px; }
+.brawndo-reviews .register-col-owner { width: 160px; }
+.brawndo-reviews .client-work-filter:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
+.brawndo-reviews .register-table-frame[data-layout="reviews"] > table { min-width: 1152px; }

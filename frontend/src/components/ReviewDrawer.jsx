@@ -4,6 +4,11 @@ import { personLabel } from '@/lib/people';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
+import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
+import {isBrawndoReference} from '@/lib/reference';
+import ReviewExpectations,{ReviewFacts} from './BrawndoReviewDetails';
+import './BrawndoCisAssessment.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,8 +38,12 @@ const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','
 const date = value => value ? new Date(String(value).slice(0,10) + 'T00:00:00').toLocaleDateString() : '—';
 const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
 
-export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues}) {
+export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user} = useAuth();
+  const pilot=reviewsPilot && isBrawndoReference(clientId,user) && (!record || record.client_id===clientId);
+  const Root=pilot?Dialog:Sheet, Content=pilot?DialogContent:SheetContent;
+  const opener=useRef(null),heading=useRef(null);
+  const [pending,setPending]=useState(null);
   const admin = ['super_admin','platform_admin'].includes(user?.role);
   const writable = admin || user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
     [record?.owner_id, record?.reviewer_id].includes(user?.user_id);
@@ -66,14 +75,14 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     setCurrent(record ? reviewView(record) : null);
     setForm(record ? {...record,due_date:record.due_date?.slice(0,10) || ''} : {title:'',review_type:'',owner_id:'',due_date:'',recurrence:'none',notes:''});
     setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setComments([]); setActivity([]); setRelated({});
-    setComment(''); setFinding(null); setLinked(null); setMembers([]);
+    setComment(''); setFinding(null); setLinked(null); setMembers([]);setPending(null);
     const version = generation.current;
-    setBasisLoading(true);setBasisError('');
+    setBasisLoading(pilot ? !!record : true);setBasisError('');
     api.get(`/clients/${record?.client_id || clientId}/members`).then(({data}) => { if (generation.current === version) setMembers(data); }).catch(e => toast.error(formatError(e)));
     setPolicies([]);
     api.get('/policies',{params:{client_id:record?.client_id || clientId}}).then(({data})=>{if(generation.current===version)setPolicies(data);}).catch(e=>toast.error(formatError(e)));
     return () => { sequence.current++; };
-  }, [open,record,clientId,initialValues?.occurrence]);
+  }, [open,record,clientId,initialValues?.occurrence,pilot]);
 
   const reload = useCallback(async () => {
     if (!open || !rid || !oid) return;
@@ -108,6 +117,20 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return Object.fromEntries(fields.map(k => [k,k === 'custom_recurrence_days' ? (form[k] ? Number(form[k]) : null) : form[k] || null])
       .filter(([k,v]) => !current || (k === 'due_date' ? (current[k]?.slice(0,10) || null) !== v : JSON.stringify(current[k] || null) !== JSON.stringify(v))));
   }
+  const dirty=pilot && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
+    pilot && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&riskOutcome!=="Reviewed — No Change");
+  function leave(action,hasDraft=dirty) {
+    if(pilot&&busy)return;
+    if(pilot&&hasDraft)setPending(()=>action);
+    else action();
+  }
+  function close(value) { if(value)onOpenChange(true);else leave(()=>onOpenChange(false)); }
+  useEffect(()=>{
+    if(!open||!dirty)return undefined;
+    const warn=e=>{e.preventDefault();e.returnValue='';};
+    window.addEventListener('beforeunload',warn);
+    return ()=>window.removeEventListener('beforeunload',warn);
+  },[open,dirty]);
   async function saveChanges() {
     const patch = changes();
     if (!current) {
@@ -121,6 +144,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return current;
   }
   const lifecycle = action => run(async () => {
+    if(pilot&&(comment.trim()||finding)) throw new Error('Post or discard the unfinished comment or Finding before starting or completing this Review.');
     const saved = await saveChanges();
     const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'&&saved.risk_id?{risk_assessment:riskDraft||{},risk_outcome:riskOutcome}:{})});
     const updated = data.review || data;
@@ -136,7 +160,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
       </SelectContent></Select></div>;
   }
-  const chooseHistory = o => { generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); };
+  const chooseHistory = o => leave(()=>{ if(pilot){setForm({...current,due_date:current.due_date?.slice(0,10)||''});setComment('');setFinding(null);setRiskDraft(riskBase.current);setRiskOutcome("Reviewed — No Change");} generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); });
   const configuration = selected || form;
   const derived = reviewSchedule(configuration);
   useEffect(()=>{setShowHistorical(false);},[rid,oid,open]);
@@ -145,19 +169,27 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const allRelatedRows = Object.entries({...related,tasks:remediation.standaloneTasks}).flatMap(([kind,items]) => ['tasks','policies','vendors','risks','framework_assessments'].includes(kind) ? items.map(item => ({kind,item})) : []);
   const historicalCount = remediation.groups.filter(({finding})=>finding.status==='closed').length + allRelatedRows.filter(({kind,item})=>historicalRemediation(kind,item)).length;
   const relatedRows = allRelatedRows.filter(({kind,item})=>showHistorical || !historicalRemediation(kind,item));
-  return <Sheet open={open} onOpenChange={onOpenChange}>
-    <SheetContent description="Inspect this Review's schedule, supporting evidence, related work and completion history. Save configuration changes separately from completing the Review." className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid="reviews-drawer">
-      <SheetHeader className="px-6 py-4 border-b border-line">
-        <div className="flex justify-between gap-3"><div><div className="text-xs text-ink-help">Review {selected ? '· Historical occurrence' : ''}</div><SheetTitle className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
-          {shown && <div className="mt-2"><StatusBadge value={selected ? shown.status : reviewStatus(shown)} /></div>}</div>
-          <button aria-label="Close record" data-testid="drawer-close" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></button></div>
+  return <Root open={open} onOpenChange={close}>
+    <Content {...(pilot?{
+      onPointerDownOutside:e=>e.preventDefault(),
+      onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},
+      onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="reviews-search"]');target?.focus({preventScroll:true});}
+    }:{description:"Inspect this Review's schedule, supporting evidence, related work and completion history. Save configuration changes separately from completing the Review."})}
+      className={pilot?"brawndo-cis-assessment bg-surface-card":"record-drawer w-full sm:max-w-2xl p-0 flex flex-col"} data-testid="reviews-drawer">
+      {pilot&&<DialogDescription className="sr-only">Conduct this Review, edit its schedule and assigned reviewer, and access evidence, related work and completion history.</DialogDescription>}
+      <SheetHeader className={pilot?"px-6 py-4 pr-12 border-b border-line shrink-0":"px-6 py-4 border-b border-line"}>
+        <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={pilot?-1:undefined} className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
+          {!pilot&&shown && <div className="mt-2"><StatusBadge value={selected ? shown.status : reviewStatus(shown)} /></div>}</div>
+          {!pilot&&<button aria-label="Close record" data-testid="drawer-close" onClick={() => close(false)}><X className="h-4 w-4" /></button>}</div>
         {current && <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto">{tabs.map(t => <button key={t} data-testid={`tab-${t.toLowerCase()}`} className={`drawer-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); if (t === 'Related' || t === 'Activity') reload(); }}>{t}</button>)}</div>}
       </SheetHeader>
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+      <div className={pilot?"flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5":"flex-1 overflow-y-auto px-6 py-5 space-y-4"}>
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
-          {!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
-          <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members}/>
+          {pilot?<ReviewFacts record={shown} users={members} history={history}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
+          {pilot?<ReviewExpectations record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
+            policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
+          <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members}/>}
           {shown?.iso_audit&&<section className="border border-line rounded p-3 space-y-2 text-sm" aria-label="Audit workpapers">
             <h3 className="font-medium">{auditPackage(shown.iso_audit.package_key)?.title}</h3>
             <p>Cycle {shown.iso_audit.cycle} · {auditProgress(shown.iso_audit).complete} of {auditProgress(shown.iso_audit).total} workpapers complete</p>
@@ -175,7 +207,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             {related.risks?.filter(r=>r.risk_id===current.risk_id).map(r=><Button key={r.risk_id} size="sm" variant="outline" onClick={()=>setLinked({kind:'risks',record:r})}>Open Risk · {r.display_id||r.title}</Button>)}
           </section>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {configFields.filter(f => (f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom') && (f.name !== 'policy_id' || configuration.review_type === 'policy' || configuration.policy_id)).map(f => {
+            {configFields.filter(f => (f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom') && (f.name !== 'policy_id' || !pilot && (configuration.review_type === 'policy' || configuration.policy_id))).map(field => {
+              const f=pilot&&field.name==='owner_id'?{...field,label:'Assigned Reviewer'}:field;
               const disabled = frozen || !admin, value = configuration[f.name] || '';
               if (f.type === 'policy') return <div key={f.name}>{picker(f.label,value,v=>setForm(p=>({...p,[f.name]:v})),policies.map(p=>({value:p.policy_id,label:p.title})),disabled || !!current,`field-${f.name}`)}</div>;
               if (f.type === 'user') return <div key={f.name}><Label>{f.label}</Label><AssigneeSelect clientId={cid} label={f.label} value={value} onChange={v=>setForm(p=>({...p,[f.name]:v}))} disabled={disabled} users={members} testId={`field-${f.name}`}/></div>;
@@ -185,7 +218,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             <div><Label>Occurrence</Label><p className="text-sm py-2" data-testid="review-period">{selected?.period || derived.period}</p></div>
             <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{date(selected?.next_review_date || derived.next_review_date)}</p></div>
           </div>
-          <GovernanceContextFields value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>
+          {!pilot&&<GovernanceContextFields value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
           <div><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>
           {selected && <p className="text-sm">Completed {date(selected.completed_at || selected.completion_date)} by {selected.completed_by_name || person(selected.completed_by)} · {outcome(selected)}</p>}
           {current && !frozen && writable && <div className="flex flex-wrap gap-2">
@@ -226,10 +259,16 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {activity.map(a => <div key={a.log_id || a.audit_id} className="border-b border-line py-2 text-sm"><div className="text-xs text-ink-help">{new Date(a.at).toLocaleString()} · {a.meta?.by_name || a.user_name || a.user_email}</div><p>{a.action}{a.meta?.task_id ? ` · ${a.meta.task_id}` : a.meta?.finding_id ? ` · ${a.meta.finding_id}` : ''}{a.meta?.filename ? ` · ${a.meta.filename}` : ''}{a.meta?.due_date ? ` · ${date(a.meta.due_date)}` : ''}</p></div>)}
         </>}
       </div>
-      <div className="px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2"><Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Close</Button>{!frozen && (current ? writable : admin) && tab === 'Overview' && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
-    </SheetContent>
+      <div className="px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2"><Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && tab === 'Overview' && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
+    </Content>
+    {pilot&&<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
+      <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>
+        <AlertDialogDescription>Saved records are unchanged. Keep editing, or discard the unfinished draft for this action.</AlertDialogDescription>
+        <AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const action=pending;setPending(null);action?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>}
     {linked && <RecordDrawer open kind={linked.kind} record={linked.record} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();}}} onSaved={() => {reload();onSaved?.();}} />}
-    <Sheet open={!!finding} onOpenChange={v => {if (!v) setFinding(null);}}>
+    <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
       <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form"><SheetHeader><SheetTitle>Raise Finding</SheetTitle></SheetHeader>
         {finding && <form className="mt-5 space-y-4" onSubmit={e => {e.preventDefault();run(async () => {await api.post(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
@@ -239,9 +278,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           <Label className="block">Due date<Input type="date" value={finding.due_date} onChange={e => setFinding(p => ({...p,due_date:e.target.value}))} /></Label>
           <Label className="block">Corrective action *<Input required data-testid="finding-remediation-title" value={finding.remediation_title} onChange={e => setFinding(p => ({...p,remediation_title:e.target.value}))} /></Label>
           <Label className="block">Remediation notes<Textarea value={finding.remediation_plan} onChange={e => setFinding(p => ({...p,remediation_plan:e.target.value}))} /></Label>
-          <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setFinding(null)}>Cancel</Button><Button type="submit" disabled={busy} data-testid="finding-save">Save finding and action</Button></div>
+          <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => leave(()=>setFinding(null),true)}>Cancel</Button><Button type="submit" disabled={busy} data-testid="finding-save">Save finding and action</Button></div>
         </form>}
       </SheetContent>
     </Sheet>
-  </Sheet>;
+  </Root>;
 }
