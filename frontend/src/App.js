@@ -21,6 +21,7 @@ import AdminRoles from "@/pages/AdminRoles";
 import AdminSecurity from "@/pages/AdminSecurity";
 import AdminAudit from "@/pages/AdminAudit";
 import ActionItems from "@/pages/ActionItems";
+import {FindingsRoute} from '@/pages/BrawndoActionItems';
 import RiskRegister from "@/pages/RiskRegister";
 import VendorRegister from "@/pages/VendorRegister";
 import AIGovernance from '@/pages/AIGovernance';
@@ -84,7 +85,7 @@ function AppRouter() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />
-        <Route path="findings" element={<RecordListPage kind="findings" />} />
+        <Route path="findings" element={<FindingsRoute />} />
         <Route path="systems" element={<RecordListPage kind="assets" />} />
         <Route path="risks" element={<RiskRegister />} />
         <Route path="policies" element={<RecordListPage kind="policies" />} />

@@ -2,6 +2,7 @@ import { ComplianceProvider, useCompliance } from "@/context/ComplianceContext";
 import DemoNotice from "@/preview/DemoNotice";
 import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
+import {isBrawndoReference} from '@/lib/reference';
 import Brand from "@/components/Brand";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -203,6 +204,7 @@ function PlatformClientsSection() {
 
 function Sidebar() {
   const { user, logout } = useAuth();
+  const {currentClientId}=useOrg();
   const nav = useNavigate();
   const location = useLocation();
   const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
@@ -210,7 +212,7 @@ function Sidebar() {
   // Client Workspace context covers everything else (dashboard, calendar, reviews, etc.).
   const atPlatform = ["/clients", "/admin", "/platform"].some((p) => location.pathname.startsWith(p));
   const { items: complianceItems } = useCompliance();
-  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV, ...complianceItems.map(item => ({
+  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV.filter(item=>item.to!=='/findings'||!isBrawndoReference(currentClientId,user)), ...complianceItems.map(item => ({
     ...item, icon: ShieldCheck, testid: `nav-compliance-${item.key}`,
   }))];
 

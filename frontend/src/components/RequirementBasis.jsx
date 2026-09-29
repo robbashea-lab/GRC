@@ -7,10 +7,10 @@ export function SourceReference({url,children}) {
   const href=referenceUrl(url);
   return href?<a href={href} target="_blank" rel="noopener noreferrer" className="text-link underline underline-offset-2">{children}</a>:<span>{children}</span>;
 }
-export function GovernanceContextFields({value={},onChange,disabled=false,cadence=false,reviewExpectations=false}) {
+export function GovernanceContextFields({value={},onChange,disabled=false,cadence=false,reviewExpectations=false,actionContext=false}) {
   const context=value||{},put=(k,v)=>onChange({...context,[k]:v});
   const select=(key,label,options)=><label className="block text-sm">{label}<select aria-label={label} className="w-full border border-line rounded-md bg-surface-card p-2 mt-1" value={context[key]||''} onChange={e=>put(key,e.target.value)}><option value="">Not recorded</option>{Object.entries(options).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>;
-  return <details className="border-t border-line pt-3"><summary className="cursor-pointer text-sm font-medium">{reviewExpectations?'Edit source & expectations':`Reason / context${cadence?' & cadence rationale':''}`}</summary><fieldset disabled={disabled} className="space-y-3 mt-3">
+  return <details className="border-t border-line pt-3"><summary className="cursor-pointer text-sm font-medium">{actionContext?'Edit business context':reviewExpectations?'Edit source & expectations':`Reason / context${cadence?' & cadence rationale':''}`}</summary><fieldset disabled={disabled} className="space-y-3 mt-3">
     <p className="text-xs text-ink-secondary">Organization-entered context. This does not change requirement assessments or verify an external mandate.</p>
     {select('category','Business basis',BUSINESS_BASIS)}
     <label className="block text-sm">{reviewExpectations?'Review expectation':'Reason / context'}<Textarea aria-label={reviewExpectations?'Review expectation':'Reason / context'} maxLength={4000} value={context.rationale||''} onChange={e=>put('rationale',e.target.value)}/></label>

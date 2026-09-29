@@ -4,6 +4,10 @@ import AssigneeSelect from "./AssigneeSelect";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
+import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
+import {isBrawndoReference} from '@/lib/reference';
+import './BrawndoCisAssessment.css';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -156,11 +160,18 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const inputRef = useRef(null);
   const loadGeneration = useRef(0);
   const { user } = useAuth();
+  const pilot=['tasks','findings'].includes(kind)&&isBrawndoReference(clientId,user)&&(!record||record.client_id===clientId);
+  const Root=pilot?Dialog:Sheet,Content=pilot?DialogContent:SheetContent;
+  const initialForm=useRef({}),opener=useRef(null),heading=useRef(null);
+  const [discardOpen,setDiscardOpen]=useState(false);
+  const dirty=pilot&&!taskCompletion&&(JSON.stringify(form)!==JSON.stringify(initialForm.current)||!!newComment.trim());
+  const close=value=>{if(value)onOpenChange(true);else if(!saving){if(dirty)setDiscardOpen(true);else onOpenChange(false);}};
+  useEffect(()=>{if(!open||!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[open,dirty]);
   const isEdit = !!record;
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
   const clientMayWork = user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
-    (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id));
+    (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id) || pilot&&kind==='tasks'&&!record?.assignee_id&&!record?.owner_id&&record?.created_by===user?.user_id);
   const canWrite = (isPlatformAdmin || clientMayWork && (isEdit || kind === 'tasks')) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
   const clientFields = editableFields(kind, user, record);
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
@@ -203,14 +214,15 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           base[k] = toDateInput(base[k]);
         });
       }
-      if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:record?.priority||"medium"});
-      if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium"});
+      if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:pilot&&record?record.priority??'':record?.priority||"medium"});
+      if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium",...(pilot?{source:'manual'}:{})});
       if (!record && kind === "risks") Object.assign(base, {status: "identified", review_cadence: "annual", source_type: "manual"});
       if (!record && kind === "vendors") Object.assign(base, {status: "onboarding", criticality: "medium", review_frequency: "annual"});
       if(['policies','tasks'].includes(kind))base.governance_context=record?.governance_context||null;
       base.client_id = record?.client_id || clientId;
       if(!record&&initialValues) Object.assign(base,initialValues);
       setForm(base);
+      initialForm.current=base;setDiscardOpen(false);if(pilot)setNewComment('');
       setTab("overview");
       if (isEdit) {
         loadComments();
@@ -312,6 +324,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   async function save(taskStatus) {
     if (!canWrite || saving) return;
+    if(pilot&&newComment.trim()){toast.error('Post or discard the unfinished comment before saving or completing this item.');return;}
     const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
     if (missing) { toast.error(`${missing.label} is required`); return; }
     if (kind === "reviews" && isEdit && form.status === "completed" && record.status !== "completed") return completeReview();
@@ -436,6 +449,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (updated) {
         // Refresh only authoritative readiness; retain unsaved descriptive edits.
         record.status = updated.status;
+        if(pilot)initialForm.current={...initialForm.current,status:updated.status};
         setForm(previous => ({...previous,status:updated.status}));
       }
     } catch (e) { toast.error(formatError(e)); }
@@ -563,6 +577,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const liveLevel = levelFromScore(liveScore || null);
 
   function renderField(f) {
+    if(pilot&&kind==='findings'&&f.name==='owner_id')f={...f,label:'Assigned To'};
+    if(pilot&&kind==='findings'&&f.name==='severity')f={...f,options:f.options?.map(o=>o.value==='medium'?{...o,label:'Moderate'}:o)};
     if(kind==='findings'&&f.name==='status') f={...f,options:f.options?.map(o=>o.value==='remediated'?{...o,label:'Pending Validation'}:o)};
     if (!isEdit && (["findings", "risks"].includes(kind) && f.name === "status" || ["completion_date", "approved_at", "last_reviewed_at"].includes(f.name))) return null;
     if (kind === "policies" && f.name === "last_reviewed_at" && (record?.schedule_from_reviews || related.reviews?.length)) return <DateReadonly key={f.name} label={f.label} value={record?.last_reviewed_at} />;
@@ -763,7 +779,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       <div role="status"><h3 className="font-medium">Action Item completed</h3><p className="mt-1">{taskCompletion.task.title}</p><p className="mt-2 text-ink-secondary">{completionHandoff(taskCompletion.finding)}</p><p className="mt-2 text-ink-secondary">This Action Item is now in Completed, with its history preserved.</p></div>
       {taskCompletion.finding&&<Button size="sm" variant="outline" onClick={()=>openLinkedRecord({kind:'findings',record:taskCompletion.finding})}>View Finding</Button>}
     </section>;
-    if (kind === "tasks") return <ActionItemFields form={form} setForm={setForm} record={record} clientId={clientId} canWrite={canWrite} saving={saving} onTransition={save} sourceLocked={!!initialValues?.source_id} related={related} onOpen={openLinkedRecord}/>;
+    if (kind === "tasks") return <ActionItemFields pilot={pilot} form={form} setForm={setForm} record={record} clientId={clientId} canWrite={canWrite} canEditContext={!clientFields||clientFields.has('governance_context')} saving={saving} onTransition={save} sourceLocked={!!initialValues?.source_id} related={related} onOpen={openLinkedRecord}/>;
     if (kind === "risks") {
       return (
         <div className="space-y-4">
@@ -785,7 +801,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       <div className="space-y-4">
         {kind === "reviews" && renderReviewActionsPanel()}
         {kind === "findings" && renderFindingActionsPanel()}
-        {kind === 'findings' && isEdit && <section className="space-y-2 text-sm" aria-label="Corrective actions"><h3 className="font-medium">Corrective Actions</h3><p className="text-ink-secondary">Work completion is followed by separate Finding validation.</p>{relatedError?<p role="alert">Corrective actions could not be loaded: {relatedError}</p>:relatedLoading?<p>Loading corrective actions…</p>:<CorrectiveActions actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users} onOpen={task=>openLinkedRecord({kind:'tasks',record:task})}/>}</section>}
+        {kind === 'findings' && isEdit && <section className="space-y-2 text-sm" aria-label="Corrective actions"><h3 className="font-medium">Corrective Actions</h3><p className="text-ink-secondary">Work completion is followed by separate Finding validation.</p>{relatedError?<p role="alert">Corrective actions could not be loaded: {relatedError}</p>:relatedLoading?<p>Loading corrective actions…</p>:<CorrectiveActions assignmentLabel={pilot?'Assigned To':'Owner'} actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users} onOpen={task=>openLinkedRecord({kind:'tasks',record:task})}/>}</section>}
         {['policies','findings'].includes(kind)&&record&&<RequirementBasis kind={kind} record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/>}
         {kind === "policies" && <><GovernanceContextFields value={form.governance_context} cadence disabled={!canWrite} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{renderPolicyPanel()}</>}
         {kind === "contacts" && <ContactAccessDetails contact={record} clientId={clientId} open={open} />}
@@ -905,7 +921,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {Object.entries(related).filter(([k])=>kind!=='risks'||k!=='evidence').map(([k, list]) => (
           (list && list.length > 0) ? (
             <div key={k}>
-              <>{k==='framework_assessments'?<h4 className="text-xs font-semibold text-ink-secondary">Framework Requirements</h4>:<Link to={k==='ai_systems'?'/ai-governance':k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k==='ai_systems'?'AI Governance':k} <ArrowUpRight className="h-3 w-3" /></Link>}</>
+              <>{k==='framework_assessments'?<h4 className="text-xs font-semibold text-ink-secondary">Framework Requirements</h4>:pilot?<h4 className="text-xs font-semibold text-ink-secondary">{k==='tasks'?'Action Items':k==='ai_systems'?'AI Governance':k}</h4>:<Link to={k==='ai_systems'?'/ai-governance':k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k==='ai_systems'?'AI Governance':k} <ArrowUpRight className="h-3 w-3" /></Link>}</>
               <ul className="mt-1.5 space-y-1.5">
                 {list.map((it) => (
                   <li key={it[ID_FIELD[k]] || it.evidence_id || it.assessment_id} className="border border-line rounded-md p-2.5 text-sm flex items-center justify-between hover:bg-surface-subtle" data-testid={`related-${k}-item`}>
@@ -931,7 +947,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
   function renderEvidence() {
     return <div className="space-y-4">
-      {kind==='tasks'&&<ActionSourceChain record={record} related={related} onOpen={openLinkedRecord}/>}
+      {kind==='tasks'&&!pilot&&<ActionSourceChain record={record} related={related} onOpen={openLinkedRecord}/>}
         {canWrite && !(kind === "reviews" && record?.status === "completed") && (
           <div
             data-testid="drawer-evidence-dropzone"
@@ -996,7 +1012,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Tab content dispatch --------
   function renderTabContent() {
-    if (tab === "overview") return <>{record && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{renderOverview()}</>;
+    if (tab === "overview") return <>{record && !pilot && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{pilot&&kind==='findings'&&record&&<p className="mb-4 text-sm">Finding status: <StatusBadge value={record.status}/></p>}{renderOverview()}</>;
     if (tab === "activity") return renderActivity();
     // Kind-specific
     if (kind === "risks") {
@@ -1071,32 +1087,35 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   );
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" description={isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`} className="record-drawer w-full sm:max-w-2xl p-0 flex flex-col" data-testid={`${kind}-drawer`}>
-        <SheetHeader className="px-6 py-4 border-b border-line">
+    <Root open={open} onOpenChange={pilot?close:onOpenChange}>
+      <Content {...(pilot?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={pilot?'brawndo-cis-assessment bg-surface-card':'record-drawer w-full sm:max-w-2xl p-0 flex flex-col'} data-testid={`${kind}-drawer`}>
+        {pilot&&<DialogDescription className="sr-only">Document assigned work and its original source, retain evidence, and complete work separately from Finding validation.</DialogDescription>}
+        <SheetHeader className={pilot?'px-6 py-4 pr-12 border-b border-line shrink-0':'px-6 py-4 border-b border-line'}>
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-xs font-mono uppercase tracking-widest text-ink-help">{singular}</div>
-              <SheetTitle className="font-heading text-xl">{isEdit ? (kind === 'contacts' ? record.name : record.title || record.name) : `New ${singular}`}</SheetTitle>
-              {isEdit && status && <div className="mt-2">{kind === "tasks" ? <span className="pill pill-neutral">{actionStatus(status)}</span> : <StatusBadge value={status} />}</div>}
+              {!pilot&&<div className="text-xs font-mono uppercase tracking-widest text-ink-help">{singular}</div>}
+              <SheetTitle ref={heading} tabIndex={pilot?-1:undefined} className="font-heading text-xl">{isEdit ? (kind === 'contacts' ? record.name : record.title || record.name) : `New ${singular}`}</SheetTitle>
+              {!pilot&&isEdit && status && <div className="mt-2">{kind === "tasks" ? <span className="pill pill-neutral">{actionStatus(status)}</span> : <StatusBadge value={status} />}</div>}
             </div>
-            <button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-surface-subtle" data-testid="drawer-close"><X className="h-4 w-4" /></button>
+            {!pilot&&<button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-surface-subtle" data-testid="drawer-close"><X className="h-4 w-4" /></button>}
           </div>
           {renderTabList()}
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className={pilot?'flex-1 min-h-0 overflow-y-auto px-6 py-5':'flex-1 overflow-y-auto px-6 py-5'}>
           {renderTabContent()}
         </div>
 
-        <div className="px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
+        <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${pilot?' flex-wrap shrink-0':''}`}>
+          <Button variant="outline" size="sm" onClick={() => pilot?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
           {kind === "reviews" && record?.status === "completed" && canWrite && <Button size="sm" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Add amendment</Button>}
-          {tabIsFormEditable && !taskCompletion && !(kind === "reviews" && record?.status === "completed") && (
+          {(tabIsFormEditable||pilot&&kind==='tasks') && !taskCompletion && !(kind === "reviews" && record?.status === "completed") && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : "Create"}</Button>
           )}
+          {pilot&&kind==='tasks'&&isEdit&&canWrite&&!taskCompletion&&!['done','cancelled'].includes(record.status)&&<Button size="sm" disabled={saving} onClick={()=>save('done')} data-testid="complete-action">Complete Action Item</Button>}
         </div>
-      </SheetContent>
+      </Content>
+      {pilot&&<AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}><AlertDialogContent><AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved records remain unchanged. Keep editing to retain this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{setDiscardOpen(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
 
       {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); setEvidenceVersion(v=>v+1); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); setEvidenceVersion(v=>v+1); refreshFindingReadiness(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
 
@@ -1104,7 +1123,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <SheetContent description="Record the outcome and supporting rationale for this governance decision. Confirming records your authenticated decision in its history." className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader><SheetTitle>{decisionForm.action === 'accept' ? 'Accept finding' : decisionForm.action === 'approve' ? 'Approve exception' : kind === "findings" ? "Validate remediation" : record?.status === "completed" ? "Add review amendment" : "Complete review"}</SheetTitle></SheetHeader>
           <form onSubmit={submitDecision} className="mt-5 space-y-4">
-            {kind==='findings'&&record&&!decisionForm.action&&<section className="space-y-3 text-sm" aria-label="Validation context"><h3 className="font-medium">{form.title||record.title}</h3><p className="whitespace-pre-wrap">{form.description||record.description||'No description recorded.'}</p><p className="text-ink-secondary">Current Finding Status: <StatusBadge value={status}/></p><p>Confirm that the corrective work resolved the Finding. Completing an Action alone does not validate it.</p><CorrectiveActions actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users}/></section>}
+            {kind==='findings'&&record&&!decisionForm.action&&<section className="space-y-3 text-sm" aria-label="Validation context"><h3 className="font-medium">{form.title||record.title}</h3><p className="whitespace-pre-wrap">{form.description||record.description||'No description recorded.'}</p><p className="text-ink-secondary">Current Finding Status: <StatusBadge value={status}/></p><p>Confirm that the corrective work resolved the Finding. Completing an Action alone does not validate it.</p><CorrectiveActions assignmentLabel={pilot?'Assigned To':'Owner'} actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users}/></section>}
             {kind==='findings'&&record&&!decisionForm.action&&<EvidencePanel clientId={record.client_id} kind="findings" id={record.finding_id} onOpen={openEvidenceSource} refreshKey={evidenceVersion}/>}
             {kind === "reviews" && record?.status !== "completed" ? <>
               <p className="text-sm">Confirm the scope, examine the supporting evidence, and record the outcome. Raise Findings for gaps before completing this Review.</p>
@@ -1292,6 +1311,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           </SheetContent>
         </Sheet>
       )}
-    </Sheet>
+    </Root>
   );
 }
