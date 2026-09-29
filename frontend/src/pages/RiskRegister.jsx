@@ -1,3 +1,10 @@
+import {isBrawndoReference} from '@/lib/reference';
+import {riskCategories,riskViews,riskMatches,riskColumns,pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
+import {RiskCategoryField,RiskTreatmentField} from '@/components/BrawndoRiskFields';
+import {AlertCircle,CalendarDays,ListChecks,UserRound} from 'lucide-react';
+import '@/components/ClientWorkDashboard.css';
+import '@/components/BrawndoCisAssessment.css';
+import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
 import AssigneeSelect from '@/components/AssigneeSelect';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import TableLoadingRow from '@/components/TableLoadingRow';
@@ -51,12 +58,13 @@ export default function RiskRegister() {
   const portfolioEntry=useRef(null);
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
+  const pilot=isBrawndoReference(currentClientId,user);
   const generation=useRef(0);
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const linkedView = ["all_active","review_due","critical","high","significant","accepted","closed"].includes(searchParams.get("view")) ? searchParams.get("view") : "all_active";
+  const linkedView = ["all_active","review_due","critical","high","significant","accepted","closed",...(pilot?["overdue","upcoming","unassigned","all"]:[])].includes(searchParams.get("view")) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -75,13 +83,13 @@ export default function RiskRegister() {
     setLoading(true); setLoadError('');
     try {
       const [r, u] = await Promise.all([
-        api.get("/risks", { params: { client_id: currentClientId, ...(portfolioSignificant?{portfolio_significant:true}:{}) } }).then((r) => r.data),
+        api.get("/risks", { params: { client_id: currentClientId, ...(!pilot&&portfolioSignificant?{portfolio_significant:true}:{}) } }).then((r) => r.data),
         api.get(`/clients/${currentClientId}/members`).then((r) => r.data).catch(() => []),
       ]);
       if(version===generation.current){setRows((r || []).map(assessedRisk)); setUsers(u || []);}
     } catch (e) { if(version===generation.current){setRows([]);setLoadError(formatError(e));} }
     finally { if(version===generation.current)setLoading(false); }
-  },[currentClientId,portfolioSignificant]);
+  },[currentClientId,portfolioSignificant,pilot]);
   useEffect(() => { const scopeGeneration=generation;setRows([]);setUsers([]);setView(linkedView);setQ("");setDrawer({open:false,record:null});setAddOpen(false);load();return()=>{scopeGeneration.current++;}; }, [currentClientId,load]); // eslint-disable-line react-hooks/exhaustive-deps -- deep-linked view applies on client change only
 
   const now = Date.now();
@@ -89,7 +97,7 @@ export default function RiskRegister() {
     const s = q.trim().toLowerCase();
     return rows.filter((r) => {
       if(portfolioSignificant&&(r.archived||r.archived_at||managementRules.terminal.includes(r.status)||!['high','critical'].includes(r.risk_level)))return false;
-      if (!riskMatchesView(r, view, new Date(now))) return false;
+      if (!(pilot?riskMatches:riskMatchesView)(r, view, new Date(now))) return false;
       if (!s) return true;
       return (r.title || "").toLowerCase().includes(s)
         || (r.risk_id || "").toLowerCase().includes(s)
@@ -101,11 +109,12 @@ export default function RiskRegister() {
       const order = { critical: 0, high: 1, moderate: 2, low: 3 };
       return (order[a.risk_level] ?? 9) - (order[b.risk_level] ?? 9) || (b.risk_score || 0) - (a.risk_score || 0);
     });
-  }, [rows, q, view, userMap, now,portfolioSignificant]);
+  }, [rows, q, view, userMap, now,portfolioSignificant,pilot]);
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
-  const columns = tableColumns('risk-register', { rows: tableSource, users,  });
-  const table = useTableControls({ columns, rows: tableSource, module: 'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key,values) => { if (key === null || key === 'status' && !values.length) setView('all_active'); else if (key === 'status') setView('all'); } });
+  const baseColumns = tableColumns('risk-register', { rows: tableSource, users });
+  const columns=pilot?riskColumns(baseColumns):baseColumns;
+  const table = useTableControls({ columns, rows: tableSource, module: pilot?'brawndo-risks':'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key,values) => { if(pilot){if(key===null||['status','next_review','risk_level','owner_id'].includes(key)&&values.length)setView('all');return;} if (key === null || key === 'status' && !values.length) setView('all_active'); else if (key === 'status') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
   useEffect(()=>{
     const key=portfolioSignificant?currentClientId:null;
@@ -116,8 +125,8 @@ export default function RiskRegister() {
   },[portfolioSignificant,currentClientId,table]);
 
   const counts = useMemo(() => riskViewCounts(tableSource, new Date(now)), [tableSource, now]);
-  const tabs = RISK_LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: RISK_LINKED_VIEWS[view] }] : VIEWS;
-  function selectView(id) { const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',significant:'risk_level',review_due:'next_review'})[id]; if (key) table.setFilter(key, []); setView(id); }
+  const tabs = pilot?riskViews:RISK_LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: RISK_LINKED_VIEWS[view] }] : VIEWS;
+  function selectView(id) { if(pilot){table.replaceState({...table.state,filters:{...table.state.filters,status:[],next_review:[],risk_level:[],owner_id:[]}});setView(id);if(portfolioSignificant){const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}return;} const key = ({all_active:'status',closed:'status',accepted:'status',critical:'risk_level',high:'risk_level',significant:'risk_level',review_due:'next_review'})[id]; if (key) table.setFilter(key, []); setView(id); }
 
   async function exportCsv() {
     const cols = ["display_id", "risk_id", "title", "category", "likelihood_score", "impact_score", "risk_score", "risk_level", "owner", "status", "treatment", "date_identified", "last_reviewed", "next_review"];
@@ -153,9 +162,11 @@ export default function RiskRegister() {
         }
       />
       {portfolioSignificant&&<p className="register-notice" role="status" data-testid="portfolio-risk-filter">Active High / Critical Risks · includes accepted Risks <button className="register-link" onClick={()=>{const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}}>Clear portfolio filter</button></p>}
+      {pilot&&<><div className="client-work-filters mx-[var(--register-gutter)] my-4" aria-label="Risk summaries">{[['overdue','Overdue Reviews','pastDue',AlertCircle],['upcoming','Reviews Due (30 Days)','due30',CalendarDays],['all_active','All Open','all',ListChecks],['unassigned','Unassigned','unassigned',UserRound]].map(([id,label,tone,Icon])=><button key={id} className={`client-work-filter filter-${tone}`} aria-pressed={view===id} onClick={()=>selectView(view===id?'all':id)}><Icon size={22} aria-hidden="true"/><span>{label}<strong>{loading?'—':tableSource.filter(r=>riskMatches(r,id)).length}</strong></span><ArrowRight size={16} aria-hidden="true"/></button>)}</div><div className="flex flex-wrap gap-2 mx-[var(--register-gutter)] mb-4" aria-label="Risk level and acceptance summaries">{['critical','high','accepted'].map(id=><Button key={id} variant={view===id?'secondary':'outline'} size="sm" aria-pressed={view===id} onClick={()=>selectView(view===id?'all':id)}>{id[0].toUpperCase()+id.slice(1)} · {loading?'—':tableSource.filter(r=>riskMatches(r,id)).length}</Button>)}</div></>}
       <div className="register-toolbar">
         <SearchField label="Search risks" placeholder="Search risks…" value={q} onChange={setQ} testid="risk-search" />
-        <ViewTabs views={tabs} active={view} onPick={selectView} counts={counts} label="Risk views" testid="risk-views" testIdPrefix="risk-view-" />
+        <ViewTabs views={tabs} active={view} onPick={selectView} counts={pilot?undefined:counts} label="Risk views" testid="risk-views" testIdPrefix="risk-view-" />
+        {pilot&&<Button size="sm" variant="ghost" onClick={()=>selectView('all')} disabled={view==='all'}>Clear view filter</Button>}
         <RegisterCount shown={filtered.length} total={tableSource.length} />
       </div>
 
@@ -163,10 +174,10 @@ export default function RiskRegister() {
         <TableFilterChips table={table} />
         <RegisterLoadError error={loadError} onRetry={load} name="risks" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className={pilot?"w-full text-sm min-w-[1100px]":"w-full text-sm"}>
             <thead>
               <tr>
-                <th scope="col" className="tbl-head">ID</th>
+                <th scope="col" className="tbl-head">{pilot?"Risk ID":"ID"}</th>
                 <SortableHeader table={table} columnKey="title" />
                 <SortableHeader table={table} columnKey="category" />
                 <SortableHeader table={table} columnKey="risk_score" className="text-right" />
@@ -185,12 +196,12 @@ export default function RiskRegister() {
                 return (
                   <tr key={r.risk_id} onClick={() => setDrawer({ open: true, record: r })} className="row-hover row-open" data-testid={`risk-row-${i}`}>
                     <td className="tbl-cell font-mono text-xs text-ink-help whitespace-nowrap">{r.display_id || "ID pending"}</td>
-                    <td className="tbl-cell font-medium text-ink-primary min-w-0">{r.title}</td>
-                    <td className="tbl-cell text-xs text-ink-secondary">{r.category ? CATEGORIES.find(o => o.value === r.category)?.label || r.category : <span className="text-ink-help">—</span>}</td>
+                    <td className="tbl-cell font-medium text-ink-primary min-w-0">{pilot?<button className="register-record-link text-left" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:r});}}>{r.title}</button>:r.title}</td>
+                    <td className="tbl-cell text-xs text-ink-secondary">{r.category ? (pilot?riskCategories[r.category]:CATEGORIES.find(o => o.value === r.category)?.label) || r.category : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell">{level ? <SeverityBadge value={level} /> : <span className="register-empty">—</span>}</td>
                     <td className="tbl-cell"><OwnerCell people={users} id={r.owner_id} status={r.status} /></td>
-                    <td className="tbl-cell"><StatusBadge value={r.status || "open"} label={riskStatus(r.status || "open")} /></td>
+                    <td className="tbl-cell"><StatusBadge value={r.status || "open"} label={(pilot?pilotRiskStatus:riskStatus)(r.status || "open")} />{pilot&&r.status==='accepted'&&!riskMatches(r,'accepted')&&<p className="text-xs text-ink-secondary">Acceptance needs review</p>}</td>
                     <td className="tbl-cell"><HistoryDate value={r.last_reviewed} empty="Never reviewed" /></td>
                     <td className="tbl-cell">{r.next_review ? <DueDate iso={r.next_review} closed={["closed", "retired"].includes(r.status)} /> : <span className="register-empty">Not scheduled</span>}</td>
                   </tr>
@@ -203,7 +214,7 @@ export default function RiskRegister() {
 
       {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(v) => setDrawer((p) => ({ ...p, open: v }))} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load} />}
       <RiskMatrixModal open={matrixOpen} onOpenChange={setMatrixOpen} />
-      <NewRiskDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} onOpenMatrix={() => setMatrixOpen(true)} />
+      {addOpen&&<NewRiskDialog pilot={pilot} open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} onOpenMatrix={() => setMatrixOpen(true)} />}
     </div>
   );
 }
@@ -269,26 +280,33 @@ function RiskMatrixModal({ open, onOpenChange }) {
   );
 }
 
-function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenMatrix }) {
+function NewRiskDialog({ pilot=false, open, onOpenChange, clientId, users, onCreated, onOpenMatrix }) {
   const [form, setForm] = useState({
     title: "", category: "cybersecurity", description: "", impact_description: "", source_type: "manual",
     likelihood_score: null, impact_score: null, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
   });
   const [saving, setSaving] = useState(false);
+  const baseline=useRef({}),[discard,setDiscard]=useState(false);
+  const createLock=useRef(false);
+  const dirty=pilot&&JSON.stringify(form)!==JSON.stringify(baseline.current);
+  const close=value=>{if(value)onOpenChange(true);else if(!saving){if(dirty)setDiscard(true);else onOpenChange(false);}};
+  useEffect(()=>{if(!open||!dirty)return;const warn=e=>{e.preventDefault();e.returnValue="";};window.addEventListener("beforeunload",warn);return()=>window.removeEventListener("beforeunload",warn);},[open,dirty]);
   useEffect(() => {
+    if(open&&pilot){const next=newRiskDefaults();setForm(next);baseline.current=next;setDiscard(false);return;}
     if (open) setForm({
       title: "", category: "cybersecurity", description: "", impact_description: "", source_type: "manual",
       likelihood_score: null, impact_score: null, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
     });
-  }, [open]);
+  }, [open,pilot]);
   const score = assessedRisk(form).risk_score;
   const level = levelFromScore(score);
   const tone = LEVEL_TONE[level] || LEVEL_TONE.low;
 
   async function save() {
+    if(createLock.current)return;
     if (!form.title.trim() || !form.description.trim() || !form.category || !form.likelihood_score || !form.impact_score) { toast.error("Title, category, description, likelihood and impact are required"); return; }
     if (["review","finding","vendor","audit"].includes(form.source_type) && !form.source_id) { toast.error("Select the source record"); return; }
-    setSaving(true);
+    createLock.current=true;setSaving(true);
     try {
       const body = { ...form, client_id: clientId };
       if (!body.owner_id) delete body.owner_id;
@@ -296,35 +314,35 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
       toast.success(`${form.title} added to the register`);
       onCreated?.();
     } catch (e) { toast.error(formatError(e)); }
-    finally { setSaving(false); }
+    finally { createLock.current=false;setSaving(false); }
   }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="new-risk-dialog">
-        <DialogHeader>
+    <Dialog open={open} onOpenChange={pilot?close:onOpenChange}>
+      <DialogContent onPointerDownOutside={pilot?e=>e.preventDefault():undefined} className={pilot?"brawndo-cis-assessment bg-surface-card":"max-w-2xl max-h-[90vh] overflow-y-auto"} data-testid="new-risk-dialog">
+        <DialogHeader className={pilot?"px-6 py-4 pr-12 border-b border-line":undefined}>
           <DialogTitle>New Risk</DialogTitle>
           <DialogDescription>Score and level are calculated automatically.</DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-3 py-2">
+        <div className={pilot?"grid grid-cols-2 gap-4 overflow-y-auto min-h-0 flex-1 px-6 py-4":"grid grid-cols-2 gap-3 py-2"}>
           <div className="col-span-2">
             <Label htmlFor="new-risk-title" className="text-xs text-ink-secondary">Risk title *</Label>
             <Input id="new-risk-title" data-testid="new-risk-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="text-sm" />
           </div>
           <div>
-            <Label className="text-xs text-ink-secondary">Category *</Label>
+            {pilot?<RiskCategoryField form={form} setForm={setForm}/>:<><Label className="text-xs text-ink-secondary">Category *</Label>
             <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
               <SelectTrigger aria-label="Risk category" className="text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
-            </Select>
+            </Select></>}
           </div>
-          <RiskSourceFields form={form} setForm={setForm} clientId={clientId}/>
+          <RiskSourceFields pilot={pilot} form={form} setForm={setForm} clientId={clientId}/>
           <div className="col-span-2">
             <Label className="text-xs text-ink-secondary">Risk description *</Label>
             <Textarea aria-label="Risk description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" rows={2} />
           </div>
           <div className="col-span-2">
             <Label className="text-xs text-ink-secondary">Impact description</Label>
-            <Textarea value={form.impact_description} onChange={(e) => setForm({ ...form, impact_description: e.target.value })} className="text-sm" rows={2} />
+            <Textarea aria-label="Impact description" value={form.impact_description} onChange={(e) => setForm({ ...form, impact_description: e.target.value })} className="text-sm" rows={2} />
           </div>
           <div>
             <Label className="text-xs text-ink-secondary flex items-center justify-between">
@@ -349,12 +367,12 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
             <span className={`pill capitalize ${tone}`} data-testid="new-risk-level">{level || 'Needs assessment'}</span>
           </div>
           <div>
-            <Label className="text-xs text-ink-secondary">Owner</Label>
-            <AssigneeSelect clientId={clientId} value={form.owner_id} onChange={v=>setForm({...form,owner_id:v})} users={users}/>
+            <Label className="text-xs text-ink-secondary">{pilot?"Assigned Owner":"Owner"}</Label>
+            <AssigneeSelect label={pilot?"Assigned Owner":"Owner"} clientId={clientId} value={form.owner_id} onChange={v=>setForm({...form,owner_id:v})} users={users}/>
           </div>
-          <div className="col-span-2"><RiskScheduleFields form={form} setForm={setForm}/></div>
+          <div className="col-span-2"><RiskScheduleFields pilot={pilot} creation form={form} setForm={setForm}/></div>
           <div className="col-span-2">
-            <Label className="text-xs text-ink-secondary">Treatment</Label>
+            {pilot?<RiskTreatmentField form={form} setForm={setForm}/>:<><Label className="text-xs text-ink-secondary">Treatment</Label>
             <Select value={form.treatment} onValueChange={(v) => setForm({ ...form, treatment: v })}>
               <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -362,16 +380,17 @@ function NewRiskDialog({ open, onOpenChange, clientId, users, onCreated, onOpenM
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select></>}
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+        <DialogFooter className={pilot?"px-6 py-3 border-t border-line shrink-0":undefined}>
+          <Button variant="outline" onClick={() => pilot?close(false):onOpenChange(false)} disabled={saving}>Cancel</Button>
           <Button onClick={save} disabled={saving} data-testid="new-risk-save" className="bg-primary hover:bg-primary/90">
             {saving ? "Saving…" : "Add to register"}
           </Button>
         </DialogFooter>
       </DialogContent>
+      {pilot&&<AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent><AlertDialogTitle>Discard new Risk?</AlertDialogTitle><AlertDialogDescription>This unsaved Risk has not been added to the register.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
     </Dialog>
   );
 }

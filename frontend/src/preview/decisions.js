@@ -38,6 +38,8 @@ export function guardEdit(kind, body, existing = {}, user) {
   protectedFields.push('current_occurrence_id','occurrence_id','occurrences','schedule_anchor','started_at','started_by','completed_at','completed_by','closed_at','closed_by','title_generated');
   if (protectedFields.some(k => k in changes)) throw new Error('Decision and history fields cannot be edited directly.');
   const targets = {policies:['approved'], risks:['accepted','closed','retired'], findings:['closed','accepted','remediated'], reviews:['completed'], exceptions:['approved']};
-  if ('status' in changes && rules.statuses[kind] && !rules.statuses[kind].includes(changes.status)) throw new Error('Invalid status.');
-  if (targets[kind]?.includes(changes.status) || kind === 'policies' && changes.presence === 'verified_existing' || kind === 'risks' && changes.treatment === 'accept') throw new Error('Use the dedicated decision action.');
+  const riskPilot=kind==='risks'&&(existing.client_id||body.client_id)==='demo_brawndo';
+  if ('status' in changes && rules.statuses[kind] && !rules.statuses[kind].includes(changes.status) && !(riskPilot&&changes.status==='monitoring')) throw new Error('Invalid status.');
+  if (targets[kind]?.includes(changes.status) || kind === 'policies' && changes.presence === 'verified_existing' || kind === 'risks' && changes.treatment === 'accept'&&!riskPilot) throw new Error('Use the dedicated decision action.');
+  if(riskPilot&&existing.status==='accepted'&&'treatment' in changes&&changes.treatment!=='accept'&&!('status' in changes))throw new Error('Change the lifecycle status when replacing an accepted treatment. The previous decision remains in history.');
 }

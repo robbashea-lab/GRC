@@ -1,3 +1,4 @@
+import {riskTreatments,nextRiskReview} from "@/lib/brawndoRisks";
 import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
 import { personLabel } from '@/lib/people';
 
@@ -49,6 +50,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     [record?.owner_id, record?.reviewer_id].includes(user?.user_id);
   const [riskDraft,setRiskDraft] = useState(null);
   const [riskOutcome,setRiskOutcome]=useState("Reviewed — No Change");
+  const [riskNext,setRiskNext]=useState("");
   const [current,setCurrent] = useState(null), [form,setForm] = useState({});
   const [history,setHistory] = useState([]), [selected,setSelected] = useState(null);
   const [tab,setTab] = useState('Overview'), [busy,setBusy] = useState(false);
@@ -74,7 +76,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     sequence.current++;
     setCurrent(record ? reviewView(record) : null);
     setForm(record ? {...record,due_date:record.due_date?.slice(0,10) || ''} : {title:'',review_type:'',owner_id:'',due_date:'',recurrence:'none',notes:''});
-    setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setComments([]); setActivity([]); setRelated({});
+    setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskNext("");setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setComments([]); setActivity([]); setRelated({});
     setComment(''); setFinding(null); setLinked(null); setMembers([]);setPending(null);
     const version = generation.current;
     setBasisLoading(pilot ? !!record : true);setBasisError('');
@@ -96,10 +98,10 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       ]);
       if (version !== generation.current) return;
       setHistory(h.data); setRelated(r.data);setBasisError('');
-      if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||'monitor'},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidenceVersion(v=>v+1); setComments(c.data); setActivity(a.data);
+      if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||(pilot?'':'monitor')},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidenceVersion(v=>v+1); setComments(c.data); setActivity(a.data);
     } catch(e) { if (version === generation.current) {setBasisError(formatError(e));toast.error(formatError(e));} }
     finally {if(version===generation.current)setBasisLoading(false);}
-  }, [open,rid,oid,current?.review_id,current?.risk_id,selected]);
+  }, [open,rid,oid,current?.review_id,current?.risk_id,selected,pilot]);
   useEffect(() => { reload(); },[reload]);
   useEffect(() => {
     if (!open || !['Related','Activity'].includes(tab)) return;
@@ -118,7 +120,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       .filter(([k,v]) => !current || (k === 'due_date' ? (current[k]?.slice(0,10) || null) !== v : JSON.stringify(current[k] || null) !== JSON.stringify(v))));
   }
   const dirty=pilot && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
-    pilot && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&riskOutcome!=="Reviewed — No Change");
+    pilot && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&(riskOutcome!=="Reviewed — No Change"||!!riskNext));
   function leave(action,hasDraft=dirty) {
     if(pilot&&busy)return;
     if(pilot&&hasDraft)setPending(()=>action);
@@ -146,21 +148,21 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const lifecycle = action => run(async () => {
     if(pilot&&(comment.trim()||finding)) throw new Error('Post or discard the unfinished comment or Finding before starting or completing this Review.');
     const saved = await saveChanges();
-    const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'&&saved.risk_id?{risk_assessment:riskDraft||{},risk_outcome:riskOutcome}:{})});
+    const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'&&saved.risk_id?{risk_assessment:pilot&&riskDraft?Object.fromEntries(Object.entries(riskDraft).filter(([k,v])=>(v??'')!==(riskBase.current?.[k]??''))):riskDraft||{},risk_outcome:riskOutcome,...(pilot&&riskNext?{risk_next_review:riskNext}:{})}:{})});
     const updated = data.review || data;
     setCurrent(updated); setForm({...updated,due_date:updated.due_date?.slice(0,10) || ''});
     if (data.occurrence) setHistory(items => [data.occurrence,...items.filter(o => o.occurrence_id !== data.occurrence.occurrence_id)]);
-    setSelected(null); setComment(''); onSaved?.();
+    setSelected(null); setRiskNext(''); setComment(''); onSaved?.();
     toast.success(action === 'start' ? 'Review started' : updated.status === 'completed' ? 'Completed and preserved in Review history' : 'Occurrence completed; next Review scheduled');
   });
   function picker(label,value,onChange,options,disabled=false,testId) {
     return <div className="space-y-1"><Label>{label}</Label><Select value={value || '__none__'} onValueChange={v => onChange(v === '__none__' ? '' : v)} disabled={disabled}>
       <SelectTrigger aria-label={label} data-testid={testId}><SelectValue /></SelectTrigger><SelectContent>
-        <SelectItem value="__none__">{label.includes('Owner') ? 'Unassigned' : 'Select…'}</SelectItem>
+        <SelectItem value="__none__">{label.includes('Owner') ? 'Unassigned' : pilot&&label==='Risk treatment'?'Not Yet Decided':'Select…'}</SelectItem>
         {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
       </SelectContent></Select></div>;
   }
-  const chooseHistory = o => leave(()=>{ if(pilot){setForm({...current,due_date:current.due_date?.slice(0,10)||''});setComment('');setFinding(null);setRiskDraft(riskBase.current);setRiskOutcome("Reviewed — No Change");} generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); });
+  const chooseHistory = o => leave(()=>{ if(pilot){setForm({...current,due_date:current.due_date?.slice(0,10)||''});setComment('');setFinding(null);setRiskDraft(riskBase.current);setRiskOutcome("Reviewed — No Change");setRiskNext('');} generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); });
   const configuration = selected || form;
   const derived = reviewSchedule(configuration);
   useEffect(()=>{setShowHistorical(false);},[rid,oid,open]);
@@ -186,7 +188,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       <div className={pilot?"flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5":"flex-1 overflow-y-auto px-6 py-5 space-y-4"}>
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
-          {pilot?<ReviewFacts record={shown} users={members} history={history}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
+          {pilot?<ReviewFacts record={shown} users={members} history={history} completionBased={!!current?.risk_id&&!frozen}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
           {pilot?<ReviewExpectations record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
             policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
           <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members}/>}
@@ -201,7 +203,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             <ul className="divide-y divide-line">{selected.iso_soa_snapshot.assessments.map(a=><li className="py-2" key={a.framework_assessment_id}><strong>{a.definition_id}</strong> · {({included:'Applicable',excluded:'Not Applicable'})[a.soa_applicability]||'Undetermined'} · {({addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Needs Validation',not_applicable:'Not Applicable'})[a.status]||'Not Assessed'}<p>{a.soa_justification}</p><p className="whitespace-pre-wrap">{a.implementation}</p></li>)}</ul>
           </details>}
           {current?.risk_id&&<section className="space-y-3 border border-line rounded-md p-3"><h3 className="font-medium text-sm">Risk reassessment</h3><p className="text-sm text-ink-secondary">Confirm the current assessment or record what changed. Use the linked Risk for acceptance, closure, and treatment work.</p>
-            {selected?.risk_after?<div className="text-sm">{outcome(selected)} · Score {selected.risk_before?.risk_score??'—'} → {selected.risk_after.risk_score??'—'}<p>{selected.risk_after.assessment_rationale}</p><p>Treatment: {selected.risk_before?.treatment} → {selected.risk_after.treatment}</p></div>:riskDraft&&<><div className="grid grid-cols-2 gap-3">{['likelihood_score','impact_score'].map(k=><div key={k}>{picker(k==='likelihood_score'?'Risk likelihood':'Risk impact',String(riskDraft[k]||''),v=>setRiskDraft({...riskDraft,[k]:v?Number(v):null}),[1,2,3,4,5].map(n=>({value:String(n),label:String(n)})),frozen||!writable)}</div>)}</div><p className="text-sm">Score {assessedRisk(riskDraft).risk_score??'—'} · {assessedRisk(riskDraft).risk_level||'Needs assessment'}</p><Label>Assessment rationale</Label><Textarea aria-label="Review assessment rationale" disabled={frozen||!writable} value={riskDraft.assessment_rationale} onChange={e=>setRiskDraft({...riskDraft,assessment_rationale:e.target.value})}/>{picker('Risk treatment',riskDraft.treatment,v=>setRiskDraft({...riskDraft,treatment:v}),['mitigate','transfer','avoid','monitor',...(riskDraft.treatment==='accept'?['accept']:[])].map(v=>({value:v,label:v})),frozen||!writable)}</>}
+            {selected?.risk_after?<div className="text-sm">{outcome(selected)} · Score {selected.risk_before?.risk_score??'—'} → {selected.risk_after.risk_score??'—'}<p>{selected.risk_after.assessment_rationale}</p><p>Treatment: {selected.risk_before?.treatment} → {selected.risk_after.treatment}</p></div>:riskDraft&&<><div className="grid grid-cols-2 gap-3">{['likelihood_score','impact_score'].map(k=><div key={k}>{picker(k==='likelihood_score'?'Risk likelihood':'Risk impact',String(riskDraft[k]||''),v=>setRiskDraft({...riskDraft,[k]:v?Number(v):null}),[1,2,3,4,5].map(n=>({value:String(n),label:String(n)})),frozen||!writable)}</div>)}</div><p className="text-sm">Score {assessedRisk(riskDraft).risk_score??'—'} · {assessedRisk(riskDraft).risk_level||'Needs assessment'}</p><Label>Assessment rationale</Label><Textarea aria-label="Review assessment rationale" disabled={frozen||!writable} value={riskDraft.assessment_rationale} onChange={e=>setRiskDraft({...riskDraft,assessment_rationale:e.target.value})}/>{picker('Risk treatment',riskDraft.treatment,v=>setRiskDraft({...riskDraft,treatment:v}),(pilot?Object.entries({...riskTreatments,...(riskDraft.treatment==='monitor'?{monitor:'Monitoring (legacy treatment)'}:{})}).filter(([v])=>v!=='accept'||riskDraft.treatment==='accept').map(([value,label])=>({value:value||'__none__',label})).filter(o=>o.value!=='__none__'):['mitigate','transfer','avoid','monitor',...(riskDraft.treatment==='accept'?['accept']:[])].map(v=>({value:v,label:v}))),frozen||!writable)}</>}
+            {pilot&&!frozen&&<div className="space-y-2 text-sm"><p>Reviewer: {user?.name||user?.email}. The actual completion date is recorded when you complete the Review.</p><p>Next Review defaults to {nextRiskReview(new Date().toISOString().slice(0,10),current.recurrence,current.custom_recurrence_days)||'no recurring date'}, based on completion and the selected cadence.</p>{['super_admin','platform_admin'].includes(user?.role)&&<Label>Next Review override (optional)<Input aria-label="Next Review override" type="date" value={riskNext} onChange={e=>setRiskNext(e.target.value)}/></Label>}</div>}
             {!frozen&&writable&&picker("Review recommendation",riskOutcome,setRiskOutcome,["Reviewed — No Change","Additional Action Required","Closure Recommended"].map(value=>({value,label:value})))}
             {selected?.risk_review_recommendation&&<p className="text-sm">{selected.risk_review_recommendation}</p>}
             {related.risks?.filter(r=>r.risk_id===current.risk_id).map(r=><Button key={r.risk_id} size="sm" variant="outline" onClick={()=>setLinked({kind:'risks',record:r})}>Open Risk · {r.display_id||r.title}</Button>)}
@@ -216,7 +219,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
             <div><Label>Occurrence</Label><p className="text-sm py-2" data-testid="review-period">{selected?.period || derived.period}</p></div>
-            <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{date(selected?.next_review_date || derived.next_review_date)}</p></div>
+            <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{pilot&&current?.risk_id&&!frozen?'Calculated from actual completion':date(selected?.next_review_date || derived.next_review_date)}</p></div>
           </div>
           {!pilot&&<GovernanceContextFields value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
           <div><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>

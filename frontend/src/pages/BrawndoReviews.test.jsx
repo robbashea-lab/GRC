@@ -111,3 +111,13 @@ test('new pilot reviews do not wait for nonexistent requirement relationships',a
   expect(dialog.textContent).not.toContain('Loading linked requirements');
   expect(dialog.textContent).toContain('Requirement source not documented');
 });
+
+test('Risk review completion sends only changed assessment fields and labels completion-based scheduling',async()=>{
+ saved={...saved,risk_id:'risk'};
+ api.get.mockImplementation(async path=>({data:path==='/related'?{risks:[{risk_id:'risk',client_id:'demo_brawndo',likelihood_score:3,impact_score:4}]}:[]}));
+ api.post.mockResolvedValue({data:{review:saved,occurrence:{occurrence_id:'done'}}});
+ await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+ expect(document.querySelector('[data-testid="review-next-date"]').textContent).toBe('Calculated from actual completion');
+ await click(document.querySelector('[data-testid="review-complete"]'));
+ expect(api.post.mock.calls[0][1].risk_assessment).toEqual({});
+});

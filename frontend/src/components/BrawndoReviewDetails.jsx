@@ -5,7 +5,7 @@ import {GovernanceContextFields,SourceReference} from './RequirementBasis';
 import {DueDate,HistoryDate,OwnerCell} from './RegisterCells';
 import StatusBadge from './StatusBadge';
 
-export function ReviewFacts({record,users,history=[]}) {
+export function ReviewFacts({record,users,history=[],completionBased=false}) {
   if (!record) return null;
   const status=pilotReviewStatus(record),last=record.last_completed_at||record.last_completed||record.completion_date||history[0]?.completed_at;
   return <section aria-label="Review details" className="space-y-3">
@@ -17,7 +17,7 @@ export function ReviewFacts({record,users,history=[]}) {
         ['Due Date',<DueDate iso={record.due_date} closed={['completed','cancelled'].includes(status)}/>],
         ['Last Completed',<HistoryDate value={last} empty="Not recorded"/>],
         ['Cadence',record.recurrence==='custom'?`Every ${record.custom_recurrence_days} days`:reviewDisplayValue('recurrence',record.recurrence)||'Not documented'],
-        ['Next Due',<HistoryDate value={record.next_review_date} empty="Not scheduled"/>]
+        ['Next Due',completionBased?'Calculated on completion':<HistoryDate value={record.next_review_date} empty="Not scheduled"/>]
       ].map(([label,value])=><div key={label}><dt className="text-xs text-ink-secondary mb-1">{label}</dt><dd>{value}</dd></div>)}
     </dl>
   </section>;

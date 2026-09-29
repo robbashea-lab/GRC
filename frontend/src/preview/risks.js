@@ -1,6 +1,8 @@
 import {reviewView,reviewSchedule} from '../lib/reviewOccurrences';
 import {assessedRisk} from '../lib/grcWork';
 import {recordUuid} from '../lib/recordUuid';
+import {nextRiskReview} from '../lib/brawndoRisks';
+import {scheduledDate} from '../lib/reviewOccurrences';
 
 export const riskSnapshot = risk => Object.fromEntries(['likelihood_score','impact_score','risk_score','risk_level','assessment_rationale','likelihood_rationale','impact_rationale','treatment','notes','status','acceptance_rationale','acceptance_expires_at','accepted_by','acceptance_date'].map(k=>[k,risk[k]??null]));
 export function ensureRiskReview(db,risk) {
@@ -9,7 +11,8 @@ export function ensureRiskReview(db,risk) {
   if(cadence==='custom'&&(!Number.isInteger(risk.custom_recurrence_days)||risk.custom_recurrence_days<1||risk.custom_recurrence_days>3650)) throw new Error('Custom cadence requires 1–3650 days.');
   if(risk.next_review&&!Number.isFinite(Date.parse(risk.next_review))) throw new Error('Invalid next review date.');
   const relations={review:['reviews','review_id'],finding:['findings','finding_id'],vendor:['vendors','vendor_id'],audit:['assessments','assessment_id']};
-  if(risk.source_type&&!['manual','annual_assessment','management',...Object.keys(relations)].includes(risk.source_type)) throw new Error('Invalid Risk source.');
+  if(risk.source_type&&!['manual','annual_assessment','management',...(risk.client_id==='demo_brawndo'?['other']:[]),...Object.keys(relations)].includes(risk.source_type)) throw new Error('Invalid Risk source.');
+  for(const key of ['category_other','source_other'])if(risk[key]!=null&&(typeof risk[key]!=='string'||risk[key].length>200))throw new Error('Custom Risk descriptions must be at most 200 characters.');
   if(relations[risk.source_type]) {const [kind,key]=relations[risk.source_type]; if(!db[kind]?.some(r=>r[key]===risk.source_id&&r.client_id===risk.client_id)) throw new Error('Select a source record from this client.'); risk[key]=risk.source_id;}
   const reviews = db.reviews.filter(r=>r.client_id===risk.client_id&&r.risk_id===risk.risk_id);
   if(reviews.length>1) throw new Error('Multiple linked Risk Reviews require reconciliation.');
@@ -42,5 +45,17 @@ export function completeRiskReview(db,review,completed,body) {
   completed.risk_after=riskSnapshot(assessedRisk({...risk,...changes}));
   if(body.risk_outcome&&!['Reviewed — No Change','Additional Action Required','Closure Recommended'].includes(body.risk_outcome)) throw new Error('Invalid Risk Review outcome.');
   completed.outcome=completed.risk_before.acceptance_date!==completed.risk_after.acceptance_date?'Risk Accepted':['likelihood_score','impact_score','assessment_rationale','likelihood_rationale','impact_rationale'].some(k=>completed.risk_before[k]!==completed.risk_after[k])?'Assessment Updated':completed.risk_before.treatment!==completed.risk_after.treatment?'Treatment Updated':body.risk_outcome||'Reviewed — No Change';
-  Object.assign(risk,completed.risk_after,{last_reviewed:completed.completed_at,next_review:reviewView(review).next_review_date,review_sync_occurrence_id:completed.occurrence_id});
+  let next=reviewView(review).next_review_date;
+  if(risk.client_id==='demo_brawndo'){
+    next=nextRiskReview(completed.completed_at.slice(0,10),risk.review_cadence,risk.custom_recurrence_days)||null;
+    if(body.risk_next_review){
+      if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Only platform administrators can override the Risk review schedule.');
+      if(!scheduledDate(body.risk_next_review)||body.risk_next_review.slice(0,10)<=completed.completed_at.slice(0,10))throw new Error('Choose a next review after the completed review date.');
+      next=body.risk_next_review.slice(0,10);
+    }
+    completed.next_review_override=body.risk_next_review||null;
+    completed.next_review_date=next;
+  }
+  Object.assign(risk,completed.risk_after,{last_reviewed:completed.completed_at,next_review:next,review_sync_occurrence_id:completed.occurrence_id});
+  return next;
 }

@@ -1,4 +1,6 @@
 import {readEvidenceFile as fileToBase64} from '@/lib/evidenceFile';
+import {RiskCategoryField,RiskTreatmentField,RiskSummary} from './BrawndoRiskFields';
+import {pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
 import VendorGovernancePanel from "./VendorGovernancePanel";
 import AssigneeSelect from "./AssigneeSelect";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -160,7 +162,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const inputRef = useRef(null);
   const loadGeneration = useRef(0);
   const { user } = useAuth();
-  const pilot=['tasks','findings'].includes(kind)&&isBrawndoReference(clientId,user)&&(!record||record.client_id===clientId);
+  const pilot=['tasks','findings','risks'].includes(kind)&&isBrawndoReference(clientId,user)&&(!record||record.client_id===clientId);
+  const riskPilot=pilot&&kind==='risks';
   const Root=pilot?Dialog:Sheet,Content=pilot?DialogContent:SheetContent;
   const initialForm=useRef({}),opener=useRef(null),heading=useRef(null);
   const [discardOpen,setDiscardOpen]=useState(false);
@@ -195,7 +198,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       // Ensure extended risk/vendor fields are always tracked, even if not in the schema list.
       if (kind === "risks") {
         ["likelihood_score","impact_score","treatment","description","impact_description","source",
-         "acceptance_rationale","compensating_controls","next_review","last_reviewed","category","notes","source_type","source_id","review_cadence","custom_recurrence_days","assessment_rationale","likelihood_rationale","impact_rationale"
+         "acceptance_rationale","compensating_controls","next_review","last_reviewed","category","notes","source_type","source_id","review_cadence","custom_recurrence_days","assessment_rationale","likelihood_rationale","impact_rationale","category_other","source_other","treatment_plan"
         ].forEach((k) => { if (!(k in base)) base[k] = record?.[k] ?? ""; });
       }
       if (kind === "vendors") {
@@ -216,7 +219,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       }
       if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:pilot&&record?record.priority??'':record?.priority||"medium"});
       if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium",...(pilot?{source:'manual'}:{})});
-      if (!record && kind === "risks") Object.assign(base, {status: "identified", review_cadence: "annual", source_type: "manual"});
+      if (!record && kind === "risks") Object.assign(base, {...(riskPilot?newRiskDefaults():{}),status: "identified", review_cadence: "annual", source_type: "manual"});
       if (!record && kind === "vendors") Object.assign(base, {status: "onboarding", criticality: "medium", review_frequency: "annual"});
       if(['policies','tasks'].includes(kind))base.governance_context=record?.governance_context||null;
       base.client_id = record?.client_id || clientId;
@@ -322,7 +325,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     }).filter(([k, v]) => !isEdit || !(JSON.stringify(v) === JSON.stringify(record[k]) || (v == null || v === "") && (record[k] == null || record[k] === "") || schema.find(f => f.name === k)?.type === "date" && String(record[k] || '').slice(0,10) === v)));
   }
 
-  async function save(taskStatus) {
+  async function save(taskStatus,keepOpen=false) {
     if (!canWrite || saving) return;
     if(pilot&&newComment.trim()){toast.error('Post or discard the unfinished comment before saving or completing this item.');return;}
     const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
@@ -359,8 +362,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         }
         toast.success('Action Item completed');
       }
+      if(riskPilot&&record){Object.assign(record,savedRecord);initialForm.current={...form,...savedRecord};setForm(initialForm.current);}
       onSaved?.(savedRecord);
-      onOpenChange(false);
+      if(!keepOpen)onOpenChange(false);
+      return savedRecord;
     } catch (e) { toast.error(formatError(e)); }
     finally { setSaving(false); }
   }
@@ -429,6 +434,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
 
   async function markRiskReviewed() {
+    if(riskPilot){const saved=dirty?await save(undefined,true):record;if(!saved)return;setSaving(true);try{const {data}=await api.post(`/risks/${record.risk_id}/review`);setRelatedDrawer({kind:"reviews",record:data.review});}catch(e){toast.error(formatError(e));}finally{setSaving(false);}return;}
     try {
       const changes=cleanForm();
       for(const key of ["last_reviewed","risk_score","risk_level","date_identified"]) delete changes[key];
@@ -462,10 +468,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       const [rows,h,relations,events]=await Promise.all([api.get("/risks",{params:{client_id:clientId}}),api.get(`/risks/${record.risk_id}/review-history`),api.get("/related",{params:{entity_type:"risks",entity_id:record.risk_id}}),api.get(`/risks/${record.risk_id}/activity`)]);
       if(version!==loadGeneration.current) return;
       const updated=rows.data.find(r=>r.risk_id===record.risk_id);
-      if(updated) {Object.assign(record,updated);setForm(p=>({...p,...updated}));}
+      if(updated) {Object.assign(record,updated);setForm(p=>{if(!riskPilot)return {...p,...updated};const next={...p},base={...initialForm.current};for(const key of Object.keys(p)){let value=updated[key]??'';if(['next_review','last_reviewed'].includes(key))value=toDateInput(value);if(JSON.stringify(p[key])===JSON.stringify(base[key]))next[key]=value;base[key]=value;}initialForm.current=base;return next;});}
       setRiskHistory(h.data); setRelated(relations.data); setActivity(events.data);
     } catch(e) {toast.error(formatError(e));}
-  },[kind,record,clientId]);
+  },[kind,record,clientId,riskPilot]);
 
   useEffect(()=>{if(open)refreshRisk();},[open,refreshRisk]);
   useEffect(()=>{
@@ -476,10 +482,12 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return()=>{active=false;clearInterval(timer);window.removeEventListener("focus",refresh);};
   },[open,kind,record?.risk_id,tab]);
 
-  async function acceptRisk() { setAcceptOpen(true); }
+  async function acceptRisk() { if(riskPilot&&dirty&&!await save(undefined,true))return;setAcceptOpen(true); }
 
   async function submitAcceptRisk() {
+    if(saving)return;
     if (!acceptForm.rationale.trim()) { toast.error("Rationale is required"); return; }
+    setSaving(true);
     try {
       const body = {
         rationale: acceptForm.rationale,
@@ -490,10 +498,11 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       const { data } = await api.post(`/risks/${record[idField]}/accept`, {...body,expected_updated_at:record.updated_at??null});
       toast.success("Risk accepted");
       if (record) Object.assign(record, data);
-      setForm((p) => ({ ...p, status: "accepted", treatment: "accept" }));
+      setForm((p) => {const next={...p,status:"accepted",treatment:"accept",next_review:toDateInput(data.next_review)};if(riskPilot)initialForm.current=next;return next;});
       setAcceptOpen(false);
       onSaved?.();
     } catch (e) { toast.error(formatError(e)); }
+    finally{setSaving(false);}
   }
 
   function renderContactActions() {
@@ -577,6 +586,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const liveLevel = levelFromScore(liveScore || null);
 
   function renderField(f) {
+    if(riskPilot&&f.name==='category')return <RiskCategoryField key="category" form={form} setForm={setForm} disabled={!canWrite||!!clientFields&&!clientFields.has('category')}/>;
+    if(riskPilot&&f.name==='owner_id')f={...f,label:'Assigned Owner'};
+    if(riskPilot&&f.name==='status')f={...f,options:[{value:record?.status&&['identified','assessed','open'].includes(record.status)?record.status:'open',label:'Open'},{value:'in_progress',label:'In Treatment'},{value:'monitoring',label:'Monitoring'},{value:'accepted',label:'Accepted'},{value:'closed',label:'Closed'},...(['treated','retired','escalated'].includes(record?.status)?[{value:record.status,label:pilotRiskStatus(record.status)+' (recorded)'}]:[])]};
     if(pilot&&kind==='findings'&&f.name==='owner_id')f={...f,label:'Assigned To'};
     if(pilot&&kind==='findings'&&f.name==='severity')f={...f,options:f.options?.map(o=>o.value==='medium'?{...o,label:'Moderate'}:o)};
     if(kind==='findings'&&f.name==='status') f={...f,options:f.options?.map(o=>o.value==='remediated'?{...o,label:'Pending Validation'}:o)};
@@ -594,7 +606,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     // Client roles see every field but may change only what the server accepts from them.
     const locked = !!clientFields && !clientFields.has(f.name);
     return (
-      <fieldset key={f.name} disabled={locked} className={`space-y-1.5 min-w-0 ${f.type === "textarea" || ["title", "name", "policy_id"].includes(f.name) ? "record-field-wide" : ""}`}>
+      <fieldset key={f.name} disabled={locked||riskPilot&&!canWrite} className={`space-y-1.5 min-w-0 ${f.type === "textarea" || ["title", "name", "policy_id"].includes(f.name) ? "record-field-wide" : ""}`}>
         <Label className="text-xs text-ink-secondary">{f.label}{f.required && <span className="text-semantic-critical ml-0.5">*</span>}</Label>
         {f.type === "textarea" ? (
           <Textarea value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
@@ -642,7 +654,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   // -------- Risk tab renderers --------
   function renderRiskAssessment() {
     return (
-      <div className="space-y-4">
+      <fieldset disabled={riskPilot&&(!canWrite||!isPlatformAdmin)} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-xs text-ink-secondary">Likelihood (1–5)</Label>
@@ -664,7 +676,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           </div>
         </div>
         <div className="flex items-center gap-3 py-2 px-3 border border-line rounded-md bg-surface-subtle" data-testid="risk-live-score">
-          <div className="text-xs font-mono uppercase tracking-widest text-ink-help">Calculated</div>
+          <div className="text-xs font-mono uppercase tracking-widest text-ink-help">{riskPilot?"Current assessed risk":"Calculated"}</div>
           <div className="font-mono text-sm text-ink-primary">Score {liveScore || "—"}</div>
           <span className="text-ink-help">→</span>
           {liveLevel ? (
@@ -676,7 +688,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           <Textarea value={form.impact_description || ""} onChange={(e) => setForm({ ...form, impact_description: e.target.value })} rows={3} className="text-sm" data-testid="field-impact_description" />
         </div>
         {["likelihood_rationale","impact_rationale","assessment_rationale"].map(key=><div key={key}><Label>{key.replaceAll("_"," ")}</Label><Textarea aria-label={key.replaceAll("_"," ")} value={form[key]||""} onChange={e=>setForm({...form,[key]:e.target.value})}/></div>)}
-      </div>
+      </fieldset>
     );
   }
 
@@ -688,8 +700,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           {(related.tasks||[]).map(t=><button className="block w-full text-left text-sm border border-line rounded-md p-2 mb-2" key={t.task_id} onClick={()=>setRelatedDrawer({kind:"tasks",record:t})}>{t.title} · {actionStatus(t.status)}</button>)}
           {!related.tasks?.length&&<p className="text-sm text-ink-secondary mb-2">No linked remediation work yet.</p>}
           {canWrite&&<Button size="sm" variant="outline" className="mb-4" onClick={()=>setRelatedDrawer({kind:"tasks",record:null,initialValues:{source_type:"risk",source_id:record.risk_id,assignee_id:record.owner_id||null}})}>Create Action Item</Button>}
-          {canWrite&&<Button size="sm" variant="outline" className="mb-4 ml-2" onClick={async()=>{try{const {data}=await api.get("/tasks",{params:{client_id:clientId}});setLinkTask({options:data.filter(t=>!(related.tasks||[]).some(x=>x.task_id===t.task_id)),task_id:""});}catch(e){toast.error(formatError(e));}}}>Link existing Action Item</Button>}
-          <Label className="text-xs text-ink-secondary">Treatment strategy</Label>
+          {canWrite&&!riskPilot&&<Button size="sm" variant="outline" className="mb-4 ml-2" onClick={async()=>{try{const {data}=await api.get("/tasks",{params:{client_id:clientId}});setLinkTask({options:data.filter(t=>!(related.tasks||[]).some(x=>x.task_id===t.task_id)),task_id:""});}catch(e){toast.error(formatError(e));}}}>Link existing Action Item</Button>}
+          {riskPilot?<RiskTreatmentField form={form} setForm={setForm} disabled={!canWrite||!!clientFields&&!clientFields.has("treatment")}/>:<><Label className="text-xs text-ink-secondary">Treatment strategy</Label>
           <Select value={form.treatment || ""} onValueChange={(v) => setForm({ ...form, treatment: v })}>
             <SelectTrigger data-testid="field-treatment" className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
@@ -697,7 +709,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
                 <SelectItem key={t} value={t} disabled={t === 'accept' && record?.treatment !== 'accept'}>{t[0].toUpperCase() + t.slice(1)}</SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select></>}
         </div>
         <div>
           <Label className="text-xs text-ink-secondary">Acceptance rationale</Label>
@@ -706,11 +718,12 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </div>
         <div>
           <Label className="text-xs text-ink-secondary">Compensating controls</Label>
-          <Textarea value={form.compensating_controls || ""} onChange={(e) => setForm({ ...form, compensating_controls: e.target.value })} rows={3} className="text-sm" data-testid="field-compensating_controls" />
+          <Textarea disabled={riskPilot&&(!canWrite||!isPlatformAdmin)} value={form.compensating_controls || ""} onChange={(e) => setForm({ ...form, compensating_controls: e.target.value })} rows={3} className="text-sm" data-testid="field-compensating_controls" />
         </div>
         <div>
           <Label className="text-xs text-ink-secondary">Notes / mitigation plan</Label>
-          <Textarea value={form.notes || ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className="text-sm" data-testid="field-notes" />
+          <Textarea disabled={riskPilot&&!canWrite} value={form.notes || ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className="text-sm" data-testid="field-notes" />
+          {riskPilot&&record?.treatment_plan&&<p className="text-sm mt-2 whitespace-pre-wrap">Recorded treatment plan: {record.treatment_plan}</p>}
         </div>
         {record?.acceptance_date && (
           <div className="border border-line rounded-md p-3 bg-surface-subtle text-xs space-y-1" data-testid="risk-acceptance-info">
@@ -783,14 +796,15 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     if (kind === "risks") {
       return (
         <div className="space-y-4">
-          {renderRiskActionsPanel()}
+          {!riskPilot&&renderRiskActionsPanel()}
           {!liveLevel && <p className="text-sm text-ink-secondary">Needs assessment. Select numeric likelihood and impact in Assessment.{record?.likelihood || record?.impact ? ` Legacy ratings: likelihood ${record.likelihood || 'unknown'}, impact ${record.impact || 'unknown'}.` : ''}</p>}
           {record?.acceptance_expires_at && <DateReadonly label="Acceptance expiry · unchanged by routine reviews" value={record.acceptance_expires_at} />}
-          <div className="text-xs font-mono">{record?.display_id || "ID assigned on creation"}</div>
+          {!riskPilot&&<div className="text-xs font-mono">{record?.display_id || "ID assigned on creation"}</div>}
           {renderFieldsByNames(["title", "category", "status", "owner_id", "description"])}
           <div className="grid grid-cols-2 gap-3"><DateReadonly label="Created" value={record?.created_at}/><DateReadonly label="Last Reviewed" value={record?.last_reviewed}/></div>
-          <RiskSourceFields form={form} setForm={setForm} clientId={clientId} disabled={!canWrite}/>
-          <RiskScheduleFields form={form} setForm={setForm} disabled={!canWrite||!isPlatformAdmin}/>
+          {riskPilot&&record?.framework_assessment_id&&(()=>{const assessment=related.framework_assessments?.find(r=>r.framework_assessment_id===record.framework_assessment_id);return assessment?<button className="text-link underline text-sm" onClick={()=>setRelatedDrawer({kind:'framework_assessments',record:assessment})}>Framework / Control Assessment · {assessment.framework_key} {assessment.definition_id}</button>:<p className="text-sm">Original framework assessment unavailable or inaccessible.</p>;})()}
+          <RiskSourceFields pilot={riskPilot} onOpen={setRelatedDrawer} form={form} setForm={setForm} clientId={clientId} disabled={!canWrite||riskPilot&&!!clientFields&&!clientFields.has("source_type")}/>
+          <RiskScheduleFields pilot={riskPilot} form={form} setForm={setForm} disabled={!canWrite||!isPlatformAdmin}/>
           {record?.closed_at&&<div className="text-sm">Closed: {record.closure_reason?.replaceAll("_"," ")} · {personLabel(users, record.closed_by, 'Not recorded')}<DateReadonly label="Closed on" value={record.closed_at}/>{record.closure_note}</div>}
         </div>
       );
@@ -1012,7 +1026,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Tab content dispatch --------
   function renderTabContent() {
-    if (tab === "overview") return <>{record && !pilot && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{pilot&&kind==='findings'&&record&&<p className="mb-4 text-sm">Finding status: <StatusBadge value={record.status}/></p>}{renderOverview()}</>;
+    if (tab === "overview") return <>{record && !pilot && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{pilot&&kind==='findings'&&record&&<p className="mb-4 text-sm">Finding status: <StatusBadge value={record.status}/></p>}{riskPilot&&record&&<RiskSummary risk={form} users={users}/>} {renderOverview()}</>;
     if (tab === "activity") return renderActivity();
     // Kind-specific
     if (kind === "risks") {
@@ -1088,8 +1102,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   return (
     <Root open={open} onOpenChange={pilot?close:onOpenChange}>
-      <Content {...(pilot?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={pilot?'brawndo-cis-assessment bg-surface-card':'record-drawer w-full sm:max-w-2xl p-0 flex flex-col'} data-testid={`${kind}-drawer`}>
-        {pilot&&<DialogDescription className="sr-only">Document assigned work and its original source, retain evidence, and complete work separately from Finding validation.</DialogDescription>}
+      <Content {...(pilot?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector(riskPilot?'[data-testid="risk-search"]':'[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={pilot?'brawndo-cis-assessment bg-surface-card':'record-drawer w-full sm:max-w-2xl p-0 flex flex-col'} data-testid={`${kind}-drawer`}>
+        {pilot&&<DialogDescription className="sr-only">{riskPilot?"Assess the risk, document treatment and review history, and record authorized acceptance or closure separately.":"Document assigned work and its original source, retain evidence, and complete work separately from Finding validation."}</DialogDescription>}
         <SheetHeader className={pilot?'px-6 py-4 pr-12 border-b border-line shrink-0':'px-6 py-4 border-b border-line'}>
           <div className="flex items-start justify-between">
             <div>
@@ -1109,15 +1123,16 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${pilot?' flex-wrap shrink-0':''}`}>
           <Button variant="outline" size="sm" onClick={() => pilot?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
           {kind === "reviews" && record?.status === "completed" && canWrite && <Button size="sm" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Add amendment</Button>}
-          {(tabIsFormEditable||pilot&&kind==='tasks') && !taskCompletion && !(kind === "reviews" && record?.status === "completed") && (
+          {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && !(kind === "reviews" && record?.status === "completed") && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : "Create"}</Button>
           )}
+          {riskPilot&&isEdit&&canWrite&&!['closed','retired'].includes(record.status)&&<><Button size="sm" variant="outline" disabled={saving} onClick={markRiskReviewed}>Review Risk</Button>{isPlatformAdmin&&<><Button size="sm" variant="outline" disabled={saving} onClick={acceptRisk}>{record.status==='accepted'?'Renew Acceptance':'Accept Risk'}</Button><Button size="sm" variant="outline" disabled={saving} onClick={async()=>{if(dirty&&!await save(undefined,true))return;setClosure({reason:'remediated',note:''});}}>Close Risk</Button></>}</>}
           {pilot&&kind==='tasks'&&isEdit&&canWrite&&!taskCompletion&&!['done','cancelled'].includes(record.status)&&<Button size="sm" disabled={saving} onClick={()=>save('done')} data-testid="complete-action">Complete Action Item</Button>}
         </div>
       </Content>
       {pilot&&<AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}><AlertDialogContent><AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved records remain unchanged. Keep editing to retain this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{setDiscardOpen(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
 
-      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); setEvidenceVersion(v=>v+1); } }} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); setEvidenceVersion(v=>v+1); refreshFindingReadiness(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
+      {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); setEvidenceVersion(v=>v+1); } }} reviewsPilot={riskPilot} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); setEvidenceVersion(v=>v+1); refreshFindingReadiness(); refreshRisk(); if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();} onSaved?.(); }} />}
 
       <Sheet open={decisionOpen} onOpenChange={setDecisionOpen}>
         <SheetContent description="Record the outcome and supporting rationale for this governance decision. Confirming records your authenticated decision in its history." className="w-full sm:max-w-xl overflow-y-auto">
@@ -1178,7 +1193,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               <div>
                 <Label className="text-xs text-ink-secondary">Acceptance expiry (required)</Label>
                 <Input type="date" data-testid="accept-expiry" value={acceptForm.expiry_date} onChange={(e) => setAcceptForm({ ...acceptForm, expiry_date: e.target.value })} className="text-sm" />
-                <div className="text-xs text-ink-help mt-1">The risk will reappear in "Due for Review" as this date approaches.</div>
+                <div className="text-xs text-ink-help mt-1">{riskPilot?"Acceptance does not lower severity. The next review is brought forward if this expiry is earlier.":"The risk will reappear in \"Due for Review\" as this date approaches."}</div>
               </div>
               <div>
                 <Label className="text-xs text-ink-secondary">Compensating controls (optional)</Label>
@@ -1186,7 +1201,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={() => setAcceptOpen(false)}>Cancel</Button>
-                <Button size="sm" onClick={submitAcceptRisk} data-testid="accept-submit" className="bg-primary hover:bg-primary/90">Accept risk</Button>
+                <Button size="sm" disabled={saving} onClick={submitAcceptRisk} data-testid="accept-submit" className="bg-primary hover:bg-primary/90">Accept risk</Button>
               </div>
             </div>
           </SheetContent>
