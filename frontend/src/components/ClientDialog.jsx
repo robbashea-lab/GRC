@@ -92,15 +92,15 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
                 {client.primary_contact_id && !choices?.contacts.some(c => c.contact_id === client.primary_contact_id && c.status === 'active' && !c.not_applicable) && <option value={client.primary_contact_id}>Recorded Primary Contact (retained)</option>}
                 {ready && choices.contacts.filter(c => c.status === 'active' && !c.not_applicable).map(c => <option key={c.contact_id} value={c.contact_id}>{c.name || c.email}{c.title ? ` · ${c.title}` : ''}{c.name && c.email ? ` · ${c.email}` : ''}</option>)}
               </select>
-              <p className="text-xs text-ink-secondary">Choose from this client's Contacts & Roles. Maintain contact details there; replacing this relationship does not delete the former Contact.</p>
-              {ready && !choices.contacts.some(c => c.status === 'active' && !c.not_applicable) && <p className="text-xs text-ink-secondary">No active Contacts available. Add a Contact in Contacts & Roles, then select it here.</p>}
+              <p className="text-xs text-ink-secondary">Choose from this client's Contacts. Maintain contact details there; replacing this relationship does not delete the former Contact.</p>
+              {ready && !choices.contacts.some(c => c.status === 'active' && !c.not_applicable) && <p className="text-xs text-ink-secondary">No active Contacts available. Add a Contact in Contacts, then select it here.</p>}
             </div> : <div className="space-y-2">
               <Input id="primary-contact" data-testid="new-client-contact" aria-label="Primary Contact name" value={form.contact_name || ''} maxLength={200} onChange={e => setForm({...form, contact_name: e.target.value})} placeholder="Contact name" />
               <div className="grid grid-cols-2 gap-3">
                 <Input aria-label="Primary Contact email" type="email" value={form.contact_email || ''} onChange={e => setForm({...form, contact_email: e.target.value})} placeholder="Email (optional)" />
                 <Input aria-label="Primary Contact title" value={form.contact_title || ''} maxLength={200} onChange={e => setForm({...form, contact_title: e.target.value})} placeholder="Title (optional)" />
               </div>
-              <p className="text-xs text-ink-secondary">Creates a client-side Contact in Contacts & Roles, not a User account. No invitation or platform access is granted.</p>
+              <p className="text-xs text-ink-secondary">Creates a client-side Contact, not a User account. No invitation or platform access is granted.</p>
             </div>}
           </div>
           <div>

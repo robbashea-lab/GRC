@@ -43,7 +43,7 @@ export default function ContactAccountActions({ contact, onChanged }) {
     <Dialog open={!!mode} onOpenChange={value => { if (!value && !saving) setMode(null); }}>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{mode === 'invite' ? 'Invite to Omnisciente' : mode === 'unlink' ? 'Unlink account' : 'Link existing account'}</DialogTitle>
-          <DialogDescription>{mode === 'invite' ? `Invite ${contact.name || contact.email} (${contact.email}) to this Contact’s client with the selected role. Business designations grant no additional permissions.` : 'This changes only the identity association. Client access, permissions, and historical attribution remain unchanged.'}</DialogDescription></DialogHeader>
+          <DialogDescription>{mode === 'invite' ? `Request an invitation for ${contact.name || contact.email} (${contact.email}) to this client with the selected role. Delivery or Demo simulation status is reported after confirmation.` : 'This changes only the identity association. Client access, permissions, and historical attribution remain unchanged.'}</DialogDescription></DialogHeader>
         {mode === 'link' && <div className="space-y-3">
           <Label htmlFor="account-search">Search client-authorized accounts</Label>
           <Input id="account-search" value={search} maxLength={100} onChange={e => setSearch(e.target.value)} />

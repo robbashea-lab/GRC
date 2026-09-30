@@ -38,11 +38,11 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
     // A same-origin blank tab inherits the isolated Demo session. Remove its
     // opener before navigation; preserve this form and never change assignment.
     if (localStorage.getItem('grc_client_id') !== clientId) {
-      setPeopleError('Open Contacts & Roles from this client after saving your changes.');
+      setPeopleError('Open Contacts from this client after saving your changes.');
       return;
     }
     const tab = window.open('about:blank', '_blank');
-    if (!tab) { setPeopleError('Allow this tab to open Contacts & Roles. Your form is unchanged.'); return; }
+    if (!tab) { setPeopleError('Allow this tab to open Contacts. Your form is unchanged.'); return; }
     tab.opener = null;
     tab.location.replace(new URL('/contacts', window.location.origin).href);
     setPeopleError('');

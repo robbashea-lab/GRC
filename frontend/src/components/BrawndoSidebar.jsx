@@ -14,7 +14,7 @@ import './BrawndoSidebar.css';
 const GROUPS=[
   ['Work',[['/dashboard','Dashboard',LayoutDashboard,'nav-dashboard'],['/calendar','Calendar',CalendarDays,'nav-calendar'],['/reviews','Reviews',ClipboardCheck,'nav-reviews','reviews'],['/action-items','Action Items',ListChecks,'nav-action-items','actions']]],
   ['Program',[['COMPLIANCE'],['/risks','Risks',ShieldAlert,'nav-risks','risks'],['/policies','Policies',FileText,'nav-policies'],['/vendors','Vendors',Building2,'nav-vendors','vendors'],['/evidence','Evidence Library',FolderArchive,'nav-evidence']]],
-  ['Client',[['/contacts','Contacts & Roles',Users,'nav-contacts'],['/systems','Systems & Scope',Server,'nav-systems'],['/ai-governance','AI Governance',Sparkles,'nav-ai-governance'],['/client-profile','Client Profile',Settings2,'nav-client-profile']]],
+  ['Client',[['/contacts','Contacts',Users,'nav-contacts'],['/systems','Systems & Scope',Server,'nav-systems'],['/ai-governance','AI Governance',Sparkles,'nav-ai-governance'],['/client-profile','Client Profile',Settings2,'nav-client-profile']]],
 ];
 const BADGE_LABEL={reviews:'overdue reviews',actions:'overdue action items',risks:'significant risks',vendors:'vendors with assurance due'};
 
