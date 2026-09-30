@@ -5,10 +5,10 @@ import './BrawndoCisAssessment.css';
 
 /** Presentation only. Callers own persistence, native conclusions and leave guards. */
 export default function AssessmentShell({open=true,title,description,status,position,
-  previous,next,close,busy,children,context,footer,crumbs,testId='framework-assessment-workspace',returnSelector}) {
+  previous,next,close,busy,children,context,footer,crumbs,ariaModal,testId='framework-assessment-workspace',returnSelector}) {
   const heading=useRef(null),opener=useRef(document.activeElement);
   return <Dialog open={open} onOpenChange={value=>{if(!value)close();}}>
-    <DialogContent className="brawndo-cis-assessment bg-surface-card" data-testid={testId}
+    <DialogContent className="brawndo-cis-assessment bg-surface-card" data-testid={testId} aria-modal={ariaModal?'true':undefined}
       onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus();}}
       onCloseAutoFocus={e=>{e.preventDefault();requestAnimationFrame(()=>{
         if(document.querySelector('[data-assessment-shell]'))return;

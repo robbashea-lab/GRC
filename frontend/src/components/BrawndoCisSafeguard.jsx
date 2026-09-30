@@ -16,6 +16,7 @@ import './BrawndoCisSafeguard.css';
 export const STATUS_OPTIONS=[['addressed','Implemented'],['in_progress','Partially Implemented'],['needs_attention','Not Implemented'],['not_assessed','Not Assessed'],['not_applicable','Not Applicable']];
 const VERIFICATION_TONE={not_verified:'neutral',needs_validation:'moderate',gap_identified:'critical',verified:'success'};
 export const CURRENT_HELP='Describe how this safeguard is currently being addressed, including technology, process, ownership, and recurring activities.';
+export const STRONGER_NOTE='Items marked Stronger practice go beyond the minimum expectation for this safeguard.';
 export const GUIDANCE_NOTE='Practical verification guidance to support assessment of this safeguard. These are not additional CIS requirements.';
 
 export default function BrawndoCisSafeguard({state,actions}){
@@ -28,7 +29,7 @@ export default function BrawndoCisSafeguard({state,actions}){
   const verification=verificationOf(form),saved=verificationOf(current);
   return <AssessmentShell open={open} title={`CIS IG1 ${id} — ${definition.title}`} description={<span className="sr-only">Safeguard assessment workspace</span>}
     status={<><span aria-label="Saved implementation status"><CisStatusPill status={current.status} framework="cis-ig1"/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
-    {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment"
+    {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment" ariaModal
     crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb}/>:null}
     returnSelector={`[data-testid="requirement-${id}"]`}
     footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?'Unsaved assessment changes':feedback||(!writable?'Read-only assessment':'Changes are saved when you choose Save assessment.')}</span></div>
@@ -42,9 +43,10 @@ export default function BrawndoCisSafeguard({state,actions}){
     </Step>
     <Step number="2" title="Verification Guidance">
       <p className="text-sm text-ink-secondary">{GUIDANCE_NOTE}</p>
+      {tiers&&TIERS.some(([k])=>tiers[k].some(c=>c.stronger))&&<p className="text-xs text-ink-secondary" data-testid="stronger-note">{STRONGER_NOTE}</p>}
       {tiers?<fieldset disabled={disabled} className="bcsg-tiers">{TIERS.map(([key,label])=><div key={key} className="bcsg-tier" role="group" aria-labelledby={`bcsg-${key}`}>
         <h4 id={`bcsg-${key}`}><span>{label}</span><span className="bcsg-count" data-testid={`tier-${key}`}>{progress[key].done} / {progress[key].total}</span></h4>
-        <ul>{tiers[key].map(c=><li key={c.id}><label><input type="checkbox" checked={checklist[key].includes(c.id)} onChange={()=>toggle(key,c.id)}/><span>{c.text}</span></label></li>)}</ul>
+        <ul>{tiers[key].map(c=><li key={c.id}><label><input type="checkbox" checked={checklist[key].includes(c.id)} onChange={()=>toggle(key,c.id)}/><span>{c.text}{c.stronger&&<span className="bcsg-stronger">Stronger practice</span>}</span></label></li>)}</ul>
       </div>)}</fieldset>:<p className="text-sm">No verification guidance is available for this safeguard.</p>}
     </Step>
     <Step number="3" title="Implementation Status">

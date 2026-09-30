@@ -100,7 +100,7 @@ test('load failure disables writes and offers retry',async()=>{
 });
 test('other clients keep the existing workspace',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('Verification Guidance');
+ expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('Verification Guidance');expect(container.querySelector('[aria-modal]')).toBeNull();
 });
 test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
  const toControl=jest.fn();
@@ -108,4 +108,11 @@ test('in-workspace breadcrumb returns to the control, behind the unsaved-changes
  expect([...container.querySelectorAll('.bcis-crumbs li')].map(l=>l.textContent)).toEqual(['CIS IG1','Control 1','Safeguard 1.1']);
  await input('Current implementation','Draft');await act(async()=>button('Control 1').click());expect(toControl).not.toHaveBeenCalled();
  expect(document.body.textContent).toContain('Leave unsaved changes?');await act(async()=>button('Discard changes').click());expect(toControl).toHaveBeenCalledTimes(1);
+});
+test('dialog is marked modal and stronger-practice items are tagged only where flagged',async()=>{
+ await render();const d=container.querySelector('[data-testid="brawndo-cis-assessment"]');expect(d.getAttribute('aria-modal')).toBe('true');
+ const tags=[...container.querySelectorAll('.bcsg-stronger')];expect(tags).toHaveLength(1);expect(tags[0].closest('[aria-labelledby]').getAttribute('aria-labelledby')).toBe('bcsg-mature');
+ expect(container.querySelector('[data-testid="stronger-note"]').textContent).toContain('go beyond the minimum expectation');
+ await act(async()=>root.unmount());root=createRoot(container);record={...record,definition_id:'1.2'};await render();
+ expect(container.querySelector('.bcsg-stronger')).toBeNull();expect(container.querySelector('[data-testid="stronger-note"]')).toBeNull();
 });

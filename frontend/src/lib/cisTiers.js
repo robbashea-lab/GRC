@@ -7,7 +7,7 @@ export function tiersFor(id) {
   if (!id || id === '_note' || !Object.prototype.hasOwnProperty.call(data, id)) return null;
   const e = data[id];
   const out = {};
-  KEYS.forEach((k) => { out[k] = (e[k] || []).map((c) => ({ id: c.id, text: c.text })); });
+  KEYS.forEach((k) => { out[k] = (e[k] || []).map((c) => ({ id: c.id, text: c.text, stronger: c.stronger === true })); });
   return out;
 }
 

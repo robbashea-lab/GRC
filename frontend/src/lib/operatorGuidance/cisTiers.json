@@ -1,5 +1,5 @@
 {
- "_note": "Omnisciente practical verification guidance to support assessment of CIS Controls v8.1 IG1 safeguards. Not CIS text and not additional CIS requirements. Cadences are referenced only where the catalog records one.",
+ "_note": "Omnisciente practical verification guidance to support assessment of CIS Controls v8.1 IG1 safeguards. Not CIS text and not additional CIS requirements. Cadences are referenced only where the catalog records one. Items flagged stronger go beyond the minimum IG1 safeguard expectation.",
  "1.1": {
   "foundation": [
    {
@@ -36,7 +36,8 @@
   "mature": [
    {
     "id": "1.1-m1",
-    "text": "The inventory is compared with an independent source such as discovery or endpoint data"
+    "text": "The inventory is compared with an independent source such as discovery or endpoint data",
+    "stronger": true
    },
    {
     "id": "1.1-m2",
@@ -484,7 +485,8 @@
    },
    {
     "id": "3.6-m3",
-    "text": "Recovery keys, where used, are stored so authorized staff can retrieve them"
+    "text": "Recovery keys, where used, are stored so authorized staff can retrieve them",
+    "stronger": true
    }
   ]
  },
@@ -700,7 +702,8 @@
    },
    {
     "id": "4.5-m2",
-    "text": "Standard users cannot turn the firewall off"
+    "text": "Standard users cannot turn the firewall off",
+    "stronger": true
    },
    {
     "id": "4.5-m3",
@@ -1096,7 +1099,8 @@
    },
    {
     "id": "6.3-m2",
-    "text": "Legacy sign-in methods that bypass MFA are disabled or justified"
+    "text": "Legacy sign-in methods that bypass MFA are disabled or justified",
+    "stronger": true
    },
    {
     "id": "6.3-m3",
@@ -1184,7 +1188,8 @@
    },
    {
     "id": "6.5-m2",
-    "text": "Emergency access accounts are documented and protected"
+    "text": "Emergency access accounts are documented and protected",
+    "stronger": true
    },
    {
     "id": "6.5-m3",
@@ -1804,7 +1809,8 @@
    },
    {
     "id": "11.2-m3",
-    "text": "A test restore shows backups can be recovered"
+    "text": "A test restore shows backups can be recovered",
+    "stronger": true
    }
   ]
  },
@@ -1848,7 +1854,8 @@
    },
    {
     "id": "11.3-m3",
-    "text": "Deleting backups requires elevated rights or is prevented"
+    "text": "Deleting backups requires elevated rights or is prevented",
+    "stronger": true
    }
   ]
  },
@@ -1888,7 +1895,8 @@
    },
    {
     "id": "11.4-m2",
-    "text": "A restore from the isolated copy shows it can be recovered"
+    "text": "A restore from the isolated copy shows it can be recovered",
+    "stronger": true
    },
    {
     "id": "11.4-m3",
@@ -2024,7 +2032,8 @@
    },
    {
     "id": "14.2-m3",
-    "text": "Phishing exercises, where used, inform the next training update"
+    "text": "Phishing exercises, where used, inform the next training update",
+    "stronger": true
    }
   ]
  },

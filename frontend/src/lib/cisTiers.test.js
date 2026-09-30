@@ -77,3 +77,11 @@ test('tierSignal messages', () => {
   expect(s).toBe('All verification checks complete');
   expect(s).not.toMatch(/%/);
 });
+
+test('stronger-practice flags appear only on Mature items and are few', () => {
+  const data = require('./operatorGuidance/cisTiers.json');
+  const flagged = Object.entries(data).filter(([k]) => k !== '_note').flatMap(([, v]) => ['foundation', 'operational', 'mature'].flatMap((t) => v[t].filter((c) => c.stronger).map((c) => [t, c.id])));
+  expect(flagged.every(([t]) => t === 'mature')).toBe(true);
+  expect(flagged.length).toBeGreaterThan(0);
+  expect(flagged.length).toBeLessThanOrEqual(12);
+});
