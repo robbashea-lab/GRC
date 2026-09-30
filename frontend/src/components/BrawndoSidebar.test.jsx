@@ -2,7 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import BrawndoSidebar,{sidebarCounts} from './BrawndoSidebar';
 import api from '@/lib/api';
-jest.mock('react-router-dom',()=>({NavLink:({to,children,className,...rest})=><a href={to} className={typeof className==='function'?className({isActive:to==='/dashboard'}):className} {...rest}>{children}</a>,useNavigate:()=>jest.fn()}));
+jest.mock('react-router-dom',()=>({NavLink:({to,children,className,...rest})=><a href={to} className={typeof className==='function'?className({isActive:to==='/dashboard'}):className} {...rest}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()}}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClient:{name:'Brawndo'},currentClientId:'demo_brawndo'})}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{name:'Demo',role:'super_admin'},logout:jest.fn()})}));
