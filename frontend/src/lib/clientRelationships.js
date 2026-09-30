@@ -7,7 +7,7 @@ export function primaryContact(client) {
     notice: contact && contact.status !== 'active' ? `Contact ${contact.status || 'status unknown'}` : '',
   };
   return { name: client?.primary_contact || 'Not designated', detail: '',
-    notice: client?.primary_contact ? 'Not linked to Contacts & Roles' : '' };
+    notice: client?.primary_contact ? 'Not linked to Contacts' : '' };
 }
 
 export function grcLead(client) {

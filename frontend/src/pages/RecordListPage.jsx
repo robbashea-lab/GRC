@@ -20,14 +20,12 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import api, { formatError, API, PREVIEW_MODE } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
-import { ContactAccessStatus, useContactAccess } from '@/components/ContactAccess';
-import { contactResponsibilities } from '@/lib/contactAccess';
 import { personLabel, peopleMap, useClientPeople } from '@/lib/people';
 import PageHeader from "@/components/PageHeader";
 import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from '@/components/Register';
 import { DueDate, HistoryDate, OwnerCell } from '@/components/RegisterCells';
 import RegisterSignalBar from "@/components/RegisterSignalBar";
-import ContactCoverage from "@/components/ContactCoverage";
+import Contacts from './Contacts';
 import { registerSignals } from "@/lib/registerSignals";
 import { frameworkCatalog } from "@/lib/frameworks";
 
@@ -95,6 +93,9 @@ function isReviewOverdue(row) {
 }
 
 export default function RecordListPage({ kind }) {
+  return kind==='contacts'?<Contacts/>:<EntityListPage kind={kind}/>;
+}
+function EntityListPage({ kind }) {
   const schema = SCHEMAS[kind];
   const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
@@ -258,8 +259,7 @@ export default function RecordListPage({ kind }) {
   }, [hasUrlFilters, urlFilters, users, user, reviewsPilot]);
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
-  const contactAccessContext = useContactAccess(currentClientId, kind === 'contacts', rows);
-  const columnCount = displayColumns.length + (kind === 'contacts' ? 3 : 2);
+  const columnCount = displayColumns.length + 2;
   const baseColumns = tableColumns(kind, { rows: tableSource, users });
   const columns = reviewsPilot ? pilotReviewColumns(baseColumns,tableSource) : policiesPilot ? policyColumns(baseColumns,tableSource,programs,policyAssessments) : baseColumns;
   const table = useTableControls({ columns, rows: tableSource, module: kind, scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key, values) => {
@@ -433,7 +433,6 @@ export default function RecordListPage({ kind }) {
       />}
       {policiesPilot&&<BrawndoTiles label="Policy summary" loading={loading&&!tableSource.length} tiles={policyTiles(tableSource,programs,policyAssessments).map(t=>t.id==='mapped'?t:{...t,pressed:policyView===t.id,onClick:()=>setParam('policyView',policyView===t.id?'':t.id)})}/>}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
-      {kind === "contacts" && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
       {reviewsPilot ? <BrawndoReviewSummary rows={tableSource} active={reviewView} loading={loading} onPick={v=>setParam('reviewView',v)}/> : !policiesPilot && signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
       <div className="register-toolbar">
         <SearchField label={`Search ${schema.title.toLowerCase()}`} testid={`${kind}-search`} value={q} onChange={setQ} placeholder={`Search ${schema.title.toLowerCase()}…`} />
@@ -563,7 +562,6 @@ export default function RecordListPage({ kind }) {
                   />
                 </th>
                 {columns.filter(c=>(!reviewsPilot||!PILOT_HIDDEN_COLUMNS.includes(c.key))&&(!policiesPilot||!POLICY_HIDDEN.includes(c.key))).map(c => <SortableHeader key={c.key} table={table} column={reviewsPilot&&c.primary?{...c,label:'Review'}:c} data-column={isReviews ? c.key : undefined} />)}
-                {kind === 'contacts' && <th scope="col" className="tbl-head">Platform access</th>}
                 <th scope="col" className="tbl-head w-10"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
@@ -611,7 +609,6 @@ export default function RecordListPage({ kind }) {
                              : reviewsPilot && c.key==='recurrence' ? <span className="brev-title"><span className="register-value">{reviewValue('recurrence',row.recurrence)}</span><span className="brev-meta">{closed?'—':row.policy_id?'Next calculated on completion':calendarDay(row.next_review_date)!==null?`Next ${new Date(calendarDay(row.next_review_date)).toLocaleDateString(undefined,{month:'short',day:'numeric',timeZone:'UTC'})}`:'No next date'}</span></span>
                              : (isReviews||policiesPilot) && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
-                             : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
                              : c.primary && kind === "policies" && policySupports(row, programs) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports {policySupports(row, programs)}</span></span>
                              : c.primary && kind === "findings" && row.source ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary" data-testid={`finding-source-${i}`}>From {row.source}</span></span>
                              : <span>{row[c.key] ? optionLabel(schema, c.key, row[c.key]) : <span className="text-ink-help">—</span>}</span>}
@@ -629,7 +626,6 @@ export default function RecordListPage({ kind }) {
                     </td>
                   );
                   })}
-                  {kind === 'contacts' && <td className="tbl-cell"><ContactAccessStatus contact={row} clientId={currentClientId} context={contactAccessContext} /></td>}
                   <td className="tbl-cell text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

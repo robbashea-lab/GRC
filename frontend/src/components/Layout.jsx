@@ -33,7 +33,7 @@ const CLIENT_NAV = [
   { to: "/policies", label: "Policies", icon: FileText, testid: "nav-policies" },
   { to: "/vendors", label: "Vendors", icon: Building2, testid: "nav-vendors" },
   { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
-  { to: "/contacts", label: "Contacts & Roles", icon: Users, testid: "nav-contacts" },
+  { to: "/contacts", label: "Contacts", icon: Users, testid: "nav-contacts" },
   { to: "/systems", label: "Systems & Scope", icon: Server, testid: "nav-systems" },
   { to: "/evidence", label: "Evidence Library", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/client-profile", label: "Client Profile", icon: Settings2, testid: "nav-client-profile" },

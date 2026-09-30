@@ -46,8 +46,7 @@ import EvidencePanel from './EvidencePanel';
 import ActionSourceChain from './ActionSourceChain';
 import RequirementBasis, {GovernanceContextFields} from './RequirementBasis';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
-import { ContactAccessDetails } from './ContactAccess';
-import ContactAccountActions from './ContactAccountActions';
+import ContactWorkspace from './ContactWorkspace';
 import AssignmentHelp from './AssignmentHelp';
 import { personLabel, useClientPeople } from '@/lib/people';
 import { editableFields } from '@/lib/permissions';
@@ -75,11 +74,6 @@ const DATA_RELATIONSHIPS = ["Stores", "Processes", "Transmits", "Accesses", "Hos
 function levelFromScore(s) {
   return riskLevel(s);
 }
-
-const GRC_ROLE_OPTIONS = ["Executive Sponsor", "Primary GRC / Security Contact", "IT Lead",
-  "Information Security Lead", "Risk Management Contact", "Vendor / Third-Party Contact",
-  "Business Continuity / Disaster Recovery Lead", "Incident Response Lead", "HR Contact",
-  "Legal / Privacy Contact", "Finance Contact", "Other"];
 
 const TABS_BY_KIND = {
   risks: [
@@ -118,6 +112,7 @@ function toDateInput(v) {
 }
 
 export default function RecordDrawer(props) {
+  if(props.kind==='contacts')return <ContactWorkspace {...props}/>;
   if(props.kind==='organizational_controls')return <OrganizationalControlDrawer {...props}/>;
   if(props.kind==='framework_assessments')return <FrameworkDrawer {...props}/>;
   if(props.kind==='ai_systems') return <AIDrawer {...props}/>;
@@ -540,15 +535,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     finally{setSaving(false);}
   }
 
-  function renderContactActions() {
-    if (!isPlatformAdmin || !record?.contact_id) return null;
-    return <ContactAccountActions contact={record} onChanged={linked_user_id => {
-      record.linked_user_id = linked_user_id;
-      setForm(previous => ({ ...previous, linked_user_id }));
-      onSaved?.();
-    }} />;
-  }
-
   async function submitVerifyPolicy() {
     try {
       const body = {};
@@ -855,8 +841,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {policyPilot&&<BrawndoPolicyDetails record={record||form} related={related} users={users} onOpen={openLinkedRecord}/>}
         {['policies','findings'].includes(kind)&&record&&!policyPilot&&<RequirementBasis kind={kind} record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/>}
         {kind === "policies" && !policyPilot && <><GovernanceContextFields value={form.governance_context} cadence disabled={!canWrite} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{renderPolicyPanel()}</>}
-        {kind === "contacts" && <ContactAccessDetails contact={record} clientId={clientId} open={open} />}
-        {kind === "contacts" && renderContactActions()}
         {kind === "exceptions" && isEdit && isPlatformAdmin && record.status !== "approved" && <Button onClick={() => { setDecisionForm({action:'approve',rationale:''}); setDecisionOpen(true); }}>Approve exception</Button>}
         {kind === "reviews" && record?.status === "completed" && <div className="rounded-md border border-line p-4 space-y-2 text-sm" data-testid="review-outcome">
           {record.completion_snapshot ? <><p>Completed by {personLabel(users, record.completion_snapshot.by, 'Not recorded')} · {record.completion_snapshot.at?.slice(0,10)}</p><p>Period: {record.completion_snapshot.tested_period}</p><p>Examined: {record.completion_snapshot.tested_scope}</p><p className="whitespace-pre-wrap">Conclusion: {record.completion_snapshot.conclusion}</p><p>{record.completion_snapshot.evidence?.length || 0} preserved evidence version(s){record.completion_snapshot.no_evidence_reason ? ` · ${record.completion_snapshot.no_evidence_reason}` : ''}</p></> : <p>Historical completion: structured outcome and decision provenance were not captured.</p>}
