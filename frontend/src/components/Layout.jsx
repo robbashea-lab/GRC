@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
   Building2, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Sparkles, FileWarning, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
+  LogOut, Sparkles, FileWarning, Server, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
   ClipboardList, ShieldCheck, Lock, Search,
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
@@ -34,6 +34,7 @@ const CLIENT_NAV = [
   { to: "/vendors", label: "Vendors", icon: Building2, testid: "nav-vendors" },
   { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
   { to: "/contacts", label: "Contacts", icon: Users, testid: "nav-contacts" },
+  { to: "/systems", label: "Systems & Scope", icon: Server, testid: "nav-systems" },
   { to: "/evidence", label: "Evidence Library", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/client-profile", label: "Client Profile", icon: Settings2, testid: "nav-client-profile" },
 ];
