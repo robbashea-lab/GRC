@@ -1,0 +1,18 @@
+.brawndo-ai-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}
+.brawndo-ai-card {display:flex;flex-direction:column;gap:16px;padding:22px;text-align:left;border:1px solid var(--line,#dbe2ea);border-radius:12px;background:var(--surface-card,#fff);font-size:13px;line-height:1.5;overflow-wrap:anywhere;}
+.brawndo-ai-card:hover {border-color:#8aa8c7;}
+.brawndo-ai-card:focus-visible {outline:2px solid #2563eb;outline-offset:3px;}
+.brawndo-ai-card h2 {font-size:17px;font-weight:650;line-height:1.35;}
+.brawndo-ai-card h3 {font-size:11px;font-weight:600;color:#526274;margin-bottom:4px;}
+.brawndo-ai-initials {flex-shrink:0;display:grid;place-items:center;width:38px;height:38px;border-radius:9px;background:#edf4fc;color:#265a94;font-weight:650;}
+.brawndo-ai-badge {font-size:12px;border-radius:5px;padding:3px 7px;background:#f1f4f8;color:#425269;}
+.brawndo-ai-badge.is-approved {background:#e7f5ed;color:#186c40;}
+.brawndo-ai-card-footer {display:flex;justify-content:space-between;gap:16px;border-top:1px solid #e4e9ef;padding-top:14px;margin-top:auto;}
+.brawndo-ai-use {white-space:pre-wrap;}
+.brawndo-ai-body {overflow-y:auto;min-height:0;padding:24px;}
+.brawndo-ai-body textarea {min-height:100px;}
+.brawndo-ai-boundaries {padding:18px;background:#f6f8fb;border:1px solid #e0e7ef;border-radius:10px;}
+.brawndo-ai-boundaries h3 {font-weight:600;margin-bottom:12px;}
+.brawndo-ai-footer {display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid #e0e7ef;flex-shrink:0;}
+@media(max-width:1200px){.brawndo-ai-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:800px){.brawndo-ai-grid{grid-template-columns:1fr;}.brawndo-ai-body{padding:16px;}}

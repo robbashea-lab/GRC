@@ -1,0 +1,34 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import AIGovernance from './AIGovernance';
+import AIDrawer from '@/components/AIDrawer';
+import api from '@/lib/api';
+let mockClient='demo_brawndo';
+const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient})}));
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
+jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/ai-governance',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-identity'}));
+let root,container;
+const click=node=>act(async()=>node.click());
+const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/ai-intake'?{usage:'unsure'}:path==='/ai_systems'?[{ai_system_id:'a',client_id:mockClient,name:'AI QA',status:'active',provider:'Test',data_types:['Public']}]:[]}));});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+test('Brawndo cards do not infer approval or data permission; other clients retain table and intake notice',async()=>{
+  await act(async()=>root.render(<AIGovernance/>));expect(container.querySelector('.brawndo-ai-grid')).not.toBeNull();expect(container.textContent).toContain('Approval not recorded');expect(container.textContent).toContain('Data permissions not established');expect(container.textContent).not.toContain('AI applicability is not yet confirmed');
+  await click(container.querySelector('[data-testid="new-ai-system"]'));expect(document.querySelector('[data-testid="ai-drawer"]').className).toContain('brawndo-cis-assessment');expect(document.body.textContent).toContain('Pending Assessment');
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
+  mockClient='demo_dunder';await act(async()=>root.render(<AIGovernance/>));expect(container.querySelector('.brawndo-ai-grid')).toBeNull();expect(container.querySelector('table')).not.toBeNull();expect(container.textContent).toContain('AI applicability is not yet confirmed');
+});
+test('draft remains across tabs, failed save and cancel; approval decision unavailable before creation',async()=>{
+  const close=jest.fn();api.post.mockRejectedValue(new Error('Save unavailable'));
+  await act(async()=>root.render(<AIDrawer open onOpenChange={close} clientId={mockClient}/>));
+  await input(document.querySelector('[aria-label="Product / System Name"]'),'Draft AI');
+  await click([...document.querySelectorAll('[role="tab"]')].find(b=>b.textContent==='Data & Access'));
+  await click([...document.querySelectorAll('[role="tab"]')].find(b=>b.textContent==='Overview'));
+  expect(document.querySelector('[aria-label="Product / System Name"]').value).toBe('Draft AI');
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Create AI System'));expect(close).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Save unavailable');
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));expect(document.body.textContent).toContain('Discard unsaved changes?');expect(close).not.toHaveBeenCalled();
+  expect(document.querySelector('[aria-label="Decision"]')).toBeNull();
+});

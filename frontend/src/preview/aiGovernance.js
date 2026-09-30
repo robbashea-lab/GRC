@@ -2,6 +2,7 @@ import {AI_DEFAULTS,AI_KEYS,aiProjection,validateAI,catalog} from '../lib/aiGove
 import {record,write,audit,uid,now,ids} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
 import { validateAssignment } from './assignmentEligibility';
+import {AI_PILOT_DEFAULTS,AI_PILOT_KEYS,aiScope} from '../lib/brawndoAI';
 
 export function aiRequest(db,path,method,params,body){
   db.ai_systems||=[];db.ai_intake||={};db.ai_counters||={};
@@ -20,11 +21,24 @@ export function aiRequest(db,path,method,params,body){
   const [, ,id,action]=path.split('/');
   if(!id&&method==='get'){checkClient(params.client_id);return db.ai_systems.filter(r=>r.client_id===params.client_id).map(view);}
   const old=id?record(db,'ai_systems',id):null;checkClient(old?.client_id||body.client_id);
+  const pilot=(old?.client_id||body.client_id)==='demo_brawndo';
   if(method==='get'&&action==='activity'){
     const reviewIds=db.reviews.filter(r=>r.client_id===old.client_id&&r.ai_system_id===id).map(r=>r.review_id);
     return db.logs.filter(l=>l.client_id===old.client_id&&[id,...reviewIds].includes(l.entity_id));
   }
   if(old?.status==='retired')throw new Error('Retired AI records remain historical');
+  if(action==='approval'&&method==='post'){
+    admin();if(!pilot)throw new Error('Approval pilot is available only for Brawndo Demo');
+    if(body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before deciding');
+    if(Object.keys(body).some(k=>!['status','note','expected_updated_at'].includes(k)))throw new Error('Unknown decision fields');
+    if(!['approved','approved_with_conditions','not_approved'].includes(body.status)||typeof body.note!=='string'||!body.note.trim()||body.note.length>10000)throw new Error('Choose a decision and document its rationale');
+    if(['approved','approved_with_conditions'].includes(body.status)&&(!old.environment?.trim()||!old.description?.trim()||!old.permitted_data_types?.length))throw new Error('Document the environment, uses and permitted data before approval');
+    if(body.status==='approved_with_conditions'&&!old.restrictions?.trim())throw new Error('Document approval conditions before conditional approval');
+    const decision={status:body.status,note:body.note.trim(),scope:aiScope(old),at:now(),by:db.user.user_id,by_name:db.user.name||db.user.email};
+    old.approval_history=[...(old.approval_history||[]),decision];old.approval_status=body.status;
+    old.updated_at=new Date(Math.max(Date.now(),(Date.parse(old.updated_at)||0)+1)).toISOString();
+    audit(db,'AI approval decision recorded','ai_systems',old,{status:body.status});return view(old);
+  }
   if(action==='reviews'&&method==='post'){
     admin();if(old.status==='suspended')throw new Error('Inactive AI cannot start periodic reviews');
     if(!['quarterly','semiannual','annual','custom'].includes(body.recurrence)||!body.due_date||!Number.isFinite(Date.parse(body.due_date)))throw new Error('Choose a valid date and cadence');
@@ -34,7 +48,7 @@ export function aiRequest(db,path,method,params,body){
     audit(db,'AI Governance Review scheduled','ai_systems',old,{review_id:r.review_id});return r;
   }
   if(action==='material-change'&&method==='post'){
-    admin();if(!body.note?.trim())throw new Error('Describe the material change');old.material_change_at=now();old.material_change_note=body.note;old.updated_at=now();audit(db,'AI material change recorded','ai_systems',old,{note:body.note});return view(old);
+    admin();if(!body.note?.trim())throw new Error('Describe the material change');if(pilot&&old.approval_status)old.approval_status='pending_assessment';old.material_change_at=now();old.material_change_note=body.note;old.updated_at=now();audit(db,'AI material change recorded','ai_systems',old,{note:body.note});return view(old);
   }
   if(action==='links'&&method==='post'){
     if(!['risks','findings','tasks','policies','requirements','vendors'].includes(body.kind))throw new Error('Unsupported relationship');
@@ -46,8 +60,17 @@ export function aiRequest(db,path,method,params,body){
   if(action||!['post','patch'].includes(method)||(!id&&method!=='post')||(id&&method!=='patch'))throw new Error('AI records are retained; use the supported lifecycle controls');
   if(old&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   body={...body};delete body.expected_updated_at;
-  if(Object.keys(body).some(k=>![...AI_KEYS,'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
-  const row={...AI_DEFAULTS,...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
+  if(Object.keys(body).some(k=>![...AI_KEYS,...(pilot?AI_PILOT_KEYS:[]),'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
+  const row={...AI_DEFAULTS,...(pilot?AI_PILOT_DEFAULTS:{}),...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
+  if(pilot){
+    for(const key of ['environment','restrictions','data_settings'])if(typeof row[key]!=='string'||row[key].length>10000)throw new Error('Invalid '+key);
+    if(!Array.isArray(row.permitted_data_types)||row.permitted_data_types.some(v=>!catalog.data_types.includes(v)))throw new Error('Invalid permitted data classifications');
+    if(!old)row.approval_status='pending_assessment';
+    else if(JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))&&['approved','approved_with_conditions','not_approved'].includes(old.approval_status)){
+      row.approval_status='pending_assessment';row.material_change_at=now();row.material_change_note='Approval boundaries changed; reassessment required.';
+      audit(db,'AI approval boundaries changed; reassessment required','ai_systems',row);
+    }
+  }
   if(['active','suspended','retired'].includes(row.status)&&old?.status!==row.status)admin();
   if(row.status==='retired')for(const r of db.reviews.filter(r=>r.ai_system_id===id&&r.client_id===row.client_id&&!['completed','cancelled'].includes(r.status))){write(db,'reviews',{recurrence:'none',status:r.status==='in_progress'?'in_progress':'cancelled'},r.review_id);audit(db,'AI retired; recurring review stopped','reviews',r);}
   if(!old){db.ai_counters[row.client_id]=(db.ai_counters[row.client_id]||0)+1;row.ai_system_id=uid('ai');row.display_id=`AI-${String(db.ai_counters[row.client_id]).padStart(3,'0')}`;row.created_at=now();row.created_by=db.user.user_id;row.related_links=[];db.ai_systems.push(row);}else Object.assign(old,row);
