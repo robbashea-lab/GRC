@@ -6,7 +6,9 @@ import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches, calendarDay } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
 import {isBrawndoReference} from '@/lib/reference';
-import {policyStatus,policyStatusLabel,policyColumns} from '@/lib/brawndoPolicies';
+import {policyStatus,policyStatusLabel,policyColumns,policyTiles,policyViewMatches} from '@/lib/brawndoPolicies';
+import {BrawndoPageHeader,BrawndoTiles,BrawndoChips} from '@/components/BrawndoPage';
+import {formatHistory} from '@/components/RegisterCells';
 import {PolicyAlignment} from '@/components/BrawndoPolicyDetails';
 import {pilotReviewStatus,pilotReviewMatches,pilotReviewColumns,reviewSource,REVIEW_STATUS,PILOT_HIDDEN_COLUMNS} from '@/lib/brawndoReviews';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
@@ -100,7 +102,9 @@ function EntityListPage({ kind }) {
   const reviewsPilot = kind==='reviews' && isBrawndoReference(currentClientId,user);
   const policiesPilot = kind==='policies' && isBrawndoReference(currentClientId,user);
   // Reviews pilot folds type and source under the title, and next due under recurrence.
-  const displayColumns = policiesPilot ? schema.columns.map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c) : reviewsPilot ? schema.columns.filter(c=>!PILOT_HIDDEN_COLUMNS.includes(c.key)) : schema.columns;
+  // Policies pilot folds version and last review under the policy title.
+  const POLICY_HIDDEN=['version','last_reviewed_at'];
+  const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c) : reviewsPilot ? schema.columns.filter(c=>!PILOT_HIDDEN_COLUMNS.includes(c.key)) : schema.columns;
   const [theme,setTheme]=useBrawndoTheme();
   const [alignmentTarget,setAlignmentTarget]=useState(null);
   const location = useLocation();
@@ -134,6 +138,7 @@ function EntityListPage({ kind }) {
   const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
   const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
   const reviewView = params.get('reviewView') || '';
+  const policyView = ['approved','awaiting','due30'].includes(params.get('policyView')) ? params.get('policyView') : '';
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
   const sortDir = params.get("sortDir") || defaultSort.dir;
@@ -292,6 +297,7 @@ function EntityListPage({ kind }) {
       if (!columnStatusActive && urlFilters.status && (reviewsPilot?pilotReviewStatus(r):policiesPilot?policyStatus(r):r.status) !== urlFilters.status) return false;
 
       if (!reviewsPilot && !policiesPilot && signal && !signal.test(r)) return false;
+      if (policiesPilot && !policyViewMatches(r, policyView)) return false;
       if (isReviews && !reviewsPilot && !signal && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
       if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && (statusFilter === "active" ? (TERMINAL_STATUS[kind] || []).includes(r.status) : (policiesPilot?policyStatus(r):r.status) !== statusFilter)) return false;
       if (!s) return true;
@@ -333,7 +339,7 @@ function EntityListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, reviewsPilot, policiesPilot, reviewView, carriedClientChanged, user]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, reviewsPilot, policiesPilot, reviewView, carriedClientChanged, user, policyView]);
   const filtered = table.apply(presetRows);
   // Keep the register's geometry/opener during an in-place modal save refresh.
   const showLoading = loading && (!(reviewsPilot||policiesPilot) || !tableSource.length);
@@ -405,14 +411,17 @@ function EntityListPage({ kind }) {
   }
 
   return (
-    <div className={`register-surface${reviewsPilot?' brawndo-reviews':''}`} data-layout={isReviews ? 'reviews' : undefined} data-theme={reviewsPilot?theme:undefined}>
+    <div className={`register-surface${reviewsPilot?' brawndo-reviews':''}${policiesPilot?' bpage':''}`} data-layout={isReviews ? 'reviews' : undefined} data-theme={reviewsPilot||policiesPilot?theme:undefined}>
       {reviewsPilot ? <div className="brev-head">
         <div><p className="brev-eyebrow">{currentClient?.name||'Client'} · Recurring obligations</p><h1>Reviews</h1></div><HeaderActions>
           <button type="button" className="brev-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
           <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || !rows.length} testid="export-reviews-button"/>
           {canWrite&&<PrimaryAction label="New Review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}
         </HeaderActions>
-      </div> : <PageHeader
+      </div> : policiesPilot ? <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Policy library`} title="Policies">
+          <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || rows.length === 0} testid="export-policies-button" />
+          {canWrite && <PrimaryAction label="New Policy" testid="create-policies-button" onClick={() => { setSelected(null); setOpen(true); }} />}
+        </BrawndoPageHeader> : <PageHeader
         title={schema.title}
         subtitle={policiesPilot?'Policy documents, versions and approvals. Manage review workload in Reviews.':schema.subtitle}
         action={
@@ -422,6 +431,7 @@ function EntityListPage({ kind }) {
           </HeaderActions>
         }
       />}
+      {policiesPilot&&<BrawndoTiles label="Policy summary" loading={loading&&!tableSource.length} tiles={policyTiles(tableSource,programs,policyAssessments).map(t=>t.id==='mapped'?t:{...t,pressed:policyView===t.id,onClick:()=>setParam('policyView',policyView===t.id?'':t.id)})}/>}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       {reviewsPilot ? <BrawndoReviewSummary rows={tableSource} active={reviewView} loading={loading} onPick={v=>setParam('reviewView',v)}/> : !policiesPilot && signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
       <div className="register-toolbar">
@@ -448,6 +458,8 @@ function EntityListPage({ kind }) {
           return <button key={id||'all'} type="button" className="brev-chip" aria-pressed={pressed} onClick={()=>setParam('reviewView',pressed&&id?'':id)}>{label}{loading?'':` · ${n}`}</button>;})}</div>
           <div className="brev-filters"><ColumnControl table={table} columnKey="review_type"/><ColumnControl table={table} columnKey="owner_id"/></div></> : isReviews ? (
           <ViewTabs views={REVIEW_TABS} active={columnStatusActive ? null : reviewTab} onPick={setReviewTab} counts={reviewTabCounts} label="Review views" testid="reviews-tabs" testIdPrefix="reviews-tab-" />
+        ) : policiesPilot ? (
+          <BrawndoChips label="Policy views" chips={[['','All'],['approved','Approved'],['awaiting','Awaiting approval'],['due30','Review due in 30 days']].map(([id,label])=>({id:id||'all',label,count:loading?null:tableSource.filter(r=>policyViewMatches(r,id)).length,pressed:policyView===id,onClick:()=>setParam('policyView',id&&policyView!==id?id:''),testid:`policy-view-${id||'all'}`}))}/>
         ) : (
           statusOptions.length > 0 && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -461,7 +473,7 @@ function EntityListPage({ kind }) {
           )
         )}
         {isReviews && <Button variant="link" size="sm" onClick={() => reviewsPilot ? setParam('reviewView',reviewView==='history'?'':'history') : setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewsPilot ? (reviewView==='history'?'All Reviews':'Completed / cancelled history') : reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
-        {!reviewsPilot && <RegisterCount shown={filtered.length} total={isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length} />}
+        {!reviewsPilot && !policiesPilot && <RegisterCount shown={filtered.length} total={isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length} />}
       </div>
 
       {/* Bulk action bar */}
@@ -549,7 +561,7 @@ function EntityListPage({ kind }) {
                     aria-label={`Select all ${kind.replaceAll('_',' ')}`}
                   />
                 </th>
-                {columns.filter(c=>!reviewsPilot||!PILOT_HIDDEN_COLUMNS.includes(c.key)).map(c => <SortableHeader key={c.key} table={table} column={reviewsPilot&&c.primary?{...c,label:'Review'}:c} data-column={isReviews ? c.key : undefined} />)}
+                {columns.filter(c=>(!reviewsPilot||!PILOT_HIDDEN_COLUMNS.includes(c.key))&&(!policiesPilot||!POLICY_HIDDEN.includes(c.key))).map(c => <SortableHeader key={c.key} table={table} column={reviewsPilot&&c.primary?{...c,label:'Review'}:c} data-column={isReviews ? c.key : undefined} />)}
                 <th scope="col" className="tbl-head w-10"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
@@ -592,7 +604,8 @@ function EntityListPage({ kind }) {
                        c.date ? <HistoryDate value={row[c.key]} /> :
                        (
                          <span className="inline-flex items-center gap-2">
-                           {reviewsPilot && c.primary ? <span className="brev-title"><button type="button" className="register-record-link">{row[c.key]}</button><span className="brev-meta">{reviewValue('review_type',row.review_type)} · {reviewSource(row)}</span></span>
+                           {policiesPilot && c.primary ? <span className="brev-title"><button type="button" className="register-record-link">{row[c.key]}</button><span className={`bpage-meta${['draft','in_review','pending_approval'].includes(policyStatus(row))?' is-attention':''}`}>{[row.version&&`Version ${row.version}`,['draft','in_review','pending_approval'].includes(policyStatus(row))?'awaiting approval':formatHistory(row.last_reviewed_at)&&`last reviewed ${formatHistory(row.last_reviewed_at)}`].filter(Boolean).join(' · ')||'No version recorded'}</span></span>
+                             : reviewsPilot && c.primary ? <span className="brev-title"><button type="button" className="register-record-link">{row[c.key]}</button><span className="brev-meta">{reviewValue('review_type',row.review_type)} · {reviewSource(row)}</span></span>
                              : reviewsPilot && c.key==='recurrence' ? <span className="brev-title"><span className="register-value">{reviewValue('recurrence',row.recurrence)}</span><span className="brev-meta">{closed?'—':row.policy_id?'Next calculated on completion':calendarDay(row.next_review_date)!==null?`Next ${new Date(calendarDay(row.next_review_date)).toLocaleDateString(undefined,{month:'short',day:'numeric',timeZone:'UTC'})}`:'No next date'}</span></span>
                              : (isReviews||policiesPilot) && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
@@ -662,6 +675,7 @@ function EntityListPage({ kind }) {
               })}
             </tbody>
           </table>
+          {policiesPilot && !showLoading && <p className="bpage-foot" data-testid="policies-count">Showing {filtered.length} of {tableSource.length} {tableSource.length===1?'policy':'policies'}{sortBy==='next_review_date'&&sortDir==='asc'?' · next review first':''}</p>}
           {reviewsPilot && !showLoading && <div className="brev-foot" data-testid="reviews-count">{(()=>{const history=reviewView==='history',total=tableSource.filter(r=>pilotReviewMatches(r,history?'history':'')).length;
             return `Showing ${filtered.length} of ${total} ${history?'completed or cancelled':'open'} ${total===1?'review':'reviews'}${sortBy==='due_date'&&sortDir==='asc'?' · soonest due first':''}`;})()}</div>}
         </div>

@@ -1,6 +1,6 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
-import VendorRegister from './VendorRegister';
+import VendorRegister,{vendorTiles} from './VendorRegister';
 import RecordDrawer from '@/components/RecordDrawer';
 import {SCHEMAS} from '@/lib/schemas';
 import api from '@/lib/api';
@@ -18,11 +18,11 @@ const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInpu
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/vendors'?[{vendor_id:'v',client_id:mockClient,name:'Cloud QA',service:'Hosting',criticality:'high',status:'active',assurance_records:[]}]:[]}));});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test('Brawndo summary and assurance columns; switching clients restores original creation',async()=>{
-  await act(async()=>root.render(<VendorRegister/>));expect(container.textContent).toContain('Overdue Reviews');expect(container.textContent).toContain('No assurance recorded');
+  await act(async()=>root.render(<VendorRegister/>));expect(container.querySelector('.bpage h1').textContent).toBe('Vendors');expect(container.textContent).toContain('Test · Third parties');expect(container.querySelector('[data-testid="tile-critical_high"]').textContent).toContain('Cloud QA');expect(container.querySelector('[data-testid="vendor-row-0"] .bpage-meta').textContent).toBe('Hosting');expect(container.querySelector('[data-testid="vendor-foot"]').textContent).toBe('Showing 1 of 1 active vendors');
   await click(container.querySelector('[data-testid="new-vendor"]'));
   const dialog=document.querySelector('[data-testid="vendors-drawer"]');expect(dialog.className).toContain('brawndo-cis-assessment');expect(dialog.textContent).not.toContain('Category');expect(dialog.textContent).toContain('Add to Register');
   await click(document.querySelector('[data-testid="drawer-cancel"]'));
-  mockClient='demo_dunder';await act(async()=>root.render(<VendorRegister/>));expect(container.textContent).not.toContain('Overdue Reviews');
+  mockClient='demo_dunder';await act(async()=>root.render(<VendorRegister/>));expect(container.querySelector('.bpage')).toBeNull();
   await click(container.querySelector('[data-testid="new-vendor"]'));expect(document.querySelector('[data-testid="new-vendor-dialog"]').textContent).toContain('Category');
 });
 test('new vendor draft is protected and failed create remains open',async()=>{
@@ -33,4 +33,24 @@ test('new vendor draft is protected and failed create remains open',async()=>{
   await click(document.querySelector('[data-testid="drawer-save"]'));expect(close).not.toHaveBeenCalled();expect(document.querySelector('[data-testid="field-name"]').value).toBe('Draft vendor');
   expect(api.post.mock.calls[0][1]).toMatchObject({next_review:'2026-10-15',contract_renewal:'2027-04-01'});
   await click(document.querySelector('[data-testid="drawer-cancel"]'));expect(document.body.textContent).toContain('Discard unsaved changes?');expect(close).not.toHaveBeenCalled();
+});
+test('tile context names vendors and falls back to next renewal',()=>{
+  const now=new Date('2026-09-30T12:00:00');
+  const rows=[{vendor_id:'a',name:'Sentinel',status:'active',criticality:'critical',next_review:'2026-10-18',contract_renewal:'2027-03-29',assurance_records:[{type:'SOC 2',next_follow_up:'2026-10-10'}]},
+    {vendor_id:'b',name:'Northstar',status:'active',criticality:'medium',next_review:'2027-03-09',contract_renewal:'2026-11-24'},
+    {vendor_id:'c',name:'Old Co',status:'inactive',criticality:'high',next_review:'2026-10-02',contract_renewal:'2026-10-05'}];
+  const t=Object.fromEntries(vendorTiles(rows,now).map(x=>[x.id,x]));
+  expect(t.critical_high).toMatchObject({count:1,context:'Sentinel'});
+  expect(t.review_due.count).toBe(1);expect(t.review_due.context).toMatch(/^Sentinel, Oct 18$/);
+  expect(t.assurance).toMatchObject({count:1,context:'Sentinel'});
+  expect(t.contract_soon.count).toBe(0);expect(t.contract_soon.context).toBe('Next renewal: Northstar, Nov 24');
+  expect(vendorTiles([],now).map(x=>x.count)).toEqual([0,0,0,0]);
+});
+test('tiles and chips drive the register views; row opens drawer',async()=>{
+  await act(async()=>root.render(<VendorRegister/>));
+  await click(container.querySelector('[data-testid="tile-critical_high"]'));
+  expect(container.querySelector('[data-testid="vendor-view-critical_high"]').getAttribute('aria-pressed')).toBe('true');
+  await click(container.querySelector('[data-testid="vendor-view-inactive"]'));expect(container.querySelector('[data-testid="vendor-row-0"]')).toBeNull();
+  await click(container.querySelector('[data-testid="vendor-view-all_active"]'));
+  await click(container.querySelector('[data-testid="vendor-row-0"]'));expect(document.querySelector('[data-testid="vendors-drawer"]')).not.toBeNull();
 });
