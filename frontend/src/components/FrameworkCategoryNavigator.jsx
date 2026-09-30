@@ -24,7 +24,22 @@ export function SoaTable({rows,onOpen}) {
   </section>;
 }
 
-export default function FrameworkCategoryNavigator({framework,rows,onOpen,soa=false,preference,onSelect}) {
+// Brawndo CIS IG1: one row per control, read left to right; opening a control keeps the existing drill-in.
+function ControlTable({nodes,rows,choose,path}){
+  const numbered=nodes.map(n=>{const m=/^Control\s+(\d+)\s*[—-]\s*(.+)$/.exec(n.label);return {n,num:m?Number(m[1]):null,name:m?m[2]:n.label,summary:sectionSummary(n.rows)};});
+  const present=new Set(numbered.map(x=>x.num)),absent=[...Array(18)].map((_,i)=>i+1).filter(i=>!present.has(i));
+  return <><table className="bcis-table"><thead><tr><th scope="col">#</th><th scope="col">Control</th><th scope="col">Assessed</th><th scope="col">Needs attention</th><th scope="col"><span className="sr-only">Open</span></th></tr></thead>
+    <tbody>{numbered.map(({n,num,name,summary:s})=>{const applicable=s.total-(s.excluded||0),tone=!s.attention?'good':s.attention>=applicable?'critical':'attention';
+      return <tr key={n.key} data-testid={'control-row-'+(num??n.key)}>
+        <td className="bcis-num">{num??'—'}</td><td className="bcis-name">{name}</td>
+        <td>{s.assessed} of {applicable}</td>
+        <td><span className={`bcis-att is-${tone}`}>{s.attention?`${s.attention} of ${applicable}`:'None'}</span></td>
+        <td className="text-right"><button type="button" className="bcis-open" onClick={()=>choose([...path,n.key])} aria-label={`Open ${n.label}`}>Open ›</button></td>
+      </tr>;})}</tbody></table>
+    <p className="bcis-foot">All {nodes.length} IG1 controls · {rows.length} safeguards.{absent.length&&present.size&&!present.has(null)?` Control${absent.length===1?'':'s'} ${absent.join(', ').replace(/, (\d+)$/,' and $1')} ${absent.length===1?'has':'have'} no IG1 safeguards.`:''}</p></>;
+}
+
+export default function FrameworkCategoryNavigator({framework,rows,onOpen,soa=false,preference,onSelect,layout}) {
   const roots=useMemo(()=>{
     const groups=groupRequirements(framework,rows);
     return framework==='iso-27001'&&groups.length===1?groups[0].children:groups;
@@ -36,11 +51,12 @@ export default function FrameworkCategoryNavigator({framework,rows,onOpen,soa=fa
   const currentRows=selected?.rows||rows;
   return <section className="space-y-4" aria-label="Framework categories">
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      <Button size="sm" variant="ghost" onClick={()=>choose([])}>Categories</Button>
+      {layout==='table'&&<h2 className="bcis-controls-title">Controls</h2>}
+      <Button size="sm" variant="ghost" onClick={()=>choose([])}>{layout==='table'?'All controls':'Categories'}</Button>
       {trail.map((n,i)=><Button key={n.key} size="sm" variant="ghost" onClick={()=>choose(path.slice(0,i+1))}>{n.label}</Button>)}
       <Button className="ml-auto" size="sm" variant={all?'default':'outline'} aria-pressed={all} onClick={()=>setAll(!all)}>{all?'Back to categories':'All requirements'}</Button>
     </div>
-    {all||selected&&!nodes.length?(soa?<SoaTable rows={all?rows:currentRows} onOpen={onOpen}/>:<CisResultTable framework={framework} rows={all?rows:currentRows} onOpen={onOpen} label={all?'All requirements':selected.label}/>):<div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+    {layout==='table'&&!all&&!selected?<div className="bcis-card bcis-controls"><ControlTable nodes={nodes} rows={rows} choose={choose} path={path}/></div>:all||selected&&!nodes.length?(soa?<SoaTable rows={all?rows:currentRows} onOpen={onOpen}/>:<CisResultTable framework={framework} rows={all?rows:currentRows} onOpen={onOpen} label={all?'All requirements':selected.label}/>):<div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
       {nodes.map(n=>{const summary=sectionSummary(n.rows),next=nextAssessment(n.rows),undetermined=n.rows.filter(r=>!r.soa_applicability).length;return <article key={n.key} className="rounded-lg border border-line bg-surface-card p-4 flex flex-col gap-3">
         <h3 className="font-semibold text-sm leading-relaxed">{n.label}</h3>
         <p className="text-xs text-ink-secondary">{summary.total} {soa?'controls':v.items} · {summary.assessed} assessed{summary.excluded?' · '+summary.excluded+' N/A':''}</p>

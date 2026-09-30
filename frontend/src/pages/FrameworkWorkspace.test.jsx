@@ -21,10 +21,18 @@ test('Brawndo Demo retains the program summary, derived views, automatic expansi
  const response=(await api.get()).data;
  response.assessments=response.assessments.map(a=>({...a,client_id:'demo_brawndo'}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/>));
- const summary=container.querySelector('[aria-labelledby="cis-summary-heading"]').textContent;
- expect(summary).toContain('Assessment coverage98%');expect(summary).toContain('Implemented98%');expect(summary).toContain('Neither measure is a compliance percentage');
- expect(buttons('In Progress')).toHaveLength(0);
- await act(async()=>[...container.querySelectorAll('.cis-legend button')].find(b=>b.textContent.startsWith('Not Assessed')).click());
+ const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
+ expect(summary).toContain('98%Implemented55 of 56 safeguards');expect(summary).toContain('98%Assessed');expect(summary).toContain('1Still to assessContinue with safeguard 1.2');
+ expect(summary).toContain('not a compliance percentage, certification or audit opinion');
+ expect(container.querySelector('h1').textContent).toBe('CIS IG1');
+ // Controls read as one table row per control, with every IG1 control listed.
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
+ expect(container.querySelector('[data-testid="control-row-1"]').textContent).toContain('1 of 2');
+ expect(container.querySelector('.bcis-foot').textContent).toBe('All 15 IG1 controls · 56 safeguards. Controls 13, 16 and 18 have no IG1 safeguards.');
+ await act(async()=>container.querySelector('[aria-label^="Open Control 1"]').click());
+ expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(2);
+ await act(async()=>buttons('All controls')[0].click());
+ await act(async()=>[...container.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not assessed')).click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);
  expect(container.textContent).toContain('Showing 1 of 56 safeguards');
  await act(async()=>buttons('Clear search and filters')[0].click());
@@ -50,10 +58,10 @@ test('Brawndo stale and unevidenced views are derived from dates and links, not 
  response.assessments=response.assessments.map((a,i)=>({...a,client_id:'demo_brawndo',last_assessed:i===0?'2020-01-01':new Date().toISOString()}));
  response.work={a2:{evidence_count:1,latest_evidence_at:new Date().toISOString()}};
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/>));
- const signal=label=>[...container.querySelectorAll('.cis-signal')].find(b=>b.textContent.startsWith(label));
- expect(signal('Validation older than 12 months').textContent).toMatch(/1$/);
- expect(signal('Implemented without evidence').textContent).toMatch(/54$/);
- await act(async()=>signal('Validation older than 12 months').click());
+ const also=label=>[...container.querySelectorAll('.bcis-also button')].find(b=>b.textContent.includes(label));
+ expect(also('validations older than 12 months').textContent).toBe('1 validations older than 12 months');
+ expect(also('implemented without evidence').textContent).toBe('54 implemented without evidence');
+ await act(async()=>also('validations older than 12 months').click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);expect(container.querySelector('[data-testid="requirement-1.1"]')).toBeTruthy();
 });
 test('every client gets the reference workspace: categories start compact; open, resume and Next keep assessment data',async()=>{
@@ -109,4 +117,10 @@ test('ISO has three primary views; SoA retains all 93 controls and audit is a se
  await act(async()=>buttons('Internal Audit Program')[0].click());
  expect(container.textContent).toContain('Program not activated');
  expect(container.querySelector('[aria-labelledby="cis-summary-heading"]')).toBeNull();
+});
+test('Brawndo next steps rank not-implemented, overdue remediation, then untracked gaps',()=>{
+ const {nextSteps}=require('@/components/BrawndoCisOverview');
+ expect(nextSteps({gap:5,overdueActions:2,unremediated:12}).map(s=>s.title)).toEqual(['5 safeguards are not implemented or need validation','2 safeguards have overdue remediation','12 gaps have no finding recorded']);
+ expect(nextSteps({gap:1,overdueActions:0,unremediated:0}).map(s=>s.title)).toEqual(['1 safeguard is not implemented or needs validation']);
+ expect(nextSteps({gap:0,overdueActions:0,unremediated:0})).toEqual([]);
 });
