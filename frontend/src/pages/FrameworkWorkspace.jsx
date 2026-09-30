@@ -15,6 +15,9 @@ import {SocProgramSettings} from '@/components/SocReadiness';
 import {socConfiguration} from '@/lib/socReadiness';
 import {operatorStatuses,operatorVocabulary,assessmentProgress} from '@/lib/frameworkOperator';
 import CisWorkspaceSummary from '@/components/CisWorkspaceSummary';
+import BrawndoCisOverview,{BrawndoCisHeader} from '@/components/BrawndoCisOverview';
+import {isBrawndoReference} from '@/lib/reference';
+import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import CisResultTable from '@/components/CisResultTable';
 import ProgramContext from '@/components/ProgramContext';
 import OrganizationalControls from '@/components/OrganizationalControls';
@@ -84,6 +87,8 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   // in that framework's own vocabulary. CMMC has no assessment tracking yet.
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
   const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels(vocab);
+  // Brawndo CIS IG1 reads top to bottom: condition, next steps, controls. Presentation only.
+  const brawndoCis=frameworkKey==='cis-ig1'&&isBrawndoReference(clientId,user),[theme]=useBrawndoTheme();
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
@@ -127,9 +132,10 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const progress=assessmentProgress(scoped),resume=nextAssessment(scoped,preference.lastId),index=scoped.findIndex(r=>r.framework_assessment_id===selected?.framework_assessment_id);
   const attention=scoped.filter(needsAttention).length;
   const lastOpened=prototype&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
-  return <div className="space-y-4" data-testid={frameworkKey==='cis-ig1'?'cis-workspace':'framework-workspace'}>
+  return <div className={brawndoCis?'bcis':'space-y-4'} data-theme={brawndoCis?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':'framework-workspace'}>
+    {brawndoCis&&<BrawndoCisHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
-    {prototype&&!(frameworkKey==='iso-27001'&&isoView==='audit')&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
+    {brawndoCis?<BrawndoCisOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume}/>:prototype&&!(frameworkKey==='iso-27001'&&isoView==='audit')&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
     {frameworkKey==='iso-27001'&&<><nav aria-label="ISO workspace sections" className="flex flex-wrap gap-2">{Object.entries(ISO_VIEWS).map(([key,v])=><Button key={key} variant={isoView===key?'default':'outline'} aria-pressed={isoView===key} onClick={()=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('assessment');n.delete('package');n.delete('audit_occurrence');setParams(n);setSearch('');setFilter('all');}}>{v.label}</Button>)}</nav>{isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:<IsoGovernanceReviews clientId={clientId} soa={isoView==='annex_control'}/>}</>}
     {!(frameworkKey==='iso-27001'&&isoView==='audit')&&<>
     {lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}
@@ -149,7 +155,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>chooseFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div></>}
     {!visible.length&&<p role="status" className="text-sm">{prototype?`No ${vocab.items} match this view.`:'No requirements match these filters.'}</p>}
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
-    {prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='annex_control'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='annex_control'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
+    {prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='annex_control'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='annex_control'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})} layout={brawndoCis?'table':undefined}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
     </>}
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}} onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null} position={index>=0?`${index+1} of ${scoped.length} in framework order`:'Retained assessment'}/>}
   </div>;
