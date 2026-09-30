@@ -1,16 +1,16 @@
 import {Moon,Sun} from 'lucide-react';
-import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import './BrawndoPage.css';
 
 // Shared shell for Brawndo reference pages: themed surface, header, summary tiles and view chips.
 export function BrawndoSurface({className='',children,...rest}){
-  const [theme]=useBrawndoTheme();
+  const [theme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
   return <div className={`bpage ${className}`} data-theme={theme} {...rest}>{children}</div>;
 }
-export function BrawndoPageHeader({eyebrow,title,children}){
+export function BrawndoPageHeader({eyebrow,title,subtitle,children}){
   const [theme,setTheme]=useBrawndoTheme();
   return <header className="bpage-head">
-    <div><p className="bpage-eyebrow">{eyebrow}</p><h1>{title}</h1></div>
+    <div><p className="bpage-eyebrow">{eyebrow}</p><h1>{title}</h1>{subtitle&&<p className="bpage-subtitle">{subtitle}</p>}</div>
     <div className="bpage-actions">
       <button type="button" className="bpage-btn" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
       {children}

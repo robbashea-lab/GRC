@@ -1,0 +1,23 @@
+/* Dark theme for portaled surfaces (drawers, dialogs, menus, popovers, selects) while a themed Brawndo page
+   is in dark mode. Tokens only: layout, spacing and structure of the drawers are untouched. */
+html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet, .ui-menu, .ui-popover, .ui-floating, [role="listbox"]) {
+  --background: 213 21% 13%; --foreground: 216 18% 92%; --card: 213 21% 13%; --card-foreground: 216 18% 92%;
+  --popover: 213 21% 13%; --popover-foreground: 216 18% 92%; --secondary: 213 19% 17%; --secondary-foreground: 216 18% 92%;
+  --muted: 213 19% 17%; --muted-foreground: 213 11% 65%; --accent: 213 19% 19%; --accent-foreground: 216 18% 92%;
+  --border: 215 19% 20%; --input: 213 16% 27%; --ring: 223 100% 78%;
+  --color-bg-app: #12161c; --color-bg-surface: #1a2028; --color-bg-subtle: #151a21; --color-bg-tablehead: #151a21; --color-bg-row-hover: #232a33;
+  --color-border: #2a323d; --color-border-strong: #3a4450; --color-input-border: #3a4450; --color-control-active-border: #8fb0ff;
+  --color-text-primary: #e6e9ee; --color-text-secondary: #9aa4b0; --color-text-muted: #9aa4b0; --color-text-help: #8b95a1; --color-text-disabled: #6b7480;
+  --color-link: #8fb0ff; --color-link-hover: #c2d3ff; --color-focus-ring: #8fb0ff; --color-selected-bg: #232a33;
+  --color-critical: #f87171; --color-critical-bg: #3b1d1d; --color-critical-border: #5c2626;
+  --color-high: #fdba74; --color-high-bg: #3a2414; --color-high-border: #5c3a1c;
+  --color-moderate: #fbbf24; --color-moderate-text: #fbbf24; --color-moderate-bg: #3a2a12; --color-moderate-border: #5c4318;
+  --color-duesoon: #fbbf24; --color-duesoon-text: #fbbf24; --color-duesoon-bg: #3a2a12; --color-duesoon-border: #5c4318;
+  --color-success: #4ade80; --color-success-bg: #15301f; --color-success-border: #1f5130;
+  --color-info: #8fb0ff; --color-info-bg: #1c2640; --color-info-border: #2f3f66;
+  --color-neutral: #c3cad3; --color-neutral-bg: #232a33; --color-neutral-border: #3a4450;
+  --color-accepted: #c3cad3; --color-accepted-bg: #232a33; --color-accepted-border: #3a4450;
+  color-scheme: dark; background-color: var(--color-bg-surface); color: var(--color-text-primary); border-color: var(--color-border);
+}
+/* Solid critical pills (Overdue) keep white text on the darker red in dark portals (AA contrast). */
+html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet) .pill-critical { background: #b91c1c; color: #ffffff; }

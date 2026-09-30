@@ -21,7 +21,8 @@ test('grouped navigation, labelled badges and the shared theme preference',async
   expect(container.querySelector('[aria-label="2 overdue action items"]').textContent).toBe('2');
   expect(container.querySelector('[data-testid="nav-vendors"] .bsb-badge')).toBeNull();
   expect(container.querySelector('[data-testid="nav-compliance-cis-ig1"]')).not.toBeNull();
-  expect(container.querySelector('[data-testid="nav-systems"]')).toBeNull();
+  // Systems & Scope owns the system records Vendors and Evidence link to, so it stays in navigation.
+  expect(container.querySelector('[data-testid="nav-systems"]').getAttribute('href')).toBe('/systems');
   expect(container.querySelector('[data-testid="nav-contacts"]')).not.toBeNull();
   expect(container.querySelector('[data-testid="nav-client-profile"]')).not.toBeNull();
   expect(container.querySelector('aside').dataset.theme).toBe('dark');

@@ -104,8 +104,10 @@ export default function Calendar() {
   const drawerNode=drawer&&drawer.record.client_id===currentClientId&&<RecordDrawer key={drawer.key} open onOpenChange={open=>{if(!open){setDrawer(null);reload();}}} kind={drawer.kind} record={drawer.record} initialValues={drawer.initialValues} schema={SCHEMAS[drawer.kind].fields} clientId={currentClientId} onSaved={reload}/>;
   if(brawndo){
     const attnKey=`${currentClientId}:${revision}`,attnReady=attn?.key===attnKey;
+    // A refresh for the same client keeps the current list on screen, so closing a record returns focus to its row.
+    const attnShown=attnReady||(attn&&!attn.failed&&attn.key.slice(0,attn.key.lastIndexOf(':'))===currentClientId);
     return <BrawndoCalendarView clientName={currentClient?.name||'Client'} anchor={anchor} setAnchor={setAnchor} scope={scope} setScope={setScope} days={days} itemsForDay={itemsForDay} today={today}
-      attention={attnReady?attn.entries:[]} attentionLoading={!attnReady||!!attn.failed} attentionFailed={attnReady&&!!attn.failed} loading={loading} error={error} errorNode={<RegisterLoadError error={error} onRetry={reload} name="Calendar"/>} total={total} busy={busy} writable={writable}
+      attention={attnShown?attn.entries:[]} attentionLoading={!attnShown||(attnReady&&!!attn.failed)} attentionFailed={attnReady&&!!attn.failed} loading={loading} error={error} errorNode={<RegisterLoadError error={error} onRetry={reload} name="Calendar"/>} total={total} busy={busy} writable={writable}
       dragging={dragging} dragOverDay={dragOverDay} setDragOverDay={setDragOverDay} setDragging={setDragging} expanded={expanded} setExpanded={setExpanded}
       onDragStart={onDragStart} onDrop={onDrop} openRecord={openRecord} ymd={ymd} drawerNode={drawerNode}/>;
   }

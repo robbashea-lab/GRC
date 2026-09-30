@@ -11,7 +11,7 @@ import {BrawndoPageHeader,BrawndoTiles,BrawndoChips} from '@/components/BrawndoP
 import {formatHistory} from '@/components/RegisterCells';
 import {PolicyAlignment} from '@/components/BrawndoPolicyDetails';
 import {pilotReviewStatus,pilotReviewMatches,pilotReviewColumns,reviewSource,REVIEW_STATUS,PILOT_HIDDEN_COLUMNS} from '@/lib/brawndoReviews';
-import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import {ColumnControl} from '@/components/TableControls';
 import {reviewDisplayValue as reviewValue} from '@/lib/reviewPresentation';
 import BrawndoReviewSummary from '@/components/BrawndoReviewSummary';
@@ -105,7 +105,7 @@ function EntityListPage({ kind }) {
   // Policies pilot folds version and last review under the policy title.
   const POLICY_HIDDEN=['version','last_reviewed_at'];
   const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c) : reviewsPilot ? schema.columns.filter(c=>!PILOT_HIDDEN_COLUMNS.includes(c.key)) : schema.columns;
-  const [theme,setTheme]=useBrawndoTheme();
+  const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(reviewsPilot||policiesPilot,theme);
   const [alignmentTarget,setAlignmentTarget]=useState(null);
   const location = useLocation();
   const navigate = useNavigate();

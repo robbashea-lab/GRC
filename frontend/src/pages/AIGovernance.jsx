@@ -16,10 +16,11 @@ import {ranks} from '@/lib/tableFilters';
 import {isBrawndoReference} from '@/lib/reference';
 import {AI_VIEWS,aiMatches} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
+import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
 
 const text=(key,label)=>({key,label,sortable:true});
 export default function AIGovernance(){
-  const {currentClientId}=useOrg(),{user}=useAuth();
+  const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
   const pilot=isBrawndoReference(currentClientId,user);
   const [showInactive,setShowInactive]=useState(false);
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[quick,setQuick]=useState('active');
@@ -38,13 +39,17 @@ export default function AIGovernance(){
   if(!currentClientId)return <p className="page-content">Select a client.</p>;
   const counts=Object.fromEntries(presets.map(([id,,test])=>[id,rows.filter(test).length]));
   const canAdd=writable&&data?.intake.usage!=='no';
-  return <div className="register-surface"><PageHeader title="AI Governance" subtitle="AI systems and use cases, screened for governance attention. Not a legal classification."
-      action={canAdd?<HeaderActions><PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/></HeaderActions>:null}/>
+  const SUBTITLE='AI systems and use cases, screened for governance attention. Not a legal classification.';
+  const addAction=canAdd?<PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/>:null;
+  // Brawndo: same surface, header and view chips as the rebuilt pages; cards, workflow and data unchanged.
+  const Shell=pilot?BrawndoSurface:'div';
+  return <Shell className="register-surface brawndo-ai-page">{pilot?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
+      action={addAction?<HeaderActions>{addAction}</HeaderActions>:null}/>}
     {data?.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntake clientId={currentClientId} canWrite={writable} onSaved={()=>setRevision(n=>n+1)}/></div>}
     {!pilot&&data?.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
     <div className="register-toolbar">
       <SearchField label="Search AI systems" placeholder="Search AI systems…" value={search} onChange={setSearch} testid="ai-system-search"/>
-      <ViewTabs views={(pilot?AI_VIEWS:presets).map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={pilot?undefined:counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>
+      {pilot?<BrawndoChips label="AI system views" chips={AI_VIEWS.map(([id,label])=>({id,label,pressed:quick===id,onClick:()=>setQuick(id),testid:`ai-system-view-${id}`}))}/>:<ViewTabs views={presets.map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>}
       {pilot&&<><label className="flex gap-2 text-sm"><input type="checkbox" checked={showInactive} onChange={e=>setShowInactive(e.target.checked)}/>Show Archived/Inactive</label>{(search||quick!=='active'||showInactive)&&<button className="text-sm text-link" onClick={clear}>Clear filters</button>}</>}
       <RegisterCount shown={visible.length} total={rows.length}/>
     </div>
@@ -71,5 +76,5 @@ export default function AIGovernance(){
         </tbody>
       </table></div>}
     </div>
-  {selected&&data&&<AIDrawer key={`${currentClientId}:${selected.ai_system_id||'new'}`} open record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</div>;
+  {selected&&data&&<AIDrawer key={`${currentClientId}:${selected.ai_system_id||'new'}`} open record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</Shell>;
 }

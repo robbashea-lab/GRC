@@ -1,0 +1,19 @@
+/* Evidence Library on the shared Brawndo surface. Presentation only; layout and grouping unchanged. */
+.bevidence .register-toolbar { border-bottom: 1px solid var(--bp-border); border-radius: 12px; margin-bottom: 4px; }
+.bevidence .section-body { padding: 16px var(--register-gutter, 20px) 0; }
+.bevidence .section-body .register-table-frame { margin: 0; border-radius: 12px; }
+.bevidence h2 { font: 600 16px/1.3 'Space Grotesk', var(--font-heading); color: var(--bp-text); }
+.bevidence .evidence-folder { border-radius: 12px; border-color: var(--bp-border); background: var(--bp-card); color: var(--bp-text); transition: border-color 120ms, background-color 120ms; }
+.bevidence .evidence-folder:hover { border-color: var(--bp-muted); background: var(--bp-card); }
+.bevidence .evidence-folder>svg:first-child { color: var(--bp-accent); }
+.bevidence .evidence-folder small, .bevidence .evidence-folder>svg:last-child { color: var(--bp-muted); }
+.bevidence .evidence-breadcrumbs { color: var(--bp-muted); font-size: 13px; }
+.bevidence .evidence-breadcrumbs button { color: var(--bp-link); }
+.bevidence .evidence-breadcrumbs [aria-current="page"] { color: var(--bp-text); font-weight: 600; }
+.bevidence .register-link { color: var(--bp-link); }
+.bevidence .register-record-link:hover { color: var(--bp-link); text-decoration: underline; }
+.bevidence .register-icon-button { color: var(--bp-muted); }
+.bevidence .register-icon-button:hover { color: var(--bp-text); }
+.bevidence thead th { background: var(--bp-subtle); }
+.bevidence .empty-state { border-radius: 12px; border: 1px solid var(--bp-border); background: var(--bp-card); color: var(--bp-muted); }
+.bevidence input[type="checkbox"] { accent-color: var(--bp-accent); }

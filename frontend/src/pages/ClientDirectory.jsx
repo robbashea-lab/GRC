@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Search, MoreVertical, Archive, ExternalLink, ScrollText, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { useBrawndoTheme } from '@/lib/brawndoTheme';
+import { useBrawndoTheme, useBrawndoPortalTheme } from '@/lib/brawndoTheme';
 import { isReferencePortfolio } from '@/lib/reference';
 import { Moon, Sun } from 'lucide-react';
 import './Portfolio.css';
@@ -70,6 +70,7 @@ function Portfolio({
   const globalScope = user.role === 'super_admin' || (user.role === 'platform_admin' && !user.client_ids?.length);
   const canManage = ['super_admin', 'platform_admin'].includes(user.role);
   const reference = isReferencePortfolio(user), [theme, setTheme] = useBrawndoTheme();
+  useBrawndoPortalTheme(reference, theme);
   const load = useCallback(async () => {
     const request = ++generation.current;
     setLoading(true);
