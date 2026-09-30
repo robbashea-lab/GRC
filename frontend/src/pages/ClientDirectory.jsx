@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrg } from '@/context/OrgContext';
 import { grcLead } from '@/lib/clientRelationships';
 import { tableColumns } from '@/lib/tableColumns';
-import { portfolioOrder, inactiveDays, isStale, STALE_AFTER_DAYS } from '@/lib/portfolioOverview';
+import { portfolioTotals, PORTFOLIO_TILES as TILES, portfolioOrder, inactiveDays, isStale, STALE_AFTER_DAYS } from '@/lib/portfolioOverview';
 import { usePortfolioView } from '@/lib/usePortfolioView';
 import { loadPortfolioRecord } from '@/lib/portfolioRecord';
 import { useTableControls, ColumnControl, TableFilterChips } from '@/components/TableControls';
@@ -17,7 +17,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Search, MoreVertical, Archive, ExternalLink, ScrollText, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useBrawndoTheme } from '@/lib/brawndoTheme';
+import { isReferencePortfolio } from '@/lib/reference';
+import { Moon, Sun } from 'lucide-react';
 import './Portfolio.css';
+import './BrawndoPortfolio.css';
 // Quick views narrow the table to clients carrying that kind of work (one at a time); the column
 // menus still combine filters. "My Team" needs a manager-to-team relationship the data model does not
 // have yet (docs/portfolio-command-center.md); scope options are a list so it can be added here without new logic.
@@ -26,6 +30,8 @@ const SCOPES = [[false, 'All Clients', 'all'], [true, 'Assigned to Me', 'assigne
 const METRICS = [['past_due', 'Past Due'], ['due_30d', 'Due ≤30d'], ['due_31_90d', 'Upcoming (31–90d)'], ['critical_high_issues', 'Critical / High'], ['significant_risks', 'Significant Risks'], ['unassigned', 'Unassigned']];
 // Red only where the number means genuine urgency; other non-zero counts stay neutral and zeros recede.
 const URGENT = ['past_due', 'critical_high_issues'];
+// Reference portfolio: counts carry a severity tone; zero always recedes.
+const TONE = { past_due: 'critical', critical_high_issues: 'critical', significant_risks: 'attention', unassigned: 'attention' };
 const fmtDate = value => value ? new Date(String(value).slice(0, 10) + 'T12:00:00').toLocaleDateString(undefined, {
   month: 'short',
   day: 'numeric'
@@ -63,6 +69,7 @@ function Portfolio({
     recordRequest = useRef(0);
   const globalScope = user.role === 'super_admin' || (user.role === 'platform_admin' && !user.client_ids?.length);
   const canManage = ['super_admin', 'platform_admin'].includes(user.role);
+  const reference = isReferencePortfolio(user), [theme, setTheme] = useBrawndoTheme();
   const load = useCallback(async () => {
     const request = ++generation.current;
     setLoading(true);
@@ -161,8 +168,17 @@ function Portfolio({
       if (request === recordRequest.current) toast.error(formatError(e));
     }
   };
-  return <div className="portfolio-overview">
-    <PageHeader title="Client Portfolio" />
+  const totals = reference ? portfolioTotals(rows) : null;
+  return <div className={`portfolio-overview${reference ? ' bport' : ''}`} data-theme={reference ? theme : undefined}>
+    {reference ? <header className="bp-head">
+      <div><p className="bp-eyebrow">{loading ? 'Portfolio' : `${rows.length} ${rows.length === 1 ? 'client' : 'clients'} in view`}</p><h1>Client Portfolio</h1></div>
+      <button type="button" className="bp-theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-pressed={theme === 'dark'} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>{theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}<span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button>
+    </header> : <PageHeader title="Client Portfolio" />}
+    {reference && !loading && !error && <div className="bp-tiles" role="group" aria-label="Portfolio totals" data-testid="portfolio-tiles">{TILES.map(([key, label, tone]) => {
+      const t = totals[key], signal = QUICK.some(([q]) => q === key), cls = `bp-tile is-${t.total ? tone : 'clear'}`;
+      const body = <><span className="bp-tile-label">{label}</span><span className="bp-tile-value">{t.total}</span><span className="bp-tile-context">{t.total ? `${t.clients} of ${rows.length} clients${t.top && t.clients > 1 ? ` · most at ${t.top}` : t.top ? ` · ${t.top}` : ''}` : 'None across the portfolio'}</span></>;
+      return signal ? <button key={key} type="button" className={cls} aria-pressed={activeSignal === key} onClick={() => pickSignal(key)} data-testid={`portfolio-tile-${key}`}>{body}</button> : <div key={key} className={cls} data-testid={`portfolio-tile-${key}`}>{body}</div>;
+    })}</div>}
     <div className="register-toolbar flex-wrap" data-testid="client-directory-filters">
       <div className="register-search relative">
         <Search aria-hidden="true" className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
@@ -210,7 +226,7 @@ function Portfolio({
               <td className="tbl-cell"><button onClick={() => enter(r)} data-testid={`client-open-${r.client_id}`} className="text-left hover:underline underline-offset-2 font-medium text-ink-primary">{r.name}</button><div className="text-xs text-ink-secondary">{r.industry || '—'}{['archived', 'inactive', 'onboarding'].includes(r.client_status) && <span className="ml-1 capitalize">· {r.client_status}</span>}</div></td>
               <td className="tbl-cell"><span className="font-medium text-ink-primary">{lead.name}</span>{lead.notice && <span title={lead.notice} className="inline-flex ml-1"><AlertTriangle className="h-3 w-3 text-ink-secondary" aria-hidden="true" /><span className="sr-only">{lead.notice}</span></span>}</td>
               <td className="tbl-cell"><div className="flex flex-wrap gap-1">{r.frameworks?.length ? r.frameworks.map(f => <button key={f.key} onClick={() => enter(r, f.to)} className="portfolio-framework rounded border border-line bg-surface-subtle text-ink-secondary px-1.5 py-0.5 text-xs hover:bg-surface-hover" aria-label={`Open ${f.label} for ${r.name}`} title={`${f.label} applies. Open the framework workspace for recorded assessments and linked work.`}>{f.label}</button>) : <span className="text-xs text-ink-help">None selected</span>}</div></td>
-              {METRICS.map(([key, label]) => <td key={key} className="tbl-cell text-right"><button type="button" data-metric={key} aria-label={`${r.name}: ${label}, ${r[key] ?? 'unavailable'} items`} className={`portfolio-metric font-mono tabular-nums underline-offset-2 hover:underline ${r[key] > 0 ? URGENT.includes(key) ? 'text-semantic-critical font-semibold' : 'text-ink-primary font-medium' : 'text-ink-help'}`} onClick={() => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)}>{r[key] ?? '—'}</button></td>)}
+              {METRICS.map(([key, label]) => <td key={key} className="tbl-cell text-right"><button type="button" data-metric={key} aria-label={`${r.name}: ${label}, ${r[key] ?? 'unavailable'} items`} className={`portfolio-metric ${reference ? `bp-count is-${r[key] > 0 ? TONE[key] || 'neutral' : 'zero'}` : ''} font-mono tabular-nums underline-offset-2 hover:underline ${r[key] > 0 ? URGENT.includes(key) ? 'text-semantic-critical font-semibold' : 'text-ink-primary font-medium' : 'text-ink-help'}`} onClick={() => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)}>{r[key] ?? '—'}</button></td>)}
               <td className="tbl-cell text-xs"><LastActivity activity={r.last_activity} /></td>
               <td className="tbl-cell"><ClientRowMenu row={r} index={i} onOpen={() => enter(r)} onArchived={() => { load(); refreshClients(); }} canEdit={canManage} /></td>
             </tr>;

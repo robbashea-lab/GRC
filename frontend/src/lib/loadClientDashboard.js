@@ -34,7 +34,8 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
         const {data}=await api.get('/frameworks/cis-ig1',{params:{client_id:clientId},signal});
         if(data.assessments.some(a=>a.client_id!==clientId))throw new Error('Assessment belongs to another client.');
         const byId=new Map(data.assessments.map(a=>[a.definition_id,a]));
-        cisRows=data.definitions.filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id)}));
+        // Linked-work projection lets the dashboard derive gap tracking, evidence and freshness.
+        cisRows=data.definitions.filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
       }
     }
     return {...summary.data,members,queue,cisRows,onboardingCompleted:!!baselineResponse.data?.state?.completed,

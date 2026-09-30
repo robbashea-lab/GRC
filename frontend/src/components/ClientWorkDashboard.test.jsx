@@ -38,3 +38,22 @@ test.each([['pastDue','No past-due items.'],['due30','No items due in the next 3
   expect(container.textContent).toContain(message);
   expect(container.querySelectorAll('tbody tr')).toHaveLength(0);
 });
+test('tile context tolerates undated or untyped items and the theme choice persists',async()=>{
+  const odd=[{key:'x',id:'x',kind:'tasks',title:'Undated work',status:'open',owner:'Unassigned',unassigned:true,due_date:null}];
+  const q={as_of:'2026-09-27',groups:Object.fromEntries(['all','pastDue','due30','unassigned'].map(k=>[k,{total:1,items:odd}]))};
+  await act(async()=>root.render(<ClientWorkDashboard queue={q} programs={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={()=>{}}/>));
+  expect(container.textContent).not.toMatch(/undefined|null|NaN|\d{4,}d late/);
+  const toggle=container.querySelector('.bd-theme');
+  await act(async()=>toggle.click());
+  expect(container.querySelector('.bdash').dataset.theme).toBe('dark');
+  expect(localStorage.getItem('omnisciente:brawndo-dashboard-theme')).toBe('dark');
+  await act(async()=>toggle.click());localStorage.clear();
+});
+test('CIS card derives gaps from linked work and links each count to its filtered workspace',async()=>{
+  const rows=[{status:'in_progress',work:{open_findings:1,direct_findings:0}},{status:'addressed',last_assessed:new Date().toISOString(),work:{evidence_count:0}},{status:'needs_attention',work:{direct_findings:1}}];
+  await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[{key:'cis-ig1',name:'CIS Controls v8.1 IG1'}]} cisRows={rows} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={()=>{}}/>));
+  const gap=container.querySelector('a[href="/compliance/cis-ig1?view=unremediated"]');
+  expect(gap.textContent).toBe('Gaps without a Finding1');
+  expect(container.querySelector('a[href="/compliance/cis-ig1?view=unevidenced"]').textContent).toBe('Implemented without evidence1');
+  expect(container.querySelector('.bd-donut').getAttribute('aria-label')).toContain('1 Implemented');
+});

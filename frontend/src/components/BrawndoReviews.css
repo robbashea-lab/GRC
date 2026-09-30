@@ -1,4 +1,66 @@
-.brawndo-reviews .register-col-basis { width: 164px; }
-.brawndo-reviews .register-col-owner { width: 160px; }
-.brawndo-reviews .client-work-filter:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
-.brawndo-reviews .register-table-frame[data-layout="reviews"] > table { min-width: 1152px; }
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+/* Brawndo Reviews (light and dark). Remaps shared tokens inside .brawndo-reviews only; drawers render outside it. */
+.brawndo-reviews {
+  --rv-bg: #f4f5f2; --rv-card: #ffffff; --rv-border: #e6e2dc; --rv-text: #1d232b; --rv-muted: #5d6670;
+  --rv-critical: #b91c1c; --rv-critical-bg: #fdecec; --rv-attention: #a15c07; --rv-attention-bg: #fef5e6;
+  --rv-neutral: #1d232b; --rv-accent: #4a6e0a; --rv-focus: #4172f4;
+  --color-bg-surface: var(--rv-card); --color-bg-subtle: #f7f6f3; --color-bg-tablehead: #f7f6f3; --color-border: var(--rv-border); --color-border-strong: #cfc9c0;
+  --color-text-primary: var(--rv-text); --color-text-secondary: var(--rv-muted); --color-text-muted: var(--rv-muted); --color-text-help: #7b848f;
+  --color-link: #2446b8; --color-link-hover: #16307f; --color-selected-bg: #eef1ec; --color-neutral-bg: #f1f1ec;
+  min-height: calc(100vh - 44px); padding-bottom: 32px; background: var(--rv-bg); color: var(--rv-text); font-family: 'IBM Plex Sans', var(--font-body);
+  transition: background-color var(--duration-drawer, 240ms) var(--ease-out, ease), color var(--duration-drawer, 240ms);
+}
+.brawndo-reviews[data-theme="dark"] {
+  --rv-bg: #12161c; --rv-card: #1a2028; --rv-border: #2a323d; --rv-text: #e6e9ee; --rv-muted: #9aa4b0;
+  --rv-critical: #f87171; --rv-critical-bg: #3b1d1d; --rv-attention: #fbbf24; --rv-attention-bg: #3a2a12;
+  --rv-neutral: #e6e9ee; --rv-accent: #a3db33; --rv-focus: #8fb0ff;
+  --color-bg-subtle: #151a21; --color-bg-tablehead: #151a21; --color-border-strong: #3a4450; --color-text-help: #7f8a96;
+  --color-link: #8fb0ff; --color-link-hover: #c2d3ff; --color-selected-bg: #232a33; --color-neutral-bg: #232a33;
+  --color-info: #8fb0ff; --color-info-bg: #1c2640; --color-info-border: #2f3f66; --color-duesoon-text: #fbbf24; --color-duesoon-bg: #3a2a12; --color-duesoon-border: #5c4318;
+  --color-neutral: #c3cad3; --color-neutral-border: #3a4450; --color-success: #4ade80; --color-success-bg: #15301f; --color-success-border: #1f5130;
+  color-scheme: dark;
+}
+.brev-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 24px var(--register-gutter, 20px) 16px; }
+.brev-head h1 { margin: 2px 0 0; font: 600 30px/1.2 'Space Grotesk', var(--font-heading); letter-spacing: -.01em; color: var(--rv-text); }
+.brev-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--rv-accent); }
+.brev-theme { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--rv-border); background: var(--rv-card); color: var(--rv-text); font: 500 13px 'IBM Plex Sans', var(--font-body); }
+.brev-theme:hover { border-color: var(--rv-muted); }
+.brev-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 0 var(--register-gutter, 20px) 16px; }
+.brev-tile { --tone: var(--rv-neutral); --rail: var(--rv-neutral); text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--rv-border); border-top: 3px solid var(--rail); background: var(--rv-card); color: var(--rv-text); min-width: 0; }
+.brev-tile.is-critical { --tone: var(--rv-critical); --rail: var(--rv-critical); }
+.brev-tile.is-attention { --tone: var(--rv-attention); --rail: var(--rv-attention); }
+.brev-tile.is-clear { --tone: var(--rv-muted); --rail: var(--rv-border); }
+.brev-tile:not(:disabled):hover { border-color: var(--rv-muted); border-top-color: var(--rail); }
+.brev-tile[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--rail); }
+.brev-tile-label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--rv-muted); }
+.brev-tile-value { font: 600 32px/1.15 'Space Grotesk', var(--font-heading); color: var(--tone); font-variant-numeric: tabular-nums; }
+.brev-tile-context { font-size: 13px; color: var(--rv-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brawndo-reviews .register-toolbar { margin: 0 var(--register-gutter, 20px); padding: 12px 16px; background: var(--rv-card); border: 1px solid var(--rv-border); border-bottom: 0; border-radius: 12px 12px 0 0; flex-wrap: wrap; gap: 10px; }
+.brev-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.brev-chip { font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--rv-border); background: var(--rv-card); color: var(--rv-text); white-space: nowrap; }
+.brev-chip:hover { border-color: var(--rv-muted); }
+.brev-chip[aria-pressed="true"] { background: var(--rv-text); border-color: var(--rv-text); color: var(--rv-bg); font-weight: 600; }
+.brev-filters { display: flex; gap: 14px; align-items: center; margin-left: auto; font-size: 13px; color: var(--rv-muted); }
+.brawndo-reviews .register-table-frame { margin: 0 var(--register-gutter, 20px); border: 1px solid var(--rv-border); border-radius: 0 0 12px 12px; background: var(--rv-card); }
+.brawndo-reviews .register-table-frame[data-layout="reviews"] > table { min-width: 960px; }
+.brawndo-reviews .tbl-head { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--rv-muted); }
+.brev-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.brev-title .register-record-link { font-weight: 600; color: var(--rv-text); text-align: left; }
+.brev-meta { font-size: 12px; color: var(--rv-muted); font-weight: 400; }
+.brawndo-reviews tr.brev-late > td:first-child { box-shadow: inset 3px 0 0 var(--rv-critical); }
+.brawndo-reviews[data-theme="dark"] .register-date.is-critical > span { color: var(--rv-critical); }
+.brawndo-reviews[data-theme="dark"] .register-date.is-duesoon > span { color: var(--rv-attention); }
+.brev-foot { padding: 10px 16px; border-top: 1px solid var(--rv-border); font-size: 12px; color: var(--rv-muted); }
+.brawndo-reviews .register-col-owner { width: 180px; }
+.brawndo-reviews :is(a, button, [tabindex]):focus-visible { outline: 2px solid var(--rv-focus); outline-offset: 2px; }
+@media (max-width: 1100px) { .brev-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .brev-head { flex-direction: column; align-items: flex-start; } .brev-tiles { grid-template-columns: 1fr; } .brev-filters { margin-left: 0; flex-wrap: wrap; } .brawndo-reviews .register-search, .brawndo-reviews .register-search input.ui-control { width: 100%; min-width: 0; } .brawndo-reviews .register-toolbar > * { min-width: 0; max-width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .brawndo-reviews { transition: none; } }
+/* Six-column layout: the title takes the remaining width. */
+.brawndo-reviews .register-table-frame[data-layout="reviews"] > table { width: 100%; }
+.brawndo-reviews .register-col-owner { width: 190px; }
+.brawndo-reviews .register-col-date { width: 130px; }
+.brawndo-reviews .register-col-recurrence { width: 150px; }
+.brawndo-reviews .register-col-status { width: 130px; }
+.brawndo-reviews .register-col-actions { width: 44px; }

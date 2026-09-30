@@ -131,8 +131,8 @@ export default function Dashboard() {
   const drawer=selected&&selected.record.client_id===currentClientId&&<RecordDrawer key={selected.key} open onOpenChange={open=>{if(!open)setSelected(null);}}
     kind={selected.kind} record={selected.record} schema={SCHEMAS[selected.kind]?.fields} clientId={currentClientId} users={data.members}
     onSaved={()=>{setSelected(null);setRevision(n=>n+1);}}/>;
-  if(pilot)return <><PageHeader title={`${currentClient?.name||'Client'} Dashboard`} subtitle="Your GRC work, at a glance."/>
-    <ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} cisRows={data.cisRows}
+  if(pilot)return <>
+    <ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} cisRows={data.cisRows} posture={data.posture} clientName={currentClient?.name||'Client'}
       filter={workFilter} onFilter={filter=>setWorkSelection({clientId:currentClientId,filter})} onOpen={openItem} loadDetail={loadDetail}/>{drawer}</>;
 
   return (

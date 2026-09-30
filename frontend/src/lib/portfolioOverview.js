@@ -62,3 +62,14 @@ export const isStale = (activity, now = new Date()) => {
   const days = inactiveDays(activity, now);
   return days == null || days >= STALE_AFTER_DAYS;
 };
+
+// Reference portfolio tiles: totals plus the client holding the most, so each tile says where to look first.
+export const PORTFOLIO_TILES = [['past_due', 'Past due', 'critical'], ['critical_high_issues', 'Critical / High', 'critical'], ['significant_risks', 'Significant risks', 'attention'], ['unassigned', 'Unassigned', 'attention'], ['due_30d', 'Due ≤30 days', 'neutral']];
+export function portfolioTotals(rows) {
+  return Object.fromEntries(PORTFOLIO_TILES.map(([key]) => {
+    const total = rows.reduce((n, r) => n + (Number(r[key]) || 0), 0);
+    const top = rows.reduce((best, r) => (Number(r[key]) || 0) > (Number(best?.[key]) || 0) ? r : best, null);
+    const clients = rows.filter(r => Number(r[key]) > 0).length;
+    return [key, { total, clients, top: top && Number(top[key]) > 0 ? top.name : null }];
+  }));
+}
