@@ -8,7 +8,9 @@ import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,A
 import AssigneeSelect from '@/components/AssigneeSelect';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import TableLoadingRow from '@/components/TableLoadingRow';
-import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { useTableControls, TableFilterChips, FilterEmpty, ColumnControl } from '@/components/TableControls';
+import {BrawndoSurface,BrawndoPageHeader,BrawndoTiles,BrawndoChips,plural,shortDate,daysUntil} from '@/components/BrawndoPage';
+import './BrawndoRisks.css';
 import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useSearchParams} from 'react-router-dom';
@@ -51,6 +53,33 @@ function levelFromScore(s) {
 const VIEWS = RISK_VIEWS;
 
 const CATEGORIES = SCHEMAS.risks.fields.find(f => f.name === 'category').options;
+
+// Risk scores are likelihood (1–5) × impact (1–5); see assessedRisk in lib/grcWork.
+export const RISK_SCORE_MAX=25;
+const byScore=(a,b)=>(assessedRisk(b).risk_score||0)-(assessedRisk(a).risk_score||0);
+const rid=r=>r.display_id||'ID pending';
+// Real-data context lines for the Brawndo summary tiles.
+export function riskTileContexts(risks,now=new Date()){
+  const active=risks.filter(r=>!riskMatches(r,'closed',now));
+  const sig=active.filter(r=>riskMatches(r,'significant',now)).sort(byScore);
+  const top=sig[0];
+  const statuses={};active.forEach(r=>{const l=pilotRiskStatus(r.status||'open').toLowerCase();statuses[l]=(statuses[l]||0)+1;});
+  const upcoming=active.filter(r=>riskMatches(r,'upcoming',now));
+  const today=daysUntil(new Date(now).toISOString().slice(0,10),now);
+  const next=active.filter(r=>{const d=daysUntil(r.next_review,now);return d!==null&&d>=Math.min(0,today??0);}).sort((a,b)=>String(a.next_review).localeCompare(String(b.next_review)))[0];
+  const unassigned=active.filter(r=>riskMatches(r,'unassigned',now));
+  return {
+    significant:{count:sig.length,context:top?`${rid(top)} · score ${assessedRisk(top).risk_score??'—'}, ${pilotRiskStatus(top.status||'open').toLowerCase()}${sig.length>1?` · +${sig.length-1} more`:''}`:'No high or critical risks'},
+    all_active:{count:active.length,context:active.length?Object.entries(statuses).map(([l,n])=>`${n} ${l}`).join(' · '):'No active risks'},
+    upcoming:{count:upcoming.length,context:next?`Next: ${shortDate(next.next_review)}, ${rid(next)}`:'No reviews scheduled'},
+    unassigned:{count:unassigned.length,context:unassigned.length?`${plural(unassigned.length,'risk')} need${unassigned.length===1?'s':''} an owner`:'Every risk has an owner'},
+  };
+}
+function ScoreCell({r}){
+  const a=assessedRisk(r),score=r.risk_score??a.risk_score,level=r.risk_level||a.risk_level;
+  if(!score)return <span className="register-empty">Needs assessment</span>;
+  return <div className="brisk-score"><span className={`brisk-num is-${level}`}>{score}</span><span className="brisk-bar" aria-hidden="true"><span className={`is-${level}`} style={{width:`${Math.min(100,score/RISK_SCORE_MAX*100)}%`}}/></span><span className="sr-only">out of {RISK_SCORE_MAX}</span>{level&&<SeverityBadge value={level}/>}</div>;
+}
 
 export default function RiskRegister() {
   const [searchParams,setSearchParams]=useSearchParams();
@@ -113,7 +142,7 @@ export default function RiskRegister() {
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const baseColumns = tableColumns('risk-register', { rows: tableSource, users });
-  const columns=pilot?riskColumns(baseColumns):baseColumns;
+  const columns=pilot?riskColumns(baseColumns).map(c=>c.key==='risk_score'?{...c,label:'Score · Level'}:c):baseColumns;
   const table = useTableControls({ columns, rows: tableSource, module: pilot?'brawndo-risks':'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key,values) => { if(pilot){if(key===null||['status','next_review','risk_level','owner_id'].includes(key)&&values.length)setView('all');return;} if (key === null || key === 'status' && !values.length) setView('all_active'); else if (key === 'status') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
   useEffect(()=>{
@@ -148,6 +177,59 @@ export default function RiskRegister() {
     a.download = `risk-register-${(currentClient?.name || "client").replace(/\s+/g, "-")}.csv`; a.click();
   }
 
+  if(pilot){
+    const ctx=riskTileContexts(tableSource,new Date(now));
+    const tile=(id,label,tone)=>({id,label,tone,...ctx[id],pressed:view===id,onClick:()=>selectView(view===id?'all':id)});
+    return <BrawndoSurface>
+      <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Risk register`} title="Risks">
+        <button type="button" className="bpage-btn" onClick={()=>setMatrixOpen(true)} data-testid="risk-matrix-btn"><Grid3x3 size={16} aria-hidden="true"/>Risk Scale &amp; Matrix</button>
+        <button type="button" className="bpage-btn" onClick={exportCsv} data-testid="risks-export"><Download size={16} aria-hidden="true"/>Export CSV</button>
+        {canWrite&&<PrimaryAction label="New Risk" onClick={()=>setAddOpen(true)} testid="new-risk"/>}
+      </BrawndoPageHeader>
+      {portfolioSignificant&&<p className="bpage-notice" role="status" data-testid="portfolio-risk-filter">Active High / Critical Risks · includes accepted Risks <button className="register-link" onClick={()=>{const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}}>Clear portfolio filter</button></p>}
+      <BrawndoTiles label="Risk summaries" loading={loading} tiles={[tile('significant','Significant','critical'),tile('all_active','All active','neutral'),tile('upcoming','Reviews due in 30 days','attention'),tile('unassigned','Unassigned','attention')]}/>
+      <div className="register-toolbar">
+          <SearchField label="Search risks" placeholder="Search risks…" value={q} onChange={setQ} testid="risk-search"/>
+          <BrawndoChips label="Risk views" chips={riskViews.map(v=>({id:v.id,label:v.label[0]+v.label.slice(1).toLowerCase(),count:loading?null:tableSource.filter(r=>riskMatches(r,v.id)).length,pressed:view===v.id,onClick:()=>selectView(view===v.id?'all':v.id),testid:`risk-view-${v.id}`}))}/>
+          <div className="brisk-filters"><ColumnControl table={table} columnKey="category"/><ColumnControl table={table} columnKey="risk_level"/></div>
+      </div>
+      <div className="register-body">
+        <TableFilterChips table={table}/>
+        <RegisterLoadError error={loadError} onRetry={load} name="risks"/>
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
+          <table className="w-full text-sm min-w-[980px]">
+            <thead><tr>
+              <th scope="col" className="tbl-head">Risk ID</th>
+              <SortableHeader table={table} columnKey="title"/>
+              <SortableHeader table={table} columnKey="risk_score"/>
+              <SortableHeader table={table} columnKey="owner_id"/>
+              <SortableHeader table={table} columnKey="status"/>
+              <SortableHeader table={table} columnKey="next_review"/>
+              <SortableHeader table={table} columnKey="last_reviewed"/>
+            </tr></thead>
+            <tbody className="divide-y divide-line">
+              {loading&&<TableLoadingRow colSpan={7}/>}
+              {!loading&&!loadError&&filtered.length===0&&<tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="risks" onClear={()=>{setQ('');setView('all_active');}}/></td></tr>}
+              {!loading&&filtered.map((r,i)=>{const closed=riskMatches(r,'closed'),d=daysUntil(r.next_review,new Date(now));return(
+                <tr key={r.risk_id} onClick={()=>setDrawer({open:true,record:r})} className={`row-hover row-open${!closed&&d!==null&&d<0?' bpage-late':''}`} data-testid={`risk-row-${i}`}>
+                  <td className="tbl-cell font-mono text-xs text-ink-help whitespace-nowrap">{rid(r)}</td>
+                  <td className="tbl-cell font-medium text-ink-primary min-w-0 max-w-sm"><button className="register-record-link text-left" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:r});}}>{r.title}</button><span className="bpage-meta">{r.category?riskCategories[r.category]||r.category:'No category'}</span></td>
+                  <td className="tbl-cell"><ScoreCell r={r}/></td>
+                  <td className="tbl-cell"><OwnerCell people={users} id={r.owner_id} status={r.status}/></td>
+                  <td className="tbl-cell"><StatusBadge value={r.status||'open'} label={pilotRiskStatus(r.status||'open')}/>{r.status==='accepted'&&!riskMatches(r,'accepted')&&<p className="text-xs text-ink-secondary">Acceptance needs review</p>}</td>
+                  <td className="tbl-cell whitespace-nowrap">{r.next_review?<><strong className="brisk-date">{shortDate(r.next_review)}</strong><span className="bpage-meta">{closed?'Closed':d===0?'Today':d<0?`${plural(-d,'day')} overdue`:`in ${plural(d,'day')}`}</span></>:<span className="register-empty">Not scheduled</span>}</td>
+                  <td className="tbl-cell"><HistoryDate value={r.last_reviewed} empty="Never reviewed"/></td>
+                </tr>);})}
+            </tbody>
+          </table>
+          {!loading&&<p className="bpage-foot" data-testid="risk-count">Showing {filtered.length} of {plural(tableSource.length,'risk')}</p>}
+        </div>
+      </div>
+      {drawer.open&&<RecordDrawer open={drawer.open} onOpenChange={v=>setDrawer(p=>({...p,open:v}))} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load}/>}
+      <RiskMatrixModal open={matrixOpen} onOpenChange={setMatrixOpen}/>
+      {addOpen&&<NewRiskDialog pilot open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}} onOpenMatrix={()=>setMatrixOpen(true)}/>}
+    </BrawndoSurface>;
+  }
   return (
     <div>
       <PageHeader

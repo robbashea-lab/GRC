@@ -18,7 +18,7 @@
   --color-border-strong: #3a4450; --color-text-help: #7f8a96; --color-link-hover: #c2d3ff; --color-selected-bg: #232a33; --color-neutral-bg: #232a33;
   --color-info: #8fb0ff; --color-info-bg: #1c2640; --color-info-border: #2f3f66; --color-duesoon-text: #fbbf24; --color-duesoon-bg: #3a2a12; --color-duesoon-border: #5c4318;
   --color-neutral: #c3cad3; --color-neutral-border: #3a4450; --color-success: #4ade80; --color-success-bg: #15301f; --color-success-border: #1f5130;
-  --color-moderate-text: #fbbf24; --color-moderate-bg: #3a2a12; --color-moderate-border: #5c4318; --color-high-text: #fdba74; --color-high-bg: #3a2414; --color-high-border: #5c3a1c;
+  --color-moderate-text: #fbbf24; --color-moderate-bg: #3a2a12; --color-moderate-border: #5c4318; --color-high: #fdba74; --color-high-text: #fdba74; --color-high-bg: #3a2414; --color-high-border: #5c3a1c;
   --color-critical-bg: #3b1d1d; --color-critical-border: #5c2626; --color-accepted-bg: #232a33; --color-input-border: #3a4450;
   color-scheme: dark;
 }

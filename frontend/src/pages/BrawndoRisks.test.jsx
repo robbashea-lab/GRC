@@ -1,6 +1,6 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
-import RiskRegister from './RiskRegister';
+import RiskRegister,{riskTileContexts,RISK_SCORE_MAX} from './RiskRegister';
 import api from '@/lib/api';
 let mockClient='demo_brawndo';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
@@ -19,18 +19,22 @@ beforeEach(()=>{
  api.get.mockImplementation(async path=>({data:path==='/risks'?rows:[]}));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+const tile=id=>container.querySelector(`[data-testid="tile-${id}"]`);
 test('stable summaries, filters and client isolation',async()=>{
  await act(async()=>root.render(<RiskRegister/>));
- expect(button('All Open').textContent).toContain('2');expect(button('Overdue Reviews').textContent).toContain('1');
- await click(button('Overdue Reviews'));expect(container.querySelector('tbody').textContent).not.toContain('Undated risk');
+ expect(tile('all_active').textContent).toContain('2');expect(tile('significant').textContent).toContain('1');
+ expect(container.querySelector('[data-testid="risk-view-review_due"]').textContent).toBe('Due for review · 1');
+ await click(container.querySelector('[data-testid="risk-view-review_due"]'));expect(container.querySelector('tbody').textContent).not.toContain('Undated risk');
+ expect(container.querySelector('tbody').textContent).toContain('Late risk');
+ await click(tile('significant'));expect(tile('significant').getAttribute('aria-pressed')).toBe('true');expect(container.querySelectorAll('tbody tr').length).toBe(1);
  await act(async()=>{const input=container.querySelector('input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'missing');input.dispatchEvent(new Event('input',{bubbles:true}));});
- expect(button('All Open').textContent).toContain('2');
+ expect(tile('all_active').textContent).toContain('2');
  mockClient='demo_other';rows=rows.map(r=>({...r,client_id:mockClient}));
  await act(async()=>root.render(<RiskRegister/>));
- expect(container.querySelector('[aria-label="Risk summaries"]')).toBeNull();
+ expect(tile('all_active')).toBeNull();expect(container.querySelector('.bpage')).toBeNull();
  expect(container.textContent).not.toContain('Assigned Owner');
  mockClient='demo_brawndo';rows=rows.map(r=>({...r,client_id:mockClient}));
- await act(async()=>root.render(<RiskRegister/>));expect(button('All Open').textContent).toContain('2');
+ await act(async()=>root.render(<RiskRegister/>));expect(tile('all_active').textContent).toContain('2');
 });
 test('new risk has annual/undecided defaults and protects an unfinished draft',async()=>{
  await act(async()=>root.render(<RiskRegister/>));await click(button('New Risk'));
@@ -39,4 +43,17 @@ test('new risk has annual/undecided defaults and protects an unfinished draft',a
  await act(async()=>{const input=dialog.querySelector('input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Unsaved risk');input.dispatchEvent(new Event('input',{bubbles:true}));});
  await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
  expect(document.querySelector('[role="alertdialog"]')).not.toBeNull();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('tile context lines use real statuses, scores and dates',()=>{
+ const now=new Date('2026-09-30T12:00:00');
+ const risks=[{display_id:'RISK-001',status:'in_progress',likelihood_score:3,impact_score:4,owner_id:'a',next_review:'2026-10-20'},{display_id:'RISK-002',status:'open',likelihood_score:2,impact_score:3,owner_id:'b',next_review:'2026-12-24'},{display_id:'RISK-003',status:'accepted',likelihood_score:2,impact_score:3,owner_id:'c',next_review:'2026-12-24'},{display_id:'RISK-004',status:'closed',likelihood_score:5,impact_score:5}];
+ const c=riskTileContexts(risks,now);
+ expect(c.significant).toEqual({count:1,context:'RISK-001 · score 12, in treatment'});
+ expect(c.all_active).toEqual({count:3,context:'1 in treatment · 1 open · 1 accepted'});
+ expect(c.upcoming.count).toBe(1);expect(c.upcoming.context).toMatch(/^Next: .+, RISK-001$/);
+ expect(c.unassigned).toEqual({count:0,context:'Every risk has an owner'});
+ const empty=riskTileContexts([{status:'open'}],now);
+ expect(empty.significant.context).toBe('No high or critical risks');expect(empty.upcoming.context).toBe('No reviews scheduled');expect(empty.unassigned.context).toBe('1 risk needs an owner');
+ expect(RISK_SCORE_MAX).toBe(25);
 });
