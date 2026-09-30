@@ -1,6 +1,7 @@
 import {ensureVendorReviews} from './vendors';
 import {approvalSnapshot} from './policyProvenance';
 import {invalidatePolicyApproval} from '../lib/policyProvenance';
+import {nextPolicyReview} from '../lib/brawndoPolicies';
 import {ensureRiskReview} from './risks';
 import { list, record, write, now, audit } from './store';
 import { reviewAction, reviewEvent } from './reviews';
@@ -271,11 +272,16 @@ export function action(db, kind, id, name, body) {
   if (kind === 'policies' && name === 'verify' && r.status==='in_review') throw new Error('Return the pending submission to Draft before verifying metadata');
   if (kind === 'policies' && name === 'verify' && Object.keys(body).some(k=>!['version','owner_id','approver_id','approved_at','last_reviewed_at','next_review_date','summary','status'].includes(k))) throw new Error('Unknown verification field');
   if(kind==='policies'&&name==='verify') {
+    if(r.client_id==='demo_brawndo'&&(r.schedule_from_reviews||db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id))) {
+      for(const key of ['last_reviewed_at','next_review_date'])if(body[key]&&String(body[key]).slice(0,10)!==String(r[key]||'').slice(0,10))throw new Error('Policy Review dates are controlled by linked Reviews.');
+      body={...body};delete body.last_reviewed_at;delete body.next_review_date;
+    }
     let fields={...Object.fromEntries(Object.entries(body).filter(([,v])=>v!=null&&v!=='')),
       presence:'verified_existing',verified_at:now(),verified_by:db.user.user_id};
     if(body.status==='approved') {
       const subject=approvalSnapshot(db,{...r,...fields});
       fields.approval_subject=subject;
+      if(r.client_id==='demo_brawndo'&&!r.schedule_from_reviews&&!db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id)&&!r.next_review_date&&!fields.next_review_date)fields.next_review_date=nextPolicyReview(fields.last_reviewed_at||r.last_reviewed_at||now().slice(0,10));
       fields.decision_history=[...(r.decision_history||[]),{action:'external_approval_recorded',recorded_by:db.user.user_id,
         recorded_by_name:db.user.name,recorded_at:now(),reported_approver_id:body.approver_id,reported_approved_at:body.approved_at,
         provenance:'Verified metadata; not an in-app approval',subject}];

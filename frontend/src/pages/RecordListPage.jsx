@@ -6,6 +6,8 @@ import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
 import {isBrawndoReference} from '@/lib/reference';
+import {policyStatus,policyStatusLabel,policyColumns} from '@/lib/brawndoPolicies';
+import {PolicyAlignment} from '@/components/BrawndoPolicyDetails';
 import {pilotReviewStatus,pilotReviewMatches,pilotReviewColumns,reviewSource,REVIEW_STATUS} from '@/lib/brawndoReviews';
 import BrawndoReviewSummary from '@/components/BrawndoReviewSummary';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -92,6 +94,9 @@ export default function RecordListPage({ kind }) {
   const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
   const reviewsPilot = kind==='reviews' && isBrawndoReference(currentClientId,user);
+  const policiesPilot = kind==='policies' && isBrawndoReference(currentClientId,user);
+  const displayColumns = policiesPilot ? schema.columns.map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c) : schema.columns;
+  const [alignmentTarget,setAlignmentTarget]=useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -105,14 +110,21 @@ export default function RecordListPage({ kind }) {
   const statusFilter = params.get("status") || DEFAULT_STATUS[kind] || "all";
   const signals = useMemo(() => registerSignals(kind), [kind]);
   const [programs, setPrograms] = useState([]);
+  const [policyAssessments,setPolicyAssessments]=useState([]);
+  const [alignmentError,setAlignmentError]=useState('');
   useEffect(() => {
     if (kind !== 'policies' || !currentClientId) { setPrograms([]); return undefined; }
     const controller = new AbortController();
+    setPolicyAssessments([]);setAlignmentError('');
     api.get('/frameworks/summary', { params: { client_id: currentClientId }, signal: controller.signal })
-      .then(({ data }) => { if (!controller.signal.aborted && data.client_id === currentClientId) setPrograms((data.items || []).filter(p => p.tracking_available).map(p => p.key)); })
-      .catch(() => { if (!controller.signal.aborted) setPrograms([]); });
+      .then(async({ data }) => {
+        if(controller.signal.aborted||data.client_id!==currentClientId)return;
+        const enabled=(data.items||[]).filter(p=>p.tracking_available).map(p=>p.key);setPrograms(enabled);
+        if(policiesPilot){const results=await Promise.all(enabled.map(key=>api.get('/frameworks/'+key,{params:{client_id:currentClientId},signal:controller.signal})));if(!controller.signal.aborted)setPolicyAssessments(results.flatMap(r=>r.data.assessments||[]).filter(a=>a.client_id===currentClientId));}
+      })
+      .catch(() => { if (!controller.signal.aborted) {setPrograms([]);if(policiesPilot)setAlignmentError('Alignment unavailable');} });
     return () => controller.abort();
-  }, [kind, currentClientId]);
+  }, [kind, currentClientId,policiesPilot]);
   const signal = useMemo(() => signals.find(x => x.id === params.get("signal")), [signals, params]);
   const reviewTab = params.get("tab") === "completed" ? "history" : params.get("tab") === "active" ? "all" : params.get("tab") || "all";
   const reviewView = params.get('reviewView') || '';
@@ -169,6 +181,7 @@ export default function RecordListPage({ kind }) {
     setLoading(true); setLoadError('');
     try {
       const { data } = await api.get(`/${kind}`, { params: { client_id: currentClientId,...(kind==='reviews'?{include_basis:true}:{}) } });
+      if(reviewsPilot)data.forEach(r=>{if(r.policy_id&&!['completed','cancelled'].includes(r.status))r.next_review_date=null;});
       if (kind === "policies") {
         const { data: reviews } = await api.get("/reviews", { params: { client_id: currentClientId } });
         data.forEach(policy => {
@@ -182,11 +195,11 @@ export default function RecordListPage({ kind }) {
       setChecked(new Set());
     } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
     finally { if (sequence === loadSequence.current) setLoading(false); }
-  }, [kind, currentClientId]);
+  }, [kind, currentClientId,reviewsPilot]);
 
   useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setRows([]); load(); return () => { sequence.current++; }; }, [load]);
 
-  const statusOptions = useMemo(() => schema.fields.find((x) => x.name === "status")?.options || [], [schema]);
+  const statusOptions = useMemo(() => policiesPilot ? [...new Set(rows.map(policyStatus))].map(value=>({value,label:policyStatusLabel(value)})) : schema.fields.find((x) => x.name === "status")?.options || [], [schema,policiesPilot,rows]);
   const filterClient = useRef(currentClientId);
   const carriedClientChanged = filterClient.current !== currentClientId;
   useEffect(() => {
@@ -195,7 +208,8 @@ export default function RecordListPage({ kind }) {
     filterClient.current = currentClientId;
     const next = new URLSearchParams(params);
     next.delete('owner'); next.delete('unassigned'); next.delete('reviewView');
-    if(kind==='reviews'&&pilotSwitch) ['q','tab','status','signal','sortBy','sortDir','setup'].forEach(key=>next.delete(key));
+    if(['reviews','policies'].includes(kind)&&pilotSwitch) ['q','tab','status','signal','sortBy','sortDir','setup'].forEach(key=>next.delete(key));
+    setAlignmentTarget(null);
     setParams(next, { replace: true });
   }, [currentClientId, params, setParams, kind, reviewsPilot, user]);
 
@@ -237,7 +251,7 @@ export default function RecordListPage({ kind }) {
   const contactAccessContext = useContactAccess(currentClientId, kind === 'contacts', rows);
   const columnCount = schema.columns.length + (kind === 'contacts' ? 3 : 2);
   const baseColumns = tableColumns(kind, { rows: tableSource, users });
-  const columns = reviewsPilot ? pilotReviewColumns(baseColumns,tableSource) : baseColumns;
+  const columns = reviewsPilot ? pilotReviewColumns(baseColumns,tableSource) : policiesPilot ? policyColumns(baseColumns,tableSource,programs,policyAssessments) : baseColumns;
   const table = useTableControls({ columns, rows: tableSource, module: kind, scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key, values) => {
     if (key !== 'status' || !values.length) return;
     const next = new URLSearchParams(params);
@@ -270,11 +284,11 @@ export default function RecordListPage({ kind }) {
         if (r[ownerField] || r.owner_id || r.assignee_id) return false;
       }
       if (urlFilters.severities.length && !urlFilters.severities.includes(r.severity)) return false;
-      if (!columnStatusActive && urlFilters.status && (reviewsPilot?pilotReviewStatus(r):r.status) !== urlFilters.status) return false;
+      if (!columnStatusActive && urlFilters.status && (reviewsPilot?pilotReviewStatus(r):policiesPilot?policyStatus(r):r.status) !== urlFilters.status) return false;
 
-      if (!reviewsPilot && signal && !signal.test(r)) return false;
+      if (!reviewsPilot && !policiesPilot && signal && !signal.test(r)) return false;
       if (isReviews && !reviewsPilot && !signal && !columnStatusActive && !reviewMatches(r, reviewTab)) return false;
-      if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && (statusFilter === "active" ? (TERMINAL_STATUS[kind] || []).includes(r.status) : r.status !== statusFilter)) return false;
+      if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && (statusFilter === "active" ? (TERMINAL_STATUS[kind] || []).includes(r.status) : (policiesPilot?policyStatus(r):r.status) !== statusFilter)) return false;
       if (!s) return true;
       const {occurrences, ...searchable} = r;
       return JSON.stringify(searchable).toLowerCase().includes(s);
@@ -314,10 +328,10 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, reviewsPilot, reviewView, carriedClientChanged]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, reviewsPilot, policiesPilot, reviewView, carriedClientChanged]);
   const filtered = table.apply(presetRows);
   // Keep the register's geometry/opener during an in-place modal save refresh.
-  const showLoading = loading && (!reviewsPilot || !tableSource.length);
+  const showLoading = loading && (!(reviewsPilot||policiesPilot) || !tableSource.length);
 
   const reviewTabCounts = useMemo(() => {
     if (!isReviews) return {};
@@ -394,7 +408,7 @@ export default function RecordListPage({ kind }) {
         </HeaderActions>
       </div> : <PageHeader
         title={schema.title}
-        subtitle={schema.subtitle}
+        subtitle={policiesPilot?'Policy documents, versions and approvals. Manage review workload in Reviews.':schema.subtitle}
         action={
           <HeaderActions>
             <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || rows.length === 0} testid={`export-${kind}-button`} />
@@ -404,7 +418,7 @@ export default function RecordListPage({ kind }) {
       />}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       {kind === "contacts" && <ContactCoverage rows={rows.filter(r => r.client_id === currentClientId)} />}
-      {reviewsPilot ? <BrawndoReviewSummary rows={tableSource} active={reviewView} loading={loading} onPick={v=>setParam('reviewView',v)}/> : signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
+      {reviewsPilot ? <BrawndoReviewSummary rows={tableSource} active={reviewView} loading={loading} onPick={v=>setParam('reviewView',v)}/> : !policiesPilot && signals.length > 0 && <RegisterSignalBar signals={signals} rows={rows.filter(r => r.client_id === currentClientId)} active={signal?.id} onPick={id => setParam("signal", signal?.id === id ? null : id)} />}
       <div className="register-toolbar">
         <SearchField label={`Search ${schema.title.toLowerCase()}`} testid={`${kind}-search`} value={q} onChange={setQ} placeholder={`Search ${schema.title.toLowerCase()}…`} />
         {hasUrlFilters && (
@@ -466,7 +480,7 @@ export default function RecordListPage({ kind }) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          {statusOptions.length > 0 && canWrite && !isReviews && (
+          {statusOptions.length > 0 && canWrite && !isReviews && !policiesPilot && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button data-testid="bulk-set-status" className="inline-flex items-center gap-1 rounded-md border border-brand-metallic-3 bg-brand-metallic hover:bg-brand-metallic-2 px-2.5 h-8 text-xs text-primary-foreground">
@@ -553,12 +567,12 @@ export default function RecordListPage({ kind }) {
                       aria-label={`Select ${row.title || row.name || 'record'}`}
                     />
                   </td>
-                  {schema.columns.map((c) => {
+                  {displayColumns.map((c) => {
                     const isDueLike = c.date && /(_date|_review|_on)$/.test(c.key);
                     const closed = row.status === "completed" || row.status === "cancelled" || row.status === "closed";
                     return (
                     <td key={`${row[idField] || i}-${c.key}`} data-column={isReviews ? c.key : undefined} className={`tbl-cell ${c.primary ? "font-medium text-ink-primary" : ""}`}>
-                      {c.badge ? (
+                      {policiesPilot&&c.key==='alignment'?(alignmentError?<span className="text-xs text-ink-secondary">{alignmentError}</span>:<PolicyAlignment record={row} programs={programs} assessments={policyAssessments} onOpen={setAlignmentTarget}/>) : policiesPilot&&c.key==='status'?<StatusBadge value={policyStatus(row)} label={policyStatusLabel(policyStatus(row))}/> : c.badge ? (
                         reviewsPilot && c.key==="status" ? <StatusBadge value={pilotReviewStatus(row)} label={REVIEW_STATUS[pilotReviewStatus(row)]} testid={`${kind}-status-${i}`}/> : overdueReview && c.key === "status"
                           ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
                           : row[c.key] ? <StatusBadge value={row[c.key]} tone={isReviews && row[c.key] === 'needs_scheduling' ? 'duesoon' : undefined} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
@@ -567,11 +581,11 @@ export default function RecordListPage({ kind }) {
                          <OwnerCell people={users} id={row[c.key]} status={row.status} testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined} />
                        ) :
                        isReviews && c.key==='basis' ? <span className="text-xs text-ink-secondary" title={reviewsPilot?reviewSource(row):basisSummary(row)}>{reviewsPilot?reviewSource(row):basisSummary(row)}</span> :
-                       isDueLike ? <DueDate iso={row[c.key]} closed={closed} /> :
+                       reviewsPilot&&row.policy_id&&c.key==='next_review_date'&&!closed?<span className="text-xs text-ink-secondary">Calculated on completion</span> : isDueLike ? <DueDate iso={row[c.key]} closed={closed} /> :
                        c.date ? <HistoryDate value={row[c.key]} /> :
                        (
                          <span className="inline-flex items-center gap-2">
-                           {isReviews && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
+                           {(isReviews||policiesPilot) && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
                              : c.primary && kind === "policies" && policySupports(row, programs) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports {policySupports(row, programs)}</span></span>
@@ -653,8 +667,9 @@ export default function RecordListPage({ kind }) {
         schema={schema.fields}
         clientId={currentClientId}
         users={users}
-        onSaved={load}
+        onSaved={saved=>{if(policiesPilot&&saved&&!selected)setSelected(saved);load();}}
       />
+      {alignmentTarget&&<RecordDrawer open kind={alignmentTarget.kind} record={alignmentTarget.record} clientId={currentClientId} onOpenChange={value=>!value&&setAlignmentTarget(null)} onSaved={load}/>}
     </div>
   );
 }

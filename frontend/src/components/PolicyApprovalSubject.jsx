@@ -13,11 +13,12 @@ export function ApprovalSubject({subject}) {
   </div>;
 }
 
-export default function PolicyApprovalSubject({record,context,busy,onSave}) {
+export default function PolicyApprovalSubject({record,context,busy,onSave,onDraftChange}) {
   const [version,setVersion]=useState(''),[mode,setMode]=useState('external'),[reference,setReference]=useState(''),[externalVersion,setExternalVersion]=useState(''),[evidenceId,setEvidenceId]=useState('');
   const [open,setOpen]=useState(false),[evidence,setEvidence]=useState([]),[error,setError]=useState('');
   const source=context.source;
   useEffect(()=>{setVersion(source?.version||record.version||'');setMode(source?.evidence_id?'evidence':'external');setReference(source?.external_reference||'');setExternalVersion(source?.external_version||'');setEvidenceId(source?.evidence_id||'');},[source,record.version]);
+  useEffect(()=>{onDraftChange?.(version!==(source?.version||record.version||'')||mode!==(source?.evidence_id?'evidence':'external')||reference!==(source?.external_reference||'')||externalVersion!==(source?.external_version||'')||evidenceId!==(source?.evidence_id||''));},[version,mode,reference,externalVersion,evidenceId,source,record.version,onDraftChange]);
   useEffect(()=>{
     if(!open)return;
     const c=new AbortController();setError('');

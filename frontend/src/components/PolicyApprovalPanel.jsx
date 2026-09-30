@@ -6,9 +6,11 @@ import AssigneeSelect from './AssigneeSelect';
 import {toast} from 'sonner';
 import PolicyApprovalSubject,{ApprovalSubject} from './PolicyApprovalSubject';
 
-export default function PolicyApprovalPanel({record, onChanged}) {
+export default function PolicyApprovalPanel({record, onChanged, compact=false, onDraftChange}) {
   const [context,setContext]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const [contacts,setContacts]=useState([]),[contactId,setContactId]=useState(''),[accountId,setAccountId]=useState(null),[comment,setComment]=useState('');
+  const [subjectDirty,setSubjectDirty]=useState(false);
+  useEffect(()=>{onDraftChange?.(!!context&&(!!comment.trim()||subjectDirty||contactId!==(context.named_approver?.contact_id||'')||accountId!==(context.authorized_account?.user_id||null)));},[context,comment,subjectDirty,contactId,accountId,onDraftChange]);
   const id=record.policy_id, cid=record.client_id;
   const load=useCallback(async(signal)=>{
     try {
@@ -38,14 +40,14 @@ export default function PolicyApprovalPanel({record, onChanged}) {
   return <section aria-label="Policy approval authority" className="space-y-3 border-t border-line pt-3">
     {error&&<p role="alert" className="text-sm text-semantic-critical">{error} <button type="button" className="underline" onClick={()=>load()}>Reload approval details</button></p>}
     {!context?<p role="status" className="text-sm text-ink-secondary">Loading approval details…</p>:<>
-      <PolicyApprovalSubject record={record} context={context} busy={busy} onSave={act}/>
+      <PolicyApprovalSubject record={record} context={context} busy={busy} onSave={act} onDraftChange={onDraftChange?setSubjectDirty:undefined}/>
       <dl className="text-xs space-y-1 text-ink-secondary">
         <div><dt className="inline font-medium">Business approver: </dt><dd className="inline">{context.named_approver?.name||'Not designated'}{record.approver_id&&!context.named_approver?' · Legacy designation retained in Policy details':''}</dd></div>
         <div><dt className="inline font-medium">Linked platform account: </dt><dd className="inline">{context.linked_account ? context.linked_account.state+(context.linked_account.has_client_access?' · Client access':' · No client access'):'None'}</dd></div>
         <div><dt className="inline font-medium">Authorized account: </dt><dd className="inline">{account ? (account.name||'Recorded account')+' · '+(account.eligible?'Eligible':'Not currently eligible'):'Approval permission not delegated'}</dd></div>
       </dl>
-      <p className="text-xs text-ink-secondary">Naming a Contact or linking an account does not grant approval permission.</p>
-      {context.internal_approval&&<p className="text-xs text-ink-secondary">Your existing internal administrative approval authority applies. Decisions are recorded as your account, not as the named business approver.</p>}
+      {!compact&&<p className="text-xs text-ink-secondary">Naming a Contact or linking an account does not grant approval permission.</p>}
+      {!compact&&context.internal_approval&&<p className="text-xs text-ink-secondary">Your existing internal administrative approval authority applies. Decisions are recorded as your account, not as the named business approver.</p>}
       {context.can_configure&&!pending&&<details className="text-sm">
         <summary className="cursor-pointer text-ink-primary">Configure approval authority</summary>
         <div className="space-y-2 pt-2">

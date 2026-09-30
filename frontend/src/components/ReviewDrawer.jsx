@@ -188,7 +188,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       <div className={pilot?"flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5":"flex-1 overflow-y-auto px-6 py-5 space-y-4"}>
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
-          {pilot?<ReviewFacts record={shown} users={members} history={history} completionBased={!!current?.risk_id&&!frozen}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
+          {pilot?<ReviewFacts record={shown} users={members} history={history} completionBased={!!(current?.risk_id||current?.policy_id)&&!frozen}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
           {pilot?<ReviewExpectations record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
             policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
           <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members}/>}
@@ -219,7 +219,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
             <div><Label>Occurrence</Label><p className="text-sm py-2" data-testid="review-period">{selected?.period || derived.period}</p></div>
-            <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{pilot&&current?.risk_id&&!frozen?'Calculated from actual completion':date(selected?.next_review_date || derived.next_review_date)}</p></div>
+            <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{pilot&&(current?.risk_id||configuration.policy_id)&&!frozen?'Calculated from actual completion':date(selected?.next_review_date || derived.next_review_date)}</p></div>
           </div>
           {!pilot&&<GovernanceContextFields value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
           <div><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>

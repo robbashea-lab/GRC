@@ -1,0 +1,90 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import RecordListPage from './RecordListPage';
+import RecordDrawer from '@/components/RecordDrawer';
+import ReviewDrawer from '@/components/ReviewDrawer';
+import {SCHEMAS} from '@/lib/schemas';
+import api from '@/lib/api';
+let mockClient='demo_brawndo';
+const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Test client'}})}));
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
+jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/policies',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('@/components/EvidencePanel',()=>()=> <div>Existing evidence panel</div>);
+let root,container,rows;
+const click=node=>act(async()=>node.click());
+const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
+beforeEach(()=>{
+  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();
+  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
+  rows=[{policy_id:'p',client_id:mockClient,title:'Access Policy',status:'draft',presence:'reported_missing',version:'1',onboarding_note:'Preserved historical note'}];
+  api.get.mockImplementation(async path=>({data:path==='/policies'?rows:path==='/frameworks/summary'?{client_id:mockClient,items:[]}:path==='/related'?{}:path.endsWith('/approval-context')?{status:'draft',history:[],subject:null,can_configure:false,can_submit:false}:[]}));
+  api.patch.mockImplementation(async(path,patch)=>({data:{...rows[0],...patch}}));
+});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+test('Brawndo register removes summary cards and presence; client switching restores original experience',async()=>{
+  await act(async()=>root.render(<RecordListPage kind="policies"/>));
+  const headers=()=>[...container.querySelectorAll('th .column-control')].map(n=>n.textContent);
+  expect(headers()).toEqual(['Policy','Framework Alignment','Policy Status','Version','Owner','Last Reviewed','Next Review']);
+  expect(container.textContent).not.toContain('Review overdue');
+  expect(container.querySelector('tbody').textContent).toContain('Needs Creation');
+  await input(container.querySelector('[data-testid="policies-search"]'),'unmatched');
+  expect(container.querySelector('tbody').textContent).not.toContain('Access Policy');
+  mockClient='demo_dunder';rows=rows.map(r=>({...r,client_id:mockClient}));
+  await act(async()=>root.render(<RecordListPage kind="policies"/>));
+  expect(headers()).toContain('Presence');expect(headers()).not.toContain('Framework Alignment');
+  expect(container.textContent).toContain('Review overdue');
+});
+test('centered policy retains legacy context and protects edits on close and failed save',async()=>{
+  const close=jest.fn();
+  await act(async()=>root.render(<RecordDrawer open kind="policies" record={rows[0]} schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={close}/>));
+  const dialog=document.querySelector('[data-testid="policies-drawer"]');
+  expect(dialog.className).toContain('brawndo-cis-assessment');
+  expect(dialog.querySelector('[data-testid="tab-related"]')).toBeNull();
+  expect(dialog.querySelector('[data-testid="field-presence"]')).toBeNull();
+  expect(dialog.querySelector('[data-testid="field-onboarding_note"]')).toBeNull();
+  expect(dialog.textContent).toContain('Preserved historical note');
+  const title=dialog.querySelector('[data-testid="field-title"]');
+  await input(title,'Updated Policy');
+  await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
+  expect(document.querySelector('[role="alertdialog"]')).toBeTruthy();expect(close).not.toHaveBeenCalled();
+  await click([...document.querySelectorAll('[role="alertdialog"] button')].find(b=>b.textContent==='Keep editing'));
+  api.patch.mockRejectedValueOnce(new Error('Write failed'));
+  await click(dialog.querySelector('[data-testid="drawer-save"]'));
+  expect(title.value).toBe('Updated Policy');expect(close).not.toHaveBeenCalled();
+  await click(dialog.querySelector('[data-testid="drawer-save"]'));
+  expect(api.patch.mock.calls[1][1]).toEqual({title:'Updated Policy',expected_updated_at:null});
+  expect(close).toHaveBeenCalledWith(false);
+});
+test('new policy has one status control and no manufactured dates; non-pilot retains drawer',async()=>{
+  await act(async()=>root.render(<RecordDrawer open kind="policies" schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
+  const dialog=document.querySelector('[data-testid="policies-drawer"]');
+  expect(dialog.querySelectorAll('#policy-status')).toHaveLength(1);
+  expect(dialog.querySelector('[data-testid="field-next_review_date"]')).toBeNull();
+  expect(dialog.querySelector('[data-testid="field-approved_at"]')).toBeNull();
+  mockClient='demo_dunder';
+  await act(async()=>root.render(<RecordDrawer open kind="policies" schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
+  expect(document.querySelector('[data-testid="policies-drawer"]').className).toContain('record-drawer');
+  expect(document.querySelector('[data-testid="field-presence"]')).toBeTruthy();
+});
+
+test('approval draft cannot be silently lost through tabs or mixed with ordinary edits',async()=>{
+  const original=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...args)=>path.endsWith('/approval-context')?{data:{status:'draft',history:[],can_submit:true}}:original(path,...args));
+  await act(async()=>root.render(<RecordDrawer open kind="policies" record={rows[0]} schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
+  const dialog=document.querySelector('[data-testid="policies-drawer"]');
+  await click([...dialog.querySelectorAll('summary')].find(n=>n.textContent==='Approval document & version'));
+  const reference=dialog.querySelector('[aria-label="External document reference"]');
+  await input(reference,'DEMO synthetic document');
+  await click(dialog.querySelector('[data-testid="tab-evidence"]'));
+  expect(dialog.querySelector('[aria-label="External document reference"]').value).toBe('DEMO synthetic document');
+  expect(dialog.querySelector('[data-testid="field-title"]').closest('fieldset.record-fields').disabled).toBe(true);
+  await click(dialog.querySelector('[data-testid="drawer-save"]'));expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('linked Brawndo Policy Review does not present a stale scheduled-date projection as its next deadline',async()=>{
+  const review={review_id:'r',client_id:mockClient,policy_id:'p',title:'Policy review',review_type:'policy',status:'upcoming',due_date:'2024-01-01',recurrence:'annual'};
+  await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={review} clientId={mockClient} onOpenChange={()=>{}}/>));
+  expect(document.querySelector('[data-testid="review-next-date"]').textContent).toBe('Calculated from actual completion');
+});
