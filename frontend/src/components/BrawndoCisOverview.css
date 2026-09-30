@@ -34,7 +34,17 @@
 .bcis-figure { font: 600 40px/1 'Space Grotesk', var(--font-heading); color: var(--cs-text); }
 .bcis-figure-label { margin-top: 6px !important; font-size: 15px; font-weight: 600; color: var(--cs-text); }
 .bcis-figure-sub { margin-top: 2px !important; font-size: 13px; color: var(--cs-muted); }
-.bcis-bar { display: flex; gap: 2px; height: 12px; margin-top: 22px; border-radius: 6px; overflow: hidden; background: var(--cs-subtle); }
+.bcis-bar { display: flex; gap: 2px; height: 12px; margin-top: 22px; border-radius: 6px; background: var(--cs-subtle); }
+.bcis-bar > span { position: relative; cursor: default; outline: none; }
+.bcis-bar > span:first-child { border-radius: 6px 0 0 6px; } .bcis-bar > span:last-child { border-radius: 0 6px 6px 0; } .bcis-bar > span:only-child { border-radius: 6px; }
+.bcis-bar > span:focus-visible { box-shadow: 0 0 0 2px var(--cs-card), 0 0 0 4px var(--cs-focus); }
+/* Segment tooltip: shown on hover and keyboard focus; absolutely positioned so nothing shifts. */
+.bcis-tip { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; gap: 2px; min-width: 150px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--cs-border); background: var(--cs-card); color: var(--cs-text); font-size: 12px; line-height: 1.35; white-space: nowrap; box-shadow: 0 8px 20px rgba(0,0,0,.18); visibility: hidden; opacity: 0; transition: opacity 120ms; pointer-events: none; }
+.bcis-tip strong { font-size: 13px; }
+.bcis-bar > span:is(:hover, :focus-visible) > .bcis-tip { visibility: visible; opacity: 1; }
+/* Pointer hover takes precedence so two tooltips never show at once. */
+.bcis-bar:hover > span:focus-visible:not(:hover) > .bcis-tip { visibility: hidden; opacity: 0; }
+.bcis-bar > span:first-child > .bcis-tip { left: 0; transform: none; } .bcis-bar > span:last-child:not(:first-child) > .bcis-tip { left: auto; right: 0; transform: none; }
 .bcis-bar > .is-good, .bcis-legend .is-good > span { background: var(--cs-good); }
 .bcis-bar > .is-attention, .bcis-legend .is-attention > span { background: var(--cs-attention); }
 .bcis-bar > .is-critical, .bcis-legend .is-critical > span { background: var(--cs-critical); }
@@ -95,3 +105,19 @@
 }
 @media (prefers-reduced-motion: reduce) { .bcis { transition: none; } }
 .bcis-controls-title { margin: 0 8px 0 0; font: 600 18px 'Space Grotesk', var(--font-heading); color: var(--cs-text); }
+/* Controls card: breadcrumb, tools, whole-row navigation */
+.bcis-controls-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bcis-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; font: 600 16px 'Space Grotesk', var(--font-heading); }
+.bcis-crumbs li + li::before { content: "›"; margin-right: 6px; color: var(--cs-muted); font-weight: 500; }
+.bcis-crumbs button { color: var(--cs-link); font: inherit; }
+.bcis-crumbs button:hover { text-decoration: underline; }
+.bcis-crumbs [aria-current="page"] { color: var(--cs-text); }
+.bcis-chip-clear { font-size: 13px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--cs-border); background: var(--cs-card); color: var(--cs-text); }
+.bcis-chip-clear:hover { border-color: var(--cs-muted); }
+.bcis-control-name { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--cs-border); font-size: 14px; color: var(--cs-muted); }
+.bcis-row { cursor: pointer; }
+.bcis-row:focus-visible { outline: 2px solid var(--cs-focus); outline-offset: -2px; }
+.bcis-sg { display: flex; gap: 12px; align-items: baseline; }
+.bcis-sg-id { font-family: 'Space Grotesk', var(--font-heading); font-weight: 600; color: var(--cs-muted); min-width: 34px; }
+.bcis-muted { color: var(--cs-muted) !important; white-space: nowrap; }
+@media (max-width: 760px) { .bcis-safeguards th:nth-child(4), .bcis-safeguards td:nth-child(4), .bcis-safeguards th:nth-child(5), .bcis-safeguards td:nth-child(5) { display: none; } }

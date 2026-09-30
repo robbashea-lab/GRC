@@ -1,11 +1,12 @@
 """Tenant-authorized framework assessments and shared operational relationships."""
 import json
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 import review_occurrences
 import assignment_eligibility
 import shared_review_plans
@@ -128,6 +129,24 @@ class AssessmentPatch(BaseModel):
     soa_justification: Optional[str]=Field(default=None,max_length=4000)
     csf_profile: CsfProfile = Field(default_factory=CsfProfile)
     management_controls: list[ManagementControl]=Field(default_factory=list,max_length=30)
+    verification: Optional[Literal['not_verified','needs_validation','gap_identified','verified']]=None
+    verification_checklist: Optional[dict[Literal['foundation','operational','mature'],list[str]]]=None
+
+    @field_validator('verification_checklist')
+    @classmethod
+    def _checklist_shape(cls,value):
+        if value is None:return value
+        out={}
+        for tier,ids in value.items():
+            if len(ids)>20:raise ValueError('Each verification tier allows at most 20 checks')
+            for check in ids:
+                if len(check)>32 or not VERIFICATION_CHECK.fullmatch(check) or check.split('-')[1][0]!=tier[0]:
+                    raise ValueError('Invalid verification check identifier')
+            out[tier]=list(dict.fromkeys(ids))
+        return out
+
+VERIFICATION_FIELDS=('verification','verification_checklist')
+VERIFICATION_CHECK=re.compile(r'^[0-9]+\.[0-9]+-[fom][0-9]{1,2}$')
 
 class LinkInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -324,6 +343,10 @@ def router_for(s):
         data={**old,**changes}
         if 'csf_profile' in changes and old['framework_key']!='nist-csf-2':
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
+        if any(k in changes for k in VERIFICATION_FIELDS):
+            if old['framework_key']!='cis-ig1':raise HTTPException(422,'Verification fields apply only to CIS Controls IG1')
+            if any(c.split('-')[0]!=old['definition_id'] for ids in (changes.get('verification_checklist') or {}).values() for c in ids):
+                raise HTTPException(422,'Verification checks must belong to this safeguard')
         if 'management_controls' in changes:
             if old['framework_key']!='soc-2':raise HTTPException(422,'Management control readiness fields apply only to SOC 2')
             if changes['management_controls'] != old.get('management_controls', []) and (old.get('controls_migrated') or await s.db.organizational_controls.find_one({'client_id':old['client_id'],'$or':[{'assessment_ids':aid},{'legacy_sources.assessment_id':aid}]})):
@@ -353,7 +376,7 @@ def router_for(s):
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed:
-            at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed'};snapshot.update(at=at,by=user['user_id'])
+            at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed' and (old['framework_key']=='cis-ig1' or k not in VERIFICATION_FIELDS)};snapshot.update(at=at,by=user['user_id'])
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}
             if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
             result=await s.db.framework_assessments.update_one(predicate,{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})

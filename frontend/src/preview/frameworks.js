@@ -9,6 +9,18 @@ import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
 import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers} from '../lib/frameworks';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
 const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
+const VERIFICATION_FIELDS=['verification','verification_checklist'],VERIFICATION_STATES=['not_verified','needs_validation','gap_identified','verified'],VERIFICATION_TIERS={foundation:'f',operational:'o',mature:'m'};
+// Shape and safeguard prefix only; the UI checks ids against operator guidance.
+const validateVerificationChecklist=(value,definitionId)=>{
+  if(value===null)return null;
+  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid verification checklist');
+  return Object.fromEntries(Object.entries(value).map(([tier,ids])=>{
+    if(!VERIFICATION_TIERS[tier]||!Array.isArray(ids)||ids.length>20)throw new Error('Invalid verification checklist');
+    for(const check of ids)if(typeof check!=='string'||check.length>32||!/^[0-9]+\.[0-9]+-[fom][0-9]{1,2}$/.test(check)||check.split('-')[1][0]!==VERIFICATION_TIERS[tier])throw new Error('Invalid verification check identifier');
+    if(ids.some(check=>check.split('-')[0]!==definitionId))throw new Error('Verification checks must belong to this safeguard');
+    return [tier,[...new Set(ids)]];
+  }));
+};
 const writable=db=>{if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');};
 export function frameworkScope(db,cid){
   record(db,'clients',cid);
@@ -148,7 +160,14 @@ export function frameworkRequest(db,path,method,params,body){
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_assessed??null))throw new Error('Assessment changed since it was opened; reload before saving');
     body={...body};delete body.expected_last_assessed;
     const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile'];
-    if(Object.keys(body).some(k=>!fields.includes(k)))throw new Error('Unknown or immutable assessment fields');
+    if(Object.keys(body).some(k=>!fields.includes(k)&&!VERIFICATION_FIELDS.includes(k)))throw new Error('Unknown or immutable assessment fields');
+    if(VERIFICATION_FIELDS.some(k=>k in body)){
+      if(row.framework_key!=='cis-ig1')throw new Error('Verification fields apply only to CIS Controls IG1');
+      body={...body};
+      if('verification' in body&&body.verification!==null&&!VERIFICATION_STATES.includes(body.verification))throw new Error('Invalid verification state');
+      if('verification_checklist' in body)body.verification_checklist=validateVerificationChecklist(body.verification_checklist,row.definition_id);
+    }
+    const historyFields=row.framework_key==='cis-ig1'?[...fields,...VERIFICATION_FIELDS]:fields;
     if('csf_profile' in body){
       if(row.framework_key!=='nist-csf-2')throw new Error('CSF profile fields apply only to NIST CSF');
       body={...body,csf_profile:validateCsfProfile(body.csf_profile)};
@@ -178,8 +197,8 @@ export function frameworkRequest(db,path,method,params,body){
     }else if(body.addressable_decision||body.addressable_rationale)throw new Error('Addressability fields apply only to addressable specifications');
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
-    const changed=Object.keys(body).filter(k=>body[k]!==row[k]);
-    if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});row.assessment_history.push({...Object.fromEntries(fields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
+    const changed=Object.keys(body).filter(k=>k==='verification_checklist'?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
+    if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});row.assessment_history.push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
     return row;
   }
   if(method==='post'&&operation==='links'){
