@@ -13,18 +13,22 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import RecordDrawer from '@/components/RecordDrawer';
 import {useEvidenceCatalog,EvidencePagination} from '@/components/EvidencePanel';
 import {EvidenceSource,resolveEvidenceSource,downloadEvidence,uploaderLabel} from '@/lib/evidenceContext';
-import {Folder,Download,File as FileIcon,ChevronRight} from 'lucide-react';
+import {Folder,Download,File as FileIcon,ChevronRight,Plus} from 'lucide-react';
 import {toast} from 'sonner';
 import EvidenceItemDrawer from '@/components/EvidenceItemDrawer';
 import {EvidenceUpload,PROGRAM_AREAS} from '@/components/EvidenceLibraryControls';
 import '@/components/EvidenceRepository.css';
+import {isBrawndoReference} from '@/lib/reference';
+import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
+import './BrawndoEvidence.css';
 
 const areaName=a=>a==='Unassigned'?'Needs Classification':a;
 const reviewTypes=SCHEMAS.reviews.fields.find(f=>f.name==='review_type').options;
 const folderName=f=>f.area==='Reviews'?(reviewTypes.find(t=>t.value===f.key)?`${reviewTypes.find(t=>t.value===f.key).label} Reviews`:f.label):f.area==='Frameworks'?(FRAMEWORKS.find(t=>t.key===f.key)?.label||f.label):f.label;
 export default function Evidence(){const {currentClientId}=useOrg(),{user}=useAuth();return <EvidenceWorkspace key={`${user?.user_id}:${currentClientId}`}/>;}
 function EvidenceWorkspace(){
-  const {currentClientId}=useOrg(),{user}=useAuth(),compliance=useCompliance();
+  const {currentClientId,currentClient}=useOrg(),{user}=useAuth(),compliance=useCompliance();
+  const pilot=isBrawndoReference(currentClientId,user);
   const scopeRef=useRef(currentClientId);scopeRef.current=currentClientId;
   const [area,setArea]=useState(''),[folder,setFolder]=useState(null),[q,setQ]=useState(''),[page,setPage]=useState(1),[all,setAll]=useState(false);
   const [adding,setAdding]=useState(false),[itemId,setItemId]=useState(null),[drawer,setDrawer]=useState(null);
@@ -39,8 +43,9 @@ function EvidenceWorkspace(){
   const showFiles=landing||!!q||!!folder||all||area==='Unassigned'||area&&!groups.length;
   async function openSource(ref){try{const target=await resolveEvidenceSource(ref,currentClientId);if(scopeRef.current===currentClientId)setDrawer(target);}catch(e){toast.error(formatError(e));}}
   const tile=(key,name,count,onClick)=><button type="button" key={key} className="evidence-folder" onClick={onClick}><Folder aria-hidden="true" size={23}/><span><strong>{name}</strong><small>{count} {count===1?'file':'files'}</small></span><ChevronRight aria-hidden="true" size={15}/></button>;
-  return <div className="register-surface evidence-repository">
-    <PageHeader title="Evidence Library" subtitle="Evidence organized by work area and record type." action={canOperate(user)&&<PrimaryAction label="Add Evidence" onClick={()=>setAdding(true)} testid="add-evidence"/>}/>
+  const body=<>
+    {pilot?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Evidence repository`} title="Evidence Library">{canOperate(user)&&<button type="button" className="bpage-btn bpage-btn-primary" onClick={()=>setAdding(true)} data-testid="add-evidence"><Plus size={16} aria-hidden="true"/>Add Evidence</button>}</BrawndoPageHeader>
+    :<PageHeader title="Evidence Library" subtitle="Evidence organized by work area and record type." action={canOperate(user)&&<PrimaryAction label="Add Evidence" onClick={()=>setAdding(true)} testid="add-evidence"/>}/>}
     <div className="register-toolbar"><SearchField label="Search Evidence" placeholder={area?`Search within ${areaName(area)}…`:'Search evidence…'} value={q} onChange={v=>{setQ(v);setPage(1);}} testid="evidence-search"/>{q&&<button className="register-link" onClick={()=>{setQ('');setPage(1);}}>Clear search</button>}</div>
     <div className="section-body space-y-5">
       {area&&<nav aria-label="Evidence location" className="evidence-breadcrumbs"><button onClick={()=>go()}>Evidence Library</button><ChevronRight aria-hidden="true" size={14}/>{folder?<><button onClick={()=>go(area)}>{areaName(area)}</button><ChevronRight aria-hidden="true" size={14}/><span aria-current="page">{folderName(folder)}</span></>:<span aria-current="page">{areaName(area)}</span>}</nav>}
@@ -64,5 +69,6 @@ function EvidenceWorkspace(){
     {adding&&<EvidenceUpload clientId={currentClientId} initialArea={area||'Unassigned'} onClose={()=>setAdding(false)} onSaved={result.reload}/>}
     {itemId&&<EvidenceItemDrawer key={itemId} id={itemId} onClose={()=>setItemId(null)} onOpen={openSource} onChanged={result.reload}/>}
     {drawer&&<RecordDrawer open onOpenChange={v=>{if(!v)setDrawer(null);}} {...drawer} clientId={currentClientId} onSaved={result.reload}/>}
-  </div>;
+  </>;
+  return pilot?<BrawndoSurface className="register-surface evidence-repository bevidence" data-testid="brawndo-evidence">{body}</BrawndoSurface>:<div className="register-surface evidence-repository">{body}</div>;
 }
