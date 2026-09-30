@@ -1577,7 +1577,7 @@ async def eligible_assignees(client_id: str, search: str = Query("", max_length=
 
 # Top-level actor fields that name a person on a client record. Assignment fields come
 # from assignment_eligibility.FIELDS; nested histories keep their own name snapshots.
-MEMBER_ACTOR_FIELDS = ("accepted_by", "closed_by", "validated_by", "verified_by", "approved_by", "completed_by")
+MEMBER_ACTOR_FIELDS = ("accepted_by", "closed_by", "validated_by", "verified_by", "approved_by", "completed_by", "assessed_by")
 
 
 def _member_summary(account, actor):

@@ -31,6 +31,28 @@ class IdentityLifecycleTests(unittest.IsolatedAsyncioTestCase):
         })
         return token
 
+    async def test_assessment_actor_names_are_scoped_without_granting_membership(self):
+        await server.db.users.insert_many([
+            {'user_id': 'assessor', 'name': 'QA Assessor', 'email': 'assessor@example.test',
+             'role': 'platform_admin', 'client_ids': [], 'status': 'active'},
+            {'user_id': 'foreign_actor', 'name': 'Private Actor', 'role': 'platform_admin',
+             'client_ids': [], 'status': 'active'},
+        ])
+        await server.db.framework_assessments.insert_many([
+            {'client_id': 'a', 'assessed_by': 'assessor'},
+            {'client_id': 'b', 'assessed_by': 'foreign_actor'},
+        ])
+        self.sign_in('member')
+        response = await self.client.get('/api/clients/a/members')
+        self.assertEqual(response.status_code, 200, response.text)
+        members = response.json()
+        assessor = next(row for row in members if row['user_id'] == 'assessor')
+        self.assertEqual(assessor['name'], 'QA Assessor')
+        self.assertNotIn('email', assessor)
+        self.assertNotIn('foreign_actor', [row['user_id'] for row in members])
+        self.assertEqual((await server.db.users.find_one({'user_id': 'assessor'}))['client_ids'], [])
+        self.assertEqual((await self.client.get('/api/clients/b/members')).status_code, 403)
+
     async def test_disabled_and_invited_cannot_use_jwt_session_or_password(self):
         token = server.create_access_token('member', 'member@example.test')
         await server.db.sessions.insert_one({

@@ -6,7 +6,7 @@ import cis from '@/lib/cisIG1.json';
 
 const clientRoles = ['client_grc_manager', 'client_contributor', 'client_readonly'];
 const roles = ['super_admin', 'platform_admin', ...clientRoles];
-const memberActorFields = ['accepted_by', 'closed_by', 'validated_by', 'verified_by', 'approved_by', 'completed_by'];
+const memberActorFields = ['accepted_by', 'closed_by', 'validated_by', 'verified_by', 'approved_by', 'completed_by', 'assessed_by'];
 const admin = (db, cid) => {
   if (!['super_admin', 'platform_admin'].includes(db.user.role) || cid && !clientAccess(db.user, cid)) throw new Error('Not authorized to manage accounts for this client');
 };

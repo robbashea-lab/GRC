@@ -81,6 +81,16 @@ test('Contact-only and business role cannot invite or grant access', () => {
   expect(invitationFeedback({delivery:'unavailable'})).toContain('unavailable');
 });
 
+test('assessment actor names are client scoped and do not grant membership or expose email', () => {
+  db.framework_assessments = [{client_id:'a', assessed_by:'super'}, {client_id:'b', assessed_by:'foreign'}];
+  db.user = {user_id:'alex', role:'client_readonly', client_ids:['a']};
+  const before = JSON.stringify(db.users);
+  const members = call('/clients/a/members');
+  expect(members.find(u => u.user_id === 'super')).toEqual({user_id:'super', name:'Super', status:'active', orphaned:true});
+  expect(members.some(u => u.user_id === 'foreign')).toBe(false);
+  expect(JSON.stringify(db.users)).toBe(before);
+});
+
 test('members match the backend contract: referenced former accounts included, client roles get names and status only', () => {
   db.risks = [{risk_id:'r', client_id:'a', owner_id:'alex', accepted_by:'super'}];
   const admin = call('/clients/a/members');
