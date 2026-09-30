@@ -14,14 +14,17 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem} from '@/components/ui/dropdown-menu';
 import {Button} from '@/components/ui/button';
+import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
+import {isBrawndoReference} from '@/lib/reference';
+import './BrawndoContacts.css';
 
 const columns=[{key:'name',label:'Contact'},{key:'title',label:'Job Title'},{key:'email',label:'Email'},{key:'phone',label:'Phone'}];
 export default function Contacts(){
-  const {currentClientId}=useOrg(),{user}=useAuth();
+  const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
   // Remount the directory on identity/tenant changes, including its open editor.
-  return <ContactDirectory key={`${user?.user_id}:${currentClientId}`} clientId={currentClientId} user={user}/>;
+  return <ContactDirectory key={`${user?.user_id}:${currentClientId}`} clientId={currentClientId} user={user} brawndo={isBrawndoReference(currentClientId,user)} clientName={currentClient?.name}/>;
 }
-function ContactDirectory({clientId,user}){
+function ContactDirectory({clientId,user,brawndo,clientName}){
   const [params,setParams]=useSearchParams(),[rows,setRows]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0);
   const [selected,setSelected]=useState(null),[open,setOpen]=useState(false);
   const canWrite=['super_admin','platform_admin'].includes(user?.role);
@@ -40,8 +43,10 @@ function ContactDirectory({clientId,user}){
   const id=params.get('open');
   useEffect(()=>{if(!loading&&id){const row=rows.find(r=>r.contact_id===id);if(row){setSelected(row);setOpen(true);}}},[id,loading,rows]);
   const close=value=>{setOpen(value);if(!value&&id)setParam('open','');};
-  return <div className="register-surface contacts-directory">
-    <PageHeader title="Contacts" subtitle="Client personnel and platform access." action={canWrite&&<HeaderActions><PrimaryAction label="New Contact" disabled={!clientId} onClick={()=>edit(null)}/></HeaderActions>}/>
+  const newContact=canWrite&&<PrimaryAction label="New Contact" disabled={!clientId} onClick={()=>edit(null)}/>;
+  const body=<>
+    {brawndo?<BrawndoPageHeader eyebrow={`${clientName||'Client'} · People`} title="Contacts">{newContact}</BrawndoPageHeader>
+      :<PageHeader title="Contacts" subtitle="Client personnel and platform access." action={canWrite&&<HeaderActions>{newContact}</HeaderActions>}/>}
     <div className="register-toolbar"><SearchField label="Search contacts" placeholder="Search contacts…" testid="contacts-search" value={query} onChange={v=>setParam('q',v)}/>
       <label className="sr-only" htmlFor="contacts-access-filter">Platform Access</label><select id="contacts-access-filter" className="contact-select" value={access} onChange={e=>setParam('access',e.target.value)}><option value="">All contacts</option><option value="none">No access</option><option value="pending">Invitation pending</option><option value="active">Active account</option><option value="disabled">Disabled</option></select>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={archived} onChange={e=>setParam('archived',e.target.checked?'true':'')}/>Include archived</label>
@@ -61,5 +66,6 @@ function ContactDirectory({clientId,user}){
         {!loading&&!error&&!filtered.length&&<tr><td className="empty-state" colSpan={6}>{rows.length?'No contacts match these filters.':'No contacts yet. Add a person to this client directory; platform access is optional.'}</td></tr>}
       </tbody></table></div>
     <ContactWorkspace open={open} onOpenChange={close} record={selected} clientId={clientId} onSaved={refresh}/>
-  </div>;
+  </>;
+  return brawndo?<BrawndoSurface className="register-surface contacts-directory bcontacts">{body}</BrawndoSurface>:<div className="register-surface contacts-directory">{body}</div>;
 }

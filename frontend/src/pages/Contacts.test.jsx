@@ -6,9 +6,10 @@ import api from '@/lib/api';
 let mockClient='a';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Brawndo'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
 jest.mock('react-router-dom',()=>({useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('@/lib/reference',()=>({isBrawndoReference:id=>id==='demo_brawndo'}));
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'contact-test-intent'}));
 const row={contact_id:'c',client_id:'a',name:'Person',email:'person@example.test',title:'Engineer',status:'active',role:'Security Lead',grc_roles:['HR Lead'],notes:'Retained notes',updated_at:'version-1'};
 let root,container;
@@ -57,4 +58,10 @@ test('active account archiving is blocked and readonly users get no mutations',a
 });
 test('tenant switching closes editor and does not show earlier contacts',async()=>{
   await act(async()=>root.render(<Contacts/>));await click(button('Person'));expect(document.querySelector('[role=dialog]')).not.toBeNull();mockClient='b';await act(async()=>root.render(<Contacts/>));expect(document.querySelector('[role=dialog]')).toBeNull();expect(container.textContent).not.toContain('Person');
+});
+test('Brawndo reference renders the themed header; other clients keep the standard header',async()=>{
+  mockClient='demo_brawndo';api.get.mockResolvedValue({data:[]});await act(async()=>root.render(<Contacts/>));
+  expect(container.querySelector('.bpage h1').textContent).toBe('Contacts');expect(container.querySelector('.bpage-eyebrow').textContent).toBe('Brawndo · People');expect(button('New Contact')).toBeTruthy();
+  await act(async()=>root.unmount());root=createRoot(container);mockClient='a';await act(async()=>root.render(<Contacts/>));
+  expect(container.querySelector('.bpage')).toBeNull();expect(container.querySelector('h1').textContent).toBe('Contacts');
 });
