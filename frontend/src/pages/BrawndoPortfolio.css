@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+/* Reference portfolio (demo workspace), light and dark. Remaps the shared tokens inside .bport only,
+   so the existing table, filters and drawers restyle without touching other pages. */
+.bport {
+  --bp-bg: #f4f5f2; --bp-card: #ffffff; --bp-border: #e6e2dc; --bp-text: #1d232b; --bp-muted: #5d6670;
+  --bp-critical: #b91c1c; --bp-critical-bg: #fdecec; --bp-attention: #a15c07; --bp-attention-bg: #fef5e6;
+  --bp-neutral: #3f4852; --bp-neutral-fill: #94a3b8; --bp-accent: #4a6e0a; --bp-focus: #4172f4;
+  --color-bg-surface: var(--bp-card); --color-bg-subtle: #f7f6f3; --color-bg-tablehead: #f7f6f3; --color-neutral-bg: #f1f1ec; --color-border: var(--bp-border); --color-border-strong: #cfc9c0;
+  --color-text-primary: var(--bp-text); --color-text-secondary: var(--bp-muted); --color-text-muted: var(--bp-muted); --color-text-help: #7b848f;
+  --color-critical: var(--bp-critical); --color-link: #2446b8; --color-link-hover: #16307f; --color-selected-bg: #eef1ec;
+  color-scheme: light;
+  min-height: calc(100vh - 44px); box-sizing: border-box; padding: 24px 0 32px;
+  background: var(--bp-bg); color: var(--bp-text); font-family: 'IBM Plex Sans', var(--font-body);
+  transition: background-color var(--duration-drawer, 240ms) var(--ease-out, ease), color var(--duration-drawer, 240ms);
+}
+.bport[data-theme="dark"] {
+  --bp-bg: #12161c; --bp-card: #1a2028; --bp-border: #2a323d; --bp-text: #e6e9ee; --bp-muted: #9aa4b0;
+  --bp-critical: #f87171; --bp-critical-bg: #3b1d1d; --bp-attention: #fbbf24; --bp-attention-bg: #3a2a12;
+  --bp-neutral: #c3cad3; --bp-neutral-fill: #64748b; --bp-accent: #a3db33; --bp-focus: #8fb0ff;
+  --color-bg-subtle: #151a21; --color-bg-tablehead: #151a21; --color-neutral-bg: #232a33; --color-border-strong: #3a4450; --color-text-help: #7f8a96;
+  --color-link: #8fb0ff; --color-link-hover: #c2d3ff; --color-selected-bg: #232a33; --color-surface-hover: #232a33;
+  color-scheme: dark;
+}
+.bport .bp-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 0 var(--space-page, 20px) 18px; }
+.bport h1 { margin: 2px 0 0; font: 600 30px/1.2 'Space Grotesk', var(--font-heading); letter-spacing: -.01em; color: var(--bp-text); }
+.bp-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bp-accent); }
+.bp-theme { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--bp-border); background: var(--bp-card); color: var(--bp-text); font: 500 13px 'IBM Plex Sans', var(--font-body); }
+.bp-theme:hover { border-color: var(--bp-muted); }
+.bp-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; padding: 0 var(--space-page, 20px) 18px; }
+.bp-tile { --tone: var(--bp-neutral); --rail: var(--bp-neutral-fill); text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--bp-border); border-top: 3px solid var(--rail); background: var(--bp-card); color: var(--bp-text); }
+.bp-tile.is-critical { --tone: var(--bp-critical); --rail: var(--bp-critical); }
+.bp-tile.is-attention { --tone: var(--bp-attention); --rail: var(--bp-attention); }
+.bp-tile.is-clear { --tone: var(--bp-muted); --rail: var(--bp-border); }
+button.bp-tile:hover { border-color: var(--bp-muted); border-top-color: var(--rail); }
+button.bp-tile[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--rail); }
+.bp-tile-label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--bp-muted); }
+.bp-tile-value { font: 600 32px/1.15 'Space Grotesk', var(--font-heading); color: var(--tone); font-variant-numeric: tabular-nums; }
+.bp-tile-context { font-size: 13px; color: var(--bp-muted); }
+/* Table and toolbar on the themed surface. */
+.bport .register-toolbar { background: transparent; border-color: var(--bp-border); }
+.bport .register-table-frame { border-radius: 12px; }
+.bport .portfolio-table thead th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--bp-muted); }
+.bport .portfolio-table .tbl-cell { padding: 12px 12px; }
+.bport .row-hover:hover { background: var(--color-bg-subtle); }
+.bport .portfolio-view.is-active.bg-primary { background: var(--bp-text) !important; color: var(--bp-bg) !important; font-weight: 600; }
+.bport input:not([type="checkbox"]) { background: var(--bp-card); color: var(--bp-text); border-color: var(--bp-border); }
+.bp-count { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; padding: 0 8px; border-radius: 999px; font-family: 'IBM Plex Mono', var(--font-mono); }
+.bp-count.is-critical { background: var(--bp-critical-bg); color: var(--bp-critical) !important; font-weight: 600; }
+.bp-count.is-attention { background: var(--bp-attention-bg); color: var(--bp-attention) !important; font-weight: 600; }
+.bp-count.is-neutral { color: var(--bp-text) !important; }
+.bp-count.is-zero { color: var(--color-text-help) !important; font-weight: 400; }
+.bport :is(a, button, [tabindex]):focus-visible { outline: 2px solid var(--bp-focus); outline-offset: 2px; }
+@media (max-width: 1180px) { .bp-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .bp-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .bport .bp-head { align-items: flex-start; flex-direction: column; } .bport .register-search, .bport .register-search input { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .bport { transition: none; } }
