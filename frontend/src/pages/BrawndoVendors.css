@@ -1,6 +1,4 @@
 /* Vendors page additions on the shared Brawndo surface. */
-.bvendors .bpage-btn-primary { background: var(--bp-accent); border-color: var(--bp-accent); color: var(--bp-bg); font-weight: 600; }
-.bvendors .bpage-btn-primary:hover { border-color: var(--bp-text); }
 @media (min-width: 641px) { .bvendors .register-toolbar .register-search { min-width: 220px; } }
 .bvendors-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .bvendors-tag { display: inline-block; padding: 1px 8px; border: 1px solid var(--bp-border); border-radius: 4px; font-size: 12px; color: var(--bp-text); white-space: nowrap; }

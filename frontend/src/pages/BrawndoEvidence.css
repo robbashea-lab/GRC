@@ -1,6 +1,4 @@
 /* Evidence Library on the shared Brawndo surface. Presentation only; layout and grouping unchanged. */
-.bevidence .bpage-btn-primary { background: var(--bp-accent); border-color: var(--bp-accent); color: var(--bp-bg); font-weight: 600; }
-.bevidence .bpage-btn-primary:hover { border-color: var(--bp-text); }
 .bevidence .register-toolbar { border-bottom: 1px solid var(--bp-border); border-radius: 12px; margin-bottom: 4px; }
 .bevidence .section-body { padding: 16px var(--register-gutter, 20px) 0; }
 .bevidence .section-body .register-table-frame { margin: 0; border-radius: 12px; }
