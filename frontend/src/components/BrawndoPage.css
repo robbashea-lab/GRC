@@ -67,3 +67,4 @@ button.bpage-tile[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--rail); }
 @media (prefers-reduced-motion: reduce) { .bpage { transition: none; } }
 .bpage-meta.is-attention { color: var(--bp-attention); font-weight: 600; }
 .bpage .brev-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+:root .bpage[data-theme="dark"] .pill-high { background: #b91c1c; color: #ffffff; border-color: transparent; }

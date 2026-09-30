@@ -1,7 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ActionItems from './ActionItems';
-import {FindingsRoute} from './BrawndoActionItems';
+import {FindingsRoute,actionTiles} from './BrawndoActionItems';
 import RecordDrawer from '@/components/RecordDrawer';
 import api from '@/lib/api';
 let mockClient='demo_brawndo',mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'},mockQuery='';
@@ -28,12 +28,16 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 test('stable summaries, orphan visibility, search, synchronized quick filters and client isolation',async()=>{
   await act(async()=>root.render(<ActionItems/>));
   const summary=label=>[...container.querySelectorAll('[aria-label="Action summaries"] button')].find(b=>b.textContent.startsWith(label));
-  expect(summary('All Open').textContent).toContain('3');expect(summary('Overdue').textContent).toContain('1');
+  expect(summary('All active').textContent).toContain('3');expect(summary('Overdue').textContent).toContain('Expand inventory');
+  expect(container.querySelector('[data-testid="ai-view-active"]').textContent).toBe('Active · 3');
+  expect(container.querySelector('[data-testid="ai-row-0"]').className).toContain('bpage-late');
+  expect(container.querySelector('[data-testid="ai-foot"]').textContent).toBe('Showing 3 of 3 active action items · soonest due first');
+  expect(container.querySelector('[data-testid="ai-pending-notice"]')).toBeNull();expect(summary('Overdue').textContent).toContain('1');
   expect(container.querySelectorAll('[data-testid^="ai-row-"]')).toHaveLength(3);
   expect(container.textContent).toContain('Finding without an Action');
   await click(summary('Overdue'));expect(container.querySelector('[data-testid="ai-view-overdue"]').getAttribute('aria-pressed')).toBe('true');
   await input(container.querySelector('[data-testid="ai-search"]'),'Plant devices');
-  expect(container.querySelectorAll('[data-testid^="ai-row-"]')).toHaveLength(1);expect(summary('All Open').textContent).toContain('3');
+  expect(container.querySelectorAll('[data-testid^="ai-row-"]')).toHaveLength(1);expect(summary('All active').textContent).toContain('3');
   await input(container.querySelector('[data-testid="ai-search"]'),'');await click(container.querySelector('[data-testid="ai-view-completed"]'));
   expect(container.querySelector('[data-testid="ai-row-0"]').textContent).toContain('Finished work');
   mockClient='demo_dunder';rows=rows.map(r=>({...r,client_id:mockClient}));
@@ -94,4 +98,14 @@ test('server readiness refresh is not a new unsaved edit in the parent Finding',
   await click(document.querySelector('[data-testid="tasks-drawer"] [data-testid="drawer-cancel"]'));
   await click(document.querySelector('[data-testid="findings-drawer"] [data-testid="drawer-cancel"]'));
   expect(document.querySelector('[role="alertdialog"]')).toBeNull();expect(close).toHaveBeenCalledWith(false);
+});
+test('tile context names the oldest overdue and next due items from real rows',()=>{
+  const now=new Date(2026,8,30),row=(id,due_date,extra={})=>({kind:'tasks',id,title:id,due_date,owner_id:'u',raw:{status:'open'},...extra});
+  const tiles=Object.fromEntries(actionTiles([row('late2','2026-09-20'),row('late1','2026-08-31'),row('soon','2026-10-12'),row('later','2026-10-20'),row('far','2026-12-14',{owner_id:null}),row('done','2026-01-01',{raw:{status:'done'}})],now).map(t=>[t.id,t]));
+  expect(tiles.overdue).toMatchObject({count:2,context:'30 days late · late1'});
+  expect(tiles.upcoming.count).toBe(2);expect(tiles.upcoming.context).toMatch(/^Next: soon, /);
+  expect(tiles.active).toMatchObject({count:5,context:'3 on schedule'});
+  expect(tiles.unassigned).toMatchObject({count:1,context:'1 item without an owner'});
+  const clear=Object.fromEntries(actionTiles([row('ok','2027-01-01')],now).map(t=>[t.id,t]));
+  expect(clear.unassigned.context).toBe('Every action item has an owner');expect(clear.overdue.context).toBe('Nothing past due');
 });

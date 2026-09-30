@@ -1,0 +1,8 @@
+/* Brawndo Action Items: page-specific layout on top of the shared BrawndoPage kit. */
+.brawndo-ai .register-toolbar { display: flex; align-items: center; }
+.brawndo-ai .brawndo-ai-source-filter { margin-left: auto; font-size: 13px; color: var(--bp-muted); }
+.brawndo-ai .bpage-notice summary { color: var(--bp-text); }
+.brawndo-ai .bpage-meta .text-link { font-size: inherit; }
+@media (max-width: 640px) { .brawndo-ai .brawndo-ai-source-filter { margin-left: 0; } }
+/* Dark mode: High priority pill needs the same AA-safe treatment the kit gives Critical. */
+.bpage[data-theme="dark"].brawndo-ai .pill-high { background: #b91c1c; color: #ffffff; border-color: #b91c1c; padding: 1px 8px; border-radius: 999px; }
