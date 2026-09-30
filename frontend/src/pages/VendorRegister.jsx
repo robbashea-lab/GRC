@@ -25,6 +25,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from "@/components/ui/textarea";
 import { Download,AlertCircle,CalendarDays,ListChecks,UserRound,ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import {BrawndoSurface,BrawndoPageHeader,BrawndoTiles,BrawndoChips,shortDate} from '@/components/BrawndoPage';
+import './BrawndoVendors.css';
 
 const CRIT_LABEL = { critical: "Critical", high: "High", medium: "Moderate", moderate: "Moderate", low: "Low" };
 const CATEGORIES = ["SaaS", "Cloud / Hosting", "Managed Service Provider", "Security Provider", "HR / Payroll",
@@ -57,6 +59,23 @@ function vendorMatchesView(v, view) {
 }
 
 
+
+// Brawndo summary tiles. Each tile uses the register's own view rule and drives that view.
+const PILOT_CHIPS=[['all_active','All active'],['review_due','Reviews due'],['review_overdue','Reviews past due'],['critical_high','Critical / High'],['contract_soon','Contracts expiring'],['renewal_soon','Renewals upcoming'],['assurance','Assurance due'],['inactive','Inactive']];
+const names=list=>list.length?list.slice(0,2).map(v=>v.name).join(', ')+(list.length>2?` +${list.length-2}`:''):'';
+const byDate=key=>(a,b)=>String(key(a)||'').localeCompare(String(key(b)||''));
+export function vendorTiles(rows,now=new Date()){
+  const m=view=>rows.filter(v=>vendorMatches(v,view,now));
+  const crit=m('critical_high'),due=m('review_due').sort(byDate(v=>v.next_review)),assur=m('assurance'),exp=m('contract_soon');
+  const today=now.toISOString().slice(0,10);
+  const nextRenewal=rows.filter(v=>vendorMatches(v,'all_active',now)&&v.contract_renewal&&String(v.contract_renewal).slice(0,10)>=today).sort(byDate(v=>v.contract_renewal))[0];
+  return [
+    {id:'critical_high',label:'Critical / High',count:crit.length,tone:'critical',context:names(crit)||'No critical or high vendors'},
+    {id:'review_due',label:'Review due in 30 days',count:due.length,tone:'attention',context:due.length?`${due[0].name}, ${shortDate(due[0].next_review)}${due.length>1?` +${due.length-1}`:''}`:'No reviews due'},
+    {id:'assurance',label:'Assurance due',count:assur.length,tone:'attention',context:names(assur)||'No assurance follow-ups due'},
+    {id:'contract_soon',label:'Contracts expiring',count:exp.length,tone:'attention',context:exp.length?names(exp):nextRenewal?`Next renewal: ${nextRenewal.name}, ${shortDate(nextRenewal.contract_renewal)}`:'No upcoming renewals'},
+  ];
+}
 
 export default function VendorRegister() {
   const { user } = useAuth();
@@ -116,7 +135,7 @@ export default function VendorRegister() {
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
   function selectView(id) { if(pilot){table.replaceState({...table.state,filters:{}});setView(id);return;}const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',critical_high:'criticality',review_due:'next_review',review_overdue:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
-  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, tableSource.filter(v => (pilot?vendorMatches:vendorMatchesView)(v, id)).length]));
+  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'critical_high','unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, tableSource.filter(v => (pilot?vendorMatches:vendorMatchesView)(v, id)).length]));
   const tabs = pilot?vendorViews:LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: LINKED_VIEWS[view] }] : VIEWS;
 
   function exportCsv() {
@@ -135,6 +154,67 @@ export default function VendorRegister() {
     a.download = `vendor-register-${(currentClient?.name || "client").replace(/\s+/g, "-")}.csv`; a.click();
   }
 
+  if(pilot){
+    const chipDefs=[...PILOT_CHIPS,...(['critical','high'].includes(view)?[[view,view==='critical'?'Critical':'High']]:[])];
+    const pick=id=>selectView(view===id?'all_active':id);
+    return (
+      <BrawndoSurface className="bvendors">
+        <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Third parties`} title="Vendors">
+          <button type="button" className="bpage-btn" onClick={exportCsv} data-testid="vendors-export"><Download size={16} aria-hidden="true"/>Export CSV</button>
+          {canWrite&&<button type="button" className="bpage-btn bpage-btn-primary" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}
+        </BrawndoPageHeader>
+        <BrawndoTiles label="Vendor summaries" loading={loading} tiles={vendorTiles(tableSource).map(t=>({...t,pressed:view===t.id,onClick:()=>pick(t.id)}))}/>
+        <div className="register-toolbar">
+          <SearchField label="Search vendors" placeholder="Search vendors…" value={q} onChange={setQ} testid="vendor-search" />
+          <BrawndoChips label="Vendor views" chips={chipDefs.map(([id,label])=>({id,label,count:loading?null:counts[id],pressed:view===id,onClick:()=>selectView(id),testid:`vendor-view-${id}`}))}/>
+          {(q||view==='all')&&<button type="button" className="bpage-chip" onClick={()=>{setQ('');selectView('all_active');}}>Clear filters</button>}
+        </div>
+        <div className="register-body">
+          <TableFilterChips table={table} />
+          <RegisterLoadError error={loadError} onRetry={load} name="vendors" />
+          <div className="register-table-frame overflow-x-auto" role="region" aria-label="Vendors register" tabIndex={0}>
+            <table className="w-full text-sm">
+              <thead><tr>
+                <SortableHeader table={table} columnKey="name" />
+                <SortableHeader table={table} columnKey="criticality" />
+                <SortableHeader table={table} columnKey="data_types" />
+                <SortableHeader table={table} columnKey="business_owner_id" />
+                <SortableHeader table={table} columnKey="next_review" />
+                <SortableHeader table={table} columnKey="contract_renewal" />
+                <SortableHeader table={table} columnKey="last_review" />
+              </tr></thead>
+              <tbody className="divide-y divide-line">
+                {loading && <TableLoadingRow colSpan={7} />}
+                {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
+                {!loading && filtered.map((v, i) => {
+                  const dt=v.data_types||[],closed=['inactive','terminated'].includes(v.status),assur=vendorMatches(v,'assurance');
+                  const meta=[v.service||v.services,v.status&&v.status!=='active'?v.status[0].toUpperCase()+v.status.slice(1):null].filter(Boolean).join(' · ');
+                  return (
+                    <tr key={v.vendor_id} className={`row-hover row-open${vendorMatches(v,'review_overdue')?' bpage-late':''}`} onClick={() => setDrawer({ open: true, record: v })} data-testid={`vendor-row-${i}`}>
+                      <td className="tbl-cell">
+                        <button type="button" className="register-record-link hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v});}}>{v.name}</button>
+                        {meta&&<span className="bpage-meta">{meta}</span>}
+                      </td>
+                      <td className="tbl-cell"><SeverityBadge value={v.criticality} label={CRIT_LABEL[v.criticality]} /></td>
+                      <td className="tbl-cell">{dt.length?<span className="bvendors-tags">{dt.map(d=><span key={d} className="bvendors-tag">{d}</span>)}</span>:<span className="register-empty">—</span>}</td>
+                      <td className="tbl-cell"><OwnerCell people={users} id={v.business_owner_id} status={v.status} /></td>
+                      <td className="tbl-cell">{v.next_review ? <DueDate iso={v.next_review} closed={closed} /> : <span className="register-empty">Not scheduled</span>}
+                        {assur&&<button type="button" className="bvendors-note" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v,tab:'assurance'});}}>Assurance report due</button>}</td>
+                      <td className="tbl-cell">{v.contract_renewal ? <DueDate iso={v.contract_renewal} closed={closed} /> : <span className="register-empty">No renewal date</span>}{view==='renewal_soon'&&<span className="bpage-meta">{renewalAction(v).label}: {shortDate(renewalAction(v).date)}</span>}</td>
+                      <td className="tbl-cell"><HistoryDate value={v.last_review} empty="Never reviewed" /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {!loading&&<p className="bpage-foot" data-testid="vendor-foot">Showing {filtered.length} of {counts.all_active} active vendors</p>}
+          </div>
+        </div>
+        {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(x) => setDrawer((p) => ({ ...p, open: x }))} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
+        {addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>}
+      </BrawndoSurface>
+    );
+  }
   return (
     <div>
       <PageHeader

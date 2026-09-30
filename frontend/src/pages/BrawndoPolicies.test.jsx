@@ -26,7 +26,16 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 test('Brawndo register removes summary cards and presence; client switching restores original experience',async()=>{
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
   const headers=()=>[...container.querySelectorAll('th .column-control')].map(n=>n.textContent);
-  expect(headers()).toEqual(['Policy','Framework Alignment','Policy Status','Version','Owner','Last Reviewed','Next Review']);
+  expect(headers()).toEqual(['Policy','Framework Alignment','Policy Status','Owner','Next Review']);
+  // Version and last review now sit under the title; drafts read as awaiting approval.
+  expect(container.querySelector('tbody .bpage-meta').textContent).toBe('Version 1'); // reported missing: Needs Creation, not awaiting approval
+  expect(container.querySelector('h1').textContent).toBe('Policies');
+  expect(container.querySelector('[data-testid="tile-awaiting"]').textContent).toContain('Nothing awaiting approval');
+  expect(container.querySelector('[data-testid="policies-count"]').textContent).toBe('Showing 1 of 1 policy · next review first');
+  await click(container.querySelector('[data-testid="policy-view-approved"]'));
+  expect(container.querySelector('tbody').textContent).not.toContain('Access Policy');
+  await click(container.querySelector('[data-testid="policy-view-all"]'));
+  expect(container.querySelector('tbody').textContent).toContain('Access Policy');
   expect(container.textContent).not.toContain('Review overdue');
   expect(container.querySelector('tbody').textContent).toContain('Needs Creation');
   await input(container.querySelector('[data-testid="policies-search"]'),'unmatched');
