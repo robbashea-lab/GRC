@@ -1,5 +1,38 @@
 # Evidence Library implementation
 
+## Folder-first repository — 2026-09-30
+
+This presentation supersedes the program-area/filter-first interface below.
+The landing page has ten compact work-area folders, search and five recent files.
+Reviews group by the recorded review type (including historical occurrence type);
+Policies, Vendors, Risks, Findings, Action Items and AI Governance group by the
+actual linked record. Framework folders use the existing enabled-program context.
+Evidence for inactive/unrecorded frameworks remains searchable and available in
+the area's All files view, without advertising those frameworks as enabled.
+Other groups remaining supported sources, including organizational Controls.
+
+Folder paths and counts are computed in the existing metadata catalog. A file is
+counted once per folder/area, even when multiple links lead there. A shared file
+can appear in several areas; adding area counts is not a unique inventory total.
+Folder filtering happens before server pagination. No file bytes are fetched for
+browsing, no physical folder tree is created, and no stored records are migrated.
+Missing/unavailable sources remain Needs Classification. Linking a valid source
+classifies the existing file; original provenance and protected historical links
+cannot be moved or rewritten. Policies retain ownership of approval/version state.
+
+The upload workspace progressively asks for work area and a source record, or
+allows Needs Classification. Item details retain metadata editing, relationships,
+authenticated download and Activity, with a wider workspace and draft protection.
+Removal remains the existing retention-aware archive operation in item details.
+An Include archived control on file views exposes retained metadata/history;
+it does not relax client authorization or make archived files editable.
+
+No new permission, schema, dependency, upload storage or document-version system.
+The existing immutable artifact version is displayed; no replacement-version tree
+or active HTML/SVG preview is introduced. Demo file-size/cache limitations remain.
+The catalog still scans client metadata in bounded batches; very large-library
+indexing and bounded folder-summary pagination remain future scalability work.
+
 ## Inspection (before changes, 2026-09-23)
 
 - Mongo Evidence documents own immutable base64 bytes, ID, SHA-256, version,

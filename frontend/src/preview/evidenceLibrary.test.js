@@ -7,6 +7,23 @@ beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post(
 const upload=async extra=>(await api.post('/evidence',{client_id:cid,filename:'proof.txt',mime_type:'text/plain',content_base64:'VEVTVA==',...extra})).data;
 const link=async(e,kind,id,extra={})=>(await api.post(`/evidence-library/items/${e.evidence_id}/relationships`,{linked_type:kind,linked_id:id,expected_updated_at:e.updated_at||null,...extra})).data;
 
+test('repository counts every shared file once per folder, routes from real review types and includes archives only on request',async()=>{
+  const r=(await api.post('/reviews',{client_id:cid,title:'Restore validation',review_type:'backup',recurrence:'annual',due_date:'2027-03-01'})).data;
+  const v=(await api.post('/vendors',{client_id:cid,name:'Cloud supplier',service:'Cloud hosting'})).data;
+  let e=await upload({linked_type:'review',linked_id:r.review_id,occurrence_id:r.current_occurrence_id});
+  e=await link(e,'vendors',v.vendor_id);
+  const catalog=async(state={},q='')=>(await api.get('/evidence/catalog',{params:{client_id:cid,state:JSON.stringify(state),q}})).data;
+  const data=await catalog();expect(data.total).toBe(1);expect(data.program_counts).toEqual({Reviews:1,Vendors:1});
+  const folder=data.folder_counts.find(f=>f.area==='Reviews');expect(folder.key).toBe('backup');expect(folder.count).toBe(1);
+  expect((await catalog({filters:{folder_paths:[folder.path]}})).total).toBe(1);
+  expect((await catalog({},'backup')).total).toBe(1);
+  expect((await catalog({},'Cloud supplier')).total).toBe(1);
+  const unlinked=await upload({filename:'unknown.txt'});expect((await catalog()).program_counts.Unassigned).toBe(1);
+  await api.delete(`/evidence/${unlinked.evidence_id}`);expect((await catalog()).total).toBe(1);
+  expect((await catalog({include_archived:true})).total).toBe(2);
+  expect(readStore().evidence.filter(x=>x.client_id===cid)).toHaveLength(2);
+});
+
 test('one file supports three records; unlink preserves bytes, provenance, and Activity',async()=>{
   const vendor=(await api.post('/vendors',{client_id:cid,name:'CloudCore',service:'Cloud hosting'})).data;
   const finding=(await api.post('/findings',{client_id:cid,title:'Access gap',severity:'high'})).data;

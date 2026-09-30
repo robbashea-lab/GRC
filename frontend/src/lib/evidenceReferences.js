@@ -13,6 +13,8 @@ export function sourceReference(kind,row,id,occurrence) {
   if(row&&kind==='reviews'){
     const oid=occurrence||'occ_'+row.review_id,old=row.occurrences?.find(o=>o.occurrence_id===oid),current=oid===occurrenceId(row);
     Object.assign(result,{occurrence_id:oid,period:old?.period||(old||current?reviewSchedule(old||row).period:'Occurrence not recorded'),available:!!(old||current)});
+    result.review_type=(old||row).review_type||row.review_type;
   }
+  if(row&&['framework_assessments','requirements'].includes(kind))result.framework_key=row.framework_key||row.baseline_key;
   return result;
 }

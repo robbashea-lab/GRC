@@ -3,8 +3,9 @@ import {dateMatches} from '../lib/tableFilters';
 import {occurrenceId,reviewView,assertCurrentOccurrence,belongsToOccurrence} from '../lib/reviewOccurrences';
 import {audit,record} from './store';
 import {auditEvidenceIds} from '../lib/isoAudit';
+import {EVIDENCE_AREAS,evidenceFolders,folderCounts} from '../lib/evidenceRepository';
 
-export const areas={reviews:'Reviews',policies:'Policies',vendors:'Vendors',risks:'Risks',findings:'Findings',framework_assessments:'Frameworks',requirements:'Frameworks',organizational_controls:'Controls'};
+export const areas=EVIDENCE_AREAS;
 export const controlEvidenceLinks=c=>[c,...c.history||[],...(c.observations||[]).map(o=>o.design_snapshot)].flatMap(v=>v?.related_links||[]).filter(l=>l.kind==='evidence');
 export const auditEvidenceLinks=r=>[r,...r.occurrences||[]].flatMap(o=>auditEvidenceIds(o.iso_audit).map(id=>({id,occurrence_id:o.occurrence_id||occurrenceId(r)})));
 export function evidenceReferences(db,e){
@@ -66,22 +67,25 @@ export function evidencePage(db,params){
     }
     if(root&&references.some(r=>r.available&&r.kind===rootKind&&r.id===params.entity_id&&(rootKind!=='reviews'||r.occurrence_id===oid)))category='direct';
     const retained=(kind==='reviews'&&review?.occurrences?.some(o=>o.occurrence_id===occurrence&&o.evidence?.some(x=>x.evidence_id===e.evidence_id)))||(rootKind==='reviews'&&root.occurrences?.some(o=>o.occurrence_id===oid&&o.evidence?.some(x=>x.evidence_id===e.evidence_id)))||(rootKind==='policies'&&references.some(r=>r.kind==='policies'&&r.id===root.policy_id&&r.module_owned));
-    if(e.archived_at&&(!root||!retained))category=null;
+    if(e.archived_at&&state.include_archived!==true&&(!root||!retained))category=null;
     const {content_base64,...metadata}=e;
     const program_areas=[...new Set(references.filter(r=>r.available).map(r=>areas[r.kind]||'Other'))],refresh=[e.expiration_date,e.refresh_date].filter(Boolean).sort()[0],cutoff=new Date(today);cutoff.setDate(cutoff.getDate()+30);
     return {...metadata,context,category,references,program_areas:program_areas.length?program_areas:['Unassigned'],evidence_type:e.evidence_type||'Other',display_name:e.display_name||e.filename,years:references.some(r=>r.kind==='reviews')?[...new Set(references.filter(r=>r.available&&r.year).map(r=>r.year))]:[e.evidence_date||e.effective_date||e.created_at].filter(Boolean).map(d=>d.slice(0,4)),frameworks:[...new Set(references.filter(r=>r.available&&r.framework_key).map(r=>r.framework_key))],refresh_status:!refresh?'Not set':refresh<today.toISOString().slice(0,10)?'Expired / refresh overdue':refresh<=cutoff.toISOString().slice(0,10)?'Due in 30 days':'Current',uploaded_by_email:email,uploader:person?.name||email||'Unknown uploader'};
   }).filter(r=>r.category);
+  rows.forEach(r=>{r.folders=evidenceFolders(r.references);r.folder_paths=r.folders.map(f=>f.path);});
+  const folder_counts=folderCounts(rows);
   const unfiltered_total=rows.length,program_counts={};rows.forEach(r=>r.program_areas.forEach(a=>{program_counts[a]=(program_counts[a]||0)+1;}));
   rows.forEach(r=>{counts[r.category]=(counts[r.category]||0)+1;Object.entries(facets).forEach(([k,set])=>{for(const value of Array.isArray(r[k])?r[k]:[r[k]])if(value&&!set.has(value)){if(set.size<200)set.add(value);else facets_limited=true;}});});
   rows=rows.filter(r=>{
+    if(state.filters?.folder_paths?.length&&!state.filters.folder_paths.some(p=>r.folder_paths.includes(p)))return false;
     // Search operator-visible context, not random record IDs that can match a quarter by accident.
-    const text=[r.filename,r.display_name,r.evidence_type,r.uploader,r.uploaded_by_email,...r.years,...[...Object.values(r.context),...r.references].filter(v=>v?.available).flatMap(v=>[v.title,v.period,v.label,v.display_id,v.year,v.framework_key])].filter(Boolean).join(' ').toLowerCase();
+    const text=[r.filename,r.display_name,r.evidence_type,r.uploader,r.uploaded_by_email,...r.program_areas,...r.folders.map(f=>f.label),...r.years,...[...Object.values(r.context),...r.references].filter(v=>v?.available).flatMap(v=>[v.title,v.period,v.label,v.display_id,v.year,v.framework_key])].filter(Boolean).join(' ').toLowerCase();
     return text.includes(query)&&Object.entries(state.filters||{}).every(([k,values])=>!values.length||!(k in facets||dates.includes(k))||values.some(v=>dates.includes(k)?dateMatches(r[k],v,today):v==='__empty__'?!r[k]:Array.isArray(r[k])?r[k].includes(v):r[k]===v));
   });
   const key=['filename','mime_type','uploaded_by_email','linked_type',...dates].includes(state.sort?.key)?state.sort.key:'created_at',direction=state.sort?.dir==='asc'?1:-1;
   const sortValues=new Map(db.evidence.filter(e=>e.client_id===cid).map(e=>[e.evidence_id,e[key]||'']));
   rows.sort((a,b)=>String(sortValues.get(a.evidence_id)).localeCompare(String(sortValues.get(b.evidence_id)))*direction||a.evidence_id.localeCompare(b.evidence_id));
-  return {items:rows.slice((page-1)*size,page*size),total:rows.length,unfiltered_total,page,page_size:size,facets:Object.fromEntries(Object.entries(facets).map(([k,set])=>[k,[...set].sort()])),facets_limited,counts,program_counts};
+  return {items:rows.slice((page-1)*size,page*size),total:rows.length,unfiltered_total,page,page_size:size,facets:Object.fromEntries(Object.entries(facets).map(([k,set])=>[k,[...set].sort()])),facets_limited,counts,program_counts,folder_counts};
 }
 
 export function evidenceLibraryRequest(db,method,parts,params,body){

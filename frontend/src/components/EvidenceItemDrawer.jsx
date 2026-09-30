@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
 import api,{formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
@@ -9,17 +9,22 @@ import {MetadataFields,SourcePicker,useLibraryRequest,selectClass} from './Evide
 import {evidenceSources} from '@/lib/evidenceReferences';
 import {toast} from 'sonner';
 import {displayRecordedAt} from '@/lib/managementDates';
+import './EvidenceRepository.css';
 
-export default function EvidenceItemDrawer({id,onClose,onOpen,onChanged}){
+export default function EvidenceItemDrawer({id,onClose,onOpen:onSourceOpen,onChanged}){
   const {user}=useAuth(),[refresh,setRefresh]=useState(0),[tab,setTab]=useState('Overview'),[draft,setDraft]=useState(null),[draftVersion,setDraftVersion]=useState(null),[kind,setKind]=useState('findings'),[busy,setBusy]=useState(false),[activityPage,setActivityPage]=useState(1);
   const {data:item,error,loading}=useLibraryRequest(`/evidence-library/items/${encodeURIComponent(id)}`,{},refresh);
   const activity=useLibraryRequest(tab==='Activity'?`/evidence-library/items/${encodeURIComponent(id)}/activity`:null,{page:activityPage},refresh);
   const canWrite=!item?.archived_at&&isInternal(user),canDelete=!item?.archived_at&&['super_admin','platform_admin'].includes(user?.role);
   const changed=()=>{setRefresh(v=>v+1);onChanged();};
+  const opener=useRef(null);
+  useEffect(()=>{if(!draft)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[draft]);
+  const close=()=>{if(!busy&&(!draft||window.confirm('Discard unsaved evidence metadata changes?')))onClose();};
+  const onOpen=ref=>{if(!busy&&(!draft||window.confirm('Discard unsaved metadata before opening the source?'))){setDraft(null);onSourceOpen(ref);}};
   async function mutate(fn){setBusy(true);try{await fn();changed();return true;}catch(e){toast.error(formatError(e));return false;}finally{setBusy(false);}}
   async function link(ref,remove=false){await mutate(()=>ref.kind==='framework_assessments'?api.post(`/framework_assessments/${ref.id}/links`,{kind:'evidence',id}):api.post(`/evidence-library/items/${id}/relationships`,{linked_type:ref.kind,linked_id:ref.id,occurrence_id:ref.occurrence_id||null,remove,expected_updated_at:item.updated_at||null}));}
   async function remove(){if(!window.confirm(`Delete "${item.filename}" from the library? It has ${item.references.length} source/supporting references. Retained history and bytes are not erased; retention rules may prevent deletion.`))return;if(await mutate(()=>api.delete(`/evidence/${id}`)))onClose();}
-  return <Sheet open onOpenChange={v=>{if(!v)onClose();}}><SheetContent className="w-full sm:max-w-xl overflow-y-auto"><SheetHeader><SheetTitle>{item?.display_name||item?.filename||'Evidence Item'}</SheetTitle><SheetDescription>One authoritative file · source and supporting relationships</SheetDescription></SheetHeader>
+  return <Sheet open onOpenChange={v=>{if(!v)close();}}><SheetContent className="evidence-workspace" onPointerDownOutside={e=>e.preventDefault()} onOpenAutoFocus={()=>{opener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();(opener.current?.isConnected?opener.current:document.querySelector('[data-testid="evidence-search"]'))?.focus();}}><SheetHeader><SheetTitle>{item?.display_name||item?.filename||'Evidence Item'}</SheetTitle><SheetDescription>One authoritative file · source and supporting relationships</SheetDescription></SheetHeader>
     {loading&&<p role="status">Loading Evidence…</p>}{error&&<p role="alert">{error}</p>}
     {item&&!loading&&<div className="space-y-4 pt-4"><div role="group" aria-label="Evidence detail" className="flex border-b border-line">{['Overview','Related','Activity'].map(t=><button key={t} aria-pressed={tab===t} className={`px-3 py-2 text-sm ${tab===t?'font-semibold border-b-2 border-brand-charcoal':'text-ink-secondary hover:bg-surface-subtle'}`} onClick={()=>setTab(t)}>{t}</button>)}</div>
       {tab==='Overview'&&<section aria-label="Evidence overview" className="space-y-4"><dl className="grid grid-cols-2 gap-3 text-sm">{[['Filename',item.filename],['Program Area',item.program_areas?.join(', ')],['Evidence Type',item.evidence_type||'Other'],['Uploaded by',uploaderLabel(item)],['Uploaded',displayRecordedAt(item.created_at)||'Not recorded'],['File type',item.mime_type],['Size',item.size!=null?`${item.size.toLocaleString()} bytes`:'Not recorded'],['Artifact version',item.version],['Evidence date',item.evidence_date],['Effective date',item.effective_date],['Expiration date',item.expiration_date],['Refresh date',item.refresh_date]].filter(([,v])=>v!=null).map(([k,v])=><div key={k}><dt className="text-xs text-ink-secondary">{k}</dt><dd className="break-words">{v}</dd></div>)}</dl><p className="text-xs break-all text-ink-secondary">SHA-256: {item.sha256||'Not recorded'}</p>{item.notes&&<p className="text-sm whitespace-pre-wrap">{item.notes}</p>}

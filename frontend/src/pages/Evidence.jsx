@@ -1,87 +1,68 @@
-import '@/components/RegisterSignalBar.css';
-import {ageDays,STALE_DAYS} from '@/lib/cisVerification';
-import {useTableControls,ColumnControl,TableFilterChips} from '@/components/TableControls';
-import {tableColumns} from '@/lib/tableColumns';
-import {columnOptions} from '@/lib/tableFilters';
 import {useRef,useState} from 'react';
-import api,{formatError} from '@/lib/api';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
+import {useCompliance} from '@/context/ComplianceContext';
+import {canOperate} from '@/lib/permissions';
+import {SCHEMAS} from '@/lib/schemas';
+import {FRAMEWORKS} from '@/lib/frameworks';
+import {formatError} from '@/lib/api';
 import PageHeader from '@/components/PageHeader';
-import {HeaderActions,PrimaryAction,SecondaryAction,SearchField,SortableHeader} from '@/components/Register';
+import {PrimaryAction,SearchField} from '@/components/Register';
 import {HistoryDate} from '@/components/RegisterCells';
-import TableLoadingRow from '@/components/TableLoadingRow';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import RecordDrawer from '@/components/RecordDrawer';
 import {useEvidenceCatalog,EvidencePagination} from '@/components/EvidencePanel';
-import {EvidenceSource,resolveEvidenceSource,downloadEvidence,uploaderLabel,evidenceSourceLabel} from '@/lib/evidenceContext';
-import {FolderArchive,Trash2,Download,File as FileIcon} from 'lucide-react';
+import {EvidenceSource,resolveEvidenceSource,downloadEvidence,uploaderLabel} from '@/lib/evidenceContext';
+import {Folder,Download,File as FileIcon,ChevronRight} from 'lucide-react';
 import {toast} from 'sonner';
-
 import EvidenceItemDrawer from '@/components/EvidenceItemDrawer';
-import {EvidenceUpload,ReviewEvidenceSets,EvidenceSetRecords,SourcePicker,PROGRAM_AREAS,AREA_KIND} from '@/components/EvidenceLibraryControls';
-const extraColumns=[['program_areas','Program Area'],['evidence_type','Evidence Type'],['years','Period / Year'],['frameworks','Framework'],['refresh_status','Refresh / Expiration']].map(([key,label])=>({key,label,filter:true,sortable:false}));
-export default function Evidence(){const {currentClientId}=useOrg();return <EvidenceWorkspace key={currentClientId}/>;}
-function EvidenceWorkspace(){
-  const {currentClient,currentClientId}=useOrg(),{user}=useAuth();
-  const scopeRef=useRef(currentClientId);scopeRef.current=currentClientId;
-  const [adding,setAdding]=useState(false),[itemId,setItemId]=useState(null),[area,setArea]=useState(null),[source,setSource]=useState(null),[selectedSet,setSelectedSet]=useState(null),[all,setAll]=useState(false),[search,setSearch]=useState({}),[paging,setPaging]=useState({}),[drawer,setDrawer]=useState(null);
-  const q=search.scope===currentClientId?search.value:'';
-  const table=useTableControls({columns:[...tableColumns('evidence'),...extraColumns,...['evidence_date','effective_date'].map(key=>({...tableColumns('evidence').find(c=>c.key==='created_at'),key,label:key==='evidence_date'?'Evidence Date':'Effective Date'}))],rows:[],module:'evidence',scope:`${user?.user_id}:${currentClientId}`});
-  const root=selectedSet||source,scopedRoot=root&&(root.kind!=='reviews'||selectedSet);
-  const state=JSON.stringify({...table.state,filters:{...table.state.filters,...(area?{program_areas:[area]}:{})}}),pageKey=`${currentClientId}:${q}:${state}:${root?.id}:${root?.occurrence_id}`,page=paging.key===pageKey?paging.page:1;
-  const setPage=value=>setPaging({key:pageKey,page:value});
-  const now=new Date(),today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const result=useEvidenceCatalog({client_id:currentClientId,q,state,page,page_size:25,today,...(scopedRoot?{entity_type:root.kind,entity_id:root.id,...(root.occurrence_id?{occurrence_id:root.occurrence_id}:{})}:{})}),data=result.data;
-  table.options=column=>columnOptions({...column,optionsOnly:true,options:(data?.facets?.[column.key]||[]).map(value=>({value,label:column.key==='linked_type'?evidenceSourceLabel(value):value}))},[]);
-  const canWrite=['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(user?.role),canDelete=['super_admin','platform_admin'].includes(user?.role);
-  const clear=()=>{setSearch({scope:currentClientId,value:''});table.clear();setArea(null);setSource(null);setSelectedSet(null);};
-  async function openSource(ref){
-    const scope=currentClientId;
-    try {const target=await resolveEvidenceSource(ref,scope);if(scopeRef.current===scope)setDrawer({...target,scope});}catch(e){toast.error(formatError(e));}
-  }
-  async function remove(row){
-    if(!window.confirm(`Delete "${row.filename}" from the library? ${row.references?.length||0} source/supporting references. Retained history and bytes are not erased; retention rules apply.`))return;
-    try{await api.delete(`/evidence/${row.evidence_id}`);toast.success('Deleted');setPage(1);result.reload();}catch(e){toast.error(formatError(e));}
-  }
-  const ageViews=[['evidence_date','older12','Older than 12 months'],['created_at','last30','Added in last 30 days']];
-  return <div className="register-surface"><PageHeader title="Evidence Library" subtitle="Evidence files and their provenance, organized by where the work happened."
-      action={canWrite&&<HeaderActions><PrimaryAction label="Add Evidence" onClick={()=>setAdding(true)} testid="add-evidence"/></HeaderActions>}/>
-    <div className="register-toolbar">
-      <SearchField label="Search Evidence" placeholder="Search filename or source…" value={q} onChange={value=>setSearch({scope:currentClientId,value})} testid="evidence-search"/>
-      <div className="quick-filters inline-flex items-center" role="group" aria-label="Evidence views">{ageViews.map(([key,range,label])=>{const on=(table.state.filters?.[key]||[]).includes(range);
-        return <button key={range} type="button" aria-pressed={on} data-testid={`evidence-view-${range}`} onClick={()=>{setAll(true);setArea(null);setSource(null);setSelectedSet(null);table.setFilter(key,on?[]:[range]);}}>{label}</button>;})}</div>
-      <div className="inline-flex flex-wrap items-center gap-3 text-xs">{['program_areas','evidence_type','years'].map(key=><ColumnControl key={key} table={table} columnKey={key}/>)}
-        <details className="evidence-more"><summary className="cursor-pointer text-ink-secondary">More filters</summary><div className="evidence-more-panel">{['frameworks','refresh_status','mime_type','uploaded_by_email','created_at','evidence_date','effective_date'].map(key=><ColumnControl key={key} table={table} columnKey={key}/>)}</div></details></div>
-      <span className="register-count" role="status">{result.loading?'Loading…':data?`${data.total} / ${data.unfiltered_total} files`:''}</span>
-    </div>
-    {!area&&<nav aria-label="Browse Evidence by source" className="evidence-areas">
-      <span className="evidence-areas-label">Browse</span>
-      {PROGRAM_AREAS.map(a=><button key={a} type="button" className="evidence-area" data-testid={`evidence-area-${a}`} onClick={()=>{setArea(a);setSource(null);setSelectedSet(null);}}>
-        <FolderArchive aria-hidden="true"/>{a==='Unassigned'?'Needs Classification':a}<span>{data?.program_counts?.[a]??0}</span></button>)}
-    </nav>}
-    <div className="section-body space-y-3">
-    <TableFilterChips table={table}/>
-    {area&&<nav aria-label="Evidence location" className="flex flex-wrap items-center gap-2 text-sm"><button className="register-link" onClick={clear}>Evidence Library</button><span aria-hidden="true">/</span><button className="register-link" onClick={()=>{setSource(null);setSelectedSet(null);}}>{area==='Unassigned'?'Needs Classification':area}</button>{source&&<><span aria-hidden="true">/</span><button className="register-link" onClick={()=>setSelectedSet(null)}>{source.title}</button></>}{selectedSet&&<><span aria-hidden="true">/</span><span>{selectedSet.period}</span></>}</nav>}
-    {area&&area!=='Unassigned'&&!source&&<SourcePicker key={area} clientId={currentClientId} kind={AREA_KIND[area]} onSelect={setSource}/>}
-    {source?.kind==='reviews'&&!selectedSet&&<ReviewEvidenceSets key={source.id} review={source} onSelect={setSelectedSet} onOpen={openSource}/>}
-    {scopedRoot&&<section className="rounded-md border border-line bg-surface-card p-3 space-y-2"><div className="flex justify-between gap-3"><h2 className="font-semibold text-sm">{root.title}{root.period&&' — '+root.period}</h2><SecondaryAction label={`Open ${root.label}`} onClick={()=>openSource(root)}/></div>{selectedSet?.set&&<p className="text-xs text-ink-secondary">{selectedSet.set.status} · {selectedSet.set.completed_by_name||'Reviewer not recorded'} · {selectedSet.set.completed_at?.slice(0,10)||'Not completed'} · {selectedSet.set.outcome?.replaceAll('_',' ')||'No outcome yet'}</p>}<p className="text-xs text-ink-secondary">Open the authoritative record for related Findings, Actions, comments, current document and version history.</p></section>}
-    {selectedSet&&<EvidenceSetRecords key={selectedSet.occurrence_id} source={selectedSet} onOpen={openSource}/>}
-    <h2 className="text-sm font-semibold">{scopedRoot?'Evidence in this context':all||area||q?'Evidence Items':'Recent Evidence'}</h2>
+import {EvidenceUpload,PROGRAM_AREAS} from '@/components/EvidenceLibraryControls';
+import '@/components/EvidenceRepository.css';
 
-    {data?.facets_limited&&<p className="text-xs text-ink-secondary">Showing the first 200 filter values. Use search to find additional filenames, sources or uploaders.</p>}
-    <RegisterLoadError error={result.error&&`${result.error}`} onRetry={result.reload} name="Evidence"/>
-    <div className="register-table-frame overflow-x-auto"><table className="w-full"><thead><tr>{['filename','evidence_type','uploaded_by_email','created_at','linked_type'].map(key=><SortableHeader key={key} table={table} columnKey={key}/>)}<th className="tbl-head w-20"><span className="sr-only">Actions</span></th></tr></thead><tbody className="divide-y divide-line">
-      {result.loading&&<TableLoadingRow colSpan={6}/>}
-      {data&&!data.items.length&&<tr><td colSpan={6} className="empty-state">{data.unfiltered_total?<>No Evidence matches the current search and filters. <button className="register-link" onClick={clear}>Clear filters</button></>:'No Evidence uploaded yet.'}</td></tr>}
-      {data?.items.map((row,index)=><tr key={row.evidence_id} className="row-hover row-open" data-testid={`evidence-row-${index}`} onClick={()=>setItemId(row.evidence_id)}>
-        <td className="tbl-cell"><div className="flex gap-2"><FileIcon aria-hidden="true" className="h-3.5 w-3.5 mt-0.5 shrink-0 text-ink-help"/><button type="button" className="register-record-link" onClick={e=>{e.stopPropagation();setItemId(row.evidence_id);}}>{row.display_name||row.filename}</button></div></td>
-        <td className="tbl-cell text-ink-secondary">{row.evidence_type||'Other'}</td>
-        <td className="tbl-cell text-ink-secondary">{uploaderLabel(row)}</td>
-        <td className="tbl-cell whitespace-nowrap"><HistoryDate value={row.created_at} empty="Not recorded"/>{(ageDays(row.evidence_date||row.created_at)??0)>STALE_DAYS&&<span className="register-subline is-attention">Over 12 months old</span>}</td>
-        <td className="tbl-cell" onClick={e=>e.stopPropagation()}><EvidenceSource source={row.context?.source||row.references?.find(ref=>ref.available)} onOpen={openSource}/>{row.context?.source?.kind==='tasks'&&row.context.finding&&<span className="register-subline">Finding: {row.context.finding.title}{row.context.review?` · ${row.context.review.title} — ${row.context.review.period}`:''}</span>}</td>
-        <td className="tbl-cell whitespace-nowrap" onClick={e=>e.stopPropagation()}><button type="button" aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} data-testid={`evidence-download-${index}`} onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))} className="register-icon-button"><Download className="h-3.5 w-3.5" aria-hidden="true"/></button>{canDelete&&<button type="button" aria-label={`Delete ${row.filename}`} title={`Delete ${row.filename}`} data-testid={`evidence-delete-${index}`} onClick={()=>remove(row)} className="register-icon-button is-destructive"><Trash2 className="h-3.5 w-3.5" aria-hidden="true"/></button>}</td></tr>)}
-    </tbody></table></div>
-    {data&&<EvidencePagination data={data} page={page} setPage={setPage}/>}
-  </div>{adding&&<EvidenceUpload clientId={currentClientId} onClose={()=>setAdding(false)} onSaved={result.reload}/>} {itemId&&<EvidenceItemDrawer key={itemId} id={itemId} onClose={()=>setItemId(null)} onOpen={openSource} onChanged={result.reload}/>} {drawer?.scope===currentClientId&&<RecordDrawer open onOpenChange={open=>{if(!open)setDrawer(null);}} {...drawer} clientId={currentClientId} onSaved={result.reload}/>}</div>;
+const areaName=a=>a==='Unassigned'?'Needs Classification':a;
+const reviewTypes=SCHEMAS.reviews.fields.find(f=>f.name==='review_type').options;
+const folderName=f=>f.area==='Reviews'?(reviewTypes.find(t=>t.value===f.key)?`${reviewTypes.find(t=>t.value===f.key).label} Reviews`:f.label):f.area==='Frameworks'?(FRAMEWORKS.find(t=>t.key===f.key)?.label||f.label):f.label;
+export default function Evidence(){const {currentClientId}=useOrg(),{user}=useAuth();return <EvidenceWorkspace key={`${user?.user_id}:${currentClientId}`}/>;}
+function EvidenceWorkspace(){
+  const {currentClientId}=useOrg(),{user}=useAuth(),compliance=useCompliance();
+  const scopeRef=useRef(currentClientId);scopeRef.current=currentClientId;
+  const [area,setArea]=useState(''),[folder,setFolder]=useState(null),[q,setQ]=useState(''),[page,setPage]=useState(1),[all,setAll]=useState(false);
+  const [adding,setAdding]=useState(false),[itemId,setItemId]=useState(null),[drawer,setDrawer]=useState(null);
+  const [archived,setArchived]=useState(false);
+  const landing=!area&&!q&&!all;
+  const state=JSON.stringify({include_archived:archived,filters:{...(area?{program_areas:[area]}:{}),...(folder?{folder_paths:[folder.path]}:{})}});
+  const result=useEvidenceCatalog({client_id:currentClientId,q,state,page,page_size:landing?5:25}),data=result.data;
+  const go=(nextArea='',nextFolder=null)=>{setArea(nextArea);setFolder(nextFolder);setQ('');setPage(1);setAll(false);if(!nextArea)setArchived(false);};
+  const groups=(data?.folder_counts||[]).filter(f=>f.area===area).sort((a,b)=>folderName(a).localeCompare(folderName(b)));
+  const enabled=new Set(compliance.items.map(f=>f.key));
+  const visibleGroups=area==='Frameworks'?compliance.items.map(f=>groups.find(g=>g.key===f.key)||{area:'Frameworks',key:f.key,label:f.label,path:JSON.stringify(['Frameworks',f.key]),count:0}):groups;
+  const showFiles=landing||!!q||!!folder||all||area==='Unassigned'||area&&!groups.length;
+  async function openSource(ref){try{const target=await resolveEvidenceSource(ref,currentClientId);if(scopeRef.current===currentClientId)setDrawer(target);}catch(e){toast.error(formatError(e));}}
+  const tile=(key,name,count,onClick)=><button type="button" key={key} className="evidence-folder" onClick={onClick}><Folder aria-hidden="true" size={23}/><span><strong>{name}</strong><small>{count} {count===1?'file':'files'}</small></span><ChevronRight aria-hidden="true" size={15}/></button>;
+  return <div className="register-surface evidence-repository">
+    <PageHeader title="Evidence Library" subtitle="Evidence organized by work area and record type." action={canOperate(user)&&<PrimaryAction label="Add Evidence" onClick={()=>setAdding(true)} testid="add-evidence"/>}/>
+    <div className="register-toolbar"><SearchField label="Search Evidence" placeholder={area?`Search within ${areaName(area)}…`:'Search evidence…'} value={q} onChange={v=>{setQ(v);setPage(1);}} testid="evidence-search"/>{q&&<button className="register-link" onClick={()=>{setQ('');setPage(1);}}>Clear search</button>}</div>
+    <div className="section-body space-y-5">
+      {area&&<nav aria-label="Evidence location" className="evidence-breadcrumbs"><button onClick={()=>go()}>Evidence Library</button><ChevronRight aria-hidden="true" size={14}/>{folder?<><button onClick={()=>go(area)}>{areaName(area)}</button><ChevronRight aria-hidden="true" size={14}/><span aria-current="page">{folderName(folder)}</span></>:<span aria-current="page">{areaName(area)}</span>}</nav>}
+      <RegisterLoadError error={result.error} onRetry={result.reload} name="Evidence"/>
+      {result.loading&&<p role="status" className="text-sm text-ink-secondary">Loading evidence…</p>}
+      {!area&&!q&&!all&&<section aria-label="Browse evidence"><h2 className="text-sm font-semibold mb-3">Browse</h2><div className="evidence-folders">{PROGRAM_AREAS.map(a=>tile(a,areaName(a),data?.program_counts?.[a]||0,()=>go(a)))}</div></section>}
+      {area&&!folder&&!q&&<section aria-label={`${areaName(area)} folders`}><h2 className="font-semibold mb-1">{areaName(area)}</h2><p className="text-sm text-ink-secondary mb-3">{area==='Unassigned'?'Link these files to their originating work to classify them.':'Files appear here from existing source and supporting relationships.'}</p>
+        {area==='Frameworks'&&compliance.error&&<p role="alert">Framework configuration could not be loaded: {compliance.error}</p>}
+        <div className="evidence-folders">{visibleGroups.map(f=>tile(f.path,folderName(f),f.count,()=>go(area,f)))}</div>
+        {area==='Frameworks'&&groups.some(f=>!enabled.has(f.key))&&<p className="text-sm text-ink-secondary mt-3">Evidence from inactive or unrecorded frameworks remains available in search and All files below.</p>}
+        {!!groups.length&&<button className="register-link text-sm mt-3" onClick={()=>setAll(!all)}>{all?'Hide files':'All files in this area'}</button>}
+      </section>}
+      {showFiles&&data&&<section aria-label="Evidence files"><div className="flex justify-between items-center gap-3 mb-3"><h2 className="text-sm font-semibold">{landing?'Recent uploads':q?'Search results':folder?folderName(folder):'Files'}</h2>{landing&&<button className="register-link text-sm" onClick={()=>setAll(true)}>View all evidence</button>}{all&&!area&&<button className="register-link text-sm" onClick={()=>go()}>Browse folders</button>}</div>
+        {!landing&&<label className="flex items-center gap-2 text-sm mb-3"><input type="checkbox" checked={archived} onChange={e=>{setArchived(e.target.checked);setPage(1);}}/>Include archived evidence</label>}
+        {!data.items.length?<div className="empty-state">{q?'No evidence matches your search.':area==='Unassigned'?'No evidence needs classification.':'No evidence yet. Files uploaded from the source record appear here automatically.'}</div>:<div className="register-table-frame overflow-x-auto" role="region" aria-label="Evidence files" tabIndex={0}><table className="w-full"><thead><tr>{['File','Type','Linked To','Uploaded By','Date','Actions'].map(t=><th scope="col" className="tbl-head" key={t}>{t}</th>)}</tr></thead><tbody>{data.items.map((row,index)=><tr key={row.evidence_id} className="row-hover" data-testid={`evidence-row-${index}`}>
+          <td className="tbl-cell"><div className="flex gap-2 items-start"><FileIcon aria-hidden="true" size={16} className="shrink-0 mt-1"/><button className="register-record-link" onClick={()=>setItemId(row.evidence_id)}>{row.display_name||row.filename}</button></div></td>
+          <td className="tbl-cell">{row.evidence_type||'Other'}{row.archived_at&&<span className="register-subline">Archived</span>}</td><td className="tbl-cell"><EvidenceSource source={row.context?.source||row.references?.find(r=>r.available)} onOpen={openSource}/>{row.context?.source?.kind==='tasks'&&row.context.finding&&<span className="register-subline">Finding: {row.context.finding.title}</span>}{row.references?.length>1&&<span className="register-subline">{row.references.length} linked contexts</span>}</td><td className="tbl-cell">{uploaderLabel(row)}</td><td className="tbl-cell"><HistoryDate value={row.created_at} empty="Not recorded"/></td>
+          <td className="tbl-cell"><button className="register-icon-button" aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} data-testid={`evidence-download-${index}`} onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))}><Download size={16} aria-hidden="true"/></button></td>
+        </tr>)}</tbody></table></div>}{!landing&&<EvidencePagination data={data} page={page} setPage={setPage}/>}</section>}
+    </div>
+    {adding&&<EvidenceUpload clientId={currentClientId} initialArea={area||'Unassigned'} onClose={()=>setAdding(false)} onSaved={result.reload}/>}
+    {itemId&&<EvidenceItemDrawer key={itemId} id={itemId} onClose={()=>setItemId(null)} onOpen={openSource} onChanged={result.reload}/>}
+    {drawer&&<RecordDrawer open onOpenChange={v=>{if(!v)setDrawer(null);}} {...drawer} clientId={currentClientId} onSaved={result.reload}/>}
+  </div>;
 }

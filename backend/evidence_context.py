@@ -9,10 +9,22 @@ from framework_catalog import assessment_title
 SOURCES = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/evidenceSources.json').read_text())
 ALIASES = {alias: kind for kind, spec in SOURCES.items() for alias in spec['aliases']}
 DATES = ('created_at','evidence_date','effective_date')
-FILTERS = ('mime_type', 'uploaded_by_email', 'linked_type', *DATES, 'program_areas', 'evidence_type', 'years', 'frameworks', 'refresh_status')
+FILTERS = ('mime_type', 'uploaded_by_email', 'linked_type', *DATES, 'program_areas', 'evidence_type', 'years', 'frameworks', 'refresh_status', 'folder_paths')
 SORTS = ('filename', *FILTERS)
 BATCH = 100
-AREAS = {'reviews':'Reviews', 'policies':'Policies', 'vendors':'Vendors', 'risks':'Risks', 'findings':'Findings', 'framework_assessments':'Frameworks', 'requirements':'Frameworks', 'organizational_controls':'Controls'}
+AREAS = {'reviews':'Reviews', 'policies':'Policies', 'vendors':'Vendors', 'risks':'Risks', 'findings':'Findings', 'framework_assessments':'Frameworks', 'requirements':'Frameworks', 'organizational_controls':'Other', 'tasks':'Action Items', 'ai_systems':'AI Governance'}
+
+
+def evidence_folders(references):
+    folders = {}
+    for ref in references:
+        if not ref['available']: continue
+        area = AREAS.get(ref['kind'], 'Other')
+        key = (ref.get('review_type') or 'untyped') if ref['kind']=='reviews' else (ref.get('framework_key') or 'unmapped') if area=='Frameworks' else ref['id']
+        label = (ref.get('review_type') or 'Review type not recorded') if ref['kind']=='reviews' else (ref.get('framework_key') or 'Framework not recorded') if area=='Frameworks' else ref['title']
+        path = json.dumps([area,key], separators=(',',':'), ensure_ascii=False)
+        folders[path] = {'area':area,'key':key,'label':label,'path':path}
+    return list(folders.values())
 
 
 def direct_links(row):
@@ -41,11 +53,13 @@ def reference(kind, row, ident=None, occurrence=None):
         result['status'] = row.get('status')
         result['display_id'] = row.get('display_id')
         if kind=='framework_assessments':result['title']=assessment_title(row)
+        if kind in ('framework_assessments','requirements'): result['framework_key']=row.get('framework_key') or row.get('baseline_key')
         result['archived'] = bool(row.get('archived_at') or row.get('status') == 'archived')
     if row and kind == 'reviews':
         oid = occurrence or 'occ_' + row['review_id']
         old = next((o for o in row.get('occurrences', []) if o.get('occurrence_id') == oid), None)
         current = oid == review_occurrences.occurrence_id(row)
+        result['review_type'] = (old or row).get('review_type') or row.get('review_type')
         result.update(occurrence_id=oid, period=(old or {}).get('period') or
                       (review_occurrences.schedule(old or row)['period'] if old or current else 'Occurrence not recorded'),
                       available=bool(old or current))
@@ -143,6 +157,8 @@ async def enrich(db, rows, cid, can_access):
         for ref in sorted(links,key=lambda r:priority[r['origin']]): unique.setdefault((ref['kind'],ref['id'],ref.get('occurrence_id')),ref)
         links=list(unique.values())
         row['references'] = links
+        row['folders'] = evidence_folders(links)
+        row['folder_paths'] = [f['path'] for f in row['folders']]
         row['program_areas'] = sorted({AREAS.get(r['kind'], 'Other') for r in links if r['available']}) or ['Unassigned']
         row['years'] = sorted({r['year'] for r in links if r.get('year') and r['available']})
         if not any(r['kind']=='reviews' for r in links):
@@ -193,7 +209,7 @@ def date_match(value, selected, today):
 def matches(row, state, query, today):
     context = row['context']
     # Random storage IDs are not examination periods or operator-visible references.
-    text = ' '.join(str(v or '') for v in [row.get('filename'), row.get('display_name'), row.get('evidence_type'), row.get('uploader'), row.get('uploaded_by_email'), *row.get('years',[]),
+    text = ' '.join(str(v or '') for v in [row.get('filename'), row.get('display_name'), row.get('evidence_type'), row.get('uploader'), row.get('uploaded_by_email'), *row.get('years',[]), *row.get('program_areas',[]), *[f['label'] for f in row.get('folders',[])],
         *[r.get(k) for r in [*context.values(), *row.get('references', [])] if r and r.get('available') for k in ('title', 'period', 'label', 'display_id', 'year', 'framework_key')]]).casefold()
     if query.casefold() not in text: return False
     for key, values in state.get('filters', {}).items():
@@ -208,10 +224,11 @@ async def catalog_page(db, cid, can_access, *, root_kind=None, root=None, oid=No
     sort = state.get('sort') or {}
     key = sort.get('key') if sort.get('key') in SORTS else 'created_at'
     direction = 1 if sort.get('dir') == 'asc' else -1
-    criteria = {'client_id': cid, **({} if root else {'archived_at': None})}
+    include_archived = state.get('include_archived') is True
+    criteria = {'client_id': cid, **({} if root or include_archived else {'archived_at': None})}
     cursor = db.evidence.find(criteria, {'_id': 0, 'content_base64': 0}).sort([(key, direction), ('evidence_id', 1)])
     total = matched = 0
-    items, batch, counts, program_counts = [], [], {}, {}
+    items, batch, counts, program_counts, folder_counts = [], [], {}, {}, {}
     facets = {key: set() for key in FILTERS if key not in DATES}
     more_facets = False
 
@@ -228,10 +245,13 @@ async def catalog_page(db, cid, can_access, *, root_kind=None, root=None, oid=No
                 retained = ALIASES.get(row.get('linked_type')) == 'reviews' and any(e.get('evidence_id') == row['evidence_id'] for e in old.get('evidence', []))
                 if root_kind=='reviews': retained = retained or any(o.get('occurrence_id')==oid and any(e.get('evidence_id')==row['evidence_id'] for e in o.get('evidence',[])) for o in root.get('occurrences',[]))
                 if root_kind=='policies': retained = retained or any(r['kind']=='policies' and r['id']==root['policy_id'] and r.get('module_owned') for r in row['references'])
-                if not root or not retained: continue
+                if not include_archived and (not root or not retained): continue
             total += 1
             counts[group] = counts.get(group, 0) + 1
             for area in row['program_areas']: program_counts[area]=program_counts.get(area,0)+1
+            for folder in row['folders']:
+                path=folder['path']
+                folder_counts[path]={**folder,'count':folder_counts.get(path,{}).get('count',0)+1}
             for field, options in facets.items():
                 value = row.get(field)
                 for value in value if isinstance(value,list) else [value]:
@@ -250,4 +270,4 @@ async def catalog_page(db, cid, can_access, *, root_kind=None, root=None, oid=No
             batch = []
     if batch: await consume(batch)
     return {'items': items, 'total': matched, 'unfiltered_total': total, 'page': page, 'page_size': page_size,
-            'facets': {k: sorted(v) for k, v in facets.items()}, 'facets_limited': more_facets, 'counts': counts,'program_counts':program_counts}
+            'facets': {k: sorted(v) for k, v in facets.items()}, 'facets_limited': more_facets, 'counts': counts,'program_counts':program_counts,'folder_counts':list(folder_counts.values())}

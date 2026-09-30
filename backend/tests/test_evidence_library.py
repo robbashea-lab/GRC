@@ -3,6 +3,39 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class EvidenceLibraryTests(ClientDashboardSourcesTests):
+    async def test_repository_paths_counts_and_archived_inventory(self):
+        self.sign_in('admin')
+        review=(await self.client.post('/api/reviews',json={'client_id':'a','title':'Restore validation','review_type':'backup','recurrence':'annual','due_date':'2027-03-01'})).json()
+        e=await self.upload(linked_type='review',linked_id=review['review_id'],occurrence_id=review['current_occurrence_id'])
+        data=(await self.client.get('/api/evidence/catalog',params={'client_id':'a','q':'backup'})).json()
+        folder=next(f for f in data['folder_counts'] if f['area']=='Reviews')
+        self.assertEqual(folder['key'],'backup')
+        self.assertEqual(folder['count'],1)
+        filtered=(await self.client.get('/api/evidence/catalog',params={'client_id':'a','state':json.dumps({'filters':{'folder_paths':[folder['path']]}})})).json()
+        self.assertEqual([r['evidence_id'] for r in filtered['items']],[e['evidence_id']])
+        unlinked=await self.upload(filename='unknown.txt')
+        await self.client.delete('/api/evidence/'+unlinked['evidence_id'])
+        default=(await self.client.get('/api/evidence/catalog',params={'client_id':'a'})).json()
+        archived=(await self.client.get('/api/evidence/catalog',params={'client_id':'a','state':json.dumps({'include_archived':True})})).json()
+        self.assertNotIn(unlinked['evidence_id'],[r['evidence_id'] for r in default['items']])
+        self.assertIn(unlinked['evidence_id'],[r['evidence_id'] for r in archived['items']])
+        self.sign_in('member')
+        denied=await self.client.get('/api/evidence/catalog',params={'client_id':'b','state':json.dumps({'include_archived':True})})
+        self.assertEqual(denied.status_code,403)
+
+    async def test_action_ai_and_missing_source_routing(self):
+        self.sign_in('admin')
+        for kind,key,area in [('tasks','task_id','Action Items'),('ai_systems','ai_system_id','AI Governance')]:
+            await server.db[kind].insert_one({key:'repository-'+kind,'client_id':'a','title':'Repository source','name':'Repository source'})
+            e=await self.upload(linked_type=kind,linked_id='repository-'+kind)
+            data=(await self.client.get('/api/evidence/catalog',params={'client_id':'a','state':json.dumps({'filters':{'program_areas':[area]}})})).json()
+            self.assertIn(e['evidence_id'],[r['evidence_id'] for r in data['items']])
+            self.assertEqual(next(f for f in data['folder_counts'] if f['area']==area)['count'],1)
+        unknown=await self.upload()
+        await server.db.evidence.update_one({'evidence_id':unknown['evidence_id']},{'$set':{'linked_type':'risk','linked_id':'missing'}})
+        data=(await self.client.get('/api/evidence/catalog',params={'client_id':'a','state':json.dumps({'filters':{'program_areas':['Unassigned']}})})).json()
+        self.assertIn(unknown['evidence_id'],[r['evidence_id'] for r in data['items']])
+
     async def test_opaque_source_ids_do_not_manufacture_period_search_matches(self):
         self.sign_in('admin')
         await server.db.reviews.insert_one({'review_id':'opaque-q3','client_id':'a','title':'Quarterly Access Review',

@@ -9,8 +9,8 @@ import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/s
 import {toast} from 'sonner';
 
 export const EVIDENCE_TYPES=['Report','Export','Screenshot','Policy / Procedure','Attestation','Assessment','Test Result','Certification','Questionnaire','Meeting / Exercise Record','Approval','Log / System Record','Other'];
-export const PROGRAM_AREAS=['Reviews','Policies','Vendors','Risks','Findings','Frameworks','Other','Unassigned'];
-export const AREA_KIND={Reviews:'reviews',Policies:'policies',Vendors:'vendors',Risks:'risks',Findings:'findings',Frameworks:'framework_assessments',Other:'tasks'};
+export const PROGRAM_AREAS=['Reviews','Policies','Vendors','Risks','Findings','Frameworks','AI Governance','Action Items','Other','Unassigned'];
+export const AREA_KIND={Reviews:'reviews',Policies:'policies',Vendors:'vendors',Risks:'risks',Findings:'findings',Frameworks:'framework_assessments','AI Governance':'ai_systems','Action Items':'tasks',Other:'assets'};
 export const selectClass='w-full rounded-md border border-line-strong bg-surface-card px-3 py-2 text-sm text-ink-primary';
 
 export function useLibraryRequest(path,params={},refresh=0){
@@ -19,16 +19,20 @@ export function useLibraryRequest(path,params={},refresh=0){
   return state.key===key?state:{loading:!!path};
 }
 
-export function EvidenceUpload({clientId,onClose,onSaved}){
-  const [area,setArea]=useState('Unassigned'),[source,setSource]=useState(null),[metadata,setMetadata]=useState({evidence_type:'Other'}),[file,setFile]=useState(null),[busy,setBusy]=useState(false);
+export function EvidenceUpload({clientId,initialArea='Unassigned',onClose,onSaved}){
+  const [area,setArea]=useState(initialArea),[otherKind,setOtherKind]=useState('assets'),[source,setSource]=useState(null),[metadata,setMetadata]=useState({evidence_type:'Other'}),[file,setFile]=useState(null),[busy,setBusy]=useState(false);
+  const close=()=>{if(!busy&&(!file||window.confirm('Discard this unfinished evidence upload?')))onClose();};
   const create=useCreateIntent(api.post,clientId);
   async function upload(e){e.preventDefault();if(!file)return;setBusy(true);try{
     const content=await readEvidenceFile(file);
     await create('/evidence',{client_id:clientId,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:content,...metadata,...(source?{linked_type:source.kind,linked_id:source.id,occurrence_id:source.occurrence_id||null}:{})});toast.success('Evidence added');onSaved();onClose();
   }catch(error){toast.error(formatError(error));}finally{setBusy(false);}}
-  return <Sheet open onOpenChange={v=>{if(!v&&!busy)onClose();}}><SheetContent className="w-full sm:max-w-xl overflow-y-auto"><SheetHeader><SheetTitle>Add Evidence</SheetTitle><SheetDescription>Prefer uploading where work happens. Choose a source, or leave this file unassigned for later classification.</SheetDescription></SheetHeader><form onSubmit={upload} className="pt-4"><fieldset disabled={busy} className="space-y-4"><label className="block text-sm">Program Area<select aria-label="Program Area" className={selectClass} value={area} onChange={e=>{setArea(e.target.value);setSource(null);}}>{PROGRAM_AREAS.map(a=><option key={a}>{a}</option>)}</select></label>
-    {area!=='Unassigned'&&(source?<div className="border border-line rounded p-3 text-sm">{source.title}{source.period&&` · ${source.period}`}<button type="button" className="block underline text-xs mt-1" onClick={()=>setSource(null)}>Change source</button></div>:<SourcePicker key={area} clientId={clientId} kind={AREA_KIND[area]} onSelect={setSource}/>)}
-    <label className="block text-sm">File<Input type="file" required data-testid="evidence-file-input" onChange={e=>setFile(e.target.files?.[0]||null)}/></label><MetadataFields value={metadata} onChange={setMetadata}/><Button disabled={!file||busy||(area!=='Unassigned'&&!source)}>Upload Evidence</Button></fieldset></form></SheetContent></Sheet>;
+  return <Sheet open onOpenChange={v=>{if(!v)close();}}><SheetContent className="evidence-workspace" onPointerDownOutside={e=>e.preventDefault()}><SheetHeader><SheetTitle>Add Evidence</SheetTitle><SheetDescription>Choose a file and its source. You can leave it in Needs Classification to link later.</SheetDescription></SheetHeader><form onSubmit={upload} className="pt-4"><fieldset disabled={busy} className="space-y-4">
+    <label className="block text-sm">File<Input type="file" required data-testid="evidence-file-input" onChange={e=>setFile(e.target.files?.[0]||null)}/></label>
+    <label className="block text-sm">Where does this evidence belong?<select aria-label="Work Area" className={selectClass} value={area} onChange={e=>{setArea(e.target.value);setSource(null);}}>{PROGRAM_AREAS.map(a=><option key={a} value={a}>{a==='Unassigned'?'Needs Classification':a}</option>)}</select></label>
+    {area==='Other'&&<label className="block text-sm">Record type<select aria-label="Other record type" className={selectClass} value={otherKind} onChange={e=>{setOtherKind(e.target.value);setSource(null);}}>{['assets','exceptions','contacts','organizational_controls'].map(k=><option value={k} key={k}>{evidenceSources[k].label}</option>)}</select></label>}
+    {area!=='Unassigned'&&(source?<div className="border border-line rounded p-3 text-sm">{source.title}{source.period&&` · ${source.period}`}<button type="button" className="block underline text-xs mt-1" onClick={()=>setSource(null)}>Change source</button></div>:<SourcePicker key={area+otherKind} clientId={clientId} kind={area==='Other'?otherKind:AREA_KIND[area]} onSelect={setSource}/>)}
+    <MetadataFields value={metadata} onChange={setMetadata}/><Button disabled={!file||busy||(area!=='Unassigned'&&!source)}>Upload Evidence</Button></fieldset></form></SheetContent></Sheet>;
 }
 
 export function ReviewEvidenceSets({review,onSelect,onOpen}){
