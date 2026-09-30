@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+/* Sign-in page. Brand pane is dark in both themes; the access pane follows the shared Light/Dark preference. */
+.lg-shell {
+  --lg-bg: #f4f5f2; --lg-card: #ffffff; --lg-border: #e6e2dc; --lg-text: #3f4852; --lg-head: #1d232b; --lg-muted: #5d6670;
+  --lg-field: #ffffff; --lg-quiet: #eef0ec; --lg-accent: #4a6e0a; --lg-focus: #4172f4; --lg-shadow: rgba(15, 19, 24, .06);
+  font-family: 'IBM Plex Sans', var(--font-body); background: var(--lg-bg); color: var(--lg-text);
+  transition: background-color var(--duration-drawer, 240ms) var(--ease-out, ease);
+}
+.lg-shell[data-theme="dark"] {
+  --lg-bg: #12161c; --lg-card: #1a2028; --lg-border: #2a323d; --lg-text: #c3cad3; --lg-head: #ffffff; --lg-muted: #9aa4b0;
+  --lg-field: #12161c; --lg-quiet: #1f2630; --lg-accent: #a3db33; --lg-focus: #8fb0ff; --lg-shadow: rgba(0, 0, 0, .4);
+  color-scheme: dark;
+}
+.lg-brand { position: relative; overflow: hidden; width: 50%; box-sizing: border-box; padding: 48px 64px; background: #0f1318; color: #c3cad3; }
+.lg-brand::before { content: ""; position: absolute; right: -160px; top: -160px; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(circle, rgba(163, 219, 51, .14), transparent 65%); pointer-events: none; }
+.lg-brand .brand-mark { background: #a3db33; color: #10140c; border-color: transparent; font-family: 'Space Grotesk', var(--font-heading); font-weight: 600; font-size: 18px; }
+.lg-brand .brand-name { color: #ffffff; }
+.lg-intro { position: relative; margin-top: 84px; max-width: 560px; }
+.lg-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #a3db33; }
+.lg-brand h1 { margin: 10px 0 0; font: 600 40px/1.12 'Space Grotesk', var(--font-heading); letter-spacing: -.01em; color: #ffffff; }
+.lg-lede { margin: 16px 0 0; font-size: 16px; line-height: 1.55; color: #9aa4b0; }
+.lg-legal { margin-top: auto; font-size: 12px; color: #8b95a1; }
+.lg-access { justify-content: flex-start; box-sizing: border-box; min-height: 100dvh; padding: 32px 24px; align-items: center; }
+.lg-topbar { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lg-topbar .brand-name { color: var(--lg-head); }
+.lg-topbar .brand-owner { color: var(--lg-muted); }
+.lg-topbar .brand-mark { background: #a3db33; color: #10140c; border-color: transparent; font-family: 'Space Grotesk', var(--font-heading); font-weight: 600; font-size: 18px; }
+.lg-theme { margin-left: auto; display: inline-flex; border: 1px solid var(--lg-border); border-radius: 8px; overflow: hidden; }
+.lg-theme button { padding: 5px 10px; font-size: 12px; color: var(--lg-muted); }
+.lg-theme button[aria-pressed="true"] { background: var(--lg-quiet); color: var(--lg-head); font-weight: 600; }
+.lg-card { margin: 24px 0 auto; width: 100%; max-width: 440px; box-sizing: border-box; padding: 36px; border-radius: 16px; border: 1px solid var(--lg-border); background: var(--lg-card); box-shadow: 0 12px 32px var(--lg-shadow); }
+.lg-card h2 { margin: 0; font: 600 26px/1.2 'Space Grotesk', var(--font-heading); color: var(--lg-head); }
+.lg-sub { margin: 6px 0 24px; font-size: 14px; color: var(--lg-muted); }
+.lg-demo { border: 1px solid var(--lg-border); border-radius: 12px; padding: 16px; background: var(--lg-bg); }
+.lg-demo-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.lg-demo-head span:first-child { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--lg-accent); }
+.lg-demo-head span:last-child { font-size: 11px; color: var(--lg-muted); }
+.lg-demo p { margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: var(--lg-muted); }
+:root .lg-shell .ui-button.lg-demo-btn { margin-top: 12px; height: 44px; border-radius: 9px; background: #a3db33; color: #10140c; font-weight: 600; font-size: 15px; border: 0; }
+:root .lg-shell .ui-button.lg-demo-btn:not(:disabled):hover { background: #b4e650; }
+.lg-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0; font-size: 12px; color: var(--lg-muted); }
+.lg-divider::before, .lg-divider::after { content: ""; flex: 1; height: 1px; background: var(--lg-border); }
+.lg-form { display: flex; flex-direction: column; gap: 14px; }
+.lg-form label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: var(--lg-head); }
+.lg-label-row { display: flex; justify-content: space-between; align-items: baseline; }
+.lg-label-row a { font-size: 13px; color: var(--lg-muted); }
+.lg-label-row a:hover { color: var(--lg-head); text-decoration: underline; }
+:root .lg-shell .ui-control { height: 44px; border-radius: 9px; background: var(--lg-field); color: var(--lg-head); border-color: var(--lg-border); }
+:root .lg-shell .ui-control:disabled { background: var(--lg-quiet); color: var(--lg-muted); opacity: 1; }
+.lg-eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 6px; border-radius: 6px; color: var(--lg-muted); }
+.lg-eye:not(:disabled):hover { color: var(--lg-head); background: var(--lg-quiet); }
+:root .lg-shell .ui-button.lg-submit { margin-top: 6px; height: 44px; border-radius: 9px; background: var(--lg-head); color: var(--lg-card); font-weight: 600; font-size: 15px; border: 1px solid transparent; }
+:root .lg-shell .ui-button.lg-submit:disabled { background: var(--lg-quiet); color: var(--lg-muted); border-color: var(--lg-border); opacity: 1; }
+.lg-notice { margin: 12px 0 0; padding: 10px 12px; border-radius: 9px; background: var(--lg-quiet); font-size: 12px; line-height: 1.45; color: var(--lg-text); }
+.lg-foot { margin: 24px 0 0; padding-top: 16px; border-top: 1px solid var(--lg-border); font-size: 12px; color: var(--lg-muted); }
+.lg-help { margin: 16px 0 0; text-align: center; font-size: 12px; color: var(--lg-muted); }
+.lg-shell :is(a, button, input):focus-visible { outline: 2px solid var(--lg-focus); outline-offset: 2px; }
+@media (max-width: 520px) { .lg-card { padding: 24px 20px; } }
+@media (prefers-reduced-motion: reduce) { .lg-shell { transition: none; } }
+@media (min-width: 1024px) { .lg-card { margin: auto 0; } }
