@@ -102,3 +102,10 @@ test('other clients keep the existing workspace',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
  expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('Verification Guidance');
 });
+test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
+ const toControl=jest.fn();
+ await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_brawndo" onOpenChange={close} onNext={next} position="1 of 56" breadcrumb={[{label:'CIS IG1',onClick:jest.fn()},{label:'Control 1',onClick:toControl},{label:'Safeguard 1.1'}]}/>));
+ expect([...container.querySelectorAll('.bcis-crumbs li')].map(l=>l.textContent)).toEqual(['CIS IG1','Control 1','Safeguard 1.1']);
+ await input('Current implementation','Draft');await act(async()=>button('Control 1').click());expect(toControl).not.toHaveBeenCalled();
+ expect(document.body.textContent).toContain('Leave unsaved changes?');await act(async()=>button('Discard changes').click());expect(toControl).toHaveBeenCalledTimes(1);
+});

@@ -1,8 +1,8 @@
 /* Brawndo CIS IG1 safeguard workspace. Uses portal theme tokens so light and dark follow the page theme. */
 [data-testid="brawndo-cis-assessment"] .brawndo-assessment-columns { grid-template-columns: minmax(0, 1fr); }
 [data-testid="brawndo-cis-assessment"] .brawndo-assessment-details:empty { display: none; }
-.bcsg-owner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 4px 0 16px; font-size: 13px; color: var(--color-text-secondary); }
-.bcsg-owner > span { font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.bcsg-owner { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 4px 0 16px; font-size: 13px; color: var(--color-text-secondary); }
+.bcsg-owner > span { font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding-top: 9px; }
 .bcsg-owner > :last-child { min-width: 220px; max-width: 320px; flex: 1; }
 .bcsg-ref { display: inline-block; margin-top: 6px; font-size: 12px; color: var(--color-link); }
 .bcsg-tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
@@ -20,3 +20,10 @@
 .bcsg-meta { margin: 8px 0 0; font-size: 12px; color: var(--color-text-muted); }
 html[data-brawndo-portal="dark"] .bcsg-tier input { accent-color: #a3db33; }
 @media (max-width: 1100px) { .bcsg-tiers { grid-template-columns: minmax(0, 1fr); } }
+[data-testid="brawndo-cis-assessment"] .bcis-crumbs { margin-bottom: 6px; font-size: 12px; }
+[data-testid="brawndo-cis-assessment"] .bcis-crumbs ol { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+[data-testid="brawndo-cis-assessment"] .bcis-crumbs li + li::before { content: "›"; margin-right: 4px; color: var(--color-text-muted); }
+[data-testid="brawndo-cis-assessment"] .bcis-crumbs button { padding: 0; border: 0; background: none; color: var(--color-link); font: inherit; cursor: pointer; }
+[data-testid="brawndo-cis-assessment"] .bcis-crumbs button:hover { text-decoration: underline; }
+[data-testid="brawndo-cis-assessment"] .bcis-crumbs button:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 2px; border-radius: 2px; }
+[data-testid="brawndo-cis-assessment"] .bcis-crumbs [aria-current] { color: var(--color-text-secondary); }

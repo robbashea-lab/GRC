@@ -42,6 +42,8 @@
 .bcis-tip { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; gap: 2px; min-width: 150px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--cs-border); background: var(--cs-card); color: var(--cs-text); font-size: 12px; line-height: 1.35; white-space: nowrap; box-shadow: 0 8px 20px rgba(0,0,0,.18); visibility: hidden; opacity: 0; transition: opacity 120ms; pointer-events: none; }
 .bcis-tip strong { font-size: 13px; }
 .bcis-bar > span:is(:hover, :focus-visible) > .bcis-tip { visibility: visible; opacity: 1; }
+/* Pointer hover takes precedence so two tooltips never show at once. */
+.bcis-bar:hover > span:focus-visible:not(:hover) > .bcis-tip { visibility: hidden; opacity: 0; }
 .bcis-bar > span:first-child > .bcis-tip { left: 0; transform: none; } .bcis-bar > span:last-child:not(:first-child) > .bcis-tip { left: auto; right: 0; transform: none; }
 .bcis-bar > .is-good, .bcis-legend .is-good > span { background: var(--cs-good); }
 .bcis-bar > .is-attention, .bcis-legend .is-attention > span { background: var(--cs-attention); }

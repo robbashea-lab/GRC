@@ -6,7 +6,7 @@ import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:e=>e.message}));
-jest.mock('@/components/FrameworkDrawer',()=>({record,onNext,onOpenChange})=><div data-testid="opened">{record.definition_id}<button onClick={onNext}>Next</button><button onClick={()=>onOpenChange(false)}>Close</button></div>);
+jest.mock('@/components/FrameworkDrawer',()=>({record,onNext,onOpenChange,breadcrumb})=><div data-testid="opened">{record.definition_id}<button onClick={onNext}>Next</button><button onClick={()=>onOpenChange(false)}>Close</button>{breadcrumb?.filter(c=>c.onClick).map(c=><button key={c.label} data-drawer-crumb onClick={c.onClick}>{c.label}</button>)}</div>);
 let mockNavigate,mockHistory,mockLocation;
 jest.mock('react-router-dom',()=>({useSearchParams:()=>{const [p,set]=require('react').useState(mockLocation.params);return [p,(next,options={})=>{mockHistory.push({search:String(next),...options});mockLocation.state=options.state??null;set(new URLSearchParams(next));}];},useLocation:()=>mockLocation,useNavigate:()=>mockNavigate,Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 let root,container;
@@ -51,7 +51,7 @@ test('Brawndo rows are whole-row links; breadcrumb round-trips control and safeg
  await key(sg,'Enter');expect(container.querySelector('[data-testid="opened"]').textContent).toContain('1.1');
  expect(crumbs()).toEqual(['CIS IG1','Control 1','Safeguard 1.1']);
  mockLocation.state=null;// in-place close path; with workspace history the real router pops back instead
- await act(async()=>buttons('Control 1')[0].click());expect(container.querySelector('[data-testid="opened"]')).toBeNull();expect(crumbs()).toEqual(['CIS IG1','Control 1']);
+ await act(async()=>container.querySelector('[data-drawer-crumb]:last-of-type').click());expect(container.querySelector('[data-testid="opened"]')).toBeNull();expect(crumbs()).toEqual(['CIS IG1','Control 1']);
  await act(async()=>buttons('CIS IG1')[0].click());expect(crumbs()).toEqual(['CIS IG1']);
  await key(container.querySelector('[data-testid="control-row-2"]'),' ');expect(crumbs()).toEqual(['CIS IG1','Control 2']);
  expect(JSON.parse(sessionStorage.getItem('framework-workspace:u:demo_brawndo:cis-ig1'))['category:all']).toEqual([expect.stringContaining('2')]);

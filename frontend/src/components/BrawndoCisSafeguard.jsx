@@ -7,7 +7,7 @@ import {operatorGuidance} from '@/lib/frameworkOperator';
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 import {TIERS,tiersFor,tierProgress,tierSignal,normalizeChecklist} from '@/lib/cisTiers';
 import {CIS_TONE,CisStatusPill} from './CisStatus';
-import {VERIFICATION_LABELS,verificationOf} from './BrawndoCisControls';
+import {VERIFICATION_LABELS,verificationOf,CisBreadcrumb} from './BrawndoCisControls';
 import './BrawndoCisAssessment.css';
 import './BrawndoCisSafeguard.css';
 
@@ -19,7 +19,7 @@ export const CURRENT_HELP='Describe how this safeguard is currently being addres
 export const GUIDANCE_NOTE='Practical verification guidance to support assessment of this safeguard. These are not additional CIS requirements.';
 
 export default function BrawndoCisSafeguard({state,actions}){
-  const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position}=state;
+  const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,breadcrumb}=state;
   const {put,save,saveAndNext,close,previous,next,retry}=actions;
   const clientId=record.client_id,id=definition.id,disabled=!writable||busy||!ctx;
   const source=sourcePresentation(definition),guide=operatorGuidance('cis-ig1',definition);
@@ -29,6 +29,7 @@ export default function BrawndoCisSafeguard({state,actions}){
   return <AssessmentShell open={open} title={`CIS IG1 ${id} — ${definition.title}`} description={<span className="sr-only">Safeguard assessment workspace</span>}
     status={<><span aria-label="Saved implementation status"><CisStatusPill status={current.status} framework="cis-ig1"/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
     {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment"
+    crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb}/>:null}
     returnSelector={`[data-testid="requirement-${id}"]`}
     footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?'Unsaved assessment changes':feedback||(!writable?'Read-only assessment':'Changes are saved when you choose Save assessment.')}</span></div>
       <div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
