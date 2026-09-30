@@ -3,12 +3,15 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import {SETUP_FILTERS} from '@/lib/onboardingHandoff';
 import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
-import { reviewMatches } from '@/lib/tableFilters';
+import { reviewMatches, calendarDay } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
 import {isBrawndoReference} from '@/lib/reference';
 import {policyStatus,policyStatusLabel,policyColumns} from '@/lib/brawndoPolicies';
 import {PolicyAlignment} from '@/components/BrawndoPolicyDetails';
-import {pilotReviewStatus,pilotReviewMatches,pilotReviewColumns,reviewSource,REVIEW_STATUS} from '@/lib/brawndoReviews';
+import {pilotReviewStatus,pilotReviewMatches,pilotReviewColumns,reviewSource,REVIEW_STATUS,PILOT_HIDDEN_COLUMNS} from '@/lib/brawndoReviews';
+import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import {ColumnControl} from '@/components/TableControls';
+import {reviewDisplayValue as reviewValue} from '@/lib/reviewPresentation';
 import BrawndoReviewSummary from '@/components/BrawndoReviewSummary';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -44,7 +47,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import AssigneeSelect from "@/components/AssigneeSelect";
-import { Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil, Filter } from "lucide-react";
+import { Moon, Sun, Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 const ID_FIELD = {
@@ -95,7 +98,9 @@ export default function RecordListPage({ kind }) {
   const { user } = useAuth();
   const reviewsPilot = kind==='reviews' && isBrawndoReference(currentClientId,user);
   const policiesPilot = kind==='policies' && isBrawndoReference(currentClientId,user);
-  const displayColumns = policiesPilot ? schema.columns.map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c) : schema.columns;
+  // Reviews pilot folds type and source under the title, and next due under recurrence.
+  const displayColumns = policiesPilot ? schema.columns.map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c) : reviewsPilot ? schema.columns.filter(c=>!PILOT_HIDDEN_COLUMNS.includes(c.key)) : schema.columns;
+  const [theme,setTheme]=useBrawndoTheme();
   const [alignmentTarget,setAlignmentTarget]=useState(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -249,7 +254,7 @@ export default function RecordListPage({ kind }) {
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const contactAccessContext = useContactAccess(currentClientId, kind === 'contacts', rows);
-  const columnCount = schema.columns.length + (kind === 'contacts' ? 3 : 2);
+  const columnCount = displayColumns.length + (kind === 'contacts' ? 3 : 2);
   const baseColumns = tableColumns(kind, { rows: tableSource, users });
   const columns = reviewsPilot ? pilotReviewColumns(baseColumns,tableSource) : policiesPilot ? policyColumns(baseColumns,tableSource,programs,policyAssessments) : baseColumns;
   const table = useTableControls({ columns, rows: tableSource, module: kind, scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key, values) => {
@@ -274,7 +279,7 @@ export default function RecordListPage({ kind }) {
     const passed = rows.filter((r) => {
       if (r.client_id !== currentClientId) return false;
       if (urlFilters.setup && !urlFilters.setup.matches(r)) return false;
-      if (reviewsPilot ? !pilotReviewMatches(r,carriedClientChanged?'':reviewView) : isReviews && !reviewMatches(r, reviewTab === 'history' ? 'history' : 'all')) return false;
+      if (reviewsPilot ? !pilotReviewMatches(r,carriedClientChanged?'':reviewView,undefined,user?.user_id) : isReviews && !reviewMatches(r, reviewTab === 'history' ? 'history' : 'all')) return false;
       // URL-carried filters (from the scoped dashboard). These are additive.
       if (urlFilters.owner) {
         const rOwner = r[ownerField] || r.owner_id || r.assignee_id;
@@ -328,7 +333,7 @@ export default function RecordListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, reviewsPilot, policiesPilot, reviewView, carriedClientChanged]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, reviewsPilot, policiesPilot, reviewView, carriedClientChanged, user]);
   const filtered = table.apply(presetRows);
   // Keep the register's geometry/opener during an in-place modal save refresh.
   const showLoading = loading && (!(reviewsPilot||policiesPilot) || !tableSource.length);
@@ -400,9 +405,10 @@ export default function RecordListPage({ kind }) {
   }
 
   return (
-    <div className={`register-surface${reviewsPilot?' brawndo-reviews':''}`} data-layout={isReviews ? 'reviews' : undefined}>
-      {reviewsPilot ? <div className="flex justify-end px-[var(--register-gutter)] pt-3">
-        <h1 className="sr-only">Reviews</h1><HeaderActions>
+    <div className={`register-surface${reviewsPilot?' brawndo-reviews':''}`} data-layout={isReviews ? 'reviews' : undefined} data-theme={reviewsPilot?theme:undefined}>
+      {reviewsPilot ? <div className="brev-head">
+        <div><p className="brev-eyebrow">{currentClient?.name||'Client'} · Recurring obligations</p><h1>Reviews</h1></div><HeaderActions>
+          <button type="button" className="brev-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
           <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || !rows.length} testid="export-reviews-button"/>
           {canWrite&&<PrimaryAction label="New Review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}
         </HeaderActions>
@@ -438,7 +444,10 @@ export default function RecordListPage({ kind }) {
             </button>
           </div>
         )}
-        {reviewsPilot ? <Button variant="ghost" size="sm" disabled={!reviewView} onClick={()=>setParam('reviewView','')}>Clear summary filter</Button> : isReviews ? (
+        {reviewsPilot ? <><div className="brev-chips" role="group" aria-label="Review views">{[['','All open'],['overdue','Overdue'],['upcoming','Due in 30 days'],['mine','Mine']].map(([id,label])=>{
+          const n=tableSource.filter(r=>pilotReviewMatches(r,id,undefined,user?.user_id)).length,pressed=id===''?(!reviewView||reviewView==='open'):reviewView===id;
+          return <button key={id||'all'} type="button" className="brev-chip" aria-pressed={pressed} onClick={()=>setParam('reviewView',pressed&&id?'':id)}>{label}{loading?'':` · ${n}`}</button>;})}</div>
+          <div className="brev-filters"><ColumnControl table={table} columnKey="review_type"/><ColumnControl table={table} columnKey="owner_id"/></div></> : isReviews ? (
           <ViewTabs views={REVIEW_TABS} active={columnStatusActive ? null : reviewTab} onPick={setReviewTab} counts={reviewTabCounts} label="Review views" testid="reviews-tabs" testIdPrefix="reviews-tab-" />
         ) : (
           statusOptions.length > 0 && (
@@ -453,7 +462,7 @@ export default function RecordListPage({ kind }) {
           )
         )}
         {isReviews && <Button variant="link" size="sm" onClick={() => reviewsPilot ? setParam('reviewView',reviewView==='history'?'':'history') : setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewsPilot ? (reviewView==='history'?'All Reviews':'Completed / cancelled history') : reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
-        <RegisterCount shown={filtered.length} total={isReviews && !reviewsPilot ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length} />
+        {!reviewsPilot && <RegisterCount shown={filtered.length} total={isReviews ? rows.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : rows.length} />}
       </div>
 
       {/* Bulk action bar */}
@@ -530,7 +539,7 @@ export default function RecordListPage({ kind }) {
         <RegisterLoadError error={loadError} onRetry={load} name="records" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
           <table className="w-full">
-            {isReviews && <colgroup><col className="register-col-check" />{schema.columns.map(c => <col key={c.key} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
+            {isReviews && <colgroup><col className="register-col-check" />{displayColumns.map(c => <col key={c.key} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
             <thead>
               <tr>
                 <th className="tbl-head w-8">
@@ -541,7 +550,7 @@ export default function RecordListPage({ kind }) {
                     aria-label={`Select all ${kind.replaceAll('_',' ')}`}
                   />
                 </th>
-                {columns.map(c => <SortableHeader key={c.key} table={table} column={c} data-column={isReviews ? c.key : undefined} />)}
+                {columns.filter(c=>!reviewsPilot||!PILOT_HIDDEN_COLUMNS.includes(c.key)).map(c => <SortableHeader key={c.key} table={table} column={reviewsPilot&&c.primary?{...c,label:'Review'}:c} data-column={isReviews ? c.key : undefined} />)}
                 {kind === 'contacts' && <th scope="col" className="tbl-head">Platform access</th>}
                 <th scope="col" className="tbl-head w-10"><span className="sr-only">Actions</span></th>
               </tr>
@@ -554,7 +563,7 @@ export default function RecordListPage({ kind }) {
                 return (
                 <tr
                   key={row[idField] || `row-${i}`}
-                  className="row-hover row-open"
+                  className={`row-hover row-open${reviewsPilot&&overdueReview?' brev-late':''}`}
                   data-testid={`${kind}-row-${i}`}
                   data-selected={checked.has(row[idField]) || undefined}
                   onClick={() => { setSelected(row); setOpen(true); }}
@@ -573,7 +582,7 @@ export default function RecordListPage({ kind }) {
                     return (
                     <td key={`${row[idField] || i}-${c.key}`} data-column={isReviews ? c.key : undefined} className={`tbl-cell ${c.primary ? "font-medium text-ink-primary" : ""}`}>
                       {policiesPilot&&c.key==='alignment'?(alignmentError?<span className="text-xs text-ink-secondary">{alignmentError}</span>:<PolicyAlignment record={row} programs={programs} assessments={policyAssessments} onOpen={setAlignmentTarget}/>) : policiesPilot&&c.key==='status'?<StatusBadge value={policyStatus(row)} label={policyStatusLabel(policyStatus(row))}/> : c.badge ? (
-                        reviewsPilot && c.key==="status" ? <StatusBadge value={pilotReviewStatus(row)} label={REVIEW_STATUS[pilotReviewStatus(row)]} testid={`${kind}-status-${i}`}/> : overdueReview && c.key === "status"
+                        reviewsPilot && c.key==="status" ? <StatusBadge value={pilotReviewStatus(row)} tone={pilotReviewStatus(row)==='due_soon'?'duesoon':pilotReviewStatus(row)==='upcoming'?'neutral':undefined} label={REVIEW_STATUS[pilotReviewStatus(row)]} testid={`${kind}-status-${i}`}/> : overdueReview && c.key === "status"
                           ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
                           : row[c.key] ? <StatusBadge value={row[c.key]} tone={isReviews && row[c.key] === 'needs_scheduling' ? 'duesoon' : undefined} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
                       ) :
@@ -585,7 +594,9 @@ export default function RecordListPage({ kind }) {
                        c.date ? <HistoryDate value={row[c.key]} /> :
                        (
                          <span className="inline-flex items-center gap-2">
-                           {(isReviews||policiesPilot) && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
+                           {reviewsPilot && c.primary ? <span className="brev-title"><button type="button" className="register-record-link">{row[c.key]}</button><span className="brev-meta">{reviewValue('review_type',row.review_type)} · {reviewSource(row)}</span></span>
+                             : reviewsPilot && c.key==='recurrence' ? <span className="brev-title"><span className="register-value">{reviewValue('recurrence',row.recurrence)}</span><span className="brev-meta">{closed?'—':row.policy_id?'Next calculated on completion':calendarDay(row.next_review_date)!==null?`Next ${new Date(calendarDay(row.next_review_date)).toLocaleDateString(undefined,{month:'short',day:'numeric',timeZone:'UTC'})}`:'No next date'}</span></span>
+                             : (isReviews||policiesPilot) && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : kind === 'contacts' && c.key === 'role' ? <span className="whitespace-normal">{contactResponsibilities(row)}</span>
                              : c.primary && kind === "policies" && policySupports(row, programs) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports {policySupports(row, programs)}</span></span>
@@ -655,6 +666,8 @@ export default function RecordListPage({ kind }) {
               })}
             </tbody>
           </table>
+          {reviewsPilot && !showLoading && <div className="brev-foot" data-testid="reviews-count">{(()=>{const history=reviewView==='history',total=tableSource.filter(r=>pilotReviewMatches(r,history?'history':'')).length;
+            return `Showing ${filtered.length} of ${total} ${history?'completed or cancelled':'open'} ${total===1?'review':'reviews'}${sortBy==='due_date'&&sortDir==='asc'?' · soonest due first':''}`;})()}</div>}
         </div>
       </div>
 

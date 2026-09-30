@@ -12,7 +12,8 @@ test('presentation preserves completion and started state while lateness remains
   expect(pilotReviewStatus(row('in_progress','2026-09-28'),now)).toBe('in_progress');
   expect(pilotReviewMatches(row('in_progress','2026-09-28'),'overdue',now)).toBe(true);
   expect(pilotReviewStatus(row('upcoming','2026-09-28'),now)).toBe('overdue');
-  expect(pilotReviewStatus(row('upcoming','2026-09-29'),now)).toBe('upcoming');
+  expect(pilotReviewStatus(row('upcoming','2026-09-29'),now)).toBe('due_soon'); // within 30 days
+  expect(pilotReviewStatus(row('upcoming','2026-10-30'),now)).toBe('upcoming');
   expect(pilotReviewStatus(row('open','2027-12-01'),now)).toBe('upcoming');
 });
 test('literal calendar dates: today and day 30 inclusive; day 31 excluded',()=>{
@@ -25,7 +26,7 @@ test('literal calendar dates: today and day 30 inclusive; day 31 excluded',()=>{
   for(const status of ['completed','cancelled']){
     for(const view of ['open','unassigned','overdue','upcoming']) expect(pilotReviewMatches(row(status,'2026-09-28'),view,now)).toBe(false);
     expect(pilotReviewMatches(row(status,null),'history',now)).toBe(true);
-    expect(pilotReviewMatches(row(status,null),'',now)).toBe(true);
+    expect(pilotReviewMatches(row(status,null),'',now)).toBe(false); // default view is open work only
   }
 });
 test('pilot columns filter derived status/source and disable only requested sorts',()=>{
@@ -48,4 +49,11 @@ test('stable demo identity only, not a name or ordinary client session',()=>{
   expect(isBrawndoReference('demo_brawndo',{workspace_mode:'demo'})).toBe(true);
   expect(isBrawndoReference('demo_dunder',{workspace_mode:'demo',name:'Brawndo'})).toBe(false);
   expect(isBrawndoReference('demo_brawndo',{workspace_mode:'standard'})).toBe(false);
+});
+
+test('mine view matches only the signed-in reviewer, and never closed reviews',()=>{
+  expect(pilotReviewMatches(row('open',null,{owner_id:'u'}),'mine',now,'u')).toBe(true);
+  expect(pilotReviewMatches(row('open',null,{owner_id:'v'}),'mine',now,'u')).toBe(false);
+  expect(pilotReviewMatches(row('open',null),'mine',now,undefined)).toBe(false);
+  expect(pilotReviewMatches(row('completed',null,{owner_id:'u'}),'mine',now,'u')).toBe(false);
 });
