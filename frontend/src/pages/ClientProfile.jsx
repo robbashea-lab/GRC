@@ -18,6 +18,9 @@ import OnboardingHandoff from '@/components/OnboardingHandoff';
 import ClientDialog from '@/components/ClientDialog';
 import ClientRelationshipValue from '@/components/ClientRelationshipValue';
 import {Button} from '@/components/ui/button';
+import BrawndoProfileOverview,{BrawndoProfileHeader} from '@/components/BrawndoProfileOverview';
+import {isBrawndoReference} from '@/lib/reference';
+import {useBrawndoTheme} from '@/lib/brawndoTheme';
 const TABS=[['overview','Overview'],['organization','Organization'],['technical','Technical Environment'],['security','Security & Data'],['program','Program Configuration'],['people','People & Ownership']];
 export function LegacyClientSettings(){const [params]=useSearchParams();return <Navigate replace to={'/client-profile?tab='+(params.get('tab')==='compliance'?'program':'people')}/>;}
 export default function ClientProfile(){
@@ -30,6 +33,8 @@ function ProfileWorkspace({clientId}){
   const [data,setData]=useState(null),[handoff,setHandoff]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[editClient,setEditClient]=useState(false);
   const canEdit=['super_admin','platform_admin'].includes(user?.role),tab=TABS.some(([id])=>id===params.get('tab'))?params.get('tab'):'overview';
   const reload=()=>setRevision(n=>n+1);
+  // Brawndo reference presentation only; data, permissions and saving are unchanged.
+  const brawndo=isBrawndoReference(clientId,user),[theme]=useBrawndoTheme();
   useEffect(()=>{if(!clientId)return;const c=new AbortController();setError('');
     Promise.all([api.get('/clients/'+clientId+'/profile',{signal:c.signal}),api.get('/onboarding/handoff',{params:{client_id:clientId},signal:c.signal})]).then(([p,h])=>{if(!c.signal.aborted){setData(p.data);setHandoff(h.data);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
   },[clientId,revision]);
@@ -41,11 +46,14 @@ function ProfileWorkspace({clientId}){
   const profile=data.profile||{},progress=completeness(profile),requirements=handoff.records.requirements;
   const programs=FRAMEWORKS.filter(f=>requirements.some(r=>r.baseline_key===f.key&&r.applicability==='applicable'));
   async function save(values){try{await api.patch('/clients/'+clientId+'/profile',{section:tab,values,expected_updated_at:data.updated_at??null});await org.refresh();reload();}catch(e){throw new Error(formatError(e));}}
-  return <div>
-    <PageHeader title="Client Profile" subtitle={SUBTITLE} action={<HeaderActions><Button variant="outline" asChild><Link to="/dashboard">Open Dashboard</Link></Button></HeaderActions>}/>
-    <div className="section-body space-y-4">
-      <nav aria-label="Client Profile sections" className="flex flex-wrap gap-1 border-b border-line pb-2">{TABS.map(([id,label])=><Button key={id} variant={tab===id?'secondary':'ghost'} size="sm" aria-current={tab===id?'page':undefined} onClick={()=>setParams({tab:id})}>{label}</Button>)}</nav>
-      {tab==='overview'&&<>
+  const extras=<>{!!progress.missing.length&&<section className="border border-line rounded-lg p-4 space-y-2"><h2 className="font-semibold">Optional profile completeness · {progress.percent}%</h2><p className="text-xs text-ink-secondary">Eight recommended context fields only. Not compliance, readiness, risk, or program health. Operational work is never blocked.</p><p className="text-sm">{progress.missing.length?'Not yet provided: '+progress.missing.join(' · '):'Recommended context fields provided.'}</p><Button variant="outline" size="sm" onClick={()=>setParams({tab:'organization'})}>Complete profile</Button></section>}
+    {applicabilityPrompts(profile,requirements).map(text=><p key={text} className="text-sm border border-line rounded p-3">{text} <Link className="underline text-link" to="/client-profile?tab=program">Review configuration</Link></p>)}</>;
+  return <div className={brawndo?'bprof':undefined} data-theme={brawndo?theme:undefined}>
+    {brawndo?<BrawndoProfileHeader tabs={TABS} tab={tab} onTab={id=>setParams({tab:id})}/>:<PageHeader title="Client Profile" subtitle={SUBTITLE} action={<HeaderActions><Button variant="outline" asChild><Link to="/dashboard">Open Dashboard</Link></Button></HeaderActions>}/>}
+    <div className={brawndo?'flex flex-col gap-4':'section-body space-y-4'}>
+      {!brawndo&&<nav aria-label="Client Profile sections" className="flex flex-wrap gap-1 border-b border-line pb-2">{TABS.map(([id,label])=><Button key={id} variant={tab===id?'secondary':'ghost'} size="sm" aria-current={tab===id?'page':undefined} onClick={()=>setParams({tab:id})}>{label}</Button>)}</nav>}
+      {tab==='overview'&&brawndo&&<BrawndoProfileOverview client={org.currentClient} relationships={handoff.client} profile={profile} programs={programs} onTab={id=>setParams({tab:id})} extra={extras}/>}
+      {tab==='overview'&&!brawndo&&<>
         <div className="grid md:grid-cols-2 gap-4">{[['Organization','organization'],['Technical Environment','technical'],['Security & Data','security']].map(([title,key])=><section key={key} className="border border-line rounded-lg p-4 space-y-2"><h2 className="font-semibold">{title}</h2>{key==='organization'&&<p className="text-sm">{org.currentClient?.name} · {org.currentClient?.industry||'Industry not provided'}</p>}<dl className="text-sm space-y-2">{catalog.sections[key].filter(f=>profile[key]?.[f.id]!=null).sort((a,b)=>(b.id==='security_technology')-(a.id==='security_technology')).slice(0,6).map(f=><div key={f.id}><dt className="text-xs text-ink-secondary">{f.label}</dt><dd className="break-words">{Array.isArray(profile[key][f.id])?profile[key][f.id].join(' · '):String(profile[key][f.id])}</dd></div>)}</dl>{!Object.values(profile[key]||{}).some(v=>v!=null)&&<p className="text-sm text-ink-secondary">Optional context not yet provided.</p>}<Button size="sm" variant="ghost" onClick={()=>setParams({tab:key})}>View {title}</Button></section>)}
         <section className="border border-line rounded-lg p-4 space-y-3"><h2 className="font-semibold">Programs</h2>{programs.length?programs.map(f=><Link className="block text-sm text-link underline" key={f.key} to={'/compliance/'+f.key}>{f.name}</Link>):<p className="text-sm">No formal framework currently applies.</p>}<Button size="sm" variant="ghost" onClick={()=>setParams({tab:'program'})}>View program configuration</Button></section></div>
         {!!progress.missing.length&&<section className="border border-line rounded-lg p-4 space-y-2"><h2 className="font-semibold">Optional profile completeness · {progress.percent}%</h2><p className="text-xs text-ink-secondary">Eight recommended context fields only. Not compliance, readiness, risk, or program health. Operational work is never blocked.</p><p className="text-sm">{progress.missing.length?'Not yet provided: '+progress.missing.join(' · '):'Recommended context fields provided.'}</p><Button variant="outline" size="sm" onClick={()=>setParams({tab:'organization'})}>Complete profile</Button></section>}
