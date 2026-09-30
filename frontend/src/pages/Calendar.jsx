@@ -12,6 +12,8 @@ import {SCHEMAS} from '@/lib/schemas';
 import {occurrenceId} from '@/lib/reviewOccurrences';
 import {CALENDAR_SCOPES,calendarStatus,calendarType,calendarSelection,canMoveCalendar,rescheduledDate} from '@/lib/calendarView';
 import {toast} from 'sonner';
+import {isBrawndoReference} from '@/lib/reference';
+import BrawndoCalendarView,{calendarEntries} from './BrawndoCalendar';
 
 const KIND_COLOR={review:'bg-semantic-info-bg text-semantic-info border-semantic-info-border',finding:'bg-semantic-moderate-bg text-semantic-moderate-text border-semantic-moderate-border',task:'bg-surface-card text-ink-primary border-line-strong'};
 // Type is encoded by color; red is reserved for overdue work.
@@ -26,7 +28,9 @@ function monthGrid(anchor) {
 const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
 export default function Calendar() {
-  const {currentClientId}=useOrg(),{user}=useAuth();
+  const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
+  const brawndo=isBrawndoReference(currentClientId,user);
+  const [attn,setAttn]=useState(null);
   const [anchor,setAnchor]=useState(()=>new Date()),[scope,setScope]=useState('active'),[revision,setRevision]=useState(0);
   const [result,setResult]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[drawer,setDrawer]=useState(null);
   const [dragging,setDragging]=useState(null),[dragOverDay,setDragOverDay]=useState(''),[expanded,setExpanded]=useState({});
@@ -47,6 +51,20 @@ export default function Calendar() {
     }).catch(e=>{if(!controller.signal.aborted)setError(formatError(e));});
     return ()=>controller.abort();
   },[currentClientId,start,end,scope,requestKey]);
+  // Brawndo: separate active-scope window (past ~11 months to +30 days) so tiles and Needs attention are not limited to the visible grid.
+  const today=ymd(new Date());
+  useEffect(()=>{
+    if(!brawndo||!currentClientId)return;
+    const controller=new AbortController(),now=new Date(),key=`${currentClientId}:${revision}`;
+    const from=ymd(new Date(now.getFullYear(),now.getMonth(),now.getDate()-336)),to=ymd(new Date(now.getFullYear(),now.getMonth(),now.getDate()+30));
+    api.get('/calendar',{params:{client_id:currentClientId,start:from,end:to,scope:'active'},signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted)return;
+      const entries=calendarEntries(data);
+      if(entries.some(item=>item.client_id!==currentClientId))throw new Error('Calendar records do not match the selected client.');
+      setAttn({key,entries});
+    }).catch(()=>{if(!controller.signal.aborted)setAttn({key,entries:[],failed:true});});
+    return ()=>controller.abort();
+  },[brawndo,currentClientId,revision]);
   const loading=!!currentClientId&&result?.key!==requestKey&&!error;
   const data=result?.key===requestKey?result.data:emptyBuckets();
   const itemsForDay=day=>[...(data.reviews[day]||[]),...(data.findings[day]||[]),...(data.tasks[day]||[])];
@@ -82,6 +100,14 @@ export default function Calendar() {
       if(currentClientRef.current===cid)toast.success(`Rescheduled to ${target}`);
     }catch(e){if(currentClientRef.current===cid)toast.error(formatError(e));}
     finally{setBusy(false);if(currentClientRef.current===cid)reload();}
+  }
+  const drawerNode=drawer&&drawer.record.client_id===currentClientId&&<RecordDrawer key={drawer.key} open onOpenChange={open=>{if(!open){setDrawer(null);reload();}}} kind={drawer.kind} record={drawer.record} initialValues={drawer.initialValues} schema={SCHEMAS[drawer.kind].fields} clientId={currentClientId} onSaved={reload}/>;
+  if(brawndo){
+    const attnKey=`${currentClientId}:${revision}`,attnReady=attn?.key===attnKey;
+    return <BrawndoCalendarView clientName={currentClient?.name||'Client'} anchor={anchor} setAnchor={setAnchor} scope={scope} setScope={setScope} days={days} itemsForDay={itemsForDay} today={today}
+      attention={attnReady?attn.entries:[]} attentionLoading={!attnReady||!!attn.failed} attentionFailed={attnReady&&!!attn.failed} loading={loading} error={error} errorNode={<RegisterLoadError error={error} onRetry={reload} name="Calendar"/>} total={total} busy={busy} writable={writable}
+      dragging={dragging} dragOverDay={dragOverDay} setDragOverDay={setDragOverDay} setDragging={setDragging} expanded={expanded} setExpanded={setExpanded}
+      onDragStart={onDragStart} onDrop={onDrop} openRecord={openRecord} ymd={ymd} drawerNode={drawerNode}/>;
   }
   return <div className="register-surface">
     <PageHeader title="Calendar" subtitle="Due dates for Reviews, Findings and Action Items."/>
