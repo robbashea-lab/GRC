@@ -6,13 +6,12 @@ import {calendarDay,displayDay} from '@/lib/managementDates';
 import {cisSummary} from '@/lib/cisVerification';
 import {CIS_ORDER,cisLabel,statusCounts} from './CisStatus';
 import {formatError} from '@/lib/api';
+import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import './BrawndoDashboard.css';
 
 // Brawndo reference dashboard. Color carries one meaning throughout, in both themes:
 // green = good (implemented), amber = attention (partial, due soon), red = critical
 // (not implemented, overdue, high severity), grey = not assessed. Text always carries it too.
-const THEME_KEY='omnisciente:brawndo-dashboard-theme';
-const readTheme=()=>{try{return localStorage.getItem(THEME_KEY)==='dark'?'dark':'light';}catch{return 'light';}};
 const TILE={pastDue:'critical',due30:'attention',all:'info',unassigned:'neutral'};
 const priorityLabel={critical:'Critical',high:'High',medium:'Moderate',moderate:'Moderate',low:'Low'};
 const statusLabel=s=>s?String(s).replaceAll('_',' ').replace(/^./,c=>c.toUpperCase()):'—';
@@ -96,7 +95,7 @@ function PostureCard({posture}) {
 
 export default function ClientWorkDashboard({queue,programs,cisRows,posture,clientName='Client',filter,onFilter,onOpen,loadDetail}) {
   const [expanded,setExpanded]=useState(false),[page,setPage]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState('');
-  const [theme,setTheme]=useState(readTheme);
+  const [theme,setTheme]=useBrawndoTheme();
   const request=useRef(null),mounted=useRef(true),load=useRef(loadDetail);
   load.current=loadDetail;
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;request.current?.abort();};},[]);
@@ -111,7 +110,7 @@ export default function ClientWorkDashboard({queue,programs,cisRows,posture,clie
     finally{if(!controller.signal.aborted&&mounted.current)setLoading(false);}
   }
   function select(key){request.current?.abort();setLoading(false);setExpanded(false);setPage(null);setError('');onFilter(key);}
-  function toggleTheme(){const next=theme==='dark'?'light':'dark';setTheme(next);try{localStorage.setItem(THEME_KEY,next);}catch{/* preference only */}}
+  const toggleTheme=()=>setTheme(theme==='dark'?'light':'dark');
   return <div className="bdash" data-theme={theme}>
     <header className="bd-header">
       <div><p className="bd-eyebrow">{cis?'CIS IG1 program':'GRC program'}</p><h1>{clientName} Dashboard</h1></div>

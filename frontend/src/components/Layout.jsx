@@ -4,6 +4,7 @@ import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
 import {isBrawndoReference} from '@/lib/reference';
 import Brand from "@/components/Brand";
+import BrawndoSidebar from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOrg } from "@/context/OrgContext";
@@ -216,6 +217,8 @@ function Sidebar() {
     ...item, icon: ShieldCheck, testid: `nav-compliance-${item.key}`,
   }))];
 
+  // Brawndo reference workspace: grouped, theme-following sidebar (client context only).
+  if(!atPlatform&&isBrawndoReference(currentClientId,user))return <BrawndoSidebar complianceItems={complianceItems} isInternal={isInternal}/>;
   return (
     <aside className="app-sidebar w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
       <div className={`px-4 py-4 ${atPlatform && isInternal ? "" : "border-b border-brand-metallic-3"}`}>
