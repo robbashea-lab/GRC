@@ -4,6 +4,7 @@ import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
 import {isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
 import Brand from "@/components/Brand";
+import './BrawndoPortalTheme.css';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";

@@ -6,7 +6,7 @@ import {calendarDay,displayDay} from '@/lib/managementDates';
 import {cisSummary} from '@/lib/cisVerification';
 import {CIS_ORDER,cisLabel,statusCounts} from './CisStatus';
 import {formatError} from '@/lib/api';
-import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import './BrawndoDashboard.css';
 
 // Brawndo reference dashboard. Color carries one meaning throughout, in both themes:
@@ -95,7 +95,7 @@ function PostureCard({posture}) {
 
 export default function ClientWorkDashboard({queue,programs,cisRows,posture,clientName='Client',filter,onFilter,onOpen,loadDetail}) {
   const [expanded,setExpanded]=useState(false),[page,setPage]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState('');
-  const [theme,setTheme]=useBrawndoTheme();
+  const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
   const request=useRef(null),mounted=useRef(true),load=useRef(loadDetail);
   load.current=loadDetail;
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;request.current?.abort();};},[]);
