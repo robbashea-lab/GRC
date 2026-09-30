@@ -33,6 +33,20 @@ or active HTML/SVG preview is introduced. Demo file-size/cache limitations remai
 The catalog still scans client metadata in bounded batches; very large-library
 indexing and bounded folder-summary pagination remain future scalability work.
 
+Validation: 27 focused frontend tests passed; the combined-main targeted run
+passed 196 tests. The broader run passed 766 tests with one failure in
+multiFrameworkLifecycle: its five-year Demo reaches the browser-storage quota.
+That same failure and 4,973,751-character checkpoint reproduced on unchanged
+72b78d7. The unrelated ten-year simulation was stopped/bounded, not declared
+passing. The backend offline allowlist passed 418 tests and 567 subtests;
+the final expanded evidence-only run passed 24 tests. Existing FastAPI lifecycle
+deprecations and the PlatformAdmin hook warning remain.
+Loopback browser QA exercised source uploads, review-type/record folders,
+breadcrumbs, period search, shared link/unlink without duplication, download,
+classification, metadata persistence, draft protection, read-only controls,
+client switching and keyboard focus at 1440/1280/1024/768. No browser errors.
+This is Demo and isolated-ASGI evidence, not persistent-backend staging validation.
+
 ## Inspection (before changes, 2026-09-23)
 
 - Mongo Evidence documents own immutable base64 bytes, ID, SHA-256, version,
