@@ -29,6 +29,18 @@ const render=props=>act(async()=>root.render(<AssigneeSelect clientId="a" onChan
 const open=()=>act(async()=>host.querySelector('button').click());
 const finish=(request,items)=>act(async()=>request.resolve({data:{items,has_more:false}}));
 
+test('assessment presentation can omit guidance without changing eligible assignment',async()=>{
+  await render({showGuidance:false});
+  expect(host.textContent).not.toContain('Only active platform users');
+  expect(host.querySelector('a[href="/contacts"]')).toBeNull();
+  expect(host.querySelector('button').getAttribute('aria-describedby')).toBeNull();
+  await open();await finish(requests[0],[{user_id:'eligible',name:'Eligible Owner'}]);
+  await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent.includes('Eligible Owner')).click());
+  expect(onChange).toHaveBeenCalledWith('eligible');
+  await render();expect(host.textContent).toContain('Only active platform users');
+  expect(host.querySelector('a[href="/contacts"]')).not.toBeNull();
+});
+
 test.each([null,undefined,'former'])('empty or historical value %s stays readable without changing data',async value=>{
   await render({value,users:[{user_id:'former',name:'Former Owner',status:'disabled'}]});
   expect(host.textContent).toContain(value?'Former Owner':'Unassigned');expect(onChange).not.toHaveBeenCalled();

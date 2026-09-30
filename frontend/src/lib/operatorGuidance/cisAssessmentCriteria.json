@@ -1,0 +1,627 @@
+{
+  "version": "8.1",
+  "revision": "2026-09-30",
+  "basis": "Safeguard text only; paraphrased assessment aid. CAS metrics, implementation examples and enhanced practices are not additional requirements.",
+  "requirements": {
+    "1.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#11-establish-and-maintain-detailed-enterprise-asset-inventory",
+      "criteria": [
+        {
+          "id": "1.1-c1",
+          "text": "Inventory covers data-capable endpoints, mobile devices, network devices, IoT and servers."
+        },
+        {
+          "id": "1.1-c2",
+          "text": "Physical, virtual, remote, cloud and regularly connected externally controlled assets are included."
+        },
+        {
+          "id": "1.1-c3",
+          "text": "Records identify static network address, hardware address, machine name, owner, department and connection approval."
+        },
+        {
+          "id": "1.1-c4",
+          "text": "Inventory is reviewed and updated at least every six months."
+        }
+      ]
+    },
+    "1.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#12-address-unauthorized-assets",
+      "criteria": [
+        {
+          "id": "1.2-c1",
+          "text": "A process addresses unauthorized assets at least weekly."
+        },
+        {
+          "id": "1.2-c2",
+          "text": "Unauthorized connections are removed, denied or quarantined."
+        }
+      ]
+    },
+    "2.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#21-establish-and-maintain-a-software-inventory",
+      "criteria": [
+        {
+          "id": "2.1-c1",
+          "text": "Inventory covers licensed software installed on enterprise assets."
+        },
+        {
+          "id": "2.1-c2",
+          "text": "Entries record title, publisher, initial use/install date and purpose; applicable URL, store, version, deployment, retirement and license details are included."
+        },
+        {
+          "id": "2.1-c3",
+          "text": "Inventory is reviewed and updated at least every six months."
+        }
+      ]
+    },
+    "2.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#22-ensure-authorized-software-is-currently-supported",
+      "criteria": [
+        {
+          "id": "2.2-c1",
+          "text": "Authorized software is supported or has a necessary-use exception documenting mitigation and residual-risk acceptance."
+        },
+        {
+          "id": "2.2-c2",
+          "text": "Unsupported software without that exception is designated unauthorized."
+        },
+        {
+          "id": "2.2-c3",
+          "text": "Support status is reviewed at least monthly."
+        }
+      ]
+    },
+    "2.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#23-address-unauthorized-software",
+      "criteria": [
+        {
+          "id": "2.3-c1",
+          "text": "Unauthorized software is removed or has a documented exception."
+        },
+        {
+          "id": "2.3-c2",
+          "text": "Unauthorized-software handling is reviewed at least monthly."
+        }
+      ]
+    },
+    "3.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#31-establish-and-maintain-a-data-management-process",
+      "criteria": [
+        {
+          "id": "3.1-c1",
+          "text": "A documented process covers sensitivity, ownership, handling, retention limits and disposal."
+        },
+        {
+          "id": "3.1-c2",
+          "text": "Documentation is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "3.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#32-establish-and-maintain-a-data-inventory",
+      "criteria": [
+        {
+          "id": "3.2-c1",
+          "text": "Inventory follows the data-management process and includes sensitive data."
+        },
+        {
+          "id": "3.2-c2",
+          "text": "Inventory is reviewed and updated annually, prioritizing sensitive data."
+        }
+      ]
+    },
+    "3.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#33-configure-data-access-control-lists",
+      "criteria": [
+        {
+          "id": "3.3-c1",
+          "text": "Permissions enforce need-to-know across local and remote files, databases and applications."
+        }
+      ]
+    },
+    "3.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#34-enforce-data-retention",
+      "criteria": [
+        {
+          "id": "3.4-c1",
+          "text": "Retention follows the documented process, including minimum and maximum periods."
+        }
+      ]
+    },
+    "3.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#35-securely-dispose-of-data",
+      "criteria": [
+        {
+          "id": "3.5-c1",
+          "text": "Disposal follows the documented process using methods appropriate to sensitivity."
+        }
+      ]
+    },
+    "3.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#36-encrypt-data-on-end-user-devices",
+      "criteria": [
+        {
+          "id": "3.6-c1",
+          "text": "Data is encrypted on end-user devices that contain sensitive information."
+        }
+      ]
+    },
+    "4.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#41-establish-and-maintain-a-secure-configuration-process",
+      "criteria": [
+        {
+          "id": "4.1-c1",
+          "text": "A documented configuration process covers endpoints, mobile, IoT, servers, operating systems and applications."
+        },
+        {
+          "id": "4.1-c2",
+          "text": "Documentation is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "4.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#42-establish-and-maintain-a-secure-configuration-process-for-network-infrastructure",
+      "criteria": [
+        {
+          "id": "4.2-c1",
+          "text": "Network devices have a documented secure-configuration process."
+        },
+        {
+          "id": "4.2-c2",
+          "text": "Documentation is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "4.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#43-configure-automatic-session-locking-on-enterprise-assets",
+      "criteria": [
+        {
+          "id": "4.3-c1",
+          "text": "Inactivity locks sessions within 15 minutes on general-purpose operating systems and two minutes on mobile endpoints."
+        }
+      ]
+    },
+    "4.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#44-implement-and-manage-a-firewall-on-servers",
+      "criteria": [
+        {
+          "id": "4.4-c1",
+          "text": "Server firewalls are implemented and managed wherever supported."
+        }
+      ]
+    },
+    "4.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#45-implement-and-manage-a-firewall-on-end-user-devices",
+      "criteria": [
+        {
+          "id": "4.5-c1",
+          "text": "Endpoint firewall or port filtering denies traffic except explicitly allowed services and ports."
+        }
+      ]
+    },
+    "4.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#46-securely-manage-enterprise-assets-and-software",
+      "criteria": [
+        {
+          "id": "4.6-c1",
+          "text": "Assets and software use secure administration; insecure management protocols are used only when operationally essential."
+        }
+      ]
+    },
+    "4.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#47-manage-default-accounts-on-enterprise-assets-and-software",
+      "criteria": [
+        {
+          "id": "4.7-c1",
+          "text": "Preconfigured accounts on assets and software are actively managed."
+        }
+      ]
+    },
+    "5.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#51-establish-and-maintain-an-inventory-of-accounts",
+      "criteria": [
+        {
+          "id": "5.1-c1",
+          "text": "Inventory includes user, administrator and service accounts."
+        },
+        {
+          "id": "5.1-c2",
+          "text": "Records include person, username, start/stop dates and department."
+        },
+        {
+          "id": "5.1-c3",
+          "text": "Active-account authorization is validated at least quarterly."
+        }
+      ]
+    },
+    "5.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#52-use-unique-passwords",
+      "criteria": [
+        {
+          "id": "5.2-c1",
+          "text": "Passwords are unique across enterprise assets."
+        }
+      ]
+    },
+    "5.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#53-disable-dormant-accounts",
+      "criteria": [
+        {
+          "id": "5.3-c1",
+          "text": "Accounts inactive for 45 days are disabled or deleted where supported."
+        }
+      ]
+    },
+    "5.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#54-restrict-administrator-privileges-to-dedicated-administrator-accounts",
+      "criteria": [
+        {
+          "id": "5.4-c1",
+          "text": "Administrator privileges are confined to dedicated accounts."
+        },
+        {
+          "id": "5.4-c2",
+          "text": "Routine computing uses the person's nonprivileged account."
+        }
+      ]
+    },
+    "6.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#61-establish-an-access-granting-process",
+      "criteria": [
+        {
+          "id": "6.1-c1",
+          "text": "A documented access-granting process is followed for new hires and role changes."
+        }
+      ]
+    },
+    "6.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#62-establish-an-access-revoking-process",
+      "criteria": [
+        {
+          "id": "6.2-c1",
+          "text": "An access-revocation process is established and followed."
+        },
+        {
+          "id": "6.2-c2",
+          "text": "Accounts are disabled immediately for termination, rights revocation or role change."
+        }
+      ]
+    },
+    "6.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#63-require-mfa-for-externally-exposed-applications",
+      "criteria": [
+        {
+          "id": "6.3-c1",
+          "text": "External enterprise and third-party applications enforce MFA wherever supported, directly or through SSO."
+        }
+      ]
+    },
+    "6.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#64-require-mfa-for-remote-network-access",
+      "criteria": [
+        {
+          "id": "6.4-c1",
+          "text": "Remote network connections require MFA."
+        }
+      ]
+    },
+    "6.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#65-require-mfa-for-administrative-access",
+      "criteria": [
+        {
+          "id": "6.5-c1",
+          "text": "Administrative accounts require MFA wherever supported, including on-site and provider-managed assets."
+        }
+      ]
+    },
+    "7.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#71-establish-and-maintain-a-vulnerability-management-process",
+      "criteria": [
+        {
+          "id": "7.1-c1",
+          "text": "Enterprise assets are covered by a documented vulnerability-management process."
+        },
+        {
+          "id": "7.1-c2",
+          "text": "Documentation is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "7.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#72-establish-and-maintain-a-remediation-process",
+      "criteria": [
+        {
+          "id": "7.2-c1",
+          "text": "A documented remediation process prioritizes work by risk."
+        },
+        {
+          "id": "7.2-c2",
+          "text": "The process is reviewed at least monthly."
+        }
+      ]
+    },
+    "7.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#73-perform-automated-operating-system-patch-management",
+      "criteria": [
+        {
+          "id": "7.3-c1",
+          "text": "Automated patch management applies operating-system updates at least monthly."
+        }
+      ]
+    },
+    "7.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#74-perform-automated-application-patch-management",
+      "criteria": [
+        {
+          "id": "7.4-c1",
+          "text": "Automated patch management applies application updates at least monthly."
+        }
+      ]
+    },
+    "8.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#81-establish-and-maintain-an-audit-log-management-process",
+      "criteria": [
+        {
+          "id": "8.1-c1",
+          "text": "A documented logging process covers collection, review and retention for enterprise assets."
+        },
+        {
+          "id": "8.1-c2",
+          "text": "Documentation is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "8.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#82-collect-audit-logs",
+      "criteria": [
+        {
+          "id": "8.2-c1",
+          "text": "Assets collect audit logs with logging enabled according to the documented process."
+        }
+      ]
+    },
+    "8.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#83-ensure-adequate-audit-log-storage",
+      "criteria": [
+        {
+          "id": "8.3-c1",
+          "text": "Logging destinations have storage sufficient for the logging process."
+        }
+      ]
+    },
+    "9.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#91-ensure-use-of-only-fully-supported-browsers-and-email-clients",
+      "criteria": [
+        {
+          "id": "9.1-c1",
+          "text": "Only fully supported browsers and email clients can execute, using the vendor's latest version."
+        }
+      ]
+    },
+    "9.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#92-use-dns-filtering-services",
+      "criteria": [
+        {
+          "id": "9.2-c1",
+          "text": "DNS filtering blocks known malicious domains on all local and remote endpoints."
+        }
+      ]
+    },
+    "10.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#101-deploy-and-maintain-anti-malware-software",
+      "criteria": [
+        {
+          "id": "10.1-c1",
+          "text": "Anti-malware is deployed and maintained across all enterprise assets."
+        }
+      ]
+    },
+    "10.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#102-configure-automatic-anti-malware-signature-updates",
+      "criteria": [
+        {
+          "id": "10.2-c1",
+          "text": "Anti-malware signatures update automatically across enterprise assets."
+        }
+      ]
+    },
+    "10.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#103-disable-autorun-and-autoplay-for-removable-media",
+      "criteria": [
+        {
+          "id": "10.3-c1",
+          "text": "Removable-media autorun and autoplay execution are disabled."
+        }
+      ]
+    },
+    "11.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#111-establish-and-maintain-a-data-recovery-process",
+      "criteria": [
+        {
+          "id": "11.1-c1",
+          "text": "A documented recovery process details backup procedures, scope, priorities and backup security."
+        },
+        {
+          "id": "11.1-c2",
+          "text": "Documentation is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "11.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#112-perform-automated-backups",
+      "criteria": [
+        {
+          "id": "11.2-c1",
+          "text": "In-scope assets are backed up automatically at least weekly, more often where sensitivity requires."
+        }
+      ]
+    },
+    "11.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#113-protect-recovery-data",
+      "criteria": [
+        {
+          "id": "11.3-c1",
+          "text": "Recovery data has protection equivalent to original data, with encryption or separation as required."
+        }
+      ]
+    },
+    "11.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#114-establish-and-maintain-an-isolated-instance-of-recovery-data",
+      "criteria": [
+        {
+          "id": "11.4-c1",
+          "text": "An isolated recovery-data copy is established and maintained."
+        }
+      ]
+    },
+    "12.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#121-ensure-network-infrastructure-is-up-to-date",
+      "criteria": [
+        {
+          "id": "12.1-c1",
+          "text": "Network infrastructure remains current."
+        },
+        {
+          "id": "12.1-c2",
+          "text": "Software versions and support are checked at least monthly."
+        }
+      ]
+    },
+    "14.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#141-establish-and-maintain-a-security-awareness-program",
+      "criteria": [
+        {
+          "id": "14.1-c1",
+          "text": "An awareness program teaches safe use of assets and data."
+        },
+        {
+          "id": "14.1-c2",
+          "text": "Training occurs at hire and annually; content is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "14.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#142-train-workforce-members-to-recognize-social-engineering-attacks",
+      "criteria": [
+        {
+          "id": "14.2-c1",
+          "text": "Training teaches recognition of social-engineering attacks."
+        }
+      ]
+    },
+    "14.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#143-train-workforce-members-on-authentication-best-practices",
+      "criteria": [
+        {
+          "id": "14.3-c1",
+          "text": "Training covers authentication best practices."
+        }
+      ]
+    },
+    "14.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#144-train-workforce-on-data-handling-best-practices",
+      "criteria": [
+        {
+          "id": "14.4-c1",
+          "text": "Training covers sensitive-data identification, storage, transfer, archiving and destruction, plus clear-screen and clear-desk practices."
+        }
+      ]
+    },
+    "14.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#145-train-workforce-members-on-causes-of-unintentional-data-exposure",
+      "criteria": [
+        {
+          "id": "14.5-c1",
+          "text": "Training explains causes of accidental data exposure."
+        }
+      ]
+    },
+    "14.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#146-train-workforce-members-on-recognizing-and-reporting-security-incidents",
+      "criteria": [
+        {
+          "id": "14.6-c1",
+          "text": "Training teaches recognition and reporting of potential incidents."
+        }
+      ]
+    },
+    "14.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#147-train-workforce-on-how-to-identify-and-report-if-their-enterprise-assets-are-missing-security-updates",
+      "criteria": [
+        {
+          "id": "14.7-c1",
+          "text": "Training covers detecting outdated patches and reporting automation or tool failures to IT."
+        }
+      ]
+    },
+    "14.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#148-train-workforce-on-the-dangers-of-connecting-to-and-transmitting-enterprise-data-over-insecure-networks",
+      "criteria": [
+        {
+          "id": "14.8-c1",
+          "text": "Training covers insecure-network risks and secure home-network configuration for remote workers."
+        }
+      ]
+    },
+    "15.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#151-establish-and-maintain-an-inventory-of-service-providers",
+      "criteria": [
+        {
+          "id": "15.1-c1",
+          "text": "Provider inventory includes all known providers, classifications and internal contacts."
+        },
+        {
+          "id": "15.1-c2",
+          "text": "Inventory is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "17.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#171-designate-personnel-to-manage-incident-handling",
+      "criteria": [
+        {
+          "id": "17.1-c1",
+          "text": "A lead and at least one backup coordinate and document response and recovery."
+        },
+        {
+          "id": "17.1-c2",
+          "text": "Provider-led handling has an internal overseer."
+        },
+        {
+          "id": "17.1-c3",
+          "text": "Designations are reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "17.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#172-establish-and-maintain-contact-information-for-reporting-security-incidents",
+      "criteria": [
+        {
+          "id": "17.2-c1",
+          "text": "Notification contacts are maintained for relevant parties."
+        },
+        {
+          "id": "17.2-c2",
+          "text": "Contact information is verified annually."
+        }
+      ]
+    },
+    "17.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#173-establish-and-maintain-an-enterprise-process-for-reporting-incidents",
+      "criteria": [
+        {
+          "id": "17.3-c1",
+          "text": "The documented reporting process specifies timing, recipients, mechanism and minimum information."
+        },
+        {
+          "id": "17.3-c2",
+          "text": "All workforce members can access the process."
+        },
+        {
+          "id": "17.3-c3",
+          "text": "The process is reviewed annually and after relevant significant changes."
+        }
+      ]
+    }
+  }
+}

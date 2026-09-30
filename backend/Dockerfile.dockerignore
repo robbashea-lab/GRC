@@ -14,6 +14,8 @@
 !frontend/src/lib/aiGovernanceCatalog.json
 !frontend/src/lib/frameworkDefinitions.json
 !frontend/src/lib/cisIG1.json
+!frontend/src/lib/operatorGuidance
+!frontend/src/lib/operatorGuidance/cisAssessmentCriteria.json
 !frontend/src/lib/hipaaSecurityRule.json
 !frontend/src/lib/iso27001.json
 !frontend/src/lib/isoAuditProgram.json

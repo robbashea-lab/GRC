@@ -10,6 +10,7 @@ COPY frontend/src/lib/managementRules.json /app/frontend/src/lib/managementRules
 COPY frontend/src/lib/portfolioRules.json /app/frontend/src/lib/portfolioRules.json
 COPY frontend/src/lib/aiGovernanceCatalog.json /app/frontend/src/lib/aiGovernanceCatalog.json
 COPY frontend/src/lib/frameworkDefinitions.json frontend/src/lib/cisIG1.json /app/frontend/src/lib/
+COPY frontend/src/lib/operatorGuidance/cisAssessmentCriteria.json /app/frontend/src/lib/operatorGuidance/cisAssessmentCriteria.json
 COPY frontend/src/lib/hipaaSecurityRule.json /app/frontend/src/lib/hipaaSecurityRule.json
 COPY frontend/src/lib/iso27001.json /app/frontend/src/lib/iso27001.json
 COPY frontend/src/lib/isoAuditProgram.json /app/frontend/src/lib/isoAuditProgram.json

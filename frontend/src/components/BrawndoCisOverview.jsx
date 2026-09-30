@@ -1,4 +1,3 @@
-import {Link} from 'react-router-dom';
 import {Moon,Sun} from 'lucide-react';
 import {Button} from './ui/button';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
@@ -13,7 +12,6 @@ export function BrawndoCisHeader({resume,onContinue}){
     <div><p className="bcis-eyebrow">CIS Controls v8.1 IG1</p><h1>CIS IG1</h1></div>
     <div className="bcis-actions">
       <button type="button" className="bcis-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
-      <Link className="bcis-btn" to="/client-profile?tab=program">Program configuration</Link>
       {resume&&<Button className="bcis-primary" onClick={onContinue} aria-label={`Continue assessment: ${resume.definition_id} ${resume.title}`}>Continue with {resume.definition_id}</Button>}
     </div>
   </header>;

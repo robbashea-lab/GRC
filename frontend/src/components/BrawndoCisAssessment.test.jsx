@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import {isBrawndoCisPrototype} from './BrawndoCisAssessment';
 import api from '@/lib/api';
+import {BrawndoCisHeader} from './BrawndoCisOverview';
 
 let mockUser,mockOfficial=null;
 jest.mock('@/lib/frameworks',()=>{const a=jest.requireActual('@/lib/frameworks');return {...a,frameworkDefinition:(k,id)=>{const d=a.frameworkDefinition(k,id);return mockOfficial&&d?{...d,official_text_mode:'LICENSED_TEXT',official_text:mockOfficial}:d;}};});
@@ -36,30 +37,37 @@ test('activation requires the exact synthetic client, framework, record tenant a
  expect(isBrawndoCisPrototype('demo_brawndo',record,{...mockUser,workspace_mode:'standard'})).toBe(false);
 });
 const headings=()=>[...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent.replace(/^\d/,''));
+test('Brawndo overview no longer offers program configuration',async()=>{
+ await act(async()=>root.render(<BrawndoCisHeader/>));
+ expect(container.textContent).not.toMatch(/Program configuration/i);
+ expect(container.querySelector('a[href*="client-profile"]')).toBeNull();
+});
 async function tick(el){await act(async()=>el.click());}
 
-test('five sections in order; removed sections are absent; header is compact',async()=>{
+test('four sections in order; verification remains editable near the top',async()=>{
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
- expect(headings()).toEqual(['What CIS Requires','Verification Guidance','Implementation Status','Current Implementation','Verification']);
+ expect(headings()).toEqual(['What CIS Requires','CIS IG1 Assessment Criteria','Implementation Status','Current Implementation']);
+ expect(container.querySelector('[aria-label="Verification result"]').closest('.brawndo-step')).toBeNull();
  for(const gone of ['Evidence','Required actions','Organizational Controls','Remediation','Create Finding','Link Evidence'])expect(container.textContent).not.toContain(gone);
  expect(container.querySelector('h2').textContent).toBe('CIS IG1 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
  expect(container.querySelector('header').textContent).not.toContain('Last assessed');
  expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
 });
 test('What CIS Requires labels the summary and links the official reference; official_text renders verbatim when supplied',async()=>{
- await render();expect(container.textContent).toContain('Omnisciente summary — not official CIS text');
+ await render();expect(container.textContent).toContain('Requirement summary');expect(container.textContent).not.toContain('Omnisciente summary — not official CIS text');
+ expect(container.querySelector('[data-testid="cis-official-text"]')).toBeNull();
  const ref=[...container.querySelectorAll('a')].find(a=>a.textContent==='Official CIS reference ↗');expect(ref.href).toMatch(/^https:\/\/cas\.docs\.cisecurity\.org\//);
- for(const gone of ['Source cadence','IG1 ·','Safeguard 1.1 ·'])expect(container.textContent).not.toContain(gone);
+ for(const gone of ['Source cadence','IG1 ·'])expect(container.textContent).not.toContain(gone);
  mockOfficial='Authorized verbatim text.';
  await act(async()=>root.unmount());root=createRoot(container);await render();
  expect(container.querySelector('[data-testid="cis-official-text"]').textContent).toBe('Authorized verbatim text.');expect(container.textContent).not.toContain('not official CIS text');mockOfficial=null;
 });
 test('tier checklists show progress and the guidance note; ticks are drafts and never change verification',async()=>{
- await render();expect(container.textContent).toContain('These are not additional CIS requirements.');
- expect(container.querySelector('[data-testid="tier-foundation"]').textContent).toBe('0 / 4');
- const boxes=[...container.querySelectorAll('[aria-labelledby="bcsg-foundation"] input')];for(const b of boxes)await tick(b);
- expect(container.querySelector('[data-testid="tier-foundation"]').textContent).toBe('4 / 4');
- expect(container.querySelector('[data-testid="tier-signal"]').textContent).toContain('Foundation checks complete');
+ await render();expect(container.textContent).toContain('They do not introduce additional requirements.');
+ expect(container.querySelectorAll('.bcsg-criteria input')).toHaveLength(4);
+ const boxes=[...container.querySelectorAll('.bcsg-criteria input')];for(const b of boxes)await tick(b);
+ expect(container.querySelectorAll('.bcsg-criteria input:checked')).toHaveLength(4);expect(container.querySelector('input[value="addressed"]').checked).toBe(true);
+ expect(container.querySelector('[data-testid="tier-signal"]')).toBeNull();
  expect(container.querySelector('[aria-label="Verification result"]').value).toBe('not_verified');
  expect(container.textContent).toContain('Unsaved assessment changes');
  expect(container.textContent).not.toMatch(/\d+%|score|maturity level|compliant/i);
@@ -68,16 +76,18 @@ test('status, current implementation, verification and checklist save with the c
  await render();await tick(container.querySelector('input[value="in_progress"]'));
  await input('Current implementation','Inventory maintained in RMM; reconciled monthly.');
  const sel=container.querySelector('[aria-label="Verification result"]');await act(async()=>{sel.value='needs_validation';sel.dispatchEvent(new Event('change',{bubbles:true}));});
- await tick(container.querySelector('[aria-labelledby="bcsg-foundation"] input'));
+ await tick(container.querySelector('.bcsg-criteria input'));
  await act(async()=>button('Save assessment').click());
- expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Inventory maintained in RMM; reconciled monthly.',verification:'needs_validation',verification_checklist:{foundation:['1.1-f1'],operational:[],mature:[]},notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}));
+ expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Inventory maintained in RMM; reconciled monthly.',verification:'needs_validation',cis_assessment_criteria:['1.1-c1'],notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}));
  expect(container.textContent).toContain('Assessment saved.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Needs validation');
 });
-test('status labels, helper text, N/A rationale only when N/A, legacy values read-only',async()=>{
+test('status labels and N/A are preserved; helper precedes narrative and legacy fields are hidden',async()=>{
  await render();expect([...container.querySelectorAll('input[name="bcsg-status"]')].map(i=>i.parentElement.textContent)).toEqual(['Implemented','Partially Implemented','Not Implemented','Not Assessed','Not Applicable']);
- expect(container.textContent).toContain('Describe how this safeguard is currently being addressed, including technology, process, ownership, and recurring activities.');
+ expect(container.textContent).toContain('Document how the organization currently satisfies this safeguard.');
+ expect(container.querySelector('#bcsg-current-help').compareDocumentPosition(container.querySelector('[aria-label="Current implementation"]')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
  expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeNull();await tick(container.querySelector('input[value="not_applicable"]'));expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeTruthy();
- const legacy=container.querySelector('.bcsg-legacy');expect(legacy.textContent).toContain('Recorded platform');expect(legacy.textContent).toContain('Older notes');expect(legacy.querySelector('textarea,input')).toBeNull();
+ expect(container.querySelector('.bcsg-legacy')).toBeNull();expect(container.textContent).not.toContain('Previously recorded');
+ expect(record.technology).toBe('Recorded platform');expect(record.notes).toBe('Older notes');
 });
 test('next and close require explicit draft discard; cancel retains the draft',async()=>{
  await render();await input('Current implementation','Draft');await act(async()=>button('Next').click());expect(next).not.toHaveBeenCalled();
@@ -93,14 +103,14 @@ test('Save & next waits for a successful save and never navigates after failure'
 });
 test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit',async role=>{
  mockUser.role=role;await render();expect(button('Save assessment')).toBeUndefined();expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
- expect(container.querySelector('.bcsg-tiers').disabled).toBe(true);
+ expect(container.querySelector('.bcsg-criteria').disabled).toBe(true);
 });
 test('load failure disables writes and offers retry',async()=>{
  api.get.mockRejectedValue(new Error('Context unavailable'));await render();expect(container.querySelector('[role="alert"]').textContent).toContain('Context unavailable');expect(button('Save assessment').disabled).toBe(true);expect(button('Retry')).toBeTruthy();
 });
 test('other clients keep the existing workspace',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('Verification Guidance');expect(container.querySelector('[aria-modal]')).toBeNull();
+ expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal]')).toBeNull();
 });
 test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
  const toControl=jest.fn();
@@ -109,10 +119,17 @@ test('in-workspace breadcrumb returns to the control, behind the unsaved-changes
  await input('Current implementation','Draft');await act(async()=>button('Control 1').click());expect(toControl).not.toHaveBeenCalled();
  expect(document.body.textContent).toContain('Leave unsaved changes?');await act(async()=>button('Discard changes').click());expect(toControl).toHaveBeenCalledTimes(1);
 });
-test('dialog is marked modal and stronger-practice items are tagged only where flagged',async()=>{
- await render();const d=container.querySelector('[data-testid="brawndo-cis-assessment"]');expect(d.getAttribute('aria-modal')).toBe('true');
- const tags=[...container.querySelectorAll('.bcsg-stronger')];expect(tags).toHaveLength(1);expect(tags[0].closest('[aria-labelledby]').getAttribute('aria-labelledby')).toBe('bcsg-mature');
- expect(container.querySelector('[data-testid="stronger-note"]').textContent).toContain('go beyond the minimum expectation');
- await act(async()=>root.unmount());root=createRoot(container);record={...record,definition_id:'1.2'};await render();
- expect(container.querySelector('.bcsg-stronger')).toBeNull();expect(container.querySelector('[data-testid="stronger-note"]')).toBeNull();
+test('dialog has one source-labelled checklist and no maturity guidance',async()=>{
+ record.verification_checklist={foundation:['1.1-f1'],mature:['1.1-m1']};
+ await render();
+ expect(container.querySelector('[data-testid="brawndo-cis-assessment"]').getAttribute('aria-modal')).toBe('true');
+ expect(container.querySelector('[data-testid="criteria-source"]').textContent).toBe('Sources: CIS Safeguard 1.1 · v8.1');
+ expect(container.querySelectorAll('.bcsg-criteria')).toHaveLength(1);
+ expect(container.querySelectorAll('.bcsg-criteria input:checked')).toHaveLength(0);
+ for(const text of ['Foundation','Operational','Mature','Stronger practice','Previously recorded','Manage people'])expect(container.textContent).not.toContain(text);
+ await tick(container.querySelector('.bcsg-criteria input'));await act(async()=>button('Save assessment').click());
+ expect(record.verification_checklist).toEqual({foundation:['1.1-f1'],mature:['1.1-m1']});
+ expect(record.cis_assessment_criteria).toEqual(['1.1-c1']);
+ await act(async()=>root.unmount());root=createRoot(container);await render();
+ expect(container.querySelector('.bcsg-criteria input').checked).toBe(true);
 });

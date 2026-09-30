@@ -78,6 +78,25 @@ class AssessmentVerificationTests(unittest.IsolatedAsyncioTestCase):
             server._require_snapshot({'verification': 'verified'}, first.json(), 'last_assessed')
         self.assertEqual(missing.exception.status_code, 428)
 
+    async def test_criteria_are_independent_scoped_and_historical(self):
+        row, base = await self.cis_row()
+        self.assertEqual((await self.client.patch(base,json={'cis_assessment_criteria':[]})).status_code,422)
+        await server.db.clients.insert_one({'client_id':'demo_brawndo','name':'Synthetic Brawndo'})
+        await server.db.framework_assessments.update_one({'framework_assessment_id':row['framework_assessment_id']},{'$set':{'client_id':'demo_brawndo'}})
+        old=(await self.client.patch(base,json={'verification_checklist':{'foundation':['1.1-f1']}})).json()
+        response=await self.client.patch(base,json={'cis_assessment_criteria':['1.1-c1','1.1-c1'],'expected_last_assessed':old['last_assessed']})
+        self.assertEqual(response.status_code,200,response.text)
+        saved=response.json()
+        self.assertEqual(saved['cis_assessment_criteria'],['1.1-c1'])
+        self.assertEqual(saved['status'],old['status'])
+        self.assertEqual(saved.get('verification'),old.get('verification'))
+        self.assertEqual(saved['verification_checklist'],old['verification_checklist'])
+        self.assertEqual(saved['assessment_history'][:-1],old['assessment_history'])
+        self.assertEqual(saved['assessment_history'][-1]['cis_assessment_criteria'],['1.1-c1'])
+        for bad in (['1.2-c1'],['1.1-c99'],['1.1-f1'],None,{},['1.1-c1']*21):
+            r=await self.client.patch(base,json={'cis_assessment_criteria':bad,'expected_last_assessed':saved['last_assessed']})
+            self.assertEqual(r.status_code,422,(bad,r.text))
+
 
 if __name__ == '__main__':
     unittest.main()

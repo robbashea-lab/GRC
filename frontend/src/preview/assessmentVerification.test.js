@@ -44,3 +44,24 @@ test('stale edits are still rejected',async()=>{
   await api.patch(path,{verification:'gap_identified',expected_last_assessed:row.last_assessed??null});
   await expect(api.patch(path,{verification:'verified',expected_last_assessed:row.last_assessed??null})).rejects.toThrow('Assessment changed since it was opened');
 });
+
+test('Brawndo criteria preserve old checks and history without changing conclusions',async()=>{
+  cid='demo_brawndo';
+  const row=(await api.get('/frameworks/cis-ig1',{params:{client_id:cid}})).data.assessments.find(a=>a.definition_id==='1.1');
+  const path='/framework_assessments/'+row.framework_assessment_id;
+  const old=(await api.patch(path,{verification_checklist:{foundation:['1.1-f1']},expected_last_assessed:row.last_assessed??null})).data;
+  const saved=(await api.patch(path,{cis_assessment_criteria:['1.1-c1','1.1-c1'],expected_last_assessed:old.last_assessed})).data;
+  expect(saved.cis_assessment_criteria).toEqual(['1.1-c1']);
+  expect(saved.status).toBe(old.status);expect(saved.verification).toBe(old.verification);
+  expect(saved.verification_checklist).toEqual(old.verification_checklist);
+  expect(saved.assessment_history.slice(0,-1)).toEqual(old.assessment_history);
+  expect(saved.assessment_history.at(-1).cis_assessment_criteria).toEqual(['1.1-c1']);
+  expect((await api.get(path)).data.cis_assessment_criteria).toEqual(['1.1-c1']);
+  for(const bad of [['1.2-c1'],['1.1-f1'],['1.1-c99'],null,{},Array(21).fill('1.1-c1')])
+    await expect(api.patch(path,{cis_assessment_criteria:bad,expected_last_assessed:saved.last_assessed})).rejects.toThrow();
+});
+
+test('new criteria cannot be written to another client',async()=>{
+  const [row,path]=await cisRow();
+  await expect(api.patch(path,{cis_assessment_criteria:[],expected_last_assessed:row.last_assessed??null})).rejects.toThrow();
+});
