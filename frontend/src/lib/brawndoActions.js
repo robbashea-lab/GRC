@@ -33,6 +33,7 @@ export function actionOrigin(record,records={},finding) {
     const missing=target&&origin.occurrence_id&&origin.occurrence_id!==occurrenceId(target)&&!initialValues.occurrence;
     return {kind:'reviews',target:missing?null:target,id:rid,label:target?.title||'Review unavailable',detail:missing?'Original occurrence unavailable':initialValues.occurrence?.period||target?.period,initialValues};}
   const origin=taskSource(source,records);
+  if(record.client_id==='demo_brawndo'&&record.assurance_id&&origin.kind==='vendors')return {...origin,detail:'Linked assurance document',initialValues:{vendorTab:'assurance',assuranceId:record.assurance_id}};
   if(origin.type==='manual')return {label:'Manual Entry'};
   if(origin.kind)return origin;
   return {label:source.source||'Origin not documented'};

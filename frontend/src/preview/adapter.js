@@ -381,7 +381,7 @@ export async function previewAdapter(config) {
         if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
         if(kind==='evidence'&&db.reviews.some(c=>c.client_id===r.client_id&&auditEvidenceLinks(c).some(l=>l.id===id)))throw new Error('Audit workpaper evidence must be retained.');
         if(kind==='evidence'&&(db.organizational_controls||[]).some(c=>c.client_id===r.client_id&&controlEvidenceLinks(c).some(l=>l.id===id)))throw new Error('Control design and operation evidence must be retained.');
-        if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
+        if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id)||v.client_id==='demo_brawndo'&&a.history?.some(h=>h.evidence_ids?.includes(id)))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
         if(kind==='evidence'&&['ai_system','ai_systems'].includes(r.linked_type)&&(db.ai_systems||[]).some(x=>x.ai_system_id===r.linked_id&&x.status==='retired'))throw new Error('Retired AI evidence must be retained');
         if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id||r.ai_system_id)) throw new Error('Governance records and their Review obligations must be retained.');
@@ -428,7 +428,13 @@ export async function previewAdapter(config) {
         write(db, kind, fields, id);
         return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
+      // Scope retry identity to this pilot's vendor-origin action creation, after authorization.
+      const requestKey=kind==='tasks'&&!id&&body.client_id==='demo_brawndo'&&body.source_type==='vendor'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+      const requestScope=requestKey?JSON.stringify([db.user.user_id,body.client_id,requestKey]):null;
+      const priorRequest=requestScope&&db.vendor_action_requests?.[requestScope];
+      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');return respond(record(db,'tasks',priorRequest.task_id));}
       const result = write(db, kind, kind==='policies'&&id?invalidatePolicyApproval(body,record(db,kind,id)):body, id);
+      if(requestScope){db.vendor_action_requests||={};db.vendor_action_requests[requestScope]={body:JSON.stringify(body),task_id:result.task_id};}
       if (kind === 'clients') return save(clientProjection(db, result));
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});

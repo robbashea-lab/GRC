@@ -1,9 +1,14 @@
 import { SOURCE_RECORDS } from '../lib/actionItems';
 import { validateAssignment } from './assignmentEligibility';
+import {assuranceKey} from '../lib/brawndoVendors';
 const links=['source_type','source_id','review_id','finding_id','risk_id','vendor_id','policy_id','assessment_id'];
 export function prepareTask(db,row,previous) {
   if(!['critical','high','medium','low',...(row.client_id==='demo_brawndo'?['informational']:[])].includes(row.priority)&&!(previous&&row.priority===previous.priority)) throw new Error('Invalid Action Item priority.');
   validateAssignment(db, 'tasks', row, previous);
+  if(row.client_id==='demo_brawndo'){
+    if(previous&&(row.assurance_id||null)!==(previous.assurance_id||null))throw new Error('Original assurance source must be retained.');
+    if(row.assurance_id){const vendor=db.vendors.find(v=>v.vendor_id===row.vendor_id&&v.client_id===row.client_id);if(!vendor?.assurance_records?.some((a,i)=>assuranceKey(a,i)===row.assurance_id))throw new Error('Assurance source must belong to the linked Vendor.');}
+  }
   if(previous) {
     if(links.some(k=>(row[k]??null)!==(previous[k]??null))) throw new Error('The originating source and relationships must be retained.');
     if(previous.status==='done'&&row.status!=='done') throw new Error('Completed Action Items remain historical evidence.');

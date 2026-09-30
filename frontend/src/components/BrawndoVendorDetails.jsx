@@ -1,0 +1,83 @@
+import {useEffect,useState} from 'react';
+import api,{formatError} from '@/lib/api';
+import {Button} from './ui/button';
+import {Input} from './ui/input';
+import {Textarea} from './ui/textarea';
+import AssigneeSelect from './AssigneeSelect';
+import VendorGovernancePanel from './VendorGovernancePanel';
+import {VENDOR_DATA_TYPES,vendorProjection} from '@/lib/vendorGovernance';
+import {assuranceTypes,assuranceNames,assuranceName,assuranceState,assuranceStates,assuranceKey,assuranceAttention,assuranceSummary} from '@/lib/brawndoVendors';
+import {recordUuid} from '@/lib/recordUuid';
+import {displayDay} from '@/lib/managementDates';
+import {editableFields} from '@/lib/permissions';
+import {useAuth} from '@/context/AuthContext';
+
+const grid='grid grid-cols-1 sm:grid-cols-2 gap-4';
+const title=value=>String(value).replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
+export default function BrawndoVendorDetails(props){
+  const {tab,record,form,setForm,canWrite,isAdmin,users,reviews=[],openRecord,downloadEv,uploadFiles}=props;
+  const {user}=useAuth(),allowedFields=editableFields('vendors',user,record);
+  const mayEdit=key=>canWrite&&(!allowedFields||allowedFields.has(key))&&!['inactive','terminated'].includes(record?.status);
+  const [catalog,setCatalog]=useState([]),[systems,setSystems]=useState([]),[error,setError]=useState(''),[search,setSearch]=useState('');
+  const write=canWrite&&isAdmin&&!['inactive','terminated'].includes(record?.status),cid=record?.client_id||form.client_id;
+  useEffect(()=>{let active=true;if(tab==='assurance'||tab==='data_access'){
+    const kind=tab==='assurance'?'evidence':'assets';
+    api.get('/'+kind,{params:{client_id:cid}}).then(({data})=>{if(active){(kind==='evidence'?setCatalog:setSystems)(data.filter(r=>r.client_id===cid&&!r.archived_at));setError('');}}).catch(e=>{if(active)setError(formatError(e));});
+  }return()=>{active=false;};},[tab,cid,props.evidence]);
+  const set=(key,value)=>setForm(f=>({...f,[key]:value}));
+  const field=(key,label,type='text',disabled=!write)=><label key={key} className="block text-sm space-y-1">{label}<Input aria-label={label} data-testid={'field-'+key} type={type} value={type==='date'?(form[key]||'').slice(0,10):form[key]??''} disabled={disabled} onChange={e=>set(key,type==='number'?(e.target.value===''?'':Number(e.target.value)):e.target.value)}/></label>;
+  const choice=(key,label,options,disabled=!write)=><label className="block text-sm space-y-1">{label}<select aria-label={label} data-testid={'field-'+key} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form[key]||''} disabled={disabled} onChange={e=>set(key,e.target.value)}><option value="">Not recorded</option>{[...new Set([...options,form[key]].filter(Boolean))].map(value=><option key={value} value={value}>{title(value)}{!options.includes(value)?' (recorded)':''}</option>)}</select></label>;
+  const checks=(key,label,options)=><fieldset className="space-y-2"><legend className="text-sm font-medium">{label}</legend><div className="flex flex-wrap gap-x-4 gap-y-2">{[...new Set([...options,...(form[key]||[])])].map(value=><label key={value} className="flex gap-2 items-center text-sm"><input type="checkbox" disabled={!write} checked={(form[key]||[]).includes(value)} onChange={e=>set(key,e.target.checked?[...(form[key]||[]),value]:(form[key]||[]).filter(v=>v!==value))}/>{title(value)}</label>)}</div></fieldset>;
+  const schedule=<div className={grid}>{choice('review_frequency','Review Frequency',['monthly','quarterly','semiannual','annual','biennial','as_needed','custom'],!write||!isAdmin)}{form.review_frequency==='custom'&&field('custom_recurrence_days','Custom recurrence (days)','number',!write||!isAdmin)}{field('next_review','Next Review','date',!write||!isAdmin)}</div>;
+  const addAssurance=type=>set('assurance_records',[...(form.assurance_records||[]),{assurance_id:recordUuid(),type,review_status:'requested',evidence_ids:[]}]);
+  const assurancePicker=<fieldset className="space-y-2"><legend className="text-sm font-semibold">Security Assurance Reviews <span className="font-normal text-ink-secondary">(optional)</span></legend><p className="text-xs text-ink-secondary">Select documentation to request. Receipt and review are recorded separately.</p><div className="flex flex-wrap gap-2">{assuranceTypes.map(type=><Button type="button" key={type} size="sm" variant="outline" disabled={!write} onClick={()=>addAssurance(type)}>{assuranceNames[type]}</Button>)}</div></fieldset>;
+  if(tab==='overview'){
+    const current=vendorProjection(record||form,reviews);
+    return <div className="space-y-5">
+      {record&&<dl className="grid grid-cols-2 lg:grid-cols-3 gap-3 text-sm border-b border-line pb-4">{[['Criticality',title(record.criticality)],['Relationship Status',title(record.status)],['Business Owner',users.find(u=>u.user_id===record.business_owner_id)?.name||'Unassigned'],['Next Vendor Review',displayDay(current.next_review)||'Not scheduled'],['Contract Renewal',displayDay(record.contract_renewal)||'Not recorded'],['Assurance',assuranceSummary(record).join('; ')]].map(([label,value])=><div key={label}><dt className="text-ink-secondary">{label}</dt><dd>{value}</dd></div>)}</dl>}
+      <div className={grid}>{field('name','Vendor Name *')}{field('service','Service / Product *')}{choice('criticality','Criticality',['critical','high','medium','low'])}{record&&choice('status','Relationship Status',['onboarding','active','offboarding','inactive'])}<div className="text-sm">Business Owner<AssigneeSelect clientId={cid} label="Business Owner" value={form.business_owner_id} onChange={v=>set('business_owner_id',v)} users={users} disabled={!mayEdit('business_owner_id')}/></div>{record&&<>{field('contact_name','Vendor Contact Name')}{field('contact_email','Vendor Contact Email','email')}<div className="text-sm">Last Review<p>{displayDay(current.last_review)||'Not recorded'}</p></div><div className="text-sm">Created<p>{displayDay(record.created_at)||'Not recorded'}</p></div></>}</div>
+      {!record&&checks('data_types','Data Types',VENDOR_DATA_TYPES)}
+      {schedule}{field('contract_renewal','Contract Renewal','date')}
+      {!record&&<>{assurancePicker}{(form.assurance_records||[]).map((a,i)=><p key={a.assurance_id||i} className="text-sm">{assuranceName(a)} — Requested</p>)}{(form.assurance_records||[]).length>0&&<p className="text-xs text-ink-secondary">Save the Vendor, then add documents and dates in Security Assurance Reviews.</p>}</>}
+      <label className="block text-sm space-y-1">Notes<Textarea aria-label="Notes" rows={3} value={form.notes||''} disabled={!mayEdit('notes')} onChange={e=>set('notes',e.target.value)}/></label>
+      {record?.services&&record.services!==record.service&&<p className="text-sm">Retained service detail: {record.services}</p>}
+    </div>;
+  }
+  if(tab==='data_access')return <div className="space-y-5">{checks('data_types','Data Types',VENDOR_DATA_TYPES)}{checks('data_relationship','Data Handling',['stores','processes','transmits','accesses'])}<div className={grid}>{choice('access_level','Access Level',['unknown','none','standard_user','administrative','integration_service'])}{field('processing_location','Hosting / Processing Location (Unknown if not known)')}</div><fieldset><legend className="text-sm font-medium mb-2">Connected Systems</legend>{error&&<p role="alert">{error}</p>}{systems.map(a=><label className="flex items-center gap-2 text-sm mb-2" key={a.asset_id}><input type="checkbox" disabled={!write} checked={(form.connected_system_ids||[]).includes(a.asset_id)} onChange={e=>set('connected_system_ids',e.target.checked?[...(form.connected_system_ids||[]),a.asset_id]:(form.connected_system_ids||[]).filter(id=>id!==a.asset_id))}/>{a.name||a.title}</label>)}{(form.connected_system_ids||[]).filter(id=>!systems.some(a=>a.asset_id===id)).map(id=><p key={id} className="text-sm">Previously linked system unavailable (relationship retained)</p>)}{!systems.length&&!error&&<p className="text-sm text-ink-secondary">No systems available to link.</p>}</fieldset><label className="block text-sm">Business dependency notes<Textarea aria-label="Business dependency notes" value={form.dependency_notes||''} disabled={!write} onChange={e=>set('dependency_notes',e.target.value)}/></label></div>;
+  if(tab==='contract')return <div className="space-y-4">{field('contract_notice_deadline','Cancellation / Non-renewal Notice Deadline','date')}<p className="text-xs text-ink-secondary">Explicit recorded deadline; no notice period is inferred.</p>{record?.contract_end&&!form.contract_expiration&&<p className="text-sm">Recorded contract end: {displayDay(record.contract_end)}</p>}<VendorGovernancePanel {...props}/></div>;
+  if(tab!=='assurance')return <VendorGovernancePanel {...props}/>;
+  const artifacts=form.assurance_records||[];
+  const change=(index,key,value)=>set('assurance_records',artifacts.map((a,i)=>i===index?{...a,[key]:value}:a));
+  const newVersion=index=>{const old=artifacts[index],id=recordUuid();set('assurance_records',[...artifacts.map((a,i)=>i===index?{...a,superseded_by:id}:a),{assurance_id:id,type:old.type,document_name:old.document_name,report_type:old.report_type,review_status:'awaiting_update',evidence_ids:[],previous_assurance_id:assuranceKey(old,index)}]);};
+  const renderArtifact=(a,i,historical=false)=>{
+    const disabled=!write||historical;
+    const input=(key,label,type='date')=><label key={key} className="block text-sm space-y-1">{label}<Input aria-label={`${assuranceName(a)} ${label}`} type={type} disabled={disabled} value={type==='date'?(a[key]||'').slice(0,10):a[key]||''} onChange={e=>change(i,key,e.target.value)}/></label>;
+    return <section key={assuranceKey(a,i)} className="border border-line rounded-lg p-4 space-y-4" aria-label={`${assuranceName(a)} ${historical?'previous document':'details'}`}>
+      {props.focusAssurance===assuranceKey(a,i)&&<p className="text-sm font-medium">Source document for this Action Item</p>}
+      <div className="flex justify-between gap-3"><h3 className="font-semibold text-sm">{assuranceName(a)}</h3><span className="text-sm">{assuranceState(a)}{historical?' · Previous document':''}</span></div>
+      {!historical&&assuranceAttention(a).map(message=><p className="text-sm text-semantic-critical" key={message}>{message}</p>)}
+      {a.refresh_due&&<p className="text-xs text-ink-secondary">Legacy refresh due: {displayDay(a.refresh_due)} (retained; not interpreted as certificate expiration).</p>}
+      <div className={grid}>
+        <label className="block text-sm space-y-1">Status<select aria-label={`${assuranceName(a)} Status`} className="h-10 border border-input rounded-md w-full px-3 bg-background" disabled={disabled} value={a.review_status||''} onChange={e=>change(i,'review_status',e.target.value)}><option value="">{assuranceState(a)} (recorded)</option>{Object.entries(assuranceStates).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+        {(a.type==='Other'||!assuranceTypes.includes(a.type))&&input('document_name','Document Name','text')}
+        {a.type==='SOC 2'&&<label className="block text-sm">SOC 2 report type<select aria-label="SOC 2 report type" className="h-10 border rounded-md w-full px-3 bg-background" value={a.report_type||''} disabled={disabled} onChange={e=>change(i,'report_type',e.target.value)}><option value="">Unknown</option><option value="I">Type I</option><option value="II">Type II</option></select></label>}
+        {input('received_at','Received On')}{input('reviewed_on','Reviewed On')}
+        {input('reviewed_by','Reviewed By (recorded name)','text')}
+        {a.last_reviewed&&<p className="text-sm">Recorded historical review: {displayDay(a.last_reviewed)}{a.review_occurrence_id?' · Linked Review occurrence retained':''}</p>}
+        {a.review_status==='awaiting_update'&&input('expected_availability','Expected Availability')}
+        {input('next_follow_up','Next Follow-up')}
+        {a.type==='SOC 2'&&a.report_type==='II'&&<>{input('coverage_start','Coverage Start')}{input('coverage_end','Coverage End')}</>}
+        {a.type==='SOC 2'&&a.report_type==='I'&&input('as_of_date','Report As-of Date')}
+        {a.type==='ISO 27001'&&<>{input('certificate_valid_from','Certificate Valid From')}{input('certificate_expires_at','Certificate Expiration')}</>}
+        {!['SOC 2','ISO 27001'].includes(a.type)&&input('document_date','Document / Assessment Date')}
+      </div>
+      <label className="block text-sm">Review Notes / Findings<Textarea aria-label={`${assuranceName(a)} Review Notes / Findings`} value={a.notes||''} disabled={disabled} onChange={e=>change(i,'notes',e.target.value)}/></label>
+      <div className="space-y-2 text-sm"><h4 className="font-medium">Documents / Evidence</h4>{(a.evidence_ids||[]).map(id=>{const e=catalog.find(e=>e.evidence_id===id)||props.evidence?.find(e=>e.evidence_id===id);return <div key={id}>{e?<button className="text-link underline" onClick={()=>downloadEv(e)}>{e.title||e.filename} · {e.filename}</button>:<span>Linked evidence unavailable (retained)</span>}</div>;})}{!a.evidence_ids?.length&&<p className="text-ink-secondary">No evidence linked.</p>}
+        {!historical&&<><Input aria-label={`Search evidence for ${assuranceName(a)}`} placeholder="Search evidence…" value={search} onChange={e=>setSearch(e.target.value)}/><div className="max-h-36 overflow-y-auto">{catalog.filter(e=>`${e.title||''} ${e.filename||''}`.toLowerCase().includes(search.toLowerCase())).map(e=><label className="flex items-center gap-2 py-1" key={e.evidence_id}><input type="checkbox" disabled={disabled} checked={(a.evidence_ids||[]).includes(e.evidence_id)} onChange={event=>change(i,'evidence_ids',event.target.checked?[...(a.evidence_ids||[]),e.evidence_id]:(a.evidence_ids||[]).filter(id=>id!==e.evidence_id))}/>{e.title||e.filename} · {e.mime_type||'Document'} · {displayDay(e.created_at)||'Date not recorded'}</label>)}</div></>}
+      </div>
+      {!historical&&write&&<div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={()=>newVersion(i)}>Request replacement</Button><Button variant="outline" size="sm" onClick={()=>openRecord({kind:'tasks',record:null,initialValues:{source_type:'vendor',source_id:record.vendor_id,vendor_id:record.vendor_id,assurance_id:assuranceKey(a,i),governance_context:{rationale:a.notes||''}}})}>Create Action Item</Button></div>}
+      {!!a.history?.length&&<details className="text-sm"><summary>Earlier recorded states ({a.history.length})</summary>{a.history.map((h,n)=><div key={n} className="border-t border-line mt-2 pt-2"><p>{assuranceState(h)} · {displayDay(h.reviewed_on||h.last_reviewed)||'Review date not recorded'} · {h.reviewed_by||'Reviewer not recorded'}</p><p>{h.notes}</p><p>Coverage: {h.coverage_start||'—'} → {h.coverage_end||'—'}</p>{(h.evidence_ids||[]).map(id=>{const e=catalog.find(e=>e.evidence_id===id);return e?<button key={id} className="block text-link underline" onClick={()=>downloadEv(e)}>{e.filename}</button>:<p key={id}>Historical evidence link retained</p>;})}</div>)}</details>}
+    </section>;
+  };
+  return <div className="space-y-4">{assurancePicker}{form.separate_assurance_review&&<details><summary className="text-sm font-medium">Configured assurance Review schedule</summary><div className={grid}>{field('assurance_review_date','Assurance Review date','date')}{choice('assurance_cadence','Assurance Review cadence',['monthly','quarterly','semiannual','annual'])}</div><p className="text-xs text-ink-secondary">Existing separate Review schedule retained. Completing it does not mark individual documents Reviewed.</p></details>}{error&&<p role="alert">{error}</p>}<p className="text-xs text-ink-secondary">Save changes to retain assurance details and evidence associations. Uploads are stored immediately in the existing Evidence Library. Selecting or uploading a document does not record its review.</p>{!artifacts.length&&<p className="text-sm">No assurance recorded.</p>}{artifacts.map((a,i)=>!a.superseded_by&&renderArtifact(a,i))}{artifacts.some(a=>a.superseded_by)&&<details open={artifacts.some((a,i)=>a.superseded_by&&props.focusAssurance===assuranceKey(a,i))||undefined}><summary className="text-sm font-medium cursor-pointer">Previous documents</summary><div className="mt-3 space-y-3">{artifacts.map((a,i)=>a.superseded_by&&renderArtifact(a,i,true))}</div></details>}<label className="block text-sm">Upload vendor evidence<input type="file" disabled={!write} className="block mt-2" onChange={e=>{uploadFiles(Array.from(e.target.files||[]));e.target.value='';}}/></label></div>;
+}

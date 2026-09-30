@@ -1,0 +1,36 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import VendorRegister from './VendorRegister';
+import RecordDrawer from '@/components/RecordDrawer';
+import {SCHEMAS} from '@/lib/schemas';
+import api from '@/lib/api';
+let mockClient='demo_brawndo';
+const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Test'}})}));
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
+jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/vendors',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('@/components/EvidencePanel',()=>()=> <div>Existing evidence panel</div>);
+jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-identity'}));
+let root,container;
+const click=node=>act(async()=>node.click());
+const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/vendors'?[{vendor_id:'v',client_id:mockClient,name:'Cloud QA',service:'Hosting',criticality:'high',status:'active',assurance_records:[]}]:[]}));});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+test('Brawndo summary and assurance columns; switching clients restores original creation',async()=>{
+  await act(async()=>root.render(<VendorRegister/>));expect(container.textContent).toContain('Overdue Reviews');expect(container.textContent).toContain('No assurance recorded');
+  await click(container.querySelector('[data-testid="new-vendor"]'));
+  const dialog=document.querySelector('[data-testid="vendors-drawer"]');expect(dialog.className).toContain('brawndo-cis-assessment');expect(dialog.textContent).not.toContain('Category');expect(dialog.textContent).toContain('Add to Register');
+  await click(document.querySelector('[data-testid="drawer-cancel"]'));
+  mockClient='demo_dunder';await act(async()=>root.render(<VendorRegister/>));expect(container.textContent).not.toContain('Overdue Reviews');
+  await click(container.querySelector('[data-testid="new-vendor"]'));expect(document.querySelector('[data-testid="new-vendor-dialog"]').textContent).toContain('Category');
+});
+test('new vendor draft is protected and failed create remains open',async()=>{
+  const close=jest.fn();api.post.mockRejectedValue(new Error('Save unavailable'));
+  await act(async()=>root.render(<RecordDrawer open onOpenChange={close} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={mockClient}/>));
+  await input(document.querySelector('[data-testid="field-name"]'),'Draft vendor');await input(document.querySelector('[data-testid="field-service"]'),'Service');
+  await input(document.querySelector('[data-testid="field-next_review"]'),'2026-10-15');await input(document.querySelector('[data-testid="field-contract_renewal"]'),'2027-04-01');
+  await click(document.querySelector('[data-testid="drawer-save"]'));expect(close).not.toHaveBeenCalled();expect(document.querySelector('[data-testid="field-name"]').value).toBe('Draft vendor');
+  expect(api.post.mock.calls[0][1]).toMatchObject({next_review:'2026-10-15',contract_renewal:'2027-04-01'});
+  await click(document.querySelector('[data-testid="drawer-cancel"]'));expect(document.body.textContent).toContain('Discard unsaved changes?');expect(close).not.toHaveBeenCalled();
+});
