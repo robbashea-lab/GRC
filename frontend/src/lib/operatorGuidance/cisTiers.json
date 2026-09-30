@@ -1,58 +1,50 @@
 {
- "_note": "Omnisciente practical verification guidance to support assessment. Not CIS text and not additional CIS requirements.",
+ "_note": "Omnisciente practical verification guidance to support assessment of CIS Controls v8.1 IG1 safeguards. Not CIS text and not additional CIS requirements. Cadences are referenced only where the catalog records one.",
  "1.1": {
   "foundation": [
    {
     "id": "1.1-f1",
-    "text": "Enterprise asset inventory exists"
+    "text": "An enterprise asset inventory exists"
    },
    {
     "id": "1.1-f2",
-    "text": "Managed endpoints and servers are represented"
+    "text": "End-user devices, servers, network devices and mobile devices are included"
    },
    {
     "id": "1.1-f3",
-    "text": "Required asset attributes are captured"
+    "text": "Remote and regularly connected assets outside enterprise control are included"
    },
    {
     "id": "1.1-f4",
-    "text": "Unknown assets can be identified"
+    "text": "Each asset records an identifier, owner and authorization status"
    }
   ],
   "operational": [
    {
     "id": "1.1-o1",
-    "text": "Inventory is maintained using an authoritative process or tool"
+    "text": "New assets are added and retired assets are removed as changes occur"
    },
    {
     "id": "1.1-o2",
-    "text": "New and removed assets flow through the process"
+    "text": "The inventory is reviewed and updated at least every six months"
    },
    {
     "id": "1.1-o3",
-    "text": "Asset ownership is recorded where appropriate"
-   },
-   {
-    "id": "1.1-o4",
-    "text": "Inventory is periodically reconciled"
+    "text": "Changes are reconciled against the source used to build the inventory"
    }
   ],
   "mature": [
    {
     "id": "1.1-m1",
-    "text": "Inventory accuracy is regularly validated"
+    "text": "The inventory is compared with an independent source such as discovery or endpoint data"
    },
    {
     "id": "1.1-m2",
-    "text": "Unidentified assets are tracked to resolution"
+    "text": "Differences found in that comparison are resolved, not only listed"
    },
    {
     "id": "1.1-m3",
-    "text": "Inventory review cadence is formally established"
-   },
-   {
-    "id": "1.1-m4",
-    "text": "Operating evidence shows inventory upkeep runs consistently"
+    "text": "The most recent review date falls within the six-month cycle"
    }
   ]
  },
@@ -60,43 +52,43 @@
   "foundation": [
    {
     "id": "1.2-f1",
-    "text": "A method exists to detect unauthorized assets"
+    "text": "Unauthorized assets can be detected on the network"
    },
    {
     "id": "1.2-f2",
-    "text": "Response options are defined: remove, deny, or quarantine"
+    "text": "A defined response exists: remove, deny access or quarantine"
    },
    {
     "id": "1.2-f3",
-    "text": "Someone is responsible for acting on findings"
+    "text": "Each response option says who can approve an asset instead"
    }
   ],
   "operational": [
    {
     "id": "1.2-o1",
-    "text": "Unauthorized asset findings are reviewed on a set schedule"
+    "text": "Unauthorized assets are addressed at least weekly"
    },
    {
     "id": "1.2-o2",
-    "text": "Each finding is resolved or quarantined"
+    "text": "Each detected asset receives a recorded decision"
    },
    {
     "id": "1.2-o3",
-    "text": "Actions taken on unauthorized assets are recorded"
+    "text": "Quarantined assets stay isolated until a decision is made"
    }
   ],
   "mature": [
    {
     "id": "1.2-m1",
-    "text": "Time to resolve unauthorized assets is tracked"
+    "text": "Recent cases show a decision and a closure date"
    },
    {
     "id": "1.2-m2",
-    "text": "Repeat unauthorized assets are investigated for root cause"
+    "text": "Assets that reappear after removal are identified"
    },
    {
     "id": "1.2-m3",
-    "text": "Review records show findings handled consistently"
+    "text": "Detection covers remote and wireless connections as well as wired"
    }
   ]
  },
@@ -104,43 +96,43 @@
   "foundation": [
    {
     "id": "2.1-f1",
-    "text": "Software inventory exists for enterprise assets"
+    "text": "A software inventory exists for enterprise assets"
    },
    {
     "id": "2.1-f2",
-    "text": "Title, publisher, and version are captured"
+    "text": "Entries record title, publisher, version and business purpose"
    },
    {
     "id": "2.1-f3",
-    "text": "Business purpose is noted for installed software"
+    "text": "Licensing and ownership information is recorded where applicable"
    }
   ],
   "operational": [
    {
     "id": "2.1-o1",
-    "text": "Inventory is populated from an automated source where possible"
+    "text": "Newly authorized software is added to the inventory"
    },
    {
     "id": "2.1-o2",
-    "text": "New software is added as it is approved"
+    "text": "Removed or retired software is taken out of the inventory"
    },
    {
     "id": "2.1-o3",
-    "text": "Software inventory is reconciled against installed software"
+    "text": "The inventory is reviewed and updated at least every six months"
    }
   ],
   "mature": [
    {
     "id": "2.1-m1",
-    "text": "Software inventory completeness is periodically validated"
+    "text": "The inventory is compared with software actually installed on assets"
    },
    {
     "id": "2.1-m2",
-    "text": "Discrepancies between inventory and endpoints are resolved"
+    "text": "Cloud and SaaS applications in use are reflected, not only installed software"
    },
    {
     "id": "2.1-m3",
-    "text": "Software inventory review dates are documented"
+    "text": "Differences between inventory and installed software are resolved"
    }
   ]
  },
@@ -148,43 +140,43 @@
   "foundation": [
    {
     "id": "2.2-f1",
-    "text": "Only vendor-supported software is authorized"
+    "text": "Vendor support status is known for each authorized title"
    },
    {
     "id": "2.2-f2",
-    "text": "End-of-support status is identifiable per title"
+    "text": "Only currently supported software is designated as authorized"
    },
    {
     "id": "2.2-f3",
-    "text": "Unsupported software requires a documented exception"
+    "text": "Unsupported software that must remain has a documented exception"
    }
   ],
   "operational": [
    {
     "id": "2.2-o1",
-    "text": "Support status is checked on a recurring basis"
+    "text": "Support status is checked at least monthly"
    },
    {
     "id": "2.2-o2",
-    "text": "Unsupported titles are removed or excepted"
+    "text": "Titles reaching end of support are removed or given an exception"
    },
    {
     "id": "2.2-o3",
-    "text": "Exceptions include mitigating controls"
+    "text": "Each exception records mitigating controls and residual risk acceptance"
    }
   ],
   "mature": [
    {
     "id": "2.2-m1",
-    "text": "Unsupported software exceptions have owners and expiry dates"
+    "text": "Exceptions are revisited at each monthly review"
    },
    {
     "id": "2.2-m2",
-    "text": "Exception register is reviewed and renewed or closed"
+    "text": "Exceptions are closed once the software is removed or upgraded"
    },
    {
     "id": "2.2-m3",
-    "text": "Records show support checks completed on schedule"
+    "text": "No unsupported title is found on assets without a matching exception"
    }
   ]
  },
@@ -192,43 +184,43 @@
   "foundation": [
    {
     "id": "2.3-f1",
-    "text": "Unauthorized software can be identified on assets"
+    "text": "Unauthorized software can be identified on enterprise assets"
    },
    {
     "id": "2.3-f2",
-    "text": "Removal or exception path is defined"
+    "text": "The response is defined: remove or document an exception"
    },
    {
     "id": "2.3-f3",
-    "text": "Responsibility for addressing findings is assigned"
+    "text": "Authorized software is defined clearly enough to tell the difference"
    }
   ],
   "operational": [
    {
     "id": "2.3-o1",
-    "text": "Unauthorized software findings are reviewed regularly"
+    "text": "Unauthorized software is reviewed at least monthly"
    },
    {
     "id": "2.3-o2",
-    "text": "Unauthorized titles are removed or documented as exceptions"
+    "text": "Each finding is removed or recorded as an exception"
    },
    {
     "id": "2.3-o3",
-    "text": "Removal actions are recorded with dates"
+    "text": "Removals are dated so the outcome can be followed"
    }
   ],
   "mature": [
    {
     "id": "2.3-m1",
-    "text": "Recurring unauthorized installs are analyzed for cause"
+    "text": "Recent findings show resolution, not only detection"
    },
    {
     "id": "2.3-m2",
-    "text": "Unauthorized software backlog is tracked to closure"
+    "text": "Titles that are repeatedly reinstalled are identified"
    },
    {
     "id": "2.3-m3",
-    "text": "Evidence shows unauthorized software reviews occur consistently"
+    "text": "Documented exceptions are revisited rather than left open indefinitely"
    }
   ]
  },
@@ -236,47 +228,43 @@
   "foundation": [
    {
     "id": "3.1-f1",
-    "text": "Data management process is documented"
+    "text": "A data management process is documented"
    },
    {
     "id": "3.1-f2",
-    "text": "Data sensitivity levels are defined"
+    "text": "Data sensitivity and data owners are addressed"
    },
    {
     "id": "3.1-f3",
-    "text": "Data owners are identified"
-   },
-   {
-    "id": "3.1-f4",
-    "text": "Handling and retention expectations are stated"
+    "text": "Handling, retention limits and disposal requirements are covered"
    }
   ],
   "operational": [
    {
     "id": "3.1-o1",
-    "text": "Process is communicated to data owners"
+    "text": "The process is available to the people who handle enterprise data"
    },
    {
     "id": "3.1-o2",
-    "text": "Disposal requirements are included in the process"
+    "text": "The data management process is reviewed and updated annually"
    },
    {
     "id": "3.1-o3",
-    "text": "Process is applied when new data types appear"
+    "text": "Significant enterprise changes prompt a review of the data management process"
    }
   ],
   "mature": [
    {
     "id": "3.1-m1",
-    "text": "Data management process is reviewed on a defined schedule"
+    "text": "The process matches how data is actually handled in practice"
    },
    {
     "id": "3.1-m2",
-    "text": "Significant changes trigger a process update"
+    "text": "Retention and disposal statements are consistent with safeguards 3.4 and 3.5"
    },
    {
     "id": "3.1-m3",
-    "text": "Process version history and approvals are retained"
+    "text": "The last review of the data management process falls within the annual cycle"
    }
   ]
  },
@@ -284,43 +272,43 @@
   "foundation": [
    {
     "id": "3.2-f1",
-    "text": "Data inventory exists for sensitive data"
+    "text": "A data inventory exists for sensitive data"
    },
    {
     "id": "3.2-f2",
-    "text": "Data locations and owners are recorded"
+    "text": "Each entry records where the data is stored"
    },
    {
     "id": "3.2-f3",
-    "text": "Sensitivity classification is recorded per data set"
+    "text": "Data owners or accountable contacts are recorded"
    }
   ],
   "operational": [
    {
     "id": "3.2-o1",
-    "text": "Data inventory is updated as data stores change"
+    "text": "The inventory is updated when systems that store sensitive data change"
    },
    {
     "id": "3.2-o2",
-    "text": "New systems holding sensitive data are added"
+    "text": "The inventory is reviewed and updated at least annually"
    },
    {
     "id": "3.2-o3",
-    "text": "Inventory aligns with the data management process"
+    "text": "Sensitive data is prioritized in the inventory"
    }
   ],
   "mature": [
    {
     "id": "3.2-m1",
-    "text": "Data inventory is reviewed at a set interval"
+    "text": "Cloud and SaaS repositories that hold sensitive data are included"
    },
    {
     "id": "3.2-m2",
-    "text": "Untracked sensitive data discoveries are resolved"
+    "text": "Sensitive data discovered outside listed locations is added or removed"
    },
    {
     "id": "3.2-m3",
-    "text": "Data inventory review sign-off is recorded"
+    "text": "The last update date falls within the annual cycle"
    }
   ]
  },
@@ -328,43 +316,43 @@
   "foundation": [
    {
     "id": "3.3-f1",
-    "text": "Access permissions are configured on sensitive data stores"
+    "text": "Access permissions are configured on sensitive data repositories"
    },
    {
     "id": "3.3-f2",
-    "text": "Access follows a need-to-know basis"
+    "text": "Permissions reflect each user's need to know"
    },
    {
     "id": "3.3-f3",
-    "text": "File shares and cloud storage are included"
+    "text": "File shares, databases and cloud storage are covered"
    }
   ],
   "operational": [
    {
     "id": "3.3-o1",
-    "text": "Data access permissions are reviewed against user roles"
+    "text": "Permission changes follow the enterprise access approval path"
    },
    {
     "id": "3.3-o2",
-    "text": "Overly broad permissions are corrected"
+    "text": "Overly broad permissions are corrected when found"
    },
    {
     "id": "3.3-o3",
-    "text": "Permission changes follow an approval path"
+    "text": "Access is adjusted when a user's role changes"
    }
   ],
   "mature": [
    {
     "id": "3.3-m1",
-    "text": "Data access reviews are performed on a defined schedule"
+    "text": "Permission exports match the documented access model"
    },
    {
     "id": "3.3-m2",
-    "text": "Excessive access findings are tracked to remediation"
+    "text": "Broad groups and external sharing links are identified and justified"
    },
    {
     "id": "3.3-m3",
-    "text": "Access review results are retained as evidence"
+    "text": "Access for users who no longer need it is removed promptly"
    }
   ]
  },
@@ -372,43 +360,43 @@
   "foundation": [
    {
     "id": "3.4-f1",
-    "text": "Retention periods are defined for data types"
+    "text": "Retention periods are defined for each data category"
    },
    {
     "id": "3.4-f2",
-    "text": "Minimum and maximum retention timelines are stated"
+    "text": "Both minimum and maximum retention timelines are stated"
    },
    {
     "id": "3.4-f3",
-    "text": "Systems holding retained data are identified"
+    "text": "Systems holding data subject to retention are identified"
    }
   ],
   "operational": [
    {
     "id": "3.4-o1",
-    "text": "Retention is enforced by system settings or procedure"
+    "text": "Retention is applied through system settings or a performed procedure"
    },
    {
     "id": "3.4-o2",
-    "text": "Data past retention is removed on schedule"
+    "text": "Data is removed once its maximum retention period has passed"
    },
    {
     "id": "3.4-o3",
-    "text": "Legal hold exceptions are handled explicitly"
+    "text": "New systems adopt the defined retention periods"
    }
   ],
   "mature": [
    {
     "id": "3.4-m1",
-    "text": "Retention enforcement is spot-checked for accuracy"
+    "text": "Retention settings are checked against the documented periods"
    },
    {
     "id": "3.4-m2",
-    "text": "Retention exceptions are documented and reviewed"
+    "text": "Records show deletions actually occur at end of retention"
    },
    {
     "id": "3.4-m3",
-    "text": "Records show deletions performed per retention rules"
+    "text": "Any data kept beyond its period has a documented reason"
    }
   ]
  },
@@ -416,43 +404,43 @@
   "foundation": [
    {
     "id": "3.5-f1",
-    "text": "Secure disposal methods are defined by data sensitivity"
+    "text": "Disposal methods are defined for enterprise data"
    },
    {
     "id": "3.5-f2",
-    "text": "Disposal covers physical media and devices"
+    "text": "Methods are matched to data sensitivity"
    },
    {
     "id": "3.5-f3",
-    "text": "Disposal vendors are identified where used"
+    "text": "Physical media and devices are covered as well as electronic data"
    }
   ],
   "operational": [
    {
     "id": "3.5-o1",
-    "text": "Disposed assets and media are logged"
+    "text": "Disposals are recorded when they occur"
    },
    {
     "id": "3.5-o2",
-    "text": "Certificates of destruction are obtained where applicable"
+    "text": "The disposal method used matches the data's sensitivity"
    },
    {
     "id": "3.5-o3",
-    "text": "Disposal method matches data sensitivity"
+    "text": "Certificates of destruction are obtained where a third party disposes of media"
    }
   ],
   "mature": [
    {
     "id": "3.5-m1",
-    "text": "Disposal logs reconcile with asset inventory retirements"
+    "text": "Disposal records identify what was disposed of, how and by whom"
    },
    {
     "id": "3.5-m2",
-    "text": "Disposal records are periodically reviewed"
+    "text": "Retired assets in the inventory have a matching disposal record"
    },
    {
     "id": "3.5-m3",
-    "text": "Missing disposal evidence is followed up"
+    "text": "Missing disposal records are followed up"
    }
   ]
  },
@@ -460,7 +448,7 @@
   "foundation": [
    {
     "id": "3.6-f1",
-    "text": "Full-disk encryption is required on end-user devices"
+    "text": "Encryption is enabled on end-user devices that hold sensitive data"
    },
    {
     "id": "3.6-f2",
@@ -468,35 +456,35 @@
    },
    {
     "id": "3.6-f3",
-    "text": "Recovery keys are escrowed centrally"
+    "text": "The encryption method is identified for each device type"
    }
   ],
   "operational": [
    {
     "id": "3.6-o1",
-    "text": "Encryption status is reported by a management tool"
+    "text": "New devices are encrypted before they are issued"
    },
    {
     "id": "3.6-o2",
-    "text": "Unencrypted devices are identified and remediated"
+    "text": "Devices found unencrypted are encrypted or given a documented exception"
    },
    {
     "id": "3.6-o3",
-    "text": "New devices are encrypted before use"
+    "text": "Encryption status can be confirmed across in-scope devices"
    }
   ],
   "mature": [
    {
     "id": "3.6-m1",
-    "text": "Encryption compliance is reviewed across the fleet"
+    "text": "Encryption coverage is reconciled with the asset inventory"
    },
    {
     "id": "3.6-m2",
-    "text": "Encryption exceptions are documented with justification"
+    "text": "Remaining unencrypted devices have a documented reason"
    },
    {
     "id": "3.6-m3",
-    "text": "Encryption compliance reports are retained over time"
+    "text": "Recovery keys, where used, are stored so authorized staff can retrieve them"
    }
   ]
  },
@@ -504,43 +492,43 @@
   "foundation": [
    {
     "id": "4.1-f1",
-    "text": "Secure configuration standards exist for assets and software"
+    "text": "A secure configuration process is documented"
    },
    {
     "id": "4.1-f2",
-    "text": "Standards cover endpoints, servers, and applications"
+    "text": "It covers end-user devices, servers, non-computing devices and software"
    },
    {
     "id": "4.1-f3",
-    "text": "A baseline or benchmark source is referenced"
+    "text": "Configuration baselines exist for the asset types in use"
    }
   ],
   "operational": [
    {
     "id": "4.1-o1",
-    "text": "Baselines are applied through tooling or build process"
+    "text": "Baselines are applied when assets are built or deployed"
    },
    {
     "id": "4.1-o2",
-    "text": "Configuration drift is detected"
+    "text": "Deviations from a baseline are approved and recorded"
    },
    {
     "id": "4.1-o3",
-    "text": "Deviations from baselines are approved and recorded"
+    "text": "The secure configuration process is reviewed and updated annually"
    }
   ],
   "mature": [
    {
     "id": "4.1-m1",
-    "text": "Configuration standards are reviewed on a defined cycle"
+    "text": "Deployed assets are checked against their baseline"
    },
    {
     "id": "4.1-m2",
-    "text": "Significant changes prompt a baseline update"
+    "text": "Configuration drift found in those checks is corrected"
    },
    {
     "id": "4.1-m3",
-    "text": "Baseline compliance results are retained"
+    "text": "Significant enterprise changes prompt a baseline review"
    }
   ]
  },
@@ -548,43 +536,43 @@
   "foundation": [
    {
     "id": "4.2-f1",
-    "text": "Secure configuration standards exist for network devices"
+    "text": "A secure configuration process exists for network devices"
    },
    {
     "id": "4.2-f2",
-    "text": "Firewalls, switches, routers, and wireless are covered"
+    "text": "Firewalls, routers, switches and wireless equipment are covered"
    },
    {
     "id": "4.2-f3",
-    "text": "Management interfaces are restricted in the standard"
+    "text": "Configuration standards are documented for each device type"
    }
   ],
   "operational": [
    {
     "id": "4.2-o1",
-    "text": "Network device configurations are backed up"
+    "text": "Network configuration changes follow a recorded change process"
    },
    {
     "id": "4.2-o2",
-    "text": "Network configuration changes follow change control"
+    "text": "Device configurations are backed up"
    },
    {
     "id": "4.2-o3",
-    "text": "Network devices are compared against the standard"
+    "text": "The network configuration process is reviewed and updated annually"
    }
   ],
   "mature": [
    {
     "id": "4.2-m1",
-    "text": "Network configuration standards are reviewed on schedule"
+    "text": "Device configurations are compared against the documented standard"
    },
    {
     "id": "4.2-m2",
-    "text": "Non-compliant network settings are tracked to fix"
+    "text": "Settings that do not match the standard are corrected or approved"
    },
    {
     "id": "4.2-m3",
-    "text": "Change records show network standards applied consistently"
+    "text": "Significant network changes prompt a review of the standards"
    }
   ]
  },
@@ -592,43 +580,43 @@
   "foundation": [
    {
     "id": "4.3-f1",
-    "text": "Automatic screen lock is configured on workstations"
+    "text": "Automatic session locking is configured on enterprise assets"
    },
    {
     "id": "4.3-f2",
-    "text": "Mobile devices enforce automatic lock"
+    "text": "General-purpose operating systems lock after no more than 15 minutes of inactivity"
    },
    {
     "id": "4.3-f3",
-    "text": "Lock timeouts meet the defined inactivity limits"
+    "text": "Mobile devices lock after no more than 2 minutes of inactivity"
    }
   ],
   "operational": [
    {
     "id": "4.3-o1",
-    "text": "Session lock is enforced via central policy"
+    "text": "The lock setting is applied by policy rather than left to users"
    },
    {
     "id": "4.3-o2",
-    "text": "Policy assignment covers all managed devices"
+    "text": "New devices receive the lock setting before use"
    },
    {
     "id": "4.3-o3",
-    "text": "Devices missing lock settings are remediated"
+    "text": "Devices missing the setting are corrected"
    }
   ],
   "mature": [
    {
     "id": "4.3-m1",
-    "text": "Session lock compliance is periodically reported"
+    "text": "Lock settings are confirmed on a sample of devices of each type"
    },
    {
     "id": "4.3-m2",
-    "text": "Lock timeout exceptions are documented"
+    "text": "Devices with a longer timeout have a documented reason"
    },
    {
     "id": "4.3-m3",
-    "text": "Compliance reports show lock policy applied over time"
+    "text": "Coverage matches the assets listed in the inventory"
    }
   ]
  },
@@ -636,43 +624,43 @@
   "foundation": [
    {
     "id": "4.4-f1",
-    "text": "Firewall is enabled on servers"
+    "text": "A firewall is enabled on servers where supported"
    },
    {
     "id": "4.4-f2",
-    "text": "Default-deny inbound rules are applied"
+    "text": "The server types in scope are identified"
    },
    {
     "id": "4.4-f3",
-    "text": "Allowed services are documented per server role"
+    "text": "Permitted inbound traffic is defined for each server role"
    }
   ],
   "operational": [
    {
     "id": "4.4-o1",
-    "text": "Server firewall state is monitored centrally"
+    "text": "Firewall rule changes follow the enterprise change process"
    },
    {
     "id": "4.4-o2",
-    "text": "Firewall rule changes are approved"
+    "text": "Servers found with the firewall disabled are corrected"
    },
    {
     "id": "4.4-o3",
-    "text": "Servers with firewall disabled are remediated"
+    "text": "New servers have the firewall enabled before production use"
    }
   ],
   "mature": [
    {
     "id": "4.4-m1",
-    "text": "Server firewall rules are periodically reviewed"
+    "text": "Rules are reviewed and unused rules are removed"
    },
    {
     "id": "4.4-m2",
-    "text": "Unneeded server firewall rules are removed"
+    "text": "Each open port or service has a stated business reason"
    },
    {
     "id": "4.4-m3",
-    "text": "Evidence shows server firewall reviews occur"
+    "text": "Firewall coverage matches the servers listed in the inventory"
    }
   ]
  },
@@ -680,43 +668,43 @@
   "foundation": [
    {
     "id": "4.5-f1",
-    "text": "Host firewall is enabled on end-user devices"
+    "text": "A host firewall is enabled on end-user devices where supported"
    },
    {
     "id": "4.5-f2",
-    "text": "Default-deny inbound posture is configured"
+    "text": "A default-deny rule drops traffic except permitted services"
    },
    {
     "id": "4.5-f3",
-    "text": "Firewall settings are managed centrally"
+    "text": "Permitted exceptions are documented"
    }
   ],
   "operational": [
    {
     "id": "4.5-o1",
-    "text": "Endpoint firewall status is reported by management tooling"
+    "text": "The firewall setting is applied by policy"
    },
    {
     "id": "4.5-o2",
-    "text": "Users cannot disable the endpoint firewall"
+    "text": "Devices with the firewall off are corrected"
    },
    {
     "id": "4.5-o3",
-    "text": "Endpoints with firewall off are corrected"
+    "text": "New devices have the firewall enabled before use"
    }
   ],
   "mature": [
    {
     "id": "4.5-m1",
-    "text": "Endpoint firewall compliance is reviewed periodically"
+    "text": "Firewall status is confirmed across in-scope devices"
    },
    {
     "id": "4.5-m2",
-    "text": "Endpoint firewall exceptions are tracked with owners"
+    "text": "Standard users cannot turn the firewall off"
    },
    {
     "id": "4.5-m3",
-    "text": "Compliance history shows endpoint firewall enforced consistently"
+    "text": "Exceptions are revisited and removed when no longer needed"
    }
   ]
  },
@@ -724,43 +712,43 @@
   "foundation": [
    {
     "id": "4.6-f1",
-    "text": "Assets are managed via version-controlled config or secure protocols"
+    "text": "Administrative access to assets and software uses secure protocols such as SSH or HTTPS"
    },
    {
     "id": "4.6-f2",
-    "text": "Insecure management protocols like Telnet are disabled"
+    "text": "Insecure management protocols such as Telnet and HTTP are disabled"
    },
    {
     "id": "4.6-f3",
-    "text": "Administrative interfaces use encrypted channels"
+    "text": "Version-controlled infrastructure-as-code is protected where used"
    }
   ],
   "operational": [
    {
     "id": "4.6-o1",
-    "text": "Management access methods are standardized"
+    "text": "New assets are deployed with secure management settings"
    },
    {
     "id": "4.6-o2",
-    "text": "Insecure protocol usage is detected and removed"
+    "text": "Insecure management protocols found in use are disabled"
    },
    {
     "id": "4.6-o3",
-    "text": "Infrastructure-as-code changes are reviewed where used"
+    "text": "Changes to management configuration follow the change process"
    }
   ],
   "mature": [
    {
     "id": "4.6-m1",
-    "text": "Management protocol configuration is periodically audited"
+    "text": "Management interfaces are checked for insecure protocols"
    },
    {
     "id": "4.6-m2",
-    "text": "Insecure management exceptions are tracked"
+    "text": "Any remaining insecure protocol has a documented reason"
    },
    {
     "id": "4.6-m3",
-    "text": "Audit results for secure management are retained"
+    "text": "Access to management tooling is limited to administrators"
    }
   ]
  },
@@ -772,39 +760,39 @@
    },
    {
     "id": "4.7-f2",
-    "text": "Default passwords are changed or accounts disabled"
+    "text": "Default accounts are disabled, or their passwords are changed"
    },
    {
     "id": "4.7-f3",
-    "text": "Vendor default credentials are not in use"
+    "text": "Network devices, applications and cloud services are included"
    }
   ],
   "operational": [
    {
     "id": "4.7-o1",
-    "text": "New deployments include default account handling"
+    "text": "New deployments include handling of default accounts"
    },
    {
     "id": "4.7-o2",
-    "text": "Default account status is checked after installs"
+    "text": "Default account status is checked after installation or reset"
    },
    {
     "id": "4.7-o3",
-    "text": "Required default accounts are documented"
+    "text": "Default accounts that must stay enabled are documented"
    }
   ],
   "mature": [
    {
     "id": "4.7-m1",
-    "text": "Default account checks are repeated periodically"
+    "text": "A recent check confirms no vendor default credentials remain"
    },
    {
     "id": "4.7-m2",
-    "text": "Remaining enabled default accounts are justified"
+    "text": "Enabled default accounts are limited to those with a stated need"
    },
    {
     "id": "4.7-m3",
-    "text": "Evidence shows default account reviews completed"
+    "text": "Devices restored to factory settings are rechecked"
    }
   ]
  },
@@ -812,43 +800,43 @@
   "foundation": [
    {
     "id": "5.1-f1",
-    "text": "Account inventory exists for user and admin accounts"
+    "text": "An inventory of all accounts managed in the enterprise exists"
    },
    {
     "id": "5.1-f2",
-    "text": "Inventory records name, username, and department"
+    "text": "User, administrator and service accounts are included"
    },
    {
     "id": "5.1-f3",
-    "text": "Service accounts are included"
+    "text": "Entries record name, username, department and start and stop dates"
    }
   ],
   "operational": [
    {
     "id": "5.1-o1",
-    "text": "Accounts are validated as authorized on a recurring basis"
+    "text": "The inventory is validated at least quarterly"
    },
    {
     "id": "5.1-o2",
-    "text": "Account inventory is sourced from directory systems"
+    "text": "Validation confirms every active account is authorized"
    },
    {
     "id": "5.1-o3",
-    "text": "Discrepancies are corrected in the directory"
+    "text": "Unauthorized or unknown accounts found are disabled or removed"
    }
   ],
   "mature": [
    {
     "id": "5.1-m1",
-    "text": "Account inventory review cadence is formally established"
+    "text": "The inventory is reconciled with workforce records"
    },
    {
     "id": "5.1-m2",
-    "text": "Unauthorized account findings are tracked to closure"
+    "text": "Accounts in cloud and SaaS services are included"
    },
    {
     "id": "5.1-m3",
-    "text": "Account review sign-offs are retained"
+    "text": "The last validation date falls within the quarterly cycle"
    }
   ]
  },
@@ -856,43 +844,43 @@
   "foundation": [
    {
     "id": "5.2-f1",
-    "text": "Unique passwords are required for all enterprise accounts"
+    "text": "Unique passwords are required for all enterprise assets"
    },
    {
     "id": "5.2-f2",
-    "text": "Password length requirements are defined"
+    "text": "Accounts using MFA require at least an 8-character password"
    },
    {
     "id": "5.2-f3",
-    "text": "MFA-dependent length allowances are documented"
+    "text": "Accounts not using MFA require at least a 14-character password"
    }
   ],
   "operational": [
    {
     "id": "5.2-o1",
-    "text": "Password policy is enforced technically"
+    "text": "Password requirements are enforced by system settings where supported"
    },
    {
     "id": "5.2-o2",
-    "text": "A password manager is available to users"
+    "text": "Shared credentials are replaced with individual accounts where possible"
    },
    {
     "id": "5.2-o3",
-    "text": "Password reuse across accounts is discouraged in guidance"
+    "text": "Users are told not to reuse passwords across accounts"
    }
   ],
   "mature": [
    {
     "id": "5.2-m1",
-    "text": "Password policy settings are periodically verified"
+    "text": "Password settings in each identity system are checked against the requirements"
    },
    {
     "id": "5.2-m2",
-    "text": "Shared or reused credentials are found and remediated"
+    "text": "Systems that cannot enforce the requirements are identified"
    },
    {
     "id": "5.2-m3",
-    "text": "Password policy exceptions are documented and reviewed"
+    "text": "Credentials found to be shared or reused are changed"
    }
   ]
  },
@@ -900,43 +888,43 @@
   "foundation": [
    {
     "id": "5.3-f1",
-    "text": "Dormant account threshold is defined"
+    "text": "Dormant accounts can be identified from last sign-in data"
    },
    {
     "id": "5.3-f2",
-    "text": "Inactive accounts can be identified"
+    "text": "The inactivity threshold is 45 days where supported"
    },
    {
     "id": "5.3-f3",
-    "text": "Dormant accounts are disabled or deleted"
+    "text": "The response is defined: disable or delete"
    }
   ],
   "operational": [
    {
     "id": "5.3-o1",
-    "text": "Inactive account reports run on a schedule"
+    "text": "Accounts inactive for 45 days are disabled or deleted where supported"
    },
    {
     "id": "5.3-o2",
-    "text": "Dormant accounts are disabled after the threshold"
+    "text": "The check is automated or performed as a recorded task"
    },
    {
     "id": "5.3-o3",
-    "text": "Exceptions for inactive accounts are approved"
+    "text": "Accounts kept active despite inactivity have an approved reason"
    }
   ],
   "mature": [
    {
     "id": "5.3-m1",
-    "text": "Dormant account handling is spot-checked"
+    "text": "Recent results show dormant accounts actually disabled"
    },
    {
     "id": "5.3-m2",
-    "text": "Dormant account exceptions are revalidated"
+    "text": "Service and cloud accounts are included in the check"
    },
    {
     "id": "5.3-m3",
-    "text": "Reports show dormant accounts disabled consistently"
+    "text": "Systems that cannot report inactivity are identified"
    }
   ]
  },
@@ -944,43 +932,43 @@
   "foundation": [
    {
     "id": "5.4-f1",
-    "text": "Administrators have dedicated admin accounts"
+    "text": "Administrators have dedicated administrator accounts"
    },
    {
     "id": "5.4-f2",
-    "text": "Daily-use accounts lack administrative privileges"
+    "text": "Everyday user accounts do not hold administrative privileges"
    },
    {
     "id": "5.4-f3",
-    "text": "Admin accounts are not used for email or browsing"
+    "text": "Administrator accounts are not used for email or web browsing"
    }
   ],
   "operational": [
    {
     "id": "5.4-o1",
-    "text": "Admin role assignments are restricted to admin accounts"
+    "text": "New administrative access is granted to dedicated accounts only"
    },
    {
     "id": "5.4-o2",
-    "text": "New admin access follows the dedicated account model"
+    "text": "Administrative role assignments are limited to administrator accounts"
    },
    {
     "id": "5.4-o3",
-    "text": "Privileged group membership is monitored"
+    "text": "Privileges are removed when administration duties end"
    }
   ],
   "mature": [
    {
     "id": "5.4-m1",
-    "text": "Privileged group membership is reviewed periodically"
+    "text": "A current list of privileged accounts is reviewed and justified"
    },
    {
     "id": "5.4-m2",
-    "text": "Standard accounts with admin rights are remediated"
+    "text": "Standard accounts found with administrative rights are corrected"
    },
    {
     "id": "5.4-m3",
-    "text": "Admin account reviews are documented"
+    "text": "Local administrator rights on end-user devices are included in the review"
    }
   ]
  },
@@ -988,43 +976,43 @@
   "foundation": [
    {
     "id": "6.1-f1",
-    "text": "Access granting process is documented"
+    "text": "An access granting process is documented"
    },
    {
     "id": "6.1-f2",
-    "text": "Access requests require approval"
+    "text": "Access is granted on hire and on role change through the process"
    },
    {
     "id": "6.1-f3",
-    "text": "Access is based on role or job need"
+    "text": "Access requests are approved before access is provided"
    }
   ],
   "operational": [
    {
     "id": "6.1-o1",
-    "text": "New hires receive access through the process"
+    "text": "Recent new hires show approval before access was granted"
    },
    {
     "id": "6.1-o2",
-    "text": "Role changes trigger access request review"
+    "text": "Role changes follow the same request and approval path"
    },
    {
     "id": "6.1-o3",
-    "text": "Access grants are recorded with approver"
+    "text": "Access granted matches what was approved"
    }
   ],
   "mature": [
    {
     "id": "6.1-m1",
-    "text": "Access grants are sampled for approval evidence"
+    "text": "The process is automated where possible"
    },
    {
     "id": "6.1-m2",
-    "text": "Process gaps found in sampling are corrected"
+    "text": "A sample of recent grants traces back to an approved request"
    },
    {
     "id": "6.1-m3",
-    "text": "Access granting process is reviewed on schedule"
+    "text": "Access granted outside the process is identified and corrected"
    }
   ]
  },
@@ -1032,43 +1020,43 @@
   "foundation": [
    {
     "id": "6.2-f1",
-    "text": "Access revocation process is documented"
+    "text": "An access revoking process is documented"
    },
    {
     "id": "6.2-f2",
-    "text": "HR or managers notify IT of departures"
+    "text": "Termination, rights revocation and role change all trigger it"
    },
    {
     "id": "6.2-f3",
-    "text": "Revocation includes disabling rather than deleting accounts"
+    "text": "Accounts are disabled rather than deleted where audit history must be kept"
    }
   ],
   "operational": [
    {
     "id": "6.2-o1",
-    "text": "Terminations trigger timely account disablement"
+    "text": "Access is revoked promptly when a trigger occurs"
    },
    {
     "id": "6.2-o2",
-    "text": "Role changes remove unneeded access"
+    "text": "Departures and role changes reach whoever removes the access"
    },
    {
     "id": "6.2-o3",
-    "text": "Revocation actions are recorded with dates"
+    "text": "Revocations are dated so timeliness can be confirmed"
    }
   ],
   "mature": [
    {
     "id": "6.2-m1",
-    "text": "Revocation timeliness is measured against departures"
+    "text": "Recent leavers show access disabled on or before their last day"
    },
    {
     "id": "6.2-m2",
-    "text": "Late or missed revocations are investigated"
+    "text": "SaaS and third-party accounts are included, not only the directory"
    },
    {
     "id": "6.2-m3",
-    "text": "Evidence shows revocation performed consistently"
+    "text": "Late or missed revocations are identified and corrected"
    }
   ]
  },
@@ -1076,43 +1064,43 @@
   "foundation": [
    {
     "id": "6.3-f1",
-    "text": "Externally exposed applications are identified"
+    "text": "Externally exposed enterprise and third-party applications are identified"
    },
    {
     "id": "6.3-f2",
-    "text": "MFA is required on external applications"
+    "text": "MFA is required on those applications where supported"
    },
    {
     "id": "6.3-f3",
-    "text": "Supported apps enforce MFA through SSO or directory"
+    "text": "Applications that cannot support MFA are identified"
    }
   ],
   "operational": [
    {
     "id": "6.3-o1",
-    "text": "MFA enforcement is applied through conditional access or policy"
+    "text": "MFA is enforced by configuration rather than left to user choice"
    },
    {
     "id": "6.3-o2",
-    "text": "New external applications are onboarded with MFA"
+    "text": "New externally exposed applications require MFA before go-live"
    },
    {
     "id": "6.3-o3",
-    "text": "Accounts excluded from MFA are identified"
+    "text": "Accounts excluded from MFA are identified with a reason"
    }
   ],
   "mature": [
    {
     "id": "6.3-m1",
-    "text": "MFA exclusions for external apps are reviewed"
+    "text": "MFA coverage is compared with the list of exposed applications"
    },
    {
     "id": "6.3-m2",
-    "text": "MFA coverage of external apps is periodically validated"
+    "text": "Legacy sign-in methods that bypass MFA are disabled or justified"
    },
    {
     "id": "6.3-m3",
-    "text": "MFA policy changes are recorded"
+    "text": "MFA exclusions are revisited and removed when no longer needed"
    }
   ]
  },
@@ -1124,17 +1112,17 @@
    },
    {
     "id": "6.4-f2",
-    "text": "MFA is required for VPN and remote access"
+    "text": "MFA is required for every remote network access method"
    },
    {
     "id": "6.4-f3",
-    "text": "Remote access without MFA is blocked"
+    "text": "VPN and remote desktop gateways are included"
    }
   ],
   "operational": [
    {
     "id": "6.4-o1",
-    "text": "Remote access MFA is enforced for all users"
+    "text": "MFA is enforced for all users of remote access"
    },
    {
     "id": "6.4-o2",
@@ -1142,21 +1130,21 @@
    },
    {
     "id": "6.4-o3",
-    "text": "Remote access logs show MFA challenges"
+    "text": "Remote access attempts without MFA are blocked"
    }
   ],
   "mature": [
    {
     "id": "6.4-m1",
-    "text": "Remote access MFA configuration is periodically verified"
+    "text": "No remote access path bypasses MFA"
    },
    {
     "id": "6.4-m2",
-    "text": "Remote access MFA exceptions are tracked"
+    "text": "Configuration confirms MFA enforcement on each method"
    },
    {
     "id": "6.4-m3",
-    "text": "Verification results for remote MFA are retained"
+    "text": "Remote access MFA exceptions are revisited and removed when possible"
    }
   ]
  },
@@ -1164,43 +1152,43 @@
   "foundation": [
    {
     "id": "6.5-f1",
-    "text": "Administrative access requires MFA"
+    "text": "MFA is required for all administrative access where supported"
    },
    {
     "id": "6.5-f2",
-    "text": "Admin consoles and cloud admin roles are included"
+    "text": "Administrative consoles and cloud administrator roles are included"
    },
    {
     "id": "6.5-f3",
-    "text": "Local and third-party admin access is considered"
+    "text": "Accounts managed on-site and by third-party providers are included"
    }
   ],
   "operational": [
    {
     "id": "6.5-o1",
-    "text": "Admin MFA is enforced through policy"
+    "text": "MFA is enforced by configuration for administrator accounts"
    },
    {
     "id": "6.5-o2",
-    "text": "New privileged roles inherit MFA enforcement"
+    "text": "New privileged roles require MFA from creation"
    },
    {
     "id": "6.5-o3",
-    "text": "Admin sign-ins without MFA are detected"
+    "text": "Administrative sign-ins without MFA are identified"
    }
   ],
   "mature": [
    {
     "id": "6.5-m1",
-    "text": "Admin MFA coverage is reviewed periodically"
+    "text": "MFA coverage is compared with the list of privileged accounts"
    },
    {
     "id": "6.5-m2",
-    "text": "Admin MFA bypasses are justified and time-limited"
+    "text": "Emergency access accounts are documented and protected"
    },
    {
     "id": "6.5-m3",
-    "text": "Review evidence shows admin MFA maintained"
+    "text": "Administrative MFA exceptions are justified and time-limited"
    }
   ]
  },
@@ -1208,43 +1196,43 @@
   "foundation": [
    {
     "id": "7.1-f1",
-    "text": "Vulnerability management process is documented"
+    "text": "A vulnerability management process is documented"
    },
    {
     "id": "7.1-f2",
-    "text": "Scanning scope and responsibilities are defined"
+    "text": "It covers how vulnerabilities are identified for enterprise assets"
    },
    {
     "id": "7.1-f3",
-    "text": "Risk ratings for findings are defined"
+    "text": "It defines how findings are prioritized"
    }
   ],
   "operational": [
    {
     "id": "7.1-o1",
-    "text": "Vulnerability scans run per the process"
+    "text": "The process is followed for scanning and review"
    },
    {
     "id": "7.1-o2",
-    "text": "Findings feed into remediation tracking"
+    "text": "Findings flow into the remediation process in safeguard 7.2"
    },
    {
     "id": "7.1-o3",
-    "text": "Process covers internal and external assets"
+    "text": "The vulnerability management process is reviewed and updated annually"
    }
   ],
   "mature": [
    {
     "id": "7.1-m1",
-    "text": "Vulnerability management process is reviewed on schedule"
+    "text": "The process covers all asset types listed in the inventory"
    },
    {
     "id": "7.1-m2",
-    "text": "Significant changes trigger process updates"
+    "text": "Significant enterprise changes prompt a review of the vulnerability management process"
    },
    {
     "id": "7.1-m3",
-    "text": "Process review history is retained"
+    "text": "The last review of the vulnerability management process falls within the annual cycle"
    }
   ]
  },
@@ -1252,35 +1240,35 @@
   "foundation": [
    {
     "id": "7.2-f1",
-    "text": "Remediation process is documented"
+    "text": "A risk-based remediation process is documented"
    },
    {
     "id": "7.2-f2",
-    "text": "Remediation timelines by severity are defined"
+    "text": "Remediation timelines are defined by severity"
    },
    {
     "id": "7.2-f3",
-    "text": "Remediation owners are assigned"
+    "text": "The process explains how exceptions are handled"
    }
   ],
   "operational": [
    {
     "id": "7.2-o1",
-    "text": "Findings are prioritized by risk"
+    "text": "The remediation process is reviewed at least monthly"
    },
    {
     "id": "7.2-o2",
-    "text": "Remediation progress is reviewed regularly"
+    "text": "Open vulnerabilities are tracked to closure or exception"
    },
    {
     "id": "7.2-o3",
-    "text": "Accepted risks are documented"
+    "text": "Findings are prioritized by risk"
    }
   ],
   "mature": [
    {
     "id": "7.2-m1",
-    "text": "Remediation timeliness is measured against targets"
+    "text": "Remediation is completed within the defined timelines"
    },
    {
     "id": "7.2-m2",
@@ -1288,7 +1276,7 @@
    },
    {
     "id": "7.2-m3",
-    "text": "Risk acceptances are revalidated periodically"
+    "text": "Accepted risks are revisited rather than left open indefinitely"
    }
   ]
  },
@@ -1296,43 +1284,43 @@
   "foundation": [
    {
     "id": "7.3-f1",
-    "text": "Automated OS patching is configured"
+    "text": "Operating system updates are automated on enterprise assets"
    },
    {
     "id": "7.3-f2",
-    "text": "Patch policies cover workstations and servers"
+    "text": "Workstations and servers are covered"
    },
    {
     "id": "7.3-f3",
-    "text": "Patch deployment tool is identified"
+    "text": "The update schedule is defined"
    }
   ],
   "operational": [
    {
     "id": "7.3-o1",
-    "text": "OS patches deploy on a recurring schedule"
+    "text": "Operating system updates are applied at least monthly"
    },
    {
     "id": "7.3-o2",
-    "text": "Failed OS patch installs are identified"
+    "text": "Failed update installations are identified"
    },
    {
     "id": "7.3-o3",
-    "text": "Devices missing OS patches are remediated"
+    "text": "Devices missing updates are remediated"
    }
   ],
   "mature": [
    {
     "id": "7.3-m1",
-    "text": "OS patch compliance is reported over time"
+    "text": "Update status is compared with the asset inventory"
    },
    {
     "id": "7.3-m2",
-    "text": "OS patch deferrals are documented and reviewed"
+    "text": "Devices excluded from automated updates have a documented reason"
    },
    {
     "id": "7.3-m3",
-    "text": "Reports show OS patching runs consistently"
+    "text": "Devices that repeatedly fail to update are investigated"
    }
   ]
  },
@@ -1340,43 +1328,43 @@
   "foundation": [
    {
     "id": "7.4-f1",
-    "text": "Automated third-party application patching is configured"
+    "text": "Application updates are automated on enterprise assets"
    },
    {
     "id": "7.4-f2",
-    "text": "Common applications are in patch scope"
+    "text": "Commonly used third-party applications are in scope"
    },
    {
     "id": "7.4-f3",
-    "text": "Application patch tool or method is identified"
+    "text": "Applications that cannot be updated automatically are identified"
    }
   ],
   "operational": [
    {
     "id": "7.4-o1",
-    "text": "Application updates deploy on a recurring schedule"
+    "text": "Application updates are applied at least monthly"
    },
    {
     "id": "7.4-o2",
-    "text": "Application patch failures are tracked"
+    "text": "Failed application updates are identified"
    },
    {
     "id": "7.4-o3",
-    "text": "Unpatchable applications are flagged"
+    "text": "Outdated applications are updated or removed"
    }
   ],
   "mature": [
    {
     "id": "7.4-m1",
-    "text": "Application patch compliance is reported over time"
+    "text": "Update status is compared with the software inventory"
    },
    {
     "id": "7.4-m2",
-    "text": "Application patch exceptions are reviewed"
+    "text": "Applications excluded from automated updates have a documented reason"
    },
    {
     "id": "7.4-m3",
-    "text": "Records show application patching runs consistently"
+    "text": "Applications with no available update are handled under safeguard 2.2"
    }
   ]
  },
@@ -1384,43 +1372,43 @@
   "foundation": [
    {
     "id": "8.1-f1",
-    "text": "Audit log management process is documented"
+    "text": "An audit log management process is documented"
    },
    {
     "id": "8.1-f2",
-    "text": "Required log sources are defined"
+    "text": "It defines which logs are collected"
    },
    {
     "id": "8.1-f3",
-    "text": "Log collection and review expectations are stated"
+    "text": "It defines log review and retention requirements"
    }
   ],
   "operational": [
    {
     "id": "8.1-o1",
-    "text": "Log sources are onboarded per the process"
+    "text": "New systems are brought into log collection under the process"
    },
    {
     "id": "8.1-o2",
-    "text": "Log retention requirements are included"
+    "text": "The audit log management process is reviewed and updated annually"
    },
    {
     "id": "8.1-o3",
-    "text": "Process is followed when adding systems"
+    "text": "Significant enterprise changes prompt a review of the audit log management process"
    }
   ],
   "mature": [
    {
     "id": "8.1-m1",
-    "text": "Audit log process is reviewed on schedule"
+    "text": "Collection in practice matches the documented process"
    },
    {
     "id": "8.1-m2",
-    "text": "Significant changes trigger logging process updates"
+    "text": "Retention requirements are consistent with safeguard 8.3"
    },
    {
     "id": "8.1-m3",
-    "text": "Logging process review records are retained"
+    "text": "The last review of the audit log management process falls within the annual cycle"
    }
   ]
  },
@@ -1432,39 +1420,39 @@
    },
    {
     "id": "8.2-f2",
-    "text": "Key systems send logs to a collection point"
+    "text": "Identity, endpoint and key systems are included"
    },
    {
     "id": "8.2-f3",
-    "text": "Logged events align with the logging process"
+    "text": "Logged events match the audit log management process"
    }
   ],
   "operational": [
    {
     "id": "8.2-o1",
-    "text": "Log collection is monitored for gaps"
+    "text": "New assets are configured to produce audit logs"
    },
    {
     "id": "8.2-o2",
-    "text": "New assets are configured to log"
+    "text": "Gaps in log collection are identified"
    },
    {
     "id": "8.2-o3",
-    "text": "Log source failures are remediated"
+    "text": "Log sources that stop producing logs are corrected"
    }
   ],
   "mature": [
    {
     "id": "8.2-m1",
-    "text": "Log source coverage is periodically validated"
+    "text": "A sample confirms logs are actually being generated"
    },
    {
     "id": "8.2-m2",
-    "text": "Missing log sources are tracked to closure"
+    "text": "Log source coverage is compared with the asset inventory"
    },
    {
     "id": "8.2-m3",
-    "text": "Coverage reviews are documented"
+    "text": "Missing log sources are tracked until resolved"
    }
   ]
  },
@@ -1472,11 +1460,11 @@
   "foundation": [
    {
     "id": "8.3-f1",
-    "text": "Log storage capacity is sized for retention needs"
+    "text": "Audit log storage is sized for the defined retention needs"
    },
    {
     "id": "8.3-f2",
-    "text": "Storage location for audit logs is defined"
+    "text": "The storage location for audit logs is defined"
    },
    {
     "id": "8.3-f3",
@@ -1486,29 +1474,29 @@
   "operational": [
    {
     "id": "8.3-o1",
-    "text": "Log storage usage is monitored"
+    "text": "Log storage use is monitored"
    },
    {
     "id": "8.3-o2",
-    "text": "Storage alerts are addressed before loss"
+    "text": "Storage shortfalls are addressed before logs are lost"
    },
    {
     "id": "8.3-o3",
-    "text": "Log retention meets the logging process"
+    "text": "Storage is reassessed when log volume changes"
    }
   ],
   "mature": [
    {
     "id": "8.3-m1",
-    "text": "Log storage capacity is reviewed periodically"
+    "text": "Retention settings are confirmed against the logging process"
    },
    {
     "id": "8.3-m2",
-    "text": "Log loss incidents are investigated"
+    "text": "Stored logs cover the full defined retention period"
    },
    {
     "id": "8.3-m3",
-    "text": "Storage review evidence is retained"
+    "text": "Any log loss is identified and explained"
    }
   ]
  },
@@ -1520,39 +1508,39 @@
    },
    {
     "id": "9.1-f2",
-    "text": "Only supported versions are permitted"
+    "text": "Only fully supported browsers and email clients are allowed"
    },
    {
     "id": "9.1-f3",
-    "text": "Browser and email client updates are enabled"
+    "text": "Automatic updates are enabled where supported"
    }
   ],
   "operational": [
    {
     "id": "9.1-o1",
-    "text": "Unsupported browser or email client versions are detected"
+    "text": "Supported versions are kept current as vendors release updates"
    },
    {
     "id": "9.1-o2",
-    "text": "Outdated clients are updated or removed"
+    "text": "Unsupported versions are identified"
    },
    {
     "id": "9.1-o3",
-    "text": "Browser versions are reported centrally"
+    "text": "Outdated clients are updated or removed"
    }
   ],
   "mature": [
    {
     "id": "9.1-m1",
-    "text": "Browser and email client compliance is reviewed periodically"
+    "text": "Browser and email client versions are listed across devices"
    },
    {
     "id": "9.1-m2",
-    "text": "Unsupported client exceptions are tracked"
+    "text": "No unsupported version remains without a documented reason"
    },
    {
     "id": "9.1-m3",
-    "text": "Compliance reports for clients are retained"
+    "text": "Unapproved browsers or email clients are removed"
    }
   ]
  },
@@ -1560,43 +1548,43 @@
   "foundation": [
    {
     "id": "9.2-f1",
-    "text": "DNS filtering service is deployed"
+    "text": "DNS filtering is in use on enterprise assets"
    },
    {
     "id": "9.2-f2",
-    "text": "Filtering applies to managed devices"
+    "text": "Known malicious domains are blocked"
    },
    {
     "id": "9.2-f3",
-    "text": "Malicious domain categories are blocked"
+    "text": "Remote and off-network devices are included"
    }
   ],
   "operational": [
    {
     "id": "9.2-o1",
-    "text": "DNS filtering covers off-network devices"
+    "text": "New devices receive DNS filtering before use"
    },
    {
     "id": "9.2-o2",
-    "text": "Filtering agent or resolver health is monitored"
+    "text": "Devices that bypass DNS filtering are corrected"
    },
    {
     "id": "9.2-o3",
-    "text": "Devices bypassing DNS filtering are remediated"
+    "text": "Filtering exceptions are recorded"
    }
   ],
   "mature": [
    {
     "id": "9.2-m1",
-    "text": "DNS filtering coverage is periodically validated"
+    "text": "DNS filtering coverage is compared with the asset inventory"
    },
    {
     "id": "9.2-m2",
-    "text": "DNS filtering exceptions are reviewed"
+    "text": "Filtering is confirmed on devices away from the office network"
    },
    {
     "id": "9.2-m3",
-    "text": "Coverage evidence for DNS filtering is retained"
+    "text": "Filtering exceptions are revisited and removed when no longer needed"
    }
   ]
  },
@@ -1604,43 +1592,43 @@
   "foundation": [
    {
     "id": "10.1-f1",
-    "text": "Anti-malware is deployed on enterprise assets"
+    "text": "Anti-malware software is deployed on enterprise assets"
    },
    {
     "id": "10.1-f2",
-    "text": "Servers and endpoints are in scope"
+    "text": "Servers and end-user devices are included"
    },
    {
     "id": "10.1-f3",
-    "text": "Anti-malware is centrally managed"
+    "text": "Anti-malware software is kept maintained and current"
    }
   ],
   "operational": [
    {
     "id": "10.1-o1",
-    "text": "Agent health and coverage are monitored"
+    "text": "New assets receive anti-malware before use"
    },
    {
     "id": "10.1-o2",
-    "text": "Assets without anti-malware are remediated"
+    "text": "Assets without working anti-malware are identified"
    },
    {
     "id": "10.1-o3",
-    "text": "Detections are reviewed and actioned"
+    "text": "Missing or inactive agents are corrected"
    }
   ],
   "mature": [
    {
     "id": "10.1-m1",
-    "text": "Anti-malware coverage is reconciled to asset inventory"
+    "text": "Anti-malware coverage is reconciled with the asset inventory"
    },
    {
     "id": "10.1-m2",
-    "text": "Coverage gaps are tracked to resolution"
+    "text": "Devices unable to run anti-malware have a documented reason"
    },
    {
     "id": "10.1-m3",
-    "text": "Coverage reports are retained over time"
+    "text": "Agents that stop reporting are investigated"
    }
   ]
  },
@@ -1648,11 +1636,11 @@
   "foundation": [
    {
     "id": "10.2-f1",
-    "text": "Automatic signature updates are enabled"
+    "text": "Automatic signature updates are enabled for anti-malware"
    },
    {
     "id": "10.2-f2",
-    "text": "Update source is configured centrally"
+    "text": "Updates apply to all assets running anti-malware"
    },
    {
     "id": "10.2-f3",
@@ -1662,29 +1650,29 @@
   "operational": [
    {
     "id": "10.2-o1",
-    "text": "Signature currency is monitored across assets"
+    "text": "Assets with out-of-date signatures are identified"
    },
    {
     "id": "10.2-o2",
-    "text": "Out-of-date signatures are remediated"
+    "text": "Out-of-date signatures are corrected"
    },
    {
     "id": "10.2-o3",
-    "text": "Update policy is applied to new assets"
+    "text": "New assets receive automatic updates"
    }
   ],
   "mature": [
    {
     "id": "10.2-m1",
-    "text": "Signature currency is reviewed periodically"
+    "text": "Signature currency is confirmed across assets"
    },
    {
     "id": "10.2-m2",
-    "text": "Persistent update failures are investigated"
+    "text": "Assets that repeatedly fail to update are investigated"
    },
    {
     "id": "10.2-m3",
-    "text": "Signature status reports are retained"
+    "text": "Offline or rarely connected devices are included"
    }
   ]
  },
@@ -1696,39 +1684,39 @@
    },
    {
     "id": "10.3-f2",
-    "text": "Autoplay is disabled on managed devices"
+    "text": "Autoplay is disabled for removable media"
    },
    {
     "id": "10.3-f3",
-    "text": "Settings are applied through central policy"
+    "text": "The setting covers all operating systems in use where supported"
    }
   ],
   "operational": [
    {
     "id": "10.3-o1",
-    "text": "Policy applies to all managed workstations"
+    "text": "The setting is applied by policy"
    },
    {
     "id": "10.3-o2",
-    "text": "Devices missing the setting are corrected"
+    "text": "New devices receive the setting before use"
    },
    {
     "id": "10.3-o3",
-    "text": "New devices receive autorun settings at build"
+    "text": "Devices missing the setting are corrected"
    }
   ],
   "mature": [
    {
     "id": "10.3-m1",
-    "text": "Autorun and autoplay settings are periodically verified"
+    "text": "The setting is confirmed on a sample of devices"
    },
    {
     "id": "10.3-m2",
-    "text": "Autorun exceptions are documented"
+    "text": "Devices without the setting have a documented reason"
    },
    {
     "id": "10.3-m3",
-    "text": "Verification records for removable media settings are retained"
+    "text": "Coverage matches the devices listed in the inventory"
    }
   ]
  },
@@ -1736,7 +1724,7 @@
   "foundation": [
    {
     "id": "11.1-f1",
-    "text": "Data recovery process is documented"
+    "text": "A data recovery process is documented"
    },
    {
     "id": "11.1-f2",
@@ -1744,35 +1732,35 @@
    },
    {
     "id": "11.1-f3",
-    "text": "Backup responsibilities are assigned"
+    "text": "Backup procedures and protection of recovery data are covered"
    }
   ],
   "operational": [
    {
     "id": "11.1-o1",
-    "text": "Recovery process covers backup and restore steps"
+    "text": "New systems are brought into the recovery process"
    },
    {
     "id": "11.1-o2",
-    "text": "Recovery process is applied to new systems"
+    "text": "The data recovery process is reviewed and updated annually"
    },
    {
     "id": "11.1-o3",
-    "text": "Restore requests follow the process"
+    "text": "Significant enterprise changes prompt a review of the data recovery process"
    }
   ],
   "mature": [
    {
     "id": "11.1-m1",
-    "text": "Data recovery process is reviewed on schedule"
+    "text": "Recovery priorities match the systems the enterprise depends on"
    },
    {
     "id": "11.1-m2",
-    "text": "Significant changes trigger recovery process updates"
+    "text": "The process is consistent with safeguards 11.2 to 11.4"
    },
    {
     "id": "11.1-m3",
-    "text": "Recovery process review history is retained"
+    "text": "The last review of the data recovery process falls within the annual cycle"
    }
   ]
  },
@@ -1780,21 +1768,21 @@
   "foundation": [
    {
     "id": "11.2-f1",
-    "text": "Automated backups are configured for in-scope assets"
+    "text": "Automated backups are configured for in-scope enterprise assets"
    },
    {
     "id": "11.2-f2",
-    "text": "Backup frequency reflects data sensitivity"
+    "text": "Backups run at least weekly, more often for sensitive data"
    },
    {
     "id": "11.2-f3",
-    "text": "Backup scope is documented"
+    "text": "The systems and data in backup scope are identified"
    }
   ],
   "operational": [
    {
     "id": "11.2-o1",
-    "text": "Backup jobs are monitored for success"
+    "text": "Backup job results are checked"
    },
    {
     "id": "11.2-o2",
@@ -1802,21 +1790,21 @@
    },
    {
     "id": "11.2-o3",
-    "text": "New systems are added to backup scope"
+    "text": "New in-scope systems are added to backups"
    }
   ],
   "mature": [
    {
     "id": "11.2-m1",
-    "text": "Backup job success is reported over time"
+    "text": "Backup coverage is compared with the in-scope systems"
    },
    {
     "id": "11.2-m2",
-    "text": "Backup coverage is reconciled to in-scope systems"
+    "text": "Cloud and SaaS data in scope is backed up"
    },
    {
     "id": "11.2-m3",
-    "text": "Test restores confirm backups are usable"
+    "text": "A test restore shows backups can be recovered"
    }
   ]
  },
@@ -1828,39 +1816,39 @@
    },
    {
     "id": "11.3-f2",
-    "text": "Backup data is encrypted where appropriate"
+    "text": "Protection is equivalent to the original data's sensitivity"
    },
    {
     "id": "11.3-f3",
-    "text": "Backup administrative access is limited"
+    "text": "Encryption or separation is used where the data requires it"
    }
   ],
   "operational": [
    {
     "id": "11.3-o1",
-    "text": "Access to backup systems is reviewed"
+    "text": "Access to backup systems is limited to those who need it"
    },
    {
     "id": "11.3-o2",
-    "text": "Backup encryption settings are verified"
+    "text": "Changes to backup access follow the access approval path"
    },
    {
     "id": "11.3-o3",
-    "text": "Backup credentials are separated from production"
+    "text": "Backup credentials are separate from everyday accounts"
    }
   ],
   "mature": [
    {
     "id": "11.3-m1",
-    "text": "Recovery data protections are periodically audited"
+    "text": "Backup access is reviewed and unneeded access is removed"
    },
    {
     "id": "11.3-m2",
-    "text": "Backup access findings are remediated"
+    "text": "Protection settings are confirmed in configuration"
    },
    {
     "id": "11.3-m3",
-    "text": "Audit results for backup protection are retained"
+    "text": "Deleting backups requires elevated rights or is prevented"
    }
   ]
  },
@@ -1868,43 +1856,43 @@
   "foundation": [
    {
     "id": "11.4-f1",
-    "text": "An isolated copy of recovery data exists"
+    "text": "An isolated instance of recovery data exists"
    },
    {
     "id": "11.4-f2",
-    "text": "Isolation method is defined: offline, immutable, or segmented"
+    "text": "Isolation is achieved by offline storage, cloud separation or immutability"
    },
    {
     "id": "11.4-f3",
-    "text": "Critical data is included in the isolated copy"
+    "text": "The isolated copy includes the data needed for recovery"
    }
   ],
   "operational": [
    {
     "id": "11.4-o1",
-    "text": "Isolated copies are updated on a regular schedule"
+    "text": "The isolated copy is kept up to date"
    },
    {
     "id": "11.4-o2",
-    "text": "Isolation is maintained from production credentials"
+    "text": "Primary-system credentials cannot alter or delete the isolated copy"
    },
    {
     "id": "11.4-o3",
-    "text": "Isolated copy status is monitored"
+    "text": "Isolated copy status is checked"
    }
   ],
   "mature": [
    {
     "id": "11.4-m1",
-    "text": "Restores from the isolated copy are tested"
+    "text": "Isolation is confirmed in configuration, not assumed"
    },
    {
     "id": "11.4-m2",
-    "text": "Isolation controls are periodically validated"
+    "text": "A restore from the isolated copy shows it can be recovered"
    },
    {
     "id": "11.4-m3",
-    "text": "Isolated copy test results are retained"
+    "text": "Changes to backup architecture preserve the isolation"
    }
   ]
  },
@@ -1916,39 +1904,39 @@
    },
    {
     "id": "12.1-f2",
-    "text": "Firmware and software versions are tracked"
+    "text": "Firmware and software versions are known for each device"
    },
    {
     "id": "12.1-f3",
-    "text": "Vendor-supported versions are in use"
+    "text": "Devices run vendor-supported versions"
    }
   ],
   "operational": [
    {
     "id": "12.1-o1",
-    "text": "Network device updates are reviewed regularly"
+    "text": "Network updates are reviewed at least monthly"
    },
    {
     "id": "12.1-o2",
-    "text": "Available firmware updates are applied"
+    "text": "Available updates are applied or deferred with a reason"
    },
    {
     "id": "12.1-o3",
-    "text": "End-of-life network devices are flagged"
+    "text": "End-of-life devices are identified"
    }
   ],
   "mature": [
    {
     "id": "12.1-m1",
-    "text": "Network firmware currency is periodically reported"
+    "text": "Versions are compared with vendor support information"
    },
    {
     "id": "12.1-m2",
-    "text": "Network update deferrals are documented"
+    "text": "End-of-life devices have a replacement or exception decision"
    },
    {
     "id": "12.1-m3",
-    "text": "Records show network updates applied consistently"
+    "text": "Deferred updates are revisited at the next monthly review"
    }
   ]
  },
@@ -1956,15 +1944,15 @@
   "foundation": [
    {
     "id": "14.1-f1",
-    "text": "Security awareness program exists"
+    "text": "A security awareness program exists"
    },
    {
     "id": "14.1-f2",
-    "text": "Training is delivered at hire"
+    "text": "Training is provided at hire"
    },
    {
     "id": "14.1-f3",
-    "text": "Annual training is required for workforce"
+    "text": "Training is provided at least annually thereafter"
    }
   ],
   "operational": [
@@ -1978,21 +1966,21 @@
    },
    {
     "id": "14.1-o3",
-    "text": "Content is updated as threats change"
+    "text": "Content is reviewed and updated annually"
    }
   ],
   "mature": [
    {
     "id": "14.1-m1",
-    "text": "Awareness content is reviewed on a defined schedule"
+    "text": "Completion records cover the whole workforce"
    },
    {
     "id": "14.1-m2",
-    "text": "Completion rates are reported to leadership"
+    "text": "Significant enterprise changes prompt a content review"
    },
    {
     "id": "14.1-m3",
-    "text": "Training records are retained"
+    "text": "The last content review falls within the annual cycle"
    }
   ]
  },
@@ -2000,43 +1988,43 @@
   "foundation": [
    {
     "id": "14.2-f1",
-    "text": "Social engineering topics are in training"
+    "text": "Training covers recognizing social engineering attacks"
    },
    {
     "id": "14.2-f2",
-    "text": "Phishing and pretexting are covered"
+    "text": "Phishing, business email compromise, pretexting and tailgating are included"
    },
    {
     "id": "14.2-f3",
-    "text": "Workforce knows how to respond to suspicious requests"
+    "text": "Workforce members know what to do with a suspicious request"
    }
   ],
   "operational": [
    {
     "id": "14.2-o1",
-    "text": "Social engineering training is delivered to all staff"
+    "text": "Social engineering training is delivered through the awareness program"
    },
    {
     "id": "14.2-o2",
-    "text": "Phishing simulations or examples are used where applicable"
+    "text": "Completion of social engineering training is tracked"
    },
    {
     "id": "14.2-o3",
-    "text": "Completion of social engineering modules is tracked"
+    "text": "Content reflects attack types the enterprise encounters"
    }
   ],
   "mature": [
    {
     "id": "14.2-m1",
-    "text": "Social engineering content is refreshed with current tactics"
+    "text": "Social engineering training completion covers the whole workforce"
    },
    {
     "id": "14.2-m2",
-    "text": "Simulation results inform training updates"
+    "text": "Content is refreshed when attack methods change"
    },
    {
     "id": "14.2-m3",
-    "text": "Social engineering training records are retained"
+    "text": "Phishing exercises, where used, inform the next training update"
    }
   ]
  },
@@ -2044,43 +2032,43 @@
   "foundation": [
    {
     "id": "14.3-f1",
-    "text": "Authentication best practices are in training"
+    "text": "Training covers authentication best practices"
    },
    {
     "id": "14.3-f2",
-    "text": "MFA usage is explained to users"
+    "text": "MFA use is explained"
    },
    {
     "id": "14.3-f3",
-    "text": "Password and credential handling is covered"
+    "text": "Password composition and credential management are covered"
    }
   ],
   "operational": [
    {
     "id": "14.3-o1",
-    "text": "Authentication training is delivered to all staff"
+    "text": "Authentication training is delivered through the awareness program"
    },
    {
     "id": "14.3-o2",
-    "text": "Authentication topics align with enterprise policies"
+    "text": "Completion of authentication training is tracked"
    },
    {
     "id": "14.3-o3",
-    "text": "Authentication module completion is tracked"
+    "text": "Content is consistent with enterprise password and MFA settings"
    }
   ],
   "mature": [
    {
     "id": "14.3-m1",
-    "text": "Authentication content is reviewed when policies change"
+    "text": "Authentication training completion covers the whole workforce"
    },
    {
     "id": "14.3-m2",
-    "text": "Credential incidents inform authentication training"
+    "text": "Content is updated when authentication settings change"
    },
    {
     "id": "14.3-m3",
-    "text": "Authentication training records are retained"
+    "text": "Credential-related incidents are reflected in later training"
    }
   ]
  },
@@ -2088,43 +2076,43 @@
   "foundation": [
    {
     "id": "14.4-f1",
-    "text": "Data handling practices are in training"
+    "text": "Training covers identifying and securely storing sensitive data"
    },
    {
     "id": "14.4-f2",
-    "text": "Sensitive data identification is covered"
+    "text": "Transferring, archiving and destroying sensitive data are covered"
    },
    {
     "id": "14.4-f3",
-    "text": "Secure storage and transfer are explained"
+    "text": "Clear-screen and clear-desk practices are included"
    }
   ],
   "operational": [
    {
     "id": "14.4-o1",
-    "text": "Data handling training is delivered to all staff"
+    "text": "Data handling training is delivered through the awareness program"
    },
    {
     "id": "14.4-o2",
-    "text": "Content reflects the data management process"
+    "text": "Completion of data handling training is tracked"
    },
    {
     "id": "14.4-o3",
-    "text": "Data handling module completion is tracked"
+    "text": "Content is consistent with the data management process in 3.1"
    }
   ],
   "mature": [
    {
     "id": "14.4-m1",
-    "text": "Data handling content is reviewed for accuracy"
+    "text": "Data handling training completion covers the whole workforce"
    },
    {
     "id": "14.4-m2",
-    "text": "Data handling incidents inform training updates"
+    "text": "Content is updated when the data management process changes"
    },
    {
     "id": "14.4-m3",
-    "text": "Data handling training records are retained"
+    "text": "Data handling incidents are reflected in later training"
    }
   ]
  },
@@ -2132,43 +2120,43 @@
   "foundation": [
    {
     "id": "14.5-f1",
-    "text": "Unintentional data exposure causes are in training"
+    "text": "Training covers causes of unintentional data exposure"
    },
    {
     "id": "14.5-f2",
-    "text": "Misdelivery and mis-sharing are covered"
+    "text": "Mis-delivery of sensitive data is covered"
    },
    {
     "id": "14.5-f3",
-    "text": "Lost devices and media are addressed"
+    "text": "Lost devices and unintended publication are covered"
    }
   ],
   "operational": [
    {
     "id": "14.5-o1",
-    "text": "Exposure training is delivered to all staff"
+    "text": "Exposure training is delivered through the awareness program"
    },
    {
     "id": "14.5-o2",
-    "text": "Examples relevant to enterprise tools are used"
+    "text": "Completion of exposure training is tracked"
    },
    {
     "id": "14.5-o3",
-    "text": "Exposure module completion is tracked"
+    "text": "Examples reflect the tools the workforce actually uses"
    }
   ],
   "mature": [
    {
     "id": "14.5-m1",
-    "text": "Exposure content is updated after related incidents"
+    "text": "Data exposure training completion covers the whole workforce"
    },
    {
     "id": "14.5-m2",
-    "text": "Exposure topics are reviewed for relevance"
+    "text": "Content is updated after exposure-related incidents"
    },
    {
     "id": "14.5-m3",
-    "text": "Exposure training records are retained"
+    "text": "Content is reviewed alongside the annual program review"
    }
   ]
  },
@@ -2176,11 +2164,11 @@
   "foundation": [
    {
     "id": "14.6-f1",
-    "text": "Incident recognition is in training"
+    "text": "Training covers recognizing a potential incident"
    },
    {
     "id": "14.6-f2",
-    "text": "Reporting channel for incidents is communicated"
+    "text": "Training explains how to report an incident"
    },
    {
     "id": "14.6-f3",
@@ -2190,29 +2178,29 @@
   "operational": [
    {
     "id": "14.6-o1",
-    "text": "Incident reporting training is delivered to all staff"
+    "text": "Incident reporting training is delivered through the awareness program"
    },
    {
     "id": "14.6-o2",
-    "text": "Reporting instructions match the current process"
+    "text": "Completion of incident reporting training is tracked"
    },
    {
     "id": "14.6-o3",
-    "text": "Incident reporting module completion is tracked"
+    "text": "The reporting channel taught matches the process in 17.3"
    }
   ],
   "mature": [
    {
     "id": "14.6-m1",
-    "text": "Reporting contact details in training are kept current"
+    "text": "Incident reporting training completion covers the whole workforce"
    },
    {
     "id": "14.6-m2",
-    "text": "User reporting trends inform training updates"
+    "text": "Reporting instructions are updated when contacts or channels change"
    },
    {
     "id": "14.6-m3",
-    "text": "Incident reporting training records are retained"
+    "text": "Incidents reported by workforce members inform later training"
    }
   ]
  },
@@ -2220,43 +2208,43 @@
   "foundation": [
    {
     "id": "14.7-f1",
-    "text": "Training covers checking for missing updates"
+    "text": "Training covers checking whether devices are missing security updates"
    },
    {
     "id": "14.7-f2",
-    "text": "Users know how to report outdated software"
+    "text": "Training explains how to report a device missing updates"
    },
    {
     "id": "14.7-f3",
-    "text": "Reporting path for update issues is defined"
+    "text": "The reporting path for update problems is defined"
    }
   ],
   "operational": [
    {
     "id": "14.7-o1",
-    "text": "Update-awareness training is delivered to all staff"
+    "text": "Update awareness training is delivered through the awareness program"
    },
    {
     "id": "14.7-o2",
-    "text": "Reports of missing updates are routed to IT"
+    "text": "Completion of update awareness training is tracked"
    },
    {
     "id": "14.7-o3",
-    "text": "Update-awareness module completion is tracked"
+    "text": "Reported update problems are routed to whoever maintains the devices"
    }
   ],
   "mature": [
    {
     "id": "14.7-m1",
-    "text": "Update-awareness content aligns with patch tooling changes"
+    "text": "Update awareness training completion covers the whole workforce"
    },
    {
     "id": "14.7-m2",
-    "text": "User-reported update issues are tracked"
+    "text": "Content is updated when update methods change"
    },
    {
     "id": "14.7-m3",
-    "text": "Update-awareness training records are retained"
+    "text": "Reported update problems are followed through to resolution"
    }
   ]
  },
@@ -2264,43 +2252,43 @@
   "foundation": [
    {
     "id": "14.8-f1",
-    "text": "Insecure network risks are in training"
+    "text": "Training covers the dangers of insecure networks"
    },
    {
     "id": "14.8-f2",
-    "text": "Public Wi-Fi use is addressed"
+    "text": "Public and home networks are addressed"
    },
    {
     "id": "14.8-f3",
-    "text": "Secure connection expectations are explained"
+    "text": "Expectations for connecting securely are explained"
    }
   ],
   "operational": [
    {
     "id": "14.8-o1",
-    "text": "Insecure network training is delivered to all staff"
+    "text": "Insecure network training is delivered through the awareness program"
    },
    {
     "id": "14.8-o2",
-    "text": "Guidance references enterprise VPN or safe methods"
+    "text": "Completion of insecure network training is tracked"
    },
    {
     "id": "14.8-o3",
-    "text": "Insecure network module completion is tracked"
+    "text": "Guidance names the approved way to connect remotely"
    }
   ],
   "mature": [
    {
     "id": "14.8-m1",
-    "text": "Insecure network content is reviewed for accuracy"
+    "text": "Insecure network training completion covers the whole workforce"
    },
    {
     "id": "14.8-m2",
-    "text": "Remote work changes prompt content updates"
+    "text": "Content is updated when remote working arrangements change"
    },
    {
     "id": "14.8-m3",
-    "text": "Insecure network training records are retained"
+    "text": "Remote workers handling enterprise data are included"
    }
   ]
  },
@@ -2308,15 +2296,15 @@
   "foundation": [
    {
     "id": "15.1-f1",
-    "text": "Service provider inventory exists"
+    "text": "An inventory of service providers exists"
    },
    {
     "id": "15.1-f2",
-    "text": "Provider classification and contact are recorded"
+    "text": "Each provider has a classification"
    },
    {
     "id": "15.1-f3",
-    "text": "Enterprise contact for each provider is named"
+    "text": "An enterprise contact is designated for each provider"
    }
   ],
   "operational": [
@@ -2326,25 +2314,25 @@
    },
    {
     "id": "15.1-o2",
-    "text": "Offboarded providers are removed"
+    "text": "Providers that are no longer used are removed"
    },
    {
     "id": "15.1-o3",
-    "text": "Inventory aligns with contracts or procurement"
+    "text": "The inventory is reviewed and updated annually"
    }
   ],
   "mature": [
    {
     "id": "15.1-m1",
-    "text": "Service provider inventory is reviewed on schedule"
+    "text": "The inventory is compared with contracts or purchasing records"
    },
    {
     "id": "15.1-m2",
-    "text": "Unlisted providers found are added"
+    "text": "Providers handling sensitive data are identified"
    },
    {
     "id": "15.1-m3",
-    "text": "Provider inventory review records are retained"
+    "text": "Providers found in use but missing from the inventory are added"
    }
   ]
  },
@@ -2352,43 +2340,43 @@
   "foundation": [
    {
     "id": "17.1-f1",
-    "text": "A primary incident handling lead is designated"
+    "text": "A person is designated to manage incident handling"
    },
    {
     "id": "17.1-f2",
-    "text": "A backup incident handler is designated"
+    "text": "A backup is designated for when the primary is unavailable"
    },
    {
     "id": "17.1-f3",
-    "text": "Roles include MSP or third-party responders if used"
+    "text": "Third-party incident handling roles are identified where used"
    }
   ],
   "operational": [
    {
     "id": "17.1-o1",
-    "text": "Designations are known to relevant staff"
+    "text": "Designations are known to the people who need them"
    },
    {
     "id": "17.1-o2",
-    "text": "Designations are updated on personnel changes"
+    "text": "Designations are updated when personnel change"
    },
    {
     "id": "17.1-o3",
-    "text": "Incident handlers understand their responsibilities"
+    "text": "Designations are reviewed annually"
    }
   ],
   "mature": [
    {
     "id": "17.1-m1",
-    "text": "Incident handler designations are reviewed on schedule"
+    "text": "Designated personnel understand their responsibilities"
    },
    {
     "id": "17.1-m2",
-    "text": "Designation changes are recorded"
+    "text": "Significant enterprise changes prompt a review of the designations"
    },
    {
     "id": "17.1-m3",
-    "text": "Evidence shows designations kept current"
+    "text": "The last review of the incident handling designations falls within the annual cycle"
    }
   ]
  },
@@ -2396,43 +2384,43 @@
   "foundation": [
    {
     "id": "17.2-f1",
-    "text": "Incident reporting contact list exists"
+    "text": "Contact information exists for reporting security incidents"
    },
    {
     "id": "17.2-f2",
-    "text": "Internal staff, providers, and authorities are included"
+    "text": "Internal staff, service providers and relevant authorities are included"
    },
    {
     "id": "17.2-f3",
-    "text": "Contact methods are recorded"
+    "text": "Insurers and law enforcement contacts are included where relevant"
    }
   ],
   "operational": [
    {
     "id": "17.2-o1",
-    "text": "Contact list is accessible during incidents"
+    "text": "Contact details are verified at least annually"
    },
    {
     "id": "17.2-o2",
-    "text": "Contact changes are updated promptly"
+    "text": "Contact changes are recorded when they occur"
    },
    {
     "id": "17.2-o3",
-    "text": "Contacts are verified as reachable"
+    "text": "The contact list is accessible during an outage"
    }
   ],
   "mature": [
    {
     "id": "17.2-m1",
-    "text": "Contact list is reviewed at a defined interval"
+    "text": "Contacts are confirmed as reachable, not only listed"
    },
    {
     "id": "17.2-m2",
-    "text": "Stale contacts found are corrected"
+    "text": "Contacts that are out of date are corrected"
    },
    {
     "id": "17.2-m3",
-    "text": "Contact list review dates are recorded"
+    "text": "The last verification date falls within the annual cycle"
    }
   ]
  },
@@ -2440,7 +2428,7 @@
   "foundation": [
    {
     "id": "17.3-f1",
-    "text": "Incident reporting process is documented"
+    "text": "An enterprise process for reporting incidents is documented"
    },
    {
     "id": "17.3-f2",
@@ -2448,39 +2436,39 @@
    },
    {
     "id": "17.3-f3",
-    "text": "Recipients and reporting mechanisms are named"
+    "text": "Personnel to report to and the reporting mechanism are named"
    },
    {
     "id": "17.3-f4",
-    "text": "Minimum information to report is specified"
+    "text": "The minimum information to report is specified"
    }
   ],
   "operational": [
    {
     "id": "17.3-o1",
-    "text": "Process is communicated to the workforce"
+    "text": "The process is available to the whole workforce"
    },
    {
     "id": "17.3-o2",
-    "text": "Reported incidents follow the process"
+    "text": "Reported incidents follow the documented process"
    },
    {
     "id": "17.3-o3",
-    "text": "Reports are recorded and tracked"
+    "text": "The incident reporting process is reviewed and updated annually"
    }
   ],
   "mature": [
    {
     "id": "17.3-m1",
-    "text": "Incident reporting process is reviewed on schedule"
+    "text": "The process is consistent with the contacts in 17.2 and training in 14.6"
    },
    {
     "id": "17.3-m2",
-    "text": "Significant changes trigger reporting process updates"
+    "text": "Significant enterprise changes prompt a review of the incident reporting process"
    },
    {
     "id": "17.3-m3",
-    "text": "Reporting process review history is retained"
+    "text": "The last review of the incident reporting process falls within the annual cycle"
    }
   ]
  }
