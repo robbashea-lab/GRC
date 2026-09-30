@@ -32,3 +32,13 @@ test('draft remains across tabs, failed save and cancel; approval decision unava
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));expect(document.body.textContent).toContain('Discard unsaved changes?');expect(close).not.toHaveBeenCalled();
   expect(document.querySelector('[aria-label="Decision"]')).toBeNull();
 });
+test('Brawndo AI Governance uses the shared page header, subtitle and view chips; other clients keep the standard header',async()=>{
+  await act(async()=>root.render(<AIGovernance/>));
+  expect(container.querySelector('.bpage[data-theme] h1').textContent).toBe('AI Governance');
+  expect(container.querySelector('.bpage-subtitle').textContent).toContain('Not a legal classification');
+  expect(container.querySelector('[data-testid="ai-system-view-active"]').getAttribute('aria-pressed')).toBe('true');
+  await click(container.querySelector('[data-testid="ai-system-view-high"]'));
+  expect(container.querySelector('[data-testid="ai-system-view-high"]').getAttribute('aria-pressed')).toBe('true');
+  mockClient='demo_dunder';await act(async()=>root.render(<AIGovernance/>));
+  expect(container.querySelector('.bpage')).toBeNull();expect(container.querySelector('h1').textContent).toBe('AI Governance');
+});
