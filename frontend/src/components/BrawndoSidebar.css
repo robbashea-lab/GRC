@@ -51,5 +51,6 @@
 .bsb-note button { text-decoration: underline; color: var(--sb-head); }
 /* The shell behind a short sidebar matches it, so no light strip shows below. */
 .app-shell:has(> .bsb) { background: var(--color-bg-app); }
-.app-shell:has(> .bsb[data-theme="dark"]) { background: #12161c; }
+/* Dark shell only behind themed pages; unconverted pages keep the light shell rather than a light block on dark. */
+.app-shell:has(> .bsb[data-theme="dark"]):has(main [data-theme="dark"]) { background: #12161c; }
 @media (prefers-reduced-motion: reduce) { .bsb, .bsb-link { transition: none; } }
