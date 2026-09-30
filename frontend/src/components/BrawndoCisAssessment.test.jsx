@@ -4,7 +4,8 @@ import FrameworkDrawer from './FrameworkDrawer';
 import {isBrawndoCisPrototype} from './BrawndoCisAssessment';
 import api from '@/lib/api';
 
-let mockUser;
+let mockUser,mockOfficial=null;
+jest.mock('@/lib/frameworks',()=>{const a=jest.requireActual('@/lib/frameworks');return {...a,frameworkDefinition:(k,id)=>{const d=a.frameworkDefinition(k,id);return mockOfficial&&d?{...d,official_text_mode:'LICENSED_TEXT',official_text:mockOfficial}:d;}};});
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
 jest.mock('./RecordDrawer',()=>({kind,record,onOpenChange})=><div data-testid="nested">{kind} {record.title}<button onClick={()=>onOpenChange(false)}>Close linked record</button></div>);
@@ -19,13 +20,13 @@ beforeEach(()=>{
  global.crypto=require('node:crypto').webcrypto;
  global.IS_REACT_ACT_ENVIRONMENT=true;mockUser={user_id:'u',role:'super_admin',workspace_mode:'demo'};
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);close=jest.fn();next=jest.fn();
- record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.2',client_id:'demo_brawndo',status:'addressed',implementation:'Current process',technology:'Recorded platform',notes:'Older notes',assessment_history:[],last_assessed:null};
+ record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.1',client_id:'demo_brawndo',status:'addressed',implementation:'Current process',technology:'Recorded platform',notes:'Older notes',assessment_history:[],last_assessed:null};
  related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:path==='/evidence/catalog'?{items:[{evidence_id:'e',filename:'Validation.txt'}],total:1,page:1,page_size:25}:[]}));
  api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-09-23',assessment_history:[{...body,at:'2026-09-23',by:'u'}]};return {data:record};});
  api.post.mockResolvedValue({data:{}});
 });
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+afterEach(async()=>{mockOfficial=null;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_brawndo" onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
 
 test('activation requires the exact synthetic client, framework, record tenant and Demo identity',()=>{
@@ -34,110 +35,70 @@ test('activation requires the exact synthetic client, framework, record tenant a
  expect(isBrawndoCisPrototype('demo_dunder',record,mockUser)).toBe(false);
  expect(isBrawndoCisPrototype('demo_brawndo',record,{...mockUser,workspace_mode:'standard'})).toBe(false);
 });
-test('linear hierarchy, reference-only content, specific validation and retained metadata',async()=>{
+const headings=()=>[...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent.replace(/^\d/,''));
+async function tick(el){await act(async()=>el.click());}
+
+test('five sections in order; removed sections are absent; header is compact',async()=>{
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
- expect([...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent)).toEqual(['1What CIS requires','2Client status','3Delivery & current state','4Verification','5Required actions','Organizational Controls']);
- expect(container.textContent).toContain('Unknown devices are detected');expect(container.querySelector('[aria-label^="Verification status"]').children).toHaveLength(6);
- expect(container.textContent).toContain('Unknown-device records');expect(container.textContent).toContain('not official framework text');
- expect(container.querySelector('a').href).toMatch(/^https:\/\/cas.docs.cisecurity.org\//);
- expect(container.querySelector('[aria-label="Technology / Processes Used"]').value).toBe('Recorded platform');
- expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe('Older notes');
- expect(container.querySelector('input[value="addressed"]').checked).toBe(true);
+ expect(headings()).toEqual(['What CIS Requires','Verification Guidance','Implementation Status','Current Implementation','Verification']);
+ for(const gone of ['Evidence','Required actions','Organizational Controls','Remediation','Create Finding','Link Evidence'])expect(container.textContent).not.toContain(gone);
+ expect(container.querySelector('h2').textContent).toBe('CIS IG1 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
+ expect(container.querySelector('header').textContent).not.toContain('Last assessed');
+ expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
 });
-test('status and narrative save through unchanged endpoint, concurrency token and legacy fields',async()=>{
- await render();await act(async()=>container.querySelector('input[value="in_progress"]').click());await input('How is this requirement implemented?','Unauthorized devices isolated pending review.');
+test('What CIS Requires labels the summary and links the official reference; official_text renders verbatim when supplied',async()=>{
+ await render();expect(container.textContent).toContain('Omnisciente summary — not official CIS text');
+ const ref=[...container.querySelectorAll('a')].find(a=>a.textContent==='Official CIS reference ↗');expect(ref.href).toMatch(/^https:\/\/cas\.docs\.cisecurity\.org\//);
+ for(const gone of ['Source cadence','IG1 ·','Safeguard 1.1 ·'])expect(container.textContent).not.toContain(gone);
+ mockOfficial='Authorized verbatim text.';
+ await act(async()=>root.unmount());root=createRoot(container);await render();
+ expect(container.querySelector('[data-testid="cis-official-text"]').textContent).toBe('Authorized verbatim text.');expect(container.textContent).not.toContain('not official CIS text');mockOfficial=null;
+});
+test('tier checklists show progress and the guidance note; ticks are drafts and never change verification',async()=>{
+ await render();expect(container.textContent).toContain('These are not additional CIS requirements.');
+ expect(container.querySelector('[data-testid="tier-foundation"]').textContent).toBe('0 / 4');
+ const boxes=[...container.querySelectorAll('[aria-labelledby="bcsg-foundation"] input')];for(const b of boxes)await tick(b);
+ expect(container.querySelector('[data-testid="tier-foundation"]').textContent).toBe('4 / 4');
+ expect(container.querySelector('[data-testid="tier-signal"]').textContent).toContain('Foundation checks complete');
+ expect(container.querySelector('[aria-label="Verification result"]').value).toBe('not_verified');
+ expect(container.textContent).toContain('Unsaved assessment changes');
+ expect(container.textContent).not.toMatch(/\d+%|score|maturity level|compliant/i);
+});
+test('status, current implementation, verification and checklist save with the concurrency token',async()=>{
+ await render();await tick(container.querySelector('input[value="in_progress"]'));
+ await input('Current implementation','Inventory maintained in RMM; reconciled monthly.');
+ const sel=container.querySelector('[aria-label="Verification result"]');await act(async()=>{sel.value='needs_validation';sel.dispatchEvent(new Event('change',{bubbles:true}));});
+ await tick(container.querySelector('[aria-labelledby="bcsg-foundation"] input'));
  await act(async()=>button('Save assessment').click());
- expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Unauthorized devices isolated pending review.',notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}));
- expect(container.textContent).toContain('Assessment saved.');expect(container.textContent).not.toContain('Unsaved assessment changes');
+ expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Inventory maintained in RMM; reconciled monthly.',verification:'needs_validation',verification_checklist:{foundation:['1.1-f1'],operational:[],mature:[]},notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}));
+ expect(container.textContent).toContain('Assessment saved.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Needs validation');
 });
-test('next and close require explicit draft discard; cancel retains narrative',async()=>{
- await render();await input('How is this requirement implemented?','Draft');await act(async()=>button('Next').click());expect(next).not.toHaveBeenCalled();
+test('status labels, helper text, N/A rationale only when N/A, legacy values read-only',async()=>{
+ await render();expect([...container.querySelectorAll('input[name="bcsg-status"]')].map(i=>i.parentElement.textContent)).toEqual(['Implemented','Partially Implemented','Not Implemented','Not Assessed','Not Applicable']);
+ expect(container.textContent).toContain('Describe how this safeguard is currently being addressed, including technology, process, ownership, and recurring activities.');
+ expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeNull();await tick(container.querySelector('input[value="not_applicable"]'));expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeTruthy();
+ const legacy=container.querySelector('.bcsg-legacy');expect(legacy.textContent).toContain('Recorded platform');expect(legacy.textContent).toContain('Older notes');expect(legacy.querySelector('textarea,input')).toBeNull();
+});
+test('next and close require explicit draft discard; cancel retains the draft',async()=>{
+ await render();await input('Current implementation','Draft');await act(async()=>button('Next').click());expect(next).not.toHaveBeenCalled();
  expect(document.body.textContent).toContain('Leave unsaved changes?');await act(async()=>button('Keep editing').click());
- expect(container.querySelector('textarea').value).toBe('Draft');await act(async()=>button('Close assessment').click());expect(close).not.toHaveBeenCalled();
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Draft');await act(async()=>button('Close assessment').click());expect(close).not.toHaveBeenCalled();
  await act(async()=>button('Discard changes').click());expect(close).toHaveBeenCalledWith(false);
 });
-test('evidence links and Findings use authoritative relationship/workflow endpoints',async()=>{
- await render();await act(async()=>button('Link Evidence').click());const select=container.querySelector('[aria-label="Link existing Evidence"]');
- await act(async()=>{select.value='e';select.dispatchEvent(new Event('change',{bubbles:true}));});
- expect(api.post).toHaveBeenCalledWith('/framework_assessments/a/links',{kind:'evidence',id:'e'});
- await act(async()=>button('Create Finding').click());await act(async()=>button('Create Finding & Action').click());
- expect(api.post).toHaveBeenCalledWith('/framework_assessments/a/findings',expect.objectContaining({description:'Current process',request_id:expect.any(String)}));
- expect(api.post.mock.calls.some(([p])=>p==='/tasks')).toBe(false);
+test('Save & next waits for a successful save and never navigates after failure',async()=>{
+ await render();await input('Current implementation','New narrative');api.patch.mockRejectedValueOnce(new Error('Save rejected'));
+ await act(async()=>button('Save & next').click());expect(next).not.toHaveBeenCalled();
+ expect(container.querySelector('.brawndo-assessment-footer [role="alert"]').textContent).toBe('Save rejected');expect(container.textContent).toContain('Unsaved assessment changes');
+ await act(async()=>button('Save & next').click());expect(next).toHaveBeenCalledTimes(1);expect(record.implementation).toBe('New narrative');
 });
-test('linked Findings and Action Items open their existing drawers',async()=>{
- related.findings=[{finding_id:'f',title:'Device gap',status:'open'}];related.tasks=[{task_id:'t',title:'Isolate devices',status:'open'}];
- await render();await act(async()=>button('Device gap').click());expect(container.querySelector('[data-testid="nested"]').firstChild.textContent).toBe('findings');
- expect(container.querySelector('[data-testid="nested"]').textContent).toContain('Device gap');
- await act(async()=>button('Isolate devices').click());expect(container.querySelector('[data-testid="nested"]').firstChild.textContent).toBe('tasks');
- expect(container.querySelector('[data-testid="nested"]').textContent).toContain('Isolate devices');
-});
-test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit or create linked work',async role=>{
- mockUser.role=role;await render();expect(container.querySelector('fieldset').disabled).toBe(true);expect(button('Save assessment')).toBeUndefined();expect(button('Create Finding')).toBeUndefined();
+test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit',async role=>{
+ mockUser.role=role;await render();expect(button('Save assessment')).toBeUndefined();expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
+ expect(container.querySelector('.bcsg-tiers').disabled).toBe(true);
 });
 test('load failure disables writes and offers retry',async()=>{
  api.get.mockRejectedValue(new Error('Context unavailable'));await render();expect(container.querySelector('[role="alert"]').textContent).toContain('Context unavailable');expect(button('Save assessment').disabled).toBe(true);expect(button('Retry')).toBeTruthy();
 });
-test('failed save keeps the draft, error and unsaved status',async()=>{
- await render();await input('How is this requirement implemented?','Draft kept');api.patch.mockRejectedValue(new Error('Conflict: reload required'));await act(async()=>button('Save assessment').click());
- expect(container.textContent).toContain('Conflict: reload required');expect(container.textContent).toContain('Unsaved assessment changes');expect(container.querySelector('textarea').value).toBe('Draft kept');
-});
-
-test('Save & next waits for a successful save and never navigates after failure',async()=>{
- await render();await input('How is this requirement implemented?','New narrative');
- api.patch.mockRejectedValueOnce(new Error('Save rejected'));
- await act(async()=>button('Save & next').click());expect(next).not.toHaveBeenCalled();
- expect(container.querySelector('.brawndo-assessment-footer [role="alert"]').textContent).toBe('Save rejected');
- await act(async()=>button('Save & next').click());expect(next).toHaveBeenCalledTimes(1);
- expect(record.implementation).toBe('New narrative');
-});
-
-test('Save & next cannot discard a separate Finding or comment draft',async()=>{
- await render();await act(async()=>button('Create Finding').click());
- expect(button('Save & next').disabled).toBe(true);
- expect(container.querySelector('[aria-label="Finding description"]').tagName).toBe('TEXTAREA');
- await act(async()=>button('Cancel Finding').click());
- await input('Safeguard comment','Unposted comment');expect(button('Save & next').disabled).toBe(true);
- expect(next).not.toHaveBeenCalled();
-});
-
-test('evidence picker searches display name, distinguishes no match, and retains filename',async()=>{
- // The catalog searches server-side; the mock filters on the query the picker sends.
- const libraryItem={evidence_id:'e',filename:'report.txt',display_name:'Asset reconciliation',created_at:'2026-09-01',evidence_type:'Report'};
- api.get.mockImplementation(async(path,config)=>{if(path==='/evidence/catalog'){const items=`${libraryItem.display_name} ${libraryItem.filename} ${libraryItem.evidence_type}`.toLowerCase().includes((config?.params?.q||'').toLowerCase())?[libraryItem]:[];return {data:{items,total:items.length,page:1,page_size:25}};}return {data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:[]};});
- await render();await act(async()=>button('Link Evidence').click());
- expect(container.textContent).toContain('Asset reconciliation · 2026-09-01');
- await input('Find existing evidence','no-match');expect(container.textContent).toContain('No evidence matches your search');
- expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(true);
- await input('Find existing evidence','report.txt');expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(false);
- expect(container.textContent).toContain('save immediately');
-});
-
-test('same-record refresh retains linked opener; refresh failure still disables writes',async()=>{
- related.findings=[{finding_id:'f',title:'Device gap',status:'open'}];await render();
- const opener=button('Device gap');await act(async()=>opener.click());
- let reject;api.get.mockImplementation(()=>new Promise((_,fail)=>{reject=fail;}));
- await act(async()=>button('Close linked record').click());
- expect(button('Device gap')).toBe(opener);expect(opener.isConnected).toBe(true);
- await act(async()=>reject(new Error('Refresh denied')));
- expect(button('Save assessment').disabled).toBe(true);
- expect(container.textContent).toContain('Refresh denied');
-});
-
-test('context refresh cannot erase an already refreshed evidence picker',async()=>{
- await render();await act(async()=>button('Link Evidence').click());
- const normalGet=api.get.getMockImplementation();let finishContext;
- api.get.mockImplementation((path,config)=>path==='/frameworks/cis-ig1'?new Promise(resolve=>{finishContext=resolve;}):normalGet(path,config));
- const select=container.querySelector('[aria-label="Link existing Evidence"]');
- await act(async()=>{select.value='e';select.dispatchEvent(new Event('change',{bubbles:true}));});
- expect(select.disabled).toBe(false);
- await act(async()=>finishContext({data:{assessments:[record]}}));
- expect(container.querySelector('[aria-label="Link existing Evidence"]').disabled).toBe(false);
- expect(container.textContent).not.toContain('Loading available evidence');
-});
-
-test('verification ladder separates recorded capability from verified implementation',async()=>{
- record={...record,status:'in_progress',technology:'',implementation:'Partial process'};await render();
- const ladder=container.querySelector('[aria-label^="Verification status"]').textContent;
- expect(ladder).toContain('Capability exists: not established');expect(ladder).toContain('Implementation verified: gap identified');
- expect(container.textContent).toContain('recorded gap but no Finding');
+test('other clients keep the existing workspace',async()=>{
+ record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
+ expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('Verification Guidance');
 });

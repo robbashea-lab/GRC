@@ -19,6 +19,7 @@ import BrawndoCisOverview,{BrawndoCisHeader} from '@/components/BrawndoCisOvervi
 import {isBrawndoReference} from '@/lib/reference';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import CisResultTable from '@/components/CisResultTable';
+import BrawndoCisControls from '@/components/BrawndoCisControls';
 import ProgramContext from '@/components/ProgramContext';
 import OrganizationalControls from '@/components/OrganizationalControls';
 import {CisStatusBar,CisStatusPill,statusCounts} from '@/components/CisStatus';
@@ -131,7 +132,9 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   if(!data.configured)return <section className="border border-line bg-surface-card rounded p-6 text-sm"><p>{data.selected?'Program selected for this client.':'Program not currently selected.'}</p><p className="text-ink-secondary mt-2">Select Applies in Client Profile to initialize this program after onboarding. Existing records are not reset.</p><Link className="text-link underline" to="/client-profile?tab=program">Configure in Client Profile</Link></section>;
   const progress=assessmentProgress(scoped),resume=nextAssessment(scoped,preference.lastId),index=scoped.findIndex(r=>r.framework_assessment_id===selected?.framework_assessment_id);
   const attention=scoped.filter(needsAttention).length;
-  const lastOpened=prototype&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
+  const controlKey=(preference['category:all']||[])[0]||'';
+  const chooseControl=key=>{remember({'category:all':key?[key]:[]});if(selected)closeRecord();};
+  const lastOpened=prototype&&!brawndoCis&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
   return <div className={brawndoCis?'bcis':'space-y-4'} data-theme={brawndoCis?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':'framework-workspace'}>
     {brawndoCis&&<BrawndoCisHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
@@ -144,8 +147,8 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     <div className="flex flex-wrap items-center gap-3 text-sm"><button className="text-link" onClick={()=>chooseFilter('attention')}>Needs Attention · {attention} items</button><span className="text-xs text-ink-secondary">Assessment gaps and linked operational work are separate conditions.</span></div></>}
     {frameworkKey==='soc-2'&&<><SocProgramSettings clientId={clientId} configuration={data.configuration||socConfiguration()} writable={data.selected&&isInternal(user)} onSaved={()=>setRevision(n=>n+1)}/><label className="text-xs flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope criteria</label></>}
     {frameworkKey==='nist-csf-2'&&<label className="text-sm">CSF profile view<select className="border border-line rounded p-2 ml-2 bg-surface-card" aria-label="CSF profile view" value={view} onChange={e=>setView(e.target.value)}><option value="all">Current Profile</option>{[['target','Target Profile'],['gaps','Recorded Gaps']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>}
-    {['cis-ig1','iso-27001','soc-2'].includes(frameworkKey)&&<details className="border border-line rounded p-3" onToggle={e=>setControlsOpen(e.currentTarget.open)}><summary className="cursor-pointer font-medium text-sm">Client organizational Controls</summary>{controlsOpen&&<OrganizationalControls clientId={clientId} onSaved={()=>setRevision(n=>n+1)}/>}</details>}
-    {prototype?<div className="cis-toolbar">
+    {['cis-ig1','iso-27001','soc-2'].includes(frameworkKey)&&!brawndoCis&&<details className="border border-line rounded p-3" onToggle={e=>setControlsOpen(e.currentTarget.open)}><summary className="cursor-pointer font-medium text-sm">Client organizational Controls</summary>{controlsOpen&&<OrganizationalControls clientId={clientId} onSaved={()=>setRevision(n=>n+1)}/>}</details>}
+    {brawndoCis?null:prototype?<div className="cis-toolbar">
       <SearchField value={search} onChange={changeSearch} label={`Search ${vocab.items}`} placeholder="Search by number or title…"/>
       {(search||filter!=='all')&&<p role="status" className="text-sm text-ink-secondary">{filter!=='all'&&<span className="cis-active-view">{VIEW_LABELS[filter]}</span>}Showing {visible.length} of {scoped.length} {vocab.items}</p>}
       {(search||filter!=='all')&&<Button size="sm" variant="ghost" onClick={()=>{dropLinkedView();setSearch('');setFilter('all');}}>Clear search and filters</Button>}
@@ -153,9 +156,9 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     </div>:<>
     <SearchField value={search} onChange={changeSearch} label="Search requirements" placeholder="Search requirements…"/>
     <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>chooseFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div></>}
-    {!visible.length&&<p role="status" className="text-sm">{prototype?`No ${vocab.items} match this view.`:'No requirements match these filters.'}</p>}
+    {!brawndoCis&&!visible.length&&<p role="status" className="text-sm">{prototype?`No ${vocab.items} match this view.`:'No requirements match these filters.'}</p>}
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
-    {prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='annex_control'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='annex_control'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})} layout={brawndoCis?'table':undefined}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
+    {brawndoCis?<BrawndoCisControls clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} controlKey={controlKey} onControl={chooseControl} onOpen={openRecord} selected={selected}/>:prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='annex_control'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='annex_control'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})} layout={brawndoCis?'table':undefined}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
     </>}
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}} onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null} position={index>=0?`${index+1} of ${scoped.length} in framework order`:'Retained assessment'}/>}
   </div>;
