@@ -36,3 +36,17 @@ test('a Finding raised in a Policy Review is visible from the Policy',async()=>{
   expect(related.findings.map(f=>f.finding_id)).toContain(finding.finding_id);
   expect(related.tasks.filter(t=>t.finding_id===finding.finding_id)).toHaveLength(1);
 });
+
+test('re-saving a Risk with the same next-review day in date-only form keeps the recurrence anchor',async()=>{
+  const risk=readStore().risks.find(r=>r.risk_id==='demo_brawndo_risk_1');
+  await api.patch('/risks/'+risk.risk_id,{next_review:'2027-01-31'});
+  let review=readStore().reviews.find(r=>r.risk_id===risk.risk_id&&!['completed','cancelled'].includes(r.status));
+  await api.patch('/reviews/'+review.review_id,{recurrence:'monthly'}).catch(()=>{});
+  const done=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id,risk_outcome:'Reviewed — No Change'})).data;
+  const after=readStore().risks.find(r=>r.risk_id===risk.risk_id);
+  // Re-save with the identical day as a date-only string, as the drawer does.
+  await api.patch('/risks/'+risk.risk_id,{next_review:after.next_review.slice(0,10)});
+  review=readStore().reviews.find(r=>r.review_id===done.review.review_id);
+  expect(review.schedule_anchor).toEqual(done.review.schedule_anchor);
+  expect(readStore().logs.filter(l=>l.entity_id===risk.risk_id&&l.action==='Next Risk Review scheduled')).toHaveLength(1);
+});

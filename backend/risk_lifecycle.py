@@ -63,6 +63,9 @@ async def ensure_review(db, risk, user, now):
     if not date and not review:
         return None
     rid = review['review_id'] if review else 'rev_' + uuid.uuid5(uuid.NAMESPACE_URL, 'risk-review:'+risk['risk_id']).hex
+    # The same calendar day in another format (date-only vs timestamp) is not a reschedule; keep the anchor.
+    if review and date and review.get('due_date') and str(review['due_date'])[:10] == str(date)[:10]:
+        date = review['due_date']
     fields = {'title':f"Risk Review — {risk.get('display_id',risk['risk_id'])} — {risk['title']}",
               'due_date':date, 'owner_id':risk.get('owner_id'), 'recurrence':risk.get('review_cadence') or 'annual',
               'custom_recurrence_days':risk.get('custom_recurrence_days')}

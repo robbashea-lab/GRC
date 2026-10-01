@@ -2742,7 +2742,9 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
             if k in computed:
                 body[k] = computed[k]
     if kind == "reviews" and set(body) & {"due_date", "recurrence", "custom_recurrence_days"}:
-        body.update(review_occurrences.schedule({**existing, **body}, reset_anchor="due_date" in body))
+        # Only a different calendar day re-anchors recurrence; resending the same date keeps the cycle.
+        moved = "due_date" in body and str(body.get("due_date") or "")[:10] != str(existing.get("due_date") or "")[:10]
+        body.update(review_occurrences.schedule({**existing, **body}, reset_anchor=moved))
         body["status"] = review_occurrences.view({**existing, **body})["status"]
     if kind == "tasks" and "assignee_id" in body and "owner_id" in existing:
         body["owner_id"] = None  # assignee is authoritative after an explicit assignment

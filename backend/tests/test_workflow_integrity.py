@@ -85,3 +85,16 @@ class WorkflowIntegrityTests(ClientDashboardSourcesTests):
         calendar = (await self.client.get("/api/calendar", params={"client_id": "a", "start": "2026-10-01", "end": "2026-10-31", "scope": "active"})).json()
         self.assertTrue(calendar["findings"]["2026-10-05"][0]["represented"])
         self.assertFalse(calendar["findings"]["2026-10-06"][0]["represented"])
+
+    async def test_resending_the_same_due_date_keeps_the_month_end_anchor(self):
+        self.sign_in("admin")
+        await server.db.reviews.insert_one({"review_id": "me", "client_id": "a", "title": "Month end", "review_type": "access", "owner_id": "member",
+                                            "status": "upcoming", "recurrence": "monthly", "due_date": "2027-01-31"})
+        done = (await self.client.post("/api/reviews/me/complete", json={"occurrence_id": "occ_me"})).json()["review"]
+        self.assertEqual(done["due_date"][:10], "2027-02-28")
+        resent = await self.client.patch("/api/reviews/me", json={"due_date": "2027-02-28", "expected_occurrence_id": done["current_occurrence_id"]})
+        self.assertEqual(resent.status_code, 200, resent.text)
+        self.assertEqual(resent.json()["schedule_anchor"], {"day": 31, "month_end": True})
+        self.assertEqual(resent.json()["next_review_date"][:10], "2027-03-31")
+        moved = (await self.client.patch("/api/reviews/me", json={"due_date": "2027-02-15", "expected_occurrence_id": done["current_occurrence_id"]})).json()
+        self.assertEqual(moved["next_review_date"][:10], "2027-03-15")

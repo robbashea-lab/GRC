@@ -275,7 +275,7 @@ export function write(db, kind, body, id) {
       }];
     }
   }
-  const riskEvent = !existing?"Risk created":row.status!==existing.status&&row.status==="closed"?"Risk closed":row.acceptance_date!==existing.acceptance_date?"Risk accepted":row.likelihood_score!==existing.likelihood_score||row.impact_score!==existing.impact_score?"Risk reassessed":row.owner_id!==existing.owner_id?"Risk owner assigned":row.treatment!==existing.treatment?"Treatment updated":row.next_review!==existing.next_review?"Next Risk Review scheduled":"Risk updated";
+  const riskEvent = !existing?"Risk created":row.status!==existing.status&&row.status==="closed"?"Risk closed":row.acceptance_date!==existing.acceptance_date?"Risk accepted":row.likelihood_score!==existing.likelihood_score||row.impact_score!==existing.impact_score?"Risk reassessed":row.owner_id!==existing.owner_id?"Risk owner assigned":row.treatment!==existing.treatment?"Treatment updated":String(row.next_review||"").slice(0,10)!==String(existing.next_review||"").slice(0,10)?"Next Risk Review scheduled":"Risk updated";
   const taskEvent = !existing ? 'Action Item created' : row.status!==existing.status ? row.status==='done'?'Action Item completed':row.status==='in_progress'?'Work started':'Status changed' : row.assignee_id!==existing.assignee_id?'Assignment changed':'Action Item updated';
   if (existing) Object.assign(existing, row);else db[kind].unshift(row);
   if (kind === "risks") ensureRiskReview(db, existing || row);
