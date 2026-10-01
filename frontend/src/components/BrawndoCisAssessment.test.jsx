@@ -137,3 +137,44 @@ test('a never-assessed safeguard does not name an assessor',async()=>{
  record={...record,last_assessed:null,assessed_by:'u'};await render();
  expect(container.querySelector('.bcsg-meta').textContent).toBe('Last assessed: Not assessed');
 });
+
+describe('safeguard Findings',()=>{
+ const f=(id,status,extra={})=>({finding_id:id,client_id:'demo_brawndo',title:'Finding '+id,status,severity:'high',framework_assessment_id:'a',...extra});
+ test('lists direct open, Pending Validation and closed Findings with their Action state',async()=>{
+  related.findings=[f('o','in_remediation'),f('p','remediated',{severity:'medium'}),f('c','closed'),f('x','open',{framework_assessment_id:'other'})];
+  related.tasks=[{task_id:'t1',finding_id:'o',client_id:'demo_brawndo',status:'in_progress',due_date:'2026-11-01'},{task_id:'t2',finding_id:'p',client_id:'demo_brawndo',status:'done'}];
+  await render();
+  const open=container.querySelector('[aria-label="Open Findings"]').textContent;
+  expect(open).toContain('Finding o');expect(open).toContain('High · In remediation · Action in progress · due 2026-11-01');
+  expect(open).toContain('Moderate · Pending Validation · Action completed');
+  expect(open).not.toContain('Finding x');
+  expect(container.querySelector('.bcsg-closed summary').textContent).toBe('1 closed / validated');
+  await act(async()=>button('Finding p').click());expect(container.querySelector('[data-testid="nested"]').textContent).toContain('findings Finding p');
+ });
+ test('Raise Finding records the safeguard origin, owner and target date, once per draft',async()=>{
+  api.post.mockResolvedValue({data:{}});await render();
+  await act(async()=>button('Raise Finding').click());
+  expect(container.querySelector('[data-testid="finding-origin"]').textContent).toBe('Origin: CIS IG1 · Safeguard 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
+  await input('Finding title','Inventory excludes plant devices');await input('Corrective action','Add plant devices to inventory');await input('Finding target date','2026-12-15');
+  const sev=container.querySelector('[aria-label="Finding severity"]');await act(async()=>{sev.value='high';sev.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(button('Save & next').disabled).toBe(true);
+  await act(async()=>button('Create Finding & Action').click());
+  const [path,body]=api.post.mock.calls.find(([p])=>p.endsWith('/findings'));
+  expect(path).toBe('/framework_assessments/a/findings');
+  expect(body).toMatchObject({title:'Inventory excludes plant devices',remediation_title:'Add plant devices to inventory',severity:'high',due_date:'2026-12-15',request_id:expect.any(String)});
+  expect(body).not.toHaveProperty('owner_id');
+  expect(container.querySelector('.bcsg-finding-form')).toBeNull();
+ });
+ test('a failed create keeps the draft and its request id for the retry',async()=>{
+  api.post.mockRejectedValueOnce(new Error('Network unavailable'));await render();
+  await act(async()=>button('Raise Finding').click());await input('Finding title','Gap');await input('Corrective action','Fix gap');
+  await act(async()=>button('Create Finding & Action').click());
+  expect(container.textContent).toContain('Network unavailable');expect(container.querySelector('.bcsg-finding-form')).toBeTruthy();
+  api.post.mockResolvedValue({data:{}});await act(async()=>button('Create Finding & Action').click());
+  const ids=api.post.mock.calls.filter(([p])=>p.endsWith('/findings')).map(([,b])=>b.request_id);
+  expect(ids).toHaveLength(2);expect(ids[0]).toBe(ids[1]);
+ });
+ test.each(['client_readonly','client_contributor'])('%s without assignment cannot raise Findings',async role=>{
+  mockUser.role=role;await render();expect(button('Raise Finding')).toBeUndefined();
+ });
+});

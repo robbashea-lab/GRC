@@ -53,6 +53,27 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         forbidden=await self.client.post(path,json=body)
         self.assertEqual(forbidden.status_code,403)
 
+    async def test_safeguard_finding_accepts_optional_owner_and_target_date(self):
+        workspace=await self.configure()
+        aid=workspace['assessments'][0]['framework_assessment_id']
+        base='/api/framework_assessments/'+aid
+        payload={'title':'Inventory gap','remediation_title':'Close gap','request_id':'dated','owner_id':'member','due_date':'2026-12-15'}
+        created=await self.client.post(base+'/findings',json=payload)
+        self.assertEqual(created.status_code,200,created.text)
+        finding=created.json()
+        self.assertEqual((finding['owner_id'],finding['due_date'],finding['framework_assessment_id']),('member','2026-12-15',aid))
+        task=await server.db.tasks.find_one({'finding_id':finding['finding_id']})
+        self.assertEqual((task['assignee_id'],task['due_date']),('member','2026-12-15'))
+        again=await self.client.post(base+'/findings',json=payload)
+        self.assertEqual(again.json()['finding_id'],finding['finding_id'])
+        self.assertEqual(await server.db.tasks.count_documents({'finding_id':finding['finding_id']}),1)
+        for bad in ({'owner_id':'nobody'},{'due_date':'2026-02-30'}):
+            response=await self.client.post(base+'/findings',json={**payload,'request_id':'bad-'+list(bad)[0],**bad})
+            self.assertEqual(response.status_code,422,response.text)
+        self.assertEqual(await server.db.findings.count_documents({'framework_assessment_id':aid}),1)
+        inherited=(await self.client.post(base+'/findings',json={'title':'Second','remediation_title':'Fix','request_id':'inherit'})).json()
+        self.assertIsNone(inherited['due_date'])
+
     def body(self, programs=('cis-ig1',), cid='a'):
         return {'client_id': cid, 'finalize': True, 'state': {
             'version': 3, 'step': 3, 'policies': {p['key']: 'unsure' for p in BASELINE_CATALOG['policies']},

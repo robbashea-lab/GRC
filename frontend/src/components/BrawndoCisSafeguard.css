@@ -22,3 +22,23 @@
 [data-testid="brawndo-cis-assessment"] .bcis-crumbs button:hover { text-decoration: underline; }
 [data-testid="brawndo-cis-assessment"] .bcis-crumbs button:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 2px; border-radius: 2px; }
 [data-testid="brawndo-cis-assessment"] .bcis-crumbs [aria-current] { color: var(--color-text-secondary); }
+/* Compact safeguard Findings: the safeguard stays the origin; the Finding drawer owns validation. */
+[data-testid="brawndo-cis-assessment"] .bcsg-findings { margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--color-input-border); border-radius: 8px; }
+.bcsg-findings-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.bcsg-findings-head h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.bcsg-findings ul { list-style: none; margin: 0; padding: 0; }
+.bcsg-finding { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; padding: 6px 0; border-top: 1px solid var(--color-input-border); font-size: 13px; overflow-wrap: anywhere; }
+.bcsg-finding:first-child { border-top: 0; }
+.bcsg-finding-title { padding: 0; border: 0; background: none; color: var(--color-link); font: inherit; text-align: left; cursor: pointer; }
+.bcsg-finding-title:hover { text-decoration: underline; }
+.bcsg-finding-title:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 2px; border-radius: 2px; }
+.bcsg-finding-meta, .bcsg-muted { font-size: 12px; color: var(--color-text-secondary); }
+.bcsg-muted { margin: 4px 0; }
+.bcsg-closed { margin-top: 6px; font-size: 12px; }
+.bcsg-closed summary { cursor: pointer; color: var(--color-text-secondary); }
+.bcsg-finding-form { display: grid; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--color-input-border); font-size: 13px; }
+.bcsg-finding-form legend { font-weight: 600; font-size: 13px; }
+.bcsg-finding-form label, .bcsg-label { display: grid; gap: 4px; font-size: 12px; font-weight: 500; }
+.bcsg-finding-form select { height: 36px; border: 1px solid var(--color-input-border); border-radius: 6px; padding: 0 8px; background: var(--color-bg-surface, transparent); color: inherit; }
+.bcsg-finding-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .bcsg-finding-grid { grid-template-columns: minmax(0, 1fr); } }
