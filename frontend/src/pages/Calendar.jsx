@@ -46,7 +46,7 @@ export default function Calendar() {
     if(!currentClientId)return;
     api.get('/calendar',{params:{client_id:currentClientId,start,end,scope},signal:controller.signal}).then(({data})=>{
       if(controller.signal.aborted)return;
-      if(['reviews','findings','tasks'].some(kind=>!data[kind]||Object.values(data[kind]).flat().some(item=>item.client_id!==currentClientId)))throw new Error('Calendar records do not match the selected client.');
+      if(['reviews','findings','tasks'].some(kind=>!data[kind])||Object.values(data).some(bucket=>Object.values(bucket||{}).flat().some(item=>item.client_id!==currentClientId)))throw new Error('Calendar records do not match the selected client.');
       setResult({key:requestKey,data});
     }).catch(e=>{if(!controller.signal.aborted)setError(formatError(e));});
     return ()=>controller.abort();
@@ -67,16 +67,18 @@ export default function Calendar() {
   },[brawndo,currentClientId,revision]);
   const loading=!!currentClientId&&result?.key!==requestKey&&!error;
   const data=result?.key===requestKey?result.data:emptyBuckets();
-  const itemsForDay=day=>[...(data.reviews[day]||[]),...(data.findings[day]||[]),...(data.tasks[day]||[])];
+  const itemsForDay=day=>[...(data.reviews[day]||[]),...(data.findings[day]||[]),...(data.tasks[day]||[]),...(data.vendor_dates?.[day]||[])];
   const total=Object.values(data).reduce((n,bucket)=>n+Object.values(bucket).reduce((sum,items)=>sum+items.length,0),0);
 
   async function openRecord(item) {
     const key=requestKey;
     try {
-      const kind=item.kind+'s';
-      const {data:record}=await api.get(`/${kind}/${item.id}`);
+      // Vendor dates open their authoritative Vendor on the matching tab.
+      const vendorDate=item.kind.startsWith('vendor_'),kind=vendorDate?'vendors':item.kind+'s';
+      const {data:record}=await api.get(`/${kind}/${vendorDate?item.vendor_id:item.id}`);
       if(activeRequest.current!==key)return;
-      setDrawer({key:item.key,kind,record,initialValues:calendarSelection(item,record,currentClientId)});
+      if(vendorDate&&record.client_id!==currentClientId)throw new Error('Record belongs to another client.');
+      setDrawer({key:item.key,kind,record,initialValues:vendorDate?{vendorTab:item.kind==='vendor_assurance'?'assurance':'contract',assuranceId:item.assurance_id}:calendarSelection(item,record,currentClientId)});
     }catch(e){if(activeRequest.current===key)toast.error(formatError(e));}
   }
   function onDragStart(e,item) {

@@ -232,7 +232,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if(vendorPilot){delete base.vendorTab;delete base.assuranceId;}
       setForm(base);
       initialForm.current=base;setDiscardOpen(false);setApprovalDirty(false);if(pilot)setNewComment('');
-      setTab(vendorPilot&&initialValues?.vendorTab==='assurance'?'assurance':'overview');
+      setTab(vendorPilot&&['assurance','contract'].includes(initialValues?.vendorTab)?initialValues.vendorTab:'overview');
       if (isEdit) {
         loadComments();
         loadActivity();

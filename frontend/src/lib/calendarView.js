@@ -3,6 +3,7 @@ import {isInternal,isAssignedTo} from './permissions';
 import {occurrenceId,reviewView} from './reviewOccurrences';
 import {actionStatus} from './actionItems';
 import {calendarDay} from './tableFilters';
+import {assuranceKey} from './brawndoVendors';
 
 export const CALENDAR_SCOPES=[['active','Active'],['history','Completed / Closed'],['all','All']];
 export const calendarTerminal=(kind,row)=>rules.closed[kind+'s']?.includes(row.status);
@@ -50,9 +51,10 @@ export function calendarBuckets(records,user,{start,end,scope='active'}={}) {
 }
 export function calendarStatus(item) {
   if(item.kind==='task')return actionStatus(item.status);
+  if(item.kind?.startsWith('vendor_'))return 'Vendor date';
   return ({needs_scheduling:'Needs Scheduling',upcoming:'Upcoming',in_progress:'In Progress',completed:'Completed',cancelled:'Cancelled',open:'Open',in_remediation:'In Remediation',remediated:'Pending Validation',closed:'Closed',accepted:'Accepted'})[item.status]||'Status not recorded';
 }
-export const calendarType=item=>({review:'Review',finding:'Finding',task:'Action Item'})[item.kind]||'Record';
+export const calendarType=item=>({review:'Review',finding:'Finding',task:'Action Item',...VENDOR_EVENT_LABELS})[item.kind]||'Record';
 export function calendarSelection(item,record,cid) {
   if(record.client_id!==cid||item.client_id!==cid)throw new Error('Record belongs to another client.');
   if(item.kind!=='review')return {};
@@ -65,4 +67,38 @@ export function rescheduledDate(value,target) {
   if(calendarDay(target)==null)throw new Error('Choose a valid date.');
   // Preserve date-only values, time, offset and precision; this is a date move, not a timezone conversion.
   return target+String(value||'').slice(10);
+}
+
+// Brawndo: Vendor dates projected directly from the authoritative Vendor record (no Reviews are created).
+// Security assurance follow-up, contract renewal and the contract notice deadline stay distinct event types.
+export const VENDOR_EVENT_LABELS={vendor_assurance:'Security Assurance Due',vendor_contract_renewal:'Contract Renewal',vendor_contract_notice:'Contract Notice Deadline'};
+export function vendorCalendarItems(vendors=[],reviews=[],{start,end,scope='active'}={},now=new Date()) {
+  const [first,last]=calendarWindow(start,end),out={},today=calendarDay(now.toISOString());
+  const iso=day=>new Date(day).toISOString().slice(0,10);
+  // Past assurance follow-ups remain open obligations (overdue); a passed renewal or notice date is history,
+  // as on the Brawndo Vendors page (Renewals Upcoming lists future dates only).
+  const add=(v,kind,day,suffix,label,extra={})=>{
+    if(day==null||day<first||day>last)return;
+    const historical=kind!=='vendor_assurance'&&day<today;
+    if(scope==='active'&&historical||scope==='history'&&!historical)return;
+    const value={id:v.vendor_id,vendor_id:v.vendor_id,key:`${kind}:${v.vendor_id}:${suffix}`,client_id:v.client_id,kind,title:`${label} — ${v.name}`,
+      status:'scheduled',owner_id:v.business_owner_id||null,due_date_iso:iso(day),review_type:null,period:null,occurrence_id:null,historical,can_reschedule:false,...extra};
+    (out[value.due_date_iso]||=[]).push(value);
+  };
+  for(const v of vendors) {
+    if(['inactive','terminated'].includes(v.status))continue;
+    const active=reviews.filter(r=>r.client_id===v.client_id&&r.vendor_id===v.vendor_id&&!['completed','cancelled'].includes(r.status));
+    (v.assurance_records||[]).forEach((a,i)=>{
+      if(a.superseded_by)return;
+      const day=calendarDay(a.next_follow_up||a.refresh_due);
+      // A Vendor or Assurance Review due the same day already carries this obligation on the Calendar.
+      if(active.some(r=>['vendor','assurance'].includes(r.vendor_purpose||'vendor')&&calendarDay(r.due_date)===day))return;
+      add(v,'vendor_assurance',day,assuranceKey(a,i),`${VENDOR_EVENT_LABELS.vendor_assurance} · ${a.type||'Assurance'}`,{assurance_id:a.assurance_id||null});
+    });
+    const notice=calendarDay(v.contract_notice_deadline),renewal=calendarDay(v.contract_renewal);
+    if(!active.some(r=>r.vendor_purpose==='contract')&&renewal!==notice)add(v,'vendor_contract_renewal',renewal,'renewal',VENDOR_EVENT_LABELS.vendor_contract_renewal);
+    add(v,'vendor_contract_notice',notice,'notice',VENDOR_EVENT_LABELS.vendor_contract_notice);
+  }
+  for(const items of Object.values(out))items.sort((a,b)=>a.title.localeCompare(b.title));
+  return out;
 }

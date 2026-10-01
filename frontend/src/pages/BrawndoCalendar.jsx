@@ -4,10 +4,10 @@ import {CALENDAR_SCOPES,calendarStatus,calendarType} from '@/lib/calendarView';
 import './BrawndoCalendar.css';
 
 const WORDS=['zero','one','two','three','four','five','six','seven','eight','nine','ten'];
-const TYPE_LABEL={review:'Review',finding:'Finding',task:'Action item'};
+const TYPE_LABEL={review:'Review',finding:'Finding',task:'Action item',vendor_assurance:'Security Assurance Due',vendor_contract_renewal:'Contract Renewal',vendor_contract_notice:'Contract Notice Deadline'};
 // Flatten calendar buckets ({reviews:{day:[items]},...}) into [{...item,date}].
 export function calendarEntries(data){
-  return ['reviews','findings','tasks'].flatMap(kind=>Object.entries(data?.[kind]||{}).flatMap(([date,items])=>items.map(item=>({...item,date}))));
+  return ['reviews','findings','tasks','vendor_dates'].flatMap(kind=>Object.entries(data?.[kind]||{}).flatMap(([date,items])=>items.map(item=>({...item,date}))));
 }
 const byDate=(a,b)=>a.date<b.date?-1:a.date>b.date?1:String(a.title).localeCompare(String(b.title));
 // Needs attention: active overdue work items (oldest first), then active work due within the next 30 days.
@@ -61,7 +61,7 @@ export default function BrawndoCalendarView({clientName,anchor,setAnchor,scope,s
             <h2 className="bcal-month" data-testid="cal-month-label">{anchor.toLocaleString(undefined,{month:'long',year:'numeric'})}</h2>
           </div>
           <BrawndoChips label="Calendar scope" chips={CALENDAR_SCOPES.map(([id,label])=>({id,label,pressed:scope===id,onClick:()=>setScope(id)}))}/>
-          <ul className="bcal-legend" aria-label="Legend">{['review','finding','task'].map(k=><li key={k}><i className={`bcal-dot k-${k}`} aria-hidden="true"/>{TYPE_LABEL[k]}</li>)}<li><i className="bcal-rail" aria-hidden="true"/>Overdue</li></ul>
+          <ul className="bcal-legend" aria-label="Legend">{['review','finding','task','vendor_assurance','vendor_contract_renewal','vendor_contract_notice'].map(k=><li key={k}><i className={`bcal-dot k-${k}`} aria-hidden="true"/>{TYPE_LABEL[k]}</li>)}<li><i className="bcal-rail" aria-hidden="true"/>Overdue</li></ul>
         </div>
         <p className="bcal-status" role="status">{busy?'Saving…':loading?'Loading Calendar…':writable?'Drag or open an active item to change its date':'Read-only'}</p>
         {scope!=='active'&&<p className="bcal-note">Historical items stay on their due dates; includes cancelled work and accepted Findings.</p>}

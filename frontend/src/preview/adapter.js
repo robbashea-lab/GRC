@@ -6,7 +6,7 @@ import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
 import {frameworkSummary} from './frameworkSummary';
-import {calendarBuckets} from '../lib/calendarView';
+import {calendarBuckets,vendorCalendarItems} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
 import { identityRequest } from './identityLifecycle';
 import { assignmentCandidates } from './assignmentEligibility';
@@ -176,7 +176,10 @@ export async function previewAdapter(config) {
       if (path === '/baseline/templates') return respond(fixtures.responses[path]);
       if (path === '/calendar') {
         frameworkScope(db,params.client_id);
-        return respond(calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,list(db,k,params.client_id)])),db.user,params));
+        const buckets=calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,list(db,k,params.client_id)])),db.user,params);
+        // Brawndo only: vendor assurance and contract dates come straight from the Vendor record.
+        if(params.client_id==='demo_brawndo')buckets.vendor_dates=vendorCalendarItems(list(db,'vendors',params.client_id),list(db,'reviews',params.client_id),params);
+        return respond(buckets);
       }
       if (path === '/related') {
         const source = record(db, params.entity_type, params.entity_id),
