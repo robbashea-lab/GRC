@@ -403,7 +403,8 @@ export async function previewAdapter(config) {
           // Recompute remediation once an open Action Item is removed; a Finding with no remediation cannot be pending validation.
           const finding=db.findings.find(f=>f.finding_id===r.finding_id&&f.client_id===r.client_id);
           const remaining=db.tasks.filter(t=>t.finding_id===r.finding_id&&t.client_id===r.client_id);
-          if(finding&&['in_remediation','remediated'].includes(finding.status)){
+          // Same population as the backend: with Actions remaining an Open Finding follows them; with none, only active remediation returns to Open.
+          if(finding&&(remaining.length?['open','in_remediation','remediated']:['in_remediation','remediated']).includes(finding.status)){
             const next=!remaining.length?'open':remaining.every(t=>['done','cancelled'].includes(t.status))?'remediated':'in_remediation';
             if(next!==finding.status){finding.status=next;finding.updated_at=now();audit(db,next==='open'?'Finding returned to Open; its remediation Action Item was deleted':next==='remediated'?'Finding moved to Pending Validation':'Finding moved to In Remediation','findings',finding,{task_id:r.task_id});}
           }

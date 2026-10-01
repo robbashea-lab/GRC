@@ -28,3 +28,7 @@ test('CIS review cadence provenance distinguishes recommended from CIS-stated in
   expect(endpoint.governance_context.cadence_source).toBe('recommended');
   for(const r of reviews.filter(r=>r!==endpoint))expect(r.governance_context.cadence_source).toBe('organization_defined');
 });
+test('other demo clients keep their original cadence provenance',()=>{
+  for(const r of readStore().reviews.filter(r=>r.client_id!==cid&&r.governance_context))
+    {expect(r.governance_context.cadence_source).not.toBe('recommended');expect(r.governance_context.cadence_rationale||'').not.toMatch(/Omnisciente recommended validation interval|Management adopted the interval CIS states/);}
+});
