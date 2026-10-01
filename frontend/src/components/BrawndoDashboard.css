@@ -107,7 +107,7 @@
 .bd-donut-value { font-family: var(--bd-display); font-size: 8px; font-weight: 600; text-anchor: middle; fill: var(--bd-good); }
 .bd-donut-label { font-family: var(--bd-body); font-size: 3.2px; text-anchor: middle; fill: var(--bd-muted); }
 .bd-legend { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 0; }
-.bdash .bd-legend a { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 5px; font-size: 13px; color: var(--bd-text); }
+.bdash .bd-legend :is(a,.bd-static) { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 5px; font-size: 13px; color: var(--bd-text); }
 .bdash .bd-legend a:hover { background: var(--bd-subtle); text-decoration: none; }
 .bd-legend span:nth-child(2) { flex-grow: 1; }
 .bd-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
@@ -115,11 +115,11 @@
 .bd-cis-measures strong { font-family: var(--bd-display); font-size: 16px; color: var(--bd-text); margin-right: 2px; }
 .bd-cis-measures strong.is-good { color: var(--bd-good); }
 .bd-gaps { display: flex; flex-direction: column; gap: 3px; }
-.bdash .bd-gaps a { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 6px; font-size: 13px; }
+.bdash .bd-gaps :is(a,.bd-static) { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 6px; font-size: 13px; }
 .bdash .bd-gaps a:hover { text-decoration: none; filter: brightness(.97); }
-.bdash .bd-gaps a.is-critical { background: var(--bd-critical-bg); color: var(--bd-critical); }
-.bdash .bd-gaps a.is-attention { background: var(--bd-attention-bg); color: var(--bd-attention); }
-.bdash .bd-gaps a.is-clear { color: var(--bd-muted); }
+.bdash .bd-gaps :is(a,.bd-static).is-critical { background: var(--bd-critical-bg); color: var(--bd-critical); }
+.bdash .bd-gaps :is(a,.bd-static).is-attention { background: var(--bd-attention-bg); color: var(--bd-attention); }
+.bdash .bd-gaps :is(a,.bd-static).is-clear { color: var(--bd-muted); }
 .bd-posture { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
 .bdash .bd-posture a { display: flex; flex-direction: column; gap: 2px; color: var(--bd-text); }
 .bdash .bd-posture a:hover { text-decoration: none; }

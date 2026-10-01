@@ -30,7 +30,7 @@ import OrganizationalControls from '@/components/OrganizationalControls';
 import {CisStatusBar,CisStatusPill,statusCounts} from '@/components/CisStatus';
 import {cisSummary,freshness,lacksEvidence} from '@/lib/cisVerification';
 import '@/components/BrawndoCisWorkspace.css';
-import {groupRequirements,nextAssessment,matchesAssessment,sectionSummary,needsAttention,hierarchyPath,visibleSections} from '@/lib/frameworkWorkspace';
+import {workspaceScope,groupRequirements,nextAssessment,matchesAssessment,sectionSummary,needsAttention,hierarchyPath,visibleSections} from '@/lib/frameworkWorkspace';
 
 const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',not_assessed:'Not Assessed',assessed:'Assessed'};
 // Derived view names in the framework's own conclusion vocabulary.
@@ -120,7 +120,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const isoView=frameworkKey==='iso-27001'?(selectedSpecification==='annex_control'&&params.get('iso_view')==='soa'?'soa':selectedSpecification||
     (ISO_VIEWS[params.get('iso_view')]?params.get('iso_view'):'overview')):'all';
   const scoped=rows.filter(r=>{
-    if(frameworkKey==='soc-2'&&!showRetained&&!data?.active_definition_ids?.includes(r.definition_id))return false;
+    if(!showRetained&&!workspaceScope(frameworkKey,data,r))return false;
     if(frameworkKey==='nist-csf-2'&&view!=='all')return r.csf_profile?.target_selected&&(view==='target'||r.csf_profile.gap_state==='gap');
     if(frameworkKey==='iso-27001')return ISO_VIEWS[isoView].matches(r);
     return true;
