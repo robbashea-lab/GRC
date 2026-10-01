@@ -80,3 +80,12 @@ test('a Finding whose own open Action is listed appears once, as the Action',()=
   const rows=dashboardPosture(agg,{today:new Date('2026-01-01')}).priority;
   expect(rows.map(r=>`${r.kind}:${r.id}`)).toEqual(['tasks:t']);
 });
+
+test('Brawndo assurance attention follows the Vendors workspace rule',()=>{
+  const v=(id,records)=>({client_id:'demo_brawndo',vendor_id:id,name:id,status:'active',criticality:'high',assurance_required:true,assurance_records:records});
+  const records={vendors:[v('reviewed',[{type:'Security Questionnaire',required:true,review_status:'reviewed',reviewed_on:date(-5),next_follow_up:date(200)}]),
+    v('followup',[{type:'SOC 2',required:true,next_follow_up:date(10)}])]};
+  const result=dashboardPosture(aggregateClientDashboard(records,{clientId:'demo_brawndo',today,scope:{kind:'org'},user:{user_id:'u'}}),{today});
+  const ids=result.vendorHealth.find(g=>g.key==='assurance').items.map(r=>r.id);
+  expect(ids).toEqual(['followup']);
+});

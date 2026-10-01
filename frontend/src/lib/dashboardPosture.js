@@ -1,3 +1,5 @@
+// Brawndo's Vendors workspace owns its assurance rule; the Dashboard counts the same population.
+import {vendorMatches} from './brawndoVendors';
 import { representedFinding } from './grcWork';
 import { calendarDay } from './clientDashboard';
 import { assuranceStatus, vendorSignals } from './vendorGovernance';
@@ -29,7 +31,7 @@ export function dashboardPosture(aggregation, {members=[], today=new Date()}={})
   const vendorHealth=[
     {key:'vendorReviewsPast',label:'Vendor Reviews Past Due',items:vendorReviews.filter(r=>r.day!==null&&r.day<day)},
     {key:'vendorReviewsSoon',label:'Vendor Reviews Due in 30 Days',items:vendorReviews.filter(r=>r.day!==null&&r.day>=day&&r.day<=day+30)},
-    {key:'assurance',label:'Assurance Needs Attention',items:vendors.filter(v=>v.source.assurance_required&&(v.source.assurance_records||[]).some(a=>['expired','due_soon','missing'].includes(assuranceStatus(v.source,a,today)))).map(v=>v.item)},
+    {key:'assurance',label:'Assurance Needs Attention',items:vendors.filter(v=>v.source.client_id==='demo_brawndo'?vendorMatches(v.source,'assurance',today):v.source.assurance_required&&(v.source.assurance_records||[]).some(a=>['expired','due_soon','missing'].includes(assuranceStatus(v.source,a,today)))).map(v=>v.item)},
     {key:'contracts',label:'Contracts Expiring',items:vendors.filter(v=>v.signals._contractSoon).map(v=>v.item)},
     {key:'criticalVendors',label:'Critical Vendors',items:vendors.filter(v=>v.source.criticality==='critical').map(v=>v.item)},
     {key:'missingAssurance',label:'Missing Required Assurance',items:vendors.filter(v=>v.source.assurance_required&&(!(v.source.assurance_records||[]).some(a=>a.required!==false)||(v.source.assurance_records||[]).some(a=>assuranceStatus(v.source,a,today)==='missing'))).map(v=>v.item)},
