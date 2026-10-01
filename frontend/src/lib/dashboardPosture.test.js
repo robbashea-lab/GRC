@@ -80,3 +80,16 @@ test('a Finding whose own open Action is listed appears once, as the Action',()=
   const rows=dashboardPosture(agg,{today:new Date('2026-01-01')}).priority;
   expect(rows.map(r=>`${r.kind}:${r.id}`)).toEqual(['tasks:t']);
 });
+
+test('the Assurance needs attention tile and the Vendors view it opens count the same Vendors',()=>{
+  const {vendorMatches}=require('./brawndoVendors');
+  const v=(id,extra)=>({client_id:'demo_brawndo',vendor_id:id,name:id,status:'active',criticality:'high',assurance_required:true,...extra});
+  const vendors=[v('missing',{assurance_records:[{type:'SOC 2',required:true}]}),
+    v('current',{assurance_records:[{type:'SOC 2',required:true,evidence_ids:['e'],received_at:date(-30),refresh_due:date(200)}]}),
+    v('soon',{assurance_records:[{type:'SOC 2',required:true,evidence_ids:['e'],received_at:date(-300),refresh_due:date(20)}]}),
+    v('offboarding',{status:'offboarding',assurance_records:[{type:'SOC 2',required:true}]})];
+  const result=dashboardPosture(aggregateClientDashboard({vendors},{clientId:'demo_brawndo',today,scope:{kind:'org'},user:{user_id:'u'}}),{today});
+  const tile=result.vendorHealth.find(g=>g.key==='assurance').items.map(r=>r.id).sort();
+  expect(tile).toEqual(['missing','soon']);
+  expect(vendors.filter(x=>vendorMatches(x,'assurance_attention',today)).map(x=>x.vendor_id).sort()).toEqual(tile);
+});

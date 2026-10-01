@@ -86,8 +86,8 @@ function PostureCard({posture}) {
   const count=g=>g?.total??g?.items?.length??0;
   const cells=[['Significant risks',t.significantRisks??posture?.significantRisks?.length??0,'/risks?view=significant','critical'],
     ['High / critical findings',t.materialFindings??posture?.materialFindings?.length??0,'/findings?signal=material','critical'],
-    ['Vendor assurance due',count(vendor('assurance')),'/vendors?view=assurance','attention'],
-    ['Vendor reviews past due',count(vendor('vendorReviewsPast')),'/vendors?view=review_due','critical']];
+    ['Assurance needs attention',count(vendor('assurance')),'/vendors?view=assurance_attention','attention'],
+    ['Vendor reviews past due',count(vendor('vendorReviewsPast')),'/vendors?view=review_overdue','critical']];
   return <section className="bd-card" aria-labelledby="bd-posture-heading"><h2 id="bd-posture-heading">Posture</h2>
     <div className="bd-posture">{cells.map(([label,n,to,tone])=><Link key={label} to={to}><span className="bd-muted bd-small">{label}</span><strong className={n?`is-${tone}`:''}>{n}</strong></Link>)}</div>
   </section>;

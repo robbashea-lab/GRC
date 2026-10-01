@@ -1,3 +1,4 @@
+import {assuranceNeedsAttention} from './vendorGovernance';
 import {calendarDay,managementDay} from './managementDates';
 export const assuranceTypes=['SOC 2','ISO 27001','Penetration Test Summary','Security Questionnaire','Other'];
 export const assuranceNames={'SOC 2':'SOC 2 Report','ISO 27001':'ISO/IEC 27001 Certificate','Penetration Test Summary':'Independent Security Assessment / Penetration Test Summary','Security Questionnaire':'Security Questionnaire',Other:'Other Assurance Document'};
@@ -17,7 +18,7 @@ export const assuranceSummary=v=>{
   return all.length?all.map(a=>`${assuranceName(a)} — ${assuranceState(a)}`):['No assurance recorded'];
 };
 export const renewalAction=v=>({date:v.contract_notice_deadline||v.contract_renewal,label:v.contract_notice_deadline?'Notice deadline':'Renewal date'});
-export const vendorViews=[['all_active','All Active'],['critical','Critical'],['high','High'],['review_due','Reviews Due'],['review_overdue','Reviews Past Due'],['contract_soon','Contracts Expiring'],['renewal_soon','Renewals Upcoming'],['assurance','Assurance Due'],['inactive','Inactive']].map(([id,label])=>({id,label}));
+export const vendorViews=[['all_active','All Active'],['critical','Critical'],['high','High'],['review_due','Reviews Due'],['review_overdue','Reviews Past Due'],['contract_soon','Contracts Expiring'],['renewal_soon','Renewals Upcoming'],['assurance','Assurance Follow-up Due'],['assurance_attention','Assurance Needs Attention'],['inactive','Inactive']].map(([id,label])=>({id,label}));
 export function vendorMatches(v,view,now=new Date()){
   const inactive=['inactive','terminated'].includes(v.status),today=managementDay(now),day=calendarDay(v.next_review);
   const upcoming=value=>{const d=calendarDay(value);return d!==null&&d>=today&&d<=today+30;};
@@ -30,7 +31,10 @@ export function vendorMatches(v,view,now=new Date()){
   if(view==='review_due')return upcoming(v.next_review);
   if(view==='contract_soon')return upcoming(v.contract_expiration||v.contract_end);
   if(view==='renewal_soon')return upcoming(renewalAction(v).date);
+  // Assurance Follow-up Due: a document's next follow-up is overdue or within 30 days, or an ISO certificate has expired.
   if(view==='assurance')return (v.assurance_records||[]).some(a=>assuranceAttention(a,now).length);
+  // Assurance Needs Attention: the Dashboard rule (required document missing, expired or within the assurance window).
+  if(view==='assurance_attention')return assuranceNeedsAttention(v,now);
   if(view==='critical_high')return ['critical','high'].includes(v.criticality);
   if(['critical','high'].includes(view))return v.criticality===view;
   return true;

@@ -17,6 +17,9 @@ export function vendorProjection(v,reviews) {
   const completed=primary.flatMap(r=>[...(r.occurrences||[]).map(o=>o.completed_at),...(r.status==='completed'?[r.completion_date]:[])]).filter(Boolean).sort();
   return {...v,...(v.status==='terminated'?{status:'inactive',legacy_status:'terminated'}:{}),service:v.service||v.services,...(primary.length?{next_review:dates[0]||null,last_review:completed.at(-1)||v.last_review}:{}),linked_review_ids:linked.map(r=>r.review_id)};
 }
+// "Assurance needs attention": a required assurance document is missing, expired, or due within the
+// Vendor's assurance window. Used by the Dashboard posture tile and the Vendors view it links to.
+export const assuranceNeedsAttention=(v,today=new Date())=>!['inactive','terminated','offboarding'].includes(v.status)&&!v.archived_at&&!!v.assurance_required&&(v.assurance_records||[]).some(a=>['expired','due_soon','missing'].includes(assuranceStatus(v,a,today)));
 export function vendorSignals(v,reviews,today=new Date()) {
   const value=vendorProjection(v,reviews),now=calendarDay(today.toISOString());
   const days=value=>calendarDay(value)!==null?calendarDay(value)-now:null;
