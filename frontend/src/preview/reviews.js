@@ -1,7 +1,6 @@
 import {completeRiskReview,riskSnapshot} from './risks';
 import {isoCompletionSnapshot} from './isoAudit';
 import {initialAuditState,auditEvidenceIds} from '../lib/isoAudit';
-import {nextPolicyReview} from '../lib/brawndoPolicies';
 import { list, record, write, now, audit, uid, clone } from './store';
 import { occurrenceId, reviewView, reviewSchedule, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
 
@@ -45,11 +44,10 @@ export function reviewAction(db, id, name, body) {
     completed_by:db.user.user_id, completed_by_name:db.user.name, notes:body.completion_notes ?? review.notes,
     outcome:findings.length ? 'findings_raised' : 'no_findings', finding_count:findings.length,
     evidence:evidence.map(e => ({evidence_id:e.evidence_id,filename:e.filename,version:e.version,sha256:e.sha256}))});
-  const policyPilot=review.client_id==='demo_brawndo'&&!!review.policy_id;
-  const next = review.risk_id?completeRiskReview(db,review,completed,body):policyPilot?nextPolicyReview(completed.completed_at.slice(0,10),review.recurrence,review.custom_recurrence_days):current.next_review_date;
-  if(policyPilot)completed.next_review_date=next;
+  // Recurrence stays anchored to the scheduled cycle; completion date is recorded, never used as the next anchor.
+  const next = review.risk_id?completeRiskReview(db,review,completed,body):current.next_review_date;
   write(db, 'reviews', {
-    occurrences:[...(occurrences || []), completed], schedule_anchor:policyPilot||review.risk_id&&review.client_id==='demo_brawndo'?null:current.schedule_anchor,
+    occurrences:[...(occurrences || []), completed], schedule_anchor:completed.next_review_override?null:current.schedule_anchor,
     ...(next ? {status:'upcoming',due_date:next,current_occurrence_id:uid('occ'),notes:null,started_by:null,started_at:null,
       completion_date:null,completion_snapshot:null,risk_baseline:null,...(review.iso_audit?{iso_audit:initialAuditState(review.iso_audit.package_key,review.iso_audit.cycle+1)}:{})}
       : {status:'completed',current_occurrence_id:occurrenceId(review),completion_date:completed.completed_at})

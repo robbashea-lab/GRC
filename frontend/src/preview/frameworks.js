@@ -22,7 +22,7 @@ const validateVerificationChecklist=(value,definitionId)=>{
     return [tier,[...new Set(ids)]];
   }));
 };
-const writable=db=>{if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');};
+const writable=db=>{if(!['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(db.user.role))throw new Error('Read-only role');};
 export function frameworkScope(db,cid){
   record(db,'clients',cid);
   if(db.user.role!=='super_admin'&&!(db.user.role==='platform_admin'&&!db.user.client_ids?.length)&&!db.user.client_ids?.includes(cid))throw new Error('Forbidden');
@@ -226,8 +226,12 @@ export function frameworkRequest(db,path,method,params,body){
     if(!body.title?.trim()||!body.remediation_title?.trim()||!body.request_id||!['low','medium','high','critical'].includes(body.severity||'medium'))throw new Error('Finding and Action titles, valid severity and request ID are required');
     const fid=stable(row.client_id,'finding',id+':'+body.request_id);let f=db.findings.find(f=>f.finding_id===fid);
     // A departed or out-of-scope safeguard owner is never copied onto new work; the Finding starts unassigned.
-    const owner=row.owner_id&&eligible(db.users.find(u=>u.user_id===row.owner_id),row.client_id)?row.owner_id:null;
-    if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:owner,remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
+    let owner=row.owner_id&&eligible(db.users.find(u=>u.user_id===row.owner_id),row.client_id)?row.owner_id:null;
+    // Optional at creation, as in the backend: an explicit owner must be eligible; a target date must be valid.
+    if(Object.prototype.hasOwnProperty.call(body,'owner_id')){owner=body.owner_id||null;if(owner&&!eligible(db.users.find(u=>u.user_id===owner),row.client_id))throw new Error('Finding owner must be an active user with access to this client');}
+    const due=body.due_date?calendarDay(body.due_date):null;
+    if(body.due_date&&due===null)throw new Error('Enter a valid target date');
+    if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:owner,due_date:due===null?null:new Date(due*86400000).toISOString().slice(0,10),remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
     action(db,'findings',fid,'create-task',{title:f.remediation_title});return f;
   }
   throw new Error('Unsupported framework operation; assessment history is retained');

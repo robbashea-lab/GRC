@@ -23,13 +23,13 @@ test('approval with no historical dates preserves blanks and defaults only next 
   expect(approved.next_review_date).toBe(nextPolicyReview(new Date().toISOString().slice(0,10)));
   expect(approved.approved_at).toBeFalsy();expect(approved.last_reviewed_at).toBeFalsy();
 });
-test('Brawndo completion owns dates, preserves overrides and does not duplicate Reviews',async()=>{
+test('Brawndo policy review keeps the scheduled cycle on completion, records the actual date, and does not duplicate Reviews',async()=>{
   const p=await create(),review=(await api.post('/reviews',{client_id:cid,policy_id:p.policy_id,title:'Synthetic policy review',review_type:'policy',recurrence:'annual',due_date:'2024-02-29'})).data;
   const before=readStore().reviews.length;
   await expect(api.post(`/policies/${p.policy_id}/verify`,{status:'draft',next_review_date:'2099-01-01'})).rejects.toBeTruthy();
   const result=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data;
   const policy=(await api.get('/policies/'+p.policy_id)).data;
-  expect(policy.next_review_date.slice(0,10)).toBe(nextPolicyReview(result.occurrence.completed_at.slice(0,10)));
+  expect(policy.next_review_date.slice(0,10)).toBe('2025-02-28');
   expect(policy.last_reviewed_at).toBe(result.occurrence.completed_at);expect(readStore().reviews.length).toBe(before);
   await api.patch('/policies/'+p.policy_id,{title:'Updated title'});
   expect((await api.get('/policies/'+p.policy_id)).data.next_review_date).toBe(policy.next_review_date);
@@ -40,12 +40,11 @@ test('other clients keep their original policy import and review behavior',async
   expect(approved.next_review_date).toBeFalsy();
 });
 
-test.each([['quarterly',null],['custom',45],['none',null]])('policy review preserves %s override and completion snapshot',async(cadence,days)=>{
+test.each([['quarterly',null,'2025-04-30'],['custom',45,'2025-03-17'],['none',null,null]])('policy review keeps the %s schedule anchored to the due date',async(cadence,days,expected)=>{
   const p=await create(),review=(await api.post('/reviews',{client_id:cid,policy_id:p.policy_id,title:'Synthetic override review',review_type:'policy',recurrence:cadence,custom_recurrence_days:days,due_date:'2025-01-31'})).data;
   const result=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data;
-  const expected=nextPolicyReview(result.occurrence.completed_at.slice(0,10),cadence,days);
-  expect(result.occurrence.next_review_date).toBe(expected);
-  expect((await api.get('/policies/'+p.policy_id)).data.next_review_date).toBe(expected);
+  expect(result.occurrence.next_review_date?.slice(0,10)??null).toBe(expected);
+  expect((await api.get('/policies/'+p.policy_id)).data.next_review_date?.slice(0,10)??null).toBe(expected);
   expect((await api.get('/reviews/'+review.review_id)).data.occurrences).toHaveLength(1);
 });
 

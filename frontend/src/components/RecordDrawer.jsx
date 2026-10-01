@@ -1,3 +1,4 @@
+import {recordUuid} from '@/lib/recordUuid';
 import {readEvidenceFile as fileToBase64} from '@/lib/evidenceFile';
 import {RiskCategoryField,RiskTreatmentField,RiskSummary} from './BrawndoRiskFields';
 import {pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
@@ -233,7 +234,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if(vendorPilot){delete base.vendorTab;delete base.assuranceId;}
       setForm(base);
       initialForm.current=base;setDiscardOpen(false);setApprovalDirty(false);if(pilot)setNewComment('');
-      setTab(vendorPilot&&initialValues?.vendorTab==='assurance'?'assurance':'overview');
+      setTab(vendorPilot&&['assurance','contract'].includes(initialValues?.vendorTab)?initialValues.vendorTab:'overview');
       if (isEdit) {
         loadComments();
         loadActivity();
@@ -412,7 +413,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
 
   async function quickCreateFinding() {
-    setFindingForm({ title: "", description: "", severity: "medium", owner_id: record.owner_id || "", due_date: "", remediation_title: "", remediation_plan: "" });
+    setFindingForm({ request_id: recordUuid(), title: "", description: "", severity: "medium", owner_id: record.owner_id || "", due_date: "", remediation_title: "", remediation_plan: "" });
     setFindingOpen(true);
   }
 

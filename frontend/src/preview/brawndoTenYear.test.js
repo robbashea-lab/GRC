@@ -486,6 +486,9 @@ const KEY_POLICIES = ['information-security-policy', 'access-control-identity-ma
 async function establishPolicyReviews() {
   for (const key of KEY_POLICIES) {
     const p = await get(`/policies/demo_brawndo_policy-${key}`);
+    // Brawndo Policies already schedule through one linked recurring Review; reuse it instead of adding another.
+    const existing = raw().reviews.find(r => r.client_id === CID && r.policy_id === p.policy_id && !['completed', 'cancelled'].includes(r.status));
+    if (existing) {report.policies.events.push({today, policy: p.title, event: 'linked annual Review already established', review_id: existing.review_id});continue;}
     const due = day(p.next_review_date) > today ? day(p.next_review_date) : addDays(today, 30);
     const r = await call('post', '/reviews', {client_id: CID, title: `Annual Policy Review — ${p.title}`, review_type: 'policy', policy_id: p.policy_id, recurrence: 'annual', due_date: due, owner_id: p.owner_id,
       governance_context: {category: 'organizational', rationale: 'Annual policy review with retained occurrence history.', cadence_source: 'organization_defined', cadence_rationale: 'Annual governance review.'}}, null, {label: 'establish policy review'});
@@ -774,7 +777,8 @@ function signalCheck(registers, now) {
 async function calendarCheck(reviews, findings, tasks) {
   const start = today.slice(0, 8) + '01', end = addDays(new Date(Date.UTC(+today.slice(0, 4), +today.slice(5, 7), 1)).toISOString().slice(0, 10), -1);
   const cal = await get('/calendar', {client_id: CID, start, end, scope: 'active'});
-  const entries = Object.values(cal || {}).flatMap(group => Object.values(group).flat());
+  // Vendor dates (assurance follow-up, contract renewal, notice) are projected from Vendor records, not dated work records.
+  const entries = Object.entries(cal || {}).filter(([bucket]) => bucket !== 'vendor_dates').flatMap(([, group]) => Object.values(group).flat());
   const keys = new Set(entries.map(e => e.kind + ':' + e.id));
   const expect = [...reviews.filter(r => ['upcoming', 'in_progress', 'needs_scheduling'].includes(r.status)).map(r => ['review', r.review_id, r.due_date]),
     ...findings.filter(f => OPEN_FINDING.includes(f.status)).map(f => ['finding', f.finding_id, f.due_date]), ...tasks.filter(t => !TASK_DONE.includes(t.status)).map(t => ['task', t.task_id, t.due_date])]

@@ -61,7 +61,7 @@ function vendorMatchesView(v, view) {
 
 
 // Brawndo summary tiles. Each tile uses the register's own view rule and drives that view.
-const PILOT_CHIPS=[['all_active','All active'],['review_due','Reviews due'],['review_overdue','Reviews past due'],['critical_high','Critical / High'],['contract_soon','Contracts expiring'],['renewal_soon','Renewals upcoming'],['assurance','Assurance due'],['inactive','Inactive']];
+const PILOT_CHIPS=[['all_active','All active'],['review_due','Reviews due'],['review_overdue','Reviews past due'],['critical_high','Critical / High'],['contract_soon','Contracts expiring'],['renewal_soon','Renewals upcoming'],['assurance','Assurance follow-up due'],['inactive','Inactive']];
 const names=list=>list.length?list.slice(0,2).map(v=>v.name).join(', ')+(list.length>2?` +${list.length-2}`:''):'';
 const byDate=key=>(a,b)=>String(key(a)||'').localeCompare(String(key(b)||''));
 export function vendorTiles(rows,now=new Date()){
@@ -72,7 +72,7 @@ export function vendorTiles(rows,now=new Date()){
   return [
     {id:'critical_high',label:'Critical / High',count:crit.length,tone:'critical',context:names(crit)||'No critical or high vendors'},
     {id:'review_due',label:'Review due in 30 days',count:due.length,tone:'attention',context:due.length?`${due[0].name}, ${shortDate(due[0].next_review)}${due.length>1?` +${due.length-1}`:''}`:'No reviews due'},
-    {id:'assurance',label:'Assurance due',count:assur.length,tone:'attention',context:names(assur)||'No assurance follow-ups due'},
+    {id:'assurance',label:'Assurance follow-up due',count:assur.length,tone:'attention',context:names(assur)||'No assurance follow-ups due'},
     {id:'contract_soon',label:'Contracts expiring',count:exp.length,tone:'attention',context:exp.length?names(exp):nextRenewal?`Next renewal: ${nextRenewal.name}, ${shortDate(nextRenewal.contract_renewal)}`:'No upcoming renewals'},
   ];
 }
@@ -88,7 +88,7 @@ export default function VendorRegister() {
   const [q, setQ] = useState("");
   const [searchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] ? searchParams.get("view") : "all_active";
+  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -199,7 +199,7 @@ export default function VendorRegister() {
                       <td className="tbl-cell">{dt.length?<span className="bvendors-tags">{dt.map(d=><span key={d} className="bvendors-tag">{d}</span>)}</span>:<span className="register-empty">—</span>}</td>
                       <td className="tbl-cell"><OwnerCell people={users} id={v.business_owner_id} status={v.status} /></td>
                       <td className="tbl-cell">{v.next_review ? <DueDate iso={v.next_review} closed={closed} /> : <span className="register-empty">Not scheduled</span>}
-                        {assur&&<button type="button" className="bvendors-note" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v,tab:'assurance'});}}>Assurance report due</button>}</td>
+                        {assur&&<button type="button" className="bvendors-note" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v,tab:'assurance'});}}>Assurance follow-up due</button>}</td>
                       <td className="tbl-cell">{v.contract_renewal ? <DueDate iso={v.contract_renewal} closed={closed} /> : <span className="register-empty">No renewal date</span>}{view==='renewal_soon'&&<span className="bpage-meta">{renewalAction(v).label}: {shortDate(renewalAction(v).date)}</span>}</td>
                       <td className="tbl-cell"><HistoryDate value={v.last_review} empty="Never reviewed" /></td>
                     </tr>

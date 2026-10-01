@@ -720,6 +720,11 @@
           "definition_id": "12.1",
           "interval": "monthly",
           "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/"
+        },
+        {
+          "definition_id": "2.1",
+          "interval": "semiannual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/"
         }
       ],
       "title": "Software Authorization & Support Review",
@@ -835,6 +840,11 @@
         {
           "definition_id": "7.2",
           "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/"
+        },
+        {
+          "definition_id": "7.1",
+          "interval": "annual",
           "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/"
         }
       ],

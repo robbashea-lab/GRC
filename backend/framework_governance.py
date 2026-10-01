@@ -2,7 +2,7 @@
 import json
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -220,6 +220,9 @@ class FindingInput(BaseModel):
     description:str=Field(default='',max_length=20000)
     severity:Literal['low','medium','high','critical']='medium'
     request_id:str=Field(min_length=1,max_length=128)
+    # Optional at creation; omitted, the Finding inherits the safeguard owner and has no target date.
+    owner_id:Optional[str]=Field(default=None,max_length=200)
+    due_date:Optional[str]=Field(default=None,max_length=40)
 
 async def related(s,row):
     cid,aid,did=row['client_id'],row['framework_assessment_id'],row['definition_id']
@@ -432,8 +435,16 @@ def router_for(s):
         # the Finding and its Action start visibly unassigned instead of failing.
         owner=row.get('owner_id')
         if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):owner=None
+        if 'owner_id' in body.model_fields_set:
+            owner=body.owner_id or None
+            if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):
+                raise HTTPException(422,'Finding owner must be an active user with access to this client')
+        due=None
+        if body.due_date:
+            try:due=date.fromisoformat(body.due_date[:10]).isoformat()
+            except ValueError:raise HTTPException(422,'Enter a valid target date')
         doc={'finding_id':fid,'client_id':row['client_id'],'title':body.title.strip(),'description':body.description,'severity':body.severity,
-             'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':owner,
+             'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':owner,'due_date':due,
              'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'remediation_title':body.remediation_title.strip()}
         previous=await s.db.findings.find_one({'finding_id':fid,'client_id':row['client_id']})
         if not previous:

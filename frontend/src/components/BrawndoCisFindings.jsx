@@ -1,0 +1,60 @@
+import {Button} from './ui/button';
+import {Input} from './ui/input';
+import {Textarea} from './ui/textarea';
+import AssigneeSelect from './AssigneeSelect';
+import api from '@/lib/api';
+import {recordUuid} from '@/lib/recordUuid';
+import {actionStatus} from '@/lib/actionItems';
+import {findingOpen} from '@/lib/findingMetrics';
+
+// Compact safeguard-level Findings for the Brawndo CIS workspace. The safeguard is the authoritative
+// origin (framework_assessment_id); the Finding owns its Action and its validation lifecycle.
+export const SEVERITY_LABELS={low:'Low',medium:'Moderate',high:'High',critical:'Critical'};
+export const FINDING_STATUS_LABELS={open:'Open',in_remediation:'In remediation',remediated:'Pending Validation',closed:'Closed',accepted:'Accepted'};
+const day=v=>v?String(v).slice(0,10):null;
+
+export function directFindings(record,related){
+  const links=new Set((record.related_links||[]).filter(l=>l.kind==='findings').map(l=>l.id));
+  return (related?.findings||[]).filter(f=>f.client_id===record.client_id&&(f.framework_assessment_id===record.framework_assessment_id||links.has(f.finding_id)));
+}
+
+export default function BrawndoCisFindings({record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested}){
+  const findings=directFindings(current,related),open=findings.filter(findingOpen),closed=findings.filter(f=>!findingOpen(f));
+  const actions=f=>(related?.tasks||[]).filter(t=>t.finding_id===f.finding_id&&t.client_id===record.client_id);
+  const disabled=!writable||busy||!ctx,aid=record.framework_assessment_id;
+  const start=()=>setFinding({request_id:recordUuid(),title:'',description:'',severity:'medium',owner_id:current.owner_id||'',due_date:'',remediation_title:''});
+  const put=(k,v)=>setFinding(p=>({...p,[k]:v}));
+  const submit=()=>run(async()=>{
+    const {owner_id,...body}=finding;
+    // An unchanged owner is inherited from the safeguard (with the existing eligibility fallback).
+    await api.post(`/framework_assessments/${aid}/findings`,{...body,due_date:body.due_date||null,...(owner_id!==(current.owner_id||'')?{owner_id:owner_id||null}:{})});
+    setFinding(null);
+  });
+  const row=f=>{const work=actions(f),active=work.filter(t=>!['done','cancelled'].includes(t.status));
+    const action=active[0]||work[0];
+    return <li key={f.finding_id} className="bcsg-finding" data-testid={`safeguard-finding-${f.finding_id}`}>
+      <button type="button" className="bcsg-finding-title" disabled={busy} onClick={()=>setNested({kind:'findings',record:f})}>{f.title}</button>
+      <span className="bcsg-finding-meta">{[SEVERITY_LABELS[f.severity]||f.severity,FINDING_STATUS_LABELS[f.status]||f.status,
+        action?`Action ${actionStatus(action.status).toLowerCase()}${action.due_date&&!['done','cancelled'].includes(action.status)?` · due ${day(action.due_date)}`:''}`:'No Action',
+        f.due_date&&findingOpen(f)?`Target ${day(f.due_date)}`:null].filter(Boolean).join(' · ')}</span>
+    </li>;};
+  return <section className="bcsg-findings" aria-labelledby="bcsg-findings-heading">
+    <div className="bcsg-findings-head"><h3 id="bcsg-findings-heading">Findings</h3>
+      {writable&&!finding&&<Button size="sm" variant="outline" disabled={disabled} onClick={start}>Raise Finding</Button>}</div>
+    {open.length?<ul aria-label="Open Findings">{open.map(row)}</ul>:<p className="bcsg-muted">No open Findings for this safeguard.</p>}
+    {!!closed.length&&<details className="bcsg-closed"><summary>{closed.length} closed / validated</summary><ul aria-label="Closed Findings">{closed.map(row)}</ul></details>}
+    {finding&&<fieldset disabled={disabled} className="bcsg-finding-form"><legend>Raise Finding</legend>
+      <p className="bcsg-muted" data-testid="finding-origin">Origin: CIS IG1 · Safeguard {definition.id} — {definition.title}</p>
+      <label>Finding title<Input aria-label="Finding title" required value={finding.title} onChange={e=>put('title',e.target.value)}/></label>
+      <label>Description<Textarea aria-label="Finding description" maxLength={20000} value={finding.description} onChange={e=>put('description',e.target.value)}/></label>
+      <div className="bcsg-finding-grid">
+        <label>Severity<select aria-label="Finding severity" value={finding.severity} onChange={e=>put('severity',e.target.value)}>{Object.entries(SEVERITY_LABELS).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        <label>Target date<Input aria-label="Finding target date" type="date" value={finding.due_date} onChange={e=>put('due_date',e.target.value)}/></label>
+      </div>
+      <div><span className="bcsg-label">Owner</span><AssigneeSelect clientId={record.client_id} label="Finding owner" value={finding.owner_id} onChange={v=>put('owner_id',v||'')} users={ctx?.users||[]} disabled={disabled} showGuidance={false}/></div>
+      <label>Corrective action<Input aria-label="Corrective action" required value={finding.remediation_title} onChange={e=>put('remediation_title',e.target.value)}/></label>
+      <p className="bcsg-muted">Creates the Finding and one linked Action Item. Completing the Action moves the Finding to Pending Validation; it is closed only when validated.</p>
+      <div className="flex flex-wrap gap-2"><Button size="sm" disabled={disabled||!finding.title.trim()||!finding.remediation_title.trim()} onClick={submit}>Create Finding & Action</Button><Button size="sm" variant="ghost" onClick={()=>setFinding(null)}>Cancel</Button></div>
+    </fieldset>}
+  </section>;
+}

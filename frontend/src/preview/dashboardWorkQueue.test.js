@@ -11,7 +11,7 @@ test('bounded queue pages reconcile every total and use authoritative CIS record
   const before=(await api.get('/frameworks/cis-ig1',{params:{client_id:cid}})).data;
   const loaded=await loadClientDashboard(api,{clientId:cid,user:(await api.get('/auth/me')).data,scope:{kind:'org'},workQueue:true});
   expect(loaded.programs.map(p=>p.key)).toEqual(['cis-ig1']);
-  expect(cisSummary(loaded.cisRows)).toMatchObject({addressed:33,assessed:49,total:56});
+  expect(cisSummary(loaded.cisRows)).toMatchObject({addressed:32,assessed:49,total:56});
   for(const [key,group] of Object.entries(loaded.queue.groups)) {
     expect(group.items.length).toBe(Math.min(9,group.total));
     const all=[];

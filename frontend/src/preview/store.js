@@ -1,6 +1,6 @@
 import {validateVendor,ensureVendorReviews,syncVendorReview} from './vendors';
 import { ensureRiskReview } from './risks';
-import { syncPolicyReview } from './policyReviews';
+import { syncPolicyReview, ensurePolicyReview } from './policyReviews';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
 import { validateAssignment } from './assignmentEligibility';
@@ -59,9 +59,14 @@ export function seedStore(clock=new Date()) {
   const db = normalizePolicyDates(initializeRiskIds(buildDemoStore(Object.keys(ids),clock)));
   db.risks.forEach(risk => ensureRiskReview(db, risk));
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
+  // Brawndo Policies schedule through linked recurring Reviews; their existing next-review dates are kept.
+  db.policies.forEach(policy => ensurePolicyReview(db, policy));
   // Only explicit Demo creation/reset seeds framework work; standard startup never calls this.
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
-  return finishDunder(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock);
+  const finished=finishDunder(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock);
+  // Policy dates derive from their Review history once that history exists.
+  finished.reviews.filter(r=>r.client_id==='demo_brawndo'&&r.policy_id).forEach(r=>syncPolicyReview(finished,r));
+  return finished;
 }
 function installCanonicalDunder(db){
   if(db.clients.some(c=>c.client_id==='demo_dunder'&&c.demo_program_version==='iso27001-year2-v1'))return false;
@@ -145,6 +150,10 @@ export function validate(db, kind, body, existing) {
   const field = ['clients', 'vendors', 'assets', 'users'].includes(kind) ? 'name' : ['contacts', 'evidence'].includes(kind) ? null : 'title';
   if (field && !String(body[field] || '').trim()) throw new Error(`${field === 'name' ? 'Name' : 'Title'} is required.`);
   if (kind === 'reviews' && !body.review_type) throw new Error('Review type is required.');
+  // Brawndo: one active recurring Review per Policy; completed history is retained, never duplicated.
+  if (kind === 'reviews' && body.client_id === 'demo_brawndo' && body.policy_id && !['completed','cancelled'].includes(body.status)
+    && db.reviews.some(r => r.client_id === body.client_id && r.policy_id === body.policy_id && r.review_id !== body.review_id && !['completed','cancelled'].includes(r.status)))
+    throw new Error('This Policy already has an active Review; open it instead.');
   if (kind === 'contacts' && !body.not_applicable && !body.name && !body.email && !body.role) throw new Error('Enter a contact name, email, or role.');
   if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) throw new Error('Enter a valid email address.');
   for (const [relation, collection] of Object.entries({
@@ -277,7 +286,7 @@ export function write(db, kind, body, id) {
       }];
     }
   }
-  const riskEvent = !existing?"Risk created":row.status!==existing.status&&row.status==="closed"?"Risk closed":row.acceptance_date!==existing.acceptance_date?"Risk accepted":row.likelihood_score!==existing.likelihood_score||row.impact_score!==existing.impact_score?"Risk reassessed":row.owner_id!==existing.owner_id?"Risk owner assigned":row.treatment!==existing.treatment?"Treatment updated":row.next_review!==existing.next_review?"Next Risk Review scheduled":"Risk updated";
+  const riskEvent = !existing?"Risk created":row.status!==existing.status&&row.status==="closed"?"Risk closed":row.acceptance_date!==existing.acceptance_date?"Risk accepted":row.likelihood_score!==existing.likelihood_score||row.impact_score!==existing.impact_score?"Risk reassessed":row.owner_id!==existing.owner_id?"Risk owner assigned":row.treatment!==existing.treatment?"Treatment updated":String(row.next_review||"").slice(0,10)!==String(existing.next_review||"").slice(0,10)?"Next Risk Review scheduled":"Risk updated";
   const taskEvent = !existing ? 'Action Item created' : row.status!==existing.status ? row.status==='done'?'Action Item completed':row.status==='in_progress'?'Work started':'Status changed' : row.assignee_id!==existing.assignee_id?'Assignment changed':'Action Item updated';
   if (existing) Object.assign(existing, row);else db[kind].unshift(row);
   if (kind === "risks") ensureRiskReview(db, existing || row);
@@ -299,7 +308,7 @@ export function write(db, kind, body, id) {
     if (finding && ['open', 'in_remediation', 'remediated'].includes(finding.status)) {
       const work = db.tasks.filter(t => t.finding_id === row.finding_id && t.client_id === row.client_id);
       const next = work.every(t => ['done', 'cancelled'].includes(t.status)) ? 'remediated' : 'in_remediation';
-      if(next!==finding.status) audit(db,next==='remediated'?'Related Finding moved to Pending Validation':'Related Finding moved to In Remediation','tasks',row,{finding_id:finding.finding_id});
+      if(next!==finding.status){const event=next==='remediated'?'Related Finding moved to Pending Validation':'Related Finding moved to In Remediation';audit(db,event,'tasks',row,{finding_id:finding.finding_id});audit(db,event.replace('Related Finding','Finding'),'findings',finding,{task_id:row.task_id});}
       finding.status = next;
       finding.updated_at = now();
     }
