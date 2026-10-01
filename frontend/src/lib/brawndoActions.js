@@ -45,7 +45,7 @@ export function unifiedActions(records,clientId) {
   const findings=(records.findings||[]).filter(f=>f.client_id===clientId),tasks=(records.tasks||[]).filter(t=>t.client_id===clientId);
   // A Finding is represented by its active Action; once no Action is active (e.g. Pending Validation) the Finding is the open work item.
   const paired=new Set(tasks.filter(t=>!['done','cancelled'].includes(t.status)).map(t=>t.finding_id).filter(Boolean));
-  return [...tasks.map(raw=>({kind:'tasks',raw,finding:findings.find(f=>f.finding_id===raw.finding_id)})),...findings.filter(f=>!paired.has(f.finding_id)).map(raw=>({kind:'findings',raw,finding:raw}))].map(row=>({
+  return [...tasks.map(raw=>({kind:'tasks',raw,finding:findings.find(f=>f.finding_id===raw.finding_id)})),...findings.filter(f=>!paired.has(f.finding_id)).map(raw=>({kind:'findings',raw,finding:raw,hasAction:tasks.some(t=>t.finding_id===raw.finding_id&&t.client_id===raw.client_id&&t.status==='done')}))].map(row=>({
     ...row,id:row.raw.task_id||row.raw.finding_id,title:row.kind==='tasks'?actionTitle(row.raw):row.raw.title,
     client_id:clientId,owner_id:row.kind==='tasks'?(row.raw.assignee_id??row.raw.owner_id):row.raw.owner_id,
     due_date:row.raw.due_date,priority:row.raw.priority||row.raw.severity,
