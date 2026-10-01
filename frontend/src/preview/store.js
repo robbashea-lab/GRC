@@ -8,7 +8,7 @@ import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
-import {finishInitech} from './programs/initech';
+import {removeRetiredDemoClients} from './retiredClients';
 import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -60,7 +60,7 @@ export function seedStore(clock=new Date()) {
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
   // Only explicit Demo creation/reset seeds framework work; standard startup never calls this.
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
-  return finishInitech(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock,{action,write,frameworkRequest});
+  return finishDemoStore(db,clock,{action,write,frameworkRequest});
 }
 export function readStore() {
   dropLegacyStores();
@@ -69,8 +69,9 @@ export function readStore() {
   if (saved) {
     let db;try{db=JSON.parse(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
+    const retired=removeRetiredDemoClients(db);
     const light=lightweightStore(db);
-    if(light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
+    if(retired||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
     return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
   }
   clearFileCache();

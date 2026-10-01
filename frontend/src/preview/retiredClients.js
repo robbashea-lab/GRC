@@ -1,0 +1,27 @@
+// Explicit synthetic identities only. Never runs against backend tenant data.
+const RETIRED = new Set(['demo_initech', 'demo_dunder']);
+export function removeRetiredDemoClients(db) {
+  const retiredUser = id => [...RETIRED].some(cid => id?.startsWith(cid + '_'));
+  let changed = false;
+  for (const [key, value] of Object.entries(db)) {
+    if (Array.isArray(value)) {
+      const kept = value.filter(row => !RETIRED.has(row.client_id) && !(key === 'users' && retiredUser(row.user_id)));
+      if (kept.length !== value.length) { db[key] = kept; changed = true; }
+    }
+  }
+  for (const user of [...(db.users || []), db.user].filter(Boolean)) {
+    for (const field of ['client_ids', 'favorite_client_ids']) if (Array.isArray(user[field])) {
+      const kept = user[field].filter(id => !RETIRED.has(id));
+      if (kept.length !== user[field].length) { user[field] = kept; changed = true; }
+    }
+  }
+  for (const field of ['baselines', 'drafts']) for (const id of RETIRED) {
+    if (db[field] && Object.hasOwn(db[field], id)) { delete db[field][id]; changed = true; }
+  }
+  // A removed client persona cannot remain the active simulated identity.
+  if (retiredUser(db.user?.user_id)) {
+    db.user = {...db.users.find(user => user.user_id === 'demo_admin')};
+    changed = true;
+  }
+  return changed;
+}

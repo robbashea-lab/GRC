@@ -9,15 +9,6 @@ export const demoOrganizations = [{
   lead: 'demo_provider_lead',
   former: 'Dr. Lexus'
 }, {
-  key: 'dunder',
-  name: 'Dunder Mifflin',
-  frameworks: ['iso-27001'],
-  industry: 'Business supplies / distribution',
-  employees: 450,
-  people: ['Dwight Schrute', 'David Wallace', 'Pam Beesly', 'Michael Scott', 'Jim Halpert', 'Angela Martin', 'Oscar Martinez', 'Toby Flenderson', 'Darryl Philbin'],
-  lead: 'demo_provider_consultant',
-  former: 'Ryan Howard'
-}, {
   key: 'prestige',
   name: 'Prestige Worldwide',
   frameworks: ['soc-2'],
@@ -26,23 +17,13 @@ export const demoOrganizations = [{
   people: ['Dale Doback', 'Robert Doback', 'Brennan Huff', 'Nancy Huff', 'Derek Huff', 'Alice Huff'],
   lead: 'demo_provider_lead',
   former: 'Randy'
-}, {
-  key: 'initech',
-  name: 'Initech',
-  frameworks: ['cis-ig1', 'iso-27001', 'soc-2'],
-  industry: 'Software / managed business services',
-  employees: 320,
-  people: ['Peter Gibbons', 'Bill Lumbergh', 'Michael Bolton', 'Samir Nagheenanajar', 'Joanna', 'Bob Slydell', 'Bob Porter', 'Milton Waddams'],
-  roles: ['platform_admin', 'client_grc_manager', 'client_contributor', 'client_contributor', 'client_grc_manager', 'client_grc_manager', 'client_readonly'],
-  lead: 'demo_initech_user_0',
-  former: 'Dom Portwood'
 }];
 // The service provider's GRC team runs each program (platform_admin, assigned clients only).
 // Client staff hold client roles: people[0] is the client's GRC manager, people[1-2] contributors,
 // people[3] read-only; `former` is a departed employee whose disabled account still owns history.
 export const providerStaff = [
   {user_id: 'demo_provider_lead', name: 'Morgan Ellis', title: 'vCISO', clients: ['brawndo', 'prestige']},
-  {user_id: 'demo_provider_consultant', name: 'Sam Okafor', title: 'GRC Consultant', clients: ['dunder', 'brawndo']},
+  {user_id: 'demo_provider_consultant', name: 'Sam Okafor', title: 'GRC Consultant', clients: ['brawndo']},
 ];
 export const clientPersonaRoles = ['client_grc_manager', 'client_contributor', 'client_contributor', 'client_readonly'];
 export function demoDates(clock = new Date()) {
