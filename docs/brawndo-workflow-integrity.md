@@ -61,7 +61,7 @@ Every fix has a regression test that fails without the fix and passes with it.
 | 9 | Rescheduling a Risk or Vendor review kept the old recurrence day (moved to Nov 10, completed → Feb 25 instead of Feb 10) | The projection overwrote the reset anchor | Reset first, then project | `brawndoScheduleIntegrity.test.js` | Demo, all clients (bug fix) |
 | 10 | Seeded Brawndo history drifted on month-end cadences (Feb 28 → May 30 instead of May 31) | The seed stepped back from the previous step, not from the anchor | Step back from the anchor with month-end handling. Gated to Brawndo, so other clients' seed data is unchanged. | `brawndoScheduleIntegrity.test.js` | No |
 | 11 | A Finding raised in a Policy Review wasn't visible from the Policy | `/related` for policies didn't follow the policy's Reviews | Include Findings and Actions from the policy's Reviews (backend and Demo) | `test_workflow_integrity.py`, `brawndoScheduleIntegrity.test.js` | Yes (bug fix) |
-| 12 | The Dashboard still counted vendor assurance as due after the document was marked Reviewed. The Vendors page cleared it. | The Dashboard used the generic `assuranceStatus` rule | Brawndo vendors use the Vendors workspace rule (`vendorMatches('assurance')`) | `dashboardPosture.test.js` | No |
+| 12 | (Withdrawn) The Dashboard assurance count was aligned with the Brawndo Vendors page, then reverted | — | The ten-year reconciliation showed the two rules disagree on *missing* documents, so this is a rule decision (significant issue #15) | — | — |
 | 13 | A never-assessed safeguard showed "Not assessed · Morgan Ellis" | The assessor was shown without a last-assessed date | Show the assessor only when there is an assessment | `BrawndoCisAssessment.test.jsx` | No |
 | 14 | The diff review found that fix #8's provenance wording leaked into ISO, SOC 2 and Initech demo plans | The seed condition wasn't gated | Applied to Brawndo CIS plans only; other clients keep their original provenance | `brawndoSeedIntegrity.test.js` | Prevented |
 
@@ -105,7 +105,8 @@ Each issue lists the current behaviour, the risk or impact, and a recommendation
 
     Both need agreed definitions.
 14. **Complete Review has no confirmation or outcome step.** It records "No Findings" without notes even when Findings were raised. Changing this changes the review workflow.
-15. **Mixed date formats.** After a completion, Demo due dates are stored as full timestamps; seed data uses date-only. Views normalise them, but equality comparisons are fragile.
+15. **"Assurance needs attention" has two rules.** The Dashboard and the ten-year reconciliation use the generic `assuranceStatus` rule, which counts expired, due-soon or *missing* required documents. The Brawndo Vendors page uses `assuranceAttention`, which counts follow-ups and certificate expiry only and ignores missing documents. After a questionnaire is marked Reviewed, the Vendors page reads 0 while the Dashboard reads 1. Decide whether a missing required document counts; both views should then use that rule.
+16. **Mixed date formats.** After a completion, Demo due dates are stored as full timestamps; seed data uses date-only. Views normalise them, but equality comparisons are fragile.
 
 ## Results
 
@@ -153,7 +154,7 @@ No Brawndo Review is less frequent than its CIS source, and none is duplicated. 
 | 21 (Calendar shows assurance and contract dates) | Fail | See significant issue #11 |
 | 24 (raise a CIS Finding from the safeguard) | Not available | See significant issue #1 |
 
-Bug fixed after the browser pass: Dashboard and Vendors assurance counts (fix #12).
+The Dashboard and Vendors assurance counts disagree. This is now significant issue #15: a fix was tried and reverted because the right rule is a business decision.
 
 Usability notes (not changed):
 - At 768 the Calendar grid scrolls inside its card (it has a minimum width).
