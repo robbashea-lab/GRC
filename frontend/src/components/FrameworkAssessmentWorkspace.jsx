@@ -150,7 +150,7 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
               </li>)}</ul>
               {ctx&&!related.tasks?.length&&<p className="text-sm text-ink-secondary">No linked Action Items.</p>}
             </Step>
-<section className="brawndo-step" aria-label="Organizational Controls"><OrganizationalControls clientId={clientId} assessmentId={aid} onDraftChange={setControlDraft} onSaved={controlSaved}/></section>
+{framework!=='iso-27001'&&<section className="brawndo-step" aria-label="Organizational Controls"><OrganizationalControls clientId={clientId} assessmentId={aid} onDraftChange={setControlDraft} onSaved={controlSaved}/></section>}
 
   </AssessmentShell>;
 }
