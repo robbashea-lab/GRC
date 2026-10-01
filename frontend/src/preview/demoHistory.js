@@ -2,7 +2,7 @@ import { demoDates, demoOrganizations } from './demoPortfolio';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { frameworkDefinition, CATALOGS } from '../lib/frameworks';
 import { approvalSnapshot } from './policyProvenance';
-import { BRAWNDO_CIS, BRAWNDO_CIS_FINDINGS } from './brawndoProgram';
+import { BRAWNDO_CIS, BRAWNDO_CIS_FINDINGS, brawndoVerification } from './brawndoProgram';
 import { clientProgram } from './programs';
 export function previousDate(value, months) {
   const d = new Date(value + 'T12:00:00Z'),
@@ -353,6 +353,7 @@ export function finishDemoStore(db, clock, {
         implementation: reference[3],
         notes: ''
       });
+      if (brawndo) patch.verification = brawndoVerification(brawndo);
       if (row) patch.owner_id = users[row.owner].user_id;
       if (d.specification === 'annex_control') Object.assign(patch, row ? {
         soa_applicability: row.soa,

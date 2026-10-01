@@ -199,8 +199,10 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         governance_context: {
           category: 'organizational',
           rationale: 'Recurring operating verification with retained occurrence evidence and management follow-up.',
-          cadence_source: 'organization_defined',
-          cadence_rationale: 'Management selected this operating interval; source-prescribed intervals are displayed separately.'
+          // Provenance follows the plan: an explicit CIS interval, or an Omnisciente recommendation where CIS states none.
+          ...(p.framework_key&&!p.source_minimum?{cadence_source:'recommended',cadence_rationale:'Omnisciente recommended validation interval. CIS does not prescribe a review interval for these safeguards.'}
+            :p.framework_key?{cadence_source:'organization_defined',cadence_rationale:'Management adopted the interval CIS states for the covered safeguards; source references are displayed separately.'}
+            :{cadence_source:'organization_defined',cadence_rationale:'Management selected this operating interval; source-prescribed intervals are displayed separately.'})
         }
       }));
     }
