@@ -27,6 +27,7 @@ import {evidenceKind} from '../lib/evidenceReferences';
 import {clearEvidenceFiles,demoDiagnostics} from './store';
 import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
 import {fileBytes} from './evidenceStorage';
+const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 export async function previewAdapter(config) {
@@ -437,13 +438,13 @@ export async function previewAdapter(config) {
         write(db, kind, fields, id);
         return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
-      // Scope retry identity to this pilot's vendor-origin action creation, after authorization.
-      const requestKey=kind==='tasks'&&!id&&body.client_id==='demo_brawndo'&&body.source_type==='vendor'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+      // Create retries reuse their Idempotency-Key (lib/api.js); replay the original record, as the backend does.
+      const requestKey=!id&&CREATE_REPLAY_KINDS.includes(kind)&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
       const requestScope=requestKey?JSON.stringify([db.user.user_id,body.client_id,requestKey]):null;
-      const priorRequest=requestScope&&db.vendor_action_requests?.[requestScope];
-      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');return respond(record(db,'tasks',priorRequest.task_id));}
+      const priorRequest=requestScope&&(db.create_requests?.[requestScope]||db.vendor_action_requests?.[requestScope]);
+      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');const prior=record(db,priorRequest.kind||'tasks',priorRequest.record_id||priorRequest.task_id);return kind==='clients'?save(clientProjection(db,prior)):respond(prior);}
       const result = write(db, kind, kind==='policies'&&id?invalidatePolicyApproval(body,record(db,kind,id)):body, id);
-      if(requestScope){db.vendor_action_requests||={};db.vendor_action_requests[requestScope]={body:JSON.stringify(body),task_id:result.task_id};}
+      if(requestScope){db.create_requests||={};db.create_requests[requestScope]={kind,body:JSON.stringify(body),record_id:result[ids[kind]]};}
       if (kind === 'clients') return save(clientProjection(db, result));
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});
