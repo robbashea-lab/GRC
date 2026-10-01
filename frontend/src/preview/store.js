@@ -8,6 +8,7 @@ import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
+import {finishDunder} from './programs/dunder';
 import {removeRetiredDemoClients} from './retiredClients';
 import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
@@ -60,7 +61,16 @@ export function seedStore(clock=new Date()) {
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
   // Only explicit Demo creation/reset seeds framework work; standard startup never calls this.
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
-  return finishDemoStore(db,clock,{action,write,frameworkRequest});
+  return finishDunder(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock);
+}
+function installCanonicalDunder(db){
+  if(db.clients.some(c=>c.client_id==='demo_dunder'&&c.demo_program_version==='iso27001-year2-v1'))return false;
+  const canonical=seedStore(),cid='demo_dunder';
+  for(const [key,value] of Object.entries(canonical))if(Array.isArray(value)&&key!=='users')(db[key]||=[]).push(...value.filter(row=>row.client_id===cid));
+  db.users.push(...canonical.users.filter(user=>user.user_id.startsWith(cid+'_')));
+  for(const user of [...db.users,db.user].filter(Boolean)){const source=canonical.users.find(candidate=>candidate.user_id===user.user_id);if(source?.client_ids.includes(cid)&&!(user.client_ids||[]).includes(cid))(user.client_ids||=[]).push(cid);}
+  for(const field of ['baselines','drafts','riskSequences','ai_intake','ai_counters'])if(canonical[field]?.[cid]!==undefined){db[field]||={};db[field][cid]=canonical[field][cid];}
+  return true;
 }
 export function readStore() {
   dropLegacyStores();
@@ -69,9 +79,9 @@ export function readStore() {
   if (saved) {
     let db;try{db=JSON.parse(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
-    const retired=removeRetiredDemoClients(db);
+    const retired=removeRetiredDemoClients(db),installed=installCanonicalDunder(db);
     const light=lightweightStore(db);
-    if(retired||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
+    if(retired||installed||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
     return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
   }
   clearFileCache();

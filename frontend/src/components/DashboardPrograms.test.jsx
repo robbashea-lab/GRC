@@ -27,6 +27,12 @@ test('empty assessment scope avoids a misleading zero percentage',async()=>{
   expect(container.textContent).toContain('Setup Required');
   expect(container.querySelector('[role="progressbar"]')).toBeNull();
 });
+test('ISO reference card labels the percentage as assessment progress',async()=>{
+  const iso={...program,key:'iso-27001',label:'ISO 27001',to:'/compliance/iso-27001'};
+  await act(async()=>root.render(<DashboardPrograms clientId="a" programs={[iso]} onOpen={()=>{}} reference/>));
+  expect(container.textContent).toContain('Assessment progress');
+  expect(container.querySelector('a[aria-label]').getAttribute('aria-label')).toContain('assessment progress');
+});
 test('foreign response is rejected instead of displaying assessment data',async()=>{
   api.get.mockResolvedValue({data:{client_id:'b',items:[{title:'Private assessment'}]}});
   await act(async()=>root.render(<DashboardPrograms clientId="a" programs={[program]} onOpen={()=>{}}/>));

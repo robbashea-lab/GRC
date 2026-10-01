@@ -132,15 +132,20 @@ test('a deep-linked requirement closes in place without leaving the workspace',a
  expect(mockHistory.at(-1)).toMatchObject({search:'',replace:true});
 });
 
-test('ISO has three primary views; SoA retains all 93 controls and audit is a separate program',async()=>{
+test('ISO has eight connected workspaces; SoA retains all 93 controls and audit is a separate program',async()=>{
  const definitions=frameworkCatalog('iso-27001').requirements;
- api.get.mockImplementation(async path=>({data:path==='/reviews'||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
+ api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="a"/>));
- expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(3);
+ expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(8);
+ expect(container.querySelector('[aria-label="ISMS Overview"]')).not.toBeNull();
+ await act(async()=>buttons('Clauses 4–10')[0].click());
  expect(container.querySelector('[aria-labelledby="cis-summary-heading"]').textContent).toContain('30 of 30');
  await act(async()=>buttons('Statement of Applicability')[0].click());
  await act(async()=>buttons('All requirements')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
+ expect(container.textContent).toContain('Necessary — Implemented');
+ await act(async()=>buttons('Annex A Controls')[0].click());
+ expect(container.querySelector('[aria-labelledby="cis-summary-heading"]').textContent).toContain('93 of 93');
  await act(async()=>buttons('Internal Audit Program')[0].click());
  expect(container.textContent).toContain('Program not activated');
  expect(container.querySelector('[aria-labelledby="cis-summary-heading"]')).toBeNull();

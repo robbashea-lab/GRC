@@ -9,10 +9,10 @@ test('removing a provider client does not change Brawndo internal-owner rotation
   expect(assessments.filter(a=>a.owner_id==='demo_brawndo_user_2')).toHaveLength(18);
 });
 
-test('retired synthetic tenants are removed on reload without resetting surviving work',()=>{
+test('stale Dunder is replaced by the canonical ISO client without resetting surviving work',()=>{
   sessionStorage.clear();
   const db=seedStore();
-  const preserved=JSON.stringify(db.framework_assessments);
+  const preserved=JSON.stringify(db.framework_assessments.filter(a=>a.client_id!=='demo_dunder'));
   const custom={client_id:'custom',name:'User-created demo client'};
   db.clients.push(custom,{client_id:'demo_dunder'},{client_id:'demo_initech'});
   db.users.push({user_id:'demo_dunder_user_0',client_ids:['demo_dunder']});
@@ -27,16 +27,17 @@ test('retired synthetic tenants are removed on reload without resetting survivin
   db.logs.push({entity_type:'users',entity_id:'demo_dunder_user_0'});
   saveStore(db);
   const migrated=readStore();
-  expect(migrated.clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_prestige','custom']);
-  expect(JSON.stringify(migrated.framework_assessments)).toBe(preserved);
+  expect(migrated.clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_prestige','custom','demo_dunder']);
+  expect(JSON.stringify(migrated.framework_assessments.filter(a=>a.client_id!=='demo_dunder'))).toBe(preserved);
   expect(migrated.reviews.some(r=>r.review_id==='retired')).toBe(false);
   expect(migrated.evidence.some(r=>r.evidence_id==='retired-file')).toBe(false);
-  expect(migrated.users.some(u=>u.user_id==='demo_dunder_user_0')).toBe(false);
+  expect(migrated.clients.find(c=>c.client_id==='demo_dunder').demo_program_version).toBe('iso27001-year2-v1');
+  expect(migrated.users.some(u=>u.user_id==='demo_dunder_user_0')).toBe(true);
   expect(migrated.user.favorite_client_ids).toEqual(['demo_prestige']);
-  expect(migrated.baselines.demo_dunder).toBeUndefined();
+  expect(migrated.baselines.demo_dunder).toBeDefined();
   expect(migrated.drafts.demo_initech).toBeUndefined();
-  expect(migrated.riskSequences.demo_dunder).toBeUndefined();
-  expect(migrated.ai_intake).toEqual({custom:{usage:'no'}});
+  expect(migrated.riskSequences.demo_dunder).toBeDefined();
+  expect(migrated.ai_intake.custom).toEqual({usage:'no'});
   expect(migrated.ai_counters).toEqual({});
   expect(migrated.logs.some(r=>r.entity_id==='demo_dunder_user_0')).toBe(false);
   expect(removeRetiredDemoClients(migrated)).toBe(false);
