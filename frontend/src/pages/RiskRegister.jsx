@@ -278,7 +278,7 @@ export default function RiskRegister() {
                 return (
                   <tr key={r.risk_id} onClick={() => setDrawer({ open: true, record: r })} className="row-hover row-open" data-testid={`risk-row-${i}`}>
                     <td className="tbl-cell font-mono text-xs text-ink-help whitespace-nowrap">{r.display_id || "ID pending"}</td>
-                    <td className="tbl-cell font-medium text-ink-primary min-w-0">{pilot?<button className="register-record-link text-left" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:r});}}>{r.title}</button>:r.title}</td>
+                    <td className="tbl-cell font-medium text-ink-primary min-w-0"><button className="register-record-link text-left" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:r});}}>{r.title}</button></td>
                     <td className="tbl-cell text-xs text-ink-secondary">{r.category ? (pilot?riskCategories[r.category]:CATEGORIES.find(o => o.value === r.category)?.label) || r.category : <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell text-right font-mono">{r.risk_score || <span className="text-ink-help">—</span>}</td>
                     <td className="tbl-cell">{level ? <SeverityBadge value={level} /> : <span className="register-empty">—</span>}</td>

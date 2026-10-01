@@ -262,7 +262,7 @@ export default function VendorRegister() {
                   <tr key={v.vendor_id} className="row-hover row-open" onClick={() => setDrawer({ open: true, record: v })} data-testid={`vendor-row-${i}`}>
                     <td className="tbl-cell font-medium text-ink-primary">
                       <span className="inline-flex items-center gap-2">
-                        {pilot?<button className="text-left hover:underline focus-visible:outline" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v});}}>{v.name}</button>:v.name}
+                        <button className="text-left hover:underline focus-visible:outline" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v});}}>{v.name}</button>
                         {v._attention && <><span className="attention-dot" aria-hidden="true" title="Needs attention" /><span className="sr-only">Needs attention</span></>}
                       </span>
                     </td>

@@ -1,4 +1,10 @@
+import {useContext} from 'react';
+import {ClientPresentationContext} from './ClientSurface';
+import {BrawndoPageHeader} from './BrawndoPage';
+
 export default function PageHeader({ title, subtitle, action, eyebrow }) {
+  const clientName=useContext(ClientPresentationContext);
+  if(clientName)return <BrawndoPageHeader title={title} subtitle={subtitle} eyebrow={eyebrow||clientName}>{action}</BrawndoPageHeader>;
   return (
     <div className="page-header">
       <div className="page-header-content">

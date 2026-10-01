@@ -1,3 +1,4 @@
+import {CisBreadcrumb} from './BrawndoCisControls';
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
 import OrganizationalControls from './OrganizationalControls';
 import { EvidenceCatalogPicker } from './EvidencePanel';
@@ -34,7 +35,7 @@ export function isBrawndoCisPrototype(clientId,record,user){
 const RECORD_IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',vendors:'vendor_id'};
 
 export default function FrameworkAssessmentWorkspace({state,actions}){
-  const {open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,otherDraft}=state;
+  const {open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,otherDraft,breadcrumb}=state;
   const {put,save,saveAndNext,run,download,setComment,setFinding,setTab,setNested,setReviewDraft,setLink,setControlDraft,controlSaved,close,previous,next,reviewSaved,retry}=actions;
   const clientId=record.client_id,aid=record.framework_assessment_id,framework=record.framework_key,isCis=framework==='cis-ig1';
   const program=operatorProgram(framework),vocab=operatorVocabulary(framework);
@@ -56,7 +57,8 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
     description={`${definition.control_name||definition.category||definition.specification||'Framework assessment'} · ${definition.source_citation||definition.id}`}
     status={<><span aria-label="Saved conclusion"><CisStatusPill status={current.status} framework={framework}/></span><span className="text-xs text-ink-secondary">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}</span></>}
     {...{position,previous,next,close,busy}} testId={clientId==='demo_brawndo'&&isCis?'brawndo-cis-assessment':'framework-assessment-workspace'}
-    returnSelector={`[data-testid="requirement-${definition.id}"] button, .cis-summary-head button`}
+    ariaModal crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb} label={`${program} location`}/>:null}
+    returnSelector={`[data-testid="requirement-${definition.id}"] button, [data-testid="requirement-${definition.id}"][tabindex], .cis-summary-head button`}
     context={<>            <h3>Ownership & context</h3>
             <dl><dt>Last assessed</dt><dd>{current.last_assessed?.slice(0,10)||'Not assessed'}{current.assessed_by?` · ${who(current.assessed_by)}`:''}</dd></dl>
             <fieldset disabled={disabled} className="space-y-4">
@@ -152,4 +154,3 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
 
   </AssessmentShell>;
 }
-

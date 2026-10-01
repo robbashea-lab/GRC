@@ -2,7 +2,8 @@ import {riskTreatments,nextRiskReview} from "@/lib/brawndoRisks";
 import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
 import { personLabel } from '@/lib/people';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {ClientPresentationContext} from './ClientSurface';
 import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
@@ -42,7 +43,8 @@ const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome ===
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user} = useAuth();
   const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferencePresentation(clientId,user) && (!record || record.client_id===clientId);
-  const Root=pilot?Dialog:Sheet, Content=pilot?DialogContent:SheetContent;
+  const clientPresentation=useContext(ClientPresentationContext),dialogLayout=pilot||!!clientPresentation;
+  const Root=dialogLayout?Dialog:Sheet, Content=dialogLayout?DialogContent:SheetContent;
   const opener=useRef(null),heading=useRef(null);
   const [pending,setPending]=useState(null);
   const admin = ['super_admin','platform_admin'].includes(user?.role);
@@ -172,20 +174,20 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const historicalCount = remediation.groups.filter(({finding})=>finding.status==='closed').length + allRelatedRows.filter(({kind,item})=>historicalRemediation(kind,item)).length;
   const relatedRows = allRelatedRows.filter(({kind,item})=>showHistorical || !historicalRemediation(kind,item));
   return <Root open={open} onOpenChange={close}>
-    <Content {...(pilot?{
+    <Content aria-modal={clientPresentation?'true':undefined} {...(dialogLayout?{
       onPointerDownOutside:e=>e.preventDefault(),
       onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},
       onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="reviews-search"]');target?.focus({preventScroll:true});}
     }:{description:"Inspect this Review's schedule, supporting evidence, related work and completion history. Save configuration changes separately from completing the Review."})}
-      className={pilot?"brawndo-cis-assessment bg-surface-card":"record-drawer w-full sm:max-w-2xl p-0 flex flex-col"} data-testid="reviews-drawer">
-      {pilot&&<DialogDescription className="sr-only">Conduct this Review, edit its schedule and assigned reviewer, and access evidence, related work and completion history.</DialogDescription>}
-      <SheetHeader className={pilot?"px-6 py-4 pr-12 border-b border-line shrink-0":"px-6 py-4 border-b border-line"}>
-        <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={pilot?-1:undefined} className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
+      className={dialogLayout?"brawndo-cis-assessment bg-surface-card":"record-drawer w-full sm:max-w-2xl p-0 flex flex-col"} data-testid="reviews-drawer">
+      {dialogLayout&&<DialogDescription className="sr-only">Conduct this Review, edit its schedule and assigned reviewer, and access evidence, related work and completion history.</DialogDescription>}
+      <SheetHeader className={dialogLayout?"px-6 py-4 pr-12 border-b border-line shrink-0":"px-6 py-4 border-b border-line"}>
+        <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={dialogLayout?-1:undefined} className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
           {!pilot&&shown && <div className="mt-2"><StatusBadge value={selected ? shown.status : reviewStatus(shown)} /></div>}</div>
-          {!pilot&&<button aria-label="Close record" data-testid="drawer-close" onClick={() => close(false)}><X className="h-4 w-4" /></button>}</div>
+          {!dialogLayout&&<button aria-label="Close record" data-testid="drawer-close" onClick={() => close(false)}><X className="h-4 w-4" /></button>}</div>
         {current && <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto">{tabs.map(t => <button key={t} data-testid={`tab-${t.toLowerCase()}`} className={`drawer-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); if (t === 'Related' || t === 'Activity') reload(); }}>{t}</button>)}</div>}
       </SheetHeader>
-      <div className={pilot?"flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5":"flex-1 overflow-y-auto px-6 py-5 space-y-4"}>
+      <div className={dialogLayout?"flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5":"flex-1 overflow-y-auto px-6 py-5 space-y-4"}>
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
           {pilot?<ReviewFacts record={shown} users={members} history={history} completionBased={!!(current?.risk_id||current?.policy_id)&&!frozen}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}

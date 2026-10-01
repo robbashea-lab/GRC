@@ -2,6 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordListPage from './RecordListPage';
 import ReviewDrawer from '@/components/ReviewDrawer';
+import {ClientPresentationContext} from '@/components/ClientSurface';
 import api from '@/lib/api';
 let mockClient='demo_brawndo';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
@@ -78,6 +79,17 @@ test('summary counts stay stable under search, filters clear, completed accessib
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
   expect(container.querySelector('[aria-label="Review summaries"] [aria-pressed="true"]')).toBeNull();
 });
+test('default client surface reuses the centered Review shell without enabling pilot workflow semantics',async()=>{
+  mockClient='future-client';saved={...saved,client_id:mockClient};
+  await act(async()=>root.render(<ClientPresentationContext.Provider value="Future client"><ReviewDrawer open record={saved} clientId={mockClient} onOpenChange={()=>{}}/></ClientPresentationContext.Provider>));
+  const dialog=document.querySelector('[data-testid="reviews-drawer"]');
+  expect(dialog.className).toContain('brawndo-cis-assessment');
+  expect(dialog.querySelector('[aria-label="Requirement basis"]')).not.toBeNull();
+  expect(dialog.querySelector('[data-testid="field-policy_id"]')).not.toBeNull();
+  expect(dialog.querySelector('h2').getAttribute('tabindex')).toBe('-1');
+  expect(dialog.getAttribute('aria-modal')).toBe('true');
+});
+
 test('centered detail preserves policy/context and guards unsaved and failed saves',async()=>{
   const close=jest.fn();
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={close}/>));

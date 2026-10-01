@@ -30,11 +30,11 @@ test('Brawndo renders the themed header and keeps the folder-first landing',asyn
     expect(node.querySelector('.bpage-tiles')).toBeNull();
   }finally{await done();}
 });
-test('other clients keep the standard page',async()=>{
+test('future clients inherit the approved Evidence presentation without changing folders',async()=>{
   mockOrg={currentClientId:'demo_initech',currentClient:{name:'Initech'}};
   const {node,done}=await mount();
   try{
-    expect(node.querySelector('.bpage')).toBeNull();
+    expect(node.querySelector('.bpage')).not.toBeNull();
     expect(node.querySelector('h1').textContent).toBe('Evidence Library');
     expect(node.querySelectorAll('.evidence-folder')).toHaveLength(10);
   }finally{await done();}

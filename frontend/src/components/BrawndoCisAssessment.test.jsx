@@ -108,9 +108,9 @@ test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit',
 test('load failure disables writes and offers retry',async()=>{
  api.get.mockRejectedValue(new Error('Context unavailable'));await render();expect(container.querySelector('[role="alert"]').textContent).toContain('Context unavailable');expect(button('Save assessment').disabled).toBe(true);expect(button('Retry')).toBeTruthy();
 });
-test('other clients keep the existing workspace',async()=>{
+test('other clients retain their assessment content with explicit modal semantics',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal]')).toBeNull();
+ expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
 test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
  const toControl=jest.fn();
