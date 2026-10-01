@@ -62,7 +62,7 @@ test('What CIS Requires labels the summary and links the official reference; off
  await act(async()=>root.unmount());root=createRoot(container);await render();
  expect(container.querySelector('[data-testid="cis-official-text"]').textContent).toBe('Authorized verbatim text.');expect(container.textContent).not.toContain('not official CIS text');mockOfficial=null;
 });
-test('tier checklists show progress and the guidance note; ticks are drafts and never change verification',async()=>{
+test('assessment criteria ticks are drafts and never change status or verification',async()=>{
  await render();expect(container.textContent).toContain('They do not introduce additional requirements.');
  expect(container.querySelectorAll('.bcsg-criteria input')).toHaveLength(4);
  const boxes=[...container.querySelectorAll('.bcsg-criteria input')];for(const b of boxes)await tick(b);
