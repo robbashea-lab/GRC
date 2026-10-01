@@ -5,6 +5,8 @@ This supplements the dated item ledgers in `iso-substantive-validation.md` and
 `soc-substantive-validation.md`; it does not relabel their exact-text comparisons
 as complete. No unauthorized copies, account bypass, or full standard reproduction.
 
+> SOC 2 update, 2026-10-01: the AICPA-hosted revised-2022 PDF was available for the scoped CC, A1 and C1 content review. `soc2-content-quality-review.md` supersedes this record for those 38 criteria only; Processing Integrity and Privacy retain the limitations below.
+
 ## Confidence and acceptance
 
 - **V** — VERIFIED — PRIMARY PUBLIC SOURCE, for the bounded concept identified.

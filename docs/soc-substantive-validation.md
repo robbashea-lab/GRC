@@ -1,5 +1,7 @@
 # SOC 2 — substantive validation and source limitations
 
+> Historical 2026-09-22 source-access record. The 2026-10-01 review found the AICPA-hosted revised-2022 PDF available and supersedes this document for CC1.1–CC9.2, A1.1–A1.3 and C1.1–C1.2. See `soc2-content-quality-review.md`. Processing Integrity and Privacy retain the source limitation recorded below.
+
 Research: 2026-09-22. Catalog identity remains `2017 TSC · revised points of focus 2022`.
 
 ## Conclusion and source access

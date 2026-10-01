@@ -1,5 +1,8 @@
 """SOC 2 internal-readiness semantics, scope retention and authorization."""
+import json
 import unittest
+from pathlib import Path
+from urllib.parse import urlparse
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 from framework_catalog import SOC
 from routes.onboarding import BASELINE_CATALOG
@@ -33,6 +36,41 @@ class SocTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(set(p['safeguards'])<=expected)
             self.assertEqual(p['classification'],'recommended')
             self.assertIn('does not prescribe',p['source_cadence'])
+
+    def test_in_scope_content_relationships_and_provenance_are_complete(self):
+        expected={f'CC{g}.{n}' for g,count in [(1,5),(2,3),(3,4),(4,2),(5,3),(6,8),(7,5),(8,1),(9,2)] for n in range(1,count+1)}
+        expected |= {'A1.1','A1.2','A1.3','C1.1','C1.2'}
+        scoped=[d for d in SOC['requirements'] if d['category'] in ('security','availability','confidentiality')]
+        self.assertEqual(len(scoped),38)
+        self.assertEqual({d['id'] for d in scoped},expected)
+        self.assertEqual(len({d['id'] for d in scoped}),len(scoped))
+        for d in scoped:
+            self.assertTrue(d['title'])
+            self.assertEqual(d['source_type'],'attestation_criteria_reference')
+            self.assertEqual(d['source_organization'],'AICPA / ASEC')
+            source=urlparse(d['source'])
+            self.assertEqual(source.scheme,'https')
+            self.assertEqual(source.netloc,'www.aicpa-cima.com')
+            self.assertIn('2017-trust-services-criteria-with-revised-points-of-focus-2022',source.path)
+        all_ids={d['id'] for d in SOC['requirements']}
+        policy_catalog=json.loads((Path(__file__).parents[1]/'routes/onboarding_catalog.json').read_text(encoding='utf-8'))
+        policy_keys={p['key'] for p in policy_catalog['policies']}
+        self.assertEqual(len({m['policy_key'] for m in SOC['policy_mappings']}),len(SOC['policy_mappings']))
+        for mapping in SOC['policy_mappings']:
+            self.assertIn(mapping['policy_key'],policy_keys)
+            self.assertTrue(set(mapping['safeguards'])<=all_ids)
+            self.assertEqual(mapping['classification'],'recommended')
+            self.assertIn('not an AICPA-required',mapping['reason'])
+        for plan in SOC['review_plans']:
+            self.assertTrue(set(plan['safeguards'])<=all_ids)
+            self.assertEqual(plan['cadence_class'],'D')
+            self.assertEqual(plan['cadence_references'],[])
+            self.assertEqual(plan['basis'],'Omnisciente Recommended')
+            self.assertTrue(plan['reason'])
+            self.assertTrue(plan['source_cadence'])
+        scoped_text=json.dumps(scoped).lower()
+        for cis_term in ('cis controls','implementation group',' ig1'):
+            self.assertNotIn(cis_term,scoped_text)
 
     async def test_scope_is_opt_in_and_summary_excludes_retained_categories(self):
         self.sign_in('admin')

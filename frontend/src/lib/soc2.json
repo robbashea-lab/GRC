@@ -1349,6 +1349,7 @@
       "policy_key": "policy-data-retention-secure-disposal-policy",
       "safeguards": [
         "CC6.5",
+        "C1.1",
         "C1.2",
         "P4.2",
         "P4.3"
@@ -1370,8 +1371,7 @@
     {
       "policy_key": "policy-vulnerability-patch-management-policy",
       "safeguards": [
-        "CC7.1",
-        "CC6.8"
+        "CC7.1"
       ],
       "classification": "recommended",
       "reason": "Partial supporting subject mapping; not an AICPA-required document title or automatic criterion satisfaction."
@@ -1379,7 +1379,28 @@
     {
       "policy_key": "policy-configuration-management-policy",
       "safeguards": [
+        "CC7.1",
+        "CC8.1"
+      ],
+      "classification": "recommended",
+      "reason": "Partial supporting subject mapping; not an AICPA-required document title or automatic criterion satisfaction."
+    },
+    {
+      "policy_key": "policy-asset-management-policy",
+      "safeguards": [
+        "CC2.1",
+        "CC6.1",
+        "CC6.5",
         "CC7.1"
+      ],
+      "classification": "recommended",
+      "reason": "Partial supporting subject mapping; not an AICPA-required document title or automatic criterion satisfaction."
+    },
+    {
+      "policy_key": "policy-cryptography-key-management-policy",
+      "safeguards": [
+        "CC6.1",
+        "CC6.7"
       ],
       "classification": "recommended",
       "reason": "Partial supporting subject mapping; not an AICPA-required document title or automatic criterion satisfaction."
@@ -1428,7 +1449,6 @@
       "policy_key": "policy-business-continuity-disaster-recovery-policy",
       "safeguards": [
         "CC9.1",
-        "A1.1",
         "A1.2",
         "A1.3"
       ],
