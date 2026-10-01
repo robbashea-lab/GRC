@@ -194,6 +194,11 @@ export async function previewAdapter(config) {
         for (const k of Object.keys(data)) data[k] = list(db, k, source.client_id).filter(r => k === params.entity_type
           ? k === 'reviews' && (r.parent_review_id === params.entity_id || r.review_id === source.parent_review_id || r.review_id === source.next_occurrence_id)
           : (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
+        if (params.entity_type === 'policies') {
+          // Findings raised in a Policy Review stay visible from the Policy, as in the backend.
+          const reviewIds = new Set(list(db, 'reviews', source.client_id).filter(r => r.policy_id === params.entity_id).map(r => r.review_id));
+          for (const k of ['findings', 'tasks']) data[k] = [...data[k], ...list(db, k, source.client_id).filter(r => reviewIds.has(r.review_id) && !data[k].includes(r))];
+        }
         if (params.entity_type === 'reviews' && params.occurrence_id)
           for (const k of ['findings','tasks','evidence']) data[k] = data[k].filter(r => belongsToOccurrence(r,source,params.occurrence_id));
         if(['tasks','findings'].includes(params.entity_type)&&source.occurrence_id) for(const review of data.reviews) {

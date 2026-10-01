@@ -60,3 +60,16 @@ class WorkflowIntegrityTests(ClientDashboardSourcesTests):
             self.assertEqual(done.status_code, 200, done.text)
             self.assertEqual(done.json()["review"]["due_date"][:10], expected)
             self.assertEqual(done.json()["occurrence"]["due_date"][:10], due)
+
+    async def test_policy_review_findings_are_visible_from_the_policy(self):
+        self.sign_in("member")
+        await server.db.policies.insert_one({"policy_id": "pol", "client_id": "a", "title": "Access Policy", "status": "approved"})
+        await server.db.reviews.insert_one({"review_id": "prev", "client_id": "a", "title": "Access Policy Review", "owner_id": "member",
+                                            "policy_id": "pol", "status": "in_progress", "recurrence": "annual", "due_date": "2026-11-01"})
+        finding = (await self.client.post("/api/reviews/prev/create-finding", json={
+            "title": "Policy outdated", "remediation_title": "Update policy", "occurrence_id": "occ_prev", "request_id": "pol-1"})).json()
+        related = (await self.client.get("/api/related?entity_type=policies&entity_id=pol")).json()
+        self.assertIn(finding["finding_id"], [f["finding_id"] for f in related["findings"]])
+        self.assertEqual(len([t for t in related["tasks"] if t["finding_id"] == finding["finding_id"]]), 1)
+        other = (await self.client.get("/api/related?entity_type=policies&entity_id=pol")).json()
+        self.assertEqual(len(other["findings"]), len({f["finding_id"] for f in other["findings"]}))

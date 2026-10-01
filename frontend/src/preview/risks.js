@@ -28,7 +28,8 @@ export function ensureRiskReview(db,risk) {
   const dateChanged=review.due_date!==risk.next_review;
   if(['completed','cancelled'].includes(review.status)&&risk.next_review) Object.assign(review,{status:'upcoming',current_occurrence_id:'occ_'+recordUuid(),notes:null,started_at:null,started_by:null,completion_date:null});
   Object.assign(review,{title:`Risk Review — ${risk.display_id} — ${risk.title}`,due_date:risk.next_review,owner_id:risk.owner_id,recurrence:risk.review_cadence||'annual',custom_recurrence_days:risk.custom_recurrence_days});
-  Object.assign(review,reviewSchedule(review,dateChanged),reviewView(review));
+  // Reset the anchor first; the projection must read the new anchor, not overwrite it.
+  Object.assign(review,reviewSchedule(review,dateChanged));Object.assign(review,reviewView(review));
   risk.linked_review_id=review.review_id;
   return review;
 }

@@ -3869,6 +3869,8 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type == 'framework_assessments':
         return await framework_governance.related(sys.modules[__name__],source)
     ai_reviews = await db.reviews.find({'client_id':cid,'ai_system_id':entity_id},{'review_id':1}).to_list(None) if entity_type == 'ai_systems' else []
+    # Findings raised in a Policy Review stay visible from the Policy without copying policy_id onto them.
+    policy_reviews = await db.reviews.find({'client_id':cid,'policy_id':entity_id},{'review_id':1}).to_list(None) if entity_type == 'policies' else []
     for target, key in keys.items():
         relations = [{keys[entity_type]: entity_id}]
         if source.get(key):
@@ -3882,6 +3884,8 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
             if source.get('review_id'):
                 ai_review = await db.reviews.find_one({'client_id':cid,'review_id':source['review_id']})
                 if ai_review and ai_review.get('ai_system_id'): relations.append({'ai_system_id':ai_review['ai_system_id']})
+        if target in ('findings','tasks') and policy_reviews:
+            relations.append({'review_id':{'$in':[r['review_id'] for r in policy_reviews]}})
         if entity_type == "risks" and target == "tasks" and source.get("related_task_ids"):
             relations.append({"task_id":{"$in":source["related_task_ids"]}})
         if entity_type == "vendors" and target == "risks" and source.get("related_risk_ids"):
