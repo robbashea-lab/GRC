@@ -6,7 +6,7 @@ One place to answer "which version of which framework does Omnisciente carry, fr
 | --- | --- | --- | ---: | --- | --- | --- |
 | CIS Controls IG1 | `cisIG1.json` | 8.1 | 56 safeguards | CIS Controls v8.1 (cisecurity.org) | 2026-09-15 | Item content verified in `cis-substantive-validation.md` |
 | ISO/IEC 27001 | `iso27001.json` | 2022 + Amd 1:2024 | 30 clause units + 93 Annex A | ISO/IEC 27001:2022 (licensed; iso.org) | 2026-09-22 | **Incomplete.** Entries are marked REQUIRES AUTHORIZED SOURCE; normative comparison needs a licensed copy |
-| SOC 2 (Trust Services Criteria) | `soc2.json` | 2017 TSC, revised points of focus 2022 | 61 criteria | AICPA/ASEC 2017 TSC (2022 PoF), download needs an account | 2026-09-22 | **Incomplete.** All 61 criteria are marked REQUIRES AUTHORIZED SOURCE |
+| SOC 2 (Trust Services Criteria) | `soc2.json` | 2017 TSC, revised points of focus 2022 | 61 criteria | AICPA/ASEC 2017 TSC (2022 PoF) | 2026-09-22 catalog; 2026-10-01 scoped review | **Partial by scope.** CC1.1–CC9.2, A1.1–A1.3 and C1.1–C1.2 were compared to the AICPA-hosted revised-2022 PDF on 2026-10-01; PI and Privacy remain unreviewed in that pass. See `soc2-content-quality-review.md` |
 | HIPAA Security Rule | `hipaaSecurityRule.json` | 45 CFR 164 as of 2026-09-18 | 76 | eCFR, 45 CFR Part 164 Subpart C | 2026-09-22 | Closure recorded in `hipaa-substantive-validation.md`; client-specific use still requires SME review |
 | NIST CSF 2.0 | `nistCSF2.json` | 2.0 | 106 subcategories | NIST CSWP 29 | 2026-09-22 | Phase 2 gate complete: 100 items verified, 6 corrected |
 | CMMC | `frameworkDefinitions.json` (applicability only) | — | — | — | — | **Placeholder.** Applicability can be recorded, but there is no assessment catalog and no tracking. No Demo client uses it since the scope change |
@@ -21,7 +21,7 @@ One place to answer "which version of which framework does Omnisciente carry, fr
 ## To close the open items
 
 1. Obtain a licensed ISO/IEC 27001:2022 (+ Amd 1:2024) copy and complete `iso-substantive-validation.md`.
-2. Obtain the AICPA 2017 TSC (2022 points of focus) and complete `soc-substantive-validation.md`.
+2. Complete the same AICPA-source comparison for SOC 2 Processing Integrity and Privacy if those optional categories enter approved scope.
 3. Re-check HIPAA and NIST CSF against the live sources from a network that allows them.
 4. Update `verified_on` only for entries that were actually compared.
 5. Decide whether CMMC gets an assessment catalog or stays applicability-only.
