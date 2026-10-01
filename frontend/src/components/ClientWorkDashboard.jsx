@@ -14,7 +14,7 @@ import './BrawndoDashboard.css';
 // (not implemented, overdue, high severity), grey = not assessed. Text always carries it too.
 const TILE={pastDue:'critical',due30:'attention',all:'info',unassigned:'neutral'};
 const priorityLabel={critical:'Critical',high:'High',medium:'Moderate',moderate:'Moderate',low:'Low'};
-const statusLabel=s=>s?String(s).replaceAll('_',' ').replace(/^./,c=>c.toUpperCase()):'—';
+const statusLabel=s=>s==='remediated'?'Pending Validation':s?String(s).replaceAll('_',' ').replace(/^./,c=>c.toUpperCase()):'—';
 const STATUS_TONE={overdue:'critical',in_progress:'info',remediated:'attention',pending_validation:'attention',upcoming:'neutral',open:'neutral'};
 const plural=(n,word)=>`${n} ${word}${n===1?'':'s'}`;
 
@@ -121,6 +121,7 @@ export default function ClientWorkDashboard({queue,programs,cisRows,posture,clie
       return <button type="button" key={key} className={`bd-tile is-${g.total?TILE[key]:'clear'}`} aria-pressed={filter===key} aria-controls="client-priority-queue" onClick={()=>select(key)}>
         <span className="bd-tile-label">{label}</span><span className="bd-tile-value">{g.total}</span><span className="bd-tile-context">{tileContext(key,g,today)}</span>
       </button>;})}</div>
+    <p className="bd-muted bd-small bd-count-note" data-testid="bd-work-note">Work items: each Review, Action Item and obligation counts once. A Finding counts as its active Action Item; with no active Action (including Pending Validation) it counts itself.</p>
     <div className="bd-grid">
       <section className="bd-card bd-queue" aria-labelledby="client-priority-heading" id="client-priority-queue">
         <div className="bd-card-head"><div><h2 id="client-priority-heading">Work next</h2><p className="bd-muted bd-small">Ranked by lateness, then severity. Open an item to work it.</p></div>

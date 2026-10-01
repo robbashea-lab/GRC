@@ -34,7 +34,7 @@ export function actionTiles(rows,now=new Date()){
     {id:'unassigned',label:'Unassigned',tone:'attention',count:unassigned.length,context:unassigned.length?`${plural(unassigned.length,'item')} without an owner`:'Every action item has an owner'},
   ];
 }
-const labels={open:'Open',in_progress:'In Progress',overdue:'Overdue',completed:'Completed'};
+const labels={open:'Open',in_progress:'In Progress',overdue:'Overdue',completed:'Completed',pending_validation:'Pending Validation'};
 
 export function FindingsRoute(){
   const {currentClientId}=useOrg(),{user}=useAuth(),location=useLocation();
@@ -72,7 +72,6 @@ export default function BrawndoActionItems(){
     opened.current=deepId;
     if(finding){const actions=data.tasks?.filter(t=>t.finding_id===finding.finding_id)||[];setDrawer(actions.length===1?{kind:'tasks',record:actions[0]}:{kind:'findings',record:finding});}else setError('The requested Finding is unavailable for this client.');
   },[deepId,loading,data.findings,data.tasks,currentClientId]);
-  const pending=(data.findings||[]).filter(f=>!['closed','accepted'].includes(f.status)&&data.tasks?.some(t=>t.finding_id===f.finding_id)&&data.tasks.filter(t=>t.finding_id===f.finding_id).every(t=>['done','cancelled'].includes(t.status)));
   const applied=table.apply(rows.filter(r=>pilotActionMatches(r,view)&&(!params.get('owner')||r.owner_id===(params.get('owner')==='__me__'?user.user_id:params.get('owner')))&&(params.get('unassigned')!=='1'||!r.owner_id)&&[r.title,r.raw.description,r.finding?.title,r.finding?.description,r.source.label,users.find(u=>u.user_id===r.owner_id)?.name].filter(Boolean).join(' ').toLowerCase().includes(q.trim().toLowerCase())));
   const userSort=!!table.state.sort,filtered=userSort?applied:[...applied].sort(soonest),viewCount=rows.filter(r=>pilotActionMatches(r,view)).length;
   const clientName=currentClient?.name||'Client';
@@ -80,7 +79,6 @@ export default function BrawndoActionItems(){
   return <BrawndoSurface className="register-surface brawndo-ai">
     <BrawndoPageHeader eyebrow={`${clientName} · Corrective actions`} title="Action Items">{canWrite&&<>{['super_admin','platform_admin'].includes(user?.role)&&<Button variant="outline" onClick={()=>setDrawer({kind:'findings',record:null})}>New Finding</Button>}<PrimaryAction label="New Action Item" testid="new-action-item" onClick={()=>setDrawer({kind:'tasks',record:null})}/></>}</BrawndoPageHeader>
     <BrawndoTiles label="Action summaries" loading={loading&&!rows.length} tiles={actionTiles(rows).map(t=>({...t,pressed:view===t.id,onClick:()=>selectView(view===t.id?'all':t.id)}))}/>
-    {!!pending.length&&<div className="bpage-notice" data-testid="ai-pending-notice"><details className="w-full"><summary className="cursor-pointer"><strong>{plural(pending.length,'Finding')}</strong> with no outstanding Actions still need{pending.length===1?'s':''} resolution</summary><p className="bpage-meta my-2">Action completion does not validate or close a Finding.</p>{pending.map(f=><button key={f.finding_id} className="block text-link underline text-left mb-2" onClick={()=>setDrawer({kind:'findings',record:f})}>{f.title} · {f.status==='remediated'?'Pending validation':f.status}</button>)}</details></div>}
     <div className="register-toolbar"><SearchField label="Search action items" placeholder="Search action items…" testid="ai-search" value={q} onChange={value=>{const next=new URLSearchParams(params);next.set('q',value);setParams(next,{replace:true});}}/>
       <div data-testid="ai-views"><BrawndoChips label="Action Item views" chips={views.map(v=>({id:v.id,label:v.label,count:rows.filter(r=>pilotActionMatches(r,v.id)).length,pressed:view===v.id,testid:'ai-view-'+v.id,onClick:()=>selectView(view===v.id?'all':v.id)}))}/></div>
       <div className="brawndo-ai-source-filter"><ColumnControl table={table} columnKey="source_type"/></div>
@@ -94,7 +92,7 @@ export default function BrawndoActionItems(){
           <td className="tbl-cell"><SeverityBadge value={r.priority||'unknown'} label={pilotPriority(r.priority)}/></td>
           <td className="tbl-cell"><OwnerCell people={users} id={r.owner_id} status={r.raw.status}/></td>
           <td className="tbl-cell">{r.due_date?<DueDate iso={r.due_date} closed={finished(r)}/>:<span className="text-ink-secondary">No due date</span>}</td>
-          <td className="tbl-cell"><StatusBadge value={pilotActionStatus(r)} label={labels[pilotActionStatus(r)]}/>{['blocked','cancelled','accepted','remediated'].includes(r.raw.status)&&<span className="register-subline">{r.raw.status==='remediated'?'Pending validation':r.raw.status}</span>}</td>
+          <td className="tbl-cell"><StatusBadge value={pilotActionStatus(r)} label={labels[pilotActionStatus(r)]}/>{['blocked','cancelled','accepted'].includes(r.raw.status)&&<span className="register-subline">{r.raw.status}</span>}</td>
         </tr>)}
       </tbody></table><p className="bpage-foot" data-testid="ai-foot">Showing {filtered.length} of {plural(viewCount,`${nouns[view]||''} action item`.trim())}{!userSort&&filtered.length>1?' · soonest due first':''}</p></div>
     </div>

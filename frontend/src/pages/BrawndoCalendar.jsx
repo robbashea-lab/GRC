@@ -10,9 +10,10 @@ export function calendarEntries(data){
   return ['reviews','findings','tasks'].flatMap(kind=>Object.entries(data?.[kind]||{}).flatMap(([date,items])=>items.map(item=>({...item,date}))));
 }
 const byDate=(a,b)=>a.date<b.date?-1:a.date>b.date?1:String(a.title).localeCompare(String(b.title));
-// Needs attention: active overdue items (oldest first), then active items due within the next 30 days.
+// Needs attention: active overdue work items (oldest first), then active work due within the next 30 days.
+// Work items count each piece of remediation once: a Finding with an active Action is represented by it.
 export function needsAttention(entries,today){
-  const active=entries.filter(e=>!e.historical);
+  const active=entries.filter(e=>!e.historical&&!(e.kind==='finding'&&e.represented));
   const overdue=active.filter(e=>daysUntil(e.date,today)<0).sort(byDate);
   const upcoming=active.filter(e=>{const d=daysUntil(e.date,today);return d>=0&&d<=30;}).sort(byDate);
   return {overdue,upcoming};
@@ -21,7 +22,7 @@ export function needsAttention(entries,today){
 export function calendarTiles({attention,monthEntries,anchor,today}){
   const {overdue,upcoming}=needsAttention(attention,today);
   const soon=upcoming.filter(e=>daysUntil(e.date,today)>0),dueToday=upcoming.filter(e=>daysUntil(e.date,today)===0);
-  const inMonth=monthEntries.filter(e=>!e.historical&&+e.date.slice(0,4)===anchor.getFullYear()&&+e.date.slice(5,7)===anchor.getMonth()+1);
+  const inMonth=monthEntries.filter(e=>!e.historical&&!(e.kind==='finding'&&e.represented)&&+e.date.slice(0,4)===anchor.getFullYear()&&+e.date.slice(5,7)===anchor.getMonth()+1);
   const monthOverdue=inMonth.filter(e=>daysUntil(e.date,today)<0).length,n=inMonth.length;
   const oldest=overdue[0];
   return [

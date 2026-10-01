@@ -73,3 +73,15 @@ class WorkflowIntegrityTests(ClientDashboardSourcesTests):
         self.assertEqual(len([t for t in related["tasks"] if t["finding_id"] == finding["finding_id"]]), 1)
         other = (await self.client.get("/api/related?entity_type=policies&entity_id=pol")).json()
         self.assertEqual(len(other["findings"]), len({f["finding_id"] for f in other["findings"]}))
+
+    async def test_calendar_marks_findings_represented_by_an_active_action(self):
+        self.sign_in("admin")
+        await server.db.findings.insert_many([
+            {"finding_id": "f1", "client_id": "a", "title": "F1", "status": "in_remediation", "due_date": "2026-10-05"},
+            {"finding_id": "f2", "client_id": "a", "title": "F2", "status": "remediated", "due_date": "2026-10-06"}])
+        await server.db.tasks.insert_many([
+            {"task_id": "t1", "client_id": "a", "finding_id": "f1", "title": "T1", "status": "open", "due_date": "2027-03-01"},
+            {"task_id": "t2", "client_id": "a", "finding_id": "f2", "title": "T2", "status": "done", "due_date": "2026-10-01"}])
+        calendar = (await self.client.get("/api/calendar", params={"client_id": "a", "start": "2026-10-01", "end": "2026-10-31", "scope": "active"})).json()
+        self.assertTrue(calendar["findings"]["2026-10-05"][0]["represented"])
+        self.assertFalse(calendar["findings"]["2026-10-06"][0]["represented"])

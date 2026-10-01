@@ -41,6 +41,9 @@ export function calendarBuckets(records,user,{start,end,scope='active'}={}) {
     const history=(records.reviews||[]).flatMap(r=>(r.occurrences||[]).filter(o=>o.occurrence_id&&calendarTerminal('review',o)&&inRange(o)&&(!o.client_id||o.client_id===r.client_id)&&(!o.review_id||o.review_id===r.review_id)).map(o=>({...o,client_id:r.client_id,review_id:r.review_id})));
     for(const row of bounded(history))add(row,'review',true);
   }
+  // A Finding with an active Action is represented by that Action in work counts (the grid still shows both).
+  const covered=new Set((records.tasks||[]).filter(t=>t.finding_id&&!calendarTerminal('task',t)).map(t=>t.finding_id));
+  for(const value of entries.values())if(value.kind==='finding')value.represented=covered.has(value.id);
   const result={reviews:{},findings:{},tasks:{}};
   for(const value of [...entries.values()].sort((a,b)=>a.due_date_iso.localeCompare(b.due_date_iso)||Number(a.historical)-Number(b.historical)||(a.title||'').localeCompare(b.title||'')||a.key.localeCompare(b.key))) (result[value.kind+'s'][value.due_date_iso.slice(0,10)]||=[]).push(value);
   return result;
