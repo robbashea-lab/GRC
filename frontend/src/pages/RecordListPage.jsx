@@ -600,7 +600,7 @@ function EntityListPage({ kind }) {
                          <OwnerCell people={users} id={row[c.key]} status={row.status} testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined} />
                        ) :
                        isReviews && c.key==='basis' ? <span className="text-xs text-ink-secondary" title={reviewsPilot?reviewSource(row):basisSummary(row)}>{reviewsPilot?reviewSource(row):basisSummary(row)}</span> :
-                       reviewsPilot&&row.policy_id&&c.key==='next_review_date'&&!closed?<span className="text-xs text-ink-secondary">Calculated on completion</span> : isDueLike ? <DueDate iso={row[c.key]} closed={closed} /> :
+                       isDueLike ? <DueDate iso={row[c.key]} closed={closed} /> :
                        c.date ? <HistoryDate value={row[c.key]} /> :
                        (
                          <span className="inline-flex items-center gap-2">
@@ -645,7 +645,8 @@ function EntityListPage({ kind }) {
                         >
                           <Pencil className="h-3.5 w-3.5 mr-2" /> Open / edit
                         </DropdownMenuItem>
-                        {isReviews && canWrite && row.status !== "completed" && row.status !== "cancelled" && (
+                        {/* Brawndo completes Reviews only in the Review drawer, behind its draft guards and confirmation. */}
+                        {isReviews && canWrite && !reviewsPilot && row.status !== "completed" && row.status !== "cancelled" && (
                           <DropdownMenuItem
                             onClick={() => markComplete(row)}
                             data-testid={`${kind}-row-complete-${i}`}

@@ -1,6 +1,6 @@
 import {validateVendor,ensureVendorReviews,syncVendorReview} from './vendors';
 import { ensureRiskReview } from './risks';
-import { syncPolicyReview } from './policyReviews';
+import { syncPolicyReview, ensurePolicyReview } from './policyReviews';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
 import { validateAssignment } from './assignmentEligibility';
@@ -58,9 +58,14 @@ export function seedStore(clock=new Date()) {
   const db = normalizePolicyDates(initializeRiskIds(buildDemoStore(Object.keys(ids),clock)));
   db.risks.forEach(risk => ensureRiskReview(db, risk));
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
+  // Brawndo Policies schedule through linked recurring Reviews; their existing next-review dates are kept.
+  db.policies.forEach(policy => ensurePolicyReview(db, policy));
   // Only explicit Demo creation/reset seeds framework work; standard startup never calls this.
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
-  return finishInitech(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock,{action,write,frameworkRequest});
+  const finished=finishInitech(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock,{action,write,frameworkRequest});
+  // Policy dates derive from their Review history once that history exists.
+  finished.reviews.filter(r=>r.client_id==='demo_brawndo'&&r.policy_id).forEach(r=>syncPolicyReview(finished,r));
+  return finished;
 }
 export function readStore() {
   dropLegacyStores();
@@ -134,6 +139,10 @@ export function validate(db, kind, body, existing) {
   const field = ['clients', 'vendors', 'assets', 'users'].includes(kind) ? 'name' : ['contacts', 'evidence'].includes(kind) ? null : 'title';
   if (field && !String(body[field] || '').trim()) throw new Error(`${field === 'name' ? 'Name' : 'Title'} is required.`);
   if (kind === 'reviews' && !body.review_type) throw new Error('Review type is required.');
+  // Brawndo: one active recurring Review per Policy; completed history is retained, never duplicated.
+  if (kind === 'reviews' && body.client_id === 'demo_brawndo' && body.policy_id && !['completed','cancelled'].includes(body.status)
+    && db.reviews.some(r => r.client_id === body.client_id && r.policy_id === body.policy_id && r.review_id !== body.review_id && !['completed','cancelled'].includes(r.status)))
+    throw new Error('This Policy already has an active Review; open it instead.');
   if (kind === 'contacts' && !body.not_applicable && !body.name && !body.email && !body.role) throw new Error('Enter a contact name, email, or role.');
   if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) throw new Error('Enter a valid email address.');
   for (const [relation, collection] of Object.entries({

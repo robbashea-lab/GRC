@@ -1,3 +1,4 @@
+import {ensurePolicyReview,syncPolicyReview} from './policyReviews';
 import {ensureVendorReviews} from './vendors';
 import {approvalSnapshot} from './policyProvenance';
 import {invalidatePolicyApproval} from '../lib/policyProvenance';
@@ -281,12 +282,19 @@ export function action(db, kind, id, name, body) {
     if(body.status==='approved') {
       const subject=approvalSnapshot(db,{...r,...fields});
       fields.approval_subject=subject;
-      if(r.client_id==='demo_brawndo'&&!r.schedule_from_reviews&&!db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id)&&!r.next_review_date&&!fields.next_review_date)fields.next_review_date=nextPolicyReview(fields.last_reviewed_at||r.last_reviewed_at||now().slice(0,10));
       fields.decision_history=[...(r.decision_history||[]),{action:'external_approval_recorded',recorded_by:db.user.user_id,
         recorded_by_name:db.user.name,recorded_at:now(),reported_approver_id:body.approver_id,reported_approved_at:body.approved_at,
         provenance:'Verified metadata; not an in-app approval',subject}];
     } else fields=invalidatePolicyApproval(fields,r);
-    return patch(fields);
+    const updated=patch(fields);
+    // Brawndo: approval establishes the Policy's recurring Review (annual from the last review, or today)
+    // instead of storing a free-standing next-review date on the Policy.
+    if(r.client_id==='demo_brawndo'&&body.status==='approved'){
+      const had=db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id&&!['completed','cancelled'].includes(v.status));
+      const review=ensurePolicyReview(db,updated,updated.next_review_date||nextPolicyReview(String(updated.last_reviewed_at||now()).slice(0,10)));
+      if(review){syncPolicyReview(db,review);if(!had)audit(db,'Policy Review scheduled','policies',updated,{review_id:review.review_id,due_date:review.due_date});}
+    }
+    return updated;
   }
   throw new Error('This action is not implemented in the demo. No changes were saved.');
 }

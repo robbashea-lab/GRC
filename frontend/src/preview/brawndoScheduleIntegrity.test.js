@@ -29,7 +29,8 @@ test('seeded Brawndo history follows one unbroken schedule per Review',()=>{
 });
 test('a Finding raised in a Policy Review is visible from the Policy',async()=>{
   const policy=readStore().policies.find(p=>p.client_id===cid);
-  const review=(await api.post('/reviews',{client_id:cid,policy_id:policy.policy_id,title:'Synthetic policy review',review_type:'policy',recurrence:'annual',due_date:'2026-11-01'})).data;
+  // The Policy's recurring Review already exists; a second active one is rejected.
+  const review=readStore().reviews.find(r=>r.policy_id===policy.policy_id&&!['completed','cancelled'].includes(r.status));
   const finding=(await api.post(`/reviews/${review.review_id}/create-finding`,{occurrence_id:review.current_occurrence_id,request_id:'pol-1',title:'Policy gap',remediation_title:'Update policy'})).data;
   const related=(await api.get('/related',{params:{entity_type:'policies',entity_id:policy.policy_id}})).data;
   expect(related.findings.map(f=>f.finding_id)).toContain(finding.finding_id);

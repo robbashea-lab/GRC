@@ -51,6 +51,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const [riskDraft,setRiskDraft] = useState(null);
   const [riskOutcome,setRiskOutcome]=useState("Reviewed — No Change");
   const [riskNext,setRiskNext]=useState("");
+  const [confirmComplete,setConfirmComplete]=useState(false);
   const [current,setCurrent] = useState(null), [form,setForm] = useState({});
   const [history,setHistory] = useState([]), [selected,setSelected] = useState(null);
   const [tab,setTab] = useState('Overview'), [busy,setBusy] = useState(false);
@@ -188,9 +189,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       <div className={pilot?"flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5":"flex-1 overflow-y-auto px-6 py-5 space-y-4"}>
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
-          {pilot?<ReviewFacts record={shown} users={members} history={history} completionBased={!!(current?.risk_id||current?.policy_id)&&!frozen}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
+          {pilot?<ReviewFacts record={shown} users={members} history={history}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
           {pilot?<ReviewExpectations record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
-            policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
+            policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.filter(p=>!(p.schedule_from_reviews&&p.next_review_date)).map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
           <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members}/>}
           {shown?.iso_audit&&<section className="border border-line rounded p-3 space-y-2 text-sm" aria-label="Audit workpapers">
             <h3 className="font-medium">{auditPackage(shown.iso_audit.package_key)?.title}</h3>
@@ -219,14 +220,19 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
             <div><Label>Occurrence</Label><p className="text-sm py-2" data-testid="review-period">{selected?.period || derived.period}</p></div>
-            <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{pilot&&(current?.risk_id||configuration.policy_id)&&!frozen?'Calculated from actual completion':date(selected?.next_review_date || derived.next_review_date)}</p></div>
+            <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{date(selected?.next_review_date || derived.next_review_date)}</p></div>
           </div>
           {!pilot&&<GovernanceContextFields value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
           <div><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>
           {selected && <p className="text-sm">Completed {date(selected.completed_at || selected.completion_date)} by {selected.completed_by_name || person(selected.completed_by)} · {outcome(selected)}</p>}
           {current && !frozen && writable && <div className="flex flex-wrap gap-2">
             {current.status !== 'in_progress' && <Button size="sm" variant="outline" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-start" onClick={() => lifecycle('start')}>Start Review</Button>}
-            <Button size="sm" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-complete" onClick={() => lifecycle('complete')}>Complete Review</Button>
+            <Button size="sm" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-complete" onClick={() => {
+              // Brawndo: completion closes the occurrence and schedules the next one, so it is confirmed first.
+              if(!pilot) return lifecycle('complete');
+              if(comment.trim()||finding) return lifecycle('complete');
+              setConfirmComplete(true);
+            }}>Complete Review</Button>
             <Button size="sm" variant="outline" disabled={busy} data-testid="quick-create-finding" onClick={() => setFinding({request_id:recordUuid(),title:'',description:'',severity:'medium',owner_id:current.owner_id || '',due_date:'',remediation_title:'',remediation_plan:''})}>Raise Finding</Button>
           </div>}
           {current && !selected && <section className="border-t border-line pt-4" data-testid="review-history"><h3 className="font-medium text-sm mb-3">Review History</h3>
@@ -268,6 +274,12 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>
         <AlertDialogDescription>Saved records are unchanged. Keep editing, or discard the unfinished draft for this action.</AlertDialogDescription>
         <AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const action=pending;setPending(null);action?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>}
+    {pilot&&<AlertDialog open={confirmComplete} onOpenChange={setConfirmComplete}>
+      <AlertDialogContent data-testid="review-complete-confirm"><AlertDialogTitle>Complete this review?</AlertDialogTitle>
+        <AlertDialogDescription>This will close the current occurrence and schedule the next review according to its existing cadence.</AlertDialogDescription>
+        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction data-testid="review-complete-confirmed" onClick={()=>{setConfirmComplete(false);lifecycle('complete');}}>Complete Review</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>}
     {linked && <RecordDrawer open kind={linked.kind} record={linked.record} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();}}} onSaved={() => {reload();onSaved?.();}} />}

@@ -126,12 +126,24 @@ test('new pilot reviews do not wait for nonexistent requirement relationships',a
   expect(dialog.textContent).toContain('Requirement source not documented');
 });
 
-test('Risk review completion sends only changed assessment fields and labels completion-based scheduling',async()=>{
+test('Risk review completion is confirmed first and sends only changed assessment fields',async()=>{
  saved={...saved,risk_id:'risk'};
  api.get.mockImplementation(async path=>({data:path==='/related'?{risks:[{risk_id:'risk',client_id:'demo_brawndo',likelihood_score:3,impact_score:4}]}:[]}));
  api.post.mockResolvedValue({data:{review:saved,occurrence:{occurrence_id:'done'}}});
  await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
- expect(document.querySelector('[data-testid="review-next-date"]').textContent).toBe('Calculated from actual completion');
+ expect(document.querySelector('[data-testid="review-next-date"]').textContent).not.toMatch(/Calculated/);
  await click(document.querySelector('[data-testid="review-complete"]'));
+ expect(api.post).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Complete this review?');
+ await click(document.querySelector('[data-testid="review-complete-confirmed"]'));
  expect(api.post.mock.calls[0][1].risk_assessment).toEqual({});
+});
+
+test('cancelling the completion confirmation saves nothing and keeps the Review open',async()=>{
+ api.post.mockResolvedValue({data:{review:saved,occurrence:{occurrence_id:'done'}}});
+ await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+ await click(document.querySelector('[data-testid="review-complete"]'));
+ expect(document.querySelector('[data-testid="review-complete-confirm"]').textContent).toContain('This will close the current occurrence and schedule the next review according to its existing cadence.');
+ await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
+ expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+ expect(document.querySelector('[data-testid="review-complete-confirm"]')).toBeNull();
 });
