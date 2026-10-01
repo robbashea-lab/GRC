@@ -3,6 +3,7 @@ import unittest
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 from routes.onboarding import BASELINE_CATALOG
 from framework_governance import CIS, FRAMEWORKS
+CADENCE_DAYS = {'monthly': 30, 'quarterly': 91, 'semiannual': 182, 'annual': 365}
 
 
 class FrameworkTests(unittest.IsolatedAsyncioTestCase):
@@ -121,11 +122,14 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn(plan['cadence_class'], ('A', 'D'))
                 if plan['cadence_class'] == 'A':
                     self.assertTrue(plan['cadence_references'])
+                    self.assertIn(plan['source_minimum'], [r['interval'] for r in plan['cadence_references']])
                     for reference in plan['cadence_references']:
                         definition = definitions[reference['definition_id']]
                         self.assertIn(definition['id'], plan['safeguards'])
                         self.assertIn(definition['type'], ('recurring', 'training'))
-                        self.assertEqual(reference['interval'], plan['source_minimum'])
+                        # Each cited safeguard keeps its own CIS interval; none may be more frequent than the
+                        # plan's schedule, and at least one reference sets that schedule.
+                        self.assertGreaterEqual(CADENCE_DAYS[reference['interval']], CADENCE_DAYS[plan['source_minimum']])
                         self.assertEqual(reference['source'], definition['source'])
                         self.assertTrue(reference['source'].startswith('https://cas.docs.cisecurity.org/'))
                 else:

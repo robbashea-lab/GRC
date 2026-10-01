@@ -202,7 +202,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
           // Provenance follows the plan: an explicit CIS interval, or an Omnisciente recommendation where CIS states none.
           ...(cid!=='demo_brawndo'||p.framework_key!=='cis-ig1'?{cadence_source:'organization_defined',cadence_rationale:'Management selected this operating interval; source-prescribed intervals are displayed separately.'}
             :!p.source_minimum?{cadence_source:'recommended',cadence_rationale:'Omnisciente recommended validation interval. CIS does not prescribe a review interval for these safeguards.'}
-            :{cadence_source:'organization_defined',cadence_rationale:'Management adopted the interval CIS states for the covered safeguards; source references are displayed separately.'})
+            :{cadence_source:'organization_defined',cadence_rationale:'Management adopted the most frequent CIS-stated interval among the covered safeguards; each safeguard\'s own CIS interval is listed separately.'})
         }
       }));
     }

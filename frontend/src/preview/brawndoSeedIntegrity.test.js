@@ -30,5 +30,5 @@ test('CIS review cadence provenance distinguishes recommended from CIS-stated in
 });
 test('other demo clients keep their original cadence provenance',()=>{
   for(const r of readStore().reviews.filter(r=>r.client_id!==cid&&r.governance_context))
-    {expect(r.governance_context.cadence_source).not.toBe('recommended');expect(r.governance_context.cadence_rationale||'').not.toMatch(/Omnisciente recommended validation interval|Management adopted the interval CIS states/);}
+    {expect(r.governance_context.cadence_source).not.toBe('recommended');expect(r.governance_context.cadence_rationale||'').not.toMatch(/Omnisciente recommended validation interval|Management adopted the most frequent CIS-stated interval/);}
 });
