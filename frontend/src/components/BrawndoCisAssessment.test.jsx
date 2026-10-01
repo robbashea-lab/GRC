@@ -133,3 +133,7 @@ test('dialog has one source-labelled checklist and no maturity guidance',async()
  await act(async()=>root.unmount());root=createRoot(container);await render();
  expect(container.querySelector('.bcsg-criteria input').checked).toBe(true);
 });
+test('a never-assessed safeguard does not name an assessor',async()=>{
+ record={...record,last_assessed:null,assessed_by:'u'};await render();
+ expect(container.querySelector('.bcsg-meta').textContent).toBe('Last assessed: Not assessed');
+});

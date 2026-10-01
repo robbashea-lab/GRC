@@ -38,7 +38,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     <div className="bcsg-metadata">
     <div className="bcsg-owner"><span>Owner</span><AssigneeSelect clientId={clientId} label="Owner" value={form.owner_id} onChange={v=>put('owner_id',v)} users={ctx?.users||[]} disabled={disabled} showGuidance={false}/></div>
     <label className="bcsg-verification">Verification<select aria-label="Verification result" disabled={disabled} value={verification} onChange={e=>put('verification',e.target.value)}>{Object.entries(VERIFICATION_LABELS).map(([v,label])=><option key={v} value={v}>{label}</option>)}</select></label>
-    <p className="bcsg-meta">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}{current.assessed_by?` · ${personLabel(ctx?.users,current.assessed_by,'Not recorded')}`:''}</p>
+    <p className="bcsg-meta">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}{current.last_assessed&&current.assessed_by?` · ${personLabel(ctx?.users,current.assessed_by,'Not recorded')}`:''}</p>
     </div>
     <Step number="1" title="What CIS Requires">
       <p className="brawndo-requirement-title">{definition.title}</p>
