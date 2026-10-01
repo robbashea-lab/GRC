@@ -61,6 +61,9 @@ Every fix has a regression test that fails without the fix and passes with it.
 | 9 | Rescheduling a Risk or Vendor review kept the old recurrence day (moved to Nov 10, completed → Feb 25 instead of Feb 10) | The projection overwrote the reset anchor | Reset first, then project | `brawndoScheduleIntegrity.test.js` | Demo, all clients (bug fix) |
 | 10 | Seeded Brawndo history drifted on month-end cadences (Feb 28 → May 30 instead of May 31) | The seed stepped back from the previous step, not from the anchor | Step back from the anchor with month-end handling. Gated to Brawndo, so other clients' seed data is unchanged. | `brawndoScheduleIntegrity.test.js` | No |
 | 11 | A Finding raised in a Policy Review wasn't visible from the Policy | `/related` for policies didn't follow the policy's Reviews | Include Findings and Actions from the policy's Reviews (backend and Demo) | `test_workflow_integrity.py`, `brawndoScheduleIntegrity.test.js` | Yes (bug fix) |
+| 12 | The Dashboard still counted vendor assurance as due after the document was marked Reviewed. The Vendors page cleared it. | The Dashboard used the generic `assuranceStatus` rule | Brawndo vendors use the Vendors workspace rule (`vendorMatches('assurance')`) | `dashboardPosture.test.js` | No |
+| 13 | A never-assessed safeguard showed "Not assessed · Morgan Ellis" | The assessor was shown without a last-assessed date | Show the assessor only when there is an assessment | `BrawndoCisAssessment.test.jsx` | No |
+| 14 | The diff review found that fix #8's provenance wording leaked into ISO, SOC 2 and Initech demo plans | The seed condition wasn't gated | Applied to Brawndo CIS plans only; other clients keep their original provenance | `brawndoSeedIntegrity.test.js` | Prevented |
 
 ## Significant issues (not implemented)
 
@@ -94,8 +97,69 @@ Each issue lists the current behaviour, the risk or impact, and a recommendation
 8. **CIS provenance in the shared catalog.** 2.1 (six-monthly) and 7.1 (annual) sit inside monthly plans and are labelled as recommendations, because a backend test requires one interval per plan. The schedule is more frequent than CIS requires, but the label is inaccurate.
 9. **Month-end anchor promotion.** A monthly review due Apr 30 continues on month-ends (May 31). This is intended for quarter-ends, but ambiguous for monthly reviews.
 10. **Leftover code after `e90927a`.** `cisTiers.js/json` is unused, and `verification_checklist` is still accepted by the backend and Demo, so a cleanup decision is needed. `test_iteration7.py` is stale and excluded from the runner.
-11. **Mixed date formats.** After a completion, Demo due dates are stored as full timestamps; seed data uses date-only. Views normalise them, but equality comparisons are fragile.
+11. **Calendar omits vendor assurance follow-up and contract renewal dates** unless a separate Review exists. The browser check found no Nov 15 follow-up or Apr 15 2027 renewal. The Dashboard shows them; the Calendar projects only Reviews, Findings and Actions.
+12. **Brawndo policies have no review action on the Policy itself.** A policy-review Finding can only come from the generic "Policy Review and Approval" Review, so it isn't tied to a specific policy (see #3).
+13. **Count definitions differ between pages:**
+    - Calendar "Overdue" (4) also counts an overdue Finding that already has an Action; Dashboard "Past Due" (3) counts it once, as the Action.
+    - Dashboard "Unassigned" counts an Action owned by a disabled account; Action Items doesn't.
+
+    Both need agreed definitions.
+14. **Complete Review has no confirmation or outcome step.** It records "No Findings" without notes even when Findings were raised. Changing this changes the review workflow.
+15. **Mixed date formats.** After a completion, Demo due dates are stored as full timestamps; seed data uses date-only. Views normalise them, but equality comparisons are fragile.
 
 ## Results
 
-Sections below are completed after browser QA and the final test run.
+### Brawndo-specific workflow checks (automated probes and tests)
+
+| Area | Result |
+|---|---|
+| Recurrence | Pass (after fixes #1, #9 and #10) for generic, CIS-plan, policy, risk and vendor Reviews: early, on-time and late completion; Mar 31 → Jun 30; Sep 1 → Sep 1; Dec → Jan; Nov 30 → Feb 28 → May 31 |
+| Review completion | Pass. A history occurrence is kept with its original due date and actual completion date. The next occurrence is scheduled. No duplicate Review. Calendar and Dashboard update with no manual sync. |
+| Finding → Action | Pass from Review, Vendor Review, Policy Review and CIS safeguard origins. Each creates exactly one Action, and retries replay. Completion moves the Finding to Pending Validation; `/validate` closes it. The origin stays traceable. |
+| Risks | Pass. The default annual Review is created. Cadence and owner changes propagate. A treatment Action doesn't close the Risk. Accept keeps the Review; Close cancels it. An overdue Risk Review shows on the Dashboard and Calendar. |
+| Policies | Pass for policy dates following their Review and approval staying independent of completion. Fix #11 for visibility. Gaps are in significant issues #3, #4 and #12. |
+| Vendors (three clocks) | Pass. Review, assurance and contract dates are independent across completions and edits. Brawndo deliberately doesn't stamp assurance documents at review completion. Calendar gap: significant issue #11. |
+| Evidence | Pass. One record with three references. Re-linking doesn't duplicate. Unlinking keeps the other links and the origin. Unassigned files show as Needs Classification. |
+| Ownership | Pass. A disabled assignee and an archived contact keep their records and history, and the disabled owner stays visible. |
+| CIS IG1 | 56 safeguards with valid owners and coherent history. Varied implementation and explicit verification (fix #6). Cadence and provenance table below. Gap: significant issue #1. |
+| Seed integrity | No orphan relationships, duplicate Actions, duplicate obligations or duplicate Calendar keys. Date order is consistent (fixes #7 and #10). |
+
+### CIS review cadence and provenance (Brawndo)
+
+| Review | Safeguards | Cadence | CIS source | Provenance shown |
+|---|---|---|---|---|
+| Asset and Software Inventory (shared generic Review) | 1.1–1.2 | Quarterly | Semiannual, explicit | Organization-defined; more frequent than the source |
+| User Access Review (shared generic Review) | 5.x, 6.x | Quarterly | Quarterly, explicit | Organization-defined |
+| Security Awareness and Training (shared generic Review) | 14.x | Quarterly | Annual, explicit | Organization-defined; more frequent than the source |
+| Software Authorization & Support | 2.1–2.3, 9.1, 12.1 | Monthly | Monthly, explicit | Adopts the CIS-stated interval |
+| Data Management & Inventory | 3.1–3.6 | Annual | Annual | Adopts the CIS-stated interval |
+| Secure Configuration Process | 4.1–4.2 | Annual | Annual | Adopts the CIS-stated interval |
+| Vulnerability & Remediation | 7.1–7.4 | Monthly | Monthly | Adopts the CIS-stated interval |
+| Audit Log Management | 8.1–8.3 | Annual | Annual | Adopts the CIS-stated interval |
+| Data Recovery Governance | 11.1–11.4 | Annual | Annual | Adopts the CIS-stated interval |
+| Service Provider Inventory | 15.1 | Annual | Annual | Adopts the CIS-stated interval |
+| Incident Reporting & Contact | 17.1–17.3 | Annual | Annual | Adopts the CIS-stated interval |
+| Endpoint Protection Validation | 4.3–4.7, 9.2, 10.1–10.3 | Quarterly | None | **Omnisciente recommendation** (fix #8) |
+
+No Brawndo Review is less frequent than its CIS source, and none is duplicated. The policy-to-CIS links shown in the Brawndo UI exactly match `cisIG1.json` `policy_mappings`. The adequacy of each mapping is assessed in the greenfield doc, §F.
+
+### Browser QA (1440 light full path; 1440 dark and 768 light key pages)
+
+26 of 30 steps pass. 0 serious or critical axe violations. No application console errors.
+
+| Step | Status | Detail |
+|---|---|---|
+| 14–16 (policy review and Finding on the Policy) | Not available | See significant issues #3 and #12 |
+| 21 (Calendar shows assurance and contract dates) | Fail | See significant issue #11 |
+| 24 (raise a CIS Finding from the safeguard) | Not available | See significant issue #1 |
+
+Bug fixed after the browser pass: Dashboard and Vendors assurance counts (fix #12).
+
+Usability notes (not changed):
+- At 768 the Calendar grid scrolls inside its card (it has a minimum width).
+- Some list dates omit the year.
+- Some raw values and IDs appear ("risk assessment", "fw_demo_brawndo_assessment_2.1").
+- Severity is "Medium" in one place and "Moderate" elsewhere.
+- "Continue with" targets an already assessed safeguard.
+- The demo banner doesn't switch to dark.
+- At 390 width (out of scope) the Dashboard, CIS and Evidence pages scroll sideways.
