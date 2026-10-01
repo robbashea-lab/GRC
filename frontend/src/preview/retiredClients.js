@@ -5,7 +5,7 @@ export function removeRetiredDemoClients(db) {
   let changed = false;
   for (const [key, value] of Object.entries(db)) {
     if (Array.isArray(value)) {
-      const kept = value.filter(row => !RETIRED.has(row.client_id) && !(key === 'users' && retiredUser(row.user_id)));
+      const kept = value.filter(row => !RETIRED.has(row.client_id) && !(key === 'users' && retiredUser(row.user_id)) && !(['logs','notifications'].includes(key) && retiredUser(row.entity_id)));
       if (kept.length !== value.length) { db[key] = kept; changed = true; }
     }
   }
@@ -15,12 +15,13 @@ export function removeRetiredDemoClients(db) {
       if (kept.length !== user[field].length) { user[field] = kept; changed = true; }
     }
   }
-  for (const field of ['baselines', 'drafts']) for (const id of RETIRED) {
+  for (const field of ['baselines', 'drafts', 'riskSequences', 'ai_intake', 'ai_counters']) for (const id of RETIRED) {
     if (db[field] && Object.hasOwn(db[field], id)) { delete db[field][id]; changed = true; }
   }
   // A removed client persona cannot remain the active simulated identity.
   if (retiredUser(db.user?.user_id)) {
-    db.user = {...db.users.find(user => user.user_id === 'demo_admin')};
+    const explorer=db.users.find(user => user.user_id === 'demo_admin');
+    db.user = explorer ? {...explorer} : null;
     changed = true;
   }
   return changed;

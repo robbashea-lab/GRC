@@ -1,6 +1,14 @@
 import {removeRetiredDemoClients} from './retiredClients';
 import {seedStore,saveStore,readStore} from './store';
 
+test('removing a provider client does not change Brawndo internal-owner rotation',()=>{
+  const db=seedStore();
+  const assessments=db.framework_assessments.filter(a=>a.client_id==='demo_brawndo');
+  expect(assessments).toHaveLength(56);
+  expect(new Set(assessments.map(a=>a.owner_id))).toEqual(new Set(['demo_brawndo_user_0','demo_brawndo_user_1','demo_brawndo_user_2']));
+  expect(assessments.filter(a=>a.owner_id==='demo_brawndo_user_2')).toHaveLength(18);
+});
+
 test('retired synthetic tenants are removed on reload without resetting surviving work',()=>{
   sessionStorage.clear();
   const db=seedStore();
@@ -13,6 +21,10 @@ test('retired synthetic tenants are removed on reload without resetting survivin
   db.reviews.push({client_id:'demo_dunder',review_id:'retired'});
   db.evidence.push({client_id:'demo_dunder',evidence_id:'retired-file',linked_id:'retired'});
   db.baselines.demo_dunder={retired:true};db.drafts.demo_initech={retired:true};
+  db.riskSequences.demo_dunder=7;
+  db.ai_intake={demo_dunder:{usage:'yes'},custom:{usage:'no'}};
+  db.ai_counters={demo_initech:2};
+  db.logs.push({entity_type:'users',entity_id:'demo_dunder_user_0'});
   saveStore(db);
   const migrated=readStore();
   expect(migrated.clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_prestige','custom']);
@@ -23,6 +35,19 @@ test('retired synthetic tenants are removed on reload without resetting survivin
   expect(migrated.user.favorite_client_ids).toEqual(['demo_prestige']);
   expect(migrated.baselines.demo_dunder).toBeUndefined();
   expect(migrated.drafts.demo_initech).toBeUndefined();
+  expect(migrated.riskSequences.demo_dunder).toBeUndefined();
+  expect(migrated.ai_intake).toEqual({custom:{usage:'no'}});
+  expect(migrated.ai_counters).toEqual({});
+  expect(migrated.logs.some(r=>r.entity_id==='demo_dunder_user_0')).toBe(false);
   expect(removeRetiredDemoClients(migrated)).toBe(false);
   expect(readStore()).toEqual(migrated);
+});
+
+test('a retired simulated identity returns to the existing explorer; missing explorer fails closed',()=>{
+  for(const users of [[{user_id:'demo_admin',role:'super_admin'}],[]]){
+    const db={users,user:{user_id:'demo_initech_user_0'}};
+    expect(removeRetiredDemoClients(db)).toBe(true);
+    expect(db.user).toEqual(users[0]||null);
+    expect(removeRetiredDemoClients(db)).toBe(false);
+  }
 });
