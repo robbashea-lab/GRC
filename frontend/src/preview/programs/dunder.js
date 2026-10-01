@@ -193,7 +193,7 @@ export default program;
 
 const CID='demo_dunder',person=i=>CID+'_user_'+i;
 const previousDate=(value,months)=>{const d=new Date(value+'T12:00:00Z'),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()-months);d.setUTCDate(Math.min(day,new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate()));return d.toISOString().slice(0,10);};
-const evidence=(db,client,key,title,kind,id,at,owner,extra={})=>{const text='DEMO - SYNTHETIC DATA\n'+title,bytes=encodeURIComponent(text).replace(/%([0-9A-F]{2})/g,(_,hex)=>String.fromCharCode(parseInt(hex,16))),item={evidence_id:client.client_id+'_evidence_'+key,client_id:client.client_id,filename:key+'.txt',display_name:title,mime_type:'text/plain',size:bytes.length,content_base64:btoa(bytes),evidence_type:'Report',linked_type:kind,linked_id:id,uploaded_by:owner,uploaded_by_email:db.users.find(u=>u.user_id===owner)?.email||'historical@example.test',created_at:at,evidence_date:at,version:1,notes:'DEMO - SYNTHETIC DATA',...extra};db.evidence.push(item);return item;};
+const evidence=(db,client,key,title,kind,id,at,owner,extra={})=>{const text='DEMO - SYNTHETIC DATA\n'+title+'\nCollected: '+at,bytes=encodeURIComponent(text).replace(/%([0-9A-F]{2})/g,(_,hex)=>String.fromCharCode(parseInt(hex,16))),item={evidence_id:client.client_id+'_evidence_'+key,client_id:client.client_id,filename:key+'.txt',display_name:title,mime_type:'text/plain',size:bytes.length,content_base64:btoa(bytes),evidence_type:'Report',linked_type:kind,linked_id:id,uploaded_by:owner,uploaded_by_email:db.users.find(u=>u.user_id===owner)?.email||'historical@example.test',created_at:at,evidence_date:at,version:1,notes:'DEMO - SYNTHETIC DATA',...extra};db.evidence.push(item);return item;};
 const OBJECTIVES=[
   {key:'phishing',objective:'Reduce susceptibility to credential-phishing attacks',target:'Keep simulated-phishing click rate below 5% each quarter',owner:2,method:'Quarterly awareness-platform campaign result',status:'on_track',result:'Latest quarter: 3.8%',due:75},
   {key:'patching',objective:'Reduce exposure to exploitable endpoint vulnerabilities',target:'At least 95% of critical endpoint patches installed within 14 days',owner:0,method:'Monthly vulnerability and patch compliance report',status:'attention',result:'Latest month: 91%; warehouse label-printer firmware is overdue',due:28},
@@ -290,8 +290,9 @@ export function finishDunder(db,clock){
   // Retain the latest operating occurrences plus prior-year annual governance; this
   // keeps the complete four-client preview below the browser's session-storage ceiling.
   const historyStart=date(-365);
+  const linkedOccurrences=new Set([...db.evidence,...db.findings,...db.tasks].filter(row=>row.client_id===CID).map(row=>row.occurrence_id).filter(Boolean));
   for(const r of db.reviews.filter(r=>r.client_id===CID&&r.occurrences?.length)){
-    const retained=r.occurrences.filter(o=>(o.due_date||o.completed_at||'')>=historyStart);r.occurrences=(retained.length?retained:[r.occurrences.at(-1)]).slice(-2);
+    const retained=r.occurrences.filter(o=>linkedOccurrences.has(o.occurrence_id)||(o.due_date||o.completed_at||'')>=historyStart);r.occurrences=retained.length?retained:[r.occurrences.at(-1)];
   }
   return db;
 }

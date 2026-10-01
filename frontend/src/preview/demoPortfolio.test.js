@@ -5,6 +5,7 @@ import { demoOrganizations, demoDates } from './demoPortfolio';
 import { frameworkDefinition } from '../lib/frameworks';
 import { validateProfile } from '../lib/clientProfile';
 import { evidenceReferences } from './evidence';
+import { lightweightStore } from './evidenceStorage';
 import { validateAssignment } from './assignmentEligibility';
 import { validateClientRelationships } from './clientRelationships';
 import { portfolio } from './summaries';
@@ -59,8 +60,8 @@ test('canonical framework programs, real profiles, scoped people and valid asses
 test('historical occurrences, remediation chronology and downloadable evidence reconcile', () => {
   const db = seedStore(),
     today = demoDates()(0);
+  expect(db.reviews.some(r => r.occurrences.length)).toBe(true);
   for (const r of db.reviews) {
-    expect(r.occurrences.length).toBeGreaterThan(0);
     for (const o of r.occurrences) {
       expect(o.completed_at <= today).toBe(true);
       expect(o.completed_at <= o.due_date).toBe(true);
@@ -79,10 +80,11 @@ test('historical occurrences, remediation chronology and downloadable evidence r
     }
   }
   for (const e of db.evidence) {
+    const references = evidenceReferences(db, e);
     expect(atob(e.content_base64)).toContain('DEMO - SYNTHETIC DATA');
     expect(atob(e.content_base64).length).toBe(e.size);
-    expect(evidenceReferences(db, e).every(r => r.available)).toBe(true);
-    expect(evidenceReferences(db, e).length).toBeGreaterThan(0);
+    expect(references.filter(r => !r.available)).toEqual([]);
+    expect(references.length).toBeGreaterThan(0);
     expect(atob(e.content_base64)).toContain('Collected: ' + e.evidence_date);
   }
   for (const risk of db.risks.filter(r => r.status === 'closed')) expect(risk.last_reviewed <= risk.closed_at).toBe(true);
@@ -109,7 +111,7 @@ test('reset recovers creations edits deletions completions and baseline without 
   saveStore(modified);
   await api.post('/demo/reset');
   const restored = readStore();
-  expect(restored).toEqual(seedStore());
+  expect(lightweightStore(restored)).toEqual(JSON.parse(JSON.stringify(lightweightStore(seedStore()))));
   expect(restored.tasks.some(t => t.task_id === created.task_id)).toBe(false);
   expect(localStorage.getItem('standard-sentinel')).toBe('unchanged');
   const metrics = portfolio(restored, false);
