@@ -6,17 +6,18 @@ import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
+jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-id'}));
 jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('./AssigneeSelect',()=>({value,onChange,disabled})=><select aria-label="Owner" value={value||''} disabled={disabled} onChange={e=>onChange(e.target.value||null)}><option value="">Unassigned</option><option value="david">David Wallace</option></select>);
 jest.mock('./ui/dialog',()=>{const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};});
 
-let root,container,record,close;
+let root,container,record,close,related;
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);
 const setValue=async(label,value)=>{const el=container.querySelector(`[aria-label="${label}"]`);await act(async()=>{const proto=el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLSelectElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(el,value);el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));});};
 beforeEach(()=>{
  global.IS_REACT_ACT_ENVIRONMENT=true;mockUser={user_id:'u',role:'super_admin',workspace_mode:'demo'};close=jest.fn();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
  record={framework_assessment_id:'soc-a',framework_key:'soc-2',definition_id:'CC9.2',client_id:'demo_prestige',status:'in_progress',verification:'needs_validation',implementation:'Existing vendor monitoring process.',technology:'Retained legacy field',notes:'Retained note',na_rationale:'',owner_id:null,assessment_history:[],last_assessed:'2026-09-22T12:00:00Z'};
- const related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
+ related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/soc-2'?{assessments:[record],work:{}}:path.includes('/members')?[{user_id:'david',name:'David Wallace'}]:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:[]}));
  api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-10-01T12:00:00Z',assessed_by:'u',assessment_history:[{...body,at:'2026-10-01T12:00:00Z',by:'u'}]};return {data:record};});
 });
@@ -48,4 +49,18 @@ test('helper precedes the implementation field, N/A rationale is preserved and b
 
 test('the SOC-specific experience is gated to Prestige Demo only',async()=>{
  await render('demo_dunder');expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeNull();expect(container.querySelector('[data-testid="framework-assessment-workspace"]')).toBeTruthy();
+});
+
+test('Prestige criterion exposes linked governance work and creates one sourced Finding and Action',async()=>{
+ related.reviews=[{review_id:'r1',title:'Vendor review',status:'upcoming'}];
+ related.findings=[{finding_id:'f1',title:'Existing deficiency',status:'in_remediation'}];
+ related.tasks=[{task_id:'t1',title:'Existing correction',status:'open'}];
+ related.evidence=[{evidence_id:'e1',filename:'vendor-report.pdf'}];
+ await render();await act(async()=>container.querySelector('.psoc-linked summary').click());
+ expect(container.textContent).toContain('Vendor review');expect(container.textContent).toContain('Existing deficiency');
+ expect(container.textContent).toContain('Existing correction');expect(container.textContent).toContain('vendor-report.pdf');
+ await act(async()=>button('Raise Finding').click());
+ await act(async()=>button('Create Finding & Action').click());
+ expect(api.post).toHaveBeenCalledWith('/framework_assessments/soc-a/findings',expect.objectContaining({title:expect.stringContaining('CC9.2'),remediation_title:expect.stringContaining('CC9.2'),request_id:expect.any(String)}));
+ expect(container.textContent).toContain('Finding and remediation Action created.');
 });
