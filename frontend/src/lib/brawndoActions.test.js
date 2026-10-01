@@ -58,3 +58,10 @@ test('a Pending Validation Finding is an open work item, overdue by its own targ
   const active=unifiedActions({findings:[{...finding,status:'in_remediation'}],tasks:[task('open',{finding_id:'pv'})]},cid);
   expect(active.filter(r=>r.kind==='findings')).toHaveLength(0);
 });
+test('the Status filter labels Pending Validation rows (filter options render)',()=>{
+  const {columnOptions}=require('./tableFilters');
+  const rows=unifiedActions({findings:[{finding_id:'pv',client_id:cid,title:'Gap',status:'remediated'}],tasks:[task('t',{finding_id:'pv',status:'done'}),task('o')]},cid);
+  const status=pilotActionColumns(tableColumns('action-items'),rows).find(c=>c.key==='status');
+  expect(()=>columnOptions(status,rows)).not.toThrow();
+  expect(status.labelValue('pending_validation')).toBe('Pending Validation');
+});

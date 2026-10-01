@@ -88,7 +88,7 @@ export default function VendorRegister() {
   const [q, setQ] = useState("");
   const [searchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] ? searchParams.get("view") : "all_active";
+  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');

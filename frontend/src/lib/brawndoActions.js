@@ -56,7 +56,7 @@ export function pilotActionColumns(columns,rows) {
   return columns.map(c=>{
     if(c.key==='owner_id')return {...c,label:'Assigned To',sortable:false,filterOnly:true};
     if(c.key==='priority')return {...c,sortable:false,filterOnly:true,value:r=>pilotPriority(r.priority),labelValue:v=>v,options:undefined,rank:undefined,emptyLabel:null};
-    if(c.key==='status')return {...c,sortable:false,filterOnly:true,value:pilotActionStatus,labelValue:v=>({completed:'Completed',in_progress:'In Progress',overdue:'Overdue',open:'Open'})[v],matches:(r,v,now)=>pilotActionStatus(r,now)===v};
+    if(c.key==='status')return {...c,sortable:false,filterOnly:true,value:pilotActionStatus,labelValue:v=>({completed:'Completed',in_progress:'In Progress',overdue:'Overdue',open:'Open',pending_validation:'Pending Validation'})[v]||v,matches:(r,v,now)=>pilotActionStatus(r,now)===v};
     if(c.key==='source_type')return {...c,sortable:false,filterOnly:true,value:r=>r.source.label,labelValue:v=>v};
     if(c.key==='due_date')return {...c,label:'Due Date',sortLabels:['Earliest First','Latest First'],matches:(r,v,now)=>v==='overdue'?pilotActionMatches(r,v,now):dateMatches(r.due_date,v,now)};
     return c;
