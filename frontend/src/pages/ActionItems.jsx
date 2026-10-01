@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferenceRegister} from '@/lib/reference';
 import BrawndoActionItems from './BrawndoActionItems';
 
 // Only authoritative Task records are displayed here.
@@ -38,11 +38,11 @@ export default function ActionItems() {
   const [params,setParams]=useSearchParams(),previous=useRef(currentClientId);
   useEffect(()=>{
     const old=previous.current;previous.current=currentClientId;
-    if(old!==currentClientId&&(isBrawndoReference(old,user)||isBrawndoReference(currentClientId,user))){
+    if(old!==currentClientId&&(isReferenceRegister(old,user)||isReferenceRegister(currentClientId,user))){
       const next=new URLSearchParams(params);['owner','unassigned','finding_id','id','view','q'].forEach(k=>next.delete(k));setParams(next,{replace:true});
     }
   },[currentClientId,user,params,setParams]);
-  return isBrawndoReference(currentClientId,user)?<BrawndoActionItems key={currentClientId}/>:<OriginalActionItems/>;
+  return isReferenceRegister(currentClientId,user)?<BrawndoActionItems key={currentClientId}/>:<OriginalActionItems/>;
 }
 function OriginalActionItems() {
   const location = useLocation();

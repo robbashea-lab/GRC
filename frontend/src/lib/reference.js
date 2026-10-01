@@ -6,3 +6,5 @@ export const isPrestigeSocAssessment=(clientId,frameworkKey,user)=>isPrestigeRef
 export const isReferencePresentation=(clientId,user)=>isBrawndoReference(clientId,user)||isPrestigeReference(clientId,user);
 // Reference portfolio styling for the demo workspace. Presentation only.
 export const isReferencePortfolio=user=>user?.workspace_mode==='demo';
+// Reference register pages (Action Items, Risks) for every Demo client. Presentation only.
+export const isReferenceRegister=(clientId,user)=>user?.workspace_mode==='demo'&&!!clientId;

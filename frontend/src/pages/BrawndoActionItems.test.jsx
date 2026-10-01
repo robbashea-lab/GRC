@@ -42,8 +42,8 @@ test('stable summaries, orphan visibility, search, synchronized quick filters an
   expect(container.querySelector('[data-testid="ai-row-0"]').textContent).toContain('Finished work');
   mockClient='demo_dunder';rows=rows.map(r=>({...r,client_id:mockClient}));
   await act(async()=>root.render(<ActionItems/>));
-  expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();
-  expect(container.querySelector('button[aria-label="Owner: sort and filter"]')).toBeTruthy();
+  // Dunder (any Demo client) gets the same reference Action Items page.
+  expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
 });
 test('legacy Findings route redirects only Brawndo and preserves the Finding ID',async()=>{
   mockQuery='?finding_id=f';await act(async()=>root.render(<FindingsRoute/>));
