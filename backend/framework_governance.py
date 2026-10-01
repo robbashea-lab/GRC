@@ -17,6 +17,7 @@ from soc_readiness import SocConfiguration, ManagementControl, configuration as 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
 FRAMEWORKS=json.loads((ROOT/'frameworkDefinitions.json').read_text(encoding='utf-8'))['frameworks']
 CIS_CRITERIA=json.loads((ROOT/'operatorGuidance/cisAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
+SOC_GUIDANCE=json.loads((ROOT/'operatorGuidance/socAssessmentGuidance.json').read_text(encoding='utf-8'))['criteria']
 STATUSES=('not_assessed','in_progress','addressed','needs_attention','not_applicable')
 CADENCES=('monthly','quarterly','semiannual','annual','custom')
 
@@ -133,6 +134,7 @@ class AssessmentPatch(BaseModel):
     verification: Optional[Literal['not_verified','needs_validation','gap_identified','verified']]=None
     verification_checklist: Optional[dict[Literal['foundation','operational','mature'],list[str]]]=None
     cis_assessment_criteria: list[str]=Field(default_factory=list,max_length=20)
+    soc_assessment_checks: list[str]=Field(default_factory=list,max_length=30)
 
     @field_validator('verification_checklist')
     @classmethod
@@ -343,6 +345,14 @@ def router_for(s):
         s._require_snapshot(changes,old,'last_assessed')
         changes.pop('expected_last_assessed')
         data={**old,**changes}
+        if 'soc_assessment_checks' in changes:
+            if old['framework_key']!='soc-2' or old['client_id']!='demo_prestige':
+                raise HTTPException(422,'SOC assessment guidance is enabled only for Prestige SOC 2')
+            valid={c['id'] for c in SOC_GUIDANCE.get(old['definition_id'],{}).get('items',[])}
+            if any(c not in valid for c in changes['soc_assessment_checks']):
+                raise HTTPException(422,'Invalid SOC assessment guidance check')
+            changes['soc_assessment_checks']=list(dict.fromkeys(changes['soc_assessment_checks']))
+            data['soc_assessment_checks']=changes['soc_assessment_checks']
         if 'cis_assessment_criteria' in changes:
             if old['framework_key']!='cis-ig1' or old['client_id']!='demo_brawndo':
                 raise HTTPException(422,'Assessment criteria are available only for Brawndo CIS IG1')
@@ -390,7 +400,7 @@ def router_for(s):
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed:
             history_verification=set(VERIFICATION_FIELDS) if old['framework_key']=='cis-ig1' else {'verification'} if verification_allowed else set()
-            at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed' and (k!='cis_assessment_criteria' or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed' and (k not in ('cis_assessment_criteria','soc_assessment_checks') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}
             if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
             result=await s.db.framework_assessments.update_one(predicate,{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})

@@ -1,5 +1,6 @@
 import {validateCsfProfile} from '../lib/csfProfile';
 import cisCriteria from '../lib/operatorGuidance/cisAssessmentCriteria.json';
+import socGuidance from '../lib/operatorGuidance/socAssessmentGuidance.json';
 import {calendarDay} from '../lib/managementDates';
 import { validateAssignment, eligible } from './assignmentEligibility';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
@@ -161,6 +162,12 @@ export function frameworkRequest(db,path,method,params,body){
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_assessed??null))throw new Error('Assessment changed since it was opened; reload before saving');
     body={...body};delete body.expected_last_assessed;
     const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...(row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1'?['cis_assessment_criteria']:[])];
+    if(row.client_id==='demo_prestige'&&row.framework_key==='soc-2')fields.push('soc_assessment_checks');
+    if('soc_assessment_checks' in body){
+      const valid=new Set((socGuidance.criteria[row.definition_id]?.items||[]).map(c=>c.id));
+      if(!fields.includes('soc_assessment_checks')||!Array.isArray(body.soc_assessment_checks)||body.soc_assessment_checks.length>30||body.soc_assessment_checks.some(c=>!valid.has(c)))throw new Error('Invalid SOC assessment guidance checks');
+      body.soc_assessment_checks=[...new Set(body.soc_assessment_checks)];
+    }
     if('cis_assessment_criteria' in body){
       const valid=new Set((cisCriteria.requirements[row.definition_id]?.criteria||[]).map(c=>c.id));
       if(row.client_id!=='demo_brawndo'||row.framework_key!=='cis-ig1'||!Array.isArray(body.cis_assessment_criteria)||body.cis_assessment_criteria.length>20||body.cis_assessment_criteria.some(c=>!valid.has(c)))throw new Error('Invalid CIS assessment criteria');
@@ -205,7 +212,7 @@ export function frameworkRequest(db,path,method,params,body){
     }else if(body.addressable_decision||body.addressable_rationale)throw new Error('Addressability fields apply only to addressable specifications');
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
-    const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
+    const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
     if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});row.assessment_history.push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
     return row;
   }

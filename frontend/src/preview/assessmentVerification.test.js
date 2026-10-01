@@ -75,3 +75,29 @@ test('new criteria cannot be written to another client',async()=>{
   const [row,path]=await cisRow();
   await expect(api.patch(path,{cis_assessment_criteria:[],expected_last_assessed:row.last_assessed??null})).rejects.toThrow();
 });
+
+test('SOC guidance saves independently, preserves legacy data and appends immutable history',async()=>{
+ const row=(await api.get('/frameworks/soc-2',{params:{client_id:'demo_prestige'}})).data.assessments.find(a=>a.definition_id==='CC9.2');
+ const path='/framework_assessments/'+row.framework_assessment_id;
+ const baseline=(await api.patch(path,{notes:'Retained assessment note',expected_last_assessed:row.last_assessed??null})).data;
+ const saved=(await api.patch(path,{soc_assessment_checks:['CC9.2-v1-r1','CC9.2-v1-o1','CC9.2-v1-r1'],expected_last_assessed:baseline.last_assessed})).data;
+ expect(saved.soc_assessment_checks).toEqual(['CC9.2-v1-r1','CC9.2-v1-o1']);
+ for(const key of ['status','verification','implementation','notes','management_controls','verification_checklist'])expect(saved[key]).toEqual(baseline[key]);
+ expect(saved.assessment_history.slice(0,-1)).toEqual(baseline.assessment_history);
+ expect(saved.assessment_history.at(-1).soc_assessment_checks).toEqual(saved.soc_assessment_checks);
+ expect((await api.get(path)).data.soc_assessment_checks).toEqual(saved.soc_assessment_checks);
+ await expect(api.patch(path,{soc_assessment_checks:[],expected_last_assessed:baseline.last_assessed})).rejects.toThrow('Assessment changed');
+ for(const bad of [['CC1.1-v1-r1'],['CC9.2-v1-r99'],['CC9.2-f1'],null,{},[1],Array(31).fill('CC9.2-v1-r1')])
+   await expect(api.patch(path,{soc_assessment_checks:bad,expected_last_assessed:saved.last_assessed})).rejects.toThrow();
+ const cleared=(await api.patch(path,{soc_assessment_checks:[],expected_last_assessed:saved.last_assessed})).data;
+ expect(cleared.soc_assessment_checks).toEqual([]);
+ expect(cleared.assessment_history.at(-2).soc_assessment_checks).toEqual(saved.soc_assessment_checks);
+});
+
+test.each(['soc-2','cis-ig1','iso-27001'])('SOC guidance cannot affect another client or %s history',async key=>{
+ const row=(await configure(key)).assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
+ await expect(api.patch(path,{soc_assessment_checks:[],expected_last_assessed:row.last_assessed??null})).rejects.toThrow();
+ const saved=(await api.patch(path,{notes:'Ordinary update',expected_last_assessed:row.last_assessed??null})).data;
+ expect(saved).not.toHaveProperty('soc_assessment_checks');
+ expect(saved.assessment_history.at(-1)).not.toHaveProperty('soc_assessment_checks');
+});

@@ -7,9 +7,14 @@
 [data-testid="prestige-soc-assessment"] .bcis-crumbs button:hover { text-decoration: underline; }
 [data-testid="prestige-soc-assessment"] .bcis-crumbs button:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 2px; border-radius: 2px; }
 .psoc-context { color: var(--color-text-secondary); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-.psoc-criteria { display: grid; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
-.psoc-criteria li { display: grid; gap: 3px; padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-subtle); font-size: 14px; line-height: 1.5; }
-.psoc-criteria strong { font-size: 12px; color: var(--color-text-secondary); }
+.psoc-tier { min-width: 0; margin: 16px 0 0; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-subtle); }
+.psoc-tier legend { max-width: 100%; padding: 0 4px; font-size: 13px; font-weight: 600; }
+.psoc-tier legend span { margin-left: 8px; white-space: nowrap; color: var(--color-text-secondary); font-weight: 400; }
+.psoc-tier label { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 14px; line-height: 1.5; cursor: pointer; overflow-wrap: anywhere; }
+.psoc-tier input { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 3px; accent-color: var(--color-link); }
+.psoc-tier input:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 3px; }
+.psoc-tier:disabled label { cursor: default; opacity: .7; }
+.psoc-guidance-note { margin-top: 12px; font-size: 12px; line-height: 1.5; color: var(--color-text-secondary); }
 .psoc-linked { margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 16px; font-size: 14px; }
 .psoc-linked summary { cursor: pointer; font-weight: 600; }
 .psoc-linked section { margin-top: 12px; }

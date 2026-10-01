@@ -1,0 +1,1196 @@
+{
+  "version": "soc-guidance-v1",
+  "framework": "soc-2",
+  "source": {
+    "title": "AICPA 2017 Trust Services Criteria (revised Points of Focus, 2022)",
+    "url": "https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022",
+    "document_url": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf",
+    "wording": "Omnisciente summaries; no licensed verbatim reproduction",
+    "reviewed_at": "2026-10-01"
+  },
+  "tiers": [
+    {
+      "key": "criterion_requirements",
+      "label": "SOC 2 Criterion Requirements"
+    },
+    {
+      "key": "operational_practices",
+      "label": "Operational Practices"
+    },
+    {
+      "key": "enhanced_assurance",
+      "label": "Enhanced Assurance"
+    }
+  ],
+  "criteria": {
+    "CC1.1": {
+      "source_reference": "CC1.1",
+      "source_page": 14,
+      "review_note": "Summary uses conduct-related Points of Focus to clarify ethical commitment; it does not prescribe a formal policy.",
+      "items": [
+        {
+          "id": "CC1.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Management establishes expectations for ethical behavior and follows through when conduct falls short.",
+          "source_type": "point_of_focus",
+          "source_reference": "CC1.1; conduct expectations and follow-through Points of Focus, page 15"
+        },
+        {
+          "id": "CC1.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Communicate conduct expectations during onboarding and when responsibilities change.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC1.1"
+        },
+        {
+          "id": "CC1.1-v1-o2",
+          "tier": "operational_practices",
+          "text": "Provide a reporting route and assign responsibility for consistent follow-up.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC1.1"
+        },
+        {
+          "id": "CC1.1-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Review recurring conduct concerns and whether corrective responses address their causes.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC1.1"
+        }
+      ]
+    },
+    "CC1.2": {
+      "source_reference": "CC1.2",
+      "source_page": 15,
+      "review_note": "Oversight arrangements depend on entity size and structure; see source footnote 15.",
+      "items": [
+        {
+          "id": "CC1.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The governing body provides independent oversight of the development and performance of internal control.",
+          "source_type": "criterion",
+          "source_reference": "CC1.2"
+        },
+        {
+          "id": "CC1.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Give the governing body control issues, decisions and unresolved actions in a usable briefing.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC1.2"
+        },
+        {
+          "id": "CC1.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Have oversight members evaluate whether their challenge changed management decisions.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC1.2"
+        }
+      ]
+    },
+    "CC1.3": {
+      "source_reference": "CC1.3",
+      "source_page": 16,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC1.3-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Management establishes structures, reporting lines, authorities and responsibilities, with governing-body oversight, to support the organization's objectives.",
+          "source_type": "criterion",
+          "source_reference": "CC1.3"
+        },
+        {
+          "id": "CC1.3-v1-o1",
+          "tier": "operational_practices",
+          "text": "Keep reporting lines and delegated decision rights accessible to control owners.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC1.3"
+        },
+        {
+          "id": "CC1.3-v1-o2",
+          "tier": "operational_practices",
+          "text": "Clarify the handoffs between internal teams and outsourced providers.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC1.3"
+        }
+      ]
+    },
+    "CC1.4": {
+      "source_reference": "CC1.4",
+      "source_page": 17,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC1.4-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization attracts, develops and retains people with the competence needed to achieve its objectives.",
+          "source_type": "criterion",
+          "source_reference": "CC1.4"
+        },
+        {
+          "id": "CC1.4-v1-o1",
+          "tier": "operational_practices",
+          "text": "Connect hiring and development activities to the competencies of each control role.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC1.4"
+        },
+        {
+          "id": "CC1.4-v1-o2",
+          "tier": "operational_practices",
+          "text": "Arrange cover for control responsibilities when key staff are absent.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC1.4"
+        },
+        {
+          "id": "CC1.4-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Evaluate whether training resolves observed execution errors.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC1.4"
+        }
+      ]
+    },
+    "CC1.5": {
+      "source_reference": "CC1.5",
+      "source_page": 18,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC1.5-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization holds individuals accountable for their internal-control responsibilities.",
+          "source_type": "criterion",
+          "source_reference": "CC1.5"
+        },
+        {
+          "id": "CC1.5-v1-o1",
+          "tier": "operational_practices",
+          "text": "Include control responsibilities in performance conversations and follow up on missed obligations.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC1.5"
+        },
+        {
+          "id": "CC1.5-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Review whether delivery incentives encourage staff to bypass controls.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC1.5"
+        }
+      ]
+    },
+    "CC2.1": {
+      "source_reference": "CC2.1",
+      "source_page": 19,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC2.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization obtains or generates and uses relevant, quality information for internal control.",
+          "source_type": "criterion",
+          "source_reference": "CC2.1"
+        },
+        {
+          "id": "CC2.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Identify each control owner's information needs and the responsible data source.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC2.1"
+        },
+        {
+          "id": "CC2.1-v1-o2",
+          "tier": "operational_practices",
+          "text": "Check important reports for missing, outdated or inconsistent information before use.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC2.1"
+        },
+        {
+          "id": "CC2.1-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Reconcile a sample of management reports to their underlying records.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC2.1"
+        }
+      ]
+    },
+    "CC2.2": {
+      "source_reference": "CC2.2",
+      "source_page": 21,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC2.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization communicates objectives and internal-control responsibilities to the people who need them.",
+          "source_type": "criterion",
+          "source_reference": "CC2.2"
+        },
+        {
+          "id": "CC2.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Use role-specific communications for control changes and escalation routes.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC2.2"
+        },
+        {
+          "id": "CC2.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Ask a sample of recipients to demonstrate how they would report a control concern.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC2.2"
+        }
+      ]
+    },
+    "CC2.3": {
+      "source_reference": "CC2.3",
+      "source_page": 22,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC2.3-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization communicates with external parties about matters affecting internal control.",
+          "source_type": "criterion",
+          "source_reference": "CC2.3"
+        },
+        {
+          "id": "CC2.3-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign owners for customer and supplier communications about responsibilities and changes.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC2.3"
+        },
+        {
+          "id": "CC2.3-v1-o2",
+          "tier": "operational_practices",
+          "text": "Route incoming concerns to a responsible team and track the response.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC2.3"
+        }
+      ]
+    },
+    "CC3.1": {
+      "source_reference": "CC3.1",
+      "source_page": 24,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC3.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization states its objectives clearly enough to identify and assess risks to their achievement.",
+          "source_type": "criterion",
+          "source_reference": "CC3.1"
+        },
+        {
+          "id": "CC3.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Connect scoped service commitments to clear objectives used in risk assessment.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC3.1"
+        }
+      ]
+    },
+    "CC3.2": {
+      "source_reference": "CC3.2",
+      "source_page": 27,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC3.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization identifies and analyzes risks to its objectives and decides how those risks will be managed.",
+          "source_type": "criterion",
+          "source_reference": "CC3.2"
+        },
+        {
+          "id": "CC3.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Record risk analysis, response decisions and accountable owners in the existing risk workflow.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC3.2"
+        },
+        {
+          "id": "CC3.2-v1-o2",
+          "tier": "operational_practices",
+          "text": "Revisit risk decisions when threat or business assumptions change.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC3.2"
+        },
+        {
+          "id": "CC3.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Challenge major risk assumptions using observed incidents and near misses.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC3.2"
+        }
+      ]
+    },
+    "CC3.3": {
+      "source_reference": "CC3.3",
+      "source_page": 28,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC3.3-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization considers the potential for fraud when assessing risks to its objectives.",
+          "source_type": "criterion",
+          "source_reference": "CC3.3"
+        },
+        {
+          "id": "CC3.3-v1-o1",
+          "tier": "operational_practices",
+          "text": "Include realistic fraud scenarios and relevant participants in risk discussions.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC3.3"
+        }
+      ]
+    },
+    "CC3.4": {
+      "source_reference": "CC3.4",
+      "source_page": 29,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC3.4-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization identifies and assesses changes that could significantly affect internal control.",
+          "source_type": "criterion",
+          "source_reference": "CC3.4"
+        },
+        {
+          "id": "CC3.4-v1-o1",
+          "tier": "operational_practices",
+          "text": "Use business, technology and supplier change workflows to trigger risk reassessment.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC3.4"
+        },
+        {
+          "id": "CC3.4-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Compare completed changes with risk reviews to identify missed triggers.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC3.4"
+        }
+      ]
+    },
+    "CC4.1": {
+      "source_reference": "CC4.1",
+      "source_page": 30,
+      "review_note": "Ongoing or separate evaluation is already part of the criterion, not an optional assurance upgrade.",
+      "items": [
+        {
+          "id": "CC4.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization performs appropriate ongoing or separate evaluations to determine whether internal control is present and functioning.",
+          "source_type": "criterion",
+          "source_reference": "CC4.1"
+        },
+        {
+          "id": "CC4.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign evaluation scope, responsibilities and timing based on control risk.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC4.1"
+        },
+        {
+          "id": "CC4.1-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Compare conclusions from different evaluators where results conflict.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC4.1"
+        }
+      ]
+    },
+    "CC4.2": {
+      "source_reference": "CC4.2",
+      "source_page": 31,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC4.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Control deficiencies are evaluated and communicated promptly to those responsible for correction, including appropriate leadership.",
+          "source_type": "criterion",
+          "source_reference": "CC4.2"
+        },
+        {
+          "id": "CC4.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign remediation owners and track deficiencies through the existing Findings and Actions workflows.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC4.2"
+        },
+        {
+          "id": "CC4.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Have someone other than the action owner challenge closure support for significant deficiencies.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC4.2"
+        }
+      ]
+    },
+    "CC5.1": {
+      "source_reference": "CC5.1",
+      "source_page": 31,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC5.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization selects and develops control activities that reduce risks to acceptable levels.",
+          "source_type": "criterion",
+          "source_reference": "CC5.1"
+        },
+        {
+          "id": "CC5.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Map selected controls to the risks they address and explain any compensating arrangements.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC5.1"
+        }
+      ]
+    },
+    "CC5.2": {
+      "source_reference": "CC5.2",
+      "source_page": 32,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC5.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization establishes general control activities over technology that support its objectives.",
+          "source_type": "criterion",
+          "source_reference": "CC5.2"
+        },
+        {
+          "id": "CC5.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Identify technology dependencies and assign ownership of supporting access, change and maintenance controls.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC5.2"
+        }
+      ]
+    },
+    "CC5.3": {
+      "source_reference": "CC5.3",
+      "source_page": 33,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC5.3-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Policies establish expectations for control activities.",
+          "source_type": "criterion",
+          "source_reference": "CC5.3"
+        },
+        {
+          "id": "CC5.3-v1-r2",
+          "tier": "criterion_requirements",
+          "text": "Procedures put those control expectations into action.",
+          "source_type": "criterion",
+          "source_reference": "CC5.3"
+        },
+        {
+          "id": "CC5.3-v1-o1",
+          "tier": "operational_practices",
+          "text": "Make procedures accessible to the people performing them and establish how exceptions are handled.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC5.3"
+        },
+        {
+          "id": "CC5.3-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Compare actual execution with the procedure after significant operational changes.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC5.3"
+        }
+      ]
+    },
+    "CC6.1": {
+      "source_reference": "CC6.1",
+      "source_page": 34,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC6.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization implements logical-access security over protected information assets to protect them from security events.",
+          "source_type": "criterion",
+          "source_reference": "CC6.1"
+        },
+        {
+          "id": "CC6.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Identify protected assets and access paths, then apply authentication and access rules appropriate to their risks.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.1"
+        },
+        {
+          "id": "CC6.1-v1-o2",
+          "tier": "operational_practices",
+          "text": "Include access-control decisions in architecture reviews.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.1"
+        },
+        {
+          "id": "CC6.1-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Validate that a sample of disallowed access attempts is blocked across different access paths.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC6.1"
+        }
+      ]
+    },
+    "CC6.2": {
+      "source_reference": "CC6.2",
+      "source_page": 36,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC6.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "For access administered by the organization, internal and external users are registered and authorized before credentials or access are issued.",
+          "source_type": "criterion",
+          "source_reference": "CC6.2"
+        },
+        {
+          "id": "CC6.2-v1-r2",
+          "tier": "criterion_requirements",
+          "text": "For access administered by the organization, credentials are removed when user access is no longer authorized.",
+          "source_type": "criterion",
+          "source_reference": "CC6.2"
+        },
+        {
+          "id": "CC6.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Connect credential approval and removal to joiner, mover and leaver workflows.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.2"
+        },
+        {
+          "id": "CC6.2-v1-o2",
+          "tier": "operational_practices",
+          "text": "Review credentials for accounts without a current owner or business purpose.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.2"
+        },
+        {
+          "id": "CC6.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Reconcile account records with personnel and supplier records to identify missed removals.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC6.2"
+        }
+      ]
+    },
+    "CC6.3": {
+      "source_reference": "CC6.3",
+      "source_page": 36,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC6.3-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization grants, changes and removes access according to roles, responsibilities and system design, considering least privilege and segregation of duties.",
+          "source_type": "criterion",
+          "source_reference": "CC6.3"
+        },
+        {
+          "id": "CC6.3-v1-o1",
+          "tier": "operational_practices",
+          "text": "Document role entitlements and approval responsibilities for access changes.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.3"
+        },
+        {
+          "id": "CC6.3-v1-o2",
+          "tier": "operational_practices",
+          "text": "Review privileges and incompatible access when responsibilities change.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.3"
+        },
+        {
+          "id": "CC6.3-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Test effective permissions rather than relying only on the requested access list.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC6.3"
+        }
+      ]
+    },
+    "CC6.4": {
+      "source_reference": "CC6.4",
+      "source_page": 37,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC6.4-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization restricts physical access to relevant facilities and protected information assets to authorized personnel.",
+          "source_type": "criterion",
+          "source_reference": "CC6.4"
+        },
+        {
+          "id": "CC6.4-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign responsibility for visitor access, badge changes and recovery of physical devices.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.4"
+        }
+      ]
+    },
+    "CC6.5": {
+      "source_reference": "CC6.5",
+      "source_page": 37,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC6.5-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Protection of physical assets continues until recoverability of their data and software has been reduced and is no longer needed for organizational objectives.",
+          "source_type": "criterion",
+          "source_reference": "CC6.5"
+        },
+        {
+          "id": "CC6.5-v1-o1",
+          "tier": "operational_practices",
+          "text": "Keep asset protection in place until the disposal or transfer owner confirms the selected sanitization outcome.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.5"
+        },
+        {
+          "id": "CC6.5-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Validate sanitization results for a sample of retired assets, including supplier-handled disposal.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC6.5"
+        }
+      ]
+    },
+    "CC6.6": {
+      "source_reference": "CC6.6",
+      "source_page": 38,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC6.6-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization protects against threats from outside its system boundaries through logical-access security measures.",
+          "source_type": "criterion",
+          "source_reference": "CC6.6"
+        },
+        {
+          "id": "CC6.6-v1-o1",
+          "tier": "operational_practices",
+          "text": "Maintain an approved inventory of external access points and their permitted uses.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.6"
+        },
+        {
+          "id": "CC6.6-v1-o2",
+          "tier": "operational_practices",
+          "text": "Review boundary-rule exceptions with a named owner.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.6"
+        },
+        {
+          "id": "CC6.6-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Validate exposed access paths against the approved boundary design.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC6.6"
+        }
+      ]
+    },
+    "CC6.7": {
+      "source_reference": "CC6.7",
+      "source_page": 38,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC6.7-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Information transmission, movement and removal are restricted to authorized users and processes.",
+          "source_type": "criterion",
+          "source_reference": "CC6.7"
+        },
+        {
+          "id": "CC6.7-v1-r2",
+          "tier": "criterion_requirements",
+          "text": "Information is protected during transmission, movement and removal.",
+          "source_type": "criterion",
+          "source_reference": "CC6.7"
+        },
+        {
+          "id": "CC6.7-v1-o1",
+          "tier": "operational_practices",
+          "text": "Define approved transfer routes and handling rules for sensitive information and removable media.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.7"
+        },
+        {
+          "id": "CC6.7-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Test whether an unauthorized transfer attempt is prevented or detected as intended.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC6.7"
+        }
+      ]
+    },
+    "CC6.8": {
+      "source_reference": "CC6.8",
+      "source_page": 39,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC6.8-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization prevents or detects and acts on unauthorized or malicious software.",
+          "source_type": "criterion",
+          "source_reference": "CC6.8"
+        },
+        {
+          "id": "CC6.8-v1-o1",
+          "tier": "operational_practices",
+          "text": "Restrict software installation and route suspected malicious software to a response owner.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC6.8"
+        },
+        {
+          "id": "CC6.8-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Exercise malware response safely in an isolated test environment.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC6.8"
+        }
+      ]
+    },
+    "CC7.1": {
+      "source_reference": "CC7.1",
+      "source_page": 40,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC7.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Monitoring detects configuration changes that introduce vulnerabilities.",
+          "source_type": "criterion",
+          "source_reference": "CC7.1"
+        },
+        {
+          "id": "CC7.1-v1-r2",
+          "tier": "criterion_requirements",
+          "text": "Monitoring identifies exposure to newly discovered vulnerabilities.",
+          "source_type": "criterion",
+          "source_reference": "CC7.1"
+        },
+        {
+          "id": "CC7.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Connect configuration and vulnerability monitoring results to prioritized remediation work.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC7.1"
+        },
+        {
+          "id": "CC7.1-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Measure repeat vulnerabilities and verify whether prior fixes remain effective.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC7.1"
+        }
+      ]
+    },
+    "CC7.2": {
+      "source_reference": "CC7.2",
+      "source_page": 40,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC7.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "System components and operations are monitored for anomalies associated with malicious activity, natural events or errors affecting objectives.",
+          "source_type": "criterion",
+          "source_reference": "CC7.2"
+        },
+        {
+          "id": "CC7.2-v1-r2",
+          "tier": "criterion_requirements",
+          "text": "Anomalies are analyzed to determine whether they are security events.",
+          "source_type": "criterion",
+          "source_reference": "CC7.2"
+        },
+        {
+          "id": "CC7.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign anomaly triage responsibilities and escalation routes.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC7.2"
+        },
+        {
+          "id": "CC7.2-v1-o2",
+          "tier": "operational_practices",
+          "text": "Monitor whether collection and alerting tools are themselves working.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC7.2"
+        },
+        {
+          "id": "CC7.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Use controlled scenarios to check that important anomalies reach the right responder.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC7.2"
+        }
+      ]
+    },
+    "CC7.3": {
+      "source_reference": "CC7.3",
+      "source_page": 41,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC7.3-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Security events are evaluated to determine whether they are incidents.",
+          "source_type": "criterion",
+          "source_reference": "CC7.3"
+        },
+        {
+          "id": "CC7.3-v1-r2",
+          "tier": "criterion_requirements",
+          "text": "Action is taken to prevent or address failures of the organization's objectives.",
+          "source_type": "criterion",
+          "source_reference": "CC7.3"
+        },
+        {
+          "id": "CC7.3-v1-o1",
+          "tier": "operational_practices",
+          "text": "Record event classification, impact analysis and the reason for escalation or closure.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC7.3"
+        },
+        {
+          "id": "CC7.3-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Revisit a sample of closed events to challenge missed-incident assumptions.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC7.3"
+        }
+      ]
+    },
+    "CC7.4": {
+      "source_reference": "CC7.4",
+      "source_page": 42,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC7.4-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization executes a defined incident-response program to understand, contain, remediate and communicate identified incidents.",
+          "source_type": "criterion",
+          "source_reference": "CC7.4"
+        },
+        {
+          "id": "CC7.4-v1-o1",
+          "tier": "operational_practices",
+          "text": "Keep response roles, contacts and communications routes usable during an incident.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC7.4"
+        },
+        {
+          "id": "CC7.4-v1-o2",
+          "tier": "operational_practices",
+          "text": "Record the sequence of containment and remediation decisions.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC7.4"
+        },
+        {
+          "id": "CC7.4-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Review incident patterns and exercise outcomes to improve response decisions.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC7.4"
+        }
+      ]
+    },
+    "CC7.5": {
+      "source_reference": "CC7.5",
+      "source_page": 44,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC7.5-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization identifies, develops and implements activities to recover from identified security incidents.",
+          "source_type": "criterion",
+          "source_reference": "CC7.5"
+        },
+        {
+          "id": "CC7.5-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign recovery activities and validate restored functionality before resuming normal operation.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC7.5"
+        },
+        {
+          "id": "CC7.5-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Review whether incident recovery changes prevent recurrence.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC7.5"
+        }
+      ]
+    },
+    "CC8.1": {
+      "source_reference": "CC8.1",
+      "source_page": 45,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC8.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "System changes are authorized, designed, developed or acquired, configured, documented, tested, approved and implemented to support organizational objectives.",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
+        },
+        {
+          "id": "CC8.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Use change records to connect approvals, tests and release decisions.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC8.1"
+        },
+        {
+          "id": "CC8.1-v1-o2",
+          "tier": "operational_practices",
+          "text": "Define how urgent changes receive appropriate review and follow-up.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC8.1"
+        },
+        {
+          "id": "CC8.1-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Compare deployed changes with approved records to identify untracked releases.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC8.1"
+        }
+      ]
+    },
+    "CC9.1": {
+      "source_reference": "CC9.1",
+      "source_page": 47,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC9.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization selects and develops activities to mitigate risks arising from potential business disruptions.",
+          "source_type": "criterion",
+          "source_reference": "CC9.1"
+        },
+        {
+          "id": "CC9.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Translate credible disruption scenarios into workable continuity arrangements and responsibilities.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC9.1"
+        },
+        {
+          "id": "CC9.1-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Exercise dependency failures that could defeat the planned alternative processing approach.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC9.1"
+        }
+      ]
+    },
+    "CC9.2": {
+      "source_reference": "CC9.2",
+      "source_page": 48,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "CC9.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization assesses and manages risks associated with vendors and business partners.",
+          "source_type": "criterion",
+          "source_reference": "CC9.2"
+        },
+        {
+          "id": "CC9.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign vendor-risk owners and connect due diligence, requirements and issue follow-up.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC9.2"
+        },
+        {
+          "id": "CC9.2-v1-o2",
+          "tier": "operational_practices",
+          "text": "Reassess significant service changes and plan access and data handling at termination.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for CC9.2"
+        },
+        {
+          "id": "CC9.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Challenge concentration risk across critical providers and their dependencies.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for CC9.2"
+        }
+      ]
+    },
+    "A1.1": {
+      "source_reference": "A1.1",
+      "source_page": 50,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "A1.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization maintains, monitors and evaluates processing capacity and system-component use so it can respond to capacity demand.",
+          "source_type": "criterion",
+          "source_reference": "A1.1"
+        },
+        {
+          "id": "A1.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Use demand forecasts and operating thresholds to trigger capacity changes.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for A1.1"
+        },
+        {
+          "id": "A1.1-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Compare forecasts with observed peaks and investigate persistent forecasting errors.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for A1.1"
+        }
+      ]
+    },
+    "A1.2": {
+      "source_reference": "A1.2",
+      "source_page": 50,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "A1.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "Environmental protections, software, backups and recovery infrastructure are authorized, designed, developed or acquired, approved, operated, maintained and monitored for availability objectives.",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
+        },
+        {
+          "id": "A1.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Monitor backup jobs and environmental alerts, with owners for failure follow-up.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for A1.2"
+        },
+        {
+          "id": "A1.2-v1-o2",
+          "tier": "operational_practices",
+          "text": "Check that backup and recovery arrangements cover the scoped systems and data.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for A1.2"
+        },
+        {
+          "id": "A1.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Evaluate whether a shared failure could defeat both primary and recovery infrastructure.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for A1.2"
+        }
+      ]
+    },
+    "A1.3": {
+      "source_reference": "A1.3",
+      "source_page": 52,
+      "review_note": "Recovery testing is criterion-derived; schedule, records and extra validation are implementation guidance.",
+      "items": [
+        {
+          "id": "A1.3-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization tests recovery-plan procedures that support system recovery.",
+          "source_type": "criterion",
+          "source_reference": "A1.3"
+        },
+        {
+          "id": "A1.3-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign a risk-based test schedule and retain recovery results.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for A1.3"
+        },
+        {
+          "id": "A1.3-v1-o2",
+          "tier": "operational_practices",
+          "text": "Track test failures and resulting recovery-plan changes.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for A1.3"
+        },
+        {
+          "id": "A1.3-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Compare restoration performance across exercises to identify persistent weaknesses.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for A1.3"
+        },
+        {
+          "id": "A1.3-v1-e2",
+          "tier": "enhanced_assurance",
+          "text": "Use an independent observer for a significant recovery exercise.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for A1.3"
+        }
+      ]
+    },
+    "C1.1": {
+      "source_reference": "C1.1",
+      "source_page": 52,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "C1.1-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization identifies and maintains confidential information according to its confidentiality objectives.",
+          "source_type": "criterion",
+          "source_reference": "C1.1"
+        },
+        {
+          "id": "C1.1-v1-o1",
+          "tier": "operational_practices",
+          "text": "Define confidential information and connect handling and retention decisions to applicable commitments.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for C1.1"
+        }
+      ]
+    },
+    "C1.2": {
+      "source_reference": "C1.2",
+      "source_page": 52,
+      "review_note": "No source gap identified for this criterion summary; control design remains entity-specific.",
+      "items": [
+        {
+          "id": "C1.2-v1-r1",
+          "tier": "criterion_requirements",
+          "text": "The organization disposes of confidential information according to its confidentiality objectives.",
+          "source_type": "criterion",
+          "source_reference": "C1.2"
+        },
+        {
+          "id": "C1.2-v1-o1",
+          "tier": "operational_practices",
+          "text": "Assign disposal responsibility when retention ends, including information held by service providers.",
+          "source_type": "operational_guidance",
+          "source_reference": "Omnisciente implementation guidance for C1.2"
+        },
+        {
+          "id": "C1.2-v1-e1",
+          "tier": "enhanced_assurance",
+          "text": "Sample completed disposal records and validate the intended result across relevant storage locations.",
+          "source_type": "enhanced_assurance",
+          "source_reference": "Omnisciente additional assurance guidance for C1.2"
+        }
+      ]
+    }
+  }
+}
