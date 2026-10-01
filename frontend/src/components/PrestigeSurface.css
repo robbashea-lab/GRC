@@ -1,0 +1,15 @@
+/* Scope to Prestige; reuse reference tokens, not a second palette. */
+.prestige-surface { min-width: 0; transition: none; }
+.prestige-surface[data-theme="dark"] { --color-critical: var(--bp-critical); }
+.prestige-surface .page-title { font: 600 30px/1.2 'Space Grotesk',var(--font-heading); letter-spacing: -.01em; }
+.prestige-surface .page-header { background: transparent; border: 0; }
+.prestige-surface .page-subtitle { color: var(--bp-muted); }
+.prestige-surface .page-header .ui-button.bg-primary { background: #a3db33; border-color: #a3db33; color: #10140c; border-radius: 8px; }
+.prestige-surface .page-header .ui-button.bg-primary:hover { background: #b4e650; border-color: #b4e650; }
+.prestige-surface :is(.page-header-content,.register-toolbar) { flex-wrap: wrap; }
+.prestige-surface :is(.page-header-copy,.register-search) { min-width: 0; }
+.prestige-surface :is(.page-title,.register-record-link,h2,h3) { overflow-wrap: anywhere; }
+.prestige-theme { display: flex; justify-content: flex-end; padding: 16px var(--register-gutter,20px) 0; }
+@media(max-width:1100px) {
+  .prestige-surface .bprof-grid { grid-template-columns: minmax(0,1fr); }
+}

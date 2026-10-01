@@ -7,7 +7,7 @@ import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation,isPrestigeReference} from '@/lib/reference';
 import ReviewExpectations,{ReviewFacts} from './BrawndoReviewDetails';
 import './BrawndoCisAssessment.css';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome ===
 
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user} = useAuth();
-  const pilot=reviewsPilot && isBrawndoReference(clientId,user) && (!record || record.client_id===clientId);
+  const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferencePresentation(clientId,user) && (!record || record.client_id===clientId);
   const Root=pilot?Dialog:Sheet, Content=pilot?DialogContent:SheetContent;
   const opener=useRef(null),heading=useRef(null);
   const [pending,setPending]=useState(null);

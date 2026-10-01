@@ -12,7 +12,7 @@ import {SCHEMAS} from '@/lib/schemas';
 import {occurrenceId} from '@/lib/reviewOccurrences';
 import {CALENDAR_SCOPES,calendarStatus,calendarType,calendarSelection,canMoveCalendar,rescheduledDate} from '@/lib/calendarView';
 import {toast} from 'sonner';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation} from '@/lib/reference';
 import BrawndoCalendarView,{calendarEntries} from './BrawndoCalendar';
 
 const KIND_COLOR={review:'bg-semantic-info-bg text-semantic-info border-semantic-info-border',finding:'bg-semantic-moderate-bg text-semantic-moderate-text border-semantic-moderate-border',task:'bg-surface-card text-ink-primary border-line-strong'};
@@ -29,7 +29,7 @@ const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${Str
 
 export default function Calendar() {
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
-  const brawndo=isBrawndoReference(currentClientId,user);
+  const brawndo=isReferencePresentation(currentClientId,user);
   const [attn,setAttn]=useState(null);
   const [anchor,setAnchor]=useState(()=>new Date()),[scope,setScope]=useState('active'),[revision,setRevision]=useState(0);
   const [result,setResult]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[drawer,setDrawer]=useState(null);

@@ -77,7 +77,7 @@ export function BrawndoPlatformSidebar({adminItems=[]}){
   </aside>;
 }
 
-export default function BrawndoSidebar({complianceItems=[],isInternal}){
+export default function BrawndoSidebar({complianceItems=[],isInternal,showFindings=false}){
   const {currentClient,currentClientId}=useOrg(),nav=useNavigate();
   const [theme]=useBrawndoTheme(),[counts,setCounts]=useState({});
   useEffect(()=>{
@@ -102,6 +102,7 @@ export default function BrawndoSidebar({complianceItems=[],isInternal}){
       {GROUPS.map(([group,items])=><div key={group} className="bsb-group" role="group" aria-labelledby={`bsb-${group}`}>
         <div id={`bsb-${group}`} className="bsb-group-label">{group}</div>
         {items.flatMap(item=>item[0]==='COMPLIANCE'?complianceItems.map(c=>link([c.to,c.label,ShieldCheck,`nav-compliance-${c.key}`])):[link(item)])}
+        {group==='Work'&&showFindings&&link(['/findings','Findings',ShieldAlert,'nav-findings'])}
       </div>)}
     </nav>
     <ProfileMenu/>
