@@ -164,3 +164,39 @@ Usability notes (not changed):
 - "Continue with" targets an already assessed safeguard.
 - The demo banner doesn't switch to dark.
 - At 390 width (out of scope) the Dashboard, CIS and Evidence pages scroll sideways.
+
+## Workflow-completion pass (2026-10-01)
+
+Baseline before this pass, at `55389e7`: 834 of 835 frontend tests passed. The only failure was the known `multiFrameworkLifecycle` Demo-storage failure.
+
+| Area | Outcome | Commit |
+|---|---|---|
+| CIS safeguard → Finding | The safeguard lists its directly linked Findings: open, Pending Validation, and a collapsed closed/validated group. **Raise Finding** pre-fills the safeguard as the origin and collects title, description, severity, owner, target date and corrective action. One request id per draft means a retry creates one Finding with one Action. Validation happens in the existing Finding drawer. Creation accepts an optional `owner_id` (must be eligible) and `due_date` (backend and Demo). | `c28e61f` |
+| Finding definitions | **Open** = anything not closed or accepted, so Pending Validation counts as open. **Overdue** = open with a target date before today. **Work items** count each piece of remediation once: as its active Action, or as the Finding itself when no Action is active. Action Items shows Pending Validation Findings. Calendar tiles count each work item once. The Dashboard labels its tiles as work-item counts. | `b0b915b` |
+| Policy Reviews | Each of the 17 Brawndo Policies has one annual Review, keeping its existing next-review date. Policy dates are synchronised from that Review. Approving a Policy schedules its Review. A second active Review for the same Policy is rejected. The program-level Policy Review and Approval Review is kept. | `3aadb45` |
+| Review completion | Brawndo asks "Complete this review?" before closing an occurrence. Cancel saves nothing. The row-level completion shortcut, which bypassed this check, was removed. | `3aadb45` |
+| Month-end recurrence | The rule is unchanged: a review anchored to the last day of the month stays on the last day. Resending the same due date in another format no longer resets the anchor (risk re-save, backend PATCH). | `6d601b8` |
+| Calendar vendor dates | Security Assurance Due, Contract Renewal and Contract Notice Deadline are projected from the Vendor record as distinct event types. They are skipped when a Review already covers the date. Clicking one opens the Vendor tab. | `178ae35` |
+| Assurance metrics | **Assurance needs attention** (Dashboard): a required document is missing, expired, or due within its window. It now has a matching Vendors view. **Assurance follow-up due** (Vendors page): a follow-up is due within 30 days or overdue, or an ISO certificate has expired. | `f403d1b` |
+| CIS 2.1 / 7.1 provenance | Cited with their explicit CIS intervals (2.1 semiannual, 7.1 annual). Schedules are unchanged. | `0e2a005` |
+| Leftover tier code | The unused `cisTiers` module and its data were removed. `verification_checklist` acceptance is kept so historical records stay readable. | `f587514` |
+| Ten-year simulation | Reuses each Policy's linked Review. The Calendar check compares dated work records only. | `60f9b84` |
+
+### Policy Review mapping
+
+All 17 seeded Policies are linked to `policy_review_<policy_id>`, an annual Review due on each Policy's existing `next_review_date`:
+- Risk Management: 2026-10-21.
+- Information Security: 2027-01-14.
+- The remaining Policies: every 3 days from 2027-01-20 to 2027-03-03.
+
+The draft Acceptable Use revision is included. After history is generated, each Policy's `last_reviewed_at` is derived from its Review history.
+
+### Still requiring a decision (not implemented)
+
+- **Missed occurrences:** whether to show the full backlog or keep the current one-at-a-time sequence.
+- **Event-driven obligations:** triggers such as "on significant change" are not scheduled.
+- **Shared-rule parity:** `registerSignals`, the backend digest and Portfolio `past_due` still use the older rule that excludes Pending Validation. They were deliberately left unchanged outside Brawndo.
+- **Brawndo rules in the backend:** the policy-review guard, vendor-date projection and notice deadline exist only in the Demo. The backend has no `contract_notice_deadline` field.
+- **Accepting a Finding:** has no status guard, and it leaves open tasks in place.
+- **Risks raised from a Finding:** get no Review.
+- **Date basis:** some pages use UTC and others the local date, so counts can differ by one day near midnight.
