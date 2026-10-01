@@ -76,6 +76,19 @@ test('SOC criteria explain distinct expectations without prescribing controls or
   for(const g of all){expect(g.meaning.length).toBeGreaterThan(40);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();expect(g.meaning).not.toContain('readiness prompt');}
   expect(operatorStatuses('soc-2').addressed).toBe('Addressed (Readiness)');
 });
+test('every in-scope SOC criterion has criterion-specific assessment and evidence guidance',()=>{
+  const scope=CATALOGS['soc-2'].requirements.filter(d=>['security','availability','confidentiality'].includes(d.category));
+  expect(scope).toHaveLength(38);
+  const guides=scope.map(d=>operatorGuidance('soc-2',d));
+  expect(new Set(guides.map(g=>g.implementation)).size).toBe(38);
+  expect(new Set(guides.map(g=>g.evidence)).size).toBe(38);
+  for(const guide of guides){
+    expect(guide.implementation).toMatch(/^Assess /);
+    expect(guide.implementation.length).toBeGreaterThan(120);
+    expect(guide.evidence.length).toBeGreaterThan(70);
+    expect(`${guide.meaning} ${guide.implementation} ${guide.evidence}`).not.toMatch(/CIS Controls|Implementation Group|\bIG1\b/i);
+  }
+});
 test('SOC readiness Review defaults do not become source-mandated control frequencies',()=>{
   for(const plan of CATALOGS['soc-2'].review_plans){
     expect(plan.cadence_class).toBe('D');

@@ -13,7 +13,7 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import AIDrawer from '@/components/AIDrawer';
 import AIIntake from '@/components/AIIntake';
 import {ranks} from '@/lib/tableFilters';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation} from '@/lib/reference';
 import {AI_VIEWS,aiMatches} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
 import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
@@ -21,7 +21,7 @@ import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/Brawnd
 const text=(key,label)=>({key,label,sortable:true});
 export default function AIGovernance(){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
-  const pilot=isBrawndoReference(currentClientId,user);
+  const pilot=isReferencePresentation(currentClientId,user);
   const [showInactive,setShowInactive]=useState(false);
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[quick,setQuick]=useState('active');
   const key=`${currentClientId}:${revision}`;

@@ -35,7 +35,7 @@ test('queue preserves Demo authentication and tenant boundaries including detail
   const db=readStore();db.user={...db.user,role:'client_readonly',client_ids:['demo_brawndo']};saveStore(db);
   const {data}=await api.get('/dashboard',{params:{client_id:'demo_brawndo',work_queue:true}});
   expect(data.groups.all.total).toBeGreaterThan(9);
-  for(const detail of [undefined,'all'])await expect(api.get('/dashboard',{params:{client_id:'demo_initech',work_queue:true,detail}})).rejects.toMatchObject({response:{status:403}});
+  for(const detail of [undefined,'all'])await expect(api.get('/dashboard',{params:{client_id:'demo_prestige',work_queue:true,detail}})).rejects.toMatchObject({response:{status:403}});
   const reload=axios.create({adapter:previewAdapter});
   expect((await reload.get('/dashboard',{params:{client_id:'demo_brawndo',work_queue:true}})).data).toEqual(data);
 });

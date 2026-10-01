@@ -10,13 +10,13 @@ export function SoaTable({rows,onOpen}) {
   const visible=rows.filter(r=>applicability==='all'||(r.soa_applicability||'undetermined')===applicability);
   return <section className="space-y-3" aria-label="Statement of Applicability controls">
     <label className="text-sm">Applicability filter <select aria-label="Applicability filter" className="border border-line rounded p-2 bg-surface-card" value={applicability} onChange={e=>setApplicability(e.target.value)}>
-      <option value="all">All controls</option><option value="included">Applicable</option><option value="excluded">Not Applicable</option><option value="undetermined">Undetermined</option>
+      <option value="all">All controls</option><option value="included">Necessary</option><option value="excluded">Not Necessary</option><option value="undetermined">Decision needed</option>
     </select></label>
     <p className="text-xs text-ink-secondary">{visible.length} of {rows.length} controls in this view. Applicability is separate from implementation.</p>
     <div className="cis-results"><table><thead><tr><th>Annex A control</th><th>Applicability</th><th>Implementation</th><th>Supporting work</th></tr></thead>
       <tbody>{visible.map(r=><tr key={r.framework_assessment_id} data-testid={'requirement-'+r.definition_id}>
         <td><button className="cis-results-open" onClick={()=>onOpen(r)}><span className="cis-safeguard-id">{r.definition_id}</span><span>{r.title}</span></button></td>
-        <td data-label="Applicability"><p className="text-sm">{({included:'Applicable',excluded:'Not Applicable'})[r.soa_applicability]||'Undetermined'}</p>{r.soa_applicability&&!r.soa_justification?.trim()&&<p className="text-xs text-semantic-critical">Justification needed</p>}</td>
+        <td data-label="Applicability"><p className="text-sm">{r.soa_applicability==='excluded'?'Not Necessary':r.soa_applicability!=='included'?'Decision needed':r.status==='addressed'?'Necessary — Implemented':r.status==='not_assessed'?'Necessary — Not Implemented':'Necessary — Partially Implemented'}</p>{r.soa_applicability&&!r.soa_justification?.trim()&&<p className="text-xs text-semantic-critical">Justification needed</p>}</td>
         <td data-label="Implementation"><CisStatusPill status={r.status} framework="iso-27001"/></td>
         <td data-label="Supporting work"><span className="text-xs">{r.work?.evidence_count||0} Evidence · {r.work?.open_findings||0} open Findings</span></td>
       </tr>)}</tbody></table></div>

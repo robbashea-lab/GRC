@@ -356,8 +356,11 @@ def router_for(s):
             data['cis_assessment_criteria']=changes['cis_assessment_criteria']
         if 'csf_profile' in changes and old['framework_key']!='nist-csf-2':
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
-        if any(k in changes for k in VERIFICATION_FIELDS):
-            if old['framework_key']!='cis-ig1':raise HTTPException(422,'Verification fields apply only to CIS Controls IG1')
+        verification_allowed=old['framework_key']=='cis-ig1' or (old['framework_key']=='soc-2' and old['client_id']=='demo_prestige')
+        if 'verification' in changes and not verification_allowed:
+            raise HTTPException(422,'Verification is available only for CIS Controls IG1 and Prestige SOC 2')
+        if 'verification_checklist' in changes:
+            if old['framework_key']!='cis-ig1':raise HTTPException(422,'Verification checklists apply only to CIS Controls IG1')
             if any(c.split('-')[0]!=old['definition_id'] for ids in (changes.get('verification_checklist') or {}).values() for c in ids):
                 raise HTTPException(422,'Verification checks must belong to this safeguard')
         if 'management_controls' in changes:
@@ -389,7 +392,8 @@ def router_for(s):
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed:
-            at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed' and (k!='cis_assessment_criteria' or k in data) and (old['framework_key']=='cis-ig1' or k not in VERIFICATION_FIELDS)};snapshot.update(at=at,by=user['user_id'])
+            history_verification=set(VERIFICATION_FIELDS) if old['framework_key']=='cis-ig1' else {'verification'} if verification_allowed else set()
+            at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed' and (k!='cis_assessment_criteria' or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}
             if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
             result=await s.db.framework_assessments.update_one(predicate,{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})

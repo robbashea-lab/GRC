@@ -9,7 +9,7 @@ jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Brawndo'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
 jest.mock('react-router-dom',()=>({useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
-jest.mock('@/lib/reference',()=>({isBrawndoReference:id=>id==='demo_brawndo'}));
+jest.mock('@/lib/reference',()=>({isReferencePresentation:id=>id==='demo_brawndo'}));
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'contact-test-intent'}));
 const row={contact_id:'c',client_id:'a',name:'Person',email:'person@example.test',title:'Engineer',status:'active',role:'Security Lead',grc_roles:['HR Lead'],notes:'Retained notes',updated_at:'version-1'};
 let root,container;

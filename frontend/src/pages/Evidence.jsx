@@ -18,7 +18,7 @@ import {toast} from 'sonner';
 import EvidenceItemDrawer from '@/components/EvidenceItemDrawer';
 import {EvidenceUpload,PROGRAM_AREAS} from '@/components/EvidenceLibraryControls';
 import '@/components/EvidenceRepository.css';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation} from '@/lib/reference';
 import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
 import './BrawndoEvidence.css';
 
@@ -28,7 +28,7 @@ const folderName=f=>f.area==='Reviews'?(reviewTypes.find(t=>t.value===f.key)?`${
 export default function Evidence(){const {currentClientId}=useOrg(),{user}=useAuth();return <EvidenceWorkspace key={`${user?.user_id}:${currentClientId}`}/>;}
 function EvidenceWorkspace(){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth(),compliance=useCompliance();
-  const pilot=isBrawndoReference(currentClientId,user);
+  const pilot=isReferencePresentation(currentClientId,user);
   const scopeRef=useRef(currentClientId);scopeRef.current=currentClientId;
   const [area,setArea]=useState(''),[folder,setFolder]=useState(null),[q,setQ]=useState(''),[page,setPage]=useState(1),[all,setAll]=useState(false);
   const [adding,setAdding]=useState(false),[itemId,setItemId]=useState(null),[drawer,setDrawer]=useState(null);

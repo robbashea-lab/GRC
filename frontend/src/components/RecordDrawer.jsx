@@ -12,7 +12,7 @@ import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation,isBrawndoReference} from '@/lib/reference';
 import './BrawndoCisAssessment.css';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -161,7 +161,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const inputRef = useRef(null);
   const loadGeneration = useRef(0);
   const { user } = useAuth();
-  const pilot=['tasks','findings','risks','policies','vendors'].includes(kind)&&isBrawndoReference(clientId,user)&&(!record||record.client_id===clientId);
+  const pilot=['tasks','findings','risks','policies','vendors'].includes(kind)&&isReferencePresentation(clientId,user)&&(!record||record.client_id===clientId);
   const vendorPilot=pilot&&kind==='vendors';
   const riskPilot=pilot&&kind==='risks';
   const policyPilot=pilot&&kind==='policies';
@@ -177,7 +177,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
   const clientMayWork = user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
-    (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id) || pilot&&kind==='tasks'&&!record?.assignee_id&&!record?.owner_id&&record?.created_by===user?.user_id);
+    (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id) || isBrawndoReference(clientId,user)&&kind==='tasks'&&!record?.assignee_id&&!record?.owner_id&&record?.created_by===user?.user_id);
   const canWrite = (isPlatformAdmin || clientMayWork && (isEdit || kind === 'tasks')) && !(kind==="risks" && ["closed","retired"].includes(record?.status)) && !(policyPilot&&['retired','not_applicable'].includes(policyStatus(record||{})));
   const clientFields = editableFields(kind, user, record);
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);

@@ -5,7 +5,7 @@ import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/Ta
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches, calendarDay } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation} from '@/lib/reference';
 import {policyStatus,policyStatusLabel,policyColumns,policyTiles,policyViewMatches} from '@/lib/brawndoPolicies';
 import {BrawndoPageHeader,BrawndoTiles,BrawndoChips} from '@/components/BrawndoPage';
 import {formatHistory} from '@/components/RegisterCells';
@@ -99,8 +99,8 @@ function EntityListPage({ kind }) {
   const schema = SCHEMAS[kind];
   const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
-  const reviewsPilot = kind==='reviews' && isBrawndoReference(currentClientId,user);
-  const policiesPilot = kind==='policies' && isBrawndoReference(currentClientId,user);
+  const reviewsPilot = kind==='reviews' && isReferencePresentation(currentClientId,user);
+  const policiesPilot = kind==='policies' && isReferencePresentation(currentClientId,user);
   // Reviews pilot folds type and source under the title, and next due under recurrence.
   // Policies pilot folds version and last review under the policy title.
   const POLICY_HIDDEN=['version','last_reviewed_at'];
@@ -215,7 +215,7 @@ function EntityListPage({ kind }) {
   const carriedClientChanged = filterClient.current !== currentClientId;
   useEffect(() => {
     if (filterClient.current === currentClientId) return;
-    const pilotSwitch=reviewsPilot||isBrawndoReference(filterClient.current,user);
+    const pilotSwitch=reviewsPilot||isReferencePresentation(filterClient.current,user);
     filterClient.current = currentClientId;
     const next = new URLSearchParams(params);
     next.delete('owner'); next.delete('unassigned'); next.delete('reviewView');

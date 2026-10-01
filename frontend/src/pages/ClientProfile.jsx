@@ -19,7 +19,7 @@ import ClientDialog from '@/components/ClientDialog';
 import ClientRelationshipValue from '@/components/ClientRelationshipValue';
 import {Button} from '@/components/ui/button';
 import BrawndoProfileOverview,{BrawndoProfileHeader} from '@/components/BrawndoProfileOverview';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation} from '@/lib/reference';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 const TABS=[['overview','Overview'],['organization','Organization'],['technical','Technical Environment'],['security','Security & Data'],['program','Program Configuration'],['people','People & Ownership']];
 export function LegacyClientSettings(){const [params]=useSearchParams();return <Navigate replace to={'/client-profile?tab='+(params.get('tab')==='compliance'?'program':'people')}/>;}
@@ -34,7 +34,7 @@ function ProfileWorkspace({clientId}){
   const canEdit=['super_admin','platform_admin'].includes(user?.role),tab=TABS.some(([id])=>id===params.get('tab'))?params.get('tab'):'overview';
   const reload=()=>setRevision(n=>n+1);
   // Brawndo reference presentation only; data, permissions and saving are unchanged.
-  const brawndo=isBrawndoReference(clientId,user),[theme]=useBrawndoTheme();useBrawndoPortalTheme(brawndo,theme);
+  const brawndo=isReferencePresentation(clientId,user),[theme]=useBrawndoTheme();useBrawndoPortalTheme(brawndo,theme);
   useEffect(()=>{if(!clientId)return;const c=new AbortController();setError('');
     Promise.all([api.get('/clients/'+clientId+'/profile',{signal:c.signal}),api.get('/onboarding/handoff',{params:{client_id:clientId},signal:c.signal})]).then(([p,h])=>{if(!c.signal.aborted){setData(p.data);setHandoff(h.data);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
   },[clientId,revision]);

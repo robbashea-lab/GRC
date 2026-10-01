@@ -61,6 +61,13 @@ test('aggregate persistent and memory payload budgets are bounded',()=>{
  rememberFiles(large);expect(storageDiagnostics('',{}).memory_file_bytes).toBeLessThanOrEqual(8*1024*1024);clearFileCache();
 });
 
+test('repeated Review snapshot fields compact without changing history',()=>{
+ const db={evidence:[],reviews:[{review_id:'r',title:'Quarterly access review',scope:'Current scope',framework_drivers:[{framework_key:'iso-27001'}],occurrences:[{occurrence_id:'old',title:'Quarterly access review',scope:'Historical scope',framework_drivers:[{framework_key:'iso-27001'}]},{occurrence_id:'current',title:'Quarterly access review',scope:'Current scope',framework_drivers:[{framework_key:'iso-27001'}]}]}]};
+ const persisted=JSON.parse(JSON.stringify(lightweightStore(db)));
+ expect(persisted.reviews[0].occurrences[1]).not.toHaveProperty('framework_drivers');
+ expect(restoreFiles(persisted)).toEqual(db);
+});
+
 test('failed clear leaves files and records recoverable; retry succeeds',async()=>{
  const file=await upload(20000),before=sessionStorage.getItem(STORE_KEY);
  const stub=jest.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw new DOMException('Full','QuotaExceededError');});
@@ -80,7 +87,7 @@ test('a retired seven-client store is discarded, never read back, and never recr
  sessionStorage.clear();
  sessionStorage.setItem('grc_interactive_demo_v2',JSON.stringify({clients:[{client_id:'demo_globo',name:'Globo Gym'}],evidence:[]}));
  const db=readStore();
- expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide','Initech']);
+ expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide']);
  expect(sessionStorage.getItem('grc_interactive_demo_v2')).toBeNull();
- expect(readStore().clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige','demo_initech']);
+ expect(readStore().clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige']);
 });

@@ -1,6 +1,9 @@
 // DEMO - SYNTHETIC DATA. Validates the Dunder Mifflin program module against the ISO 27001 catalog.
 import iso from '../../lib/iso27001.json';
 import dunder from './dunder';
+import {seedStore} from '../store';
+import {auditProgress,auditQuarter} from '../../lib/isoAudit';
+import {lightweightStore} from '../evidenceStorage';
 
 const STATUSES = ['addressed', 'in_progress', 'needs_attention', 'not_assessed', 'not_applicable'];
 const ids = iso.requirements.map(r => r.id);
@@ -85,4 +88,42 @@ test('findings, review findings, risks and vendors are valid', () => {
   }
   for (const v of dunder.vendors) expect([0, 1, 2]).toContain(v.owner);
   expect(dunder.vendors.some(v => v.assurance.refresh_in < 0)).toBe(true);
+});
+
+test('canonical Dunder seed operates as one connected Year-2 ISMS',()=>{
+  const db=seedStore(new Date('2030-05-15T12:00:00Z')),cid='demo_dunder',own=kind=>db[kind].filter(r=>r.client_id===cid);
+  expect(own('requirements').filter(r=>r.baseline_response==='applies').map(r=>r.baseline_key)).toEqual(['iso-27001']);
+  expect(own('contacts')).toHaveLength(9);
+  expect(own('contacts').every(c=>c.name&&c.title&&c.email&&!('role' in c)&&!('grc_roles' in c))).toBe(true);
+  expect(own('contacts').filter(c=>c.linked_user_id)).toHaveLength(4);
+  const annexAssessments=own('framework_assessments').filter(a=>a.framework_key==='iso-27001'&&a.definition_id.startsWith('A.'));
+  expect(annexAssessments).toHaveLength(93);
+  expect(annexAssessments.filter(a=>a.soa_applicability==='excluded')).toHaveLength(2);
+  expect(annexAssessments.filter(a=>!a.soa_applicability)).toHaveLength(1);
+  const objectiveReview=own('reviews').find(r=>r.isms_objectives);
+  expect(objectiveReview.isms_objectives).toHaveLength(4);
+  expect(objectiveReview.isms_objectives.every(o=>o.target&&o.method&&o.owner_id&&o.history.length===2)).toBe(true);
+  expect(new Set(objectiveReview.isms_objectives.map(o=>o.status))).toEqual(new Set(['on_track','attention']));
+  expect(objectiveReview.occurrences.length).toBeGreaterThan(0);
+  const management=own('reviews').find(r=>(r.framework_drivers||[r]).some(d=>d.framework_plan_key==='iso-management-review'));
+  expect(management.management_review.inputs.some(([,state])=>state==='attention')).toBe(true);
+  expect(management.participants).toContain('David Wallace');
+  expect(management.governance_context.cadence_rationale).toContain('does not prescribe annual');
+  const policyReviews=own('reviews').filter(r=>r.policy_ids?.length);
+  expect(policyReviews).toHaveLength(1);
+  expect(policyReviews[0].policy_ids).toHaveLength(own('policies').length);
+  for(const policy of own('policies')){
+    const linked=policyReviews.find(r=>r.policy_ids.includes(policy.policy_id));
+    expect(policy).toMatchObject({schedule_from_reviews:true,next_review_date:linked.due_date});
+  }
+  const audits=own('reviews').filter(r=>r.iso_audit);
+  expect(audits).toHaveLength(4);
+  expect(new Set(audits.map(r=>auditQuarter(r.due_date))).size).toBe(4);
+  expect(audits.some(r=>r.status==='in_progress')).toBe(true);
+  expect(audits.reduce((n,r)=>n+r.occurrences.length,0)).toBe(1);
+  for(const r of audits)for(const o of r.occurrences)expect(auditProgress(o.iso_audit).complete).toBe(auditProgress(o.iso_audit).total);
+  expect(own('findings').some(f=>f.review_id?.startsWith(cid+'_audit_'))).toBe(true);
+  expect(own('risks').every(r=>r.treatment_reference&&r.control_refs?.length&&r.related_links?.some(l=>l.kind==='framework_assessments'))).toBe(true);
+  expect(own('evidence').map(e=>e.display_name)).toEqual(expect.arrayContaining(['ISO 27001 / Clauses / approved ISMS scope statement','ISO 27001 / SoA / approved Statement of Applicability v4','ISO 27001 / Management Review / approved minutes']));
+  expect(JSON.stringify(lightweightStore(db)).length).toBeLessThan(4.5*1024*1024);
 });

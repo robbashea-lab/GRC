@@ -32,8 +32,8 @@
 //   vendors: [{ name, services, criticality, data_types, owner, last_review_ago, next_review_in,
 //               renewal_in, assurance: { type, received_ago, refresh_in }, notes }],
 // }
-import dunder from './dunder';
 import prestige from './prestige';
+import dunder from './dunder';
 
 export const CLIENT_PROGRAMS = { demo_dunder: dunder, demo_prestige: prestige };
 export const clientProgram = cid => CLIENT_PROGRAMS[cid] || null;

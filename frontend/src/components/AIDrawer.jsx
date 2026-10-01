@@ -13,7 +13,7 @@ import RecordDrawer from './RecordDrawer';
 import AssigneeSelect from './AssigneeSelect';
 import {SCHEMAS} from '@/lib/schemas';
 
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation} from '@/lib/reference';
 import {AI_PILOT_DEFAULTS,AI_PILOT_KEYS,AI_APPROVAL_LABELS,aiApproval} from '@/lib/brawndoAI';
 import BrawndoAIFields from './BrawndoAIFields';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
@@ -28,7 +28,7 @@ function Choices({label,values,selected=[],onChange,disabled}){return <fieldset 
 
 export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onSaved}){
   const {user}=useAuth(),id=record?.ai_system_id;
-  const pilot=isBrawndoReference(clientId,user);
+  const pilot=isReferencePresentation(clientId,user);
   const keys=pilot?[...AI_KEYS,...AI_PILOT_KEYS]:AI_KEYS;
   const initial={...AI_DEFAULTS,...(pilot?AI_PILOT_DEFAULTS:{}),...record};
   const opener=useRef(null),heading=useRef(null);

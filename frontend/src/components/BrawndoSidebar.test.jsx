@@ -27,4 +27,9 @@ test('grouped navigation, labelled badges and the shared theme preference',async
   expect(container.querySelector('[data-testid="nav-client-profile"]')).not.toBeNull();
   expect(container.querySelector('aside').dataset.theme).toBe('dark');
   expect(container.querySelector('.is-active').textContent).toContain('Dashboard');
+  expect(container.querySelector('a[href="/findings"]')).toBeNull();
+  await act(async()=>root.render(<BrawndoSidebar complianceItems={[{key:'soc-2',label:'SOC 2',to:'/compliance/soc-2'}]} isInternal showFindings/>));
+  expect(container.querySelector('a[href="/findings"]')).not.toBeNull();
+  expect(container.querySelector('a[href="/compliance/soc-2"]')).not.toBeNull();
+  expect(container.querySelector('a[href="/compliance/cis-ig1"]')).toBeNull();
 });

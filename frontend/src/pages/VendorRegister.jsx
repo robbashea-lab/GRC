@@ -7,7 +7,7 @@ import AssigneeSelect from '@/components/AssigneeSelect';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGovernance';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation} from '@/lib/reference';
 import {vendorViews,vendorMatches,vendorColumns,assuranceSummary,renewalAction} from '@/lib/brawndoVendors';
 import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -80,7 +80,7 @@ export function vendorTiles(rows,now=new Date()){
 export default function VendorRegister() {
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
-  const pilot=isBrawndoReference(currentClientId,user);
+  const pilot=isReferencePresentation(currentClientId,user);
   const [rows, setRows] = useState([]);
   const [reviews,setReviews] = useState([]);
   const generation=useRef(0);

@@ -19,6 +19,8 @@ import { SCHEMAS } from "@/lib/schemas";
 import { loadClientDashboard, labelDashboardRows } from "@/lib/loadClientDashboard";
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
 import ClientWorkDashboard from '@/components/ClientWorkDashboard';
+import DashboardPrograms from '@/components/DashboardPrograms';
+import {isPrestigeReference} from '@/lib/reference';
 
 const ORGANIZATION_SCOPE = {kind:'org'};
 const SUBTITLE = "Program health, priorities and upcoming work.";
@@ -133,6 +135,7 @@ export default function Dashboard() {
     onSaved={()=>{setSelected(null);setRevision(n=>n+1);}}/>;
   if(pilot)return <>
     <ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} cisRows={data.cisRows} posture={data.posture} clientName={currentClient?.name||'Client'}
+      programDetails={isPrestigeReference(currentClientId,user)?<DashboardPrograms clientId={currentClientId} programs={data.programs} onOpen={openItem} reference/>:null}
       filter={workFilter} onFilter={filter=>setWorkSelection({clientId:currentClientId,filter})} onOpen={openItem} loadDetail={loadDetail}/>{drawer}</>;
 
   return (

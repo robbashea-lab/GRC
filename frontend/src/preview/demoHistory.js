@@ -50,7 +50,7 @@ export function finishDemoStore(db, clock, {
   for (const org of demoOrganizations) {
     const cid = 'demo_' + org.key,
       client = db.clients.find(c => c.client_id === cid),
-      users = db.users.filter(u => u.client_ids?.length === 1 && u.client_ids[0] === cid && u.status === 'active' && u.role !== 'client_readonly'),
+      users = db.users.filter(u => u.user_id.startsWith(cid + '_user_') && u.status === 'active' && u.role !== 'client_readonly'),
       owner = users[0].user_id,
       lead = client.assigned_owner_id,
       former = cid + '_former',

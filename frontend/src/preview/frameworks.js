@@ -167,13 +167,15 @@ export function frameworkRequest(db,path,method,params,body){
       body.cis_assessment_criteria=[...new Set(body.cis_assessment_criteria)];
     }
     if(Object.keys(body).some(k=>!fields.includes(k)&&!VERIFICATION_FIELDS.includes(k)))throw new Error('Unknown or immutable assessment fields');
-    if(VERIFICATION_FIELDS.some(k=>k in body)){
-      if(row.framework_key!=='cis-ig1')throw new Error('Verification fields apply only to CIS Controls IG1');
+    const verificationAllowed=row.framework_key==='cis-ig1'||row.client_id==='demo_prestige'&&row.framework_key==='soc-2';
+    if('verification' in body&&!verificationAllowed)throw new Error('Verification is available only for CIS Controls IG1 and Prestige SOC 2');
+    if('verification_checklist' in body){
+      if(row.framework_key!=='cis-ig1')throw new Error('Verification checklists apply only to CIS Controls IG1');
       body={...body};
-      if('verification' in body&&body.verification!==null&&!VERIFICATION_STATES.includes(body.verification))throw new Error('Invalid verification state');
-      if('verification_checklist' in body)body.verification_checklist=validateVerificationChecklist(body.verification_checklist,row.definition_id);
+      body.verification_checklist=validateVerificationChecklist(body.verification_checklist,row.definition_id);
     }
-    const historyFields=row.framework_key==='cis-ig1'?[...fields,...VERIFICATION_FIELDS]:fields;
+    if('verification' in body&&body.verification!==null&&!VERIFICATION_STATES.includes(body.verification))throw new Error('Invalid verification state');
+    const historyFields=row.framework_key==='cis-ig1'?[...fields,...VERIFICATION_FIELDS]:verificationAllowed?[...fields,'verification']:fields;
     if('csf_profile' in body){
       if(row.framework_key!=='nist-csf-2')throw new Error('CSF profile fields apply only to NIST CSF');
       body={...body,csf_profile:validateCsfProfile(body.csf_profile)};

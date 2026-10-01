@@ -1,4 +1,4 @@
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation} from '@/lib/reference';
 import {riskCategories,riskViews,riskMatches,riskColumns,pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
 import {RiskCategoryField,RiskTreatmentField} from '@/components/BrawndoRiskFields';
 import {AlertCircle,CalendarDays,ListChecks,UserRound} from 'lucide-react';
@@ -87,7 +87,7 @@ export default function RiskRegister() {
   const portfolioEntry=useRef(null);
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
-  const pilot=isBrawndoReference(currentClientId,user);
+  const pilot=isReferencePresentation(currentClientId,user);
   const generation=useRef(0);
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);

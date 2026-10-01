@@ -93,7 +93,7 @@ function PostureCard({posture}) {
   </section>;
 }
 
-export default function ClientWorkDashboard({queue,programs,cisRows,posture,clientName='Client',filter,onFilter,onOpen,loadDetail}) {
+export default function ClientWorkDashboard({queue,programs,cisRows,posture,clientName='Client',filter,onFilter,onOpen,loadDetail,programDetails}) {
   const [expanded,setExpanded]=useState(false),[page,setPage]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState('');
   const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
   const request=useRef(null),mounted=useRef(true),load=useRef(loadDetail);
@@ -134,7 +134,7 @@ export default function ClientWorkDashboard({queue,programs,cisRows,posture,clie
       </section>
       <aside className="bd-aside" aria-label="Program condition">
         {cis&&cisRows?<CisProgramCard program={cis} rows={cisRows}/>:null}
-        {programs.filter(p=>p.key!=='cis-ig1'||!cisRows).map(p=><section key={p.key} className="bd-card"><h2>{p.label}</h2><p className="bd-muted bd-small">{p.explanation}</p><Link to={p.to}>Open workspace</Link></section>)}
+        {programDetails||programs.filter(p=>p.key!=='cis-ig1'||!cisRows).map(p=><section key={p.key} className="bd-card"><h2>{p.label}</h2><p className="bd-muted bd-small">{p.explanation}</p><Link to={p.to}>Open workspace</Link></section>)}
         {!programs.length&&<section className="bd-card"><p className="bd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
         {posture&&<PostureCard posture={posture}/>}
       </aside>

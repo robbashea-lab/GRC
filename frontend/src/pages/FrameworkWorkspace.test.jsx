@@ -12,7 +12,7 @@ jest.mock('react-router-dom',()=>({useSearchParams:()=>{const [p,set]=require('r
 let root,container;
 beforeEach(()=>{
  mockUser={user_id:'u',role:'super_admin'};mockNavigate=jest.fn();mockHistory=[];mockLocation={pathname:'/compliance/cis-ig1',search:'',state:null,params:new URLSearchParams()};
- global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
+ global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
  api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:cis.requirements,assessments:cis.requirements.map((d,i)=>({framework_assessment_id:'a'+i,definition_id:d.id,client_id:'a',status:i===1?'not_assessed':'addressed'})),work:{}}});
 });
 
@@ -23,6 +23,11 @@ const brawndo=async(pref)=>{mockUser.workspace_mode='demo';const response=(await
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/>));};
 const crumbs=()=>[...container.querySelectorAll('.bcis-crumbs li')].map(l=>l.textContent);
 const key=(el,k)=>act(async()=>el.dispatchEvent(new KeyboardEvent('keydown',{key:k,bubbles:true})));
+const prestige=async()=>{mockUser.workspace_mode='demo';const definitions=frameworkCatalog('soc-2').requirements,active=definitions.filter(d=>['security','availability','confidentiality'].includes(d.category));
+ const assessments=definitions.map((d,i)=>({framework_assessment_id:'soc'+i,definition_id:d.id,client_id:'demo_prestige',status:i<28?'addressed':i<33?'in_progress':['A1.1','A1.2'].includes(d.id)?'needs_attention':'not_assessed',owner_id:d.id==='CC1.1'?'u1':undefined,last_assessed:d.id==='CC1.1'?'2026-09-15T12:00:00Z':null}));
+ const response={configured:true,selected:true,definitions,assessments,active_definition_ids:active.map(d=>d.id),configuration:{categories:['security','availability','confidentiality']},organizational_controls:[],work:{}};
+ api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[{user_id:'u1',name:'David Wallace'}]:response}));
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId="demo_prestige"/>));};
 test('Brawndo summary, bar tooltips, and removed sections; Controls follow the summary',async()=>{
  await brawndo();
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
@@ -65,6 +70,28 @@ test('Brawndo filters are separate from navigation and clear back to controls',a
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'no-result');search.dispatchEvent(new Event('input',{bubbles:true}));});
  expect(container.textContent).toContain('No safeguards match this view.');expect(crumbs()).toEqual(['CIS IG1','Search results']);
 });
+test('Prestige SOC 2 uses scoped progress and category-first hierarchy without configuration clutter',async()=>{
+ await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
+ expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toMatch(/Scope and observation period settings|Client organizational Controls|Include retained out-of-scope criteria|System boundary and service commitments/);
+ const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
+ expect(summary).toContain('74%Implemented28 of 38 criteria');expect(summary).toContain('92%Assessed');expect(summary).toContain('3Still to assess');
+ const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Implemented: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Implemented5 of 38 criteria13%');
+ expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');
+ expect(workspace.textContent).not.toMatch(/Processing Integrity|Privacy/);
+ await act(async()=>buttons('Dark')[0].click());expect(workspace.dataset.theme).toBe('dark');await act(async()=>buttons('Light')[0].click());expect(workspace.dataset.theme).toBe('light');
+ await act(async()=>[...workspace.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not Assessed')).click());
+ expect(workspace.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(3);expect(crumbs()).toEqual(['SOC 2','Not yet assessed']);
+ await act(async()=>buttons('Clear filter')[0].click());expect(crumbs()).toEqual(['SOC 2']);
+});
+test('Prestige SOC 2 rows support keyboard navigation, native groups, criteria and breadcrumbs',async()=>{
+ await prestige();await key(container.querySelector('[data-testid="soc-category-security"]'),'Enter');expect(crumbs()).toEqual(['SOC 2','Security']);expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(9);
+ await key(container.querySelector('[data-testid="soc-group-CC1"]'),' ');expect(crumbs()).toEqual(['SOC 2','Security','CC1']);expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(5);
+ const criterion=container.querySelector('[data-testid="requirement-CC1.1"]');expect(criterion.getAttribute('role')).toBe('link');expect(criterion.textContent).toContain('Implemented');expect(criterion.textContent).toContain('David Wallace');
+ await act(async()=>criterion.click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('CC1.1');expect(crumbs()).toEqual(['SOC 2','Security','CC1','CC1.1']);
+ mockLocation.state=null;await act(async()=>[...container.querySelectorAll('[data-drawer-crumb]')].find(b=>b.textContent==='CC1').click());expect(container.querySelector('[data-testid="opened"]')).toBeNull();expect(crumbs()).toEqual(['SOC 2','Security','CC1']);
+ await act(async()=>buttons('SOC 2')[0].click());await act(async()=>container.querySelector('[data-testid="soc-category-availability"]').click());expect(crumbs()).toEqual(['SOC 2','Availability']);expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(1);expect(container.querySelector('[data-testid="soc-group-A1"]')).toBeTruthy();
+ await act(async()=>buttons('SOC 2')[0].click());await act(async()=>container.querySelector('[data-testid="soc-category-confidentiality"]').click());expect(container.querySelector('[data-testid="soc-group-C1"]')).toBeTruthy();
+});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 const buttons=label=>[...container.querySelectorAll('button')].filter(b=>b.textContent===label);
 test('every client gets the reference workspace: categories start compact; open, resume and Next keep assessment data',async()=>{
@@ -105,15 +132,20 @@ test('a deep-linked requirement closes in place without leaving the workspace',a
  expect(mockHistory.at(-1)).toMatchObject({search:'',replace:true});
 });
 
-test('ISO has three primary views; SoA retains all 93 controls and audit is a separate program',async()=>{
+test('ISO has eight connected workspaces; SoA retains all 93 controls and audit is a separate program',async()=>{
  const definitions=frameworkCatalog('iso-27001').requirements;
- api.get.mockImplementation(async path=>({data:path==='/reviews'||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
+ api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="a"/>));
- expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(3);
+ expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(8);
+ expect(container.querySelector('[aria-label="ISMS Overview"]')).not.toBeNull();
+ await act(async()=>buttons('Clauses 4–10')[0].click());
  expect(container.querySelector('[aria-labelledby="cis-summary-heading"]').textContent).toContain('30 of 30');
  await act(async()=>buttons('Statement of Applicability')[0].click());
  await act(async()=>buttons('All requirements')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
+ expect(container.textContent).toContain('Necessary — Implemented');
+ await act(async()=>buttons('Annex A Controls')[0].click());
+ expect(container.querySelector('[aria-labelledby="cis-summary-heading"]').textContent).toContain('93 of 93');
  await act(async()=>buttons('Internal Audit Program')[0].click());
  expect(container.textContent).toContain('Program not activated');
  expect(container.querySelector('[aria-labelledby="cis-summary-heading"]')).toBeNull();

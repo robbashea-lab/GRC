@@ -1,3 +1,7 @@
+import {demoDates} from '../demoPortfolio';
+import {reviewSchedule,reviewView} from '../../lib/reviewOccurrences';
+import {isoAuditCatalog,initialAuditState,blankAuditItem} from '../../lib/isoAudit';
+
 // DEMO - SYNTHETIC DATA. Dunder Mifflin: ISO/IEC 27001:2022 ISMS, year two, MSP-supported. Deliberately imperfect.
 // Assessment conclusions are fictional operator judgements; a certificate would be an external event, never an app conclusion.
 // Row: [id, status, assessed_ago, owner, technology, narrative, evidence_ago, soa?, justification?]
@@ -138,7 +142,7 @@ const row=([id,status,assessed_ago,owner,technology,narrative,evidence_ago,soa,j
   ...(soa!==undefined?{soa}:{}),...(justification?{justification}:{}),
 }];
 
-export default {
+const program={
   framework:'iso-27001',
   profile:{
     organization:{
@@ -184,3 +188,111 @@ export default {
     {name:'Treeline Payroll (fictional)',services:'Payroll processing',criticality:'medium',data_types:['Employee Data','PII','Financial'],owner:2,last_review_ago:180,next_review_in:185,renewal_in:300,assurance:{type:'Security Questionnaire',received_ago:180,refresh_in:185},notes:'Fictional provider. Questionnaire reviewed by Finance and HR.'},
   ],
 };
+
+export default program;
+
+const CID='demo_dunder',person=i=>CID+'_user_'+i;
+const previousDate=(value,months)=>{const d=new Date(value+'T12:00:00Z'),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()-months);d.setUTCDate(Math.min(day,new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate()));return d.toISOString().slice(0,10);};
+const evidence=(db,client,key,title,kind,id,at,owner,extra={})=>{const text='DEMO - SYNTHETIC DATA\n'+title+'\nCollected: '+at,bytes=encodeURIComponent(text).replace(/%([0-9A-F]{2})/g,(_,hex)=>String.fromCharCode(parseInt(hex,16))),item={evidence_id:client.client_id+'_evidence_'+key,client_id:client.client_id,filename:key+'.txt',display_name:title,mime_type:'text/plain',size:bytes.length,content_base64:btoa(bytes),evidence_type:'Report',linked_type:kind,linked_id:id,uploaded_by:owner,uploaded_by_email:db.users.find(u=>u.user_id===owner)?.email||'historical@example.test',created_at:at,evidence_date:at,version:1,notes:'DEMO - SYNTHETIC DATA',...extra};db.evidence.push(item);return item;};
+const OBJECTIVES=[
+  {key:'phishing',objective:'Reduce susceptibility to credential-phishing attacks',target:'Keep simulated-phishing click rate below 5% each quarter',owner:2,method:'Quarterly awareness-platform campaign result',status:'on_track',result:'Latest quarter: 3.8%',due:75},
+  {key:'patching',objective:'Reduce exposure to exploitable endpoint vulnerabilities',target:'At least 95% of critical endpoint patches installed within 14 days',owner:0,method:'Monthly vulnerability and patch compliance report',status:'attention',result:'Latest month: 91%; warehouse label-printer firmware is overdue',due:28},
+  {key:'awareness',objective:'Maintain workforce security-awareness participation',target:'At least 98% completion within 30 days of assignment',owner:2,method:'Monthly training completion export by workforce group',status:'attention',result:'Overall 97%; warehouse night shift is 89%',due:45},
+  {key:'recovery',objective:'Demonstrate recoverability of critical order services',target:'Restore the ERP and WMS dependency set within the approved four-hour recovery target',owner:0,method:'Semiannual recovery exercise with timed results',status:'on_track',result:'Latest exercise: 3h 32m; one application dependency follow-up remains open',due:120},
+];
+
+const cadence=(rationale,source='organization_defined')=>({category:'organizational',rationale:'Recurring ISMS governance with retained occurrence evidence and follow-up.',cadence_source:source,cadence_rationale:rationale,citation:'ISO/IEC 27001:2022 operating programme; consult the licensed standard for normative wording.'});
+const completedOccurrence=(r,due,db)=>{
+  const completed=demoDates(new Date(due+'T12:00:00Z'))(-1),who=r.reviewer_id||r.owner_id,snapshot=Object.fromEntries(['review_id','client_id','title','review_type','recurrence','owner_id','reviewer_id','scope','framework_drivers','baseline_key','framework_key','framework_safeguards','framework_plan_key','governance_context','policy_id'].filter(k=>r[k]!==undefined).map(k=>[k,JSON.parse(JSON.stringify(r[k]))]));
+  return {...snapshot,...reviewSchedule({...r,due_date:due},true),occurrence_id:r.review_id+'_'+due,due_date:due,status:'completed',completed_at:completed,completion_date:completed,completed_by:who,completed_by_name:db.users.find(u=>u.user_id===who)?.name||'Historical user',outcome:'no_findings',finding_count:0,evidence:[]};
+};
+
+// Adds Dunder's connected operating history after the shared seed is complete.
+// It is Demo-only and does not run during production startup.
+export function finishDunder(db,clock){
+  const client=db.clients.find(c=>c.client_id===CID);if(!client)return db;
+  const date=demoDates(clock),review=key=>db.reviews.find(r=>r.client_id===CID&&(r.framework_plan_key===key||r.baseline_key===key));
+  client.demo_program_version='iso27001-year2-v1';
+  client.notes='DEMO - SYNTHETIC DATA. Year-2 operating ISO/IEC 27001:2022 ISMS; assessment progress is not certification or a compliance conclusion.';
+  const contactDetails=[
+    ['Dwight Schrute','ISMS Manager','dwight.schrute@dundermifflin.example.test','570-555-0101'],
+    ['David Wallace','Chief Financial Officer and Executive Sponsor','david.wallace@dundermifflin.example.test','212-555-0102'],
+    ['Pam Beesly','Office Administrator and Document Control Coordinator','pam.beesly@dundermifflin.example.test','570-555-0103'],
+    ['Michael Scott','Regional Manager','michael.scott@dundermifflin.example.test','570-555-0104'],
+    ['Jim Halpert','Assistant Regional Manager','jim.halpert@dundermifflin.example.test',null],
+    ['Angela Martin','Accounting Manager','angela.martin@dundermifflin.example.test',null],
+    ['Oscar Martinez','Senior Accountant and Internal Auditor','oscar.martinez@dundermifflin.example.test',null],
+    ['Toby Flenderson','Human Resources Representative','toby.flenderson@dundermifflin.example.test',null],
+    ['Darryl Philbin','Warehouse Operations Manager','darryl.philbin@dundermifflin.example.test',null],
+  ];
+  db.contacts.filter(c=>c.client_id===CID).forEach((c,i)=>{const [name,title,email,phone]=contactDetails[i];Object.assign(c,{name,title,email,...(phone?{phone}:{})});delete c.role;delete c.grc_roles;});
+
+  for(const r of db.reviews.filter(r=>r.client_id===CID)){
+    const key=r.framework_plan_key||r.baseline_key;
+    if(key==='iso-user-access'||key==='user-access')r.governance_context=cadence('iVenture operating cadence: quarterly access review. ISO requires controlled access and periodic review where appropriate, but does not prescribe this exact interval.','risk_based');
+    else if(key==='iso-management-review'||key==='management-review')r.governance_context=cadence('Program Standard: management selected an annual formal review. ISO requires review at planned intervals; it does not prescribe annual frequency.');
+    else if(key==='iso-internal-audit')r.governance_context=cadence('Program Standard: annual package recurrence, staggered across quarters for usability. ISO requires a planned audit programme, not quarterly audits.');
+    else if(key?.startsWith('iso-'))r.governance_context=cadence('Omnisciente recommended cadence: annual programme review and review after material change. The configured interval is operational unless a cited source states otherwise.','recommended');
+  }
+
+  const management=review('iso-management-review')||review('management-review');
+  if(management){
+    Object.assign(management,{scope:'Suitability, adequacy and effectiveness of the Dunder Mifflin ISMS',participants:['David Wallace','Michael Scott','Dwight Schrute','Pam Beesly','Oscar Martinez','Sam Okafor'],management_review:{inputs:[
+      ['Prior actions','complete'],['Changes in context and interested parties','complete'],['Security performance and trends','complete'],['Nonconformities and corrective actions','complete'],['Monitoring and measurement','complete'],['Internal audit results','complete'],['Objective achievement','complete'],['Interested-party feedback','attention'],['Risk assessment and treatment','complete'],['Supplier performance','attention'],['Improvement opportunities','complete']],decisions:['Fund immutable backup retention for the ERP and WMS dependency set','Accept the portal concentration risk through contract renewal','Require supplier performance in the next review pack'],improvements:['Automate patch and awareness scorecard feeds'],required_changes:['Add New York corporate IT support interfaces to the scope appendix'],actions:['Add supplier performance summary to the next management review agenda','Assign objective data owners for patch and awareness metrics']}});
+    const last=management.occurrences?.at(-1);if(last)Object.assign(last,{participants:management.participants,management_review:management.management_review,notes:'DEMO - SYNTHETIC DATA. Decisions and required changes were recorded; two inputs require follow-up.'});
+    const e=evidence(db,client,'iso-management-review','ISO 27001 / Management Review / approved minutes','review',management.review_id,last?.completed_at||date(-45),management.reviewer_id,{occurrence_id:last?.occurrence_id,evidence_type:'Meeting Minutes'});
+    if(last)last.evidence.push({evidence_id:e.evidence_id,filename:e.filename,version:1});
+  }
+
+  const objectiveReview=review('iso-objective-review');
+  if(objectiveReview){
+    const last=objectiveReview.occurrences?.at(-1);
+    Object.assign(objectiveReview,{title:'ISMS Objectives Review',recurrence:'quarterly',status:'in_progress',due_date:last?reviewSchedule({...objectiveReview,recurrence:'quarterly',due_date:last.due_date},true).next_review_date:date(75),governance_context:cadence('Client-selected quarterly measurement. ISO requires objectives to be monitored and updated as appropriate, but does not prescribe this interval.'),isms_objectives:OBJECTIVES.map((o,i)=>({...o,owner_id:person(o.owner),timeframe:'FY'+date(0).slice(0,4),history:[{at:date(-280),result:i===1?'87%':'Baseline established'},{at:date(-100),result:o.result}]}))});
+    const scorecard=evidence(db,client,'iso-objectives','ISO 27001 / Objectives / security objectives scorecard','review',objectiveReview.review_id,date(-40),person(2),{occurrence_id:last?.occurrence_id,evidence_type:'Metrics / Scorecard'});
+    if(last){last.evidence=last.evidence||[];last.evidence.push({evidence_id:scorecard.evidence_id,filename:scorecard.filename,version:1});}
+  }
+
+  const policies=db.policies.filter(p=>p.client_id===CID);
+  const centralPolicy=review('iso-policy-review')||review('policy-review');if(centralPolicy){const last=centralPolicy.occurrences?.at(-1);centralPolicy.recurrence='annual';Object.assign(centralPolicy,{title:'ISO Policy Set Review',policy_ids:policies.map(p=>p.policy_id),status:'upcoming',due_date:last?reviewSchedule({...centralPolicy,due_date:last.due_date},true).next_review_date:date(95),governance_context:cadence('Program Standard: annual policy-set review plus reassessment after material change. ISO does not prescribe this exact annual interval.')});policies.forEach(p=>{Object.assign(p,{last_reviewed_at:last?.completed_at||null,next_review_date:centralPolicy.due_date,schedule_from_reviews:true});delete p.decision_history;});}
+
+  const scope='Scranton office and warehouse order-to-delivery operations, Finance and HR, and supporting New York corporate IT interfaces; other branches are excluded with interfaces documented.';
+  const independence='Oscar Martinez audits operational and supplier areas outside his accounting work; the MSP GRC consultant audits Finance and access-control areas. Neither auditor validates their own control operation.';
+  client.iso_audit_program={status:'active',activated_at:date(-620),activated_by:person(0),configuration:{client_id:CID,start_date:date(-620),first_package:isoAuditCatalog.packages[0].key,auditor_id:person(2),scope,independence},schedule:[]};
+  const today=new Date(date(0)+'T12:00:00Z'),quarterEnd=offset=>new Date(Date.UTC(today.getUTCFullYear(),Math.floor(today.getUTCMonth()/3)*3+3*(offset+1),0,12)).toISOString().slice(0,10);
+  isoAuditCatalog.packages.forEach((pack,i)=>{
+    const due=quarterEnd(i),rid=CID+'_audit_'+pack.key,r=reviewView({review_id:rid,client_id:CID,title:'Internal Audit — '+pack.title,review_type:'requirements',recurrence:'annual',due_date:due,status:i===1?'in_progress':'upcoming',owner_id:i%2?person(2):'demo_provider_consultant',reviewer_id:person(1),scope,created_at:date(-620),updated_at:date(-3),created_by:person(0),iso_audit:initialAuditState(pack.key,3),occurrences:[],audit_program_start:date(-620),audit_independence:independence,framework_key:'iso-27001',framework_safeguards:[...new Set(pack.items.map(x=>x.definition_id))],governance_context:cadence('Program Standard: each audit package recurs annually and packages are staggered across quarters. This is an operating model, not an ISO-prescribed quarterly cadence.')});
+    client.iso_audit_program.schedule.push({package_key:pack.key,title:pack.title,due_date:previousDate(due,24)});
+    for(const back of i<1?[1]:[]){
+      const o=completedOccurrence(r,previousDate(due,back*12),db),report=evidence(db,client,'audit-'+pack.key+'-'+back,'ISO 27001 / Internal Audit / '+pack.title+' / issued report','review',rid,o.completed_at,o.completed_by,{occurrence_id:o.occurrence_id,evidence_type:'Audit Report'});o.evidence.push({evidence_id:report.evidence_id,filename:report.filename,version:1});o.iso_audit=initialAuditState(pack.key,3-back);o.iso_audit.report_evidence_id=report.evidence_id;
+      pack.items.forEach(item=>{o.iso_audit.items[item.key]={status:'reviewed',result:'conforming',notes:'',evidence_ids:item===pack.items[0]?[report.evidence_id]:[],finding_ids:[]};});r.occurrences.push(o);
+    }
+    if(i===1)pack.items.slice(0,8).forEach(item=>{r.iso_audit.items[item.key]={...blankAuditItem(),status:'reviewed',result:'conforming',notes:'Current-cycle synthetic sample completed.',updated_at:date(-5),updated_by:r.owner_id};});
+    db.reviews.push(r);for(const a of db.framework_assessments.filter(a=>a.client_id===CID&&a.framework_key==='iso-27001'&&r.framework_safeguards.includes(a.definition_id)))a.related_links.push({kind:'reviews',id:rid});
+  });
+  const oldAudit=review('iso-internal-audit');if(oldAudit)Object.assign(oldAudit,{status:'cancelled',cancelled_at:date(-2),notes:'Replaced prospectively by the four-package annual audit programme; prior history remains retained.'});
+
+  const auditReview=db.reviews.find(r=>r.review_id===CID+'_audit_'+isoAuditCatalog.packages[0].key),auditOccurrence=auditReview?.occurrences.at(-1);
+  if(auditReview&&auditOccurrence){
+    const finding={finding_id:CID+'_audit_finding_supplier',client_id:CID,title:'Internal audit observation: supplier performance omitted from management review',description:'The audit found that supplier assurance status and performance trends were not included in the latest management review input pack.',status:'in_remediation',severity:'medium',owner_id:person(0),review_id:auditReview.review_id,occurrence_id:auditOccurrence.occurrence_id,due_date:date(35),created_at:auditOccurrence.completed_at,updated_at:date(-3),created_by:auditOccurrence.completed_by};db.findings.push(finding);db.tasks.push({task_id:CID+'_audit_action_supplier',client_id:CID,title:'Add supplier performance to the management review input pack',source:'Finding remediation',source_type:'review',source_id:auditReview.review_id,review_id:auditReview.review_id,occurrence_id:auditOccurrence.occurrence_id,finding_id:finding.finding_id,assignee_id:person(0),due_date:date(35),status:'in_progress',created_at:auditOccurrence.completed_at,updated_at:date(-3),created_by:auditOccurrence.completed_by,title_generated:false});auditOccurrence.outcome='findings_raised';auditOccurrence.finding_count=1;
+  }
+
+  const refs=[['A.8.13','A.5.30'],['A.5.17','A.8.5'],['A.7.5','A.7.11'],['A.8.2','A.8.18'],['A.5.19','A.5.22'],['A.8.12','A.5.34'],['A.8.32','A.5.37'],['A.7.9','A.8.1'],['A.8.8']];
+  db.risks.filter(r=>r.client_id===CID).forEach((r,i)=>{r.control_refs=refs[i]||[];r.treatment_reference='Risk Treatment RT-'+String(i+1).padStart(2,'0');r.related_links=[...(r.related_links||[]),...r.control_refs.map(id=>({kind:'framework_assessments',id:db.framework_assessments.find(a=>a.client_id===CID&&a.framework_key==='iso-27001'&&a.definition_id===id)?.framework_assessment_id})).filter(x=>x.id)];});
+  evidence(db,client,'iso-scope','ISO 27001 / Clauses / approved ISMS scope statement','framework_assessment',db.framework_assessments.find(a=>a.client_id===CID&&a.definition_id==='4.3')?.framework_assessment_id,date(-88),person(0),{evidence_type:'Scope Statement'});
+  evidence(db,client,'iso-soa','ISO 27001 / SoA / approved Statement of Applicability v4','framework_assessment',db.framework_assessments.find(a=>a.client_id===CID&&a.definition_id==='6.1.3')?.framework_assessment_id,date(-68),person(0),{evidence_type:'Statement of Applicability'});
+  // Retain representative authoritative files instead of one duplicate validation file per Annex control.
+  db.evidence=db.evidence.filter(e=>e.client_id!==CID||!e.evidence_id.startsWith(CID+'_evidence_iso-27001-'));
+  const retainedEvidence=new Set(db.evidence.map(e=>e.evidence_id));for(const a of db.framework_assessments.filter(a=>a.client_id===CID))a.related_links=(a.related_links||[]).filter(l=>l.kind!=='evidence'||retainedEvidence.has(l.id));
+  const riskControls=new Set(db.risks.filter(r=>r.client_id===CID).flatMap(r=>r.control_refs||[]));
+  // Keep assessment history where it demonstrates a decision, gap or treatment link;
+  // the current implementation remains authoritative for routine implemented controls.
+  for(const a of db.framework_assessments.filter(a=>a.client_id===CID&&a.status==='addressed'&&!riskControls.has(a.definition_id)&&!['4.3','6.1.3','9.2.2','9.3.1'].includes(a.definition_id)))delete a.assessment_history;
+  // Retain the latest operating occurrences plus prior-year annual governance; this
+  // keeps the complete four-client preview below the browser's session-storage ceiling.
+  const historyStart=date(-365);
+  const linkedOccurrences=new Set([...db.evidence,...db.findings,...db.tasks].filter(row=>row.client_id===CID).map(row=>row.occurrence_id).filter(Boolean));
+  for(const r of db.reviews.filter(r=>r.client_id===CID&&r.occurrences?.length)){
+    const retained=r.occurrences.filter(o=>linkedOccurrences.has(o.occurrence_id)||(o.due_date||o.completed_at||'')>=historyStart);r.occurrences=retained.length?retained:[r.occurrences.at(-1)];
+  }
+  return db;
+}
