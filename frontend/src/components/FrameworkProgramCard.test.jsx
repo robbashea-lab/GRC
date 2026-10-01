@@ -23,10 +23,10 @@ test('SOC 2 uses the same card shell with SOC 2 vocabulary and workspace links',
   expect(container.querySelector('.bd-eyebrow').textContent).toBe('SOC 2 program');
   expect(card.querySelector('h2').textContent).toBe('SOC 2');
   expect(card.querySelector('.bd-donut')).not.toBeNull();
-  expect(card.textContent).toContain('Addressed (Readiness)');
-  expect(card.textContent).toContain('Addressed 2 of 6');
+  expect(card.textContent).toContain('Partially Implemented');
+  expect(card.textContent).toContain('Implemented 2 of 6');
   expect(card.textContent).toContain('Internal readiness, not an auditor opinion.');
-  expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Needs remediation / validation');
+  expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Not implemented');
   // Same structure as the approved CIS card: class list of every element is identical.
   const shape=el=>[...el.querySelectorAll('*')].map(e=>e.tagName+'.'+(e.className.baseVal??e.className));
   const soc=shape(card);

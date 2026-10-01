@@ -1,4 +1,3 @@
-import {Moon,Sun} from 'lucide-react';
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
@@ -7,7 +6,7 @@ import {personLabel} from '@/lib/people';
 import {operatorGuidance} from '@/lib/frameworkOperator';
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 import socGuidance from '@/lib/operatorGuidance/socAssessmentGuidance.json';
-import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import {FrameworkHeader} from './BrawndoCisOverview';
 import {CIS_TONE} from './CisStatus';
 import {CisBreadcrumb,VERIFICATION_LABELS,verificationOf} from './BrawndoCisControls';
 import {SocStatusPill,socCategoryCrumb} from './PrestigeSocNavigator';
@@ -21,10 +20,7 @@ const VERIFICATION_TONE={not_verified:'neutral',needs_validation:'moderate',gap_
 export const SOC_CURRENT_HELP='Document how the organization currently addresses this criterion. Describe the relevant policies, technical controls, operational processes, responsible parties, recurring activities, and other implementation details necessary to understand how the control environment operates in practice.';
 export const SOC_CRITERIA_NOTE='SOC 2 Criterion Requirements reflect the applicable criterion and authoritative assessment guidance. Operational Practices and Enhanced Assurance are implementation guidance and do not represent additional SOC 2 requirements.';
 
-export function PrestigeSocHeader({resume,onContinue}){
-  const [theme,setTheme]=useBrawndoTheme();
-  return <header className="bcis-head"><div><p className="bcis-eyebrow">Prestige Worldwide · SOC 2 readiness</p><h1>SOC 2</h1></div><div className="bcis-actions"><button type="button" className="bcis-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>{resume&&<Button className="bcis-primary" onClick={onContinue} aria-label={`Continue assessment: ${resume.definition_id} ${resume.title}`}>Continue with {resume.definition_id}</Button>}</div></header>;
-}
+export const PrestigeSocHeader=props=><FrameworkHeader eyebrow="Prestige Worldwide · SOC 2 readiness" title="SOC 2" {...props}/>;
 
 export default function PrestigeSocAssessment({state,actions}){
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,related,finding,breadcrumb}=state;

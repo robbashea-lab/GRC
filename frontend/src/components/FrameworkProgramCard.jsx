@@ -2,12 +2,15 @@ import {Link} from 'react-router-dom';
 import {cisSummary} from '@/lib/cisVerification';
 import {operatorStatuses} from '@/lib/frameworkOperator';
 import {CIS_ORDER,statusCounts} from './CisStatus';
+import {SOC_STATUS_LABELS} from './PrestigeSocNavigator';
 
 // Shared client-dashboard programme card (Brawndo CIS IG1 is the approved shell).
 // Same layout, colours and measures for every framework; only the vocabulary and data differ.
 const SHORT={'cis-ig1':'CIS IG1','soc-2':'SOC 2','iso-27001':'ISO 27001'};
 // Dashboard wording for the not-implemented conclusion, where it is shorter than the workspace label.
-const GAP={'cis-ig1':'Not implemented'};
+const GAP={'cis-ig1':'Not implemented','soc-2':'Not implemented'};
+// The card speaks the vocabulary of the workspace it links to.
+const LABELS={'soc-2':SOC_STATUS_LABELS};
 const NOTE={'soc-2':'Internal readiness, not an auditor opinion.'};
 // Workspaces whose ?view= filter covers the whole framework population. ISO views are scoped to a
 // workspace tab (Clauses / Annex A), so its rows are shown as counts without a filtered link.
@@ -29,7 +32,7 @@ function Donut({counts,summary,name,labels}) {
 }
 
 export default function FrameworkProgramCard({rows,program}) {
-  const key=program.key,name=shortName(program),labels=operatorStatuses(key),done=firstWord(labels.addressed);
+  const key=program.key,name=shortName(program),labels=LABELS[key]||operatorStatuses(key),done=firstWord(labels.addressed);
   const summary=cisSummary(rows),counts=statusCounts(rows),to=program.to||`/compliance/${key}`;
   const heading=key==='cis-ig1'?'bd-cis-heading':`bd-program-${key}-heading`;
   const Row=({view,className,children})=>LINKABLE.has(key)?<Link to={`${to}?view=${view}`} className={className}>{children}</Link>:<span className={`bd-static${className?` ${className}`:''}`}>{children}</span>;

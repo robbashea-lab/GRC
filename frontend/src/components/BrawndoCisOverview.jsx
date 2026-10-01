@@ -6,16 +6,18 @@ import './BrawndoCisOverview.css';
 // Brawndo CIS IG1 overview: where the program stands, what to do next, then the controls.
 const SEGMENTS=[['addressed','Implemented','good'],['partial','Partial','attention'],['gap','Not implemented','critical'],['notAssessed','Not assessed','neutral']];
 const FILTER={addressed:'addressed',partial:'in_progress',gap:'needs_attention',notAssessed:'not_assessed'};
-export function BrawndoCisHeader({resume,onContinue}){
+// Shared framework workspace header (approved Brawndo CIS IG1 pattern); framework copy is data.
+export function FrameworkHeader({eyebrow,title,subtitle,resume,onContinue}){
   const [theme,setTheme]=useBrawndoTheme();
   return <header className="bcis-head">
-    <div><p className="bcis-eyebrow">CIS Controls v8.1 IG1</p><h1>CIS IG1</h1></div>
+    <div><p className="bcis-eyebrow">{eyebrow}</p><h1>{title}</h1>{subtitle&&<p className="text-sm text-ink-secondary">{subtitle}</p>}</div>
     <div className="bcis-actions">
       <button type="button" className="bcis-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
       {resume&&<Button className="bcis-primary" onClick={onContinue} aria-label={`Continue assessment: ${resume.definition_id} ${resume.title}`}>Continue with {resume.definition_id}</Button>}
     </div>
   </header>;
 }
+export const BrawndoCisHeader=props=><FrameworkHeader eyebrow="CIS Controls v8.1 IG1" title="CIS IG1" {...props}/>;
 // Share of applicable safeguards for a segment; assessment progress only, never a compliance score.
 export function segmentShare(n,applicable){return applicable?Math.round(n/applicable*100):0;}
 export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='safeguards',continueNoun='safeguard',testIdPrefix='bcis',segmentLabels={}}){

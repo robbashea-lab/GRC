@@ -16,14 +16,13 @@ import {SocProgramSettings} from '@/components/SocReadiness';
 import {socConfiguration} from '@/lib/socReadiness';
 import {operatorStatuses,operatorVocabulary,assessmentProgress} from '@/lib/frameworkOperator';
 import CisWorkspaceSummary from '@/components/CisWorkspaceSummary';
-import BrawndoCisOverview,{AssessmentOverview,BrawndoCisHeader} from '@/components/BrawndoCisOverview';
+import BrawndoCisOverview,{AssessmentOverview,BrawndoCisHeader,FrameworkHeader} from '@/components/BrawndoCisOverview';
 import PrestigeSocNavigator,{socCategoryCrumb} from '@/components/PrestigeSocNavigator';
 import {PrestigeSocHeader} from '@/components/PrestigeSocAssessment';
 import {isBrawndoReference,isPrestigeSocAssessment} from '@/lib/reference';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import CisResultTable from '@/components/CisResultTable';
 import BrawndoCisControls from '@/components/BrawndoCisControls';
-import {Moon,Sun} from 'lucide-react';
 import '@/components/FrameworkPresentation.css';
 import ProgramContext from '@/components/ProgramContext';
 import OrganizationalControls from '@/components/OrganizationalControls';
@@ -99,7 +98,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
   const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels(vocab);
   // Brawndo CIS IG1 reads top to bottom: condition, next steps, controls. Presentation only.
-  const brawndoCis=frameworkKey==='cis-ig1'&&isBrawndoReference(clientId,user),prestigeSoc=isPrestigeSocAssessment(clientId,frameworkKey,user),referenceAssessment=brawndoCis||prestigeSoc,iso=frameworkKey==='iso-27001',[theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
+  const brawndoCis=frameworkKey==='cis-ig1'&&isBrawndoReference(clientId,user),prestigeSoc=isPrestigeSocAssessment(clientId,frameworkKey,user),referenceAssessment=brawndoCis||prestigeSoc,iso=frameworkKey==='iso-27001',[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
@@ -151,7 +150,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const isoCrumb=(view,path=[])=>{setSearch('');setFilter('all');remember({['category:'+view]:path});const n=new URLSearchParams(params);n.delete('assessment');n.set('iso_view',view);setParams(n,{replace:true});};
   const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:'CIS IG1',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}},{label:socCategoryCrumb(selected.category),onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([selectedPath[0].id]);}},{label:selected.control,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath(selectedPath.map(p=>p.id));}},{label:selected.definition_id}]:undefined;
   return <div className={iso?'bcis framework-presentation':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
-    {iso&&<header className="bcis-head"><div><p className="bcis-eyebrow">ISO/IEC 27001:2022 · ISMS</p><h1>ISO 27001</h1><p className="text-sm text-ink-secondary">{ISO_VIEWS[isoView].label}</p></div><div className="bcis-actions"><button type="button" className="bcis-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>{resume&&<Button className="bcis-primary" onClick={()=>openRecord(resume)}>Continue with {resume.definition_id}</Button>}</div></header>}
+    {iso&&<FrameworkHeader eyebrow="ISO/IEC 27001:2022 · ISMS" title="ISO 27001" subtitle={ISO_VIEWS[isoView].label} resume={resume} onContinue={()=>openRecord(resume)}/>}
     {brawndoCis&&<BrawndoCisHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {prestigeSoc&&<PrestigeSocHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
