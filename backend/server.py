@@ -2742,7 +2742,9 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
             if k in computed:
                 body[k] = computed[k]
     if kind == "reviews" and set(body) & {"due_date", "recurrence", "custom_recurrence_days"}:
-        body.update(review_occurrences.schedule({**existing, **body}, reset_anchor="due_date" in body))
+        # Only a different calendar day re-anchors recurrence; resending the same date keeps the cycle.
+        moved = "due_date" in body and str(body.get("due_date") or "")[:10] != str(existing.get("due_date") or "")[:10]
+        body.update(review_occurrences.schedule({**existing, **body}, reset_anchor=moved))
         body["status"] = review_occurrences.view({**existing, **body})["status"]
     if kind == "tasks" and "assignee_id" in body and "owner_id" in existing:
         body["owner_id"] = None  # assignee is authoritative after an explicit assignment
@@ -2828,6 +2830,8 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     if not deleted.deleted_count:
         raise HTTPException(409, "Record changed; reload before deleting")
     await audit(user, "delete", entity_type, item_id, existing.get("client_id"))
+    if kind == "tasks":
+        await remediation.after_delete(db, existing, user, _now, audit)
     return {"ok": True}
 
 
@@ -3819,7 +3823,9 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
     await db.tasks.update_one({"_id": tid}, {"$setOnInsert": doc}, upsert=True)
     # link back on the finding
     if finding.get("status") == "open":
-        await db.findings.update_one({"finding_id": finding_id, "status":"open"}, {"$set": {"status": "in_remediation", "updated_at": _next_write_time(finding.get('updated_at'))}})
+        moved = await db.findings.update_one({"finding_id": finding_id, "status":"open"}, {"$set": {"status": "in_remediation", "updated_at": _next_write_time(finding.get('updated_at'))}})
+        if moved.modified_count:
+            await audit(user, "Finding moved to In Remediation", "finding", finding_id, finding["client_id"], meta={"task_id": tid})
     doc.pop("_id", None)
     await audit(user, "create", "task", tid, finding["client_id"], meta={"from_finding": finding_id})
     if finding.get("review_id"):
@@ -3865,6 +3871,8 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type == 'framework_assessments':
         return await framework_governance.related(sys.modules[__name__],source)
     ai_reviews = await db.reviews.find({'client_id':cid,'ai_system_id':entity_id},{'review_id':1}).to_list(None) if entity_type == 'ai_systems' else []
+    # Findings raised in a Policy Review stay visible from the Policy without copying policy_id onto them.
+    policy_reviews = await db.reviews.find({'client_id':cid,'policy_id':entity_id},{'review_id':1}).to_list(None) if entity_type == 'policies' else []
     for target, key in keys.items():
         relations = [{keys[entity_type]: entity_id}]
         if source.get(key):
@@ -3878,6 +3886,8 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
             if source.get('review_id'):
                 ai_review = await db.reviews.find_one({'client_id':cid,'review_id':source['review_id']})
                 if ai_review and ai_review.get('ai_system_id'): relations.append({'ai_system_id':ai_review['ai_system_id']})
+        if target in ('findings','tasks') and policy_reviews:
+            relations.append({'review_id':{'$in':[r['review_id'] for r in policy_reviews]}})
         if entity_type == "risks" and target == "tasks" and source.get("related_task_ids"):
             relations.append({"task_id":{"$in":source["related_task_ids"]}})
         if entity_type == "vendors" and target == "risks" and source.get("related_risk_ids"):

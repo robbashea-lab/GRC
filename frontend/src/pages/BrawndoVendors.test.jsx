@@ -4,18 +4,18 @@ import VendorRegister,{vendorTiles} from './VendorRegister';
 import RecordDrawer from '@/components/RecordDrawer';
 import {SCHEMAS} from '@/lib/schemas';
 import api from '@/lib/api';
-let mockClient='demo_brawndo';
+let mockClient='demo_brawndo',mockSearch='';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Test'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
-jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/vendors',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/vendors',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams(mockSearch))}),{virtual:true});
 jest.mock('@/components/EvidencePanel',()=>()=> <div>Existing evidence panel</div>);
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-identity'}));
 let root,container;
 const click=node=>act(async()=>node.click());
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/vendors'?[{vendor_id:'v',client_id:mockClient,name:'Cloud QA',service:'Hosting',criticality:'high',status:'active',assurance_records:[]}]:[]}));});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockSearch='';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/vendors'?[{vendor_id:'v',client_id:mockClient,name:'Cloud QA',service:'Hosting',criticality:'high',status:'active',assurance_records:[]}]:[]}));});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test('Brawndo summary and assurance columns; switching clients restores original creation',async()=>{
   await act(async()=>root.render(<VendorRegister/>));expect(container.querySelector('.bpage h1').textContent).toBe('Vendors');expect(container.textContent).toContain('Test · Third parties');expect(container.querySelector('[data-testid="tile-critical_high"]').textContent).toContain('Cloud QA');expect(container.querySelector('[data-testid="vendor-row-0"] .bpage-meta').textContent).toBe('Hosting');expect(container.querySelector('[data-testid="vendor-foot"]').textContent).toBe('Showing 1 of 1 active vendors');
@@ -53,4 +53,10 @@ test('tiles and chips drive the register views; row opens drawer',async()=>{
   await click(container.querySelector('[data-testid="vendor-view-inactive"]'));expect(container.querySelector('[data-testid="vendor-row-0"]')).toBeNull();
   await click(container.querySelector('[data-testid="vendor-view-all_active"]'));
   await click(container.querySelector('[data-testid="vendor-row-0"]'));expect(document.querySelector('[data-testid="vendors-drawer"]')).not.toBeNull();
+});
+
+test('the Dashboard assurance link opens the matching Vendors view, not All active',async()=>{
+  mockSearch='view=assurance_attention';
+  await act(async()=>root.render(<VendorRegister/>));
+  expect(container.querySelector('[data-testid="vendor-view-all_active"]').getAttribute('aria-pressed')).toBe('false');
 });

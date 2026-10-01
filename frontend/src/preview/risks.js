@@ -1,7 +1,6 @@
 import {reviewView,reviewSchedule} from '../lib/reviewOccurrences';
 import {assessedRisk} from '../lib/grcWork';
 import {recordUuid} from '../lib/recordUuid';
-import {nextRiskReview} from '../lib/brawndoRisks';
 import {scheduledDate} from '../lib/reviewOccurrences';
 
 export const riskSnapshot = risk => Object.fromEntries(['likelihood_score','impact_score','risk_score','risk_level','assessment_rationale','likelihood_rationale','impact_rationale','treatment','notes','status','acceptance_rationale','acceptance_expires_at','accepted_by','acceptance_date'].map(k=>[k,risk[k]??null]));
@@ -26,10 +25,13 @@ export function ensureRiskReview(db,risk) {
     review={review_id:'risk_review_'+risk.risk_id,risk_id:risk.risk_id,client_id:risk.client_id,review_type:'risk_assessment',status:'upcoming',created_at:new Date().toISOString(),created_by:db.user.user_id};
     db.reviews.push(review);
   }
-  const dateChanged=review.due_date!==risk.next_review;
+  // The same calendar day in another format (date-only vs timestamp) is not a reschedule; keep the anchor.
+  const dateChanged=String(review.due_date||'').slice(0,10)!==String(risk.next_review||'').slice(0,10);
+  if(!dateChanged&&review.due_date)risk.next_review=review.due_date;
   if(['completed','cancelled'].includes(review.status)&&risk.next_review) Object.assign(review,{status:'upcoming',current_occurrence_id:'occ_'+recordUuid(),notes:null,started_at:null,started_by:null,completion_date:null});
   Object.assign(review,{title:`Risk Review — ${risk.display_id} — ${risk.title}`,due_date:risk.next_review,owner_id:risk.owner_id,recurrence:risk.review_cadence||'annual',custom_recurrence_days:risk.custom_recurrence_days});
-  Object.assign(review,reviewSchedule(review,dateChanged),reviewView(review));
+  // Reset the anchor first; the projection must read the new anchor, not overwrite it.
+  Object.assign(review,reviewSchedule(review,dateChanged));Object.assign(review,reviewView(review));
   risk.linked_review_id=review.review_id;
   return review;
 }
@@ -47,7 +49,6 @@ export function completeRiskReview(db,review,completed,body) {
   completed.outcome=completed.risk_before.acceptance_date!==completed.risk_after.acceptance_date?'Risk Accepted':['likelihood_score','impact_score','assessment_rationale','likelihood_rationale','impact_rationale'].some(k=>completed.risk_before[k]!==completed.risk_after[k])?'Assessment Updated':completed.risk_before.treatment!==completed.risk_after.treatment?'Treatment Updated':body.risk_outcome||'Reviewed — No Change';
   let next=reviewView(review).next_review_date;
   if(risk.client_id==='demo_brawndo'){
-    next=nextRiskReview(completed.completed_at.slice(0,10),risk.review_cadence,risk.custom_recurrence_days)||null;
     if(body.risk_next_review){
       if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Only platform administrators can override the Risk review schedule.');
       if(!scheduledDate(body.risk_next_review)||body.risk_next_review.slice(0,10)<=completed.completed_at.slice(0,10))throw new Error('Choose a next review after the completed review date.');

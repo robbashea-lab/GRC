@@ -132,3 +132,4 @@
 @media (max-width: 900px) { .bd-aside { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .bdash h1 { font-size: 24px; } }
 @media (prefers-reduced-motion: reduce) { .bdash, .bd-tile, .bd-table tbody tr { transition: none; } .bd-tile:hover { transform: none; } }
+.bd-count-note { margin: -4px 0 14px; }

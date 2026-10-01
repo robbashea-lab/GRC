@@ -47,7 +47,7 @@ export const BRAWNDO_CIS={
   '11.3':[A,150,'Backup platform encryption and RBAC','Backups encrypted; console access limited to two MSP engineers and the IT Lead.',null],
   '11.4':[G,150,'Backup and recovery platform','Backups replicate to a second region but in the same tenant with delete rights. No immutable or offline copy is verified.',null],
   '12.1':[P,150,'','Firewall firmware current. Two plant switches run end-of-life firmware with no replacement date.',null],
-  '14.1':[A,480,'Annual awareness training platform','Awareness program owned by HR and Security. Last content review was before the current training vendor; completion not reported this year.',480],
+  '14.1':[P,90,'Annual awareness training platform','Awareness program owned by HR and Security. Last content review was before the current training vendor; completion not reported this year.',480],
   '14.2':[A,480,'Training platform; phishing simulation','Phishing module included in annual training. Simulations paused since vendor change.',null],
   '14.3':[A,480,'Training platform','Authentication module included in annual training.',null],
   '14.4':[A,480,'Training platform','Data handling module included in annual training.',null],
@@ -60,10 +60,18 @@ export const BRAWNDO_CIS={
   '17.2':[G,400,'Incident Response Plan contact list','Contact list lists the former cyber insurer and MSP escalation numbers that changed in the spring.',null],
   '17.3':[A,200,'Incident Response Plan; intranet page','Reporting process published on the intranet and covered in training.',200],
 };
+// Explicit verification conclusions, independent of implementation status: evidence-backed and recent
+// work is Verified, partial or stale work Needs validation, recorded gaps are Gap identified.
+export function brawndoVerification([status,assessed,,,evidence]){
+  if(status===N)return 'not_verified';
+  if(status===G)return 'gap_identified';
+  if(status===A&&evidence!=null&&assessed<=365)return 'verified';
+  return 'needs_validation';
+}
 // Findings raised from assessment gaps; Actions are the authoritative remediation.
 // [safeguard, title, severity, action title, assignee index, action due (days), finding age]
 export const BRAWNDO_CIS_FINDINGS=[
-  ['1.1','Asset inventory excludes plant-floor, mobile and network devices','high','Extend inventory to all asset classes and reconcile against EDR and DHCP',2,-12,50],
+  ['1.1','Asset inventory excludes plant-floor, mobile and network devices','high','Extend inventory to all asset classes and reconcile against EDR and DHCP',2,-12,38],
   ['11.4','No isolated or immutable copy of recovery data','high','Configure immutable backup copy and verify isolation',2,20,140],
   ['6.2','SaaS access not revoked consistently at termination','medium','Add non-SSO SaaS applications to offboarding checklist',0,35,28],
   ['7.4','Third-party application patching is manual and irregular','medium','Automate third-party application patching for managed endpoints',2,40,18],

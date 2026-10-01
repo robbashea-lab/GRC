@@ -26,14 +26,14 @@ test('monitoring is pilot lifecycle only; legacy categories and monitoring treat
  const other=(await api.post('/clients',{name:'Other Risk QA'})).data.client_id,legacy=await create({client_id:other,source_type:'manual'});
  await expect(api.patch('/risks/'+legacy.risk_id,{status:'monitoring'})).rejects.toBeTruthy();await expect(create({client_id:other,source_type:'other'})).rejects.toBeTruthy();
 });
-test('completion anchors the next review to actual completion, permits explicit override, preserves history',async()=>{
+test('late completion keeps the next review on the scheduled cycle, permits explicit override, preserves history',async()=>{
  const r=await create({next_review:'2020-03-01'}),path='/risks/'+r.risk_id,review=(await api.post(path+'/review')).data.review;
  expect((await api.get(path)).data.last_reviewed).toBeFalsy();
  const body={occurrence_id:review.current_occurrence_id,risk_outcome:'Reviewed — No Change'};
  const done=(await api.post('/reviews/'+review.review_id+'/complete',body)).data;
  const saved=(await api.get(path)).data;
  expect(done.occurrence.next_review_date).toBe(saved.next_review);
- expect(saved.next_review.slice(0,10)).toBe(nextRiskReview(done.occurrence.completed_at.slice(0,10)));expect(saved.last_reviewed).toBe(done.occurrence.completed_at);expect(done.occurrence.due_date.slice(0,10)).toBe('2020-03-01');
+ expect(saved.next_review.slice(0,10)).toBe('2021-03-01');expect(saved.last_reviewed).toBe(done.occurrence.completed_at);expect(done.occurrence.due_date.slice(0,10)).toBe('2020-03-01');
  expect((await api.post('/reviews/'+review.review_id+'/complete',body)).data.occurrence).toEqual(done.occurrence);
  const override=(await api.post('/reviews/'+review.review_id+'/complete',{occurrence_id:done.review.current_occurrence_id,risk_next_review:'2090-10-10'})).data;
  expect(override.review.due_date.slice(0,10)).toBe('2090-10-10');expect((await api.get(path)).data.next_review).toBe('2090-10-10');expect((await api.get(path+'/review-history')).data).toHaveLength(2);

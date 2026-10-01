@@ -92,8 +92,9 @@ test('approval draft cannot be silently lost through tabs or mixed with ordinary
   await click(dialog.querySelector('[data-testid="drawer-save"]'));expect(api.patch).not.toHaveBeenCalled();
 });
 
-test('linked Brawndo Policy Review does not present a stale scheduled-date projection as its next deadline',async()=>{
+test('linked Brawndo Policy Review shows its next date from the scheduled cycle',async()=>{
   const review={review_id:'r',client_id:mockClient,policy_id:'p',title:'Policy review',review_type:'policy',status:'upcoming',due_date:'2024-01-01',recurrence:'annual'};
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={review} clientId={mockClient} onOpenChange={()=>{}}/>));
-  expect(document.querySelector('[data-testid="review-next-date"]').textContent).toBe('Calculated from actual completion');
+  const next=document.querySelector('[data-testid="review-next-date"]').textContent;
+  expect(next).not.toMatch(/Calculated/);expect(next).toMatch(/2025/);
 });

@@ -22,3 +22,9 @@ test('tiles derive counts and literal context',()=>{
   const t2=calendarTiles({attention:onlyLate,monthEntries:onlyLate,anchor:today,today});
   expect(t2[2].context).toBe('All two are already overdue');expect(t2[3].context).toBe('Nothing due today');expect(t2[1].context).toBe('Nothing due in the next 30 days');
 });
+
+test('a Finding with an active Action counts once in Calendar work tiles',()=>{
+  const today=new Date(2026,9,1,12);
+  const entries=[{kind:'finding',key:'f',title:'F',date:'2026-09-20',represented:true},{kind:'task',key:'t',title:'T',date:'2026-09-25'},{kind:'finding',key:'pv',title:'PV',date:'2026-09-22',represented:false}];
+  expect(needsAttention(entries,today).overdue.map(e=>e.key)).toEqual(['pv','t']);
+});

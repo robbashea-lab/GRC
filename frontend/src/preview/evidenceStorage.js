@@ -4,9 +4,21 @@ import {DEMO_INLINE_LIMIT,lastStorageError} from '../lib/demoStorageErrors';
 const files=new Map(),MAX_CACHE_BYTES=8*1024*1024;
 export const payloadBytes=value=>typeof value==='string'?value.length*2:0;
 export const fileBytes=value=>{const raw=(value||'').split(',').pop();return Math.floor(raw.length*3/4)-(raw.endsWith('==')?2:raw.endsWith('=')?1:0);};
+const SNAPSHOT_FIELDS=['title','review_type','recurrence','owner_id','reviewer_id','scope','framework_drivers','baseline_key','framework_key','framework_safeguards','framework_plan_key','governance_context','policy_id'];
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const copy=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));
+const compactReviews=reviews=>(reviews||[]).map(review=>({...review,occurrences:(review.occurrences||[]).map(occurrence=>{
+  const inherited=SNAPSHOT_FIELDS.filter(field=>Object.hasOwn(occurrence,field)&&same(occurrence[field],review[field]));
+  if(!inherited.length)return occurrence;
+  const compact={...occurrence,_review_inherited:inherited};for(const field of inherited)delete compact[field];return compact;
+})}));
+const expandReviews=reviews=>(reviews||[]).map(review=>({...review,occurrences:(review.occurrences||[]).map(occurrence=>{
+  if(!occurrence._review_inherited)return occurrence;
+  const expanded={...occurrence};for(const field of expanded._review_inherited)expanded[field]=copy(review[field]);delete expanded._review_inherited;return expanded;
+})}));
 export function lightweightStore(db){
-  let remaining=256*1024; // Aggregate UTF-16 payload budget, independent of metadata.
-  return {...db,evidence:(db.evidence||[]).map(e=>{
+  let remaining=64*1024; // Aggregate UTF-16 payload budget, independent of metadata.
+  return {...db,reviews:compactReviews(db.reviews),evidence:(db.evidence||[]).map(e=>{
     const {content_base64,...metadata}=e;
     const bytes=payloadBytes(content_base64);
     if(content_base64&&(fileBytes(content_base64)>DEMO_INLINE_LIMIT||bytes>remaining))return {...metadata,demo_file_storage:'session_only'};
@@ -22,7 +34,8 @@ export function rememberFiles(db){
   for(const [id,f] of files){if(bytes<=MAX_CACHE_BYTES)break;files.delete(id);bytes-=payloadBytes(f.content);}
 }
 export function restoreFiles(db){
-  for(const e of db.evidence||[]){const f=files.get(e.evidence_id);if(!e.content_base64&&e.demo_file_storage==='session_only'&&f?.client_id===e.client_id)e.content_base64=f.content;}
+  for(const e of db.evidence||[]){const f=files.get(e.evidence_id);if(!e.content_base64&&e.demo_file_storage==='session_only'&&f?.client_id===e.client_id){e.content_base64=f.content;delete e.demo_file_storage;}}
+  db.reviews=expandReviews(db.reviews);
   return db;
 }
 export const clearFileCache=()=>files.clear();

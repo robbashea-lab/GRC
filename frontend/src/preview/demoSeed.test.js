@@ -8,10 +8,10 @@ import {reviewSchedule} from '../lib/reviewOccurrences';
 beforeEach(()=>sessionStorage.clear());
 test('canonical clients reset independently of standard session material',()=>{
   const db=seedStore();
-  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Prestige Worldwide']);
+  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide']);
   db.clients.push({client_id:'test-demo-only',name:'Session mutation'});saveStore(db);
   localStorage.setItem('grc_token','test-standard-token');resetStore();
-  expect(readStore().clients).toHaveLength(2);
+  expect(readStore().clients).toHaveLength(3);
   expect(localStorage.getItem('grc_token')).toBe('test-standard-token');localStorage.clear();
 });
 test('every relationship, owner and occurrence belongs to its client',()=>{

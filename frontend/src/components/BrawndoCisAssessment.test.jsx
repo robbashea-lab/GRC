@@ -62,7 +62,7 @@ test('What CIS Requires labels the summary and links the official reference; off
  await act(async()=>root.unmount());root=createRoot(container);await render();
  expect(container.querySelector('[data-testid="cis-official-text"]').textContent).toBe('Authorized verbatim text.');expect(container.textContent).not.toContain('not official CIS text');mockOfficial=null;
 });
-test('tier checklists show progress and the guidance note; ticks are drafts and never change verification',async()=>{
+test('assessment criteria ticks are drafts and never change status or verification',async()=>{
  await render();expect(container.textContent).toContain('They do not introduce additional requirements.');
  expect(container.querySelectorAll('.bcsg-criteria input')).toHaveLength(4);
  const boxes=[...container.querySelectorAll('.bcsg-criteria input')];for(const b of boxes)await tick(b);
@@ -108,9 +108,9 @@ test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit',
 test('load failure disables writes and offers retry',async()=>{
  api.get.mockRejectedValue(new Error('Context unavailable'));await render();expect(container.querySelector('[role="alert"]').textContent).toContain('Context unavailable');expect(button('Save assessment').disabled).toBe(true);expect(button('Retry')).toBeTruthy();
 });
-test('other clients keep the existing workspace',async()=>{
+test('other clients retain their assessment content with explicit modal semantics',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal]')).toBeNull();
+ expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
 test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
  const toControl=jest.fn();
@@ -132,4 +132,49 @@ test('dialog has one source-labelled checklist and no maturity guidance',async()
  expect(record.cis_assessment_criteria).toEqual(['1.1-c1']);
  await act(async()=>root.unmount());root=createRoot(container);await render();
  expect(container.querySelector('.bcsg-criteria input').checked).toBe(true);
+});
+test('a never-assessed safeguard does not name an assessor',async()=>{
+ record={...record,last_assessed:null,assessed_by:'u'};await render();
+ expect(container.querySelector('.bcsg-meta').textContent).toBe('Last assessed: Not assessed');
+});
+
+describe('safeguard Findings',()=>{
+ const f=(id,status,extra={})=>({finding_id:id,client_id:'demo_brawndo',title:'Finding '+id,status,severity:'high',framework_assessment_id:'a',...extra});
+ test('lists direct open, Pending Validation and closed Findings with their Action state',async()=>{
+  related.findings=[f('o','in_remediation'),f('p','remediated',{severity:'medium'}),f('c','closed'),f('x','open',{framework_assessment_id:'other'})];
+  related.tasks=[{task_id:'t1',finding_id:'o',client_id:'demo_brawndo',status:'in_progress',due_date:'2026-11-01'},{task_id:'t2',finding_id:'p',client_id:'demo_brawndo',status:'done'}];
+  await render();
+  const open=container.querySelector('[aria-label="Open Findings"]').textContent;
+  expect(open).toContain('Finding o');expect(open).toContain('High · In remediation · Action in progress · due 2026-11-01');
+  expect(open).toContain('Moderate · Pending Validation · Action completed');
+  expect(open).not.toContain('Finding x');
+  expect(container.querySelector('.bcsg-closed summary').textContent).toBe('1 closed / validated');
+  await act(async()=>button('Finding p').click());expect(container.querySelector('[data-testid="nested"]').textContent).toContain('findings Finding p');
+ });
+ test('Raise Finding records the safeguard origin, owner and target date, once per draft',async()=>{
+  api.post.mockResolvedValue({data:{}});await render();
+  await act(async()=>button('Raise Finding').click());
+  expect(container.querySelector('[data-testid="finding-origin"]').textContent).toBe('Origin: CIS IG1 · Safeguard 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
+  await input('Finding title','Inventory excludes plant devices');await input('Corrective action','Add plant devices to inventory');await input('Finding target date','2026-12-15');
+  const sev=container.querySelector('[aria-label="Finding severity"]');await act(async()=>{sev.value='high';sev.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(button('Save & next').disabled).toBe(true);
+  await act(async()=>button('Create Finding & Action').click());
+  const [path,body]=api.post.mock.calls.find(([p])=>p.endsWith('/findings'));
+  expect(path).toBe('/framework_assessments/a/findings');
+  expect(body).toMatchObject({title:'Inventory excludes plant devices',remediation_title:'Add plant devices to inventory',severity:'high',due_date:'2026-12-15',request_id:expect.any(String)});
+  expect(body).not.toHaveProperty('owner_id');
+  expect(container.querySelector('.bcsg-finding-form')).toBeNull();
+ });
+ test('a failed create keeps the draft and its request id for the retry',async()=>{
+  api.post.mockRejectedValueOnce(new Error('Network unavailable'));await render();
+  await act(async()=>button('Raise Finding').click());await input('Finding title','Gap');await input('Corrective action','Fix gap');
+  await act(async()=>button('Create Finding & Action').click());
+  expect(container.textContent).toContain('Network unavailable');expect(container.querySelector('.bcsg-finding-form')).toBeTruthy();
+  api.post.mockResolvedValue({data:{}});await act(async()=>button('Create Finding & Action').click());
+  const ids=api.post.mock.calls.filter(([p])=>p.endsWith('/findings')).map(([,b])=>b.request_id);
+  expect(ids).toHaveLength(2);expect(ids[0]).toBe(ids[1]);
+ });
+ test.each(['client_readonly','client_contributor'])('%s without assignment cannot raise Findings',async role=>{
+  mockUser.role=role;await render();expect(button('Raise Finding')).toBeUndefined();
+ });
 });

@@ -132,17 +132,40 @@ test('a deep-linked requirement closes in place without leaving the workspace',a
  expect(mockHistory.at(-1)).toMatchObject({search:'',replace:true});
 });
 
-test('ISO has three primary views; SoA retains all 93 controls and audit is a separate program',async()=>{
+test('ISO has eight connected workspaces; SoA retains all 93 controls and audit is a separate program',async()=>{
  const definitions=frameworkCatalog('iso-27001').requirements;
- api.get.mockImplementation(async path=>({data:path==='/reviews'||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
+ api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'a',status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="a"/>));
- expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(3);
- expect(container.querySelector('[aria-labelledby="cis-summary-heading"]').textContent).toContain('30 of 30');
+ expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(8);
+ expect(container.querySelector('[aria-label="ISMS Overview"]')).not.toBeNull();
+ await act(async()=>buttons('Clauses 4–10')[0].click());
+ expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('30 of 30');
  await act(async()=>buttons('Statement of Applicability')[0].click());
  await act(async()=>buttons('All requirements')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
+ expect(container.textContent).toContain('Necessary — Implemented');
+ await act(async()=>buttons('Annex A Controls')[0].click());
+ expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('93 of 93');
  await act(async()=>buttons('Internal Audit Program')[0].click());
  expect(container.textContent).toContain('Program not activated');
- expect(container.querySelector('[aria-labelledby="cis-summary-heading"]')).toBeNull();
+ expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
 });
 
+test('ISO default presentation preserves SoA scope and uses native category buttons and guarded drawer breadcrumbs',async()=>{
+ const definitions=frameworkCatalog('iso-27001').requirements;
+ const annex=definitions.filter(d=>d.specification==='annex_control');
+ mockLocation.params=new URLSearchParams('iso_view=soa');
+ api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'new-client',status:d.id===annex[0].id?'not_assessed':'addressed',soa_applicability:d.id===annex[1].id?'excluded':'included'})),work:{}}}));
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="new-client"/>));
+ expect(container.querySelector('.framework-presentation')).not.toBeNull();
+ expect(container.querySelector('[data-testid="iso-seg-addressed"]').getAttribute('aria-label')).toContain('91 of 92 controls');
+ expect(container.querySelector('.framework-category-row').tagName).toBe('BUTTON');
+ await act(async()=>buttons('All requirements')[0].click());
+ expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
+ await act(async()=>container.querySelector(`[data-testid="requirement-${annex[0].id}"] button`).click());
+ expect(container.querySelector('[aria-label="ISO workspace sections"] [aria-pressed="true"]').textContent).toBe('Statement of Applicability');
+ expect(container.querySelector('[data-testid="opened"]').textContent).toContain('Statement of Applicability');
+ await act(async()=>[...container.querySelectorAll('[data-drawer-crumb]')].find(b=>b.textContent==='Statement of Applicability').click());
+ expect(container.querySelector('[data-testid="opened"]')).toBeNull();
+ expect(mockHistory.at(-1).search).toBe('iso_view=soa');
+});

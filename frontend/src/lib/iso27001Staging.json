@@ -1,0 +1,198 @@
+{
+  "framework": "iso-27001",
+  "version": "ISO/IEC 27001:2022 + Amd 1:2024",
+  "research_date": "2026-10-01",
+  "content_notice": "Omnisciente-authored implementation architecture and explanations. This file does not reproduce ISO requirements or control text and is not a substitute for licensed standards or qualified conformity assessment.",
+  "sources": [
+    {
+      "id": "ISO27001",
+      "reference": "ISO/IEC 27001:2022",
+      "publisher": "ISO/IEC",
+      "url": "https://www.iso.org/standard/27001",
+      "status": "published",
+      "use": "Authoritative ISMS requirements and Annex A reference-control source; licensed text is not stored."
+    },
+    {
+      "id": "AMD1",
+      "reference": "ISO/IEC 27001:2022/Amd 1:2024",
+      "publisher": "ISO/IEC",
+      "url": "https://www.iso.org/standard/88435.html",
+      "status": "published",
+      "use": "Climate-action changes applicable to clauses 4.1 and 4.2."
+    },
+    {
+      "id": "ISO27002",
+      "reference": "ISO/IEC 27002:2022",
+      "publisher": "ISO/IEC",
+      "url": "https://www.iso.org/standard/75652.html",
+      "status": "published",
+      "use": "Control implementation guidance; not a certifiable requirements standard."
+    },
+    {
+      "id": "ISO27007",
+      "reference": "ISO/IEC 27007:2020",
+      "publisher": "ISO/IEC",
+      "url": "https://www.iso.org/standard/77802.html",
+      "status": "published; revision in development",
+      "use": "Current published guidance for ISMS audit programmes, audits and auditor competence."
+    },
+    {
+      "id": "SOA_NOTE",
+      "reference": "ISO/IEC 27001 Auditing Practices Group guidance on the Statement of Applicability",
+      "publisher": "ISO/IEC JTC 1/SC 27/WG 1",
+      "url": "https://committee.iso.org/files/live/sites/jtc1sc27/files/resources/ISO-IECJTC1-SC27-WG1_N3298_Auditing%20Practices%20Note%20-%20SoA.pdf",
+      "status": "committee-hosted guidance; non-normative",
+      "use": "Supports the distinction between necessary controls, Annex A comparison and additional controls outside Annex A."
+    }
+  ],
+  "workspaces": [
+    {"key": "isms-requirements", "name": "ISMS Requirements", "records": "Framework assessments for mandatory clauses 4-10"},
+    {"key": "statement-of-applicability", "name": "Statement of Applicability", "records": "SoA entries for Annex A and other necessary controls"},
+    {"key": "annex-a-controls", "name": "Annex A Control Implementation", "records": "Framework assessments linked to Risks, Policies, Evidence, Findings and Actions"},
+    {"key": "isms-assurance", "name": "ISMS Assurance and Governance", "records": "Reviews, audit programmes, management reviews, objectives and corrective actions"}
+  ],
+  "clause_profiles": [
+    {"id":"4.1","must":"Determine relevant internal and external issues and record the climate-change relevance decision.","reviewer_verify":"Context is current, material issues are evaluated, and the climate decision is explicit.","records":["context register","climate relevance decision"],"recurring":true,"review_plan":null,"workspace":"context-scope"},
+    {"id":"4.2","must":"Identify relevant interested parties, their relevant requirements, which requirements the ISMS addresses, and relevant climate-related expectations.","reviewer_verify":"Parties and requirements are current, owned and traceable to Risks or obligations where appropriate.","records":["interested-party register","requirements register mappings"],"recurring":true,"review_plan":null,"workspace":"context-scope"},
+    {"id":"4.3","must":"Define and maintain the ISMS scope after considering context, interested-party requirements, interfaces and dependencies.","reviewer_verify":"The documented scope has clear organizational, service, location, technology and dependency boundaries.","records":["approved ISMS scope","boundary or dependency diagram"],"recurring":false,"review_plan":null,"workspace":"context-scope"},
+    {"id":"4.4","must":"Establish, implement, maintain and continually improve the ISMS and its interacting processes.","reviewer_verify":"Processes, owners, inputs, outputs and interactions operate across the stated scope.","records":["ISMS process map","process ownership records"],"recurring":true,"review_plan":null,"workspace":"isms-requirements"},
+    {"id":"5.1","must":"Demonstrate top-management leadership, accountability, direction and support for the ISMS.","reviewer_verify":"Leadership decisions, resources and business integration are evidenced rather than delegated in name only.","records":["leadership decisions","resource approvals","management communications"],"recurring":true,"review_plan":"iso-management-review","workspace":"management-review"},
+    {"id":"5.2","must":"Establish, approve, communicate and make available an information security policy appropriate to the organization.","reviewer_verify":"The current approved policy aligns to direction, objectives and continual improvement commitments.","records":["approved information security policy","communication and acknowledgement records"],"recurring":true,"review_plan":"iso-policy-review","workspace":"policies"},
+    {"id":"5.3","must":"Assign and communicate relevant information security roles, responsibilities and authorities.","reviewer_verify":"Named accountable roles cover ISMS conformity and performance reporting without material gaps.","records":["responsibility matrix","role assignments"],"recurring":true,"review_plan":null,"workspace":"client-profile"},
+    {"id":"6.1.1","must":"Plan actions for ISMS risks and opportunities, integrate them into ISMS processes and evaluate effectiveness.","reviewer_verify":"Planning addresses intended outcomes, unwanted effects and improvement opportunities.","records":["ISMS planning decisions","effectiveness evaluations"],"recurring":true,"review_plan":"iso-risk-assessment","workspace":"risks"},
+    {"id":"6.1.2","must":"Define and apply a consistent information security risk assessment process with criteria, identification, analysis, evaluation and ownership.","reviewer_verify":"Criteria are repeatable and comparable, risk owners are identified, and results are retained.","records":["risk assessment methodology","risk register","assessment results"],"recurring":true,"review_plan":"iso-risk-assessment","workspace":"risks"},
+    {"id":"6.1.3","must":"Define and apply risk treatment, determine necessary controls, compare them with Annex A, produce the SoA, plan treatment and obtain risk-owner approval.","reviewer_verify":"Every treatment traces to necessary controls, Annex A omissions are considered, additional controls are captured, and residual risk is approved.","records":["risk treatment plan","Statement of Applicability","residual-risk approvals"],"recurring":true,"review_plan":"iso-soa-review","workspace":"statement-of-applicability"},
+    {"id":"6.2","must":"Establish measurable information security objectives and plans covering owner, resources, actions, timing and evaluation.","reviewer_verify":"Objectives are measurable where practicable, monitored, communicated, updated and linked to results.","records":["objectives register","measurement results","review history"],"recurring":true,"review_plan":"iso-objective-review","workspace":"objectives"},
+    {"id":"6.3","must":"Carry out changes to the ISMS in a planned manner.","reviewer_verify":"Material ISMS changes show purpose, consequences, resource needs and controlled implementation.","records":["change proposal","impact assessment","change decision and outcome"],"recurring":false,"review_plan":null,"workspace":"isms-requirements"},
+    {"id":"7.1","must":"Determine and provide resources needed for the ISMS.","reviewer_verify":"Resource needs and unresolved gaps are visible to accountable management.","records":["resource plan","budget or staffing decisions"],"recurring":true,"review_plan":"iso-management-review","workspace":"management-review"},
+    {"id":"7.2","must":"Determine necessary competence, ensure competence and retain evidence for people whose work affects information security performance.","reviewer_verify":"Role requirements and evidence of education, training or experience are current and effective.","records":["competence matrix","training and experience records","effectiveness checks"],"recurring":true,"review_plan":"iso-awareness","workspace":"reviews"},
+    {"id":"7.3","must":"Ensure relevant people understand the policy, their contribution and consequences of nonconformity.","reviewer_verify":"Awareness reaches the relevant population and is evidenced beyond mere content publication.","records":["awareness materials","completion or acknowledgement records"],"recurring":true,"review_plan":"iso-awareness","workspace":"reviews"},
+    {"id":"7.4","must":"Determine what, when, with whom and how to communicate about the ISMS.","reviewer_verify":"Communication responsibilities, audiences and methods are defined and used.","records":["communication plan","delivery records"],"recurring":true,"review_plan":null,"workspace":"isms-requirements"},
+    {"id":"7.5.1","must":"Maintain the documented information required by the standard and needed for an effective ISMS.","reviewer_verify":"The controlled document set is proportionate and distinguishes required, operational and recommended records.","records":["document register","controlled Policies and Evidence"],"recurring":true,"review_plan":"iso-policy-review","workspace":"evidence"},
+    {"id":"7.5.2","must":"Control identification, format, review and approval when documented information is created or updated.","reviewer_verify":"Documents have ownership, version, review and approval evidence.","records":["document metadata","approval and revision history"],"recurring":true,"review_plan":"iso-policy-review","workspace":"policies"},
+    {"id":"7.5.3","must":"Control availability, protection, distribution, access, storage, preservation, retention, disposition and relevant external documents.","reviewer_verify":"Information is available where needed and protected from loss, misuse and unauthorized change.","records":["access records","retention schedule","external-document register"],"recurring":true,"review_plan":"iso-policy-review","workspace":"evidence"},
+    {"id":"8.1","must":"Plan, implement and control ISMS processes, criteria, changes and relevant externally provided processes or services.","reviewer_verify":"Operating criteria are used, planned changes are controlled and unintended changes are reviewed.","records":["operating procedures","execution records","supplier process controls"],"recurring":true,"review_plan":null,"workspace":"reviews"},
+    {"id":"8.2","must":"Perform information security risk assessments at planned intervals and when significant changes are proposed or occur.","reviewer_verify":"Assessments use approved criteria, cover change triggers and retain comparable results.","records":["dated risk assessments","change-triggered reassessments"],"recurring":true,"review_plan":"iso-risk-assessment","workspace":"risks"},
+    {"id":"8.3","must":"Implement the approved information security risk treatment plan and retain results.","reviewer_verify":"Treatments are performed, evidence is linked, and residual-risk decisions are current.","records":["risk treatment Actions","implementation Evidence","risk-owner decisions"],"recurring":true,"review_plan":"iso-risk-assessment","workspace":"risks"},
+    {"id":"9.1","must":"Determine monitoring and measurement needs, methods, responsibilities and timing; analyse results and evaluate ISMS performance and effectiveness.","reviewer_verify":"Metrics are decision-useful, repeatable and linked to retained results and follow-up.","records":["metric definitions","measurement results","performance evaluations"],"recurring":true,"review_plan":"iso-objective-review","workspace":"objectives"},
+    {"id":"9.2.1","must":"Conduct internal audits at planned intervals against organizational and ISO/IEC 27001 criteria.","reviewer_verify":"Audit scope, criteria, evidence and conclusions demonstrate conformity and effective implementation.","records":["audit plans","working papers","audit reports"],"recurring":true,"review_plan":"iso-internal-audit","workspace":"internal-audit"},
+    {"id":"9.2.2","must":"Plan, establish, implement and maintain an audit programme considering process importance and prior results; ensure objectivity and follow-up.","reviewer_verify":"Coverage is risk-informed, responsibilities are assigned, independence is checked and results reach relevant management.","records":["audit programme","coverage matrix","independence checks","follow-up records"],"recurring":true,"review_plan":"iso-internal-audit","workspace":"internal-audit"},
+    {"id":"9.3.1","must":"Have top management review the ISMS at planned intervals for continuing suitability, adequacy and effectiveness.","reviewer_verify":"The review is substantive, attended by accountable management and uses all required inputs.","records":["review agenda","attendance","minutes"],"recurring":true,"review_plan":"iso-management-review","workspace":"management-review"},
+    {"id":"9.3.2","must":"Provide management review inputs covering prior actions, changes, interested-party feedback, performance, objectives, audit results, risks and improvement opportunities.","reviewer_verify":"The review pack is complete, current and linked to authoritative records.","records":["management review input pack","linked metrics, Risks, audits and prior Actions"],"recurring":true,"review_plan":"iso-management-review","workspace":"management-review"},
+    {"id":"9.3.3","must":"Record management review decisions on improvement opportunities and needed ISMS changes.","reviewer_verify":"Decisions have accountable owners, due dates and traceable follow-up.","records":["approved minutes","decisions","linked Action Items"],"recurring":true,"review_plan":"iso-management-review","workspace":"management-review"},
+    {"id":"10.1","must":"Continually improve ISMS suitability, adequacy and effectiveness.","reviewer_verify":"Improvement is evidenced by decisions and outcomes, not only open tasks.","records":["improvement decisions","before-and-after Evidence"],"recurring":true,"review_plan":"iso-corrective-review","workspace":"findings-actions"},
+    {"id":"10.2","must":"React to nonconformities, control and correct them, address consequences and causes, implement corrective action and review effectiveness.","reviewer_verify":"Finding, cause, Action, implementation and independent closure evidence form one traceable chain.","records":["Findings","root-cause analysis","Action Items","effectiveness validation"],"recurring":false,"review_plan":"iso-corrective-review","workspace":"findings-actions"}
+  ],
+  "soa_model": {
+    "purpose": "One organization-specific register of necessary controls, including but not limited to Annex A.",
+    "status_labels": ["Necessary — Implemented", "Necessary — Partially Implemented", "Necessary — Not Implemented", "Not Necessary"],
+    "fields": ["soa_entry_id", "source_kind", "annex_a_reference", "control_title", "custom_control_reference", "custom_control_description", "necessity", "necessity_justification", "not_necessary_justification", "implementation_status", "implementation_description", "implementation_references", "risk_treatment_ids", "risk_ids", "policy_ids", "process_or_control_ids", "owner_id", "review_history"],
+    "source_kinds": ["annex_a", "external", "custom"],
+    "rules": [
+      "Every Annex A reference must appear exactly once for comparison, but need not be selected as necessary.",
+      "Every necessary control outside Annex A must also appear.",
+      "Necessary and Not Necessary both require rationale; implementation status applies only to necessary controls.",
+      "Not Necessary is the preferred ISO concept; the current runtime term Not Applicable requires an approved compatibility migration.",
+      "A SoA decision never changes Risk, Policy, Finding, Action or Evidence ownership."
+    ],
+    "trace": ["Risk", "Risk Treatment", "Necessary Control", "SoA Entry", "Implementation", "Evidence"]
+  },
+  "risk_treatment_integration": {
+    "authoritative_record": "Risks",
+    "relationship_fields": ["risk_id", "treatment_decision", "treatment_action_ids", "necessary_control_ids", "soa_entry_ids", "residual_risk_decision", "approved_by", "approved_at"],
+    "rules": [
+      "Do not create an ISO-only duplicate Risk.",
+      "A treatment may select Annex A, external or custom controls.",
+      "Every SoA entry can trace back to the treatment decision that made the control necessary.",
+      "Implementation and Evidence do not silently close or re-rate the authoritative Risk."
+    ]
+  },
+  "control_implementation_model": {
+    "fields": ["control_reference", "control_title", "implementation_status", "implementation_description", "risk_ids", "policy_ids", "soa_entry_id", "owner_id", "evidence_ids", "finding_ids", "action_item_ids", "review_history"],
+    "status_values": ["not_assessed", "not_implemented", "partially_implemented", "implemented", "needs_attention"],
+    "rule": "Assess the organization's implementation and evidence without inventing rigid technical tests for implementation-neutral controls."
+  },
+  "internal_audit_program": {
+    "programme_fields": ["programme_id", "client_id", "cycle_start", "cycle_end", "objectives", "scope", "risk_basis", "status", "coverage_target", "owner_id", "approved_by", "approved_at"],
+    "engagement_fields": ["review_id", "planned_period", "completion_date", "scope", "criteria", "clause_ids", "control_ids", "auditor_ids", "independence_check", "status", "result", "evidence_ids", "finding_ids"],
+    "coverage_fields": ["reference_id", "planned_review_id", "completed_review_id", "audited_at", "auditor_ids", "result", "finding_ids"],
+    "authoritative_records": {"schedule": "Reviews", "exceptions": "Findings", "remediation": "Action Items", "proof": "Evidence"},
+    "cadence_rule": "Planned intervals are required; ISO does not prescribe quarterly or annual frequency. Coverage is planned over the client-defined audit cycle."
+  },
+  "management_review": {
+    "review_type": "ISO 27001 Management Review",
+    "fields": ["review_id", "review_date", "participant_ids", "input_items", "decisions", "outputs", "improvement_opportunities", "isms_changes", "action_item_ids", "evidence_ids"],
+    "required_input_topics": ["prior management review actions", "changes in internal and external issues", "changes in interested-party requirements", "information security performance and trends", "nonconformities and corrective actions", "monitoring and measurement results", "audit results", "information security objective achievement", "interested-party feedback", "risk assessment results and risk treatment status", "improvement opportunities"],
+    "required_output_topics": ["continual improvement opportunities", "needed ISMS changes"],
+    "cadence_rule": "Planned intervals are required; no numerical interval is asserted. Any annual default is Omnisciente recommended or client-selected."
+  },
+  "objectives_model": {
+    "fields": ["objective_id", "objective", "indicator", "baseline", "target", "owner_id", "target_date", "measurement_method", "measurement_frequency", "status", "results", "review_history"],
+    "rule": "Prefer measurable, ongoing outcomes. One-time implementation tasks belong in Action Items, not the objectives register."
+  },
+  "context_scope_model": {
+    "reuse": {"organization": "Client Profile", "people": "Contacts", "obligations": "existing legal/regulatory/contractual requirements register", "risks": "Risks"},
+    "iso_specific_fields": ["context_issue_type", "relevance_rationale", "interested_party_id", "requirement_id", "isms_scope_inclusion", "isms_scope_exclusion_rationale", "dependency_ids", "climate_relevance", "reviewed_at"]
+  },
+  "documented_information": [
+    {"kind":"explicitly_required","source":"4.3","record":"ISMS scope"},
+    {"kind":"explicitly_required","source":"5.2","record":"information security policy"},
+    {"kind":"explicitly_required","source":"6.1.2","record":"risk assessment process and retained results"},
+    {"kind":"explicitly_required","source":"6.1.3","record":"risk treatment process, SoA, treatment plan and risk-owner approval"},
+    {"kind":"explicitly_required","source":"6.2","record":"information security objectives"},
+    {"kind":"explicitly_required","source":"7.2","record":"evidence of competence"},
+    {"kind":"explicitly_required","source":"8.1","record":"information needed to show processes were carried out as planned"},
+    {"kind":"explicitly_required","source":"8.2","record":"risk assessment results"},
+    {"kind":"explicitly_required","source":"8.3","record":"risk treatment results"},
+    {"kind":"explicitly_required","source":"9.1","record":"monitoring, measurement, analysis and evaluation results"},
+    {"kind":"explicitly_required","source":"9.2.2","record":"audit programme implementation and audit results"},
+    {"kind":"explicitly_required","source":"9.3.3","record":"management review results"},
+    {"kind":"explicitly_required","source":"10.2","record":"nonconformity, actions taken and corrective-action results"},
+    {"kind":"operational_evidence","source":"7.5.1","record":"additional documented information the organization determines necessary for ISMS effectiveness"},
+    {"kind":"recommended_supporting","source":"Omnisciente","record":"process maps, responsibility matrix and registers used to make the explicit records usable"}
+  ],
+  "recurring_obligations": [
+    {"activity":"Risk assessment review","source":["8.2"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Annual plus significant-change trigger","cadence_provenance":"Omnisciente recommended cadence","review_plan":"iso-risk-assessment","calendar":"recurring Review plus event-created Review"},
+    {"activity":"Risk treatment review","source":["6.1.3","8.3"],"recurrence_required":false,"frequency_specified":false,"recommended_cadence":"With risk review and on treatment change","cadence_provenance":"Omnisciente recommended cadence","review_plan":"iso-risk-assessment","calendar":"linked Review; do not delay treatment Actions"},
+    {"activity":"Information security objective review","source":["6.2","9.1"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Quarterly","cadence_provenance":"Omnisciente recommended cadence","review_plan":"iso-objective-review","calendar":"recurring Review"},
+    {"activity":"Internal audit","source":["9.2.1","9.2.2"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Client-defined audit cycle with annual coverage planning","cadence_provenance":"client-selected cadence","review_plan":"iso-internal-audit","calendar":"programme engagements appear as Reviews"},
+    {"activity":"Management review","source":["9.3.1","9.3.2","9.3.3"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Annual","cadence_provenance":"Omnisciente recommended cadence","review_plan":"iso-management-review","calendar":"recurring Review"},
+    {"activity":"Statement of Applicability review","source":["6.1.3"],"recurrence_required":false,"frequency_specified":false,"recommended_cadence":"Annual plus risk, scope or treatment change","cadence_provenance":"Omnisciente recommended cadence","review_plan":"iso-soa-review","calendar":"recurring Review plus event-created Review"},
+    {"activity":"Information security policy review","source":["A.5.1"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Annual plus significant change","cadence_provenance":"Omnisciente recommended cadence","review_plan":"iso-policy-review","calendar":"recurring Review plus event-created Review"},
+    {"activity":"Access entitlement review","source":["A.5.18"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Quarterly","cadence_provenance":"iVenture operating cadence","review_plan":"iso-user-access","calendar":"recurring Review"},
+    {"activity":"Backup and restoration testing","source":["A.8.13"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Annual restoration exercise; backup monitoring per control design","cadence_provenance":"Omnisciente recommended cadence","review_plan":null,"calendar":"client-selected Review"},
+    {"activity":"Supplier security review","source":["A.5.22"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Annual and on material service change","cadence_provenance":"Omnisciente recommended cadence","review_plan":"iso-vendor","calendar":"recurring Review plus event-created Review"},
+    {"activity":"Business continuity and ICT readiness exercise","source":["A.5.29","A.5.30"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Annual exercise","cadence_provenance":"Omnisciente recommended cadence","review_plan":null,"calendar":"client-selected Review"},
+    {"activity":"Awareness and training review","source":["7.2","7.3","A.6.3"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Annual plus role or risk change","cadence_provenance":"Omnisciente recommended cadence","review_plan":"iso-awareness","calendar":"recurring Review plus event-created Review"},
+    {"activity":"Vulnerability management review","source":["A.8.8"],"recurrence_required":true,"frequency_specified":false,"recommended_cadence":"Monthly programme review; operational handling is continuous and risk-based","cadence_provenance":"iVenture operating cadence","review_plan":null,"calendar":"client-selected Review"},
+    {"activity":"Corrective action effectiveness review","source":["10.2"],"recurrence_required":false,"frequency_specified":false,"recommended_cadence":"Event-triggered before closure","cadence_provenance":"ISO explicitly required","review_plan":"iso-corrective-review","calendar":"Finding and Action due dates; no blanket annual delay"}
+  ],
+  "onboarding_flow": [
+    "Enable ISO/IEC 27001 for the client without changing other framework state.",
+    "Confirm organizational context, interested parties and legal, regulatory and contractual requirement mappings.",
+    "Approve the ISMS scope and boundaries.",
+    "Initialize mandatory clause assessments and the 93-reference Annex A comparison set.",
+    "Establish the risk assessment method and perform the initial assessment in Risks.",
+    "Create the risk treatment plan and organization-specific SoA, including additional necessary controls.",
+    "Map existing Policies and identify justified policy gaps.",
+    "Create measurable objectives and owners.",
+    "Select client cadences and create recurring Reviews and Calendar obligations.",
+    "Approve the internal audit programme and management review schedule."
+  ],
+  "auditor_navigation": [
+    {"question":"Show me the Statement of Applicability.","module":"Statement of Applicability","authoritative_records":["SoA entries","framework assessments","Risks","Policies","Evidence"]},
+    {"question":"Show me the internal audit programme and results.","module":"Internal Audit","authoritative_records":["audit programme","Reviews","Evidence","Findings"]},
+    {"question":"Show me management reviews.","module":"Management Review","authoritative_records":["Reviews","minutes Evidence","Action Items"]},
+    {"question":"Show me ISMS objectives.","module":"Objectives","authoritative_records":["objectives register","measurement results","Review history"]},
+    {"question":"Show me how this Annex A control is implemented.","module":"Annex A Control Implementation","authoritative_records":["framework assessment","SoA entry","Policies","Evidence","Findings","Actions"]},
+    {"question":"Show me the risk that drove this control.","module":"Risks","authoritative_records":["Risk","risk treatment","SoA entry"]},
+    {"question":"Show me corrective actions.","module":"Findings and Action Items","authoritative_records":["Finding","Action Item","verification Evidence"]}
+  ],
+  "approval_decisions": [
+    "Approve a backward-compatible persistence model for organization-specific SoA entries, including controls outside Annex A.",
+    "Approve terminology migration from included/excluded and Not Applicable to Necessary/Not Necessary while preserving stored history and APIs.",
+    "Approve whether objectives become a dedicated register or a typed view over existing authoritative records.",
+    "Approve replacing the current fixed four-package audit activation with a configurable programme cycle and coverage plan.",
+    "Provide licensed ISO/IEC 27001:2022 and ISO/IEC 27002:2022 access for exact title and normative completeness validation."
+  ]
+}

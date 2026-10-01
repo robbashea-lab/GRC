@@ -2,8 +2,8 @@ import { ComplianceProvider, useCompliance } from "@/context/ComplianceContext";
 import DemoNotice from "@/preview/DemoNotice";
 import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
-import {isBrawndoReference,isReferencePortfolio,isPrestigeReference,isReferencePresentation} from '@/lib/reference';
-import PrestigeSurface from './PrestigeSurface';
+import {isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
+import ClientSurface from './ClientSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
@@ -219,8 +219,8 @@ function Sidebar() {
     ...item, icon: ShieldCheck, testid: `nav-compliance-${item.key}`,
   }))];
 
-  // Brawndo reference workspace: grouped, theme-following sidebar (client context only).
-  if(!atPlatform&&isReferencePresentation(currentClientId,user))return <BrawndoSidebar complianceItems={complianceItems} isInternal={isInternal} showFindings={isPrestigeReference(currentClientId,user)}/>;
+  // Default client navigation uses the reference presentation; route permissions stay unchanged.
+  if(!atPlatform&&currentClientId)return <BrawndoSidebar complianceItems={complianceItems} isInternal={isInternal} showFindings={!isBrawndoReference(currentClientId,user)}/>;
   if(atPlatform&&isInternal&&isReferencePortfolio(user))return <BrawndoPlatformSidebar adminItems={PLATFORM_NAV.filter(n=>!n.section)}/>;
   return (
     <aside className="app-sidebar w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
@@ -300,7 +300,7 @@ export default function Layout() {
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
         {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
-        {isPrestigeReference(currentClientId,user)&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<PrestigeSurface key={pathname}><Outlet /></PrestigeSurface>:<Outlet />}
+        {currentClientId&&!isBrawndoReference(currentClientId,user)&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
     </div></ComplianceProvider>
   );

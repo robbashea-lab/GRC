@@ -1,0 +1,28 @@
+/* ISO uses the approved reference tokens; specialized ISMS content stays in its own modules. */
+.framework-presentation { min-width: 0; transition: none; }
+/* ISO's longer native status names must stay inside the summary at narrow widths. */
+.framework-presentation .bcis-bar { position: relative; }
+.framework-presentation .bcis-bar > span { position: static; }
+.framework-presentation .bcis-bar > span > .bcis-tip { left: 0; right: auto; transform: none; max-width: 100%; white-space: normal; }
+.framework-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.framework-tabs .ui-button { height: auto; min-height: 36px; padding: 6px 12px; font-size: 13px; border-radius: 999px; background: var(--cs-card); color: var(--cs-text); border: 1px solid var(--cs-border); white-space: normal; }
+.framework-tabs .ui-button[aria-pressed="true"] { background: var(--cs-text); color: var(--cs-bg); border-color: var(--cs-text); }
+.framework-category-list { display: flex; flex-direction: column; border: 1px solid var(--cs-border); border-radius: 12px; background: var(--cs-card); overflow: hidden; }
+.framework-category-row { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr); align-items: center; gap: 8px 16px; width: 100%; padding: 14px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--cs-border); }
+.framework-category-row:last-child { border-bottom: 0; }
+.framework-category-row:hover { background: var(--cs-subtle); }
+.framework-category-row > :first-child { font-weight: 600; }
+.framework-category-row > :not(:first-child) { color: var(--cs-muted); font-size: 12px; }
+.framework-presentation :is(button,summary,a,input,select,textarea):focus-visible { outline: 2px solid var(--cs-focus); outline-offset: 2px; }
+.framework-category-row:focus-visible { outline-offset: -3px; }
+.framework-presentation :is(h2,h3) { overflow-wrap: anywhere; }
+.framework-presentation .cis-results { background: var(--cs-card); border-radius: 12px; }
+.framework-presentation .cis-results tr { position: relative; }
+.framework-presentation .cis-results-open::after { content: ''; position: absolute; inset: 0; cursor: pointer; }
+.framework-presentation .cis-results tr:has(.cis-results-open:focus-visible) { outline: 2px solid var(--cs-focus); outline-offset: -2px; }
+.framework-presentation .cis-results tr:hover { background: var(--cs-subtle); }
+.framework-presentation .cis-results-open { color: var(--cs-text); }
+.framework-presentation .cis-results th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+[data-testid="framework-assessment-workspace"] .bcis-crumbs { --cs-muted: var(--color-text-muted); --cs-text: var(--color-text-primary); --cs-link: var(--color-link); margin-bottom: 8px; }
+[data-testid="framework-assessment-workspace"] .bcis-crumbs ol { font-size: 12px; }
+@media(max-width:1024px) { .framework-category-row { grid-template-columns: minmax(0,1fr); gap: 4px; } }

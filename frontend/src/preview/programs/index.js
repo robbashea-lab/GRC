@@ -33,6 +33,7 @@
 //               renewal_in, assurance: { type, received_ago, refresh_in }, notes }],
 // }
 import prestige from './prestige';
+import dunder from './dunder';
 
-export const CLIENT_PROGRAMS = { demo_prestige: prestige };
+export const CLIENT_PROGRAMS = { demo_dunder: dunder, demo_prestige: prestige };
 export const clientProgram = cid => CLIENT_PROGRAMS[cid] || null;

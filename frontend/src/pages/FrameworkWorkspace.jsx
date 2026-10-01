@@ -1,6 +1,7 @@
 import FrameworkCategoryNavigator,{SoaTable} from '@/components/FrameworkCategoryNavigator';
 import IsoAuditWorkspace from '@/components/IsoAuditWorkspace';
 import IsoGovernanceReviews from '@/components/IsoGovernanceReviews';
+import IsoProgramWorkspace from '@/components/IsoProgramWorkspace';
 import {useEffect,useMemo,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
 import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
@@ -22,6 +23,8 @@ import {isBrawndoReference,isPrestigeSocAssessment} from '@/lib/reference';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import CisResultTable from '@/components/CisResultTable';
 import BrawndoCisControls from '@/components/BrawndoCisControls';
+import {Moon,Sun} from 'lucide-react';
+import '@/components/FrameworkPresentation.css';
 import ProgramContext from '@/components/ProgramContext';
 import OrganizationalControls from '@/components/OrganizationalControls';
 import {CisStatusBar,CisStatusPill,statusCounts} from '@/components/CisStatus';
@@ -33,9 +36,14 @@ const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',n
 // Derived view names in the framework's own conclusion vocabulary.
 const viewLabels=v=>({attention:'Needs attention',gaps:`${v.statuses.in_progress} or ${v.statuses.needs_attention.toLowerCase()}`,addressed:v.statuses.addressed,in_progress:v.statuses.in_progress,needs_attention:v.statuses.needs_attention,not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:`${v.statuses.addressed} without evidence`,unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation',assessed:'Assessed'});
 const ISO_VIEWS={
-  isms_clause:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
-  annex_control:{label:'Statement of Applicability',matches:r=>r.specification==='annex_control'},
+  overview:{label:'ISMS Overview',matches:()=>false,custom:true},
+  isms_clause:{label:'Clauses 4–10',matches:r=>r.specification==='isms_clause'},
+  soa:{label:'Statement of Applicability',matches:r=>r.specification==='annex_control'},
+  annex_control:{label:'Annex A Controls',matches:r=>r.specification==='annex_control'},
+  risk_treatment:{label:'Risk Assessment / Treatment',matches:()=>false,custom:true},
   audit:{label:'Internal Audit Program',matches:()=>false},
+  management_review:{label:'Management Review',matches:()=>false,custom:true},
+  objectives:{label:'ISMS Objectives',matches:()=>false,custom:true},
 };
 function readPreference(key){try{return JSON.parse(sessionStorage.getItem(key))||{};}catch{return {};}}
 function SafeguardSignals({row}){
@@ -91,7 +99,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
   const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels(vocab);
   // Brawndo CIS IG1 reads top to bottom: condition, next steps, controls. Presentation only.
-  const brawndoCis=frameworkKey==='cis-ig1'&&isBrawndoReference(clientId,user),prestigeSoc=isPrestigeSocAssessment(clientId,frameworkKey,user),referenceAssessment=brawndoCis||prestigeSoc,[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment,theme);
+  const brawndoCis=frameworkKey==='cis-ig1'&&isBrawndoReference(clientId,user),prestigeSoc=isPrestigeSocAssessment(clientId,frameworkKey,user),referenceAssessment=brawndoCis||prestigeSoc,iso=frameworkKey==='iso-27001',[theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
@@ -108,8 +116,9 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     const byId=new Map((data?.assessments||[]).filter(a=>a.client_id===clientId).map(a=>[a.definition_id,a]));
     return (data?.definitions||[]).filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
   },[data,clientId]);
-  const isoView=frameworkKey==='iso-27001'?(rows.find(r=>r.framework_assessment_id===params.get('assessment'))?.specification||
-    (ISO_VIEWS[params.get('iso_view')]?params.get('iso_view'):'isms_clause')):'all';
+  const selectedSpecification=rows.find(r=>r.framework_assessment_id===params.get('assessment'))?.specification;
+  const isoView=frameworkKey==='iso-27001'?(selectedSpecification==='annex_control'&&params.get('iso_view')==='soa'?'soa':selectedSpecification||
+    (ISO_VIEWS[params.get('iso_view')]?params.get('iso_view'):'overview')):'all';
   const scoped=rows.filter(r=>{
     if(frameworkKey==='soc-2'&&!showRetained&&!data?.active_definition_ids?.includes(r.definition_id))return false;
     if(frameworkKey==='nist-csf-2'&&view!=='all')return r.csf_profile?.target_selected&&(view==='target'||r.csf_profile.gap_state==='gap');
@@ -139,14 +148,16 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const socPath=preference['category:all']||[],chooseSocPath=path=>{remember({'category:all':path});if(selected)closeRecord();};
   const lastOpened=prototype&&!referenceAssessment&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
   const selectedPath=selected?hierarchyPath(frameworkKey,selected):[];
+  const isoCrumb=(view,path=[])=>{setSearch('');setFilter('all');remember({['category:'+view]:path});const n=new URLSearchParams(params);n.delete('assessment');n.set('iso_view',view);setParams(n,{replace:true});};
   const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:'CIS IG1',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}},{label:socCategoryCrumb(selected.category),onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([selectedPath[0].id]);}},{label:selected.control,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath(selectedPath.map(p=>p.id));}},{label:selected.definition_id}]:undefined;
-  return <div className={referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
+  return <div className={iso?'bcis framework-presentation':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
+    {iso&&<header className="bcis-head"><div><p className="bcis-eyebrow">ISO/IEC 27001:2022 · ISMS</p><h1>ISO 27001</h1><p className="text-sm text-ink-secondary">{ISO_VIEWS[isoView].label}</p></div><div className="bcis-actions"><button type="button" className="bcis-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>{resume&&<Button className="bcis-primary" onClick={()=>openRecord(resume)}>Continue with {resume.definition_id}</Button>}</div></header>}
     {brawndoCis&&<BrawndoCisHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {prestigeSoc&&<PrestigeSocHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
-    {brawndoCis?<BrawndoCisOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:prototype&&!(frameworkKey==='iso-27001'&&isoView==='audit')&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
-    {frameworkKey==='iso-27001'&&<><nav aria-label="ISO workspace sections" className="flex flex-wrap gap-2">{Object.entries(ISO_VIEWS).map(([key,v])=><Button key={key} variant={isoView===key?'default':'outline'} aria-pressed={isoView===key} onClick={()=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('assessment');n.delete('package');n.delete('audit_occurrence');setParams(n);setSearch('');setFilter('all');}}>{v.label}</Button>)}</nav>{isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:<IsoGovernanceReviews clientId={clientId} soa={isoView==='annex_control'}/>}</>}
-    {!(frameworkKey==='iso-27001'&&isoView==='audit')&&<>
+    {brawndoCis?<BrawndoCisOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&!(isoView==='audit'||ISO_VIEWS[isoView]?.custom)?<><AssessmentOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/><ProgramContext frameworkKey={frameworkKey} rows={rows} configuration={data.configuration} controls={data.organizational_controls}/></>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
+    {frameworkKey==='iso-27001'&&<><nav aria-label="ISO workspace sections" className="framework-tabs">{Object.entries(ISO_VIEWS).map(([key,v])=><Button key={key} variant={isoView===key?'default':'outline'} aria-pressed={isoView===key} onClick={()=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('assessment');n.delete('package');n.delete('audit_occurrence');setParams(n);setSearch('');setFilter('all');}}>{v.label}</Button>)}</nav>{isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:ISO_VIEWS[isoView]?.custom?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows}/>:<IsoGovernanceReviews clientId={clientId} soa={isoView==='soa'}/>}</>}
+    {!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<>
     {lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}
     {!prototype&&<><section aria-label="Assessment progress" className="space-y-2"><h2 className="font-semibold">Assessment Progress</h2><p className="text-sm">{progress.assessed} / {progress.applicable} applicable {(catalog?.labels?.items||'requirements').toLowerCase()} assessed · {scoped.length-progress.assessed-progress.excluded} not assessed · {progress.excluded} N/A</p><p className="text-xs text-ink-secondary">Assessment coverage includes partial and unresolved results. It is not certification or a compliance percentage.</p></section>
     <section className="border border-line rounded-lg p-4 bg-surface-card flex flex-wrap justify-between items-center gap-3" aria-label="Continue where you left off"><div><h2 className="text-sm font-semibold">Continue where you left off</h2><p className="text-sm text-ink-secondary mt-1">{resume?`${resume.definition_id} · ${resume.title}`:'No pending assessments or linked work requiring attention.'}</p></div>{resume&&<Button onClick={()=>openRecord(resume)}>Continue Assessment</Button>}</section>
@@ -164,11 +175,11 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>chooseFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div></>}
     {!referenceAssessment&&!visible.length&&<p role="status" className="text-sm">{prototype?`No ${vocab.items} match this view.`:'No requirements match these filters.'}</p>}
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
-    {brawndoCis?<BrawndoCisControls clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} controlKey={controlKey} onControl={chooseControl} onOpen={openRecord} selected={selected}/>:prestigeSoc?<PrestigeSocNavigator clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}} path={socPath} onPath={chooseSocPath} onOpen={openRecord} selected={selected}/>:prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='annex_control'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='annex_control'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
+    {brawndoCis?<BrawndoCisControls clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} controlKey={controlKey} onControl={chooseControl} onOpen={openRecord} selected={selected}/>:prestigeSoc?<PrestigeSocNavigator clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}} path={socPath} onPath={chooseSocPath} onOpen={openRecord} selected={selected}/>:prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='soa'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='soa'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
     </>}
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId}
       onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}}
       onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null}
-      position={index>=0?`${index+1} of ${scoped.length} in framework order`:'Retained assessment'} breadcrumb={drawerBreadcrumb}/>}
+      position={index>=0?`${index+1} of ${scoped.length} in framework order`:'Retained assessment'} breadcrumb={iso&&selected?[{label:'ISO 27001',onClick:()=>isoCrumb('overview')},{label:ISO_VIEWS[isoView].label,onClick:()=>isoCrumb(isoView)},...selectedPath.slice(1).map((p,i)=>({label:p.label,onClick:()=>isoCrumb(isoView,selectedPath.slice(1,i+2).map((_,j)=>selectedPath.slice(0,j+2).map(x=>x.id).join('/')))})),{label:selected.definition_id}]:drawerBreadcrumb}/>}
   </div>;
 }

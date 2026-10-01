@@ -6,7 +6,7 @@ import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
 import {frameworkSummary} from './frameworkSummary';
-import {calendarBuckets} from '../lib/calendarView';
+import {calendarBuckets,vendorCalendarItems} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
 import { identityRequest } from './identityLifecycle';
 import { assignmentCandidates } from './assignmentEligibility';
@@ -27,6 +27,7 @@ import {evidenceKind} from '../lib/evidenceReferences';
 import {clearEvidenceFiles,demoDiagnostics} from './store';
 import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
 import {fileBytes} from './evidenceStorage';
+const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 export async function previewAdapter(config) {
@@ -175,7 +176,10 @@ export async function previewAdapter(config) {
       if (path === '/baseline/templates') return respond(fixtures.responses[path]);
       if (path === '/calendar') {
         frameworkScope(db,params.client_id);
-        return respond(calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,list(db,k,params.client_id)])),db.user,params));
+        const buckets=calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,list(db,k,params.client_id)])),db.user,params);
+        // Brawndo only: vendor assurance and contract dates come straight from the Vendor record.
+        if(params.client_id==='demo_brawndo')buckets.vendor_dates=vendorCalendarItems(list(db,'vendors',params.client_id),list(db,'reviews',params.client_id),params);
+        return respond(buckets);
       }
       if (path === '/related') {
         const source = record(db, params.entity_type, params.entity_id),
@@ -192,7 +196,12 @@ export async function previewAdapter(config) {
           };
         for (const k of Object.keys(data)) data[k] = list(db, k, source.client_id).filter(r => k === params.entity_type
           ? k === 'reviews' && (r.parent_review_id === params.entity_id || r.review_id === source.parent_review_id || r.review_id === source.next_occurrence_id)
-          : (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
+          : (params.entity_type==='policies'&&k==='reviews'&&r.policy_ids?.includes(source.policy_id)) || (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
+        if (params.entity_type === 'policies') {
+          // Findings raised in a Policy Review stay visible from the Policy, as in the backend.
+          const reviewIds = new Set(list(db, 'reviews', source.client_id).filter(r => r.policy_id === params.entity_id).map(r => r.review_id));
+          for (const k of ['findings', 'tasks']) data[k] = [...data[k], ...list(db, k, source.client_id).filter(r => reviewIds.has(r.review_id) && !data[k].includes(r))];
+        }
         if (params.entity_type === 'reviews' && params.occurrence_id)
           for (const k of ['findings','tasks','evidence']) data[k] = data[k].filter(r => belongsToOccurrence(r,source,params.occurrence_id));
         if(['tasks','findings'].includes(params.entity_type)&&source.occurrence_id) for(const review of data.reviews) {
@@ -393,6 +402,16 @@ export async function previewAdapter(config) {
         }
         else db[kind] = db[kind].filter(x => x[ids[kind]] !== id);
         audit(db, 'delete', kind, r);
+        if(kind==='tasks'&&r.finding_id){
+          // Recompute remediation once an open Action Item is removed; a Finding with no remediation cannot be pending validation.
+          const finding=db.findings.find(f=>f.finding_id===r.finding_id&&f.client_id===r.client_id);
+          const remaining=db.tasks.filter(t=>t.finding_id===r.finding_id&&t.client_id===r.client_id);
+          // Same population as the backend: with Actions remaining an Open Finding follows them; with none, only active remediation returns to Open.
+          if(finding&&(remaining.length?['open','in_remediation','remediated']:['in_remediation','remediated']).includes(finding.status)){
+            const next=!remaining.length?'open':remaining.every(t=>['done','cancelled'].includes(t.status))?'remediated':'in_remediation';
+            if(next!==finding.status){finding.status=next;finding.updated_at=now();audit(db,next==='open'?'Finding returned to Open; its remediation Action Item was deleted':next==='remediated'?'Finding moved to Pending Validation':'Finding moved to In Remediation','findings',finding,{task_id:r.task_id});}
+          }
+        }
         return save({
           ok: true
         });
@@ -428,13 +447,13 @@ export async function previewAdapter(config) {
         write(db, kind, fields, id);
         return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
-      // Scope retry identity to this pilot's vendor-origin action creation, after authorization.
-      const requestKey=kind==='tasks'&&!id&&body.client_id==='demo_brawndo'&&body.source_type==='vendor'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+      // Create retries reuse their Idempotency-Key (lib/api.js); replay the original record, as the backend does.
+      const requestKey=!id&&CREATE_REPLAY_KINDS.includes(kind)&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
       const requestScope=requestKey?JSON.stringify([db.user.user_id,body.client_id,requestKey]):null;
-      const priorRequest=requestScope&&db.vendor_action_requests?.[requestScope];
-      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');return respond(record(db,'tasks',priorRequest.task_id));}
+      const priorRequest=requestScope&&(db.create_requests?.[requestScope]||db.vendor_action_requests?.[requestScope]);
+      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');const prior=record(db,priorRequest.kind||'tasks',priorRequest.record_id||priorRequest.task_id);return kind==='clients'?save(clientProjection(db,prior)):respond(prior);}
       const result = write(db, kind, kind==='policies'&&id?invalidatePolicyApproval(body,record(db,kind,id)):body, id);
-      if(requestScope){db.vendor_action_requests||={};db.vendor_action_requests[requestScope]={body:JSON.stringify(body),task_id:result.task_id};}
+      if(requestScope){db.create_requests||={};db.create_requests[requestScope]={kind,body:JSON.stringify(body),record_id:result[ids[kind]]};}
       if (kind === 'clients') return save(clientProjection(db, result));
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});

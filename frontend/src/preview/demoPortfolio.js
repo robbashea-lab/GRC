@@ -9,6 +9,15 @@ export const demoOrganizations = [{
   lead: 'demo_provider_lead',
   former: 'Dr. Lexus'
 }, {
+  key: 'dunder',
+  name: 'Dunder Mifflin',
+  frameworks: ['iso-27001'],
+  industry: 'Paper distribution / business services',
+  employees: 210,
+  people: ['Dwight Schrute', 'David Wallace', 'Pam Beesly', 'Michael Scott', 'Jim Halpert', 'Angela Martin', 'Oscar Martinez', 'Toby Flenderson', 'Darryl Philbin'],
+  lead: 'demo_provider_lead',
+  former: 'Jan Levinson'
+}, {
   key: 'prestige',
   name: 'Prestige Worldwide',
   frameworks: ['soc-2'],
@@ -22,8 +31,8 @@ export const demoOrganizations = [{
 // Client staff hold client roles: people[0] is the client's GRC manager, people[1-2] contributors,
 // people[3] read-only; `former` is a departed employee whose disabled account still owns history.
 export const providerStaff = [
-  {user_id: 'demo_provider_lead', name: 'Morgan Ellis', title: 'vCISO', clients: ['brawndo', 'prestige']},
-  {user_id: 'demo_provider_consultant', name: 'Sam Okafor', title: 'GRC Consultant', clients: ['brawndo']},
+  {user_id: 'demo_provider_lead', name: 'Morgan Ellis', title: 'vCISO', clients: ['brawndo', 'dunder', 'prestige']},
+  {user_id: 'demo_provider_consultant', name: 'Sam Okafor', title: 'GRC Consultant', clients: ['brawndo', 'dunder']},
 ];
 export const clientPersonaRoles = ['client_grc_manager', 'client_contributor', 'client_contributor', 'client_readonly'];
 export function demoDates(clock = new Date()) {

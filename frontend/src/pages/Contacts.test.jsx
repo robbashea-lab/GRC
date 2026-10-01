@@ -59,9 +59,9 @@ test('active account archiving is blocked and readonly users get no mutations',a
 test('tenant switching closes editor and does not show earlier contacts',async()=>{
   await act(async()=>root.render(<Contacts/>));await click(button('Person'));expect(document.querySelector('[role=dialog]')).not.toBeNull();mockClient='b';await act(async()=>root.render(<Contacts/>));expect(document.querySelector('[role=dialog]')).toBeNull();expect(container.textContent).not.toContain('Person');
 });
-test('Brawndo reference renders the themed header; other clients keep the standard header',async()=>{
+test('the approved Contacts header is the default for existing and future clients',async()=>{
   mockClient='demo_brawndo';api.get.mockResolvedValue({data:[]});await act(async()=>root.render(<Contacts/>));
   expect(container.querySelector('.bpage h1').textContent).toBe('Contacts');expect(container.querySelector('.bpage-eyebrow').textContent).toBe('Brawndo · People');expect(button('New Contact')).toBeTruthy();
   await act(async()=>root.unmount());root=createRoot(container);mockClient='a';await act(async()=>root.render(<Contacts/>));
-  expect(container.querySelector('.bpage')).toBeNull();expect(container.querySelector('h1').textContent).toBe('Contacts');
+  expect(container.querySelector('.bpage')).not.toBeNull();expect(container.querySelector('h1').textContent).toBe('Contacts');
 });

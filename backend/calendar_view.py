@@ -53,6 +53,13 @@ async def read(s, query, user, start=None, end=None, scope: Literal['active', 'h
             raise HTTPException(413, 'Too many Calendar entries. Choose a shorter period; no partial results are shown.')
         for row in rows:
             add(row, kind)
+    # A Finding with an active Action is represented by that Action in work counts (both stay on the grid).
+    finding_ids = [v['id'] for v in entries.values() if v['kind'] == 'finding']
+    if finding_ids:
+        covered = {t['finding_id'] for t in await s.db.tasks.find({**query, 'finding_id': {'$in': finding_ids}, 'status': {'$nin': s.CLOSED['tasks']}}, {'_id': 0, 'finding_id': 1}).to_list(None)}
+        for value in entries.values():
+            if value['kind'] == 'finding':
+                value['represented'] = value['id'] in covered
     if scope != 'active':
         # Filter and project occurrence snapshots in Mongo; never return whole client history to the browser.
         fields = COMMON + REVIEW_FIELDS + ['occurrence_id']

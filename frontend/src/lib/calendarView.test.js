@@ -44,3 +44,12 @@ test('date-only boundary, offset-preserving moves, invalid ranges and explicit c
   expect(()=>calendarBuckets(records,admin,{start:'2020-01-01',end:'2026-01-01'})).toThrow('valid Calendar');
   expect(()=>calendarBuckets({tasks:Array.from({length:5001},(_,i)=>({...records.tasks[0],task_id:String(i)}))},admin,options)).toThrow('Too many');
 });
+
+test('Finding entries say whether an active Action represents them',()=>{
+  const user={role:'super_admin'};
+  const records={findings:[{finding_id:'f1',client_id:'c',title:'F1',status:'in_remediation',due_date:'2026-10-05'},{finding_id:'f2',client_id:'c',title:'F2',status:'remediated',due_date:'2026-10-06'}],
+    tasks:[{task_id:'t1',client_id:'c',finding_id:'f1',title:'T1',status:'open',due_date:'2027-03-01'},{task_id:'t2',client_id:'c',finding_id:'f2',title:'T2',status:'done',due_date:'2026-10-01'}]};
+  const out=calendarBuckets(records,user,{start:'2026-10-01',end:'2026-10-31',scope:'active'});
+  expect(out.findings['2026-10-05'][0].represented).toBe(true);
+  expect(out.findings['2026-10-06'][0].represented).toBe(false);
+});

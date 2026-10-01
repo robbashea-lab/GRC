@@ -15,14 +15,14 @@ import TableLoadingRow from '@/components/TableLoadingRow';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem} from '@/components/ui/dropdown-menu';
 import {Button} from '@/components/ui/button';
 import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
-import {isReferencePresentation} from '@/lib/reference';
+
 import './BrawndoContacts.css';
 
 const columns=[{key:'name',label:'Contact'},{key:'title',label:'Job Title'},{key:'email',label:'Email'},{key:'phone',label:'Phone'}];
 export default function Contacts(){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
   // Remount the directory on identity/tenant changes, including its open editor.
-  return <ContactDirectory key={`${user?.user_id}:${currentClientId}`} clientId={currentClientId} user={user} brawndo={isReferencePresentation(currentClientId,user)} clientName={currentClient?.name}/>;
+  return <ContactDirectory key={`${user?.user_id}:${currentClientId}`} clientId={currentClientId} user={user} brawndo={!!currentClientId} clientName={currentClient?.name}/>;
 }
 function ContactDirectory({clientId,user,brawndo,clientName}){
   const [params,setParams]=useSearchParams(),[rows,setRows]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0);

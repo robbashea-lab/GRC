@@ -33,9 +33,9 @@ test('direct compliance routes render client empty states and preserve existing 
     mockKey = key; mockPath = `/compliance/${key}`; await render();
     expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Select Applies in Client Profile to initialize this program after onboarding.':'Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.');
     expect(container.querySelector('main').textContent).toContain(label);
-    // The header names the framework edition, not the client (the sidebar already does).
+    // The shared header names the client and retains the framework edition.
     expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Assessment workspace · ':'Applicability only; no assessment catalog');
-    expect(container.querySelector('main').textContent).not.toContain('Client A');
+    expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
     if(key!=='cmmc')expect(api.get.mock.calls.some(([path,config])=>path===`/frameworks/${key}`&&config?.params?.client_id==='a')).toBe(true);
     expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(3);
   }

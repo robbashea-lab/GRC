@@ -1,0 +1,31 @@
+import axios from 'axios';
+import {previewAdapter} from './adapter';
+import {readStore} from './store';
+const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
+beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
+const safeguard=id=>readStore().framework_assessments.find(a=>a.client_id===cid&&a.framework_key==='cis-ig1'&&a.definition_id===id);
+const raise=(aid,extra={})=>api.post(`/framework_assessments/${aid}/findings`,{request_id:'qa-1',title:'Inventory gap',remediation_title:'Close inventory gap',severity:'high',...extra});
+test('safeguard → Finding → one Action → Pending Validation → validated, origin retained',async()=>{
+  const a=safeguard('2.2'),owner=readStore().users.find(u=>u.user_id!==a.owner_id&&u.status==='active'&&['super_admin','platform_admin'].includes(u.role))||readStore().users.find(u=>u.user_id===a.owner_id);
+  const f=(await raise(a.framework_assessment_id,{owner_id:owner.user_id,due_date:'2026-12-15'})).data;
+  expect(f).toMatchObject({framework_assessment_id:a.framework_assessment_id,owner_id:owner.user_id,due_date:'2026-12-15',status:'in_remediation'});
+  const again=(await raise(a.framework_assessment_id,{owner_id:owner.user_id,due_date:'2026-12-15'})).data;expect(again.finding_id).toBe(f.finding_id);
+  const tasks=readStore().tasks.filter(t=>t.finding_id===f.finding_id);
+  expect(tasks).toHaveLength(1);expect(tasks[0]).toMatchObject({client_id:cid,assignee_id:owner.user_id,due_date:'2026-12-15'});
+  const related=(await api.get(`/framework_assessments/${a.framework_assessment_id}/related`)).data;
+  expect(related.findings.map(x=>x.finding_id)).toContain(f.finding_id);
+  await api.patch('/tasks/'+tasks[0].task_id,{status:'done'});
+  expect((await api.get('/findings/'+f.finding_id)).data.status).toBe('remediated');
+  const work=(await api.get('/frameworks/cis-ig1',{params:{client_id:cid}})).data.work[a.framework_assessment_id];
+  expect(work.finding_ids).toContain(f.finding_id);
+  await api.post(`/findings/${f.finding_id}/validate`,{rationale:'Inventory reconciled'});
+  const closed=(await api.get('/findings/'+f.finding_id)).data;
+  expect(closed).toMatchObject({status:'closed',framework_assessment_id:a.framework_assessment_id});
+});
+test('omitted owner is inherited; invalid owner or date is rejected without creating records',async()=>{
+  const a=safeguard('2.3'),before=readStore().findings.length;
+  const f=(await raise(a.framework_assessment_id,{request_id:'qa-2'})).data;expect(f.owner_id).toBe(a.owner_id);expect(f.due_date).toBeNull();
+  await expect(raise(a.framework_assessment_id,{request_id:'qa-3',owner_id:'no_such_user'})).rejects.toBeTruthy();
+  await expect(raise(a.framework_assessment_id,{request_id:'qa-4',due_date:'2026-02-30'})).rejects.toBeTruthy();
+  expect(readStore().findings.length).toBe(before+1);
+});

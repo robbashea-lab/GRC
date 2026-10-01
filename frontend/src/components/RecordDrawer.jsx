@@ -1,3 +1,4 @@
+import {recordUuid} from '@/lib/recordUuid';
 import {readEvidenceFile as fileToBase64} from '@/lib/evidenceFile';
 import {RiskCategoryField,RiskTreatmentField,RiskSummary} from './BrawndoRiskFields';
 import {pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
@@ -6,7 +7,8 @@ import BrawndoPolicyDetails,{PolicyStatusField} from './BrawndoPolicyDetails';
 import VendorGovernancePanel from "./VendorGovernancePanel";
 import BrawndoVendorDetails from './BrawndoVendorDetails';
 import AssigneeSelect from "./AssigneeSelect";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {ClientPresentationContext} from './ClientSurface';
 import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
@@ -165,7 +167,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const riskPilot=pilot&&kind==='risks';
   const policyPilot=pilot&&kind==='policies';
   const [approvalDirty,setApprovalDirty]=useState(false);
-  const Root=pilot?Dialog:Sheet,Content=pilot?DialogContent:SheetContent;
+  const clientPresentation=useContext(ClientPresentationContext),dialogLayout=pilot||!!clientPresentation;
+  const Root=dialogLayout?Dialog:Sheet,Content=dialogLayout?DialogContent:SheetContent;
   const initialForm=useRef({}),opener=useRef(null),heading=useRef(null);
   const [discardOpen,setDiscardOpen]=useState(false);
   const formDirty=JSON.stringify(form)!==JSON.stringify(initialForm.current);
@@ -231,7 +234,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if(vendorPilot){delete base.vendorTab;delete base.assuranceId;}
       setForm(base);
       initialForm.current=base;setDiscardOpen(false);setApprovalDirty(false);if(pilot)setNewComment('');
-      setTab(vendorPilot&&initialValues?.vendorTab==='assurance'?'assurance':'overview');
+      setTab(vendorPilot&&['assurance','contract'].includes(initialValues?.vendorTab)?initialValues.vendorTab:'overview');
       if (isEdit) {
         loadComments();
         loadActivity();
@@ -410,7 +413,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
 
   async function quickCreateFinding() {
-    setFindingForm({ title: "", description: "", severity: "medium", owner_id: record.owner_id || "", due_date: "", remediation_title: "", remediation_plan: "" });
+    setFindingForm({ request_id: recordUuid(), title: "", description: "", severity: "medium", owner_id: record.owner_id || "", due_date: "", remediation_title: "", remediation_plan: "" });
     setFindingOpen(true);
   }
 
@@ -1126,25 +1129,25 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   return (
     <Root open={open} onOpenChange={pilot?close:onOpenChange}>
-      <Content {...(pilot?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector(vendorPilot?'[data-testid="vendor-search"]':policyPilot?'[data-testid="policies-search"]':riskPilot?'[data-testid="risk-search"]':'[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={pilot?'brawndo-cis-assessment bg-surface-card':'record-drawer w-full sm:max-w-2xl p-0 flex flex-col'} data-testid={`${kind}-drawer`}>
-        {pilot&&<DialogDescription className="sr-only">{vendorPilot?'Manage the vendor relationship, assurance documents and independent review and contract schedules.':policyPilot?'Manage this Policy, its document versions, framework alignment, review schedule and recorded approvals.':riskPilot?"Assess the risk, document treatment and review history, and record authorized acceptance or closure separately.":"Document assigned work and its original source, retain evidence, and complete work separately from Finding validation."}</DialogDescription>}
-        <SheetHeader className={pilot?'px-6 py-4 pr-12 border-b border-line shrink-0':'px-6 py-4 border-b border-line'}>
+      <Content aria-modal={clientPresentation?'true':undefined} {...(dialogLayout?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected&&(!clientPresentation||opener.current!==document.body)?opener.current:document.querySelector(vendorPilot||clientPresentation&&kind==='vendors'?'[data-testid="vendor-search"]':policyPilot||clientPresentation&&kind==='policies'?'[data-testid="policies-search"]':riskPilot||clientPresentation&&kind==='risks'?'[data-testid="risk-search"]':'[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={dialogLayout?'brawndo-cis-assessment bg-surface-card':'record-drawer w-full sm:max-w-2xl p-0 flex flex-col'} data-testid={`${kind}-drawer`}>
+        {dialogLayout&&<DialogDescription className="sr-only">{!pilot?`Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.`:vendorPilot?'Manage the vendor relationship, assurance documents and independent review and contract schedules.':policyPilot?'Manage this Policy, its document versions, framework alignment, review schedule and recorded approvals.':riskPilot?"Assess the risk, document treatment and review history, and record authorized acceptance or closure separately.":"Document assigned work and its original source, retain evidence, and complete work separately from Finding validation."}</DialogDescription>}
+        <SheetHeader className={dialogLayout?'px-6 py-4 pr-12 border-b border-line shrink-0':'px-6 py-4 border-b border-line'}>
           <div className="flex items-start justify-between">
             <div>
               {!pilot&&<div className="text-xs font-mono uppercase tracking-widest text-ink-help">{singular}</div>}
-              <SheetTitle ref={heading} tabIndex={pilot?-1:undefined} className="font-heading text-xl">{isEdit ? (kind === 'contacts' ? record.name : record.title || record.name) : `New ${singular}`}</SheetTitle>
+              <SheetTitle ref={heading} tabIndex={dialogLayout?-1:undefined} className="font-heading text-xl">{isEdit ? (kind === 'contacts' ? record.name : record.title || record.name) : `New ${singular}`}</SheetTitle>
               {!pilot&&isEdit && status && <div className="mt-2">{kind === "tasks" ? <span className="pill pill-neutral">{actionStatus(status)}</span> : <StatusBadge value={status} />}</div>}
             </div>
-            {!pilot&&<button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-surface-subtle" data-testid="drawer-close"><X className="h-4 w-4" /></button>}
+            {!dialogLayout&&<button aria-label="Close record" onClick={() => onOpenChange(false)} className="p-1 rounded hover:bg-surface-subtle" data-testid="drawer-close"><X className="h-4 w-4" /></button>}
           </div>
           {renderTabList()}
         </SheetHeader>
 
-        <div className={pilot?'flex-1 min-h-0 overflow-y-auto px-6 py-5':'flex-1 overflow-y-auto px-6 py-5'}>
+        <div className={dialogLayout?'flex-1 min-h-0 overflow-y-auto px-6 py-5':'flex-1 overflow-y-auto px-6 py-5'}>
           {renderTabContent()}
         </div>
 
-        <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${pilot?' flex-wrap shrink-0':''}`}>
+        <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${dialogLayout?' flex-wrap shrink-0':''}`}>
           <Button variant="outline" size="sm" onClick={() => pilot?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
           {kind === "reviews" && record?.status === "completed" && canWrite && <Button size="sm" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Add amendment</Button>}
           {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && !(kind === "reviews" && record?.status === "completed") && (

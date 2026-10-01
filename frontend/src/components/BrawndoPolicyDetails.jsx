@@ -42,7 +42,7 @@ export function PolicyAlignment({record,programs=[],assessments=[],onOpen}) {
 export default function BrawndoPolicyDetails({record,related={},users=[],onOpen}) {
   const [programs,setPrograms]=useState([]),[error,setError]=useState('');
   useEffect(()=>{const c=new AbortController();setPrograms([]);setError('');api.get('/frameworks/summary',{params:{client_id:record.client_id},signal:c.signal}).then(({data})=>{if(!c.signal.aborted&&data.client_id===record.client_id)setPrograms(data.items.filter(p=>p.tracking_available).map(p=>p.key));}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[record.client_id]);
-  const reviews=(related.reviews||[]).filter(r=>r.client_id===record.client_id&&r.policy_id===record.policy_id);
+  const reviews=(related.reviews||[]).filter(r=>r.client_id===record.client_id&&(r.policy_id===record.policy_id||r.policy_ids?.includes(record.policy_id)));
   const purpose=record.governance_context?.rationale||record.framework_purpose||record.summary;
   const cadenceRefs=policyAlignment(record,programs,related.framework_assessments).filter(r=>r.sourceCadence&&/annual|month|quarter|day/i.test(r.sourceCadence));
   const approved=[...(record.approval_history||[]).filter(h=>h.action==='approved'),...(record.decision_history||[]).filter(h=>h.action==='external_approval_recorded')].sort((a,b)=>String(b.at||b.recorded_at).localeCompare(String(a.at||a.recorded_at)))[0];
