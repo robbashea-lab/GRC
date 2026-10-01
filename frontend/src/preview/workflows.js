@@ -203,9 +203,9 @@ export function action(db, kind, id, name, body) {
       due_date: body.due_date || r.due_date,
       description: body.description || r.remediation_plan
     });
-    if (r.status === 'open') patch({
+    if (r.status === 'open') {patch({
       status: 'in_remediation'
-    });
+    });audit(db,'Finding moved to In Remediation','findings',r,{task_id:task.task_id});}
     return task;
   }
   if (kind === 'findings' && name === 'raise-risk') {

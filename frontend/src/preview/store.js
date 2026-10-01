@@ -288,7 +288,7 @@ export function write(db, kind, body, id) {
     if (finding && ['open', 'in_remediation', 'remediated'].includes(finding.status)) {
       const work = db.tasks.filter(t => t.finding_id === row.finding_id && t.client_id === row.client_id);
       const next = work.every(t => ['done', 'cancelled'].includes(t.status)) ? 'remediated' : 'in_remediation';
-      if(next!==finding.status) audit(db,next==='remediated'?'Related Finding moved to Pending Validation':'Related Finding moved to In Remediation','tasks',row,{finding_id:finding.finding_id});
+      if(next!==finding.status){const event=next==='remediated'?'Related Finding moved to Pending Validation':'Related Finding moved to In Remediation';audit(db,event,'tasks',row,{finding_id:finding.finding_id});audit(db,event.replace('Related Finding','Finding'),'findings',finding,{task_id:row.task_id});}
       finding.status = next;
       finding.updated_at = now();
     }

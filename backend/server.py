@@ -2828,6 +2828,8 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     if not deleted.deleted_count:
         raise HTTPException(409, "Record changed; reload before deleting")
     await audit(user, "delete", entity_type, item_id, existing.get("client_id"))
+    if kind == "tasks":
+        await remediation.after_delete(db, existing, user, _now, audit)
     return {"ok": True}
 
 
@@ -3819,7 +3821,9 @@ async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict 
     await db.tasks.update_one({"_id": tid}, {"$setOnInsert": doc}, upsert=True)
     # link back on the finding
     if finding.get("status") == "open":
-        await db.findings.update_one({"finding_id": finding_id, "status":"open"}, {"$set": {"status": "in_remediation", "updated_at": _next_write_time(finding.get('updated_at'))}})
+        moved = await db.findings.update_one({"finding_id": finding_id, "status":"open"}, {"$set": {"status": "in_remediation", "updated_at": _next_write_time(finding.get('updated_at'))}})
+        if moved.modified_count:
+            await audit(user, "Finding moved to In Remediation", "finding", finding_id, finding["client_id"], meta={"task_id": tid})
     doc.pop("_id", None)
     await audit(user, "create", "task", tid, finding["client_id"], meta={"from_finding": finding_id})
     if finding.get("review_id"):
