@@ -15,6 +15,17 @@ class AssessmentVerificationTests(unittest.IsolatedAsyncioTestCase):
         row = next(a for a in w['assessments'] if a['definition_id'] == '1.1')
         return row, '/api/framework_assessments/' + row['framework_assessment_id']
 
+    async def prestige_soc_row(self):
+        self.sign_in('admin')
+        response = await self.client.post('/api/onboarding/baseline', json=self.body(programs=('soc-2',)))
+        self.assertEqual(response.status_code, 200, response.text)
+        workspace = (await self.client.get('/api/frameworks/soc-2', params={'client_id': 'a'})).json()
+        row = next(a for a in workspace['assessments'] if a['definition_id'] == 'CC9.2')
+        await server.db.clients.insert_one({'client_id': 'demo_prestige', 'name': 'Synthetic Prestige'})
+        await server.db.framework_assessments.update_one({'framework_assessment_id': row['framework_assessment_id']}, {'$set': {'client_id': 'demo_prestige'}})
+        row['client_id'] = 'demo_prestige'
+        return row, '/api/framework_assessments/' + row['framework_assessment_id']
+
     async def test_round_trip_history_and_dedupe(self):
         row, base = await self.cis_row()
         self.assertNotIn('verification', row)
@@ -77,6 +88,17 @@ class AssessmentVerificationTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(HTTPException) as missing:
             server._require_snapshot({'verification': 'verified'}, first.json(), 'last_assessed')
         self.assertEqual(missing.exception.status_code, 428)
+
+    async def test_prestige_soc_verification_round_trips_without_cis_checklist(self):
+        row, base = await self.prestige_soc_row()
+        response = await self.client.patch(base, json={'verification': 'needs_validation', 'expected_last_assessed': row.get('last_assessed')})
+        self.assertEqual(response.status_code, 200, response.text)
+        saved = response.json()
+        self.assertEqual(saved['verification'], 'needs_validation')
+        self.assertEqual(saved['assessment_history'][-1]['verification'], 'needs_validation')
+        self.assertNotIn('verification_checklist', saved['assessment_history'][-1])
+        rejected = await self.client.patch(base, json={'verification_checklist': {}, 'expected_last_assessed': saved['last_assessed']})
+        self.assertEqual(rejected.status_code, 422, rejected.text)
 
     async def test_criteria_are_independent_scoped_and_historical(self):
         row, base = await self.cis_row()

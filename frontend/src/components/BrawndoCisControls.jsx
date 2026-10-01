@@ -13,8 +13,8 @@ export const verificationOf=row=>VERIFICATION_LABELS[row?.verification]?row.veri
 export function controlParts(label){const m=/^Control\s+(\d+)\s*[—-]\s*(.+)$/.exec(label||'');return m?{num:Number(m[1]),name:m[2]}:{num:null,name:label};}
 const activate=fn=>e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}};
 
-export function CisBreadcrumb({items}){
-  return <nav aria-label="CIS IG1 location" className="bcis-crumbs"><ol>{items.map((c,i)=>{const last=i===items.length-1;
+export function CisBreadcrumb({items,label='CIS IG1 location'}){
+  return <nav aria-label={label} className="bcis-crumbs"><ol>{items.map((c,i)=>{const last=i===items.length-1;
     return <li key={c.label}>{last||!c.onClick?<span aria-current={last?'page':undefined}>{c.label}</span>:<button type="button" onClick={c.onClick}>{c.label}</button>}</li>;})}</ol></nav>;
 }
 

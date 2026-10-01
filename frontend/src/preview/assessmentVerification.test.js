@@ -34,7 +34,8 @@ test.each([
 
 test('non-CIS assessments reject verification and keep history shape',async()=>{
   const row=(await configure('nist-csf-2')).assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
-  for(const patch of [{verification:'verified'},{verification_checklist:{}}])await expect(api.patch(path,{...patch,expected_last_assessed:null})).rejects.toThrow('Verification fields apply only to CIS Controls IG1');
+  await expect(api.patch(path,{verification:'verified',expected_last_assessed:null})).rejects.toThrow('Verification is available only for CIS Controls IG1 and Prestige SOC 2');
+  await expect(api.patch(path,{verification_checklist:{},expected_last_assessed:null})).rejects.toThrow('Verification checklists apply only to CIS Controls IG1');
   const saved=(await api.patch(path,{notes:'CSF note',expected_last_assessed:null})).data;
   expect(saved.assessment_history.at(-1)).not.toHaveProperty('verification');
 });
@@ -43,6 +44,15 @@ test('stale edits are still rejected',async()=>{
   const [row,path]=await cisRow();
   await api.patch(path,{verification:'gap_identified',expected_last_assessed:row.last_assessed??null});
   await expect(api.patch(path,{verification:'verified',expected_last_assessed:row.last_assessed??null})).rejects.toThrow('Assessment changed since it was opened');
+});
+
+test('Prestige SOC verification persists without exposing CIS checklists',async()=>{
+  cid='demo_prestige';const row=(await api.get('/frameworks/soc-2',{params:{client_id:cid}})).data.assessments.find(a=>a.definition_id==='CC9.2');
+  const path='/framework_assessments/'+row.framework_assessment_id;
+  const saved=(await api.patch(path,{verification:'needs_validation',expected_last_assessed:row.last_assessed??null})).data;
+  expect(saved.verification).toBe('needs_validation');expect(saved.assessment_history.at(-1).verification).toBe('needs_validation');
+  expect(saved.assessment_history.at(-1)).not.toHaveProperty('verification_checklist');
+  await expect(api.patch(path,{verification_checklist:{},expected_last_assessed:saved.last_assessed})).rejects.toThrow('Verification checklists apply only to CIS Controls IG1');
 });
 
 test('Brawndo criteria preserve old checks and history without changing conclusions',async()=>{
