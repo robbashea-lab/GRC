@@ -5,7 +5,7 @@
 - Initial remote main: `6cc52ad4794fa1846923647dc42471c2c6a138b1` (2026-10-01).
 - Working branch: `codex/quality-backlog-implementation`, isolated worktree based on remote main.
 - GitHub PR inventory: no open PRs at initial inspection. Prior PRs 1–11 were merged.
-- Initial `origin/claude/cross-client-visual-consistency` had three unmerged commits (`f4db298`, `13aec7f`, `6623800`); it later advanced through `a2dd220`. Reviewed compatible presentations and follow-ups are integrated, not a wholesale branch merge.
+- Initial `origin/claude/cross-client-visual-consistency` had three unmerged commits (`f4db298`, `13aec7f`, `6623800`). Scoped reconciliation ultimately reviewed through `7df4276`; compatible fixes are integrated or superseded, not a wholesale branch merge. Exact disposition is in the release matrix.
 - Existing worktrees and uncommitted changes are outside this task's worktree.
 - Continuation authorizes merge after repository checks/approvals and publishing the existing Demo preview. Production rollout/destructive real-data operations remain out of scope.
 
@@ -36,18 +36,22 @@
 - [x] Remove verified unused onboarding implementation.
 - [x] Executable backend/Demo contract matrix: recurrence, stale writes, replay, tenant scope, capabilities, projections, persistence failure.
 - [x] Coherent backend workflow extraction.
-- [x] Domain drawer panels and shared register controller; focused behavior tests pass, published visual verification pending.
+- [x] Domain drawer panels and shared register controller; focused behavior tests and bounded final published visual/interaction checks passed.
 - [x] One framework/onboarding catalog source consumed by both builds; backend packaging checks and standard frontend build pass.
 - [x] Explicit offline/environment test classification and unclassified-test gate.
 - [x] Document authoritative relationship ownership; invariant checks and dry-run repair report.
 - [x] Canonical writable fields/lifecycle values; contradiction rejection and compatible legacy reads.
 - [x] Safe migration tooling with fixtures, dry-run and recovery provisions; no shared data mutation.
 - [x] Backend/frontend regression suites and production/preview builds; exact counts and limits in release matrix.
-- [ ] Browser QA across Brawndo, Prestige, Dunder, newly created client; themes/responsive/keyboard/retry/isolation.
-- [x] Fetch main again, reconcile changes, rerun affected checks (main remains `6cc52ad`; visual follow-ups through `a2dd220` integrated).
-- [x] Candidate diff review, coherent commits, branch push, PR #12 merged, private Demo version 87 published from `82f6972`. Final release remains gated by published workflow matrix.
+- [x] Available Demo browser QA across Brawndo, Dunder, Prestige and new clients; themes/responsive/keyboard/retry/isolation. Authenticated staging checks remain separately blocked below.
+- [x] Fetch/reconcile main and reviewed visual follow-ups before each application merge; candidate PR #12 and corrected-release PR #14 merged without force or bypass.
+- [x] Candidate diff review, coherent commits, branch push, PR #12 merged, private Demo version 87 published from `82f6972`; observed fixes merged in PR #14 and published as version 88 from `1103be2`. Final bounded evidence is in the release matrix.
 
-## Verification log
+## Historical implementation verification log
+
+The entries below preserve intermediate results, not current release gates. The
+[release matrix](quality-release-verification.md) is authoritative for final
+source/version identity, corrected-source results and remaining limitations.
 
 - Initial focused onboarding baseline: 41 passed, 21 subtests; eight FastAPI lifecycle deprecation warnings.
 - Full initial backend baseline: 458 passed, 579 subtests, eight existing FastAPI lifecycle warnings (267.87 seconds).
@@ -56,14 +60,14 @@
 - First combined backend run: 504 passed, 630 subtests passed, three failures. Two were distinct-occurrence request identity and a stale simulation snapshot after starting an ISO Review; one was the registry detecting new files while another slice was being added. Correct fixtures/registry, then rerun the frozen combined tree.
 - Actual MongoDB 8.0.28 loopback recovery and three-year CIS/SOC/ISO commands: 37 tests passed (120.155 seconds); every case uses a fresh disposable database and production indexes, including connection replacement, migration recovery/rollback, reference validation, and standalone Finding/Action audit repair.
 - Standard production build with `CI=true`: passed; existing bundle-size notice remains. PlatformAdmin hook warning was corrected with scope-change regression coverage, not suppressed.
-- Release and scenario evidence: [quality-release-verification.md](quality-release-verification.md). No candidate published yet.
+- Release and scenario evidence: [quality-release-verification.md](quality-release-verification.md). Subsequent publications are candidate 87 and corrected release 88.
 - Complete pristine frontend baseline: 161/165 suites, 917/924 tests passed (1,778.04 seconds). Seven failures: three stale adapter population assertions, one seeded cadence boundary, one portfolio population assertion, and two comparisons against compressed rather than restored occurrence history. The assertions were retained or corrected to the intended population/representation, not disabled.
-- Current ordinary frontend rerun: 171 suites / 958 tests passed (387.245 seconds), excluding only the separate default-five-year and ten-year simulations. Latest default-five-year run: three passed. Final ten-year and post-reconciliation regression evidence pending.
-- Full backend before fixture corrections: 523 passed, 652 subtests, one ten-year failure. Reproduction identified a leaked simulated clock and reused request identity for different catch-up occurrences. Scoped clocks and occurrence-specific intent IDs corrected the fixtures without lowering lifecycle thresholds. Final full backend: 524 passed, 652 subtests passed (253.39 seconds). Sequential three-year then ten-year with `-n0`: four tests plus three subtests passed (144.37 seconds), including 510 ten-year completions.
-- Re-fetch: remote main remains `6cc52ad`; cross-client branch advanced to `d54195b`. Reconcile its reviewed dashboard/consolidated Findings routing/readiness/keyboard/theme changes with this branch's capabilities, recovery and shared controllers. Its storage-history test correction and Demo-only Dunder migration guard are ported with focused 26-test evidence.
+- Intermediate ordinary frontend rerun: 171 suites / 958 tests passed (387.245 seconds), excluding the separate default-five-year and ten-year simulations. Subsequent corrected-release results are 182 suites / 1,012 tests / one snapshot, plus separate three-/five-year runs; the ten-year characterization predates the storage correction.
+- Full backend before fixture corrections: 523 passed, 652 subtests, one ten-year failure. Reproduction identified a leaked simulated clock and reused request identity for different catch-up occurrences. Scoped clocks and occurrence-specific intent IDs corrected the fixtures without lowering lifecycle thresholds. Intermediate full backend: 524 passed, 652 subtests passed (253.39 seconds); subsequent combined result: 534 tests / 671 subtests. Sequential three-year then ten-year with `-n0`: four tests plus three subtests passed (144.37 seconds), including 510 ten-year completions.
+- At the intermediate re-fetch, remote main was `6cc52ad` and the cross-client branch had advanced to `d54195b`. Reviewed dashboard/consolidated Findings routing/readiness/keyboard/theme changes were reconciled with capabilities, recovery and shared controllers. Its storage-history test correction and Demo-only Dunder migration guard were ported with focused 26-test evidence.
 - Completed visual-branch disposition: shared framework cards/all-Demo dashboards, consolidated Findings navigation/high-critical reconciliation, dark primary tokens, keyboard ISO tabs, readiness explanations and empty denominators are retained. Capability metadata supersedes the new SOC client's seeded-ID gate. Combined UI port verification: 19 suites / 182 tests / one retained snapshot; standard build passed. A reproduced ISO donut mismatch now reuses the same applicability summary as its percentage.
-- Independent cross-review found and corrected command actor-ID collisions, shortcut assignment-rule bypass, malformed Action input, mutable retry-audit identity and stale migration-receipt state. New regression tests first reproduced each issue; final combined and persistent-database reruns remain a release gate.
-- Ten-year Demo run: seven tests passed (1,034.788 seconds). Unlimited-storage characterization reached 1,405 completions and retained history exactly, but exceeded the diagnostic storage budget and compacted some file payloads. It is not a browser-storage capacity claim; see the release matrix for exact limits.
+- Independent agent cross-review found and corrected command actor-ID collisions, shortcut assignment-rule bypass, malformed Action input, mutable retry-audit identity and stale migration-receipt state. New regression tests first reproduced each issue; subsequent combined and persistent-database reruns passed. This is not external security assurance.
+- Candidate/pre-storage-fix ten-year Demo run: seven tests passed (1,034.788 seconds). Unlimited-storage characterization reached 1,405 completions and retained history exactly, but exceeded the diagnostic storage budget and compacted some file payloads. It was not rerun on corrected source and is not a browser-storage capacity claim; see the release matrix for final focused, three-/five-year and published evidence.
 - Final candidate gates: ordinary frontend 176 suites / 984 tests / one snapshot (271.835 seconds); backend 534 tests / 671 subtests (188.88 seconds); actual Mongo 47 tests (86.309 seconds); standard build passed. Separate default-five-year three tests passed. No dependency/lockfile changes. Preview build and published scenarios remain separate gates.
 
 ## Release and full program continuation
@@ -72,14 +76,15 @@ Operator clarity is part of each workflow checkpoint: required/optional, owner, 
 
 - [x] Review combined backlog implementation, reconcile main, pass checks, merge PR #12.
 - [x] Publish Demo release candidate 87; verify deployed `82f6972` and exact bundle hash.
-- [ ] Sequential browser operator journeys: Brawndo CIS, Dunder ISO, Prestige SOC; record workflow coverage, themes/widths, keyboard, isolation, persistence.
-- [ ] New CIS IG1-only client: accurate onboarding plus 36 months via real commands and controlled test clock.
-- [ ] New SOC 2 client: scoped categories/tiered guidance plus 36 months.
-- [ ] New ISO 27001 client: ISMS/SoA/audit/management review plus 36 months.
-- [ ] Correct demonstrated failures with regression tests; recheck affected frameworks.
-- [ ] Final diff/regressions/reconciliation, merge fixes, republish and verify all three established clients.
-- [ ] Remove only disposable synthetic records; preserve evidence and established clients.
+- [x] Sequential browser operator journeys: Brawndo CIS, Dunder ISO, Prestige SOC; final88 core workflows, themes/widths, keyboard, Demo isolation and same-session persistence. Scenario-specific exclusions remain explicit in the matrix.
+- [x] New CIS IG1-only client: RC87 UI onboarding/three annual checkpoints plus final-source 36-month API/Demo commands and default-five-year regression.
+- [x] New SOC 2 client: RC87 three annual checkpoints, final-source 36-month API/Demo and default-five-year commands, plus final88 onboarding/category expansion/shrink/history and tiered-guidance checks.
+- [x] New ISO 27001 client: RC87 UI onboarding/three annual checkpoints plus final-source ISMS/SoA/audit/management-review 36-month commands and default-five-year regression.
+- [x] Correct demonstrated failures with red-green regressions; recheck affected frameworks on final88. Final Contact filter failure was a QA assertion timing issue; the one-click/settled-state assertion rerun passed without an application change.
+- [x] Final application diff/regressions/reconciliation, merge fixes in PR #14, republish version88 and verify all three established clients within stated scope.
+- [x] Dispose only synthetic browser contexts and test databases; stop dedicated MongoDB process, preserve evidence and established clients.
+- [ ] Authenticated browser role/revocation/new-session verification: blocked by no disposable staging URL or test accounts. Static Demo and automated backend evidence are not substitutes; no production-readiness claim.
 
 ## Data validation gate
 
-No representative production database has been provided. Migration/invariant tooling will be verified with isolated fixtures. Any production dry-run, backup validation, or apply operation remains a separate explicitly targeted operation.
+No representative production database has been provided. Migration/invariant tooling was verified with isolated fixtures and actual MongoDB recovery tests. Any production dry-run, backup validation, or apply operation remains a separate explicitly targeted operation.
