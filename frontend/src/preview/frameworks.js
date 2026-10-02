@@ -1,9 +1,9 @@
 import {validateCsfProfile} from '../lib/csfProfile';
-import cisCriteria from '../lib/operatorGuidance/cisAssessmentCriteria.json';
-import socGuidance from '../lib/operatorGuidance/socAssessmentGuidance.json';
+import cisCriteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
+import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import {calendarDay} from '../lib/managementDates';
 import { validateAssignment, eligible } from './assignmentEligibility';
-import {CATALOGS,frameworkCatalog,frameworkDefinition,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
+import {CATALOGS,frameworkCatalog,frameworkDefinition,frameworkCapabilities,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
 import {action} from './workflows';
@@ -12,6 +12,7 @@ import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers}
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
 const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
 const VERIFICATION_FIELDS=['verification','verification_checklist'],VERIFICATION_STATES=['not_verified','needs_validation','gap_identified','verified'],VERIFICATION_TIERS={foundation:'f',operational:'o',mature:'m'};
+const fail=(message,status=422)=>{const error=new Error(message);error.status=status;throw error;};
 // Shape and safeguard prefix only; the UI checks ids against operator guidance.
 const validateVerificationChecklist=(value,definitionId)=>{
   if(value===null)return null;
@@ -23,10 +24,10 @@ const validateVerificationChecklist=(value,definitionId)=>{
     return [tier,[...new Set(ids)]];
   }));
 };
-const writable=db=>{if(!['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(db.user.role))throw new Error('Read-only role');};
+const writable=db=>{if(!['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(db.user.role))fail('Read-only role',403);};
 export function frameworkScope(db,cid){
   record(db,'clients',cid);
-  if(db.user.role!=='super_admin'&&!(db.user.role==='platform_admin'&&!db.user.client_ids?.length)&&!db.user.client_ids?.includes(cid))throw new Error('Forbidden');
+  if(db.user.role!=='super_admin'&&!(db.user.role==='platform_admin'&&!db.user.client_ids?.length)&&!db.user.client_ids?.includes(cid))fail('Forbidden',403);
 }
 export function validateFrameworkConfig(state){
   const configs=state.framework_reviews||{};
@@ -159,36 +160,38 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
   if(method==='patch'&&!operation){
-    if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_assessed??null))throw new Error('Assessment changed since it was opened; reload before saving');
+    if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
     body={...body};delete body.expected_last_assessed;
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...(row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1'?['cis_assessment_criteria']:[])];
-    if(row.client_id==='demo_prestige'&&row.framework_key==='soc-2')fields.push('soc_assessment_checks');
+    const supported=frameworkCapabilities(row.framework_key);
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks'].filter(k=>supported.includes(k))];
     if('soc_assessment_checks' in body){
+      if(!supported.includes('soc_assessment_checks'))fail('SOC assessment guidance applies only to SOC 2');
       const valid=new Set((socGuidance.criteria[row.definition_id]?.items||[]).map(c=>c.id));
-      if(!fields.includes('soc_assessment_checks')||!Array.isArray(body.soc_assessment_checks)||body.soc_assessment_checks.length>30||body.soc_assessment_checks.some(c=>!valid.has(c)))throw new Error('Invalid SOC assessment guidance checks');
+      if(!Array.isArray(body.soc_assessment_checks)||body.soc_assessment_checks.length>30||body.soc_assessment_checks.some(c=>!valid.has(c)))fail('Invalid SOC assessment guidance checks');
       body.soc_assessment_checks=[...new Set(body.soc_assessment_checks)];
     }
     if('cis_assessment_criteria' in body){
+      if(!supported.includes('cis_assessment_criteria'))fail('CIS assessment criteria apply only to CIS Controls IG1');
       const valid=new Set((cisCriteria.requirements[row.definition_id]?.criteria||[]).map(c=>c.id));
-      if(row.client_id!=='demo_brawndo'||row.framework_key!=='cis-ig1'||!Array.isArray(body.cis_assessment_criteria)||body.cis_assessment_criteria.length>20||body.cis_assessment_criteria.some(c=>!valid.has(c)))throw new Error('Invalid CIS assessment criteria');
+      if(!Array.isArray(body.cis_assessment_criteria)||body.cis_assessment_criteria.length>20||body.cis_assessment_criteria.some(c=>!valid.has(c)))fail('Invalid CIS assessment criteria');
       body.cis_assessment_criteria=[...new Set(body.cis_assessment_criteria)];
     }
-    if(Object.keys(body).some(k=>!fields.includes(k)&&!VERIFICATION_FIELDS.includes(k)))throw new Error('Unknown or immutable assessment fields');
-    const verificationAllowed=row.framework_key==='cis-ig1'||row.client_id==='demo_prestige'&&row.framework_key==='soc-2';
-    if('verification' in body&&!verificationAllowed)throw new Error('Verification is available only for CIS Controls IG1 and Prestige SOC 2');
+    if(Object.keys(body).some(k=>!fields.includes(k)&&!VERIFICATION_FIELDS.includes(k)))fail('Unknown or immutable assessment fields');
+    const verificationAllowed=supported.includes('verification');
+    if('verification' in body&&!verificationAllowed)fail('Verification is available only for CIS Controls IG1 and SOC 2');
     if('verification_checklist' in body){
-      if(row.framework_key!=='cis-ig1')throw new Error('Verification checklists apply only to CIS Controls IG1');
+      if(!supported.includes('verification_checklist'))fail('Verification checklists apply only to CIS Controls IG1');
       body={...body};
       body.verification_checklist=validateVerificationChecklist(body.verification_checklist,row.definition_id);
     }
     if('verification' in body&&body.verification!==null&&!VERIFICATION_STATES.includes(body.verification))throw new Error('Invalid verification state');
     const historyFields=row.framework_key==='cis-ig1'?[...fields,...VERIFICATION_FIELDS]:verificationAllowed?[...fields,'verification']:fields;
     if('csf_profile' in body){
-      if(row.framework_key!=='nist-csf-2')throw new Error('CSF profile fields apply only to NIST CSF');
+      if(!supported.includes('csf_profile'))fail('CSF profile fields apply only to NIST CSF');
       body={...body,csf_profile:validateCsfProfile(body.csf_profile)};
     }
     if('management_controls' in body){
-      if(row.framework_key!=='soc-2')throw new Error('Management control readiness fields apply only to SOC 2');
+      if(!supported.includes('management_controls'))fail('Management control readiness fields apply only to SOC 2');
       if(JSON.stringify(body.management_controls)!==JSON.stringify(row.management_controls||[])&&(row.controls_migrated||db.organizational_controls?.some(c=>c.client_id===row.client_id&&(c.assessment_ids.includes(id)||c.legacy_sources.some(s=>s.assessment_id===id)))))throw new Error('Legacy descriptions are preserved. Edit the shared organizational Control instead');
       body={...body,management_controls:validateManagementControls(body.management_controls)};
     }
@@ -213,7 +216,7 @@ export function frameworkRequest(db,path,method,params,body){
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
     const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
-    if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});row.assessment_history.push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
+    if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});(row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
     return row;
   }
   if(method==='post'&&operation==='links'){

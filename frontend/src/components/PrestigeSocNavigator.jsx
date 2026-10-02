@@ -6,14 +6,15 @@ import {CisBreadcrumb,VERIFICATION_LABELS,verificationOf} from './BrawndoCisCont
 import {groupRequirements,needsAttention,sectionSummary} from '@/lib/frameworkWorkspace';
 import {freshness} from '@/lib/cisVerification';
 
-const STATUS_LABELS={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed',not_applicable:'Not Applicable'};
+// The SOC 2 reference workspace's conclusion labels (also used by its dashboard programme card).
+export const SOC_STATUS_LABELS={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed',not_applicable:'Not Applicable'};
 const VERIFICATION_TONE={not_verified:'neutral',needs_validation:'moderate',gap_identified:'critical',verified:'success'};
 const CATEGORY_LABELS={security:'Security — Common Criteria',availability:'Availability',confidentiality:'Confidentiality',processing_integrity:'Processing Integrity',privacy:'Privacy'};
 const CATEGORY_CRUMBS={security:'Security',availability:'Availability',confidentiality:'Confidentiality',processing_integrity:'Processing Integrity',privacy:'Privacy'};
 const activate=fn=>e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}};
 export const socCategoryLabel=key=>CATEGORY_LABELS[key]||key?.replaceAll('_',' ').replace(/^./,s=>s.toUpperCase());
 export const socCategoryCrumb=key=>CATEGORY_CRUMBS[key]||socCategoryLabel(key);
-export function SocStatusPill({status}){return <span className={`cis-pill cis-tone-${CIS_TONE[status]||'neutral'}`}><span className="cis-dot" aria-hidden="true"/>{STATUS_LABELS[status]||'Not Assessed'}</span>;}
+export function SocStatusPill({status}){return <span className={`cis-pill cis-tone-${CIS_TONE[status]||'neutral'}`}><span className="cis-dot" aria-hidden="true"/>{SOC_STATUS_LABELS[status]||'Not Assessed'}</span>;}
 
 export default function PrestigeSocNavigator({clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,path,onPath,onOpen,selected}){
   const [members,setMembers]=useState([]);

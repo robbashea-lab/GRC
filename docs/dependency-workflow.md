@@ -90,3 +90,31 @@ direct-pin scan returned no known vulnerabilities for its 12 pins. This used
 `--no-deps --disable-pip`: it is **not** a fully resolved/hash-locked transitive
 runtime audit. Persistent container validation and transitive reproducibility
 remain separate observations; do not claim whole-environment supply-chain assurance.
+
+## 2026-10-01 quality-release scan
+
+The earlier clean-scan counts are historical, not current assurance. This task
+did not change package manifests, lockfiles or the shared installed tree.
+
+- `node frontend/scripts/dependency-audit.cjs`: 1,304 names; 15 advisory entries,
+  comprising 12 Axios 1.18.0 entries and the three previously documented SVGO
+  entries. Several Axios entries concern Node HTTP/2, proxy and data-URL adapters;
+  those are not the application's browser XHR or isolated Demo adapter. The
+  prototype-pollution gadget advisories require further reachability review;
+  their absence from selected workflow tests does not establish non-exploitability.
+- `python -m pip_audit -r backend/requirements-runtime.txt --disable-pip --no-deps`:
+  13 PyJWT 2.13.0 advisory entries. The server fixes the algorithm to HS256,
+  uses a configured secret, creates fresh verification options and does not use
+  PyJWKClient/JWKS or mixed symmetric/asymmetric algorithms. These facts rule out
+  the stated prerequisites of several entries, not every possible issue.
+  A malformed nested-header request is included in the authentication boundary
+  regression and returns 401 in this runtime. This is not a universal parser audit.
+- No forced upgrades were performed. A separately tested targeted dependency
+  update/reachability review remains necessary before any backend production
+  release. The authorized release here is the static Demo preview, not backend
+  production deployment. The inventory is not a clean security scan.
+
+Current advisory references: [Axios inherited HTTP method](https://github.com/advisories/GHSA-9fr6-4gfg-395g),
+[Axios fetch prototype gadget](https://github.com/advisories/GHSA-vh66-26gq-q6x8),
+[PyJWT mixed-algorithm guard](https://github.com/advisories/GHSA-ffc3-869f-jxw9),
+[PyJWT header parsing](https://github.com/advisories/GHSA-8wjv-2p76-3863).

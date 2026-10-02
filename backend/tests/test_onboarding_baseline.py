@@ -15,7 +15,7 @@ class BaselineTests(unittest.IsolatedAsyncioTestCase):
         self.sign_in('admin')
         c = (await self.client.get('/api/onboarding/baseline?client_id=a')).json()
         self.assertEqual(len(c['state']['reviews']),17)
-        self.assertEqual(catalog,json.loads((Path(__file__).resolve().parents[2]/'frontend/src/lib/onboardingCatalog.json').read_text()))
+        self.assertEqual(catalog,json.loads((Path(__file__).resolve().parents[2]/'shared/catalogs/onboardingCatalog.json').read_text()))
         await server.db.contacts.insert_one({'client_id':'a','contact_id':'old','name':'Preserved'})
         await server.db.requirements.insert_one({'client_id':'a','requirement_id':'soc','title':'SOC 2'})
         body=self.body()

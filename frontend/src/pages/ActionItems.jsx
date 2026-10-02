@@ -5,18 +5,17 @@ import StatusBadge, { SeverityBadge } from "@/components/StatusBadge";
 import RegisterLoadError from '@/components/RegisterLoadError';
 import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
-import api, { formatError } from "@/lib/api";
+import {useActionRegisterData} from '@/lib/useActionRegisterData';
 import { ACTION_VIEWS, SOURCE_TYPES, actionMatches, actionOrder, actionStatus, taskSource } from "@/lib/actionItems";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 import RecordDrawer from "@/components/RecordDrawer";
 import { SCHEMAS } from "@/lib/schemas";
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferenceRegister} from '@/lib/reference';
 import BrawndoActionItems from './BrawndoActionItems';
 
 // Only authoritative Task records are displayed here.
@@ -38,18 +37,22 @@ export default function ActionItems() {
   const [params,setParams]=useSearchParams(),previous=useRef(currentClientId);
   useEffect(()=>{
     const old=previous.current;previous.current=currentClientId;
-    if(old!==currentClientId&&(isBrawndoReference(old,user)||isBrawndoReference(currentClientId,user))){
+    if(old!==currentClientId&&(isReferenceRegister(old,user)||isReferenceRegister(currentClientId,user))){
       const next=new URLSearchParams(params);['owner','unassigned','finding_id','id','view','q'].forEach(k=>next.delete(k));setParams(next,{replace:true});
     }
   },[currentClientId,user,params,setParams]);
-  return isBrawndoReference(currentClientId,user)?<BrawndoActionItems key={currentClientId}/>:<OriginalActionItems/>;
+  return isReferenceRegister(currentClientId,user)?<BrawndoActionItems key={currentClientId}/>:<OriginalActionItems/>;
 }
 function OriginalActionItems() {
   const location = useLocation();
-  const { currentClient, currentClientId } = useOrg();
+  const { currentClientId } = useOrg();
   const { user } = useAuth();
-  const [rows, setRows] = useState([]);
-  const [users, setUsers] = useState([]);
+  const {data,users,loading,error:loadError,load}=useActionRegisterData(currentClientId);
+  const rows=useMemo(()=>(data.tasks||[]).map(task=>{
+    const source=taskSource(task,data);
+    return {...task,_kind:"task",id:task.task_id,raw:task,owner_id:task.assignee_id??task.owner_id,
+      priority:task.priority||"medium",status:task.status||"open",source:source.label,source_type:source.type,sourceRecord:source,closed:closedTask};
+  }),[data]);
   const [params, setParams] = useSearchParams();
   const q = params.get("q") || "";
   const view = (ACTION_VIEWS.includes(params.get("view")) ? params.get("view") : "active");
@@ -57,9 +60,6 @@ function OriginalActionItems() {
   const setParam = (key, value) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next, { replace: true }); };
   const setQ = value => setParam("q", value);
   const setView = value => setParam("view", value);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const loadSequence = useRef(0);
   const [drawer, setDrawer] = useState({ open: false, kind: null, record: null });
 
   const canWrite = ["super_admin", "platform_admin", "client_grc_manager", "client_contributor"].includes(user?.role);
@@ -69,34 +69,7 @@ function OriginalActionItems() {
     return m;
   }, [users]);
 
-  const load = useCallback(async () => {
-    const sequence = ++loadSequence.current;
-    if (!currentClientId) { setRows([]); setLoading(false); return; }
-    setLoading(true); setLoadError('');
-    try {
-      const [tasks, findings, reviews, risks, vendors, policies, assessments, u] = await Promise.all([
-        api.get("/tasks", { params: { client_id: currentClientId } }).then((r) => r.data),
-        api.get("/findings", { params: { client_id: currentClientId } }).then((r) => r.data),
-        api.get("/reviews", { params: { client_id: currentClientId } }).then((r) => r.data),
-        ...["risks","vendors","policies"].map(kind => api.get(`/${kind}`, { params: { client_id: currentClientId } }).then(r=>r.data)),
-        api.get("/onboarding/state",{params:{client_id:currentClientId}}).then(r=>r.data.assessments||[]),
-        api.get(`/clients/${currentClientId}/members`).then((r) => r.data),
-      ]);
-      if (sequence !== loadSequence.current) return;
-      setUsers(u || []);
-
-      const sources = {findings,reviews,risks,vendors,policies,assessments};
-      const items = tasks.map(t => {
-        const source = taskSource(t,sources);
-        return {...t,_kind:"task",id:t.task_id,raw:t,owner_id:t.assignee_id ?? t.owner_id,
-          priority:t.priority||"medium",status:t.status||"open",source:source.label,source_type:source.type,sourceRecord:source,closed:closedTask};
-      });
-      setRows(items);
-    } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
-    finally { if (sequence === loadSequence.current) setLoading(false); }
-  }, [currentClientId]);
-
-  useEffect(() => { const sequence = loadSequence; setRows([]); setDrawer({ open: false, kind: null, record: null }); load(); return () => { sequence.current++; }; }, [load, location.pathname]);
+  useEffect(() => { setDrawer({ open: false, kind: null, record: null }); }, [currentClientId, location.pathname]);
 
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();

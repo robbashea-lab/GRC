@@ -1,6 +1,7 @@
 import { aggregateClientDashboard, DASHBOARD_KINDS } from "./clientDashboard";
 import { dashboardPosture } from './dashboardPosture';
 import { complianceProgress } from './complianceProgress';
+import { workspaceScope } from './frameworkWorkspace';
 
 export function labelDashboardRows(rows, members) {
   const names=new Map(members.map(user=>[user.user_id,user.name||user.email]));
@@ -25,20 +26,22 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
     const programs=complianceProgress(clientId,baselineResponse.data?.state,requirements);
     const frameworkSummary=programs.some(program=>program.trackingAvailable)
       ? (await api.get('/frameworks/summary',{params:{client_id:clientId},signal})).data : undefined;
-    let queue, cisRows;
+    let queue, programRows;
     if(workQueue) {
       const response=await api.get('/dashboard',{params:{...params,work_queue:true},signal});
       queue=response.data;
       if(queue.client_id!==clientId||!queue.groups)throw new Error('Work queue could not be loaded for this client.');
-      if(programs.some(p=>p.key==='cis-ig1')) {
-        const {data}=await api.get('/frameworks/cis-ig1',{params:{client_id:clientId},signal});
+      // One programme card per tracked framework, from the same authoritative records as its workspace.
+      programRows={};
+      for(const program of programs.filter(p=>p.trackingAvailable)) {
+        const {data}=await api.get(`/frameworks/${program.key}`,{params:{client_id:clientId},signal});
         if(data.assessments.some(a=>a.client_id!==clientId))throw new Error('Assessment belongs to another client.');
         const byId=new Map(data.assessments.map(a=>[a.definition_id,a]));
         // Linked-work projection lets the dashboard derive gap tracking, evidence and freshness.
-        cisRows=data.definitions.filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
+        programRows[program.key]=data.definitions.filter(d=>byId.has(d.id)&&workspaceScope(program.key,data,d)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
       }
     }
-    return {...summary.data,members,queue,cisRows,onboardingCompleted:!!baselineResponse.data?.state?.completed,
+    return {...summary.data,members,queue,programRows,cisRows:programRows?.['cis-ig1'],onboardingCompleted:!!baselineResponse.data?.state?.completed,
       posture:Object.fromEntries(Object.entries(summary.data.posture).map(([key,value])=>[key,Array.isArray(value)?labelDashboardRows(value,members):value])),
       programs:complianceProgress(clientId,baselineResponse.data?.state,requirements,frameworkSummary)};
   }

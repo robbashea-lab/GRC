@@ -56,7 +56,10 @@ class VendorGovernanceTests(ClientDashboardSourcesTests):
     async def test_service_required_and_legacy_preserved(self):
         self.sign_in('admin')
         self.assertEqual((await self.client.post('/api/vendors',json={'name':'Incomplete','client_id':'a'})).status_code,422)
-        vendor = await self.create_vendor(services='Legacy detail retained')
+        vendor = await self.create_vendor()
+        # Existing historical aliases remain readable even when their text differs.
+        await server.db.vendors.update_one({'vendor_id':vendor['vendor_id']},{'$set':{'services':'Legacy detail retained'}})
+        vendor = (await self.client.get('/api/vendors/'+vendor['vendor_id'])).json()
         self.assertEqual(vendor['services'],'Legacy detail retained')
         self.assertEqual(vendor['service'],'Primary CRM & data storage')
 

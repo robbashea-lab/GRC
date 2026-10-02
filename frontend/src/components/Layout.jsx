@@ -2,7 +2,7 @@ import { ComplianceProvider, useCompliance } from "@/context/ComplianceContext";
 import DemoNotice from "@/preview/DemoNotice";
 import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
-import {isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
+import {isReferenceRegister,isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
 import ClientSurface from './ClientSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
@@ -215,12 +215,12 @@ function Sidebar() {
   // Client Workspace context covers everything else (dashboard, calendar, reviews, etc.).
   const atPlatform = ["/clients", "/admin", "/platform"].some((p) => location.pathname.startsWith(p));
   const { items: complianceItems } = useCompliance();
-  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV.filter(item=>item.to!=='/findings'||!isBrawndoReference(currentClientId,user)), ...complianceItems.map(item => ({
+  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV.filter(item=>item.to!=='/findings'||!isReferenceRegister(currentClientId,user)), ...complianceItems.map(item => ({
     ...item, icon: ShieldCheck, testid: `nav-compliance-${item.key}`,
   }))];
 
   // Default client navigation uses the reference presentation; route permissions stay unchanged.
-  if(!atPlatform&&currentClientId)return <BrawndoSidebar complianceItems={complianceItems} isInternal={isInternal} showFindings={!isBrawndoReference(currentClientId,user)}/>;
+  if(!atPlatform&&currentClientId)return <BrawndoSidebar complianceItems={complianceItems} isInternal={isInternal} showFindings={!isReferenceRegister(currentClientId,user)}/>;
   if(atPlatform&&isInternal&&isReferencePortfolio(user))return <BrawndoPlatformSidebar adminItems={PLATFORM_NAV.filter(n=>!n.section)}/>;
   return (
     <aside className="app-sidebar w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">

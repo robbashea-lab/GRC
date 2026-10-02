@@ -9,15 +9,8 @@ COPY frontend/src/lib/grcRules.json /app/frontend/src/lib/grcRules.json
 COPY frontend/src/lib/managementRules.json /app/frontend/src/lib/managementRules.json
 COPY frontend/src/lib/portfolioRules.json /app/frontend/src/lib/portfolioRules.json
 COPY frontend/src/lib/aiGovernanceCatalog.json /app/frontend/src/lib/aiGovernanceCatalog.json
-COPY frontend/src/lib/frameworkDefinitions.json frontend/src/lib/cisIG1.json /app/frontend/src/lib/
-COPY frontend/src/lib/operatorGuidance/cisAssessmentCriteria.json /app/frontend/src/lib/operatorGuidance/cisAssessmentCriteria.json
-COPY frontend/src/lib/hipaaSecurityRule.json /app/frontend/src/lib/hipaaSecurityRule.json
-COPY frontend/src/lib/iso27001.json /app/frontend/src/lib/iso27001.json
-COPY frontend/src/lib/isoAuditProgram.json /app/frontend/src/lib/isoAuditProgram.json
-COPY frontend/src/lib/nistCSF2.json /app/frontend/src/lib/nistCSF2.json
-COPY frontend/src/lib/soc2.json /app/frontend/src/lib/soc2.json
+COPY shared/catalogs /app/shared/catalogs
 COPY frontend/src/lib/evidenceSources.json /app/frontend/src/lib/evidenceSources.json
-COPY frontend/src/lib/onboardingHandoffFields.json /app/frontend/src/lib/onboardingHandoffFields.json
 COPY frontend/src/lib/clientProfileFields.json /app/frontend/src/lib/clientProfileFields.json
 RUN useradd --create-home --uid 10001 app
 USER app

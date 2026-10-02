@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {unifiedActions} from '../lib/brawndoActions';
 import {SOURCE_RECORDS} from '../lib/actionItems';
 const api=axios.create({adapter:previewAdapter}),client_id='demo_brawndo';

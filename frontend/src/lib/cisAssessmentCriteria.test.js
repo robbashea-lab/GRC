@@ -1,5 +1,5 @@
-import data from './operatorGuidance/cisAssessmentCriteria.json';
-import catalog from './cisIG1.json';
+import data from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
+import catalog from '@catalogs/cisIG1.json';
 
 test('all 56 safeguards have distinct, source-traceable criteria without legacy tier ids',()=>{
   expect(Object.keys(data.requirements)).toEqual(catalog.requirements.map(r=>r.id));

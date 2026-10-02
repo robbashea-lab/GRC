@@ -1,22 +1,12 @@
-"""Run only reviewed offline suites, retaining the repository's pytest/xdist configuration."""
+"""Discover every classified offline suite with the existing pytest/xdist settings."""
 from pathlib import Path
 import sys
 import pytest
-
-TESTS = """
-action_items ai_governance assignment_eligibility auth_boundaries client_dashboard_sources
-client_management client_relationships client_profile core_audit create_requests csf_framework dashboard_contract edit_versions engineering_reliability
-assessment_verification workflow_integrity evidence_context evidence_library framework_governance framework_program governance_integrity governance_context hipaa_framework
-identity_lifecycle iso_framework iso_audit_program management_obligations multi_framework onboarding_baseline onboarding_handoff
-operating_model organizational_controls people_visibility phase6_visibility policy_approval policy_provenance
-portfolio_overview review_lifecycle review_occurrences risk_ids risk_lifecycle runtime_packaging
-seed_account_settings security_campaign soc_framework standard_initialization ten_year_operation vendor_governance
-""".split()
 
 if __name__ == "__main__":
     backend = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(backend.parent))
     sys.path.insert(0, str(backend))
-    # No general discovery: legacy generated HTTP suites mutate an external environment.
-    raise SystemExit(pytest.main(["-c",str(backend/"pytest.ini"),"-q",
-                                *(str(backend/"tests"/f"test_{name}.py") for name in TESTS)]))
+    # conftest validates complete classification before importing any test module.
+    raise SystemExit(pytest.main(["-c", str(backend / "pytest.ini"), "-q", "-m", "offline",
+                                str(backend / "tests"), *sys.argv[1:]]))

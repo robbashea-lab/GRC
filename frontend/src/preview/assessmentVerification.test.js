@@ -1,6 +1,6 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
-import catalog from '../lib/onboardingCatalog.json';
+import {previewAdapter} from './commandTestAdapter';
+import catalog from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS} from '../lib/frameworks';
 const api=axios.create({adapter:previewAdapter});
 let cid;
@@ -34,7 +34,7 @@ test.each([
 
 test('non-CIS assessments reject verification and keep history shape',async()=>{
   const row=(await configure('nist-csf-2')).assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
-  await expect(api.patch(path,{verification:'verified',expected_last_assessed:null})).rejects.toThrow('Verification is available only for CIS Controls IG1 and Prestige SOC 2');
+  await expect(api.patch(path,{verification:'verified',expected_last_assessed:null})).rejects.toThrow('Verification is available only for CIS Controls IG1 and SOC 2');
   await expect(api.patch(path,{verification_checklist:{},expected_last_assessed:null})).rejects.toThrow('Verification checklists apply only to CIS Controls IG1');
   const saved=(await api.patch(path,{notes:'CSF note',expected_last_assessed:null})).data;
   expect(saved.assessment_history.at(-1)).not.toHaveProperty('verification');
@@ -71,9 +71,11 @@ test('Brawndo criteria preserve old checks and history without changing conclusi
     await expect(api.patch(path,{cis_assessment_criteria:bad,expected_last_assessed:saved.last_assessed})).rejects.toThrow();
 });
 
-test('new criteria cannot be written to another client',async()=>{
+test('new clients can write CIS criteria through the same framework capability',async()=>{
   const [row,path]=await cisRow();
-  await expect(api.patch(path,{cis_assessment_criteria:[],expected_last_assessed:row.last_assessed??null})).rejects.toThrow();
+  const saved=(await api.patch(path,{cis_assessment_criteria:['1.1-c1'],expected_last_assessed:row.last_assessed??null})).data;
+  expect(saved.cis_assessment_criteria).toEqual(['1.1-c1']);
+  expect(saved.client_id).toBe(cid);
 });
 
 test('SOC guidance saves independently, preserves legacy data and appends immutable history',async()=>{
@@ -94,7 +96,7 @@ test('SOC guidance saves independently, preserves legacy data and appends immuta
  expect(cleared.assessment_history.at(-2).soc_assessment_checks).toEqual(saved.soc_assessment_checks);
 });
 
-test.each(['soc-2','cis-ig1','iso-27001'])('SOC guidance cannot affect another client or %s history',async key=>{
+test.each(['cis-ig1','iso-27001'])('SOC guidance cannot affect %s history',async key=>{
  const row=(await configure(key)).assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
  await expect(api.patch(path,{soc_assessment_checks:[],expected_last_assessed:row.last_assessed??null})).rejects.toThrow();
  const saved=(await api.patch(path,{notes:'Ordinary update',expected_last_assessed:row.last_assessed??null})).data;

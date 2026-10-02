@@ -13,8 +13,10 @@ jest.mock("@/context/AuthContext", () => {
   return { useAuth: () => ({ user }) };
 });
 jest.mock("@/lib/loadClientDashboard", () => ({ loadClientDashboard: jest.fn(), labelDashboardRows:rows=>rows }));
-jest.mock("@/lib/api", () => ({ __esModule: true, default: {get:jest.fn()}, PREVIEW_MODE:true, API: "/api", formatError: err => err.message }));
-jest.mock("react-router-dom", () => ({ Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a> }));
+// Demo mode is switchable: the legacy layout now renders only for the live backend.
+const mockMode = { preview: false };
+jest.mock("@/lib/api", () => ({ __esModule: true, default: {get:jest.fn()}, get PREVIEW_MODE() { return mockMode.preview; }, API: "/api", formatError: err => err.message }));
+jest.mock("react-router-dom", () => ({ Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a> }),{virtual:true});
 jest.mock("@/components/DashboardScopeSelector", () => () => null);
 jest.mock("@/components/RecordDrawer", () => props => <><div data-testid="record-drawer">{props.kind}:{props.record.task_id}:{props.clientId}</div><button onClick={()=>props.onOpenChange(false)}>Close test record</button></>);
 
@@ -25,6 +27,7 @@ beforeEach(() => {
   container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
   useOrg.mockReturnValue({ currentClientId: "a", currentClient: { name: "Client A" } });
   loadClientDashboard.mockReset();
+  mockMode.preview = false;
   api.get.mockReset();
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
@@ -42,7 +45,8 @@ test("minimal client: attention strip, priority panel and three health panels, a
   expect(container.querySelector('button[aria-label="Past Due: 0 items"]')).not.toBeNull();
 });
 
-test('only Brawndo gets the queue pilot; opening and closing a record retains its filter',async()=>{
+test('every Demo client gets the queue dashboard; opening and closing a record retains its filter',async()=>{
+  mockMode.preview=true;
   const item={key:'tasks:t',id:'t',kind:'tasks',title:'Brawndo work',status:'open',owner:'Unassigned',unassigned:true};
   const queue={as_of:'2026-09-27',groups:Object.fromEntries(['all','pastDue','due30','unassigned'].map(key=>[key,{total:1,items:[item]}]))};
   useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{name:'Brawndo'}});
@@ -58,7 +62,16 @@ test('only Brawndo gets the queue pilot; opening and closing a record retains it
   await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent==='Close test record').click());
   expect(container.querySelector('[data-testid="record-drawer"]')).toBeNull();
   expect(container.querySelector('[aria-pressed=true]').textContent).toContain('Unassigned');
-  useOrg.mockReturnValue({currentClientId:'demo_initech',currentClient:{name:'Initech'}});
+  // Dunder (and any other Demo client) uses the same composition, not the legacy layout.
+  useOrg.mockReturnValue({currentClientId:'demo_dunder',currentClient:{name:'Dunder Mifflin'}});
+  loadClientDashboard.mockResolvedValue({...empty,contract_version:2,queue});
+  await act(async()=>root.render(<Dashboard/>));
+  expect(container.textContent).toContain('Dunder Mifflin Dashboard');
+  expect(container.textContent).not.toContain('Requires attention');
+  expect(loadClientDashboard.mock.calls.at(-1)[1].workQueue).toBe(true);
+  // The live backend has no work_queue contract yet and keeps the older layout.
+  mockMode.preview=false;
+  useOrg.mockReturnValue({currentClientId:'live_client',currentClient:{name:'Live'}});
   loadClientDashboard.mockResolvedValue(empty);
   await act(async()=>root.render(<Dashboard/>));
   expect(container.textContent).toContain('Board Report PDF');

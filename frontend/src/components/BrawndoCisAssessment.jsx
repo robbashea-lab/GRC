@@ -1,2 +1,2 @@
 // Compatibility entry point; the interaction is shared by CIS, ISO and SOC 2.
-export {default,isBrawndoCisPrototype,isBrawndoReference} from './FrameworkAssessmentWorkspace';
+export {default} from './FrameworkAssessmentWorkspace';

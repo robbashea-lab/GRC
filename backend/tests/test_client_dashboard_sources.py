@@ -34,10 +34,21 @@ class ClientDashboardSourcesTests(unittest.IsolatedAsyncioTestCase):
             # supplies a repeated key. Match the frontend transport contract.
             if request.method == "POST" and request.url.path.removeprefix('/api/') in {*server.ENTITY_MAP, 'clients', 'evidence', 'ai_systems'}:
                 request.headers.setdefault('Idempotency-Key', uuid.uuid4().hex)
+            if request.method == 'POST' and request.url.path in ('/api/onboarding/baseline', '/api/onboarding/finalize'):
+                # Each fresh editor submission has a new intent. Recovery tests
+                # bypass this hook and retain the original body and key explicitly.
+                request.headers.setdefault('Idempotency-Key', uuid.uuid4().hex)
             # Existing workflow tests represent fresh editors. Conflict tests
             # explicitly retain an older token; missing-token tests disable this
             # fixture hook. Never do this read-before-write substitution in UI.
             parts=request.url.path.removeprefix('/api/').split('/')
+            if request.method == 'POST' and len(parts) == 3 and parts[0] == 'reviews' and parts[2] == 'create-finding':
+                data = json.loads(request.content)
+                data.setdefault('request_id', uuid.uuid4().hex)
+                request._content = json.dumps(data).encode()
+                request.stream = httpx.ByteStream(request._content)
+                request.headers['Content-Length'] = str(len(request._content))
+                request.headers['Content-Type'] = 'application/json'
             if request.method=='POST' and (parts==['ai-intake'] or len(parts)==3 and parts[0]=='contacts' and parts[2]=='account-link'):
                 data=json.loads(request.content)
                 field='updated_at' if parts==['ai-intake'] else 'linked_user_id'

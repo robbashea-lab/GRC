@@ -1,5 +1,6 @@
 // craco.config.js
 const path = require("path");
+const catalogRoot = path.resolve(__dirname, '../shared/catalogs');
 require("dotenv").config();
 
 // Check if we're in development/preview mode (not production build)
@@ -83,8 +84,12 @@ let webpackConfig = {
   webpack: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      '@catalogs': catalogRoot,
     },
     configure: (webpackConfig) => {
+      // Both runtimes consume the same JSON data; retain CRA's scope guard for code.
+      const scope = webpackConfig.resolve.plugins.find(plugin => plugin.constructor.name === 'ModuleScopePlugin');
+      if (scope) scope.allowedPaths.push(catalogRoot + path.sep);
 
       // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {
@@ -151,7 +156,7 @@ webpackConfig.devServer = (devServerConfig) =>
 
 // Use the application's existing source alias in dashboard component tests.
 webpackConfig.jest = {
-  configure: { moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" } },
+  configure: { moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1", "^@catalogs/(.*)$": "<rootDir>/../shared/catalogs/$1", "^@contracts/(.*)$": "<rootDir>/../shared/contracts/$1" } },
 };
 
 module.exports = webpackConfig;

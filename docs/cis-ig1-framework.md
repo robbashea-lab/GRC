@@ -6,8 +6,8 @@ The four steps are Compliance & Requirements, Policies & Governance Documents,
 Recurring Reviews, and Review & Create. No framework is required. The six selections
 are persisted as client applicability; only finalized applicability drives navigation.
 
-- `frontend/src/lib/frameworkDefinitions.json`: selectable versus implemented metadata.
-- `frontend/src/lib/cisIG1.json`: versioned global definitions, classifications,
+- `shared/catalogs/frameworkDefinitions.json`: selectable versus implemented metadata and capabilities.
+- `shared/catalogs/cisIG1.json`: versioned global definitions, classifications,
   grouped Review proposals, Policy relationship rationale, and official source links.
 - `framework_assessments`: client-specific responses, ownership, relationships and
   append-only assessment snapshots. Unique client/framework/version/definition index.

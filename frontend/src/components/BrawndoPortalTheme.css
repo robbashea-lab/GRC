@@ -21,3 +21,7 @@ html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet, .ui-menu, .ui-popove
 }
 /* Solid critical pills (Overdue) keep white text on the darker red in dark portals (AA contrast). */
 html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet) .pill-critical { background: #b91c1c; color: #ffffff; }
+/* Override the light-theme charcoal applied by design-system.css to primary buttons. */
+html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled) { background: #a3db33; color: #10140c; }
+html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):hover { background: #b4e650; }
+html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):active { background: #8fc22a; }

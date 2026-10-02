@@ -15,19 +15,16 @@ class AssessmentVerificationTests(unittest.IsolatedAsyncioTestCase):
         row = next(a for a in w['assessments'] if a['definition_id'] == '1.1')
         return row, '/api/framework_assessments/' + row['framework_assessment_id']
 
-    async def prestige_soc_row(self):
+    async def soc_row(self):
         self.sign_in('admin')
         response = await self.client.post('/api/onboarding/baseline', json=self.body(programs=('soc-2',)))
         self.assertEqual(response.status_code, 200, response.text)
         workspace = (await self.client.get('/api/frameworks/soc-2', params={'client_id': 'a'})).json()
         row = next(a for a in workspace['assessments'] if a['definition_id'] == 'CC9.2')
-        await server.db.clients.insert_one({'client_id': 'demo_prestige', 'name': 'Synthetic Prestige'})
-        await server.db.framework_assessments.update_one({'framework_assessment_id': row['framework_assessment_id']}, {'$set': {'client_id': 'demo_prestige'}})
-        row['client_id'] = 'demo_prestige'
         return row, '/api/framework_assessments/' + row['framework_assessment_id']
 
     async def test_soc_guidance_is_validated_independent_and_preserves_history(self):
-        row, base = await self.prestige_soc_row()
+        row, base = await self.soc_row()
         legacy={'foundation':['old-unmapped-check']}
         await server.db.framework_assessments.update_one({'framework_assessment_id':row['framework_assessment_id']},{'$set':{'verification_checklist':legacy}})
         response=await self.client.patch(base,json={'notes':'Retained note','verification':'needs_validation','expected_last_assessed':row.get('last_assessed')})
@@ -53,16 +50,15 @@ class AssessmentVerificationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.json()['assessment_history'][-2]['soc_assessment_checks'],checks)
         self.assertEqual(response.json()['verification_checklist'],legacy)
 
-    async def test_soc_guidance_is_client_and_framework_scoped(self):
+    async def test_soc_guidance_preserves_framework_and_authorization_boundaries(self):
         row, base = await self.cis_row()
         response=await self.client.patch(base,json={'soc_assessment_checks':[]})
         self.assertEqual(response.status_code,422,response.text)
         response=await self.client.patch(base,json={'notes':'Unrelated CIS update'})
         self.assertNotIn('soc_assessment_checks',response.json()['assessment_history'][-1])
-        row, base = await self.prestige_soc_row()
-        await server.db.framework_assessments.update_one({'framework_assessment_id':row['framework_assessment_id']},{'$set':{'client_id':'a'}})
+        row, base = await self.soc_row()
         response=await self.client.patch(base,json={'soc_assessment_checks':[]})
-        self.assertEqual(response.status_code,422,response.text)
+        self.assertEqual(response.status_code,200,response.text)
         await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_viewer'}})
         self.sign_in('member')
         response=await self.client.patch(base,json={'soc_assessment_checks':[]})
@@ -134,8 +130,8 @@ class AssessmentVerificationTests(unittest.IsolatedAsyncioTestCase):
             server._require_snapshot({'verification': 'verified'}, first.json(), 'last_assessed')
         self.assertEqual(missing.exception.status_code, 428)
 
-    async def test_prestige_soc_verification_round_trips_without_cis_checklist(self):
-        row, base = await self.prestige_soc_row()
+    async def test_soc_verification_round_trips_without_cis_checklist(self):
+        row, base = await self.soc_row()
         response = await self.client.patch(base, json={'verification': 'needs_validation', 'expected_last_assessed': row.get('last_assessed')})
         self.assertEqual(response.status_code, 200, response.text)
         saved = response.json()
@@ -147,9 +143,7 @@ class AssessmentVerificationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_criteria_are_independent_scoped_and_historical(self):
         row, base = await self.cis_row()
-        self.assertEqual((await self.client.patch(base,json={'cis_assessment_criteria':[]})).status_code,422)
-        await server.db.clients.insert_one({'client_id':'demo_brawndo','name':'Synthetic Brawndo'})
-        await server.db.framework_assessments.update_one({'framework_assessment_id':row['framework_assessment_id']},{'$set':{'client_id':'demo_brawndo'}})
+        self.assertEqual((await self.client.patch(base,json={'cis_assessment_criteria':[]})).status_code,200)
         old=(await self.client.patch(base,json={'verification_checklist':{'foundation':['1.1-f1']}})).json()
         response=await self.client.patch(base,json={'cis_assessment_criteria':['1.1-c1','1.1-c1'],'expected_last_assessed':old['last_assessed']})
         self.assertEqual(response.status_code,200,response.text)

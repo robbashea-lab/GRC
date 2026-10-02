@@ -94,8 +94,12 @@ class IsoAuditTests(unittest.IsolatedAsyncioTestCase):
             report=await self.client.patch('/api/reviews/'+rid+'/iso-audit',json={'occurrence_id':review['current_occurrence_id'],'expected_updated_at':review['updated_at'],'report_evidence_id':'report'})
             self.assertEqual(report.status_code,200,report.text);review=report.json()
             self.assertEqual((await self.client.post('/api/reviews/'+rid+'/complete',json={'occurrence_id':review['current_occurrence_id']})).status_code,422)
-            finding=await self.client.post('/api/reviews/'+rid+'/create-finding',json={'occurrence_id':review['current_occurrence_id'],'request_id':'item-'+first,'title':'Synthetic audit gap','remediation_title':'Resolve synthetic audit gap'})
+            intent={'occurrence_id':review['current_occurrence_id'],'request_id':'item-'+first+'-'+review['current_occurrence_id'],'title':'Synthetic audit gap','remediation_title':'Resolve synthetic audit gap'}
+            finding=await self.client.post('/api/reviews/'+rid+'/create-finding',json=intent)
             self.assertEqual(finding.status_code,200,finding.text)
+            replay=await self.client.post('/api/reviews/'+rid+'/create-finding',json=intent)
+            self.assertEqual(replay.status_code,200,replay.text)
+            self.assertEqual(replay.json()['finding_id'],finding.json()['finding_id'])
             # Fetch latest Review token, as normal callers must after another workflow writes.
             review=(await self.client.get('/api/reviews/'+rid)).json()
             result=await self.item(review,first,result='nonconformity',evidence_ids=['report'],finding_ids=[finding.json()['finding_id']])

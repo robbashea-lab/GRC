@@ -14,16 +14,19 @@ defined), so the imports resolve cleanly.
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
+import onboarding_recovery
+import review_occurrences
+import assignment_eligibility
 
 # Late-binding imports from the main server module. Safe because server.py
 # imports this module at the bottom, after all these names are defined.
 from server import (  # noqa: E402
-    db, _uid, _now, audit, _writable, _can_access_client,
-    _next_due_for_recurrence, get_current_user,
+    db, _now, audit, _writable, _can_access_client,
+    get_current_user, _next_write_time,
     _presence_for_response, _lifecycle_for_response,
-    OnboardingPolicyResponse, configuration_mutation, _require_snapshot, _save_snapshot,
+    OnboardingPolicyResponse, configuration_mutation, _require_snapshot,
 )
 
 router = APIRouter(prefix="/api", tags=["onboarding"])
@@ -187,16 +190,21 @@ async def onboarding_state(
 
 @router.post("/onboarding/finalize")
 @configuration_mutation
-async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(get_current_user)):
-    """Idempotent orchestrator for the six-step onboarding wizard.
-    Never fabricates verified metadata. Never duplicates by (client_id + title).
-    """
+async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(get_current_user),
+                              idempotency_key: Optional[str] = Header(default=None)):
+    """Resume the original intake intent after an uncertain or partial write."""
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
     if not _can_access_client(user, body.client_id):
         raise HTTPException(403, "Forbidden for this client")
+    return await onboarding_recovery.run(
+        db, idempotency_key, user, body.client_id, '/onboarding/finalize', body.model_dump(exclude_unset=True),
+        lambda identity: _prepare_legacy_onboarding(body, user, identity), audit)
 
+
+async def _prepare_legacy_onboarding(body, user, identity):
     cid = body.client_id
+    plan = onboarding_recovery.OnboardingPlan(identity, cid)
     # Reject stale batches before any writes; still condition each write because
     # register edits do not take the configuration lease. This is not a transaction.
     for kind, entries, name_field in (
@@ -211,9 +219,14 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
         def entry_key(name, date=None):
             return (name or '').strip().lower(), (date or '') if kind == 'assessments' else ''
         by_key = {entry_key(row.get(name_field), row.get('date')): row for row in rows}
+        submitted = set()
         for entry in entries or []:
             name = entry.role if kind == 'contacts' else entry.name
-            existing = by_key.get(entry_key(name, getattr(entry, 'date', None)))
+            key = entry_key(name, getattr(entry, 'date', None))
+            if key in submitted:
+                raise HTTPException(422, 'Duplicate onboarding entries must be combined before saving')
+            submitted.add(key)
+            existing = by_key.get(key)
             if existing:
                 _require_snapshot(entry.model_dump(exclude_unset=True), existing)
     now = _now()
@@ -254,12 +267,13 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                 }
                 if existing.get("status") in (None, "", "draft", "needs_verification", "needs_creation", "not_applicable"):
                     update["status"] = lifecycle
-                await _save_snapshot(db.policies, {"policy_id": existing["policy_id"]}, existing, r.model_dump(exclude_unset=True), update)
+                update['updated_at'] = _next_write_time(existing.get('updated_at'))
+                plan.update('policies', 'policy_id', existing, update)
                 counters["policies_updated"] += 1
                 pol_id = existing["policy_id"]
             else:
-                pol_id = _uid("pol")
-                await db.policies.insert_one({
+                pol_id = plan.new_id("pol")
+                plan.insert('policies', 'policy_id', {
                     "policy_id": pol_id, "title": r.name, "client_id": cid,
                     "category": r.category, "presence": presence, "status": lifecycle,
                     "onboarding_note": r.note or None,
@@ -268,12 +282,12 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                     "created_at": now, "updated_at": now, "created_by": user["user_id"],
                 })
                 counters["policies_created"] += 1
-            await audit(user, "onboarding-response", "policy", pol_id, cid,
+            plan.audit("onboarding-response", "policy", pol_id,
                         meta={"response": resp, "presence": presence})
             if resp in ("no", "unsure") and pol_id not in task_by_policy:
                 task_title = f"Develop and approve {r.name}" if resp == "no" else f"Confirm whether {r.name} exists"
-                tid = _uid("tsk")
-                await db.tasks.insert_one({
+                tid = plan.new_id("tsk")
+                plan.insert('tasks', 'task_id', {
                     "task_id": tid, "title": task_title, "client_id": cid,
                     "status": "open", "priority": "medium",
                     "policy_id": pol_id, "source": "GRC Program Onboarding",
@@ -294,20 +308,18 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
             status_val, app_val = _APPLICABILITY_MAP[app]
             existing = req_by_name.get(r.name.strip().lower())
             if existing:
-                await _save_snapshot(db.requirements,
-                    {"requirement_id": existing["requirement_id"]},
-                    existing, r.model_dump(exclude_unset=True), {
+                plan.update('requirements', 'requirement_id', existing, {
                         "applicability": app_val, "status": status_val,
                         "category": r.category or existing.get("category"),
                         "note": r.note or existing.get("note"),
                         "rationale": r.rationale if app == "not_applicable" else existing.get("rationale"),
-                        "is_client_reported": True, "updated_at": now,
+                        "is_client_reported": True, "updated_at": _next_write_time(existing.get('updated_at')),
                     })
                 counters["requirements_updated"] += 1
                 req_id = existing["requirement_id"]
             else:
-                req_id = _uid("req")
-                await db.requirements.insert_one({
+                req_id = plan.new_id("req")
+                plan.insert('requirements', 'requirement_id', {
                     "requirement_id": req_id, "title": r.name, "client_id": cid,
                     "category": r.category, "applicability": app_val, "status": status_val,
                     "note": r.note or None,
@@ -316,7 +328,7 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                     "created_at": now, "updated_at": now, "created_by": user["user_id"],
                 })
                 counters["requirements_created"] += 1
-            await audit(user, "onboarding-response", "requirement", req_id, cid,
+            plan.audit("onboarding-response", "requirement", req_id,
                         meta={"applicability": app_val})
 
     # ---------- 3) Key Roles & Contacts ----------
@@ -344,16 +356,17 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                 }
             existing = by_role.get(role_key)
             if existing:
-                await _save_snapshot(db.contacts, {"contact_id": existing["contact_id"]}, existing, c.model_dump(exclude_unset=True), doc_upsert)
+                doc_upsert['updated_at'] = _next_write_time(existing.get('updated_at'))
+                plan.update('contacts', 'contact_id', existing, doc_upsert)
                 contact_id = existing["contact_id"]
             else:
-                contact_id = _uid("cnt")
+                contact_id = plan.new_id("cnt")
                 doc_upsert.update({
                     "contact_id": contact_id, "created_at": now, "created_by": user["user_id"],
                 })
-                await db.contacts.insert_one(doc_upsert)
+                plan.insert('contacts', 'contact_id', doc_upsert)
             counters["contacts_saved"] += 1
-            await audit(user, "onboarding-contact", "contact", contact_id, cid,
+            plan.audit("onboarding-contact", "contact", contact_id,
                         meta={"role": c.role, "not_applicable": bool(c.not_applicable)})
 
     # ---------- 4) Existing Assessments ----------
@@ -363,9 +376,7 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
         for a in body.assessments:
             key = (a.name.strip().lower(), a.date or "")
             if key in seen_key:
-                await _save_snapshot(db.assessments,
-                    {"assessment_id": seen_key[key]["assessment_id"]},
-                    seen_key[key], a.model_dump(exclude_unset=True), {
+                plan.update('assessments', 'assessment_id', seen_key[key], {
                         "assessment_type": a.assessment_type,
                         "conducted_by": a.conducted_by,
                         "status": a.status or "reported",
@@ -373,13 +384,13 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                         "open_findings": a.open_findings,
                         "notes": a.notes,
                         "evidence_ids": a.evidence_ids or [],
-                        "updated_at": now,
+                        "updated_at": _next_write_time(seen_key[key].get('updated_at')),
                     },
                 )
                 assessment_id = seen_key[key]["assessment_id"]
             else:
-                assessment_id = _uid("ass")
-                await db.assessments.insert_one({
+                assessment_id = plan.new_id("ass")
+                plan.insert('assessments', 'assessment_id', {
                     "assessment_id": assessment_id, "name": a.name, "client_id": cid,
                     "assessment_type": a.assessment_type, "date": a.date,
                     "conducted_by": a.conducted_by, "status": a.status or "reported",
@@ -390,7 +401,7 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                     "created_at": now, "updated_at": now, "created_by": user["user_id"],
                 })
                 counters["assessments_created"] += 1
-            await audit(user, "onboarding-assessment", "assessment", assessment_id, cid,
+            plan.audit("onboarding-assessment", "assessment", assessment_id,
                         meta={"type": a.assessment_type})
 
     # ---------- 5) Known Issues → promote ----------
@@ -409,9 +420,9 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
             title_key = issue.title.strip().lower()
             if issue.classification == "verified_finding":
                 if title_key in finding_titles: continue
-                fid = _uid("fnd")
+                fid = plan.new_id("fnd")
                 sev = (issue.priority or "medium").lower()
-                await db.findings.insert_one({
+                plan.insert('findings', 'finding_id', {
                     "finding_id": fid, "title": issue.title, "client_id": cid,
                     "severity": sev if sev in ("critical", "high", "medium", "low", "info") else "medium",
                     "status": "open",
@@ -422,13 +433,14 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                 })
                 counters["findings_created"] += 1
                 counters["known_issues_promoted"] += 1
-                await audit(user, "onboarding-known-issue", "finding", fid, cid,
+                finding_titles.add(title_key)
+                plan.audit("onboarding-known-issue", "finding", fid,
                             meta={"classification": "verified_finding"})
             else:
                 if title_key in task_titles: continue
-                tid = _uid("tsk")
+                tid = plan.new_id("tsk")
                 prio = (issue.priority or "medium").lower()
-                await db.tasks.insert_one({
+                plan.insert('tasks', 'task_id', {
                     "task_id": tid, "title": issue.title, "client_id": cid,
                     "status": "open",
                     "priority": prio if prio in ("critical", "high", "medium", "low") else "medium",
@@ -439,7 +451,8 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
                 })
                 counters["tasks_created"] += 1
                 counters["known_issues_promoted"] += 1
-                await audit(user, "onboarding-known-issue", "task", tid, cid,
+                task_titles.add(title_key)
+                plan.audit("onboarding-known-issue", "task", tid,
                             meta={"classification": issue.classification})
 
     # ---------- 6) Recurring Reviews (dedup by title) ----------
@@ -452,34 +465,50 @@ async def onboarding_finalize(body: OnboardingFinalizeIn, user: Dict = Depends(g
         for rv in body.recurring_reviews:
             if rv.title.strip().lower() in seen_rev: continue
             due_iso = rv.due_date or (datetime.now(timezone.utc) + timedelta(days=int(rv.due_days or 30))).isoformat()
-            rid = _uid("rev")
-            await db.reviews.insert_one({
+            if not review_occurrences.scheduled_date(due_iso):
+                raise HTTPException(422, 'Recurring Review requires a valid due date')
+            if (rv.recurrence or 'annual') not in {*review_occurrences.MONTHS, 'none'}:
+                raise HTTPException(422, 'Invalid onboarding Review recurrence')
+            rid = plan.new_id("rev")
+            review = {
                 "review_id": rid, "title": rv.title, "review_type": rv.review_type,
                 "client_id": cid, "status": "upcoming",
                 "recurrence": rv.recurrence or "annual",
                 "owner_id": rv.owner_id or user["user_id"],
                 "due_date": due_iso,
-                "next_review_date": _next_due_for_recurrence(due_iso, rv.recurrence or "annual", None),
                 "source": "GRC Program Onboarding",
                 "created_at": now, "updated_at": now, "created_by": user["user_id"],
-            })
+            }
+            review.update(review_occurrences.schedule(review))
+            review['current_occurrence_id'] = review_occurrences.occurrence_id(review)
+            plan.insert('reviews', 'review_id', review)
             counters["reviews_created"] += 1
             seen_rev.add(rv.title.strip().lower())
-            await audit(user, "onboarding-review", "review", rid, cid,
+            plan.audit("onboarding-review", "review", rid,
                         meta={"review_type": rv.review_type})
 
-    await audit(user, "onboarding-complete", "client", cid, cid, meta=counters)
+    plan.audit("onboarding-complete", "client", cid, meta=counters)
 
-    return {"ok": True, "counters": counters, "validation_errors": validation_errors}
+    # Validate all new references before the frozen plan can write any record.
+    # Existing historical references are not reclassified during ordinary reads.
+    for row in plan.rows:
+        values = {**row['values'], 'client_id': cid}
+        await assignment_eligibility.validate(db, row['kind'], values, _can_access_client)
+        if row['kind'] == 'assessments':
+            for evidence_id in values.get('evidence_ids') or []:
+                if not await db.evidence.find_one({'evidence_id': evidence_id, 'client_id': cid, 'archived_at': None}, {'_id': 1}):
+                    raise HTTPException(422, 'Choose available Evidence from this client')
+
+    return plan.document({"ok": True, "counters": counters, "validation_errors": validation_errors})
 
 # Focused baseline assessment. Legacy onboarding endpoints remain available for
 # historical callers; this endpoint never deletes their contacts or assessments.
 import json
 import uuid
-from pathlib import Path as FilePath
 from pydantic import Field, ConfigDict
+from framework_catalog import ROOT as CATALOG_ROOT
 
-BASELINE_CATALOG = json.loads(FilePath(__file__).with_name('onboarding_catalog.json').read_text())
+BASELINE_CATALOG = json.loads((CATALOG_ROOT / 'onboardingCatalog.json').read_text(encoding='utf-8'))
 
 
 class BaselineState(BaseModel):
@@ -548,11 +577,26 @@ async def baseline_state(client_id: str, user: Dict = Depends(get_current_user))
 
 @router.post('/onboarding/baseline')
 @configuration_mutation
-async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_user)):
+async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_user),
+                        idempotency_key: Optional[str] = Header(default=None)):
+    import server
+    await _baseline_client(body.client_id, user, writable=True)
+    if body.finalize:
+        return await onboarding_recovery.run(
+            server.db, idempotency_key, user, body.client_id, '/onboarding/baseline', body.model_dump(exclude_unset=True),
+            lambda identity: _prepare_baseline(body, user, identity), audit,
+            lambda identity, plan: _finish_baseline(identity, plan, user))
+    plan = await _prepare_baseline(body, user, None)
+    await _finish_baseline(None, plan, user)
+    return plan['result']
+
+
+async def _prepare_baseline(body, user, identity):
     import server
     import framework_governance
     cid = body.client_id
     client = await _baseline_client(cid, user, writable=True)
+    plan = onboarding_recovery.OnboardingPlan(identity, cid)
     from client_profile import recorded_baseline
     previous_baseline=await recorded_baseline(server,client)
     server._require_snapshot(body.model_dump(exclude_unset=True),client.get('onboarding_baseline') or {})
@@ -575,8 +619,8 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
     if body.finalize:
         import shared_review_plans
         try:
-            for plan in shared_review_plans.selected_plans(state):
-                shared_review_plans.shared_config(state,plan)
+            for review_plan in shared_review_plans.selected_plans(state):
+                shared_review_plans.shared_config(state,review_plan)
         except ValueError as error:
             raise HTTPException(422,str(error)) from error
         if body.expected_records is None:
@@ -610,34 +654,59 @@ async def save_baseline(body: BaselineSave, user: Dict = Depends(get_current_use
                 if old:
                     if any(old.get(k)!=v for k,v in updates.items() if k!='updated_at'):
                         updates['updated_at']=server._next_write_time(old.get('updated_at'))
-                        changed=await server.db[group].update_one({id_field: old[id_field], 'client_id': cid,'updated_at':old.get('updated_at')}, {'$set': updates})
-                        if not changed.matched_count:raise HTTPException(409,'A setup record changed; reload before saving')
+                        plan.update(group, id_field, old, updates)
                 else:
                     stable_id = 'baseline_' + uuid.uuid5(uuid.NAMESPACE_URL, f'grc:{cid}:{group}:{item["key"]}').hex
                     defaults = {id_field: stable_id, 'client_id': cid, 'title': item['name'], 'category': item['category'], 'created_at': _now(), 'created_by': user['user_id']}
                     if group == 'reviews':
                         defaults.update({'review_type': item['review_type'], 'source': 'GRC Program Onboarding', 'status': 'needs_scheduling', 'due_date': None, 'next_review_date': None, 'recurrence': None, 'owner_id': None})
-                    # The unique Mongo _id makes concurrent retries safe for new records.
-                    await server.db[group].update_one({'_id': stable_id}, {'$set': updates, '$setOnInsert': defaults}, upsert=True)
-        if state['version']>=3:
-            await framework_governance.reconcile(server,cid,state,user)
-        await audit(user, 'onboarding-complete', 'client', cid, cid, meta={'baseline_version': state['version'], 'selected_reviews': len(state['reviews'])})
+                    plan.insert(group, id_field, {**defaults, **updates})
+        plan.audit('onboarding-complete', 'client', cid, meta={'baseline_version': state['version'], 'selected_reviews': len(state['reviews'])})
     state['completed'] = bool(body.finalize or previous_baseline)
     state['updated_at'] = server._next_write_time((client.get('onboarding_baseline') or {}).get('updated_at'))
-    if previous_baseline and not client.get('initial_program_baseline'):
-        await server.db.clients.update_one({'client_id':cid,'initial_program_baseline':{'$exists':False}},
-            {'$set':{'initial_program_baseline':previous_baseline}})
-    # Capture only the first completion. Existing completed clients retain their
-    # legacy intake, without inventing historical counts or a completion date.
-    if body.finalize and not previous_baseline:
-        snapshot = {'state': state, 'completed_at': state['updated_at'], 'completed_by': user['user_id'],
-                    'primary_contact_id': client.get('primary_contact_id'), 'assigned_owner_id': client.get('assigned_owner_id'),
-                    'policies': await server.db.policies.count_documents({'client_id':cid}),
-                    'reviews': await server.db.reviews.count_documents({'client_id':cid})}
-        await server.db.clients.update_one({'client_id':cid,'initial_program_baseline':{'$exists':False}},
-                                          {'$set':{'initial_program_baseline':snapshot}})
-    await server.db.clients.update_one({'client_id': cid}, {'$set': {'onboarding_baseline': state}})
-    return state
+    return plan.document(state, finalize=body.finalize, previous_baseline=previous_baseline,
+                         client={key: client.get(key) for key in ('primary_contact_id', 'assigned_owner_id', 'initial_program_baseline')},
+                         expected_updated_at=(client.get('onboarding_baseline') or {}).get('updated_at'))
+
+
+async def _finish_baseline(identity, plan, user):
+    import server
+    import framework_governance
+    cid, state = plan['client_id'], plan['result']
+    receipt = await server.db.create_requests.find_one({'_id': identity}) if identity else {}
+    if plan['finalize'] and not receipt.get('onboarding_reconciled'):
+        client = await server.db.clients.find_one({'client_id': cid})
+        if (client.get('onboarding_baseline') or {}).get('updated_at') not in (plan['expected_updated_at'], state['updated_at']):
+            raise HTTPException(409, 'Program configuration changed during onboarding recovery; reload to reconcile it')
+        if state['version'] >= 3:
+            await framework_governance.reconcile(server, cid, state, user)
+        await server.db.create_requests.update_one({'_id': identity}, {'$set': {'onboarding_reconciled': True}})
+    completion = receipt.get('onboarding_completion')
+    if completion is None:
+        updates = {'onboarding_baseline': state}
+        if not plan['client'].get('initial_program_baseline'):
+            if plan['previous_baseline']:
+                updates['initial_program_baseline'] = plan['previous_baseline']
+            elif plan['finalize']:
+                updates['initial_program_baseline'] = {
+                    'state': state, 'completed_at': state['updated_at'], 'completed_by': user['user_id'],
+                    'primary_contact_id': plan['client']['primary_contact_id'], 'assigned_owner_id': plan['client']['assigned_owner_id'],
+                    'policies': await server.db.policies.count_documents({'client_id': cid}),
+                    'reviews': await server.db.reviews.count_documents({'client_id': cid})}
+        completion = onboarding_recovery.OnboardingPlan(identity, cid)
+        completion.update('clients', 'client_id', {'client_id': cid, 'updated_at': plan['expected_updated_at']},
+                          updates, version_field='onboarding_baseline.updated_at')
+        completion = completion.rows
+        if identity:
+            await server.db.create_requests.update_one({'_id': identity}, {'$set': {'onboarding_completion': completion}})
+    if identity:
+        await onboarding_recovery.apply_rows(server.db, identity, completion, cid, offset=len(plan['rows']))
+    else:
+        # Draft saves keep normal optimistic concurrency and never create receipts.
+        changed = await server.db.clients.update_one(
+            {'client_id': cid, 'onboarding_baseline.updated_at': plan['expected_updated_at']}, {'$set': completion[0]['values']})
+        if not changed.matched_count:
+            raise HTTPException(409, 'Record changed since it was opened; reload before saving')
 
 
 @router.get('/onboarding/handoff')
@@ -651,7 +720,7 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
     client = await _baseline_client(client_id, user)
     from client_profile import recorded_baseline
     completed=await recorded_baseline(server,client) is not None
-    fields = json.loads((framework_governance.ROOT / 'onboardingHandoffFields.json').read_text())
+    fields = json.loads((CATALOG_ROOT / 'onboardingHandoffFields.json').read_text(encoding='utf-8'))
 
     async def rows(kind, names):
         result = await server.db[kind].find({'client_id': client_id}, {'_id': 0, **dict.fromkeys(names, 1)}).to_list(2001)

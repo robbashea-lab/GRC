@@ -39,6 +39,7 @@ def view(vendor, reviews):
         result['status'] = 'inactive'
         result['legacy_status'] = 'terminated'
     result['service'] = vendor.get('service') or vendor.get('services')
+    result['contract_expiration'] = vendor.get('contract_expiration') or vendor.get('contract_end')
     linked = [r for r in reviews if r.get('vendor_id') == vendor['vendor_id'] and r.get('client_id') == vendor['client_id']]
     primary = [r for r in linked if r.get('vendor_purpose', 'vendor') == 'vendor']
     if primary:

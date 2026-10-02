@@ -1,5 +1,5 @@
 import axios from "axios";
-import { previewAdapter } from "./adapter";
+import { previewAdapter } from "./commandTestAdapter";
 import { loadClientDashboard } from "../lib/loadClientDashboard";
 const api = axios.create({
   adapter: previewAdapter
@@ -47,8 +47,11 @@ test("portfolio and every sample client load through the real dashboard loader",
       include_archived: "false"
     }
   });
-  expect(directory.clients.length).toBe(2);
+  expect(directory.clients.map(client => client.client_id).sort()).toEqual(['demo_brawndo','demo_dunder','demo_prestige']);
   expect(directory.portfolio).toBeTruthy();
+  for (const metric of ['past_due','due_30d','due_31_90d','critical_high_open','unassigned']) {
+    expect(directory.portfolio[metric]).toBe(directory.clients.reduce((total, client) => total + client[metric], 0));
+  }
   expect(Array.isArray(directory.attention_queue)).toBe(true);
   for (const client of (await api.get("/clients")).data) {
     const result = await loadClientDashboard(api, {
@@ -130,7 +133,7 @@ test('new clients initialize empty, persist, edit/archive/restore, and reset', a
   });
   expect((await reloaded.get('/clients')).data.some(r => r.name === 'Renamed')).toBe(true);
   await api.post('/demo/reset');
-  expect((await api.get('/clients')).data).toHaveLength(2);
+  expect((await api.get('/clients')).data.map(client => client.client_id).sort()).toEqual(['demo_brawndo','demo_dunder','demo_prestige']);
 });
 test('onboarding draft and finalization survive client switching without duplicating or crossing tenants', async () => {
   await api.post('/demo/enter');

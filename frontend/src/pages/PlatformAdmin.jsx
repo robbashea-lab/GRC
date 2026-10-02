@@ -3,7 +3,7 @@ import UserAssignments from '@/components/UserAssignments';
 import { invitationFeedback } from '@/lib/invitationFeedback';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api, { formatError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/PageHeader";
@@ -39,18 +39,22 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   const pendingAssignment = useRef(null);
   const [clients, setClients] = useState([]);
   const [loadedScope, setLoadedScope] = useState(null);
+  const loadSequence = useRef(0);
 
-  async function load() {
+  const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
+    if (scope !== "platform" && !clientId) { setUsers([]); setLoadedScope(null); setLoading(false); return; }
     setLoading(true);
     try {
       const path = scope === "client" ? `/clients/${clientId}/members` : "/users";
       const { data } = await api.get(path);
+      if (sequence !== loadSequence.current) return;
       setUsers(data);
       setLoadedScope(`${scope}:${clientId}`);
-    } catch (e) { toast.error(formatError(e)); }
-    finally { setLoading(false); }
-  }
-  useEffect(() => { if (scope === "platform" || clientId) load(); /* eslint-disable-next-line */ }, [scope, clientId]);
+    } catch (e) { if (sequence === loadSequence.current) toast.error(formatError(e)); }
+    finally { if (sequence === loadSequence.current) setLoading(false); }
+  }, [scope, clientId]);
+  useEffect(() => { const generation=loadSequence; load(); return () => { generation.current++; }; }, [load]);
   useEffect(() => { (async () => { try { const { data } = await api.get("/clients"); setClients(data); } catch { setClients([]); } })(); }, []);
 
   const presetRows = useMemo(() => {

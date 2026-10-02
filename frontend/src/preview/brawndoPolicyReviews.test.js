@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {readStore} from './store';
 import {buildDemoStore} from './demoSeed';
 import {ids} from './store';

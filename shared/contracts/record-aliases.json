@@ -1,0 +1,11 @@
+[
+  {"name":"legacy service","kind":"vendors","body":{"services":"Hosted CRM"},"expected":{"service":"Hosted CRM"}},
+  {"name":"same service twice","kind":"vendors","body":{"service":"Hosted CRM","services":"Hosted CRM"},"expected":{"service":"Hosted CRM"}},
+  {"name":"conflicting service","kind":"vendors","body":{"service":"Hosted CRM","services":"Other"},"error":422},
+  {"name":"legacy expiration","kind":"vendors","body":{"contract_end":"2028-02-29"},"expected":{"contract_expiration":"2028-02-29"}},
+  {"name":"conflicting expiration","kind":"vendors","body":{"contract_end":"2028-02-29","contract_expiration":"2029-02-28"},"error":422},
+  {"name":"explicit clear","kind":"vendors","body":{"contract_end":null},"expected":{"contract_expiration":null}},
+  {"name":"canonical clear owns existing alias","kind":"vendors","body":{"contract_expiration":null},"existing":{"contract_end":"2028-02-29"},"expected":{"contract_expiration":null,"contract_end":null}},
+  {"name":"unrelated edit retains legacy","kind":"vendors","body":{"notes":"Note"},"existing":{"services":"Old"},"expected":{"notes":"Note"}},
+  {"name":"unrelated kind unchanged","kind":"tasks","body":{"assignee_id":"member"},"expected":{"assignee_id":"member"}}
+]

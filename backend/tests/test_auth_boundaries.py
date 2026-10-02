@@ -1,3 +1,4 @@
+import base64
 import secrets
 import unittest
 import test_client_dashboard_sources as harness
@@ -5,6 +6,11 @@ import test_client_dashboard_sources as harness
 
 class AuthBoundaryTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = harness.ClientDashboardSourcesTests.asyncSetUp
+
+    async def test_deeply_nested_unsigned_header_is_rejected_as_unauthenticated(self):
+        header = base64.urlsafe_b64encode(b'[' * 1200).rstrip(b'=').decode()
+        response = await self.client.get('/api/auth/me', headers={'Authorization': 'Bearer ' + header + '.e30.eA'})
+        self.assertEqual(response.status_code, 401, response.text)
 
     async def test_registration_rejects_empty_short_and_bcrypt_overflow_without_creating_account(self):
         for value in ["", "x"*7, "é"*7, "x"*73, "é"*37]:

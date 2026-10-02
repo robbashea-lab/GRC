@@ -1,13 +1,14 @@
-import {recordUuid} from '@/lib/recordUuid';
 import {readEvidenceFile as fileToBase64} from '@/lib/evidenceFile';
-import {RiskCategoryField,RiskTreatmentField,RiskSummary} from './BrawndoRiskFields';
+import {RiskCategoryField,RiskSummary} from './BrawndoRiskFields';
+import {RiskAssessmentPanel,RiskTreatmentPanel,RiskHistoryPanel} from './RiskRecordPanels';
+import {DateReadonly} from './RegisterCells';
 import {pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
 import {policyStatus,nextPolicyReview} from '@/lib/brawndoPolicies';
 import BrawndoPolicyDetails,{PolicyStatusField} from './BrawndoPolicyDetails';
 import VendorGovernancePanel from "./VendorGovernancePanel";
 import BrawndoVendorDetails from './BrawndoVendorDetails';
 import AssigneeSelect from "./AssigneeSelect";
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {ClientPresentationContext} from './ClientSurface';
 import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -19,17 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import api, { formatError } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
-import { X, ArrowUpRight, Zap, UploadCloud, CheckCircle2, ShieldCheck, CalendarPlus, Users2 } from "lucide-react";
-import PolicyApprovalPanel from './PolicyApprovalPanel';
+import { X, ArrowUpRight, Zap, UploadCloud, ShieldCheck } from "lucide-react";
+import PolicyWorkflowPanel from './PolicyWorkflowPanel';
 import { Link } from "react-router-dom";
 import { SCHEMAS } from "@/lib/schemas";
-import rules from "@/lib/grcRules.json";
 import {RiskSourceFields,RiskScheduleFields} from "./RiskGovernanceFields";
 import {riskLevel} from "@/lib/grcWork";
 import {displayDay} from "@/lib/managementDates";
@@ -61,21 +60,6 @@ const ID_FIELD = {
   contacts: "contact_id", requirements: "requirement_id",
 };
 
-const LIKELIHOOD_LABELS = { 1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely", 5: "Almost Certain" };
-const IMPACT_LABELS = { 1: "Minimal", 2: "Minor", 3: "Moderate", 4: "Major", 5: "Severe" };
-const LEVEL_TONE = {
-  critical: "bg-semantic-critical-bg text-semantic-critical border-semantic-critical-border",
-  high: "pill-high",
-  moderate: "pill-moderate",
-  low: "bg-surface-subtle text-ink-secondary border-line",
-};
-const DATA_TYPES = ["No Sensitive Data", "Internal", "Confidential", "PII", "PHI", "Financial",
-  "Customer Data", "Employee Data", "Credentials", "Source Code / IP", "Operational Data", "Other"];
-const DATA_RELATIONSHIPS = ["Stores", "Processes", "Transmits", "Accesses", "Hosts", "None"];
-
-function levelFromScore(s) {
-  return riskLevel(s);
-}
 
 const TABS_BY_KIND = {
   risks: [
@@ -132,9 +116,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const createRecord = useCreateIntent((...args) => api.post(...args), `${clientId}:${kind}`);
   const [decisionOpen, setDecisionOpen] = useState(false);
   const [decisionForm, setDecisionForm] = useState({});
-  const [findingOpen, setFindingOpen] = useState(false);
   const [relatedDrawer, setRelatedDrawer] = useState(null);
-  const [findingForm, setFindingForm] = useState({});
   const [tab, setTab] = useState("overview");
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -144,7 +126,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [relatedError,setRelatedError]=useState('');
   const [relatedLoading,setRelatedLoading]=useState(false);
   const [taskCompletion,setTaskCompletion]=useState(null);
-  const [policyOptions, setPolicyOptions] = useState([]);
   const [evidenceItems, setEvidenceItems] = useState([]);
   const [evidenceVersion,setEvidenceVersion]=useState(0);
   const [riskHistory,setRiskHistory] = useState([]);
@@ -190,13 +171,11 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     const generation = loadGeneration;
     generation.current++;
     if (open) {
-      setRelatedDrawer(null); setFindingOpen(false);setTaskCompletion(null);setRelatedError('');
-      if (kind === "reviews") api.get("/policies", { params: { client_id: record?.client_id || clientId } }).then(({data}) => setPolicyOptions(data)).catch(() => setPolicyOptions([]));
+      setRelatedDrawer(null);setTaskCompletion(null);setRelatedError('');
       setComments([]); setActivity([]); setRelated({}); setEvidenceItems([]);
       const base = {};
       (schema || []).forEach((f) => {
         let v = record?.[f.name] ?? f.default ?? "";
-        if (kind === "reviews" && record?.status === "needs_scheduling" && f.name === "recurrence" && !record.recurrence) v = "";
         if (f.type === "date" && typeof v === "string" && v.length > 10) v = v.slice(0, 10);
         base[f.name] = v;
       });
@@ -362,7 +341,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     if(pilot&&newComment.trim()){toast.error('Post or discard the unfinished comment before saving or completing this item.');return;}
     const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
     if (missing) { toast.error(`${missing.label} is required`); return; }
-    if (kind === "reviews" && isEdit && form.status === "completed" && record.status !== "completed") return completeReview();
     setSaving(true);
     try {
       const clean = cleanForm();
@@ -412,43 +390,18 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     } catch (e) { toast.error(formatError(e)); }
   }
 
-  async function quickCreateFinding() {
-    setFindingForm({ request_id: recordUuid(), title: "", description: "", severity: "medium", owner_id: record.owner_id || "", due_date: "", remediation_title: "", remediation_plan: "" });
-    setFindingOpen(true);
-  }
-
-  async function saveReviewFinding(event) {
-    event.preventDefault();
-    if (saving) return;
-    setSaving(true);
-    try {
-      await api.post(`/reviews/${record[idField]}/create-finding`, findingForm);
-      toast.success("Finding and remediation action linked to this review");
-      setFindingOpen(false);
-      onSaved?.(); loadRelated();
-    } catch (e) { toast.error(formatError(e)); }
-    finally { setSaving(false); }
-  }
-
-  async function completeReview() {
-    setDecisionForm({ tested_period: form.period || "", tested_scope: form.scope || "", conclusion: "", no_evidence_reason: "", checklist_confirmed: false });
-    setDecisionOpen(true);
-  }
-
   async function submitDecision(event) {
     event.preventDefault();
     setSaving(true);
     try {
-      if (!(kind === "reviews" && record.status === "completed")) {
-        const { status: ignoredStatus, ...changes } = cleanForm();
-        if (Object.keys(changes).length) {const saved=await api.patch(`/${kind}/${record[idField]}`, {...changes,expected_updated_at:record.updated_at??null});Object.assign(record,saved.data);}
-      }
-      const action = decisionForm.action || (kind === "findings" ? "validate" : record.status === "completed" ? "amend" : "complete");
-      const { data } = await api.post(`/${kind}/${record[idField]}/${action}`, { ...decisionForm, spawn_next: true, expected_updated_at:record.updated_at??null });
-      Object.assign(record, data.review || data);
+      const { status: ignoredStatus, ...changes } = cleanForm();
+      if (Object.keys(changes).length) {const saved=await api.patch(`/${kind}/${record[idField]}`, {...changes,expected_updated_at:record.updated_at??null});Object.assign(record,saved.data);}
+      const action = decisionForm.action || "validate";
+      const { data } = await api.post(`/${kind}/${record[idField]}/${action}`, { ...decisionForm, expected_updated_at:record.updated_at??null });
+      Object.assign(record, data);
       setForm(p => ({ ...p, status: record.status }));
       setDecisionOpen(false);
-      toast.success(action === "complete" ? "Review completed; evidence and outcome preserved" : action === "amend" ? "Amendment recorded" : action === "validate" ? "Remediation validated and closed" : "Decision recorded");
+      toast.success(action === "validate" ? "Remediation validated and closed" : "Decision recorded");
       onSaved?.();
       loadRelated();
     } catch (e) { toast.error(formatError(e)); }
@@ -603,10 +556,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
 
   const relatedTotal = Object.values(related).reduce((a, b) => a + (b?.length || 0), 0);
-  const isPolicy = kind === "policies";
   const status = form.status || record?.status;
   const liveScore = (parseInt(form.likelihood_score) || 0) * (parseInt(form.impact_score) || 0);
-  const liveLevel = levelFromScore(liveScore || null);
+  const liveLevel = riskLevel(liveScore || null);
 
   function renderField(f) {
     if(policyPilot&&f.name==='status')return <PolicyStatusField key="status" record={{...record,...form}} disabled={!canWrite||record?.status==='in_review'||!!clientFields&&!clientFields.has('status')} onChange={value=>setForm(p=>({...p,status:value,...(p.presence==='reported_missing'&&value==='draft'?{presence:'needs_confirmation'}:{})}))}/>;
@@ -634,14 +586,12 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <Label className="text-xs text-ink-secondary">{f.label}{f.required && <span className="text-semantic-critical ml-0.5">*</span>}</Label>
         {f.type === "textarea" ? (
           <Textarea value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
-        ) : f.type === "policy" ? (
-          <Select value={form[f.name] || "__none__"} onValueChange={v => setForm(p => ({ ...p, [f.name]: v }))}><SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`}><SelectValue placeholder="Related policy" /></SelectTrigger><SelectContent><SelectItem value="__none__">No linked policy</SelectItem>{policyOptions.map(p => <SelectItem key={p.policy_id} value={p.policy_id}>{p.title}</SelectItem>)}</SelectContent></Select>
         ) : f.type === "select" ? (
           <Select value={form[f.name] || ""} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
             <SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
               {kind === "risks" && f.name === "category" && form.category && !f.options?.some(o => o.value === form.category) && <SelectItem value={form.category}>{form.category} (recorded)</SelectItem>}
-              {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value} disabled={o.value !== record?.[f.name] && (f.name === "status" && ({policies:['approved'],findings:['closed','accepted','remediated'],risks:['accepted','closed','retired'],reviews:['completed'],exceptions:['approved']}[kind] || []).includes(o.value) || f.name === "presence" && o.value === "verified_existing" && record?.presence !== o.value)}>{o.label}</SelectItem>)}
+              {(f.options || []).map((o) => <SelectItem key={o.value} value={o.value} disabled={o.value !== record?.[f.name] && (f.name === "status" && ({policies:['approved'],findings:['closed','accepted','remediated'],risks:['accepted','closed','retired'],exceptions:['approved']}[kind] || []).includes(o.value) || f.name === "presence" && o.value === "verified_existing" && record?.presence !== o.value)}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
         ) : f.type === "user" && !["linked_user_id", "approver_id"].includes(f.name) ? (
@@ -666,145 +616,27 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return names.map((n) => map[n] ? renderField(map[n]) : null);
   }
 
-  function DateReadonly({ value, label }) {
-    return (
-      <div className="space-y-1">
-        <Label className="text-xs text-ink-secondary">{label}</Label>
-        <div className="text-sm font-mono text-ink-primary">{value ? new Date(String(value).slice(0, 10) + "T00:00:00").toLocaleDateString() : <span className="text-ink-help">—</span>}</div>
-      </div>
-    );
+
+  async function openRiskActionPicker() {
+    const generation=loadGeneration.current;
+    try {
+      const {data}=await api.get("/tasks",{params:{client_id:clientId}});
+      if(generation===loadGeneration.current) setLinkTask({options:data.filter(t=>t.client_id===clientId&&!(related.tasks||[]).some(x=>x.task_id===t.task_id)),task_id:""});
+    } catch(e) { toast.error(formatError(e)); }
   }
 
-  // -------- Risk tab renderers --------
-  function renderRiskAssessment() {
-    return (
-      <fieldset disabled={riskPilot&&(!canWrite||!isPlatformAdmin)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs text-ink-secondary">Likelihood (1–5)</Label>
-            <Select value={String(form.likelihood_score || "")} onValueChange={(v) => setForm({ ...form, likelihood_score: parseInt(v) })}>
-              <SelectTrigger data-testid="field-likelihood_score" className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n} · {LIKELIHOOD_LABELS[n]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Impact (1–5)</Label>
-            <Select value={String(form.impact_score || "")} onValueChange={(v) => setForm({ ...form, impact_score: parseInt(v) })}>
-              <SelectTrigger data-testid="field-impact_score" className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n} · {IMPACT_LABELS[n]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 py-2 px-3 border border-line rounded-md bg-surface-subtle" data-testid="risk-live-score">
-          <div className="text-xs font-mono uppercase tracking-widest text-ink-help">{riskPilot?"Current assessed risk":"Calculated"}</div>
-          <div className="font-mono text-sm text-ink-primary">Score {liveScore || "—"}</div>
-          <span className="text-ink-help">→</span>
-          {liveLevel ? (
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium capitalize ${LEVEL_TONE[liveLevel]}`}>{liveLevel}</span>
-          ) : <span className="text-ink-help text-xs">select both</span>}
-        </div>
-        <div>
-          <Label className="text-xs text-ink-secondary">Impact description</Label>
-          <Textarea value={form.impact_description || ""} onChange={(e) => setForm({ ...form, impact_description: e.target.value })} rows={3} className="text-sm" data-testid="field-impact_description" />
-        </div>
-        {["likelihood_rationale","impact_rationale","assessment_rationale"].map(key=><div key={key}><Label>{key.replaceAll("_"," ")}</Label><Textarea aria-label={key.replaceAll("_"," ")} value={form[key]||""} onChange={e=>setForm({...form,[key]:e.target.value})}/></div>)}
-      </fieldset>
-    );
-  }
-
-  function renderRiskTreatment() {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h3 className="font-medium text-sm mb-2">Remediation Action Items</h3>
-          {(related.tasks||[]).map(t=><button className="block w-full text-left text-sm border border-line rounded-md p-2 mb-2" key={t.task_id} onClick={()=>setRelatedDrawer({kind:"tasks",record:t})}>{t.title} · {actionStatus(t.status)}</button>)}
-          {!related.tasks?.length&&<p className="text-sm text-ink-secondary mb-2">No linked remediation work yet.</p>}
-          {canWrite&&<Button size="sm" variant="outline" className="mb-4" onClick={()=>setRelatedDrawer({kind:"tasks",record:null,initialValues:{source_type:"risk",source_id:record.risk_id,assignee_id:record.owner_id||null}})}>Create Action Item</Button>}
-          {canWrite&&!riskPilot&&<Button size="sm" variant="outline" className="mb-4 ml-2" onClick={async()=>{try{const {data}=await api.get("/tasks",{params:{client_id:clientId}});setLinkTask({options:data.filter(t=>!(related.tasks||[]).some(x=>x.task_id===t.task_id)),task_id:""});}catch(e){toast.error(formatError(e));}}}>Link existing Action Item</Button>}
-          {riskPilot?<RiskTreatmentField form={form} setForm={setForm} disabled={!canWrite||!!clientFields&&!clientFields.has("treatment")}/>:<><Label className="text-xs text-ink-secondary">Treatment strategy</Label>
-          <Select value={form.treatment || ""} onValueChange={(v) => setForm({ ...form, treatment: v })}>
-            <SelectTrigger data-testid="field-treatment" className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
-            <SelectContent>
-              {["mitigate", "accept", "transfer", "avoid", "monitor"].map((t) => (
-                <SelectItem key={t} value={t} disabled={t === 'accept' && record?.treatment !== 'accept'}>{t[0].toUpperCase() + t.slice(1)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select></>}
-        </div>
-        <div>
-          <Label className="text-xs text-ink-secondary">Acceptance rationale</Label>
-          <Textarea readOnly value={record?.acceptance_rationale || ""} rows={3} className="text-sm" data-testid="field-acceptance_rationale" />
-          <p className="text-xs text-ink-secondary">Recorded by the acceptance action; renew acceptance to record a new decision.</p>
-        </div>
-        <div>
-          <Label className="text-xs text-ink-secondary">Compensating controls</Label>
-          <Textarea disabled={riskPilot&&(!canWrite||!isPlatformAdmin)} value={form.compensating_controls || ""} onChange={(e) => setForm({ ...form, compensating_controls: e.target.value })} rows={3} className="text-sm" data-testid="field-compensating_controls" />
-        </div>
-        <div>
-          <Label className="text-xs text-ink-secondary">Notes / mitigation plan</Label>
-          <Textarea disabled={riskPilot&&!canWrite} value={form.notes || ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className="text-sm" data-testid="field-notes" />
-          {riskPilot&&record?.treatment_plan&&<p className="text-sm mt-2 whitespace-pre-wrap">Recorded treatment plan: {record.treatment_plan}</p>}
-        </div>
-        {record?.acceptance_date && (
-          <div className="border border-line rounded-md p-3 bg-surface-subtle text-xs space-y-1" data-testid="risk-acceptance-info">
-            <div className="text-xs font-mono uppercase tracking-widest text-ink-help">Acceptance</div>
-            <div><span className="text-ink-secondary">Approved by:</span> <span className="text-ink-primary font-medium">{record.accepted_by ? personLabel(users, record.accepted_by) : "—"}</span></div>
-            <div><span className="text-ink-secondary">Accepted on:</span> <span className="font-mono">{displayDay(record.acceptance_date)}</span></div>
-            {record.acceptance_expires_at && <div><span className="text-ink-secondary">Expires:</span> <span className="font-mono">{displayDay(record.acceptance_expires_at)}</span></div>}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  function renderRiskHistory() {
-    const history = record?.rating_history || [];
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <DateReadonly label="Last reviewed" value={record?.last_reviewed} />
-          <DateReadonly label="Next review" value={record?.next_review} />
-          <DateReadonly label="Date identified" value={record?.date_identified} />
-          <DateReadonly label="Created" value={record?.created_at} />
-        </div>
-        <div>
-          <h3 className="text-sm font-medium mb-2">Completed Risk Reviews</h3>
-          {!riskHistory.length&&<p className="text-sm text-ink-secondary">No completed Risk Reviews recorded.</p>}
-          {riskHistory.map(o=><button key={o.occurrence_id} className="block w-full text-left border border-line rounded-md p-3 mb-2 text-sm" onClick={async()=>{const {data}=await api.get("/reviews",{params:{client_id:clientId}});const r=data.find(r=>r.review_id===o.review_id);if(r)setRelatedDrawer({kind:"reviews",record:r,initialValues:{occurrence:o}});}}><strong>{o.period}</strong><div>Scheduled {o.due_date?.slice(0,10)} · Completed {o.completed_at?.slice(0,10)} · {o.completed_by_name||personLabel(users,o.completed_by,'Not recorded')}</div><div>{o.outcome}</div></button>)}
-          <div className="text-xs font-mono uppercase tracking-widest text-ink-help mb-2 mt-4">Rating history</div>
-          {history.length === 0 ? (
-            <div className="text-sm text-ink-muted">No rating changes recorded yet.</div>
-          ) : (
-            <ul className="space-y-2" data-testid="risk-rating-history">
-              {[...history].reverse().map((h, i) => (
-                <li key={i} className="border border-line rounded-md p-3 text-xs">
-                  <div className="flex justify-between mb-1">
-                    <span className="font-medium text-ink-primary">{h.by_name || personLabel(users, h.by, 'Not recorded')}</span>
-                    <span className="font-mono text-ink-help">{new Date(h.at).toLocaleString()}</span>
-                  </div>
-                  <div className="text-ink-secondary">
-                    Likelihood {h.prev_likelihood ?? "—"} → <strong>{h.new_likelihood ?? "—"}</strong> · Impact {h.prev_impact ?? "—"} → <strong>{h.new_impact ?? "—"}</strong>
-                    {h.prev_score != null && <span className="text-ink-help ml-2">prev score {h.prev_score}</span>}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    );
+  async function openRiskOccurrence(occurrence) {
+    const generation=loadGeneration.current;
+    try {
+      const {data}=await api.get("/reviews",{params:{client_id:clientId}});
+      if(generation!==loadGeneration.current)return;
+      const review=data.find(r=>r.review_id===occurrence.review_id&&r.client_id===clientId);
+      if(!review)throw new Error('The original Risk Review is unavailable for this client.');
+      setRelatedDrawer({kind:"reviews",record:review,initialValues:{occurrence}});
+    } catch(e) { toast.error(formatError(e)); }
   }
 
   // -------- Vendor tab renderers --------
-  function toggleArrayValue(fieldName, value) {
-    const arr = new Set(form[fieldName] || []);
-    arr.has(value) ? arr.delete(value) : arr.add(value);
-    setForm({ ...form, [fieldName]: Array.from(arr) });
-  }
 
   function vendorPanel(section) {
     const Panel=vendorPilot?BrawndoVendorDetails:VendorGovernancePanel;
@@ -838,56 +670,16 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     // Default: use full schema
     return (
       <div className="space-y-4">
-        {kind === "reviews" && renderReviewActionsPanel()}
         {kind === "findings" && renderFindingActionsPanel()}
         {kind === 'findings' && isEdit && <section className="space-y-2 text-sm" aria-label="Corrective actions"><h3 className="font-medium">Corrective Actions</h3><p className="text-ink-secondary">Work completion is followed by separate Finding validation.</p>{relatedError?<p role="alert">Corrective actions could not be loaded: {relatedError}</p>:relatedLoading?<p>Loading corrective actions…</p>:<CorrectiveActions assignmentLabel={pilot?'Assigned To':'Owner'} actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users} onOpen={task=>openLinkedRecord({kind:'tasks',record:task})}/>}</section>}
         {policyPilot&&<BrawndoPolicyDetails record={record||form} related={related} users={users} onOpen={openLinkedRecord}/>}
         {['policies','findings'].includes(kind)&&record&&!policyPilot&&<RequirementBasis kind={kind} record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/>}
         {kind === "policies" && !policyPilot && <><GovernanceContextFields value={form.governance_context} cadence disabled={!canWrite} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{renderPolicyPanel()}</>}
         {kind === "exceptions" && isEdit && isPlatformAdmin && record.status !== "approved" && <Button onClick={() => { setDecisionForm({action:'approve',rationale:''}); setDecisionOpen(true); }}>Approve exception</Button>}
-        {kind === "reviews" && record?.status === "completed" && <div className="rounded-md border border-line p-4 space-y-2 text-sm" data-testid="review-outcome">
-          {record.completion_snapshot ? <><p>Completed by {personLabel(users, record.completion_snapshot.by, 'Not recorded')} · {record.completion_snapshot.at?.slice(0,10)}</p><p>Period: {record.completion_snapshot.tested_period}</p><p>Examined: {record.completion_snapshot.tested_scope}</p><p className="whitespace-pre-wrap">Conclusion: {record.completion_snapshot.conclusion}</p><p>{record.completion_snapshot.evidence?.length || 0} preserved evidence version(s){record.completion_snapshot.no_evidence_reason ? ` · ${record.completion_snapshot.no_evidence_reason}` : ''}</p></> : <p>Historical completion: structured outcome and decision provenance were not captured.</p>}
-          {(record.amendments || []).map((a,i) => <p key={i}>Amendment · {a.at?.slice(0,10)} · {personLabel(users, a.by, 'Not recorded')}: {a.rationale}</p>)}
-        </div>}
         {!policyPilot&&!!record?.decision_history?.length && <div className="rounded-md border border-line p-3 text-sm space-y-2">{record.decision_history.map((d,i) => <p key={i}>{d.action?.replaceAll('_',' ')} · {personLabel(users, d.by || d.recorded_by, 'Not recorded')} · {(d.at || d.recorded_at)?.slice(0,10)}{d.rationale ? `: ${d.rationale}` : ''}{d.provenance ? ` · ${d.provenance}` : ''}</p>)}</div>}
         {policyPilot&&approvalDirty&&<p className="text-xs text-ink-secondary">Save the unfinished approval details before editing Policy fields.</p>}
-        <fieldset disabled={kind === "reviews" && record?.status === "completed"||policyPilot&&(record?.status==='in_review'||approvalDirty)} className="record-fields">{(schema || []).filter(f=>!policyPilot||['title','category','status','version','owner_id',...(isEdit?['approved_at','last_reviewed_at','next_review_date']:[])].includes(f.name)).map((f) => renderField(f))}</fieldset>
+        <fieldset disabled={policyPilot&&(record?.status==='in_review'||approvalDirty)} className="record-fields">{(schema || []).filter(f=>!policyPilot||['title','category','status','version','owner_id',...(isEdit?['approved_at','last_reviewed_at','next_review_date']:[])].includes(f.name)).map((f) => renderField(f))}</fieldset>
         {policyPilot&&(!isEdit?<p className="text-sm text-ink-secondary">Create the Policy to upload or link its document in Evidence. No review or approval date will be manufactured.</p>:<>{renderPolicyPanel()}<details className="text-sm border-t border-line pt-3"><summary className="cursor-pointer font-medium">Linked records{relatedTotal?` (${relatedTotal})`:''}</summary><div className="pt-3">{relatedError?<p role="alert">{relatedError}</p>:renderRelated()}</div></details>{[record.onboarding_note,record.applicability_rationale,record.governance_context?.cadence_rationale].some(Boolean)&&<details className="text-sm"><summary className="cursor-pointer">Retained policy context</summary>{[record.onboarding_note,record.applicability_rationale,record.governance_context?.cadence_rationale].filter(Boolean).map((text,i)=><p className="mt-2 whitespace-pre-wrap" key={i}>{text}</p>)}</details>}</>)}
-      </div>
-    );
-  }
-
-  function renderReviewActionsPanel() {
-    if (!isEdit) return null;
-    return (
-      <div className="border border-line bg-surface-subtle rounded-md p-3 space-y-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-sm text-ink-primary">
-            <Zap className="h-4 w-4 text-ink-secondary" /> Review actions
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {canWrite && ["needs_scheduling", "upcoming"].includes(record?.status) && <Button size="sm" variant="outline" data-testid="review-start" onClick={async () => {
-              try { const {data}=await api.patch(`/reviews/${record[idField]}`, { status: "in_progress", expected_updated_at:record.updated_at??null }); Object.assign(record,data); setForm(p => ({ ...p, status: "in_progress" })); onSaved?.(); toast.success("Review started"); }
-              catch (e) { toast.error(formatError(e)); }
-            }}>Start review</Button>}
-            {canWrite && record?.status !== "completed" && record?.status !== "cancelled" && (
-              <Button size="sm" onClick={completeReview} data-testid="review-complete">
-                <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark complete
-              </Button>
-            )}
-            {canWrite && (
-              <Button size="sm" variant="outline" onClick={quickCreateFinding} data-testid="quick-create-finding">
-                Raise finding
-              </Button>
-            )}
-          </div>
-        </div>
-        {(record?.parent_review_id || record?.next_occurrence_id) && (
-          <div className="pt-2 border-t border-line text-xs text-ink-secondary space-y-1" data-testid="review-lineage">
-            {record?.parent_review_id && <div><span className="font-mono text-ink-help mr-1">previous:</span><span className="font-mono">{record.parent_review_id}</span></div>}
-            {record?.next_occurrence_id && <div><span className="font-mono text-ink-help mr-1">next:</span><span className="font-mono">{record.next_occurrence_id}</span></div>}
-          </div>
-        )}
       </div>
     );
   }
@@ -928,30 +720,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
 
   function renderPolicyPanel() {
-    if (!isEdit) return null;
-    const presence = form.presence || record?.presence;
-    const canVerify = isPlatformAdmin && presence && presence !== "verified_existing" && presence !== "not_applicable";
-    return (
-      <div className="border border-line bg-surface-subtle rounded-md p-3 space-y-2">
-        {!policyPilot&&<div className="flex items-center justify-between">
-          <div className="text-sm text-ink-primary">Approval workflow</div>
-          <div className="flex items-center gap-1.5">
-            {presence && <StatusBadge value={presence} />}
-            <StatusBadge value={status || "draft"} />
-          </div>
-        </div>}
-        {canVerify && (
-          <div className="flex items-center justify-between border-t border-line pt-2">
-            <div className="text-xs text-ink-secondary">Confirm the document and record verified metadata.</div>
-            <Button size="sm" disabled={policyPilot&&(formDirty||approvalDirty)} onClick={() => { setVerifyForm({ version: record?.version || "", owner_id: record?.owner_id || "", approver_id: record?.approver_id || "", approved_at: toDateInput(record?.approved_at), last_reviewed_at: toDateInput(record?.last_reviewed_at), next_review_date: toDateInput(record?.next_review_date), status: ["approved", "in_review", "draft"].includes(record?.status) ? record.status : "draft" }); setVerifyOpen(true); }} data-testid="policy-verify" className="bg-primary hover:bg-primary/90">
-              <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Verify policy
-            </Button>
-          </div>
-        )}
-        {policyPilot&&formDirty&&<p className="text-xs text-ink-secondary">Save Policy edits before changing its approval record.</p>}
-        <fieldset disabled={policyPilot&&(formDirty||!canWrite)}><PolicyApprovalPanel compact={policyPilot} onDraftChange={policyPilot?setApprovalDirty:undefined} record={record} onChanged={data=>{Object.assign(record,data);setForm(p=>{const next={...p,status:data.status,version:data.version,approved_at:toDateInput(data.approved_at)};if(policyPilot)initialForm.current=next;return next;});onSaved?.();loadActivity();}}/></fieldset>
-      </div>
-    );
+    return <PolicyWorkflowPanel record={record} form={form} policyPilot={policyPilot} isPlatformAdmin={isPlatformAdmin} canWrite={canWrite} formDirty={formDirty} approvalDirty={approvalDirty} onDraftChange={setApprovalDirty}
+      onVerify={() => { setVerifyForm({ version: record?.version || "", owner_id: record?.owner_id || "", approver_id: record?.approver_id || "", approved_at: toDateInput(record?.approved_at), last_reviewed_at: toDateInput(record?.last_reviewed_at), next_review_date: toDateInput(record?.next_review_date), status: ["approved", "in_review", "draft"].includes(record?.status) ? record.status : "draft" }); setVerifyOpen(true); }}
+      onChanged={data=>{Object.assign(record,data);setForm(p=>{const next={...p,status:data.status,version:data.version,approved_at:toDateInput(data.approved_at)};if(policyPilot)initialForm.current=next;return next;});onSaved?.();loadActivity();}}/>;
   }
 
   // -------- Shared tab renderers --------
@@ -989,7 +760,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   function renderEvidence() {
     return <div className="space-y-4">
       {kind==='tasks'&&!pilot&&<ActionSourceChain record={record} related={related} onOpen={openLinkedRecord}/>}
-        {canWrite && !(kind === "reviews" && record?.status === "completed") && (
+        {canWrite && (
           <div
             data-testid="drawer-evidence-dropzone"
             role="button" tabIndex={0} aria-label="Upload evidence files"
@@ -1057,9 +828,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     if (tab === "activity") return renderActivity();
     // Kind-specific
     if (kind === "risks") {
-      if (tab === "assessment") return renderRiskAssessment();
-      if (tab === "treatment") return renderRiskTreatment();
-      if (tab === "history") return renderRiskHistory();
+      if (tab === "assessment") return <RiskAssessmentPanel form={form} setForm={setForm} riskPilot={riskPilot} canWrite={canWrite} isPlatformAdmin={isPlatformAdmin}/>;
+      if (tab === "treatment") return <RiskTreatmentPanel form={form} setForm={setForm} record={record} users={users} tasks={related.tasks} riskPilot={riskPilot} canWrite={canWrite} isPlatformAdmin={isPlatformAdmin} clientFields={clientFields} onOpen={setRelatedDrawer} onLinkAction={openRiskActionPicker}/>;
+      if (tab === "history") return <RiskHistoryPanel record={record} users={users} riskHistory={riskHistory} onOpenOccurrence={openRiskOccurrence}/>;
       if (tab === "related") return <div className="space-y-4">{renderRelated()}{renderEvidence()}</div>;
     }
     if (kind === "vendors") {
@@ -1149,8 +920,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
         <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${dialogLayout?' flex-wrap shrink-0':''}`}>
           <Button variant="outline" size="sm" onClick={() => pilot?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
-          {kind === "reviews" && record?.status === "completed" && canWrite && <Button size="sm" onClick={() => { setDecisionForm({ rationale: "" }); setDecisionOpen(true); }}>Add amendment</Button>}
-          {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && !(kind === "reviews" && record?.status === "completed") && (
+          {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : vendorPilot?'Add to Register':"Create"}</Button>
           )}
           {riskPilot&&isEdit&&canWrite&&!['closed','retired'].includes(record.status)&&<><Button size="sm" variant="outline" disabled={saving} onClick={markRiskReviewed}>Review Risk</Button>{isPlatformAdmin&&<><Button size="sm" variant="outline" disabled={saving} onClick={acceptRisk}>{record.status==='accepted'?'Renew Acceptance':'Accept Risk'}</Button><Button size="sm" variant="outline" disabled={saving} onClick={async()=>{if(dirty&&!await save(undefined,true))return;setClosure({reason:'remediated',note:''});}}>Close Risk</Button></>}</>}
@@ -1163,38 +933,12 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
       <Sheet open={decisionOpen} onOpenChange={setDecisionOpen}>
         <SheetContent description="Record the outcome and supporting rationale for this governance decision. Confirming records your authenticated decision in its history." className="w-full sm:max-w-xl overflow-y-auto">
-          <SheetHeader><SheetTitle>{decisionForm.action === 'accept' ? 'Accept finding' : decisionForm.action === 'approve' ? 'Approve exception' : kind === "findings" ? "Validate remediation" : record?.status === "completed" ? "Add review amendment" : "Complete review"}</SheetTitle></SheetHeader>
+          <SheetHeader><SheetTitle>{decisionForm.action === 'accept' ? 'Accept finding' : decisionForm.action === 'approve' ? 'Approve exception' : "Validate remediation"}</SheetTitle></SheetHeader>
           <form onSubmit={submitDecision} className="mt-5 space-y-4">
             {kind==='findings'&&record&&!decisionForm.action&&<section className="space-y-3 text-sm" aria-label="Validation context"><h3 className="font-medium">{form.title||record.title}</h3><p className="whitespace-pre-wrap">{form.description||record.description||'No description recorded.'}</p><p className="text-ink-secondary">Current Finding Status: <StatusBadge value={status}/></p><p>Confirm that the corrective work resolved the Finding. Completing an Action alone does not validate it.</p><CorrectiveActions assignmentLabel={pilot?'Assigned To':'Owner'} actions={(related.tasks||[]).filter(t=>t.finding_id===record.finding_id&&t.client_id===record.client_id)} members={users}/></section>}
             {kind==='findings'&&record&&!decisionForm.action&&<EvidencePanel clientId={record.client_id} kind="findings" id={record.finding_id} onOpen={openEvidenceSource} refreshKey={evidenceVersion}/>}
-            {kind === "reviews" && record?.status !== "completed" ? <>
-              <p className="text-sm">Confirm the scope, examine the supporting evidence, and record the outcome. Raise Findings for gaps before completing this Review.</p>
-              <ul className="list-disc pl-5 text-sm space-y-1">{(rules.reviewPlaybooks[record?.review_type] || rules.reviewPlaybooks.default).map(item => <li key={item}>{item}</li>)}</ul>
-              <Label className="block">Tested period<Input required value={decisionForm.tested_period || ""} onChange={e => setDecisionForm(p => ({ ...p, tested_period: e.target.value }))} /></Label>
-              <Label className="block">What was examined?<Textarea required value={decisionForm.tested_scope || ""} onChange={e => setDecisionForm(p => ({ ...p, tested_scope: e.target.value }))} /></Label>
-              <Label className="block">Conclusion and exceptions<Textarea required value={decisionForm.conclusion || ""} onChange={e => setDecisionForm(p => ({ ...p, conclusion: e.target.value }))} /></Label>
-              <p className="text-sm">{evidenceItems.length} evidence file(s) attached. Their versions will be preserved with this outcome.</p>
-              {!evidenceItems.length && <Label className="block">Why is no evidence required?<Textarea required value={decisionForm.no_evidence_reason || ""} onChange={e => setDecisionForm(p => ({ ...p, no_evidence_reason: e.target.value }))} /></Label>}
-              <label className="flex gap-2 text-sm"><Checkbox required checked={!!decisionForm.checklist_confirmed} onCheckedChange={checked => setDecisionForm(p => ({ ...p, checklist_confirmed: checked === true }))} />I checked the scope, evidence, outcome, and any required follow-up.</label>
-            </> : <Label className="block">{decisionForm.action ? "Decision rationale" : kind === "findings" ? "What confirms the remediation worked?" : "Amendment explanation"}<Textarea required value={decisionForm.rationale || ""} onChange={e => setDecisionForm(p => ({ ...p, rationale: e.target.value }))} /></Label>}
+            <Label className="block">{decisionForm.action ? "Decision rationale" : "What confirms the remediation worked?"}<Textarea required value={decisionForm.rationale || ""} onChange={e => setDecisionForm(p => ({ ...p, rationale: e.target.value }))} /></Label>
             <Button type="submit" disabled={saving}>{saving ? "Recording…" : "Record decision"}</Button>
-          </form>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={findingOpen} onOpenChange={setFindingOpen}>
-        <SheetContent description="Describe the gap identified during this Review and the corrective Action needed to address it." className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form">
-          <SheetHeader><SheetTitle>Raise finding</SheetTitle></SheetHeader>
-          <p className="my-4 text-sm text-ink-secondary">Source review: {record?.title}</p>
-          <form onSubmit={saveReviewFinding} className="space-y-4">
-            <Label className="block">Finding title *<Input required value={findingForm.title || ""} onChange={e => setFindingForm(p => ({ ...p, title: e.target.value }))} data-testid="finding-title" /></Label>
-            <Label className="block">What was identified?<Textarea value={findingForm.description || ""} onChange={e => setFindingForm(p => ({ ...p, description: e.target.value }))} /></Label>
-            <div><Label>Severity</Label><Select value={findingForm.severity || "medium"} onValueChange={v => setFindingForm(p => ({ ...p, severity: v }))}><SelectTrigger aria-label="Finding severity"><SelectValue /></SelectTrigger><SelectContent>{["low", "medium", "high", "critical"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
-            <div><Label>Owner</Label><AssigneeSelect clientId={record?.client_id || clientId} label="Finding owner" value={findingForm.owner_id} onChange={v=>setFindingForm(p=>({...p,owner_id:v}))} users={users}/></div>
-            <Label className="block">Due date<Input type="date" value={findingForm.due_date || ""} onChange={e => setFindingForm(p => ({ ...p, due_date: e.target.value }))} /></Label>
-            <Label className="block">Remediation action *<Input required placeholder="Develop and approve a Business Impact Analysis" value={findingForm.remediation_title || ""} onChange={e => setFindingForm(p => ({ ...p, remediation_title: e.target.value }))} data-testid="finding-remediation-title" /></Label>
-            <Label className="block">Remediation plan<Textarea value={findingForm.remediation_plan || ""} onChange={e => setFindingForm(p => ({ ...p, remediation_plan: e.target.value }))} /></Label>
-            <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setFindingOpen(false)}>Cancel</Button><Button type="submit" disabled={saving} data-testid="finding-save">{saving ? "Saving…" : "Save finding and action"}</Button></div>
           </form>
         </SheetContent>
       </Sheet>

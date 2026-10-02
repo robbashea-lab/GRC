@@ -1,0 +1,27 @@
+{
+  "recurrence_cases": [
+    {"name":"month-end through February","review":{"due_date":"2027-01-31","recurrence":"monthly"},"next_dates":["2027-02-28","2027-03-31","2027-04-30"]},
+    {"name":"fixed day stays fixed after February","review":{"due_date":"2027-01-28","recurrence":"monthly"},"next_dates":["2027-02-28","2027-03-28"]},
+    {"name":"annual leap-day month-end","review":{"due_date":"2024-02-29","recurrence":"annual"},"next_dates":["2025-02-28","2026-02-28","2027-02-28","2028-02-29"]},
+    {"name":"quarter crossing year-end","review":{"due_date":"2026-09-30","recurrence":"quarterly"},"next_dates":["2026-12-31","2027-03-31"]},
+    {"name":"custom days cross February","review":{"due_date":"2028-02-27","recurrence":"custom","custom_recurrence_days":7},"next_dates":["2028-03-05","2028-03-12"]},
+    {"name":"invalid imported calendar date","review":{"due_date":"2027-02-30","recurrence":"monthly"},"next_dates":[null]},
+    {"name":"terminal supported year","review":{"due_date":"9999-12-31","recurrence":"monthly"},"next_dates":[null]}
+  ],
+  "review_history": {
+    "initial":{"title":"Original contract review","review_type":"access","due_date":"2024-01-31","recurrence":"monthly","notes":"Original cycle notes"},
+    "completed_at":"2024-04-15T12:00:00.000Z",
+    "next_due":"2024-02-29",
+    "edited":{"title":"Revised contract review","due_date":"2024-05-15","recurrence":"quarterly"},
+    "next_after_edit":"2024-08-15"
+  },
+  "schedule_projections": [
+    {"kind":"policies","key":"policy_id","create":{"title":"Projection policy","status":"draft","presence":"needs_confirmation"},"due_date":"2026-01-31","recurrence":"annual","next_due":"2027-01-31","last_field":"last_reviewed_at","next_field":"next_review_date","status":"draft"},
+    {"kind":"risks","key":"risk_id","create":{"title":"Projection risk","likelihood_score":3,"impact_score":4,"next_review":"2026-01-31","review_cadence":"annual"},"due_date":"2026-01-31","recurrence":"annual","next_due":"2027-01-31","last_field":"last_reviewed","next_field":"next_review","risk_score":12},
+    {"kind":"vendors","key":"vendor_id","create":{"name":"Projection vendor","service":"Synthetic service","next_review":"2026-01-31","review_frequency":"annual"},"due_date":"2026-01-31","recurrence":"annual","next_due":"2027-01-31","last_field":"last_review","next_field":"next_review"}
+  ],
+  "projection_completed_at":"2026-12-15T12:00:00.000Z",
+  "persistence_failure":{"request_id":"lifecycle-contract-failure-0001","title":"Recoverable persistence failure","after_failure_count":0,"after_retry_count":1},
+  "stale_write":{"initial_title":"Initial contract finding","new_title":"Newer contract finding","stale_title":"Stale contract finding","status":409},
+  "tenant_denied_status":403
+}

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {readStore} from './store';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});

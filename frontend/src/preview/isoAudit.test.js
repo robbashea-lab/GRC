@@ -1,7 +1,7 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
-import baseline from '../lib/onboardingCatalog.json';
+import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS} from '../lib/frameworks';
 import {auditPackage,auditActivationPlan,auditProgress,blankAuditItem} from '../lib/isoAudit';
 

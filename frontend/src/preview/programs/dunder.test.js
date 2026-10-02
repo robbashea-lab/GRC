@@ -1,5 +1,5 @@
 // DEMO - SYNTHETIC DATA. Validates the Dunder Mifflin program module against the ISO 27001 catalog.
-import iso from '../../lib/iso27001.json';
+import iso from '@catalogs/iso27001.json';
 import dunder from './dunder';
 import {seedStore} from '../store';
 import {auditProgress,auditQuarter} from '../../lib/isoAudit';

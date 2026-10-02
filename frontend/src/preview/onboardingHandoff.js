@@ -1,6 +1,6 @@
-import fields from '../lib/onboardingHandoffFields.json';
+import fields from '@catalogs/onboardingHandoffFields.json';
 import {recordedBaseline} from '../lib/clientProfile';
-import catalog from '../lib/onboardingCatalog.json';
+import catalog from '@catalogs/onboardingCatalog.json';
 import {record, list, write, audit} from './store';
 import {frameworkScope, reconcileFramework} from './frameworks';
 import {CATALOGS} from '../lib/frameworks';

@@ -2,13 +2,19 @@
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).parents[1] / 'frontend/src/lib'
+ROOT = Path(__file__).parents[1] / 'shared/catalogs'
+FRAMEWORKS = json.loads((ROOT / 'frameworkDefinitions.json').read_text(encoding='utf-8'))['frameworks']
 CIS = json.loads((ROOT / 'cisIG1.json').read_text(encoding='utf-8'))
 HIPAA = json.loads((ROOT / 'hipaaSecurityRule.json').read_text(encoding='utf-8'))
 ISO = json.loads((ROOT / 'iso27001.json').read_text(encoding='utf-8'))
 SOC = json.loads((ROOT / 'soc2.json').read_text(encoding='utf-8'))
 NIST = json.loads((ROOT / 'nistCSF2.json').read_text(encoding='utf-8'))
 CATALOGS = {'cis-ig1': CIS, 'hipaa': HIPAA, 'iso-27001': ISO, 'soc-2': SOC, 'nist-csf-2': NIST}
+
+
+def capabilities(framework_key):
+    """Product features only; callers must authorize the tenant and action first."""
+    return next((f.get('capabilities', []) for f in FRAMEWORKS if f['key'] == framework_key), [])
 
 
 def active_definitions(key, configuration=None):

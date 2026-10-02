@@ -121,3 +121,7 @@
 .bcis-sg-id { font-family: 'Space Grotesk', var(--font-heading); font-weight: 600; color: var(--cs-muted); min-width: 34px; }
 .bcis-muted { color: var(--cs-muted) !important; white-space: nowrap; }
 @media (max-width: 760px) { .bcis-safeguards th:nth-child(4), .bcis-safeguards td:nth-child(4), .bcis-safeguards th:nth-child(5), .bcis-safeguards td:nth-child(5) { display: none; } }
+.bcis-explain { margin: 8px 0 0; font-size: 12px; color: var(--cs-muted); }
+.bcis-explain summary { cursor: pointer; width: fit-content; border-radius: 4px; }
+.bcis-explain summary:focus-visible { outline: 2px solid var(--cs-focus); outline-offset: 2px; }
+.bcis-explain p { margin: 6px 0 0; line-height: 1.45; }

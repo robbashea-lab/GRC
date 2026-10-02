@@ -1,0 +1,12 @@
+{
+  "review": {"title":"Original review","review_type":"access","recurrence":"monthly","due_date":"2026-01-31"},
+  "command": {"request_id":"review-recovery-intent","title":"Gap","remediation_title":"Fix gap"},
+  "changed_title":"Different intent",
+  "later_title":"Later edit",
+  "result_status":"in_remediation",
+  "missing_identity_status":422,
+  "changed_payload_status":409,
+  "denied_status":403,
+  "finding_count":1,
+  "action_count":1
+}

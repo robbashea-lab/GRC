@@ -1,7 +1,7 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
-import catalog from '../lib/onboardingCatalog.json';
+import catalog from '@catalogs/onboardingCatalog.json';
 import {complianceProgress} from '../lib/complianceProgress';
 import {loadClientDashboard} from '../lib/loadClientDashboard';
 const api=axios.create({adapter:previewAdapter});

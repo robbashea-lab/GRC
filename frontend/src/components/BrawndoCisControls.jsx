@@ -1,4 +1,5 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useRef,useEffect,useMemo,useState} from 'react';
+import {useRescueFocus} from '@/lib/focusRescue';
 import api from '@/lib/api';
 import {SearchField} from './Register';
 import {CisStatusPill} from './CisStatus';
@@ -14,8 +15,9 @@ export function controlParts(label){const m=/^Control\s+(\d+)\s*[—-]\s*(.+)$/.
 const activate=fn=>e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}};
 
 export function CisBreadcrumb({items,label='CIS IG1 location'}){
+  const current=useRef(null);useRescueFocus(current,items.map(c=>c.label).join('/'));
   return <nav aria-label={label} className="bcis-crumbs"><ol>{items.map((c,i)=>{const last=i===items.length-1;
-    return <li key={c.label}>{last||!c.onClick?<span aria-current={last?'page':undefined}>{c.label}</span>:<button type="button" onClick={c.onClick}>{c.label}</button>}</li>;})}</ol></nav>;
+    return <li key={c.label}>{last||!c.onClick?<span ref={last?current:undefined} aria-current={last?'page':undefined}>{c.label}</span>:<button type="button" onClick={c.onClick}>{c.label}</button>}</li>;})}</ol></nav>;
 }
 
 export default function BrawndoCisControls({clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,controlKey,onControl,onOpen,selected}){

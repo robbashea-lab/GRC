@@ -1,4 +1,4 @@
-import catalog from '@/lib/onboardingCatalog.json';
+import catalog from '@catalogs/onboardingCatalog.json';
 import {isoAuditRequest} from './isoAudit';
 import { authorizeDemo } from './authorization';
 import {organizationalControlRequest} from './organizationalControls';
@@ -13,12 +13,13 @@ import { assignmentCandidates } from './assignmentEligibility';
 import { clientProjection, leadCandidates } from './clientRelationships';
 import {aiRequest,aiRelated} from './aiGovernance';
 import {frameworkRequest,frameworkReverse,frameworkScope} from './frameworks';
-import { baselineState, saveBaseline } from './baseline';
+import { baselineState, baselineRecordVersions, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './demoConfiguration.json';
 import { clone, readStore, saveStore, resetStore, ids, list, record, write, library, audit, uid, now } from './store';
 import { portfolio, dashboard } from './summaries';
 import { onboard, action } from './workflows';
+import {commandRequest} from './commandRequests';
 import { guardEdit } from './decisions';
 import { history, reviewEvent } from './reviews';
 import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
@@ -45,12 +46,13 @@ export async function previewAdapter(config) {
     headers: {},
     config
   });
-  const fail = (status, detail, storage_code) => {
+  const fail = (status, detail, storage_code, createRejected=false) => {
     throw new axios.AxiosError(detail, 'ERR_BAD_REQUEST', config, null, {
       data: {
         detail, ...(storage_code?{storage_code}:{})
       },
       status,
+      headers:createRejected?{'x-create-rejected':'true'}:{},
       config
     });
   };
@@ -140,8 +142,10 @@ export async function previewAdapter(config) {
     if (path.startsWith('/onboarding/programs/') && method === 'patch') return save(adjustProgram(db, body.client_id, path.split('/').pop(), body));
     if (path === '/onboarding/baseline') {
       const cid = params.client_id || body.client_id;
-      if (method === 'get') return respond({catalog, state:baselineState(db,cid)});
-      return save(saveBaseline(db,cid,body.state,body.finalize,body));
+      if (method === 'get') return respond({catalog, state:baselineState(db,cid), record_versions:baselineRecordVersions(db,cid)});
+      const execute=()=>saveBaseline(db,cid,body.state,body.finalize,body);
+      const key=config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'];
+      return save(body.finalize?commandRequest(db,path,cid,key,body,execute):execute());
     }
     if (path === '/auth/me') return respond(db.user);
     if (method === 'get') {
@@ -269,8 +273,12 @@ export async function previewAdapter(config) {
       return fail(404, 'This view is not implemented in the demo.');
     }
     if (path === '/onboarding/finalize') {
-      const result = onboard(db, body);
-      delete db.drafts[body.client_id];
+      const key=config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'];
+      const result = commandRequest(db,path,body.client_id,key,body,()=>{
+        const completed=onboard(db,body);
+        delete db.drafts[body.client_id];
+        return completed;
+      });
       return save(result);
     }
     if (path === '/onboarding/policy-responses') return save(onboard(db, {
@@ -282,7 +290,7 @@ export async function previewAdapter(config) {
       if (!ids[body.kind] || !body.ids?.length) throw new Error('Select records first.');
       const rows = body.ids.map(i => record(db, body.kind, i));
       if(rows.some(row=>row.client_id&&!evidenceAccess(db.user,row.client_id)))return fail(403,'Forbidden for this client');
-      if(body.expected_versions&&rows.some(row=>body.expected_versions[row[ids[body.kind]]] !== (row.updated_at??null)))throw new Error('Record changed since it was opened; reload before saving');
+      if(body.expected_versions&&rows.some(row=>body.expected_versions[row[ids[body.kind]]] !== (row.updated_at??null)))throw Object.assign(new Error('Record changed since it was opened; reload before saving'), { status: 409 });
       if (body.kind === 'contacts' && body.action === 'delete' && db.clients.some(c => rows.some(r => r.client_id === c.client_id && r.contact_id === c.primary_contact_id))) throw new Error('A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.');
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
         throw new Error('Review history must be retained.');
@@ -350,6 +358,10 @@ export async function previewAdapter(config) {
       return save(db.user);
     }
     if (ids[kind] && name) {
+      if(kind==='reviews' && name==='create-finding') {
+        const review=record(db,kind,id);
+        return save(commandRequest(db,path,review.client_id,body.request_id,body,()=>action(db,kind,id,name,body)));
+      }
       const result = action(db, kind, id, name, body);
       const r = record(db, kind, id);
       if (kind !== 'reviews') audit(db, name, kind, r);
@@ -385,7 +397,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
-        if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw new Error('Record changed; reload before deleting');
+        if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw Object.assign(new Error('Record changed; reload before deleting'), { status: 409 });
         if(kind==='policies'&&retainedPolicy(r))throw new Error('Policy approval history must be retained; retire the Policy instead');
         if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
         if(kind==='evidence'&&db.reviews.some(c=>c.client_id===r.client_id&&auditEvidenceLinks(c).some(l=>l.id===id)))throw new Error('Audit workpaper evidence must be retained.');
@@ -465,6 +477,6 @@ export async function previewAdapter(config) {
   } catch (error) {
     if (error.isAxiosError) throw error;
     if(['SecurityError','NotAllowedError','QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error.name))error=demoStorageError(error);
-    return fail(400, error.message || 'Demo action failed. No changes were saved.',error.storage_code);
+    return fail(error.status || 400, error.message || 'Demo action failed. No changes were saved.',error.storage_code,error.create_rejected===true);
   }
 }

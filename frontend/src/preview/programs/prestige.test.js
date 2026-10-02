@@ -1,5 +1,5 @@
 // DEMO - SYNTHETIC DATA. Validates the Prestige Worldwide SOC 2 program module against the catalog.
-import soc from '../../lib/soc2.json';
+import soc from '@catalogs/soc2.json';
 import prestige from './prestige';
 
 const IN_SCOPE = soc.requirements.map(r => r.id).filter(id => /^(CC\d|A1\.|C1\.)/.test(id));

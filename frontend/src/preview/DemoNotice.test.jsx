@@ -1,0 +1,20 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import DemoNotice from './DemoNotice';
+import api from '@/lib/api';
+jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,default:{get:jest.fn(),post:jest.fn()},formatError:error=>error.message}));
+let root,container;
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;jest.useFakeTimers();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);jest.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());await act(async()=>jest.runAllTimers());container.remove();jest.useRealTimers();});
+test.each([false,true])('storage dialog returns focus to its opener even after a read failure (%s)',async failure=>{
+  if(failure)api.get.mockRejectedValue(new Error('Storage unavailable'));else api.get.mockResolvedValue({data:{records:3}});
+  await act(async()=>root.render(<DemoNotice/>));const opener=container.querySelector('button');opener.focus();
+  await act(async()=>opener.click());
+  expect(document.activeElement.closest('[role="dialog"]')).toBeTruthy();
+  if(failure)expect(document.querySelector('[role="alert"]').textContent).toBe('Storage unavailable');
+  await act(async()=>document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  await act(async()=>jest.runAllTimers());
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(document.activeElement).toBe(opener);
+  expect(api.post).not.toHaveBeenCalled();
+});

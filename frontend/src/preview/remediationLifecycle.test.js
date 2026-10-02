@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {SCHEMAS} from '../lib/schemas';
 const api=axios.create({adapter:previewAdapter});
 const types=SCHEMAS.reviews.fields.find(f=>f.name==='review_type').options.map(o=>o.value);

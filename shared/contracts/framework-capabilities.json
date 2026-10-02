@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "client_id": "capability-contract-client",
+  "framework_cases": [
+    {"name": "CIS criteria for a new tenant", "framework": "cis-ig1", "definition": "1.1", "patch": {"cis_assessment_criteria": ["1.1-c1"]}, "status": 200},
+    {"name": "CIS verification for a new tenant", "framework": "cis-ig1", "definition": "1.1", "patch": {"verification": "needs_validation"}, "status": 200},
+    {"name": "SOC guidance for a new tenant", "framework": "soc-2", "definition": "CC9.2", "patch": {"soc_assessment_checks": ["CC9.2-v1-r1"]}, "status": 200},
+    {"name": "SOC verification for a new tenant", "framework": "soc-2", "definition": "CC9.2", "patch": {"verification": "verified"}, "status": 200},
+    {"name": "SOC rejects CIS criteria", "framework": "soc-2", "definition": "CC9.2", "patch": {"cis_assessment_criteria": []}, "status": 422},
+    {"name": "CIS rejects SOC guidance", "framework": "cis-ig1", "definition": "1.1", "patch": {"soc_assessment_checks": []}, "status": 422},
+    {"name": "SOC rejects CIS checklists", "framework": "soc-2", "definition": "CC9.2", "patch": {"verification_checklist": {}}, "status": 422},
+    {"name": "ISO retains its distinct assessment contract", "framework": "iso-27001", "definition": "A.5.1", "patch": {"verification": "verified"}, "status": 422},
+    {"name": "Caller cannot enable capabilities", "framework": "iso-27001", "definition": "A.5.1", "patch": {"capabilities": ["verification"]}, "status": 422}
+  ],
+  "access_cases": [
+    {"name": "Capability does not grant reader writes", "role": "client_readonly", "client_scope": "same", "status": 403},
+    {"name": "Capability does not cross tenant boundaries", "role": "client_contributor", "client_scope": "other", "status": 403}
+  ],
+  "stale_write_status": 409
+}
