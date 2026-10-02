@@ -33,30 +33,55 @@ test('Prestige SOC criterion workspace is focused, source-qualified and ordered'
  expect(container.textContent).not.toContain('Omnisciente explanation — not official AICPA text');expect(container.querySelector('[data-testid="soc-official-text"]')).toBeNull();
  const ref=[...container.querySelectorAll('a')].find(a=>a.textContent==='AICPA Reference ↗');expect(ref.href).toMatch(/^https:\/\/www\.aicpa-cima\.com\//);
  expect(container.querySelectorAll('.psoc-tier')).toHaveLength(3);expect(container.textContent).toContain('do not represent additional SOC 2 requirements');
+ expect(container.textContent).toContain('Requirement summary · Omnisciente');
+ expect(container.querySelector('[data-testid="soc-requirement-summary"]').textContent).toBe(socGuidance.criteria['CC9.2'].practical.summary);
+ expect(container.querySelector('.psoc-guidance').dataset.guidanceVersion).toBe(socGuidance.version);
+ expect(container.textContent).toContain('Internal readiness, not an auditor opinion.');
+ expect(container.querySelectorAll('input[type="checkbox"]')).toHaveLength(0);
+ expect(container.querySelector('.psoc-previous-checks')).toBeNull();
  for(const gone of ['Client organizational Controls','Scope and observation period settings','Required actions','Create Finding','Link Evidence'])expect(container.textContent).not.toContain(gone);
 });
 
-test('checks are independent, counted per tier and saved without changing conclusions or narrative',async()=>{
+test('read-only guidance preserves previous responses without changing conclusions or narrative',async()=>{
+ record.soc_assessment_checks=['CC9.2-v1-r1','CC9.2-v1-o1'];
  await render();
- const checks=container.querySelectorAll('.psoc-tier input');
- await act(async()=>{checks[0].click();checks[1].click();});
- expect(container.querySelector('[aria-label="SOC 2 Criterion Requirements completion"]').textContent).toBe('1 / 1');
- expect(container.querySelector('[aria-label="Operational Practices completion"]').textContent).toBe('1 / 2');
- expect(container.querySelector('[aria-label="Enhanced Assurance completion"]').textContent).toBe('0 / 1');
+ const previous=container.querySelector('.psoc-previous-checks');
+ expect(previous.open).toBe(false);expect(previous.textContent).toContain('Previous checklist responses · 2');
+ expect([...previous.querySelectorAll('li')].map(el=>el.textContent)).toEqual(socGuidance.criteria['CC9.2'].items.slice(0,2).map(item=>item.text));
+ expect(container.querySelector('[aria-label$=" completion"]')).toBeNull();
+ await act(async()=>previous.querySelector('summary').click());
+ expect(previous.open).toBe(true);
+ expect(api.patch).not.toHaveBeenCalled();
  await act(async()=>button('Save assessment').click());
  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({soc_assessment_checks:['CC9.2-v1-r1','CC9.2-v1-o1'],status:'in_progress',verification:'needs_validation',implementation:'Existing vendor monitoring process.'}));
- expect(checks[2].checked).toBe(false);
- await act(async()=>checks[0].click());
- expect(container.querySelector('[aria-label="SOC 2 Criterion Requirements completion"]').textContent).toBe('0 / 1');
+ expect(record.assessment_history[0].soc_assessment_checks).toEqual(['CC9.2-v1-r1','CC9.2-v1-o1']);
 });
 
-test('empty enhanced tier is hidden and saved checks render on reopening',async()=>{
- record={...record,definition_id:'CC1.3',soc_assessment_checks:['CC1.3-v1-o1']};
+test('empty enhanced tier is hidden without hiding prior responses',async()=>{
+ const [id,entry]=Object.entries(socGuidance.criteria).find(([,entry])=>!entry.practical.enhanced.length);
+ record={...record,definition_id:id,soc_assessment_checks:[entry.items[0].id]};
  await render();
- expect(container.querySelectorAll('.psoc-tier')).toHaveLength(2);
- expect(container.querySelector('[aria-label="Enhanced Assurance completion"]')).toBeNull();
- expect(container.querySelector('[aria-label="Operational Practices completion"]').textContent).toBe('1 / 2');
- expect(container.querySelectorAll('.psoc-tier input:checked')).toHaveLength(1);
+ expect(container.querySelector('#psoc-guidance-enhanced')).toBeNull();
+ expect(container.querySelector('.psoc-previous-checks').textContent).toContain(entry.items[0].text);
+ expect(container.querySelector('.psoc-previous-checks').open).toBe(false);
+});
+
+test('unrecognized historical IDs remain visible instead of being dropped or relabeled',async()=>{
+ record.soc_assessment_checks=['CC9.2-retired-response'];
+ await render();
+ expect(container.querySelector('.psoc-previous-checks li').textContent).toBe('CC9.2-retired-response');
+ expect(record.soc_assessment_checks).toEqual(['CC9.2-retired-response']);
+ expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('shared context distinguishes selected controls, evidence alternatives and Type 2 operation',async()=>{
+ await render();
+ const context=container.querySelector('.psoc-guidance-context');
+ expect(context.open).toBe(false);
+ await act(async()=>context.querySelector('summary').click());
+ for(const key of ['categories','obligations','type2','gaps'])expect(context.textContent).toContain(socGuidance.context[key]);
+ expect(container.querySelector('#psoc-guidance-evidence').closest('section').textContent).toContain(socGuidance.context.evidence);
+ expect(api.patch).not.toHaveBeenCalled();
 });
 
 test('all in-scope criteria have stable, classified guidance and no forced empty panels',()=>{
@@ -76,33 +101,42 @@ test('all in-scope criteria have stable, classified guidance and no forced empty
  expect(Object.values(socGuidance.criteria).filter(c=>!c.items.some(i=>i.tier==='enhanced_assurance'))).toHaveLength(8);
 });
 
-test('read-only reviewers cannot change guidance',async()=>{
+test('read-only reviewers can read practical guidance and cannot edit the assessment',async()=>{
  mockUser={...mockUser,role:'client_viewer'};
  await render();
- for(const checkbox of container.querySelectorAll('.psoc-tier input'))expect(checkbox.closest('fieldset').disabled).toBe(true);
+ expect(container.querySelectorAll('.psoc-guidance-group')).toHaveLength(3);
+ expect(container.querySelectorAll('.psoc-tier input')).toHaveLength(0);
+ expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
+ expect(container.querySelector('[aria-label="Verification result"]').disabled).toBe(true);
  expect(button('Save assessment')).toBeUndefined();
 });
 
-test.each(Object.keys(socGuidance.criteria))('%s renders exactly its reviewed items and populated tiers',async id=>{
+test.each(Object.keys(socGuidance.criteria))('%s renders exactly its practical guidance and populated tiers',async id=>{
  record={...record,definition_id:id};
  await render();
- const items=socGuidance.criteria[id].items;
- expect(container.querySelectorAll('.psoc-tier input')).toHaveLength(items.length);
- expect(container.querySelectorAll('.psoc-tier')).toHaveLength(new Set(items.map(i=>i.tier)).size);
- expect([...container.querySelectorAll('.psoc-tier label span')].map(e=>e.textContent)).toEqual(items.map(i=>i.text));
+ const guidance=socGuidance.criteria[id].practical;
+ expect(container.querySelectorAll('.psoc-tier input')).toHaveLength(0);
+ expect(container.querySelectorAll('.psoc-tier')).toHaveLength(1+Number(!!guidance.operational.length)+Number(!!guidance.enhanced.length));
+ for(const key of ['review','evidence','outcome','operational','enhanced']){
+   const heading=container.querySelector(`#psoc-guidance-${key}`);
+   expect(heading? [...heading.closest('section').querySelectorAll('li')].map(el=>el.textContent):[]).toEqual(guidance[key]);
+ }
+ expect(container.querySelector('[data-testid="soc-requirement-summary"]').textContent).toBe(guidance.summary);
 });
 
-test('Save & Next advances only after a successful checklist save',async()=>{
+test('Save & Next advances only after saving the narrative and preserving previous responses',async()=>{
+ record.soc_assessment_checks=['CC9.2-v1-r1'];
  const next=jest.fn();
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_prestige" onOpenChange={close} onNext={next}/>));
- await act(async()=>container.querySelector('.psoc-tier input').click());
+ await setValue('Current implementation','Reviewed dated provider records and escalation results.');
  api.patch.mockRejectedValueOnce(new Error('Save failed'));
  await act(async()=>button('Save & next').click());
  expect(next).not.toHaveBeenCalled();expect(container.textContent).toContain('Save failed');
- expect(container.querySelector('.psoc-tier input').checked).toBe(true);
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Reviewed dated provider records and escalation results.');
  await act(async()=>button('Save & next').click());
  expect(next).toHaveBeenCalledTimes(1);
  expect(record.soc_assessment_checks).toEqual(['CC9.2-v1-r1']);
+ expect(record.implementation).toBe('Reviewed dated provider records and escalation results.');
 });
 
 test('Save & next retains an unfinished Finding draft',async()=>{
@@ -135,9 +169,11 @@ test('helper precedes the implementation field, N/A rationale is preserved and b
  await setValue('Current implementation','Unsaved');await act(async()=>button('CC9').click());expect(document.body.textContent).toContain('Leave unsaved changes?');
 });
 
-test('a newly created SOC tenant receives the same framework-specific workspace',async()=>{
- await render('new-soc-client');expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
+test.each(['new-soc-client','existing-client-enabling-soc'])('%s receives the same framework-specific practical guidance',async clientId=>{
+ await render(clientId);expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
  expect(container.querySelectorAll('.psoc-tier')).toHaveLength(3);
+ expect(container.querySelector('#psoc-guidance-review').closest('section').textContent).toContain(socGuidance.criteria['CC9.2'].practical.review[0]);
+ expect(container.querySelector('.psoc-previous-checks')).toBeNull();
 });
 
 test('the standard workspace receives SOC guidance through framework configuration',async()=>{
@@ -145,6 +181,18 @@ test('the standard workspace receives SOC guidance through framework configurati
  await render();
  expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
  expect(container.querySelectorAll('.psoc-tier')).toHaveLength(3);
+});
+
+test.each(['PI1.1','P1.1'])('%s retains its existing reference and assessment without CC/A/C guidance',async id=>{
+ record={...record,definition_id:id};
+ await render('other-category-client');
+ expect(container.querySelector('h2').textContent).toContain(id);
+ expect(container.querySelector('[data-testid="soc-requirement-summary"]').textContent).not.toBe('');
+ expect(container.querySelector('.psoc-guidance')).toBeNull();
+ expect(container.textContent).toContain('Assessment guidance has not been reviewed for this criterion.');
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
+ await act(async()=>button('Save assessment').click());
+ expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({status:'in_progress',verification:'needs_validation',implementation:record.implementation}));
 });
 
 test('Prestige criterion exposes linked governance work and creates one sourced Finding and Action',async()=>{

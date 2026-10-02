@@ -1,12 +1,12 @@
 {
-  "version": "soc-guidance-v1",
+  "version": "soc-guidance-v2",
   "framework": "soc-2",
   "source": {
     "title": "AICPA 2017 Trust Services Criteria (revised Points of Focus, 2022)",
     "url": "https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022",
     "document_url": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf",
     "wording": "Omnisciente summaries; no licensed verbatim reproduction",
-    "reviewed_at": "2026-10-01"
+    "reviewed_at": "2026-10-02"
   },
   "tiers": [
     {
@@ -56,7 +56,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC1.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Demonstrate integrity and ethical conduct in practice.",
+        "review": [
+          "Compare leadership's stated conduct expectations with how employees, contractors, and relevant provider personnel are expected to behave. Confirm people can recognize and report unacceptable conduct.",
+          "Examine how actual concerns were considered and addressed. A handbook alone does not resolve inconsistent treatment, ignored reports, or leadership behavior that contradicts stated expectations."
+        ],
+        "evidence": [
+          "Leadership communications, handbook or conduct guidance, and onboarding records can show the expectations communicated; use the formats the organization actually relies on.",
+          "Redacted concern records, management decisions, or follow-up records can demonstrate the response to conduct issues without exposing unnecessary personal information."
+        ],
+        "outcome": [
+          "Personnel understand the expected conduct, leadership acts consistently with it, and actual departures receive an appropriate response."
+        ],
+        "operational": [
+          "Integrate conduct expectations and reporting routes into onboarding, provider engagement, and relevant role changes. Assign a responsible person to handle concerns consistently."
+        ],
+        "enhanced": [
+          "Review patterns in conduct concerns and repeat issues to see whether the response changed behavior."
+        ]
+      }
     },
     "CC1.2": {
       "source_reference": "CC1.2",
@@ -84,7 +104,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC1.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Governance provides independent oversight of the control environment.",
+        "review": [
+          "Identify who provides governance oversight, how management's decisions are challenged, and whether the oversight arrangement fits the organization's size and structure.",
+          "Trace significant risks, incidents, and control problems to oversight discussions and decisions across the review period. Attendance or receipt of a dashboard alone does not show that issues were considered."
+        ],
+        "evidence": [
+          "Governance responsibilities and meeting or decision records can show who reviewed material issues, the questions raised, and the decisions made.",
+          "Briefing materials with dated follow-up can show whether oversight had the information and relevant expertise needed to act."
+        ],
+        "outcome": [
+          "An appropriate governance body or arrangement meaningfully challenges management and follows the development and performance of controls."
+        ],
+        "operational": [
+          "Prepare oversight updates around material changes, unresolved issues, and decisions needed. Set the review rhythm to the organization's risks and adopted governance commitments."
+        ],
+        "enhanced": [
+          "Seek suitably independent expertise when governance lacks the knowledge to challenge a material technical or control issue."
+        ]
+      }
     },
     "CC1.3": {
       "source_reference": "CC1.3",
@@ -112,7 +152,24 @@
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC1.3"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Assign structure, authority, and responsibilities that support objectives.",
+        "review": [
+          "Trace important control decisions from the person doing the work to the person accountable for approval and escalation. Compare current responsibilities with the actual organization.",
+          "Confirm handoffs between the client, MSP/MSSP, and other providers identify who acts and who retains oversight. Look for unowned work, conflicting authority, and assignments left behind after role changes."
+        ],
+        "evidence": [
+          "An organization chart, role descriptions, responsibility matrix, or service agreement can establish ownership. Approvals or escalation records can demonstrate that those arrangements are used."
+        ],
+        "outcome": [
+          "People can identify who executes, approves, and escalates control work, including work shared with providers."
+        ],
+        "operational": [
+          "Update responsibilities during staffing, service, and provider changes, and confirm the affected people understand the handoff."
+        ],
+        "enhanced": []
+      }
     },
     "CC1.4": {
       "source_reference": "CC1.4",
@@ -147,7 +204,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC1.4"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Develop and retain people capable of meeting control responsibilities.",
+        "review": [
+          "Compare the skills and capacity needed for security responsibilities with the people or providers assigned to them. Consider coverage when key personnel are unavailable.",
+          "Review hiring, role changes, and development activity during the period. Training completion alone may not address an unsupported technical responsibility or recurring execution errors."
+        ],
+        "evidence": [
+          "Role requirements, relevant experience, training results, staffing reviews, or provider qualification records can explain why assigned personnel are capable of the work.",
+          "Dated development, hiring, or backup-coverage actions can show how identified competence and capacity gaps were addressed."
+        ],
+        "outcome": [
+          "Assigned people have the capability and support to perform their responsibilities, and known skill or staffing gaps have an effective response."
+        ],
+        "operational": [
+          "Include control responsibilities in role discussions and select development or provider support based on actual gaps, not only completion of general awareness training."
+        ],
+        "enhanced": [
+          "Use a task walkthrough or practical exercise to validate capability for a critical responsibility where attendance records give limited assurance."
+        ]
+      }
     },
     "CC1.5": {
       "source_reference": "CC1.5",
@@ -175,7 +252,26 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC1.5"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Hold people accountable for their control responsibilities.",
+        "review": [
+          "Confirm owners understand the work and completion expectations assigned to them, including their responsibilities for outsourced activities.",
+          "Compare expected work with dated completion and management follow-up. Investigate repeated missed reviews, nominal owners who do not act, or performance pressures that encourage bypassing controls."
+        ],
+        "evidence": [
+          "Responsibility assignments, completion records, owner reviews, or management decisions can show how performance was evaluated and missed responsibilities were addressed."
+        ],
+        "outcome": [
+          "Accountability is visible in how work is performed and how management responds when assigned responsibilities are not met."
+        ],
+        "operational": [
+          "Make expected completion, escalation, and backup ownership clear within existing work tracking and performance discussions."
+        ],
+        "enhanced": [
+          "Compare recurring missed responsibilities across teams to identify workload or incentive problems that individual reminders do not resolve."
+        ]
+      }
     },
     "CC2.1": {
       "source_reference": "CC2.1",
@@ -210,7 +306,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC2.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Use reliable, relevant information to support controls.",
+        "review": [
+          "Identify the reports, inventories, data flows, and other information that control owners actually use. Confirm their scope and source match the decision or review being performed.",
+          "Check report dates, filters, population coverage, and significant transformations. A current dashboard does not establish what information supported earlier reviews; missing systems or stale exports can undermine the result."
+        ],
+        "evidence": [
+          "Exports with query parameters, source inventories, report definitions, or reconciliation records can demonstrate that review information is complete and reliable.",
+          "Dated review records tied to the information used can show which population and period were assessed."
+        ],
+        "outcome": [
+          "Control decisions use information that is sufficiently accurate, complete, current, and traceable for their purpose."
+        ],
+        "operational": [
+          "Assign ownership for important reporting sources and preserve the filters or scope needed to understand each review. Recheck reports after source or system changes."
+        ],
+        "enhanced": [
+          "Reconcile a critical review population against an independent inventory or source to identify omissions that the report cannot reveal about itself."
+        ]
+      }
     },
     "CC2.2": {
       "source_reference": "CC2.2",
@@ -238,7 +354,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC2.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Communicate internally so people can carry out controls.",
+        "review": [
+          "Confirm employees and contractors receive the objectives, responsibilities, system changes, and reporting instructions relevant to their work.",
+          "Review communications and relevant training across the period, including new hires and changed roles. Look for excluded groups, outdated instructions, or required acknowledgements that were never completed."
+        ],
+        "evidence": [
+          "Onboarding or training records, policy distribution, change notices, team briefings, and acknowledgements where adopted can show what reached the relevant audience and when.",
+          "Internal reports and escalations can show that control owners and leadership received information needed to act."
+        ],
+        "outcome": [
+          "People receive and understand the information needed to perform their roles and know how to raise a concern."
+        ],
+        "operational": [
+          "Connect communications to onboarding, role changes, and material process changes. Choose channels and follow-up that fit the audience and the organization's communication controls."
+        ],
+        "enhanced": [
+          "Ask personnel to explain a relevant reporting or security task to check whether the communication was understood, not merely delivered."
+        ]
+      }
     },
     "CC2.3": {
       "source_reference": "CC2.3",
@@ -266,7 +402,25 @@
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC2.3"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Exchange control-relevant information with external parties.",
+        "review": [
+          "Identify which customers, providers, and other external parties need information about responsibilities, service commitments, system changes, or incidents, and how they can report concerns back.",
+          "Trace relevant events during the period to communication decisions and delivery. Check for stale contacts, unclear client/provider handoffs, or notifications that did not meet applicable commitments."
+        ],
+        "evidence": [
+          "Service terms, responsibility agreements, support channels, or notification procedures can show the expected information exchange.",
+          "Dated messages, tickets, approvals, or communication logs can demonstrate that the appropriate parties received information and incoming concerns were handled."
+        ],
+        "outcome": [
+          "External parties and the organization can exchange relevant information in time to perform their responsibilities and address control concerns."
+        ],
+        "operational": [
+          "Maintain contact and approval routes for communication scenarios that matter to the service. Reconcile notification responsibilities with MSP/MSSP and other provider arrangements."
+        ],
+        "enhanced": []
+      }
     },
     "CC3.1": {
       "source_reference": "CC3.1",
@@ -287,7 +441,24 @@
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC3.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Define objectives clearly enough to assess related risks.",
+        "review": [
+          "Compare the service's security objectives with its actual customer commitments, system requirements, and operating context. Confirm the team can explain what it is trying to achieve.",
+          "Use the defined system boundary as context, then check whether the objectives are specific enough to identify a failure and assess its significance. A system inventory or a goal to pass an audit is not, by itself, a clear control objective."
+        ],
+        "evidence": [
+          "Service commitments, internal objectives, relevant contract requirements, or management planning records can explain the outcomes the organization intends to achieve and the basis for assessing risk."
+        ],
+        "outcome": [
+          "Control owners can connect the service's objectives to identifiable risks and explain what an unacceptable outcome would be."
+        ],
+        "operational": [
+          "Keep objectives aligned when services, commitments, or scope change. Treat system-description preparation as readiness context rather than a substitute for clear objectives."
+        ],
+        "enhanced": []
+      }
     },
     "CC3.2": {
       "source_reference": "CC3.2",
@@ -322,7 +493,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC3.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Identify and analyze risks that could prevent achieving objectives.",
+        "review": [
+          "Trace important objectives to relevant threats, weaknesses, and business or provider dependencies. Confirm the risk assessment considers the actual environment rather than only a generic list.",
+          "Examine how likelihood, impact, existing controls, and remaining exposure inform treatment decisions. Missing dependencies, unexplained ratings, or acceptance without a reasoned assessment need follow-up."
+        ],
+        "evidence": [
+          "A risk register, assessment notes, scenario analysis, or management risk decisions can show what was considered and why particular responses were selected.",
+          "System, incident, vulnerability, and vendor information can support the assumptions behind the assessment."
+        ],
+        "outcome": [
+          "Material risks are understood well enough to make justified management decisions about how to address them."
+        ],
+        "operational": [
+          "Use a consistent method, involve relevant service and technical owners, and revisit risk when the environment or important assumptions change."
+        ],
+        "enhanced": [
+          "Challenge high-impact scenarios against incident experience and provider dependencies to identify optimistic assumptions or overlooked exposure."
+        ]
+      }
     },
     "CC3.3": {
       "source_reference": "CC3.3",
@@ -343,7 +534,24 @@
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC3.3"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Consider fraud when assessing risks to objectives.",
+        "review": [
+          "Review credible ways personnel or outsiders could intentionally misuse access, conceal activity, manipulate control records, or take information or assets.",
+          "Check whether high-trust roles and workflows were considered realistically. A technical vulnerability list alone may miss deliberate bypass, collusion, or incentives to misrepresent control performance."
+        ],
+        "evidence": [
+          "Fraud or misuse scenarios in risk discussions, investigation lessons, or privileged-workflow reviews can show the intentional abuse considered and the resulting risk decisions."
+        ],
+        "outcome": [
+          "The risk assessment addresses plausible intentional abuse in the organization's systems and processes, not only accidental failure."
+        ],
+        "operational": [
+          "Include process owners when considering misuse of privileged access or sensitive workflows, and revisit scenarios when access models or incentives change."
+        ],
+        "enhanced": []
+      }
     },
     "CC3.4": {
       "source_reference": "CC3.4",
@@ -371,7 +579,26 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC3.4"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Assess changes that could materially affect controls.",
+        "review": [
+          "Review significant changes in services, technology, leadership, vendors, and external risk conditions to determine which could affect the control environment.",
+          "Trace changes during the period to a risk decision and any needed control updates. Identify new dependencies, responsibilities, or threats that left the assessment and controls out of date."
+        ],
+        "evidence": [
+          "Business or technology change records, revised risk assessments, provider-change reviews, or management decisions can connect a significant change to its control impact and response."
+        ],
+        "outcome": [
+          "Material changes are recognized and evaluated early enough for controls and responsibilities to remain appropriate."
+        ],
+        "operational": [
+          "Add risk-impact prompts to existing service, vendor, organizational, and technology change workflows instead of relying only on a calendar review."
+        ],
+        "enhanced": [
+          "Compare major changes recorded by business and technical teams against the risk-review record to find changes that bypassed assessment."
+        ]
+      }
     },
     "CC4.1": {
       "source_reference": "CC4.1",
@@ -399,7 +626,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC4.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Evaluate whether controls are present and working.",
+        "review": [
+          "Identify how management checks that controls work, including relevant provider-operated activities. Confirm evaluations cover the controls and risks the organization actually relies on.",
+          "Examine evaluation results, missed checks, and repeat exceptions across the review period. A completed-task count or a current configuration screenshot does not establish consistent control operation."
+        ],
+        "evidence": [
+          "Dated control reviews, monitoring results, internal assessments, or relevant external assessments can show what was evaluated, the period covered, and what the reviewer found.",
+          "Provider results considered alongside client-side responsibilities can support monitoring of shared controls; the provider's involvement alone is insufficient."
+        ],
+        "outcome": [
+          "Evaluations give management a supported view of whether its controls are functioning and reveal missed or ineffective activity."
+        ],
+        "operational": [
+          "Define review scope and frequency according to risk, change, and adopted commitments. Include outcomes and exceptions, not just evidence collection or task completion."
+        ],
+        "enhanced": [
+          "Use a reviewer separate from the operator for a higher-risk control to challenge the conclusion using the underlying records."
+        ]
+      }
     },
     "CC4.2": {
       "source_reference": "CC4.2",
@@ -427,7 +674,26 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC4.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Evaluate control deficiencies and communicate them for corrective action.",
+        "review": [
+          "Trace identified control problems to an assessment of impact and communication to people able to correct them, with leadership involvement appropriate to significance.",
+          "Examine overdue, recurring, and closed items. Confirm closure reflects the actual result, not just a ticket status, and keep an unmet outcome visible when management accepts the associated risk."
+        ],
+        "evidence": [
+          "Issue records, escalation messages, management decisions, and dated correction or retest records can show who was informed, what happened, and whether the deficiency remains."
+        ],
+        "outcome": [
+          "Responsible people receive actionable information promptly, management can see unresolved exposure, and claimed corrections have support."
+        ],
+        "operational": [
+          "Use the existing issue workflow to assign responsibility, set appropriate follow-up expectations, and record closure criteria. Opening an Action or approving an exception does not establish that the affected criterion is met."
+        ],
+        "enhanced": [
+          "Review recurring deficiencies across teams to distinguish isolated mistakes from a control design or resourcing problem."
+        ]
+      }
     },
     "CC5.1": {
       "source_reference": "CC5.1",
@@ -448,7 +714,24 @@
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC5.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Select controls that reduce risks to acceptable levels.",
+        "review": [
+          "Connect the organization's significant risks to the controls selected to address them. Confirm each control has a plausible purpose in the actual service and operating model.",
+          "Walk through how the selected controls prevent or detect the relevant failure. Look for uncovered risks, incompatible responsibilities, or controls whose stated purpose is unsupported by how they work."
+        ],
+        "evidence": [
+          "Risk-to-control mappings, process walkthroughs, control design notes, or management decisions can explain why controls were selected and how they reduce the identified exposure."
+        ],
+        "outcome": [
+          "The selected control activities address the organization's risks with a justified basis for the remaining exposure."
+        ],
+        "operational": [
+          "Record enough about each selected control to make its purpose, operator, trigger, and expected result understandable. Reconsider the design when risks or responsibilities change."
+        ],
+        "enhanced": []
+      }
     },
     "CC5.2": {
       "source_reference": "CC5.2",
@@ -469,7 +752,24 @@
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC5.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Technology controls support the organization's objectives.",
+        "review": [
+          "Identify technology and automated processes relied on by important controls, then examine the supporting access, infrastructure, and change arrangements.",
+          "Confirm client and provider responsibilities cover the relevant technology. Use dated records to distinguish a configured control from one that remained managed during the period; investigate unmanaged services or unsupported assumptions about provider coverage."
+        ],
+        "evidence": [
+          "Architecture and responsibility records, configuration exports, access reviews, or change and maintenance records can connect technology dependencies to the controls protecting them."
+        ],
+        "outcome": [
+          "Technology-dependent controls have supporting safeguards appropriate to the systems and risks on which they rely."
+        ],
+        "operational": [
+          "Include supporting technology controls when a service is introduced or changed. Make client-side duties explicit where an MSP, cloud service, or other provider performs part of the work."
+        ],
+        "enhanced": []
+      }
     },
     "CC5.3": {
       "source_reference": "CC5.3",
@@ -504,7 +804,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC5.3"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Turn policy expectations into operating control procedures.",
+        "review": [
+          "Compare stated policies and control expectations with the steps, ownership, and timing used in day-to-day work. No particular policy title or separate document for every topic is assumed.",
+          "Trace selected procedures to dated execution records throughout the review period. Look for procedures that no longer match systems, missed organization-defined frequencies, or approved policies with no evidence of use."
+        ],
+        "evidence": [
+          "Policies, runbooks, workflow instructions, or embedded approval rules can explain how expectations are put into practice.",
+          "Tickets, review records, approvals, or other dated results can show that the procedure was followed and identified problems were acted on."
+        ],
+        "outcome": [
+          "Operational work follows the organization's stated control expectations, and procedures remain usable and aligned with actual practice."
+        ],
+        "operational": [
+          "Maintain procedures where operators use them, with clear owners and organization-defined triggers or frequencies. Update affected instructions when the service or control changes."
+        ],
+        "enhanced": [
+          "Observe or reperform a higher-risk workflow to identify differences between the written procedure and routine execution."
+        ]
+      }
     },
     "CC6.1": {
       "source_reference": "CC6.1",
@@ -539,7 +859,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Protect information assets through logical access safeguards.",
+        "review": [
+          "Compare the in-scope systems, data stores, integrations, and access paths with the safeguards actually applied. Look for unmanaged systems or access routes outside the expected controls.",
+          "Confirm authentication, access restrictions, and credential protection match the organization's risks and commitments, including service accounts, privileged access, and provider-managed access. Examine MFA or encryption wherever the organization relies on them."
+        ],
+        "evidence": [
+          "Architecture or inventory records alongside identity, application, or network configuration exports can demonstrate coverage and the protections in use.",
+          "Dated configuration changes, authentication records, or review results can show whether safeguards continued to operate during the period; a current settings screenshot shows only the current state."
+        ],
+        "outcome": [
+          "Access safeguards cover the protected environment and match the organization's selected controls; unmanaged access paths or ineffective protections remain identifiable gaps."
+        ],
+        "operational": [
+          "Maintain a usable link between systems, owners, access methods, and control settings. Assign responsibility for service credentials and key handling, including handoffs to the MSP or other providers."
+        ],
+        "enhanced": [
+          "Validate selected access paths from an unauthorized-user perspective to check whether the configured restrictions work as intended."
+        ]
+      }
     },
     "CC6.2": {
       "source_reference": "CC6.2",
@@ -581,7 +921,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Authorize credentials before granting access; revoke obsolete credentials.",
+        "review": [
+          "Trace new employee, contractor, vendor, and non-person accounts to the authorization that preceded access being granted.",
+          "Compare departures and access-ending events with actual disablement or credential removal across the systems administered by the organization. Look for stale accounts, missed applications, and incomplete provider handoffs."
+        ],
+        "evidence": [
+          "Access requests and approvals paired with provisioning logs can demonstrate who authorized access and when it became effective.",
+          "Dated termination records, account exports, and disablement tickets across the review period can demonstrate removal, including failures discovered after the initial offboarding task."
+        ],
+        "outcome": [
+          "Accounts are authorized before use and credentials cease to work when authorization ends; closing an offboarding ticket alone is not evidence of removal."
+        ],
+        "operational": [
+          "Use a joiner/leaver workflow that names each system owner and distinguishes work completed by the client from work awaiting its provider. Review account validity at the organization's defined frequency."
+        ],
+        "enhanced": [
+          "Reconcile active accounts to personnel and third-party rosters to find accounts missed by event-driven provisioning and removal workflows."
+        ]
+      }
     },
     "CC6.3": {
       "source_reference": "CC6.3",
@@ -616,7 +976,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.3"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Keep permissions aligned with roles and appropriate separation.",
+        "review": [
+          "Compare effective permissions, privileged roles, and shared or service-account access with approved job or system needs, including conflicting responsibilities.",
+          "Trace role changes and access reviews to actual permission changes or removals. Identify excessive privileges and reviews that signed off access without resolving the identified mismatch."
+        ],
+        "evidence": [
+          "Role/group exports, permission rules, and approvals can show how access reflects responsibilities and separates incompatible activities.",
+          "Dated role-change tickets or access-review decisions paired with implementation records can show that decisions took effect during the period."
+        ],
+        "outcome": [
+          "Permissions remain appropriate as responsibilities change, and incompatible access is restricted or addressed through the organization's selected controls."
+        ],
+        "operational": [
+          "Assign owners to privileged and non-person accounts. Give access reviewers enough business context to challenge access, with review timing based on the organization's risks and adopted controls."
+        ],
+        "enhanced": [
+          "Compare actual privilege use with approved need to identify long-unused administration rights or combinations missed by role-based reviews."
+        ]
+      }
     },
     "CC6.4": {
       "source_reference": "CC6.4",
@@ -637,7 +1017,24 @@
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC6.4"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Limit physical access to authorized people.",
+        "review": [
+          "Identify relevant facilities, equipment, and media locations, including outsourced hosting, and confirm how physical access is restricted at each.",
+          "Review access grants, visitor arrangements, and removals against actual personnel needs. Check for active badges after departure or unclear responsibilities between the client and facility provider."
+        ],
+        "evidence": [
+          "Badge/key records, visitor logs, access approvals, or dated removal records can demonstrate how restrictions operate; relevant provider assurance can support outsourced locations when its scope and customer responsibilities are evaluated."
+        ],
+        "outcome": [
+          "Relevant physical assets and locations have working access restrictions, with client and provider responsibilities understood; cloud hosting alone does not establish that no physical controls apply."
+        ],
+        "operational": [
+          "Include badges, keys, and equipment custody in personnel changes. Review physical access at a frequency suited to the organization's selected controls and locations."
+        ],
+        "enhanced": []
+      }
     },
     "CC6.5": {
       "source_reference": "CC6.5",
@@ -665,7 +1062,24 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.5"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Sanitize retired assets before releasing their protections.",
+        "review": [
+          "Examine how devices and media are retired, reused, returned, or transferred, and when their access protections or custody end.",
+          "Confirm data and software no longer needed on those assets are made inaccessible before protection ends. Look for assets released before wiping, unverifiable destruction, or unresolved provider disposal responsibilities."
+        ],
+        "evidence": [
+          "Asset retirement records linked to wipe results, destruction records, return tickets, or provider confirmation can demonstrate the method, affected asset, timing, and completion."
+        ],
+        "outcome": [
+          "Retired or released physical assets no longer expose recoverable information that needed protection; a disposal request without completed sanitization is insufficient."
+        ],
+        "operational": [
+          "Keep assets under controlled custody until the selected sanitization method is confirmed. Include leased devices, removable media, and disposal vendors in the retirement workflow."
+        ],
+        "enhanced": []
+      }
     },
     "CC6.6": {
       "source_reference": "CC6.6",
@@ -700,7 +1114,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.6"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Protect system boundaries against externally originating threats.",
+        "review": [
+          "Identify internet-facing services, remote access, provider connections, and other external entry points, and compare them with the boundary protections in use.",
+          "Confirm permitted access and authentication match the intended purpose. Investigate unintended exposure, overly broad rules, and external connections omitted from change or access reviews."
+        ],
+        "evidence": [
+          "Network or cloud rules, remote-access settings, external exposure records, and approved connection designs can show which outside access is permitted.",
+          "Dated rule changes, access records, and resolved exposure findings can show how boundary protections were maintained through the period."
+        ],
+        "outcome": [
+          "External entry points are known and protected in line with the organization's risks and intended access; unexplained public exposure is not covered by an internal user-access review."
+        ],
+        "operational": [
+          "Give each external connection an owner and business purpose. Include firewall, cloud, remote-access, and provider-access changes in the existing change workflow."
+        ],
+        "enhanced": [
+          "Validate external exposure independently of configuration inventories to find reachable services that were overlooked."
+        ]
+      }
     },
     "CC6.7": {
       "source_reference": "CC6.7",
@@ -735,7 +1169,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.7"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Authorize and protect information as it moves.",
+        "review": [
+          "Examine how information is shared, exported, transferred, or removed by people and integrations, including removable media and provider transfers.",
+          "Confirm recipients and processes are authorized and protections match the information and commitments. Look for unrestricted sharing links, unapproved destinations, and transfers bypassing adopted safeguards."
+        ],
+        "evidence": [
+          "Sharing permissions, transfer configurations, recipient approvals, or removable-media procedures can show the intended restrictions.",
+          "Dated transfer logs, external-sharing reviews, or investigated handling alerts can show actual use and the response to inappropriate movement during the period."
+        ],
+        "outcome": [
+          "Information moves only through authorized people and processes with suitable protection; a permitted tool alone does not establish that every recipient or transfer was authorized."
+        ],
+        "operational": [
+          "Provide clear approved transfer methods and a route for unusual exchanges. Apply the organization's chosen encryption, channel restrictions, or data-loss controls according to its handling commitments."
+        ],
+        "enhanced": [
+          "Compare observed sharing and transfer activity with approved destinations to identify persistent bypasses or unintended public access."
+        ]
+      }
     },
     "CC6.8": {
       "source_reference": "CC6.8",
@@ -763,7 +1217,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.8"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Prevent or detect and address unauthorized or malicious software.",
+        "review": [
+          "Confirm the selected software-installation and malicious-software protections cover the systems they are intended to protect, including newly added assets.",
+          "Review protection health and detections through the period. Identify disabled or missing agents, unauthorized installations, and detections with no demonstrable response."
+        ],
+        "evidence": [
+          "Application restrictions, endpoint protection configurations, or software inventories can demonstrate the preventive or detective controls selected.",
+          "Dated coverage and health records, malware alerts, and containment or remediation tickets can show continued operation and action on detections."
+        ],
+        "outcome": [
+          "The selected protections operate over the intended systems and unauthorized or malicious software is addressed; a purchased license or installed-but-unhealthy agent is insufficient."
+        ],
+        "operational": [
+          "Reconcile protection coverage with active assets and route disabled protection or detections to a named responder, including the agreed client/MSP split."
+        ],
+        "enhanced": [
+          "Use a safe, authorized validation exercise to confirm that the chosen protections detect or block the expected behavior and reach a responder."
+        ]
+      }
     },
     "CC7.1": {
       "source_reference": "CC7.1",
@@ -798,7 +1272,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Find new vulnerabilities and vulnerability-producing configuration changes.",
+        "review": [
+          "Compare vulnerability and configuration monitoring coverage with active systems and recent changes. Confirm newly discovered weaknesses and changes that introduce vulnerabilities can be identified.",
+          "Trace material findings to investigation and the organization's remediation decisions. Look for missed assets, stale scans, recurring configuration drift, or fixes marked complete without validation."
+        ],
+        "evidence": [
+          "Scan scope and results, configuration comparisons, asset reconciliation, or security advisories linked to affected systems can demonstrate detection coverage.",
+          "Dated finding histories, patch results, and retest records can show detection and follow-through during the period, including overdue work against the organization's own expectations."
+        ],
+        "outcome": [
+          "The organization can identify relevant new weaknesses and configuration changes, and distinguish corrected findings from unresolved exposure."
+        ],
+        "operational": [
+          "Set monitoring and remediation timing based on risk and adopted obligations. Reconcile tools to the asset population and connect significant changes to renewed vulnerability assessment."
+        ],
+        "enhanced": [
+          "Compare repeat findings and missed-asset trends to determine whether the detection process itself needs improvement."
+        ]
+      }
     },
     "CC7.2": {
       "source_reference": "CC7.2",
@@ -840,7 +1334,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Detect anomalies and determine whether they are security events.",
+        "review": [
+          "Examine whether relevant systems produce usable monitoring information for malicious activity, errors, and other threats to objectives. Check whether monitoring tools and integrations themselves remain healthy.",
+          "Follow anomalies from detection to analysis. Look for unreviewed alerts, silent log sources, and unclear handoffs between the client and its monitoring provider."
+        ],
+        "evidence": [
+          "Log-source coverage, alert rules, retention settings, or monitoring architecture can show the detection design.",
+          "Dated alerts, analysis records, and monitoring-health or integration-failure records across the period can show that detection and review occurred, rather than only that a dashboard exists."
+        ],
+        "outcome": [
+          "Relevant anomalies reach an accountable analyst and receive a supported security-event determination; provider enrollment alone does not establish effective monitoring."
+        ],
+        "operational": [
+          "Define expected sources, review responsibilities, escalation routes, and retention needed for investigation. Confirm the client receives and acts on the provider's agreed notifications."
+        ],
+        "enhanced": [
+          "Run authorized detection checks and compare time-to-analysis or missed-detection trends with the organization's expectations."
+        ]
+      }
     },
     "CC7.3": {
       "source_reference": "CC7.3",
@@ -875,7 +1389,26 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.3"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Evaluate security events and act on incident impact.",
+        "review": [
+          "Review how security events are assessed for actual or potential failure to meet commitments and system requirements, rather than relying solely on a tool's severity label.",
+          "Trace event decisions to incident escalation or a supported non-incident disposition. Look for unsupported false-positive closures, incomplete impact analysis, or incidents left without action."
+        ],
+        "evidence": [
+          "Dated intake records, investigation notes, classification decisions, affected-system details, and escalation records can demonstrate why events were or were not treated as incidents."
+        ],
+        "outcome": [
+          "Event assessments explain the impact and trigger appropriate action; closing an alert is not equivalent to establishing that objectives were met."
+        ],
+        "operational": [
+          "Give analysts usable impact and escalation criteria, including how an MSP or MSSP obtains business context from the client before a material event is closed."
+        ],
+        "enhanced": [
+          "Have a second reviewer challenge selected non-incident closures to identify missed impacts or inconsistent classification."
+        ]
+      }
     },
     "CC7.4": {
       "source_reference": "CC7.4",
@@ -910,7 +1443,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.4"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Execute a defined response to identified security incidents.",
+        "review": [
+          "Compare the response program with actual incident handling: investigation, containment, remediation, and communication appropriate to the incident and obligations.",
+          "Confirm client and external responders understood authority, escalation, and communication responsibilities. Identify missing containment evidence, delayed decisions, or closure while the incident remained active."
+        ],
+        "evidence": [
+          "Response procedures and contact arrangements can demonstrate design; dated incident timelines, investigation records, actions, and communications can demonstrate execution.",
+          "Exercise records can help assess preparedness when incidents are absent, but distinguish a simulated exercise from evidence of an actual response."
+        ],
+        "outcome": [
+          "The response follows a usable program and addresses the incident's effects, with a traceable basis for containment, remediation, and communication decisions."
+        ],
+        "operational": [
+          "Keep responder contacts and decision authority current. Use incident records to connect response actions to owners and subsequent improvements without treating an open action as completed remediation."
+        ],
+        "enhanced": [
+          "Review response delays and recurring incident patterns to test whether changes from previous incidents improved later responses."
+        ]
+      }
     },
     "CC7.5": {
       "source_reference": "CC7.5",
@@ -938,7 +1491,26 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.5"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Restore operations following security incidents.",
+        "review": [
+          "Examine how affected systems and data would be restored safely after a security incident, including dependencies, recovery ownership, and provider support.",
+          "Review actual recovery or exercise results and any backups relied upon. Look for failed restores, missing recovery coverage, unresolved reinfection risks, or an inability to demonstrate that recovered services work."
+        ],
+        "evidence": [
+          "Recovery procedures, backup configurations, or rebuild instructions can show the planned approach; dated restore logs, validation results, incident records, or exercises can show execution and identified limitations."
+        ],
+        "outcome": [
+          "Recovery activities can restore the affected environment and address what would prevent safe resumption; this remains relevant in Security-only scope."
+        ],
+        "operational": [
+          "Where backups support incident recovery, align coverage, retention, failure monitoring, and restoration steps with the organization's needs. Feed recovery lessons into procedures and retest material corrections."
+        ],
+        "enhanced": [
+          "Validate a recovery scenario that includes compromised credentials or unavailable personnel to challenge assumptions beyond a routine successful restore."
+        ]
+      }
     },
     "CC8.1": {
       "source_reference": "CC8.1",
@@ -973,7 +1545,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC8.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Control changes through authorization, testing, approval, and implementation.",
+        "review": [
+          "Trace infrastructure, software, data, configuration, and procedure changes through authorization, design or acquisition, testing, approval, and implementation. Include emergency changes and provider-delivered changes within the organization's responsibilities.",
+          "Compare deployed changes with change records over the period. Identify unauthorized deployments, missing validation, or security-impacting configuration changes outside the established process."
+        ],
+        "evidence": [
+          "Change tickets, repository or pipeline records, test results, approvals, and deployment logs can link the requested change to what actually reached the environment.",
+          "Emergency-change records or post-implementation reviews can show how urgent and failed changes were handled under the organization's process."
+        ],
+        "outcome": [
+          "Implemented changes are traceable through the selected change controls and evaluated against affected objectives; a ticket created after deployment does not by itself establish prior authorization."
+        ],
+        "operational": [
+          "Make normal and emergency paths explicit, including decision authority, validation, and recovery/backout appropriate to the change. Include security settings and outsourced deployments, not just application releases."
+        ],
+        "enhanced": [
+          "Reconcile actual deployments and configuration changes against approved records to detect changes that bypassed the workflow."
+        ]
+      }
     },
     "CC9.1": {
       "source_reference": "CC9.1",
@@ -1001,7 +1593,26 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC9.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Develop mitigations for potential business disruption.",
+        "review": [
+          "Identify disruption scenarios that could prevent the in-scope service from meeting objectives, such as key staff loss, facility problems, provider failure, or security events.",
+          "Examine the selected mitigation activities and their feasibility, ownership, and dependencies. Look for plans relying on unavailable people, inaccessible systems, or unsupported recovery assumptions."
+        ],
+        "evidence": [
+          "Disruption risk assessments, continuity arrangements, alternative operating procedures, dependency analyses, or relevant financial mitigation decisions can demonstrate how identified disruption risks are addressed."
+        ],
+        "outcome": [
+          "Material disruption risks have workable mitigation activities aligned with objectives; a generic risk register or approved acceptance does not establish that the necessary mitigation operates."
+        ],
+        "operational": [
+          "Connect disruption risks to practical response, continuity, and recovery arrangements. Revisit them when dependencies or commitments change; do not remove these considerations merely because Availability is out of scope."
+        ],
+        "enhanced": [
+          "Challenge a critical disruption assumption with a scenario exercise involving both client and provider decision-makers."
+        ]
+      }
     },
     "CC9.2": {
       "source_reference": "CC9.2",
@@ -1036,7 +1647,28 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC9.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Assess and manage risks from vendors and partners.",
+        "review": [
+          "Compare providers actually supporting the system with the vendor-risk inventory, service obligations, and assigned internal responsibilities, including MSP/MSSP and subservice dependencies.",
+          "Review whether due diligence and ongoing oversight address the provider's relevant risks. Where assurance reports are used, examine scope, period, findings, and customer responsibilities rather than treating possession of a report as assurance.",
+          "Trace material provider issues or service changes to client decisions and follow-up. Identify unassigned customer-side controls, stale reliance, or unresolved failures affecting commitments."
+        ],
+        "evidence": [
+          "Contracts, responsibility mappings, due diligence assessments, relevant assurance reports, service records, or provider discussions can support the risk assessment. No single report type is universally required.",
+          "Dated oversight records, issue follow-up, and completed customer-side activities can show how the relationship was managed during the review period."
+        ],
+        "outcome": [
+          "Provider risk is understood and managed throughout the relationship, and the client can demonstrate its own responsibilities rather than assuming outsourcing transfers accountability."
+        ],
+        "operational": [
+          "Choose oversight frequency and depth by risk and adopted commitments. Assign an internal owner for provider changes, findings, escalation, and secure termination of the relationship."
+        ],
+        "enhanced": [
+          "Validate a critical shared responsibility end to end with the provider, including whether agreed notifications actually lead to client action."
+        ]
+      }
     },
     "A1.1": {
       "source_reference": "A1.1",
@@ -1064,7 +1696,26 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for A1.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Manage system capacity against demand.",
+        "review": [
+          "Compare processing, storage, and other relevant resource use with current capacity, expected demand, and the organization's service commitments.",
+          "Review how capacity constraints are identified and addressed, including growth, peak demand, or loss of a critical component. Look for exhausted resources, repeated threshold breaches, or scaling plans that depend on unavailable provider capacity."
+        ],
+        "evidence": [
+          "Dated utilization trends, capacity assessments, threshold alerts, scaling records, or capacity-change decisions can demonstrate that demand was evaluated and acted on across the period."
+        ],
+        "outcome": [
+          "Capacity decisions are supported by actual use and expected demand, with identified constraints addressed before they undermine the organization's availability objectives."
+        ],
+        "operational": [
+          "Assign capacity ownership and thresholds that reflect the service's needs. Link emerging constraints to the change process and confirm provider limits instead of assuming capacity is unlimited."
+        ],
+        "enhanced": [
+          "Validate a peak-demand or reduced-capacity scenario to check whether the organization's forecasts and scaling assumptions hold."
+        ]
+      }
     },
     "A1.2": {
       "source_reference": "A1.2",
@@ -1099,7 +1750,27 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for A1.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Operate environmental, backup, and recovery protections.",
+        "review": [
+          "Examine environmental threats, protective software, backup coverage, and recovery infrastructure against the systems and data needed for availability commitments. Include provider-operated facilities and recovery dependencies.",
+          "Confirm the selected protections were authorized, implemented, maintained, and monitored. Review backup failures or protection alerts over the period for missing coverage, repeated failures, or unsupported recovery expectations."
+        ],
+        "evidence": [
+          "Backup and retention settings, recovery architecture, environmental safeguards, maintenance records, or scoped provider assurance can show the protection design and responsibilities.",
+          "Dated job histories, monitoring alerts, failure resolution, and infrastructure maintenance records can demonstrate operation; a backup-success indicator alone does not establish recoverability."
+        ],
+        "outcome": [
+          "Environmental, backup, and recovery protections operate over the required environment and support the organization's availability needs, with client/provider responsibilities demonstrated."
+        ],
+        "operational": [
+          "Reconcile backup and recovery coverage with system changes. Align retention, protection of backup copies, failure escalation, and recovery resources with the organization's recovery needs and threat exposure."
+        ],
+        "enhanced": [
+          "Review correlated failures to challenge whether the same incident could disable the primary environment and the recovery protections relied upon."
+        ]
+      }
     },
     "A1.3": {
       "source_reference": "A1.3",
@@ -1141,7 +1812,26 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for A1.3"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Test recovery procedures against recovery objectives.",
+        "review": [
+          "Review whether recovery procedures have been exercised for the systems, data, and dependencies needed to meet recovery objectives, including relevant provider participation.",
+          "Compare observed restoration and validation results with the organization's recovery needs. Identify untested critical paths, incomplete or unusable restored data, failed steps, or material corrections not yet demonstrated."
+        ],
+        "evidence": [
+          "Dated recovery test plans and results, restore logs, restored-data validation, exercise records, or follow-up retests can demonstrate what was tested, what happened, and what remains unproven."
+        ],
+        "outcome": [
+          "Recovery testing demonstrates the procedures' ability to support recovery objectives and exposes limitations; a written plan or successful backup job is not a recovery test."
+        ],
+        "operational": [
+          "Set test timing and scenarios from risk, dependencies, and adopted commitments. Record expected versus observed outcomes, update procedures, and retest material failures; distinguish exercises from actual recovery events."
+        ],
+        "enhanced": [
+          "Extend validation to a less familiar failure scenario, unavailable key personnel, or end-to-end provider recovery where these would challenge existing assurance."
+        ]
+      }
     },
     "C1.1": {
       "source_reference": "C1.1",
@@ -1162,7 +1852,25 @@
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for C1.1"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Identify and maintain information designated confidential.",
+        "review": [
+          "Trace confidentiality commitments to the information designated confidential, its owners, locations, flows, and relevant providers. Look for confidential data that classification or handling arrangements miss.",
+          "Compare retention and preservation practices with the identified purpose and applicable obligations. Investigate premature deletion, unnecessary retention, or an inability to locate the information covered by a commitment."
+        ],
+        "evidence": [
+          "Confidential-data inventories, classification decisions, customer commitments, data-flow records, and retention rules can demonstrate what must be maintained and why.",
+          "Dated retention settings, preservation reviews, handling records, or changes to data locations can show how these arrangements operated during the period."
+        ],
+        "outcome": [
+          "Confidential information is identifiable and maintained for the justified period without premature destruction, including information held by providers."
+        ],
+        "operational": [
+          "Update data locations and handling instructions when commitments, services, or providers change. Connect access, transfer, and provider safeguards to their relevant Common Criteria rather than treating every confidentiality activity as a separate C1.1 requirement."
+        ],
+        "enhanced": []
+      }
     },
     "C1.2": {
       "source_reference": "C1.2",
@@ -1190,7 +1898,43 @@
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for C1.2"
         }
-      ]
+      ],
+      "practical": {
+        "summary": "Dispose of confidential information appropriately.",
+        "review": [
+          "Examine how confidential information due for disposal is identified across active systems, archives, media, and providers, taking applicable retention duties or holds into account.",
+          "Trace disposal decisions to actual deletion or destruction, including retained copies and backup expiry where relevant. Look for overdue deletion, unverifiable provider disposal, or access revocation being mistaken for data removal."
+        ],
+        "evidence": [
+          "Retention rules and dated deletion logs, destruction records, lifecycle settings, disposal tickets, or provider confirmations can show what was disposed of, when, and under which approved conditions."
+        ],
+        "outcome": [
+          "Confidential information due for disposal is removed using a method consistent with obligations, and remaining copies or limitations are understood rather than assumed erased."
+        ],
+        "operational": [
+          "Assign disposal ownership and coordinate deletion across systems and providers. Define how holds, backup retention, and service termination affect execution without describing indefinite retention as completed disposal."
+        ],
+        "enhanced": [
+          "Validate selected disposal outcomes against the relevant systems or provider process to detect data that remains accessible after reported completion."
+        ]
+      }
     }
+  },
+  "legacy_items_version": "soc-guidance-v1",
+  "practical_provenance": {
+    "summary": "criterion_summary",
+    "review": "assessment_guidance",
+    "evidence": "evidence_examples",
+    "outcome": "assessment_guidance",
+    "operational": "operational_guidance",
+    "enhanced": "enhanced_assurance"
+  },
+  "context": {
+    "categories": "These are assessment guidance categories, not AICPA maturity levels or mandatory stages.",
+    "obligations": "Assess the organization's selected controls and commitments. A practice is not optional merely because it appears under Operational Practices or Enhanced Assurance. Set review frequencies to the organization's risks and obligations, not a universal SOC 2 cadence.",
+    "evidence": "Use relevant examples or equivalent support from the client, MSP/MSSP or responsible provider; not every artifact is needed. Confirm what each party performs and what the records demonstrate.",
+    "type2": "For Type 2 readiness, distinguish a documented design from consistent operation across the review period. Examine dated records, completion history, exceptions and follow-up. A current policy or screenshot alone does not establish historical operating effectiveness.",
+    "gaps": "Opening an Action, recording an exception or accepting risk does not establish that an unmet criterion is satisfied.",
+    "baseline": "Before assessing criteria, establish the service boundary, commitments, systems, data flows, providers and shared responsibilities. Maintain the system description as program context; it is not an extra TSC control checklist. Security-only scope still includes relevant incident recovery and business-disruption mitigations."
   }
 }
