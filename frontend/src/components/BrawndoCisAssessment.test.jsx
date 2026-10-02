@@ -176,7 +176,8 @@ test('ISO assessments omit the duplicate organizational controls section',async(
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} position="1 of 30"/>));
  expect(container.textContent).not.toContain('Organizational Controls');
- expect(container.querySelector('.cis-requirement-guide')).toBeNull();
+  expect(container.querySelector('.iso-guide-disclosure').open).toBe(false);
+  expect(container.querySelector('.cis-requirement-guide')).not.toBeNull();
 });
 test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
  const toControl=jest.fn();

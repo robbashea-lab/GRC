@@ -201,7 +201,7 @@ test('ISO default presentation preserves SoA scope and uses native category butt
  api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'new-client',status:d.id===annex[0].id?'not_assessed':'addressed',soa_applicability:d.id===annex[1].id?'excluded':'included'})),work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="new-client"/>));
  expect(container.querySelector('.framework-presentation')).not.toBeNull();
- expect(container.querySelector('[aria-label="Statement of Applicability status"]').textContent).toContain('93 of 93 necessity decisions recorded');
+  expect(container.querySelector('[aria-label="Statement of Applicability status"]').textContent).toContain('93 of 93 decisions recorded');
  expect(container.querySelector('.framework-category-row').tagName).toBe('BUTTON');
  await act(async()=>buttons('All controls')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
@@ -213,6 +213,9 @@ test('ISO default presentation preserves SoA scope and uses native category butt
  expect(mockHistory.at(-1).search).toBe('iso_view=soa');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('91 of 92');
+ await act(async()=>container.querySelector('.bcis-legend .is-good').click());
+ expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(91);
+ expect(container.querySelector(`[data-testid="requirement-${annex[1].id}"]`)).toBeNull();
 });
 
 test.each(['cis-ig1','hipaa'])('%s with all records N/A keeps undefined progress without calculation explanations',async frameworkKey=>{

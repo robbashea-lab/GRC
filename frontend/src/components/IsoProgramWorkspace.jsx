@@ -1,55 +1,49 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useState} from 'react';
 import api,{formatError} from '@/lib/api';
-import {auditProgress} from '@/lib/isoAudit';
+import {isoProgramMetrics,isoAssessmentConflicts,auditProgrammeMetrics,auditProgrammeYears} from '@/lib/isoProgramMetrics';
 
-const soaState=row=>row.soa_applicability==='excluded'?'notNecessary':row.soa_applicability!=='included'?'undetermined':row.status==='addressed'?'implemented':row.status==='not_assessed'?'notImplemented':'partial';
 const percent=(value,total)=>total?Math.round(value/total*100):0;
 const Segments=({segments,total,label})=><div className="iso-program-bar" role="img" aria-label={label}>{segments.filter(s=>s.value).map(s=><span key={s.label} className={'is-'+s.tone} style={{width:`${s.value/Math.max(total,1)*100}%`}} title={`${s.label}: ${s.value}`}/>)}</div>;
-const Card=({view,title,subtitle,metric,progress,segments,total,items,onSelect,tone=''})=><button type="button" className={`iso-program-card ${tone?'is-'+tone:''}`} onClick={()=>onSelect(view)} aria-label={`Open ${title}. ${metric}`}>
+const Card=({view,title,metric,complete,total,segments,items,onSelect})=><button type="button" className="iso-program-card" onClick={()=>onSelect(view)} aria-label={`Open ${title}. ${metric}`}>
   <span className="iso-program-title">{title}<span aria-hidden="true">›</span></span>
-  <span className="iso-program-subtitle">{subtitle}</span>
   <strong className="iso-program-metric">{metric}</strong>
-  <span className="iso-program-progress">{progress}%</span>
-  <Segments segments={segments} total={total} label={`${title}: ${progress}% progress`}/>
+  <span className="iso-program-progress">{total?`${percent(complete,total)}%`:'No planned records'}</span>
+  <Segments segments={segments} total={total} label={`${title}: ${complete} of ${total}`}/>
   <span className="iso-program-breakdown">{items.map(item=><span key={item}>{item}</span>)}</span>
 </button>;
+const implementationSegments=c=>[{value:c.implemented,tone:'good',label:'Implemented'},{value:c.partial,tone:'attention',label:'Partially implemented'},{value:c.notImplemented,tone:'critical',label:'Not implemented'},{value:c.notAssessed,tone:'neutral',label:'Not assessed'}];
+const implementationItems=c=>[`${c.implemented} implemented`,`${c.partial} partially implemented`,`${c.notImplemented} not implemented`,`${c.notAssessed} not assessed`];
 
 export function IsoSoaSummary({rows}){
-  const counts=rows.reduce((a,row)=>{a[soaState(row)]++;return a;},{implemented:0,partial:0,notImplemented:0,notNecessary:0,undetermined:0});
-  const necessary=counts.implemented+counts.partial+counts.notImplemented,reviewed=rows.length-counts.undetermined;
+  const {soa}=isoProgramMetrics(rows);
   return <section className="bcis-card iso-workspace-summary" aria-label="Statement of Applicability status">
-    <div><p className="bcis-measure-label">Annex A controls reviewed</p><p className="iso-workspace-figure">{percent(reviewed,rows.length)}%</p><p className="text-sm text-ink-secondary">{reviewed} of {rows.length} necessity decisions recorded</p></div>
-    <Segments total={rows.length} label={`Statement of Applicability: ${reviewed} of ${rows.length} controls reviewed`} segments={[{value:necessary,tone:'good',label:'Necessary'},{value:counts.notNecessary,tone:'attention',label:'Not Necessary'},{value:counts.undetermined,tone:'neutral',label:'Not yet determined'}]}/>
-    <div className="iso-workspace-breakdown"><span>Necessary <strong>{necessary}</strong></span><span>Not Necessary <strong>{counts.notNecessary}</strong></span><span>Not yet determined <strong>{counts.undetermined}</strong></span><span>Implementation gaps <strong>{counts.partial+counts.notImplemented}</strong></span></div>
-    <p className="bcis-note">Necessity decisions and implementation status are separate. All {rows.length} Annex A reference controls remain in scope for consideration.</p>
+    <div><p className="bcis-measure-label">Applicability decisions</p><p className="iso-workspace-figure">{percent(soa.decided,soa.total)}%</p><p className="text-sm text-ink-secondary">{soa.decided} of {soa.total} decisions recorded</p></div>
+    <Segments total={soa.total} label={`Statement of Applicability: ${soa.decided} of ${soa.total} decisions recorded`} segments={[{value:soa.applicable,tone:'good',label:'Applicable'},{value:soa.excluded,tone:'attention',label:'Excluded'},{value:soa.undetermined,tone:'neutral',label:'Not determined'}]}/>
+    <div className="iso-workspace-breakdown"><span>Applicable <strong>{soa.applicable}</strong></span><span>Not applicable / excluded <strong>{soa.excluded}</strong></span><span>Not determined <strong>{soa.undetermined}</strong></span></div>
+    <p className="bcis-note">Applicability decisions and implementation assessments are separate. Additional necessary controls may be documented through risk treatment and linked organization controls.</p>
   </section>;
 }
 
 export default function IsoProgramWorkspace({clientId,mode,rows,onSelect}){
-  const [data,setData]=useState({reviews:[],findings:[]}),[error,setError]=useState('');
-  useEffect(()=>{const c=new AbortController();setError('');Promise.all(['reviews','findings'].map(kind=>api.get('/'+kind,{params:{client_id:clientId},signal:c.signal}))).then(result=>{if(!c.signal.aborted)setData({reviews:Array.isArray(result[0].data)?result[0].data:[],findings:Array.isArray(result[1].data)?result[1].data:[]});}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[clientId]);
-  const clauses=rows.filter(r=>r.specification==='isms_clause'),annex=rows.filter(r=>r.specification==='annex_control'),audits=data.reviews.filter(r=>r.iso_audit);
-  const clauseCounts=useMemo(()=>({implemented:clauses.filter(r=>r.status==='addressed').length,partial:clauses.filter(r=>r.status==='in_progress').length,notImplemented:clauses.filter(r=>r.status==='needs_attention').length,notAssessed:clauses.filter(r=>r.status==='not_assessed').length}),[clauses]);
-  const soa=useMemo(()=>annex.reduce((a,row)=>{a[soaState(row)]++;return a;},{implemented:0,partial:0,notImplemented:0,notNecessary:0,undetermined:0}),[annex]);
-  const assessed=clauses.length-clauseCounts.notAssessed,soaReviewed=annex.length-soa.undetermined,necessary=soa.implemented+soa.partial+soa.notImplemented;
-  const auditComplete=audits.filter(r=>{const p=auditProgress(r.iso_audit);return p.total>0&&p.complete===p.total;}).length,auditFindings=data.findings.filter(f=>audits.some(r=>r.review_id===f.review_id)&&!['closed','accepted'].includes(f.status)).length;
-  if(error)return <p role="alert" className="text-sm text-semantic-critical">ISO programme details could not be loaded. {error}</p>;
+  const [reviews,setReviews]=useState(null),[error,setError]=useState(''),[selectedYear,setSelectedYear]=useState('');
+  useEffect(()=>{const c=new AbortController();setError('');setReviews(null);setSelectedYear('');api.get('/iso-audit',{params:{client_id:clientId},signal:c.signal}).then(({data})=>{if(!c.signal.aborted)setReviews(data.reviews||[]);}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[clientId]);
+  const {soa,requirements,annex}=isoProgramMetrics(rows),years=auditProgrammeYears(reviews||[]);
+  const now=String(new Date().getFullYear()),year=selectedYear||(years.includes(now)?now:years.at(-1)||now),audit=auditProgrammeMetrics(reviews||[],year);
   if(mode!=='overview')return null;
   return <section className="space-y-4" aria-label="ISMS Overview">
-    <div><h2 className="font-semibold">ISO 27001 programme overview</h2><p className="text-sm text-ink-secondary">Four connected views of the operating ISMS. Figures show assessment and programme progress, not certification status or audit opinion.</p></div>
+    <p className="text-sm text-ink-secondary">Figures show assessment and programme progress, not certification status or audit opinion.</p>
+    {!!isoAssessmentConflicts(rows).length&&<p role="alert" className="text-sm text-semantic-critical">Legacy assessment conflicts require review: {isoAssessmentConflicts(rows).map(r=>r.definition_id).join(', ')}. A mandatory requirement or applicable control has a Not Applicable implementation status. Saved values are retained, not counted as implemented, and have not been migrated.</p>}
+    <label className="block text-sm">Audit-program year <select aria-label="Audit-program year" value={year} onChange={e=>setSelectedYear(e.target.value)}>{(years.length?years:[now]).map(y=><option key={y}>{y}</option>)}</select></label>
+    {error&&<p role="alert" className="text-sm text-semantic-critical">Audit programme could not be loaded. {error}</p>}
     <div className="iso-program-grid">
-      <Card view="isms_clause" title="ISMS Requirements" subtitle="Clauses 4–10" metric={`${percent(assessed,clauses.length)}% assessed`} progress={percent(assessed,clauses.length)} total={clauses.length} onSelect={onSelect}
-        segments={[{value:clauseCounts.implemented,tone:'good',label:'Implemented'},{value:clauseCounts.partial,tone:'attention',label:'Partial'},{value:clauseCounts.notImplemented,tone:'critical',label:'Not implemented'},{value:clauseCounts.notAssessed,tone:'neutral',label:'Not assessed'}]}
-        items={[`${assessed} of ${clauses.length} assessed`,`${clauseCounts.implemented} implemented`,`${clauseCounts.partial} partial · ${clauseCounts.notImplemented} not implemented`,`${clauseCounts.notAssessed} not assessed`]}/>
-      <Card view="soa" title="Statement of Applicability" subtitle="Necessity and justification" metric={`${soaReviewed} of ${annex.length} reviewed`} progress={percent(soaReviewed,annex.length)} total={annex.length} onSelect={onSelect} tone={soa.undetermined?'attention':''}
-        segments={[{value:necessary,tone:'good',label:'Necessary'},{value:soa.notNecessary,tone:'attention',label:'Not Necessary'},{value:soa.undetermined,tone:'neutral',label:'Not yet determined'}]}
-        items={[`${necessary} Necessary`,`${soa.notNecessary} Not Necessary`,`${soa.undetermined} not yet determined`,`${soa.partial+soa.notImplemented} implementation gaps`]}/>
-      <Card view="annex_control" title="Annex A Controls" subtitle="Implementation of necessary controls" metric={`${percent(soa.implemented,necessary)}% implemented`} progress={percent(soa.implemented,necessary)} total={necessary} onSelect={onSelect}
-        segments={[{value:soa.implemented,tone:'good',label:'Implemented'},{value:soa.partial,tone:'attention',label:'Partial'},{value:soa.notImplemented,tone:'critical',label:'Not implemented'}]}
-        items={[`${annex.length} reference controls`,`${necessary} Necessary`,`${soa.implemented} implemented`,`${soa.partial} partial · ${soa.notImplemented} not implemented`]}/>
-      <Card view="audit" title="Internal Audit Programme" subtitle={`Current programme · ${audits[0]?.due_date?.slice(0,4)||'year not set'}`} metric={`${auditComplete} of ${audits.length} planned audits complete`} progress={percent(auditComplete,audits.length)} total={audits.length} onSelect={onSelect} tone={auditFindings?'attention':''}
-        segments={[{value:auditComplete,tone:'good',label:'Complete'},{value:audits.length-auditComplete,tone:'neutral',label:'Planned or in progress'}]}
-        items={[`${percent(auditComplete,audits.length)}% programme coverage`,`${auditFindings} open audit Finding${auditFindings===1?'':'s'}`]}/>
+      <Card view="soa" title="Statement of Applicability" metric={`${soa.decided} of ${soa.total} applicability decisions completed`} complete={soa.decided} total={soa.total} onSelect={onSelect}
+        segments={[{value:soa.applicable,tone:'good',label:'Applicable'},{value:soa.excluded,tone:'attention',label:'Excluded'},{value:soa.undetermined,tone:'neutral',label:'Not determined'}]}
+        items={[`${soa.applicable} applicable`,`${soa.excluded} not applicable / excluded`,`${soa.undetermined} not determined`]}/>
+      <Card view="isms_clause" title="ISMS Requirements" metric={`${requirements.implemented} of ${requirements.total} requirements implemented`} complete={requirements.implemented} total={requirements.total} segments={implementationSegments(requirements)} items={implementationItems(requirements)} onSelect={onSelect}/>
+      <Card view="annex_control" title="Annex A Controls" metric={`${annex.implemented} of ${annex.total} applicable controls implemented`} complete={annex.implemented} total={annex.total} segments={implementationSegments(annex)} items={[...implementationItems(annex),`${soa.undetermined} applicability not determined · ${soa.excluded} excluded`]} onSelect={onSelect}/>
+      {reviews&&!error?<Card view="audit" title="Internal Audit" metric={`${audit.complete} of ${audit.total} planned audit checks completed · ${year}`} complete={audit.complete} total={audit.total} onSelect={view=>onSelect(view,{audit_year:year})}
+        segments={[{value:audit.complete,tone:'good',label:'Complete'},{value:audit.total-audit.complete,tone:'neutral',label:'Pending'}]}
+        items={audit.quarters.map(q=>`Q${q.quarter}: ${q.total?`${q.complete} of ${q.total} · ${percent(q.complete,q.total)}%`:'Not scheduled'}`)}/>:<div className="iso-program-card" role="status">Internal Audit · {error?'Unavailable':'Loading programme…'}</div>}
     </div>
   </section>;
 }

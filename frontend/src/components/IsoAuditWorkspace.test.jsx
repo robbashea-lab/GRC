@@ -65,3 +65,12 @@ test('package cards distinguish completed history from the upcoming cycle',async
   expect(document.activeElement.tagName).toBe('H3');
   expect(document.activeElement.textContent).toBe(auditPackage('governance-risk').title);
 });
+
+test('switching clients clears the old audit while the next authorized programme loads',async()=>{
+  api.get.mockImplementation(()=>new Promise(()=>{}));
+  await act(async()=>root.render(<IsoAuditWorkspace clientId="another-iso-client"/>));
+  expect(document.querySelector('[data-assessment-shell]')).toBeNull();
+  expect(container.textContent).toContain('Loading audit program');
+  expect(container.textContent).not.toContain('governance-risk');
+  expect(api.patch).not.toHaveBeenCalled();
+});

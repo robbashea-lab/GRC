@@ -7,7 +7,8 @@
 .framework-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
 .framework-tabs .ui-button { height: auto; min-height: 36px; padding: 6px 12px; font-size: 13px; border-radius: 999px; background: var(--cs-card); color: var(--cs-text); border: 1px solid var(--cs-border); white-space: normal; }
 .framework-tabs .ui-button[aria-pressed="true"] { background: var(--cs-text); color: var(--cs-bg); border-color: var(--cs-text); }
-.iso-program-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.framework-presentation .framework-tabs .ui-button[aria-selected="true"] { background: var(--cs-text); color: var(--cs-bg); border-color: var(--cs-text); }
+.iso-program-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .iso-program-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-content: start; gap: 4px 12px; min-width: 0; padding: 18px; text-align: left; border: 1px solid var(--cs-border); border-radius: 12px; background: var(--cs-card); color: var(--cs-text); }
 .iso-program-card:hover { border-color: var(--cs-muted); background: var(--cs-subtle); }
 .iso-program-card.is-attention { box-shadow: inset 0 2px 0 var(--cs-attention); }
