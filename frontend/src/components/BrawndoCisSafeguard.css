@@ -1,4 +1,33 @@
 /* Shared CIS IG1 safeguard workspace. Portal tokens preserve light/dark themes. */
+/* Brawndo 1.1 preview trial: presentation only, preserving the shared forms. */
+.cis-layout-trial .cis-guidance-layout { display: block; padding-bottom: 0; border-bottom: 0; }
+.cis-layout-trial .brawndo-step { padding: 18px 0; }
+.cis-layout-trial .brawndo-step h3 { font-size: 1rem; gap: 10px; }
+.cis-layout-trial .brawndo-step-body { margin-top: 10px; }
+.cis-layout-trial .cis-assessment-guidance { max-width: none; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; }
+.cis-layout-trial .cis-assessment-guidance > section { padding: 14px; min-width: 0; }
+.cis-layout-trial .cis-assessment-guidance h4 { margin-top: 0; font-size: .875rem; }
+.cis-layout-trial .cis-assessment-guidance ul { gap: 8px; padding-left: 18px; }
+.cis-layout-trial .cis-assessment-guidance li { font-size: 1rem; line-height: 1.55; }
+.cis-layout-trial .cis-guide-disclosure { border: 1px solid var(--color-input-border); border-radius: 6px; background: var(--color-bg-subtle); margin: 8px 0 0; }
+.cis-layout-trial .cis-guide-disclosure > summary { padding: 12px 16px; font-size: .875rem; font-weight: 600; }
+.cis-layout-trial .cis-guide-disclosure > summary:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }
+.cis-layout-trial .cis-requirement-guide { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 16px; margin: 0; border: 0; padding: 0 16px 16px; }
+.cis-layout-trial .cis-requirement-guide > h3, .cis-layout-trial .cis-guide-intro { display: none; }
+.cis-layout-trial .cis-guide-answer { margin: 0; padding: 12px 16px; border-top: 0; border-left: 1px solid var(--color-input-border); }
+.cis-layout-trial .cis-guide-answer p { font-size: 1rem; line-height: 1.6; }
+.cis-layout-trial .cis-trial-implementation { display: grid; grid-template-columns: 260px minmax(0,1fr); gap: 24px; }
+.cis-layout-trial .cis-trial-implementation > section { border-bottom: 0; min-width: 0; }
+.cis-layout-trial .brawndo-status-options { grid-template-columns: minmax(0,1fr); gap: 6px; }
+.cis-layout-trial .brawndo-status-options label { min-height: 40px; padding: 8px 10px; }
+.cis-layout-trial textarea { font-size: 1rem; line-height: 1.6; }
+@media (max-width: 1000px) {
+  .cis-layout-trial .cis-assessment-guidance { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 720px) {
+  .cis-layout-trial .cis-requirement-guide, .cis-layout-trial .cis-trial-implementation { grid-template-columns: minmax(0,1fr); gap: 12px; }
+  .cis-layout-trial .cis-guide-answer { border-left: 0; border-top: 1px solid var(--color-input-border); padding: 12px 0 0; }
+}
 .bcsg-criteria { display: grid; gap: 12px; margin-top: 12px; }
 .bcsg-criteria label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: pointer; }
 .bcsg-criteria input { margin-top: 4px; flex: none; accent-color: var(--color-link); }
