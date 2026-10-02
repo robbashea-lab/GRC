@@ -87,10 +87,11 @@ export function finishDemoStore(db, clock, {
             } = r;
           r.occurrences.unshift({
             ...snapshot,
+            // Brawndo history keeps the Review's own anchor: a day-28 cadence passing Feb 28 is not month-end.
             ...reviewSchedule({
               ...r,
               due_date: due
-            }, true),
+            }, !(cid === 'demo_brawndo' && r.schedule_anchor)),
             occurrence_id: r.review_id + '_' + due,
             due_date: due,
             status: 'completed',
