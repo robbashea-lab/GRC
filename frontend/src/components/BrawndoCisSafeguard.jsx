@@ -29,9 +29,6 @@ export default function BrawndoCisSafeguard({state,actions}){
   const clientId=record.client_id,id=definition.id,disabled=!writable||busy||!ctx;
   const source=sourcePresentation(definition),criteria=criteriaData.requirements[id];
   const guidance=guidanceData.requirements[id];
-  // Temporary, preview-only design trial; broaden only after visual approval.
-  const layoutTrial=process.env.REACT_APP_PREVIEW==='true'&&clientId==='demo_brawndo'&&id==='1.1';
-  const findingsPanel=<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested}}/>;
   const verification=verificationOf(form),saved=verificationOf(current);
   return <AssessmentShell open={open} title={`CIS IG1 ${id} — ${definition.title}`} description={<span className="sr-only">Safeguard assessment workspace</span>}
     status={<><span aria-label="Saved implementation status"><CisStatusPill status={current.status} framework="cis-ig1"/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
@@ -46,9 +43,8 @@ export default function BrawndoCisSafeguard({state,actions}){
     <label className="bcsg-verification">Verification<select aria-label="Verification result" disabled={disabled} value={verification} onChange={e=>put('verification',e.target.value)}>{Object.entries(VERIFICATION_LABELS).map(([v,label])=><option key={v} value={v}>{label}</option>)}</select></label>
     <p className="bcsg-meta">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}{current.last_assessed&&current.assessed_by?` · ${personLabel(ctx?.users,current.assessed_by,'Not recorded')}`:''}</p>
     </div>
-    <div className={layoutTrial?'cis-layout-trial':undefined}>
-    {!layoutTrial&&findingsPanel}
-    {layoutTrial&&<details className="cis-guide-disclosure"><summary>Requirement guide</summary><CisRequirementGuide key={`${clientId}:${id}`} safeguardId={id}/></details>}
+    <div className="cis-assessment-layout">
+    <details key={`${clientId}:${id}`} className="cis-guide-disclosure"><summary>Requirement guide</summary><CisRequirementGuide safeguardId={id}/></details>
     <div className="cis-guidance-layout">
     <div className="cis-guidance-main">
     <Step number="1" title="What CIS Requires">
@@ -68,9 +64,8 @@ export default function BrawndoCisSafeguard({state,actions}){
       </div>
     </Step>
     </div>
-    {!layoutTrial&&<CisRequirementGuide key={`${clientId}:${id}`} safeguardId={id}/>}
     </div>
-    <div className={layoutTrial?'cis-trial-implementation':undefined}>
+    <div className="cis-implementation-layout">
     <Step number="3" title="Implementation Status">
       <fieldset disabled={disabled}><legend className="sr-only">Implementation status</legend>
         <div className="brawndo-status-options">{STATUS_OPTIONS.map(([status,label])=><label key={status} className={`cis-tone-${CIS_TONE[status]} ${form.status===status?'is-selected':''}`}>
@@ -85,7 +80,7 @@ export default function BrawndoCisSafeguard({state,actions}){
         <Textarea aria-label="Current implementation" aria-describedby="bcsg-current-help" rows={5} disabled={disabled} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)}/></label>
     </Step>
     </div>
-    {layoutTrial&&findingsPanel}
+    <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested}}/>
     {form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><Textarea aria-label="Previously recorded notes" disabled={disabled} value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
     <AssessmentHistory record={current} users={ctx?.users} activity={ctx?.activity}/>
     </div>
