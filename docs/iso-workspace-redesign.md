@@ -11,8 +11,8 @@ No open pull requests found during baseline inspection. Approved CIS PR #19 and 
 - [x] Versioned guide content covering 30 clauses and 93 Annex references; source review.
 - [x] Audit guide and quarterly programme organization, retaining Review schedules/history.
 - [x] Final browser verification, affected regression and both optimized builds.
-- [ ] Complete diff review, reconcile latest main, PR/checks/merge.
-- [ ] Publish existing private ChatGPT preview; confirm source commit.
+- [x] Complete diff review, reconcile latest main, PR/checks/merge.
+- [x] Publish existing private ChatGPT preview; confirm source commit.
 
 ## Metrics and data ownership
 
@@ -58,4 +58,10 @@ Other new/changed components, utilities, catalog and tests are ISO-specific. Aud
 
 ## Delivery
 
-Pending final browser result, source reconciliation, PR/repository checks and private preview publication. Existing preview access was verified owner-only (custom access policy, revision 1); preserve it. Production backend and production data are not deployment targets.
+Implementation [PR #21](https://github.com/robbashea-lab/GRC/pull/21) merged through the normal GitHub API without protection overrides. Head: `aeb21be9595ccee407b57f4f121b977b8ad1656b`; merge: `f7945fc1106bca1f4ba113215af7b720922a23bd`. Remote main was fetched before and after merge. No intervening source changes; the merge tree equals the tested implementation tree. No GitHub Actions runs, status contexts, review requests or unresolved review threads were reported. The known baseline Prestige test failure remains explicitly documented above, not described as a green full suite.
+
+The first native publication of the merged implementation returned `status: succeeded` at 2026-10-02 20:42 UTC, deployment `appgdep_6ac0171db9c88191888cf6223538561c`, version `appgver_1636894d4cec8191b776603e6438857c`. [ChatGPT preview](https://iventure-grc-code-preview.mr-robbashea.chatgpt.site). Site source `FETCH_HEAD` independently matched merge `f7945fc1106bca1f4ba113215af7b720922a23bd`. Owner-only custom access policy, revision 1, was preserved. Production backend and production data were not deployed or modified.
+
+On Windows the standard packager could not launch its Bash command. Source preparation/push succeeded, then the bundled `prepare-site-build.cjs` and native Windows `tar` produced a validated archive containing `dist/index.html` and the normalized Site manifest. Archive SHA-256: `84AA12760E271DAA649F457F16F478B246726BE4DF94F9A80B6460781FCEAC3F`. No credential was stored in source, shell arguments or files. Publication succeeded through the native Sites deployment tool, not the failed packaging command.
+
+This completion record is a documentation-only follow-up; subsequent publication can reuse the same validated application assets because no frontend/backend/catalog source changed. No schema migration is required. Remaining limitations are the verified pre-existing Prestige Reviews test failure, unavailable licensed normative review, and the explicitly limited Demo-browser/in-memory-backend verification—not implementation blockers or certification claims.
