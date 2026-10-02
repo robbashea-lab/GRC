@@ -22,15 +22,15 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 const button=name=>[...container.querySelectorAll('button')].find(b=>b.textContent===name);
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="client" onOpenChange={()=>{}}/>));}
 test('default assessment combines source context, narrative and status with progressive guidance',async()=>{
-  await render();expect(container.textContent).toContain('What CIS requires');expect(container.textContent).toContain('Implementation guidance');
-  expect(container.querySelector('[aria-label="How is this requirement implemented?"]')).toBeTruthy();expect(container.querySelector('input[value="in_progress"]')).toBeTruthy();
-  expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Not Assessed');
+  await render();expect(container.textContent).toContain('What CIS Requires');expect(container.textContent).toContain('CIS IG1 Assessment Criteria');
+  expect(container.querySelector('[aria-label="Current implementation"]')).toBeTruthy();expect(container.querySelector('input[value="in_progress"]')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Saved implementation status"]').textContent).toContain('Not Assessed');
   expect(container.textContent).toContain('Official CIS');
   expect(container.textContent).not.toContain('What to ask the client');expect(container.querySelector('details')).toBeTruthy();
   expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe('Legacy narrative retained');
 });
 test('notes save once, confirm success and remain readable in history including legacy notes',async()=>{
-  await render();const field=container.querySelector('[aria-label="How is this requirement implemented?"]');
+  await render();const field=container.querySelector('[aria-label="Current implementation"]');
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(field,'Inventory omits remote devices.');field.dispatchEvent(new Event('input',{bubbles:true}));});
   expect(container.textContent).toContain('Unsaved assessment changes');
   await act(async()=>button('Save assessment').click());
@@ -48,10 +48,10 @@ test.each(['client_readonly','client_viewer'])('%s retains context but cannot sa
 test('saved conclusion does not change until the draft is saved',async()=>{
   await render();const field=container.querySelector('input[value="in_progress"]');
   await act(async()=>{field.click();});
-  expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Not Assessed');
+  expect(container.querySelector('[aria-label="Saved implementation status"]').textContent).toContain('Not Assessed');
   expect(container.textContent).toContain('Unsaved assessment changes');
   await act(async()=>button('Save assessment').click());
-  expect(container.querySelector('[aria-label="Saved conclusion"]').textContent).toContain('Partially Implemented');
+  expect(container.querySelector('[aria-label="Saved implementation status"]').textContent).toContain('Partially Implemented');
 });
 
 test('unavailable historical actors remain distinct from missing attribution',async()=>{

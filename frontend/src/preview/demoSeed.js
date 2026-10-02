@@ -1,4 +1,4 @@
-import catalog from '../lib/onboardingCatalog.json';
+import catalog from '@catalogs/onboardingCatalog.json';
 import { CATALOGS } from '../lib/frameworks';
 import { reviewView } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';

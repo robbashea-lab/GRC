@@ -53,8 +53,8 @@ browser end-to-end coverage.
 
 Supersedes the earlier onboarding browser coverage above. The current interface
 has four steps, 17 policy assessments, five requirements, and 17 selectable review
-areas. The matching catalogs live in backend/routes/onboarding_catalog.json and
-frontend/src/lib/onboardingCatalog.json; a backend test verifies their parity.
+areas. Both runtimes read shared/catalogs/onboardingCatalog.json; packaging tests
+verify the backend image and frontend alias consume this shared source.
 
 Automated: all 30 frontend tests and four backend tests pass. New checks cover
 stable client-scoped keys, response validation before writes, repeated finalization,

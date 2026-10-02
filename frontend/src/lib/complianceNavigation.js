@@ -1,4 +1,4 @@
-import definitions from './frameworkDefinitions.json';
+import definitions from '@catalogs/frameworkDefinitions.json';
 
 export const COMPLIANCE_SECTIONS = definitions.frameworks.map(item => ({
   ...item, to: `/compliance/${item.key}`,

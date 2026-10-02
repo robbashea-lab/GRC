@@ -38,6 +38,12 @@ const api = axios.create({
 
 // Use a document-local bearer during this session; reload relies on HttpOnly cookies.
 api.interceptors.request.use((cfg) => {
+  // A transport retry keeps the same command identity. Forms retain it for resubmission.
+  if (cfg.method === 'post' && /^\/reviews\/[^/]+\/create-finding$/.test(cfg.url)) {
+    const data = typeof cfg.data === 'string' ? JSON.parse(cfg.data) : {...cfg.data};
+    data.request_id ||= recordUuid();
+    cfg.data = data;
+  }
   // Capture the intentional mode per request. Demo requests never reach HTTP.
   if (PREVIEW_MODE) {
     cfg.withCredentials = false;

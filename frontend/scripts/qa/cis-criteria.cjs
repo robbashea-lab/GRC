@@ -1,7 +1,7 @@
 // Disposable local Demo only; never targets persistent or hosted data.
 const {chromium}=require('playwright'),{expect}=require('playwright/test');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const catalog=require('../../src/lib/cisIG1.json'),criteria=require('../../src/lib/operatorGuidance/cisAssessmentCriteria.json');
+const catalog=require('../../../shared/catalogs/cisIG1.json'),criteria=require('../../../shared/catalogs/operatorGuidance/cisAssessmentCriteria.json');
 const base=process.env.QA_BASE_URL||'http://127.0.0.1:4179';
 if(new URL(base).hostname!=='127.0.0.1')throw Error('Loopback Demo required');
 (async()=>{

@@ -1,6 +1,11 @@
 """Check explicit runtime catalog packaging without Docker or network access."""
 from pathlib import Path
 import ast
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
 import unittest
 
 
@@ -11,20 +16,50 @@ class RuntimePackagingTests(unittest.TestCase):
         context=(root/"backend/Dockerfile.dockerignore").read_text().splitlines()
         # Discover literal catalog references from application code. A hand-maintained
         # list can omit the same dependency as the Dockerfile and falsely pass.
-        names=set()
+        paths=set()
         sources=list((root/"backend").glob("*.py"))+list((root/"backend/routes").glob("*.py"))
         for source in sources:
             for node in ast.walk(ast.parse(source.read_text(encoding="utf-8"))):
                 if isinstance(node,ast.Constant) and isinstance(node.value,str) and node.value.endswith(".json"):
-                    name=node.value.rsplit("/",1)[-1]
-                    if (root/"frontend/src/lib"/name).is_file():
-                        names.add(name)
-        self.assertIn("managementRules.json",names)
-        self.assertIn("onboardingHandoffFields.json",names)
-        for name in names:
-            path="frontend/src/lib/"+name
+                    for directory in ("","shared/catalogs","frontend/src/lib"):
+                        candidate=root/directory/node.value
+                        if candidate.is_file():
+                            paths.add(candidate.relative_to(root).as_posix())
+        self.assertIn("frontend/src/lib/managementRules.json",paths)
+        self.assertIn("shared/catalogs/onboardingHandoffFields.json",paths)
+        self.assertIn("shared/catalogs/operatorGuidance/socAssessmentGuidance.json",paths)
+        for path in paths:
             self.assertTrue((root/path).is_file(),path)
-            self.assertIn(path,docker,path)
-            self.assertIn("!"+path,context,path)
+            if path.startswith("shared/catalogs/"):
+                self.assertIn("COPY shared/catalogs /app/shared/catalogs",docker)
+                self.assertIn("!shared/catalogs/**",context)
+            else:
+                self.assertIn(path,docker,path)
+                self.assertIn("!"+path,context,path)
         self.assertIn("COPY backend/routes ./routes",docker)
-        self.assertIn("!backend/routes/*.json",context)
+
+    def test_runtime_imports_from_packaged_catalogs_without_frontend_application_code(self):
+        root=Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as temporary:
+            image=Path(temporary)
+            backend=image/"backend";backend.mkdir()
+            for source in (root/"backend").glob("*.py"):
+                shutil.copy2(source,backend/source.name)
+            shutil.copytree(root/"backend/routes",backend/"routes",ignore=shutil.ignore_patterns("__pycache__"))
+            shutil.copytree(root/"shared/catalogs",image/"shared/catalogs")
+            # Keep the remaining domain JSON dependencies exactly as Docker packages
+            # them; no React source tree is available to mask a missing shared file.
+            for line in (root/"backend/Dockerfile").read_text().splitlines():
+                parts=line.split()
+                if len(parts)==3 and parts[0]=="COPY" and parts[1].startswith("frontend/"):
+                    destination=image/parts[2].removeprefix("/app/")
+                    destination.parent.mkdir(parents=True,exist_ok=True)
+                    shutil.copy2(root/parts[1],destination)
+            result=subprocess.run([sys.executable,"-c",
+                "import server, framework_catalog, framework_governance, iso_audit; "
+                "from routes.onboarding import BASELINE_CATALOG; "
+                "assert BASELINE_CATALOG['policies']; "
+                "assert framework_governance.SOC_GUIDANCE; "
+                "assert len(framework_catalog.CIS['requirements']) == 56"],
+                cwd=backend,env={**os.environ,"PYTHONPATH":str(backend),"MONGO_URL":"mongodb://127.0.0.1:1","DB_NAME":"runtime_import_smoke"},capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)

@@ -1,4 +1,4 @@
-import catalog from './isoAuditProgram.json';
+import catalog from '@catalogs/isoAuditProgram.json';
 export {catalog as isoAuditCatalog};
 export const AUDIT_STATUSES={not_started:'Not Started',in_progress:'In Progress',reviewed:'Reviewed',not_applicable:'N/A'};
 export const AUDIT_RESULTS={conforming:'Conforming',observation:'Observation',nonconformity:'Nonconformity'};

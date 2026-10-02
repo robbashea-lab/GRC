@@ -4,7 +4,7 @@ import json
 import uuid
 from calendar import monthrange
 from datetime import date
-from pathlib import Path
+from framework_catalog import ROOT as CATALOG_ROOT
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 import assignment_eligibility
 import review_occurrences
 
-CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/isoAuditProgram.json').read_text(encoding='utf-8'))
+CATALOG = json.loads((CATALOG_ROOT / 'isoAuditProgram.json').read_text(encoding='utf-8'))
 PACKAGES = {p['key']: p for p in CATALOG['packages']}
 
 

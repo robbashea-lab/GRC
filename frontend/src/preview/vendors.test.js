@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
 import {assuranceStatus,vendorSignals,vendorPlans} from '../lib/vendorGovernance';
 const api=axios.create({adapter:previewAdapter});

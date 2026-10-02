@@ -1,9 +1,18 @@
 import { CircleDashed, UserRound } from 'lucide-react';
+import {Label} from './ui/label';
 import { calendarDay } from '@/lib/managementDates';
 import { personLabel } from '@/lib/people';
 import { OwnerAccountNote } from './ContactAccess';
 
 // Shared register cells: one date grammar and one owner grammar across every register.
+export function DateReadonly({ value, label }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-ink-secondary">{label}</Label>
+      <div className="text-sm font-mono text-ink-primary">{value ? new Date(String(value).slice(0, 10) + "T00:00:00").toLocaleDateString() : <span className="text-ink-help">—</span>}</div>
+    </div>
+  );
+}
 
 // Due-like dates: "Oct 8" over "in 12 days" / "3 days overdue". Closed records get no callout.
 // Date-only values are compared as literal local calendar days, never shifted by timezone.

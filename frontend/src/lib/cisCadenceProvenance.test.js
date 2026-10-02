@@ -1,4 +1,4 @@
-import cis from './cisIG1.json';
+import cis from '@catalogs/cisIG1.json';
 import {recurrencePresentation} from './frameworkWorkspace';
 const def=id=>cis.requirements.find(r=>r.id===id);
 const days={monthly:30,quarterly:91,semiannual:182,annual:365};

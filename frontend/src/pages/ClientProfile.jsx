@@ -4,7 +4,7 @@ import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
 import {catalog,completeness,applicabilityPrompts} from '@/lib/clientProfile';
-import onboardingCatalog from '@/lib/onboardingCatalog.json';
+import onboardingCatalog from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS} from '@/lib/frameworks';
 import Onboarding from './Onboarding';
 import {UsersTable} from './PlatformAdmin';

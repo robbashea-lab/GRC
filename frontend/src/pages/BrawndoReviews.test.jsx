@@ -13,6 +13,7 @@ jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/reviews',search:
 jest.mock('@/components/RecordDrawer',()=>props=>props.open?<div data-testid="opened-record">{props.reviewsPilot?'Pilot':'Original'}</div>:null);
 jest.mock('@/components/EvidencePanel',()=>()=> <div>Existing evidence panel</div>);
 let root,container,rows,saved;
+beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 const click=async node=>act(async()=>node.click());
 const button=text=>[...container.querySelectorAll('button')].find(b=>b.textContent.includes(text));
 const input=async(node,value)=>act(async()=>{
@@ -158,4 +159,41 @@ test('cancelling the completion confirmation saves nothing and keeps the Review 
  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
  expect(document.querySelector('[data-testid="review-complete-confirm"]')).toBeNull();
+});
+
+test('a proven rejected Finding can be corrected with a new command identity',async()=>{
+ api.post.mockReset();
+ api.post.mockRejectedValueOnce({message:'Finding title is too long',response:{status:422,headers:{'x-create-rejected':'true'}}}).mockResolvedValue({data:{finding_id:'saved'}});
+ await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+ await click(document.querySelector('[data-testid="quick-create-finding"]'));
+ await input(document.querySelector('[data-testid="finding-title"]'),'x'.repeat(1001));
+ await input(document.querySelector('[data-testid="finding-remediation-title"]'),'Correct the gap');
+ await click(document.querySelector('[data-testid="finding-save"]'));
+ const original=api.post.mock.calls[0];
+ expect(document.querySelector('[data-testid="finding-title"]').value).toBe('x'.repeat(1001));
+ await input(document.querySelector('[data-testid="finding-title"]'),'Corrected title');
+ await click(document.querySelector('[data-testid="finding-save"]'));
+ expect(api.post).toHaveBeenCalledTimes(2);
+ expect(api.post.mock.calls[1][1].title).toBe('Corrected title');
+ expect(api.post.mock.calls[1][1].request_id).not.toBe(original[1].request_id);
+ expect(document.querySelector('[data-testid="review-finding-form"]')).toBeNull();
+});
+
+test('an uncertain Finding failure retains its identity and original draft for retry',async()=>{
+ api.post.mockReset();
+ api.post.mockRejectedValueOnce({message:'Response lost',response:{status:503,headers:{}}}).mockResolvedValue({data:{finding_id:'saved'}});
+ await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+ await click(document.querySelector('[data-testid="quick-create-finding"]'));
+ await input(document.querySelector('[data-testid="finding-title"]'),'Original title');
+ await input(document.querySelector('[data-testid="finding-remediation-title"]'),'Correct the gap');
+ await click(document.querySelector('[data-testid="finding-save"]'));
+ const original=api.post.mock.calls[0];
+ await input(document.querySelector('[data-testid="finding-title"]'),'Changed before confirmation');
+ await click(document.querySelector('[data-testid="finding-save"]'));
+ expect(api.post).toHaveBeenCalledTimes(1);
+ await input(document.querySelector('[data-testid="finding-title"]'),'Original title');
+ await click(document.querySelector('[data-testid="finding-save"]'));
+ expect(api.post).toHaveBeenCalledTimes(2);
+ expect(api.post.mock.calls[1]).toEqual(original);
+ expect(document.querySelector('[data-testid="review-finding-form"]')).toBeNull();
 });

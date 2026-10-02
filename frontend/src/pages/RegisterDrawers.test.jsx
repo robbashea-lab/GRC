@@ -13,7 +13,7 @@ let root, container;
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   container=document.createElement('div'); document.body.appendChild(container); root=createRoot(container);
-  api.get.mockImplementation(async path => ({data:path==='/users'?[{user_id:'owner',name:'Owner'}]:path==='/risks'?[{risk_id:'r',client_id:'a',title:'Risk record',status:'open',owner_id:'owner'}]:path==='/vendors'?[{vendor_id:'v',client_id:'a',name:'Vendor record',status:'active',criticality:'high',contact_email:'contact@example.test'}]:path==='/related'?{}:[]}));
+  api.get.mockImplementation(async path => ({data:path==='/users'?[{user_id:'owner',name:'Owner'}]:path==='/risks'?[{risk_id:'r',client_id:'a',title:'Risk record',status:'open',owner_id:'owner'}]:path==='/vendors'?[{vendor_id:'v',client_id:'a',name:'Vendor record',service:'Hosted business application',status:'active',criticality:'high',contact_email:'contact@example.test'}]:path==='/related'?{}:[]}));
   api.patch.mockResolvedValue({data:{}});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});

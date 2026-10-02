@@ -38,6 +38,7 @@ from pydantic import BaseModel, Field, EmailStr, ValidationError
 from governance_context import GovernanceContext
 from pymongo.errors import DuplicateKeyError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
+import record_contracts
 import action_items
 import assignment_eligibility
 import client_relationships
@@ -49,6 +50,7 @@ import policy_provenance
 import risk_lifecycle
 import vendor_governance
 import review_occurrences
+import review_commands
 import ai_governance
 import framework_governance
 import evidence_context
@@ -687,9 +689,21 @@ async def audit(user: Dict, action: str, entity_type: str, entity_id: str, clien
     }
     intent = create_requests.current.get()
     if intent:
-        # Replaying a partially completed create repairs its audit without duplicates.
-        identity = create_requests.digest([intent, action, entity_type, entity_id, client_id, meta])
-        await db.create_requests.update_one({"_id": intent}, {"$set": {"pending_audits." + identity: document}})
+        # A create event keeps its first metadata, even if the actor or record is
+        # edited before a retry. Linked record/occurrence IDs distinguish events;
+        # mutable titles, assignment and display names do not identify an event.
+        def event_key(event):
+            details = event.get("meta") or {}
+            return [event.get(k) for k in ("action", "entity_type", "entity_id", "client_id")] + [
+                details.get(k) for k in ("occurrence_id", "finding_id", "task_id")]
+        receipt = await db.create_requests.find_one({"_id": intent})
+        prior = next(((key, value) for key, value in receipt.get("pending_audits", {}).items()
+                      if event_key(value) == event_key(document)), None)
+        if prior:
+            identity, document = prior  # Also retain pre-upgrade full-metadata keys.
+        else:
+            identity = create_requests.digest([intent, *event_key(document)])
+            await db.create_requests.update_one({"_id": intent}, {"$set": {"pending_audits." + identity: document}})
         await db.audit_logs.update_one({"_id": "create:" + identity}, {"$setOnInsert": document}, upsert=True)
     else:
         await db.audit_logs.insert_one(document)
@@ -723,7 +737,12 @@ async def create_notification(*, user_id: str, title: str, kind: str,
         "read": False,
         "created_at": _now(),
     }
-    await db.notifications.insert_one(doc)
+    intent = create_requests.current.get()
+    if intent:
+        identity = create_requests.digest([intent, user_id, kind, entity_type, entity_id, client_id])
+        await db.notifications.update_one({"_id": "create:" + identity}, {"$setOnInsert": doc}, upsert=True)
+    else:
+        await db.notifications.insert_one(doc)
 
 
 # ---------------- Tenant scoping ----------------
@@ -2449,6 +2468,7 @@ def _apply_risk_scoring(doc: Dict) -> Dict:
 
 def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user: Optional[Dict] = None) -> Dict:
     """One contract for normal and bulk writes; decisions have separate endpoints."""
+    body = record_contracts.normalize_write(kind, body, existing)
     previous = existing or {}
     if 'framework_assessment_id' in body or any(k.startswith('framework_') for k in body):
         raise HTTPException(422,'Framework relationships are managed through the framework workspace')
@@ -3435,42 +3455,6 @@ async def reminders_send_weekly_now(user: Dict = Depends(get_current_user)):
     return {"ok": True, "stats": stats}
 
 
-# ---------------- Reviews: recurrence helpers + complete endpoint ----------------
-_RECUR_MONTHS = {"monthly": 1, "quarterly": 3, "semiannual": 6, "annual": 12}
-
-
-def _shift_iso(base_iso: str, months: int = 0, days: int = 0) -> str:
-    try:
-        d = datetime.fromisoformat(base_iso)
-    except Exception:
-        d = datetime.now(timezone.utc)
-    if d.tzinfo is None:
-        d = d.replace(tzinfo=timezone.utc)
-    if months:
-        # calendar-aware month math
-        month0 = d.month - 1 + months
-        year = d.year + month0 // 12
-        month = month0 % 12 + 1
-        # clamp day to end-of-month
-        import calendar as _cal
-        last_day = _cal.monthrange(year, month)[1]
-        day = min(d.day, last_day)
-        d = d.replace(year=year, month=month, day=day)
-    if days:
-        d = d + timedelta(days=days)
-    return d.isoformat()
-
-
-def _next_due_for_recurrence(base_due_iso: str, recurrence: str, custom_days: Optional[int] = None) -> Optional[str]:
-    if not base_due_iso or recurrence in (None, "none", ""):
-        return None
-    if recurrence in _RECUR_MONTHS:
-        return _shift_iso(base_due_iso, months=_RECUR_MONTHS[recurrence])
-    if recurrence == "custom" and custom_days and custom_days > 0:
-        return _shift_iso(base_due_iso, days=int(custom_days))
-    return None
-
-
 class ReviewCompleteIn(BaseModel):
     occurrence_id: Optional[str] = None
     completion_notes: Optional[str] = None
@@ -3724,125 +3708,13 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
 @api.post("/reviews/{review_id}/create-finding")
 @review_mutation
 async def review_create_finding(review_id: str, body: Dict[str, Any], user: Dict = Depends(get_current_user)):
-    if not _writable(user):
-        raise HTTPException(403, "Read-only role")
-    review = await db.reviews.find_one({"review_id": review_id}, {"_id": 0})
-    if not review:
-        raise HTTPException(404, "Review not found")
-    if not _can_access_client(user, review["client_id"]):
-        raise HTTPException(403, "Forbidden")
-    if not isinstance(body.get("occurrence_id"), str) or not body["occurrence_id"]:
-        raise HTTPException(422, "Select the Review occurrence before raising a Finding")
-    request_id = body.get("request_id")
-    if request_id is not None and (not isinstance(request_id, str) or not 1 <= len(request_id) <= 128):
-        raise HTTPException(422, "Invalid request ID")
-    fid = "fnd_" + uuid.uuid5(uuid.NAMESPACE_URL, review_id + ":" + body["occurrence_id"] + ":" + request_id).hex if request_id else _uid("fnd")
-    prior = await db.findings.find_one({"finding_id": fid, "client_id": review["client_id"]}, {"_id": 0})
-    if prior:
-        await finding_create_task(fid, {"title": prior.get("remediation_title") or prior["title"]}, user)
-        return prior
-    await _review_selection(review, body["occurrence_id"], write=True)
-    await assignment_eligibility.validate(db, "findings", {
-        "client_id": review["client_id"], "owner_id": body.get("owner_id", review.get("owner_id")),
-    }, _can_access_client)
-    if not isinstance(body.get("title"), str) or not body["title"].strip():
-        raise HTTPException(422, "Finding title is required")
-    if not isinstance(body.get("remediation_title"), str) or not body["remediation_title"].strip():
-        raise HTTPException(422, "Remediation action is required")
-    if body.get("severity", "medium") not in ("low", "medium", "high", "critical"):
-        raise HTTPException(422, "Invalid severity")
-    doc = {
-        "finding_id": fid,
-        "title": body.get("title") or f"Finding from: {review['title']}",
-        "client_id": review["client_id"],
-        "severity": body.get("severity", "medium"),
-        "status": "open",
-        "description": body.get("description") or "",
-        "owner_id": body.get("owner_id", review.get("owner_id")) or None,
-        "due_date": body.get("due_date"),
-        "review_id": review_id,
-        "occurrence_id": body["occurrence_id"],
-        "source": review["title"],
-        "vendor_id": review.get("vendor_id"),
-        "identified_at": _now(),
-        "remediation_plan": body.get("remediation_plan") or "",
-        "remediation_title": body["remediation_title"].strip(),
-        "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"],
-    }
-    await db.findings.insert_one(doc)
-    doc.pop("_id", None)
-    await audit(user, "create", "finding", fid, review["client_id"], meta={"from_review": review_id})
-    await finding_create_task(fid, {"title": body["remediation_title"].strip()}, user)
-    await _review_event(user, review, "Finding raised", body["occurrence_id"], finding_id=fid, title=doc["title"])
-    # Notify finding owner (if not self)
-    if doc.get("owner_id") and doc["owner_id"] != user["user_id"]:
-        await create_notification(
-            user_id=doc["owner_id"],
-            title=f"New finding assigned: {doc['title']}",
-            kind="finding_assigned",
-            entity_type="findings",
-            entity_id=fid,
-            client_id=doc["client_id"],
-        )
-    return await db.findings.find_one({"finding_id": fid, "client_id": review["client_id"]}, {"_id": 0})
+    return await review_commands.create_finding(sys.modules[__name__], review_id, body, user)
 
 
 @api.post("/findings/{finding_id}/create-task")
 @finding_mutation
 async def finding_create_task(finding_id: str, body: Dict[str, Any], user: Dict = Depends(get_current_user)):
-    if not _writable(user):
-        raise HTTPException(403, "Read-only role")
-    finding = await db.findings.find_one({"finding_id": finding_id}, {"_id": 0})
-    if not finding:
-        raise HTTPException(404, "Finding not found")
-    if not _can_access_client(user, finding["client_id"]):
-        raise HTTPException(403, "Forbidden")
-    existing = await db.tasks.find_one({"finding_id": finding_id, "client_id": finding["client_id"]}, {"_id": 0})
-    if existing:
-        return existing
-    tid = "tsk_" + uuid.uuid5(uuid.NAMESPACE_URL, "finding-remediation:" + finding_id).hex
-    doc = {
-        "task_id": tid,
-        "title": body.get("title") or finding['title'],
-        "title_generated": not bool(body.get("title")),
-        "client_id": finding["client_id"],
-        "status": "open",
-        "priority": body.get("priority", finding.get("severity", "medium")),
-        "assignee_id": body.get("assignee_id", finding.get("owner_id")),
-        "due_date": body.get("due_date") or finding.get("due_date"),
-        "description": body.get("description") or finding.get("remediation_plan"),
-        "finding_id": finding_id,
-        "review_id": finding.get("review_id"),
-        "occurrence_id": finding.get("occurrence_id"),
-        "source": finding.get("source") or "Finding remediation",
-        "created_at": _now(), "updated_at": _now(), "created_by": user["user_id"],
-    }
-    doc["source_type"] = "review" if doc.get("review_id") else "finding"
-    doc["source_id"] = doc.get("review_id") or finding_id
-    doc = await action_items.prepare(db, doc, _can_access_client)
-    await db.tasks.update_one({"_id": tid}, {"$setOnInsert": doc}, upsert=True)
-    # link back on the finding
-    if finding.get("status") == "open":
-        moved = await db.findings.update_one({"finding_id": finding_id, "status":"open"}, {"$set": {"status": "in_remediation", "updated_at": _next_write_time(finding.get('updated_at'))}})
-        if moved.modified_count:
-            await audit(user, "Finding moved to In Remediation", "finding", finding_id, finding["client_id"], meta={"task_id": tid})
-    doc.pop("_id", None)
-    await audit(user, "create", "task", tid, finding["client_id"], meta={"from_finding": finding_id})
-    if finding.get("review_id"):
-        review = await db.reviews.find_one({"review_id": finding["review_id"], "client_id": finding["client_id"]}, {"_id": 0})
-        if review:
-            await _review_event(user, review, "Action Item created", finding.get("occurrence_id") or "occ_" + review["review_id"],
-                                task_id=tid, title=doc["title"], assignee_id=doc.get("assignee_id"))
-    if doc.get("assignee_id") and doc["assignee_id"] != user["user_id"]:
-        await create_notification(
-            user_id=doc["assignee_id"],
-            title=f"New remediation task: {doc['title']}",
-            kind="task_assigned",
-            entity_type="tasks",
-            entity_id=tid,
-            client_id=doc["client_id"],
-        )
-    return doc
+    return await review_commands.ensure_action(sys.modules[__name__], finding_id, body, user)
 
 
 @api.get("/tasks/{task_id}/activity")
@@ -4346,282 +4218,6 @@ _APPLICABILITY_MAP = {
 
 
 # onboarding_state moved to routes/onboarding.py
-
-
-# onboarding_finalize moved to routes/onboarding.py
-async def _legacy_onboarding_finalize_removed(body, user):
-    """Idempotent orchestrator for the six-step onboarding wizard.
-    Creates or updates records across Policies, Requirements, Contacts,
-    Assessments, Tasks (for Known Issues + missing policies), Findings
-    (for verified existing findings), and Reviews.
-    Never fabricates verified metadata. Never duplicates by (client_id + title).
-    """
-    if not _writable(user):
-        raise HTTPException(403, "Read-only role")
-    if not _can_access_client(user, body.client_id):
-        raise HTTPException(403, "Forbidden for this client")
-
-    cid = body.client_id
-    now = _now()
-    counters = {
-        "policies_created": 0, "policies_updated": 0,
-        "requirements_created": 0, "requirements_updated": 0,
-        "contacts_saved": 0,
-        "assessments_created": 0,
-        "known_issues_promoted": 0,
-        "reviews_created": 0,
-        "tasks_created": 0,
-        "findings_created": 0,
-    }
-    validation_errors: List[str] = []
-
-    # ---------- 1) Policy responses (reuse the same rules as /policy-responses) ----------
-    if body.policy_responses:
-        existing_pols = await db.policies.find({"client_id": cid}, {"_id": 0}).to_list(2000)
-        by_title = {(p.get("title") or "").strip().lower(): p for p in existing_pols}
-        open_pol_tasks = await db.tasks.find(
-            {"client_id": cid, "source": "GRC Program Onboarding",
-             "status": {"$nin": ["done"]}, "policy_id": {"$exists": True}},
-            {"_id": 0}
-        ).to_list(2000)
-        task_by_policy = {t.get("policy_id"): t for t in open_pol_tasks}
-
-        for r in body.policy_responses:
-            resp = (r.response or "").lower().strip()
-            if resp not in ("yes", "no", "unsure", "na"): continue
-            if resp == "na" and not (r.applicability_rationale or "").strip():
-                validation_errors.append(f"Rationale required for N/A policy '{r.name}'"); continue
-            presence = _presence_for_response(resp)
-            lifecycle = _lifecycle_for_response(resp)
-            existing = by_title.get(r.name.strip().lower())
-            if existing:
-                update = {
-                    "presence": presence, "onboarding_note": r.note or existing.get("onboarding_note"),
-                    "applicability_rationale": (r.applicability_rationale or existing.get("applicability_rationale")) if resp == "na" else existing.get("applicability_rationale"),
-                    "category": r.category or existing.get("category"),
-                    "is_client_reported": True, "updated_at": now,
-                }
-                if existing.get("status") in (None, "", "draft", "needs_verification", "needs_creation", "not_applicable"):
-                    update["status"] = lifecycle
-                await db.policies.update_one({"policy_id": existing["policy_id"]}, {"$set": update})
-                counters["policies_updated"] += 1
-                pol_id = existing["policy_id"]
-            else:
-                pol_id = _uid("pol")
-                await db.policies.insert_one({
-                    "policy_id": pol_id, "title": r.name, "client_id": cid,
-                    "category": r.category, "presence": presence, "status": lifecycle,
-                    "onboarding_note": r.note or None,
-                    "applicability_rationale": (r.applicability_rationale or None) if resp == "na" else None,
-                    "is_client_reported": True,
-                    "created_at": now, "updated_at": now, "created_by": user["user_id"],
-                })
-                counters["policies_created"] += 1
-            await audit(user, "onboarding-response", "policy", pol_id, cid,
-                        meta={"response": resp, "presence": presence})
-            if resp in ("no", "unsure") and pol_id not in task_by_policy:
-                task_title = f"Develop and approve {r.name}" if resp == "no" else f"Confirm whether {r.name} exists"
-                tid = _uid("tsk")
-                await db.tasks.insert_one({
-                    "task_id": tid, "title": task_title, "client_id": cid,
-                    "status": "open", "priority": "medium",
-                    "policy_id": pol_id, "source": "GRC Program Onboarding",
-                    "created_at": now, "updated_at": now, "created_by": user["user_id"],
-                })
-                counters["tasks_created"] += 1
-
-    # ---------- 2) Requirements ----------
-    if body.requirement_responses:
-        existing_reqs = await db.requirements.find({"client_id": cid}, {"_id": 0}).to_list(500)
-        req_by_name = {(r.get("title") or "").strip().lower(): r for r in existing_reqs}
-        for r in body.requirement_responses:
-            app = (r.applicability or "").lower()
-            if app not in _APPLICABILITY_MAP:
-                validation_errors.append(f"Unknown applicability for '{r.name}'"); continue
-            if app == "not_applicable" and not (r.rationale or "").strip():
-                validation_errors.append(f"Rationale required for N/A requirement '{r.name}'"); continue
-            status_val, app_val = _APPLICABILITY_MAP[app]
-            existing = req_by_name.get(r.name.strip().lower())
-            if existing:
-                await db.requirements.update_one(
-                    {"requirement_id": existing["requirement_id"]},
-                    {"$set": {
-                        "applicability": app_val, "status": status_val,
-                        "category": r.category or existing.get("category"),
-                        "note": r.note or existing.get("note"),
-                        "rationale": r.rationale if app == "not_applicable" else existing.get("rationale"),
-                        "is_client_reported": True, "updated_at": now,
-                    }})
-                counters["requirements_updated"] += 1
-                req_id = existing["requirement_id"]
-            else:
-                req_id = _uid("req")
-                await db.requirements.insert_one({
-                    "requirement_id": req_id, "title": r.name, "client_id": cid,
-                    "category": r.category, "applicability": app_val, "status": status_val,
-                    "note": r.note or None,
-                    "rationale": r.rationale if app == "not_applicable" else None,
-                    "source": "GRC Program Onboarding", "is_client_reported": True,
-                    "created_at": now, "updated_at": now, "created_by": user["user_id"],
-                })
-                counters["requirements_created"] += 1
-            await audit(user, "onboarding-response", "requirement", req_id, cid,
-                        meta={"applicability": app_val})
-
-    # ---------- 3) Key Roles & Contacts ----------
-    if body.contacts:
-        existing_contacts = await db.contacts.find({"client_id": cid}, {"_id": 0}).to_list(200)
-        by_role = {(c.get("role") or "").strip().lower(): c for c in existing_contacts}
-        for c in body.contacts:
-            role_key = (c.role or "").strip().lower()
-            if not role_key: continue
-            if c.not_applicable:
-                # Persist the N/A determination but skip email/name fields.
-                doc_upsert = {
-                    "role": c.role, "client_id": cid,
-                    "not_applicable": True, "name": None, "email": None,
-                    "notes": c.notes or None, "updated_at": now,
-                }
-            else:
-                doc_upsert = {
-                    "role": c.role, "client_id": cid,
-                    "name": (c.name or None), "title": (c.title or None),
-                    "email": (c.email or None), "phone": (c.phone or None),
-                    # Identity associations are changed only through explicit account linking.
-                    "notes": (c.notes or None),
-                    "not_applicable": False,
-                    "updated_at": now,
-                }
-            existing = by_role.get(role_key)
-            if existing:
-                await db.contacts.update_one({"contact_id": existing["contact_id"]}, {"$set": doc_upsert})
-                contact_id = existing["contact_id"]
-            else:
-                contact_id = _uid("cnt")
-                doc_upsert.update({
-                    "contact_id": contact_id, "created_at": now, "created_by": user["user_id"],
-                })
-                await db.contacts.insert_one(doc_upsert)
-            counters["contacts_saved"] += 1
-            await audit(user, "onboarding-contact", "contact", contact_id, cid,
-                        meta={"role": c.role, "not_applicable": bool(c.not_applicable)})
-
-    # ---------- 4) Existing Assessments ----------
-    if body.assessments:
-        existing_ass = await db.assessments.find({"client_id": cid}, {"_id": 0}).to_list(500)
-        # Idempotence key: title + date
-        seen_key = {((a.get("name") or "").strip().lower(), a.get("date") or ""): a for a in existing_ass}
-        for a in body.assessments:
-            key = (a.name.strip().lower(), a.date or "")
-            if key in seen_key:
-                await db.assessments.update_one(
-                    {"assessment_id": seen_key[key]["assessment_id"]},
-                    {"$set": {
-                        "assessment_type": a.assessment_type,
-                        "conducted_by": a.conducted_by,
-                        "status": a.status or "reported",
-                        "document_available": bool(a.document_available),
-                        "open_findings": a.open_findings,
-                        "notes": a.notes,
-                        "evidence_ids": a.evidence_ids or [],
-                        "updated_at": now,
-                    }},
-                )
-                assessment_id = seen_key[key]["assessment_id"]
-            else:
-                assessment_id = _uid("ass")
-                await db.assessments.insert_one({
-                    "assessment_id": assessment_id, "name": a.name, "client_id": cid,
-                    "assessment_type": a.assessment_type, "date": a.date,
-                    "conducted_by": a.conducted_by, "status": a.status or "reported",
-                    "document_available": bool(a.document_available),
-                    "open_findings": a.open_findings, "notes": a.notes,
-                    "evidence_ids": a.evidence_ids or [],
-                    "source": "GRC Program Onboarding",
-                    "created_at": now, "updated_at": now, "created_by": user["user_id"],
-                })
-                counters["assessments_created"] += 1
-            await audit(user, "onboarding-assessment", "assessment", assessment_id, cid,
-                        meta={"type": a.assessment_type})
-
-    # ---------- 5) Known Issues → promote to Tasks/Findings (no separate collection) ----------
-    if body.known_issues:
-        existing_tasks = await db.tasks.find(
-            {"client_id": cid, "source": "GRC Program Onboarding · Known Issue"},
-            {"_id": 0, "task_id": 1, "title": 1}
-        ).to_list(500)
-        existing_findings = await db.findings.find(
-            {"client_id": cid, "source": "GRC Program Onboarding · Existing Finding"},
-            {"_id": 0, "finding_id": 1, "title": 1}
-        ).to_list(500)
-        task_titles = {(t.get("title") or "").strip().lower() for t in existing_tasks}
-        finding_titles = {(f.get("title") or "").strip().lower() for f in existing_findings}
-        for issue in body.known_issues:
-            title_key = issue.title.strip().lower()
-            if issue.classification == "verified_finding":
-                if title_key in finding_titles: continue
-                fid = _uid("fnd")
-                sev = (issue.priority or "medium").lower()
-                await db.findings.insert_one({
-                    "finding_id": fid, "title": issue.title, "client_id": cid,
-                    "severity": sev if sev in ("critical", "high", "medium", "low", "info") else "medium",
-                    "status": "open",
-                    "owner_id": issue.owner_id, "due_date": issue.due_date,
-                    "description": issue.notes,
-                    "source": "GRC Program Onboarding · Existing Finding",
-                    "created_at": now, "updated_at": now, "created_by": user["user_id"],
-                })
-                counters["findings_created"] += 1
-                counters["known_issues_promoted"] += 1
-                await audit(user, "onboarding-known-issue", "finding", fid, cid,
-                            meta={"classification": "verified_finding"})
-            else:
-                if title_key in task_titles: continue
-                tid = _uid("tsk")
-                prio = (issue.priority or "medium").lower()
-                await db.tasks.insert_one({
-                    "task_id": tid, "title": issue.title, "client_id": cid,
-                    "status": "open",
-                    "priority": prio if prio in ("critical", "high", "medium", "low") else "medium",
-                    "assignee_id": issue.owner_id, "due_date": issue.due_date,
-                    "description": issue.notes,
-                    "source": "GRC Program Onboarding · Known Issue",
-                    "created_at": now, "updated_at": now, "created_by": user["user_id"],
-                })
-                counters["tasks_created"] += 1
-                counters["known_issues_promoted"] += 1
-                await audit(user, "onboarding-known-issue", "task", tid, cid,
-                            meta={"classification": issue.classification})
-
-    # ---------- 6) Recurring Reviews (dedup by title) ----------
-    if body.recurring_reviews:
-        existing_rev = await db.reviews.find(
-            {"client_id": cid, "status": {"$nin": ["completed", "cancelled"]}},
-            {"_id": 0, "title": 1}
-        ).to_list(1000)
-        seen_rev = {(r.get("title") or "").strip().lower() for r in existing_rev}
-        for rv in body.recurring_reviews:
-            if rv.title.strip().lower() in seen_rev: continue
-            due_iso = rv.due_date or (datetime.now(timezone.utc) + timedelta(days=int(rv.due_days or 30))).isoformat()
-            rid = _uid("rev")
-            await db.reviews.insert_one({
-                "review_id": rid, "title": rv.title, "review_type": rv.review_type,
-                "client_id": cid, "status": "upcoming",
-                "recurrence": rv.recurrence or "annual",
-                "owner_id": rv.owner_id or user["user_id"],
-                "due_date": due_iso,
-                "next_review_date": _next_due_for_recurrence(due_iso, rv.recurrence or "annual", None),
-                "source": "GRC Program Onboarding",
-                "created_at": now, "updated_at": now, "created_by": user["user_id"],
-            })
-            counters["reviews_created"] += 1
-            seen_rev.add(rv.title.strip().lower())
-            await audit(user, "onboarding-review", "review", rid, cid,
-                        meta={"review_type": rv.review_type})
-
-    await audit(user, "onboarding-complete", "client", cid, cid, meta=counters)
-
-    return {"ok": True, "counters": counters, "validation_errors": validation_errors}
 
 
 # ---------------- Wire extracted routers (after all helpers defined) ----------------

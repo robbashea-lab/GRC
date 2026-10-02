@@ -1,8 +1,8 @@
 // DEMO — SYNTHETIC DATA. Program records are created through product APIs.
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
-import baseline from '../lib/onboardingCatalog.json';
+import baseline from '@catalogs/onboardingCatalog.json';
 import {CATALOGS,FRAMEWORKS} from '../lib/frameworks';
 import {reviewSchedule} from '../lib/reviewOccurrences';
 

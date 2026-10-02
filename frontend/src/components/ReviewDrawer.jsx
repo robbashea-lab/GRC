@@ -68,6 +68,14 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const shown = selected || current;
   const cid = current?.client_id || record?.client_id || clientId;
   const createRecord = useCreateIntent((...args) => api.post(...args), cid);
+  const createFinding = useCreateIntent(async (...args) => {
+    try { return await api.post(...args); }
+    catch(error) {
+      // This command's identity is in the body, not only the transport header.
+      if(error.response?.headers?.['x-create-rejected']==='true')setFinding(draft=>draft?.request_id===args[1].request_id?{...draft,request_id:recordUuid()}:draft);
+      throw error;
+    }
+  }, `${cid}:${record?.review_id}:${finding?.request_id}`);
   const rid = shown?.review_id;
   const oid = selected?.occurrence_id || (shown ? occurrenceId(shown) : null);
   const frozen = !!selected || ['completed','cancelled'].includes(current?.status);
@@ -287,7 +295,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     {linked && <RecordDrawer open kind={linked.kind} record={linked.record} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();}}} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
       <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form"><SheetHeader><SheetTitle>Raise Finding</SheetTitle></SheetHeader>
-        {finding && <form className="mt-5 space-y-4" onSubmit={e => {e.preventDefault();run(async () => {await api.post(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
+        {finding && <form className="mt-5 space-y-4" onSubmit={e => {e.preventDefault();run(async () => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
           <Label className="block">Description<Textarea value={finding.description} onChange={e => setFinding(p => ({...p,description:e.target.value}))} /></Label>
           {picker('Severity',finding.severity,v => setFinding(p => ({...p,severity:v})),SCHEMAS.findings.fields.find(f => f.name === 'severity').options)}

@@ -1,6 +1,6 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
-import {readStore} from './store';
+import {previewAdapter} from './commandTestAdapter';
+import {readStore,seedStore} from './store';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const day=v=>v?.slice(0,10);
@@ -25,6 +25,15 @@ test('seeded Brawndo history follows one unbroken schedule per Review',()=>{
   for(const r of readStore().reviews.filter(r=>r.client_id===cid&&r.occurrences?.length&&['monthly','quarterly','semiannual','annual'].includes(r.recurrence))){
     const chain=[...r.occurrences.map(o=>day(o.due_date)),day(r.due_date)];
     r.occurrences.forEach((o,i)=>{if(o.next_review_date)expect([r.review_id,day(o.next_review_date)]).toEqual([r.review_id,chain[i+1]]);});
+  }
+});
+test.each(['2026-10-02','2024-01-31','2025-02-28','2026-11-30'])('new seed at %s preserves the original anchor across clipped months',clock=>{
+  for(const r of seedStore(new Date(clock+'T12:00:00Z')).reviews.filter(r=>r.client_id===cid&&r.occurrences?.length&&['monthly','quarterly','semiannual','annual'].includes(r.recurrence))){
+    const chain=[...r.occurrences.map(o=>day(o.due_date)),day(r.due_date)];
+    r.occurrences.forEach((o,i)=>{
+      expect({review:r.review_id,next:day(o.next_review_date)}).toEqual({review:r.review_id,next:chain[i+1]});
+      expect({review:r.review_id,anchor:o.schedule_anchor}).toEqual({review:r.review_id,anchor:r.schedule_anchor});
+    });
   }
 });
 test('a Finding raised in a Policy Review is visible from the Policy',async()=>{

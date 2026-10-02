@@ -2,10 +2,10 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import Onboarding from './Onboarding';
 import api from '@/lib/api';
-import catalog from '@/lib/onboardingCatalog.json';
-let mockState;
+import catalog from '@catalogs/onboardingCatalog.json';
+let mockState,mockRole;
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'a',currentClient:{name:'Northstar'}})}));
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'admin',role:'super_admin'}})}));
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'admin',role:mockRole}})}));
 jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({refresh:jest.fn()})}));
 jest.mock('@/components/AIIntake',()=>()=>null);
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn()},formatError:e=>e.message}));
@@ -13,13 +13,21 @@ jest.mock('react-router-dom',()=>({Link:({to,children,...props})=><a href={to} {
 let root,container;
 const button=text=>Array.from(container.querySelectorAll('button')).find(b=>b.textContent===text);
 beforeEach(()=>{
+  mockRole='super_admin';
   global.IS_REACT_ACT_ENVIRONMENT=true;
+  Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto});
   mockState={version:3,step:1,policies:{},requirements:{'cis-ig1':'does_not_apply'},reviews:[],completed:false};
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   api.get.mockImplementation(async path=>({data:path==='/onboarding/baseline'?{catalog,state:mockState}:{client:{client_id:'a',name:'Northstar'},people:{contacts:0,active_client_users:0,eligible_assignees_available:true},records:{reviews:[],policies:[],requirements:[],framework_assessments:[]}}}));
   api.post.mockImplementation(async(_,body)=>{mockState={...body.state,completed:!!body.finalize};return {data:mockState};});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+test('contributor is told which operator can run onboarding',async()=>{
+  mockRole='client_contributor';
+  await act(async()=>root.render(<Onboarding/>));
+  expect(container.textContent).toContain('A platform administrator must run this wizard.');
+  expect(button('Complete onboarding')).toBeUndefined();
+});
 test('Policy step reports omissions immediately, blocks Next and accepts Unsure',async()=>{
   // A real partial draft keeps the saved Policy step (untouched drafts begin on Compliance).
   mockState.policies[catalog.policies[0].key]='unsure';
@@ -56,4 +64,38 @@ test('entered first due date remains visible and reaches draft and final submiss
   await act(async()=>button('Complete onboarding').click());
   const final=api.post.mock.calls.find(([,body])=>body.finalize)[1];
   expect(Object.values(final.state.framework_reviews)[0].due_date).toBe('2028-02-29');
+});
+
+test('completion retry retains its original request identity and payload',async()=>{
+  mockState.step=3;mockState.policies=Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure']));
+  await act(async()=>root.render(<Onboarding/>));
+  api.post.mockRejectedValueOnce(new Error('Connection lost after saving'));
+  await act(async()=>button('Complete onboarding').click());
+  const first=api.post.mock.calls.at(-1);
+  expect(first[2].headers['Idempotency-Key']).toBeTruthy();
+  expect(button('Back').disabled).toBe(true);
+  expect(container.querySelector('[role="alert"]').textContent).toContain('resume the same submission');
+  await act(async()=>button('Retry completion').click());
+  const retry=api.post.mock.calls.at(-1);
+  expect(retry).toEqual(first);
+  expect(container.querySelector('[data-testid="onboarding-handoff"]')).toBeTruthy();
+});
+
+test('failed progress saves do not lock the form as an uncertain completion and can be retried',async()=>{
+  mockState.step=2;mockState.policies=Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure']));
+  mockState.updated_at='draft-version';
+  await act(async()=>root.render(<Onboarding/>));
+  api.post.mockRejectedValueOnce(new Error('Draft save unavailable')).mockRejectedValueOnce(new Error('Draft save still unavailable'));
+  await act(async()=>button('Next').click());
+  await act(async()=>button('Complete onboarding').click());
+  expect(api.post.mock.calls).toHaveLength(2);
+  expect(api.post.mock.calls.every(([,body,options])=>!body.finalize&&!options)).toBe(true);
+  expect(button('Back').disabled).toBe(false);
+  expect(button('Retry completion')).toBeUndefined();
+  expect(container.textContent).not.toContain('Completion has not been confirmed');
+  await act(async()=>button('Complete onboarding').click());
+  expect(api.post.mock.calls[2][1]).toMatchObject({finalize:false,expected_updated_at:'draft-version'});
+  expect(api.post.mock.calls[3][1]).toMatchObject({finalize:true});
+  expect(api.post.mock.calls[3][2].headers['Idempotency-Key']).toBeTruthy();
+  expect(container.querySelector('[data-testid="onboarding-handoff"]')).toBeTruthy();
 });

@@ -1,0 +1,6 @@
+{
+  "vendors": {
+    "services": "service",
+    "contract_end": "contract_expiration"
+  }
+}

@@ -73,10 +73,10 @@ export function finishDemoStore(db, clock, {
         semiannual: 6,
         annual: 12
       }[r.recurrence] || 3;
-      // Step back from the current due date with the same anchor forward recurrence uses, so seeded
-      // Brawndo history never drifts (Nov 30 quarterly: Aug 31, May 31, Feb 28, not Aug 30, May 30).
-      const anchorDay = r.due_date.slice(0, 10), monthEnd = new Date(Date.parse(anchorDay + 'T12:00:00Z') + 86400000).getUTCDate() === 1;
-      let step = 1, due = previousDate(anchorDay, months, cid === 'demo_brawndo' && monthEnd);
+      // Derive every historical period from the same current anchor. A clipped
+      // February date must not turn a fixed-day Review into a month-end Review.
+      const anchorDay = r.due_date.slice(0, 10), monthEnd = r.schedule_anchor.month_end;
+      let step = 1, due = previousDate(anchorDay, months, monthEnd);
       r.occurrences = [];
       while (due >= date(-570)) {
         if (due < date(-2)) {
@@ -90,7 +90,7 @@ export function finishDemoStore(db, clock, {
             ...reviewSchedule({
               ...r,
               due_date: due
-            }, true),
+            }),
             occurrence_id: r.review_id + '_' + due,
             due_date: due,
             status: 'completed',
@@ -103,7 +103,7 @@ export function finishDemoStore(db, clock, {
             evidence: []
           });
         }
-        due = cid === 'demo_brawndo' ? previousDate(anchorDay, months * ++step, monthEnd) : previousDate(due, months);
+        due = previousDate(anchorDay, months * ++step, monthEnd);
       }
       if (r.risk_id) {
         const risk = risks.find(risk => risk.risk_id === r.risk_id);

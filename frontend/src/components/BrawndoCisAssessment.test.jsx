@@ -1,7 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
-import {isBrawndoCisPrototype} from './BrawndoCisAssessment';
+import {frameworkWorkspace} from '@/lib/frameworks';
 import api from '@/lib/api';
 import {BrawndoCisHeader} from './BrawndoCisOverview';
 
@@ -30,11 +30,11 @@ beforeEach(()=>{
 afterEach(async()=>{mockOfficial=null;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_brawndo" onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
 
-test('activation requires the exact synthetic client, framework, record tenant and Demo identity',()=>{
- expect(isBrawndoCisPrototype('demo_brawndo',record,mockUser)).toBe(true);
- for(const candidate of [{...record,client_id:'demo_dunder'},{...record,framework_key:'iso-27001'}])expect(isBrawndoCisPrototype('demo_brawndo',candidate,mockUser)).toBe(false);
- expect(isBrawndoCisPrototype('demo_dunder',record,mockUser)).toBe(false);
- expect(isBrawndoCisPrototype('demo_brawndo',record,{...mockUser,workspace_mode:'standard'})).toBe(false);
+test('framework configuration selects distinct workspaces without tenant identities',()=>{
+ expect(frameworkWorkspace('cis-ig1')).toBe('cis');
+ expect(frameworkWorkspace('soc-2')).toBe('soc');
+ expect(frameworkWorkspace('iso-27001')).toBe('iso');
+ expect(frameworkWorkspace('unknown')).toBe('generic');
 });
 const headings=()=>[...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent.replace(/^\d/,''));
 test('Brawndo overview no longer offers program configuration',async()=>{
@@ -81,12 +81,13 @@ test('status, current implementation, verification and checklist save with the c
  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Inventory maintained in RMM; reconciled monthly.',verification:'needs_validation',cis_assessment_criteria:['1.1-c1'],notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}));
  expect(container.textContent).toContain('Assessment saved.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Needs validation');
 });
-test('status labels and N/A are preserved; helper precedes narrative and legacy fields are hidden',async()=>{
+test('status labels and N/A are preserved; legacy notes remain in a collapsed disclosure',async()=>{
  await render();expect([...container.querySelectorAll('input[name="bcsg-status"]')].map(i=>i.parentElement.textContent)).toEqual(['Implemented','Partially Implemented','Not Implemented','Not Assessed','Not Applicable']);
  expect(container.textContent).toContain('Document how the organization currently satisfies this safeguard.');
  expect(container.querySelector('#bcsg-current-help').compareDocumentPosition(container.querySelector('[aria-label="Current implementation"]')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
  expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeNull();await tick(container.querySelector('input[value="not_applicable"]'));expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeTruthy();
- expect(container.querySelector('.bcsg-legacy')).toBeNull();expect(container.textContent).not.toContain('Previously recorded');
+ expect(container.querySelector('.bcsg-legacy')).toBeNull();
+ const notes=container.querySelector('[aria-label="Previously recorded notes"]');expect(notes.value).toBe('Older notes');expect(notes.closest('details').open).toBe(false);
  expect(record.technology).toBe('Recorded platform');expect(record.notes).toBe('Older notes');
 });
 test('next and close require explicit draft discard; cancel retains the draft',async()=>{
@@ -110,7 +111,7 @@ test('load failure disables writes and offers retry',async()=>{
 });
 test('other clients retain their assessment content with explicit modal semantics',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
+ expect(container.textContent).toContain('Implementation Status');expect(container.textContent).toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
 test('ISO assessments omit the duplicate organizational controls section',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
@@ -131,7 +132,7 @@ test('dialog has one source-labelled checklist and no maturity guidance',async()
  expect(container.querySelector('[data-testid="criteria-source"]').textContent).toBe('Sources: CIS Safeguard 1.1 · v8.1');
  expect(container.querySelectorAll('.bcsg-criteria')).toHaveLength(1);
  expect(container.querySelectorAll('.bcsg-criteria input:checked')).toHaveLength(0);
- for(const text of ['Foundation','Operational','Mature','Stronger practice','Previously recorded','Manage people'])expect(container.textContent).not.toContain(text);
+ for(const text of ['Foundation','Operational','Mature','Stronger practice','Manage people'])expect(container.textContent).not.toContain(text);
  await tick(container.querySelector('.bcsg-criteria input'));await act(async()=>button('Save assessment').click());
  expect(record.verification_checklist).toEqual({foundation:['1.1-f1'],mature:['1.1-m1']});
  expect(record.cis_assessment_criteria).toEqual(['1.1-c1']);

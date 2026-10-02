@@ -8,9 +8,9 @@ import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
 import api,{formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
-import {frameworkCatalog,frameworkDefinition} from '@/lib/frameworks';
+import {frameworkCatalog,frameworkDefinition,frameworkWorkspace} from '@/lib/frameworks';
 import {recordUuid} from '@/lib/recordUuid';
-import policyCatalog from '@/lib/onboardingCatalog.json';
+import policyCatalog from '@catalogs/onboardingCatalog.json';
 import {actionStatus} from '@/lib/actionItems';
 import {SCHEMAS} from '@/lib/schemas';
 import RecordDrawer from './RecordDrawer';
@@ -22,10 +22,9 @@ import OrganizationalControls from './OrganizationalControls';
 import FrameworkContext from './FrameworkContext';
 import {operatorStatuses,operatorProgram,STATUS_HELP} from '@/lib/frameworkOperator';
 import FrameworkReviewSetup from './FrameworkReviewSetup';
-import FrameworkAssessmentWorkspace,{isBrawndoCisPrototype} from './FrameworkAssessmentWorkspace';
+import FrameworkAssessmentWorkspace from './FrameworkAssessmentWorkspace';
 import BrawndoCisSafeguard from './BrawndoCisSafeguard';
 import PrestigeSocAssessment from './PrestigeSocAssessment';
-import {isPrestigeSocAssessment} from '@/lib/reference';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from './ui/alert-dialog';
 
 const IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',evidence:'evidence_id',vendors:'vendor_id'};
@@ -34,8 +33,9 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const {user}=useAuth(),aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
   const catalog=frameworkCatalog(record.framework_key),isCsf=record.framework_key==='nist-csf-2',isSoc=record.framework_key==='soc-2',isCis=record.framework_key==='cis-ig1',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement'),program=operatorProgram(record.framework_key);
   const statuses=operatorStatuses(record.framework_key);
-  const brawndoCis=isBrawndoCisPrototype(clientId,record,user);
-  const prestigeSoc=isPrestigeSocAssessment(clientId,record.framework_key,user);
+  const workspace=record.client_id===clientId?frameworkWorkspace(record.framework_key):'generic';
+  const brawndoCis=workspace==='cis';
+  const prestigeSoc=workspace==='soc';
   const prototype=['cis-ig1','iso-27001','soc-2'].includes(record.framework_key);
   const writable=['super_admin','platform_admin','client_grc_manager'].includes(user?.role) ||
     user?.role==='client_contributor' && record?.owner_id===user?.user_id;
@@ -74,7 +74,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   async function download(e){await run(async()=>{const {data}=await api.get(`/evidence/${e.evidence_id}/download`);const a=document.createElement('a');a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type};base64,${data.content_base64}`;a.download=data.filename;a.click();});}
   const current=ctx?.current||record,related=ctx?.related||{};
   const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
-  if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{open,record,definition,form,current,ctx,related,finding,error,busy,dirty,feedback,writable,position,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{put,save,run,setFinding,setNested,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{put,save,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
+  if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{open,record,definition,form,current,ctx,related,finding,error,busy,dirty,feedback,writable,position,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{put,save,run,setFinding,setNested,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{put,save,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!finding&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
     state={{open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()}}
     actions={{put,save,run,download,setComment,setFinding,setTab,setNested,setReviewDraft,setLink,setControlDraft,
       controlSaved:()=>{setRevision(n=>n+1);onSaved?.();},

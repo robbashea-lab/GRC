@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
-import soc from '../lib/soc2.json';
+import soc from '@catalogs/soc2.json';
 import {reviewSchedule} from '../lib/reviewOccurrences';
 
 const api=axios.create({adapter:previewAdapter});

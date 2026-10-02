@@ -222,10 +222,10 @@ export const SCHEMAS = {
     subtitle: "Third-party services, criticality, assurance and review status.",
     columns: [
       { key: "name", label: "Vendor", primary: true },
-      { key: "services", label: "Services" },
+      { key: "service", label: "Service / Product" },
       { key: "criticality", label: "Criticality", badge: true },
       { key: "status", label: "Status", badge: true },
-      { key: "contract_end", label: "Contract end", date: true },
+      { key: "contract_expiration", label: "Contract expiration", date: true },
     ],
     fields: [
       { name: "name", label: "Vendor name", required: true },
@@ -234,12 +234,13 @@ export const SCHEMAS = {
         { value: "high", label: "High" }, { value: "critical", label: "Critical" },
       ]},
       { name: "status", label: "Status", type: "select", options: [
-        { value: "active", label: "Active" }, { value: "under_review", label: "Under review" },
-        { value: "terminated", label: "Terminated" },
+        { value: "onboarding", label: "Onboarding" }, { value: "under_review", label: "Under review" },
+        { value: "active", label: "Active" }, { value: "offboarding", label: "Offboarding" },
+        { value: "inactive", label: "Inactive" },
       ]},
       { name: "contact_email", label: "Contact email" },
-      { name: "services", label: "Services provided", type: "textarea" },
-      { name: "contract_end", label: "Contract end", type: "date" },
+      { name: "service", label: "Service / Product", type: "textarea", required: true },
+      { name: "contract_expiration", label: "Contract expiration", type: "date" },
     ],
   },
   assets: {

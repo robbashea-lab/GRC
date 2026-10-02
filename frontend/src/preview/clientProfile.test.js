@@ -1,7 +1,7 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {readStore,saveStore} from './store';
-import catalog from '../lib/onboardingCatalog.json';
+import catalog from '@catalogs/onboardingCatalog.json';
 import {completeness,validateProfile,applicabilityPrompts} from '../lib/clientProfile';
 const api=axios.create({adapter:previewAdapter});
 let cid;

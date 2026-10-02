@@ -1,10 +1,16 @@
-import catalog from '@/lib/onboardingCatalog.json';
+import catalog from '@catalogs/onboardingCatalog.json';
 import {recordedBaseline} from '../lib/clientProfile';
 import { list, write, record, audit, clone } from './store';
 import {frameworkScope,validateFrameworkConfig,reconcileFramework} from './frameworks';
 import {genericReviews} from '../lib/frameworks';
 export const matches = (row, item) => row.baseline_key === item.key || !row.baseline_key && [item.name,...(item.aliases||[])].some(n=>n.toLowerCase()===(row.title||'').trim().toLowerCase());
 const findExisting=(db,kind,cid,item)=>list(db,kind,cid).find(r=>r.baseline_key===item.key)||list(db,kind,cid).find(r=>matches(r,item));
+export function baselineRecordVersions(db,cid){
+  return Object.fromEntries(['policies','requirements','reviews'].flatMap(group=>catalog[group].map(item=>{
+    const row=findExisting(db,group,cid,item),idField={policies:'policy_id',requirements:'requirement_id',reviews:'review_id'}[group];
+    return [`${group}:${item.key}`,row?{[idField]:row[idField],updated_at:row.updated_at??null}:null];
+  })));
+}
 export function baselineState(db,cid) {
   record(db,'clients',cid);
   const saved=db.baselines?.[cid];
@@ -25,7 +31,8 @@ export function saveBaseline(db,cid,state,finalize,precondition={}) {
   const priorBaseline=recordedBaseline(record(db,'clients',cid),db.baselines?.[cid],db.logs);
   frameworkScope(db,cid);
   if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
-  if(Object.prototype.hasOwnProperty.call(precondition,'expected_updated_at')&&precondition.expected_updated_at!==(db.baselines?.[cid]?.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
+  if(!Object.prototype.hasOwnProperty.call(precondition,'expected_updated_at'))throw Object.assign(new Error('Reload the record before saving; an edit version is required'),{status:428});
+  if(precondition.expected_updated_at!==(db.baselines?.[cid]?.updated_at??null))throw Object.assign(new Error('Record changed since it was opened; reload before saving'),{status:409});
   state=clone(state);validateFrameworkConfig(state);
   state.requirements||={};state.requirements['soc-2']||='does_not_apply';
   if(state.version>=3)for(const item of catalog.requirements)state.requirements[item.key]||='does_not_apply';
@@ -35,6 +42,9 @@ export function saveBaseline(db,cid,state,finalize,precondition={}) {
   if(!Array.isArray(state.reviews)||state.reviews.some(k=>!catalog.reviews.some(r=>r.key===k)))throw new Error('Invalid review selection.');
   if(finalize)for(const group of ['policies','requirements'])if(catalog[group].some(i=>!state[group]?.[i.key]))throw new Error('Please answer every policy and requirement before completing onboarding.');
   if(finalize) {
+    if(!precondition.expected_records)throw Object.assign(new Error('Reload setup before finalizing; source record versions are required'),{status:428});
+    const versions=baselineRecordVersions(db,cid),expected=precondition.expected_records;
+    if(Object.keys(expected).length!==Object.keys(versions).length||Object.entries(versions).some(([key,value])=>value===null?expected[key]!==null:!expected[key]||Object.entries(value).some(([field,item])=>expected[key][field]!==item)))throw Object.assign(new Error('Setup records changed since this form was opened; reload before finalizing'),{status:409});
     if(state.version>=3)state.reviews=genericReviews(catalog,state).map(r=>r.key);
     for(const item of catalog.policies) {
       const old=findExisting(db,'policies',cid,item), response=state.policies[item.key];

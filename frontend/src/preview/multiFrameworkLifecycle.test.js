@@ -1,8 +1,8 @@
 // DEMO — SYNTHETIC DATA. All state below is produced through normal workflows.
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY,readStore,saveStore} from './store';
-import catalog from '../lib/onboardingCatalog.json';
+import catalog from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,sharedFrameworkPlans,reviewConfig} from '../lib/frameworks';
 const api=axios.create({adapter:previewAdapter});
 const {setImmediate:yieldEventLoop}=jest.requireActual('timers');

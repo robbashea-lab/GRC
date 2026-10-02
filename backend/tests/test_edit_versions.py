@@ -89,7 +89,7 @@ class EditVersionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(created.status_code,200,created.text)
         self.client.event_hooks['request']=[]
         body['expected_updated_at']=None
-        stale=await self.client.post('/api/onboarding/baseline',json=body)
+        stale=await self.client.post('/api/onboarding/baseline',json=body,headers={'Idempotency-Key':'stale-onboarding-state'})
         self.assertEqual(stale.status_code,409,stale.text)
         requirement=await server.db.requirements.find_one({'client_id':'a','baseline_key':'cis-ig1'})
         reviews=await server.db.reviews.find({'client_id':'a'},{'_id':0}).to_list(None)
@@ -147,7 +147,7 @@ class EditVersionTests(unittest.IsolatedAsyncioTestCase):
         response={'name':'Policy','response':'no','expected_updated_at':None}
         with patch.object(onboarding,'db',server.db):
             for path,key in [('policy-responses','responses'),('finalize','policy_responses')]:
-                result=await self.client.post('/api/onboarding/'+path,json={'client_id':'a',key:[response]})
+                result=await self.client.post('/api/onboarding/'+path,json={'client_id':'a',key:[response]},headers={'Idempotency-Key':'stale-onboarding-policy'})
                 self.assertEqual(result.status_code,409,result.text)
         self.assertEqual((await server.db.policies.find_one({'policy_id':'p'}))['presence'],'verified_existing')
         self.assertEqual(await server.db.tasks.count_documents({}),0)
@@ -200,6 +200,6 @@ class EditVersionTests(unittest.IsolatedAsyncioTestCase):
         policy=await server.db.policies.find_one({'client_id':'a'})
         await server.db.policies.update_one({'policy_id':policy['policy_id']},{'$set':{'onboarding_note':'Newer operator edit','updated_at':server._next_write_time(policy.get('updated_at'))}})
         self.client.event_hooks['request']=[]
-        result=await self.client.post('/api/onboarding/baseline',json={**body,'expected_updated_at':snapshot['state']['updated_at'],'expected_records':snapshot['record_versions']})
+        result=await self.client.post('/api/onboarding/baseline',json={**body,'expected_updated_at':snapshot['state']['updated_at'],'expected_records':snapshot['record_versions']},headers={'Idempotency-Key':'stale-onboarding-records'})
         self.assertEqual(result.status_code,409,result.text)
         self.assertEqual((await server.db.policies.find_one({'policy_id':policy['policy_id']}))['onboarding_note'],'Newer operator edit')

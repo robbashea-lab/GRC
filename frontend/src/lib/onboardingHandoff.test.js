@@ -1,5 +1,5 @@
 import {SETUP_FILTERS,unansweredPolicies,onboardingPreview,currentHandoff,reviewConfigurationIssues} from './onboardingHandoff';
-import catalog from './onboardingCatalog.json';
+import catalog from '@catalogs/onboardingCatalog.json';
 import {cis} from './frameworks';
 test('Unsure is answered; missing and invalid answers remain required',()=>{
   const state={policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure']))};

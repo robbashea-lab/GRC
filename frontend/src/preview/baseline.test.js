@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { previewAdapter } from './adapter';
-import catalog from '@/lib/onboardingCatalog.json';
+import { previewAdapter } from './commandTestAdapter';
+import catalog from '@catalogs/onboardingCatalog.json';
 import { STORE_KEY } from './store';
 const api=axios.create({adapter:previewAdapter});
 const get=async(kind,cid)=>(await api.get(`/${kind}`,{params:{client_id:cid}})).data;

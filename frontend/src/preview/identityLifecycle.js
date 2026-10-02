@@ -2,7 +2,7 @@
 import { assignmentFields, assignmentCandidates, clientAccess, eligible } from './assignmentEligibility';
 import { record, write, audit, ids, now } from './store';
 import rules from '@/lib/grcRules.json';
-import cis from '@/lib/cisIG1.json';
+import cis from '@catalogs/cisIG1.json';
 
 const clientRoles = ['client_grc_manager', 'client_contributor', 'client_readonly'];
 const roles = ['super_admin', 'platform_admin', ...clientRoles];

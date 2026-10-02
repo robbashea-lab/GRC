@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
+import {useCreateIntent} from '@/lib/createIntent';
 import PageHeader from '@/components/PageHeader';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -19,39 +20,47 @@ const ANSWERS=[['yes','Yes'],['no','No'],['unsure','Unsure']];
 export default function Onboarding({onComplete}){
   const {currentClient,currentClientId}=useOrg(),{user}=useAuth(),compliance=useCompliance();
   const [snapshot,setSnapshot]=useState(null),[validation,setValidation]=useState(false),[retry,setRetry]=useState(0);
+  const [completionUncertain,setCompletionUncertain]=useState(false);
   const [loaded,setLoaded]=useState(null),[state,setState]=useState(null),[catalog,setCatalog]=useState(null),[reviews,setReviews]=useState([]),[error,setError]=useState(''),[saved,setSaved]=useState(''),[busy,setBusy]=useState(false);
   const pending=useRef(Promise.resolve()),generation=useRef(0),editVersion=useRef(null),recordVersions=useRef(null);
+  const completeIntake=useCreateIntent(api.post,`${user?.user_id}:${currentClientId}`);
   const canRun=['super_admin','platform_admin'].includes(user?.role);
   useEffect(()=>{
-    const c=new AbortController();generation.current++;setLoaded(null);setState(null);setSnapshot(null);setError('');setValidation(false);
+    const c=new AbortController();generation.current++;setLoaded(null);setState(null);setSnapshot(null);setError('');setValidation(false);setCompletionUncertain(false);setBusy(false);
     if(!currentClientId)return;
     Promise.all([api.get('/onboarding/baseline',{params:{client_id:currentClientId},signal:c.signal}),api.get('/onboarding/handoff',{params:{client_id:currentClientId},signal:c.signal})]).then(([baseline,handoff])=>{
       if(c.signal.aborted)return;editVersion.current=baseline.data.state.updated_at??null;recordVersions.current=baseline.data.record_versions??null;pending.current=Promise.resolve();setCatalog(baseline.data.catalog);setState(baseline.data.state.completed ? baseline.data.state : onboardingDraft(baseline.data.state));setReviews(handoff.data.records.reviews);setSnapshot(handoff.data);setLoaded(currentClientId);setSaved('');
     }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
   },[currentClientId,retry]);
+  async function saveProgress(next,cid,revision){
+    if(revision!==generation.current)return;
+    const result=await api.post('/onboarding/baseline',{client_id:cid,state:next,finalize:false,expected_updated_at:editVersion.current});
+    if(revision===generation.current)editVersion.current=result.data.updated_at??null;
+  }
   function update(next){
     setState(next);setSaved('Saving progress…');
     const cid=currentClientId,revision=generation.current;
-    pending.current=pending.current.catch(()=>{}).then(async()=>{
-      if(revision!==generation.current)return;
-      const result=await api.post('/onboarding/baseline',{client_id:cid,state:next,finalize:false,expected_updated_at:editVersion.current});
-      if(revision===generation.current)editVersion.current=result.data.updated_at??null;
-    });
+    pending.current=pending.current.catch(()=>{}).then(()=>saveProgress(next,cid,revision));
     pending.current.then(()=>{if(revision===generation.current)setSaved('Progress saved');}).catch(e=>{if(revision===generation.current){setSaved('Progress could not be saved');toast.error(formatError(e));}});
   }
   async function finalize(){
     if(unansweredPolicies(catalog,state).length){setValidation(true);update({...state,step:1});return;}
     if(reviewConfigurationIssues(state).length){setValidation(true);update({...state,step:2});return;}
     const cid=currentClientId,revision=generation.current;
+    let submissionStarted=false;
     setBusy(true);try{
-      await pending.current;
-      await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true,expected_records:recordVersions.current,expected_updated_at:editVersion.current});
+      // A failed draft save has not submitted the completion command. Retry the
+      // current draft with its existing version before creating that intent.
+      await pending.current.catch(()=>{pending.current=saveProgress(state,cid,revision);return pending.current;});
+      if(revision!==generation.current)return;
+      submissionStarted=true;
+      await completeIntake('/onboarding/baseline',{client_id:cid,state,finalize:true,expected_records:recordVersions.current,expected_updated_at:editVersion.current});
       if(revision!==generation.current)return;
       toast.success('Onboarding complete. Review the remaining operational setup.');
       compliance.refresh?.();setRetry(n=>n+1);onComplete?.();
-    }catch(e){if(revision===generation.current)toast.error(formatError(e));}finally{setBusy(false);}
+    }catch(e){if(revision===generation.current){setCompletionUncertain(submissionStarted&&e?.response?.headers?.['x-create-rejected']!=='true');toast.error(formatError(e));}}finally{if(revision===generation.current)setBusy(false);}
   }
-  if(!canRun)return <PageHeader title="GRC Program Onboarding" subtitle="You need contributor access to run this wizard."/>;
+  if(!canRun)return <PageHeader title="GRC Program Onboarding" subtitle="A platform administrator must run this wizard."/>;
   if(!currentClientId)return <PageHeader title="GRC Program Onboarding" subtitle="Select a client organization first."/>;
   if(error)return <div role="alert" className="page-content space-y-3"><p>{error}</p><Button variant="outline" onClick={()=>setRetry(n=>n+1)}>Retry onboarding</Button></div>;
   if(!state||loaded!==currentClientId)return <div role="status" className="page-content">Loading onboarding…</div>;
@@ -67,6 +76,8 @@ export default function Onboarding({onComplete}){
     <div className="page-gutter pt-4 flex flex-wrap gap-3 text-sm"><span>Active client · <strong>{currentClient?.name}</strong></span><span role="status" className="text-xs text-ink-muted">{saved}</span>{state.completed&&<span className="text-xs text-ink-muted">Revisiting saved onboarding · existing history is retained</span>}</div>
     <div className="page-content max-w-7xl"><ol className="onboarding-stepper flex flex-wrap gap-4 mb-6 text-sm" data-testid="onboarding-stepper">{STEPS.map((name,i)=><li key={name} aria-current={step===i?'step':undefined} className={step===i?'font-semibold text-ink-primary':'text-ink-muted'}>{i+1}. {name}</li>)}</ol>
     <section className="border border-line bg-surface-card rounded-lg p-6"><h2 className="text-base font-semibold mb-4">{STEPS[step]}</h2>
+      {completionUncertain&&<p role="alert" className="text-sm mb-4">Completion has not been confirmed. Retry completion to resume the same submission; keep this page open.</p>}
+      <fieldset disabled={busy||completionUncertain} className="min-w-0">
       {step===0&&<div className="space-y-5"><p className="text-sm text-ink-muted">Select relevant programs. A selection records applicability—not certification. General GRC onboarding does not require a framework.</p>
         <div className="grid md:grid-cols-2 gap-3">{FRAMEWORKS.map(f=><label key={f.key} className="onboarding-program-option border border-line rounded p-4"><span className="block text-sm font-medium">{f.name}</span><select aria-label={f.name} className="mt-2 border border-line rounded bg-surface-card p-2 text-sm" value={state.requirements[f.key]} onChange={e=>update({...state,requirements:{...state.requirements,[f.key]:e.target.value}})}>{APPLICABILITY.map(([v,label])=><option key={v} value={v}>{label}</option>)}</select><span className="block text-xs text-ink-muted mt-2">{f.implemented?'Requirement assessments and mapped Reviews available.':'Program workspace only. Detailed mapping is not yet configured.'}</span></label>)}</div>
         <AIIntake key={currentClientId} clientId={currentClientId} canWrite={canRun}/>
@@ -96,7 +107,8 @@ export default function Onboarding({onComplete}){
         <section><h3 className="text-sm font-semibold mb-2">People</h3><div className="grid sm:grid-cols-2 gap-3 text-sm"><div>Primary Contact<ClientRelationshipValue client={snapshot.client} primary/></div><div>GRC Lead<ClientRelationshipValue client={snapshot.client}/></div></div><p className="text-xs text-ink-secondary mt-2">{snapshot.people.contacts} business Contacts · {snapshot.people.active_client_users} active client platform Users. No accounts or assignments will be created.</p></section>
         <section><h3 className="text-sm font-semibold">Reviews to Create / Retain</h3><ul className="list-disc ml-5 text-sm space-y-1">{plans.filter(p=>reviewConfig(state,p).enabled).map(p=><li key={p.key}>{p.title} · {existing(p)?'Existing Review retained':`Create or share · ${reviewConfig(state,p).recurrence}`}</li>)}{generic.map(r=><li key={r.key}>{r.name} · Generic governance · create only if missing</li>)}</ul>{!generic.length&&!plans.some(p=>reviewConfig(state,p).enabled)&&<p className="text-sm text-ink-muted">No Reviews selected.</p>}<p className="text-xs text-ink-muted mt-3">Deselecting a program removes its current driver. Existing Reviews, Findings, Actions, Evidence and assessment history are never deleted.</p></section>
       </div>}
-      <div className="mt-8 flex justify-between"><Button variant="outline" disabled={step===0||busy} onClick={()=>update({...state,step:step-1})}>Back</Button>{step<3?<Button onClick={()=>{if(step===1&&missing.length){setValidation(true);document.querySelector('[role="group"][aria-describedby] button')?.focus();return;}if(step===2&&reviewConfigurationIssues(state).length){document.querySelector('input[type="number"]:invalid')?.focus();return;}setValidation(false);update({...state,step:step+1});}}>Next</Button>:<Button disabled={busy} onClick={finalize}>{busy?'Saving…':'Complete onboarding'}</Button>}</div>
+      </fieldset>
+      <div className="mt-8 flex justify-between"><Button variant="outline" disabled={step===0||busy||completionUncertain} onClick={()=>update({...state,step:step-1})}>Back</Button>{step<3?<Button onClick={()=>{if(step===1&&missing.length){setValidation(true);document.querySelector('[role="group"][aria-describedby] button')?.focus();return;}if(step===2&&reviewConfigurationIssues(state).length){document.querySelector('input[type="number"]:invalid')?.focus();return;}setValidation(false);update({...state,step:step+1});}}>Next</Button>:<Button disabled={busy} onClick={finalize}>{busy?'Saving…':completionUncertain?'Retry completion':'Complete onboarding'}</Button>}</div>
     </section></div>
   </div>;
 }

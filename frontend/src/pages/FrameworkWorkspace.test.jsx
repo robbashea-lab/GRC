@@ -96,18 +96,17 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 const buttons=label=>[...container.querySelectorAll('button')].filter(b=>b.textContent===label);
 test('every client gets the reference workspace: categories start compact; open, resume and Next keep assessment data',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
- const toggles=()=>buttons('Open category'),rows=()=>container.querySelectorAll('[data-testid^="requirement-"]');
- expect(toggles()).toHaveLength(15);expect(rows()).toHaveLength(0);
- await act(async()=>buttons('Open category')[0].click());expect(rows()).toHaveLength(2);
- await act(async()=>buttons('All requirements')[0].click());expect(rows()).toHaveLength(56);
- await act(async()=>buttons('Categories')[0].click());expect(rows()).toHaveLength(0);
+ const controls=()=>container.querySelectorAll('[data-testid^="control-row-"]'),rows=()=>container.querySelectorAll('[data-testid^="requirement-"]');
+ expect(controls()).toHaveLength(15);expect(rows()).toHaveLength(0);
+ await act(async()=>controls()[0].click());expect(rows()).toHaveLength(2);
+ await act(async()=>buttons('CIS IG1')[0].click());expect(controls()).toHaveLength(15);expect(rows()).toHaveLength(0);
  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('1.2');
  await act(async()=>buttons('Next')[0].click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('2.1');
  expect(JSON.parse(sessionStorage.getItem('framework-workspace:u:a:cis-ig1')).lastId).toBe('a2');
 });
 test('a mismatched client response cannot populate the workspace or resume selection',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="b"/>));
- expect(container.querySelectorAll('.cis-section-toggle')).toHaveLength(0);expect(container.textContent).toContain('0 of 0 applicable safeguards assessed');
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);expect(container.textContent).toContain('0 of 0 safeguards');
  expect([...container.querySelectorAll('button')].some(b=>b.textContent.startsWith('Continue with'))).toBe(false);
 });
 
@@ -142,6 +141,10 @@ test('ISO has five focused workspaces; SoA retains all 93 controls and audit is 
  expect(container.textContent).not.toContain('Connected programme records');
  await act(async()=>buttons('ISMS Requirements')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('30 of 30');
+ expect(container.querySelector('.bcis-explain').textContent).toContain('(30 of 30)');
+ const panel=container.querySelector('[role="tabpanel"]');
+ expect(panel.getAttribute('aria-labelledby')).toBe('iso-tab-isms_clause');
+ expect(panel.tabIndex).toBe(0);
  await act(async()=>buttons('Statement of Applicability')[0].click());
  await act(async()=>buttons('All controls')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
@@ -165,11 +168,24 @@ test('ISO default presentation preserves SoA scope and uses native category butt
  await act(async()=>buttons('All controls')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
  await act(async()=>container.querySelector(`[data-testid="requirement-${annex[0].id}"] button`).click());
- expect(container.querySelector('[aria-label="ISO workspace sections"] [aria-pressed="true"]').textContent).toBe('Statement of Applicability');
+ expect(container.querySelector('[aria-label="ISO workspace sections"] [aria-selected="true"]').textContent).toBe('Statement of Applicability');
  expect(container.querySelector('[data-testid="opened"]').textContent).toContain('Statement of Applicability');
  await act(async()=>[...container.querySelectorAll('[data-drawer-crumb]')].find(b=>b.textContent==='Statement of Applicability').click());
  expect(container.querySelector('[data-testid="opened"]')).toBeNull();
  expect(mockHistory.at(-1).search).toBe('iso_view=soa');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('91 of 92');
+ expect(container.querySelector('.bcis-explain').textContent).toContain('Only Annex A controls marked Necessary are counted in this view.');
+ expect(container.querySelector('.bcis-explain').textContent).toContain('(91 of 92)');
+});
+
+test.each(['cis-ig1','hipaa'])('%s with all records N/A explains why readiness is not calculated',async frameworkKey=>{
+ const definitions=frameworkCatalog(frameworkKey).requirements;
+ api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'na'+i,definition_id:d.id,client_id:'a',status:'not_applicable'})),work:{}}}));
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="a"/>));
+ const figures=[...container.querySelectorAll('.bcis-figure,.cis-measure-value')].slice(0,2);
+ expect(figures.map(n=>n.textContent)).toEqual(['—','—']);
+ const disclosure=container.querySelector('details');
+ expect(disclosure.querySelector('summary').textContent).toBe('How is this calculated?');
+ expect(disclosure.textContent).toContain('readiness is not calculated');
 });

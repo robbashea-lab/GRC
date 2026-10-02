@@ -1,15 +1,19 @@
-import definitions from './frameworkDefinitions.json';
-import cis from './cisIG1.json';
-import hipaa from './hipaaSecurityRule.json';
-import iso from './iso27001.json';
-import nist from './nistCSF2.json';
-import soc from './soc2.json';
+import definitions from '@catalogs/frameworkDefinitions.json';
+import cis from '@catalogs/cisIG1.json';
+import hipaa from '@catalogs/hipaaSecurityRule.json';
+import iso from '@catalogs/iso27001.json';
+import nist from '@catalogs/nistCSF2.json';
+import soc from '@catalogs/soc2.json';
 export {cis};
 export const CATALOGS={'cis-ig1':cis,hipaa,'iso-27001':iso,'soc-2':soc,'nist-csf-2':nist};
 export const frameworkCatalog=key=>CATALOGS[key];
 export const frameworkDefinition=(key,id)=>frameworkCatalog(key)?.requirements.find(d=>d.id===id);
 export const activeDefinitions=(key,configuration={})=>(frameworkCatalog(key)?.requirements||[]).filter(d=>key!=='soc-2'||(configuration.categories||['security']).includes(d.category));
 export const FRAMEWORKS=definitions.frameworks;
+// Capabilities select product behavior. Authorization remains with the backend.
+export const frameworkCapabilities=key=>FRAMEWORKS.find(f=>f.key===key)?.capabilities||[];
+export const supportsFrameworkCapability=(key,capability)=>frameworkCapabilities(key).includes(capability);
+export const frameworkWorkspace=key=>FRAMEWORKS.find(f=>f.key===key)?.workspace||'generic';
 export const ASSESSMENT_STATUSES={not_assessed:'Not Assessed',in_progress:'In Progress',addressed:'Addressed',needs_attention:'Needs Attention',not_applicable:'Not Applicable'};
 export const SPECIFICATION_LABELS={cybersecurity_outcome:'Cybersecurity outcome',standard:'Standard / general duty',required:'Required specification',addressable:'Addressable specification',related_dependency:'Related dependency',isms_clause:'ISMS requirement',annex_control:'Annex A / SoA',common_criterion:'Common Criterion',category_criterion:'Additional category criterion'};
 export const REQUIREMENT_TYPES={recurring:'Recurring governance / validation',operational:'Operational cadence',event:'Event-driven',state:'Implementation / state',training:'Training / program'};

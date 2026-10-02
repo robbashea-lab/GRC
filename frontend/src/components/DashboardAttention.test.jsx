@@ -1,7 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import DashboardAttention from './DashboardAttention';
-jest.mock('react-router-dom',()=>({Link:({children,to,...p})=><a href={to} {...p}>{children}</a>}));
+jest.mock('react-router-dom',()=>({Link:({children,to,...p})=><a href={to} {...p}>{children}</a>}),{virtual:true});
 
 test('attention tiles open their contributing records; each tracked program deep-links its gaps',async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;

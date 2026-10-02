@@ -6,30 +6,30 @@ import { isInternal } from '@/lib/permissions';
 import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
-import {frameworkCatalog} from '@/lib/frameworks';
+import {frameworkCatalog,frameworkWorkspace} from '@/lib/frameworks';
 import {SearchField} from '@/components/Register';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import {Button} from '@/components/ui/button';
+import WorkspaceTabs from '@/components/WorkspaceTabs';
+import {readinessExplanation,readinessLabels} from '@/components/FrameworkProgramCard';
 import FrameworkDrawer from '@/components/FrameworkDrawer';
 import {SocProgramSettings} from '@/components/SocReadiness';
 import {socConfiguration} from '@/lib/socReadiness';
 import {operatorStatuses,operatorVocabulary,assessmentProgress} from '@/lib/frameworkOperator';
 import CisWorkspaceSummary from '@/components/CisWorkspaceSummary';
-import BrawndoCisOverview,{AssessmentOverview,BrawndoCisHeader} from '@/components/BrawndoCisOverview';
+import BrawndoCisOverview,{AssessmentOverview,BrawndoCisHeader,FrameworkHeader} from '@/components/BrawndoCisOverview';
 import PrestigeSocNavigator,{socCategoryCrumb} from '@/components/PrestigeSocNavigator';
 import {PrestigeSocHeader} from '@/components/PrestigeSocAssessment';
-import {isBrawndoReference,isPrestigeSocAssessment} from '@/lib/reference';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import CisResultTable from '@/components/CisResultTable';
 import BrawndoCisControls from '@/components/BrawndoCisControls';
-import {Moon,Sun} from 'lucide-react';
 import '@/components/FrameworkPresentation.css';
 import ProgramContext from '@/components/ProgramContext';
 import OrganizationalControls from '@/components/OrganizationalControls';
 import {CisStatusBar,CisStatusPill,statusCounts} from '@/components/CisStatus';
 import {cisSummary,freshness,lacksEvidence} from '@/lib/cisVerification';
 import '@/components/BrawndoCisWorkspace.css';
-import {groupRequirements,nextAssessment,matchesAssessment,sectionSummary,needsAttention,hierarchyPath,visibleSections} from '@/lib/frameworkWorkspace';
+import {workspaceScope,groupRequirements,nextAssessment,matchesAssessment,sectionSummary,needsAttention,hierarchyPath,visibleSections} from '@/lib/frameworkWorkspace';
 
 const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',not_assessed:'Not Assessed',assessed:'Assessed'};
 // Derived view names in the framework's own conclusion vocabulary.
@@ -41,6 +41,8 @@ const ISO_VIEWS={
   annex_control:{label:'Annex A Controls',matches:r=>r.specification==='annex_control'},
   audit:{label:'Internal Audit',matches:()=>false},
 };
+// The ISO section content is the panel of the ISO tabs; other frameworks render it unwrapped.
+const IsoPanel=({iso,view,children})=>iso?<div role="tabpanel" id="iso-tabpanel" aria-labelledby={`iso-tab-${view}`} tabIndex={0} className="framework-tabpanel">{children}</div>:<>{children}</>;
 function readPreference(key){try{return JSON.parse(sessionStorage.getItem(key))||{};}catch{return {};}}
 function SafeguardSignals({row}){
   const fresh=freshness(row),w=row.work||{};
@@ -94,8 +96,8 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   // in that framework's own vocabulary. CMMC has no assessment tracking yet.
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
   const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels(vocab);
-  // Brawndo CIS IG1 reads top to bottom: condition, next steps, controls. Presentation only.
-  const brawndoCis=frameworkKey==='cis-ig1'&&isBrawndoReference(clientId,user),prestigeSoc=isPrestigeSocAssessment(clientId,frameworkKey,user),referenceAssessment=brawndoCis||prestigeSoc,iso=frameworkKey==='iso-27001',[theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
+  // Framework metadata selects the appropriate assessment structure for every client.
+  const workspace=frameworkWorkspace(frameworkKey),brawndoCis=workspace==='cis',prestigeSoc=workspace==='soc',referenceAssessment=brawndoCis||prestigeSoc,iso=workspace==='iso',[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
@@ -116,11 +118,13 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const isoView=frameworkKey==='iso-27001'?(selectedSpecification==='annex_control'&&params.get('iso_view')==='soa'?'soa':selectedSpecification||
     (ISO_VIEWS[params.get('iso_view')]?params.get('iso_view'):'overview')):'all';
   const scoped=rows.filter(r=>{
-    if(frameworkKey==='soc-2'&&!showRetained&&!data?.active_definition_ids?.includes(r.definition_id))return false;
+    if(!showRetained&&!workspaceScope(frameworkKey,data,r))return false;
     if(frameworkKey==='nist-csf-2'&&view!=='all')return r.csf_profile?.target_selected&&(view==='target'||r.csf_profile.gap_state==='gap');
     if(frameworkKey==='iso-27001')return ISO_VIEWS[isoView].matches(r);
     return true;
   });
+  const readiness=cisSummary(iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped);
+  const explanation=(iso&&isoView==='annex_control'?'Only Annex A controls marked Necessary are counted in this view. ':'')+readinessExplanation(frameworkKey,readiness,readinessLabels(frameworkKey));
   const visible=scoped.filter(r=>matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
   const linkedViewKey=prototype&&data&&filter!=='all'&&filter===initialView?`${clientId}:${filter}`:null;
   useEffect(()=>{if(linkedViewKey)setExpanded(groupRequirements(frameworkKey,visible).map(n=>n.key));},[linkedViewKey]);// eslint-disable-line react-hooks/exhaustive-deps
@@ -148,12 +152,13 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const isoCrumb=(view,path=[])=>{setSearch('');setFilter('all');remember({['category:'+view]:path});const n=new URLSearchParams(params);n.delete('assessment');n.set('iso_view',view);setParams(n,{replace:true});};
   const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:'CIS IG1',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}},{label:socCategoryCrumb(selected.category),onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([selectedPath[0].id]);}},{label:selected.control,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath(selectedPath.map(p=>p.id));}},{label:selected.definition_id}]:undefined;
   return <div className={iso?'bcis framework-presentation':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
-    {iso&&<header className="bcis-head"><div><p className="bcis-eyebrow">ISO/IEC 27001:2022 · ISMS</p><h1>ISO 27001</h1><p className="text-sm text-ink-secondary">{ISO_VIEWS[isoView].label}</p></div><div className="bcis-actions"><button type="button" className="bcis-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>{resume&&<Button className="bcis-primary" onClick={()=>openRecord(resume)}>Continue with {resume.definition_id}</Button>}</div></header>}
+    {iso&&<FrameworkHeader eyebrow="ISO/IEC 27001:2022 · ISMS" title="ISO 27001" subtitle={ISO_VIEWS[isoView].label} resume={resume} onContinue={()=>openRecord(resume)}/>}
     {brawndoCis&&<BrawndoCisHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {prestigeSoc&&<PrestigeSocHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
-    {iso&&<nav aria-label="ISO workspace sections" className="framework-tabs">{Object.entries(ISO_VIEWS).map(([key,v])=><Button key={key} variant={isoView===key?'default':'outline'} aria-pressed={isoView===key} onClick={()=>chooseIsoView(key)}>{v.label}</Button>)}</nav>}
-    {brawndoCis?<BrawndoCisOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&isoView==='soa'?<IsoSoaSummary rows={scoped}/>:iso&&isoView!=='audit'&&!ISO_VIEWS[isoView]?.custom?<><AssessmentOverview summary={cisSummary(isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped)} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'necessary controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/>{isoView==='annex_control'&&<p className="iso-reference-count">{scoped.length} Annex A reference controls · {scoped.filter(r=>r.soa_applicability==='included').length} Necessary · {scoped.filter(r=>r.soa_applicability==='excluded').length} Not Necessary · {scoped.filter(r=>!r.soa_applicability).length} not yet determined</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
+    {iso&&<WorkspaceTabs label="ISO workspace sections" tabs={Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label])} selected={isoView} onSelect={chooseIsoView} idPrefix="iso-tab" panelId="iso-tabpanel"/>}
+    <IsoPanel iso={iso} view={isoView}>
+    {brawndoCis?<BrawndoCisOverview summary={readiness} explanation={explanation} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={readiness} explanation={explanation} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&isoView==='soa'?<IsoSoaSummary rows={scoped}/>:iso&&isoView!=='audit'&&!ISO_VIEWS[isoView]?.custom?<><AssessmentOverview summary={readiness} explanation={explanation} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'necessary controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/>{isoView==='annex_control'&&<p className="iso-reference-count">{scoped.length} Annex A reference controls · {scoped.filter(r=>r.soa_applicability==='included').length} Necessary · {scoped.filter(r=>r.soa_applicability==='excluded').length} Not Necessary · {scoped.filter(r=>!r.soa_applicability).length} not yet determined</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={readiness} explanation={explanation} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
     {frameworkKey==='iso-27001'&&(isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:ISO_VIEWS[isoView]?.custom?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows} onSelect={chooseIsoView}/>:null)}
     {!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<>
     {lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}
@@ -175,6 +180,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
     {brawndoCis?<BrawndoCisControls clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} controlKey={controlKey} onControl={chooseControl} onOpen={openRecord} selected={selected}/>:prestigeSoc?<PrestigeSocNavigator clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}} path={socPath} onPath={chooseSocPath} onOpen={openRecord} selected={selected}/>:prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='soa'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='soa'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
     </>}
+    </IsoPanel>
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId}
       onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}}
       onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null}

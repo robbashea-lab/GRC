@@ -1,9 +1,10 @@
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
+import AssessmentHistory from './AssessmentHistory';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import AssigneeSelect from './AssigneeSelect';
 import {personLabel} from '@/lib/people';
-import criteriaData from '@/lib/operatorGuidance/cisAssessmentCriteria.json';
+import criteriaData from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 
 import {CIS_TONE,CisStatusPill} from './CisStatus';
@@ -67,5 +68,7 @@ export default function BrawndoCisSafeguard({state,actions}){
       <label className="block text-sm"><span className="sr-only">Current implementation</span>
         <Textarea aria-label="Current implementation" aria-describedby="bcsg-current-help" rows={5} disabled={disabled} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)}/></label>
     </Step>
+    {form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><Textarea aria-label="Previously recorded notes" disabled={disabled} value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
+    <AssessmentHistory record={current} users={ctx?.users} activity={ctx?.activity}/>
   </AssessmentShell>;
 }

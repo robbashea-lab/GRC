@@ -72,6 +72,9 @@ class TenYearOperationTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp_harness = Harness.asyncSetUp
 
     async def asyncSetUp(self):
+        clock_state = patch.object(Clock, 'now', REAL_DATETIME.combine(START, time(14), tzinfo=timezone.utc))
+        clock_state.start()
+        self.addCleanup(clock_state.stop)
         await self.asyncSetUp_harness()
         for module in CLOCKED:
             for name, fake in (('datetime', SimDatetime), ('date', SimDate)):
@@ -236,7 +239,7 @@ class TenYearOperationTests(unittest.IsolatedAsyncioTestCase):
             await self.upload('review', rid, review['title'], occurrence_id=oid)
         if self.rng.random() < (0.14 if self.year() in (2, 5, 8) else 0.08):
             severity = self.rng.choice(['low', 'medium', 'medium', 'high'])
-            finding = await self.call('POST', f'/reviews/{rid}/create-finding', json={'occurrence_id': oid, 'request_id': f'sim-{rid}-{self.today}', 'title': f"{review['title']} exception {self.today}",
+            finding = await self.call('POST', f'/reviews/{rid}/create-finding', json={'occurrence_id': oid, 'request_id': f'sim-{rid}-{oid}-{self.today}', 'title': f"{review['title']} exception {self.today}",
                                       'remediation_title': 'Remediate exception', 'severity': severity, 'due_date': add_days(self.today, 90),
                                       'owner_id': None if review.get('owner_id') in self.departed else review.get('owner_id')}, label='review finding')
             if finding:

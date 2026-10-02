@@ -23,6 +23,12 @@ const deny = message => { throw new Forbidden(message); };
 const roleOf = user => user?.role === 'client_viewer' ? READER : user?.role;
 const activeClientUser = (db, id, clientId) => db.users.some(u => u.user_id === id && u.status === 'active' && CLIENT_ROLES.includes(u.role) && u.client_ids?.includes(clientId));
 
+export function requireCreationAssignee(db, clientId, assigneeId) {
+  const role=roleOf(db.user);
+  if(role===CONTRIBUTOR&&![undefined,null,'',db.user.user_id].includes(assigneeId))deny('Contributors may create work only for themselves');
+  if(role===MANAGER&&assigneeId&&!activeClientUser(db,assigneeId,clientId))deny('Assign an existing authorized client user');
+}
+
 function requireAssigned(user, kind, row) {
   if (kind === 'tasks' && !(row.assignee_id || row.owner_id) && row.created_by === user.user_id) return;
   if (roleOf(user) === CONTRIBUTOR && !(OWNERS[kind] || []).some(f => row[f] === user.user_id)) deny('This activity must be assigned to you');
@@ -51,8 +57,7 @@ export function authorizeDemo(db, method, parts, body = {}) {
   if (!allowed) deny('This operation requires a service-provider administrator');
   if (method === 'post' && parts.length === 1 && generic) {
     if (kind !== 'tasks') deny('Creating this record requires a service-provider administrator');
-    if (role === CONTRIBUTOR && ![undefined, null, '', user.user_id].includes(body.assignee_id)) deny('Contributors may create work only for themselves');
-    if (role === MANAGER && body.assignee_id && !activeClientUser(db, body.assignee_id, body.client_id)) deny('Assign an existing authorized client user');
+    requireCreationAssignee(db,body.client_id,body.assignee_id);
     return;
   }
   if (!id || !OWNERS[kind]) {

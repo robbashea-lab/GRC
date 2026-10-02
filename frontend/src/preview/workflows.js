@@ -6,29 +6,29 @@ import {nextPolicyReview} from '../lib/brawndoPolicies';
 import {ensureRiskReview} from './risks';
 import { list, record, write, now, audit } from './store';
 import { reviewAction, reviewEvent } from './reviews';
-import { assertCurrentOccurrence } from '../lib/reviewOccurrences';
+import { assertCurrentOccurrence, reviewSchedule } from '../lib/reviewOccurrences';
+import {requireCreationAssignee} from './authorization';
+import {guardEdit} from './decisions';
+
+function commandFields(body, allowed) {
+  if(Object.entries(body).some(([key,value])=>!allowed.includes(key)||(value!=null&&typeof value!=='string')))
+    throw Object.assign(new Error('Unsupported command field or invalid text value'),{status:422});
+}
+
+function commandEdit(kind, body, user) {
+  try{guardEdit(kind,body,{},user);}
+  catch(error){error.status=422;throw error;}
+}
 export function nextDue(base, recurrence, custom) {
-  if (!base || !recurrence || recurrence === 'none') return null;
-  const date = new Date(base);
-  const months = {
-    monthly: 1,
-    quarterly: 3,
-    semiannual: 6,
-    annual: 12
-  }[recurrence];
-  if (months) {
-    const day = date.getUTCDate();
-    date.setUTCDate(1);
-    date.setUTCMonth(date.getUTCMonth() + months);
-    const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
-    date.setUTCDate(Math.min(day, last));
-    return date.toISOString();
-  }
-  return recurrence === 'custom' && Number(custom) > 0 ? new Date(date.getTime() + Number(custom) * 86400000).toISOString() : null;
+  return reviewSchedule({due_date:base,recurrence,custom_recurrence_days:custom}).next_review_date;
 }
 export function onboard(db, body) {
   const cid = body.client_id;
   record(db, 'clients', cid);
+  for(const assessment of body.assessments||[])for(const id of assessment.evidence_ids||[]){
+    if(!db.evidence.some(e=>e.evidence_id===id&&e.client_id===cid&&!e.archived_at))
+      throw Object.assign(new Error('Choose available Evidence from this client'),{status:422});
+  }
   const counters = Object.fromEntries(['policies_created', 'policies_updated', 'requirements_created', 'requirements_updated', 'contacts_saved', 'assessments_created', 'known_issues_promoted', 'reviews_created', 'tasks_created', 'findings_created'].map(k => [k, 0]));
   const find = (k, name) => list(db, k, cid).find(r => (r.title || r.name || '').trim().toLowerCase() === name.trim().toLowerCase());
   for (const p of body.policy_responses || []) {
@@ -170,25 +170,34 @@ export function action(db, kind, id, name, body) {
   }
   if (kind === 'reviews' && ['start','complete'].includes(name)) return reviewAction(db, id, name, body);
   if (kind === 'reviews' && name === 'create-finding') {
-    const prior = body.request_id && list(db,'findings',cid).find(f => f.review_id === id && f.occurrence_id === body.occurrence_id && f.request_id === body.request_id);
+    const prior = body.request_id && list(db,'findings',cid).find(f => f.created_by === db.user.user_id && f.review_id === id && f.occurrence_id === body.occurrence_id && f.request_id === body.request_id);
     if (prior) return prior;
     assertCurrentOccurrence(r, body.occurrence_id);
-    if (!body.title?.trim()) throw new Error('Finding title is required.');
-    if (!body.remediation_title?.trim()) throw new Error('Remediation action is required.');
-    if (!['low', 'medium', 'high', 'critical'].includes(body.severity || 'medium')) throw new Error('Invalid severity.');
+    commandFields(body,['request_id','occurrence_id','title','remediation_title','severity','description','owner_id','due_date','remediation_plan']);
+    for(const [field,label] of [['title','Finding title'],['remediation_title','Remediation action']])
+      if(typeof body[field]!=='string'||!body[field].trim()||body[field].length>1000)
+        throw Object.assign(new Error(label+' is required (maximum 1000 characters)'),{status:422});
+    if (!['low', 'medium', 'high', 'critical'].includes(body.severity || 'medium')) throw Object.assign(new Error('Invalid severity.'),{status:422});
+    const owner=Object.prototype.hasOwnProperty.call(body,'owner_id')?body.owner_id:r.owner_id;
+    requireCreationAssignee(db,cid,owner);
+    commandEdit('findings',{due_date:body.due_date},db.user);
     const finding = write(db, 'findings', {
       title: body.title.trim(), description: body.description || '', severity: body.severity || 'medium',
       remediation_plan: body.remediation_plan || '', due_date: body.due_date || null,
       client_id: cid, review_id: id, vendor_id:r.vendor_id, occurrence_id:body.occurrence_id, request_id:body.request_id, source: r.title, identified_at: now(),
-      owner_id: Object.prototype.hasOwnProperty.call(body, 'owner_id') ? body.owner_id : r.owner_id
+      owner_id: owner
     });
     action(db, 'findings', finding.finding_id, 'create-task', { title: body.remediation_title.trim() });
     reviewEvent(db, r, 'Finding raised', body.occurrence_id, {finding_id:finding.finding_id,title:finding.title});
-    return finding;
+    return record(db, 'findings', finding.finding_id);
   }
   if (kind === 'findings' && name === 'create-task') {
     const existing = list(db, 'tasks', cid).find(t => t.finding_id === id);
     if (existing) return existing;
+    commandFields(body,['title','priority','assignee_id','due_date','description']);
+    const assignee=Object.prototype.hasOwnProperty.call(body,'assignee_id')?body.assignee_id:r.owner_id;
+    requireCreationAssignee(db,cid,assignee);
+    commandEdit('tasks',{title:body.title||r.title,due_date:body.due_date||r.due_date},db.user);
     const task = write(db, 'tasks', {
       ...body,
       title: body.title || r.title,
@@ -199,7 +208,7 @@ export function action(db, kind, id, name, body) {
       occurrence_id: r.occurrence_id,
       source: r.source || 'Finding remediation',
       source_type:r.review_id?'review':'finding',source_id:r.review_id||id,
-      assignee_id: Object.prototype.hasOwnProperty.call(body, 'assignee_id') ? body.assignee_id : r.owner_id,
+      assignee_id: assignee,
       priority: body.priority || r.severity,
       due_date: body.due_date || r.due_date,
       description: body.description || r.remediation_plan

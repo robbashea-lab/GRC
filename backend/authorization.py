@@ -84,6 +84,18 @@ async def object_body(request):
     return body
 
 
+async def require_creation_assignee(db, user, client_id, assignee_id):
+    """The existing Task-create rule, including work derived by another command."""
+    role = role_of(user)
+    if role == CONTRIBUTOR and assignee_id not in (None, '', user['user_id']):
+        raise HTTPException(403, 'Contributors may create work only for themselves')
+    if role == MANAGER and assignee_id:
+        target = await db.users.find_one({'user_id': assignee_id, 'status': 'active',
+            'role': {'$in': list(CLIENT_ROLES)}, 'client_ids': client_id})
+        if not target:
+            raise HTTPException(403, 'Assign an existing authorized client user')
+
+
 async def authorize_request(request, user, db):
     request.scope['security_actor'] = user.get('user_id')
     role = role_of(user)
@@ -116,13 +128,7 @@ async def authorize_request(request, user, db):
         if kind != 'tasks':
             raise HTTPException(403, 'Creating this record requires a service-provider administrator')
         body = await object_body(request)
-        if role == CONTRIBUTOR and body.get('assignee_id') not in (None, '', user['user_id']):
-            raise HTTPException(403, 'Contributors may create work only for themselves')
-        if role == MANAGER and body.get('assignee_id'):
-            target = await db.users.find_one({'user_id':body['assignee_id'], 'status':'active',
-                'role':{'$in':list(CLIENT_ROLES)}, 'client_ids':body.get('client_id')})
-            if not target:
-                raise HTTPException(403, 'Assign an existing authorized client user')
+        await require_creation_assignee(db, user, body.get('client_id'), body.get('assignee_id'))
     if params.get('review_id'):
         kind, record_id = 'reviews', params['review_id']
     if params.get('aid'):

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {catalog,aiScreening} from '../lib/aiGovernance';
 const api=axios.create({adapter:previewAdapter});
 let cid;

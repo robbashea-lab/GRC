@@ -2,8 +2,8 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
-import socGuidance from '@/lib/operatorGuidance/socAssessmentGuidance.json';
-import socCatalog from '@/lib/soc2.json';
+import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
+import socCatalog from '@catalogs/soc2.json';
 
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -105,6 +105,23 @@ test('Save & Next advances only after a successful checklist save',async()=>{
  expect(record.soc_assessment_checks).toEqual(['CC9.2-v1-r1']);
 });
 
+test('Save & next retains an unfinished Finding draft',async()=>{
+ const next=jest.fn();
+ await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_prestige" onOpenChange={close} onNext={next}/>));
+ await act(async()=>container.querySelector('.psoc-linked summary').click());
+ await act(async()=>button('Raise Finding').click());
+ await act(async()=>button('Save & next').click());
+ expect(next).not.toHaveBeenCalled();
+ expect(container.querySelector('[aria-label="Finding title"]')).toBeTruthy();
+});
+
+test('new SOC tenants retain historical management-Control observations',async()=>{
+ record.assessment_history=[{status:'addressed',at:'2027-12-31',by:'former-owner',management_controls:[{control_id:'old-access',name:'Historical access review',description:'Prior control design',design:'adequate',operating:'gap',period_start:'2027-01-01',period_end:'2027-12-31',collected_instances:3,expected_instances:4,testing_notes:'One quarterly sample was missing'}]}];
+ await render('new-soc-client');
+ await act(async()=>[...container.querySelectorAll('summary')].find(s=>s.textContent==='View History').click());
+ for(const text of ['Historical access review','Prior control design','adequate / gap','2027-01-01','2027-12-31','3 / 4 instances','One quarterly sample was missing'])expect(container.textContent).toContain(text);
+});
+
 test('status, verification, owner and current implementation persist with the concurrency token',async()=>{
  await render();await act(async()=>container.querySelector('input[value="addressed"]').click());await setValue('Verification result','verified');await setValue('Owner','david');await setValue('Current implementation','Prestige reviews critical vendors and tracks exceptions through the existing Findings workflow.');await act(async()=>button('Save assessment').click());
  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({status:'addressed',verification:'verified',owner_id:'david',implementation:'Prestige reviews critical vendors and tracks exceptions through the existing Findings workflow.',technology:'Retained legacy field',notes:'Retained note',expected_last_assessed:'2026-09-22T12:00:00Z'}));
@@ -118,15 +135,16 @@ test('helper precedes the implementation field, N/A rationale is preserved and b
  await setValue('Current implementation','Unsaved');await act(async()=>button('CC9').click());expect(document.body.textContent).toContain('Leave unsaved changes?');
 });
 
-test('the SOC-specific experience is gated to Prestige Demo only',async()=>{
- await render('demo_dunder');expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeNull();expect(container.querySelector('[data-testid="framework-assessment-workspace"]')).toBeTruthy();
+test('a newly created SOC tenant receives the same framework-specific workspace',async()=>{
+ await render('new-soc-client');expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
+ expect(container.querySelectorAll('.psoc-tier')).toHaveLength(3);
 });
 
-test('Prestige identity outside Demo does not activate tiered guidance',async()=>{
+test('the standard workspace receives SOC guidance through framework configuration',async()=>{
  mockUser={...mockUser,workspace_mode:'standard'};
  await render();
- expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeNull();
- expect(container.querySelectorAll('.psoc-tier')).toHaveLength(0);
+ expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
+ expect(container.querySelectorAll('.psoc-tier')).toHaveLength(3);
 });
 
 test('Prestige criterion exposes linked governance work and creates one sourced Finding and Action',async()=>{

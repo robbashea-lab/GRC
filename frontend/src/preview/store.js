@@ -16,6 +16,7 @@ import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
 import {validateGovernanceContext} from '../lib/requirementBasis';
 import {actionTitle} from '../lib/actionItems';
+import {normalizeRecordWrite} from '../lib/recordContracts';
 import {demoStorageError} from '../lib/demoStorageErrors';
 import {lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
 export const STORE_KEY = 'grc_interactive_demo_v3';
@@ -70,6 +71,9 @@ export function seedStore(clock=new Date()) {
 }
 function installCanonicalDunder(db){
   if(db.clients.some(c=>c.client_id==='demo_dunder'&&c.demo_program_version==='iso27001-year2-v1'))return false;
+  // Upgrades existing Demo-seeded stores only; a store without the seeded Demo clients
+  // (e.g. imported backend fixtures) is left exactly as saved.
+  if(!db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id)))return false;
   const canonical=seedStore(),cid='demo_dunder';
   for(const [key,value] of Object.entries(canonical))if(Array.isArray(value)&&key!=='users')(db[key]||=[]).push(...value.filter(row=>row.client_id===cid));
   db.users.push(...canonical.users.filter(user=>user.user_id.startsWith(cid+'_')));
@@ -173,10 +177,11 @@ export function validate(db, kind, body, existing) {
 }
 export function write(db, kind, body, id) {
   const existing = id ? record(db, kind, id) : null;
+  body=normalizeRecordWrite(kind,body,existing);
   const profileChanges=kind==='clients'&&existing?Object.fromEntries(Object.entries(body).filter(([k,v])=>!['expected_updated_at','updated_at'].includes(k)&&JSON.stringify(existing[k])!==JSON.stringify(v)).map(([k,v])=>[k,{before:clone(existing[k]??null),after:clone(v)}])):null;
   const contextChange=existing&&'governance_context' in body?{governance_context_before:clone(existing.governance_context??null),governance_context_after:clone(body.governance_context)}:{};
   if (existing && Object.prototype.hasOwnProperty.call(body, 'expected_updated_at') && body.expected_updated_at !== (existing.updated_at ?? null)) {
-    throw new Error('Record changed since it was opened; reload before saving');
+    throw Object.assign(new Error('Record changed since it was opened; reload before saving'), {status:409});
   }
   body = { ...body };
   delete body.expected_updated_at;

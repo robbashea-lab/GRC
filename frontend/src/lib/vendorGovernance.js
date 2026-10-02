@@ -15,7 +15,7 @@ export function vendorProjection(v,reviews) {
   const primary=linked.filter(r=>(r.vendor_purpose||'vendor')==='vendor');
   const dates=primary.filter(r=>!['completed','cancelled'].includes(r.status)).map(r=>r.due_date).filter(Boolean).sort();
   const completed=primary.flatMap(r=>[...(r.occurrences||[]).map(o=>o.completed_at),...(r.status==='completed'?[r.completion_date]:[])]).filter(Boolean).sort();
-  return {...v,...(v.status==='terminated'?{status:'inactive',legacy_status:'terminated'}:{}),service:v.service||v.services,...(primary.length?{next_review:dates[0]||null,last_review:completed.at(-1)||v.last_review}:{}),linked_review_ids:linked.map(r=>r.review_id)};
+  return {...v,...(v.status==='terminated'?{status:'inactive',legacy_status:'terminated'}:{}),service:v.service||v.services,contract_expiration:v.contract_expiration||v.contract_end,...(primary.length?{next_review:dates[0]||null,last_review:completed.at(-1)||v.last_review}:{}),linked_review_ids:linked.map(r=>r.review_id)};
 }
 // "Assurance needs attention": a required assurance document is missing, expired, or due within the
 // Vendor's assurance window. Used by the Dashboard posture tile and the Vendors view it links to.

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {previewAdapter} from './adapter';
+import {previewAdapter} from './commandTestAdapter';
 import {dashboard,portfolio} from './summaries';
 import {seedStore,readStore,saveStore} from './store';
 const api=axios.create({adapter:previewAdapter});

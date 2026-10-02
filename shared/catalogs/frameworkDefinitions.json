@@ -8,7 +8,9 @@
       "category": "Legal / Regulatory",
       "selectable": true,
       "implemented": true,
-      "version": "45 CFR 164 · 2026-09-18"
+      "version": "45 CFR 164 · 2026-09-18",
+      "workspace": "generic",
+      "capabilities": ["addressability"]
     },
     {
       "key": "cis-ig1",
@@ -18,7 +20,9 @@
       "selectable": true,
       "implemented": true,
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "workspace": "cis",
+      "capabilities": ["verification", "verification_checklist", "cis_assessment_criteria"]
     },
     {
       "key": "nist-csf-2",
@@ -27,7 +31,9 @@
       "category": "Security Frameworks",
       "selectable": true,
       "implemented": true,
-      "version": "2.0"
+      "version": "2.0",
+      "workspace": "generic",
+      "capabilities": ["csf_profile"]
     },
     {
       "key": "iso-27001",
@@ -36,7 +42,9 @@
       "category": "Certification / Contractual Programs",
       "selectable": true,
       "implemented": true,
-      "version": "2022 + Amd 1:2024"
+      "version": "2022 + Amd 1:2024",
+      "workspace": "iso",
+      "capabilities": ["statement_of_applicability", "internal_audit"]
     },
     {
       "key": "cmmc",
@@ -44,7 +52,9 @@
       "label": "CMMC",
       "category": "Certification / Contractual Programs",
       "selectable": true,
-      "implemented": false
+      "implemented": false,
+      "workspace": "generic",
+      "capabilities": []
     },
     {
       "key": "soc-2",
@@ -53,7 +63,9 @@
       "category": "Certification / Contractual Programs",
       "selectable": true,
       "implemented": true,
-      "version": "2017 TSC · revised points of focus 2022"
+      "version": "2017 TSC · revised points of focus 2022",
+      "workspace": "soc",
+      "capabilities": ["verification", "soc_assessment_checks", "management_controls"]
     }
   ]
 }

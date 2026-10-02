@@ -10,14 +10,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 import review_occurrences
 import assignment_eligibility
 import shared_review_plans
-from framework_catalog import CATALOGS, CIS, definition_for, assessment_title, active_definitions
+from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
-FRAMEWORKS=json.loads((ROOT/'frameworkDefinitions.json').read_text(encoding='utf-8'))['frameworks']
-CIS_CRITERIA=json.loads((ROOT/'operatorGuidance/cisAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
-SOC_GUIDANCE=json.loads((ROOT/'operatorGuidance/socAssessmentGuidance.json').read_text(encoding='utf-8'))['criteria']
+CIS_CRITERIA=json.loads((CATALOG_ROOT/'operatorGuidance/cisAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
+SOC_GUIDANCE=json.loads((CATALOG_ROOT/'operatorGuidance/socAssessmentGuidance.json').read_text(encoding='utf-8'))['criteria']
 STATUSES=('not_assessed','in_progress','addressed','needs_attention','not_applicable')
 CADENCES=('monthly','quarterly','semiannual','annual','custom')
 
@@ -348,33 +347,34 @@ def router_for(s):
         s._require_snapshot(changes,old,'last_assessed')
         changes.pop('expected_last_assessed')
         data={**old,**changes}
+        supported=capabilities(old['framework_key'])
         if 'soc_assessment_checks' in changes:
-            if old['framework_key']!='soc-2' or old['client_id']!='demo_prestige':
-                raise HTTPException(422,'SOC assessment guidance is enabled only for Prestige SOC 2')
+            if 'soc_assessment_checks' not in supported:
+                raise HTTPException(422,'SOC assessment guidance applies only to SOC 2')
             valid={c['id'] for c in SOC_GUIDANCE.get(old['definition_id'],{}).get('items',[])}
             if any(c not in valid for c in changes['soc_assessment_checks']):
                 raise HTTPException(422,'Invalid SOC assessment guidance check')
             changes['soc_assessment_checks']=list(dict.fromkeys(changes['soc_assessment_checks']))
             data['soc_assessment_checks']=changes['soc_assessment_checks']
         if 'cis_assessment_criteria' in changes:
-            if old['framework_key']!='cis-ig1' or old['client_id']!='demo_brawndo':
-                raise HTTPException(422,'Assessment criteria are available only for Brawndo CIS IG1')
+            if 'cis_assessment_criteria' not in supported:
+                raise HTTPException(422,'CIS assessment criteria apply only to CIS Controls IG1')
             valid={c['id'] for c in CIS_CRITERIA.get(old['definition_id'],{}).get('criteria',[])}
             if any(c not in valid for c in changes['cis_assessment_criteria']):
                 raise HTTPException(422,'Invalid CIS assessment criterion')
             changes['cis_assessment_criteria']=list(dict.fromkeys(changes['cis_assessment_criteria']))
             data['cis_assessment_criteria']=changes['cis_assessment_criteria']
-        if 'csf_profile' in changes and old['framework_key']!='nist-csf-2':
+        if 'csf_profile' in changes and 'csf_profile' not in supported:
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
-        verification_allowed=old['framework_key']=='cis-ig1' or (old['framework_key']=='soc-2' and old['client_id']=='demo_prestige')
+        verification_allowed='verification' in supported
         if 'verification' in changes and not verification_allowed:
-            raise HTTPException(422,'Verification is available only for CIS Controls IG1 and Prestige SOC 2')
+            raise HTTPException(422,'Verification is available only for CIS Controls IG1 and SOC 2')
         if 'verification_checklist' in changes:
-            if old['framework_key']!='cis-ig1':raise HTTPException(422,'Verification checklists apply only to CIS Controls IG1')
+            if 'verification_checklist' not in supported:raise HTTPException(422,'Verification checklists apply only to CIS Controls IG1')
             if any(c.split('-')[0]!=old['definition_id'] for ids in (changes.get('verification_checklist') or {}).values() for c in ids):
                 raise HTTPException(422,'Verification checks must belong to this safeguard')
         if 'management_controls' in changes:
-            if old['framework_key']!='soc-2':raise HTTPException(422,'Management control readiness fields apply only to SOC 2')
+            if 'management_controls' not in supported:raise HTTPException(422,'Management control readiness fields apply only to SOC 2')
             if changes['management_controls'] != old.get('management_controls', []) and (old.get('controls_migrated') or await s.db.organizational_controls.find_one({'client_id':old['client_id'],'$or':[{'assessment_ids':aid},{'legacy_sources.assessment_id':aid}]})):
                 raise HTTPException(409,'Legacy descriptions are preserved. Edit the shared organizational Control instead')
             ids=[c['control_id'] for c in changes['management_controls']]
@@ -402,7 +402,7 @@ def router_for(s):
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed:
-            history_verification=set(VERIFICATION_FIELDS) if old['framework_key']=='cis-ig1' else {'verification'} if verification_allowed else set()
+            history_verification=set(VERIFICATION_FIELDS)&set(supported)
             at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed' and (k not in ('cis_assessment_criteria','soc_assessment_checks') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}
             if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}

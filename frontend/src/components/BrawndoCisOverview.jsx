@@ -6,25 +6,27 @@ import './BrawndoCisOverview.css';
 // Brawndo CIS IG1 overview: where the program stands, what to do next, then the controls.
 const SEGMENTS=[['addressed','Implemented','good'],['partial','Partial','attention'],['gap','Not implemented','critical'],['notAssessed','Not assessed','neutral']];
 const FILTER={addressed:'addressed',partial:'in_progress',gap:'needs_attention',notAssessed:'not_assessed'};
-export function BrawndoCisHeader({resume,onContinue}){
+// Shared framework workspace header from the approved cross-client visual work.
+export function FrameworkHeader({eyebrow,title,subtitle,resume,onContinue}){
   const [theme,setTheme]=useBrawndoTheme();
   return <header className="bcis-head">
-    <div><p className="bcis-eyebrow">CIS Controls v8.1 IG1</p><h1>CIS IG1</h1></div>
+    <div><p className="bcis-eyebrow">{eyebrow}</p><h1>{title}</h1>{subtitle&&<p className="text-sm text-ink-secondary">{subtitle}</p>}</div>
     <div className="bcis-actions">
       <button type="button" className="bcis-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
       {resume&&<Button className="bcis-primary" onClick={onContinue} aria-label={`Continue assessment: ${resume.definition_id} ${resume.title}`}>Continue with {resume.definition_id}</Button>}
     </div>
   </header>;
 }
+export const BrawndoCisHeader=props=><FrameworkHeader eyebrow="CIS Controls v8.1 IG1" title="CIS IG1" {...props}/>;
 // Share of applicable safeguards for a segment; assessment progress only, never a compliance score.
 export function segmentShare(n,applicable){return applicable?Math.round(n/applicable*100):0;}
-export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='safeguards',continueNoun='safeguard',testIdPrefix='bcis',segmentLabels={}}){
+export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='safeguards',continueNoun='safeguard',testIdPrefix='bcis',segmentLabels={},explanation}){
   const pick=key=>onFilter(filter===key?'all':key);
   return <section className="bcis-card bcis-summary" aria-labelledby="bcis-summary-heading">
       <h2 id="bcis-summary-heading" className="sr-only">Program condition</h2>
       <div className="bcis-figures">
-        <div><p className="bcis-figure">{s.implemented}%</p><p className="bcis-figure-label">Implemented</p><p className="bcis-figure-sub">{s.addressed} of {s.applicable} {itemNoun}</p></div>
-        <div><p className="bcis-figure">{s.coverage}%</p><p className="bcis-figure-label">Assessed</p><p className="bcis-figure-sub">{s.assessed} of {s.applicable} {itemNoun}</p></div>
+        <div><p className="bcis-figure">{s.applicable?`${s.implemented}%`:'—'}</p><p className="bcis-figure-label">Implemented</p><p className="bcis-figure-sub">{s.addressed} of {s.applicable} {itemNoun}</p></div>
+        <div><p className="bcis-figure">{s.applicable?`${s.coverage}%`:'—'}</p><p className="bcis-figure-label">Assessed</p><p className="bcis-figure-sub">{s.assessed} of {s.applicable} {itemNoun}</p></div>
         <div><p className="bcis-figure">{s.notAssessed}</p><p className="bcis-figure-label">Still to assess</p><p className="bcis-figure-sub">{resume?`Continue with ${continueNoun} ${resume.definition_id}`:`Every ${continueNoun} has been assessed`}</p></div>
       </div>
       <div className="bcis-bar" role="group" aria-label="Assessment progress by status">{SEGMENTS.map(([k,defaultLabel,tone])=>s[k]>0&&(()=>{const label=segmentLabels[k]||defaultLabel,pct=segmentShare(s[k],s.applicable),text=`${label}: ${s[k]} of ${s.applicable} ${itemNoun}, ${pct}%`;
@@ -35,6 +37,7 @@ export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='s
         {s.na>0&&<span className="bcis-legend-na">Not applicable <strong>{s.na}</strong></span>}
       </div>
       <p className="bcis-note">These figures show assessment progress, not a compliance percentage, certification or audit opinion.</p>
+      {explanation&&<details className="bcis-explain"><summary>How is this calculated?</summary><p>{explanation}</p></details>}
     </section>;
 }
 export default function BrawndoCisOverview(props){return <AssessmentOverview {...props}/>;}

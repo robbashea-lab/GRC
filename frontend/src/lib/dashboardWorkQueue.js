@@ -1,10 +1,11 @@
 import {calendarDay} from './managementDates';
 import {actionTitle, taskSource} from './actionItems';
-import definitions from './frameworkDefinitions.json';
+import definitions from '@catalogs/frameworkDefinitions.json';
 import {BUSINESS_BASIS} from './requirementBasis';
 
 // Presentation gate only. The population builder below has no client-specific rules.
-export const dashboardPilot = (demo, clientId) => demo && ['demo_brawndo','demo_prestige'].includes(clientId);
+// The Demo adapter supports this contract for every client; the live backend does not yet.
+export const dashboardPilot = (demo, clientId) => !!(demo && clientId);
 export const WORK_FILTERS = [
   {key:'pastDue', label:'Past Due', empty:'No past-due items.'},
   {key:'due30', label:'Due in 30 Days', empty:'No items due in the next 30 days.'},

@@ -53,7 +53,7 @@ class SocTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(source.netloc,'www.aicpa-cima.com')
             self.assertIn('2017-trust-services-criteria-with-revised-points-of-focus-2022',source.path)
         all_ids={d['id'] for d in SOC['requirements']}
-        policy_catalog=json.loads((Path(__file__).parents[1]/'routes/onboarding_catalog.json').read_text(encoding='utf-8'))
+        policy_catalog=json.loads((Path(__file__).parents[2]/'shared/catalogs/onboardingCatalog.json').read_text(encoding='utf-8'))
         policy_keys={p['key'] for p in policy_catalog['policies']}
         self.assertEqual(len({m['policy_key'] for m in SOC['policy_mappings']}),len(SOC['policy_mappings']))
         for mapping in SOC['policy_mappings']:

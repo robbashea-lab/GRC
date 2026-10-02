@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 
-ROOT = Path(__file__).parents[2] / "frontend" / "src" / "lib"
+ROOT = Path(__file__).parents[2] / "shared" / "catalogs"
 CATALOG = json.loads((ROOT / "iso27001.json").read_text(encoding="utf-8"))
 STAGING = json.loads((ROOT / "iso27001Staging.json").read_text(encoding="utf-8"))
 

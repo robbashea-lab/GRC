@@ -1,5 +1,6 @@
 import {CisBreadcrumb} from './BrawndoCisControls';
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
+import AssessmentHistory from './AssessmentHistory';
 import OrganizationalControls from './OrganizationalControls';
 import { EvidenceCatalogPicker } from './EvidencePanel';
 import { personLabel } from '@/lib/people';
@@ -16,7 +17,6 @@ import {actionStatus} from '@/lib/actionItems';
 import {recordUuid} from '@/lib/recordUuid';
 import {readEvidenceFile} from '@/lib/evidenceFile';
 import api from '@/lib/api';
-import {isBrawndoReference} from '@/lib/reference';
 import {useOrg} from '@/context/OrgContext';
 import {CIS_TONE,CisStatusPill} from './CisStatus';
 import {verificationLadder,verificationChecks,stackCapability,ageDays,STALE_DAYS} from '@/lib/cisVerification';
@@ -25,13 +25,6 @@ import './BrawndoCisWorkspace.css';
 
 const LADDER_STATE={done:'confirmed',partial:'partly confirmed',missing:'not established',gap:'gap identified'};
 
-// Explicit synthetic-client identity, not a mutable display-name match. This is
-// presentation gating only; the normal adapter/server still owns authorization.
-export {isBrawndoReference};
-export function isBrawndoCisPrototype(clientId,record,user){
-  return isBrawndoReference(clientId,user) &&
-    record?.client_id===clientId && record.framework_key==='cis-ig1';
-}
 const RECORD_IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',vendors:'vendor_id'};
 
 export default function FrameworkAssessmentWorkspace({state,actions}){
@@ -76,7 +69,7 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
               {writable&&<fieldset disabled={disabled} className="space-y-3 mt-3"><label className="block">Record type<select aria-label="Related record type" value={link.kind} onChange={e=>{setTab('Related');setLink({kind:e.target.value,id:''});}}>{Object.keys(RECORD_IDS).map(kind=><option key={kind} value={kind}>{kind==='tasks'?'Action Items':kind}</option>)}</select></label><label className="block">Record<select aria-label="Related record" value={link.id} onChange={e=>setLink({...link,id:e.target.value})}><option value="">Select record</option>{ctx?.options[link.kind]?.map(r=><option key={r[RECORD_IDS[link.kind]]} value={r[RECORD_IDS[link.kind]]}>{r.title||r.name}</option>)}</select></label><Button size="sm" variant="outline" disabled={disabled||!link.id} onClick={()=>run(()=>api.post(`/framework_assessments/${aid}/links`,link))}>Link record</Button></fieldset>}
             </details>
             <details><summary>Discussion · {ctx?.comments.length||0}</summary><ul>{ctx?.comments.map(c=><li className="mt-3 text-sm whitespace-pre-wrap break-words" key={c.comment_id}>{c.body}<p className="text-xs">{c.author_name||c.user_name} · {c.created_at?.slice(0,10)}</p></li>)}</ul>{writable&&<fieldset disabled={disabled} className="mt-3 space-y-2"><Textarea aria-label={isCis?"Safeguard comment":"Requirement comment"} value={comment} onChange={e=>setComment(e.target.value)}/><Button size="sm" disabled={!comment.trim()||disabled} onClick={()=>run(async()=>{await api.post('/comments',{client_id:clientId,entity_type:'framework_assessments',entity_id:aid,body:comment});setComment('');})}>Add comment</Button></fieldset>}</details>
-            <details><summary>View History</summary><ul>{current.assessment_history?.slice().reverse().map((h,i)=><li key={i} className="mt-3 text-sm whitespace-pre-wrap break-words"><p className="font-medium">{statuses[h.status]} · {h.at?.slice(0,10)}</p><p className="text-xs">{who(h.by)}</p><p>{h.implementation}</p>{h.notes&&<p>{h.notes}</p>}{h.na_rationale&&<p>N/A: {h.na_rationale}</p>}{h.soa_applicability&&<p>Applicability: {h.soa_applicability==='included'?'Applicable':'Not Applicable'} · {h.soa_justification}</p>}</li>)}</ul>{!current.assessment_history?.length&&<p className="text-xs mt-3">No saved assessments yet.</p>}<h4 className="mt-4 text-sm font-medium">Activity</h4>{ctx?.activity.map((a,i)=><p key={a.audit_id||i} className="mt-2 text-xs">{a.action} · {a.at} · {a.user_name||a.user_email}</p>)}</details>
+            <AssessmentHistory record={current} users={ctx?.users} activity={ctx?.activity}/>
 </>} footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?'Unsaved assessment changes':feedback||(!writable?'Read-only assessment':'Assessment changes are saved when you choose Save assessment.')}</span>{otherDraft&&<p id="brawndo-other-draft" className="text-xs text-ink-secondary">Finish or cancel the open Finding, Control, Review setup or comment before using Save & next.</p>}</div><div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={otherDraft?'brawndo-other-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading linked work…</p>}
             <Step number="1" title={isCis?"What CIS requires":`${program} reference & intent`}>

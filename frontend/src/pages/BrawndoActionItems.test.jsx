@@ -42,13 +42,32 @@ test('stable summaries, orphan visibility, search, synchronized quick filters an
   expect(container.querySelector('[data-testid="ai-row-0"]').textContent).toContain('Finished work');
   mockClient='demo_dunder';rows=rows.map(r=>({...r,client_id:mockClient}));
   await act(async()=>root.render(<ActionItems/>));
-  expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();
-  expect(container.querySelector('button[aria-label="Owner: sort and filter"]')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
+  expect(container.textContent).not.toContain('Finding without an Action');
 });
-test('legacy Findings route redirects only Brawndo and preserves the Finding ID',async()=>{
-  mockQuery='?finding_id=f';await act(async()=>root.render(<FindingsRoute/>));
-  expect(container.querySelector('[data-testid="redirect"]').textContent).toBe('/action-items?finding_id=f');
-  mockClient='demo_dunder';await act(async()=>root.render(<FindingsRoute/>));expect(container.querySelector('[data-testid="redirect"]')).toBeNull();
+test('legacy Findings route redirects every Demo client and preserves the query',async()=>{
+  for(const client of ['demo_brawndo','demo_prestige','demo_dunder','demo_new_soc']){
+    mockClient=client;mockQuery='?finding_id=f';await act(async()=>root.render(<FindingsRoute/>));
+    expect(container.querySelector('[data-testid="redirect"]').textContent).toBe('/action-items?finding_id=f');
+  }
+  mockQuery='?signal=material';await act(async()=>root.render(<FindingsRoute/>));
+  expect(container.querySelector('[data-testid="redirect"]').textContent).toBe('/action-items?signal=material');
+  mockUser={...mockUser,workspace_mode:'live'};await act(async()=>root.render(<FindingsRoute/>));expect(container.querySelector('[data-testid="redirect"]')).toBeNull();
+});
+test.each(['dependency failure','missing finding'])('Finding deep link recovers after %s and retry',async failure=>{
+  mockQuery='?finding_id=f';
+  const get=api.get.getMockImplementation();let recovered=false;
+  api.get.mockImplementation((path,options)=>{
+    if(path==='/findings'&&!recovered)return failure==='dependency failure'?Promise.reject(new Error('Dependency unavailable')):Promise.resolve({data:[]});
+    return get(path,options);
+  });
+  await act(async()=>root.render(<ActionItems/>));
+  const error=container.querySelector('[data-testid="register-load-error"]');
+  expect(error.textContent).toContain(failure==='dependency failure'?'Dependency unavailable':'The requested Finding is unavailable');
+  expect(document.querySelector('[data-testid="tasks-drawer"]')).toBeNull();
+  recovered=true;await click(error.querySelector('button'));
+  expect(document.querySelector('[data-testid="tasks-drawer"]')).toBeTruthy();
+  expect(container.querySelector('[data-testid="register-load-error"]')).toBeNull();
 });
 test('centered detail protects unsaved edits and submits completion with the edits in one write',async()=>{
   const close=jest.fn();await act(async()=>root.render(<RecordDrawer open kind="tasks" record={saved} clientId={mockClient} onOpenChange={close}/>));
