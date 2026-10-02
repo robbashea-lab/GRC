@@ -4,6 +4,8 @@ import FrameworkDrawer from './FrameworkDrawer';
 import {frameworkWorkspace} from '@/lib/frameworks';
 import api from '@/lib/api';
 import {BrawndoCisHeader} from './BrawndoCisOverview';
+import guide from '@catalogs/operatorGuidance/cisRequirementGuide.json';
+import {GUIDE_QUESTIONS} from './CisRequirementGuide';
 
 let mockUser,mockOfficial=null;
 jest.mock('@/lib/frameworks',()=>{const a=jest.requireActual('@/lib/frameworks');return {...a,frameworkDefinition:(k,id)=>{const d=a.frameworkDefinition(k,id);return mockOfficial&&d?{...d,official_text_mode:'LICENSED_TEXT',official_text:mockOfficial}:d;}};});
@@ -83,6 +85,35 @@ test('status, narrative and verification save while retaining prior criteria and
  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Inventory maintained in RMM; reconciled monthly.',verification:'needs_validation',cis_assessment_criteria:['1.1-c1'],notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}));
  expect(container.textContent).toContain('Assessment saved.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Needs validation');
 });
+
+test('guide selects one answer without writes or drafts and resets on safeguard/client changes',async()=>{
+ await render();const before=JSON.stringify(record);
+ const answer=()=>container.querySelector('.cis-guide-answer p').textContent;
+ expect(answer()).toBe(guide.requirements['1.1'].plain);
+ for(const [key,label] of GUIDE_QUESTIONS){
+  await tick(button(label));expect(answer()).toBe(guide.requirements['1.1'][key]);
+  expect(container.querySelectorAll('.cis-guide-questions [aria-pressed="true"]')).toHaveLength(1);
+  expect(button(label).getAttribute('aria-pressed')).toBe('true');
+  expect(document.getElementById(button(label).getAttribute('aria-controls'))).toBeTruthy();
+ }
+ expect(JSON.stringify(record)).toBe(before);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+ expect(container.textContent).not.toContain('Unsaved assessment changes');
+ record={...record,framework_assessment_id:'b',definition_id:'14.1'};await render();
+ expect(answer()).toBe(guide.requirements['14.1'].plain);
+ await tick(button('What common gaps should I look for?'));
+ record={...record,client_id:'new-cis-client',framework_assessment_id:'c'};
+ await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="new-cis-client" onOpenChange={close}/>));
+ expect(answer()).toBe(guide.requirements['14.1'].plain);
+ expect(container.querySelector('.cis-guide-questions [aria-pressed="true"]').textContent).toBe('Explain this in plain language.');
+});
+
+test('static guide remains usable while an assessment draft is being edited',async()=>{
+ await render();await input('Current implementation','Retain this unsaved draft');
+ await tick(button('Where should I start?'));
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain this unsaved draft');
+ expect(container.textContent).toContain('Unsaved assessment changes');expect(api.patch).not.toHaveBeenCalled();
+ expect(container.querySelector('[aria-label="Current implementation"]').closest('.cis-guidance-layout')).toBeNull();
+});
 test('status labels and N/A are preserved; legacy notes remain in a collapsed disclosure',async()=>{
  await render();expect([...container.querySelectorAll('input[name="bcsg-status"]')].map(i=>i.parentElement.textContent)).toEqual(['Implemented','Partially Implemented','Not Implemented','Not Assessed','Not Applicable']);
  expect(container.textContent).toContain('Document how the organization currently satisfies this safeguard.');
@@ -108,6 +139,7 @@ test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit',
  mockUser.role=role;await render();expect(button('Save assessment')).toBeUndefined();expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
  expect(container.querySelector('.cis-assessment-guidance').textContent).toContain('What good looks like');
  expect(container.querySelector('.cis-assessment-guidance input')).toBeNull();
+ expect(button('Where should I start?').disabled).toBe(false);
 });
 test('load failure disables writes and offers retry',async()=>{
  api.get.mockRejectedValue(new Error('Context unavailable'));await render();expect(container.querySelector('[role="alert"]').textContent).toContain('Context unavailable');expect(button('Save assessment').disabled).toBe(true);expect(button('Retry')).toBeTruthy();
@@ -120,6 +152,7 @@ test('ISO assessments omit the duplicate organizational controls section',async(
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} position="1 of 30"/>));
  expect(container.textContent).not.toContain('Organizational Controls');
+ expect(container.querySelector('.cis-requirement-guide')).toBeNull();
 });
 test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
  const toControl=jest.fn();

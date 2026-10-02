@@ -1,0 +1,400 @@
+{
+  "framework": "cis-ig1",
+  "version": "8.1",
+  "revision": "2026-10-02",
+  "basis": "Optional Omnisciente explanations, not assessment responses. Based on the reviewed CIS v8.1 assessment guidance and official safeguard descriptions. Source links remain in cisAssessmentCriteria.json.",
+  "requirements": {
+    "1.1": {
+      "plain": "Know which devices can hold or process your organization's information, who is responsible for them, and whether they may connect. This includes phones, network equipment, remote and cloud devices—not just office computers. Check and update the inventory at least every six months.",
+      "start": "Ask IT for its device list, then ask department leads about equipment they use. Compare those lists, including regularly connected third-party devices. Fill missing ownership and connection-approval details using the fields listed on the left.",
+      "evidence": "A device register can show ownership and identifying details. Network or device-management reports can help reveal omissions. Dated reconciliation notes can show when someone checked that the list matched reality; these records can work together.",
+      "ask": "Does this include mobile, plant-floor, network, remote and cloud equipment? Who owns each device and approves its connection? How do you identify regularly connected devices managed by someone else? When was the whole inventory last checked?",
+      "gaps": "Investigate lists containing only laptops, unexplained duplicate names, missing departments or owners, and retired devices still marked active. Equipment known to a department but absent from IT's list may indicate incomplete coverage."
+    },
+    "1.2": {
+      "plain": "Deal with devices that are not allowed on the network each week. The aim is to remove their access, block remote connection, or isolate them so they cannot continue connecting normally—not simply put their names on a list.",
+      "start": "Ask who reviews unknown devices each week. Pick a recent example and follow it from identification to removal, blocking or isolation. If a provider handles this, ask for the result for your organization's device, not just its general service description.",
+      "evidence": "A weekly device review can identify what was investigated. A matching network change, blocked-connection result or isolation record can show what happened next. A ticket is useful when it records the completed action, not merely a request.",
+      "ask": "Who handles an unfamiliar device this week? How do you determine whether it is authorized? Can you show a recent device whose access was removed or isolated? How do you confirm it did not remain connected?",
+      "gaps": "Look into unknown devices repeatedly appearing without a disposition, weeks with no review, or tickets marked resolved without a connection change. A planned fix or accepted risk does not itself demonstrate that unauthorized access was addressed."
+    },
+    "2.1": {
+      "plain": "Keep a usable record of licensed software installed on the organization's devices. It should explain what each product is, who publishes it, when use began and why it is needed. Review and update it at least every six months.",
+      "start": "Bring together IT's installed-software list and purchasing or subscription records. Ask business teams to identify applications they use. Reconcile missing entries and complete the required and, where appropriate, additional details listed in the assessment guidance.",
+      "evidence": "An application register can explain business purpose and ownership. Installed-software reports and licensing records can support coverage and versions. Dated comparisons help distinguish a maintained inventory from an old purchasing list.",
+      "ask": "Are operating systems and department-specific applications included? Can we identify the publisher, initial install or use date and purpose of each? Which additional fields apply to our products? When did you last reconcile this with installed software?",
+      "gaps": "Investigate products with no business purpose, applications present on devices but missing from the register, and purchase records that do not identify installed versions. A list last checked more than six months ago may be out of date."
+    },
+    "2.2": {
+      "plain": "Approved software should still receive support from its publisher. Check support at least monthly. Necessary but unsupported software needs a documented exception explaining protective measures and acceptance of the risk that remains; without that, classify it as unauthorized.",
+      "start": "Take the software inventory and ask IT to match its versions to publisher support dates. Start with products whose support has ended or will end soon. For necessary unsupported products, locate the exception and check the stated protections actually operate.",
+      "evidence": "Publisher lifecycle notices alongside installed versions can establish support status. Monthly review records show that support is checked over time. An exception plus configuration or operating records can substantiate the treatment of necessary unsupported software.",
+      "ask": "Which approved versions no longer receive support? How often is this checked? If a product is essential but unsupported, where are its protective measures and remaining-risk decision recorded? Can you demonstrate those protections?",
+      "gaps": "Look for a supported product name paired with an unsupported old version, expired exceptions, or protections described but never implemented. A renewal invoice alone may not prove that the installed version is supported."
+    },
+    "2.3": {
+      "plain": "Find software that has not been authorized and either remove it from use or record an exception. Check at least monthly. Knowing that an unapproved application exists is only the starting point; its disposition needs to be clear.",
+      "start": "Ask IT to compare installed applications with the approved software list. Choose a recent mismatch and follow the removal or exception. Ask the business owner about the application's purpose before assuming that it is unnecessary.",
+      "evidence": "An installed-versus-approved comparison can identify unauthorized software. Uninstall results can show removal; a documented exception can explain authorized continued use. Together with dated monthly reviews, these establish more than a list of open tickets.",
+      "ask": "How are unapproved applications identified? What happened to the last one found? Is it still installed or in use? Where is its removal result or exception, and when was the software population last reviewed?",
+      "gaps": "Investigate applications repeatedly flagged with no outcome, informal verbal exceptions, or uninstall requests without results. A future removal date is not evidence that software has already been removed."
+    },
+    "3.1": {
+      "plain": "Write down how information should be handled through its life: who owns it, how sensitive it is, how to use it, how long to keep it and how to dispose of it. Review this process annually and after significant relevant changes.",
+      "start": "Ask HR, Finance and other data owners for their current handling and retention rules. Bring them together with the person responsible for information security. Resolve missing instructions for important data types rather than starting with a new software purchase.",
+      "evidence": "A data-handling procedure, sensitivity guide and retention schedule may collectively cover the required subjects. Dated reviews and revisions show whether those instructions still reflect how the organization works.",
+      "ask": "Ask the business data owners: Who decides how this information is handled? Where are its sensitivity, retention and disposal rules? What changed in our business since the last review, and were the instructions updated?",
+      "gaps": "Look for conflicting department instructions, retention periods with no owner, or policies covering electronic files but not relevant paper records. A document that omits disposal or has not been reviewed after a major change warrants investigation."
+    },
+    "3.2": {
+      "plain": "Know what information the organization holds, especially sensitive information, and where it is kept. A list of computers alone cannot answer this. Maintain the data inventory using the data-management process and review it at least annually.",
+      "start": "Ask department data owners about payroll, customer, financial and other sensitive information they handle. Identify the applications, folders, paper stores or providers holding it. Compare those answers with the existing data inventory and resolve omissions.",
+      "evidence": "A data register can connect information types to their locations. Department confirmations, application records or provider descriptions can help establish coverage. An annual reconciliation shows that someone checked the inventory rather than simply retaining it.",
+      "ask": "Ask data owners: Where do you keep sensitive information, including copies and exports? Does our inventory reflect those locations? Who updates it when work moves to a different application or provider? When was it last checked?",
+      "gaps": "Investigate inventories listing only system names without describing the information, overlooked shared folders, and data moved to a new service without an update. Sensitive spreadsheets kept outside the main application are useful places to ask about."
+    },
+    "3.3": {
+      "plain": "People should be able to access information because their work requires it, not merely because they have an account. Access permissions are the settings that enforce this in folders, databases and applications, including remote locations.",
+      "start": "Choose an important data location with its business owner. Ask who needs to read or change it, then have IT compare that answer with the actual permissions. Include access inherited through groups, not just named individuals.",
+      "evidence": "A permission export or configuration view shows who can access the data. Job responsibilities and the data owner's review can explain why that access is justified. Both the business need and the effective settings matter.",
+      "ask": "Who can read, change or share this information? Which group memberships grant that access? Does the owner recognize those people and their need? Do remote folders and applications follow the same need-to-know approach?",
+      "gaps": "Look into broad 'everyone' access, former team members retaining permissions, or nested groups nobody can explain. A written access policy without corresponding system settings does not show that access is restricted."
+    },
+    "3.4": {
+      "plain": "Keep information for the time your documented process requires—neither deleting it too soon nor retaining it indefinitely. The rules need both minimum and maximum periods, and the actual systems and working practices need to follow them.",
+      "start": "Ask the data owner for the retention rules for one important record type. Have IT or records management explain how those rules are applied. Compare a sample of retained and deleted records with the documented periods.",
+      "evidence": "A retention schedule explains the intended timing. System settings, deletion logs or records-management records can show enforcement. Provider records may support the same comparison for information stored in a hosted service.",
+      "ask": "Ask the data owner and system team: What is the minimum and maximum period for these records? How are those periods enforced? Do exports and copies follow the same documented treatment? How can we confirm actual results?",
+      "gaps": "Investigate 'keep forever' defaults that conflict with the process, early automatic deletion, and retention settings covering only the main repository. A schedule on paper is not enough if actual records are handled differently."
+    },
+    "3.5": {
+      "plain": "When information is due for disposal, use a method appropriate to its sensitivity and the organization's process. Moving a file to a recycle bin or putting confidential paper in ordinary waste may leave it recoverable.",
+      "start": "Ask records management or the data owner how sensitive information is disposed of. Follow one recent electronic or physical disposal through to completion. Include the responsible provider if devices, media or paper are handled externally.",
+      "evidence": "Deletion or sanitization records can support electronic disposal. Destruction records or a provider certificate can support physical disposal. The procedure explains the intended method; completion records connect it to actual data or media.",
+      "ask": "What method is used for this data's sensitivity? Who carries it out? How do we know disposal finished? If a provider does it, can its records identify the items and treatment without exposing the sensitive information itself?",
+      "gaps": "Look for disposal requests with no completion record, unclear treatment of returned devices, and sensitive paper or media mixed with ordinary waste. A generic provider statement may not establish what happened to the specific items."
+    },
+    "3.6": {
+      "plain": "Sensitive information stored on computers, phones and other end-user devices should be encrypted: made unreadable without the appropriate means to unlock it. A screen password alone does not establish that the stored information is encrypted.",
+      "start": "Use the asset and data inventories to identify end-user devices that hold sensitive information. Ask IT for their actual encryption state. Include portable and mobile devices, and investigate devices missing from the report.",
+      "evidence": "An encryption-status report matched to device records can demonstrate coverage. Effective device settings or a responsible-provider demonstration can support individual cases. Do not collect recovery keys or passwords as evidence.",
+      "ask": "Which devices hold sensitive data? Is encryption actually active on each, rather than merely assigned by policy? Are any devices missing or showing errors? How is coverage checked for mobile and remotely managed devices?",
+      "gaps": "Investigate devices marked pending, disabled or unknown, and a policy that exists without device results. An encrypted server does not establish protection for sensitive copies downloaded to an unencrypted laptop."
+    },
+    "4.1": {
+      "plain": "Have documented instructions for setting up and maintaining devices and software securely, instead of relying on installation defaults or individual memory. Cover the technologies actually used, and review the process annually and after significant relevant changes.",
+      "start": "Ask IT for its setup procedures for computers, mobile devices, servers and applications. Compare their coverage with the asset and software inventories. Identify who maintains the instructions when a technology or business process changes.",
+      "evidence": "Setup procedures and baseline settings can explain the process. Change records or dated reviews can show that it is maintained. Different device types may have different instructions; one generic policy need not contain every technical detail.",
+      "ask": "How does a new device or application get a secure configuration? Which asset types have documented instructions? Who maintains them? Were they reviewed this year and after the last significant technology change?",
+      "gaps": "Look for procedures covering laptops but omitting servers, mobile or other relevant equipment; undocumented steps known only to one technician; and instructions for retired products. A product's default installation guide may not be a secure-configuration process."
+    },
+    "4.2": {
+      "plain": "Network equipment needs its own secure setup and maintenance instructions. Routers, switches, wireless equipment and firewalls connect the organization; a laptop setup guide does not cover them. Review these instructions annually and after significant relevant changes.",
+      "start": "Ask the network team or provider which devices connect your locations and services. Find the setup standards for those device types. Compare them with the current network and the most recent major network change.",
+      "evidence": "Network configuration procedures and device-specific baselines can show the expected setup. Review records and revisions after changes can show maintenance. Provider documents are useful when they describe the equipment and responsibilities in your scope.",
+      "ask": "Which standards apply to our routers, switches, wireless equipment and firewalls? Who maintains them? Did the latest network change require revised instructions? Can you show the last annual review?",
+      "gaps": "Investigate network devices absent from the procedure, unchanged vendor defaults, and a provider's general policy with no connection to your network. A network diagram alone does not explain how devices are configured securely."
+    },
+    "4.3": {
+      "plain": "An unattended session should lock automatically so someone else cannot simply use it. The inactivity limit is 15 minutes for general-purpose operating systems and 2 minutes for mobile end-user devices. Asking staff to remember to lock screens is not the same as automatic locking.",
+      "start": "Ask IT which inactivity policies apply to computers and mobile devices. Compare the configured limits with a few effective device settings. Where safe, observe a device locking without anyone touching it.",
+      "evidence": "Applied policy reports can show assigned time limits. Device settings or a safe observation can confirm that those limits take effect. Include the relevant device types rather than assuming one laptop represents every device.",
+      "ask": "Do computers lock within 15 minutes and mobile devices within 2 minutes? Can users override the setting? Are any devices excluded from the policy? Does the screen actually lock rather than only dim or display a screensaver?",
+      "gaps": "Look for mobile devices using the computer limit, a screensaver that does not lock, or settings assigned but not applied. Devices excluded for convenience merit investigation rather than an automatic implemented conclusion."
+    },
+    "4.4": {
+      "plain": "Servers should have managed firewall protection wherever supported. A firewall controls network traffic reaching a system. This is about protection for the servers themselves, not just whether the organization bought a perimeter firewall.",
+      "start": "Identify servers with IT and ask which firewall solution protects each. Compare that list with actual firewall state. Ask about servers showing disabled protection or unsupported functionality rather than assuming all use the same approach.",
+      "evidence": "A server inventory paired with firewall status can show coverage. Effective settings or provider management reports can show protection is active and managed. Operating-system, virtual and third-party firewalls are possible approaches, not required purchases.",
+      "ask": "What firewall protection is implemented for each server? Is it enabled and managed? Which servers support it but are not covered? Does the report include hosted or virtual servers as well as equipment on site?",
+      "gaps": "Investigate servers missing from coverage, disabled firewalls left after troubleshooting, or a diagram showing only a perimeter device. Having firewall software installed does not establish that it is active and managed."
+    },
+    "4.5": {
+      "plain": "Computers and other end-user devices need traffic filtering that denies connections by default and permits only explicitly allowed services and ports. Ports are numbered connection points used by software. Protection matters away from the office too.",
+      "start": "Ask IT for the device firewall policy and effective settings. Have someone explain the default rule and the exceptions in plain language. Check how the policy behaves on office, home and public network profiles used by staff.",
+      "evidence": "Device firewall settings and rule lists can show default-deny behavior. Deployment reports can show which devices receive them. A provider's coverage report may help, but a general statement that firewalls are on does not explain permitted traffic.",
+      "ask": "Is the default to deny traffic except explicitly allowed services and ports? What do the broadest exceptions allow? Do the rules remain effective off site? Can staff disable protection or select an unprotected network profile?",
+      "gaps": "Look for allow-everything rules, protection disabled on public networks, and devices without an applied policy. An office network firewall does not by itself demonstrate filtering on a laptop used elsewhere."
+    },
+    "4.6": {
+      "plain": "Use secure methods to administer devices and software so management activity is protected. Avoid insecure methods such as unencrypted HTTP or Telnet unless they are operationally essential. A specific management product or automation approach is not prescribed.",
+      "start": "Ask IT or the provider to describe how administrators connect to important systems. Have them identify the connection methods and any insecure ones still used. Ask why those methods are essential and what alternatives were considered.",
+      "evidence": "Management-interface settings, connection configurations or a safe demonstration can show the method in use. Procedures and change records can explain the chosen approach. Exclude administrative credentials from collected records.",
+      "ask": "How is administrative access protected in transit? Are HTTP or Telnet management interfaces still in use? If so, why are they operationally essential rather than just familiar? Do provider connections use the same secure approach?",
+      "gaps": "Investigate insecure interfaces still enabled after an upgrade, undocumented provider access, or exceptions justified only by convenience. A secure public website does not establish that its administrative interface is managed securely."
+    },
+    "4.7": {
+      "plain": "Deliberately manage accounts supplied with a device or application, such as built-in administrator accounts. Do not leave them in an unmanaged installation state. Disabling them or making them unusable are possible treatments; simply renaming an account is not proof of protection.",
+      "start": "Ask IT which built-in accounts come with important systems. Identify the treatment chosen for each and examine the current settings. Include appliances and applications, not only ordinary user directories.",
+      "evidence": "Built-in account state or configuration records can show the applied treatment. Setup procedures and completed provisioning records can explain how it is established. Evidence should not contain passwords or other account secrets.",
+      "ask": "Which default accounts exist on these systems? How are they managed now? Can you show that the intended treatment was applied? Who checks default accounts when a new appliance or application is introduced?",
+      "gaps": "Look for enabled accounts nobody recognizes, setup checklists with no recorded outcome, or an account renamed but otherwise unchanged. A normal employee account review may miss accounts built into an appliance."
+    },
+    "5.1": {
+      "plain": "Keep track of accounts that can use the organization's systems, including administrator and service accounts—accounts used by software rather than a person. Record the identifying details and validate active-account authorization at least quarterly.",
+      "start": "Ask IT for directory and application account lists, then compare them with the account inventory and HR records. Identify missing names, usernames, start/stop dates and departments. Ask who confirms that each active account remains authorized.",
+      "evidence": "Account exports and the inventory can establish the account population and details. Dated authorization reviews can explain which active accounts were justified. An export alone shows accounts exist, not that their continued access was approved.",
+      "ask": "Are administrator and service accounts included? Can each entry be tied to the required identifying details? Who validated active accounts this quarter? Are separately managed application and provider accounts included in that review?",
+      "gaps": "Investigate unexplained active accounts, missing dates or departments, and inventories limited to the main directory. A quarterly report automatically generated but never checked may not demonstrate authorization validation."
+    },
+    "5.2": {
+      "plain": "Do not reuse the same password across enterprise assets: one exposed password should not unlock several systems. CIS gives length examples of at least 8 characters with multi-factor authentication and 14 without it as best practices. Never collect actual passwords to assess this.",
+      "start": "Ask IT how passwords are created and managed across systems, including administrator accounts. Review the instructions staff receive and the available settings. Ask how the organization avoids reuse without requesting anyone's secret values.",
+      "evidence": "Password settings can show length rules; credential-handling procedures or a safe demonstration can explain how unique passwords are maintained. A password-management approach may help, but a named product is not required and settings alone may not prove uniqueness.",
+      "ask": "How do staff and administrators avoid reusing passwords across assets? Are shared setup passwords still used? How does multi-factor authentication affect your approach? Can you explain or demonstrate the process without revealing any passwords?",
+      "gaps": "Look into standard setup passwords reused on many devices, instructions encouraging reuse, or a length setting offered as the only proof of uniqueness. A password list containing secret values creates exposure rather than useful assessment evidence."
+    },
+    "5.3": {
+      "plain": "Accounts that have not been used for 45 days should be disabled or deleted where the system supports it. These dormant accounts can leave unnecessary entry points. A monthly review meeting does not add extra time to the 45-day limit.",
+      "start": "Ask IT how it identifies last account activity. Compare inactive accounts with actual account status, then follow a recent disablement or deletion. Clarify systems where activity information or disabling is unsupported rather than assuming coverage.",
+      "evidence": "Inactivity reports show which accounts reached the threshold. Account-state changes or provider execution records show the response and its timing. A ticket to disable an account is weaker than confirmation that access was actually disabled.",
+      "ask": "How do you find accounts inactive for 45 days? When and how are they disabled or deleted? Can you show the resulting state? Which systems do not support this, and how was that limitation established?",
+      "gaps": "Investigate enabled accounts beyond the threshold, unreliable last-use dates, and reviews that identify dormant accounts but never act. A generic risk acceptance or future cleanup plan does not establish completed disablement."
+    },
+    "5.4": {
+      "plain": "Use separate accounts for powerful administrative work and ordinary daily work. Someone who manages systems should use a nonprivileged account for email, browsing and productivity tasks, reducing the damage possible from an everyday mistake or malicious message.",
+      "start": "Ask IT for the list of privileged accounts and the people using them. Compare those with their ordinary work accounts. Have an administrator explain which account they use for email and which for system changes.",
+      "evidence": "Role listings can show which accounts have administrative rights. Ordinary-account records and relevant activity examples can support separation in practice. Procedures explain the intended behavior but should agree with actual role assignments.",
+      "ask": "Do administrators have distinct everyday and administrative accounts? Can their email account also change system settings? Are ordinary browsing and productivity tasks performed without administrator privileges? How are provider administrators separated?",
+      "gaps": "Look for everyday accounts with broad administrative rights, administrators using one account for everything, or dedicated accounts that exist but are not used. Separate account names alone do not establish the intended separation of work."
+    },
+    "6.1": {
+      "plain": "Have a documented way to give people access when they join or change roles. The process should result in the access needed for their work. Automation is preferred, but this safeguard does not require buying a particular tool or adopting a new approval hierarchy.",
+      "start": "Ask HR and IT to walk through one recent hire and one role change. Find the written process, the request and the access that resulted. Check that applications managed by departments or providers are not missed.",
+      "evidence": "An access procedure explains the process. Hire or transfer requests and provisioning records show it operating. A provider's completion record can help demonstrate the resulting access when it performs the setup.",
+      "ask": "Ask HR, the manager and IT: Who initiates access for a hire or transfer? How are required systems identified? How do we know the requested access was set up? Are role changes covered as clearly as new starters?",
+      "gaps": "Investigate access arranged only through informal messages, role changes outside the procedure, or requests closed without checking the result. A consistent process matters more than whether the request uses a sophisticated form."
+    },
+    "6.2": {
+      "plain": "Remove access immediately when a termination, rights revocation or role change requires it. Waiting for a periodic review leaves access in place too long. Disabling an account instead of deleting it can preserve the records needed to trace past activity.",
+      "start": "Ask HR and IT how an access-removal event reaches the people who can act. Follow a recent example and compare the event time with actual disablement. Include separately managed applications and provider-handled access.",
+      "evidence": "An HR or management event record can establish when removal was needed. Matching account-disablement or access-change records show when it happened. The written process and provider responsibilities explain how immediate action is coordinated.",
+      "ask": "How is IT notified when access must stop? Can revocation happen immediately, including outside normal hours? Which systems require separate action? Can you show event and disablement times without exposing unnecessary personnel information?",
+      "gaps": "Look into access removed days after departure, the main account disabled while a separate application stays active, or requests marked complete before execution. A scheduled access review is not a substitute for immediate revocation."
+    },
+    "6.3": {
+      "plain": "Externally exposed applications should require multi-factor authentication wherever supported. This means proving identity with more than a password, such as an additional authenticator. Enabling the feature is not enough if people can still sign in without it.",
+      "start": "List applications reachable from outside the organization with IT and business owners. Check which support multi-factor authentication, who is covered and whether it is enforced. Ask about alternate sign-in routes and excluded accounts.",
+      "evidence": "Application authentication settings and account-coverage reports can show enforcement. A safe sign-in demonstration can support the result. Publisher information may establish a support limitation; a license invoice alone does not prove the feature is used.",
+      "ask": "Which externally exposed applications require a second factor? Are all relevant users covered? Can legacy or alternative sign-in methods bypass it? Where is it unsupported, and what supports that conclusion?",
+      "gaps": "Investigate optional enrollment, accounts excluded without explanation, or a second factor required only on the main portal while another route bypasses it. A provider using multi-factor authentication for its own staff does not prove your users are covered."
+    },
+    "6.4": {
+      "plain": "Require multi-factor authentication for remote access to the network. A remote connection should not rely on a password alone. This safeguard covers remote network access, which is distinct from signing into a single externally exposed application.",
+      "start": "Ask IT to list remote network connection methods, including those used by providers. For each, check that a second factor is required. Ask about emergency, alternate and older connection routes that may still be available.",
+      "evidence": "Remote-access configuration and user-coverage records can show enforcement. A safe connection demonstration or authentication record can confirm it operates. A list of enrolled users is useful but does not by itself rule out a bypass route.",
+      "ask": "What routes allow people or providers into our network remotely? Does every route require more than a password? Are older routes still enabled? Can an account connect without completing the additional authentication step?",
+      "gaps": "Look for a protected main remote-access service alongside an unprotected alternate, provider accounts without the second factor, or enrollment mistaken for enforcement. Protecting email alone does not demonstrate remote network protection."
+    },
+    "6.5": {
+      "plain": "Administrative accounts need multi-factor authentication wherever it is supported, whether systems are managed on site or by a provider. These accounts can make powerful changes, so password-only access deserves particular scrutiny.",
+      "start": "Use the privileged-account list to identify administrative access to systems and hosted services. Ask IT or each responsible provider which accounts support and enforce a second factor. Check the administrative interfaces, not just everyday user sign-in.",
+      "evidence": "Privileged-role lists paired with authentication settings can show administrative coverage. Safe demonstrations or provider records can substantiate enforcement. Product support information can explain a limitation without treating it as automatic implementation.",
+      "ask": "Which accounts can administer these systems? Is multi-factor authentication enforced for them wherever supported? Does that include provider-managed and emergency access? Are any administrative interfaces reachable with only a password?",
+      "gaps": "Investigate administrators exempted from the normal policy, protection on user accounts but not management interfaces, or unsupported claims with no product information. A provider contract alone does not establish how administrative sign-in actually works."
+    },
+    "7.1": {
+      "plain": "Have a documented process for managing security weaknesses in devices and software: identifying the work, deciding who handles it and maintaining the process. Review and update it annually and after significant relevant changes. This does not import higher-group scanning requirements into IG1.",
+      "start": "Ask the security or IT owner how weaknesses become managed work today. Find the documented process and compare it with the systems and providers in use. Check who maintains it and when it was last reviewed.",
+      "evidence": "A vulnerability-management procedure can explain responsibilities and the working approach. Dated reviews and change records show maintenance. Examples of handled weaknesses can help confirm the procedure describes real operations rather than an unused template.",
+      "ask": "Who owns the vulnerability-management process? Which assets and software does it cover? How do providers fit into it? Was the process reviewed this year and after important changes to our systems?",
+      "gaps": "Look for no named process owner, instructions disconnected from the actual environment, or a procedure never revisited after outsourcing. A purchased scanner is not a substitute for a documented, maintained process."
+    },
+    "7.2": {
+      "plain": "Use a risk-based process to decide how security weaknesses are fixed and track the work. Review that remediation process monthly or more often. This monthly interval is not a universal deadline that says every weakness can wait a month.",
+      "start": "Ask the remediation owner how weaknesses are prioritized and assigned. Follow a few recent issues from identification through action and verification. Compare their treatment with the documented process and its latest monthly review.",
+      "evidence": "A remediation procedure can explain prioritization. Issue records with owners, decisions and verified outcomes can show the process operating. Monthly process-review records can demonstrate that its effectiveness and current approach are checked.",
+      "ask": "How does risk influence what gets fixed first? Who is responsible for each issue? How do you verify a fix worked? When was the remediation process last reviewed, rather than just the open-ticket count?",
+      "gaps": "Investigate issues with no responsible person, priorities unrelated to risk, or tickets closed without confirmation. Documenting acceptance or opening a ticket does not mean the underlying weakness has been fixed."
+    },
+    "7.3": {
+      "plain": "Use automated patch management to apply operating-system updates at least monthly. The operating system is the core software running a device. A schedule or monthly report is not the same as updates actually being installed.",
+      "start": "Ask IT which assets receive automated operating-system updates. Compare that coverage with the asset list. Review recent deployment results and follow failed or missed devices through to their actual update state.",
+      "evidence": "An automated schedule shows intended timing. Dated deployment results and device update status show execution. Provider reports are useful when they identify coverage and failures, not just summarize a percentage without its underlying population.",
+      "ask": "Which operating systems are patched automatically? Are updates applied monthly or more frequently? What happens to offline devices and failed installations? Can you show completed deployments rather than only the planned schedule?",
+      "gaps": "Look for devices omitted from automation, repeated installation failures, and reports counted as successful despite pending updates or restarts. A delayed-update ticket is not evidence that the update was applied."
+    },
+    "7.4": {
+      "plain": "Apply application updates through automated patch management at least monthly. Updating the operating system does not necessarily update browsers, document tools or business applications. Check application coverage separately.",
+      "start": "Take the software inventory to IT and identify how each relevant application is updated. Compare automated coverage with recent deployment results. Ask about department applications and software maintained by a provider.",
+      "evidence": "Application update settings can show automation. Deployment records and installed-version reports can show that updates reached devices. A software inventory helps establish what was included, avoiding reliance on operating-system patch results alone.",
+      "ask": "Which applications are updated automatically at least monthly? What is outside that coverage? How do you detect failed updates? Does the report include our business applications as well as commonly used desktop software?",
+      "gaps": "Investigate applications never included in the updater, versions unchanged after a reported deployment, or manually handled software described as automated. A current operating system does not establish that its applications are current."
+    },
+    "8.1": {
+      "plain": "Document how activity records, called audit logs, are collected, reviewed and retained. These records help explain what happened in systems. Review the process annually and after significant relevant changes; the organization's process sets the applicable review and retention expectations.",
+      "start": "Ask IT or security which logs are needed and where they go. Find the instructions for collecting, reviewing and keeping them. Compare the process with current systems and outsourced responsibilities.",
+      "evidence": "A logging procedure can cover all three subjects, or linked procedures can do so together. Review dates and change records show maintenance. A sample log may illustrate the process but cannot replace the documented expectations.",
+      "ask": "What activity do we collect, who reviews it and how long do we keep it? Which systems and providers are covered? Who revisits those expectations after a major change, and when was the annual review?",
+      "gaps": "Look for instructions addressing collection but not review or retention, unclear provider responsibilities, or a process that still names retired systems. Do not assume a particular monitoring product is required to document these expectations."
+    },
+    "8.2": {
+      "plain": "Make sure systems actually collect the activity records required by the logging process. A policy saying logging is enabled is not enough if there are no recent records or some systems never send them.",
+      "start": "Use the logging process to identify expected sources. Ask IT to show recent records from representative sources and compare the source list with the assets in scope. Investigate missing or silent sources.",
+      "evidence": "Logging settings show intended collection. Recent audit records or collection-status reports demonstrate operation. Provider records can support hosted-system coverage; samples can be limited or redacted to avoid exposing unnecessary sensitive activity.",
+      "ask": "Which systems should produce logs under our process? Can you show recent records from them? How do you recognize a source that stops logging? Are settings and collection still effective after system changes?",
+      "gaps": "Investigate enabled settings with no recent records, sources omitted from the collection list, or logs containing only old activity. An available logging feature does not show that the organization has enabled and used it."
+    },
+    "8.3": {
+      "plain": "Give logging destinations enough storage to meet the organization's logging process. If storage fills or records are overwritten too early, useful history disappears. This IG1 safeguard does not impose the separate IG2 90-day retention interval.",
+      "start": "Ask where logs are stored and what the process requires them to retain. Compare available capacity and actual retained history with those expectations. Ask how full storage, dropped records or automatic overwriting are noticed.",
+      "evidence": "Storage settings and usage reports can show available capacity. Retention observations, overwrite settings or dropped-log alerts can show whether capacity supports the process. Provider reports may supply these details for managed destinations.",
+      "ask": "Is there enough capacity for our documented logging needs? What happens when a destination fills? Are records being overwritten earlier than intended? Can you show retained history rather than just the purchased storage allowance?",
+      "gaps": "Look into full disks, repeated capacity alerts, unexpected gaps or shorter actual history than the process expects. Buying storage does not demonstrate sufficiency if the volume of collected logs has since increased."
+    },
+    "9.1": {
+      "plain": "Allow only fully supported browsers and email clients using the vendor's latest version. Older executable versions can leave known weaknesses available even when a newer version has also been installed.",
+      "start": "Ask IT which browsers and email applications can run on devices. Compare installed versions with the vendors' current release and support information. Include secondary browsers or email clients used by individual teams.",
+      "evidence": "Version inventories and vendor release information can establish currency. Update and execution settings can show how the allowed versions are maintained. Device observations or provider coverage reports can help identify older versions still able to run.",
+      "ask": "Which browsers and email clients can users run? Are they fully supported and on the vendor's latest version? Are older copies still executable? How do you find devices that failed to update?",
+      "gaps": "Investigate a supported product running an old version, unused but executable older browsers, or update plans without completed results. A subscription to the product does not prove the installed version is current."
+    },
+    "9.2": {
+      "plain": "Use DNS filtering to block known malicious internet domains on all end-user devices, in the office and remotely. DNS translates a website name into its network destination; filtering can stop a device from reaching known harmful destinations through that lookup.",
+      "start": "Ask IT how website-name filtering reaches office and remote devices. Compare covered devices with the endpoint inventory. Have the responsible team demonstrate a provider-approved safe test rather than visiting a real malicious site.",
+      "evidence": "Filtering settings and coverage records can show the intended protection. Block events or a safe test can demonstrate operation. Remote-device results are useful because an office-only configuration does not establish coverage elsewhere.",
+      "ask": "Does this protect devices when they leave the office? What happens if a device uses different DNS settings? Can you demonstrate a safe blocked-domain test? Are all end-user devices accounted for?",
+      "gaps": "Look for filtering limited to office Wi-Fi, remote devices using an unfiltered resolver, or a service purchased but not deployed. A browser warning alone may not establish that DNS filtering is the protection doing the blocking."
+    },
+    "10.1": {
+      "plain": "Deploy and maintain anti-malware protection across enterprise assets. Anti-malware helps detect or stop harmful software. Owning licenses or installing an agent is not enough if protection is missing, disabled or unhealthy.",
+      "start": "Ask IT for protection status and compare it with the asset inventory. Investigate devices absent from the report and devices showing inactive or unhealthy protection. Include assets operated by a responsible provider.",
+      "evidence": "Deployment and health reports matched to assets can show coverage. Effective device settings or provider records can confirm protection is active. License records show entitlement, not the actual deployment or health state.",
+      "ask": "Which assets have active anti-malware protection? Which are missing or unhealthy? How are those conditions handled? Does the coverage report account for our whole asset population rather than only devices already enrolled?",
+      "gaps": "Investigate old devices still shown as protected, disabled agents, and reports whose denominator includes only enrolled devices. An unused license or future rollout plan does not establish maintained protection."
+    },
+    "10.2": {
+      "plain": "Configure anti-malware signatures to update automatically. Signatures are detection information used to recognize harmful software. Protection installed months ago may miss newer threats if that information is stale.",
+      "start": "Ask IT how automatic signature updates are configured. Compare the setting with recent device update results. Look especially at devices that are often offline or cannot reach the update service.",
+      "evidence": "Automatic-update settings establish the intended mechanism. Signature versions, update timestamps or provider update results show whether it operates. Configuration and results together are more informative than a statement that antivirus is installed.",
+      "ask": "Are signature updates automatic on covered assets? How do you notice failed or stale updates? What happens when a device reconnects after being offline? Can you show recent update results for our devices?",
+      "gaps": "Look for manual-only updating, repeated connection failures, or many devices with old signatures despite an enabled schedule. An installed anti-malware product does not automatically demonstrate its updates work."
+    },
+    "10.3": {
+      "plain": "Stop removable media from automatically executing content when connected. Autorun and autoplay can launch content without a deliberate user choice. Disabling this behavior is not the same as banning every USB drive.",
+      "start": "Ask IT which settings disable autorun and autoplay. Check that they are actually applied to devices, including any outside central management. Use configuration inspection or a safe demonstration, not suspicious media.",
+      "evidence": "Effective device settings and applied-policy reports can demonstrate both protections. A responsible provider's configuration observation may support the same point. A policy prohibiting USB use does not by itself show the technical settings.",
+      "ask": "Are both autorun and autoplay auto-execution disabled? Do these settings apply to all relevant devices? Can users override them? How do you confirm that an assigned policy has reached the device?",
+      "gaps": "Investigate one setting disabled while the other remains active, unmanaged devices outside policy coverage, or policy assignment mistaken for application. Avoid treating a general removable-media rule as proof of effective device behavior."
+    },
+    "11.1": {
+      "plain": "Document how the organization backs up and recovers information: what is covered, what comes back first, how backups are made and how they are protected. Review the process annually and after significant relevant changes.",
+      "start": "Ask business owners what information and services they would need to recover. Compare that with IT's recovery procedures and backup scope. Clarify priorities, responsible teams and provider dependencies already present in the process.",
+      "evidence": "Recovery procedures can describe scope, priorities and backup protection. Supporting backup instructions can add operational detail. Dated annual reviews and change records show the process remains current; backup-job results alone do not document the recovery process.",
+      "ask": "Ask business owners and IT: What would we recover first, and why? What is outside the documented scope? Where are the backup and recovery instructions? Did recent system changes update the process?",
+      "gaps": "Look for a backup schedule with no recovery instructions, undocumented priorities, or procedures that rely on a departed employee. Do not add a separate higher-group restore-test frequency as an IG1 requirement."
+    },
+    "11.2": {
+      "plain": "Run automated backups at least weekly, or more often when the data's sensitivity calls for it. Backups need to execute successfully; reviewing a weekly report is not the same as making a weekly backup.",
+      "start": "Compare the asset and recovery scope with automated backup coverage. Ask IT to show recent scheduled jobs and their actual results. Follow missing or failed jobs to see whether a usable backup was subsequently created.",
+      "evidence": "Scope and schedule settings explain what should run. Dated job results establish execution, including failures. A provider report can support this if it identifies the relevant systems and outcomes, not just that backup service is included in a contract.",
+      "ask": "What is backed up automatically at least weekly? Does sensitivity require more frequent backups for some data? Which jobs failed or were missed? What result confirms the backup eventually completed?",
+      "gaps": "Investigate schedules with no successful jobs, newly added systems outside backup coverage, or failures hidden inside a green summary. A plan to rerun a failed job does not mean a backup already exists."
+    },
+    "11.3": {
+      "plain": "Protect recovery copies as carefully as the original information. A backup can contain the same sensitive records, so it should not become an easier way to read or alter them. Equivalent protection depends on the original data's requirements.",
+      "start": "Ask the data owner what protection the original information needs. With IT, compare that with backup access and other relevant safeguards, such as encryption where required. Include the provider's recovery copies in the comparison.",
+      "evidence": "Original-data protection requirements provide the comparison point. Backup access settings, relevant encryption settings or provider protection records can demonstrate equivalent treatment. Isolation evidence addresses a different question under safeguard 11.4.",
+      "ask": "Who can read or change the backup compared with the original data? Are its required protections maintained during storage and handling? What can provider personnel access? Can you demonstrate the actual settings?",
+      "gaps": "Look for sensitive backups in broadly accessible folders, recovery copies lacking protection applied to originals, or vague claims that a destination is secure. Backup isolation alone does not establish equivalent confidentiality protection."
+    },
+    "11.4": {
+      "plain": "Maintain an isolated recovery copy so a problem affecting normal systems is less likely to affect every backup too. Offline, off-site and cloud arrangements can help, but their label or location alone does not prove isolation.",
+      "start": "Ask IT to identify the specific isolated recovery copy that exists today. Have the team explain what separates it from normal systems and routine access. Check that the copy is maintained rather than merely planned.",
+      "evidence": "Destination and version records can identify the copy. Access and separation configurations can explain its isolation. Provider records may support the mechanism; a diagram of a future backup arrangement is not evidence of a maintained instance.",
+      "ask": "Which recovery copy is isolated? What keeps normal system activity or compromised access from affecting it? How is it maintained? If it is off site or in the cloud, what actually provides the isolation?",
+      "gaps": "Investigate a second folder on the same exposed system, a cloud copy controlled by the same unrestricted access, or an offline copy no longer updated. Multiple copies are not automatically isolated copies."
+    },
+    "12.1": {
+      "plain": "Keep network infrastructure current and supported, checking software support at least monthly. Network infrastructure includes the equipment and services connecting systems. Current stable software and supported managed network services are examples of ways to meet this expectation.",
+      "start": "Ask IT or the network provider for device and software versions. Compare them with vendor support and stable-release information. Identify who performs the monthly support check and how outdated infrastructure is addressed.",
+      "evidence": "A network version inventory paired with vendor information can establish current support. Dated monthly checks and upgrade results can show maintenance. Provider records can cover managed services without assuming the contract alone proves current versions.",
+      "ask": "Which network components are unsupported or behind current stable software? When was support last checked? Who handles updates for managed equipment? Can we see installed versions and completed maintenance results?",
+      "gaps": "Look for network devices absent from inventories, firmware never checked after installation, or unsupported equipment covered only by a replacement plan. Hardware still functioning is not the same as software still supported."
+    },
+    "14.1": {
+      "plain": "Teach the workforce how to use systems and information securely when hired and at least annually. Maintain the training content through annual review and significant relevant changes. Purchasing training does not establish that people received it.",
+      "start": "Ask HR or the awareness owner for training content and completion records. Compare them with the workforce and recent hires. Identify missed people and check when the content was last reviewed for current working practices.",
+      "evidence": "Course materials show what is taught. Attendance or completion records show delivery. Workforce reconciliation and content-review records can together demonstrate hire-time and annual coverage without requiring a particular training platform.",
+      "ask": "Ask HR or the training owner: How do new hires receive security training? Who is overdue for annual training? Are relevant workforce groups included? When was the content updated after changes to how we work?",
+      "gaps": "Investigate new starters missing training, annual lists that omit parts of the workforce, or completion records for content nobody maintains. An email announcing an available course does not establish participation."
+    },
+    "14.2": {
+      "plain": "Teach people to recognize attempts to manipulate them into unsafe actions. Examples include deceptive messages, fake payment instructions, invented identities and following someone into a restricted area. This is broader than recognizing suspicious email alone.",
+      "start": "Ask the training owner where these scenarios appear in current lessons. Choose examples relevant to Finance, HR, reception or other teams. Check that the content was delivered through the awareness program, not just available in a course library.",
+      "evidence": "Lesson material can show the scenarios covered. Attendance, completion records or discussion results can show delivery. A phishing simulation may provide additional insight, but a simulation is not a mandatory IG1 artifact.",
+      "ask": "Ask the awareness owner: Do staff learn to question unusual payment or information requests? Are impersonation and physical-access tricks covered? How do we know the lesson reached the workforce, including roles handling sensitive requests?",
+      "gaps": "Look for lessons limited to misspelled emails, no examples relevant to business roles, or licensed content never delivered. A successful simulated email test alone does not demonstrate the breadth of the training."
+    },
+    "14.3": {
+      "plain": "Teach people how to authenticate safely—prove their identity when signing in. This includes useful instruction on passwords, handling credentials and multi-factor authentication, adapted to the methods the organization uses.",
+      "start": "Ask the training owner and IT to compare sign-in lessons with today's tools. Check whether staff learn what to do in realistic situations, such as an unexpected authentication prompt, rather than only learning terminology.",
+      "evidence": "Authentication lesson material and completion records can show what was taught and to whom. Job aids or knowledge checks may support understanding. A technical multi-factor configuration proves a different point from workforce training.",
+      "ask": "Ask the awareness owner: Do the lessons explain safe password and credential handling? Do staff know how to use our additional sign-in factors? Are instructions updated when the authentication method changes?",
+      "gaps": "Investigate training that names multi-factor authentication without explaining user behavior, outdated screenshots that confuse staff, or technical configuration offered as the only evidence that training occurred."
+    },
+    "14.4": {
+      "plain": "Teach people to recognize sensitive information and handle it safely when storing, sharing, archiving and destroying it. Include practical clear-desk and clear-screen habits, such as locking an unattended screen and clearing sensitive whiteboards.",
+      "start": "Ask data owners and the training owner for lessons covering the information staff actually use. Trace a familiar record, such as a personnel file, through sharing, storage and disposal. Check physical and virtual workspace examples too.",
+      "evidence": "Data-handling and clear-desk/screen lesson materials can show topic coverage. Attendance records or relevant exercises can show delivery. A data-handling policy supplies context but does not establish that people were taught how to apply it.",
+      "ask": "Ask HR, data owners or the awareness owner: Can staff recognize sensitive records? Are secure transfer, archiving and destruction explained? Do lessons cover unattended screens, paper records and physical or virtual whiteboards?",
+      "gaps": "Look for training covering email but not disposal, no examples of sensitive business data, or clear-desk advice that overlooks virtual whiteboards. Written rules alone may not demonstrate practical workforce instruction."
+    },
+    "14.5": {
+      "plain": "Teach people how information can be exposed accidentally, even without an attacker. Sending to the wrong person, sharing a link too broadly or losing a device are everyday examples staff should be able to recognize and avoid.",
+      "start": "Ask the training owner for accidental-disclosure examples relevant to daily work. Review how staff send, share and carry information. Check that lessons cover those situations and have actually reached the workforce.",
+      "evidence": "Lessons or communications can illustrate common mistakes. Completion, attendance or scenario-discussion records can show delivery. Real incident details are not necessary; safe examples can teach the same behavior without exposing sensitive information.",
+      "ask": "Ask the awareness owner: Do lessons explain wrong-recipient messages and overly broad sharing? Are lost devices and portable data covered? How do staff check the intended audience before sending or granting access?",
+      "gaps": "Investigate training focused entirely on malicious attacks, advice that ignores shared-link permissions, or policies with no practical examples. A lack of reported accidents does not demonstrate that people received this training."
+    },
+    "14.6": {
+      "plain": "Teach people to recognize a possible security incident and report it through the organization's process. They do not need to prove an attack occurred before knowing where to ask for help or raise a concern.",
+      "start": "Ask the awareness owner to show the recognition and reporting lesson. Compare its contacts and reporting route with current instructions. Check that examples make sense for ordinary staff, such as a lost device or suspicious message.",
+      "evidence": "Lesson material can explain warning signs and the reporting route. Completion records show delivery. A practice discussion or exercise may support understanding, but the training should agree with the actual reporting process.",
+      "ask": "Ask the training and incident owners: What signs are staff taught to recognize? Where should they report concerns? Are the training contacts current? Can a nontechnical employee understand what to do without first investigating the incident?",
+      "gaps": "Look for obsolete phone numbers, instructions telling staff only to contact 'security' without a usable route, or lessons on recognition with nothing about reporting. A documented response plan alone does not establish workforce training."
+    },
+    "14.7": {
+      "plain": "Teach people to notice outdated software patches and failures in automated tools, and report them to IT. Staff are not being asked to become patch administrators; they need to recognize warning signs and know how to get help.",
+      "start": "Ask IT what update or tool-failure messages users commonly see. Compare those with the awareness material and reporting instructions. Check that the examples explain both missing updates and failed automatic processes.",
+      "evidence": "Lessons, job aids or demonstrations can show the warning signs taught. Training records can show delivery. A patch deployment report supports technical operation but does not show that users were taught how to report a problem.",
+      "ask": "Ask the awareness owner and IT: Which update warnings should users report? How should they contact IT? Does training cover automation failures as well as missing patches? Are users told what to do without making unauthorized changes?",
+      "gaps": "Investigate advice to ignore repeated update errors, training covering only restart reminders, or no reporting route for failed tools. Technical automation does not remove the need for the workforce topic."
+    },
+    "14.8": {
+      "plain": "Teach people the risks of connecting to insecure networks and sending work information across them. Where remote workers exist, include secure setup of home network equipment. This is workforce guidance, not a requirement for employees to become network engineers.",
+      "start": "Ask the training owner how lessons address work away from the office. For remote staff, review the practical home-network guidance. Compare examples with the network situations the workforce actually encounters.",
+      "evidence": "Lessons on insecure connections and relevant home-network guidance can show coverage. Completion or attendance records can show delivery to the workforce. A remote-access product alone does not demonstrate that these topics were taught.",
+      "ask": "Ask HR or the awareness owner: Do staff understand risks on public or otherwise insecure networks? Do remote workers receive usable home-network setup guidance? Where can they ask for help when unsure about a connection?",
+      "gaps": "Look for training limited to office Wi-Fi, home-network guidance omitted for remote workers, or technical instructions too unclear to use. Avoid assuming that a protected work device makes every network situation safe."
+    },
+    "15.1": {
+      "plain": "Know which service providers the organization uses, how they are classified and who inside the organization is responsible for the relationship. Review the inventory annually and after significant changes. This inventory safeguard is not a separate mandate to audit every supplier.",
+      "start": "Ask procurement, Finance and department leads for their provider lists. Reconcile them with contracts and service records. Add missing classifications and internal contacts, including services purchased directly by a department.",
+      "evidence": "A provider register can show names, classifications and internal contacts. Purchasing or contract records can help check completeness. Dated annual reconciliation and change records can show the inventory stays current.",
+      "ask": "Ask procurement and business owners: Which providers support your work? Are they in the shared inventory? What classification and internal contact does each have? How are new or ended relationships reflected in the list?",
+      "gaps": "Investigate recurring service payments with no inventory entry, provider contacts confused with internal relationship owners, or classifications left blank. A contracts folder may not be a maintained inventory with the required details."
+    },
+    "17.1": {
+      "plain": "Name a lead and at least one backup to coordinate and document incident response and recovery. If a provider handles incidents, keep at least one internal person overseeing that work. Review the assignments annually and after significant relevant changes.",
+      "start": "Ask management who would coordinate a security incident today and who would cover their absence. Check those assignments against the documented responsibilities. If response is outsourced, identify the internal overseer as well as the provider contact.",
+      "evidence": "Role assignments or an incident plan can show the lead, backup and coordination duties. Provider agreements may clarify external responsibilities. Dated reviews and personnel-change updates can establish that the assignments are current.",
+      "ask": "Ask management: Who leads and documents response and recovery? Who is the backup? If our provider acts, who internally oversees it? Have personnel or service changes affected these assignments since the last annual review?",
+      "gaps": "Look for a single named person with no backup, a departed employee still listed, or outsourcing with no internal oversight. A provider's response capability does not automatically establish the organization's own responsibilities."
+    },
+    "17.2": {
+      "plain": "Keep current contact details for parties who may need notification about an incident, and verify them annually. The relevant parties depend on the organization; examples such as providers, insurers or authorities are not a universal list for every incident.",
+      "start": "Ask the incident owner which internal and external parties belong on the notification list. Check that usable contact details exist for those parties. Review the latest annual verification rather than assuming an old directory remains valid.",
+      "evidence": "An incident-notification list can identify relevant recipients and routes. Dated checks or contact confirmations can establish currency. Contract or insurance contact information may help corroborate entries without defining new notification obligations.",
+      "ask": "Ask the incident owner: Who may need notification under our arrangements? How would we reach them? When were the details last verified? Is this list distinct from the instructions employees use to report a concern?",
+      "gaps": "Investigate obsolete numbers, missing contacts for important providers, or a generic stakeholder list never checked for relevance. Listing an authority does not by itself establish when a legal notification obligation applies."
+    },
+    "17.3": {
+      "plain": "Give the whole workforce accessible instructions for reporting incidents: when to report, to whom, by what method and what minimum information to provide. Review the instructions annually and after significant relevant changes. Accessible to staff does not mean publicly posting internal details.",
+      "start": "Ask the incident owner for the workforce reporting instructions. Check the four required elements and try finding the instructions as an ordinary staff member. Compare contacts and channels with the current reporting arrangements.",
+      "evidence": "A staff procedure, intranet page or job aid can state the reporting steps. Communication or access records can support workforce availability. Dated reviews and revisions show that changes to contacts or reporting methods are reflected.",
+      "ask": "Ask the incident and HR owners: How quickly should staff report under our process? Who receives reports, through which channel, and what information is needed? Can every workforce group find the instructions? When were they last reviewed?",
+      "gaps": "Look for instructions saying only 'report promptly' without the organization's timeframes, missing recipients or minimum details, or a page some staff cannot access. A response plan restricted to the incident team may not serve workforce reporting."
+    }
+  }
+}

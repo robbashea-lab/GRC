@@ -6,6 +6,7 @@ import AssigneeSelect from './AssigneeSelect';
 import {personLabel} from '@/lib/people';
 import criteriaData from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import guidanceData from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
+import CisRequirementGuide from './CisRequirementGuide';
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 
 import {CIS_TONE,CisStatusPill} from './CisStatus';
@@ -43,6 +44,8 @@ export default function BrawndoCisSafeguard({state,actions}){
     <p className="bcsg-meta">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}{current.last_assessed&&current.assessed_by?` · ${personLabel(ctx?.users,current.assessed_by,'Not recorded')}`:''}</p>
     </div>
     <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested}}/>
+    <div className="cis-guidance-layout">
+    <div className="cis-guidance-main">
     <Step number="1" title="What CIS Requires">
       <p className="brawndo-requirement-title">{definition.title}</p>
       {source.text?<><p className="text-xs text-ink-secondary">Official requirement</p><p className="whitespace-pre-wrap" data-testid="cis-official-text">{source.text}</p></>:<><p className="text-xs text-ink-secondary">Requirement summary · Omnisciente</p><p>{definition.guidance}</p></>}
@@ -59,6 +62,9 @@ export default function BrawndoCisSafeguard({state,actions}){
         </section>)}
       </div>
     </Step>
+    </div>
+    <CisRequirementGuide key={`${clientId}:${id}`} safeguardId={id}/>
+    </div>
     <Step number="3" title="Implementation Status">
       <fieldset disabled={disabled}><legend className="sr-only">Implementation status</legend>
         <div className="brawndo-status-options">{STATUS_OPTIONS.map(([status,label])=><label key={status} className={`cis-tone-${CIS_TONE[status]} ${form.status===status?'is-selected':''}`}>
