@@ -48,7 +48,7 @@ test('four sections in order; verification remains editable near the top',async(
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
  expect(headings()).toEqual(['What CIS Requires','CIS IG1 Assessment Criteria','Implementation Status','Current Implementation']);
  expect(container.querySelector('[aria-label="Verification result"]').closest('.brawndo-step')).toBeNull();
- for(const gone of ['Evidence','Required actions','Organizational Controls','Remediation','Create Finding','Link Evidence'])expect(container.textContent).not.toContain(gone);
+ for(const gone of ['Required actions','Organizational Controls','Remediation','Create Finding','Link Evidence'])expect(container.textContent).not.toContain(gone);
  expect(container.querySelector('h2').textContent).toBe('CIS IG1 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
  expect(container.querySelector('header').textContent).not.toContain('Last assessed');
  expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
@@ -62,21 +62,23 @@ test('What CIS Requires labels the summary and links the official reference; off
  await act(async()=>root.unmount());root=createRoot(container);await render();
  expect(container.querySelector('[data-testid="cis-official-text"]').textContent).toBe('Authorized verbatim text.');expect(container.textContent).not.toContain('not official CIS text');mockOfficial=null;
 });
-test('assessment criteria ticks are drafts and never change status or verification',async()=>{
- await render();expect(container.textContent).toContain('They do not introduce additional requirements.');
- expect(container.querySelectorAll('.bcsg-criteria input')).toHaveLength(4);
- const boxes=[...container.querySelectorAll('.bcsg-criteria input')];for(const b of boxes)await tick(b);
- expect(container.querySelectorAll('.bcsg-criteria input:checked')).toHaveLength(4);expect(container.querySelector('input[value="addressed"]').checked).toBe(true);
+test('guidance is visible, noninteractive and never changes status, verification or draft state',async()=>{
+ await render();expect(container.textContent).toContain('not additional CIS requirements');
+ const guidance=container.querySelector('.cis-assessment-guidance');
+ expect([...guidance.querySelectorAll('h4')].map(h=>h.textContent)).toEqual(['What to review and confirm','Examples of supporting evidence','What good looks like']);
+ expect(guidance.querySelector('input,button,details,select,textarea')).toBeNull();
+ expect(container.querySelector('input[value="addressed"]').checked).toBe(true);
  expect(container.querySelector('[data-testid="tier-signal"]')).toBeNull();
  expect(container.querySelector('[aria-label="Verification result"]').value).toBe('not_verified');
- expect(container.textContent).toContain('Unsaved assessment changes');
+ expect(container.textContent).not.toContain('Unsaved assessment changes');
+ expect(api.patch).not.toHaveBeenCalled();
  expect(container.textContent).not.toMatch(/\d+%|score|maturity level|compliant/i);
 });
-test('status, current implementation, verification and checklist save with the concurrency token',async()=>{
+test('status, narrative and verification save while retaining prior criteria and the concurrency token',async()=>{
+ record.cis_assessment_criteria=['1.1-c1'];
  await render();await tick(container.querySelector('input[value="in_progress"]'));
  await input('Current implementation','Inventory maintained in RMM; reconciled monthly.');
  const sel=container.querySelector('[aria-label="Verification result"]');await act(async()=>{sel.value='needs_validation';sel.dispatchEvent(new Event('change',{bubbles:true}));});
- await tick(container.querySelector('.bcsg-criteria input'));
  await act(async()=>button('Save assessment').click());
  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Inventory maintained in RMM; reconciled monthly.',verification:'needs_validation',cis_assessment_criteria:['1.1-c1'],notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}));
  expect(container.textContent).toContain('Assessment saved.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Needs validation');
@@ -104,7 +106,8 @@ test('Save & next waits for a successful save and never navigates after failure'
 });
 test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit',async role=>{
  mockUser.role=role;await render();expect(button('Save assessment')).toBeUndefined();expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
- expect(container.querySelector('.bcsg-criteria').disabled).toBe(true);
+ expect(container.querySelector('.cis-assessment-guidance').textContent).toContain('What good looks like');
+ expect(container.querySelector('.cis-assessment-guidance input')).toBeNull();
 });
 test('load failure disables writes and offers retry',async()=>{
  api.get.mockRejectedValue(new Error('Context unavailable'));await render();expect(container.querySelector('[role="alert"]').textContent).toContain('Context unavailable');expect(button('Save assessment').disabled).toBe(true);expect(button('Retry')).toBeTruthy();
@@ -125,19 +128,30 @@ test('in-workspace breadcrumb returns to the control, behind the unsaved-changes
  await input('Current implementation','Draft');await act(async()=>button('Control 1').click());expect(toControl).not.toHaveBeenCalled();
  expect(document.body.textContent).toContain('Leave unsaved changes?');await act(async()=>button('Discard changes').click());expect(toControl).toHaveBeenCalledTimes(1);
 });
-test('dialog has one source-labelled checklist and no maturity guidance',async()=>{
+test('readable guidance preserves previous criteria, legacy checks and historical snapshots after save/reopen',async()=>{
  record.verification_checklist={foundation:['1.1-f1'],mature:['1.1-m1']};
+ record.cis_assessment_criteria=['1.1-c1'];
  await render();
  expect(container.querySelector('[data-testid="brawndo-cis-assessment"]').getAttribute('aria-modal')).toBe('true');
  expect(container.querySelector('[data-testid="criteria-source"]').textContent).toBe('Sources: CIS Safeguard 1.1 · v8.1');
- expect(container.querySelectorAll('.bcsg-criteria')).toHaveLength(1);
- expect(container.querySelectorAll('.bcsg-criteria input:checked')).toHaveLength(0);
+ expect(container.querySelectorAll('.cis-assessment-guidance')).toHaveLength(1);
+ expect(container.querySelectorAll('.bcsg-criteria input')).toHaveLength(0);
  for(const text of ['Foundation','Operational','Mature','Stronger practice','Manage people'])expect(container.textContent).not.toContain(text);
- await tick(container.querySelector('.bcsg-criteria input'));await act(async()=>button('Save assessment').click());
+ await input('Current implementation','Retained legacy responses');await act(async()=>button('Save assessment').click());
  expect(record.verification_checklist).toEqual({foundation:['1.1-f1'],mature:['1.1-m1']});
  expect(record.cis_assessment_criteria).toEqual(['1.1-c1']);
  await act(async()=>root.unmount());root=createRoot(container);await render();
- expect(container.querySelector('.bcsg-criteria input').checked).toBe(true);
+ expect(container.querySelector('.cis-assessment-guidance input')).toBeNull();
+ expect(container.textContent).toContain('Assessment criteria: 1.1-c1');
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retained legacy responses');
+});
+
+test.each(['new-cis-client','existing-iso-client'])('shared guidance is identical for %s without client-specific content',async clientId=>{
+ await render();const expected=container.querySelector('.cis-assessment-guidance').textContent;
+ record={...record,client_id:clientId};
+ await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close}/>));
+ expect(container.querySelector('.cis-assessment-guidance').textContent).toBe(expected);
+ expect(container.querySelector('.cis-assessment-guidance').textContent).not.toContain('Brawndo');
 });
 test('a never-assessed safeguard does not name an assessor',async()=>{
  record={...record,last_assessed:null,assessed_by:'u'};await render();
