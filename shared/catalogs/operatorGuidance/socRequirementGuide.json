@@ -1,0 +1,442 @@
+{
+  "framework": "soc-2",
+  "framework_version": "2017 TSC · revised points of focus 2022",
+  "revision": "soc-requirement-guide-v1",
+  "source": {
+    "title": "AICPA 2017 Trust Services Criteria (revised Points of Focus, 2022)",
+    "url": "https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022",
+    "document_url": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf",
+    "reviewed_at": "2026-10-02",
+    "wording": "Authored Omnisciente guidance, not verbatim AICPA text"
+  },
+  "classification": "operational_guidance",
+  "requirements": {
+    "CC1.1": {
+      "plain": "Ethical conduct must be reflected in leadership behavior and how departures are handled, not just in a handbook. Consider employees, contractors, and relevant provider personnel.",
+      "start": "Start with stated conduct expectations, reporting routes, and a real concern handled during the review period. Compare what leadership says with its response.",
+      "evidence": "Conduct communications, onboarding records, or redacted case decisions can show expectations and follow-through. A policy alone does not demonstrate that concerns received consistent treatment.",
+      "ask": "Who communicates expected conduct to your staff and ours? Who receives concerns involving provider personnel, and how do we confirm appropriate follow-through?",
+      "gaps": "Look for ignored reports, inconsistent responses, unclear reporting routes, or leadership behavior that contradicts communicated expectations. These observations need assessment, not an automatic conclusion."
+    },
+    "CC1.2": {
+      "plain": "Those overseeing internal control need sufficient objectivity and expertise to challenge management. The appropriate governance structure depends on the organization's size and circumstances.",
+      "start": "Identify who oversees internal control and how they challenge management decisions. Examine discussions of significant control issues rather than assuming a particular committee is necessary.",
+      "evidence": "Governance responsibilities, meeting decisions, or independent advice can show oversight in practice. Dated discussions and follow-up are more useful than a membership list alone.",
+      "ask": "Which control issues do you report to our oversight body? What expertise do you supply, and who independently challenges management's interpretation of those reports?",
+      "gaps": "Look for oversight that simply repeats management's assurances, missing expertise, undisclosed conflicts, or significant control issues never reaching those responsible for oversight."
+    },
+    "CC1.3": {
+      "plain": "People need clear reporting lines, authority, and responsibility for achieving system objectives. Outsourcing work does not remove the need to define how responsibilities fit together.",
+      "start": "Trace a key control from the person performing it through escalation and oversight. Compare actual authority with role descriptions, including handoffs to service providers.",
+      "evidence": "Role assignments, organization charts, contracts, or escalation records can demonstrate responsibilities and reporting lines. Choose artifacts that reflect how work actually gets directed.",
+      "ask": "Which activities do you perform, approve, or monitor, and which remain ours? Who can authorize changes, and how are unresolved ownership issues escalated?",
+      "gaps": "Look for unowned controls, conflicting authority, approval by someone without authority, or client/provider handoffs where each side assumes the other is responsible."
+    },
+    "CC1.4": {
+      "plain": "The organization needs people with appropriate competence to carry out its objectives. Consider recruitment, development, retention, and the capabilities supplied by relevant providers.",
+      "start": "Compare critical responsibilities with the skills and capacity of those assigned. Examine how shortcomings or personnel changes were addressed during the period.",
+      "evidence": "Role expectations, competency evaluations, training completion, succession arrangements, or provider qualifications can support the assessment. Attendance alone does not establish competence for a critical task.",
+      "ask": "What skills and staffing support the services you provide? How do you maintain them, cover absences, and inform us when capacity affects our controls?",
+      "gaps": "Look for critical roles without capable coverage, training unrelated to assigned duties, unresolved skill gaps, or reliance on a single individual without a workable replacement."
+    },
+    "CC1.5": {
+      "plain": "Assigning a control is not enough: people must be accountable for carrying it out. Performance expectations should support control objectives rather than encourage shortcuts.",
+      "start": "Identify how control responsibilities are evaluated and what happens when assigned work is missed. Consider whether workload or incentives undermine the expected behavior.",
+      "evidence": "Responsibility assignments, performance discussions, completion records, or corrective decisions can show accountability. Redact sensitive personnel details that are unnecessary to demonstrate the control.",
+      "ask": "How is your team's performance against our control responsibilities evaluated? Who addresses missed activities, and what do we need to do when incentives or capacity conflict?",
+      "gaps": "Look for repeated missed responsibilities without response, ownership in name only, or incentives that reward bypassing controls. A signed assignment does not establish effective accountability."
+    },
+    "CC2.1": {
+      "plain": "Control decisions depend on reliable information. The organization needs relevant, accurate, complete, and timely information about its systems, assets, data flows, and control activity.",
+      "start": "Select information used in a real control decision and trace its source, coverage, and update process. Check whether outsourced systems or data flows are missing.",
+      "evidence": "Asset records, data-flow descriptions, reconciliations, report exports, or source checks can demonstrate information quality. Show why the information was fit for the decision it supported.",
+      "ask": "Which systems and populations are included in your reports? What could be missing or stale, and who reconciles provider information with our own records?",
+      "gaps": "Look for incomplete populations, outdated inventories, unclear report sources, or decisions based on information no one checks. An attractive dashboard can still omit important systems."
+    },
+    "CC2.2": {
+      "plain": "Personnel need the objectives, responsibilities, and reporting information required to operate controls. Internal communication should reach the people affected when expectations or systems change.",
+      "start": "Ask personnel how they learn their responsibilities and report failures or concerns. Trace a recent change to the communication received by affected teams.",
+      "evidence": "Targeted communications, onboarding or awareness records, instructions, and reporting examples can show that information reached the right audience and could be acted upon.",
+      "ask": "How do your staff receive changes affecting our controls? Who informs our teams, and how can either team report failures when normal communication routes are ineffective?",
+      "gaps": "Look for obsolete instructions, changes reaching only managers, personnel unable to report concerns, or communications that do not explain what the recipient must do."
+    },
+    "CC2.3": {
+      "plain": "Relevant external parties need information that supports internal control, and the organization needs a way to receive concerns from them. Communication must match commitments and responsibilities.",
+      "start": "Identify customers, providers, and other parties whose actions affect the system. Follow a recent external communication or complaint through receipt, ownership, and response.",
+      "evidence": "Service communications, contractual responsibilities, support records, incident notices, or customer instructions can demonstrate useful two-way communication. Assess content and delivery, not a prescribed format.",
+      "ask": "What changes or incidents must you tell us about, and how? What information must we supply, and who handles customer concerns involving your services?",
+      "gaps": "Look for unclear external reporting routes, commitments not communicated to responsible parties, missed notices, or concerns that are received but never reach a decision-maker."
+    },
+    "CC3.1": {
+      "plain": "Objectives must be clear enough to identify risks to achieving them. For SOC 2, connect objectives to service commitments and system requirements rather than an unexplained generic risk list.",
+      "start": "Start with system boundaries, customer commitments, and relevant requirements. Check whether management can explain the objectives and use them when deciding which risks matter.",
+      "evidence": "Service commitments, approved objectives, system context, or risk-assessment criteria can show the basis for evaluation. System-description preparation provides context, not an extra standalone criterion.",
+      "ask": "Which service commitments and system requirements are you supporting? Where do your assumptions differ from ours, and who resolves conflicting performance or protection objectives?",
+      "gaps": "Look for vague objectives, promises omitted from risk assessment, mismatched system boundaries, or objectives so unclear that teams cannot consistently judge whether a risk matters."
+    },
+    "CC3.2": {
+      "plain": "Identify and analyze risks that could prevent the organization from meeting its objectives. Consider internal and external threats, dependencies, and how the risks should be managed.",
+      "start": "Trace an important objective to its relevant risks, analysis, and chosen response. Include provider dependencies and changes in exposure rather than relying only on a static template.",
+      "evidence": "Risk assessments, threat analyses, dependency reviews, or response decisions can show how risks were identified and evaluated. An inventory without analysis offers only part of the picture.",
+      "ask": "What risks arise from your services or dependencies? What analysis do you provide, what remains ours, and how do we reconcile those risks with our commitments?",
+      "gaps": "Look for ignored dependencies, unsupported likelihood or impact judgments, risks disconnected from objectives, or responses that do not address the identified exposure."
+    },
+    "CC3.3": {
+      "plain": "Risk assessment must consider fraud, including incentives, opportunities, and rationalizations that could undermine objectives. This is broader than checking for technical attacks alone.",
+      "start": "Examine where someone could manipulate records, misuse authority, or conceal a failure. Consider conflicts and incentives in both client and provider activities.",
+      "evidence": "Fraud-risk discussions, access/approval analyses, investigation records, or management response decisions can demonstrate consideration of relevant scenarios. Protect sensitive case information.",
+      "ask": "Where could your personnel manipulate our records or bypass approvals? What oversight is ours, and how would suspected fraud involving either organization be reported?",
+      "gaps": "Look for fraud excluded from risk assessment, unchecked authority over critical records, conflicting incentives, or scenarios dismissed solely because no known incident has occurred."
+    },
+    "CC3.4": {
+      "plain": "Changes can create new risks or make existing controls unsuitable. The organization needs to identify and assess significant changes affecting its system and objectives.",
+      "start": "Review a meaningful business, technology, staffing, regulatory, or provider change. Check how its risks were evaluated and whether control decisions kept pace.",
+      "evidence": "Change-impact assessments, acquisition or migration plans, revised risk records, or control decisions can show how new exposure was considered before and during change.",
+      "ask": "What changes in your services, staffing, or subcontractors affect our system? When are we informed, and who reassesses responsibilities or controls on each side?",
+      "gaps": "Look for major changes absent from risk records, control assumptions carried forward without review, or provider changes discovered only after they affect service or protection."
+    },
+    "CC4.1": {
+      "plain": "Evaluate whether internal control remains present and functioning. Ongoing monitoring, separate evaluations, or a suitable combination should reveal weaknesses in the actual environment.",
+      "start": "Identify how management knows controls are working. Compare monitoring coverage with key risks and trace a detected issue through evaluation during the review period.",
+      "evidence": "Monitoring results, control reviews, testing records, or independent assessments can show evaluation coverage and findings. A monitoring plan alone does not demonstrate that evaluation occurred.",
+      "ask": "What controls do you evaluate, using which populations and period? What must we evaluate ourselves, and how are limitations in your monitoring communicated?",
+      "gaps": "Look for controls never evaluated, monitoring disconnected from risk, repeated false reassurance from incomplete reports, or evaluations that test documentation but not operation."
+    },
+    "CC4.2": {
+      "plain": "Control deficiencies need evaluation and timely communication to people responsible for corrective action, including management or oversight where appropriate. Recording a gap is only the beginning.",
+      "start": "Follow a control deficiency from discovery through significance assessment, communication, and assigned response. Check whether the right decision-makers received it in time.",
+      "evidence": "Issue records, escalation messages, management decisions, or follow-up evidence can demonstrate evaluation and communication. Opening an Action does not itself show the deficiency was resolved.",
+      "ask": "Who assesses the significance of deficiencies you identify? What do you escalate to us, when, and how do we confirm responsibility for the corrective response?",
+      "gaps": "Look for deficiencies hidden in logs, inconsistent escalation, overdue decisions, or issues closed without checking what changed. Risk acceptance does not automatically satisfy an unmet criterion."
+    },
+    "CC5.1": {
+      "plain": "Select and develop control activities that reduce relevant risks to acceptable levels. Controls should address the identified exposure, not merely populate a standard checklist.",
+      "start": "Take a material risk and compare its selected controls with the reason for choosing them. Identify dependencies, incompatible duties, and residual exposure requiring management judgment.",
+      "evidence": "Risk-to-control mappings, design decisions, approval rules, or control procedures can show why activities were selected. Evidence of operation helps distinguish intended design from actual practice.",
+      "ask": "Which risks do your activities reduce, and where do they depend on our actions? What exposure remains if a client-side step or provider control fails?",
+      "gaps": "Look for controls with no clear risk purpose, identified risks without responses, incompatible duties without safeguards, or reliance on procedures that cannot actually reduce the exposure."
+    },
+    "CC5.2": {
+      "plain": "Technology controls must support the achievement of objectives, including reliable infrastructure, access, and technology acquisition or development. The needed controls depend on the actual system.",
+      "start": "Identify the technology supporting key processes and examine the controls its risks require. Include hosted services and integrations without assuming a particular product is mandatory.",
+      "evidence": "Configuration records, access restrictions, infrastructure procedures, or development and change records can show relevant technology controls. Use artifacts tied to actual systems and objectives.",
+      "ask": "Which technology controls do you operate for us, including hosted dependencies? Which configurations or access decisions are ours, and how do we verify the boundary?",
+      "gaps": "Look for unsupported infrastructure, uncontrolled administrative access, technology changes outside normal controls, or security assumptions that do not match the services actually used."
+    },
+    "CC5.3": {
+      "plain": "Control activities need policies that establish expectations and procedures that put them into action. Their form should fit the organization; a specific policy title is not the outcome.",
+      "start": "Compare an important control expectation with the process people actually follow. Check responsibility, timing, exceptions, and whether procedures remain usable after system or role changes.",
+      "evidence": "Applicable policies, workflow instructions, completed records, or supervisory reviews can show expectations implemented in practice. An approved document alone does not prove execution throughout a period.",
+      "ask": "Which expectations govern your work, and what procedures implement them? How do changes reach both organizations, and who handles departures from the agreed process?",
+      "gaps": "Look for procedures inconsistent with policy, responsibilities omitted, outdated instructions, or repeated departures with no appropriate response. More documents do not necessarily mean better implementation."
+    },
+    "CC6.1": {
+      "plain": "Logical access safeguards should protect information assets against threats consistent with system objectives. Assess the access architecture and protections, not simply whether one security product is installed.",
+      "start": "Map important information assets, entry points, identity sources, and administrative paths. Check how access safeguards address the risks of those systems, including provider connections.",
+      "evidence": "Architecture descriptions, identity settings, access configurations, or dated monitoring records can show protections and coverage. A current screenshot does not establish unchanged operation across the review period.",
+      "ask": "Which access safeguards do you manage, including privileged and remote access? What is ours to configure, and how do you demonstrate coverage and changes during the period?",
+      "gaps": "Look for unmanaged entry points, bypass paths, excessive privileges, weak identity safeguards, or assets excluded from protection without a justified assessment."
+    },
+    "CC6.2": {
+      "plain": "Before access is issued, users must be appropriately registered and authorized. Access should also be removed when authorization no longer applies, including personnel leaving either organization.",
+      "start": "Trace a joiner and a leaver across important systems. Compare the authorization decision with the account created or removed, including provider-managed accounts.",
+      "evidence": "Access requests, approvals, account exports, or deactivation tickets can demonstrate authorized provisioning and removal. Use dated records to examine how the process operated during the period.",
+      "ask": "Who approves identities, creates accounts, and removes access when staff leave? How do your offboarding notifications reach us, and what remains outside your management?",
+      "gaps": "Look for accounts without authorization, departed personnel retaining access, untracked service identities, or handoffs that delay removal because neither party owns the final step."
+    },
+    "CC6.3": {
+      "plain": "Access rights should match authorized roles and responsibilities and be changed or removed when no longer needed. Consider least privilege and incompatible duties in the actual environment.",
+      "start": "Compare a person's job and authorization with their real entitlements. Include privileged roles, role changes, and access managed by providers rather than checking account existence alone.",
+      "evidence": "Role definitions, entitlement exports, role-change tickets, or access-review decisions can show whether privileges were appropriate and adjusted. Dated records support period-based assessment.",
+      "ask": "Who determines appropriate privileges and who implements them? How do you notify us of role changes, and who reviews privileged access or conflicting duties across shared services?",
+      "gaps": "Look for accumulated privileges, access inconsistent with duties, stale role assignments, or reviews that approve every account without checking what the permissions allow."
+    },
+    "CC6.4": {
+      "plain": "Physical access to facilities and protected information assets must be limited to authorized people. Include relevant offices, hosting sites, and sensitive media locations within the system boundary.",
+      "start": "Identify where protected assets are physically located and who controls access. Trace authorization, entry, and removal, including responsibilities at third-party facilities.",
+      "evidence": "Badge permissions, visitor records, facility procedures, or applicable provider assurance can support physical-access assessment. Confirm coverage and client responsibilities rather than assuming a provider report covers everything.",
+      "ask": "Which facilities and media locations do you protect for us? What assurance covers them, and which local access or visitor responsibilities still belong to our organization?",
+      "gaps": "Look for unknown asset locations, access remaining after roles end, uncontrolled visitors, or reliance on hosting assurance that excludes relevant facilities or periods."
+    },
+    "CC6.5": {
+      "plain": "When physical assets are retired, moved, or otherwise leave protected use, safeguards should prevent data and software from becoming accessible to unauthorized parties.",
+      "start": "Follow a retired device or storage medium from inventory to reuse, return, or disposal. Confirm information protections cover the actual asset and custody changes.",
+      "evidence": "Disposition records, sanitization results, custody records, or provider completion evidence can demonstrate protection before assets leave controlled use. Choose evidence appropriate to the data and medium.",
+      "ask": "Who sanitizes, returns, or disposes of our devices and media? What remains our decision, and how do we verify completion before custody transfers?",
+      "gaps": "Look for retired assets with readable information, missing custody records, disposal evidence not tied to devices, or equipment returned to a provider without checking data protection."
+    },
+    "CC6.6": {
+      "plain": "Protect system boundaries against unauthorized access from outside the system. Examine actual external connections and exposure, including third-party and remote-access paths.",
+      "start": "Map internet-facing services and external connections. Compare the intended boundary with current access rules and how new or changed connections are authorized.",
+      "evidence": "Network or cloud rules, remote-access settings, connection inventories, or dated change records can show boundary protection. The presence of a firewall alone is not sufficient evidence.",
+      "ask": "Which external connections do you secure, and which do we control? How are new connections reviewed, and how do you tell us about exposure changes?",
+      "gaps": "Look for undocumented entry points, overly broad rules, unmanaged remote access, or boundary assumptions that ignore cloud services and provider connections."
+    },
+    "CC6.7": {
+      "plain": "Information transmission, movement, and removal need restrictions and protections appropriate to the data and objectives. Consider transfers between systems, devices, customers, and providers.",
+      "start": "Trace a sensitive information transfer and identify authorization, protection in transit, destinations, and removal rules. Include portable devices and exports when relevant.",
+      "evidence": "Transfer settings, authorized destination rules, encryption configurations, export records, or movement approvals can show how information was protected. Not every transfer requires the same artifact.",
+      "ask": "Which data transfers do you operate, and who approves destinations or removal? How do we verify protection when information leaves either organization's controlled environment?",
+      "gaps": "Look for uncontrolled exports, insecure transfer paths, unclear recipients, or data movement that bypasses established restrictions. Encryption alone does not establish that a transfer was authorized."
+    },
+    "CC6.8": {
+      "plain": "Prevent or detect unauthorized or malicious software and respond appropriately. Protection should address the actual systems and software-entry paths, not require a named security tool.",
+      "start": "Identify how software enters the environment and how unauthorized or malicious code is prevented, detected, and handled. Check systems outside the main endpoint-management population.",
+      "evidence": "Software restrictions, protection settings, coverage exports, alerts, or response tickets can show relevant safeguards and operation. Installation of an agent alone does not prove effective coverage.",
+      "ask": "Which systems do you protect and monitor for malicious software? Who addresses detections, what requires our action, and how are exclusions or failed agents communicated?",
+      "gaps": "Look for unmanaged devices, inactive protection, ignored detections, unsafe software-entry paths, or exclusions no one evaluates against the system's risks."
+    },
+    "CC7.1": {
+      "plain": "Use detection and monitoring to identify configuration changes that introduce vulnerabilities and susceptibility to newly discovered vulnerabilities. This informs protection of the system over time.",
+      "start": "Compare important assets with vulnerability and configuration monitoring coverage. Trace a new vulnerability or risky configuration change through evaluation and the selected response.",
+      "evidence": "Configuration comparisons, vulnerability results, coverage records, or remediation tickets can demonstrate detection and follow-through. Organization-defined timing should reflect risk and commitments, not an invented SOC 2 cadence.",
+      "ask": "Which assets and configuration changes do you monitor? How are new vulnerabilities evaluated, which fixes are ours, and how do we learn about missing coverage?",
+      "gaps": "Look for assets outside monitoring, obsolete vulnerability information, risky changes undetected, or identified exposure with no evaluated response. A single scan does not show sustained monitoring."
+    },
+    "CC7.2": {
+      "plain": "Monitor system components for anomalies that may indicate malicious activity, environmental failure, or other security events. Evaluate whether anomalies affect achievement of objectives.",
+      "start": "Identify important event sources and monitoring responsibilities. Follow an anomaly from collection through analysis, including sources managed by the client and its providers.",
+      "evidence": "Monitoring configuration, event records, alert evaluations, or service coverage reports can demonstrate detection and analysis across the period. Logs retained without evaluation show only part of the process.",
+      "ask": "Which components and events do you monitor, during what coverage hours? Who evaluates anomalies, and what gaps or client-side event sources are outside your service?",
+      "gaps": "Look for missing event sources, unreviewed alerts, monitoring interruptions, or anomalies dismissed without considering the effect on system objectives."
+    },
+    "CC7.3": {
+      "plain": "Detected security events need evaluation to decide whether they are incidents and whether action is needed. Not every alert is an incident, but the judgment needs a sound basis.",
+      "start": "Follow several relevant events through triage and classification. Examine who decides significance, how information is gathered, and whether escalation matches the potential impact.",
+      "evidence": "Triage records, incident classification decisions, supporting event data, or escalation tickets can show evaluation. Dated decisions help distinguish active handling from a retrospective description.",
+      "ask": "Who decides whether an alert affecting us is an incident? What information do you need from us, and who takes over when an event exceeds your responsibility?",
+      "gaps": "Look for alerts never classified, decisions made without sufficient context, inconsistent escalation, or provider events that never reach the person accountable for the affected system."
+    },
+    "CC7.4": {
+      "plain": "Respond to identified security incidents through a defined process that contains and addresses the event and communicates appropriately. Responsibilities and decisions must fit the incident's impact.",
+      "start": "Trace an actual incident or a relevant response exercise through containment, investigation, remediation, and communication. Separate a documented response plan from evidence it was used.",
+      "evidence": "Incident timelines, response procedures, containment records, communications, or corrective decisions can demonstrate coordinated handling. Protect sensitive investigation details while retaining useful dates and decisions.",
+      "ask": "What incident response actions do you perform and who authorizes them? How do we coordinate containment and communications, and where do your responsibilities end?",
+      "gaps": "Look for unclear command authority, response steps not performed, communication gaps, or incidents marked resolved without considering the underlying cause and remaining exposure."
+    },
+    "CC7.5": {
+      "plain": "Recover from identified security incidents using appropriate activities to restore the system and address the consequences. Recovery also helps determine whether objectives can again be met.",
+      "start": "Follow recovery from an incident or relevant exercise. Check restoration decisions, integrity checks, residual effects, and coordination with providers supporting the affected services.",
+      "evidence": "Recovery records, restoration results, post-incident reviews, or validated remediation can demonstrate recovery actions. A backup configuration alone does not show recovery was possible or completed.",
+      "ask": "Which incident recovery activities do you perform, and what do we need to validate? How are restored services checked before normal operation resumes?",
+      "gaps": "Look for recovery plans disconnected from actual incidents, restoration without validation, or unresolved effects after service returns. Security recovery remains relevant even without Availability selected."
+    },
+    "CC8.1": {
+      "plain": "System changes need authorization, design, development or acquisition, testing, and implementation appropriate to objectives. Include infrastructure, software, data, and procedures rather than only code releases.",
+      "start": "Trace a normal change and an urgent change from need through implementation. Examine authorization, testing, security impact, and the actual production result.",
+      "evidence": "Change tickets, approval history, test results, deployment logs, or configuration diffs can show controlled changes. Dated records reveal operation better than a procedure alone.",
+      "ask": "Which changes can you make, who authorizes them, and which tests are ours? How are urgent changes reviewed and communicated across both teams?",
+      "gaps": "Look for changes outside the process, approvals after the fact without justified emergency handling, testing unrelated to risk, or provider changes implemented without client coordination."
+    },
+    "CC9.1": {
+      "plain": "Identify and select ways to mitigate risks from potential business disruption. The appropriate response depends on objectives and exposure; it is not limited to an Availability category checklist.",
+      "start": "Examine disruption scenarios, dependencies, and selected responses. Check whether those decisions cover the service and security consequences relevant to the organization's commitments.",
+      "evidence": "Disruption risk analyses, continuity arrangements, alternate-resource plans, or response exercises can show chosen mitigation. Specific insurance, documents, or testing intervals are not universally prescribed.",
+      "ask": "What happens if your service, staff, or a key dependency becomes unavailable? Which mitigations do you provide, and what continuity decisions or resources remain ours?",
+      "gaps": "Look for critical dependencies without a considered response, plans based on unsupported assumptions, or exclusion of disruption risks solely because Availability is not in scope."
+    },
+    "CC9.2": {
+      "plain": "Assess and manage risks arising from vendors and business partners. Contracting with a provider does not automatically establish that its services meet the organization's control objectives.",
+      "start": "Identify important providers, their services, and the risks they create. Examine selection, commitments, monitoring, and response when a provider falls short.",
+      "evidence": "Provider assessments, agreements, assurance reports, service reviews, or issue records can support oversight. Check report scope, period, exceptions, and client responsibilities before relying on assurance.",
+      "ask": "What risks and subcontractors affect your service? What assurance can you provide, which controls must we perform, and how are service or security deficiencies communicated?",
+      "gaps": "Look for unassessed critical providers, reports outside relevant scope, ignored client responsibilities, or known provider deficiencies without a management decision and follow-up."
+    },
+    "A1.1": {
+      "plain": "Capacity must be managed so the system can meet availability commitments. Consider actual usage, expected demand, and resources needed across infrastructure and service dependencies.",
+      "start": "Compare availability commitments and demand assumptions with current resource use and capacity decisions. Check bottlenecks and whether provider capacity information supports the whole service.",
+      "evidence": "Usage trends, capacity forecasts, performance records, or scaling decisions can demonstrate resource management. A current utilization screenshot does not explain demand changes over the period.",
+      "ask": "Which resources and capacity limits do you manage? What demand information must we provide, and how are scaling needs or bottlenecks communicated?",
+      "gaps": "Look for commitments disconnected from capacity planning, unknown limits, recurring saturation, or reliance on provider capacity that does not cover client-managed components."
+    },
+    "A1.2": {
+      "plain": "Environmental protection, backup, and recovery infrastructure should support availability commitments and system requirements. The design must fit the service, data, dependencies, and recovery objectives.",
+      "start": "Identify what must remain available or recoverable and compare that with protective infrastructure and backup arrangements. Include dependency failures and responsibility for recovery resources.",
+      "evidence": "Backup-job history, environmental safeguards, redundancy configurations, or recovery arrangements can show appropriate infrastructure and operation. A successful backup is not proof of successful restoration.",
+      "ask": "Which backups and availability safeguards do you operate, and which components remain ours? What failures are covered, and how do we learn about unsuccessful protection activities?",
+      "gaps": "Look for missing backup coverage, repeated failed jobs, recovery resources inconsistent with commitments, or environmental and provider dependencies omitted from the availability design."
+    },
+    "A1.3": {
+      "plain": "Recovery procedures must be tested to support availability objectives. Testing should establish whether the selected recovery approach works, not merely whether instructions exist.",
+      "start": "Compare recovery commitments with procedures and completed tests. Examine the scenario, results, recovery validation, and response to discovered limitations using organization-defined test timing.",
+      "evidence": "Recovery procedures, dated test results, restoration logs, or issue follow-up can demonstrate testing. Select evidence showing the outcome, not just a calendar invitation.",
+      "ask": "Which recovery procedures do you test and what must we test? How do we validate restored data and service, and how are unsuccessful results resolved?",
+      "gaps": "Look for untested procedures, tests excluding critical dependencies, restored services not checked, or repeated test failures without effective correction. No universal SOC 2 sample size is implied."
+    },
+    "C1.1": {
+      "plain": "Confidential information needs identification and protection consistent with confidentiality commitments. Determine what is confidential and how safeguards follow it across its lifecycle and service boundaries.",
+      "start": "Start with confidentiality commitments and the information they cover. Trace sensitive data through collection, storage, use, and sharing, including client and provider responsibilities.",
+      "evidence": "Classification decisions, data-flow records, access settings, transfer safeguards, or handling procedures can show identification and protection. Evidence should match the data and applicable commitment.",
+      "ask": "Which confidential information do you handle for us, and how is it protected? Who determines classification, permitted use, and safeguards at each transfer?",
+      "gaps": "Look for confidential data not identified, inconsistent handling across systems, protection missing at transfers, or assumptions that every provider applies the same confidentiality obligations."
+    },
+    "C1.2": {
+      "plain": "Confidential information must be disposed of consistently with confidentiality commitments and requirements. Disposal includes relevant copies and locations, not merely closing an account or deleting one file.",
+      "start": "Compare disposal obligations with actual deletion or sanitization processes. Trace a completed disposal request through client systems, providers, copies, and any justified retention constraints.",
+      "evidence": "Deletion results, sanitization records, retention decisions, or provider completion confirmations can show controlled disposal. Clarify which copies the evidence covers and which remain retained.",
+      "ask": "Which confidential copies can you delete or sanitize, including backups? What remains ours, and how are completion, retained copies, or legal constraints communicated?",
+      "gaps": "Look for forgotten copies, disposal not verified, retention without a justified basis, or provider deletion claims that exclude relevant storage and replicas."
+    },
+    "PI1.1": {
+      "plain": "Processing must be based on clear information about expected products, services, data, and processing specifications. People need usable definitions to determine whether processing meets objectives.",
+      "start": "Identify an important processing service and agree what its inputs, outputs, data definitions, and success conditions mean. Check that affected users and operators receive those specifications.",
+      "evidence": "Service specifications, data definitions, customer instructions, or approved processing rules can demonstrate understood expectations. Choose records that show actual information quality, not just a system name.",
+      "ask": "Which processing specifications do you use and communicate? Who defines acceptable results, validates data definitions, and resolves differences between our expectations and your service?",
+      "gaps": "Look for ambiguous data definitions, undocumented processing assumptions, specifications not communicated, or no agreed basis for deciding whether the delivered service is correct."
+    },
+    "PI1.2": {
+      "plain": "Inputs must meet defined requirements so processing can be complete and accurate. Identify what should enter the process and how invalid, missing, or unauthorized inputs are handled.",
+      "start": "Trace inputs from their source through acceptance checks. Compare expected and received populations, required fields, authorization where relevant, and correction of rejected or incomplete submissions.",
+      "evidence": "Input-validation settings, source totals, intake records, rejection logs, or corrected submissions can demonstrate reliable inputs. Dated records help show the checks operated throughout the period.",
+      "ask": "Which input checks do you perform, and which are our responsibility? How do we learn about rejected, duplicate, missing, or inaccurate submissions and confirm their correction?",
+      "gaps": "Look for missing input populations, unchecked formats, duplicate entries, rejected inputs never resolved, or input controls that disappear when data arrives through a different integration."
+    },
+    "PI1.3": {
+      "plain": "Processing must execute according to the defined specifications, with errors identified and addressed. Focus on what the system actually does between accepted inputs and resulting outputs.",
+      "start": "Follow a representative transaction or batch through processing rules, execution, and exception handling. Examine whether failures, retries, and manual interventions preserve the intended result.",
+      "evidence": "Processing configurations, execution logs, reconciliations, or error-resolution tickets can demonstrate correct execution. Consider dated operation and exceptions rather than relying only on a design document.",
+      "ask": "Which processing steps and error handling do you operate? Who resolves failed or partial runs, and how do retries avoid duplicate or inconsistent results?",
+      "gaps": "Look for undocumented processing rules, incomplete batches, silent failures, uncontrolled manual changes, or retries that duplicate results instead of safely completing the original work."
+    },
+    "PI1.4": {
+      "plain": "Outputs need to be complete, accurate, timely, and delivered to intended parties according to specifications. A successful internal processing step is not enough if delivery fails.",
+      "start": "Compare expected outputs with what recipients received, including content, completeness, timing, and destination. Follow a failed or delayed delivery through its resolution.",
+      "evidence": "Output reconciliations, generated reports, delivery records, recipient acknowledgments, or exception records can demonstrate the required result. Use alternatives relevant to the actual output channel.",
+      "ask": "Which output checks and deliveries do you manage? Who verifies recipient authorization and completeness, and how do we resolve late, incorrect, or undelivered outputs?",
+      "gaps": "Look for outputs sent to unintended recipients, missing records, unrecognized delivery failures, unexplained delays, or reconciliations that ignore the final delivery stage."
+    },
+    "PI1.5": {
+      "plain": "Inputs, in-process data, and outputs must be stored according to processing specifications. Storage should preserve their integrity and accessibility for the purpose they serve.",
+      "start": "Identify where each processing stage stores data and compare protection and retention with specifications. Examine corruption, loss, movement, or premature deletion risks relevant to processing.",
+      "evidence": "Storage configurations, integrity checks, access restrictions, retention records, or recovery results can demonstrate preserved processing data. Tie evidence to the relevant processing stages and period.",
+      "ask": "Which processing data do you store, for how long, and under which protections? What must we retain or validate, and how are corruption or loss detected and addressed?",
+      "gaps": "Look for intermediate data outside protection, records removed before needed, unrecognized corruption, or storage assumptions that omit provider-managed copies essential to processing."
+    },
+    "P1.1": {
+      "plain": "People need notice of privacy practices relevant to their personal information. Notices should accurately describe practices and changes; responsibilities depend on whether the organization acts as controller or processor.",
+      "start": "Compare the applicable privacy notice with actual data practices and delivery points. Identify who owns the notice and how changes reach affected people in time.",
+      "evidence": "Notice versions, publication or delivery records, practice inventories, or change communications can show accurate and timely notice. A generic website notice may not cover the assessed service.",
+      "ask": "Who supplies and updates notices for the data we handle together? Which practices must each party disclose, and how do service changes reach the notice owner?",
+      "gaps": "Look for notices inconsistent with actual collection or sharing, affected people never receiving notice, or processor/controller assumptions that leave privacy communication unowned."
+    },
+    "P2.1": {
+      "plain": "People need understandable choices about collection, use, retention, disclosure, and disposal, including consequences. Consent must be handled appropriately, with an understood basis where implicit consent is used.",
+      "start": "Compare offered choices and consent mechanisms with notices and actual processing. Determine when explicit consent is needed and how choices or withdrawal change downstream handling.",
+      "evidence": "Choice screens, consent records, preference changes, or documented consent reasoning can demonstrate meaningful choices. Use records showing what the person understood and what happened afterward.",
+      "ask": "Which choices and consent records do you manage? What must we communicate, and how do changed preferences reach both parties and affect continued handling?",
+      "gaps": "Look for unclear consequences, choices that do not change processing, consent without an understood basis, or withdrawals that never reach provider systems."
+    },
+    "P3.1": {
+      "plain": "Collect personal information consistently with privacy objectives. Collection should fit stated purposes and applicable requirements rather than expanding simply because additional data is available.",
+      "start": "Map collected fields, sources, and purposes for the assessed service. Check that collection methods and new data sources align with communicated practices and privacy objectives.",
+      "evidence": "Data inventories, collection forms, source agreements, or intake configurations can demonstrate what is collected and why. Minimize exposure of actual personal data during assessment.",
+      "ask": "Which personal information do you collect directly or receive from us? Who confirms its purpose, source reliability, and alignment with the privacy practices people were told about?",
+      "gaps": "Look for unnecessary fields, unknown collection sources, hidden collection paths, or data collected for purposes inconsistent with the organization's stated privacy objectives."
+    },
+    "P3.2": {
+      "plain": "When explicit consent is required for collection, explain its necessity and the consequences of refusal and obtain it before collecting the information.",
+      "start": "Identify collection scenarios requiring explicit consent and trace the person's decision before collection begins. Check refusal paths and whether later changes respect the original consent.",
+      "evidence": "Consent wording, dated consent records, collection timestamps, or refusal-flow tests can show informed consent before collection. A general acknowledgment may not cover the specific collection.",
+      "ask": "Who determines when explicit consent is needed and captures it before collection? How are refusal and consent scope communicated between our systems and your services?",
+      "gaps": "Look for collection preceding consent, unclear refusal consequences, bundled acknowledgments without a clear decision, or consent records that cannot be linked to the collection involved."
+    },
+    "P4.1": {
+      "plain": "Use personal information only for identified purposes consistent with privacy objectives. Access to information does not itself authorize a new use.",
+      "start": "Trace an actual use of personal information to its stated purpose. Include analytics, support access, and provider uses rather than checking collection notices alone.",
+      "evidence": "Purpose inventories, processing instructions, access/use records, or approved use decisions can demonstrate purpose-limited handling. Choose records that explain why the use was appropriate.",
+      "ask": "Which purposes govern your use of our personal information? What uses require our decision or renewed communication, and how do you prevent unrelated secondary use?",
+      "gaps": "Look for data reused without a defined purpose, provider uses outside instructions, purpose changes not evaluated, or staff assuming technical access permits any use."
+    },
+    "P4.2": {
+      "plain": "Retain personal information consistently with privacy objectives and relevant obligations. Retention should support necessary purposes without keeping data indefinitely by default.",
+      "start": "Compare retention decisions with purposes, legal or contractual constraints, and actual storage. Check both excessive retention and destruction before required purposes have been met.",
+      "evidence": "Retention rules, configured expiration settings, justified holds, or aged-data reviews can demonstrate appropriate retention. Different datasets may legitimately require different periods.",
+      "ask": "Which copies do you retain and under whose retention instructions? How do holds, expired purposes, and deletion timing reach your systems and ours?",
+      "gaps": "Look for indefinite retention without justification, configured periods inconsistent with decisions, forgotten copies, or premature deletion that prevents meeting a valid obligation."
+    },
+    "P4.3": {
+      "plain": "Dispose of personal information securely when its use and retention purposes end, consistent with privacy objectives. Include relevant systems and providers rather than one visible application record.",
+      "start": "Trace a completed disposal decision through all relevant locations. Understand deletion, sanitization, or appropriate anonymization methods and any justified retained copies.",
+      "evidence": "Disposal results, deletion logs, sanitization records, or provider confirmations can show completion and coverage. Assess what the method demonstrates without requiring a particular certificate.",
+      "ask": "Which copies can you dispose of and how do you confirm completion? What constraints or backup cycles affect timing, and what must our team initiate or verify?",
+      "gaps": "Look for disposal decisions never executed, recoverable personal data treated as anonymized, provider copies omitted, or retained data without a clear constraint and accountable owner."
+    },
+    "P5.1": {
+      "plain": "Authenticated individuals need appropriate access to their personal information for review and copies. If access is denied, handle the denial and explanation according to privacy objectives.",
+      "start": "Follow an access request from identity verification through retrieval and response. Check coverage across relevant systems, third-party coordination, and any documented denial basis.",
+      "evidence": "Request records, identity-verification procedures, response records, or denial explanations can demonstrate appropriate access handling. Avoid retaining more identity material than the process needs.",
+      "ask": "Which data can you retrieve for access requests, and what authentication or instructions do you need from us? Who responds to the person and explains any valid denial?",
+      "gaps": "Look for unverified requesters receiving information, incomplete responses, requests lost between providers, or denials without an appropriate reason and communication."
+    },
+    "P5.2": {
+      "plain": "Individuals need a way to request correction or amendment of personal information. Appropriate changes and relevant notifications should follow through, with justified denials explained.",
+      "start": "Trace a correction request to the source data, affected copies, response, and any parties requiring notification. Examine how contested information or denied corrections are handled.",
+      "evidence": "Correction tickets, change records, communications, or justified denial records can show accurate and coordinated handling. A changed front-end display may leave underlying copies unchanged.",
+      "ask": "Which copies can you correct and which require our action? How do corrections reach other relevant recipients, and who explains a request that cannot be accepted?",
+      "gaps": "Look for corrections applied to only one copy, recipients not notified where needed, unexplained denials, or changes made without verifying the request and affected information."
+    },
+    "P6.1": {
+      "plain": "The criterion addresses explicit consent before personal information is disclosed to third parties. Assess the actual disclosure, consent, and privacy objectives rather than treating a provider agreement as consent.",
+      "start": "Identify third-party disclosures and examine the consent supporting them before disclosure occurs. Have the privacy owner address applicable legal constraints; do not silently replace the criterion with a generic lawful-basis statement.",
+      "evidence": "Consent records, disclosed purposes and recipients, or dated sharing records can link an informed decision to subsequent disclosure. Contracts alone do not demonstrate a person's consent.",
+      "ask": "Which disclosures do you make and under whose instructions? Who obtains the required consent beforehand, verifies its scope, and handles applicable legal exceptions with the privacy owner?",
+      "gaps": "Look for sharing before consent, consent that does not cover the recipient or purpose, or an assumed exception never evaluated. Provider involvement alone does not authorize disclosure."
+    },
+    "P6.2": {
+      "plain": "Authorized disclosures of personal information need complete, accurate, and timely records consistent with privacy objectives. Records should explain what was shared and to whom.",
+      "start": "Trace an authorized disclosure and compare the actual transfer with its recorded information, recipient, purpose, and timing. Check coverage across relevant sharing channels.",
+      "evidence": "Disclosure logs, transfer records, recipient records, or reconciliations can demonstrate reliable accounting of authorized sharing. Choose an appropriate format rather than requiring a named report.",
+      "ask": "Which authorized disclosures do you record, including onward transfers? What information must we supply, and how can we reconcile your records with our own disclosure history?",
+      "gaps": "Look for authorized transfers missing from records, inaccurate recipients or dates, incomplete sharing channels, or records created too late to support required accountability."
+    },
+    "P6.3": {
+      "plain": "Detected or reported unauthorized disclosures need reliable records. This criterion focuses on recording the disclosure; incident evaluation, response, and notification have related but distinct purposes.",
+      "start": "Follow a suspected or confirmed unauthorized disclosure through detection/reporting and recording. Compare what was known with the dates, affected information, recipients, and subsequent updates.",
+      "evidence": "Incident intake records, disclosure registers, investigation updates, or reconciled event records can show complete and timely recording. Protect sensitive incident details without losing accountability.",
+      "ask": "How do you record unauthorized disclosures involving our information? What do you report to us, who maintains the authoritative record, and how are later corrections synchronized?",
+      "gaps": "Look for reported disclosures missing from the record, incomplete affected-data information, unexplained timing gaps, or records marked complete before relevant investigation updates were captured."
+    },
+    "P6.4": {
+      "plain": "Third parties handling personal information need appropriate privacy commitments, evaluated periodically and as needed. Identified failures require corrective action appropriate to privacy objectives.",
+      "start": "Identify personal-information recipients and their privacy obligations. Examine the organization's defined evaluation approach and follow a detected provider issue through the corrective response.",
+      "evidence": "Privacy agreements, provider evaluations, assurance records, or corrective follow-up can demonstrate commitments and ongoing evaluation. The criterion does not prescribe a universal annual or quarterly interval.",
+      "ask": "What privacy commitments cover your handling and onward providers? What evaluation information do you supply, and who acts when commitments or practices are not met?",
+      "gaps": "Look for recipients without appropriate commitments, evaluation missing despite relevant changes, assurance unrelated to privacy obligations, or known provider failures without effective follow-up."
+    },
+    "P6.5": {
+      "plain": "Third parties must commit to report actual or suspected unauthorized disclosures, and appropriate personnel need to receive and act on those reports in line with privacy objectives.",
+      "start": "Review notification commitments and trace a provider report or relevant exercise through receipt, escalation, and action. Check that the route works outside ordinary account-management conversations.",
+      "evidence": "Notification clauses, contact routes, received reports, or response decisions can demonstrate workable provider reporting. An agreement alone does not show that a reported event was acted upon.",
+      "ask": "What actual or suspected disclosures must you report and to whom? How do we maintain contact routes, and which response actions belong to each organization?",
+      "gaps": "Look for commitments covering only confirmed breaches, reports sent to inactive contacts, delayed internal escalation, or provider notifications received without an appropriate response."
+    },
+    "P6.6": {
+      "plain": "Affected people, regulators, and others need notification of personal-information breaches or incidents according to privacy objectives and applicable obligations. Requirements depend on the circumstances and jurisdiction.",
+      "start": "Examine how notification obligations, affected parties, timing, and approval are determined. Trace an incident decision to communications or a documented, appropriate decision not to notify.",
+      "evidence": "Incident assessments, recipient determinations, dated notices, or decision records can demonstrate notification handling. Do not assume one universal deadline or that every event requires the same recipients.",
+      "ask": "What information do you provide for notification decisions, and who makes those decisions? Which communications can you perform, and which remain our privacy or legal team's responsibility?",
+      "gaps": "Look for decisions without affected-party analysis, applicable deadlines not evaluated, incomplete notices, or reliance on a provider to notify people when that responsibility was never agreed."
+    },
+    "P6.7": {
+      "plain": "On request, provide an accounting of the personal information held and its disclosures consistent with privacy objectives. This is not limited to an incident or one application's sharing log.",
+      "start": "Follow an accounting request through identification of held information and disclosures across relevant systems and providers. Check identity, completeness, and the response supplied to the requester.",
+      "evidence": "Request records, held-data inventories, disclosure histories, or reconciled responses can demonstrate an accurate accounting. Select evidence showing both information held and relevant disclosures.",
+      "ask": "Which held information and disclosure history can you provide for a request? What remains outside your service, and how do we reconcile the complete accounting across organizations?",
+      "gaps": "Look for an accounting that lists disclosures but omits held data, missing provider records, or responses assembled from inconsistent inventories without checking their coverage."
+    },
+    "P7.1": {
+      "plain": "Personal information should be accurate, current, complete, and relevant for the purposes for which it is used. Quality depends on the use and consequences of incorrect information.",
+      "start": "Select important personal information and compare its source, update process, and use. Examine how errors, outdated values, and missing information are detected and corrected.",
+      "evidence": "Source checks, update records, validation results, or correction history can demonstrate suitable data quality. Avoid collecting unnecessary personal information merely to create assessment evidence.",
+      "ask": "Which personal-data quality checks do you perform? Who corrects source errors, supplies updates, and verifies that corrections reach the systems where the information is used?",
+      "gaps": "Look for outdated information driving decisions, missing critical fields, inconsistent copies, or correction processes that do not address the original source and subsequent use."
+    },
+    "P8.1": {
+      "plain": "Privacy objectives need ongoing attention through complaint handling, communication, monitoring, and correction. A privacy notice alone does not show that the organization follows its stated practices.",
+      "start": "Trace a privacy complaint through receipt, investigation, resolution, and communication. Compare monitoring with privacy objectives and examine how identified deficiencies received timely correction.",
+      "evidence": "Complaint records, response communications, privacy monitoring results, or corrective reviews can demonstrate ongoing accountability. Organization-defined monitoring timing should fit the obligations and risks.",
+      "ask": "How are privacy complaints and monitoring issues involving your service reported and resolved? Who communicates outcomes, and how do we verify corrections across both organizations?",
+      "gaps": "Look for unanswered complaints, decisions not communicated, monitoring that ignores actual privacy practices, or repeat deficiencies closed without checking whether the corrective response worked."
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "version": "soc-guidance-v2",
+  "version": "soc-guidance-v3",
   "framework": "soc-2",
   "source": {
     "title": "AICPA 2017 Trust Services Criteria (revised Points of Focus, 2022)",
@@ -1916,6 +1916,554 @@
         ],
         "enhanced": [
           "Validate selected disposal outcomes against the relevant systems or provider process to detect data that remains accessible after reported completion."
+        ]
+      }
+    },
+    "PI1.1": {
+      "source_reference": "PI1.1",
+      "source_page": 53,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Define and communicate the information and processing specifications needed to meet processing objectives.",
+        "review": [
+          "Confirm data definitions and expected services or outputs are understandable and communicated to those supplying, processing, or using the information."
+        ],
+        "evidence": [
+          "Specifications, data dictionaries, service instructions, or acceptance definitions can demonstrate shared understanding of expected processing."
+        ],
+        "outcome": [
+          "Users and operators have sufficiently clear, usable information to judge whether processing meets the defined objectives."
+        ],
+        "operational": [
+          "Keep processing definitions aligned when products, data fields, or customer instructions change."
+        ],
+        "enhanced": [
+          "Compare interpretations among users and operators to identify ambiguous specifications before they cause incorrect processing."
+        ]
+      }
+    },
+    "PI1.2": {
+      "source_reference": "PI1.2",
+      "source_page": 54,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Process inputs consistently with defined requirements for completeness and accuracy.",
+        "review": [
+          "Compare expected input populations and quality requirements with acceptance checks, rejection handling, and corrected submissions."
+        ],
+        "evidence": [
+          "Intake records, validation results, source totals, and rejected-input resolutions can demonstrate complete and accurate input handling across the period."
+        ],
+        "outcome": [
+          "Expected inputs are accounted for and unsuitable submissions are identified and addressed before they cause incorrect processing."
+        ],
+        "operational": [
+          "Assign responsibility for correcting rejected or incomplete inputs and reconciling source-to-intake differences."
+        ],
+        "enhanced": [
+          "Test alternative input channels to see whether an integration bypasses the intended acceptance checks."
+        ]
+      }
+    },
+    "PI1.3": {
+      "source_reference": "PI1.3",
+      "source_page": 54,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Execute processing according to specifications and address processing errors.",
+        "review": [
+          "Trace transactions through processing logic, execution results, partial failures, retries, and manual interventions."
+        ],
+        "evidence": [
+          "Job logs, processing reconciliations, error tickets, or execution results can demonstrate specification-consistent processing and error resolution."
+        ],
+        "outcome": [
+          "Processing produces the intended result, with errors recognized and addressed rather than silently losing or duplicating work."
+        ],
+        "operational": [
+          "Make restart, retry, and manual correction procedures clear to the people operating the process."
+        ],
+        "enhanced": [
+          "Examine interruption and recovery scenarios for duplicate, inconsistent, or incomplete processing results."
+        ]
+      }
+    },
+    "PI1.4": {
+      "source_reference": "PI1.4",
+      "source_page": 55,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Deliver complete, accurate, and timely outputs to intended recipients according to specifications.",
+        "review": [
+          "Compare expected outputs and recipients with actual generated and delivered results, including delayed or failed deliveries."
+        ],
+        "evidence": [
+          "Output totals, delivery logs, acknowledgments, or resolved delivery exceptions can demonstrate output accuracy, completeness, timing, and destination."
+        ],
+        "outcome": [
+          "Intended recipients receive the specified outputs with appropriate completeness, accuracy, and timeliness."
+        ],
+        "operational": [
+          "Assign responsibility for resolving output discrepancies and failed deliveries without obscuring the original processing record."
+        ],
+        "enhanced": [
+          "Reconcile delivered outputs independently of successful internal processing status where useful."
+        ]
+      }
+    },
+    "PI1.5": {
+      "source_reference": "PI1.5",
+      "source_page": 56,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Preserve inputs, in-process data, and outputs in storage according to processing specifications.",
+        "review": [
+          "Identify storage used at each processing stage and evaluate protection, retention, integrity, and accessibility against the specified purpose."
+        ],
+        "evidence": [
+          "Storage settings, integrity checks, retention records, or recovery outcomes can demonstrate protection of processing data."
+        ],
+        "outcome": [
+          "Processing data remains suitable for its defined purpose throughout the required storage lifecycle."
+        ],
+        "operational": [
+          "Include temporary and provider-managed storage in the operational handling of processing records."
+        ],
+        "enhanced": [
+          "Validate that processing can continue correctly after a relevant storage-loss or corruption scenario."
+        ]
+      }
+    },
+    "P1.1": {
+      "source_reference": "P1.1",
+      "source_page": 57,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Give notice of privacy practices and update affected people when those practices change.",
+        "review": [
+          "Compare notice content and delivery with actual practices, purposes, and controller or processor responsibilities for the assessed service."
+        ],
+        "evidence": [
+          "Notice versions, delivery records, and practice-change communications can demonstrate accurate notice reaching the intended people."
+        ],
+        "outcome": [
+          "People receive timely, accurate information about the privacy practices relevant to their personal information."
+        ],
+        "operational": [
+          "Coordinate notice changes with the owners of collection, use, and disclosure practices, including relevant provider changes."
+        ],
+        "enhanced": [
+          "Check whether less visible collection channels receive the same relevant notice information."
+        ]
+      }
+    },
+    "P2.1": {
+      "source_reference": "P2.1",
+      "source_page": 58,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Communicate privacy choices and consequences and handle consent consistently with privacy objectives.",
+        "review": [
+          "Examine how choices concerning collection, use, retention, disclosure, and disposal are communicated and honored, including the basis for implicit or explicit consent."
+        ],
+        "evidence": [
+          "Consent wording, preference records, documented consent reasoning, or withdrawal handling can show informed choices reflected in actual processing."
+        ],
+        "outcome": [
+          "Choices and consequences are understandable, and the consent relied on is appropriate and acted upon."
+        ],
+        "operational": [
+          "Route preference changes and withdrawal decisions to every responsible process and provider."
+        ],
+        "enhanced": [
+          "Validate a changed preference through downstream handling rather than only the collection interface."
+        ]
+      }
+    },
+    "P3.1": {
+      "source_reference": "P3.1",
+      "source_page": 59,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Collect personal information consistently with privacy objectives.",
+        "review": [
+          "Map collected information and sources to identified purposes and communicated practices; assess collection methods and relevant source reliability."
+        ],
+        "evidence": [
+          "Field inventories, intake settings, collection forms, or source agreements can show what information is collected and why."
+        ],
+        "outcome": [
+          "Collection is appropriate to the stated purposes and privacy objectives of the service."
+        ],
+        "operational": [
+          "Evaluate new fields and sources before incorporating them into routine collection."
+        ],
+        "enhanced": [
+          "Review less visible or automated collection paths for information not included in the stated collection model."
+        ]
+      }
+    },
+    "P3.2": {
+      "source_reference": "P3.2",
+      "source_page": 60,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Obtain required explicit consent before collection and explain the consequences of refusal.",
+        "review": [
+          "Identify where explicit consent is needed, compare consent timing with collection, and examine the information given about refusal."
+        ],
+        "evidence": [
+          "Consent versions, timestamps, collection records, or refusal-path results can demonstrate an informed decision before collection."
+        ],
+        "outcome": [
+          "Required consent precedes collection and people understand why it is requested and what refusal means."
+        ],
+        "operational": [
+          "Ensure changes to collection flows do not move data capture ahead of the required consent decision."
+        ],
+        "enhanced": []
+      }
+    },
+    "P4.1": {
+      "source_reference": "P4.1",
+      "source_page": 60,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Use personal information for identified purposes consistent with privacy objectives.",
+        "review": [
+          "Trace actual uses, including analytics and provider activities, to the purposes that govern the information."
+        ],
+        "evidence": [
+          "Processing instructions, purpose records, use logs, or evaluated purpose-change decisions can demonstrate appropriate use."
+        ],
+        "outcome": [
+          "Personal information is used consistently with its identified purposes rather than treated as available for any secondary activity."
+        ],
+        "operational": [
+          "Make approved purposes available to staff and providers who decide how the information is used."
+        ],
+        "enhanced": [
+          "Investigate unexpected downstream uses revealed by data-flow or access analysis."
+        ]
+      }
+    },
+    "P4.2": {
+      "source_reference": "P4.2",
+      "source_page": 60,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Retain personal information consistently with privacy purposes and applicable obligations.",
+        "review": [
+          "Compare retention decisions, legal or contractual constraints, and actual storage behavior, including both over-retention and premature deletion."
+        ],
+        "evidence": [
+          "Retention settings, justified holds, aged-data reviews, or expiration results can demonstrate purpose-appropriate retention."
+        ],
+        "outcome": [
+          "Information remains available when legitimately needed and is not retained indefinitely without an appropriate basis."
+        ],
+        "operational": [
+          "Translate dataset-specific retention decisions into usable operational instructions for systems and providers."
+        ],
+        "enhanced": [
+          "Compare actual aged populations with intended retention to detect settings that do not produce the expected result."
+        ]
+      }
+    },
+    "P4.3": {
+      "source_reference": "P4.3",
+      "source_page": 61,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Dispose of personal information securely when retention purposes end.",
+        "review": [
+          "Trace disposal across relevant copies and locations, distinguishing deletion, sanitization, anonymization, and justified retained information."
+        ],
+        "evidence": [
+          "Deletion results, sanitization records, anonymization validation, or provider confirmations can demonstrate secure disposal and its coverage."
+        ],
+        "outcome": [
+          "Disposal appropriately protects personal information and reflects the applicable purposes and constraints."
+        ],
+        "operational": [
+          "Coordinate disposal instructions and completion tracking across client and provider storage."
+        ],
+        "enhanced": [
+          "Validate that a selected disposal method leaves information appropriately inaccessible or no longer identifiable."
+        ]
+      }
+    },
+    "P5.1": {
+      "source_reference": "P5.1",
+      "source_page": 61,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Provide authenticated individuals appropriate access to their personal information and explain applicable denials.",
+        "review": [
+          "Trace access requests through identity verification, retrieval, response, and any denial basis, including relevant provider-held information."
+        ],
+        "evidence": [
+          "Request histories, response records, identity-check procedures, or denial explanations can demonstrate appropriate access handling."
+        ],
+        "outcome": [
+          "Authenticated people receive the access and copies they are entitled to, with appropriate reasons when access is denied."
+        ],
+        "operational": [
+          "Assign retrieval and response responsibilities across the systems needed to fulfill a request."
+        ],
+        "enhanced": [
+          "Compare response coverage with the information inventory to detect omitted systems or copies."
+        ]
+      }
+    },
+    "P5.2": {
+      "source_reference": "P5.2",
+      "source_page": 62,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Handle corrections or amendments to personal information and communicate appropriate changes or denials.",
+        "review": [
+          "Trace a correction through relevant records, responses, and communications to other parties where required by commitments or objectives."
+        ],
+        "evidence": [
+          "Correction records, updated information, recipient notifications, or explained denials can demonstrate coordinated amendment handling."
+        ],
+        "outcome": [
+          "Appropriate corrections reach relevant information and parties, and denied requests receive suitable explanations."
+        ],
+        "operational": [
+          "Coordinate amendments at the source and in downstream copies instead of changing only the visible application field."
+        ],
+        "enhanced": [
+          "Check whether a resolved request left conflicting values in systems that continue to use the information."
+        ]
+      }
+    },
+    "P6.1": {
+      "source_reference": "P6.1",
+      "source_page": 63,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Obtain explicit consent before third-party disclosure of personal information in accordance with privacy objectives.",
+        "review": [
+          "Link actual disclosures to the explicit consent obtained beforehand; have the privacy owner evaluate applicable legal constraints rather than silently substituting a broader lawful-basis formulation."
+        ],
+        "evidence": [
+          "Consent records, recipient and purpose information, and dated disclosure records can demonstrate consent preceding the sharing involved."
+        ],
+        "outcome": [
+          "Disclosure is consistent with the applicable criterion outcome and privacy objectives, with consent scope and any legal constraints explicitly understood."
+        ],
+        "operational": [
+          "Maintain coordination between consent decisions, sharing instructions, and the services that execute disclosures."
+        ],
+        "enhanced": [
+          "Compare onward-sharing paths with the recipients and purposes understood when consent was obtained."
+        ]
+      }
+    },
+    "P6.2": {
+      "source_reference": "P6.2",
+      "source_page": 63,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Maintain complete, accurate, and timely records of authorized personal-information disclosures.",
+        "review": [
+          "Compare actual authorized sharing with its accounting, including relevant recipients, information, purposes, and timing across channels."
+        ],
+        "evidence": [
+          "Transfer records, disclosure logs, recipient histories, or reconciliations can demonstrate reliable recording of authorized sharing."
+        ],
+        "outcome": [
+          "Authorized disclosures can be reliably accounted for using records aligned with actual transfers."
+        ],
+        "operational": [
+          "Include provider and onward transfers in the agreed recording responsibilities."
+        ],
+        "enhanced": [
+          "Reconcile an independent transfer population with disclosure records to detect unrecorded authorized sharing."
+        ]
+      }
+    },
+    "P6.3": {
+      "source_reference": "P6.3",
+      "source_page": 64,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Record detected or reported unauthorized personal-information disclosures accurately and promptly.",
+        "review": [
+          "Follow reported or detected unauthorized disclosures into the authoritative record and subsequent updates as facts become known."
+        ],
+        "evidence": [
+          "Incident intake records, disclosure registers, event data, or investigation updates can demonstrate complete and timely recording."
+        ],
+        "outcome": [
+          "Detected or reported unauthorized disclosures are accounted for with appropriate accuracy and completeness."
+        ],
+        "operational": [
+          "Assign responsibility for maintaining the disclosure record when different teams supply investigation information."
+        ],
+        "enhanced": []
+      }
+    },
+    "P6.4": {
+      "source_reference": "P6.4",
+      "source_page": 64,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Obtain appropriate third-party privacy commitments, evaluate them periodically and as needed, and address failures.",
+        "review": [
+          "Identify personal-information recipients, their obligations, the organization's evaluation timing, and corrective responses to unmet commitments."
+        ],
+        "evidence": [
+          "Privacy agreements, evaluations, applicable assurance, or corrective follow-up can demonstrate commitments and ongoing evaluation."
+        ],
+        "outcome": [
+          "Third-party privacy practices are evaluated against applicable commitments and shortcomings receive an appropriate response."
+        ],
+        "operational": [
+          "Define evaluation triggers and timing according to risk and obligations, without assuming a universal SOC 2 cadence."
+        ],
+        "enhanced": [
+          "Use service or data-flow changes to challenge whether existing provider evaluations still cover the actual privacy exposure."
+        ]
+      }
+    },
+    "P6.5": {
+      "source_reference": "P6.5",
+      "source_page": 65,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Require provider reporting of actual or suspected unauthorized disclosures and act on the reports.",
+        "review": [
+          "Check notification commitments and trace a reported disclosure or relevant exercise through receipt, internal routing, and response."
+        ],
+        "evidence": [
+          "Reporting clauses, current contact routes, provider notices, or response records can demonstrate a workable notification and action process."
+        ],
+        "outcome": [
+          "Relevant provider reports reach appropriate personnel and prompt action consistent with privacy objectives."
+        ],
+        "operational": [
+          "Maintain operational contact routes and clarify reporting responsibilities across providers and client teams."
+        ],
+        "enhanced": [
+          "Exercise a provider-reporting scenario involving suspected rather than already confirmed disclosure."
+        ]
+      }
+    },
+    "P6.6": {
+      "source_reference": "P6.6",
+      "source_page": 65,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Notify affected people, regulators, and others of breaches or incidents according to privacy objectives and applicable obligations.",
+        "review": [
+          "Examine how affected parties, notification duties, timing, and decisions are determined for actual incidents; avoid assuming one deadline applies universally."
+        ],
+        "evidence": [
+          "Incident assessments, dated communications, recipient determinations, or justified notification decisions can demonstrate appropriate handling."
+        ],
+        "outcome": [
+          "Required notifications reflect the affected information, recipients, applicable obligations, and relevant timing."
+        ],
+        "operational": [
+          "Coordinate technical facts with the privacy or legal personnel responsible for notification decisions."
+        ],
+        "enhanced": [
+          "Compare the incident timeline with applicable duties to identify avoidable delays in decision-making or communication."
+        ]
+      }
+    },
+    "P6.7": {
+      "source_reference": "P6.7",
+      "source_page": 65,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Provide a requested accounting of personal information held and its disclosures.",
+        "review": [
+          "Trace a request through the information inventory, disclosure history, provider coordination, and the accounting supplied to the requester."
+        ],
+        "evidence": [
+          "Held-data inventories, disclosure records, request histories, or reconciled responses can demonstrate coverage and accuracy."
+        ],
+        "outcome": [
+          "The accounting appropriately covers both held information and relevant disclosures, not just one application's sharing log."
+        ],
+        "operational": [
+          "Maintain retrieval responsibilities for held information and disclosures across the relevant services."
+        ],
+        "enhanced": [
+          "Compare an assembled response with independent system and provider inventories to identify omissions."
+        ]
+      }
+    },
+    "P7.1": {
+      "source_reference": "P7.1",
+      "source_page": 66,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Keep personal information accurate, current, complete, and relevant for its intended use.",
+        "review": [
+          "Compare important personal-information records with their sources, update processes, validation, and correction handling in the actual use context."
+        ],
+        "evidence": [
+          "Source reconciliations, validation results, update records, or correction histories can demonstrate purpose-appropriate information quality."
+        ],
+        "outcome": [
+          "Personal information is suitably reliable and relevant for the decisions and processing that use it."
+        ],
+        "operational": [
+          "Coordinate corrections at the source and in downstream systems while avoiding unnecessary data collection."
+        ],
+        "enhanced": [
+          "Examine recurring discrepancies to identify source or synchronization problems rather than correcting individual values alone."
+        ]
+      }
+    },
+    "P8.1": {
+      "source_reference": "P8.1",
+      "source_page": 66,
+      "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
+      "items": [],
+      "practical": {
+        "summary": "Address and communicate privacy complaint resolutions, monitor privacy objectives, and correct identified deficiencies.",
+        "review": [
+          "Follow complaints through receipt, resolution, and communication, then compare privacy monitoring with actual practices and corrective responses."
+        ],
+        "evidence": [
+          "Complaint histories, response communications, monitoring results, or completed corrective reviews can demonstrate ongoing privacy accountability."
+        ],
+        "outcome": [
+          "Complaints receive appropriate resolution and communication, and privacy deficiencies are identified and corrected in time."
+        ],
+        "operational": [
+          "Coordinate complaint ownership and monitoring responsibilities across teams and relevant providers."
+        ],
+        "enhanced": [
+          "Examine repeat complaints or deficiencies to determine whether corrective responses changed the underlying practice."
         ]
       }
     }

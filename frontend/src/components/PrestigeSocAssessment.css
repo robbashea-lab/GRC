@@ -7,13 +7,14 @@
 [data-testid="prestige-soc-assessment"] .bcis-crumbs button:hover { text-decoration: underline; }
 [data-testid="prestige-soc-assessment"] .bcis-crumbs button:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 2px; border-radius: 2px; }
 .psoc-context { color: var(--color-text-secondary); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-.psoc-guidance { min-width: 0; max-width: 88ch; overflow-wrap: anywhere; }
+.psoc-guidance { min-width: 0; overflow-wrap: anywhere; }
 .psoc-tier { min-width: 0; margin: 16px 0 0; padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-subtle); }
 .psoc-tier h4 { margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
-.psoc-guidance-group + .psoc-guidance-group { margin-top: 18px; }
+.psoc-guidance-columns { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; }
+.psoc-guidance-group { min-width: 0; padding: 14px; border: 1px solid var(--color-input-border); border-radius: 6px; }
 .psoc-guidance-group h5 { margin: 0 0 6px; font-size: 14px; font-weight: 600; }
 .psoc-tier ul { list-style: disc; padding-left: 22px; margin: 8px 0 0; display: grid; gap: 8px; }
-.psoc-tier li { font-size: 14px; line-height: 1.6; }
+.psoc-tier li { font-size: 1rem; line-height: 1.55; }
 .psoc-guidance-note { margin-top: 12px; font-size: 12px; line-height: 1.5; color: var(--color-text-secondary); }
 .psoc-guidance-context, .psoc-previous-checks { margin-top: 12px; font-size: 12px; line-height: 1.5; color: var(--color-text-secondary); overflow-wrap: anywhere; }
 .psoc-guidance-context summary, .psoc-previous-checks summary { cursor: pointer; font-weight: 600; }
@@ -28,3 +29,26 @@
 .psoc-linked ul { margin: 4px 0 0; padding-left: 18px; }
 .psoc-linked li { margin-top: 4px; overflow-wrap: anywhere; }
 .psoc-linked li button { color: var(--color-link); text-align: left; text-decoration: underline; }
+.psoc-guide-disclosure { border: 1px solid var(--color-input-border); border-radius: 6px; background: var(--color-bg-subtle); margin-top: 8px; }
+.psoc-guide-disclosure > summary { padding: 12px 16px; font-size: .875rem; font-weight: 600; cursor: pointer; }
+.psoc-guide-disclosure > summary:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }
+.psoc-guide-disclosure .cis-requirement-guide { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 16px; margin: 0; border: 0; padding: 0 16px 16px; }
+.psoc-guide-disclosure .cis-requirement-guide > h3, .psoc-guide-disclosure .cis-guide-intro { display: none; }
+.psoc-guide-disclosure .cis-guide-answer { margin: 0; padding: 12px 16px; border-top: 0; border-left: 1px solid var(--color-input-border); }
+.psoc-guide-disclosure .cis-guide-answer p { font-size: 1rem; line-height: 1.6; }
+.psoc-implementation-layout { display: grid; grid-template-columns: 260px minmax(0,1fr); gap: 24px; }
+.psoc-implementation-layout > section { border-bottom: 0; min-width: 0; }
+.psoc-implementation-layout .brawndo-status-options { grid-template-columns: minmax(0,1fr); gap: 6px; }
+.psoc-implementation-layout .brawndo-status-options label { min-height: 40px; padding: 8px 10px; }
+.psoc-implementation-layout textarea { font-size: 1rem; line-height: 1.6; }
+.psoc-findings { margin: 18px 0; padding: 12px 14px; border: 1px solid var(--color-input-border); border-radius: 8px; }
+.psoc-findings h3 { font-size: 1rem; font-weight: 600; }
+.psoc-findings ul { margin: 8px 0; display: grid; gap: 6px; }
+.psoc-findings li { overflow-wrap: anywhere; }
+.psoc-findings li button { color: var(--color-link); text-align: left; text-decoration: underline; }
+.psoc-findings button:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }
+@media (max-width: 1000px) { .psoc-guidance-columns { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 720px) {
+  .psoc-guide-disclosure .cis-requirement-guide, .psoc-implementation-layout { grid-template-columns: minmax(0,1fr); gap: 12px; }
+  .psoc-guide-disclosure .cis-guide-answer { border-left: 0; border-top: 1px solid var(--color-input-border); padding: 12px 0 0; }
+}

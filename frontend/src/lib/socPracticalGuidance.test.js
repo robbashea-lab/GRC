@@ -2,10 +2,10 @@ import {createHash} from 'crypto';
 import guidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import catalog from '@catalogs/soc2.json';
 
-test('versioned shared practical guidance covers exactly CC, Availability and Confidentiality',()=>{
- const expected=catalog.requirements.filter(c=>['security','availability','confidentiality'].includes(c.category)).map(c=>c.id);
+test('versioned shared practical guidance covers every supported criterion without activating categories',()=>{
+ const expected=catalog.requirements.map(c=>c.id);
  expect(Object.keys(guidance.criteria).sort()).toEqual(expected.sort());
- expect(guidance.version).toBe('soc-guidance-v2');
+ expect(guidance.version).toBe('soc-guidance-v3');
  expect(guidance.practical_provenance).toEqual({summary:'criterion_summary',review:'assessment_guidance',evidence:'evidence_examples',outcome:'assessment_guidance',operational:'operational_guidance',enhanced:'enhanced_assurance'});
  const seen=[];
  for(const [id,entry] of Object.entries(guidance.criteria)){
@@ -27,7 +27,7 @@ test('versioned shared practical guidance covers exactly CC, Availability and Co
 });
 
 test('legacy checkbox definitions stay byte-for-byte equivalent in meaning and stable IDs',()=>{
- const items=Object.fromEntries(Object.entries(guidance.criteria).map(([id,entry])=>[id,entry.items]));
+ const items=Object.fromEntries(Object.entries(guidance.criteria).filter(([,entry])=>entry.items.length).map(([id,entry])=>[id,entry.items]));
  expect(createHash('sha256').update(JSON.stringify(items)).digest('hex')).toBe('a7cffdb6268068f90be2b0497a0b7c0e9522f0bd405d4ff937cdc7038c080f0a');
 });
 
