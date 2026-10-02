@@ -2,6 +2,7 @@
 import copy
 import json
 import os
+import secrets
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -65,7 +66,9 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual({r['review_id'] for r in await self.get('/reviews',client_id=cid)},ids)
                 for review in reviews:
                     await self.edit('/reviews/'+review['review_id'],{'owner_id':'admin','expected_occurrence_id':review['current_occurrence_id']})
-                probe=await self.post('/reviews',{'client_id':cid,'title':TIMELINE['month_end_probe']['title'],'review_type':'governance','recurrence':'monthly','due_date':'2027-01-31','owner_id':'admin'})
+                departing=(await self.post('/users',{'name':'Synthetic departing owner','email':framework+'-departure@example.com','role':'client_contributor','client_ids':[cid],'password':secrets.token_urlsafe(24)}))['user']
+                probe=await self.post('/reviews',{'client_id':cid,'title':TIMELINE['month_end_probe']['title'],'review_type':'governance','recurrence':'monthly','due_date':'2027-01-31','owner_id':departing['user_id']})
+                handoff=await self.post('/tasks',{'client_id':cid,'title':'Synthetic owner departure handoff','assignee_id':departing['user_id']})
                 if framework=='iso-27001':
                     activated=await self.post('/iso-audit/activate',{'client_id':cid,'start_date':'2027-01-01','first_package':'governance-risk','auditor_id':'admin','scope':'Synthetic scoped service','independence':'Independent reviewer does not assess their own operation'})
                     self.assertEqual(len(activated['reviews']),4)
@@ -78,7 +81,7 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                 pp='/policies/'+policy['policy_id']
                 manual=await self.post('/findings',{'client_id':cid,'title':'Synthetic observation without an Action','severity':'low'})
                 self.assertEqual(await server.db.tasks.count_documents({'finding_id':manual['finding_id']}),0)
-                snapshots={};checkpoints=[];first_assessment=None;first_finding=None
+                snapshots={};checkpoints=[];events=[];first_assessment=None;first_finding=None;first_closed=None;original_action=None;reopened_action=None
                 for year in range(2027,2030):
                     self.clock(str(year)+'-01-15')
                     changes={'status':'in_progress' if year==2027 else 'addressed','implementation':f'Synthetic {year} implementation reassessment','owner_id':'admin'}
@@ -91,6 +94,17 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                     await self.post(pp+'/approval-subject',{'version':str(year-2026),'external_reference':'https://documents.example.test/synthetic-policy','external_version':f'demo-v{year-2026}'})
                     request=await self.post(pp+'/submit-review')
                     await self.post(pp+'/approve',{'approval_request_id':request['approval_request_id']})
+                    if year==2029:
+                        self.assertEqual(first_closed['status'],'closed')
+                        reopened=await self.edit('/findings/'+first_finding['finding_id'],{'status':'open','expected_updated_at':first_closed['updated_at']})
+                        self.assertEqual(reopened['status'],'open')
+                        self.assertEqual(reopened['decision_history'],first_closed['decision_history'])
+                        reopened_action=await self.post('/tasks',{'client_id':cid,'title':'Revalidate changed supplier operation','source_type':'finding','source_id':first_finding['finding_id'],'assignee_id':'admin'})
+                        self.assertNotEqual(reopened_action['task_id'],original_action['task_id'])
+                        for field in ('review_id','occurrence_id'):
+                            self.assertEqual(reopened_action[field],first_closed[field])
+                        self.assertEqual((await self.get('/findings/'+first_finding['finding_id']))['status'],'in_remediation')
+                        events.append({'at':'2029-01-15','event':'finding_reopened','finding_id':first_finding['finding_id'],'new_action_id':reopened_action['task_id'],'original_action_id':original_action['task_id']})
                     executions=0
                     while True:
                         due=sorted([r for r in await self.get('/reviews',client_id=cid) if r.get('due_date') and r['due_date'][:10]<=f'{year}-12-31' and r.get('status') not in ('completed','cancelled')],key=lambda r:r['due_date'])
@@ -129,13 +143,38 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(expired['acceptance_expires_at'][:10],'2028-06-30')
                         task=(await self.get('/tasks',client_id=cid))
                         task=next(t for t in task if t.get('finding_id')==first_finding['finding_id'])
-                        await self.edit('/tasks/'+task['task_id'],{'status':'done'})
+                        original_action=await self.edit('/tasks/'+task['task_id'],{'status':'done'})
                         self.assertEqual((await self.get('/findings/'+first_finding['finding_id']))['status'],'remediated')
-                        await self.post('/findings/'+first_finding['finding_id']+'/validate',{'rationale':'Synthetic independent effectiveness check'})
+                        first_closed=await self.post('/findings/'+first_finding['finding_id']+'/validate',{'rationale':'Synthetic independent effectiveness check'})
                         current=await self.get('/reviews/'+probe['review_id'])
                         self.assertTrue(any(o['due_date'][:10]=='2028-02-29' for o in current['occurrences']))
+                        pending=await self.get('/tasks/'+handoff['task_id'])
+                        disabled=await self.edit('/users/'+departing['user_id'],{'status':'disabled'})
+                        self.assertEqual(disabled['status'],'disabled')
+                        self.assertEqual(await self.get('/reviews/'+probe['review_id']),current)
+                        self.assertEqual(await self.get('/tasks/'+handoff['task_id']),pending)
+                        self.assertNotIn(departing['user_id'],[u['user_id'] for u in (await self.get('/clients/'+cid+'/assignees'))['items']])
+                        unassigned=await self.edit('/tasks/'+handoff['task_id'],{'assignee_id':None})
+                        self.assertIsNone(unassigned['assignee_id'])
+                        self.assertEqual(unassigned['status'],'open')
                         await self.edit('/reviews/'+probe['review_id'],{'title':'Organization-selected quarterly governance checkpoint','owner_id':None,'recurrence':'quarterly','expected_occurrence_id':current['current_occurrence_id']})
                         self.assertEqual((await self.get('/reviews/'+probe['review_id']))['occurrences'],current['occurrences'])
+                        self.assertIsNone((await self.get('/reviews/'+probe['review_id']))['owner_id'])
+                        events.append({'at':'2028-12-31','event':'owner_departed','user_id':departing['user_id'],'review_id':probe['review_id'],'unassigned_action_id':handoff['task_id'],'preserved_occurrences':len(current['occurrences'])})
+                    if year==2029:
+                        await self.edit('/tasks/'+reopened_action['task_id'],{'status':'in_progress'})
+                        await self.edit('/tasks/'+reopened_action['task_id'],{'status':'done'})
+                        pending_validation=await self.get('/findings/'+first_finding['finding_id'])
+                        self.assertEqual(pending_validation['status'],'remediated')
+                        self.assertEqual(pending_validation['decision_history'],first_closed['decision_history'])
+                        closed=await self.post('/findings/'+first_finding['finding_id']+'/validate',{'rationale':'Synthetic second independent effectiveness check after reopening'})
+                        self.assertEqual(closed['status'],'closed')
+                        self.assertEqual(closed['decision_history'][:len(first_closed['decision_history'])],first_closed['decision_history'])
+                        self.assertEqual(len([h for h in closed['decision_history'] if h['action']=='validated']),2)
+                        self.assertGreater(closed['closed_at'],first_closed['closed_at'])
+                        self.assertEqual(await self.get('/tasks/'+original_action['task_id']),original_action)
+                        self.assertIsNone((await self.get('/tasks/'+handoff['task_id']))['assignee_id'])
+                        events.append({'at':'2029-12-31','event':'reopened_finding_validated','finding_id':closed['finding_id'],'validations':2,'pending_validation_observed':True,'first_decision_preserved':True})
                     live=await self.get('/reviews',client_id=cid)
                     for review in live:
                         for occurrence in review.get('occurrences',[]):self.assertEqual(occurrence,snapshots[occurrence['occurrence_id']])
@@ -153,7 +192,7 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(dash['kpis']['overdue_reviews'],sum(r.get('status') not in ('completed','cancelled') and bool(r.get('due_date')) and r['due_date'][:10]<today for r in live))
                     self.assertEqual(dash['kpis']['overdue_actions'],sum(t.get('status') not in ('done','cancelled') and bool(t.get('due_date')) and t['due_date'][:10]<today for t in tasks))
                     self.assertEqual(dash['kpis']['open_findings'],sum(f.get('status') not in ('closed','accepted','cancelled') for f in findings))
-                    checkpoints.append({'at':today,'reviews':len(live),'occurrences':len(snapshots),'calendar_review_entries':len(entries),'kpis':dash['kpis']})
+                    checkpoints.append({'at':today,'reviews':len(live),'occurrences':len(snapshots),'calendar_review_entries':len(entries),'kpis':dash['kpis'],'events':copy.deepcopy(events)})
                 final_probe=await self.get('/reviews/'+probe['review_id'])
                 self.assertEqual(final_probe['due_date'][:10],'2030-01-31')
                 self.assertEqual(final_probe['occurrences'][0]['completed_at'][:10],'2027-01-24')
@@ -169,7 +208,7 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                 denied=await self.client.get('/api/frameworks/'+framework,params={'client_id':cid})
                 self.assertEqual(denied.status_code,403)
                 self.sign_in('admin')
-                reports.append({'framework':framework,'client_id':cid,'months':36,'checkpoints':checkpoints,'occurrences':len(snapshots),'database':'isolated Mongo mock','completed_by':'API commands only'})
+                reports.append({'framework':framework,'client_id':cid,'months':36,'checkpoints':checkpoints,'events':events,'occurrences':len(snapshots),'database':'isolated Mongo mock','completed_by':'API commands only'})
         if os.environ.get('FRAMEWORK_LIFECYCLE_EXPORT_DIR'):
             destination=Path(os.environ['FRAMEWORK_LIFECYCLE_EXPORT_DIR']);destination.mkdir(parents=True,exist_ok=True)
             (destination/'backend-three-year-report.json').write_text(json.dumps(reports,indent=2),encoding='utf-8')

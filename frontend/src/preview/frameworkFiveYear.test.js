@@ -60,8 +60,13 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   const owner = (await get('/clients/' + cid + '/assignees')).items[0].user_id;
   const nextOwner=(await get('/users')).find(u=>u.status==='active'&&u.user_id!==owner);
   await patch('/users/'+nextOwner.user_id+'/client-memberships',{client_ids:[...new Set([...(nextOwner.client_ids||[]),cid])]});
+  const sessionUser=(await get('/auth/me')).user_id;
+  const departing=(await get('/users')).find(u=>u.status==='active'&&![owner,nextOwner.user_id,sessionUser].includes(u.user_id));
+  expect(departing).toBeTruthy();
+  await patch('/users/'+departing.user_id+'/client-memberships',{client_ids:[...new Set([...(departing.client_ids||[]),cid])]});
   for (const r of initialReviews) await patch('/reviews/' + r.review_id, {owner_id: owner, expected_occurrence_id: r.current_occurrence_id});
-  const probe=await post('/reviews',{client_id:cid,title:timeline.month_end_probe.title,review_type:'governance',owner_id:owner,due_date:timeline.month_end_probe.first_due,recurrence:'monthly',status:'upcoming'});
+  const probe=await post('/reviews',{client_id:cid,title:timeline.month_end_probe.title,review_type:'governance',owner_id:departing.user_id,due_date:timeline.month_end_probe.first_due,recurrence:'monthly',status:'upcoming'});
+  const handoff=await post('/tasks',{client_id:cid,title:'Synthetic owner departure handoff',assignee_id:departing.user_id});
   if(framework==='iso-27001')await post('/iso-audit/activate',{client_id:cid,start_date:'2027-01-01',first_package:'governance-risk',auditor_id:owner,scope:'Synthetic scoped service',independence:'Independent reviewer does not audit their own operation'});
 
   const definition = framework === 'iso-27001' ? 'A.8.30' : framework === 'soc-2' ? 'CC6.1' : '1.1';
@@ -78,23 +83,34 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   const approvedPolicy=copy(await get('/policies/'+policy.policy_id));
   const vendor=await post('/vendors',{client_id:cid,name:'Synthetic service provider',service:'Scoped service support',business_owner_id:owner,criticality:'high',next_review:'2027-06-30',review_frequency:'annual',contract_renewal:'2028-03-31',contract_review_enabled:true});
   const histories = new Map(), occurrenceSnapshots = new Map();
-  let firstEvidence, firstFinding, firstAssessmentHistory, sharedControl, firstControlObservation, laterFinding, auditFinding, improvement;
+  let firstEvidence, firstFinding, firstAssessmentHistory, sharedControl, firstControlObservation, laterFinding, auditFinding, improvement, firstClosed, originalAction, reopenedAction;
   const controlDesign=c=>Object.fromEntries(['name','description','frequency','design','owner_id','assessment_ids','related_links'].map(k=>[k,c[k]]));
-  async function remediate(finding){
-    const task=(await get('/tasks',cid)).find(t=>t.finding_id===finding.finding_id);
+  async function remediate(finding,taskId){
+    const task=(await get('/tasks',cid)).find(t=>t.finding_id===finding.finding_id&&(!taskId||t.task_id===taskId));
     await patch('/tasks/'+task.task_id,{status:'in_progress'});
     await patch('/tasks/'+task.task_id,{status:'done'});
     expect((await get('/findings/'+finding.finding_id)).status).toBe('remediated');
-    await post('/findings/'+finding.finding_id+'/validate',{rationale:'DEMO: independently sampled corrective operation and verified effectiveness'});
+    return post('/findings/'+finding.finding_id+'/validate',{rationale:'DEMO: independently sampled corrective operation and verified effectiveness'});
   }
 
-  const checkpoints=[];
+  const checkpoints=[],events=[];
   for (let year = startYear; year <= endYear; year++) {
     clock(year + '-01-15');
     if(year>startYear){
       await post('/policies/'+policy.policy_id+'/approval-subject',{version:String(year-startYear+1),external_reference:'https://documents.example.test/synthetic-policy',external_version:'demo-v'+(year-startYear+1)});
       const request=await post('/policies/'+policy.policy_id+'/submit-review');
       await post('/policies/'+policy.policy_id+'/approve',{approval_request_id:request.approval_request_id});
+    }
+    if(year===2029){
+      expect(firstClosed.status).toBe('closed');
+      const reopened=await patch('/findings/'+firstFinding.finding_id,{status:'open',expected_updated_at:firstClosed.updated_at});
+      expect(reopened.status).toBe('open');
+      expect(reopened.decision_history).toEqual(firstClosed.decision_history);
+      reopenedAction=await post('/tasks',{client_id:cid,title:'Revalidate changed supplier operation',source_type:'finding',source_id:firstFinding.finding_id,assignee_id:owner});
+      expect(reopenedAction.task_id).not.toBe(originalAction.task_id);
+      for(const field of ['review_id','occurrence_id'])expect(reopenedAction[field]).toBe(firstClosed[field]);
+      expect((await get('/findings/'+firstFinding.finding_id)).status).toBe('in_remediation');
+      events.push({at:'2029-01-15',event:'finding_reopened',finding_id:firstFinding.finding_id,new_action_id:reopenedAction.task_id,original_action_id:originalAction.task_id});
     }
     const profile = await get('/clients/' + cid + '/profile');
     await patch('/clients/' + cid + '/profile', {section:'organization', values:{employees:20 + (year-2027)*5}, expected_updated_at:profile.updated_at});
@@ -205,9 +221,20 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
       expect(sharedControl.observations).toHaveLength(year-2026);
     }
     if (year === 2028) {
-      await remediate(firstFinding);
+      firstClosed=copy(await remediate(firstFinding));
+      originalAction=copy((await get('/tasks',cid)).find(t=>t.finding_id===firstFinding.finding_id));
       if(auditFinding)await remediate(auditFinding);
       expect((await get(path)).status).toBe(changes.status);
+    }
+    if(year===2029){
+      const closed=await remediate(firstFinding,reopenedAction.task_id);
+      expect(closed.status).toBe('closed');
+      expect(closed.decision_history.slice(0,firstClosed.decision_history.length)).toEqual(firstClosed.decision_history);
+      expect(closed.decision_history.filter(h=>h.action==='validated')).toHaveLength(2);
+      expect(closed.closed_at>firstClosed.closed_at).toBe(true);
+      expect(await get('/tasks/'+originalAction.task_id)).toEqual(originalAction);
+      expect((await get('/tasks/'+handoff.task_id)).assignee_id).toBeNull();
+      events.push({at:'2029-12-31',event:'reopened_finding_validated',finding_id:closed.finding_id,validations:2,pending_validation_observed:true,first_decision_preserved:true});
     }
     if(year===endYear){
       expect(laterFinding).toBeTruthy();
@@ -223,8 +250,21 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
     if(year===2028){
       expect(currentProbe.occurrences.some(o=>o.due_date?.slice(0,10)===timeline.month_end_probe.leap_day)).toBe(true);
       const before=copy(currentProbe.occurrences);
-      await patch('/reviews/'+probe.review_id,{title:'Organization-selected quarterly governance checkpoint',owner_id:nextOwner.user_id,recurrence:'quarterly',expected_updated_at:currentProbe.updated_at??null,expected_occurrence_id:currentProbe.current_occurrence_id});
+      const pending=copy(await get('/tasks/'+handoff.task_id));
+      const disabled=await patch('/users/'+departing.user_id,{status:'disabled'});
+      expect(disabled.status).toBe('disabled');
+      expect(await get('/reviews/'+probe.review_id)).toEqual(currentProbe);
+      expect(await get('/tasks/'+handoff.task_id)).toEqual(pending);
+      expect((await get('/clients/'+cid+'/assignees')).items.map(u=>u.user_id)).not.toContain(departing.user_id);
+      const unassigned=await patch('/tasks/'+handoff.task_id,{assignee_id:null});
+      expect(unassigned.assignee_id).toBeNull();
+      expect(unassigned.status).toBe('open');
+      const unowned=await patch('/reviews/'+probe.review_id,{owner_id:null,expected_updated_at:currentProbe.updated_at??null,expected_occurrence_id:currentProbe.current_occurrence_id});
+      expect(unowned.owner_id).toBeNull();
+      expect(unowned.occurrences).toEqual(before);
+      await patch('/reviews/'+probe.review_id,{title:'Organization-selected quarterly governance checkpoint',owner_id:nextOwner.user_id,recurrence:'quarterly',expected_updated_at:unowned.updated_at??null,expected_occurrence_id:unowned.current_occurrence_id});
       expect((await get('/reviews/'+probe.review_id)).occurrences).toEqual(before);
+      events.push({at:'2028-12-31',event:'owner_departed',user_id:departing.user_id,review_id:probe.review_id,unassigned_action_id:handoff.task_id,preserved_occurrences:before.length});
     }
     const live=await get('/reviews',cid),today=year+'-12-31',dash=await get('/dashboard',cid),tasks=await get('/tasks',cid),findings=await get('/findings',cid);
     expect(dash.kpis.overdue_reviews).toBe(live.filter(r=>!['completed','cancelled'].includes(r.status)&&r.due_date&&r.due_date.slice(0,10)<today).length);
@@ -238,7 +278,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
     }
     expect(entries.map(e=>e.key).sort()).toEqual(expected.sort());
     expect(entries.every(e=>e.client_id===cid)).toBe(true);
-    const counts={framework,at:today,reviews:live.length,occurrences:live.reduce((n,r)=>n+(r.occurrences?.length||0),0),calendar_review_entries:entries.length,kpis:dash.kpis};
+    const counts={framework,at:today,reviews:live.length,occurrences:live.reduce((n,r)=>n+(r.occurrences?.length||0),0),calendar_review_entries:entries.length,kpis:dash.kpis,events:copy(events)};
     checkpoints.push(counts);
     if(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR){
       const fs=jest.requireActual('fs'),nodePath=jest.requireActual('path');fs.mkdirSync(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,{recursive:true});
@@ -278,7 +318,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   expect(oldFile.references.filter(r=>r.kind==='framework_assessments')).toHaveLength(2);
   const snapshot = JSON.parse(sessionStorage.getItem(STORE_KEY));
   expect(snapshot.evidence.filter(e=>e.evidence_id===firstEvidence.evidence_id)).toHaveLength(1);
-  expect(snapshot.evidence.reduce((bytes,e)=>bytes+(e.content_base64?.length||0)*2,0)).toBeLessThanOrEqual(256*1024);
+  expect(snapshot.evidence.reduce((bytes,e)=>bytes+(e.content_base64?.length||0)*2,0)).toBeLessThanOrEqual(64*1024);
   // Read through a new client instance to ensure results are persisted, not API-local state.
   const reloaded = axios.create({adapter:previewAdapter});
   expect((await reloaded.get(path)).data.assessment_history[0]).toEqual(firstAssessmentHistory);
@@ -291,7 +331,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   if(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR){
     const fs=jest.requireActual('fs'),nodePath=jest.requireActual('path');
     fs.mkdirSync(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,{recursive:true});
-    fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,store:JSON.parse(sessionStorage.getItem(STORE_KEY))}));
+    fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,events,store:JSON.parse(sessionStorage.getItem(STORE_KEY))}));
   }
   const finalProbe=finalReviews.find(r=>r.review_id===probe.review_id);
   expect(finalProbe.occurrences[0].completed_at.slice(0,10)).toBe(timeline.month_end_probe.early_completion);

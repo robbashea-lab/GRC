@@ -89,7 +89,7 @@ export function readStore() {
     let db;try{db=JSON.parse(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
     const retired=removeRetiredDemoClients(db),installed=installCanonicalDunder(db);
-    const light=lightweightStore(db);
+    const light=lightweightStore(db,db.evidence);
     if(retired||installed||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
     return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
   }
@@ -98,17 +98,19 @@ export function readStore() {
   saveStore(db);
   return db;
 }
-export function saveStore(db) {
+export function saveStore(db,{resetFiles=false}={}) {
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
-    sessionStorage.setItem(STORE_KEY, JSON.stringify(lightweightStore(db)));
-    rememberFiles(db);
+    const previous=resetFiles?null:JSON.parse(sessionStorage.getItem(STORE_KEY)||'null');
+    const persisted=lightweightStore(db,previous?.evidence||[]);
+    sessionStorage.setItem(STORE_KEY, JSON.stringify(persisted));
+    rememberFiles(db,persisted);
   } catch (error) {
     throw demoStorageError(error);
   }
 }
 export function resetStore() {
-  saveStore(seedStore());
+  saveStore(seedStore(),{resetFiles:true});
   clearFileCache();
 }
 export function clearEvidenceFiles(){

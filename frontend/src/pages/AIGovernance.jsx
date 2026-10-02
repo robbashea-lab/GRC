@@ -13,7 +13,7 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import AIDrawer from '@/components/AIDrawer';
 import AIIntake from '@/components/AIIntake';
 import {ranks} from '@/lib/tableFilters';
-import {isReferencePresentation} from '@/lib/reference';
+import {isReferencePresentation,isBrawndoReference} from '@/lib/reference';
 import {AI_VIEWS,aiMatches} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
 import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
@@ -21,19 +21,19 @@ import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/Brawnd
 const text=(key,label)=>({key,label,sortable:true});
 export default function AIGovernance(){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
-  const pilot=isReferencePresentation(currentClientId,user);
+  const reference=isReferencePresentation(currentClientId,user),approvalPilot=isBrawndoReference(currentClientId,user);
   const [showInactive,setShowInactive]=useState(false);
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[quick,setQuick]=useState('active');
   const key=`${currentClientId}:${revision}`;
   useEffect(()=>{const c=new AbortController();setSelected(null);setError('');if(!currentClientId)return;Promise.all([api.get('/ai_systems',{params:{client_id:currentClientId},signal:c.signal}),api.get(`/clients/${currentClientId}/members`,{signal:c.signal}),api.get('/ai-intake',{params:{client_id:currentClientId},signal:c.signal})]).then(([rows,members,intake])=>{if(!c.signal.aborted){if(rows.data.some(r=>r.client_id!==currentClientId))throw new Error('Client data mismatch');setSnapshot({key,clientId:currentClientId,rows:rows.data,members:members.data,intake:intake.data});}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[currentClientId,key]);
   useEffect(()=>{setQuick('active');setSearch('');setShowInactive(false);},[currentClientId]);
-  const data=snapshot&&(pilot?snapshot.clientId===currentClientId:snapshot.key===key)?snapshot:null,rows=data?.rows||[],members=data?.members||[];
+  const data=snapshot&&(reference?snapshot.clientId===currentClientId:snapshot.key===key)?snapshot:null,rows=data?.rows||[],members=data?.members||[];
   const columns=[text('display_id','ID'),text('name','AI System / Use Case'),{...text('owner_id','Owner'),filter:true,emptyLabel:'Unassigned',optionsOnly:true,options:members.map(u=>({value:u.user_id,label:u.name||u.email}))},text('provider','Provider'),{...text('purposes','Purpose / Use'),filter:true},{...text('risk_tier','Risk Tier'),filter:true,rank:ranks,emptyLabel:'Not Screened'},{...text('status','Status'),filter:true},{...text('last_review','Last Review'),filter:true,dateKind:'history',emptyLabel:'Never Reviewed'},{...text('next_review','Next Review'),filter:true,dateKind:'future',emptyLabel:'No Review Scheduled'}];
   const table=useTableControls({columns,rows,module:'ai-governance',scope:`${user?.user_id}:${currentClientId}`});
   const today=new Date().toISOString().slice(0,10),active=r=>!['suspended','retired'].includes(r.status);
   const presets=[['active','All Active',active],['due','Due for Review',r=>active(r)&&(!r.next_review||r.next_review.slice(0,10)<=today)],['high','High Risk',r=>active(r)&&r.risk_tier==='high'],['third','Third-Party',r=>active(r)&&(r.vendor_id||r.provider||r.screening?.third_party)],['customer','Customer-Facing',r=>active(r)&&(r.purposes?.includes('Customer-Facing')||r.screening?.customer_facing)],['inactive','Inactive',r=>!active(r)]];
-  const searched=rows.filter(r=>[r.display_id,r.name,r.provider,r.description,...(pilot?[r.product_model,r.environment]:[]),...(r.purposes||[])].join(' ').toLowerCase().includes(search.toLowerCase()));
-  const visible=pilot?searched.filter(r=>aiMatches(r,quick,showInactive)):table.apply(searched.filter(presets.find(p=>p[0]===quick)?.[2]||active));
+  const searched=rows.filter(r=>[r.display_id,r.name,r.provider,r.description,...(reference?[r.product_model,r.environment]:[]),...(r.purposes||[])].join(' ').toLowerCase().includes(search.toLowerCase()));
+  const visible=reference?searched.filter(r=>aiMatches(r,quick,showInactive)):table.apply(searched.filter(presets.find(p=>p[0]===quick)?.[2]||active));
   const writable=isInternal(user);
   function clear(){table.clear();setSearch('');setQuick('active');setShowInactive(false);}
   if(!currentClientId)return <p className="page-content">Select a client.</p>;
@@ -42,21 +42,21 @@ export default function AIGovernance(){
   const SUBTITLE='AI systems and use cases, screened for governance attention. Not a legal classification.';
   const addAction=canAdd?<PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/>:null;
   // Brawndo: same surface, header and view chips as the rebuilt pages; cards, workflow and data unchanged.
-  const Shell=pilot?BrawndoSurface:'div';
-  return <Shell className="register-surface brawndo-ai-page">{pilot?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
+  const Shell=reference?BrawndoSurface:'div';
+  return <Shell className="register-surface brawndo-ai-page">{reference?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
       action={addAction?<HeaderActions>{addAction}</HeaderActions>:null}/>}
     {data?.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntake clientId={currentClientId} canWrite={writable} onSaved={()=>setRevision(n=>n+1)}/></div>}
-    {!pilot&&data?.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
+    {!reference&&data?.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
     <div className="register-toolbar">
       <SearchField label="Search AI systems" placeholder="Search AI systems…" value={search} onChange={setSearch} testid="ai-system-search"/>
-      {pilot?<BrawndoChips label="AI system views" chips={AI_VIEWS.map(([id,label])=>({id,label,pressed:quick===id,onClick:()=>setQuick(id),testid:`ai-system-view-${id}`}))}/>:<ViewTabs views={presets.map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>}
-      {pilot&&<><label className="flex gap-2 text-sm"><input type="checkbox" checked={showInactive} onChange={e=>setShowInactive(e.target.checked)}/>Show Archived/Inactive</label>{(search||quick!=='active'||showInactive)&&<button className="text-sm text-link" onClick={clear}>Clear filters</button>}</>}
+      {reference?<BrawndoChips label="AI system views" chips={AI_VIEWS.filter(([id])=>approvalPilot||id!=='pending').map(([id,label])=>({id,label,pressed:quick===id,onClick:()=>setQuick(id),testid:`ai-system-view-${id}`}))}/>:<ViewTabs views={presets.map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>}
+      {reference&&<><label className="flex gap-2 text-sm"><input type="checkbox" checked={showInactive} onChange={e=>setShowInactive(e.target.checked)}/>Show Archived/Inactive</label>{(search||quick!=='active'||showInactive)&&<button className="text-sm text-link" onClick={clear}>Clear filters</button>}</>}
       <RegisterCount shown={visible.length} total={rows.length}/>
     </div>
     <div className="register-body">
-      {!pilot&&<TableFilterChips table={table}/>}
+      {!reference&&<TableFilterChips table={table}/>}
       <RegisterLoadError error={error} onRetry={()=>setRevision(n=>n+1)} name="AI systems"/>
-      {pilot?<>{!data&&!error&&<p role="status">Loading AI systems…</p>}{data&&!visible.length&&<p className="empty-state">{rows.length?'No AI systems match these filters.':'No AI systems recorded yet.'}</p>}{data&&<BrawndoAICards rows={visible} users={members} onOpen={setSelected}/>}</>:<div className="register-table-frame overflow-x-auto"><table className="w-full">
+      {reference?<>{!data&&!error&&<p role="status">Loading AI systems…</p>}{data&&!visible.length&&<p className="empty-state">{rows.length?'No AI systems match these filters.':'No AI systems recorded yet.'}</p>}{data&&<BrawndoAICards approvalPilot={approvalPilot} rows={visible} users={members} onOpen={setSelected}/>}</>:<div className="register-table-frame overflow-x-auto"><table className="w-full">
         <caption className="sr-only">AI systems and use cases. Screening tiers prioritize governance attention; organizational exposure belongs in Risks, and deficiencies and remediation in Findings and Action Items.</caption>
         <thead><tr>{columns.map(c=><SortableHeader key={c.key} table={table} column={c}/>)}</tr></thead>
         <tbody className="divide-y divide-line">

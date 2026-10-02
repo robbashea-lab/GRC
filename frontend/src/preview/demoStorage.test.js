@@ -17,6 +17,41 @@ test('small files persist; large files retain metadata but no payload after relo
  clearFileCache();await expect(api.get('/evidence/'+large.evidence_id+'/download')).rejects.toThrow('metadata and relationships are preserved');
  expect((await api.get('/evidence/'+small.evidence_id+'/download')).data.content_base64).toBeTruthy();
 });
+
+test('a new upload cannot evict another client\'s previously persisted file',async()=>{
+ const db=readStore();
+ const retained={evidence_id:'retained-dunder-file',client_id:'demo_dunder',filename:'retained.txt',mime_type:'text/plain',content_base64:btoa('d'.repeat(16000))};
+ db.evidence=[{evidence_id:'existing-brawndo-file',client_id:'demo_brawndo',content_base64:btoa('b'.repeat(8000))},retained];
+ saveStore(db);
+ const before=persisted().evidence.find(e=>e.evidence_id===retained.evidence_id);
+ expect(before).toEqual(retained);
+ const uploaded=(await api.post('/evidence',{client_id:'demo_brawndo',filename:'new.txt',mime_type:'text/plain',content_base64:btoa('n'.repeat(1000))})).data;
+ expect(persisted().evidence.find(e=>e.evidence_id===retained.evidence_id)).toEqual(before);
+ expect(persisted().evidence.find(e=>e.evidence_id===uploaded.evidence_id)).toMatchObject({demo_file_storage:'session_only'});
+ expect((await api.get('/evidence/'+uploaded.evidence_id+'/download')).data.content_base64).toBe(btoa('n'.repeat(1000)));
+ const reordered=readStore();reordered.evidence.reverse();saveStore(reordered);
+ expect(persisted().evidence.find(e=>e.evidence_id===retained.evidence_id)).toEqual(before);
+ clearFileCache();
+ expect((await api.get('/evidence/'+retained.evidence_id+'/download')).data.content_base64).toBe(retained.content_base64);
+});
+test('failed uploads leave the stored snapshot and existing temporary files unchanged',async()=>{
+ const temporary=await upload(20000),before=sessionStorage.getItem(STORE_KEY),diagnostics=(await api.get('/demo/storage')).data;
+ const stub=jest.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw new DOMException('Full','QuotaExceededError');});
+ try{await expect(upload(30000,'unsaved.txt')).rejects.toMatchObject({response:{data:{storage_code:'QUOTA_EXCEEDED'}}});}finally{stub.mockRestore();}
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+ expect((await api.get('/demo/storage')).data).toMatchObject({memory_file_count:diagnostics.memory_file_count,memory_file_bytes:diagnostics.memory_file_bytes});
+ expect((await api.get('/evidence/'+temporary.evidence_id+'/download')).data.content_base64).toBe(btoa('x'.repeat(20000)));
+ clearFileCache();
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+});
+test('retention does not transfer to another client with the same evidence ID',()=>{
+ const previous=[{evidence_id:'same-id',client_id:'client-a',content_base64:btoa('a'.repeat(16000))}];
+ const db={evidence:[{evidence_id:'new-file',client_id:'client-b',content_base64:btoa('b'.repeat(10000))},{...previous[0],client_id:'client-b'}]};
+ const saved=lightweightStore(db,previous);
+ expect(saved.evidence[0].content_base64).toBe(db.evidence[0].content_base64);
+ expect(saved.evidence[1]).toMatchObject({demo_file_storage:'session_only'});
+ expect(saved.evidence[1]).not.toHaveProperty('content_base64');
+});
 test('oversized uploads fail before writes with an explicit error code',async()=>{
  const before=sessionStorage.getItem(STORE_KEY);
  await expect(upload(1024*1024+1)).rejects.toMatchObject({response:{data:{storage_code:'FILE_TOO_LARGE'}}});
@@ -56,7 +91,7 @@ test('blocked reads are classified without exposing browser internals',async()=>
 });
 test('aggregate persistent and memory payload budgets are bounded',()=>{
  const db={evidence:Array.from({length:100},(_,i)=>({evidence_id:String(i),client_id:'a',content_base64:btoa('x'.repeat(16000))}))};
- const saved=lightweightStore(db);expect(storageDiagnostics(JSON.stringify(saved),saved).persisted_payload_bytes).toBeLessThanOrEqual(256*1024);
+ const saved=lightweightStore(db);expect(storageDiagnostics(JSON.stringify(saved),saved).persisted_payload_bytes).toBeLessThanOrEqual(64*1024);
  const large={evidence:Array.from({length:10},(_,i)=>({evidence_id:String(i),client_id:'a',content_base64:btoa('x'.repeat(1024*1024))}))};
  rememberFiles(large);expect(storageDiagnostics('',{}).memory_file_bytes).toBeLessThanOrEqual(8*1024*1024);clearFileCache();
 });

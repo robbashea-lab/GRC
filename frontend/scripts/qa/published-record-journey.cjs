@@ -4,7 +4,7 @@
 const path = require('node:path');
 const {createHash} = require('node:crypto');
 
-module.exports = async function publishedRecordJourney({page, expect, assert, go, store, cid, prefix, artifacts}) {
+module.exports = async function publishedRecordJourney({page, expect, assert, go, store, cid, prefix, artifacts, scenarioIds}) {
   assert.ok(typeof prefix === 'string' && prefix.trim().length >= 8, 'Use a unique synthetic record prefix');
   prefix += ' records'; // Keep this module distinct from the runner's Review/Finding journey.
   const initial = await store();
@@ -23,7 +23,8 @@ module.exports = async function publishedRecordJourney({page, expect, assert, go
   const open = async (route, title) => {
     await go(route);
     await page.getByTestId(searches[route]).fill(title);
-    await page.getByText(title, {exact: true}).click();
+    if(['/findings','/action-items'].includes(route))await page.locator('button.register-record-link').filter({hasText:title}).click();
+    else await page.getByText(title, {exact: true}).click();
   };
   const choose = async (control, label, value) => {
     if (await control.evaluate(el => el.tagName === 'SELECT')) await control.selectOption(value ? {value} : {label});
@@ -62,6 +63,7 @@ module.exports = async function publishedRecordJourney({page, expect, assert, go
   const later = days => { const date = new Date(today + 'T12:00:00Z'); date.setUTCDate(date.getUTCDate() + days); return date.toISOString().slice(0, 10); };
   const results = [];
   async function scenario(id, title, notCovered, body) {
+    if(scenarioIds&&!scenarioIds.includes(id))return;
     const outcome = {scenario: id, title, status: 'failed', checks: [], notCovered, stage: 'start'};
     const stage = value => { outcome.stage = value; };
     try {

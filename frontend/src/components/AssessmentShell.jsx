@@ -1,5 +1,5 @@
 import {useRef} from 'react';
-import {focusFallback} from '@/lib/focusRescue';
+import {focusFallback,pageHeading} from '@/lib/focusRescue';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
 import './BrawndoCisAssessment.css';
@@ -17,7 +17,7 @@ export default function AssessmentShell({open=true,title,description,status,posi
         if(document.querySelector('[data-assessment-shell]'))return;
         const target=opener.current?.isConnected&&opener.current!==document.body?opener.current:
           returnSelector?document.querySelector(returnSelector):null;
-        if(target)target.focus();else focusFallback(document.querySelector('main h1'));
+        if(target)target.focus();else focusFallback(pageHeading());
       });}} onPointerDownOutside={e=>e.preventDefault()} data-assessment-shell>
       <header className="brawndo-assessment-header">
         <div className="min-w-0">{crumbs}<DialogTitle ref={heading} tabIndex={-1}>{title}</DialogTitle>

@@ -1,6 +1,6 @@
 export const DEMO_FILE_LIMIT=1024*1024;
 export const DEMO_INLINE_LIMIT=16*1024;
-export const DEMO_FILE_NOTICE='Demo files up to 16 KB are retained within a shared 256 KB payload budget. Other files (maximum 1 MB each) use an 8 MB temporary memory cache and may be unavailable after reload or eviction. Metadata and relationships remain. Clear Demo Evidence Files preserves records and people.';
+export const DEMO_FILE_NOTICE='Demo files up to 16 KB are retained while space remains in a shared 64 KiB budget for base64-encoded UTF-16 payloads. Previously retained files keep their space. Other files, including small uploads when that budget is full (maximum 1 MB each), use an 8 MB temporary memory cache and may be unavailable after reload or eviction. Metadata and relationships remain. Clear Demo Evidence Files preserves records and people.';
 const MESSAGES={
   QUOTA_EXCEEDED:'Demo browser storage is full. Clear Demo Evidence Files or Reset Demo Data. Changes were not saved.',
   STORAGE_UNAVAILABLE:'Browser storage is unavailable in this session. Allow site storage or use another browser session. Changes were not saved.',

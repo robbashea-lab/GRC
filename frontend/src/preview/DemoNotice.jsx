@@ -13,7 +13,7 @@ export default function DemoNotice(){
     else window.location.reload();
   }catch(e){setError(formatError(e));setBusy(false);}}
   return <><div className="demo-notice border-b border-line bg-surface-subtle text-ink-muted" data-testid="interactive-demo-notice">
-    <span><span className="font-medium">Demo workspace</span><span className="demo-notice-detail"> · Session changes only · Large file content lasts until reload</span></span>
+    <span><span className="font-medium">Demo workspace</span><span className="demo-notice-detail"> · Session changes only · Some file content lasts until reload</span></span>
     <Button ref={opener} size="sm" variant="ghost" onClick={inspect}>Demo storage</Button>
   </div><Dialog open={!!action} onOpenChange={v=>{if(!v&&!busy)setAction('');}}><DialogContent onCloseAutoFocus={e=>{e.preventDefault();opener.current?.focus();}}><DialogHeader>
     <DialogTitle>{action==='clear'?'Clear Demo Evidence Files?':action==='reset'?'Reset Demo Data?':'Demo storage & recovery'}</DialogTitle>
