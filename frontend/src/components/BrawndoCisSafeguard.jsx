@@ -5,6 +5,7 @@ import {Textarea} from './ui/textarea';
 import AssigneeSelect from './AssigneeSelect';
 import {personLabel} from '@/lib/people';
 import criteriaData from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
+import guidanceData from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 
 import {CIS_TONE,CisStatusPill} from './CisStatus';
@@ -13,21 +14,20 @@ import BrawndoCisFindings from './BrawndoCisFindings';
 import './BrawndoCisAssessment.css';
 import './BrawndoCisSafeguard.css';
 
-// Brawndo CIS IG1 safeguard workspace. Persistence, draft guards and navigation stay in FrameworkDrawer;
-// the checklist is practical guidance and never sets status or verification.
+// Shared CIS IG1 workspace. The historical name is retained for existing callers.
+// Read-only guidance never writes assessment responses, status or verification.
 export const STATUS_OPTIONS=[['addressed','Implemented'],['in_progress','Partially Implemented'],['needs_attention','Not Implemented'],['not_assessed','Not Assessed'],['not_applicable','Not Applicable']];
 const VERIFICATION_TONE={not_verified:'neutral',needs_validation:'moderate',gap_identified:'critical',verified:'success'};
 export const CURRENT_HELP='Document how the organization currently satisfies this safeguard. Describe relevant technology, processes, responsible parties and recurring activities.';
 
-export const GUIDANCE_NOTE='Assessment criteria are paraphrased from the applicable CIS safeguard to support consistent evaluation. They do not introduce additional requirements.';
+export const GUIDANCE_NOTE='Omnisciente guidance for assessing this safeguard, not additional CIS requirements.';
 
 export default function BrawndoCisSafeguard({state,actions}){
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,breadcrumb,related,finding}=state;
   const {put,save,saveAndNext,close,previous,next,retry,run,setFinding,setNested}=actions;
   const clientId=record.client_id,id=definition.id,disabled=!writable||busy||!ctx;
   const source=sourcePresentation(definition),criteria=criteriaData.requirements[id];
-  const checklist=form.cis_assessment_criteria||[];
-  const toggle=check=>put('cis_assessment_criteria',checklist.includes(check)?checklist.filter(c=>c!==check):[...checklist,check]);
+  const guidance=guidanceData.requirements[id];
   const verification=verificationOf(form),saved=verificationOf(current);
   return <AssessmentShell open={open} title={`CIS IG1 ${id} — ${definition.title}`} description={<span className="sr-only">Safeguard assessment workspace</span>}
     status={<><span aria-label="Saved implementation status"><CisStatusPill status={current.status} framework="cis-ig1"/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
@@ -45,15 +45,19 @@ export default function BrawndoCisSafeguard({state,actions}){
     <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested}}/>
     <Step number="1" title="What CIS Requires">
       <p className="brawndo-requirement-title">{definition.title}</p>
-      {source.text?<p className="whitespace-pre-wrap" data-testid="cis-official-text">{source.text}</p>:<><p className="text-xs text-ink-secondary">Requirement summary</p><p>{definition.guidance}</p></>}
+      {source.text?<><p className="text-xs text-ink-secondary">Official requirement</p><p className="whitespace-pre-wrap" data-testid="cis-official-text">{source.text}</p></>:<><p className="text-xs text-ink-secondary">Requirement summary · Omnisciente</p><p>{definition.guidance}</p></>}
       {source.url&&<a className="bcsg-ref" href={criteria?.source||source.url} target="_blank" rel="noopener noreferrer">Official CIS reference ↗</a>}
     </Step>
     <Step number="2" title="CIS IG1 Assessment Criteria">
       <p className="text-sm text-ink-secondary">{GUIDANCE_NOTE}</p>
       <p className="text-xs text-ink-secondary" data-testid="criteria-source">Sources: CIS Safeguard {id} · v8.1</p>
-      <fieldset disabled={disabled} className="bcsg-criteria"><legend className="sr-only">CIS IG1 Assessment Criteria</legend>
-        {criteria?.criteria.map(c=><label key={c.id}><input type="checkbox" checked={checklist.includes(c.id)} onChange={()=>toggle(c.id)}/><span>{c.text}</span></label>)}
-      </fieldset>
+      <div className="cis-assessment-guidance" data-guidance-revision={guidanceData.revision}>
+        {[['review','What to review and confirm'],['evidence','Examples of supporting evidence'],['outcome','What good looks like']].map(([key,title])=><section key={key} aria-labelledby={`cis-guidance-${key}`}>
+          <h4 id={`cis-guidance-${key}`}>{title}</h4>
+          {key==='evidence'&&<p className="text-sm text-ink-secondary">Use relevant examples or equivalent support from the client, MSP/MSSP or responsible provider; not every artifact is needed.</p>}
+          <ul>{guidance[key].map(text=><li key={text}>{text}</li>)}</ul>
+        </section>)}
+      </div>
     </Step>
     <Step number="3" title="Implementation Status">
       <fieldset disabled={disabled}><legend className="sr-only">Implementation status</legend>

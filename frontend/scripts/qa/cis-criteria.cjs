@@ -2,6 +2,7 @@
 const {chromium}=require('playwright'),{expect}=require('playwright/test');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const catalog=require('../../../shared/catalogs/cisIG1.json'),criteria=require('../../../shared/catalogs/operatorGuidance/cisAssessmentCriteria.json');
+const guidance=require('../../../shared/catalogs/operatorGuidance/cisAssessmentGuidance.json');
 const base=process.env.QA_BASE_URL||'http://127.0.0.1:4179';
 if(new URL(base).hostname!=='127.0.0.1')throw Error('Loopback Demo required');
 (async()=>{
@@ -25,18 +26,46 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Loopback Demo required');
    await expect(dialog.getByRole('link',{name:'Official CIS reference'})).toHaveAttribute('href',criteria.requirements[d.id].source);
    assert.deepEqual(await dialog.locator('.brawndo-step h3').allTextContents(),['1What CIS Requires','2CIS IG1 Assessment Criteria','3Implementation Status','4Current Implementation']);
    assert(!/Stronger practice|Previously recorded|Manage people|Foundation|Mature/.test(await dialog.innerText()));
-   assert.equal(await dialog.locator('.bcsg-criteria input').count(),criteria.requirements[d.id].criteria.length);
-   await dialog.locator('.bcsg-criteria input').first().check();
+   assert.equal(await dialog.locator('.cis-assessment-guidance input').count(),0);
+   assert.deepEqual(await dialog.locator('.cis-assessment-guidance h4').allTextContents(),['What to review and confirm','Examples of supporting evidence','What good looks like']);
+   assert.deepEqual(await dialog.locator('.cis-assessment-guidance li').allTextContents(),Object.values(guidance.requirements[d.id]).flat());
+   const before=await page.evaluate(id=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')).framework_assessments.find(a=>a.framework_assessment_id===id),rows.find(r=>r.definition_id===d.id).framework_assessment_id);
    await dialog.locator('input[value="in_progress"]').check();
    await dialog.getByLabel('Verification result').selectOption('needs_validation');
    await dialog.getByLabel('Current implementation',{exact:true}).fill('SYNTHETIC QA implementation '+d.id);
    await dialog.getByRole('button',{name:'Save assessment',exact:true}).click();
    await expect(dialog.getByText('Assessment saved.',{exact:true})).toBeVisible();
    await page.reload();await expect(dialog.getByLabel('Current implementation',{exact:true})).toHaveValue('SYNTHETIC QA implementation '+d.id);
-   await expect(dialog.locator('.bcsg-criteria input').first()).toBeChecked();
+   const after=await page.evaluate(id=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')).framework_assessments.find(a=>a.framework_assessment_id===id),before.framework_assessment_id);
+   assert.deepEqual(after.cis_assessment_criteria||[],before.cis_assessment_criteria||[]);
+   assert.deepEqual(after.evidence_ids||[],before.evidence_ids||[]);
+   assert.deepEqual(after.assessment_history.slice(0,before.assessment_history?.length||0),before.assessment_history||[]);
    await expect(dialog.getByLabel('Verification result')).toHaveValue('needs_validation');
   }
   await open('1.1');
+  // Existing authoritative Finding/Action/Evidence flow remains outside the guidance.
+  await dialog.getByRole('button',{name:'Raise Finding',exact:true}).click();
+  await dialog.getByLabel('Finding title',{exact:true}).fill('SYNTHETIC QA guidance evidence gap');
+  await dialog.getByLabel('Finding description',{exact:true}).fill('Isolated regression record; not client evidence.');
+  await dialog.getByLabel('Corrective action',{exact:true}).fill('SYNTHETIC QA inspect supporting record');
+  await dialog.getByRole('button',{name:'Create Finding & Action',exact:true}).click();
+  const findingButton=dialog.getByRole('button',{name:'SYNTHETIC QA guidance evidence gap',exact:true});
+  await expect(findingButton).toBeVisible();await findingButton.click();
+  const findingDialog=page.getByTestId('findings-drawer');
+  await findingDialog.getByRole('button',{name:'Evidence',exact:true}).click();
+  const filename='synthetic-guidance-validation.txt';
+  await findingDialog.getByTestId('drawer-evidence-input').setInputFiles({name:filename,mimeType:'text/plain',buffer:Buffer.from('DEMO — SYNTHETIC DATA\nGuidance UI regression fixture.')});
+  await expect(findingDialog.getByText(filename,{exact:true})).toBeVisible();
+  const downloadEvent=page.waitForEvent('download');await findingDialog.getByRole('button',{name:'Download '+filename,exact:true}).click();
+  const download=await downloadEvent;assert.equal(download.suggestedFilename(),filename);assert.equal(await download.failure(),null);
+  await findingDialog.getByRole('button',{name:'Close',exact:true}).click();await expect(findingButton).toBeFocused();
+  await page.reload();await expect(dialog.getByLabel('Current implementation',{exact:true})).toBeEnabled();
+  await findingButton.click();await findingDialog.getByRole('button',{name:'Evidence',exact:true}).click();
+  await expect(findingDialog.getByText(filename,{exact:true})).toBeVisible();
+  await findingDialog.getByRole('button',{name:'Close',exact:true}).click();
+  const relationships=await page.evaluate(filename=>{const db=JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')),f=db.findings.find(f=>f.title==='SYNTHETIC QA guidance evidence gap');return {finding:f,actions:db.tasks.filter(t=>t.finding_id===f.finding_id),files:db.evidence.filter(e=>e.filename===filename)};},filename);
+  assert.equal(relationships.actions.length,1);assert.equal(relationships.files.length,1);
+  assert.equal(relationships.finding.framework_assessment_id,rows.find(r=>r.definition_id==='1.1').framework_assessment_id);
   const out=process.env.QA_OUTPUT_DIR;
   if(out)fs.mkdirSync(out,{recursive:true});
   for(const theme of ['light','dark'])for(const width of [1440,1280,1024,768]){
@@ -66,6 +95,6 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Loopback Demo required');
   await page.goto(base+'/compliance/nist-csf-2');
   await expect(page.getByTestId('brawndo-cis-assessment')).toHaveCount(0);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({safeguardsSavedAndReloaded:tested.length,widths:[1440,1280,1024,768],themes:['light','dark'],draftGuard:true,saveNext:true,previous:true,escape:true,focusTrap:true,focusReturn:true,breadcrumb:true,runtimeErrors:errors}));
- }finally{await browser.close();}
+  console.log(JSON.stringify({safeguardsSavedAndReloaded:tested.length,findingAndSingleAction:true,evidenceUploadDownloadReload:true,widths:[1440,1280,1024,768],themes:['light','dark'],draftGuard:true,saveNext:true,previous:true,escape:true,focusTrap:true,focusReturn:true,breadcrumb:true,runtimeErrors:errors}));
+ }catch(e){console.error((await page.locator('body').innerText()).slice(-4000));throw e;}finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

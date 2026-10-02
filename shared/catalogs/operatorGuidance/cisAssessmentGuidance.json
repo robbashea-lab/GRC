@@ -1,0 +1,292 @@
+{
+  "framework": "cis-ig1",
+  "version": "8.1",
+  "revision": "2026-10-02",
+  "basis": "Omnisciente assessment guidance, checked against CIS v8.1 safeguard descriptions. Evidence examples are alternatives, not additional requirements. CAS scoring, inputs and metrics are not imported.",
+  "requirements": {
+    "1.1": {
+      "review": [
+        "Compare the inventory with the devices actually used: endpoints (including portable and mobile), servers, network equipment and data-capable IoT/non-computing devices. Include physical, virtual, remote and cloud assets, plus regularly connected assets outside the organization's control.",
+        "Confirm each entry records its static network address when applicable, hardware address, machine name, owner, department and approval to connect. Look for missing devices, duplicate entries and retired devices still shown as active.",
+        "Check dated inventory reviews and updates occur at least every six months. Discovery and device-management tools can help reconcile coverage; a particular tool is not required."
+      ],
+      "evidence": ["An asset inventory export with the specified identifying fields.", "Dated reconciliation notes compared with network, endpoint or responsible-provider records."],
+      "outcome": ["The inventory accounts for the full asset population and identifies who owns each device and whether it may connect.", "Inventory changes and reviews demonstrate currency within the six-month interval."]
+    },
+    "1.2": {
+      "review": ["Review how unknown or unauthorized devices are identified and handled each week. Compare recent inventory differences or network observations with the handling records.", "Confirm unauthorized devices are removed from the network, denied remote connection or quarantined. Identify devices that remain connected without authorization; an open remediation ticket alone does not resolve them."],
+      "evidence": ["Weekly unauthorized-device review records or provider reports showing the devices examined.", "Dated removal, connection-denial or quarantine results matched to the identified devices."],
+      "outcome": ["Weekly handling operates, and unauthorized devices do not retain unaddressed network access.", "Records demonstrate the disposition of identified devices, not only their discovery."]
+    },
+    "2.1": {
+      "review": ["Review the inventory of licensed software installed on enterprise assets. Confirm each entry has a title, publisher, initial installation/use date and business purpose.", "Check URL, app store, versions, deployment mechanism, retirement date and license count where appropriate. Compare recorded software with installed applications and operating systems to find omissions.", "Verify the inventory is reviewed and updated at least every six months. Automated inventory tools are an option, not an IG1 prerequisite."],
+      "evidence": ["Software inventory or application catalog containing the relevant fields.", "Dated reconciliation with installed-software reports, licensing records or provider-maintained inventories."],
+      "outcome": ["Installed software can be identified and connected to a documented business purpose.", "The inventory has the specified details and a current six-month review/update record."]
+    },
+    "2.2": {
+      "review": ["Compare authorized software versions against publisher support information at least monthly. Identify end-of-support products incorrectly marked as supported.", "For necessary mission-supporting software that is unsupported, examine a documented exception covering mitigating controls and acceptance of residual risk. Without that exception, confirm it is classified as unauthorized."],
+      "evidence": ["Version inventory matched to publisher lifecycle notices and dated monthly support checks.", "For necessary unsupported software, its exception and evidence that the stated mitigation operates."],
+      "outcome": ["Authorization reflects current vendor support or the safeguard's documented exception conditions.", "Unsupported software is not silently treated as supported; monthly checks identify changes."]
+    },
+    "2.3": {
+      "review": ["Compare installed software with the authorized inventory and examine the disposition of unapproved installations.", "Confirm unauthorized software is removed from use or has a documented exception, with review at least monthly. Pending investigation or a planned removal is not completed handling."],
+      "evidence": ["Monthly software reconciliation or provider review identifying unauthorized installations.", "Removal results or documented exceptions tied to the software and affected assets."],
+      "outcome": ["Unauthorized installations have a demonstrated removal or a documented exception.", "Monthly reviews can account for software that was discovered and what happened to it."]
+    },
+    "3.1": {
+      "review": ["Review the documented data-management process for sensitivity, ownership, handling, retention limits and disposal requirements.", "Confirm these expectations reflect the organization's sensitivity and retention standards. Check review/update dates annually and after significant changes affecting the process."],
+      "evidence": ["Data-management procedures or standards addressing the required subjects.", "Revision records or dated reviews explaining updates after relevant changes."],
+      "outcome": ["People responsible for data can determine its handling, retention and disposal requirements.", "Documentation reflects current operations and receives annual and significant-change review."]
+    },
+    "3.2": {
+      "review": ["Compare the data inventory with the documented data-management process. Confirm sensitive data is included at a minimum, rather than inventorying systems alone.", "Review relevant repositories and business processes for omitted data. Verify inventory reviews and updates at least annually, prioritizing sensitive information."],
+      "evidence": ["Data inventory linked to the systems or locations holding the identified data.", "Dated annual reconciliation with data owners or responsible providers."],
+      "outcome": ["The organization can identify its sensitive data and account for it in the inventory.", "The inventory follows the data-management process and has been reviewed within the annual interval."]
+    },
+    "3.3": {
+      "review": ["Inspect access permissions for local and remote file systems, databases and applications. Compare access with users' need to know.", "Identify broad groups, inherited permissions and unnecessary access that expose data beyond business need. An access policy alone does not demonstrate the configured permissions."],
+      "evidence": ["Permission exports or configuration views from the relevant repositories.", "Business-role information or access-review records explaining why the observed access is needed."],
+      "outcome": ["Effective permissions restrict access according to business need across the relevant data locations.", "The observed configuration agrees with the stated access model."]
+    },
+    "3.4": {
+      "review": ["Review the documented minimum and maximum retention periods for the relevant data.", "Compare retention settings and actual retained data with those periods. Identify premature deletion and data kept beyond its maximum period; a written schedule alone is insufficient."],
+      "evidence": ["Retention requirements together with repository or system retention settings.", "Dated retention/deletion results or provider records showing how the periods are enforced."],
+      "outcome": ["Data is retained for the required minimum period and not kept beyond the documented maximum.", "Actual retention behavior matches the organization's data-management process."]
+    },
+    "3.5": {
+      "review": ["Review disposal procedures and recent disposal activity for electronic and physical data.", "Confirm the method matches data sensitivity and the documented data-management process. Check that a request to dispose was actually carried out."],
+      "evidence": ["Disposal procedure and dated deletion, sanitization or destruction records.", "Provider disposal certificates or execution reports identifying the affected data or media."],
+      "outcome": ["Disposal follows the documented process using a method suited to the sensitivity involved.", "Completed disposal can be distinguished from work merely scheduled or requested."]
+    },
+    "3.6": {
+      "review": ["Identify end-user devices containing sensitive data, including portable and mobile devices, and inspect their encryption state.", "Compare the device population with encryption results to find missing or disabled protection. Product selection is optional; encryption of the sensitive data is the requirement."],
+      "evidence": ["Encryption-state reports or device configuration views matched to the sensitive-data device population.", "Client or provider verification of actual encryption coverage, excluding passwords and recovery keys."],
+      "outcome": ["Sensitive data on end-user devices is encrypted.", "The claim is supported by device-level state, not only an intended encryption policy."]
+    },
+    "4.1": {
+      "review": ["Review the documented secure-configuration process for endpoints, portable/mobile devices, IoT/non-computing assets, servers, operating systems and applications.", "Confirm the process covers the technologies actually used. Check annual documentation reviews and updates following significant changes that affect configuration."],
+      "evidence": ["Configuration procedures and relevant baseline examples.", "Dated process reviews and change records showing that documentation remains current."],
+      "outcome": ["There is a documented way to establish and maintain secure configurations across the asset and software scope.", "The process is reviewed annually and when significant changes affect it."]
+    },
+    "4.2": {
+      "review": ["Review the documented secure-configuration process specifically for network devices, such as routers, switches, firewalls and wireless infrastructure.", "Compare the process with the current network estate. Verify annual review/update and review after significant changes affecting the safeguard."],
+      "evidence": ["Network configuration procedures or standards, with relevant device baselines.", "Annual review records and revisions resulting from network changes."],
+      "outcome": ["Network infrastructure is covered by a maintained configuration process, not just endpoint guidance.", "Documentation keeps pace with annual review and significant network changes."]
+    },
+    "4.3": {
+      "review": ["Inspect applied inactivity-lock settings and confirm sessions lock automatically within 15 minutes on general-purpose operating systems and within 2 minutes on mobile end-user devices.", "Compare assigned policies with effective device settings or observed behavior. Look for exclusions or overrides that leave sessions unlocked."],
+      "evidence": ["Effective session-lock settings or policy-deployment reports by device type.", "A safe observation of automatic locking on representative devices."],
+      "outcome": ["Sessions lock automatically within the applicable 15-minute or 2-minute limit.", "The limits operate on devices rather than existing only in a proposed policy."]
+    },
+    "4.4": {
+      "review": ["Identify servers that support a firewall and inspect whether firewall protection is implemented and managed.", "Check for disabled protection or servers missed by the selected solution. An operating-system firewall, virtual firewall or third-party agent can be used; no named product is required."],
+      "evidence": ["Server inventory compared with firewall coverage and effective configuration.", "Management or provider records showing the deployed firewall state."],
+      "outcome": ["Servers have managed firewall protection wherever supported.", "Coverage and active settings substantiate the implementation claim."]
+    },
+    "4.5": {
+      "review": ["Inspect host firewall or port-filtering settings on end-user devices, including laptops used away from the office.", "Confirm the effective default is to deny traffic, with only explicitly allowed services and ports permitted. Look for disabled profiles and broad rules that undermine that default."],
+      "evidence": ["Effective endpoint firewall rules and deployment/coverage reports.", "Configuration observations or provider reports confirming the policy operates on devices."],
+      "outcome": ["End-user devices apply default-deny filtering with explicit permitted services and ports.", "Protection remains active in the device's relevant network profiles."]
+    },
+    "4.6": {
+      "review": ["Review how assets and software are administered, including the protocols used to reach management interfaces.", "Confirm secure management methods are used. Identify insecure protocols such as Telnet or HTTP and verify any continued use is operationally essential, not merely convenient. Infrastructure-as-Code is an example, not mandatory."],
+      "evidence": ["Administrative-interface settings, connection configurations or management procedures.", "Change records or provider demonstrations showing secure administration in use and any operationally essential exception."],
+      "outcome": ["Administration uses secure methods appropriate to the assets and software.", "Insecure management protocols are absent unless the safeguard's operational-necessity condition applies."]
+    },
+    "4.7": {
+      "review": ["Identify vendor-preconfigured accounts on assets and software, including administrator and root accounts, and inspect how they are managed.", "Confirm the selected treatment is applied. Disabling or making such accounts unusable are examples; do not assume merely renaming an account establishes secure management."],
+      "evidence": ["Default-account configuration or account-state records for relevant systems.", "Provisioning or provider records showing the treatment applied to preconfigured accounts."],
+      "outcome": ["Default accounts are deliberately managed rather than left in an unmanaged installation state.", "Observed account settings agree with the organization's chosen treatment."]
+    },
+    "5.1": {
+      "review": ["Compare the account inventory with directories, applications and platforms, including user, administrator and service accounts.", "Confirm records contain the person's name, username, start/stop dates and department. Identify active accounts missing from the inventory or lacking authorization.", "Verify active-account authorization is validated at least quarterly; collecting an export alone is not an authorization review."],
+      "evidence": ["Account inventory and account/role exports from the client or responsible provider.", "Dated quarterly authorization decisions tied to the reviewed accounts."],
+      "outcome": ["Accounts are identifiable in the inventory with the specified details.", "Active-account authorization is demonstrated by recurring quarterly or more frequent validation."]
+    },
+    "5.2": {
+      "review": ["Review password-setting and credential-management practices to confirm passwords are unique across enterprise assets. Do not request actual passwords to prove this.", "CIS gives best-practice examples of at least 8 characters with MFA and 14 without MFA. Compare those examples with the organization's approach without treating them as a new Omnisciente scoring rule."],
+      "evidence": ["Password-policy configuration and credential-handling procedures without secret values.", "A responsible-party demonstration or explanation of how reuse across assets is avoided; settings alone may not prove uniqueness."],
+      "outcome": ["Passwords are not reused across enterprise assets.", "The assessment explains the basis for that conclusion without collecting credentials."]
+    },
+    "5.3": {
+      "review": ["Review account-activity data and the handling of accounts inactive for 45 days. Confirm they are disabled or deleted where supported.", "Compare inactivity dates with actual disablement/deletion results. A monthly evidence-review meeting must not extend the 45-day threshold; a generic risk acceptance is not a substitute."],
+      "evidence": ["Account inactivity reports and dated account-state changes.", "Client or provider execution records confirming which dormant accounts were disabled or deleted."],
+      "outcome": ["Dormant accounts are disabled or removed after the 45-day inactivity period where the system supports it.", "The record demonstrates the action, not only identification of inactivity."]
+    },
+    "5.4": {
+      "review": ["Compare privileged-role assignments with the accounts used for ordinary work. Confirm administrator privileges are restricted to dedicated administrative accounts.", "Check that web browsing, email and productivity work use the person's primary nonprivileged account. Look for everyday accounts retaining administrator privileges."],
+      "evidence": ["Privileged-account and role listings alongside ordinary user-account records.", "Access procedures or representative activity records showing separation in practice."],
+      "outcome": ["Dedicated accounts perform administration; routine computing uses nonprivileged accounts.", "Actual role assignments support that separation."]
+    },
+    "6.1": {
+      "review": ["Review the documented access-granting process for new hires and role changes.", "Compare recent hires or changes with resulting access to confirm the process is followed. Automation is preferred in the safeguard, not a prerequisite or a requirement for a particular approval chain."],
+      "evidence": ["Access-granting procedure and relevant hire/role-change requests.", "Provisioning records or responsible-provider results showing the resulting access."],
+      "outcome": ["A documented granting process operates for both new hires and changed roles.", "Access decisions and resulting provisioning can be followed through actual examples."]
+    },
+    "6.2": {
+      "review": ["Review the revocation process and compare termination, rights-revocation and role-change times with account disablement.", "Confirm access is disabled immediately when those events require revocation. A later periodic review does not replace immediate action. Disabling rather than deleting may be needed to preserve audit trails."],
+      "evidence": ["Offboarding/role-change records compared with timestamped disablement logs.", "Revocation procedure and provider execution records where access is externally managed."],
+      "outcome": ["Required revocation takes effect immediately, rather than waiting for the next scheduled review.", "The organization can demonstrate when access was disabled and retain necessary attribution."]
+    },
+    "6.3": {
+      "review": ["Identify externally exposed enterprise and third-party applications. Inspect whether MFA is enforced wherever supported, rather than merely available for enrollment.", "Check direct sign-in and SSO routes for bypasses. Enforcement through a directory or SSO provider is acceptable; note actual support limitations separately from incomplete deployment."],
+      "evidence": ["Application/sign-in inventory and MFA or conditional-access configuration.", "Authentication results or provider records demonstrating enforced MFA on applicable routes."],
+      "outcome": ["Externally exposed applications enforce MFA wherever they support it.", "Alternative access paths do not silently bypass the intended enforcement."]
+    },
+    "6.4": {
+      "review": ["Review all remote network-access methods and confirm MFA is required for connections.", "Inspect applied authentication policies and representative connection results. Identify alternate remote-access paths that still permit a password alone."],
+      "evidence": ["Remote-access configurations and authentication policies.", "Connection/authentication logs or a safe sign-in demonstration from the client or provider."],
+      "outcome": ["Remote network access requires MFA.", "The implemented connection behavior matches the configuration claim."]
+    },
+    "6.5": {
+      "review": ["Review administrative accounts across enterprise assets, including on-site and service-provider-managed environments.", "Confirm MFA is enforced for administrative access wherever supported. Identify excluded accounts, alternative admin interfaces and enrollment without enforcement."],
+      "evidence": ["Administrative-account lists matched to effective MFA policies.", "Admin sign-in results or scoped provider evidence confirming enforcement."],
+      "outcome": ["Administrative access requires MFA wherever supported, including provider-managed assets.", "Coverage is demonstrated for the administrative population, not inferred from ordinary-user MFA."]
+    },
+    "7.1": {
+      "review": ["Review the documented vulnerability-management process and its coverage of enterprise assets.", "Confirm the process reflects current operations and is reviewed/updated annually and after significant changes. Do not import IG2 scanning frequencies into this IG1 process requirement."],
+      "evidence": ["Vulnerability-management procedures and their asset scope.", "Dated reviews or revisions showing annual and significant-change maintenance."],
+      "outcome": ["A current, documented process governs vulnerability management for enterprise assets.", "Relevant changes and annual reviews keep the process usable."]
+    },
+    "7.2": {
+      "review": ["Review the documented remediation process and how its strategy prioritizes work by risk.", "Confirm monthly or more frequent process reviews. Examine remediation records to understand how prioritization operates; the safeguard does not impose one universal deadline for every vulnerability."],
+      "evidence": ["Risk-based remediation procedure and prioritization criteria.", "Dated monthly reviews supported by remediation queues, decisions or provider reports."],
+      "outcome": ["Risk drives a documented remediation strategy.", "Monthly or more frequent reviews evaluate the process; unresolved work is not mistaken for completed remediation."]
+    },
+    "7.3": {
+      "review": ["Compare operating-system patch schedules and deployment results with the enterprise asset population.", "Confirm automated patch management actually applies OS updates monthly or more frequently. Identify failed, missed and incomplete deployments; a monthly report or accepted delay is not equivalent to applying updates."],
+      "evidence": ["Automated patch configuration and dated OS deployment results.", "Asset-level update status or provider execution reports, including failed jobs and subsequent outcomes."],
+      "outcome": ["OS updates are applied through automated patch management at least monthly.", "Results substantiate deployment across the asset population, not only the existence of a schedule."]
+    },
+    "7.4": {
+      "review": ["Review automated application patching coverage, including business applications and other installed software; do not infer it from OS patching alone.", "Confirm application updates are applied monthly or more frequently. Compare results with the software inventory to identify omitted applications and failed or incomplete deployments."],
+      "evidence": ["Application update configuration and dated deployment results.", "Installed-version comparisons or responsible-provider reports demonstrating completed updates."],
+      "outcome": ["Application updates are applied automatically at least monthly.", "Coverage and results support the claim for applications, independently of OS patch status."]
+    },
+    "8.1": {
+      "review": ["Review the documented logging process for collection, review and retention expectations across enterprise assets.", "Confirm annual review/update and updates following significant changes affecting logging. Organization-defined review and retention expectations should not be replaced with an invented IG1 interval."],
+      "evidence": ["Audit-log management procedures covering collection, review and retention.", "Dated annual reviews or revisions after relevant changes."],
+      "outcome": ["The organization has current, documented logging expectations covering all three subjects.", "Annual and significant-change reviews maintain the process."]
+    },
+    "8.2": {
+      "review": ["Compare the documented logging process with actual logging configuration across enterprise assets.", "Confirm audit logs are being collected, not just that logging is intended. Identify missing sources, disabled logging or gaps in generated records."],
+      "evidence": ["Logging settings together with recent audit records from the relevant assets.", "Source-coverage reports or provider records demonstrating collection."],
+      "outcome": ["Logging is enabled and collects records according to the documented process.", "Observed records substantiate operation for the relevant asset scope."]
+    },
+    "8.3": {
+      "review": ["Review logging destinations and compare storage capacity with the requirements in the audit-log management process.", "Inspect capacity, overwrite or dropped-log conditions that could prevent those requirements being met. Do not impose the separate IG2 90-day retention safeguard on IG1."],
+      "evidence": ["Storage configuration and utilization reports for logging destinations.", "Retention/capacity observations or provider reports compared with the organization's logging requirements."],
+      "outcome": ["Logging destinations have sufficient storage to meet the documented process.", "Capacity limits are not silently causing loss of required logs."]
+    },
+    "9.1": {
+      "review": ["Compare installed browsers and email clients with current vendor releases and support information.", "Confirm only fully supported products using the vendor's latest version are allowed to execute. Identify unsupported or outdated versions that can still run; a future upgrade plan does not establish this state."],
+      "evidence": ["Browser/email-client version inventory compared with vendor release information.", "Update/enforcement settings and observed installed versions or provider coverage reports."],
+      "outcome": ["Executable browsers and email clients are fully supported and on the vendor's latest version.", "Version and execution evidence agree with the stated policy."]
+    },
+    "9.2": {
+      "review": ["Review DNS filtering coverage on all end-user devices, both on-premises and remote.", "Confirm known malicious domains are blocked. Check whether roaming devices or alternative DNS settings bypass the service; no particular filtering product is required."],
+      "evidence": ["DNS filtering configuration and endpoint coverage information.", "Block events or a provider-approved safe test demonstrating filtering, including remote devices."],
+      "outcome": ["Known malicious domains are blocked through DNS filtering for local and remote end-user devices.", "Coverage is demonstrated beyond the office network alone."]
+    },
+    "10.1": {
+      "review": ["Compare the enterprise asset population with anti-malware deployment and health information.", "Confirm anti-malware is deployed and maintained; identify absent, disabled or unhealthy protection. A purchased license or intended rollout is not deployment."],
+      "evidence": ["Anti-malware deployment/health reports matched to the asset inventory.", "Effective device settings or provider records confirming active protection."],
+      "outcome": ["Enterprise assets have maintained anti-malware protection.", "Observed deployment and health support the claimed coverage."]
+    },
+    "10.2": {
+      "review": ["Inspect anti-malware signature-update configuration across enterprise assets.", "Confirm updates are automatic and check recent results for stale signatures or failed updates. Manual updates alone do not establish automatic configuration."],
+      "evidence": ["Automatic-update settings alongside signature-version or update-status reports.", "Dated endpoint or provider update results."],
+      "outcome": ["Signature files update automatically across the asset scope.", "Recent results corroborate that the configured mechanism works."]
+    },
+    "10.3": {
+      "review": ["Inspect removable-media settings for both autorun and autoplay auto-execution.", "Confirm auto-execute functionality is disabled in effective configurations, including devices excluded from central policy. This does not require a blanket ban on removable media."],
+      "evidence": ["Effective autorun/autoplay settings or applied-policy reports.", "A safe configuration observation from representative devices or their responsible provider."],
+      "outcome": ["Removable media does not trigger autorun or autoplay auto-execution.", "Both settings are covered by the implemented treatment."]
+    },
+    "11.1": {
+      "review": ["Review the documented recovery process for detailed backup procedures, recovery scope, prioritization and backup-data security.", "Confirm annual review/update and updates after significant changes affecting recovery. Keep this process requirement distinct from backup execution and recovery testing."],
+      "evidence": ["Recovery procedures identifying scope, priorities and backup protection.", "Dated annual reviews and change-driven revisions."],
+      "outcome": ["The recovery process explains what is recoverable, its priority and how backups are made and secured.", "Documentation remains current through annual and significant-change review."]
+    },
+    "11.2": {
+      "review": ["Compare in-scope assets with automated backup coverage and schedules. Confirm backups run at least weekly, with greater frequency when data sensitivity requires it.", "Inspect recent job results for successful execution and missing, failed or incomplete jobs. A weekly evidence review is not a substitute for weekly backup execution."],
+      "evidence": ["Backup scope and schedule configuration together with dated job results.", "Client or provider backup reports showing success, failure and subsequent resolution."],
+      "outcome": ["Automated backups execute at least weekly for the in-scope assets, with frequency reflecting data sensitivity.", "Actual results substantiate the schedule; unresolved failures remain visible as gaps."]
+    },
+    "11.3": {
+      "review": ["Compare recovery-data protections with those required for the original data.", "Inspect access and other relevant controls, including encryption or separation where the data requirements call for them. A protected destination alone does not establish the separate isolation requirement in 11.4."],
+      "evidence": ["Backup access/encryption configurations compared with the original data's protection requirements.", "Provider protection records or demonstrations covering the recovery copy."],
+      "outcome": ["Recovery data receives protection equivalent to the original data.", "Implemented controls substantiate the comparison, rather than relying on a generic secure-backup claim."]
+    },
+    "11.4": {
+      "review": ["Identify the isolated recovery-data instance and inspect how its isolation is maintained.", "Confirm it is an actual maintained recovery copy, not merely a proposed destination. Offline, cloud or off-site arrangements are examples; their location or a restricted folder alone does not demonstrate isolation."],
+      "evidence": ["Backup destination/version configuration and records identifying the isolated copy.", "Access or separation details from the client or provider showing how isolation is maintained."],
+      "outcome": ["An isolated instance of recovery data exists and is maintained.", "The assessment can explain the isolation mechanism without assuming a particular product or architecture."]
+    },
+    "12.1": {
+      "review": ["Review network device/software versions and supported service offerings to confirm infrastructure is kept current. CIS examples include latest stable software and supported network-as-a-service.", "Compare versions with vendor support information monthly or more frequently. Identify unsupported or outdated infrastructure rather than treating a replacement plan as a current implementation."],
+      "evidence": ["Network version inventory and vendor lifecycle/release information.", "Dated monthly support checks and upgrade or provider maintenance results."],
+      "outcome": ["Network infrastructure is up to date and software support is verified at least monthly.", "The current-state conclusion is supported by observed versions and support information."]
+    },
+    "14.1": {
+      "review": ["Review the awareness program and workforce training records. Confirm training on secure use of assets and data takes place at hire and at least annually.", "Compare participation with the workforce population to find missed hires or overdue training. Verify content is reviewed/updated annually and after significant changes affecting the program."],
+      "evidence": ["Training content and hire/annual completion records from internal or provider-led delivery.", "Workforce reconciliation and dated content reviews/revisions."],
+      "outcome": ["New hires and the existing workforce receive the required training at the stated times.", "Current program content reflects annual and significant-change review."]
+    },
+    "14.2": {
+      "review": ["Review training content and delivery records for recognizing social engineering, including examples such as phishing, business email compromise, pretexting and tailgating.", "Confirm the topic is actually taught within the awareness program. A phishing simulation can support evaluation but is not a mandatory IG1 artifact."],
+      "evidence": ["Relevant lesson material and training/attendance records.", "Discussion, exercise or knowledge-check results where used by the organization."],
+      "outcome": ["Workforce training explains how to recognize social-engineering attempts.", "Delivery records demonstrate that the content was provided, not merely purchased."]
+    },
+    "14.3": {
+      "review": ["Review authentication training and how it is delivered. CIS example topics include MFA, password composition and credential management.", "Confirm practical instruction fits the authentication methods used by the workforce. A technical MFA configuration alone does not demonstrate training."],
+      "evidence": ["Authentication lesson material with attendance or completion records.", "Workforce guidance or knowledge checks used to reinforce the lesson."],
+      "outcome": ["The workforce is taught authentication best practices.", "Training explains usable behavior rather than only listing available security features."]
+    },
+    "14.4": {
+      "review": ["Review training on identifying sensitive data and securely storing, transferring, archiving and destroying it.", "Confirm clear-screen and clear-desk practices are taught, including locking unattended screens, clearing physical/virtual whiteboards and securing data/assets."],
+      "evidence": ["Data-handling and clear-screen/desk lesson material.", "Training delivery records or exercises relevant to the organization's data handling."],
+      "outcome": ["The workforce receives practical instruction across the sensitive-data lifecycle.", "Training includes both information handling and clear-screen/desk behavior."]
+    },
+    "14.5": {
+      "review": ["Review training on accidental exposure, such as sending data to the wrong recipient, losing portable devices or sharing with unintended audiences.", "Confirm relevant examples and delivery records show the topic is taught, rather than covered only by a data-handling policy."],
+      "evidence": ["Lessons or communications explaining accidental-exposure scenarios.", "Attendance, completion or scenario-discussion records."],
+      "outcome": ["Training makes common causes of unintentional exposure recognizable to the workforce.", "Examples relate to how people actually handle and share enterprise data."]
+    },
+    "14.6": {
+      "review": ["Review training on recognizing a possible security incident and reporting it through the organization's reporting process.", "Confirm workforce-facing instructions identify a usable reporting route. Compare training with current contacts so staff are not directed to obsolete channels."],
+      "evidence": ["Incident-recognition/reporting training and completion records.", "Current reporting instructions or exercise/discussion results where used."],
+      "outcome": ["The workforce is taught both recognition and reporting of potential incidents.", "Instruction points to a reporting method people can use."]
+    },
+    "14.7": {
+      "review": ["Review training showing the workforce how to identify and report outdated software patches or failures in automated processes and tools.", "Confirm the instruction includes notifying IT about failures. An automated patch report alone does not show that this workforce topic was taught."],
+      "evidence": ["Lessons or job aids explaining update/failure indicators and how to notify IT.", "Training records or practical demonstrations used by the organization."],
+      "outcome": ["People receive actionable instruction for recognizing update problems and reporting them to IT.", "Training covers automation/tool failures as well as missing patches."]
+    },
+    "14.8": {
+      "review": ["Review training on the risks of connecting to insecure networks and transmitting enterprise data over them.", "Where remote workers exist, confirm training includes secure configuration of home network infrastructure. Check that delivery reaches the relevant workforce."],
+      "evidence": ["Insecure-network and, where relevant, home-network training material.", "Attendance/completion records or remote-worker guidance supporting delivery."],
+      "outcome": ["The workforce is taught the risks of insecure networks for enterprise work.", "Remote workers receive guidance on securing their home infrastructure."]
+    },
+    "15.1": {
+      "review": ["Compare the provider inventory with known services and relationships. Confirm it includes all known providers, their classifications and an internal enterprise contact for each.", "Verify annual review/update and updates after significant changes. Do not turn this inventory safeguard into a mandatory IG2 provider-assessment program."],
+      "evidence": ["Provider inventory with classifications and designated contacts.", "Annual reconciliation or change records compared with contracts, purchasing or service records."],
+      "outcome": ["Known service providers are inventoried, classified and assigned an enterprise contact.", "The inventory stays current through annual and significant-change review."]
+    },
+    "17.1": {
+      "review": ["Confirm a lead and at least one backup are designated to manage incident handling, coordinating and documenting response and recovery.", "If providers perform incident handling, confirm at least one internal person oversees their work. Verify designations are reviewed annually and after significant relevant changes."],
+      "evidence": ["Incident-handling role assignments, including lead, backup and any internal provider overseer.", "Dated reviews, responsibility records or provider agreements supporting the assignments."],
+      "outcome": ["Incident handling has a known lead and backup with coordination/documentation responsibilities.", "Provider involvement retains internal oversight, and assignments remain current."]
+    },
+    "17.2": {
+      "review": ["Review contact information for parties that need incident notification. Consider the organization's actual stakeholders, including providers, insurers or authorities where relevant.", "Confirm contact details are verified annually. This notification list is distinct from the workforce's reporting instructions in 17.3; not every example stakeholder must apply to every organization."],
+      "evidence": ["Incident-notification contact list relevant to the organization.", "Dated annual contact verification or provider confirmation records."],
+      "outcome": ["Relevant notification recipients can be reached using current contact information.", "Annual verification demonstrates that the list has been checked, not merely retained."]
+    },
+    "17.3": {
+      "review": ["Review the documented workforce incident-reporting process for reporting timeframes, recipients, reporting mechanism and minimum information to provide.", "Confirm all workforce members can access it. Verify annual review and review after significant changes affecting the process; workforce availability does not mean publishing internal details to the internet."],
+      "evidence": ["Reporting instructions showing all four required elements.", "Workforce access/communication records and dated annual or change-driven reviews."],
+      "outcome": ["The workforce can find usable instructions for when, how, to whom and what to report.", "The reporting process is maintained annually and after significant relevant changes."]
+    }
+  }
+}
