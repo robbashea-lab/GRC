@@ -11,7 +11,7 @@ import {SearchField} from '@/components/Register';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import {Button} from '@/components/ui/button';
 import WorkspaceTabs from '@/components/WorkspaceTabs';
-import {focusLost,focusFallback} from '@/lib/focusRescue';
+import {focusLost,focusFallback,pageHeading} from '@/lib/focusRescue';
 import {readinessExplanation,readinessLabels} from '@/components/FrameworkProgramCard';
 import FrameworkDrawer from '@/components/FrameworkDrawer';
 import {SocProgramSettings} from '@/components/SocReadiness';
@@ -134,7 +134,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const openRecord=row=>{const path=hierarchyPath(frameworkKey,row).map(p=>p.id);remember({lastId:row.framework_assessment_id,section:path[0],...(prestigeSoc?{'category:all':path}:{})});const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);const within=params.has('assessment');setParams(next,{replace:within,state:{fromWorkspace:within?!!location.state?.fromWorkspace:true}});};
   const closeRecord=()=>{const id=selected?.definition_id;if(location.state?.fromWorkspace)navigate(-1);else{const next=new URLSearchParams(params);next.delete('assessment');setParams(next,{replace:true});}setRevision(n=>n+1);
     // Some drawers unmount without their own close-focus step; rescue lost focus to the record's row, else the page heading.
-    setTimeout(()=>{if(focusLost())focusFallback((id&&document.querySelector(`[data-testid="requirement-${id}"]`))||document.querySelector('main h1'));},60);};
+    setTimeout(()=>{if(focusLost())focusFallback((id&&document.querySelector(`[data-testid="requirement-${id}"]`))||pageHeading());},60);};
   const toggle=key=>{setExpanded(old=>old.includes(key)?old.filter(k=>k!==key):[...old,key]);remember({section:key.split('/')[0]});};
   const allKeys=ns=>ns.flatMap(n=>[n.key,...allKeys(n.children)]);
   const dropLinkedView=()=>{if(params.get('view')){const n=new URLSearchParams(params);n.delete('view');setParams(n,{replace:true});}};

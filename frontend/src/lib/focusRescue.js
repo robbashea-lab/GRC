@@ -6,3 +6,5 @@ export function focusFallback(el){if(!el)return false;if(!el.hasAttribute('tabin
 // After a navigation that replaces the activated control (drill-in, breadcrumb, view switch),
 // rescue lost focus to the element that names the new location. Never steals focus otherwise.
 export function useRescueFocus(ref,key){useEffect(()=>{if(focusLost())focusFallback(ref.current);},[key]);}// eslint-disable-line react-hooks/exhaustive-deps
+// The visible page heading (a hidden generic header can precede a workspace's own header).
+export const pageHeading=()=>[...document.querySelectorAll('main h1')].find(h=>h.getClientRects().length>0)||null;
