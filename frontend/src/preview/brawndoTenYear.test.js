@@ -16,6 +16,7 @@ import axios from 'axios';
 import {performance} from 'perf_hooks';
 import {previewAdapter} from './adapter';
 import {STORE_KEY,ids as ID_FIELDS} from './store';
+import {restoreFiles} from './evidenceStorage';
 import {registerSignals} from '../lib/registerSignals';
 import {riskMatchesView} from '../lib/riskRegister';
 import {vendorSignals} from '../lib/vendorGovernance';
@@ -86,6 +87,9 @@ async function call(method, url, data, params, {expectFailure = false, label} = 
 }
 const get = (url, params) => call('get', url, null, params);
 const raw = () => JSON.parse(storage.getItem(STORE_KEY));
+// Records as the application reads them back: at-rest storage compacts occurrence fields that
+// equal their Review's current values (evidenceStorage.js); history is checked after expansion.
+const stored = () => restoreFiles(raw());
 let evidenceSeq = 0;
 async function upload(linked_type, linked_id, title, extra = {}) {
   const text = `DEMO - SYNTHETIC DATA\nBrawndo\n${title}\nCollected ${today}\nItem ${++evidenceSeq}`;
@@ -854,7 +858,7 @@ function integrityScan() {
   return issues;
 }
 function historyCheck() {
-  const db = raw(), out = {occurrencesChecked: 0, occurrenceMismatches: [], assessmentChecked: 0, assessmentMismatches: [], decisionMismatches: []};
+  const db = stored(), out = {occurrencesChecked: 0, occurrenceMismatches: [], assessmentChecked: 0, assessmentMismatches: [], decisionMismatches: []};
   const fields = ['occurrence_id', 'due_date', 'period', 'completed_at', 'completed_by', 'completed_by_name', 'outcome', 'finding_count', 'notes', 'owner_id', 'title'];
   for (const [rid, map] of ledger.occurrences) {
     const r = db.reviews.find(x => x.review_id === rid);
@@ -879,7 +883,7 @@ function historyCheck() {
 }
 function yearOneCheck() {
   if (!ledger.year1) return {skipped: true};
-  const db = raw(), y1 = ledger.year1, out = {occurrences: y1.occurrences.length, missing: [], changed: [], evidenceMissing: 0, closedFindingsChanged: [], doneTasksChanged: [], assessmentPrefixBroken: [], riskHistoryBroken: [], policyHistoryBroken: [], fritoAttribution: 0};
+  const db = stored(), y1 = ledger.year1, out = {occurrences: y1.occurrences.length, missing: [], changed: [], evidenceMissing: 0, closedFindingsChanged: [], doneTasksChanged: [], assessmentPrefixBroken: [], riskHistoryBroken: [], policyHistoryBroken: [], fritoAttribution: 0};
   for (const {parent, snapshot} of y1.occurrences) {
     const stored = db.reviews.find(r => r.review_id === parent)?.occurrences?.find(x => x.occurrence_id === snapshot.occurrence_id);
     if (!stored) out.missing.push(snapshot.occurrence_id);

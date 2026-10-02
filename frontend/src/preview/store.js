@@ -70,6 +70,9 @@ export function seedStore(clock=new Date()) {
 }
 function installCanonicalDunder(db){
   if(db.clients.some(c=>c.client_id==='demo_dunder'&&c.demo_program_version==='iso27001-year2-v1'))return false;
+  // Upgrades existing Demo-seeded stores only; a store without the seeded Demo clients
+  // (e.g. imported backend fixtures) is left exactly as saved.
+  if(!db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id)))return false;
   const canonical=seedStore(),cid='demo_dunder';
   for(const [key,value] of Object.entries(canonical))if(Array.isArray(value)&&key!=='users')(db[key]||=[]).push(...value.filter(row=>row.client_id===cid));
   db.users.push(...canonical.users.filter(user=>user.user_id.startsWith(cid+'_')));
