@@ -118,8 +118,8 @@ test('helper precedes the implementation field, N/A rationale is preserved and b
  await setValue('Current implementation','Unsaved');await act(async()=>button('CC9').click());expect(document.body.textContent).toContain('Leave unsaved changes?');
 });
 
-test('the SOC-specific experience is gated to Prestige Demo only',async()=>{
- await render('demo_dunder');expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeNull();expect(container.querySelector('[data-testid="framework-assessment-workspace"]')).toBeTruthy();
+test('the SOC 2 assessment follows the framework: any Demo client with a SOC 2 record gets it',async()=>{
+ await render('demo_new_soc');expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();expect(container.querySelector('[data-testid="framework-assessment-workspace"]')).toBeNull();
 });
 
 test('Prestige identity outside Demo does not activate tiered guidance',async()=>{

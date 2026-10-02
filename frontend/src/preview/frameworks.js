@@ -162,7 +162,8 @@ export function frameworkRequest(db,path,method,params,body){
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_assessed??null))throw new Error('Assessment changed since it was opened; reload before saving');
     body={...body};delete body.expected_last_assessed;
     const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...(row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1'?['cis_assessment_criteria']:[])];
-    if(row.client_id==='demo_prestige'&&row.framework_key==='soc-2')fields.push('soc_assessment_checks');
+    // SOC 2 guidance and verification follow the framework, for any Demo client configured with SOC 2.
+    if(row.framework_key==='soc-2')fields.push('soc_assessment_checks');
     if('soc_assessment_checks' in body){
       const valid=new Set((socGuidance.criteria[row.definition_id]?.items||[]).map(c=>c.id));
       if(!fields.includes('soc_assessment_checks')||!Array.isArray(body.soc_assessment_checks)||body.soc_assessment_checks.length>30||body.soc_assessment_checks.some(c=>!valid.has(c)))throw new Error('Invalid SOC assessment guidance checks');
@@ -174,7 +175,7 @@ export function frameworkRequest(db,path,method,params,body){
       body.cis_assessment_criteria=[...new Set(body.cis_assessment_criteria)];
     }
     if(Object.keys(body).some(k=>!fields.includes(k)&&!VERIFICATION_FIELDS.includes(k)))throw new Error('Unknown or immutable assessment fields');
-    const verificationAllowed=row.framework_key==='cis-ig1'||row.client_id==='demo_prestige'&&row.framework_key==='soc-2';
+    const verificationAllowed=['cis-ig1','soc-2'].includes(row.framework_key);
     if('verification' in body&&!verificationAllowed)throw new Error('Verification is available only for CIS Controls IG1 and Prestige SOC 2');
     if('verification_checklist' in body){
       if(row.framework_key!=='cis-ig1')throw new Error('Verification checklists apply only to CIS Controls IG1');

@@ -18,7 +18,7 @@ import CisWorkspaceSummary from '@/components/CisWorkspaceSummary';
 import BrawndoCisOverview,{AssessmentOverview,BrawndoCisHeader,FrameworkHeader} from '@/components/BrawndoCisOverview';
 import PrestigeSocNavigator,{socCategoryCrumb} from '@/components/PrestigeSocNavigator';
 import {PrestigeSocHeader} from '@/components/PrestigeSocAssessment';
-import {isBrawndoReference,isPrestigeSocAssessment} from '@/lib/reference';
+import {isBrawndoReference,isReferenceSocAssessment} from '@/lib/reference';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import CisResultTable from '@/components/CisResultTable';
 import BrawndoCisControls from '@/components/BrawndoCisControls';
@@ -94,7 +94,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
   const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels(vocab);
   // Brawndo CIS IG1 reads top to bottom: condition, next steps, controls. Presentation only.
-  const brawndoCis=frameworkKey==='cis-ig1'&&isBrawndoReference(clientId,user),prestigeSoc=isPrestigeSocAssessment(clientId,frameworkKey,user),referenceAssessment=brawndoCis||prestigeSoc,iso=frameworkKey==='iso-27001',[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
+  const brawndoCis=frameworkKey==='cis-ig1'&&isBrawndoReference(clientId,user),prestigeSoc=isReferenceSocAssessment(clientId,frameworkKey,user),referenceAssessment=brawndoCis||prestigeSoc,iso=frameworkKey==='iso-27001',[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);

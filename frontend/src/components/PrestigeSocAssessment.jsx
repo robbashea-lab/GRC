@@ -20,7 +20,7 @@ const VERIFICATION_TONE={not_verified:'neutral',needs_validation:'moderate',gap_
 export const SOC_CURRENT_HELP='Document how the organization currently addresses this criterion. Describe the relevant policies, technical controls, operational processes, responsible parties, recurring activities, and other implementation details necessary to understand how the control environment operates in practice.';
 export const SOC_CRITERIA_NOTE='SOC 2 Criterion Requirements reflect the applicable criterion and authoritative assessment guidance. Operational Practices and Enhanced Assurance are implementation guidance and do not represent additional SOC 2 requirements.';
 
-export const PrestigeSocHeader=props=><FrameworkHeader eyebrow="Prestige Worldwide · SOC 2 readiness" title="SOC 2" {...props}/>;
+export const PrestigeSocHeader=props=><FrameworkHeader eyebrow="SOC 2 readiness" title="SOC 2" {...props}/>;
 
 export default function PrestigeSocAssessment({state,actions}){
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,related,finding,breadcrumb}=state;

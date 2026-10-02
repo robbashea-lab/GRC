@@ -94,7 +94,12 @@ test('SOC guidance saves independently, preserves legacy data and appends immuta
  expect(cleared.assessment_history.at(-2).soc_assessment_checks).toEqual(saved.soc_assessment_checks);
 });
 
-test.each(['soc-2','cis-ig1','iso-27001'])('SOC guidance cannot affect another client or %s history',async key=>{
+test('SOC guidance applies to any client configured with SOC 2, not only Prestige',async()=>{
+ const row=(await configure('soc-2')).assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
+ const saved=(await api.patch(path,{soc_assessment_checks:[],verification:'needs_validation',expected_last_assessed:row.last_assessed??null})).data;
+ expect(saved).toMatchObject({client_id:cid,soc_assessment_checks:[],verification:'needs_validation'});
+});
+test.each(['cis-ig1','iso-27001'])('SOC guidance cannot affect %s history',async key=>{
  const row=(await configure(key)).assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
  await expect(api.patch(path,{soc_assessment_checks:[],expected_last_assessed:row.last_assessed??null})).rejects.toThrow();
  const saved=(await api.patch(path,{notes:'Ordinary update',expected_last_assessed:row.last_assessed??null})).data;

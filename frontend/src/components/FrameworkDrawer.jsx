@@ -25,7 +25,7 @@ import FrameworkReviewSetup from './FrameworkReviewSetup';
 import FrameworkAssessmentWorkspace,{isBrawndoCisPrototype} from './FrameworkAssessmentWorkspace';
 import BrawndoCisSafeguard from './BrawndoCisSafeguard';
 import PrestigeSocAssessment from './PrestigeSocAssessment';
-import {isPrestigeSocAssessment} from '@/lib/reference';
+import {isReferenceSocAssessment} from '@/lib/reference';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from './ui/alert-dialog';
 
 const IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',evidence:'evidence_id',vendors:'vendor_id'};
@@ -35,7 +35,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const catalog=frameworkCatalog(record.framework_key),isCsf=record.framework_key==='nist-csf-2',isSoc=record.framework_key==='soc-2',isCis=record.framework_key==='cis-ig1',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement'),program=operatorProgram(record.framework_key);
   const statuses=operatorStatuses(record.framework_key);
   const brawndoCis=isBrawndoCisPrototype(clientId,record,user);
-  const prestigeSoc=isPrestigeSocAssessment(clientId,record.framework_key,user);
+  const prestigeSoc=isReferenceSocAssessment(clientId,record.framework_key,user);
   const prototype=['cis-ig1','iso-27001','soc-2'].includes(record.framework_key);
   const writable=['super_admin','platform_admin','client_grc_manager'].includes(user?.role) ||
     user?.role==='client_contributor' && record?.owner_id===user?.user_id;
