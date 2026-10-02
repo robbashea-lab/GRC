@@ -7,14 +7,20 @@
 [data-testid="prestige-soc-assessment"] .bcis-crumbs button:hover { text-decoration: underline; }
 [data-testid="prestige-soc-assessment"] .bcis-crumbs button:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 2px; border-radius: 2px; }
 .psoc-context { color: var(--color-text-secondary); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-.psoc-tier { min-width: 0; margin: 16px 0 0; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-subtle); }
-.psoc-tier legend { max-width: 100%; padding: 0 4px; font-size: 13px; font-weight: 600; }
-.psoc-tier legend span { margin-left: 8px; white-space: nowrap; color: var(--color-text-secondary); font-weight: 400; }
-.psoc-tier label { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 14px; line-height: 1.5; cursor: pointer; overflow-wrap: anywhere; }
-.psoc-tier input { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 3px; accent-color: var(--color-link); }
-.psoc-tier input:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 3px; }
-.psoc-tier:disabled label { cursor: default; opacity: .7; }
+.psoc-guidance { min-width: 0; max-width: 88ch; overflow-wrap: anywhere; }
+.psoc-tier { min-width: 0; margin: 16px 0 0; padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-subtle); }
+.psoc-tier h4 { margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
+.psoc-guidance-group + .psoc-guidance-group { margin-top: 18px; }
+.psoc-guidance-group h5 { margin: 0 0 6px; font-size: 14px; font-weight: 600; }
+.psoc-tier ul { list-style: disc; padding-left: 22px; margin: 8px 0 0; display: grid; gap: 8px; }
+.psoc-tier li { font-size: 14px; line-height: 1.6; }
 .psoc-guidance-note { margin-top: 12px; font-size: 12px; line-height: 1.5; color: var(--color-text-secondary); }
+.psoc-guidance-context, .psoc-previous-checks { margin-top: 12px; font-size: 12px; line-height: 1.5; color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.psoc-guidance-context summary, .psoc-previous-checks summary { cursor: pointer; font-weight: 600; }
+.psoc-guidance-context summary:focus-visible, .psoc-previous-checks summary:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 3px; }
+.psoc-guidance-context p, .psoc-previous-checks p { margin-top: 8px; }
+.psoc-previous-checks ul { list-style: disc; margin: 8px 0 0; padding-left: 22px; }
+.psoc-previous-checks li + li { margin-top: 4px; }
 .psoc-linked { margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 16px; font-size: 14px; }
 .psoc-linked summary { cursor: pointer; font-weight: 600; }
 .psoc-linked section { margin-top: 12px; }
