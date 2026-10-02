@@ -2,23 +2,26 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import Layout from '@/components/Layout';
 import MockComplianceWorkspace from './ComplianceWorkspace';
+import MockRecordListPage from './RecordListPage';
+import {THEME_KEY} from '@/lib/brawndoTheme';
 import api from '@/lib/api';
 let mockClient, mockPath, mockKey;
 jest.mock('@/context/OrgContext', () => ({ useOrg: () => ({ currentClientId: mockClient.client_id, currentClient: mockClient, clients: [mockClient] }) }));
-jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: { role: 'super_admin', name: 'Alex Morgan' } }) }));
+jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: { role: 'super_admin', name: 'Alex Morgan', workspace_mode: 'demo' } }) }));
 jest.mock('@/components/NotificationBell', () => () => null);
 jest.mock('@/preview/DemoNotice', () => () => null);
 jest.mock('@/lib/api', () => ({ __esModule: true, default: { get: jest.fn() }, formatError: e => e.message }));
 jest.mock('react-router-dom', () => ({
   useSearchParams: () => require('react').useState(new URLSearchParams()),
   useLocation: () => ({ pathname: mockPath }), useParams: () => ({ requirementKey: mockKey }), useNavigate: () => jest.fn(),
-  Outlet: () => <MockComplianceWorkspace />,
+  Outlet: () => mockPath==='/reviews'?<MockRecordListPage kind="reviews"/>:<MockComplianceWorkspace />,
   NavLink: ({ children, to, ...props }) => <a href={to} data-testid={props['data-testid']}>{children}</a>,
   Link: ({children,to}) => <a href={to}>{children}</a>,
 }), { virtual: true });
 let root, container;
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
+  localStorage.removeItem(THEME_KEY);
   mockClient = { client_id: 'a', name: 'Client A' }; mockKey = 'hipaa'; mockPath = '/compliance/hipaa';
   api.get.mockImplementation(async (path, config) => ({ data: path === '/onboarding/baseline' ? { state: { completed: true } }
     : path.startsWith('/frameworks/') ? {configured:false,selected:mockClient.client_id==='a',assessments:[],definitions:[]}
@@ -26,7 +29,7 @@ beforeEach(() => {
     : config?.params?.client_id === 'a' ? ['hipaa','iso-27001','cmmc'].map(key => ({client_id:'a',baseline_key:key,baseline_response:'applies'})) : [] }));
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
-afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
+afterEach(async () => { await act(async () => root.unmount()); container.remove(); localStorage.removeItem(THEME_KEY); });
 const render = async () => { await act(async () => root.render(<Layout />)); };
 test('direct compliance routes render client empty states and preserve existing sidebar links', async () => {
   for (const [key, label] of [['hipaa','HIPAA'],['iso-27001','ISO 27001'],['cmmc','CMMC']]) {
@@ -55,4 +58,16 @@ test('failed loads show a safe error instead of a blank page', async () => {
   await render();
   expect(container.querySelector('[role="alert"]').textContent).toContain('Unable to retrieve requirements');
   expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(0);
+});
+
+test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s Reviews inherits shared header, theme and portal surface from Layout',async clientId=>{
+  mockClient={client_id:clientId,name:'Review client'};mockPath='/reviews';
+  await render();
+  expect(container.querySelector('main .client-surface').dataset.theme).toBe('light');
+  expect(container.querySelector('main h1').textContent).toBe('Reviews');
+  expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Review client');
+  await act(async()=>container.querySelector('main [aria-label="Switch to dark mode"]').click());
+  expect(container.querySelector('main .client-surface').dataset.theme).toBe('dark');
+  expect(document.documentElement.dataset.brawndoPortal).toBe('dark');
+  expect(container.querySelector('main [aria-label="Switch to light mode"]')).toBeTruthy();
 });

@@ -1,3 +1,4 @@
+import AssessmentMetrics from './AssessmentMetrics';
 import {AlertTriangle,Clock3,FileX2,FlagOff,ListChecks,SearchCheck,CircleDashed,PlayCircle} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {Button} from './ui/button';
@@ -17,7 +18,7 @@ const SIGNALS=v=>[
 ];
 
 // Operational summary: what has been evaluated, what it concluded, and what needs work.
-export default function CisWorkspaceSummary({summary:s,filter,onFilter,resume,onContinue,framework='cis-ig1',scopeLabel,explanation,children}){
+export default function CisWorkspaceSummary({summary:s,filter,onFilter,resume,onContinue,framework='cis-ig1',scopeLabel,children}){
   const pick=key=>onFilter(filter===key?'all':key),v=operatorVocabulary(framework);
   return <section className="cis-summary" aria-labelledby="cis-summary-heading">
     <div className="cis-summary-head">
@@ -27,17 +28,13 @@ export default function CisWorkspaceSummary({summary:s,filter,onFilter,resume,on
     </div>
     <div className="cis-summary-grid">
       <div className="cis-summary-measures">
-        <div className="cis-measure-pair">
-          <div><p className="cis-measure-label">Assessment coverage</p><p className="cis-measure-value">{s.applicable?`${s.coverage}%`:'—'}</p><p className="cis-measure-sub">{s.assessed} of {s.applicable} {scopeLabel==='Statement of Applicability'?'non-excluded controls':`applicable ${v.items}`} assessed</p></div>
-          <div><p className="cis-measure-label">{v.statuses.addressed}</p><p className="cis-measure-value text-semantic-success">{s.applicable?`${s.implemented}%`:'—'}</p><p className="cis-measure-sub">{s.addressed} of {s.applicable} concluded {v.statuses.addressed}</p></div>
-        </div>
+        <AssessmentMetrics summary={s} implementedLabel={v.statuses.addressed}/>
         <CisStatusBar counts={Object.fromEntries(CIS_ORDER.map(k=>[k,s[FIELD[k]]]))} className="h-2.5"/>
         <div className="cis-legend" role="group" aria-label="Filter by assessment status">
           {CIS_ORDER.map(status=>{const n=s[FIELD[status]];
             return <button key={status} type="button" aria-pressed={filter===status} onClick={()=>pick(status)} className={`cis-legend-item cis-tone-${CIS_TONE[status]}`}><span className="cis-dot" aria-hidden="true"/>{v.statuses[status]}<strong>{n}</strong></button>;})}
         </div>
         <p className="cis-footnote">{scopeLabel ? `Coverage is limited to the ${scopeLabel} view, not the whole program.` : `Coverage shows how much of ${v.scope} has been evaluated.`} Neither measure is a compliance percentage, certification or audit opinion.</p>
-        {explanation&&<details className="bcis-explain"><summary>How is this calculated?</summary><p>{explanation}</p></details>}
         {children}
       </div>
       <div className="cis-signals" role="group" aria-label="Requires attention">

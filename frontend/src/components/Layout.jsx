@@ -300,7 +300,7 @@ export default function Layout() {
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
         {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
-        {currentClientId&&!isBrawndoReference(currentClientId,user)&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
+        {currentClientId&&(pathname==='/reviews'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
     </div></ComplianceProvider>
   );

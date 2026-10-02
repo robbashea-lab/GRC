@@ -68,7 +68,7 @@ test('SOC settings retain the scope draft after a failed save and allow retry',a
 test('Brawndo summary, bar tooltips, and removed sections; Controls follow the summary',async()=>{
  await brawndo();
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('98%Implemented55 of 56 safeguards');expect(summary).toContain('98%Assessed');expect(summary).toContain('1Still to assessContinue with safeguard 1.2');
+ expect(summary).toContain('Implemented98%55 of 56');expect(summary).toContain('Assessed98%');expect(summary).toContain('1 still to assess · Continue with safeguard 1.2');
  expect(summary).toContain('not a compliance percentage, certification or audit opinion');
  expect(container.querySelector('h1').textContent).toBe('CIS IG1');
  const seg=container.querySelector('[data-testid="bcis-seg-addressed"]');
@@ -111,7 +111,7 @@ test('Prestige SOC 2 uses scoped progress and category-first hierarchy with coll
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
  expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toMatch(/Client organizational Controls|Include retained out-of-scope criteria/);expect(socSettings().open).toBe(false);
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('74%Implemented28 of 38 criteria');expect(summary).toContain('92%Assessed');expect(summary).toContain('3Still to assess');
+ expect(summary).toContain('Implemented74%28 of 38');expect(summary).toContain('Assessed92%');expect(summary).toContain('3 still to assess');
  const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Implemented: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Implemented5 of 38 criteria13%');
  expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');
  expect(workspace.querySelector('[aria-label="Trust Services Categories"]').textContent).not.toMatch(/Processing Integrity|Privacy/);
@@ -143,7 +143,7 @@ test('every client gets the reference workspace: categories start compact; open,
 });
 test('a mismatched client response cannot populate the workspace or resume selection',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="b"/>));
- expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);expect(container.textContent).toContain('0 of 0 safeguards');
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);expect(container.querySelector('.assessment-metrics').textContent).toContain('0 of 0');
  expect([...container.querySelectorAll('button')].some(b=>b.textContent.startsWith('Continue with'))).toBe(false);
 });
 
@@ -178,7 +178,8 @@ test('ISO has five focused workspaces; SoA retains all 93 controls and audit is 
  expect(container.textContent).not.toContain('Connected programme records');
  await act(async()=>buttons('ISMS Requirements')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('30 of 30');
- expect(container.querySelector('.bcis-explain').textContent).toContain('(30 of 30)');
+ expect(container.querySelector('.assessment-metrics').textContent).toContain('30 of 30');
+ expect(container.querySelector('.bcis-explain')).toBeNull();
  const panel=container.querySelector('[role="tabpanel"]');
  expect(panel.getAttribute('aria-labelledby')).toBe('iso-tab-isms_clause');
  expect(panel.tabIndex).toBe(0);
@@ -212,19 +213,14 @@ test('ISO default presentation preserves SoA scope and uses native category butt
  expect(mockHistory.at(-1).search).toBe('iso_view=soa');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('91 of 92');
- expect(container.querySelector('.bcis-explain').textContent).toContain('Only Annex A controls marked Necessary are counted in this view.');
- expect(container.querySelector('.bcis-explain').textContent).toContain('(91 of 92)');
- expect(container.querySelector('.bcis-explain').textContent).toContain('controls concluded');
- expect(container.querySelector('.bcis-explain').textContent).toContain('(1 excluded)');
 });
 
-test.each(['cis-ig1','hipaa'])('%s with all records N/A explains why readiness is not calculated',async frameworkKey=>{
+test.each(['cis-ig1','hipaa'])('%s with all records N/A keeps undefined progress without calculation explanations',async frameworkKey=>{
  const definitions=frameworkCatalog(frameworkKey).requirements;
  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'na'+i,definition_id:d.id,client_id:'a',status:'not_applicable'})),work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="a"/>));
- const figures=[...container.querySelectorAll('.bcis-figure,.cis-measure-value')].slice(0,2);
+ const figures=[...container.querySelectorAll('.assessment-metric strong')].slice(0,2);
  expect(figures.map(n=>n.textContent)).toEqual(['—','—']);
- const disclosure=container.querySelector('details');
- expect(disclosure.querySelector('summary').textContent).toBe('How is this calculated?');
- expect(disclosure.textContent).toContain('readiness is not calculated');
+ expect(container.textContent).not.toMatch(/How is this calculated|excluded from progress denominators/);
+ expect(container.querySelector('.bcis-explain')).toBeNull();
 });

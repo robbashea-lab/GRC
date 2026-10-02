@@ -4,6 +4,7 @@
 .bpage {
   --bp-bg: #f4f5f2; --bp-card: #ffffff; --bp-border: #e6e2dc; --bp-text: #1d232b; --bp-muted: #5d6670; --bp-subtle: #f7f6f3;
   --bp-critical: #b91c1c; --bp-critical-bg: #fdecec; --bp-attention: #a15c07; --bp-attention-bg: #fef5e6; --bp-good: #15803d; --bp-good-bg: #e8f5ec;
+  --color-critical: var(--bp-critical);
   --bp-neutral: #1d232b; --bp-accent: #4a6e0a; --bp-focus: #4172f4; --bp-link: #2446b8;
   --color-bg-app: var(--bp-bg); --color-bg-surface: var(--bp-card); --color-bg-subtle: var(--bp-subtle); --color-bg-tablehead: var(--bp-subtle); --color-border: var(--bp-border); --color-border-strong: #cfc9c0;
   --color-text-primary: var(--bp-text); --color-text-secondary: var(--bp-muted); --color-text-muted: var(--bp-muted); --color-text-help: #7b848f;
@@ -61,7 +62,6 @@ button.bpage-tile[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--rail); }
 .bpage-foot { margin: 0; padding: 10px 16px; border-top: 1px solid var(--bp-border); font-size: 12px; color: var(--bp-muted); }
 .bpage[data-theme="dark"] .register-date.is-critical > span { color: var(--bp-critical); }
 .bpage[data-theme="dark"] .register-date.is-duesoon > span { color: var(--bp-attention); }
-.bpage[data-theme="dark"] :root .pill-critical, :root .bpage[data-theme="dark"] .pill-critical { background: #b91c1c; color: #ffffff; }
 .bpage :is(a, button, [tabindex], summary):focus-visible { outline: 2px solid var(--bp-focus); outline-offset: 2px; }
 @media (max-width: 1100px) { .bpage-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) {

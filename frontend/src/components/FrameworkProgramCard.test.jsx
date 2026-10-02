@@ -16,8 +16,8 @@ const aside=()=>{
   card.querySelectorAll('*').forEach(node=>[...node.attributes].filter(a=>a.name.startsWith('x-')).forEach(a=>node.removeAttribute(a.name)));
   return card.innerHTML;
 };
-// Approved Brawndo reference: the CIS IG1 programme card must not change while the shell is shared.
-test('Brawndo CIS IG1 programme card is unchanged',async()=>{
+// All frameworks share the compact metrics and approved ring/status shell.
+test('CIS IG1 programme card uses compact shared metrics',async()=>{
   await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[{key:'cis-ig1',label:'CIS Controls v8.1 IG1',name:'CIS Controls v8.1 IG1',to:'/compliance/cis-ig1'}]} cisRows={cisRows} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));
   expect(container.querySelector('.bd-eyebrow').textContent).toBe('CIS IG1 program');
   expect(aside()).toMatchSnapshot();
@@ -30,7 +30,7 @@ test('SOC 2 uses the same card shell with SOC 2 vocabulary and workspace links',
   expect(card.querySelector('h2').textContent).toBe('SOC 2');
   expect(card.querySelector('.bd-donut')).not.toBeNull();
   expect(card.textContent).toContain('Partially Implemented');
-  expect(card.textContent).toContain('Implemented 2 of 6');
+  expect(card.textContent).toContain('Implemented33%2 of 6');
   expect(card.textContent).toContain('Internal readiness, not an auditor opinion.');
   expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Not implemented');
   // Same structure as the approved CIS card: class list of every element is identical.
@@ -46,29 +46,26 @@ test('ISO 27001 uses the same shell; tab-scoped views are counts, not misleading
   expect(card.querySelector('h2').textContent).toBe('ISO 27001');
   expect([...card.querySelectorAll('a')].map(a=>a.getAttribute('href'))).toEqual(['/compliance/iso-27001']);
   expect(card.querySelectorAll('.bd-gaps .bd-static')).toHaveLength(4);
-  // No ISMS workspace panels on the dashboard (the calculation note may name the SoA exclusion rule).
-  const body=card.cloneNode(true);body.querySelector('.bd-explain').remove();
-  expect(body.textContent).not.toMatch(/Management Review|Objectives|Statement of Applicability|Internal Audit/);
+  // Detailed ISMS modules stay in their workspace.
+  expect(card.textContent).not.toMatch(/Management Review|Objectives|Statement of Applicability|Internal Audit/);
 });
-test('readiness explanation states what is counted and how N/A affects the denominator',async()=>{
-  await render([{key:'cis-ig1',label:'CIS Controls v8.1 IG1',name:'CIS Controls v8.1 IG1',to:'/compliance/cis-ig1'}]);
-  const text=container.querySelector('.bd-explain').textContent;
-  expect(container.querySelector('.bd-explain summary').textContent).toBe('How is this calculated?');
-  expect(text).toContain('Implemented % = safeguards concluded “Implemented” ÷ applicable safeguards (2 of 6)');
-  expect(text).toContain('Assessed % = applicable safeguards with any conclusion (5 of 6)');
-  expect(text).toContain('marked N/A are left out of the denominator (1 excluded)');
-  await render([{key:'iso-27001',label:'ISO/IEC 27001:2022',to:'/compliance/iso-27001'}]);
-  expect(container.querySelector('.bd-explain').textContent).toContain('Annex A controls excluded in the Statement of Applicability');
-  await render([{key:'soc-2',label:'SOC 2',to:'/compliance/soc-2'}]);
-  expect(container.textContent).toContain('Internal readiness, not an auditor opinion.');
+test.each(['cis-ig1','iso-27001','soc-2'])('%s hides calculation explanations without changing progress or N/A counts',async key=>{
+  await render([{key,label:key}]);
+  const card=container.querySelector('.bd-aside .bd-card');
+  expect(card.querySelector('details')).toBeNull();
+  expect(card.textContent).not.toMatch(/How is this calculated|excluded from progress denominators/);
+  expect([...card.querySelectorAll('.assessment-metric strong')].map(n=>n.textContent)).toEqual(['33%','83%']);
+  expect([...card.querySelectorAll('.assessment-metric dd > span')].map(n=>n.textContent)).toEqual(['2 of 6','5 of 6']);
+  expect(card.querySelector('.bd-legend li:last-child strong').textContent).toBe('1');
+  expect(card.textContent).toContain(key==='soc-2'?'Internal readiness, not an auditor opinion.':'Assessment progress, not a compliance determination.');
 });
 test.each([['no records',[]],['all N/A',[{status:'not_applicable'},{status:'not_applicable'}]]])('%s: readiness is not calculated rather than shown as 0%%',async(_,rows)=>{
   await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[{key:'soc-2',label:'SOC 2',to:'/compliance/soc-2'}]} programRows={{'soc-2':rows}} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));
   const card=container.querySelector('.bd-aside .bd-card');
   expect(card.querySelector('.bd-donut-value').textContent).toBe('—');
   expect(card.querySelector('[data-testid="readiness-empty"]').textContent).toBe('No applicable criteria yet: readiness not calculated.');
-  expect(card.querySelector('.bd-cis-measures')).toBeNull();
-  expect(card.querySelector('.bd-explain').textContent).toContain('readiness is not calculated');
+  expect(card.querySelector('.assessment-metrics')).toBeNull();
+  expect(card.querySelector('details')).toBeNull();
   expect(card.textContent).toContain('Internal readiness, not an auditor opinion.');
 });
 test('ISO donut and legend use the same applicable population as the percentage',async()=>{
@@ -81,14 +78,6 @@ test('ISO donut and legend use the same applicable population as the percentage'
   expect(card.querySelector('circle.bd-seg-addressed').getAttribute('stroke-dasharray')).toBe('50 50');
   expect(card.querySelector('.bd-donut').getAttribute('aria-label')).toContain('1 Implemented');
   expect([...card.querySelectorAll('.bd-legend strong')].map(n=>n.textContent)).toEqual(['1','0','0','1','1']);
-  expect(card.querySelector('.bd-cis-measures').textContent).toContain('Implemented 1 of 2');
+  expect(card.querySelector('.assessment-metrics').textContent).toContain('Implemented50%1 of 2');
   expect(rows[2].status).toBe('addressed');
-});
-test('a tab-scoped ISO explanation uses the tab noun and its excluded count',()=>{
-  const {readinessExplanation,readinessLabels}=require('./FrameworkProgramCard');
-  const text=readinessExplanation('iso-27001',{applicable:90,addressed:70,assessed:87,na:0},readinessLabels('iso-27001'),{items:'controls',excluded:3,excludedText:'Annex A controls not included in the Statement of Applicability are left out of the denominator'});
-  expect(text).toContain('controls concluded');expect(text).toContain('(70 of 90)');expect(text).toContain('(3 excluded)');
-  expect(text).not.toContain('requirements');
-  const empty=readinessExplanation('iso-27001',{applicable:0,na:0},readinessLabels('iso-27001'),{items:'controls',excluded:3});
-  expect(empty).toContain('All 3 recorded controls');expect(empty).not.toContain('No controls have been set up');
 });

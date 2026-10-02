@@ -23,10 +23,7 @@
 .cis-config-link:hover { text-decoration: underline; }
 .cis-summary-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, 1fr); gap: 16px 32px; }
 .cis-summary-measures { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.cis-measure-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .cis-measure-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); }
-.cis-measure-value { font-size: 28px; line-height: 1.15; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; color: var(--color-text-primary); }
-.cis-measure-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
 .cis-legend { display: flex; flex-wrap: wrap; gap: 6px; }
 .cis-legend-item { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border: 1px solid var(--color-border); border-radius: 999px; font-size: 12px; color: var(--color-text-secondary); background: var(--color-bg-surface); transition: background var(--duration-feedback), border-color var(--duration-feedback); }
 .cis-legend-item strong { color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
@@ -81,7 +78,6 @@
   .cis-safeguard-signals { grid-column: 2 / -1; grid-row: 2; justify-content: flex-start; }
 }
 @media (max-width: 560px) {
-  .cis-measure-value { font-size: 26px; }
   .cis-safeguard { grid-template-columns: 36px minmax(0, 1fr); }
   .cis-safeguard .cis-pill { grid-column: 2; justify-self: start; }
 }

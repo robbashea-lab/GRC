@@ -566,8 +566,6 @@ td:last-child > button[aria-label="Row actions"] {
 :root .ui-button.bg-primary { background: var(--color-brand-charcoal); color: #FFFFFF; }
 :root .ui-button.border { background: var(--color-bg-surface); border-color: var(--color-input-border); color: var(--color-text-primary); }
 :root .ui-button:disabled { background: var(--color-bg-subtle); color: var(--color-text-disabled); opacity: 1; }
-:root .pill-critical { padding: 2px 6px; border-radius: 3px; background: var(--color-critical); color: #FFFFFF; }
-:root .pill-critical::before { display: none; }
 :root .pill[data-status="upcoming"] { color: var(--color-text-secondary); }
 :root td[data-column="recurrence"] .register-value { color: var(--color-text-secondary); }
 :root :focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }

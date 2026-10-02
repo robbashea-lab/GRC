@@ -28,13 +28,10 @@
 :root .bcis .ui-button.bcis-primary { height: 36px; border-radius: 8px; background: #a3db33; color: #10140c; font-weight: 600; border: 0; }
 :root .bcis .ui-button.bcis-primary:hover { background: #b4e650; }
 .bcis-card { background: var(--cs-card); border: 1px solid var(--cs-border); border-radius: 12px; }
-.bcis-summary { padding: 24px 28px; }
-.bcis-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-.bcis-figures p { margin: 0; }
-.bcis-figure { font: 600 40px/1 'Space Grotesk', var(--font-heading); color: var(--cs-text); }
-.bcis-figure-label { margin-top: 6px !important; font-size: 15px; font-weight: 600; color: var(--cs-text); }
-.bcis-figure-sub { margin-top: 2px !important; font-size: 13px; color: var(--cs-muted); }
-.bcis-bar { display: flex; gap: 2px; height: 12px; margin-top: 22px; border-radius: 6px; background: var(--cs-subtle); }
+.bcis-summary { padding: 20px 24px; }
+.bcis-assessment-next { margin: 10px 0 0; font-size: 12px; color: var(--cs-muted); }
+.bcis-assessment-next strong { color: var(--cs-text); font-variant-numeric: tabular-nums; }
+.bcis-bar { display: flex; gap: 2px; height: 12px; margin-top: 16px; border-radius: 6px; background: var(--cs-subtle); }
 .bcis-bar > span { position: relative; cursor: default; outline: none; }
 .bcis-bar > span:first-child { border-radius: 6px 0 0 6px; } .bcis-bar > span:last-child { border-radius: 0 6px 6px 0; } .bcis-bar > span:only-child { border-radius: 6px; }
 .bcis-bar > span:focus-visible { box-shadow: 0 0 0 2px var(--cs-card), 0 0 0 4px var(--cs-focus); }
@@ -91,7 +88,6 @@
 .bcis .cis-toolbar { margin: 0; }
 .bcis :is(a, button, [tabindex], summary):focus-visible { outline: 2px solid var(--cs-focus); outline-offset: 2px; }
 @media (max-width: 760px) {
-  .bcis-figures { grid-template-columns: 1fr; gap: 16px; }
   .bcis-summary, .bcis-steps { padding: 18px; }
   .bcis-step { flex-wrap: wrap; }
   .bcis-table th:nth-child(3), .bcis-table td:nth-child(3) { display: none; }
@@ -121,7 +117,3 @@
 .bcis-sg-id { font-family: 'Space Grotesk', var(--font-heading); font-weight: 600; color: var(--cs-muted); min-width: 34px; }
 .bcis-muted { color: var(--cs-muted) !important; white-space: nowrap; }
 @media (max-width: 760px) { .bcis-safeguards th:nth-child(4), .bcis-safeguards td:nth-child(4), .bcis-safeguards th:nth-child(5), .bcis-safeguards td:nth-child(5) { display: none; } }
-.bcis-explain { margin: 8px 0 0; font-size: 12px; color: var(--cs-muted); }
-.bcis-explain summary { cursor: pointer; width: fit-content; border-radius: 4px; }
-.bcis-explain summary:focus-visible { outline: 2px solid var(--cs-focus); outline-offset: 2px; }
-.bcis-explain p { margin: 6px 0 0; line-height: 1.45; }

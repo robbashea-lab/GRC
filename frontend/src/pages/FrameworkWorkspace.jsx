@@ -11,7 +11,7 @@ import {SearchField} from '@/components/Register';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import {Button} from '@/components/ui/button';
 import WorkspaceTabs from '@/components/WorkspaceTabs';
-import {readinessExplanation,readinessLabels} from '@/components/FrameworkProgramCard';
+import {readinessLabels} from '@/components/FrameworkProgramCard';
 import FrameworkDrawer from '@/components/FrameworkDrawer';
 import {SocProgramSettings} from '@/components/SocReadiness';
 import {socConfiguration} from '@/lib/socReadiness';
@@ -95,7 +95,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   // The reference workspace (summary, derived views, result table) serves every assessed framework,
   // in that framework's own vocabulary. CMMC has no assessment tracking yet.
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
-  const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels(vocab);
+  const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels({...vocab,statuses:readinessLabels(frameworkKey)});
   // Framework metadata selects the appropriate assessment structure for every client.
   const workspace=frameworkWorkspace(frameworkKey),brawndoCis=workspace==='cis',prestigeSoc=workspace==='soc',referenceAssessment=brawndoCis||prestigeSoc,iso=workspace==='iso',[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
@@ -124,10 +124,6 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     return true;
   });
   const readiness=cisSummary(iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped);
-  const readinessScope=!iso?undefined:isoView==='annex_control'?{items:'controls',excluded:scoped.filter(r=>r.soa_applicability!=='included').length+readiness.na,
-    excludedText:'Annex A controls not included in the Statement of Applicability (excluded or not yet decided), and N/A controls, are left out of the denominator'}
-    :isoView==='isms_clause'?{items:'requirements',excludedText:'Clause requirements marked N/A are left out of the denominator'}:undefined;
-  const explanation=(iso&&isoView==='annex_control'?'Only Annex A controls marked Necessary are counted in this view. ':'')+readinessExplanation(frameworkKey,readiness,readinessLabels(frameworkKey),readinessScope);
   const visible=scoped.filter(r=>matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
   const linkedViewKey=prototype&&data&&filter!=='all'&&filter===initialView?`${clientId}:${filter}`:null;
   useEffect(()=>{if(linkedViewKey)setExpanded(groupRequirements(frameworkKey,visible).map(n=>n.key));},[linkedViewKey]);// eslint-disable-line react-hooks/exhaustive-deps
@@ -161,7 +157,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
     {iso&&<WorkspaceTabs label="ISO workspace sections" tabs={Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label])} selected={isoView} onSelect={chooseIsoView} idPrefix="iso-tab" panelId="iso-tabpanel"/>}
     <IsoPanel iso={iso} view={isoView}>
-    {brawndoCis?<BrawndoCisOverview summary={readiness} explanation={explanation} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={readiness} explanation={explanation} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&isoView==='soa'?<IsoSoaSummary rows={scoped}/>:iso&&isoView!=='audit'&&!ISO_VIEWS[isoView]?.custom?<><AssessmentOverview summary={readiness} explanation={explanation} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'necessary controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/>{isoView==='annex_control'&&<p className="iso-reference-count">{scoped.length} Annex A reference controls · {scoped.filter(r=>r.soa_applicability==='included').length} Necessary · {scoped.filter(r=>r.soa_applicability==='excluded').length} Not Necessary · {scoped.filter(r=>!r.soa_applicability).length} not yet determined</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={readiness} explanation={explanation} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
+    {brawndoCis?<BrawndoCisOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&isoView==='soa'?<IsoSoaSummary rows={scoped}/>:iso&&isoView!=='audit'&&!ISO_VIEWS[isoView]?.custom?<><AssessmentOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'necessary controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/>{isoView==='annex_control'&&<p className="iso-reference-count">{scoped.length} Annex A reference controls · {scoped.filter(r=>r.soa_applicability==='included').length} Necessary · {scoped.filter(r=>r.soa_applicability==='excluded').length} Not Necessary · {scoped.filter(r=>!r.soa_applicability).length} not yet determined</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
     {frameworkKey==='iso-27001'&&(isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:ISO_VIEWS[isoView]?.custom?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows} onSelect={chooseIsoView}/>:null)}
     {!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<>
     {lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}

@@ -1,0 +1,7 @@
+.assessment-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.assessment-metric { min-width: 0; padding: 10px 12px; border: 1px solid var(--bd-border, var(--cs-border, var(--color-border))); border-radius: 8px; background: var(--bd-subtle, var(--cs-subtle, var(--color-bg-subtle))); }
+.assessment-metric dt { font-size: 12px; font-weight: 500; line-height: 1.4; color: var(--bd-muted, var(--cs-muted, var(--color-text-secondary))); }
+.assessment-metric dd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 3px 0 0; font-variant-numeric: tabular-nums; }
+.assessment-metric strong { font-size: 20px; font-weight: 600; line-height: 1.2; color: var(--bd-text, var(--cs-text, var(--color-text-primary))); }
+.assessment-metric.is-implemented strong { color: var(--bd-good, var(--cs-good, var(--color-success))); }
+.assessment-metric dd > span { font-size: 12px; line-height: 1.4; white-space: nowrap; color: var(--bd-muted, var(--cs-muted, var(--color-text-secondary))); }

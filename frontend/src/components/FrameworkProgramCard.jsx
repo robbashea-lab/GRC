@@ -1,4 +1,5 @@
 import {Link} from 'react-router-dom';
+import AssessmentMetrics from './AssessmentMetrics';
 import {cisSummary} from '@/lib/cisVerification';
 import {operatorStatuses,operatorVocabulary} from '@/lib/frameworkOperator';
 import {CIS_ORDER} from './CisStatus';
@@ -33,15 +34,6 @@ function Donut({counts,summary,name,labels}) {
   </svg>;
 }
 
-// Plain-language account of cisSummary (lib/cisVerification.js), the calculation behind these numbers.
-// scope describes a narrower population already filtered by the caller (ISO workspace tabs).
-export function readinessExplanation(key,summary,labels,scope){
-  const items=scope?.items||operatorVocabulary(key).items,done=labels.addressed,excludedCount=scope?.excluded??summary.na;
-  if(!summary.applicable)return `No applicable ${items} yet, so readiness is not calculated. ${excludedCount?`All ${excludedCount} recorded ${items} are N/A or excluded from this scope.`:`No ${items} have been set up.`}`;
-  const excluded=scope?.excludedText||(key==='iso-27001'?`Annex A controls excluded in the Statement of Applicability, and N/A clause requirements, are left out of the denominator`:`${items.charAt(0).toUpperCase()+items.slice(1)} marked N/A are left out of the denominator`);
-  return `${firstWord(done)} % = ${items} concluded “${done}” ÷ applicable ${items} (${summary.addressed} of ${summary.applicable}). Assessed % = applicable ${items} with any conclusion (${summary.assessed} of ${summary.applicable}). ${excluded} (${excludedCount} excluded). Percentages are rounded to the nearest whole percent.`;
-}
-
 export default function FrameworkProgramCard({rows,program}) {
   const key=program.key,name=shortName(program),labels=LABELS[key]||operatorStatuses(key),done=firstWord(labels.addressed);
   const summary=cisSummary(rows),to=program.to||`/compliance/${key}`;
@@ -56,10 +48,8 @@ export default function FrameworkProgramCard({rows,program}) {
     <div className="bd-cis-chart"><Donut counts={counts} summary={summary} name={name} labels={labels}/>
       <ul className="bd-legend">{CIS_ORDER.filter(s=>s!=='not_applicable'||counts[s]).map(s=><li key={s}><Row view={s}><span className={`bd-swatch bd-seg-${s}`} aria-hidden="true"/><span>{labels[s]}</span><strong>{counts[s]}</strong></Row></li>)}</ul>
     </div>
-    {summary.applicable?<div className="bd-cis-measures"><span>{done} {summary.addressed} of {summary.applicable}</span><span><strong>{summary.coverage}%</strong> Assessed · {summary.assessed} of {summary.applicable}</span></div>
+    {summary.applicable?<AssessmentMetrics summary={summary} implementedLabel={done}/>
       :<p className="bd-muted bd-small" data-testid="readiness-empty">No applicable {operatorVocabulary(key).items} yet: readiness not calculated.</p>}
-    <details className="bd-explain"><summary>How is this calculated?</summary><p>{readinessExplanation(key,summary,labels)}</p></details>
-    {summary.na>0&&<p className="bd-muted bd-small">{summary.na} N/A excluded from progress denominators.</p>}
     <ul className="bd-gaps" aria-label={`${name.split(" ")[0]} verification gaps`}>{gaps.map(([view,label,n,tone])=><li key={view}><Row view={view} className={n?`is-${tone}`:'is-clear'}><span>{label}</span><strong>{n}</strong></Row></li>)}</ul>
     <p className="bd-muted bd-small">{NOTE[key]||'Assessment progress, not a compliance determination.'}</p>
   </section>;

@@ -1,5 +1,5 @@
 // Semantic status mapping — the text label is ALWAYS shown; color only reinforces it, and sparingly:
-//   red (critical)  overdue, critical — the only solid badges, so they stand out
+//   red (critical)  overdue, critical — same shared shape, with a red label and dot
 //   amber           needs attention: high severity, due soon, pending validation, gaps to confirm
 //   green (success) confirmed outcomes: completed, approved, verified, validated
 //   blue (info)     work in progress
@@ -101,7 +101,7 @@ export default function StatusBadge({ value, tone, testid, label: override }) {
   );
 }
 
-// Severity, priority and criticality share one scale: Critical (solid red), High (amber), then gray.
+// Severity, priority and criticality share one scale: Critical (red), High (amber), then gray.
 const SEVERITY_LABEL = { immediate: "Immediate", critical: "Critical", high: "High", medium: "Medium", moderate: "Moderate", low: "Low" };
 export function SeverityBadge({ value, label, testid }) {
   if (!value) return <span className="register-empty">Not assessed</span>;

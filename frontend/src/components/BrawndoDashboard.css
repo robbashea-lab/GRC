@@ -111,12 +111,9 @@
 .bdash .bd-legend a:hover { background: var(--bd-subtle); text-decoration: none; }
 .bd-legend span:nth-child(2) { flex-grow: 1; }
 .bd-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-.bd-cis-measures { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 12px; color: var(--bd-muted); }
-.bd-cis-measures strong { font-family: var(--bd-display); font-size: 16px; color: var(--bd-text); margin-right: 2px; }
-.bd-cis-measures strong.is-good { color: var(--bd-good); }
 .bd-gaps { display: flex; flex-direction: column; gap: 3px; }
 .bdash .bd-gaps :is(a,.bd-static) { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 6px; font-size: 13px; }
-.bdash .bd-gaps a:hover { text-decoration: none; filter: brightness(.97); }
+.bdash .bd-gaps a:is(:hover,:focus-visible) { text-decoration: none; box-shadow: inset 0 0 0 1px currentColor; }
 .bdash .bd-gaps :is(a,.bd-static).is-critical { background: var(--bd-critical-bg); color: var(--bd-critical); }
 .bdash .bd-gaps :is(a,.bd-static).is-attention { background: var(--bd-attention-bg); color: var(--bd-attention); }
 .bdash .bd-gaps :is(a,.bd-static).is-clear { color: var(--bd-muted); }
@@ -133,8 +130,3 @@
 @media (max-width: 760px) { .bdash h1 { font-size: 24px; } }
 @media (prefers-reduced-motion: reduce) { .bdash, .bd-tile, .bd-table tbody tr { transition: none; } .bd-tile:hover { transform: none; } }
 .bd-count-note { margin: -4px 0 14px; }
-/* Readiness calculation disclosure on the programme card (native details/summary: keyboard and screen-reader reachable). */
-.bdash .bd-explain { font-size: 12px; color: var(--bd-muted); }
-.bdash .bd-explain summary { cursor: pointer; width: fit-content; border-radius: 4px; }
-.bdash .bd-explain summary:focus-visible { outline: 2px solid var(--bd-focus, #4172f4); outline-offset: 2px; }
-.bdash .bd-explain p { margin: 6px 0 0; line-height: 1.45; }

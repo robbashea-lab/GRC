@@ -5,11 +5,12 @@ import ReviewDrawer from '@/components/ReviewDrawer';
 import {ClientPresentationContext} from '@/components/ClientSurface';
 import api from '@/lib/api';
 let mockClient='demo_brawndo';
+let mockSearch='';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Brawndo'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
-jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/reviews',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/reviews',search:mockSearch}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams(mockSearch))}),{virtual:true});
 jest.mock('@/components/RecordDrawer',()=>props=>props.open?<div data-testid="opened-record">{props.reviewsPilot?'Pilot':'Original'}</div>:null);
 jest.mock('@/components/EvidencePanel',()=>()=> <div>Existing evidence panel</div>);
 let root,container,rows,saved;
@@ -21,7 +22,7 @@ const input=async(node,value)=>act(async()=>{
   node.dispatchEvent(new Event('input',{bubbles:true}));
 });
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';
+  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockSearch='';
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   const today=new Date(),due=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
   rows=[
@@ -36,49 +37,100 @@ beforeEach(()=>{
   window.confirm=jest.fn(()=>false);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-test('summary counts stay stable under search, filters clear, completed accessible and client switching resets pilot',async()=>{
+test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s shares Dunder summaries, columns and filters while preserving history and client scope',async clientId=>{
+  mockClient=clientId;rows=rows.map(r=>({...r,client_id:clientId}));
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
-  expect(container.querySelector('.page-title')).toBeNull();
-  const tile=label=>[...container.querySelectorAll('[aria-label="Review summaries"] button')].find(b=>b.querySelector('.brev-tile-label').textContent===label);
-  const chip=label=>[...container.querySelectorAll('.brev-chip')].find(b=>b.textContent.startsWith(label));
+  expect(container.querySelector('.page-title').textContent).toBe('Reviews');
+  expect(container.querySelector('.brawndo-reviews')).toBeNull();
+  expect(container.querySelectorAll('thead th')).toHaveLength(10);
+  expect(container.querySelector('th[data-column="basis"]').textContent).toContain('Basis');
+  expect(container.querySelector('th[data-column="owner_id"]').textContent).toContain('Owner');
+  const signal=label=>[...container.querySelectorAll('.register-signal')].find(b=>b.querySelector('.register-signal-label').textContent===label);
+  const tab=id=>container.querySelector(`[data-testid="reviews-tab-${id}"]`);
   const count=()=>container.querySelectorAll('tr[data-testid^="reviews-row-"]').length;
-  expect(tile('All open').querySelector('strong').textContent).toBe('3');
-  expect(tile('Overdue').querySelector('strong').textContent).toBe('1');
-  expect(tile('Overdue').textContent).toContain('Late active review');
-  expect(tile('Due in 30 days').querySelector('strong').textContent).toBe('1');
-  expect(tile('Due in 30 days').textContent).toContain('Next: Due today');
-  expect(tile('Unassigned').querySelector('strong').textContent).toBe('2');
+  expect(tab('all').textContent).toBe('All open3');
+  expect(tab('overdue').textContent).toBe('Overdue1');
+  expect(tab('due30').textContent).toBe('Due in 30 days1');
+  expect(tab('upcoming').textContent).toBe('Due in 90 days1');
+  expect(signal('Due in 14 days').querySelector('.register-signal-value').textContent).toBe('1');
+  expect(signal('No owner').querySelector('.register-signal-value').textContent).toBe('2');
   // Open work is the default; closed reviews live behind history.
   expect(count()).toBe(3);
-  expect(container.querySelector('[data-testid="reviews-count"]').textContent).toBe('Showing 3 of 3 open reviews · soonest due first');
-  expect(chip('All open').getAttribute('aria-pressed')).toBe('true');
-  await click(tile('Overdue'));
+  expect(tab('all').getAttribute('aria-pressed')).toBe('true');
+  await click(signal('Due in 14 days'));
   expect(count()).toBe(1);
-  expect(chip('Overdue').getAttribute('aria-pressed')).toBe('true');
-  expect(container.querySelector('[data-testid="reviews-status-0"]').textContent).toBe('In Progress');
-  expect(container.querySelector('tr[data-testid="reviews-row-0"]').className).toContain('brev-late');
+  expect(container.querySelector('[data-testid="reviews-row-0"]').textContent).toContain('Due today');
+  expect(tab('all').getAttribute('aria-pressed')).toBe('false');
+  await click(tab('overdue'));
+  expect(count()).toBe(1);
+  expect(signal('Due in 14 days').getAttribute('aria-pressed')).toBe('false');
+  expect(tab('overdue').getAttribute('aria-pressed')).toBe('true');
+  expect(container.querySelector('[data-testid="reviews-status-0"]').textContent).toBe('overdue');
   await input(container.querySelector('[data-testid="reviews-search"]'),'no match');
-  expect(tile('All open').querySelector('strong').textContent).toBe('3');
+  expect(tab('all').textContent).toBe('All open3');
   await click(button('Clear filters'));
   expect(count()).toBe(3);
-  await click(tile('Overdue'));
-  await click(chip('All open'));
-  expect(count()).toBe(3);
-  await click(chip('Mine'));
+  await click(tab('mine'));
   expect(count()).toBe(0);
-  await click(chip('All open'));
-  await click(button('Completed / cancelled history'));
+  await click(signal('No owner'));
+  expect(count()).toBe(2);
+  await click(button('Review history'));
+  expect(count()).toBe(1);
   expect(container.querySelector('[data-testid="reviews-row-0"]').textContent).toContain('Completed review');
-  await click(button('All Reviews'));
-  await click(button('Unassigned'));
-  rows=rows.map(r=>({...r,client_id:'demo_dunder'}));mockClient='demo_dunder';
+  await click(button('Back to active Reviews'));
+  await click(signal('No owner'));
+  rows=rows.map(r=>({...r,client_id:'different-client'}));mockClient='different-client';
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
-  expect(container.querySelector('[aria-label="Review summaries"]')).toBeNull();
   expect(container.querySelector('.page-title').textContent).toBe('Reviews');
-  expect(container.querySelector('th[data-column="owner_id"]').textContent).toContain('Owner');
-  rows=rows.map(r=>({...r,client_id:'demo_brawndo'}));mockClient='demo_brawndo';
+  expect(count()).toBe(3);
+  expect(container.querySelector('.register-signals [aria-pressed="true"]')).toBeNull();
+});
+
+test('recent-completion signal includes completed and recurring active reviews counted in its summary',async()=>{
+  const completed_at=new Date().toISOString();
+  rows=rows.map(r=>['late','closed'].includes(r.review_id)?{...r,occurrences:[{completed_at}]}:r);
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
-  expect(container.querySelector('[aria-label="Review summaries"] [aria-pressed="true"]')).toBeNull();
+  const signal=button('Completed in last 30 days');
+  expect(signal.querySelector('.register-signal-value').textContent).toBe('2');
+  await click(signal);
+  const shown=[...container.querySelectorAll('tr[data-testid^="reviews-row-"]')].map(r=>r.textContent);
+  expect(shown).toHaveLength(2);
+  expect(shown.join(' ')).toContain('Late active review');
+  expect(shown.join(' ')).toContain('Completed review');
+  await click(container.querySelector('[data-testid="reviews-tab-all"]'));
+  expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(3);
+});
+
+test.each([['upcoming',1,'Due today'],['unassigned',2,'Schedule me'],['history',1,'Completed review'],['mine',0,'']])('bookmarked %s view opens the equivalent shared filter',async(view,count,title)=>{
+  mockSearch=`?reviewView=${view}`;
+  await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+  expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(count);
+  if(title)expect(container.querySelector('tbody').textContent).toContain(title);
+  await click(container.querySelector('[data-testid="reviews-tab-all"]'));
+  expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(3);
+});
+
+test('shared Review summaries and rows never count another client',async()=>{
+  rows.push({...rows[0],client_id:'other-client',review_id:'foreign',title:'Another client review'});
+  await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+  expect(container.querySelector('[data-testid="reviews-tab-overdue"]').textContent).toBe('Overdue1');
+  expect(container.querySelector('[data-testid="reviews-tab-all"]').textContent).toBe('All open3');
+  expect(container.textContent).not.toContain('Another client review');
+});
+
+test('the completed status column filter opens historical records instead of intersecting the open tab',async()=>{
+  rows.push({...rows[3],review_id:'cancelled',status:'cancelled',title:'Cancelled review'});
+  await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+  const status=container.querySelector('[aria-label="Status: sort and filter"]');
+  await act(async()=>status.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+  const completed=[...document.querySelectorAll('[role="menuitemcheckbox"]')].find(item=>item.textContent==='Completed');
+  expect(completed).toBeTruthy();
+  await click(completed);
+  expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(1);
+  expect(container.querySelector('[data-testid="reviews-row-0"]').textContent).toContain('Completed review');
+  expect(container.querySelector('.register-count').textContent).toBe('1 / 5');
+  await click(container.querySelector('[data-testid="reviews-tab-all"]'));
+  expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(3);
 });
 test('default client surface reuses the centered Review shell without enabling pilot workflow semantics',async()=>{
   mockClient='future-client';saved={...saved,client_id:mockClient};

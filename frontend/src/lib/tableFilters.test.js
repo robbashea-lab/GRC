@@ -38,6 +38,26 @@ test('review status column uses exactly the quick preset predicate',()=>{
   }
   expect(filter(rows,cols,{status:['overdue','in_progress']})).toEqual([rows[0]]);
 });
+
+test('shared review date windows and Mine include only matching open records',()=>{
+  const row={status:'upcoming',due_date:'2026-10-09',recurrence:'monthly',owner_id:'me'};
+  expect(reviewMatches(row,'due30',now)).toBe(true);
+  expect(reviewMatches({...row,due_date:'2026-10-10'},'due30',now)).toBe(false);
+  expect(reviewMatches({...row,due_date:'2026-12-08'},'upcoming',now)).toBe(true);
+  expect(reviewMatches({...row,due_date:'2026-12-09'},'upcoming',now)).toBe(false);
+  expect(reviewMatches({...row,recurrence:null},'due30',now)).toBe(false);
+  expect(reviewMatches(row,'mine',now,'me')).toBe(true);
+  expect(reviewMatches(row,'mine',now,'other')).toBe(false);
+  expect(reviewMatches({...row,owner_id:null},'mine',now)).toBe(false);
+  for(const status of ['completed','cancelled'])for(const view of ['due30','upcoming','mine'])expect(reviewMatches({...row,status},view,now,'me')).toBe(false);
+});
+
+test('named closed Review status filters are exact while history includes both',()=>{
+  const rows=[{status:'completed'},{status:'cancelled'},{status:'upcoming'}];
+  const columns=tableColumns('reviews',{rows});
+  for(const status of ['completed','cancelled'])expect(filter(rows,columns,{status:[status]})).toEqual(rows.filter(row=>row.status===status));
+  expect(rows.filter(row=>reviewMatches(row,'history'))).toEqual(rows.slice(0,2));
+});
 test('owner choices cannot enumerate unrelated users',()=>{
   const rows=[{owner_id:'a'}];
   const cols=tableColumns('reviews',{rows,users:[{user_id:'a',name:'A'},{user_id:'other-client',name:'Private Person'}]});

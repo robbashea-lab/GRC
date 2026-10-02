@@ -31,15 +31,17 @@ export function dateMatches(value, range, now = new Date()) {
   if (range === 'older12') return day < Date.UTC(now.getFullYear() - 1, now.getMonth(), now.getDate());
   return false;
 }
-export function reviewMatches(row, status) {
+export function reviewMatches(row, status, now = new Date(), userId) {
   const closed = ['completed', 'cancelled'].includes(row.status);
   const unscheduled = calendarDay(row.due_date) === null || ('recurrence' in row && [null,''].includes(row.recurrence)) || row.recurrence === 'custom' && !(Number(row.custom_recurrence_days) > 0);
-  const overdue = !closed && !unscheduled && dateMatches(row.due_date, 'overdue');
+  const overdue = !closed && !unscheduled && dateMatches(row.due_date, 'overdue', now);
   if (status === 'active' || status === 'all') return !closed;
   if (status === 'overdue') return overdue;
-  if (status === 'upcoming') return !closed && !unscheduled && dateMatches(row.due_date, 'next90');
+  if (status === 'due30' || status === 'upcoming') return !closed && !unscheduled && dateMatches(row.due_date, status==='due30'?'next30':'next90', now);
+  if (status === 'mine') return !closed && !!userId && row.owner_id === userId;
   if (status === 'needs_scheduling') return !closed && unscheduled;
-  if (status === 'completed' || status === 'history') return closed;
+  if (status === 'history') return closed;
+  if (status === 'completed' || status === 'cancelled') return row.status === status;
   return !closed && row.status === status;
 }
 export function dateOptions(column) {
