@@ -109,6 +109,9 @@ test('canonical Dunder seed operates as one connected Year-2 ISMS',()=>{
   expect(management.management_review.inputs.some(([,state])=>state==='attention')).toBe(true);
   expect(management.participants).toContain('David Wallace');
   expect(management.governance_context.cadence_rationale).toContain('does not prescribe annual');
+  const linkedReviews=id=>own('framework_assessments').find(a=>a.definition_id===id).related_links.filter(l=>l.kind==='reviews').map(l=>l.id);
+  expect(linkedReviews('9.3.2')).toContain(management.review_id);
+  expect(linkedReviews('6.2')).toContain(objectiveReview.review_id);
   const policyReviews=own('reviews').filter(r=>r.policy_ids?.length);
   expect(policyReviews).toHaveLength(1);
   expect(policyReviews[0].policy_ids).toHaveLength(own('policies').length);

@@ -2,11 +2,15 @@ import {isStale,lacksEvidence,gapUntracked} from './cisVerification';
 import {assessmentProgress} from './frameworkOperator';
 
 // Native hierarchy adapters; catalog order remains authoritative (never lexical ID sorting).
+const ISO_GROUPS={
+  '4':'4 — Context of the Organization','5':'5 — Leadership','6':'6 — Planning','7':'7 — Support','8':'8 — Operation','9':'9 — Performance Evaluation','10':'10 — Improvement',
+  'A.5':'Organizational','A.6':'People','A.7':'Physical','A.8':'Technological',
+};
 const HIERARCHY = {
   'cis-ig1': d => [{id:String(d.control),label:`Control ${d.control} — ${d.control_name}`}],
   'nist-csf-2': d => [{id:d.function,label:d.function_name},{id:d.category,label:`${d.category} — ${d.control_name}`}],
   hipaa: d => [{id:d.control,label:d.control_name}],
-  'iso-27001': d => [{id:d.specification,label:d.specification==='annex_control'?'Annex A / Statement of Applicability':'ISMS requirements'},{id:d.control,label:d.control_name}],
+  'iso-27001': d => [{id:d.specification,label:d.specification==='annex_control'?'Annex A / Statement of Applicability':'ISMS Requirements'},{id:d.control,label:ISO_GROUPS[d.control]||d.control_name}],
   'soc-2': d => [{id:d.category,label:d.category==='security'?'Security / Common Criteria':d.category?.replace(/^./,s=>s.toUpperCase())},{id:d.control,label:`${d.control} — ${d.control_name}`}],
 };
 export const hierarchyPath=(key,row)=>(HIERARCHY[key]|| (d=>[{id:d.control||'requirements',label:d.control_name||'Requirements'}]))(row);

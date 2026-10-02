@@ -46,6 +46,7 @@ export default function FrameworkCategoryNavigator({framework,rows,onOpen,soa=fa
     return framework==='iso-27001'&&groups.length===1?groups[0].children:groups;
   },[framework,rows]);
   const [path,setPath]=useState(preference||[]),[all,setAll]=useState(false),v=operatorVocabulary(framework);
+  const annex=framework==='iso-27001'&&rows[0]?.specification==='annex_control',itemNoun=annex?'controls':v.items,allLabel=framework==='iso-27001'?`All ${itemNoun}`:'All requirements';
   useEffect(()=>{setPath(preference||[]);},[preference]);
   let nodes=roots,selected=null;const trail=[];
   for(const key of path){const match=nodes.find(n=>n.key===key);if(!match)break;trail.push(match);selected=match;nodes=match.children;}
@@ -53,17 +54,17 @@ export default function FrameworkCategoryNavigator({framework,rows,onOpen,soa=fa
   const currentRows=selected?.rows||rows;
   return <section className="space-y-4" aria-label="Framework categories">
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      {framework==='iso-27001'?<CisBreadcrumb label="ISO category location" items={[{label:soa?'Statement of Applicability':'ISO 27001',onClick:()=>choose([])},...trail.map((n,i)=>({label:n.label,onClick:()=>choose(path.slice(0,i+1))}))]}/>:<>
+      {framework==='iso-27001'?<CisBreadcrumb label="ISO category location" items={[{label:soa?'Statement of Applicability':annex?'Annex A Controls':'ISMS Requirements',onClick:()=>choose([])},...trail.map((n,i)=>({label:n.label,onClick:()=>choose(path.slice(0,i+1))}))]}/>:<>
       {layout==='table'&&<h2 className="bcis-controls-title">Controls</h2>}
       <Button size="sm" variant="ghost" onClick={()=>choose([])}>{layout==='table'?'All controls':'Categories'}</Button>
       {trail.map((n,i)=><Button key={n.key} size="sm" variant="ghost" onClick={()=>choose(path.slice(0,i+1))}>{n.label}</Button>)}
       </>}
-      <Button className="ml-auto" size="sm" variant={all?'default':'outline'} aria-pressed={all} onClick={()=>setAll(!all)}>{all?'Back to categories':'All requirements'}</Button>
+      <Button className="ml-auto" size="sm" variant={all?'default':'outline'} aria-pressed={all} onClick={()=>setAll(!all)}>{all?'Back to categories':allLabel}</Button>
     </div>
-    {layout==='table'&&!all&&!selected?<div className="bcis-card bcis-controls"><ControlTable nodes={nodes} rows={rows} choose={choose} path={path}/></div>:all||selected&&!nodes.length?(soa?<SoaTable rows={all?rows:currentRows} onOpen={onOpen}/>:<CisResultTable framework={framework} rows={all?rows:currentRows} onOpen={onOpen} label={all?'All requirements':selected.label}/>):<div className={framework==='iso-27001'?'framework-category-list':'grid md:grid-cols-2 xl:grid-cols-3 gap-3'}>
+    {layout==='table'&&!all&&!selected?<div className="bcis-card bcis-controls"><ControlTable nodes={nodes} rows={rows} choose={choose} path={path}/></div>:all||selected&&!nodes.length?(soa?<SoaTable rows={all?rows:currentRows} onOpen={onOpen}/>:<CisResultTable framework={framework} rows={all?rows:currentRows} onOpen={onOpen} label={all?allLabel:selected.label}/>):<div className={framework==='iso-27001'?'framework-category-list':'grid md:grid-cols-2 xl:grid-cols-3 gap-3'}>
       {nodes.map(n=>{const summary=sectionSummary(n.rows),next=nextAssessment(n.rows),undetermined=n.rows.filter(r=>!r.soa_applicability).length;
         if(framework==='iso-27001')return <button type="button" key={n.key} className="framework-category-row" onClick={()=>choose([...path,n.key])}>
-          <span>{n.label}</span><span>{summary.total} {soa?'controls':v.items} · {summary.assessed} assessed{summary.excluded?` · ${summary.excluded} N/A`:''}</span>
+          <span>{n.label}</span><span>{summary.total} {itemNoun} · {summary.assessed} assessed{summary.excluded?` · ${summary.excluded} N/A`:''}</span>
           <span>{soa?`${undetermined} applicability undetermined`:`${summary.attention} need attention`}{summary.findings?` · ${summary.findings} open Findings`:''}{summary.reviews?` · ${summary.reviews} Reviews`:''}</span>
         </button>;
         return <article key={n.key} className="rounded-lg border border-line bg-surface-card p-4 flex flex-col gap-3">

@@ -23,7 +23,7 @@ beforeEach(()=>{
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);close=jest.fn();next=jest.fn();
  record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.1',client_id:'demo_brawndo',status:'addressed',implementation:'Current process',technology:'Recorded platform',notes:'Older notes',assessment_history:[],last_assessed:null};
  related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
- api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:path==='/evidence/catalog'?{items:[{evidence_id:'e',filename:'Validation.txt'}],total:1,page:1,page_size:25}:[]}));
+ api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path.startsWith('/frameworks/')?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:path==='/evidence/catalog'?{items:[{evidence_id:'e',filename:'Validation.txt'}],total:1,page:1,page_size:25}:[]}));
  api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-09-23',assessment_history:[{...body,at:'2026-09-23',by:'u'}]};return {data:record};});
  api.post.mockResolvedValue({data:{}});
 });
@@ -111,6 +111,11 @@ test('load failure disables writes and offers retry',async()=>{
 test('other clients retain their assessment content with explicit modal semantics',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
  expect(container.textContent).toContain('Client status');expect(container.textContent).not.toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
+});
+test('ISO assessments omit the duplicate organizational controls section',async()=>{
+ record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
+ await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} position="1 of 30"/>));
+ expect(container.textContent).not.toContain('Organizational Controls');
 });
 test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
  const toControl=jest.fn();
