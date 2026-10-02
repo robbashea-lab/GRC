@@ -403,7 +403,11 @@ module.exports = async function publishedRecordJourney({page, expect, assert, go
     await page.getByRole('alertdialog').getByRole('button', {name: 'Archive Contact', exact: true}).click();
     await expect(page.locator('.contact-workspace')).toHaveCount(0);
     await expect(page.locator('tbody')).not.toContainText(name);
-    await page.getByLabel('Include archived', {exact: true}).check();
+    // This controlled checkbox follows a URL update; assert its settled state.
+    const includeArchived = page.getByLabel('Include archived', {exact: true});
+    await expect(includeArchived).not.toBeChecked();
+    await includeArchived.click();
+    await expect(includeArchived).toBeChecked();
     await page.getByRole('button', {name, exact: true}).click();
     await page.getByRole('button', {name: 'Restore Contact', exact: true}).click();
     await page.getByRole('alertdialog').getByRole('button', {name: 'Restore Contact', exact: true}).click();

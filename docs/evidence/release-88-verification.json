@@ -1,0 +1,776 @@
+{
+  "schema_version": 1,
+  "verified_on": "2026-10-02",
+  "application": {
+    "repository": "robbashea-lab/GRC",
+    "commit": "1103be245404ca1dc5594e74804c7a6cb5d94fa6",
+    "site": "https://iventure-grc-code-preview.mr-robbashea.chatgpt.site",
+    "version": 88,
+    "main_bundle": "/static/js/main.3911441a.js",
+    "main_bundle_sha256": "55da7d16af6046eccbf8d9fc08c94f191a37fc5cdaff9225abcc35d9ee701303",
+    "audience": "owner-private",
+    "deployment_id": "appgdep_6abf41281a6081919bf6be8a51c3a315"
+  },
+  "local_artifact_base": "../ (relative to repository checkout; sibling work directories)",
+  "established_browser": [
+    {
+      "artifact": "qa-final88-brawndo/results.json",
+      "sha256": "0bd7bb3167a037078f1e0d38ceccf2241d2f1b55566c6b562955177e26b404bb",
+      "commit": "1103be245404ca1dc5594e74804c7a6cb5d94fa6",
+      "version": 88,
+      "browser_errors": 0,
+      "results": [
+        {
+          "scenario": "identity",
+          "status": "passed"
+        },
+        {
+          "scenario": "E01",
+          "status": "passed"
+        },
+        {
+          "scenario": "E02/E14",
+          "status": "passed"
+        },
+        {
+          "scenario": "E03/E04/E09/E10/E14",
+          "status": "passed"
+        },
+        {
+          "scenario": "E06",
+          "status": "passed"
+        },
+        {
+          "scenario": "E07",
+          "status": "passed"
+        },
+        {
+          "scenario": "E08",
+          "status": "passed"
+        },
+        {
+          "scenario": "E09",
+          "status": "passed"
+        },
+        {
+          "scenario": "E11",
+          "status": "passed"
+        },
+        {
+          "scenario": "E12",
+          "status": "passed"
+        },
+        {
+          "scenario": "E05",
+          "status": "passed"
+        },
+        {
+          "scenario": "E13",
+          "status": "passed"
+        },
+        {
+          "scenario": "E15",
+          "status": "passed"
+        },
+        {
+          "scenario": "E16",
+          "status": "passed"
+        }
+      ],
+      "dashboard": {
+        "framework": "cis-ig1",
+        "applicable": 56,
+        "implemented": 32,
+        "assessed": 49,
+        "unassessed": 7,
+        "material_findings": 3,
+        "material_work_rows": 3
+      }
+    },
+    {
+      "artifact": "qa-final88-dunder/results.json",
+      "sha256": "a579cb670089cc01741bc50e9fe3e06bfc3a665625d03efd78af2cc4f9e50207",
+      "commit": "1103be245404ca1dc5594e74804c7a6cb5d94fa6",
+      "version": 88,
+      "browser_errors": 0,
+      "results": [
+        {
+          "scenario": "identity",
+          "status": "passed"
+        },
+        {
+          "scenario": "E01",
+          "status": "passed"
+        },
+        {
+          "scenario": "E02/E14",
+          "status": "passed"
+        },
+        {
+          "scenario": "E03/E04/E09/E10/E14",
+          "status": "passed"
+        },
+        {
+          "scenario": "E06",
+          "status": "passed"
+        },
+        {
+          "scenario": "E07",
+          "status": "passed"
+        },
+        {
+          "scenario": "E08",
+          "status": "passed"
+        },
+        {
+          "scenario": "E09",
+          "status": "passed"
+        },
+        {
+          "scenario": "E11",
+          "status": "passed"
+        },
+        {
+          "scenario": "E12",
+          "status": "passed"
+        },
+        {
+          "scenario": "E05",
+          "status": "passed"
+        },
+        {
+          "scenario": "E13",
+          "status": "passed"
+        },
+        {
+          "scenario": "E15",
+          "status": "passed"
+        },
+        {
+          "scenario": "E16",
+          "status": "passed"
+        }
+      ],
+      "dashboard": {
+        "framework": "iso-27001",
+        "applicable": 121,
+        "implemented": 94,
+        "assessed": 117,
+        "unassessed": 4,
+        "material_findings": 2,
+        "material_work_rows": 2
+      }
+    },
+    {
+      "artifact": "qa-final88-prestige/results.json",
+      "sha256": "81163ad0ddbd9cadf1fe9dfb00c5a5d9255336410c14f877272de12ac0b7f6eb",
+      "commit": "1103be245404ca1dc5594e74804c7a6cb5d94fa6",
+      "version": 88,
+      "browser_errors": 0,
+      "results": [
+        {
+          "scenario": "identity",
+          "status": "passed"
+        },
+        {
+          "scenario": "E01",
+          "status": "passed"
+        },
+        {
+          "scenario": "E02/E14",
+          "status": "passed"
+        },
+        {
+          "scenario": "E02 SOC scope editor",
+          "status": "passed"
+        },
+        {
+          "scenario": "E03/E04/E09/E10/E14",
+          "status": "passed"
+        },
+        {
+          "scenario": "E06",
+          "status": "passed"
+        },
+        {
+          "scenario": "E07",
+          "status": "passed"
+        },
+        {
+          "scenario": "E08",
+          "status": "passed"
+        },
+        {
+          "scenario": "E09",
+          "status": "passed"
+        },
+        {
+          "scenario": "E11",
+          "status": "failed"
+        },
+        {
+          "scenario": "E12",
+          "status": "passed"
+        },
+        {
+          "scenario": "E05",
+          "status": "passed"
+        },
+        {
+          "scenario": "E13",
+          "status": "passed"
+        },
+        {
+          "scenario": "E15",
+          "status": "passed"
+        },
+        {
+          "scenario": "run failure gate",
+          "status": "failed"
+        }
+      ],
+      "dashboard": {
+        "framework": "soc-2",
+        "applicable": 38,
+        "implemented": 27,
+        "assessed": 36,
+        "unassessed": 2,
+        "material_findings": 2,
+        "material_work_rows": 2
+      },
+      "failure_disposition": "E11 immediate checked-state assertion raced a completed router update; screenshot showed checked filter and archived Contact. QA-only one-click/retrying assertion correction; E11 and final isolation/reload passed in qa-final88-prestige-retry. Original failure retained."
+    },
+    {
+      "artifact": "qa-final88-prestige-retry/results.json",
+      "sha256": "be42e5c5827aac678823a9c70da16c0b4b408cbaeb52fea641c6b401161f5f4c",
+      "commit": "1103be245404ca1dc5594e74804c7a6cb5d94fa6",
+      "version": 88,
+      "browser_errors": 0,
+      "results": [
+        {
+          "scenario": "identity",
+          "status": "passed"
+        },
+        {
+          "scenario": "E01",
+          "status": "passed"
+        },
+        {
+          "scenario": "E11",
+          "status": "passed"
+        },
+        {
+          "scenario": "E05",
+          "status": "passed"
+        },
+        {
+          "scenario": "E13",
+          "status": "passed"
+        },
+        {
+          "scenario": "E15",
+          "status": "passed"
+        },
+        {
+          "scenario": "E16",
+          "status": "passed"
+        }
+      ],
+      "dashboard": {
+        "framework": "soc-2",
+        "applicable": 38,
+        "implemented": 27,
+        "assessed": 36,
+        "unassessed": 2,
+        "material_findings": 2,
+        "material_work_rows": 2
+      }
+    }
+  ],
+  "visual_review": {
+    "scope": "All 17 normal screenshots for each of Brawndo, Dunder and Prestige; 1440/1024/768 widths and light/dark Reviews; root also inspected corrected Prestige Contact image.",
+    "outcome": "No concrete visual blocker observed; expected horizontal register-table overflow retained.",
+    "limitation": "Not measured contrast or whole-application accessibility assurance."
+  },
+  "new_soc_final_scope": {
+    "report": {
+      "commit": "1103be245404ca1dc5594e74804c7a6cb5d94fa6",
+      "version": 88,
+      "results": [
+        {
+          "scenario": "N01/N02",
+          "status": "passed",
+          "client": "clients_demo_myd27y80_ulctpeqr",
+          "framework": "soc-2",
+          "assessments": 33,
+          "scope": {
+            "definitions": 33,
+            "categories": [
+              "security"
+            ],
+            "guidance_tiers": 3
+          },
+          "detail": "UI-created client, incomplete input rejected, saved/reloaded intake, catalog identity and visible framework scope/terminology, explicit unassessed/unassigned state, framework workspace edit/history"
+        },
+        {
+          "scenario": "N02/N07 SOC scope editing",
+          "status": "passed",
+          "client": "clients_demo_myd27y80_ulctpeqr",
+          "initial_default_criteria": 33,
+          "expanded_scope": {
+            "definitions": 36,
+            "categories": [
+              "security",
+              "availability"
+            ],
+            "guidance_tiers": 3
+          },
+          "final_active_criteria": 33,
+          "retained_criteria": 3,
+          "retained_history_entries": 1,
+          "period": {
+            "start": "2027-01-01",
+            "end": "2027-12-31"
+          },
+          "detail": "UI-selected Availability and observation period saved/reloaded; A1.1 assessment saved before shrinking to Security; all three Availability records and assessment history retained after reload."
+        }
+      ],
+      "errors": []
+    },
+    "artifact": "qa-final88-new-soc/soc-2-onboard.json",
+    "sha256": "e65887296f076b279466cc16ddb41af880ac996ec7cd938fa4914e4e737754c1"
+  },
+  "candidate_annual_browser_checkpoints": [
+    {
+      "framework": "cis-ig1",
+      "artifact": "qa-rc87-new-cis/cis-ig1-checkpoints.json",
+      "sha256": "2c8ac5a6264723d6b1f147d7df04f9d9042d78e1e1afe48233d4ecb3ce0c98dd",
+      "commit": "82f69722763ee63b241947f29822026d99903825",
+      "version": 87,
+      "checkpoints": [
+        {
+          "year": 2027,
+          "status": "passed",
+          "fixture_sha256": "a0c47a06ab9ff99f87f83943a536584f390dfbbe79cec3c5aec88d0ce15ee7d3",
+          "occurrences": 51,
+          "framework_counts": {
+            "framework": "cis-ig1",
+            "applicable": 56,
+            "implemented": 0,
+            "assessed": 1,
+            "unassessed": 55,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 0,
+              "Due in 30 Days": 1,
+              "All Open": 17,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 5
+        },
+        {
+          "year": 2028,
+          "status": "passed",
+          "fixture_sha256": "2bedf5f9f88dfd916072a97d148528d12665c11ae87dcb04d6afbc698f144b32",
+          "occurrences": 107,
+          "framework_counts": {
+            "framework": "cis-ig1",
+            "applicable": 56,
+            "implemented": 1,
+            "assessed": 1,
+            "unassessed": 55,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 2,
+              "Due in 30 Days": 0,
+              "All Open": 17,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 5
+        },
+        {
+          "year": 2029,
+          "status": "passed",
+          "fixture_sha256": "1634c54563b9053e41857c0eae7b93553453c88e682fca9308a500aaacfcdd78",
+          "occurrences": 154,
+          "framework_counts": {
+            "framework": "cis-ig1",
+            "applicable": 56,
+            "implemented": 1,
+            "assessed": 1,
+            "unassessed": 55,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 2,
+              "Due in 30 Days": 0,
+              "All Open": 18,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 4
+        }
+      ]
+    },
+    {
+      "framework": "soc-2",
+      "artifact": "qa-rc87-new-soc/soc-2-checkpoints.json",
+      "sha256": "6fdd7e5de2181d39b5049e19e0b532a4bdb9589622e5d1b52cf259c2af072286",
+      "commit": "82f69722763ee63b241947f29822026d99903825",
+      "version": 87,
+      "checkpoints": [
+        {
+          "year": 2027,
+          "status": "passed",
+          "fixture_sha256": "f1f5dc22841112b22413c08a22db799e983527d37e05b92c576089985f288b9c",
+          "occurrences": 25,
+          "framework_counts": {
+            "framework": "soc-2",
+            "applicable": 33,
+            "implemented": 0,
+            "assessed": 1,
+            "unassessed": 32,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 0,
+              "Due in 30 Days": 1,
+              "All Open": 13,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 2
+        },
+        {
+          "year": 2028,
+          "status": "passed",
+          "fixture_sha256": "2d3ed74a87ea9167442b735c93426e3d9a74446d322dc20b514f2d2db73a35e9",
+          "occurrences": 51,
+          "framework_counts": {
+            "framework": "soc-2",
+            "applicable": 33,
+            "implemented": 1,
+            "assessed": 1,
+            "unassessed": 32,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 2,
+              "Due in 30 Days": 0,
+              "All Open": 13,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 2
+        },
+        {
+          "year": 2029,
+          "status": "passed",
+          "fixture_sha256": "5ca35f840700322622bf4a379cd8f0383b61a58ca0fd418962a7b27f3d0788a1",
+          "occurrences": 68,
+          "framework_counts": {
+            "framework": "soc-2",
+            "applicable": 33,
+            "implemented": 1,
+            "assessed": 1,
+            "unassessed": 32,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 2,
+              "Due in 30 Days": 0,
+              "All Open": 13,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 1
+        }
+      ]
+    },
+    {
+      "framework": "iso-27001",
+      "artifact": "qa-rc87-new-iso/iso-27001-checkpoints.json",
+      "sha256": "6842b60a512a22d82aa1a2bc447be1a15f421eb8e5642581cbb6196b3d54b226",
+      "commit": "82f69722763ee63b241947f29822026d99903825",
+      "version": 87,
+      "checkpoints": [
+        {
+          "year": 2027,
+          "status": "passed",
+          "fixture_sha256": "b210c22cee0b836a9f6b919c1cf72212b69911ae572eb3a6d49c1e31a4abb4ff",
+          "occurrences": 31,
+          "framework_counts": {
+            "framework": "iso-27001",
+            "applicable": 122,
+            "implemented": 0,
+            "assessed": 0,
+            "unassessed": 122,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 0,
+              "Due in 30 Days": 1,
+              "All Open": 19,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 3
+        },
+        {
+          "year": 2028,
+          "status": "passed",
+          "fixture_sha256": "01304d3761168c134c20e406ba6e2ead441b26a0469badeb69915e9a9573c935",
+          "occurrences": 63,
+          "framework_counts": {
+            "framework": "iso-27001",
+            "applicable": 123,
+            "implemented": 0,
+            "assessed": 1,
+            "unassessed": 122,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 2,
+              "Due in 30 Days": 0,
+              "All Open": 19,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 3
+        },
+        {
+          "year": 2029,
+          "status": "passed",
+          "fixture_sha256": "9a489d4c23cee878643ab593a50138e0e0e2bee16a136df366ee61174ed0dc20",
+          "occurrences": 86,
+          "framework_counts": {
+            "framework": "iso-27001",
+            "applicable": 123,
+            "implemented": 0,
+            "assessed": 1,
+            "unassessed": 122,
+            "material_findings": 0,
+            "material_work_rows": 0,
+            "work": {
+              "Past Due": 2,
+              "Due in 30 Days": 0,
+              "All Open": 19,
+              "Unassigned": 0
+            }
+          },
+          "calendar_entries": 2
+        }
+      ]
+    }
+  ],
+  "final_command_exports": [
+    {
+      "sha256": "9fe7b690de9ec21d381b4210f5b5670af4243641da59d2b6ed147066926a9a05",
+      "artifact": "qa-final-command-lifecycle/cis-ig1/cis-ig1.json",
+      "synthetic": true,
+      "events": [
+        {
+          "at": "2028-12-31",
+          "event": "owner_departed",
+          "preserved_occurrences": 24
+        },
+        {
+          "at": "2029-01-15",
+          "event": "finding_reopened"
+        },
+        {
+          "at": "2029-12-31",
+          "event": "reopened_finding_validated",
+          "validations": 2,
+          "pending_validation_observed": true,
+          "first_decision_preserved": true
+        }
+      ],
+      "framework": "cis-ig1",
+      "occurrences": 154
+    },
+    {
+      "sha256": "080e7a829ce386c004b084d883c6e8890d023dc15192812735a5677b7389f973",
+      "artifact": "qa-final-command-lifecycle-five-year/cis-ig1/cis-ig1.json",
+      "synthetic": true,
+      "events": [
+        {
+          "at": "2028-12-31",
+          "event": "owner_departed",
+          "preserved_occurrences": 24
+        },
+        {
+          "at": "2029-01-15",
+          "event": "finding_reopened"
+        },
+        {
+          "at": "2029-12-31",
+          "event": "reopened_finding_validated",
+          "validations": 2,
+          "pending_validation_observed": true,
+          "first_decision_preserved": true
+        }
+      ],
+      "framework": "cis-ig1",
+      "occurrences": 248
+    },
+    {
+      "sha256": "47ee31bda3b95df9b72f0c58e6b26630440045b2fae7c198493fdf26ddb58dd5",
+      "artifact": "qa-final-command-lifecycle/soc-2/soc-2.json",
+      "synthetic": true,
+      "events": [
+        {
+          "at": "2028-12-31",
+          "event": "owner_departed",
+          "preserved_occurrences": 24
+        },
+        {
+          "at": "2029-01-15",
+          "event": "finding_reopened"
+        },
+        {
+          "at": "2029-12-31",
+          "event": "reopened_finding_validated",
+          "validations": 2,
+          "pending_validation_observed": true,
+          "first_decision_preserved": true
+        }
+      ],
+      "framework": "soc-2",
+      "occurrences": 68
+    },
+    {
+      "sha256": "2634a94d3e2a4752543f5cb025f1f1ad05012911686ef42d3b1195d2432b8b97",
+      "artifact": "qa-final-command-lifecycle-five-year/soc-2/soc-2.json",
+      "synthetic": true,
+      "events": [
+        {
+          "at": "2028-12-31",
+          "event": "owner_departed",
+          "preserved_occurrences": 24
+        },
+        {
+          "at": "2029-01-15",
+          "event": "finding_reopened"
+        },
+        {
+          "at": "2029-12-31",
+          "event": "reopened_finding_validated",
+          "validations": 2,
+          "pending_validation_observed": true,
+          "first_decision_preserved": true
+        }
+      ],
+      "framework": "soc-2",
+      "occurrences": 102
+    },
+    {
+      "sha256": "aa512508705efd2e9b13ff469e4e78ce4a514955684734c73a2e70ea6294f63d",
+      "artifact": "qa-final-command-lifecycle/iso-27001/iso-27001.json",
+      "synthetic": true,
+      "events": [
+        {
+          "at": "2028-12-31",
+          "event": "owner_departed",
+          "preserved_occurrences": 24
+        },
+        {
+          "at": "2029-01-15",
+          "event": "finding_reopened"
+        },
+        {
+          "at": "2029-12-31",
+          "event": "reopened_finding_validated",
+          "validations": 2,
+          "pending_validation_observed": true,
+          "first_decision_preserved": true
+        }
+      ],
+      "framework": "iso-27001",
+      "occurrences": 86
+    },
+    {
+      "sha256": "82d9695efd4f5103202bd7f97dfbae4b92fddd17b55ed26eed892c828fed283e",
+      "artifact": "qa-final-command-lifecycle-five-year/iso-27001/iso-27001.json",
+      "synthetic": true,
+      "events": [
+        {
+          "at": "2028-12-31",
+          "event": "owner_departed",
+          "preserved_occurrences": 24
+        },
+        {
+          "at": "2029-01-15",
+          "event": "finding_reopened"
+        },
+        {
+          "at": "2029-12-31",
+          "event": "reopened_finding_validated",
+          "validations": 2,
+          "pending_validation_observed": true,
+          "first_decision_preserved": true
+        }
+      ],
+      "framework": "iso-27001",
+      "occurrences": 132
+    }
+  ],
+  "automated": {
+    "ordinary_frontend": {
+      "suites": 182,
+      "tests": 1012,
+      "snapshots": 1,
+      "seconds": 249.72,
+      "cold": true
+    },
+    "combined_backend": {
+      "tests": 534,
+      "subtests": 671,
+      "seconds": 188.88
+    },
+    "corrected_real_mongo": {
+      "tests": 47,
+      "seconds": 93.668,
+      "version": "8.0.28"
+    },
+    "final_three_year": {
+      "backend_seconds": {
+        "cis": 7.533,
+        "soc": 3.261,
+        "iso": 7.733
+      },
+      "demo_seconds": {
+        "cis": 34.899,
+        "soc": 16.729,
+        "iso": 38.775
+      }
+    },
+    "final_five_year": {
+      "demo_seconds": {
+        "cis": 80.874,
+        "soc": 21.652,
+        "iso": 54.531
+      }
+    },
+    "standard_build": "passed",
+    "private_preview_build": "passed"
+  },
+  "limits": [
+    "Static Demo checks do not establish real authentication or persistent backend browser behavior; authenticated staging URL and test personas were unavailable.",
+    "Candidate annual browser checkpoints precede expanded final owner-departure/revalidation command fixtures; evidence is not interchangeable.",
+    "Ten-year Demo characterization predates the storage fix and uses unlimited test storage; not rerun on final source and not a browser-capacity pass.",
+    "Read docs/quality-release-verification.md for scenario-specific browser exclusions, production migration and unresolved dependency advisory prerequisites.",
+    "Frontend harness assertion and evidence documentation may be committed after the application source; no deployed application changes."
+  ],
+  "cleanup": {
+    "synthetic_browser_contexts": "disposed",
+    "disposable_mongo_databases_remaining": 0,
+    "mongo_process_and_loopback_listener": "gracefully stopped and confirmed absent",
+    "shared_data_changed": false,
+    "evidence_files": "retained"
+  }
+}
