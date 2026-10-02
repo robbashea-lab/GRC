@@ -1,0 +1,2616 @@
+{
+  "version": 1,
+  "framework": "iso-27001",
+  "standard_version": "2022 + Amd 1:2024",
+  "author": "Omnisciente",
+  "content_label": "Original implementation and assessment prompts. Not official ISO wording or a certification opinion.",
+  "verified_on": "2026-10-02",
+  "source_notes": [
+    {
+      "url": "https://www.iso.org/standard/27001",
+      "purpose": "Verified ISO/IEC 27001:2022 edition and amendment reference; public overview only, not licensed clause wording."
+    },
+    {
+      "url": "https://www.iso.org/standard/75652.html",
+      "purpose": "Verified ISO/IEC 27002:2022 control-guidance identity; public metadata does not verify detailed control implementation."
+    },
+    {
+      "url": "https://www.iso.org/standard/88435.html",
+      "purpose": "Verified Amendment 1:2024 Climate action changes reference."
+    },
+    {
+      "url": "https://www.iso.org/files/live/sites/isoorg/files/standards/popular_standards/management_systems/ISO-IAF%20Joint%20Communique%20Feb%202024.pdf",
+      "purpose": "Public primary communication explaining climate consideration in context and interested-party requirements."
+    }
+  ],
+  "licensing_note": "No licensed full standard was supplied. Record identifiers and coverage follow the approved product catalog; public ISO sources establish edition context, not a clause-by-clause conformity review.",
+  "cadence_note": "These prompts do not prescribe annual or quarterly intervals. Exact timing must retain its authoritative cadence source.",
+  "entries": {
+    "4.1": {
+      "title": "Context and external issues",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "The ISMS needs to reflect the business conditions in which it operates, including whether climate change is relevant to that context.",
+      "start": "Compare recorded context decisions with the organization's actual strategy, operations and relevant dependencies.",
+      "evidence": "Recorded context analysis and climate relevance decision; a dedicated register is one possible format.",
+      "ask": "Consult business leadership and the ISMS owner. Which business or climate-related conditions were considered, and what effect did they have on security priorities?",
+      "gaps": "Context analysis is generic or climate relevance has no considered decision.",
+      "review": [
+        "Compare recorded context decisions with the organization's actual strategy, operations and relevant dependencies.",
+        "Consult business leadership and the ISMS owner. Which business or climate-related conditions were considered, and what effect did they have on security priorities?"
+      ],
+      "evidence_examples": [
+        "Recorded context analysis and climate relevance decision; a dedicated register is one possible format.",
+        "Recorded context workshop decisions explaining relevant issues and climate relevance."
+      ],
+      "outcome": [
+        "Context decisions explain relevant conditions and climate relevance."
+      ]
+    },
+    "4.2": {
+      "title": "Stakeholder obligations",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Understand whose needs and obligations matter to the ISMS and which of those expectations it addresses, including relevant climate concerns.",
+      "start": "Trace relevant interested-party expectations into the recorded requirements the ISMS addresses.",
+      "evidence": "Recorded interested-party analysis and relevant requirements with responsibility for addressing them; a register is one possible format.",
+      "ask": "Consult the ISMS owner and owners of relevant stakeholder relationships. Who decides which stakeholder expectations the ISMS must address?",
+      "gaps": "Interested parties are listed without relevant requirements or accountable owners.",
+      "review": [
+        "Trace relevant interested-party expectations into the recorded requirements the ISMS addresses.",
+        "Consult the ISMS owner and owners of relevant stakeholder relationships. Who decides which stakeholder expectations the ISMS must address?"
+      ],
+      "evidence_examples": [
+        "Recorded interested-party analysis and relevant requirements with responsibility for addressing them; a register is one possible format.",
+        "A stakeholder analysis in Client Profile with relevant requirements and responsible owners."
+      ],
+      "outcome": [
+        "Stakeholder requirements have owners and a stated ISMS response."
+      ]
+    },
+    "4.3": {
+      "title": "ISMS boundaries",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Make the ISMS boundary understandable: the locations, services, interfaces and dependencies that the management system covers.",
+      "start": "Compare the documented scope with actual operations, locations, information flows and relevant external interfaces.",
+      "evidence": "Documented ISMS scope with understandable boundaries and dependencies; a diagram can support the explanation.",
+      "ask": "Consult the ISMS owner and owners of in-scope operations. If the scope has boundary exclusions, how are their dependencies and justification understood?",
+      "gaps": "Scope omits a critical interface or claims coverage beyond actual operations.",
+      "review": [
+        "Compare the documented scope with actual operations, locations, information flows and relevant external interfaces.",
+        "Consult the ISMS owner and owners of in-scope operations. If the scope has boundary exclusions, how are their dependencies and justification understood?"
+      ],
+      "evidence_examples": [
+        "Documented ISMS scope with understandable boundaries and dependencies; a diagram can support the explanation.",
+        "A controlled scope description with service and dependency boundaries; a diagram is optional."
+      ],
+      "outcome": [
+        "The documented scope matches real locations, services and interfaces."
+      ]
+    },
+    "4.4": {
+      "title": "ISMS processes",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "The ISMS is a set of connected operating processes, not just a collection of security documents.",
+      "start": "Follow one risk through assessment, treatment, review and improvement processes.",
+      "evidence": "An operating description of ISMS processes, their interactions and accountable ownership; a process map is one possible format.",
+      "ask": "Consult the ISMS owner and relevant process owners. How do the ISMS processes exchange decisions and records?",
+      "gaps": "Processes exist as isolated documents with no working handoffs.",
+      "review": [
+        "Follow one risk through assessment, treatment, review and improvement processes.",
+        "Consult the ISMS owner and relevant process owners. How do the ISMS processes exchange decisions and records?"
+      ],
+      "evidence_examples": [
+        "An operating description of ISMS processes, their interactions and accountable ownership; a process map is one possible format.",
+        "An ISMS operating description with process owners and evidence of actual handoffs."
+      ],
+      "outcome": [
+        "ISMS process handoffs work across risk, treatment and oversight."
+      ]
+    },
+    "5.1": {
+      "title": "Leadership accountability",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Leadership support should be visible in decisions, resources and the way information security is integrated into business activity.",
+      "start": "Inspect a recent leadership decision that allocated resources or resolved a security issue.",
+      "evidence": "Leadership decisions and resource commitments.",
+      "ask": "Consult executive leadership and the ISMS owner. What leadership decisions demonstrate that security considerations influence business priorities?",
+      "gaps": "A sponsor is named but decisions and resource support cannot be demonstrated.",
+      "review": [
+        "Inspect a recent leadership decision that allocated resources or resolved a security issue.",
+        "Consult executive leadership and the ISMS owner. What leadership decisions demonstrate that security considerations influence business priorities?"
+      ],
+      "evidence_examples": [
+        "Leadership decisions and resource commitments.",
+        "Meeting decisions or approved resource requests showing leadership involvement."
+      ],
+      "outcome": [
+        "Leadership decisions demonstrate resources and security integration."
+      ]
+    },
+    "5.2": {
+      "title": "Security policy direction",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Security policy communicates management direction and provides a basis for objectives; people need to understand the policy relevant to their work.",
+      "start": "Check the approved security policy against objectives and workforce communication.",
+      "evidence": "Approved policy, communication record and acknowledgements.",
+      "ask": "Consult the policy approver and ISMS owner. How does policy direction influence actual security objectives?",
+      "gaps": "Policy approval is stale or affected people cannot locate the current policy.",
+      "review": [
+        "Check the approved security policy against objectives and workforce communication.",
+        "Consult the policy approver and ISMS owner. How does policy direction influence actual security objectives?"
+      ],
+      "evidence_examples": [
+        "Approved policy, communication record and acknowledgements.",
+        "Controlled policy approval and evidence that affected people received the current direction."
+      ],
+      "outcome": [
+        "Policy direction supports objectives and reaches its intended audience."
+      ]
+    },
+    "5.3": {
+      "title": "Accountable ISMS roles",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "People need clear responsibility for operating the ISMS and reporting its performance and conformity.",
+      "start": "Trace ISMS operation and performance reporting to named accountable roles.",
+      "evidence": "Communicated role assignments or role descriptions covering ISMS operation and reporting.",
+      "ask": "Consult leadership and people assigned ISMS operation or reporting duties. Who reports ISMS performance and who has authority to resolve an ownership dispute?",
+      "gaps": "Responsibilities overlap or reporting accountability is absent.",
+      "review": [
+        "Trace ISMS operation and performance reporting to named accountable roles.",
+        "Consult leadership and people assigned ISMS operation or reporting duties. Who reports ISMS performance and who has authority to resolve an ownership dispute?"
+      ],
+      "evidence_examples": [
+        "Communicated role assignments or role descriptions covering ISMS operation and reporting.",
+        "Role descriptions or communicated assignments showing operation and reporting accountability."
+      ],
+      "outcome": [
+        "ISMS operation and reporting have communicated accountable roles."
+      ]
+    },
+    "6.1.1": {
+      "title": "Planning risks and opportunities",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "ISMS planning should address relevant risks and opportunities and explain how the chosen actions will be evaluated.",
+      "start": "Compare planning actions with context issues, stakeholder needs and identified opportunities.",
+      "evidence": "Planning decisions and evaluated actions.",
+      "ask": "Consult the ISMS planner and relevant risk or process owners. How will you determine whether each planning action achieved its purpose?",
+      "gaps": "Planning records list risks but omit opportunities or evaluation of chosen actions.",
+      "review": [
+        "Compare planning actions with context issues, stakeholder needs and identified opportunities.",
+        "Consult the ISMS planner and relevant risk or process owners. How will you determine whether each planning action achieved its purpose?"
+      ],
+      "evidence_examples": [
+        "Planning decisions and evaluated actions.",
+        "Planning minutes linking risks and opportunities to actions and evaluation methods."
+      ],
+      "outcome": [
+        "Planning actions address relevant risks and opportunities with evaluation methods."
+      ]
+    },
+    "6.1.2": {
+      "title": "Risk assessment method",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "A repeatable risk assessment approach makes criteria, ownership and evaluation consistent enough to support meaningful decisions.",
+      "start": "Reperform a sample risk assessment using the documented criteria.",
+      "evidence": "Risk methodology and representative assessments.",
+      "ask": "Consult the risk-method owner and assessors. Would two assessors reach comparable decisions using the same criteria?",
+      "gaps": "Likelihood, impact, acceptance criteria or risk ownership are undefined.",
+      "review": [
+        "Reperform a sample risk assessment using the documented criteria.",
+        "Consult the risk-method owner and assessors. Would two assessors reach comparable decisions using the same criteria?"
+      ],
+      "evidence_examples": [
+        "Risk methodology and representative assessments.",
+        "A documented assessment procedure with criteria and completed comparable samples."
+      ],
+      "outcome": [
+        "Risk assessment criteria support consistent and repeatable decisions."
+      ]
+    },
+    "6.1.3": {
+      "title": "Treatment decisions and SoA",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Risk treatment connects selected controls, owner decisions and the Statement of Applicability. Necessary controls are not limited to the Annex A reference set.",
+      "start": "Trace a selected risk through treatment options, necessary controls and SoA decisions.",
+      "evidence": "Risk treatment plan, residual-risk acceptance and SoA decisions.",
+      "ask": "Consult risk owners and the person coordinating risk treatment and the SoA. How did comparison with Annex A and other necessary controls support the completeness of treatment decisions?",
+      "gaps": "SoA exclusions lack justification or residual risk decisions lack owner approval.",
+      "review": [
+        "Trace a selected risk through treatment options, necessary controls and SoA decisions.",
+        "Consult risk owners and the person coordinating risk treatment and the SoA. How did comparison with Annex A and other necessary controls support the completeness of treatment decisions?"
+      ],
+      "evidence_examples": [
+        "Risk treatment plan, residual-risk acceptance and SoA decisions.",
+        "Linked risk, treatment and SoA records with owner decisions and custom-control consideration."
+      ],
+      "outcome": [
+        "Treatments and SoA decisions account for necessary controls and owner acceptance."
+      ]
+    },
+    "6.2": {
+      "title": "Measurable security objectives",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Information security objectives need an accountable plan and measures that show whether progress is being made.",
+      "start": "Inspect one objective from measurable target through measurement results and its delivery plan.",
+      "evidence": "Objectives register and measurement results.",
+      "ask": "Consult objective owners and the people responsible for measurement. What result would show this objective succeeded within its timeframe?",
+      "gaps": "Objectives are one-time tasks or have no measure, owner or reporting period.",
+      "review": [
+        "Inspect one objective from measurable target through measurement results and its delivery plan.",
+        "Consult objective owners and the people responsible for measurement. What result would show this objective succeeded within its timeframe?"
+      ],
+      "evidence_examples": [
+        "Objectives register and measurement results.",
+        "Objective records with target, owner, measurement method, timeframe and measured results."
+      ],
+      "outcome": [
+        "Objective results can be compared with accountable measurable targets."
+      ]
+    },
+    "6.3": {
+      "title": "Planned ISMS changes",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Changes to the ISMS should be planned so their impact and implementation are understood rather than accidental.",
+      "start": "Sample a change to ISMS scope, processes or ownership and inspect its plan.",
+      "evidence": "Change proposal, impact analysis and implementation record.",
+      "ask": "Consult the ISMS change owner and affected process owners. What dependencies and resource needs were considered before this ISMS change?",
+      "gaps": "ISMS changes are implemented without assessing their effects.",
+      "review": [
+        "Sample a change to ISMS scope, processes or ownership and inspect its plan.",
+        "Consult the ISMS change owner and affected process owners. What dependencies and resource needs were considered before this ISMS change?"
+      ],
+      "evidence_examples": [
+        "Change proposal, impact analysis and implementation record.",
+        "A planned ISMS change record describing effects, resources and implementation responsibility."
+      ],
+      "outcome": [
+        "ISMS changes have understood impacts and planned implementation."
+      ]
+    },
+    "7.1": {
+      "title": "ISMS resources",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "The management system needs adequate resources, and identified resource gaps need an accountable response.",
+      "start": "Compare ISMS workload and skills needs with approved resource allocation.",
+      "evidence": "Resource plan and staffing or budget decisions.",
+      "ask": "Consult leadership and owners of resource allocation. Which resource constraint could prevent a planned ISMS activity?",
+      "gaps": "Funding or staffing gaps are recognized but have no accountable response.",
+      "review": [
+        "Compare ISMS workload and skills needs with approved resource allocation.",
+        "Consult leadership and owners of resource allocation. Which resource constraint could prevent a planned ISMS activity?"
+      ],
+      "evidence_examples": [
+        "Resource plan and staffing or budget decisions.",
+        "A resource decision or capacity review resolving identified ISMS needs."
+      ],
+      "outcome": [
+        "ISMS resource needs are met or assigned an accountable resolution."
+      ]
+    },
+    "7.2": {
+      "title": "Role competence",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "People carrying out relevant responsibilities need demonstrable competence, not simply an assigned job title.",
+      "start": "Sample people performing relevant ISMS responsibilities, such as risk assessment, audit or incident handling.",
+      "evidence": "Competence matrix and training or experience records.",
+      "ask": "Consult line managers and the person responsible for competence assurance. How was competence established and how was any learning action evaluated?",
+      "gaps": "Training attendance is used as the sole proof of competence.",
+      "review": [
+        "Sample people performing relevant ISMS responsibilities, such as risk assessment, audit or incident handling.",
+        "Consult line managers and the person responsible for competence assurance. How was competence established and how was any learning action evaluated?"
+      ],
+      "evidence_examples": [
+        "Competence matrix and training or experience records.",
+        "Experience or qualification records plus evaluation of competence for the assigned duties."
+      ],
+      "outcome": [
+        "Relevant responsibilities are supported by demonstrable competence."
+      ]
+    },
+    "7.3": {
+      "title": "Workforce awareness",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "People should understand the security policy, their contribution and the consequences of departing from ISMS expectations.",
+      "start": "Ask a workforce member to explain reporting routes and security responsibilities.",
+      "evidence": "Awareness materials and completion evidence.",
+      "ask": "Consult workforce members and the awareness coordinator. What happens when an employee departs from an ISMS expectation?",
+      "gaps": "Awareness completion records exist but people cannot explain their contribution.",
+      "review": [
+        "Ask a workforce member to explain reporting routes and security responsibilities.",
+        "Consult workforce members and the awareness coordinator. What happens when an employee departs from an ISMS expectation?"
+      ],
+      "evidence_examples": [
+        "Awareness materials and completion evidence.",
+        "Interview observations or exercises showing awareness of responsibilities and reporting routes."
+      ],
+      "outcome": [
+        "Workforce members can explain their security contribution and consequences."
+      ]
+    },
+    "7.4": {
+      "title": "ISMS communications",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "ISMS communication should have a clear purpose, audience, owner and timing so important information reaches the right people.",
+      "start": "Inspect communication arrangements for relevant ISMS activities, such as policy updates, performance reporting or incident escalation.",
+      "evidence": "Communication plan and delivery evidence.",
+      "ask": "Consult the ISMS communication owner and intended recipients. Who receives each communication, through which route and at what trigger?",
+      "gaps": "Communications lack audience, responsibility or timing.",
+      "review": [
+        "Inspect communication arrangements for relevant ISMS activities, such as policy updates, performance reporting or incident escalation.",
+        "Consult the ISMS communication owner and intended recipients. Who receives each communication, through which route and at what trigger?"
+      ],
+      "evidence_examples": [
+        "Communication plan and delivery evidence.",
+        "A communication plan or process description identifying audience, timing and responsibility."
+      ],
+      "outcome": [
+        "Communication routes specify purpose, audience, responsibility and timing."
+      ]
+    },
+    "7.5.1": {
+      "title": "Required records",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Operating and demonstrating this ISMS depends on appropriate documentation with clear controlled locations.",
+      "start": "Locate the records needed to operate and demonstrate the in-scope ISMS.",
+      "evidence": "Document register and current records.",
+      "ask": "Consult the ISMS owner and owners of necessary operating records. Which records are needed for your processes beyond the standard's references?",
+      "gaps": "Required records are absent or scattered without controlled locations.",
+      "review": [
+        "Locate the records needed to operate and demonstrate the in-scope ISMS.",
+        "Consult the ISMS owner and owners of necessary operating records. Which records are needed for your processes beyond the standard's references?"
+      ],
+      "evidence_examples": [
+        "Document register and current records.",
+        "Controlled records distributed across existing modules with clear ownership and retrieval paths."
+      ],
+      "outcome": [
+        "Necessary operating and demonstration records have controlled locations."
+      ]
+    },
+    "7.5.2": {
+      "title": "Document creation and revision",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "New and changed documents need appropriate identification, review and approval before people rely on them.",
+      "start": "Sample a revised procedure and inspect identification, review and approval.",
+      "evidence": "Document versions and review approvals.",
+      "ask": "Consult document authors and assigned reviewers or approvers. How can a reader tell whether a new version is approved for use?",
+      "gaps": "Changes are published with no review or version identity.",
+      "review": [
+        "Sample a revised procedure and inspect identification, review and approval.",
+        "Consult document authors and assigned reviewers or approvers. How can a reader tell whether a new version is approved for use?"
+      ],
+      "evidence_examples": [
+        "Document versions and review approvals.",
+        "Document history or workflow records demonstrating identification, review and approval."
+      ],
+      "outcome": [
+        "New or revised documents are identifiable, reviewed and approved."
+      ]
+    },
+    "7.5.3": {
+      "title": "Document protection and availability",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Documentation needs controlled access, distribution, retention and revision handling, including relevant external documents.",
+      "start": "Test retrieval and access to a current document and its superseded version.",
+      "evidence": "Access controls, retention schedule and revision history.",
+      "ask": "Consult document owners and people administering controlled repositories. How do you protect external documents and prevent obsolete instructions being used?",
+      "gaps": "Readers use uncontrolled copies or retention and disposal are undefined.",
+      "review": [
+        "Test retrieval and access to a current document and its superseded version.",
+        "Consult document owners and people administering controlled repositories. How do you protect external documents and prevent obsolete instructions being used?"
+      ],
+      "evidence_examples": [
+        "Access controls, retention schedule and revision history.",
+        "Repository permissions and revision history demonstrating protection and current-version access."
+      ],
+      "outcome": [
+        "Current and superseded documentation has controlled access and handling."
+      ]
+    },
+    "8.1": {
+      "title": "Controlled operational processes",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Planned ISMS activities and relevant externally provided processes need to be carried out under understood operating controls.",
+      "start": "Sample a planned operational activity and, where relevant, an externally provided process.",
+      "evidence": "Operating procedures and execution records.",
+      "ask": "Consult operational process owners. Which operating criteria show the process ran as planned? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Execution lacks defined criteria or supplier-controlled activities have no oversight.",
+      "review": [
+        "Sample a planned operational activity and, where relevant, an externally provided process.",
+        "Consult operational process owners. Which operating criteria show the process ran as planned? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Operating procedures and execution records.",
+        "Operating records or sampled supplier oversight showing defined criteria were followed."
+      ],
+      "outcome": [
+        "Operational and externally provided processes meet defined operating criteria."
+      ]
+    },
+    "8.2": {
+      "title": "Risk assessment execution",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Risk assessment remains an operating activity, including planned reassessment and reassessment following significant changes.",
+      "start": "Compare completed assessments with the risk review plan and significant change history.",
+      "evidence": "Dated risk assessments and change-triggered reassessments.",
+      "ask": "Consult risk assessors and affected risk owners. Which change would trigger reassessment outside the planned schedule?",
+      "gaps": "Risk assessment records were not refreshed after a material change.",
+      "review": [
+        "Compare completed assessments with the risk review plan and significant change history.",
+        "Consult risk assessors and affected risk owners. Which change would trigger reassessment outside the planned schedule?"
+      ],
+      "evidence_examples": [
+        "Dated risk assessments and change-triggered reassessments.",
+        "Dated assessments linked to the planned reassessment cycle or significant-change trigger."
+      ],
+      "outcome": [
+        "Risk reassessment reflects planned activity and significant change."
+      ]
+    },
+    "8.3": {
+      "title": "Treatment execution",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Agreed risk treatment needs to be implemented; a treatment plan without execution evidence leaves that work unproven.",
+      "start": "Follow a treatment plan to deployed safeguards, test evidence and retained results.",
+      "evidence": "Treatment Actions and risk-owner decisions.",
+      "ask": "Consult treatment owners and people implementing the selected safeguards. What demonstrates that a completed treatment actually changed the exposure? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Treatments are marked complete without implementation evidence.",
+      "review": [
+        "Follow a treatment plan to deployed safeguards, test evidence and retained results.",
+        "Consult treatment owners and people implementing the selected safeguards. What demonstrates that a completed treatment actually changed the exposure? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Treatment Actions and risk-owner decisions.",
+        "Treatment records linked to actual implementation checks and retained results."
+      ],
+      "outcome": [
+        "Agreed treatments have retained implementation results."
+      ]
+    },
+    "9.1": {
+      "title": "Performance measurement",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Useful performance evaluation connects defined measures, responsibilities and timing to retained results and conclusions.",
+      "start": "Recalculate one performance measure from its source data and inspect the conclusion.",
+      "evidence": "Metric definitions, results and evaluation records.",
+      "ask": "Consult measurement owners and people analyzing or evaluating ISMS performance. Who measures, analyzes and evaluates results, and when?",
+      "gaps": "Metrics have no method or collected results are never evaluated.",
+      "review": [
+        "Recalculate one performance measure from its source data and inspect the conclusion.",
+        "Consult measurement owners and people analyzing or evaluating ISMS performance. Who measures, analyzes and evaluates results, and when?"
+      ],
+      "evidence_examples": [
+        "Metric definitions, results and evaluation records.",
+        "A measurement record with method, source data, analysis and conclusions."
+      ],
+      "outcome": [
+        "Performance results support analysis and evaluation of ISMS effectiveness."
+      ]
+    },
+    "9.2.1": {
+      "title": "ISMS audit coverage",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Internal audit evaluates the ISMS against its relevant criteria rather than merely collecting evidence that activities occurred.",
+      "start": "Compare an audit's criteria and tests with ISMS requirements and the organization's own rules.",
+      "evidence": "Internal audit scope, criteria and reports.",
+      "ask": "Consult the internal auditor and owners of the audited processes. Did the audit evaluate implementation and effectiveness as well as document presence?",
+      "gaps": "Audit tests are a document inventory rather than evaluation against criteria.",
+      "review": [
+        "Compare an audit's criteria and tests with ISMS requirements and the organization's own rules.",
+        "Consult the internal auditor and owners of the audited processes. Did the audit evaluate implementation and effectiveness as well as document presence?"
+      ],
+      "evidence_examples": [
+        "Internal audit scope, criteria and reports.",
+        "An audit report with relevant criteria, performed tests and supported conclusions."
+      ],
+      "outcome": [
+        "Audit tests evaluate the ISMS against its relevant criteria."
+      ]
+    },
+    "9.2.2": {
+      "title": "Internal audit programme",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "The audit programme needs deliberate planning, impartiality, reporting and follow-up so its results support reliable oversight.",
+      "start": "Review programme coverage, auditor impartiality and follow-up for completed audits.",
+      "evidence": "Audit programme, auditor independence and reports.",
+      "ask": "Consult the audit programme owner and assigned auditors. How do process importance and earlier audit results affect the programme?",
+      "gaps": "Coverage is incomplete or an auditor assesses their own work without safeguards.",
+      "review": [
+        "Review programme coverage, auditor impartiality and follow-up for completed audits.",
+        "Consult the audit programme owner and assigned auditors. How do process importance and earlier audit results affect the programme?"
+      ],
+      "evidence_examples": [
+        "Audit programme, auditor independence and reports.",
+        "An audit programme with coverage decisions, impartial assignments and reporting follow-up."
+      ],
+      "outcome": [
+        "The audit programme provides planned coverage, impartiality and follow-up."
+      ]
+    },
+    "9.3.1": {
+      "title": "Management review operation",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Management review is leadership's evaluation of ISMS suitability and effectiveness, distinct from internal audit.",
+      "start": "Inspect a completed leadership review and its schedule or change triggers.",
+      "evidence": "Dated management review minutes and attendance.",
+      "ask": "Consult the management-review chair and ISMS owner. How did management decide the ISMS remains suitable and effective?",
+      "gaps": "Management review is a status meeting with no ISMS evaluation.",
+      "review": [
+        "Inspect a completed leadership review and its schedule or change triggers.",
+        "Consult the management-review chair and ISMS owner. How did management decide the ISMS remains suitable and effective?"
+      ],
+      "evidence_examples": [
+        "Dated management review minutes and attendance.",
+        "A retained management-review record showing leadership evaluation and timing."
+      ],
+      "outcome": [
+        "Leadership review evaluates ISMS suitability and effectiveness."
+      ]
+    },
+    "9.3.2": {
+      "title": "Management review inputs",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Management review needs relevant inputs, including performance, changes, feedback, risk and follow-up on earlier decisions.",
+      "start": "Check the review input pack against performance, feedback, risk and previous decisions.",
+      "evidence": "Management review pack linked to authoritative records.",
+      "ask": "Consult the review coordinator and owners of relevant input records. Which changed conditions or stakeholder feedback influenced the review?",
+      "gaps": "Inputs omit unresolved previous actions, risk changes or audit results.",
+      "review": [
+        "Check the review input pack against performance, feedback, risk and previous decisions.",
+        "Consult the review coordinator and owners of relevant input records. Which changed conditions or stakeholder feedback influenced the review?"
+      ],
+      "evidence_examples": [
+        "Management review pack linked to authoritative records.",
+        "A structured input pack or linked source records considered during management review."
+      ],
+      "outcome": [
+        "Review inputs reflect changes, performance, feedback, risk and prior decisions."
+      ]
+    },
+    "9.3.3": {
+      "title": "Management review decisions",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Management review should lead to recorded improvement or change decisions with accountable follow-through.",
+      "start": "Trace review decisions into improvements, ISMS changes and assigned actions.",
+      "evidence": "Approved minutes and linked Action Items.",
+      "ask": "Consult management-review decision makers and assigned action owners. Where are management decisions and their follow-through retained?",
+      "gaps": "Minutes contain discussion but no recorded decision or accountable action.",
+      "review": [
+        "Trace review decisions into improvements, ISMS changes and assigned actions.",
+        "Consult management-review decision makers and assigned action owners. Where are management decisions and their follow-through retained?"
+      ],
+      "evidence_examples": [
+        "Approved minutes and linked Action Items.",
+        "Review decisions linked to assigned improvements or ISMS change records."
+      ],
+      "outcome": [
+        "Management decisions lead to accountable improvements or ISMS changes."
+      ]
+    },
+    "10.1": {
+      "title": "Ongoing ISMS improvement",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Improvement means making changes and evaluating their effectiveness, not just identifying opportunities.",
+      "start": "Trace an improvement from identified opportunity to implemented change and evaluation.",
+      "evidence": "Improvement decisions and before/after evidence.",
+      "ask": "Consult the ISMS owner and improvement owners. How do you know the change improved the ISMS rather than only adding work?",
+      "gaps": "Improvement opportunities accumulate without implementation or evaluation.",
+      "review": [
+        "Trace an improvement from identified opportunity to implemented change and evaluation.",
+        "Consult the ISMS owner and improvement owners. How do you know the change improved the ISMS rather than only adding work?"
+      ],
+      "evidence_examples": [
+        "Improvement decisions and before/after evidence.",
+        "An improvement record showing implementation and subsequent evaluation."
+      ],
+      "outcome": [
+        "Implemented improvements are evaluated for their intended effect."
+      ]
+    },
+    "10.2": {
+      "title": "Nonconformity correction",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Corrective action connects a deficiency to its cause, remediation and effectiveness validation; completing a task alone does not demonstrate resolution.",
+      "start": "Inspect a nonconformity from containment and cause analysis through effectiveness verification.",
+      "evidence": "Finding history, remediation and validation results.",
+      "ask": "Consult the finding owner and person verifying corrective-action effectiveness. What prevents this issue recurring or appearing elsewhere?",
+      "gaps": "Action closure substitutes for cause analysis or effectiveness verification.",
+      "review": [
+        "Inspect a nonconformity from containment and cause analysis through effectiveness verification.",
+        "Consult the finding owner and person verifying corrective-action effectiveness. What prevents this issue recurring or appearing elsewhere?"
+      ],
+      "evidence_examples": [
+        "Finding history, remediation and validation results.",
+        "A finding record showing cause analysis, correction and effectiveness verification."
+      ],
+      "outcome": [
+        "Nonconformity handling addresses cause, recurrence and effectiveness."
+      ]
+    },
+    "A.5.1": {
+      "title": "Security policy governance",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Keep security policy aligned with management direction and make it usable by the people expected to follow it.",
+      "start": "Sample policy approval, communication and a review prompted by change.",
+      "evidence": "Approved policies, ownership, communication and review records.",
+      "ask": "Consult policy owners, approvers and affected workforce representatives. Which business change last led you to revise a security policy?",
+      "gaps": "Policies have owners but no evidence of current direction or communication.",
+      "review": [
+        "Sample policy approval, communication and a review prompted by change.",
+        "Consult policy owners, approvers and affected workforce representatives. Which business change last led you to revise a security policy?"
+      ],
+      "evidence_examples": [
+        "Approved policies, ownership, communication and review records.",
+        "Controlled policy history and records of communication appropriate to affected people."
+      ],
+      "outcome": [
+        "Security policies express current direction and reach affected people."
+      ]
+    },
+    "A.5.2": {
+      "title": "Security role allocation",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Assign security responsibilities so important decisions and activities have accountable owners.",
+      "start": "Match key security activities to communicated role assignments.",
+      "evidence": "Communicated role descriptions or assignments with security responsibilities; a responsibility matrix is an optional supporting format.",
+      "ask": "Consult security activity owners and the leadership assigning responsibilities. Who owns each security decision when the usual owner is unavailable?",
+      "gaps": "Ownership is unclear at handoffs or assignments are not communicated.",
+      "review": [
+        "Match key security activities to communicated role assignments.",
+        "Consult security activity owners and the leadership assigning responsibilities. Who owns each security decision when the usual owner is unavailable?"
+      ],
+      "evidence_examples": [
+        "Communicated role descriptions or assignments with security responsibilities; a responsibility matrix is an optional supporting format.",
+        "Role descriptions or service ownership records with communicated security duties."
+      ],
+      "outcome": [
+        "Security activities and decisions have communicated accountable owners."
+      ]
+    },
+    "A.5.3": {
+      "title": "Separation of conflicting duties",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Separate duties that could allow one person to misuse a process without an appropriate check.",
+      "start": "Inspect a high-impact transaction for incompatible permissions and approvals.",
+      "evidence": "Role design, access assignments, approval paths and compensating review records.",
+      "ask": "Consult owners of sensitive processes and access-approval responsibilities. Can one person request, approve and execute this sensitive operation?",
+      "gaps": "Conflicting duties remain combined without an evaluated compensating check.",
+      "review": [
+        "Inspect a high-impact transaction for incompatible permissions and approvals.",
+        "Consult owners of sensitive processes and access-approval responsibilities. Can one person request, approve and execute this sensitive operation?"
+      ],
+      "evidence_examples": [
+        "Role design, access assignments, approval paths and compensating review records.",
+        "Sample transactions showing separate approvals or an evaluated compensating review."
+      ],
+      "outcome": [
+        "Conflicting duties are separated or supported by evaluated compensating checks."
+      ]
+    },
+    "A.5.4": {
+      "title": "Management security expectations",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Management should make security expectations clear and support their application in day-to-day work.",
+      "start": "Sample how managers communicate and follow up on team security expectations.",
+      "evidence": "Management communications, team responsibilities and follow-up records.",
+      "ask": "Consult line managers and affected team members. How does a manager respond when a team repeatedly ignores a security rule?",
+      "gaps": "Expectations are delegated to IT with no management follow-up.",
+      "review": [
+        "Sample how managers communicate and follow up on team security expectations.",
+        "Consult line managers and affected team members. How does a manager respond when a team repeatedly ignores a security rule?"
+      ],
+      "evidence_examples": [
+        "Management communications, team responsibilities and follow-up records.",
+        "Team meeting decisions or manager follow-up records showing expectations in practice."
+      ],
+      "outcome": [
+        "Managers demonstrate follow-up on workforce security expectations."
+      ]
+    },
+    "A.5.5": {
+      "title": "Authority liaison",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Maintain appropriate relationships and contact routes with relevant authorities.",
+      "start": "Check current authority contact routes and the owner of liaison activities.",
+      "evidence": "Authority contact list, assigned liaison responsibilities and relevant correspondence.",
+      "ask": "Consult the authority liaison and incident escalation owner. Who contacts the relevant authority during an urgent security matter?",
+      "gaps": "Authority contacts are stale or no liaison owner is designated.",
+      "review": [
+        "Check current authority contact routes and the owner of liaison activities.",
+        "Consult the authority liaison and incident escalation owner. Who contacts the relevant authority during an urgent security matter?"
+      ],
+      "evidence_examples": [
+        "Authority contact list, assigned liaison responsibilities and relevant correspondence.",
+        "A tested escalation contact route with assigned authority liaison responsibilities."
+      ],
+      "outcome": [
+        "Relevant authority liaison routes are current and assigned."
+      ]
+    },
+    "A.5.6": {
+      "title": "Security community liaison",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Use relevant security communities and professional contacts to stay informed and obtain appropriate support.",
+      "start": "Inspect a useful security-community update and resulting internal action.",
+      "evidence": "Participation records, information received and examples of resulting action.",
+      "ask": "Consult the security-community liaison and recipients of relevant updates. Which professional source recently changed your security practice?",
+      "gaps": "Membership exists without relevant information reaching decision makers.",
+      "review": [
+        "Inspect a useful security-community update and resulting internal action.",
+        "Consult the security-community liaison and recipients of relevant updates. Which professional source recently changed your security practice?"
+      ],
+      "evidence_examples": [
+        "Participation records, information received and examples of resulting action.",
+        "Security-community updates linked to internal assessments or resulting decisions."
+      ],
+      "outcome": [
+        "Useful security-community information reaches internal decision makers."
+      ]
+    },
+    "A.5.7": {
+      "title": "Threat-informed decisions",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Use relevant threat information to inform security decisions rather than collecting intelligence without a purpose.",
+      "start": "Follow one threat advisory through relevance analysis into a risk or operational decision.",
+      "evidence": "Threat sources, analysis notes and linked risk or operational decisions.",
+      "ask": "Consult the threat-analysis owner and relevant risk or operational decision makers. How do you distinguish actionable threats from irrelevant intelligence?",
+      "gaps": "Feeds are collected without analysis or action ownership.",
+      "review": [
+        "Follow one threat advisory through relevance analysis into a risk or operational decision.",
+        "Consult the threat-analysis owner and relevant risk or operational decision makers. How do you distinguish actionable threats from irrelevant intelligence?"
+      ],
+      "evidence_examples": [
+        "Threat sources, analysis notes and linked risk or operational decisions.",
+        "An advisory assessment linked to a risk update, change request or reasoned no-action decision."
+      ],
+      "outcome": [
+        "Threat information supports documented risk or operational decisions."
+      ]
+    },
+    "A.5.8": {
+      "title": "Security in projects",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Include security needs in projects while decisions can still influence design and delivery.",
+      "start": "Sample a project from security requirements to design review and acceptance.",
+      "evidence": "Project security requirements, review gates and accepted exceptions.",
+      "ask": "Consult the project owner and people responsible for security requirements. At which project gate can security concerns still alter delivery?",
+      "gaps": "Security review occurs only after project decisions become difficult to change.",
+      "review": [
+        "Sample a project from security requirements to design review and acceptance.",
+        "Consult the project owner and people responsible for security requirements. At which project gate can security concerns still alter delivery?"
+      ],
+      "evidence_examples": [
+        "Project security requirements, review gates and accepted exceptions.",
+        "Project records showing security requirements and review before key delivery decisions."
+      ],
+      "outcome": [
+        "Project security decisions occur while design and delivery can still change."
+      ]
+    },
+    "A.5.9": {
+      "title": "Asset and information inventory",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Know what information and related assets exist and who is responsible for managing them.",
+      "start": "Reconcile a sample asset or data set with its recorded owner and location.",
+      "evidence": "Asset/data inventories, assigned owners and reconciliation records.",
+      "ask": "Consult information or asset owners and inventory maintainers. How are unmanaged assets discovered and assigned an owner?",
+      "gaps": "Inventory coverage omits relevant information, assets or accountable owners.",
+      "review": [
+        "Reconcile a sample asset or data set with its recorded owner and location.",
+        "Consult information or asset owners and inventory maintainers. How are unmanaged assets discovered and assigned an owner?"
+      ],
+      "evidence_examples": [
+        "Asset/data inventories, assigned owners and reconciliation records.",
+        "Inventory exports or owner-confirmed records reconciled to actual information and assets."
+      ],
+      "outcome": [
+        "Information and asset records identify owners and actual coverage."
+      ]
+    },
+    "A.5.10": {
+      "title": "Acceptable-use rules",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Define acceptable ways to use information and assets so users understand the boundaries.",
+      "start": "Compare acceptable-use rules with workforce practice and acknowledgements.",
+      "evidence": "Acceptable-use rules, communications and acknowledgements.",
+      "ask": "Consult the acceptable-use owner and representative users. What does a user do when business work requires an exception?",
+      "gaps": "Rules are inaccessible or exceptions are handled informally.",
+      "review": [
+        "Compare acceptable-use rules with workforce practice and acknowledgements.",
+        "Consult the acceptable-use owner and representative users. What does a user do when business work requires an exception?"
+      ],
+      "evidence_examples": [
+        "Acceptable-use rules, communications and acknowledgements.",
+        "Published use rules with workforce communication and approved exception records."
+      ],
+      "outcome": [
+        "Users understand acceptable-use boundaries and exception routes."
+      ]
+    },
+    "A.5.11": {
+      "title": "Asset return",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Recover organizational assets when a person or relationship no longer needs them.",
+      "start": "Trace a departing person's assigned assets to recorded return or resolution.",
+      "evidence": "Asset assignment lists, departure checklists and return records.",
+      "ask": "Consult asset custodians and people coordinating relationship departures. How do you resolve equipment that is not returned?",
+      "gaps": "Departure closes while asset return remains unverified.",
+      "review": [
+        "Trace a departing person's assigned assets to recorded return or resolution.",
+        "Consult asset custodians and people coordinating relationship departures. How do you resolve equipment that is not returned?"
+      ],
+      "evidence_examples": [
+        "Asset assignment lists, departure checklists and return records.",
+        "Asset custody records linked to return, transfer or explicitly resolved outstanding items."
+      ],
+      "outcome": [
+        "Departing relationships leave assets returned or explicitly resolved."
+      ]
+    },
+    "A.5.12": {
+      "title": "Information classification",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Classify information according to its protection needs and business context.",
+      "start": "Sample data sets and compare classifications with impact and handling needs.",
+      "evidence": "Classification scheme, data inventory and owner decisions.",
+      "ask": "Consult information owners and the classification scheme owner. Who decides classification when information changes purpose or audience?",
+      "gaps": "Classification is assigned mechanically without owner judgment.",
+      "review": [
+        "Sample data sets and compare classifications with impact and handling needs.",
+        "Consult information owners and the classification scheme owner. Who decides classification when information changes purpose or audience?"
+      ],
+      "evidence_examples": [
+        "Classification scheme, data inventory and owner decisions.",
+        "Owner decisions in a data inventory linking protection needs to classification."
+      ],
+      "outcome": [
+        "Information classifications reflect owner judgment and protection needs."
+      ]
+    },
+    "A.5.13": {
+      "title": "Classification labels",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Make information classifications recognizable where labels help people or systems handle data appropriately.",
+      "start": "Inspect representative labels across documents, email and applicable systems.",
+      "evidence": "Labelling guidance, labelled samples and applicable tool settings.",
+      "ask": "Consult information owners and people applying or consuming labels. How do labels help recipients choose the right handling action?",
+      "gaps": "Labels conflict with the classification scheme or lack handling instructions.",
+      "review": [
+        "Inspect representative labels across documents, email and applicable systems.",
+        "Consult information owners and people applying or consuming labels. How do labels help recipients choose the right handling action?"
+      ],
+      "evidence_examples": [
+        "Labelling guidance, labelled samples and applicable tool settings.",
+        "Representative labels and handling instructions suited to the information format."
+      ],
+      "outcome": [
+        "Labels communicate classifications and actionable handling expectations."
+      ]
+    },
+    "A.5.14": {
+      "title": "Protected information transfers",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect information when it is transferred between people, systems or organizations.",
+      "start": "Sample an external information transfer and its approved protection method.",
+      "evidence": "Transfer procedures, agreement terms and relevant channel configurations.",
+      "ask": "Consult information owners and people authorizing or operating transfers. What checks occur before sensitive information leaves the organization?",
+      "gaps": "Transfers use unapproved channels or recipient checks are absent.",
+      "review": [
+        "Sample an external information transfer and its approved protection method.",
+        "Consult information owners and people authorizing or operating transfers. What checks occur before sensitive information leaves the organization?"
+      ],
+      "evidence_examples": [
+        "Transfer procedures, agreement terms and relevant channel configurations.",
+        "An approved transfer record with recipient verification and channel protection evidence."
+      ],
+      "outcome": [
+        "Transfers protect information through approved channels and recipient checks."
+      ]
+    },
+    "A.5.15": {
+      "title": "Access rules",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Establish access rules that connect business need to appropriate information and system permissions.",
+      "start": "Compare a role's permitted access with documented business need and rules.",
+      "evidence": "Access policy, role definitions and approval criteria.",
+      "ask": "Consult information or system owners and access approvers. What rule determines whether an access request should be approved?",
+      "gaps": "Access rules are broad permissions without a business justification.",
+      "review": [
+        "Compare a role's permitted access with documented business need and rules.",
+        "Consult information or system owners and access approvers. What rule determines whether an access request should be approved?"
+      ],
+      "evidence_examples": [
+        "Access policy, role definitions and approval criteria.",
+        "Role design and access-decision records applying business-need criteria."
+      ],
+      "outcome": [
+        "Access rules tie permissions to documented business need."
+      ]
+    },
+    "A.5.16": {
+      "title": "Identity lifecycle",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Manage identities through creation, change and retirement rather than only at initial provisioning.",
+      "start": "Trace a joiner, role transfer and leaver through identity records.",
+      "evidence": "Identity records, provisioning/change tickets and deactivation evidence.",
+      "ask": "Consult identity lifecycle owners and people initiating joiner, mover or leaver changes. How are orphaned, duplicate and non-human identities detected?",
+      "gaps": "Identity retirement omits relevant non-human or shared identities where these are used.",
+      "review": [
+        "Trace a joiner, role transfer and leaver through identity records.",
+        "Consult identity lifecycle owners and people initiating joiner, mover or leaver changes. How are orphaned, duplicate and non-human identities detected?"
+      ],
+      "evidence_examples": [
+        "Identity records, provisioning/change tickets and deactivation evidence.",
+        "Provisioning, transfer and retirement records reconciled with active identities."
+      ],
+      "outcome": [
+        "Identity creation, changes and retirement cover relevant identity types."
+      ]
+    },
+    "A.5.17": {
+      "title": "Credential handling",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Handle authentication information so credentials are issued, protected and changed appropriately.",
+      "start": "Inspect credential issuance and reset processes without collecting secret values.",
+      "evidence": "Credential-handling procedures and configuration evidence without credential values.",
+      "ask": "Consult authentication process owners and people handling credential issuance or resets. How is the recipient verified before authentication information is issued?",
+      "gaps": "Credentials are exposed in tickets or reset identity checks are weak.",
+      "review": [
+        "Inspect credential issuance and reset processes without collecting secret values.",
+        "Consult authentication process owners and people handling credential issuance or resets. How is the recipient verified before authentication information is issued?"
+      ],
+      "evidence_examples": [
+        "Credential-handling procedures and configuration evidence without credential values.",
+        "Observed credential issuance or reset workflow with verified recipients and no secret values."
+      ],
+      "outcome": [
+        "Credential issuance and resets protect secrets and verify recipients."
+      ]
+    },
+    "A.5.18": {
+      "title": "Access entitlement lifecycle",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Approve, review, change and remove access rights as people's responsibilities and needs change.",
+      "start": "Sample access approvals, periodic reviews and revocations after role changes.",
+      "evidence": "Access approvals, review records and revocation tickets.",
+      "ask": "Consult access approvers, entitlement reviewers and affected system owners. How does a reviewer know which entitlements are still needed?",
+      "gaps": "Reviews approve account lists without examining actual privileges.",
+      "review": [
+        "Sample access approvals, periodic reviews and revocations after role changes.",
+        "Consult access approvers, entitlement reviewers and affected system owners. How does a reviewer know which entitlements are still needed?"
+      ],
+      "evidence_examples": [
+        "Access approvals, review records and revocation tickets.",
+        "Entitlement-level review decisions and removal records linked to changed responsibilities."
+      ],
+      "outcome": [
+        "Access rights change with need and are meaningfully reviewed."
+      ]
+    },
+    "A.5.19": {
+      "title": "Supplier security",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Manage the security exposure introduced by supplier relationships.",
+      "start": "Sample a supplier's security risk assessment and assigned relationship owner.",
+      "evidence": "Supplier inventory, risk assessments and accountable business owners.",
+      "ask": "Consult supplier relationship owners and security risk assessors. What triggers deeper assurance for a high-risk supplier?",
+      "gaps": "Supplier selection omits the information or access exposure it introduces.",
+      "review": [
+        "Sample a supplier's security risk assessment and assigned relationship owner.",
+        "Consult supplier relationship owners and security risk assessors. What triggers deeper assurance for a high-risk supplier?"
+      ],
+      "evidence_examples": [
+        "Supplier inventory, risk assessments and accountable business owners.",
+        "Supplier assessments linked to actual data or access exposure and relationship ownership."
+      ],
+      "outcome": [
+        "Supplier security exposure is evaluated with accountable ownership."
+      ]
+    },
+    "A.5.20": {
+      "title": "Contractual supplier safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Include appropriate security expectations in supplier agreements.",
+      "start": "Compare a supplier agreement with its assessed security requirements.",
+      "evidence": "Security clauses, negotiated requirements and approved agreement records.",
+      "ask": "Consult contract owners and people reviewing supplier security terms. Which agreement terms support breach reporting and secure termination?",
+      "gaps": "Important security expectations remain verbal or absent from the agreement.",
+      "review": [
+        "Compare a supplier agreement with its assessed security requirements.",
+        "Consult contract owners and people reviewing supplier security terms. Which agreement terms support breach reporting and secure termination?"
+      ],
+      "evidence_examples": [
+        "Security clauses, negotiated requirements and approved agreement records.",
+        "An approved agreement or security addendum covering the relevant supplier expectations."
+      ],
+      "outcome": [
+        "Supplier agreements capture appropriate security commitments."
+      ]
+    },
+    "A.5.21": {
+      "title": "Technology supply-chain safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Consider security risks across the technology supply chain, not just the direct supplier.",
+      "start": "Trace a technology service through key components and upstream dependencies.",
+      "evidence": "Technology supplier assessments, dependency records and supply-chain risk decisions.",
+      "ask": "Consult technology procurement owners and people assessing critical dependencies. How are material supply-chain changes and component risks evaluated? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Assessment stops at the direct vendor and ignores critical dependencies.",
+      "review": [
+        "Trace a technology service through key components and upstream dependencies.",
+        "Consult technology procurement owners and people assessing critical dependencies. How are material supply-chain changes and component risks evaluated? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Technology supplier assessments, dependency records and supply-chain risk decisions.",
+        "Component or dependency assessments with evaluated upstream technology risks."
+      ],
+      "outcome": [
+        "Technology supply-chain decisions consider critical upstream dependencies."
+      ]
+    },
+    "A.5.22": {
+      "title": "Supplier service oversight",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Review supplier service performance and manage changes that affect security.",
+      "start": "Inspect a supplier service review and a material service change.",
+      "evidence": "Service reviews, assurance follow-up and change records.",
+      "ask": "Consult supplier service owners and assurance reviewers. How are adverse assurance results tracked to resolution? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Assurance reports are filed without findings or service-change follow-up.",
+      "review": [
+        "Inspect a supplier service review and a material service change.",
+        "Consult supplier service owners and assurance reviewers. How are adverse assurance results tracked to resolution? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Service reviews, assurance follow-up and change records.",
+        "Service-review decisions and tracked assurance or security-change follow-up."
+      ],
+      "outcome": [
+        "Supplier changes and adverse assurance results receive tracked follow-up."
+      ]
+    },
+    "A.5.23": {
+      "title": "Cloud service governance",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Manage cloud use deliberately through acquisition, operation and exit, including shared responsibilities.",
+      "start": "Inspect a cloud service's acquisition, shared responsibilities and exit arrangements.",
+      "evidence": "Cloud inventory, responsibility model, configuration reviews and exit arrangements.",
+      "ask": "Consult cloud service owners and the people assigned customer-side security responsibilities. Who controls configuration and recovery when the provider manages the platform? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Cloud use has no responsibility boundary or workable exit plan.",
+      "review": [
+        "Inspect a cloud service's acquisition, shared responsibilities and exit arrangements.",
+        "Consult cloud service owners and the people assigned customer-side security responsibilities. Who controls configuration and recovery when the provider manages the platform? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Cloud inventory, responsibility model, configuration reviews and exit arrangements.",
+        "Cloud acquisition and exit decisions with documented shared responsibilities."
+      ],
+      "outcome": [
+        "Cloud acquisition, operation and exit have understood responsibilities."
+      ]
+    },
+    "A.5.24": {
+      "title": "Incident preparation",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Prepare the roles, procedures and resources needed to handle security incidents.",
+      "start": "Walk incident preparation through relevant roles, escalation, communications and resources, using a readiness check, exercise or actual response record.",
+      "evidence": "Incident plan, responsibilities, contact routes and exercise records.",
+      "ask": "Consult incident coordinators and designated responders. Can responders obtain the plan and contacts when normal systems are unavailable?",
+      "gaps": "Response readiness is unverified or escalation responsibilities conflict.",
+      "review": [
+        "Walk incident preparation through relevant roles, escalation, communications and resources, using a readiness check, exercise or actual response record.",
+        "Consult incident coordinators and designated responders. Can responders obtain the plan and contacts when normal systems are unavailable?"
+      ],
+      "evidence_examples": [
+        "Incident plan, responsibilities, contact routes and exercise records.",
+        "Exercise records showing usable incident roles, communication and escalation."
+      ],
+      "outcome": [
+        "Incident response roles and procedures are usable in an exercised scenario."
+      ]
+    },
+    "A.5.25": {
+      "title": "Event triage",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Assess security events and decide which require incident response.",
+      "start": "Sample a security event from initial report to documented incident classification.",
+      "evidence": "Triage criteria, event records and escalation decisions.",
+      "ask": "Consult event triage owners and escalation decision makers. Which criteria distinguish an event from an incident requiring response?",
+      "gaps": "Classification depends on personal judgment without escalation criteria.",
+      "review": [
+        "Sample a security event from initial report to documented incident classification.",
+        "Consult event triage owners and escalation decision makers. Which criteria distinguish an event from an incident requiring response?"
+      ],
+      "evidence_examples": [
+        "Triage criteria, event records and escalation decisions.",
+        "Event triage records demonstrating classification and escalation decisions."
+      ],
+      "outcome": [
+        "Event classification applies defined criteria and escalation routes."
+      ]
+    },
+    "A.5.26": {
+      "title": "Incident response execution",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Carry out a coordinated response when a security incident is identified.",
+      "start": "Trace a confirmed incident through containment, communications and recovery.",
+      "evidence": "Response procedures, incident timelines and recorded actions.",
+      "ask": "Consult incident responders and people authorizing consequential response decisions. Who authorized consequential response actions and recorded the timeline?",
+      "gaps": "Response actions lack coordination or an accountable decision trail.",
+      "review": [
+        "Trace a confirmed incident through containment, communications and recovery.",
+        "Consult incident responders and people authorizing consequential response decisions. Who authorized consequential response actions and recorded the timeline?"
+      ],
+      "evidence_examples": [
+        "Response procedures, incident timelines and recorded actions.",
+        "A retained incident timeline identifying authorized response and recovery decisions."
+      ],
+      "outcome": [
+        "Incident response has a coordinated timeline and accountable decisions."
+      ]
+    },
+    "A.5.27": {
+      "title": "Incident lessons",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Use incident experience to improve the security program.",
+      "start": "Follow one incident lesson into an improvement and validation.",
+      "evidence": "Lessons-learned records, assigned improvements and follow-up validation.",
+      "ask": "Consult incident review facilitators and assigned improvement owners. What changed because of the incident and how was that change checked?",
+      "gaps": "Lessons are documented but never assigned or evaluated.",
+      "review": [
+        "Follow one incident lesson into an improvement and validation.",
+        "Consult incident review facilitators and assigned improvement owners. What changed because of the incident and how was that change checked?"
+      ],
+      "evidence_examples": [
+        "Lessons-learned records, assigned improvements and follow-up validation.",
+        "An improvement record linked to an incident lesson and follow-up evaluation."
+      ],
+      "outcome": [
+        "Incident lessons result in improvements with validation."
+      ]
+    },
+    "A.5.28": {
+      "title": "Incident evidence preservation",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Preserve incident-related evidence in a way that supports its intended use and traceability.",
+      "start": "Inspect the collection, preservation and access history of an incident artifact or an evidence-handling exercise.",
+      "evidence": "Evidence-handling procedure, collection records and provenance.",
+      "ask": "Consult evidence custodians and relevant legal or investigation advisers. How would you demonstrate an artifact's origin and handling history?",
+      "gaps": "Artifacts have no provenance or handling compromises their intended use.",
+      "review": [
+        "Inspect the collection, preservation and access history of an incident artifact or an evidence-handling exercise.",
+        "Consult evidence custodians and relevant legal or investigation advisers. How would you demonstrate an artifact's origin and handling history?"
+      ],
+      "evidence_examples": [
+        "Evidence-handling procedure, collection records and provenance.",
+        "Collection and handling records preserving artifact origin, integrity and access history."
+      ],
+      "outcome": [
+        "Incident artifacts retain provenance and appropriate handling protection."
+      ]
+    },
+    "A.5.29": {
+      "title": "Security during disruptions",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Maintain appropriate information security while operating under disruptive conditions.",
+      "start": "Inspect disruption arrangements or exercise results for appropriate emergency access and information handling.",
+      "evidence": "Continuity procedures, emergency access decisions and exercise results.",
+      "ask": "Consult continuity owners and security owners for degraded operations. Which security safeguards must remain effective during degraded operations?",
+      "gaps": "Emergency processes bypass security without bounded approval or follow-up.",
+      "review": [
+        "Inspect disruption arrangements or exercise results for appropriate emergency access and information handling.",
+        "Consult continuity owners and security owners for degraded operations. Which security safeguards must remain effective during degraded operations?"
+      ],
+      "evidence_examples": [
+        "Continuity procedures, emergency access decisions and exercise results.",
+        "Disruption exercise observations showing emergency access and information-handling safeguards."
+      ],
+      "outcome": [
+        "Security remains appropriately controlled during degraded operations."
+      ]
+    },
+    "A.5.30": {
+      "title": "ICT continuity preparedness",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Prepare technology to support the organization's continuity needs.",
+      "start": "Compare recovery capabilities and test results with business continuity needs.",
+      "evidence": "Recovery requirements, plans, dependency information and test results.",
+      "ask": "Consult technology recovery owners and business continuity decision makers. Which critical dependency limits the achievable recovery time? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Recovery plans exist but technology cannot meet business needs in testing.",
+      "review": [
+        "Compare recovery capabilities and test results with business continuity needs.",
+        "Consult technology recovery owners and business continuity decision makers. Which critical dependency limits the achievable recovery time? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Recovery requirements, plans, dependency information and test results.",
+        "Recovery-test results compared with continuity needs and critical dependencies."
+      ],
+      "outcome": [
+        "Technology recovery capability supports evaluated continuity needs."
+      ]
+    },
+    "A.5.31": {
+      "title": "Applicable obligations",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Identify and manage the obligations relevant to information security within the ISMS scope.",
+      "start": "Trace a relevant legal or contractual obligation into operating responsibility.",
+      "evidence": "Obligations register, assigned owners and review records.",
+      "ask": "Consult owners of relevant obligations and appropriate legal or contractual advisers. Who checks whether changed obligations affect the ISMS?",
+      "gaps": "The obligations register lacks current review or actionable ownership.",
+      "review": [
+        "Trace a relevant legal or contractual obligation into operating responsibility.",
+        "Consult owners of relevant obligations and appropriate legal or contractual advisers. Who checks whether changed obligations affect the ISMS?"
+      ],
+      "evidence_examples": [
+        "Obligations register, assigned owners and review records.",
+        "Relevant obligation assessments linked to responsible operating processes."
+      ],
+      "outcome": [
+        "Relevant obligations have current ownership and operating responses."
+      ]
+    },
+    "A.5.32": {
+      "title": "Intellectual-property safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect intellectual property and manage the rights associated with material the organization uses.",
+      "start": "Where third-party software or content is used, sample its rights and permitted use.",
+      "evidence": "Licensing records, usage rules and intellectual-property handling procedures.",
+      "ask": "Consult license or intellectual-property owners and procurement representatives. How is unauthorized use of licensed material identified and resolved?",
+      "gaps": "Licenses or content permissions cannot be demonstrated.",
+      "review": [
+        "Where third-party software or content is used, sample its rights and permitted use.",
+        "Consult license or intellectual-property owners and procurement representatives. How is unauthorized use of licensed material identified and resolved?"
+      ],
+      "evidence_examples": [
+        "Licensing records, usage rules and intellectual-property handling procedures.",
+        "License entitlements or usage approvals matched to sampled software or content."
+      ],
+      "outcome": [
+        "Use of software and third-party material respects demonstrated rights."
+      ]
+    },
+    "A.5.33": {
+      "title": "Business record protection",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect business records against inappropriate loss, change, disclosure or destruction.",
+      "start": "Inspect a business record's access, retention and authorized disposal.",
+      "evidence": "Record-retention rules, access settings and preservation/disposal records.",
+      "ask": "Consult business record owners and people responsible for retention or preservation. How are records preserved when a legal hold overrides ordinary disposal?",
+      "gaps": "Retention rules exist but access or disposal does not follow them.",
+      "review": [
+        "Inspect a business record's access, retention and authorized disposal.",
+        "Consult business record owners and people responsible for retention or preservation. How are records preserved when a legal hold overrides ordinary disposal?"
+      ],
+      "evidence_examples": [
+        "Record-retention rules, access settings and preservation/disposal records.",
+        "Record-system permissions and retention or hold decisions with disposal evidence."
+      ],
+      "outcome": [
+        "Business records have appropriate access, retention and preservation."
+      ]
+    },
+    "A.5.34": {
+      "title": "Personal-data safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Address personal-information protection in the organization's actual processing activities.",
+      "start": "Trace a personal-data flow through purpose, access and protection safeguards.",
+      "evidence": "Data-flow records, privacy responsibilities and relevant handling safeguards.",
+      "ask": "Consult privacy responsibility holders and owners of relevant processing activities. Which handling decisions change when personal data is shared externally?",
+      "gaps": "Privacy responsibilities or actual processing flows are undocumented.",
+      "review": [
+        "Trace a personal-data flow through purpose, access and protection safeguards.",
+        "Consult privacy responsibility holders and owners of relevant processing activities. Which handling decisions change when personal data is shared externally?"
+      ],
+      "evidence_examples": [
+        "Data-flow records, privacy responsibilities and relevant handling safeguards.",
+        "Processing records or assessed data flows linked to relevant privacy safeguards."
+      ],
+      "outcome": [
+        "Personal-data safeguards reflect actual processing flows and responsibilities."
+      ]
+    },
+    "A.5.35": {
+      "title": "Independent security evaluation",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Obtain an appropriately independent evaluation of the security approach and its implementation.",
+      "start": "Inspect an independent security review's scope, reviewer and follow-up.",
+      "evidence": "Review scope, reviewer independence, results and corrective follow-up.",
+      "ask": "Consult the independent reviewer and person commissioning the review. What establishes the reviewer's independence from the work evaluated?",
+      "gaps": "Reviewer independence is unsubstantiated or findings lack follow-up.",
+      "review": [
+        "Inspect an independent security review's scope, reviewer and follow-up.",
+        "Consult the independent reviewer and person commissioning the review. What establishes the reviewer's independence from the work evaluated?"
+      ],
+      "evidence_examples": [
+        "Review scope, reviewer independence, results and corrective follow-up.",
+        "Independent review conclusions with supported reviewer independence and assigned follow-up."
+      ],
+      "outcome": [
+        "Independent review has a supported independence basis and findings follow-up."
+      ]
+    },
+    "A.5.36": {
+      "title": "Security-rule adherence",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Check whether security practices follow the organization's established rules.",
+      "start": "Sample a security-rule check and the treatment of detected departures.",
+      "evidence": "Compliance reviews, exceptions and corrective-action records.",
+      "ask": "Consult policy or process owners and people checking adherence. How are repeated policy exceptions escalated and corrected?",
+      "gaps": "Exceptions are normalized without approval or corrective work.",
+      "review": [
+        "Sample a security-rule check and the treatment of detected departures.",
+        "Consult policy or process owners and people checking adherence. How are repeated policy exceptions escalated and corrected?"
+      ],
+      "evidence_examples": [
+        "Compliance reviews, exceptions and corrective-action records.",
+        "Sample checks of policy adherence with approved exceptions or corrective work."
+      ],
+      "outcome": [
+        "Departures from security rules are detected, approved or corrected."
+      ]
+    },
+    "A.5.37": {
+      "title": "Operating instructions",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Make operating instructions available where consistent and safe execution depends on them.",
+      "start": "Observe a sensitive operational task using its current instructions.",
+      "evidence": "Current procedures, controlled access and execution records.",
+      "ask": "Consult procedure owners and operators of the assessed tasks. Can a substitute operator execute the task safely from the procedure?",
+      "gaps": "Critical steps rely on personal knowledge or obsolete instructions.",
+      "review": [
+        "Observe a sensitive operational task using its current instructions.",
+        "Consult procedure owners and operators of the assessed tasks. Can a substitute operator execute the task safely from the procedure?"
+      ],
+      "evidence_examples": [
+        "Current procedures, controlled access and execution records.",
+        "Observed task execution using current accessible operating instructions."
+      ],
+      "outcome": [
+        "Operators can use current instructions for safe and consistent execution."
+      ]
+    },
+    "A.6.1": {
+      "title": "Pre-employment checks",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Use appropriate checks before employment in light of the role and applicable constraints.",
+      "start": "Sample screening completion against role risk and applicable restrictions.",
+      "evidence": "Screening procedure and completion records with sensitive details minimized.",
+      "ask": "Consult personnel screening owners and relevant hiring managers. How are screening checks adjusted for the role and local constraints?",
+      "gaps": "Screening is inconsistent or stores unnecessary sensitive details.",
+      "review": [
+        "Sample screening completion against role risk and applicable restrictions.",
+        "Consult personnel screening owners and relevant hiring managers. How are screening checks adjusted for the role and local constraints?"
+      ],
+      "evidence_examples": [
+        "Screening procedure and completion records with sensitive details minimized.",
+        "Restricted screening completion records demonstrating role-appropriate checks."
+      ],
+      "outcome": [
+        "Screening reflects role risk and applicable constraints."
+      ]
+    },
+    "A.6.2": {
+      "title": "Employment security commitments",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Make employment-related security responsibilities clear in the relevant terms and commitments.",
+      "start": "Inspect employment terms for communicated security duties.",
+      "evidence": "Employment terms, role expectations and acknowledgement records.",
+      "ask": "Consult employment terms owners and hiring managers. When does the employee acknowledge the responsibilities relevant to access?",
+      "gaps": "Security commitments are absent from employment arrangements.",
+      "review": [
+        "Inspect employment terms for communicated security duties.",
+        "Consult employment terms owners and hiring managers. When does the employee acknowledge the responsibilities relevant to access?"
+      ],
+      "evidence_examples": [
+        "Employment terms, role expectations and acknowledgement records.",
+        "Acknowledged employment commitments suited to the person's security responsibilities."
+      ],
+      "outcome": [
+        "Employment arrangements communicate relevant security responsibilities."
+      ]
+    },
+    "A.6.3": {
+      "title": "Workforce security learning",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Provide security learning suited to people's responsibilities and the environment they work in.",
+      "start": "Compare role-based learning assignments with completion and follow-up results.",
+      "evidence": "Training content, audience assignments, completion and follow-up records.",
+      "ask": "Consult security learning coordinators and relevant line managers. How does training change for privileged users or incident responders?",
+      "gaps": "Generic attendance records conceal missed role-specific learning.",
+      "review": [
+        "Compare role-based learning assignments with completion and follow-up results.",
+        "Consult security learning coordinators and relevant line managers. How does training change for privileged users or incident responders?"
+      ],
+      "evidence_examples": [
+        "Training content, audience assignments, completion and follow-up records.",
+        "Role-based learning records or exercises demonstrating needed security knowledge."
+      ],
+      "outcome": [
+        "Workforce learning fits responsibilities and addresses missed needs."
+      ]
+    },
+    "A.6.4": {
+      "title": "Disciplinary handling",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Handle security-policy violations through an established and communicated disciplinary process.",
+      "start": "Inspect the communicated disciplinary process and restricted case handling.",
+      "evidence": "Disciplinary procedure and appropriately restricted case records.",
+      "ask": "Consult the personnel disciplinary process owner and appropriate management. How are security violations handled consistently and fairly?",
+      "gaps": "The process is unknown to staff or case information is overexposed.",
+      "review": [
+        "Inspect the communicated disciplinary process and restricted case handling.",
+        "Consult the personnel disciplinary process owner and appropriate management. How are security violations handled consistently and fairly?"
+      ],
+      "evidence_examples": [
+        "Disciplinary procedure and appropriately restricted case records.",
+        "A communicated procedure and minimized case records showing consistent handling."
+      ],
+      "outcome": [
+        "Disciplinary handling is established, communicated and appropriately restricted."
+      ]
+    },
+    "A.6.5": {
+      "title": "Departure and role-change duties",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Manage security duties that change or continue when employment or roles change.",
+      "start": "Trace a role change or departure through access changes and continuing duties.",
+      "evidence": "Departure/transfer checklists, access changes and continuing obligations.",
+      "ask": "Consult personnel departure or transfer coordinators and affected access or asset owners. Which responsibilities continue after departure and how are they communicated?",
+      "gaps": "Departure checks omit transfers or continuing confidentiality duties.",
+      "review": [
+        "Trace a role change or departure through access changes and continuing duties.",
+        "Consult personnel departure or transfer coordinators and affected access or asset owners. Which responsibilities continue after departure and how are they communicated?"
+      ],
+      "evidence_examples": [
+        "Departure/transfer checklists, access changes and continuing obligations.",
+        "Transfer or departure records confirming access changes and continuing commitments."
+      ],
+      "outcome": [
+        "Departures and transfers address changed access and continuing duties."
+      ]
+    },
+    "A.6.6": {
+      "title": "Confidentiality commitments",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Establish appropriate confidentiality commitments for people who access protected information.",
+      "start": "Sample confidentiality commitments for employees and external personnel.",
+      "evidence": "Confidentiality agreements, scope and review records.",
+      "ask": "Consult confidentiality agreement owners and relevant relationship managers. How do agreements reflect the information people actually access?",
+      "gaps": "Agreement scope is unclear or relevant personnel are uncovered.",
+      "review": [
+        "Sample confidentiality commitments for employees and external personnel.",
+        "Consult confidentiality agreement owners and relevant relationship managers. How do agreements reflect the information people actually access?"
+      ],
+      "evidence_examples": [
+        "Confidentiality agreements, scope and review records.",
+        "Acknowledged confidentiality terms matched to the person's access to protected information."
+      ],
+      "outcome": [
+        "Relevant people have confidentiality commitments suited to information access."
+      ]
+    },
+    "A.6.7": {
+      "title": "Remote-work safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect information and assets used away from the organization's normal workplace.",
+      "start": "Check a remote-work arrangement against device, access and workspace safeguards.",
+      "evidence": "Remote-work rules, endpoint/access configurations and exception decisions.",
+      "ask": "Consult remote-work policy owners and people administering applicable safeguards. How are the physical exposure risks of actual remote-work arrangements assessed and addressed? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Remote rules address connectivity but overlook physical exposure.",
+      "review": [
+        "Check a remote-work arrangement against device, access and workspace safeguards.",
+        "Consult remote-work policy owners and people administering applicable safeguards. How are the physical exposure risks of actual remote-work arrangements assessed and addressed? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Remote-work rules, endpoint/access configurations and exception decisions.",
+        "An assessed remote-work arrangement with relevant device and workspace safeguards."
+      ],
+      "outcome": [
+        "Remote work protects information across devices, access and workspaces."
+      ]
+    },
+    "A.6.8": {
+      "title": "Workforce event reporting",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Give people a clear way to report suspected security events promptly.",
+      "start": "Test whether a worker can find and use the security reporting route.",
+      "evidence": "Reporting instructions, workforce communications and received reports.",
+      "ask": "Consult workforce members and owners of the event-reporting route. What should staff report when they are unsure an event is significant?",
+      "gaps": "Reporting routes are difficult to find or discourage early reporting.",
+      "review": [
+        "Test whether a worker can find and use the security reporting route.",
+        "Consult workforce members and owners of the event-reporting route. What should staff report when they are unsure an event is significant?"
+      ],
+      "evidence_examples": [
+        "Reporting instructions, workforce communications and received reports.",
+        "A reporting demonstration or received event report showing an accessible route."
+      ],
+      "outcome": [
+        "People can locate and use a clear security-event reporting route."
+      ]
+    },
+    "A.7.1": {
+      "title": "Protected site boundaries",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Define physical boundaries that protect areas containing sensitive information and assets.",
+      "start": "Walk protected site boundaries against the information and equipment inside.",
+      "evidence": "Site layout, perimeter protections and boundary review records.",
+      "ask": "Consult site or facilities owners and owners of sensitive areas. Where can a person cross into a protected area without being challenged?",
+      "gaps": "Boundaries do not match actual sensitive asset locations.",
+      "review": [
+        "Walk protected site boundaries against the information and equipment inside.",
+        "Consult site or facilities owners and owners of sensitive areas. Where can a person cross into a protected area without being challenged?"
+      ],
+      "evidence_examples": [
+        "Site layout, perimeter protections and boundary review records.",
+        "An observed boundary walkthrough matched to sensitive information and asset locations."
+      ],
+      "outcome": [
+        "Protected site boundaries match sensitive locations and assets."
+      ]
+    },
+    "A.7.2": {
+      "title": "Controlled site entry",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Control who enters protected locations and under what conditions.",
+      "start": "Sample visitor entry, escorting and removal of former staff access.",
+      "evidence": "Entry procedures, access lists and visitor records.",
+      "ask": "Consult physical access owners and visitor or reception coordinators. How is physical access revoked after a relationship ends?",
+      "gaps": "Visitor logs or access lists do not reflect actual entry rights.",
+      "review": [
+        "Sample visitor entry, escorting and removal of former staff access.",
+        "Consult physical access owners and visitor or reception coordinators. How is physical access revoked after a relationship ends?"
+      ],
+      "evidence_examples": [
+        "Entry procedures, access lists and visitor records.",
+        "Sample access revocations, visitor approvals and entry records appropriate to the site."
+      ],
+      "outcome": [
+        "Physical entry rights and visitor practices reflect authorized access."
+      ]
+    },
+    "A.7.3": {
+      "title": "Protected facilities",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Apply physical protection appropriate to the offices, rooms and facilities in scope.",
+      "start": "Inspect protection of sensitive rooms, offices and storage areas.",
+      "evidence": "Facility safeguards, access restrictions and inspection records.",
+      "ask": "Consult facilities owners and people responsible for sensitive rooms or storage. What prevents unauthorized access when the facility is unattended?",
+      "gaps": "Sensitive facilities lack appropriate locks or access restrictions.",
+      "review": [
+        "Inspect protection of sensitive rooms, offices and storage areas.",
+        "Consult facilities owners and people responsible for sensitive rooms or storage. What prevents unauthorized access when the facility is unattended?"
+      ],
+      "evidence_examples": [
+        "Facility safeguards, access restrictions and inspection records.",
+        "An observed facility inspection showing safeguards at relevant rooms and storage areas."
+      ],
+      "outcome": [
+        "Sensitive rooms and facilities have appropriate physical safeguards."
+      ]
+    },
+    "A.7.4": {
+      "title": "Physical intrusion monitoring",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Detect and respond to unauthorized physical access or intrusion.",
+      "start": "Trace a physical alert through detection, review and response.",
+      "evidence": "Physical monitoring configuration, alert handling and review records.",
+      "ask": "Consult physical monitoring owners and designated alert responders. Who responds when intrusion monitoring signals unauthorized access?",
+      "gaps": "Monitoring exists without response ownership or usable coverage.",
+      "review": [
+        "Trace a physical alert through detection, review and response.",
+        "Consult physical monitoring owners and designated alert responders. Who responds when intrusion monitoring signals unauthorized access?"
+      ],
+      "evidence_examples": [
+        "Physical monitoring configuration, alert handling and review records.",
+        "A physical alert exercise or incident record showing accountable response."
+      ],
+      "outcome": [
+        "Physical intrusion alerts have usable coverage and response ownership."
+      ]
+    },
+    "A.7.5": {
+      "title": "Environmental hazard protection",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Address environmental and physical hazards that could affect information or technology.",
+      "start": "Compare site hazard assessment with fire, water and other relevant safeguards.",
+      "evidence": "Site risk assessments, protection measures and inspection/test records.",
+      "ask": "Consult site risk owners and people maintaining environmental protection. Which local hazard could defeat the current protective measures?",
+      "gaps": "Hazard protection does not reflect the site's actual exposure.",
+      "review": [
+        "Compare site hazard assessment with fire, water and other relevant safeguards.",
+        "Consult site risk owners and people maintaining environmental protection. Which local hazard could defeat the current protective measures?"
+      ],
+      "evidence_examples": [
+        "Site risk assessments, protection measures and inspection/test records.",
+        "Site inspection or protection-test results addressing identified local hazards."
+      ],
+      "outcome": [
+        "Site protection addresses relevant physical and environmental hazards."
+      ]
+    },
+    "A.7.6": {
+      "title": "Secure-area working practices",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Define safe working practices for people operating in protected areas.",
+      "start": "Where protected areas are used, observe the applicable working rules for staff and external personnel.",
+      "evidence": "Secure-area procedures, access responsibilities and applicable work records.",
+      "ask": "Consult secure-area owners and supervisors of relevant staff or external personnel. What limits unsupervised activity or recording in sensitive areas?",
+      "gaps": "Secure-area rules are undefined or not applied to visitors.",
+      "review": [
+        "Where protected areas are used, observe the applicable working rules for staff and external personnel.",
+        "Consult secure-area owners and supervisors of relevant staff or external personnel. What limits unsupervised activity or recording in sensitive areas?"
+      ],
+      "evidence_examples": [
+        "Secure-area procedures, access responsibilities and applicable work records.",
+        "Observed secure-area work or contractor instructions showing applied restrictions."
+      ],
+      "outcome": [
+        "Secure-area work follows defined practices for staff and external personnel."
+      ]
+    },
+    "A.7.7": {
+      "title": "Clear desks and screens",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Reduce exposure from unattended documents, media and screens.",
+      "start": "Observe unattended desks and screen locks in a representative workspace.",
+      "evidence": "Clear-desk/screen rules, lock settings and workplace review observations.",
+      "ask": "Consult workplace managers and people responsible for screen-lock safeguards. Where may sensitive paper be kept when a worker leaves the desk?",
+      "gaps": "Clear-desk expectations are unmet or screen locks are ineffective.",
+      "review": [
+        "Observe unattended desks and screen locks in a representative workspace.",
+        "Consult workplace managers and people responsible for screen-lock safeguards. Where may sensitive paper be kept when a worker leaves the desk?"
+      ],
+      "evidence_examples": [
+        "Clear-desk/screen rules, lock settings and workplace review observations.",
+        "Workplace observations and relevant lock settings showing protection when unattended."
+      ],
+      "outcome": [
+        "Unattended paper, media and screens are appropriately protected."
+      ]
+    },
+    "A.7.8": {
+      "title": "Protected equipment placement",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Place and protect equipment to reduce relevant physical and environmental risks.",
+      "start": "Inspect placement of equipment against damage, visibility and access risks.",
+      "evidence": "Equipment layout, protective measures and site review records.",
+      "ask": "Consult equipment custodians and facilities owners. Which equipment is exposed to public view or avoidable environmental harm?",
+      "gaps": "Equipment placement creates preventable physical exposure.",
+      "review": [
+        "Inspect placement of equipment against damage, visibility and access risks.",
+        "Consult equipment custodians and facilities owners. Which equipment is exposed to public view or avoidable environmental harm?"
+      ],
+      "evidence_examples": [
+        "Equipment layout, protective measures and site review records.",
+        "Site observations comparing equipment location with assessed physical exposure."
+      ],
+      "outcome": [
+        "Equipment placement reduces relevant physical and environmental exposure."
+      ]
+    },
+    "A.7.9": {
+      "title": "Off-site asset safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect organizational assets when used or stored off-site.",
+      "start": "Where assets are used off-site, trace an asset from authorization to handling and return.",
+      "evidence": "Off-site asset records, handling rules and loss/exception follow-up.",
+      "ask": "Consult asset custodians and people authorizing off-site use. How is a loss of an off-site device reported and contained?",
+      "gaps": "Off-site assets have no custody or protection record.",
+      "review": [
+        "Where assets are used off-site, trace an asset from authorization to handling and return.",
+        "Consult asset custodians and people authorizing off-site use. How is a loss of an off-site device reported and contained?"
+      ],
+      "evidence_examples": [
+        "Off-site asset records, handling rules and loss/exception follow-up.",
+        "Custody or transfer records showing safeguards for assets used away from normal premises."
+      ],
+      "outcome": [
+        "Off-site assets have accountable custody and protection."
+      ]
+    },
+    "A.7.10": {
+      "title": "Media lifecycle safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect storage media throughout its use, movement, reuse and disposal.",
+      "start": "Follow media through storage, transport, reuse and disposal.",
+      "evidence": "Media handling procedures, transfer records and disposal evidence.",
+      "ask": "Consult media custodians and people responsible for transport, reuse or disposal. How is media sensitivity determined before transfer or reuse?",
+      "gaps": "Media transfers or reuse lack appropriate protection and accountability.",
+      "review": [
+        "Follow media through storage, transport, reuse and disposal.",
+        "Consult media custodians and people responsible for transport, reuse or disposal. How is media sensitivity determined before transfer or reuse?"
+      ],
+      "evidence_examples": [
+        "Media handling procedures, transfer records and disposal evidence.",
+        "Observed media handling with accountable transfer, reuse and disposal decisions."
+      ],
+      "outcome": [
+        "Media handling protects information across transfer, reuse and disposal."
+      ]
+    },
+    "A.7.11": {
+      "title": "Utility resilience",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Address dependence on power and other utilities needed for reliable operation.",
+      "start": "Inspect utility dependencies, resilience measures and test or maintenance results.",
+      "evidence": "Utility resilience arrangements, maintenance and test results.",
+      "ask": "Consult facilities or utility service owners and owners of dependent critical operations. How long can critical equipment operate after utility failure? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Utility protections are installed but not maintained or tested.",
+      "review": [
+        "Inspect utility dependencies, resilience measures and test or maintenance results.",
+        "Consult facilities or utility service owners and owners of dependent critical operations. How long can critical equipment operate after utility failure? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Utility resilience arrangements, maintenance and test results.",
+        "Utility protection maintenance or failure-test results compared with operating needs."
+      ],
+      "outcome": [
+        "Utility resilience is maintained and tested against service needs."
+      ]
+    },
+    "A.7.12": {
+      "title": "Protected cabling",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect cabling against relevant damage, interference or unauthorized access.",
+      "start": "Inspect sensitive cable routes and their protection from interference.",
+      "evidence": "Cabling layout, protective measures and inspection records.",
+      "ask": "Consult facilities or cabling owners and relevant network infrastructure maintainers. Where could an unauthorized person reach critical cabling? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Cable routes are exposed to avoidable damage or access.",
+      "review": [
+        "Inspect sensitive cable routes and their protection from interference.",
+        "Consult facilities or cabling owners and relevant network infrastructure maintainers. Where could an unauthorized person reach critical cabling? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Cabling layout, protective measures and inspection records.",
+        "Inspection observations showing protection of relevant cable routes."
+      ],
+      "outcome": [
+        "Critical cabling is protected against relevant damage and access."
+      ]
+    },
+    "A.7.13": {
+      "title": "Equipment servicing",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Maintain equipment without exposing information or undermining security.",
+      "start": "Sample equipment servicing for authorized access and information protection.",
+      "evidence": "Maintenance arrangements, service records and access controls.",
+      "ask": "Consult equipment owners and people authorizing maintenance access. How is information protected when third-party technicians service equipment? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Maintenance access is uncontrolled or service records are absent.",
+      "review": [
+        "Sample equipment servicing for authorized access and information protection.",
+        "Consult equipment owners and people authorizing maintenance access. How is information protected when third-party technicians service equipment? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Maintenance arrangements, service records and access controls.",
+        "Service records showing authorized technician access and protection of information."
+      ],
+      "outcome": [
+        "Equipment servicing controls technician access and information exposure."
+      ]
+    },
+    "A.7.14": {
+      "title": "Equipment retirement and reuse",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Remove information and protect assets appropriately before equipment is reused or retired.",
+      "start": "Trace retired equipment through sanitization verification and disposal.",
+      "evidence": "Retirement procedures, sanitization verification and disposal records.",
+      "ask": "Consult equipment retirement owners and people verifying sanitization. Who verifies that sensitive information is removed before reuse?",
+      "gaps": "Disposal certificates do not establish successful information removal.",
+      "review": [
+        "Trace retired equipment through sanitization verification and disposal.",
+        "Consult equipment retirement owners and people verifying sanitization. Who verifies that sensitive information is removed before reuse?"
+      ],
+      "evidence_examples": [
+        "Retirement procedures, sanitization verification and disposal records.",
+        "Sanitization verification linked to equipment transfer, reuse or disposal."
+      ],
+      "outcome": [
+        "Equipment reuse or retirement has verified information removal."
+      ]
+    },
+    "A.8.1": {
+      "title": "Endpoint safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect user endpoints according to the information and activities they support.",
+      "start": "Compare endpoint inventory with deployed security baseline coverage.",
+      "evidence": "Endpoint baseline, coverage reports and exception records.",
+      "ask": "Consult endpoint service owners and people administering device safeguards. Which active endpoints fall outside management and how are exceptions treated? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Protection reports omit unmanaged or remote endpoints.",
+      "review": [
+        "Compare endpoint inventory with deployed security baseline coverage.",
+        "Consult endpoint service owners and people administering device safeguards. Which active endpoints fall outside management and how are exceptions treated? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Endpoint baseline, coverage reports and exception records.",
+        "Management coverage and exception records reconciled with actual active endpoints."
+      ],
+      "outcome": [
+        "Endpoint safeguards demonstrably cover the assessed device population."
+      ]
+    },
+    "A.8.2": {
+      "title": "Privileged permissions",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Restrict and oversee elevated privileges that can bypass ordinary protections.",
+      "start": "Sample elevated accounts for necessity, approval and monitored use.",
+      "evidence": "Privileged access approvals, account inventory and review records.",
+      "ask": "Consult privileged-access approvers and relevant system owners. Where standing privilege exists, how is its continuing need assessed and more limited access considered? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Persistent privileged access has no justified need or oversight.",
+      "review": [
+        "Sample elevated accounts for necessity, approval and monitored use.",
+        "Consult privileged-access approvers and relevant system owners. Where standing privilege exists, how is its continuing need assessed and more limited access considered? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Privileged access approvals, account inventory and review records.",
+        "Sample privilege approvals and usage reviews matched to current need."
+      ],
+      "outcome": [
+        "Elevated privileges have justified need, approval and oversight."
+      ]
+    },
+    "A.8.3": {
+      "title": "Restricted information access",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Limit information access according to the established authorization rules.",
+      "start": "Test representative user permissions against the intended authorization rules.",
+      "evidence": "Role/permission configuration, access decisions and review results.",
+      "ask": "Consult information or application owners and permission administrators. Can a user obtain another team's sensitive information through an alternate path? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Permissions exceed need or restrictions cover only the primary interface.",
+      "review": [
+        "Test representative user permissions against the intended authorization rules.",
+        "Consult information or application owners and permission administrators. Can a user obtain another team's sensitive information through an alternate path? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Role/permission configuration, access decisions and review results.",
+        "Observed access tests or permission reviews against the approved authorization rules."
+      ],
+      "outcome": [
+        "Information restrictions enforce intended access rules across relevant paths."
+      ]
+    },
+    "A.8.4": {
+      "title": "Source-code access",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Control access to source code and related development assets.",
+      "start": "Where source code or related development assets are used, inspect access for approved contributors.",
+      "evidence": "Repository access settings, approval records and access reviews.",
+      "ask": "Consult source-code owners and repository access administrators. Who can change source code or retrieve sensitive development assets? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Repository access survives role changes or protects only selected branches.",
+      "review": [
+        "Where source code or related development assets are used, inspect access for approved contributors.",
+        "Consult source-code owners and repository access administrators. Who can change source code or retrieve sensitive development assets? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Repository access settings, approval records and access reviews.",
+        "Repository permissions and access reviews covering relevant development assets."
+      ],
+      "outcome": [
+        "Source code and development assets have controlled contributor access."
+      ]
+    },
+    "A.8.5": {
+      "title": "Authentication safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Use authentication appropriate to the sensitivity and risks of the access path.",
+      "start": "Inspect authentication enforcement across applicable normal, administrative and recovery paths.",
+      "evidence": "Authentication configurations, enforcement coverage and exceptions.",
+      "ask": "Consult authentication service owners and relevant system administrators. Can a recovery or legacy path bypass the intended authentication strength? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Strong authentication is configured but incompletely enforced.",
+      "review": [
+        "Inspect authentication enforcement across applicable normal, administrative and recovery paths.",
+        "Consult authentication service owners and relevant system administrators. Can a recovery or legacy path bypass the intended authentication strength? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Authentication configurations, enforcement coverage and exceptions.",
+        "Enforcement checks across applicable authentication and recovery paths."
+      ],
+      "outcome": [
+        "Authentication safeguards are enforced across normal and alternate paths."
+      ]
+    },
+    "A.8.6": {
+      "title": "Capacity planning",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Monitor and plan resource capacity to support the required service levels.",
+      "start": "Compare relevant capacity trends and forecasts with expected demand and response actions.",
+      "evidence": "Capacity measures, forecasts and corrective capacity decisions.",
+      "ask": "Consult capacity owners and service-level decision makers. Which resource limit would breach expected service availability first? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Capacity alerts lack forecasts or timely corrective decisions.",
+      "review": [
+        "Compare relevant capacity trends and forecasts with expected demand and response actions.",
+        "Consult capacity owners and service-level decision makers. Which resource limit would breach expected service availability first? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Capacity measures, forecasts and corrective capacity decisions.",
+        "Measured capacity trends linked to forecasts and corrective resource decisions."
+      ],
+      "outcome": [
+        "Capacity evidence supports timely decisions against expected service demand."
+      ]
+    },
+    "A.8.7": {
+      "title": "Malware defences",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Prevent, detect and address malicious software within the assessed scope.",
+      "start": "Inspect malware prevention coverage and a recent detection response.",
+      "evidence": "Malware protection settings, deployment coverage and detection follow-up.",
+      "ask": "Consult malware defense owners and people responding to detections. How are failed agents or unsupported platforms identified and addressed? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Protection is purchased but deployment gaps remain unmanaged.",
+      "review": [
+        "Inspect malware prevention coverage and a recent detection response.",
+        "Consult malware defense owners and people responding to detections. How are failed agents or unsupported platforms identified and addressed? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Malware protection settings, deployment coverage and detection follow-up.",
+        "Deployment health and detection records demonstrating relevant malware-defense coverage."
+      ],
+      "outcome": [
+        "Malware defenses have verified coverage and detection follow-up."
+      ]
+    },
+    "A.8.8": {
+      "title": "Vulnerability handling",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Identify technical weaknesses and manage their treatment according to risk.",
+      "start": "Trace a vulnerability from identification through prioritization and verified remediation.",
+      "evidence": "Vulnerability reports, prioritized remediation and verified closure records.",
+      "ask": "Consult vulnerability management owners and remediation or risk-acceptance decision makers. How does risk determine remediation priority and approved deferral? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Closure depends on a completed ticket without verification.",
+      "review": [
+        "Trace a vulnerability from identification through prioritization and verified remediation.",
+        "Consult vulnerability management owners and remediation or risk-acceptance decision makers. How does risk determine remediation priority and approved deferral? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Vulnerability reports, prioritized remediation and verified closure records.",
+        "A weakness record linked to risk-based priority, deferral decision and verified remediation."
+      ],
+      "outcome": [
+        "Vulnerability treatment priorities and closure reflect risk and verification."
+      ]
+    },
+    "A.8.9": {
+      "title": "Secure configuration",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Establish and maintain approved configurations rather than leaving system settings unmanaged.",
+      "start": "Compare actual settings with approved baselines and authorized deviations.",
+      "evidence": "Configuration baselines, compliance checks and change/exception records.",
+      "ask": "Consult configuration baseline owners and relevant system administrators. How is configuration drift detected and corrected? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Baselines exist but actual settings or exceptions are unverified.",
+      "review": [
+        "Compare actual settings with approved baselines and authorized deviations.",
+        "Consult configuration baseline owners and relevant system administrators. How is configuration drift detected and corrected? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Configuration baselines, compliance checks and change/exception records.",
+        "Actual configuration checks compared with the approved baseline and accepted deviations."
+      ],
+      "outcome": [
+        "Actual configurations align with approved baselines or justified exceptions."
+      ]
+    },
+    "A.8.10": {
+      "title": "Information deletion",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Remove information when it is no longer needed under the applicable retention and handling decisions.",
+      "start": "Sample deletion of expired information across systems and managed copies.",
+      "evidence": "Deletion procedures, retention configuration and execution records.",
+      "ask": "Consult information owners and people responsible for retention-driven deletion. How do retention and deletion decisions address relevant copies, including replicas or provider-held information where used? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Deletion covers only the primary record or has no execution evidence.",
+      "review": [
+        "Sample deletion of expired information across systems and managed copies.",
+        "Consult information owners and people responsible for retention-driven deletion. How do retention and deletion decisions address relevant copies, including replicas or provider-held information where used? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Deletion procedures, retention configuration and execution records.",
+        "Observed deletion results or service records across relevant retention-controlled copies."
+      ],
+      "outcome": [
+        "Information deletion implements retention decisions across relevant copies."
+      ]
+    },
+    "A.8.11": {
+      "title": "Data masking",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Reduce unnecessary exposure of sensitive values when full data is not needed.",
+      "start": "Where masking is used, inspect representative outputs and access to the original sensitive values.",
+      "evidence": "Masking rules, scoped configuration and representative output samples.",
+      "ask": "Consult information owners and people designing masking or approving original-data access. Can a recipient reconstruct protected values from the masked result? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Masking leaves identifiable combinations or originals broadly accessible.",
+      "review": [
+        "Where masking is used, inspect representative outputs and access to the original sensitive values.",
+        "Consult information owners and people designing masking or approving original-data access. Can a recipient reconstruct protected values from the masked result? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Masking rules, scoped configuration and representative output samples.",
+        "Representative masked outputs and restricted-original access checks."
+      ],
+      "outcome": [
+        "Masking limits exposure while originals retain appropriate restrictions."
+      ]
+    },
+    "A.8.12": {
+      "title": "Data-loss prevention",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Detect or prevent inappropriate movement or disclosure of information.",
+      "start": "Test a relevant data-loss scenario against detection and response rules.",
+      "evidence": "Data-loss prevention rules, coverage and alert follow-up.",
+      "ask": "Consult data protection owners and people responding to transfer alerts. Which sensitive transfer routes are outside current prevention coverage? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "DLP rules do not cover actual data routes or alerts have no response.",
+      "review": [
+        "Test a relevant data-loss scenario against detection and response rules.",
+        "Consult data protection owners and people responding to transfer alerts. Which sensitive transfer routes are outside current prevention coverage? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Data-loss prevention rules, coverage and alert follow-up.",
+        "A transfer scenario test showing detection, prevention or accountable alert handling."
+      ],
+      "outcome": [
+        "Data-loss controls address actual transfer routes with response follow-up."
+      ]
+    },
+    "A.8.13": {
+      "title": "Recoverable backups",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Maintain backups that support the organization's recovery needs and verify their usability.",
+      "start": "Trace critical data through backup jobs to a successful restoration test.",
+      "evidence": "Backup scope, protected-copy configuration, job results and restore tests.",
+      "ask": "Consult backup owners and business owners defining recovery needs. What demonstrates recovery of usable data within business needs? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Backup success is claimed without restore evidence or complete coverage.",
+      "review": [
+        "Trace critical data through backup jobs to a successful restoration test.",
+        "Consult backup owners and business owners defining recovery needs. What demonstrates recovery of usable data within business needs? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Backup scope, protected-copy configuration, job results and restore tests.",
+        "Restore-test results establishing usable recovery of relevant data."
+      ],
+      "outcome": [
+        "Restoration tests demonstrate usable recovery of relevant backed-up data."
+      ]
+    },
+    "A.8.14": {
+      "title": "Processing redundancy",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Provide redundancy where it supports the availability needs of information processing.",
+      "start": "Where redundancy is selected, inspect its design and a representative failover or resilience check.",
+      "evidence": "Resilience design, failover configuration and test results.",
+      "ask": "Consult service resilience owners and relevant infrastructure operators. Which shared dependency could defeat both primary and redundant systems? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Redundant components share an untested common point of failure.",
+      "review": [
+        "Where redundancy is selected, inspect its design and a representative failover or resilience check.",
+        "Consult service resilience owners and relevant infrastructure operators. Which shared dependency could defeat both primary and redundant systems? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Resilience design, failover configuration and test results.",
+        "A failover exercise evaluating continuity and common-dependency exposure."
+      ],
+      "outcome": [
+        "Redundancy addresses availability needs and shared failure dependencies."
+      ]
+    },
+    "A.8.15": {
+      "title": "Security event logs",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Generate and protect event records that support accountability and investigation.",
+      "start": "Inspect representative security events for useful fields, retention and protection.",
+      "evidence": "Logging scope, event samples, retention and access settings.",
+      "ask": "Consult logging owners and people using logs for investigation. Can investigators retrieve reliable logs after a system compromise? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Logs lack attribution or are modifiable by the actors being recorded.",
+      "review": [
+        "Inspect representative security events for useful fields, retention and protection.",
+        "Consult logging owners and people using logs for investigation. Can investigators retrieve reliable logs after a system compromise? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Logging scope, event samples, retention and access settings.",
+        "Sample retrievable events with attribution, protected storage and retention settings."
+      ],
+      "outcome": [
+        "Protected logs support attribution, investigation and appropriate retention."
+      ]
+    },
+    "A.8.16": {
+      "title": "Activity monitoring",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Monitor relevant activity and investigate signs of adverse behavior.",
+      "start": "Trace a detection rule from covered systems through triage and investigation.",
+      "evidence": "Monitoring coverage, detection rules and investigation records.",
+      "ask": "Consult monitoring owners and people triaging or investigating alerts. Who investigates an alert and how is missing telemetry discovered? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Alerts are generated without assigned investigation or coverage checks.",
+      "review": [
+        "Trace a detection rule from covered systems through triage and investigation.",
+        "Consult monitoring owners and people triaging or investigating alerts. Who investigates an alert and how is missing telemetry discovered? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Monitoring coverage, detection rules and investigation records.",
+        "Sample alerts linked to triage and investigation with telemetry-coverage checks."
+      ],
+      "outcome": [
+        "Monitoring connects covered activity to accountable investigation."
+      ]
+    },
+    "A.8.17": {
+      "title": "Aligned system clocks",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Keep system clocks aligned so records from different systems can be interpreted together.",
+      "start": "Compare time sources and synchronization health across correlated systems.",
+      "evidence": "Time-source configuration and synchronization health records.",
+      "ask": "Consult time-service owners and administrators of relevant systems. How would clock drift affect reconstruction of an incident? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Systems use inconsistent time sources or synchronization failures are unnoticed.",
+      "review": [
+        "Compare time sources and synchronization health across correlated systems.",
+        "Consult time-service owners and administrators of relevant systems. How would clock drift affect reconstruction of an incident? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Time-source configuration and synchronization health records.",
+        "Time-source settings and synchronization-health observations for relevant systems."
+      ],
+      "outcome": [
+        "Consistent system time supports reliable cross-system event interpretation."
+      ]
+    },
+    "A.8.18": {
+      "title": "Privileged utility use",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Control tools that can override normal system or application safeguards.",
+      "start": "Sample use of a utility capable of bypassing ordinary protections.",
+      "evidence": "Privileged-tool inventory, access approvals and usage logs.",
+      "ask": "Consult privileged-tool approvers and administrators reviewing use. Who may authorize the tool and review its actual use? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Powerful utilities are broadly available without accountable oversight.",
+      "review": [
+        "Sample use of a utility capable of bypassing ordinary protections.",
+        "Consult privileged-tool approvers and administrators reviewing use. Who may authorize the tool and review its actual use? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Privileged-tool inventory, access approvals and usage logs.",
+        "Approved tool-use records and access restrictions for safeguard-bypassing utilities."
+      ],
+      "outcome": [
+        "Privileged utility use has authorization and accountable review."
+      ]
+    },
+    "A.8.19": {
+      "title": "Software installation controls",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Control software installation on operational systems.",
+      "start": "Inspect an operational software installation against approval and permissions.",
+      "evidence": "Installation rules, administrative permissions and approved deployment records.",
+      "ask": "Consult software deployment owners and installation permission administrators. What prevents unauthorized installations by users or administrators? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Installation restrictions omit privileged users or deployment exceptions.",
+      "review": [
+        "Inspect an operational software installation against approval and permissions.",
+        "Consult software deployment owners and installation permission administrators. What prevents unauthorized installations by users or administrators? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Installation rules, administrative permissions and approved deployment records.",
+        "Observed installation permissions and sampled authorized deployment records."
+      ],
+      "outcome": [
+        "Operational software installation follows controlled approval and permissions."
+      ]
+    },
+    "A.8.20": {
+      "title": "Network protection",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect networks and connected information against the relevant security threats.",
+      "start": "Review network boundaries and protection settings against current connections.",
+      "evidence": "Network design, protection configurations and reviewed exceptions.",
+      "ask": "Consult network owners and relevant security administrators. Which network path exposes sensitive services and how is it controlled? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Network controls do not reflect current topology or approved exceptions.",
+      "review": [
+        "Review network boundaries and protection settings against current connections.",
+        "Consult network owners and relevant security administrators. Which network path exposes sensitive services and how is it controlled? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Network design, protection configurations and reviewed exceptions.",
+        "Current topology and sampled boundary settings showing appropriate network safeguards."
+      ],
+      "outcome": [
+        "Network protection reflects current topology and exposed service paths."
+      ]
+    },
+    "A.8.21": {
+      "title": "Network-service safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Define and manage the safeguards expected from network services.",
+      "start": "Compare a network service's security expectations with provider delivery.",
+      "evidence": "Network-service requirements, agreements and configuration/monitoring records.",
+      "ask": "Consult network service owners and people verifying agreed safeguards. Who verifies that contracted network safeguards operate as expected? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Service safeguards are unspecified or accepted without evidence.",
+      "review": [
+        "Compare a network service's security expectations with provider delivery.",
+        "Consult network service owners and people verifying agreed safeguards. Who verifies that contracted network safeguards operate as expected? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Network-service requirements, agreements and configuration/monitoring records.",
+        "Network-service reviews or test observations against agreed security expectations."
+      ],
+      "outcome": [
+        "Network-service safeguards have defined expectations and delivery evidence."
+      ]
+    },
+    "A.8.22": {
+      "title": "Network segmentation",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Separate network areas where doing so limits inappropriate access or the spread of an incident.",
+      "start": "Where segmentation is selected, verify representative cross-segment connections against intended restrictions.",
+      "evidence": "Segmentation design, traffic rules and verification results.",
+      "ask": "Consult network segmentation designers and administrators verifying traffic restrictions. Could a compromised low-trust segment reach a critical service? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Segmentation diagrams exist but traffic rules permit unintended access.",
+      "review": [
+        "Where segmentation is selected, verify representative cross-segment connections against intended restrictions.",
+        "Consult network segmentation designers and administrators verifying traffic restrictions. Could a compromised low-trust segment reach a critical service? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Segmentation design, traffic rules and verification results.",
+        "Traffic verification records demonstrating the intended cross-segment restrictions."
+      ],
+      "outcome": [
+        "Verified segment restrictions limit unintended cross-network access."
+      ]
+    },
+    "A.8.23": {
+      "title": "Web-content controls",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Manage access to external web content according to the organization's security needs.",
+      "start": "Where web-content controls are used, inspect their coverage and handling of authorized exceptions.",
+      "evidence": "Web-filtering policy, configured coverage and exception records.",
+      "ask": "Consult web-content policy owners and people administering enforcement. Which devices or access routes bypass web-content restrictions? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Filtering applies only at one network location or exceptions are unbounded.",
+      "review": [
+        "Where web-content controls are used, inspect their coverage and handling of authorized exceptions.",
+        "Consult web-content policy owners and people administering enforcement. Which devices or access routes bypass web-content restrictions? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Web-filtering policy, configured coverage and exception records.",
+        "Filtering enforcement observations across intended routes and approved exceptions."
+      ],
+      "outcome": [
+        "Web-content controls cover intended users, devices and exception routes."
+      ]
+    },
+    "A.8.24": {
+      "title": "Cryptographic safeguards",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Use cryptography and manage keys in a way that supports the identified protection needs.",
+      "start": "Inspect applicable cryptographic configurations and the lifecycle of associated keys.",
+      "evidence": "Cryptographic policy, key-management responsibilities and configuration records without keys.",
+      "ask": "Consult cryptographic service owners and key custodians. Who can recover, rotate or retire keys without exposing them? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Encryption is enabled but key custody or lifecycle responsibility is unclear.",
+      "review": [
+        "Inspect applicable cryptographic configurations and the lifecycle of associated keys.",
+        "Consult cryptographic service owners and key custodians. Who can recover, rotate or retire keys without exposing them? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Cryptographic policy, key-management responsibilities and configuration records without keys.",
+        "Configuration checks and accountable key lifecycle records without key material."
+      ],
+      "outcome": [
+        "Cryptography has appropriate configuration and accountable key lifecycle."
+      ]
+    },
+    "A.8.25": {
+      "title": "Secure development lifecycle",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Build security into the software-development lifecycle rather than adding it only at release.",
+      "start": "Where development is in scope, trace a delivery through security activities in each relevant lifecycle stage.",
+      "evidence": "Development process, security gates and delivery records.",
+      "ask": "Consult development lifecycle owners and people responsible for security gates. Which security gate can block release of an unresolved serious defect? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Security activities are optional or occur only near release.",
+      "review": [
+        "Where development is in scope, trace a delivery through security activities in each relevant lifecycle stage.",
+        "Consult development lifecycle owners and people responsible for security gates. Which security gate can block release of an unresolved serious defect? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Development process, security gates and delivery records.",
+        "A release's records showing security activities at relevant development stages."
+      ],
+      "outcome": [
+        "Development security activities influence delivery decisions throughout the lifecycle."
+      ]
+    },
+    "A.8.26": {
+      "title": "Application security needs",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Identify application security needs while defining or acquiring the application.",
+      "start": "Compare application security requirements with risk and acceptance criteria.",
+      "evidence": "Security requirements, acceptance criteria and risk decisions.",
+      "ask": "Consult application owners and people defining security acceptance criteria. Which security expectations were defined before build or procurement? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Requirements omit security boundaries or cannot be tested at acceptance.",
+      "review": [
+        "Compare application security requirements with risk and acceptance criteria.",
+        "Consult application owners and people defining security acceptance criteria. Which security expectations were defined before build or procurement? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Security requirements, acceptance criteria and risk decisions.",
+        "Risk-informed security acceptance criteria and verification records."
+      ],
+      "outcome": [
+        "Application security requirements are risk-informed and testable at acceptance."
+      ]
+    },
+    "A.8.27": {
+      "title": "Secure architecture principles",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Apply security principles to system design and architecture.",
+      "start": "Inspect a design review for trust boundaries and applied security principles.",
+      "evidence": "Architecture principles, design reviews and documented trade-offs.",
+      "ask": "Consult system architects and relevant security design reviewers. Which architectural decision reduces a plausible misuse scenario? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Design principles are stated but absent from consequential decisions.",
+      "review": [
+        "Inspect a design review for trust boundaries and applied security principles.",
+        "Consult system architects and relevant security design reviewers. Which architectural decision reduces a plausible misuse scenario? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Architecture principles, design reviews and documented trade-offs.",
+        "Design review decisions recording trust boundaries and applied security principles."
+      ],
+      "outcome": [
+        "Architecture reviews apply security principles to consequential design choices."
+      ]
+    },
+    "A.8.28": {
+      "title": "Secure coding practices",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Use coding practices that reduce security defects in software.",
+      "start": "Where coding is undertaken, sample a change against coding rules, review and relevant analysis findings.",
+      "evidence": "Coding standards, review evidence and relevant analysis results.",
+      "ask": "Consult development leads and code reviewers. How do developers detect and correct unsafe patterns before release? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Coding standards are unused or review ignores relevant security defects.",
+      "review": [
+        "Where coding is undertaken, sample a change against coding rules, review and relevant analysis findings.",
+        "Consult development leads and code reviewers. How do developers detect and correct unsafe patterns before release? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Coding standards, review evidence and relevant analysis results.",
+        "Sample code reviews and addressed analysis findings against the coding rules."
+      ],
+      "outcome": [
+        "Coding practices, reviews and analysis address relevant security defects."
+      ]
+    },
+    "A.8.29": {
+      "title": "Security testing before acceptance",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Test security before accepting software or systems into their intended use.",
+      "start": "Inspect security test scope, results and acceptance of residual defects.",
+      "evidence": "Test scope, results, defect remediation and acceptance decisions.",
+      "ask": "Consult security test owners and release acceptance decision makers. What supports release acceptance when a security test fails? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Tests omit material risks or defects lack an accountable acceptance decision.",
+      "review": [
+        "Inspect security test scope, results and acceptance of residual defects.",
+        "Consult security test owners and release acceptance decision makers. What supports release acceptance when a security test fails? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Test scope, results, defect remediation and acceptance decisions.",
+        "Security test results linked to defect resolution or accountable acceptance decisions."
+      ],
+      "outcome": [
+        "Acceptance considers security test results and accountable residual-defect decisions."
+      ]
+    },
+    "A.8.30": {
+      "title": "Outsourced development oversight",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Oversee security in development performed by external parties.",
+      "start": "Where development is outsourced, trace a deliverable through security requirements and acceptance.",
+      "evidence": "Supplier development requirements, review records and deliverable acceptance.",
+      "ask": "Consult outsourced development relationship owners and deliverable reviewers. How do you obtain assurance over the supplier's development work? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Outsourced code is accepted without security review or contractual expectations.",
+      "review": [
+        "Where development is outsourced, trace a deliverable through security requirements and acceptance.",
+        "Consult outsourced development relationship owners and deliverable reviewers. How do you obtain assurance over the supplier's development work? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Supplier development requirements, review records and deliverable acceptance.",
+        "Sample outsourced deliverable assurance against agreed security requirements."
+      ],
+      "outcome": [
+        "Outsourced development has security expectations and deliverable assurance."
+      ]
+    },
+    "A.8.31": {
+      "title": "Separated development and production",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Separate development, testing and production so changes or testing do not inappropriately affect live operations.",
+      "start": "Where development and testing environments are used, inspect their boundaries, access and controlled production deployment paths.",
+      "evidence": "Environment boundaries, access permissions and deployment paths.",
+      "ask": "Consult environment owners and people controlling production deployment or access. Can a developer alter production directly or retrieve live data into testing? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Environment separation leaves uncontrolled production access or data movement.",
+      "review": [
+        "Where development and testing environments are used, inspect their boundaries, access and controlled production deployment paths.",
+        "Consult environment owners and people controlling production deployment or access. Can a developer alter production directly or retrieve live data into testing? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Environment boundaries, access permissions and deployment paths.",
+        "Access checks and controlled deployment records showing effective environment boundaries."
+      ],
+      "outcome": [
+        "Environment boundaries protect production from uncontrolled changes and data movement."
+      ]
+    },
+    "A.8.32": {
+      "title": "Controlled changes",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Assess and control changes that affect information processing.",
+      "start": "Sample a normal and emergency change from impact review to post-change checks.",
+      "evidence": "Change requests, impact assessments, approvals and implementation checks.",
+      "ask": "Consult change approvers and people verifying implementation. How is an urgent change approved and reviewed after implementation? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Emergency changes bypass accountability or implementation validation.",
+      "review": [
+        "Sample a normal and emergency change from impact review to post-change checks.",
+        "Consult change approvers and people verifying implementation. How is an urgent change approved and reviewed after implementation? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Change requests, impact assessments, approvals and implementation checks.",
+        "Sample change records showing impact decisions, authorization and implementation checks."
+      ],
+      "outcome": [
+        "Normal and emergency changes preserve impact review and implementation checks."
+      ]
+    },
+    "A.8.33": {
+      "title": "Protected test information",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Protect the information used for testing, especially when it resembles or originates from sensitive live data.",
+      "start": "Inspect test-data origin, masking, permissions and disposal.",
+      "evidence": "Test-data handling rules, access restrictions and masking/deletion records.",
+      "ask": "Consult test-data owners and people approving access to sensitive source information. If live-derived information is used for testing, why is it necessary and how is exposure minimized? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Sensitive live data enters testing without approved protection.",
+      "review": [
+        "Inspect test-data origin, masking, permissions and disposal.",
+        "Consult test-data owners and people approving access to sensitive source information. If live-derived information is used for testing, why is it necessary and how is exposure minimized? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Test-data handling rules, access restrictions and masking/deletion records.",
+        "Test-data provenance and protection records showing justified use and limited exposure."
+      ],
+      "outcome": [
+        "Test information has justified use, access protection and disposal."
+      ]
+    },
+    "A.8.34": {
+      "title": "Safe audit testing",
+      "author": "Omnisciente",
+      "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
+      "plain": "Plan audit testing so it does not unnecessarily disrupt or expose operational systems.",
+      "start": "Inspect authorization, limits and operational safeguards for planned audit testing or a relevant completed test.",
+      "evidence": "Agreed test scope, safeguards, authorization and test records.",
+      "ask": "Consult audit test coordinators and operational system owners. Who may stop an audit test if it threatens service or information? If the assessed activity is outsourced, include the provider responsible for that activity.",
+      "gaps": "Audit testing lacks agreed boundaries or recovery safeguards.",
+      "review": [
+        "Inspect authorization, limits and operational safeguards for planned audit testing or a relevant completed test.",
+        "Consult audit test coordinators and operational system owners. Who may stop an audit test if it threatens service or information? If the assessed activity is outsourced, include the provider responsible for that activity."
+      ],
+      "evidence_examples": [
+        "Agreed test scope, safeguards, authorization and test records.",
+        "Agreed audit test scope and safeguards with recorded authorization and stop conditions."
+      ],
+      "outcome": [
+        "Audit tests operate within authorized limits and operational safeguards."
+      ]
+    }
+  },
+  "evidence_note": "Evidence examples describe possible ways to substantiate implementation. Select evidence suited to the organization's scope and actual operating model; no named register, matrix, tool or technology is universally mandated by these prompts.",
+  "applicability_note": "Assess clauses within the documented ISMS scope. Annex A prompts apply according to the risk-based SoA decision and actual implementation; they do not require adopting every technology or activity mentioned as an example.",
+  "people_note": "Role descriptions identify responsibilities to consult, not mandatory job titles or extra contact fields. One person may hold several responsibilities. Provider involvement depends on the assessed activity being outsourced; the client retains its applicable governance and approval responsibilities."
+}

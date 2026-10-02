@@ -1,6 +1,7 @@
 import FrameworkCategoryNavigator,{SoaTable} from '@/components/FrameworkCategoryNavigator';
 import IsoAuditWorkspace from '@/components/IsoAuditWorkspace';
 import IsoProgramWorkspace,{IsoSoaSummary} from '@/components/IsoProgramWorkspace';
+import {ISO_INTRODUCTIONS} from '@/lib/isoWorkspace';
 import {useEffect,useMemo,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
 import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
@@ -36,8 +37,8 @@ const FILTERS={all:'All',attention:'Needs Attention',in_progress:'In Progress',n
 const viewLabels=v=>({attention:'Needs attention',gaps:`${v.statuses.in_progress} or ${v.statuses.needs_attention.toLowerCase()}`,addressed:v.statuses.addressed,in_progress:v.statuses.in_progress,needs_attention:v.statuses.needs_attention,not_assessed:'Not yet assessed',not_applicable:'Not applicable',stale:'Validation older than 12 months',unevidenced:`${v.statuses.addressed} without evidence`,unremediated:'Gaps without a Finding',overdue_actions:'Overdue remediation',assessed:'Assessed'});
 const ISO_VIEWS={
   overview:{label:'Overview',matches:()=>false,custom:true},
-  isms_clause:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
   soa:{label:'Statement of Applicability',matches:r=>r.specification==='annex_control'},
+  isms_clause:{label:'ISMS Requirements',matches:r=>r.specification==='isms_clause'},
   annex_control:{label:'Annex A Controls',matches:r=>r.specification==='annex_control'},
   audit:{label:'Internal Audit',matches:()=>false},
 };
@@ -124,7 +125,8 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     return true;
   });
   const readiness=cisSummary(iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped);
-  const visible=scoped.filter(r=>matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
+  const implementationFilter=iso&&isoView==='annex_control'&&['addressed','in_progress','needs_attention','not_assessed','assessed','gaps'].includes(filter);
+  const visible=scoped.filter(r=>(!implementationFilter||r.soa_applicability==='included')&&matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
   const linkedViewKey=prototype&&data&&filter!=='all'&&filter===initialView?`${clientId}:${filter}`:null;
   useEffect(()=>{if(linkedViewKey)setExpanded(groupRequirements(frameworkKey,visible).map(n=>n.key));},[linkedViewKey]);// eslint-disable-line react-hooks/exhaustive-deps
   const selected=rows.find(r=>r.framework_assessment_id===params.get('assessment'))||null;
@@ -147,15 +149,16 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const socPath=preference['category:all']||[],chooseSocPath=path=>{remember({'category:all':path});if(selected)closeRecord();};
   const lastOpened=prototype&&!referenceAssessment&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
   const selectedPath=selected?hierarchyPath(frameworkKey,selected):[];
-  const chooseIsoView=key=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('assessment');n.delete('package');n.delete('audit_occurrence');setParams(n);setSearch('');setFilter('all');};
+  const chooseIsoView=(key,options={})=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('assessment');n.delete('package');n.delete('audit_occurrence');if(options.audit_year)n.set('audit_year',options.audit_year);setParams(n);setSearch('');setFilter('all');};
   const isoCrumb=(view,path=[])=>{setSearch('');setFilter('all');remember({['category:'+view]:path});const n=new URLSearchParams(params);n.delete('assessment');n.set('iso_view',view);setParams(n,{replace:true});};
   const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:'CIS IG1',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}},{label:socCategoryCrumb(selected.category),onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([selectedPath[0].id]);}},{label:selected.control,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath(selectedPath.map(p=>p.id));}},{label:selected.definition_id}]:undefined;
   return <div className={iso?'bcis framework-presentation':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
-    {iso&&<FrameworkHeader eyebrow="ISO/IEC 27001:2022 · ISMS" title="ISO 27001" subtitle={ISO_VIEWS[isoView].label} resume={resume} onContinue={()=>openRecord(resume)}/>}
+    {iso&&<FrameworkHeader eyebrow="ISO/IEC 27001:2022 · ISMS" title={ISO_VIEWS[isoView].label} subtitle={ISO_INTRODUCTIONS[isoView]} resume={resume} onContinue={()=>openRecord(resume)}/>}
     {brawndoCis&&<BrawndoCisHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {prestigeSoc&&<PrestigeSocHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
     {iso&&<WorkspaceTabs label="ISO workspace sections" tabs={Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label])} selected={isoView} onSelect={chooseIsoView} idPrefix="iso-tab" panelId="iso-tabpanel"/>}
+    {iso&&<nav aria-label="Related ISMS work" className="flex flex-wrap gap-4 text-sm"><Link className="text-link underline" to="/client-profile">Context & scope</Link><Link className="text-link underline" to="/reviews">Objectives & management review</Link><Link className="text-link underline" to="/risks">Risk assessment & treatment</Link></nav>}
     <IsoPanel iso={iso} view={isoView}>
     {brawndoCis?<BrawndoCisOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&isoView==='soa'?<IsoSoaSummary rows={scoped}/>:iso&&isoView!=='audit'&&!ISO_VIEWS[isoView]?.custom?<><AssessmentOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'necessary controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/>{isoView==='annex_control'&&<p className="iso-reference-count">{scoped.length} Annex A reference controls · {scoped.filter(r=>r.soa_applicability==='included').length} Necessary · {scoped.filter(r=>r.soa_applicability==='excluded').length} Not Necessary · {scoped.filter(r=>!r.soa_applicability).length} not yet determined</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
     {frameworkKey==='iso-27001'&&(isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:ISO_VIEWS[isoView]?.custom?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows} onSelect={chooseIsoView}/>:null)}

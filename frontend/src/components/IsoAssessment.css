@@ -1,0 +1,26 @@
+/* ISO-scoped presentation over existing assessment and dialog components. */
+[data-testid="iso-assessment-workspace"] .brawndo-assessment-columns { grid-template-columns: minmax(0,1fr); }
+[data-testid="iso-assessment-workspace"] .brawndo-assessment-details { border-left: 0; border-top: 1px solid var(--color-input-border); }
+.iso-assessment-layout .brawndo-step-body, .iso-assessment-layout textarea { font-size: 1rem; line-height: 1.6; }
+.iso-assessment-metadata > fieldset { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; align-items: start; }
+.iso-assessment-metadata > fieldset > * { margin-top: 0; }
+.iso-guide-disclosure { border: 1px solid var(--color-input-border); border-radius: 6px; background: var(--color-bg-subtle); margin: 8px 0; }
+.iso-guide-disclosure > summary { padding: 12px 16px; font-size: .875rem; font-weight: 600; cursor: pointer; }
+.iso-guide-disclosure > summary:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }
+.iso-guide-disclosure .cis-requirement-guide { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 16px; margin: 0; border: 0; padding: 0 16px 16px; }
+.iso-guide-disclosure .cis-requirement-guide > h3, .iso-guide-disclosure .cis-guide-intro { display: none; }
+.iso-guide-disclosure .cis-guide-answer { margin: 0; padding: 12px 16px; border-top: 0; border-left: 1px solid var(--color-input-border); }
+.iso-guide-disclosure .cis-guide-answer p { font-size: 1rem; line-height: 1.6; }
+.iso-guidance-columns { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; }
+.iso-guidance-columns > section { min-width: 0; padding: 14px; border: 1px solid var(--color-input-border); border-radius: 6px; background: var(--color-bg-subtle); }
+.iso-guidance-columns h4 { margin: 0 0 8px; font-size: .875rem; }
+.iso-guidance-columns ul { list-style: disc; padding-left: 18px; display: grid; gap: 8px; }
+.iso-implementation-layout { display: grid; grid-template-columns: 300px minmax(0,1fr); gap: 24px; }
+.iso-implementation-layout > section { min-width: 0; }
+.iso-implementation-layout .brawndo-status-options { grid-template-columns: minmax(0,1fr); }
+@media (max-width: 1000px) { .iso-guidance-columns { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 720px) {
+  .iso-assessment-metadata > fieldset { grid-template-columns: minmax(0,1fr); }
+  .iso-guide-disclosure .cis-requirement-guide, .iso-implementation-layout { grid-template-columns: minmax(0,1fr); gap: 12px; }
+  .iso-guide-disclosure .cis-guide-answer { border-left: 0; border-top: 1px solid var(--color-input-border); padding: 12px 0 0; }
+}
