@@ -133,3 +133,8 @@
 @media (max-width: 760px) { .bdash h1 { font-size: 24px; } }
 @media (prefers-reduced-motion: reduce) { .bdash, .bd-tile, .bd-table tbody tr { transition: none; } .bd-tile:hover { transform: none; } }
 .bd-count-note { margin: -4px 0 14px; }
+/* Readiness calculation disclosure on the programme card (native details/summary: keyboard and screen-reader reachable). */
+.bdash .bd-explain { font-size: 12px; color: var(--bd-muted); }
+.bdash .bd-explain summary { cursor: pointer; width: fit-content; border-radius: 4px; }
+.bdash .bd-explain summary:focus-visible { outline: 2px solid var(--bd-focus, #4172f4); outline-offset: 2px; }
+.bdash .bd-explain p { margin: 6px 0 0; line-height: 1.45; }

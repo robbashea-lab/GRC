@@ -40,5 +40,28 @@ test('ISO 27001 uses the same shell; tab-scoped views are counts, not misleading
   expect(card.querySelector('h2').textContent).toBe('ISO 27001');
   expect([...card.querySelectorAll('a')].map(a=>a.getAttribute('href'))).toEqual(['/compliance/iso-27001']);
   expect(card.querySelectorAll('.bd-gaps .bd-static')).toHaveLength(4);
-  expect(card.textContent).not.toMatch(/Management Review|Objectives|Statement of Applicability|Internal Audit/);
+  // No ISMS workspace panels on the dashboard (the calculation note may name the SoA exclusion rule).
+  const body=card.cloneNode(true);body.querySelector('.bd-explain').remove();
+  expect(body.textContent).not.toMatch(/Management Review|Objectives|Statement of Applicability|Internal Audit/);
+});
+test('readiness explanation states what is counted and how N/A affects the denominator',async()=>{
+  await render([{key:'cis-ig1',label:'CIS Controls v8.1 IG1',name:'CIS Controls v8.1 IG1',to:'/compliance/cis-ig1'}]);
+  const text=container.querySelector('.bd-explain').textContent;
+  expect(container.querySelector('.bd-explain summary').textContent).toBe('How is this calculated?');
+  expect(text).toContain('Implemented % = safeguards concluded “Implemented” ÷ applicable safeguards (2 of 6)');
+  expect(text).toContain('Assessed % = applicable safeguards with any conclusion (5 of 6)');
+  expect(text).toContain('marked N/A are left out of the denominator (1 excluded)');
+  await render([{key:'iso-27001',label:'ISO/IEC 27001:2022',to:'/compliance/iso-27001'}]);
+  expect(container.querySelector('.bd-explain').textContent).toContain('Annex A controls excluded in the Statement of Applicability');
+  await render([{key:'soc-2',label:'SOC 2',to:'/compliance/soc-2'}]);
+  expect(container.textContent).toContain('Internal readiness, not an auditor opinion.');
+});
+test.each([['no records',[]],['all N/A',[{status:'not_applicable'},{status:'not_applicable'}]]])('%s: readiness is not calculated rather than shown as 0%%',async(_,rows)=>{
+  await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[{key:'soc-2',label:'SOC 2',to:'/compliance/soc-2'}]} programRows={{'soc-2':rows}} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));
+  const card=container.querySelector('.bd-aside .bd-card');
+  expect(card.querySelector('.bd-donut-value').textContent).toBe('—');
+  expect(card.querySelector('[data-testid="readiness-empty"]').textContent).toBe('No applicable criteria yet: readiness not calculated.');
+  expect(card.querySelector('.bd-cis-measures')).toBeNull();
+  expect(card.querySelector('.bd-explain').textContent).toContain('readiness is not calculated');
+  expect(card.textContent).toContain('Internal readiness, not an auditor opinion.');
 });
