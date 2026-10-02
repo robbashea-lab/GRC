@@ -462,7 +462,7 @@ const EVENTS = [
 ];
 
 async function snapshotYearOne() {
-  const db = raw();
+  const db = stored();
   const mine = k => db[k].filter(r => r.client_id === CID);
   ledger.year1 = {
     at: today,
