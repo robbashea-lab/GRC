@@ -5,6 +5,8 @@ html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet, .ui-menu, .ui-popove
   --popover: 213 21% 13%; --popover-foreground: 216 18% 92%; --secondary: 213 19% 17%; --secondary-foreground: 216 18% 92%;
   --muted: 213 19% 17%; --muted-foreground: 213 11% 65%; --accent: 213 19% 19%; --accent-foreground: 216 18% 92%;
   --border: 215 19% 20%; --input: 213 16% 27%; --ring: 223 100% 78%;
+  /* Primary actions (Save & next, Create …) use the Brawndo primary (#a3db33 on #10140c), not the light charcoal. */
+  --primary: 80 70% 53%; --primary-foreground: 90 25% 6%;
   --color-bg-app: #12161c; --color-bg-surface: #1a2028; --color-bg-subtle: #151a21; --color-bg-tablehead: #151a21; --color-bg-row-hover: #232a33;
   --color-border: #2a323d; --color-border-strong: #3a4450; --color-input-border: #3a4450; --color-control-active-border: #8fb0ff;
   --color-text-primary: #e6e9ee; --color-text-secondary: #9aa4b0; --color-text-muted: #9aa4b0; --color-text-help: #8b95a1; --color-text-disabled: #6b7480;

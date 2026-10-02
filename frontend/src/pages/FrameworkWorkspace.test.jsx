@@ -165,7 +165,7 @@ test('ISO default presentation preserves SoA scope and uses native category butt
  await act(async()=>buttons('All controls')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
  await act(async()=>container.querySelector(`[data-testid="requirement-${annex[0].id}"] button`).click());
- expect(container.querySelector('[aria-label="ISO workspace sections"] [aria-pressed="true"]').textContent).toBe('Statement of Applicability');
+ expect(container.querySelector('[aria-label="ISO workspace sections"] [aria-selected="true"]').textContent).toBe('Statement of Applicability');
  expect(container.querySelector('[data-testid="opened"]').textContent).toContain('Statement of Applicability');
  await act(async()=>[...container.querySelectorAll('[data-drawer-crumb]')].find(b=>b.textContent==='Statement of Applicability').click());
  expect(container.querySelector('[data-testid="opened"]')).toBeNull();

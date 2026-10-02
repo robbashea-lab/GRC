@@ -10,6 +10,7 @@ import {frameworkCatalog} from '@/lib/frameworks';
 import {SearchField} from '@/components/Register';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import {Button} from '@/components/ui/button';
+import WorkspaceTabs from '@/components/WorkspaceTabs';
 import FrameworkDrawer from '@/components/FrameworkDrawer';
 import {SocProgramSettings} from '@/components/SocReadiness';
 import {socConfiguration} from '@/lib/socReadiness';
@@ -40,6 +41,8 @@ const ISO_VIEWS={
   annex_control:{label:'Annex A Controls',matches:r=>r.specification==='annex_control'},
   audit:{label:'Internal Audit',matches:()=>false},
 };
+// The ISO section content is the panel of the ISO tabs; other frameworks render it unwrapped.
+const IsoPanel=({iso,view,children})=>iso?<div role="tabpanel" id="iso-tabpanel" aria-labelledby={`iso-tab-${view}`} className="framework-tabpanel">{children}</div>:<>{children}</>;
 function readPreference(key){try{return JSON.parse(sessionStorage.getItem(key))||{};}catch{return {};}}
 function SafeguardSignals({row}){
   const fresh=freshness(row),w=row.work||{};
@@ -151,7 +154,8 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     {brawndoCis&&<BrawndoCisHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {prestigeSoc&&<PrestigeSocHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
-    {iso&&<nav aria-label="ISO workspace sections" className="framework-tabs">{Object.entries(ISO_VIEWS).map(([key,v])=><Button key={key} variant={isoView===key?'default':'outline'} aria-pressed={isoView===key} onClick={()=>chooseIsoView(key)}>{v.label}</Button>)}</nav>}
+    {iso&&<WorkspaceTabs label="ISO workspace sections" tabs={Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label])} selected={isoView} onSelect={chooseIsoView} idPrefix="iso-tab" panelId="iso-tabpanel"/>}
+    <IsoPanel iso={iso} view={isoView}>
     {brawndoCis?<BrawndoCisOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&isoView==='soa'?<IsoSoaSummary rows={scoped}/>:iso&&isoView!=='audit'&&!ISO_VIEWS[isoView]?.custom?<><AssessmentOverview summary={cisSummary(isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped)} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'necessary controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/>{isoView==='annex_control'&&<p className="iso-reference-count">{scoped.length} Annex A reference controls · {scoped.filter(r=>r.soa_applicability==='included').length} Necessary · {scoped.filter(r=>r.soa_applicability==='excluded').length} Not Necessary · {scoped.filter(r=>!r.soa_applicability).length} not yet determined</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={cisSummary(scoped)} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
     {frameworkKey==='iso-27001'&&(isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:ISO_VIEWS[isoView]?.custom?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows} onSelect={chooseIsoView}/>:null)}
     {!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<>
@@ -174,6 +178,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
     {brawndoCis?<BrawndoCisControls clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} controlKey={controlKey} onControl={chooseControl} onOpen={openRecord} selected={selected}/>:prestigeSoc?<PrestigeSocNavigator clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}} path={socPath} onPath={chooseSocPath} onOpen={openRecord} selected={selected}/>:prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='soa'?<SoaTable rows={visible} onOpen={openRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} soa={frameworkKey==='iso-27001'&&isoView==='soa'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,statuses,prototype,framework:frameworkKey}}/>}
     </>}
+    </IsoPanel>
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId}
       onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}}
       onPrevious={index>0?()=>openRecord(scoped[index-1]):null} onNext={index>=0&&index<scoped.length-1?()=>openRecord(scoped[index+1]):null}
