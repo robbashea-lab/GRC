@@ -34,11 +34,12 @@ function Donut({counts,summary,name,labels}) {
 }
 
 // Plain-language account of cisSummary (lib/cisVerification.js), the calculation behind these numbers.
-export function readinessExplanation(key,summary,labels){
-  const items=operatorVocabulary(key).items,done=labels.addressed;
-  if(!summary.applicable)return `No applicable ${items} yet, so readiness is not calculated. ${summary.na?`All ${summary.na} recorded ${items} are N/A or excluded.`:`No ${items} have been set up.`}`;
-  const excluded=key==='iso-27001'?`Annex A controls excluded in the Statement of Applicability, and N/A clause requirements, are left out of the denominator`:`${items.charAt(0).toUpperCase()+items.slice(1)} marked N/A are left out of the denominator`;
-  return `${firstWord(done)} % = ${items} concluded “${done}” ÷ applicable ${items} (${summary.addressed} of ${summary.applicable}). Assessed % = applicable ${items} with any conclusion (${summary.assessed} of ${summary.applicable}). ${excluded} (${summary.na} excluded). Percentages are rounded to the nearest whole percent.`;
+// scope describes a narrower population already filtered by the caller (ISO workspace tabs).
+export function readinessExplanation(key,summary,labels,scope){
+  const items=scope?.items||operatorVocabulary(key).items,done=labels.addressed,excludedCount=scope?.excluded??summary.na;
+  if(!summary.applicable)return `No applicable ${items} yet, so readiness is not calculated. ${excludedCount?`All ${excludedCount} recorded ${items} are N/A or excluded from this scope.`:`No ${items} have been set up.`}`;
+  const excluded=scope?.excludedText||(key==='iso-27001'?`Annex A controls excluded in the Statement of Applicability, and N/A clause requirements, are left out of the denominator`:`${items.charAt(0).toUpperCase()+items.slice(1)} marked N/A are left out of the denominator`);
+  return `${firstWord(done)} % = ${items} concluded “${done}” ÷ applicable ${items} (${summary.addressed} of ${summary.applicable}). Assessed % = applicable ${items} with any conclusion (${summary.assessed} of ${summary.applicable}). ${excluded} (${excludedCount} excluded). Percentages are rounded to the nearest whole percent.`;
 }
 
 export default function FrameworkProgramCard({rows,program}) {

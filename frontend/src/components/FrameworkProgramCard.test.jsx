@@ -84,3 +84,11 @@ test('ISO donut and legend use the same applicable population as the percentage'
   expect(card.querySelector('.bd-cis-measures').textContent).toContain('Implemented 1 of 2');
   expect(rows[2].status).toBe('addressed');
 });
+test('a tab-scoped ISO explanation uses the tab noun and its excluded count',()=>{
+  const {readinessExplanation,readinessLabels}=require('./FrameworkProgramCard');
+  const text=readinessExplanation('iso-27001',{applicable:90,addressed:70,assessed:87,na:0},readinessLabels('iso-27001'),{items:'controls',excluded:3,excludedText:'Annex A controls not included in the Statement of Applicability are left out of the denominator'});
+  expect(text).toContain('controls concluded');expect(text).toContain('(70 of 90)');expect(text).toContain('(3 excluded)');
+  expect(text).not.toContain('requirements');
+  const empty=readinessExplanation('iso-27001',{applicable:0,na:0},readinessLabels('iso-27001'),{items:'controls',excluded:3});
+  expect(empty).toContain('All 3 recorded controls');expect(empty).not.toContain('No controls have been set up');
+});

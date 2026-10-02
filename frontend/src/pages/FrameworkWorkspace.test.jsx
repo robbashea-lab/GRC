@@ -177,6 +177,8 @@ test('ISO default presentation preserves SoA scope and uses native category butt
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('91 of 92');
  expect(container.querySelector('.bcis-explain').textContent).toContain('Only Annex A controls marked Necessary are counted in this view.');
  expect(container.querySelector('.bcis-explain').textContent).toContain('(91 of 92)');
+ expect(container.querySelector('.bcis-explain').textContent).toContain('controls concluded');
+ expect(container.querySelector('.bcis-explain').textContent).toContain('(1 excluded)');
 });
 
 test.each(['cis-ig1','hipaa'])('%s with all records N/A explains why readiness is not calculated',async frameworkKey=>{

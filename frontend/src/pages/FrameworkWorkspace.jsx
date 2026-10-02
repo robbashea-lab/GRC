@@ -124,7 +124,10 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     return true;
   });
   const readiness=cisSummary(iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped);
-  const explanation=(iso&&isoView==='annex_control'?'Only Annex A controls marked Necessary are counted in this view. ':'')+readinessExplanation(frameworkKey,readiness,readinessLabels(frameworkKey));
+  const readinessScope=!iso?undefined:isoView==='annex_control'?{items:'controls',excluded:scoped.filter(r=>r.soa_applicability!=='included').length+readiness.na,
+    excludedText:'Annex A controls not included in the Statement of Applicability (excluded or not yet decided), and N/A controls, are left out of the denominator'}
+    :isoView==='isms_clause'?{items:'requirements',excludedText:'Clause requirements marked N/A are left out of the denominator'}:undefined;
+  const explanation=(iso&&isoView==='annex_control'?'Only Annex A controls marked Necessary are counted in this view. ':'')+readinessExplanation(frameworkKey,readiness,readinessLabels(frameworkKey),readinessScope);
   const visible=scoped.filter(r=>matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
   const linkedViewKey=prototype&&data&&filter!=='all'&&filter===initialView?`${clientId}:${filter}`:null;
   useEffect(()=>{if(linkedViewKey)setExpanded(groupRequirements(frameworkKey,visible).map(n=>n.key));},[linkedViewKey]);// eslint-disable-line react-hooks/exhaustive-deps
@@ -171,7 +174,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     {referenceAssessment?null:prototype?<div className="cis-toolbar">
       <SearchField value={search} onChange={changeSearch} label={`Search ${vocab.items}`} placeholder="Search by number or title…"/>
       {(search||filter!=='all')&&<p role="status" className="text-sm text-ink-secondary">{filter!=='all'&&<span className="cis-active-view">{VIEW_LABELS[filter]}</span>}Showing {visible.length} of {scoped.length} {vocab.items}</p>}
-      {(search||filter!=='all')&&<Button size="sm" variant="ghost" onClick={()=>{dropLinkedView();setSearch('');setFilter('all');}}>Clear search and filters</Button>}
+      {(search||filter!=='all')&&<Button size="sm" variant="ghost" onClick={e=>{const bar=e.currentTarget.closest('.cis-toolbar');dropLinkedView();setSearch('');setFilter('all');requestAnimationFrame(()=>bar?.querySelector('input')?.focus());}}>Clear search and filters</Button>}
       {!categoryFirst&&!(search.trim()||filter!=='all')&&<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div>}
     </div>:<>
     <SearchField value={search} onChange={changeSearch} label="Search requirements" placeholder="Search requirements…"/>

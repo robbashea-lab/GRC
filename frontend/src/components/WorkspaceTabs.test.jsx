@@ -23,3 +23,10 @@ test('tablist semantics, one tab stop, Arrow/Home/End move focus and select',asy
   expect(container.querySelector('[role="tabpanel"]').getAttribute('aria-labelledby')).toBe('t-overview');
   await act(async()=>tabs()[2].click());expect(onSelect).toHaveBeenLastCalledWith('soa');
 });
+test('an unmounted panel control returns lost focus to its selected tab',async()=>{
+  function PanelNavigation(){const [selected,setSelected]=useState('overview');return <><WorkspaceTabs label="Sections" tabs={TABS} selected={selected} onSelect={setSelected} idPrefix="t" panelId="p"/>{selected==='overview'&&<button data-open onClick={()=>setSelected('isms_clause')}>Open clauses</button>}</>;}
+  await act(async()=>root.render(<PanelNavigation/>));
+  const open=container.querySelector('[data-open]');open.focus();
+  await act(async()=>open.click());
+  expect(document.activeElement).toBe(container.querySelector('#t-isms_clause'));
+});

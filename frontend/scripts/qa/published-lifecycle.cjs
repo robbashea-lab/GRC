@@ -34,7 +34,11 @@ async function main(){
       await page.getByRole('button',{name:'Next',exact:true}).click();
       await page.getByRole('button',{name:'Next',exact:true}).click();
       await expect(page.locator('main')).toContainText('Choose Yes, No or Unsure');
-      for(const group of await page.locator('main').getByRole('group').all())await group.getByRole('button',{name:'Unsure',exact:true}).click();
+      const policyGroups=page.locator('main [role="group"][aria-label]');
+      await expect(policyGroups).toHaveCount(17);
+      for(const group of await policyGroups.all())await group.getByRole('button',{name:'Unsure',exact:true}).click();
+      // Draft writes are queued; reload only after the final answer is persisted.
+      await expect.poll(async()=>Object.values((await store()).baselines?.[cid]?.policies||{}).filter(answer=>answer==='unsure').length).toBe(17);
       await page.reload();await expect(page.locator('main')).toContainText('17 of 17 answered');
       await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();
       await page.getByRole('button',{name:'Complete onboarding',exact:true}).click();

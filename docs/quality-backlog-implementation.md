@@ -5,7 +5,7 @@
 - Initial remote main: `6cc52ad4794fa1846923647dc42471c2c6a138b1` (2026-10-01).
 - Working branch: `codex/quality-backlog-implementation`, isolated worktree based on remote main.
 - GitHub PR inventory: no open PRs at initial inspection. Prior PRs 1–11 were merged.
-- Initial `origin/claude/cross-client-visual-consistency` had three unmerged commits (`f4db298`, `13aec7f`, `6623800`); it later advanced through `d54195b`. Reviewed compatible presentations and follow-ups are integrated, not a wholesale branch merge.
+- Initial `origin/claude/cross-client-visual-consistency` had three unmerged commits (`f4db298`, `13aec7f`, `6623800`); it later advanced through `a2dd220`. Reviewed compatible presentations and follow-ups are integrated, not a wholesale branch merge.
 - Existing worktrees and uncommitted changes are outside this task's worktree.
 - Continuation authorizes merge after repository checks/approvals and publishing the existing Demo preview. Production rollout/destructive real-data operations remain out of scope.
 
@@ -44,7 +44,7 @@
 - [x] Safe migration tooling with fixtures, dry-run and recovery provisions; no shared data mutation.
 - [ ] Backend/frontend regression suites and production/preview builds.
 - [ ] Browser QA across Brawndo, Prestige, Dunder, newly created client; themes/responsive/keyboard/retry/isolation.
-- [x] Fetch main again, reconcile changes, rerun affected checks (main remains `6cc52ad`; visual follow-ups through `d54195b` integrated).
+- [x] Fetch main again, reconcile changes, rerun affected checks (main remains `6cc52ad`; visual follow-ups through `a2dd220` integrated).
 - [ ] Final diff review, coherent commits, push branch, open PR (diff review complete; publication sequence next).
 
 ## Verification log

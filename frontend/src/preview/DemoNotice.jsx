@@ -1,10 +1,10 @@
-import {useState} from 'react';
+import {useRef,useState} from 'react';
 import api,{PREVIEW_MODE,formatError} from '@/lib/api';
 import {DEMO_FILE_NOTICE} from '@/lib/demoStorageErrors';
 import {Button} from '@/components/ui/button';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription,DialogFooter} from '@/components/ui/dialog';
 export default function DemoNotice(){
-  const [action,setAction]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[stats,setStats]=useState(null);
+  const [action,setAction]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[stats,setStats]=useState(null),opener=useRef(null);
   if(!PREVIEW_MODE)return null;
   async function inspect(){setAction('storage');setError('');setStats(null);try{const {data}=await api.get('/demo/storage');setStats(data);}catch(e){setError(formatError(e));}}
   async function recover(){setBusy(true);setError('');try{
@@ -14,8 +14,8 @@ export default function DemoNotice(){
   }catch(e){setError(formatError(e));setBusy(false);}}
   return <><div className="demo-notice border-b border-line bg-surface-subtle text-ink-muted" data-testid="interactive-demo-notice">
     <span><span className="font-medium">Demo workspace</span><span className="demo-notice-detail"> · Session changes only · Large file content lasts until reload</span></span>
-    <Button size="sm" variant="ghost" onClick={inspect}>Demo storage</Button>
-  </div><Dialog open={!!action} onOpenChange={v=>{if(!v&&!busy)setAction('');}}><DialogContent><DialogHeader>
+    <Button ref={opener} size="sm" variant="ghost" onClick={inspect}>Demo storage</Button>
+  </div><Dialog open={!!action} onOpenChange={v=>{if(!v&&!busy)setAction('');}}><DialogContent onCloseAutoFocus={e=>{e.preventDefault();opener.current?.focus();}}><DialogHeader>
     <DialogTitle>{action==='clear'?'Clear Demo Evidence Files?':action==='reset'?'Reset Demo Data?':'Demo storage & recovery'}</DialogTitle>
     <DialogDescription>{action==='clear'?'Remove all Demo file contents, including synthetic files and the temporary memory cache. Keep evidence metadata, relationships, clients, simulated users, roles, permissions, assessments and other records.':action==='reset'?'Replace all mutable Demo records with the canonical sample clients, users, roles, memberships, framework configuration and sample evidence. Custom Demo records and uploads will be removed. Non-demo data is untouched.':DEMO_FILE_NOTICE}</DialogDescription>
   </DialogHeader>{error&&<p role="alert" className="text-sm text-semantic-critical">{error}</p>}

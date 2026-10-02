@@ -27,6 +27,7 @@ async function frameworkJourney({page,go,store,cid,framework,prefix}){
   if(framework==='iso-27001')await page.getByRole('button',{name:/^Open ISMS Requirements\./}).click();
   await page.getByRole('textbox',{name:/^Search /}).fill(framework==='soc-2'?'CC1':framework==='cis-ig1'?'1.':'4.');
   const first=page.locator('[data-testid^="requirement-"]').first();
+  await expect(first).toBeVisible();
   if(await first.getByRole('button').count())await first.getByRole('button').first().click();else await first.click();
   const panel=page.locator('[data-testid="brawndo-cis-assessment"], [data-testid="prestige-soc-assessment"], [data-testid="framework-assessment-workspace"]');
   await expect(panel).toBeVisible();
