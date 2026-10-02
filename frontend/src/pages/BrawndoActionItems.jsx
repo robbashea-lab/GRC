@@ -3,7 +3,7 @@ import {Navigate,useLocation,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import api,{formatError} from '@/lib/api';
-import {isBrawndoReference} from '@/lib/reference';
+import {isReferenceRegister} from '@/lib/reference';
 import {unifiedActions,pilotActionMatches,pilotActionStatus,pilotActionColumns,pilotPriority,finished} from '@/lib/brawndoActions';
 import {tableColumns} from '@/lib/tableColumns';
 import RecordListPage from './RecordListPage';
@@ -18,8 +18,8 @@ import TableLoadingRow from '@/components/TableLoadingRow';
 import {Button} from '@/components/ui/button';
 import './BrawndoActionItems.css';
 
-const views=[['active','Active'],['overdue','Overdue'],['in_progress','In Progress'],['open','Open'],['completed','Completed']].map(([id,label])=>({id,label}));
-const nouns={active:'active',overdue:'overdue',in_progress:'in-progress',open:'open',completed:'completed',upcoming:'due-in-30-days',unassigned:'unassigned active'};
+const views=[['active','Active'],['overdue','Overdue'],['in_progress','In Progress'],['open','Open'],['completed','Completed'],['high_critical','High / Critical Findings']].map(([id,label])=>({id,label}));
+const nouns={active:'active',overdue:'overdue',in_progress:'in-progress',open:'open',completed:'completed',upcoming:'due-in-30-days',unassigned:'unassigned active',high_critical:'high / critical Finding'};
 const due=r=>r.due_date?String(r.due_date).slice(0,10):'9999-99-99';
 const soonest=(a,b)=>due(a)<due(b)?-1:due(a)>due(b)?1:0;
 // Summary tiles derived only from loaded rows.
@@ -38,12 +38,13 @@ const labels={open:'Open',in_progress:'In Progress',overdue:'Overdue',completed:
 
 export function FindingsRoute(){
   const {currentClientId}=useOrg(),{user}=useAuth(),location=useLocation();
-  return isBrawndoReference(currentClientId,user)?<Navigate replace to={'/action-items'+location.search} state={location.state}/>:<RecordListPage kind="findings"/>;
+  // Every Demo client uses the consolidated Action Items workflow; the query string (finding_id, signal) is kept.
+  return isReferenceRegister(currentClientId,user)?<Navigate replace to={'/action-items'+location.search} state={location.state}/>:<RecordListPage kind="findings"/>;
 }
 
 export default function BrawndoActionItems(){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
-  const [params,setParams]=useSearchParams(),view=params.get('view')||'active',q=params.get('q')||'';
+  const [params,setParams]=useSearchParams(),view=params.get('view')||(params.get('signal')==='material'?'high_critical':'active'),q=params.get('q')||'';
   const [data,setData]=useState({}),[users,setUsers]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[drawer,setDrawer]=useState(null);
   const sequence=useRef(0),opened=useRef('');
   const load=useCallback(async()=>{

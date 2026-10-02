@@ -1,5 +1,6 @@
 import {actionTitle,daysDue,taskSource} from './actionItems';
 import {dateMatches} from './tableFilters';
+import {findingOpen} from './findingMetrics';
 import {FRAMEWORKS} from './frameworks';
 import {occurrenceId,relatedReviewInitialValues} from './reviewOccurrences';
 
@@ -16,6 +17,9 @@ export function pilotActionMatches(row,view,now=new Date()) {
   if(view==='all')return true;
   if(view==='completed')return finished(row);
   if(finished(row))return false;
+  // High / critical Findings: rows of an open high or critical Finding (its Actions, or the Finding
+  // itself when it has no active Action). The same population as the Dashboard's Finding count.
+  if(view==='high_critical'){const f=row.finding||(row.kind==='findings'?row.raw:null);return !!f&&findingOpen(f)&&['high','critical'].includes(f.severity);}
   if(view==='overdue')return dateMatches(row.due_date,'overdue',now);
   if(view==='upcoming')return dateMatches(row.due_date,'next30',now);
   if(view==='unassigned')return !row.owner_id;

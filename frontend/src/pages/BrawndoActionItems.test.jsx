@@ -45,10 +45,15 @@ test('stable summaries, orphan visibility, search, synchronized quick filters an
   // Dunder (any Demo client) gets the same reference Action Items page.
   expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
 });
-test('legacy Findings route redirects only Brawndo and preserves the Finding ID',async()=>{
-  mockQuery='?finding_id=f';await act(async()=>root.render(<FindingsRoute/>));
-  expect(container.querySelector('[data-testid="redirect"]').textContent).toBe('/action-items?finding_id=f');
-  mockClient='demo_dunder';await act(async()=>root.render(<FindingsRoute/>));expect(container.querySelector('[data-testid="redirect"]')).toBeNull();
+test('legacy Findings route redirects every Demo client and preserves the query',async()=>{
+  for(const client of ['demo_brawndo','demo_prestige','demo_dunder','demo_new_soc']){
+    mockClient=client;mockQuery='?finding_id=f';await act(async()=>root.render(<FindingsRoute/>));
+    expect(container.querySelector('[data-testid="redirect"]').textContent).toBe('/action-items?finding_id=f');
+  }
+  mockQuery='?signal=material';await act(async()=>root.render(<FindingsRoute/>));
+  expect(container.querySelector('[data-testid="redirect"]').textContent).toBe('/action-items?signal=material');
+  // Live (non-Demo) workspaces keep the standalone Findings register.
+  mockUser={...mockUser,workspace_mode:'live'};await act(async()=>root.render(<FindingsRoute/>));expect(container.querySelector('[data-testid="redirect"]')).toBeNull();
 });
 test('centered detail protects unsaved edits and submits completion with the edits in one write',async()=>{
   const close=jest.fn();await act(async()=>root.render(<RecordDrawer open kind="tasks" record={saved} clientId={mockClient} onOpenChange={close}/>));
