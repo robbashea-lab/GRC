@@ -214,7 +214,7 @@ export function frameworkRequest(db,path,method,params,body){
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
     const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
-    if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});row.assessment_history.push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
+    if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});(row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
     return row;
   }
   if(method==='post'&&operation==='links'){
