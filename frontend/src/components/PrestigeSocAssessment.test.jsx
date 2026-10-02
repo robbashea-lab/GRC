@@ -73,7 +73,6 @@ test('unrecognized historical IDs remain visible instead of being dropped or rel
  expect(record.soc_assessment_checks).toEqual(['CC9.2-retired-response']);
  expect(api.patch).not.toHaveBeenCalled();
 });
-
 test('shared context distinguishes selected controls, evidence alternatives and Type 2 operation',async()=>{
  await render();
  const context=container.querySelector('.psoc-guidance-context');
@@ -86,19 +85,19 @@ test('shared context distinguishes selected controls, evidence alternatives and 
 
 test('all in-scope criteria have stable, classified guidance and no forced empty panels',()=>{
  expect(socGuidance.tiers.map(t=>t.key)).toEqual(['criterion_requirements','operational_practices','enhanced_assurance']);
- expect(Object.keys(socGuidance.criteria)).toHaveLength(38);
- expect(Object.keys(socGuidance.criteria).sort()).toEqual(socCatalog.requirements.filter(d=>['security','availability','confidentiality'].includes(d.category)).map(d=>d.id).sort());
+ expect(Object.keys(socGuidance.criteria)).toHaveLength(61);
+ expect(Object.keys(socGuidance.criteria).sort()).toEqual(socCatalog.requirements.map(d=>d.id).sort());
  const ids=[];
  for(const [criterion,entry] of Object.entries(socGuidance.criteria)){
    expect(entry.source_reference).toBe(criterion);expect(entry.source_page).toBeGreaterThan(0);expect(entry.review_note).toBeTruthy();
-   expect(entry.items.some(i=>i.tier==='criterion_requirements')).toBe(true);
+   if(entry.items.length)expect(entry.items.some(i=>i.tier==='criterion_requirements')).toBe(true);
    for(const item of entry.items){
      ids.push(item.id);expect(item.id.startsWith(criterion+'-v1-')).toBe(true);expect(item.text).toBeTruthy();expect(item.source_reference).toBeTruthy();
      expect(item.tier==='criterion_requirements'?['criterion','point_of_focus']:item.tier==='operational_practices'?['operational_guidance']:['enhanced_assurance']).toContain(item.source_type);
    }
  }
  expect(new Set(ids).size).toBe(ids.length);
- expect(Object.values(socGuidance.criteria).filter(c=>!c.items.some(i=>i.tier==='enhanced_assurance'))).toHaveLength(8);
+ expect(Object.values(socGuidance.criteria).filter(c=>c.items.length&&!c.items.some(i=>i.tier==='enhanced_assurance'))).toHaveLength(8);
 });
 
 test('read-only reviewers can read practical guidance and cannot edit the assessment',async()=>{
@@ -183,13 +182,13 @@ test('the standard workspace receives SOC guidance through framework configurati
  expect(container.querySelectorAll('.psoc-tier')).toHaveLength(3);
 });
 
-test.each(['PI1.1','P1.1'])('%s retains its existing reference and assessment without CC/A/C guidance',async id=>{
+test.each(['PI1.1','P1.1'])('%s retains its existing reference and assessment with source-checked category-specific guidance',async id=>{
  record={...record,definition_id:id};
  await render('other-category-client');
  expect(container.querySelector('h2').textContent).toContain(id);
  expect(container.querySelector('[data-testid="soc-requirement-summary"]').textContent).not.toBe('');
- expect(container.querySelector('.psoc-guidance')).toBeNull();
- expect(container.textContent).toContain('Assessment guidance has not been reviewed for this criterion.');
+ expect(container.querySelector('.psoc-guidance')).toBeTruthy();
+ expect(container.querySelector('[data-testid="soc-requirement-summary"]').textContent).toBe(socGuidance.criteria[id].practical.summary);
  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
  await act(async()=>button('Save assessment').click());
  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({status:'in_progress',verification:'needs_validation',implementation:record.implementation}));
@@ -207,4 +206,46 @@ test('Prestige criterion exposes linked governance work and creates one sourced 
  await act(async()=>button('Create Finding & Action').click());
  expect(api.post).toHaveBeenCalledWith('/framework_assessments/soc-a/findings',expect.objectContaining({title:expect.stringContaining('CC9.2'),remediation_title:expect.stringContaining('CC9.2'),request_id:expect.any(String)}));
  expect(container.textContent).toContain('Finding and remediation Action created.');
+});
+test('static guide is collapsed, read-only, and above the criterion; desktop regions preserve native fields',async()=>{
+ await render();
+ const disclosure=container.querySelector('.psoc-guide-disclosure');
+ expect(disclosure.open).toBe(false);
+ expect(disclosure.compareDocumentPosition(container.querySelector('.brawndo-step'))&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ await act(async()=>disclosure.querySelector('summary').click());
+ await act(async()=>button('What should I ask IT or our provider?').click());
+ expect(button('What should I ask IT or our provider?').getAttribute('aria-pressed')).toBe('true');
+ expect(container.querySelector('.cis-guide-answer').textContent).toContain('subcontractors');
+ expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+ expect(container.textContent).not.toContain('Unsaved assessment changes');
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
+ expect(container.querySelector('[aria-label="Verification result"]').value).toBe('needs_validation');
+ expect(container.querySelector('input[value="in_progress"]').checked).toBe(true);
+ expect(container.querySelector('.psoc-implementation-layout').querySelectorAll('.brawndo-step')).toHaveLength(2);
+ expect(container.querySelector('.psoc-guidance-columns').children).toHaveLength(3);
+ expect(container.querySelector('.psoc-findings').compareDocumentPosition(container.querySelector('[aria-label="Current implementation"]'))&Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+ await act(async()=>button('Close assessment').click());
+ expect(document.body.textContent).not.toContain('Leave unsaved changes?');
+ expect(close).toHaveBeenCalledWith(false);
+});
+test('guide expansion and selected answer reset when navigating between criteria',async()=>{
+ await render();await act(async()=>container.querySelector('.psoc-guide-disclosure summary').click());
+ await act(async()=>button('What common gaps should I look for?').click());
+ record={...record,framework_assessment_id:'soc-b',definition_id:'A1.3'};
+ await render();
+ expect(container.querySelector('.psoc-guide-disclosure').open).toBe(false);
+ expect(button('Explain this in plain language.').getAttribute('aria-pressed')).toBe('true');
+ expect(container.querySelector('.cis-guide-answer').textContent).toContain('Recovery procedures must be tested');
+ expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+test('Finding retry preserves request identity and linked record origin',async()=>{
+ await render();await act(async()=>button('Raise Finding').click());
+ api.post.mockRejectedValueOnce(new Error('Temporary Finding failure'));
+ await act(async()=>button('Create Finding & Action').click());
+ expect(container.textContent).toContain('Temporary Finding failure');
+ expect(container.querySelector('[aria-label="Finding title"]')).toBeTruthy();
+ await act(async()=>button('Create Finding & Action').click());
+ expect(api.post.mock.calls[1]).toEqual(api.post.mock.calls[0]);
+ expect(api.post.mock.calls[0][0]).toBe('/framework_assessments/soc-a/findings');
+ expect(api.patch).not.toHaveBeenCalled();
 });

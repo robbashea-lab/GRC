@@ -1,5 +1,6 @@
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
 import AssessmentHistory from './AssessmentHistory';
+import SocRequirementGuide from './SocRequirementGuide';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import AssigneeSelect from './AssigneeSelect';
@@ -35,17 +36,21 @@ export default function PrestigeSocAssessment({state,actions}){
     footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?'Unsaved assessment changes':feedback||(!writable?'Read-only assessment':'Changes are saved when you choose Save assessment.')}</span></div><div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading assessment…</p>}
     <div className="bcsg-metadata"><div className="bcsg-owner"><span>Owner</span><AssigneeSelect clientId={record.client_id} label="Owner" value={form.owner_id} onChange={v=>put('owner_id',v)} users={ctx?.users||[]} disabled={disabled} showGuidance={false}/></div><label className="bcsg-verification">Verification<select aria-label="Verification result" disabled={disabled} value={verification} onChange={e=>put('verification',e.target.value)}>{Object.entries(VERIFICATION_LABELS).map(([v,label])=><option key={v} value={v}>{label}</option>)}</select></label><p className="bcsg-meta">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}{current.assessed_by?` · ${personLabel(ctx?.users,current.assessed_by,'Not recorded')}`:''}</p></div>
+    <div className="psoc-assessment-layout">
+    <details className="psoc-guide-disclosure" key={`${record.client_id}:${definition.id}`}><summary>Requirement guide</summary><SocRequirementGuide criterionId={definition.id}/></details>
     <Step number="1" title="What SOC 2 Requires"><p className="brawndo-requirement-title"><strong>{definition.id}</strong> · {definition.title}</p>{source.text?<><p className="text-xs text-ink-secondary">Official criterion text</p><p className="whitespace-pre-wrap" data-testid="soc-official-text">{source.text}</p></>:<><p className="text-xs text-ink-secondary">Requirement summary · Omnisciente</p><p data-testid="soc-requirement-summary">{practical?.summary||items.filter(i=>i.tier==='criterion_requirements').map(i=>i.text).join(' ')||guidance.meaning||definition.guidance}</p></>}{source.url&&<a className="bcsg-ref" href={source.url} target="_blank" rel="noopener noreferrer">AICPA Reference ↗</a>}</Step>
     <Step number="2" title="SOC 2 Assessment Guidance">
       <p className="text-xs text-ink-secondary">Omnisciente assessment guidance. Internal readiness, not an auditor opinion.</p>
       {practical?<div className="psoc-guidance" data-guidance-version={socGuidance.version}>
         <section className="psoc-tier" aria-labelledby="psoc-criterion-requirements">
           <h4 id="psoc-criterion-requirements">SOC 2 Criterion Requirements</h4>
+          <div className="psoc-guidance-columns">
           {[['review','What to review and confirm'],['evidence','Examples of supporting evidence'],['outcome','What good looks like']].map(([key,title])=><section key={key} className="psoc-guidance-group" aria-labelledby={`psoc-guidance-${key}`}>
             <h5 id={`psoc-guidance-${key}`}>{title}</h5>
             {key==='evidence'&&socGuidance.context?.evidence&&<p className="text-sm text-ink-secondary">{socGuidance.context.evidence}</p>}
             <ul>{practical[key].map(text=><li key={text}>{text}</li>)}</ul>
           </section>)}
+          </div>
         </section>
         {[['operational','Operational Practices'],['enhanced','Enhanced Assurance']].map(([key,title])=>practical[key].length?<section key={key} className="psoc-tier" aria-labelledby={`psoc-guidance-${key}`}>
           <h4 id={`psoc-guidance-${key}`}>{title}</h4>
@@ -56,23 +61,14 @@ export default function PrestigeSocAssessment({state,actions}){
       {practical&&socGuidance.context&&<details className="psoc-guidance-context"><summary>How to use this guidance</summary>{['categories','obligations','type2','gaps'].map(key=>socGuidance.context[key]&&<p key={key}>{socGuidance.context[key]}</p>)}</details>}
       {!!checks.length&&<details className="psoc-previous-checks"><summary>Previous checklist responses · {checks.length}</summary><p>Retained from the previous checklist, not recalculated against this guidance. These responses do not set Implementation Status or Verification.</p><ul>{checks.map(id=><li key={id}>{items.find(item=>item.id===id)?.text||id}</li>)}</ul></details>}
     </Step>
+    <div className="psoc-implementation-layout">
     <Step number="3" title="Implementation Status"><fieldset disabled={disabled}><legend className="sr-only">Implementation status</legend><div className="brawndo-status-options">{SOC_STATUS_OPTIONS.map(([status,label])=><label key={status} className={`cis-tone-${CIS_TONE[status]} ${form.status===status?'is-selected':''}`}><input type="radio" name="psoc-status" value={status} checked={form.status===status} onChange={()=>put('status',status)}/><span className="cis-dot" aria-hidden="true"/><span>{label}</span></label>)}</div></fieldset>{form.status==='not_applicable'&&<label className="block text-sm">Why is this criterion not applicable?<Textarea aria-label="N/A Rationale" disabled={disabled} value={form.na_rationale||''} onChange={e=>put('na_rationale',e.target.value)} maxLength={4000}/></label>}</Step>
     <Step number="4" title="Current Implementation"><p id="psoc-current-help" className="text-xs text-ink-secondary">{SOC_CURRENT_HELP}</p><label className="block text-sm"><span className="sr-only">Current implementation</span><Textarea aria-label="Current implementation" aria-describedby="psoc-current-help" rows={5} disabled={disabled} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)}/></label></Step>
-    <details className="psoc-linked">
-      <summary>Linked work and history</summary>
-      <p className="text-xs text-ink-secondary">These are existing governance records. Completing remediation does not change the assessment conclusion automatically.</p>
-      {[
-        ['reviews','Reviews','review_id'],['findings','Findings','finding_id'],['tasks','Action Items','task_id'],
-        ['risks','Risks','risk_id'],['policies','Policies','policy_id'],['evidence','Evidence','evidence_id']
-      ].map(([kind,label,id])=><section key={kind}>
-        <h3>{label} · {related?.[kind]?.length||0}</h3>
-        <ul>{related?.[kind]?.map(item=><li key={item[id]}>
-          {kind==='evidence'
-            ? <button type="button" disabled={busy} onClick={()=>download(item)}>{item.filename}</button>
-            : <button type="button" onClick={()=>setNested({kind,record:item})}>{item.title||item.name||item[id]}</button>}
-          {item.status&&` · ${item.status.replaceAll('_',' ')}`}
-        </li>)}</ul>
-      </section>)}
+    </div>
+    <section className="psoc-findings" aria-label="Criterion Findings">
+      <h3>Findings</h3>
+      <p className="text-xs text-ink-secondary">Completing remediation does not change the assessment conclusion automatically.</p>
+      {related?.findings?.length?<ul>{related.findings.map(item=><li key={item.finding_id}><button type="button" disabled={busy} onClick={()=>setNested({kind:'findings',record:item})}>{item.title||item.finding_id}</button>{item.status&&` · ${item.status.replaceAll('_',' ')}`}</li>)}</ul>:<p className="text-sm text-ink-secondary">No linked Findings for this criterion.</p>}
       {writable&&<div className="space-y-2">
         <Button variant="outline" disabled={disabled||!!finding} onClick={()=>setFinding({title:`${definition.id} · ${definition.title} — implementation gap`,description:current.implementation||'',remediation_title:`Address ${definition.id} implementation gap`,severity:'medium',request_id:recordUuid()})}>Raise Finding</Button>
         {finding&&<div className="space-y-2">
@@ -84,7 +80,24 @@ export default function PrestigeSocAssessment({state,actions}){
           <Button variant="ghost" onClick={()=>setFinding(null)}>Cancel</Button>
         </div>}
       </div>}
-      <AssessmentHistory record={current} users={ctx?.users} activity={ctx?.activity}/>
+    </section>
+    <details className="psoc-linked">
+      <summary>Linked work and history</summary>
+      <p className="text-xs text-ink-secondary">These are existing governance records. Completing remediation does not change the assessment conclusion automatically.</p>
+      {[
+        ['reviews','Reviews','review_id'],['tasks','Action Items','task_id'],
+        ['risks','Risks','risk_id'],['policies','Policies','policy_id'],['evidence','Evidence','evidence_id']
+      ].map(([kind,label,id])=><section key={kind}>
+        <h3>{label} · {related?.[kind]?.length||0}</h3>
+        <ul>{related?.[kind]?.map(item=><li key={item[id]}>
+          {kind==='evidence'
+            ? <button type="button" disabled={busy} onClick={()=>download(item)}>{item.filename}</button>
+            : <button type="button" onClick={()=>setNested({kind,record:item})}>{item.title||item.name||item[id]}</button>}
+          {item.status&&` · ${item.status.replaceAll('_',' ')}`}
+        </li>)}</ul>
+      </section>)}
     </details>
+    <AssessmentHistory record={current} users={ctx?.users} activity={ctx?.activity}/>
+    </div>
   </AssessmentShell>;
 }
