@@ -1,4 +1,5 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
+import {useRescueFocus} from '@/lib/focusRescue';
 import {useSearchParams} from 'react-router-dom';
 import api,{formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
@@ -108,7 +109,7 @@ export default function IsoAuditWorkspace({clientId}) {
   const {user}=useAuth(),[params,setParams]=useSearchParams();
   const [data,setData]=useState(null),[users,setUsers]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
   const [draft,setDraft]=useState({start_date:'',first_package:isoAuditCatalog.packages[0].key,auditor_id:null,scope:'',independence:''}),[preview,setPreview]=useState(false);
-  const [itemKey,setItemKey]=useState(null),[search,setSearch]=useState(''),[nested,setNested]=useState(null);
+  const [itemKey,setItemKey]=useState(null),[search,setSearch]=useState(''),[nested,setNested]=useState(null),packageHeading=useRef(null);
   useEffect(()=>{
     const c=new AbortController();setError('');
     Promise.all([api.get('/iso-audit',{params:{client_id:clientId},signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal})]).then(([a,b])=>{if(!c.signal.aborted){setData(a.data);setUsers(b.data);if(a.data.program?.status==='configuring')setDraft(a.data.program.configuration);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
@@ -117,6 +118,8 @@ export default function IsoAuditWorkspace({clientId}) {
   const selectPackage=key=>{const p=new URLSearchParams(params);if(key)p.set('package',key);else p.delete('package');p.delete('audit_occurrence');setParams(p);setItemKey(null);setSearch('');};
   const current=data?.reviews.find(r=>r.iso_audit.package_key===params.get('package'));
   const historical=current?.occurrences?.find(o=>o.occurrence_id===params.get('audit_occurrence')),review=historical||current;
+  // Opening a package replaces the package list (and the activated row): rescue lost focus to its title.
+  useRescueFocus(packageHeading,review?.review_id);
   const pack=review&&auditPackage(review.iso_audit.package_key),items=pack?.items.filter(i=>(i.reference+' '+i.title+' '+i.area).toLowerCase().includes(search.toLowerCase()))||[];
   const item=pack?.items.find(i=>i.key===itemKey),index=items.findIndex(i=>i.key===itemKey),plan=auditActivationPlan(draft.start_date,draft.first_package);
   async function run(fn){setBusy(true);setError('');try{await fn();}catch(e){setError(formatError(e));}finally{setBusy(false);}}
@@ -140,7 +143,7 @@ export default function IsoAuditWorkspace({clientId}) {
       <p className="text-xs text-ink-secondary">Activated {data.program.activated_at.slice(0,10)} · program starts {data.program.configuration.start_date}. Current assignments and due dates come from Reviews.</p>
       <Button variant="ghost" size="sm" onClick={()=>selectPackage(null)}>All audit packages</Button>
       {!review?<div className="framework-category-list">{data.reviews.map(r=>{const p=auditProgress(r.iso_audit),last=r.occurrences?.filter(o=>o.iso_audit&&o.completed_at).at(-1);return <button key={r.review_id} className="framework-category-row" onClick={()=>selectPackage(r.iso_audit.package_key)}><h3 className="font-medium">{auditPackage(r.iso_audit.package_key).title}</h3><p className="text-sm">{auditQuarter(r.due_date)} · Cycle {r.iso_audit.cycle} · {p.complete} / {p.total} complete</p><p className="text-xs text-ink-secondary">{r.status.replaceAll('_',' ')} · {p.nonconformities} Nonconformities · {p.observations} Observations</p>{last&&<p className="text-xs">Last completed {last.completed_at.slice(0,10)}{last.finding_count?' · Findings raised':''}</p>}</button>;})}</div>:<>
-        <header className="flex flex-wrap justify-between gap-3"><div><h3 className="font-semibold">{pack.title}</h3><p className="text-sm">Cycle {review.iso_audit.cycle} · {auditQuarter(review.due_date)} · {auditProgress(review.iso_audit).complete} / {pack.items.length} complete</p><p className="text-xs text-ink-secondary">Auditor: {users.find(u=>u.user_id===review.owner_id)?.name||'Historical / unassigned'} · Due {review.due_date?.slice(0,10)}</p></div><Button variant="outline" onClick={()=>setNested({kind:'reviews',record:current,initialValues:historical?{occurrence:historical}:undefined})}>Open central Review</Button></header>
+        <header className="flex flex-wrap justify-between gap-3"><div><h3 ref={packageHeading} className="font-semibold">{pack.title}</h3><p className="text-sm">Cycle {review.iso_audit.cycle} · {auditQuarter(review.due_date)} · {auditProgress(review.iso_audit).complete} / {pack.items.length} complete</p><p className="text-xs text-ink-secondary">Auditor: {users.find(u=>u.user_id===review.owner_id)?.name||'Historical / unassigned'} · Due {review.due_date?.slice(0,10)}</p></div><Button variant="outline" onClick={()=>setNested({kind:'reviews',record:current,initialValues:historical?{occurrence:historical}:undefined})}>Open central Review</Button></header>
         <p className="text-sm">{review.scope}</p>
         <label className="text-sm block">Audit occurrence<select className={SELECT} aria-label="Audit occurrence" value={historical?.occurrence_id||''} onChange={e=>{const p=new URLSearchParams(params);if(e.target.value)p.set('audit_occurrence',e.target.value);else p.delete('audit_occurrence');setParams(p);setItemKey(null);}}><option value="">{'Current cycle '+current.iso_audit.cycle}</option>{current.occurrences?.filter(o=>o.iso_audit).map(o=><option key={o.occurrence_id} value={o.occurrence_id}>{'Cycle '+o.iso_audit.cycle+' · completed '+o.completed_at.slice(0,10)}</option>)}</select></label>
         <Input aria-label="Search audit items" placeholder="Reference, title or audit area…" value={search} onChange={e=>setSearch(e.target.value)}/>

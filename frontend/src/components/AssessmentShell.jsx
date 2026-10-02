@@ -7,7 +7,9 @@ import './BrawndoCisAssessment.css';
 /** Presentation only. Callers own persistence, native conclusions and leave guards. */
 export default function AssessmentShell({open=true,title,description,status,position,
   previous,next,close,busy,children,context,footer,crumbs,ariaModal,testId='framework-assessment-workspace',returnSelector}) {
-  const heading=useRef(null),opener=useRef(document.activeElement);
+  // The opener is the page control that opened the drawer. When the shell remounts for Next /
+  // Save & next the active element is inside the closing drawer, which is not a return target.
+  const heading=useRef(null),opener=useRef(document.activeElement?.closest?.('[data-assessment-shell]')?null:document.activeElement);
   return <Dialog open={open} onOpenChange={value=>{if(!value)close();}}>
     <DialogContent className="brawndo-cis-assessment bg-surface-card" data-testid={testId} aria-modal={ariaModal?'true':undefined}
       onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus();}}

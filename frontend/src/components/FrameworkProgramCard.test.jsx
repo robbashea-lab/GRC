@@ -65,3 +65,9 @@ test.each([['no records',[]],['all N/A',[{status:'not_applicable'},{status:'not_
   expect(card.querySelector('.bd-explain').textContent).toContain('readiness is not calculated');
   expect(card.textContent).toContain('Internal readiness, not an auditor opinion.');
 });
+test('a tab-scoped ISO explanation uses the tab noun and its excluded count',()=>{
+  const {readinessExplanation,readinessLabels}=require('./FrameworkProgramCard');
+  const text=readinessExplanation('iso-27001',{applicable:90,addressed:70,assessed:87,na:0},readinessLabels('iso-27001'),{items:'controls',excluded:3,excludedText:'Annex A controls not included in the Statement of Applicability are left out of the denominator'});
+  expect(text).toContain('controls concluded');expect(text).toContain('(70 of 90)');expect(text).toContain('(3 excluded)');
+  expect(text).not.toContain('requirements');
+});
