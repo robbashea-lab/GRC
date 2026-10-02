@@ -42,10 +42,10 @@
 - [x] Document authoritative relationship ownership; invariant checks and dry-run repair report.
 - [x] Canonical writable fields/lifecycle values; contradiction rejection and compatible legacy reads.
 - [x] Safe migration tooling with fixtures, dry-run and recovery provisions; no shared data mutation.
-- [ ] Backend/frontend regression suites and production/preview builds.
+- [x] Backend/frontend regression suites and production/preview builds; exact counts and limits in release matrix.
 - [ ] Browser QA across Brawndo, Prestige, Dunder, newly created client; themes/responsive/keyboard/retry/isolation.
 - [x] Fetch main again, reconcile changes, rerun affected checks (main remains `6cc52ad`; visual follow-ups through `a2dd220` integrated).
-- [ ] Final diff review, coherent commits, push branch, open PR (diff review complete; publication sequence next).
+- [x] Candidate diff review, coherent commits, branch push, PR #12 merged, private Demo version 87 published from `82f6972`. Final release remains gated by published workflow matrix.
 
 ## Verification log
 
@@ -70,8 +70,8 @@
 
 Operator clarity is part of each workflow checkpoint: required/optional, owner, due date, evidence needed, unresolved state and next action. Reconcile summaries with underlying lists; keep unassessed, pending-validation and unassigned work visible. Activity completion must not imply control implementation/verification. Add UI copy/steps only for observed ambiguity. One coordinated integration/publish sequence; the agreed coverage matrix is the finish line.
 
-- [ ] Review combined backlog implementation, reconcile main, pass checks, merge PR.
-- [ ] Publish Demo release candidate; verify deployed commit/build.
+- [x] Review combined backlog implementation, reconcile main, pass checks, merge PR #12.
+- [x] Publish Demo release candidate 87; verify deployed `82f6972` and exact bundle hash.
 - [ ] Sequential browser operator journeys: Brawndo CIS, Dunder ISO, Prestige SOC; record workflow coverage, themes/widths, keyboard, isolation, persistence.
 - [ ] New CIS IG1-only client: accurate onboarding plus 36 months via real commands and controlled test clock.
 - [ ] New SOC 2 client: scoped categories/tiered guidance plus 36 months.

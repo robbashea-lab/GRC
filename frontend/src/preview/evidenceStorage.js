@@ -16,19 +16,25 @@ const expandReviews=reviews=>(reviews||[]).map(review=>({...review,occurrences:(
   if(!occurrence._review_inherited)return occurrence;
   const expanded={...occurrence};for(const field of expanded._review_inherited)expanded[field]=copy(review[field]);delete expanded._review_inherited;return expanded;
 })}));
-export function lightweightStore(db){
+export function lightweightStore(db,previousEvidence=[]){
   let remaining=64*1024; // Aggregate UTF-16 payload budget, independent of metadata.
-  return {...db,reviews:compactReviews(db.reviews),evidence:(db.evidence||[]).map(e=>{
+  const evidence=db.evidence||[],previous=new Map(previousEvidence.map(e=>[e.evidence_id,e]));
+  // Reserve already-persisted bytes first: prepending another client's upload must
+  // not demote a durable file to the reload-sensitive memory cache.
+  const retained=new Set(evidence.filter(e=>e.content_base64&&previous.get(e.evidence_id)?.client_id===e.client_id&&previous.get(e.evidence_id).content_base64===e.content_base64));
+  const inline=new Set();
+  for(const e of [...retained,...evidence.filter(e=>!retained.has(e))]){
+    const bytes=payloadBytes(e.content_base64);
+    if(e.content_base64&&fileBytes(e.content_base64)<=DEMO_INLINE_LIMIT&&bytes<=remaining){inline.add(e);remaining-=bytes;}
+  }
+  return {...db,reviews:compactReviews(db.reviews),evidence:evidence.map(e=>{
     const {content_base64,...metadata}=e;
-    const bytes=payloadBytes(content_base64);
-    if(content_base64&&(fileBytes(content_base64)>DEMO_INLINE_LIMIT||bytes>remaining))return {...metadata,demo_file_storage:'session_only'};
-    remaining-=bytes;return e;
+    return content_base64&&!inline.has(e)?{...metadata,demo_file_storage:'session_only'}:e;
   })};
 }
-export function rememberFiles(db){
+export function rememberFiles(db,persisted=lightweightStore(db)){
   const ids=new Set((db.evidence||[]).map(e=>e.evidence_id));
   for(const id of files.keys())if(!ids.has(id))files.delete(id);
-  const persisted=lightweightStore(db);
   for(const [i,e] of (db.evidence||[]).entries())if(e.content_base64&&!persisted.evidence[i].content_base64){files.delete(e.evidence_id);files.set(e.evidence_id,{client_id:e.client_id,content:e.content_base64});}
   let bytes=[...files.values()].reduce((n,f)=>n+payloadBytes(f.content),0);
   for(const [id,f] of files){if(bytes<=MAX_CACHE_BYTES)break;files.delete(id);bytes-=payloadBytes(f.content);}

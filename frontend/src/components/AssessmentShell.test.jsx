@@ -5,11 +5,14 @@ import AssessmentShell from './AssessmentShell';
 let root,container;
 const button=name=>[...document.querySelectorAll('button')].find(el=>el.textContent===name);
 const flushClose=async()=>{await act(async()=>jest.runAllTimers());};
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;jest.useFakeTimers();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
-afterEach(async()=>{await act(async()=>root.unmount());await flushClose();container.remove();jest.useRealTimers();});
-function Example({removeOpener=false}){
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;jest.useFakeTimers();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
+  // jsdom has no layout; model only the heading visibility boundary used by focus rescue.
+  jest.spyOn(HTMLHeadingElement.prototype,'getClientRects').mockImplementation(function(){return this.closest('[hidden]')?[]:[{}];});
+});
+afterEach(async()=>{await act(async()=>root.unmount());await flushClose();container.remove();jest.restoreAllMocks();jest.useRealTimers();});
+function Example({removeOpener=false,hiddenHeader=false}){
   const [open,setOpen]=useState(false),[step,setStep]=useState(1);
-  return <main><h1>Framework workspace</h1>{(!removeOpener||!open)&&<button onClick={()=>setOpen(true)}>Open assessment</button>}
+  return <main>{hiddenHeader&&<header hidden><h1>Hidden generic header</h1></header>}<h1>Framework workspace</h1>{(!removeOpener||!open)&&<button onClick={()=>setOpen(true)}>Open assessment</button>}
     {open&&<AssessmentShell key={step} title={'Assessment '+step} description="Review the recorded implementation."
       close={()=>setOpen(false)} next={()=>setStep(step+1)} position={step+' of 2'}
       footer={<button onClick={()=>setOpen(false)}>Close assessment</button>}>Assessment content</AssessmentShell>}</main>;
@@ -29,4 +32,9 @@ test('Next remounts do not retain a drawer control as the page opener',async()=>
   await openExample();const next=button('Next');next.focus();await act(async()=>next.click());await flushClose();
   expect(document.activeElement.textContent).toBe('Assessment 2');
   await close();expect(document.activeElement).toBe(container.querySelector('h1'));
+});
+test('Next then close falls back to the visible workspace heading, not an earlier hidden header',async()=>{
+  await openExample({hiddenHeader:true});const next=button('Next');next.focus();await act(async()=>next.click());await flushClose();
+  await close();expect(document.activeElement).toBe(container.querySelector('main > h1'));
+  expect(container.querySelector('header h1').hasAttribute('tabindex')).toBe(false);
 });

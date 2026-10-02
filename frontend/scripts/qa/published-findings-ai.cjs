@@ -19,7 +19,7 @@ module.exports = async function publishedFindingsAI({page, expect, assert, go, s
   const openWork = async title => {
     await go('/action-items?view=all');
     await page.getByTestId('ai-search').fill(title);
-    await page.getByRole('button', {name: title, exact: true}).click();
+    await page.locator('button.register-record-link').filter({hasText:title}).click();
   };
   const ai = () => page.getByTestId('ai-drawer');
   const openAI = async title => {

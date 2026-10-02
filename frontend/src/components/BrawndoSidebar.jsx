@@ -43,7 +43,7 @@ function ProfileMenu(){
       </DropdownMenu>
     </div>;
 }
-const Brand=()=><div className="bsb-brand"><span className="bsb-mark" aria-hidden="true">O</span><span><span className="bsb-name">Omnisciente</span><span className="bsb-sub">Prestige Worldwide</span></span></div>;
+const Brand=()=><div className="bsb-brand" aria-label="Omnisciente by Prestige Worldwide"><span className="bsb-mark" aria-hidden="true">O</span><span><span className="bsb-name">Omnisciente</span><span className="bsb-sub">By Prestige Worldwide</span></span></div>;
 
 // Portfolio (platform) context in the reference theme: Portfolio, the client navigator, Administration.
 export function BrawndoPlatformSidebar({adminItems=[]}){

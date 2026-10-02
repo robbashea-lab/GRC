@@ -420,15 +420,17 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
 
   async function markRiskReviewed() {
-    if(riskPilot){const saved=dirty?await save(undefined,true):record;if(!saved)return;setSaving(true);try{const {data}=await api.post(`/risks/${record.risk_id}/review`);setRelatedDrawer({kind:"reviews",record:data.review});}catch(e){toast.error(formatError(e));}finally{setSaving(false);}return;}
+    if(!canWrite||saving)return;
+    const saved=(riskPilot?dirty:formDirty)?await save(undefined,true):record;
+    if(!saved)return;
+    Object.assign(record,saved);
+    setSaving(true);
     try {
-      const changes=cleanForm();
-      for(const key of ["last_reviewed","risk_score","risk_level","date_identified"]) delete changes[key];
-      if(Object.keys(changes).length) await api.patch(`/risks/${record.risk_id}`,{...changes,expected_updated_at:record.updated_at??null});
       const {data}=await api.post(`/risks/${record.risk_id}/review`);
       setRelatedDrawer({kind:"reviews",record:data.review});
-      onSaved?.();
+      if(!riskPilot)onSaved?.();
     } catch(e) {toast.error(formatError(e));}
+    finally{setSaving(false);}
   }
 
   async function refreshFindingReadiness() {
@@ -484,7 +486,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       const { data } = await api.post(`/risks/${record[idField]}/accept`, {...body,expected_updated_at:record.updated_at??null});
       toast.success("Risk accepted");
       if (record) Object.assign(record, data);
-      setForm((p) => {const next={...p,status:"accepted",treatment:"accept",next_review:toDateInput(data.next_review)};if(riskPilot)initialForm.current=next;return next;});
+      setForm((p) => {const next={...p,status:"accepted",treatment:"accept",next_review:toDateInput(data.next_review),...(body.compensating_controls!==undefined?{compensating_controls:data.compensating_controls||''}:{})};if(riskPilot)initialForm.current=next;return next;});
       setAcceptOpen(false);
       onSaved?.();
     } catch (e) { toast.error(formatError(e)); }

@@ -15,7 +15,7 @@ async function input(){
     if(terminal)process.stdin.setRawMode(true);
     process.stderr.write('Ready for published QA JSON on stdin (input is hidden).\n');
     process.stdin.setEncoding('utf8');process.stdin.resume();
-    const read=chunk=>{text+=chunk;if(!text.includes('\n'))return;
+    const read=chunk=>{text+=chunk;if(!/[\r\n]/.test(text))return;
       process.stdin.removeListener('data',read);if(terminal)process.stdin.setRawMode(false);process.stdin.pause();
       try{resolve(JSON.parse(text.trim()));}catch{reject(Error('Invalid QA input'));}
     };process.stdin.on('data',read);
@@ -61,7 +61,7 @@ async function frameworkJourney({page,go,store,cid,framework,prefix}){
 
 async function dashboardJourney({page,go,store,cid,framework}){
   await go('/dashboard');const db=await store(),client=db.clients.find(c=>c.client_id===cid);
-  const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../../../..','shared/catalogs',{'cis-ig1':'cisIG1.json','soc-2':'soc2.json','iso-27001':'iso27001.json'}[framework]),'utf8'));
+  const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../../..','shared/catalogs',{'cis-ig1':'cisIG1.json','soc-2':'soc2.json','iso-27001':'iso27001.json'}[framework]),'utf8'));
   const categories=client.framework_settings?.['soc-2']?.categories||['security'];
   const definitions=new Map(catalog.requirements.map(r=>[r.id,r]));
   const rows=db.framework_assessments.filter(r=>r.client_id===cid&&r.framework_key===framework)
@@ -101,6 +101,13 @@ async function reviewJourney({page,expect,assert,go,store,cid,prefix}){
   await expect(drawer().getByTestId('review-start')).toBeVisible();
   let row=(await store()).reviews.find(r=>r.client_id===cid&&r.title===prefix+' Quarterly access review');
   assert.ok(row);assert.ok(!row.owner_id,'unassigned is retained rather than silently filled');
+  const owner=drawer().getByTestId('field-owner_id'),ownerLabel=await owner.getAttribute('aria-label');
+  await owner.click();
+  await page.locator('[aria-label="'+ownerLabel+' candidates"]').getByRole('button').filter({hasNotText:/^Unassigned$/}).first().click();
+  await drawer().getByTestId('field-notes').fill(prefix+' review account ownership against retained evidence.');
+  await drawer().getByTestId('drawer-save').click();
+  await expect.poll(async()=>(await store()).reviews.find(r=>r.review_id===row.review_id).owner_id).toBeTruthy();
+  assert.equal((await store()).reviews.find(r=>r.review_id===row.review_id).notes,prefix+' review account ownership against retained evidence.');
   await drawer().getByTestId('review-start').click();
   await drawer().getByTestId('tab-evidence').click();
   await drawer().getByTestId('drawer-evidence-input').setInputFiles({name:prefix+'-review.txt',mimeType:'text/plain',buffer:Buffer.from('Disposable release verification evidence')});
@@ -144,12 +151,24 @@ async function reviewJourney({page,expect,assert,go,store,cid,prefix}){
   await drawer().getByTestId('review-history').getByRole('button').first().click();
   await drawer().getByTestId('tab-evidence').click();await expect(drawer()).toContainText(prefix+'-review.txt');
   assert.deepEqual((await store()).reviews.find(r=>r.review_id===row.review_id).occurrences,saved.occurrences);
-  await go('/calendar');await expect(page.locator('main')).not.toBeEmpty();
+  await go('/calendar');
+  const now=await page.evaluate(()=>({year:new Date().getFullYear(),month:new Date().getMonth()}));
+  const due=new Date(saved.due_date),months=(due.getUTCFullYear()-now.year)*12+due.getUTCMonth()-now.month;
+  assert.ok(Math.abs(months)<=36,'bounded Calendar verification');
+  for(let i=0;i<Math.abs(months);i++)await page.getByTestId(months<0?'cal-prev':'cal-next').click();
+  await expect(page.getByTestId('cal-month-label')).toHaveText('April 2027');
+  await expect(page.getByText('Loading Calendar…',{exact:true})).toHaveCount(0);
+  const day=page.getByTestId('cal-day-2027-04-30'),more=day.getByRole('button',{name:/^Show all /});
+  if(await more.count())await more.click();
+  const currentEntry=day.getByRole('button').filter({hasText:row.title});
+  await expect(currentEntry).toHaveCount(1);await currentEntry.click();
+  await expect(drawer().getByTestId('field-due_date')).toHaveValue('2027-04-30');
   return {review_id:row.review_id,finding_id:finding.finding_id,next_due:saved.due_date};
 }
 
 async function main(){
   const cfg=await input();assert.equal(cfg.origin,SITE);assert.ok(cfg.commit&&cfg.version&&cfg.mainFile&&cfg.mainSha256);
+  assert.ok(!cfg.stage||['presentation','records'].includes(cfg.stage));
   const artifacts=path.resolve(cfg.artifacts);fs.mkdirSync(artifacts,{recursive:true});
   const results=[],errors=[];
   const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
@@ -177,14 +196,22 @@ async function main(){
         await page.getByTestId('sidebar-open-'+cid).click();await expect(page.getByTestId('context-header-client')).toContainText(name);
         const initial=await store();
         record('E01',await dashboardJourney({page,go,store,cid,framework}));
+        let chain,extra=[],findingsAI=[];
+        if(cfg.stage!=='presentation'){
+        if(cfg.stage!=='records'){
         await frameworkJourney({page,go,store,cid,framework,prefix});record('E02/E14','Framework narrative save/history, unchanged implementation conclusion, Save & next, draft guard, focus and reload');
-        const chain=await reviewJourney({page,expect,assert,go,store,cid,prefix});record('E03/E04/E09/E10/E14',chain);
-        const extra=await require('./published-record-journey.cjs')({page,expect,assert,go,store,cid,prefix,artifacts});
+        if(framework==='soc-2'){
+          const scope=page.getByText('Scope and observation period settings',{exact:true});
+          results.push({client:cid,scenario:'E02 SOC scope editor',status:await scope.count()?'passed':'failed',detail:'Existing scope/category and observation-period editor must be reachable in the configured SOC workspace'});
+          console.log(JSON.stringify(results.at(-1)));
+        }
+        chain=await reviewJourney({page,expect,assert,go,store,cid,prefix});record('E03/E04/E09/E10/E14',chain);
+        }
+        extra=await require('./published-record-journey.cjs')({page,expect,assert,go,store,cid,prefix,artifacts,scenarioIds:cfg.scenarioIds});
         for(const result of extra){results.push({client:cid,...result});console.log(JSON.stringify(results.at(-1)));}
-        const findingsAI=await require('./published-findings-ai.cjs')({page,expect,assert,go,store,cid,prefix,artifacts});
+        findingsAI=await require('./published-findings-ai.cjs')({page,expect,assert,go,store,cid,prefix,artifacts});
         for(const result of findingsAI){results.push({client:cid,...result});console.log(JSON.stringify(results.at(-1)));}
-        assert.ok(extra.every(r=>r.status==='passed'),'One or more record journeys failed; inspect results');
-        assert.ok(findingsAI.every(r=>r.status==='passed'),'Finding/AI journeys failed; inspect results');
+        }
         for(const [route,label] of [['dashboard','Dashboard'],['reviews','Reviews'],['findings','Findings'],['action-items','Action Items'],['risks','Risks'],['policies','Policies'],['vendors','Vendors'],['evidence','Evidence'],['calendar','Calendar'],['contacts','Contacts'],['client-settings','Client Settings']]){
           await go('/'+route);await page.screenshot({path:path.join(artifacts,cid+'-'+route+'.png'),fullPage:true});
           assert.ok((await page.locator('main').innerText()).trim(),label);
@@ -199,16 +226,21 @@ async function main(){
           await page.screenshot({path:path.join(artifacts,cid+'-'+width+'-light.png'),fullPage:true});
         }
         record('E15','Desktop/tablet no document overflow; light/dark screenshots require visual inspection');
+        assert.ok(results.every(r=>r.status!=='failed'),'One or more published workflows failed; inspect results');
+        assert.ok(extra.every(r=>r.status==='passed'),'One or more record journeys failed; inspect results');
+        assert.ok(findingsAI.every(r=>r.status==='passed'),'Finding/AI journeys failed; inspect results');
         const after=await store();
         assert.deepEqual(after.framework_assessments.filter(r=>r.client_id===cid).map(r=>[r.framework_assessment_id,r.status,r.verification]),initial.framework_assessments.filter(r=>r.client_id===cid).map(r=>[r.framework_assessment_id,r.status,r.verification]),'completed activity does not change control conclusions');
-        for(const kind of ['reviews','findings','tasks','risks','policies','vendors','evidence','framework_assessments'])assert.deepEqual(after[kind].filter(r=>r.client_id!==cid),initial[kind].filter(r=>r.client_id!==cid),'other clients unchanged '+kind);
-        await page.reload();assert.ok((await store()).reviews.some(r=>r.review_id===chain.review_id));
-        record('E16','Same-session reload persisted; other clients unchanged; context disposal removes synthetic edits');
+        const collections=['reviews','findings','tasks','risks','policies','vendors','evidence','framework_assessments','ai_systems','assets','contacts','clients'];
+        for(const kind of collections)assert.deepEqual(after[kind].filter(r=>r.client_id!==cid),initial[kind].filter(r=>r.client_id!==cid),'other clients unchanged '+kind);
+        await page.reload();if(chain)assert.ok((await store()).reviews.some(r=>r.review_id===chain.review_id));
+        const reloaded=await store();for(const kind of collections)assert.deepEqual(reloaded[kind].filter(r=>r.client_id===cid),after[kind].filter(r=>r.client_id===cid),'same-session reload retains '+kind);
+        record('E16',cfg.stage==='presentation'?'Presentation-only context: navigation/reload did not change other clients or assessment conclusions; no mutation persistence claim':'Same-session reload persisted; other clients unchanged; context disposal removes synthetic edits');
       }catch(error){results.push({client:cid,status:'failed',message:error.message});await page.screenshot({path:path.join(artifacts,cid+'-failure.png'),fullPage:true});throw error;}
       finally{await context.close();fs.writeFileSync(path.join(artifacts,'results.json'),JSON.stringify({commit:cfg.commit,version:cfg.version,results,errors},null,2));}
     }
     assert.deepEqual(errors,[]);
   }finally{await browser.close();}
 }
-module.exports={input,SITE,KEY,frameworkJourney,reviewJourney};
+module.exports={input,SITE,KEY,frameworkJourney,reviewJourney,dashboardJourney};
 if(require.main===module)main().catch(e=>{console.error(e);process.exitCode=1;});
