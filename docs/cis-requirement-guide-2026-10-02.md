@@ -1,5 +1,39 @@
 # CIS IG1 static Requirement guide
 
+## Approved layout rollout — 2026-10-02
+
+Retrieved and inspected preview-source commit
+`e82102352255f3f8cfc339af2d3ed9a2bd6fe46c`, based on GitHub main
+`ee86353ac99d85a4b11cd1b2e674d345371e33f4`. Its approved presentation now
+applies through the existing CIS framework configuration, without preview,
+client-ID or safeguard-ID gates. No dashboard, catalog, backend, schema,
+dependency, assessment-data or other-framework changes.
+
+- Guide starts collapsed near the top; expanded questions sit beside the answer.
+  Its native disclosure and question selection reset on client/safeguard change.
+- Requirement spans the workspace; three desktop guidance columns stack below
+  1000px. Status and implementation sit beside each other and stack below 720px.
+- Findings immediately follow implementation in DOM/keyboard order. Ownership,
+  verification, legacy notes, history and guarded save/navigation remain intact.
+- All existing requirement wording and all 280 guide answers are unchanged.
+
+Validation: 182 tests across eight focused suites passed; changed-component lint
+passed without warnings. Optimized Demo build passed (existing bundle-size and
+Node fs.F_OK advisories). Loopback browser QA saved/reloaded all 56 safeguards,
+checked all 280 answers without writes, and exercised Finding/Action/Evidence,
+draft guards, Save & next, Previous, focus trap/return and Escape. Long asset
+inventory and shorter incident-reporting screens passed at 1440/1280/1024/768
+in both themes; screenshots inspected. Both real UI onboarding cases passed:
+new CIS-only client and disposable ISO client later adding CIS, with fresh CIS
+state and preserved ISO/other-client records. Actual SOC/ISO workspaces remained
+unchanged. No browser runtime errors. These are isolated static Demo checks,
+not new persistent-backend or independent security validation.
+
+The initial overflow probe incorrectly included one-pixel screen-reader labels;
+it now tests visible layout and still checks dialog bounds/overflow. No product
+workaround or data reset was needed. Publication identifiers belong to the
+PR/release handoff. The original implementation report below is historical.
+
 Base: GitHub main `009bb1ab13a215df0f6f42d1d132b60fe22ea873` (includes PR #17's SOC 2 guidance).
 
 ## Implementation

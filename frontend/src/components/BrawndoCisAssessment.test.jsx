@@ -5,6 +5,7 @@ import {frameworkWorkspace} from '@/lib/frameworks';
 import api from '@/lib/api';
 import {BrawndoCisHeader} from './BrawndoCisOverview';
 import guide from '@catalogs/operatorGuidance/cisRequirementGuide.json';
+import catalog from '@catalogs/cisIG1.json';
 import {GUIDE_QUESTIONS} from './CisRequirementGuide';
 
 let mockUser,mockOfficial=null;
@@ -14,7 +15,7 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn
 jest.mock('./RecordDrawer',()=>({kind,record,onOpenChange})=><div data-testid="nested">{kind} {record.title}<button onClick={()=>onOpenChange(false)}>Close linked record</button></div>);
 jest.mock('./AssigneeSelect',()=>()=>null);
 jest.mock('./ui/dialog',()=>{
- const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};
+ const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef(({children,...props},ref)=><h2 {...props} ref={ref}>{children}</h2>),DialogDescription:({children})=><p>{children}</p>};
 });
 let root,container,record,related,close,next;
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);
@@ -30,7 +31,7 @@ beforeEach(()=>{
  api.post.mockResolvedValue({data:{}});
 });
 afterEach(async()=>{mockOfficial=null;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_brawndo" onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
+async function render(clientId='demo_brawndo'){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
 
 test('framework configuration selects distinct workspaces without tenant identities',()=>{
  expect(frameworkWorkspace('cis-ig1')).toBe('cis');
@@ -54,6 +55,12 @@ test('four sections in order; verification remains editable near the top',async(
  expect(container.querySelector('h2').textContent).toBe('CIS IG1 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
  expect(container.querySelector('header').textContent).not.toContain('Last assessed');
  expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
+ const disclosure=container.querySelector('.cis-guide-disclosure');
+ expect(disclosure.open).toBe(false);
+ expect(disclosure.compareDocumentPosition(container.querySelector('.brawndo-step')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ const implementation=container.querySelector('.cis-implementation-layout');
+ expect(implementation.children).toHaveLength(2);
+ expect(implementation.nextElementSibling).toBe(container.querySelector('.bcsg-findings'));
 });
 test('What CIS Requires labels the summary and links the official reference; official_text renders verbatim when supplied',async()=>{
  await render();expect(container.textContent).toContain('Requirement summary');expect(container.textContent).not.toContain('Omnisciente summary — not official CIS text');
@@ -88,6 +95,7 @@ test('status, narrative and verification save while retaining prior criteria and
 
 test('guide selects one answer without writes or drafts and resets on safeguard/client changes',async()=>{
  await render();const before=JSON.stringify(record);
+ container.querySelector('.cis-guide-disclosure').open=true;
  const answer=()=>container.querySelector('.cis-guide-answer p').textContent;
  expect(answer()).toBe(guide.requirements['1.1'].plain);
  for(const [key,label] of GUIDE_QUESTIONS){
@@ -99,12 +107,28 @@ test('guide selects one answer without writes or drafts and resets on safeguard/
  expect(JSON.stringify(record)).toBe(before);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
  expect(container.textContent).not.toContain('Unsaved assessment changes');
  record={...record,framework_assessment_id:'b',definition_id:'14.1'};await render();
+ expect(container.querySelector('.cis-guide-disclosure').open).toBe(false);
  expect(answer()).toBe(guide.requirements['14.1'].plain);
  await tick(button('What common gaps should I look for?'));
+ container.querySelector('.cis-guide-disclosure').open=true;
  record={...record,client_id:'new-cis-client',framework_assessment_id:'c'};
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="new-cis-client" onOpenChange={close}/>));
  expect(answer()).toBe(guide.requirements['14.1'].plain);
+ expect(container.querySelector('.cis-guide-disclosure').open).toBe(false);
  expect(container.querySelector('.cis-guide-questions [aria-pressed="true"]').textContent).toBe('Explain this in plain language.');
+});
+
+test('approved layout applies to all 56 safeguards for a non-Brawndo CIS client',async()=>{
+ for(const definition of catalog.requirements){
+  record={...record,client_id:'new-cis-client',definition_id:definition.id,framework_assessment_id:'new-'+definition.id};
+  await render('new-cis-client');
+  expect(container.querySelector('.cis-assessment-layout')).toBeTruthy();
+  expect(container.querySelector('.cis-guide-disclosure').open).toBe(false);
+  expect(container.querySelector('.cis-guide-answer p').textContent).toBe(guide.requirements[definition.id].plain);
+  expect(container.querySelector('.cis-assessment-guidance').children).toHaveLength(3);
+  expect(container.querySelector('.cis-implementation-layout').nextElementSibling).toBe(container.querySelector('.bcsg-findings'));
+ }
+ expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
 test('static guide remains usable while an assessment draft is being edited',async()=>{

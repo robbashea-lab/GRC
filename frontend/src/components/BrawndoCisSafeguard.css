@@ -1,11 +1,38 @@
 /* Shared CIS IG1 safeguard workspace. Portal tokens preserve light/dark themes. */
+/* Approved CIS presentation, shared through framework configuration. */
+.cis-assessment-layout .cis-guidance-layout { display: block; padding-bottom: 0; border-bottom: 0; }
+.cis-assessment-layout .brawndo-step { padding: 18px 0; }
+.cis-assessment-layout .brawndo-step h3 { font-size: 1rem; gap: 10px; }
+.cis-assessment-layout .brawndo-step-body { margin-top: 10px; }
+.cis-assessment-layout .cis-assessment-guidance { max-width: none; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; }
+.cis-assessment-layout .cis-assessment-guidance > section { padding: 14px; min-width: 0; }
+.cis-assessment-layout .cis-assessment-guidance h4 { margin-top: 0; font-size: .875rem; }
+.cis-assessment-layout .cis-assessment-guidance ul { gap: 8px; padding-left: 18px; }
+.cis-assessment-layout .cis-assessment-guidance li { font-size: 1rem; line-height: 1.55; }
+.cis-assessment-layout .cis-guide-disclosure { border: 1px solid var(--color-input-border); border-radius: 6px; background: var(--color-bg-subtle); margin: 8px 0 0; }
+.cis-assessment-layout .cis-guide-disclosure > summary { padding: 12px 16px; font-size: .875rem; font-weight: 600; cursor: pointer; }
+.cis-assessment-layout .cis-guide-disclosure > summary:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }
+.cis-assessment-layout .cis-requirement-guide { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 16px; margin: 0; border: 0; padding: 0 16px 16px; }
+.cis-assessment-layout .cis-requirement-guide > h3, .cis-assessment-layout .cis-guide-intro { display: none; }
+.cis-assessment-layout .cis-guide-answer { margin: 0; padding: 12px 16px; border-top: 0; border-left: 1px solid var(--color-input-border); }
+.cis-assessment-layout .cis-guide-answer p { font-size: 1rem; line-height: 1.6; }
+.cis-assessment-layout .cis-implementation-layout { display: grid; grid-template-columns: 260px minmax(0,1fr); gap: 24px; }
+.cis-assessment-layout .cis-implementation-layout > section { border-bottom: 0; min-width: 0; }
+.cis-assessment-layout .brawndo-status-options { grid-template-columns: minmax(0,1fr); gap: 6px; }
+.cis-assessment-layout .brawndo-status-options label { min-height: 40px; padding: 8px 10px; }
+.cis-assessment-layout textarea { font-size: 1rem; line-height: 1.6; }
+@media (max-width: 1000px) {
+  .cis-assessment-layout .cis-assessment-guidance { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 720px) {
+  .cis-assessment-layout .cis-requirement-guide, .cis-assessment-layout .cis-implementation-layout { grid-template-columns: minmax(0,1fr); gap: 12px; }
+  .cis-assessment-layout .cis-guide-answer { border-left: 0; border-top: 1px solid var(--color-input-border); padding: 12px 0 0; }
+}
 .bcsg-criteria { display: grid; gap: 12px; margin-top: 12px; }
 .bcsg-criteria label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: pointer; }
 .bcsg-criteria input { margin-top: 4px; flex: none; accent-color: var(--color-link); }
 .bcsg-criteria input:focus-visible { outline: 2px solid var(--color-focus-ring, #4172f4); outline-offset: 3px; }
-.cis-guidance-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px,32%); gap: 28px; align-items: start; border-bottom: 1px solid var(--color-input-border); padding-bottom: 24px; }
 .cis-guidance-main { min-width: 0; }
-.cis-guidance-main > .brawndo-step:last-child { padding-bottom: 0; }
 .cis-assessment-guidance { max-width: 88ch; display: grid; gap: 14px; margin-top: 16px; overflow-wrap: anywhere; }
 .cis-assessment-guidance > section { padding: 18px; border: 1px solid var(--color-input-border); border-radius: 6px; background: var(--color-bg-subtle); }
 .cis-assessment-guidance h4 { margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
@@ -22,10 +49,6 @@
 .cis-guide-answer { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--color-input-border); }
 .cis-guide-answer h4 { margin: 0 0 8px; font-size: 14px; font-weight: 600; line-height: 1.5; }
 .cis-guide-answer p { margin: 0; font-size: 15px; line-height: 1.7; }
-@media (max-width: 1100px) {
-  .cis-guidance-layout { grid-template-columns: minmax(0,1fr); gap: 0; }
-  .cis-requirement-guide { margin-top: 24px; }
-}
 .bcsg-metadata { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 12px; }
 .bcsg-metadata .bcsg-owner { padding: 0; align-items: center; }
 .bcsg-verification { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--color-text-secondary); }
