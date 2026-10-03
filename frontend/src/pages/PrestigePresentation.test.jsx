@@ -5,6 +5,7 @@ import Contacts from './Contacts';
 import RecordDrawer from '@/components/RecordDrawer';
 import {SCHEMAS} from '@/lib/schemas';
 import api from '@/lib/api';
+import ClientSurface from '@/components/ClientSurface';
 let mockClient='demo_prestige';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -19,14 +20,19 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test.each(['reviews','policies'])('Prestige %s uses the reference register, themes and original fields',async kind=>{
-  await act(async()=>root.render(<RecordListPage kind={kind}/>));
+  const page=()=>kind==='reviews'?<ClientSurface><RecordListPage kind={kind}/></ClientSurface>:<RecordListPage kind={kind}/>;
+  await act(async()=>root.render(page()));
   expect(container.querySelector('h1').textContent).toBe(kind==='reviews'?'Reviews':'Policies');
   expect(container.querySelector('[data-theme="light"]')).toBeTruthy();
   await act(async()=>container.querySelector('[aria-label="Switch to dark mode"]').click());
   expect(container.querySelector('[data-theme="dark"]')).toBeTruthy();
   mockClient='unconverted-client';
-  await act(async()=>root.render(<RecordListPage kind={kind}/>));
-  expect(container.querySelector('[aria-label="Switch to light mode"]')).toBeNull();
+  await act(async()=>root.render(page()));
+  // Reviews use the shared ClientSurface for every client, not a client-ID gate.
+  if(kind==='reviews'){
+    expect(container.querySelector('[data-theme="dark"]')).toBeTruthy();
+    expect(document.documentElement.dataset.brawndoPortal).toBe('dark');
+  }else expect(container.querySelector('[aria-label="Switch to light mode"]')).toBeNull();
 });
 test('Prestige contacts retain the simplified directory',async()=>{
   await act(async()=>root.render(<Contacts/>));

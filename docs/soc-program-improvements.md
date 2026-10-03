@@ -1,8 +1,10 @@
 # Targeted SOC 2 program improvements — 2026-10-02
 
 Baseline: `9a0a781f2f240bd1a1b5ac2e044f14ab125f2ecc` (`origin/main`).
-Working branch: `codex/soc-program-improvements`. Delivery is a PR only;
-merging, production writes and hosted-preview publication are not authorized.
+Working branch: `codex/soc-program-improvements`. Initial delivery was PR-only.
+Continuation authorizes merge and existing private-preview publication only after
+required repository checks and real integrated verification pass. Production
+backend/data changes and preview access changes remain prohibited.
 
 ## Implementation checklist
 
@@ -149,3 +151,76 @@ not retried through an alternate launcher or bypassed. Therefore actual browser
 and persistent end-to-end evidence bytes are **not verified**. Mock route tests
 and Demo browser checks are independent evidence, not substitutes for that gate.
 No production database or hosted preview was modified.
+
+## Continuation finalization — 2026-10-02
+
+Implementation parent: `7dd16c012841fefbc329e07b1a603d5897c16d9e`.
+Fetched main again after verification: unchanged at the baseline above.
+
+All five previously reported failures are resolved, without skipping tests or
+suppressing warnings. Four Review signal assertions exposed UTC-midnight
+disagreement between local-calendar date-only tabs and a UTC due-soon signal.
+The signal now reuses `dateMatches` with an inclusive local today–day-14 range;
+calendar-day arithmetic survives DST. Recurrence anchoring is unchanged.
+Tests freeze Date at a UTC/local boundary while retaining actual async timers.
+The fifth failure was a stale isolated Prestige Reviews theme expectation:
+Layout already wraps Reviews for every client in ClientSurface. The test now
+uses that actual shared wrapper and verifies its dark portal theme after client
+switching; no theme architecture or application behavior was changed.
+
+Final frontend: **17 suites / 262 tests passed**, zero failures, with
+`TZ=America/New_York`. This includes all eleven earlier suites plus
+PrestigePresentation, registerSignals, tableFilters, reviewOccurrences,
+clientProfile and onboardingHandoff. A separate UTC run of the seven date,
+presentation and onboarding suites passed **101 tests**. Cases cover UTC
+midnight, local midnight, spring/fall DST, overdue, today, day 14 and day 15.
+Final backend: the eleven suites listed above passed **122 tests**, with ordinary
+logging enabled. These are authorized-handler/mock-database checks, not real
+Mongo integration. Final Preview build and `git diff --check` passed. Existing
+large-bundle and Node deprecation advisories remain; no dependencies changed.
+
+Historical onboarding answers are now explicitly labeled as initial intake,
+distinct from current Program configuration. A fresh disposable Demo client
+was onboarded without SOC, then enabled SOC through the ordinary UI. Original
+Does Not Apply and 17 Policy records were retained; the live SOC workspace has
+33 Security criteria and 8 initialized Reviews. The same preservation contract
+has a new automated regression. No re-onboarding or history rewrite occurred.
+
+On that later-enabled client, browser QA also confirmed Notes Save changes
+retains an unfinished evaluation; Related → Overview retains it; closing the
+drawer prompts Leave unsaved changes; Keep editing restores the same conclusion.
+Two new component cases cover Prestige and a new client. Console errors: none.
+Proof captures are in the task's external outputs/soc-program-improvements
+folder (`historical-vs-current-finalization.jpg`, `review-draft-finalization.jpg`).
+The temporary browser tab and dev server were closed. These are Demo checks.
+
+Risk next-date dependency remains narrow: existing Risk UI already sends
+`risk_next_review`; stricter completion extra-field rejection would otherwise
+break that caller. The prior commit accepts only that known field, checks Risk
+context and administrator authorization, validates canonical future dates,
+anchors the next occurrence, and preserves the override on replay. It does not
+close the Risk or change ordinary cadence. Its permission/date/replay/schedule
+regressions passed in the final backend and Demo suites.
+
+Release remains blocked. Current checks found no mongod/mongosh/Docker commands,
+Mongo/Docker services, localhost:27017 listener, or standard installation folders.
+No repository workflow files or PR-triggered workflow runs were available for
+the implementation parent. The earlier normal non-Demo frontend launch was
+execution-policy denied; no alternate launcher or bypass was attempted.
+Existing `backend/scripts/verify_mongo_recovery.py` was inspected: it can verify
+isolated real-Mongo handler/reconnect behavior once Mongo exists, but does not
+by itself establish the requested normally authenticated browser workflow.
+
+Exact remaining requirement: an approved environment able to run the normal
+frontend/backend and isolated real Mongo with synthetic identities/data. Run
+the requested onboarding/later-enable, assessment dates, Control mapping and
+observations, Review completion/replay, Evidence byte round-trip, Finding →
+Action → validation, recurrence/history, role/tenant denial, and backend/database
+restart retrieval checks there. Neither Demo nor mock results replace this gate.
+No unverified infrastructure scaffold, authentication weakening, paid resources,
+or production credentials/data were introduced.
+
+PR #23 remains draft and unmerged pending that gate and repository checks.
+Existing private preview was inspected only: version **99**, source
+`9a0a781f2f240bd1a1b5ac2e044f14ab125f2ecc`, deployment succeeded. Its URL and
+access configuration are unchanged. The implementation branch is not published.

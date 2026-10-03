@@ -22,6 +22,7 @@ const input=async(node,value)=>act(async()=>{
   node.dispatchEvent(new Event('input',{bubbles:true}));
 });
 beforeEach(()=>{
+  jest.useFakeTimers({now:new Date('2026-10-03T00:30:00Z'),doNotFake:['setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate','nextTick','queueMicrotask','performance']});
   global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockSearch='';
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   const today=new Date(),due=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
@@ -36,7 +37,7 @@ beforeEach(()=>{
   api.patch.mockImplementation(async(path,patch)=>{saved={...saved,...patch};return {data:saved};});
   window.confirm=jest.fn(()=>false);
 });
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();jest.useRealTimers();});
 test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s shares Dunder summaries, columns and filters while preserving history and client scope',async clientId=>{
   mockClient=clientId;rows=rows.map(r=>({...r,client_id:clientId}));
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
@@ -204,6 +205,23 @@ test('optional Review evaluation is protected as a draft and sent only on comple
  await click(document.querySelector('[data-testid="review-complete"]'));
  await click(document.querySelector('[data-testid="review-complete-confirmed"]'));
  expect(api.post).toHaveBeenCalledWith(expect.stringMatching(/\/complete$/),expect.objectContaining({conclusion:'Operating gap remains despite completed activity',tested_scope:'Client and provider responsibilities'}));
+});
+
+test.each(['demo_prestige','new-client'])('evaluation survives Save changes and tab navigation, and closure stays guarded for %s',async clientId=>{
+ mockClient=clientId;saved={...saved,client_id:clientId};const close=jest.fn();
+ await act(async()=>root.render(<ReviewDrawer open reviewsPilot={clientId==='demo_prestige'} record={saved} clientId={clientId} onOpenChange={close}/>));
+ await click([...document.querySelectorAll('summary')].find(s=>s.textContent==='Review evaluation'));
+ await input(document.querySelector('[aria-label="Reviewer conclusion"]'),'Pending effectiveness judgment');
+ await input(document.querySelector('[data-testid="field-notes"]'),'Saved Notes, unfinished evaluation');
+ await click(document.querySelector('[data-testid="drawer-save"]'));
+ expect(api.patch).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({notes:'Saved Notes, unfinished evaluation'}));
+ expect(api.patch.mock.calls[0][1]).not.toHaveProperty('conclusion');
+ expect(document.querySelector('[aria-label="Reviewer conclusion"]').value).toBe('Pending effectiveness judgment');
+ await click(document.querySelector('[data-testid="tab-related"]'));
+ await click(document.querySelector('[data-testid="tab-overview"]'));
+ expect(document.querySelector('[aria-label="Reviewer conclusion"]').value).toBe('Pending effectiveness judgment');
+ await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close'));
+ expect(document.body.textContent).toContain('Leave unsaved changes?');expect(close).not.toHaveBeenCalled();
 });
 
 test('Risk review completion is confirmed first and sends only changed assessment fields',async()=>{

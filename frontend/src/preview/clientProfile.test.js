@@ -8,6 +8,19 @@ let cid;
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');cid=(await api.post('/clients',{name:'Profile QA'})).data.client_id;});
 const profile=async()=>(await api.get('/clients/'+cid+'/profile')).data;
 const save=async(section,values)=>api.patch('/clients/'+cid+'/profile',{section,values,expected_updated_at:(await profile()).updated_at});
+
+test('later SOC enablement preserves historical Does Not Apply while current configuration and workspace are enabled',async()=>{
+  const state={version:3,step:3,policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure'])),requirements:{'soc-2':'does_not_apply'},reviews:[]};
+  await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true});
+  const baseline=(await profile()).baseline;
+  await api.patch('/onboarding/programs/soc-2',{client_id:cid,applicability:'applies'});
+  expect((await profile()).baseline).toEqual(baseline);
+  expect(baseline.state.requirements['soc-2']).toBe('does_not_apply');
+  const handoff=(await api.get('/onboarding/handoff',{params:{client_id:cid}})).data;
+  expect(handoff.records.requirements.find(r=>r.baseline_key==='soc-2').applicability).toBe('applicable');
+  const workspace=(await api.get('/frameworks/soc-2',{params:{client_id:cid}})).data;
+  expect(workspace.selected).toBe(true);expect(workspace.assessments).toHaveLength(33);
+});
 test('optional metadata persists without operational entities and audits changes',async()=>{
   const before=readStore();
   await save('organization',{employees:0,cyber_insurance:'No',workforce:'Unknown'});
