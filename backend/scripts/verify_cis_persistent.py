@@ -192,6 +192,18 @@ def run(args):
             'filename': 'synthetic-foreign.txt', 'mime_type': 'text/plain', 'content_base64': 'eA=='})
         writer, _ = client_for('pr24-writer@example.com')
         reader, _ = client_for('pr24-reader@example.com')
+        def cookie_origin():
+            with httpx.Client(base_url=origin + '/api', verify=context, trust_env=False) as cookie_client:
+                request(cookie_client, 'POST', '/auth/login', {'email': 'pr24-writer@example.com', 'password': password})
+                before = request(cookie_client, 'GET', base)
+                request(cookie_client, 'PATCH', base, {'notes': 'Must not be written'}, expected=403)
+                cookie_client.headers['Origin'] = 'https://unauthorized.example.com'
+                request(cookie_client, 'PATCH', base, {'notes': 'Must not be written'}, expected=403)
+                assert request(cookie_client, 'GET', base) == before
+                cookie_client.headers['Origin'] = origin
+                saved = request(cookie_client, 'PATCH', base, {'notes': 'Synthetic trusted Origin write'})
+                assert saved['notes'] == 'Synthetic trusted Origin write'
+        check('API secure cookie / missing and foreign Origin denial / trusted Origin allow (not browser)', cookie_origin)
         def legacy():
             original = request(writer, 'GET', base)
             assert 'cis_operation' not in original
