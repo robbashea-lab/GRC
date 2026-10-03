@@ -172,10 +172,10 @@ test('other clients retain their assessment content with explicit modal semantic
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
  expect(container.textContent).toContain('Implementation Status');expect(container.textContent).toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
-test('ISO assessments omit the duplicate organizational controls section',async()=>{
+test('ISO assessments expose the existing organizational controls section',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} position="1 of 30"/>));
- expect(container.textContent).not.toContain('Organizational Controls');
+ expect(container.textContent).toContain('Organizational Controls');
   expect(container.querySelector('.iso-guide-disclosure').open).toBe(false);
   expect(container.querySelector('.cis-requirement-guide')).not.toBeNull();
 });

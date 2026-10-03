@@ -207,6 +207,33 @@ test('optional Review evaluation is protected as a draft and sent only on comple
  expect(api.post).toHaveBeenCalledWith(expect.stringMatching(/\/complete$/),expect.objectContaining({conclusion:'Operating gap remains despite completed activity',tested_scope:'Client and provider responsibilities'}));
 });
 
+test('normal ISO management Review shows guide beside existing fields and protects Notes drafts without widening shared behavior',async()=>{
+ mockClient='normal-iso';saved={...saved,client_id:mockClient,framework_key:'iso-27001',framework_plan_key:'iso-management-review',review_type:'management',notes:'Leadership agenda v1'};const close=jest.fn();
+ await act(async()=>root.render(<ReviewDrawer open record={saved} clientId={mockClient} onOpenChange={close}/>));
+ expect(document.querySelector('[data-testid="iso-management-review-guide"]')).toBeTruthy();
+ const guide=document.querySelector('[data-testid="iso-management-review-guide"]'),notes=document.querySelector('[data-testid="field-notes"]');
+ expect(guide.compareDocumentPosition(notes)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ await input(notes,'Unfinished leadership decisions');
+ await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close'));
+ expect(document.body.textContent).toContain('Leave unsaved changes?');expect(close).not.toHaveBeenCalled();
+ await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Keep editing'));
+ expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Unfinished leadership decisions');
+ expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('ISO historical management results remain read-only with separately labelled current guidance and Annex-only SoA scope',async()=>{
+ mockClient='normal-iso';saved={...saved,client_id:mockClient,framework_key:'iso-27001',framework_plan_key:'iso-management-review',review_type:'management',notes:'Current agenda v2'};
+ const historical={...saved,occurrence_id:'past-iso',notes:'Retained leadership minutes v1',conclusion:'Retained decision v1',status:'completed',iso_soa_snapshot:{captured_at:'2026-10-01',assessments:[]}};
+ await act(async()=>root.render(<ReviewDrawer open record={saved} clientId={mockClient} initialValues={{occurrence:historical}} onOpenChange={()=>{}}/>));
+ expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Retained leadership minutes v1');
+ expect(document.querySelector('[data-testid="field-notes"]').disabled).toBe(true);
+ expect(document.body.textContent).toContain('does not replace the retained historical conclusions');
+ expect(document.body.textContent).toContain('Retained decision v1');
+ expect(document.body.textContent).toContain('Annex A SoA snapshot captured at completion');
+ expect(document.body.textContent).toContain('outside this snapshot');
+ expect(historical.conclusion).toBe('Retained decision v1');expect(api.patch).not.toHaveBeenCalled();
+});
+
 test.each(['demo_prestige','new-client'])('evaluation survives Save changes and tab navigation, and closure stays guarded for %s',async clientId=>{
  mockClient=clientId;saved={...saved,client_id:clientId};const close=jest.fn();
  await act(async()=>root.render(<ReviewDrawer open reviewsPilot={clientId==='demo_prestige'} record={saved} clientId={clientId} onOpenChange={close}/>));

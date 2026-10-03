@@ -31,6 +31,7 @@
     "test_iso_audit_program.py",
     "test_iso_framework.py",
     "test_iso_staging.py",
+    "test_iso_work_packages.py",
     "test_management_obligations.py",
     "test_multi_framework.py",
     "test_onboarding_baseline.py",
