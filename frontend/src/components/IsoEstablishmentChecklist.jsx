@@ -1,4 +1,5 @@
 import {Link} from 'react-router-dom';
+import {isoEstablishmentInformationRecorded} from '@/lib/isoWorkspace';
 
 // Discovery only: the linked clause records remain authoritative. Supporting
 // information is not a setup confirmation, implementation or effectiveness judgment.
@@ -14,7 +15,7 @@ export const ISO_ESTABLISHMENT = [
 export function establishmentRows(rows,clientId){
   return ISO_ESTABLISHMENT.map(item=>({...item,requirements:item.refs.map(ref=>{
     const row=rows.find(r=>r.client_id===clientId&&r.framework_key==='iso-27001'&&r.definition_id===ref);
-    const recorded=!!row&&(row.iso_establishment_information_recorded===true||['implementation','notes'].some(k=>typeof row[k]==='string'&&!!row[k].trim())||!!row.related_links?.length);
+    const recorded=!!row&&(row.iso_establishment_information_recorded===true||isoEstablishmentInformationRecorded(row));
     return {ref,row,recorded};
   })}));
 }
@@ -24,7 +25,7 @@ export default function IsoEstablishmentChecklist({rows=[],clientId}){
   return <section className="border border-line rounded-lg bg-surface-card p-4 space-y-3" aria-labelledby="iso-establishment-title" data-testid="iso-establishment-checklist">
     <h2 id="iso-establishment-title" className="font-semibold text-base">ISO establishment checklist</h2>
     <p className="text-sm text-ink-secondary">{missing} of {items.length} areas still have requirements without recorded supporting information. Use the linked clause's current implementation, Notes or related records to record the basis and any unresolved work. Controlled external references are welcome.</p>
-    <p className="text-xs text-ink-secondary">Omnisciente guidance, not official ISO wording or a complete normative checklist. Supporting information recorded is not establishment confirmed, Implemented, Verified or compliant. Assessment conclusions remain separate. Unfinished work does not prevent onboarding.</p>
+    <p className="text-xs text-ink-secondary">Omnisciente guidance, not official ISO wording or a complete normative checklist. Review links alone do not count as supporting information; record their basis in Current implementation or Notes. Supporting information recorded is not establishment confirmed, Implemented, Verified or compliant. Assessment conclusions remain separate. Unfinished work does not prevent onboarding.</p>
     <ul className="divide-y divide-line">{items.map(item=>{
       const recorded=item.requirements.filter(r=>r.recorded).length;
       return <li key={item.title} className="py-3 space-y-2 text-sm">

@@ -1,3 +1,6 @@
+// Generated Review mappings alone are not client-recorded supporting information.
+export const isoEstablishmentInformationRecorded=row=>['implementation','notes'].some(k=>typeof row[k]==='string'&&!!row[k].trim())||!!row.related_links?.some(link=>link.kind!=='reviews');
+
 export const ISO_INTRODUCTIONS={
   soa:'The Statement of Applicability (SoA) records which security controls your organization needs, why they are necessary, and whether they are implemented. ISO/IEC 27001 requires this document as part of information security risk treatment, including justification for excluding any Annex A controls. Use this section to document and maintain those decisions as your organization’s risks, obligations, and operations change.',
   isms_clause:'Clauses 4–10 define how your organization establishes, operates, evaluates, and improves its information security management system (ISMS). They cover areas such as leadership, risk management, resources, internal audit, and continual improvement. These requirements apply to organizations claiming conformity with ISO/IEC 27001. Use this section to assess how your organization meets them and identify gaps.',

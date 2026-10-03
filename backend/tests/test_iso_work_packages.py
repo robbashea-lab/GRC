@@ -17,6 +17,8 @@ class IsoWorkPackageTests(unittest.IsolatedAsyncioTestCase):
     async def test_existing_information_is_not_an_implementation_conclusion_or_schedule_change(self):
         workspace=await self.configure()
         reviews=await self.call('GET','reviews?client_id=a')
+        untouched=await self.call('GET','onboarding/handoff?client_id=a')
+        self.assertTrue(all(not r['iso_establishment_information_recorded'] for r in untouched['records']['framework_assessments']))
         row=next(a for a in workspace['assessments'] if a['definition_id']=='6.2')
         saved=await self.call('PATCH','framework_assessments/'+row['framework_assessment_id'],{'notes':'Controlled objective register v1 https://records.example/objectives; target RTO <=4h; owner CTO; measurement quarterly'})
         self.assertEqual(saved['status'],'not_assessed')

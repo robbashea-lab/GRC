@@ -37,3 +37,9 @@ test('reloading reads the authoritative narrative and clearing it exposes unreso
  expect(container.querySelector('[aria-label="Open ISO 6.2 unresolved work"]')).toBeTruthy();
  expect(rows[0].status).toBe('not_assessed');
 });
+
+test('generated Review relationships alone remain unresolved in the full-record workspace',async()=>{
+ await act(async()=>root.render(<Checklist clientId="a" rows={[row('6.2',{related_links:[{kind:'reviews',id:'generated'}]})]}/>));
+ expect(container.querySelector('[aria-label="Open ISO 6.2 unresolved work"]')).toBeTruthy();
+ expect(container.textContent).toContain('Review links alone do not count');
+});

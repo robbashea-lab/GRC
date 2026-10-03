@@ -40,6 +40,18 @@ Mock/Demo tests do not prove conformity, normative completeness or production re
 Final merged SHA, replacement PR, saved preview version and deployment status must be
 reported from actual GitHub/Sites results, not inferred from these local tests.
 
+PR26's automated review found two further bounded defects, corrected before merge:
+explicit partial CIS arrangement objects now serialize their complete validated defaults,
+matching Demo behavior; generated ISO Review relationships no longer count as recorded
+setup support. Review links alone require their substantive basis in Notes/implementation;
+other supporting relationships remain usable. Full-workspace and Demo share the same
+ISO predicate. Regression tests cover untouched ISO setup and empty/provider-only/
+confirmation-only CIS payloads. No permissions, cadence, history or schema changes.
+
+One repeated mocked-auth browser run timed out finding parent CIS Next after a nested
+Review closed; a subsequent complete run passed unchanged. This intermittent browser/
+harness observation is retained, not represented as a flawless browser run.
+
 ## Exact sources and boundary
 
 - Branch: `codex/iso-cis-bounded-integration` in its own worktree.

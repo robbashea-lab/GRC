@@ -33,6 +33,7 @@ test('CIS confirmation survives handoff reload without exposing setup narratives
 test('ISO handoff derives discovery metadata without narratives or assessment conclusions',async()=>{
   state.requirements['iso-27001']='applies';await complete();
   const before=await get(),row=before.records.framework_assessments.find(r=>r.framework_key==='iso-27001'&&r.definition_id==='6.3');
+  expect(before.records.framework_assessments.filter(r=>r.framework_key==='iso-27001').every(r=>r.iso_establishment_information_recorded===false)).toBe(true);
   expect(row.iso_establishment_information_recorded).toBe(false);
   await api.patch(`/framework_assessments/${row.framework_assessment_id}`,{notes:'Controlled external objective register https://records.example/v1'});
   const projected=(await get()).records.framework_assessments.find(r=>r.framework_assessment_id===row.framework_assessment_id);

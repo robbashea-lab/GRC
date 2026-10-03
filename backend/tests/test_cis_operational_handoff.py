@@ -48,6 +48,7 @@ class CisOperationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(response.status_code,422,response.text)
         response=await self.client.patch(path,json={'owner_id':'admin','implementation':None,'cis_operation':{'confirmed':True}})
         self.assertEqual(response.status_code,422,response.text)
+
         await server.db.users.insert_one({'user_id':'reader','email':'reader@example.test','name':'Reader','role':'client_readonly','client_ids':['a'],'status':'active'})
         self.sign_in('reader');self.assertEqual((await self.client.patch(path,json={'cis_operation':{'confirmed':False}})).status_code,403)
         self.sign_in('member')
@@ -58,6 +59,16 @@ class CisOperationTests(unittest.IsolatedAsyncioTestCase):
         iso=await server.db.framework_assessments.find_one({'client_id':'a','framework_key':'iso-27001'})
         response=await self.client.patch('/api/framework_assessments/'+iso['framework_assessment_id'],json={'cis_operation':{'confirmed':False}})
         self.assertEqual(response.status_code,422,response.text)
+
+    async def test_partial_operation_objects_are_normalized_like_demo(self):
+        row=(await self.configure())['assessments'][0]
+        path='/api/framework_assessments/'+row['framework_assessment_id']
+        for operation,expected in [({'provider':'MSP'},{'provider':'MSP','confirmed':False}), ({},{'provider':'','confirmed':False}), ({'confirmed':True},{'provider':'','confirmed':True})]:
+            response=await self.client.patch(path,json={'owner_id':'member','implementation':'Recorded method','cis_operation':operation})
+            self.assertEqual(response.status_code,200,response.text)
+            self.assertEqual(response.json()['cis_operation'],expected)
+            self.assertEqual((await self.client.get(path)).json()['cis_operation'],expected)
+            self.assertEqual(response.json()['assessment_history'][-1]['cis_operation'],expected)
 
     async def test_shared_library_evidence_is_scoped_deduplicated_and_excludes_archived(self):
         workspace=await self.configure();row=workspace['assessments'][0]

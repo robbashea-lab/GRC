@@ -355,6 +355,8 @@ def router_for(s):
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)
+        if 'cis_operation' in changes:
+            changes['cis_operation']=body.cis_operation.model_dump()
         s._require_snapshot(changes,old,'last_assessed')
         changes.pop('expected_last_assessed')
         record_assessment=changes.pop('record_assessment',False)

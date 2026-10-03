@@ -737,7 +737,8 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
                 }
             if kind == 'framework_assessments' and row.get('framework_key') == 'iso-27001':
                 # Discovery metadata only, never an assessment or setup conclusion.
-                row['iso_establishment_information_recorded'] = any(isinstance(row.get(k), str) and bool(row[k].strip()) for k in ('implementation', 'notes')) or bool(row.get('related_links'))
+                # Review mappings are generated during enablement, not recorded support.
+                row['iso_establishment_information_recorded'] = any(isinstance(row.get(k), str) and bool(row[k].strip()) for k in ('implementation', 'notes')) or any(link.get('kind') != 'reviews' for link in row.get('related_links', []))
             for key in supporting_fields:
                 row.pop(key, None)
         return result
