@@ -34,7 +34,7 @@ from reportlab.lib import colors as rl_colors
 from reportlab.lib.units import inch
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field, EmailStr, ValidationError
+from pydantic import BaseModel, Field, EmailStr, ValidationError, ConfigDict
 from governance_context import GovernanceContext
 from pymongo.errors import DuplicateKeyError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
@@ -3456,17 +3456,19 @@ async def reminders_send_weekly_now(user: Dict = Depends(get_current_user)):
 
 
 class ReviewCompleteIn(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     occurrence_id: Optional[str] = None
     completion_notes: Optional[str] = None
     risk_assessment: Optional[Dict[str, Any]] = None
     risk_outcome: Optional[str] = None
     completion_date: Optional[str] = None
     spawn_next: Optional[bool] = True
-    conclusion: Optional[str] = None
-    tested_period: Optional[str] = None
-    tested_scope: Optional[str] = None
-    no_evidence_reason: Optional[str] = None
-    checklist_confirmed: bool = False
+    conclusion: Optional[str] = Field(default=None, max_length=20000)
+    tested_period: Optional[str] = Field(default=None, max_length=4000)
+    tested_scope: Optional[str] = Field(default=None, max_length=4000)
+    no_evidence_reason: Optional[str] = Field(default=None, max_length=4000)
+    checklist_confirmed: bool = Field(default=False, strict=True)
+    risk_next_review: Optional[str] = Field(default=None, max_length=10)
 
 
 class DecisionIn(BaseModel):
@@ -3652,6 +3654,9 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
     findings = await db.findings.count_documents({"client_id": review["client_id"], "review_id": review_id, **scope})
     iso_snapshot = await iso_audit.completion_snapshot(sys.modules[__name__], review)
     completed = {**review_occurrences.snapshot(review, evidence, findings, user, _now()), **iso_snapshot}
+    # Evaluation belongs to this immutable execution, not the recurring definition.
+    completed.update({k: v for k, v in body.model_dump(exclude_unset=True).items()
+                      if k in ('conclusion', 'tested_scope', 'tested_period', 'checklist_confirmed', 'no_evidence_reason')})
     if body.completion_notes is not None:
         completed["notes"] = body.completion_notes
     if review.get("risk_id"):
@@ -3669,7 +3674,18 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
         completed["risk_after"] = risk_lifecycle.snapshot(after)
         completed["outcome"] = "Risk Accepted" if completed["risk_before"].get("acceptance_date") != after.get("acceptance_date") else "Assessment Updated" if any(completed["risk_before"].get(k) != after.get(k) for k in ("likelihood_score","impact_score","assessment_rationale","likelihood_rationale","impact_rationale")) else "Treatment Updated" if completed["risk_before"].get("treatment") != after.get("treatment") else body.risk_outcome or "Reviewed — No Change"
     next_due = current["next_review_date"]
+    if body.risk_next_review:
+        if not review.get('risk_id'):
+            raise HTTPException(422, 'Schedule overrides apply only to Risk Reviews')
+        if user.get('role') not in ('super_admin', 'platform_admin'):
+            raise HTTPException(403, 'Only platform administrators can override the Risk review schedule')
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}',body.risk_next_review) or not review_occurrences.scheduled_date(body.risk_next_review) or body.risk_next_review <= completed['completed_at'][:10]:
+            raise HTTPException(422, 'Choose a next review after the completed review date')
+        next_due = body.risk_next_review
+        completed.update(next_review_override=next_due, next_review_date=next_due)
     updates = {"updated_at": completed["completed_at"], "schedule_anchor": current["schedule_anchor"]}
+    if body.risk_next_review:
+        updates['schedule_anchor'] = None
     if next_due:
         updates.update({"due_date": next_due, "current_occurrence_id": _uid("occ"), "status": "upcoming",
                         "notes": None, "started_at": None, "started_by": None, "completion_date": None,

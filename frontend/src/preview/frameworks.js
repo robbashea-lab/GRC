@@ -162,6 +162,9 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='patch'&&!operation){
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
     body={...body};delete body.expected_last_assessed;
+    const recordAssessment=body.record_assessment===true;
+    if('record_assessment' in body&&(row.framework_key!=='soc-2'||typeof body.record_assessment!=='boolean'))fail('Explicit assessment recording applies only to SOC 2');
+    delete body.record_assessment;
     const supported=frameworkCapabilities(row.framework_key);
     const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks'].filter(k=>supported.includes(k))];
     if('soc_assessment_checks' in body){
@@ -196,6 +199,7 @@ export function frameworkRequest(db,path,method,params,body){
       body={...body,management_controls:validateManagementControls(body.management_controls)};
     }
     const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
+    if(recordAssessment&&data.status==='not_assessed')fail('Choose an assessment status before recording an assessment');
     const definition=frameworkDefinition(row.framework_key,row.definition_id);
     if(data.status==='not_applicable'&&definition?.specification!=='annex_control'&&!data.na_rationale.trim())throw new Error('N/A rationale is required');
     if(data.status==='addressed'&&!data.implementation.trim())throw new Error('Describe implementation before marking Addressed');
@@ -216,7 +220,17 @@ export function frameworkRequest(db,path,method,params,body){
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
     const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
-    if(changed.length){Object.assign(row,body,{last_assessed:new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString(),assessed_by:db.user.user_id});(row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at:row.last_assessed,by:row.assessed_by});audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});}
+    if(changed.length||recordAssessment){
+      const at=new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString();
+      if(row.framework_key==='soc-2'){
+        const judgment=recordAssessment||(changed.includes('status')&&data.status!=='not_assessed');
+        Object.assign(body,{last_saved:at,assessment_recorded_at:judgment?at:row.assessment_recorded_at??null,assessment_recorded_by:judgment?db.user.user_id:row.assessment_recorded_by??null});
+        historyFields.push('last_saved','assessment_recorded_at','assessment_recorded_by');
+      }
+      Object.assign(row,body,{last_assessed:at,assessed_by:db.user.user_id});
+      (row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at,by:row.assessed_by});
+      audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});
+    }
     return row;
   }
   if(method==='post'&&operation==='links'){

@@ -4,6 +4,41 @@ from review_occurrences import schedule, snapshot
 
 
 class OccurrenceTests(ClientDashboardSourcesTests):
+    async def test_evaluation_survives_history_replay_and_definition_edits(self):
+        action = await self.seed()
+        evaluation = {'conclusion':'Exceptions remain; effectiveness not established',
+                      'tested_scope':'Recovery process and provider responsibilities',
+                      'tested_period':'January–September 2026', 'checklist_confirmed':True,
+                      'no_evidence_reason':'Existing incident records reviewed; no separate artifact',
+                      'completion_notes':'A reasoned evaluation, not an auditor opinion'}
+        done = await self.client.post('/api/reviews/bcp/complete', json={**action, **evaluation})
+        self.assertEqual(done.status_code, 200, done.text)
+        completed = done.json()['occurrence']
+        for key in evaluation.keys() - {'completion_notes'}:
+            self.assertEqual(completed.get(key), evaluation[key])
+        self.assertEqual(completed['notes'], evaluation['completion_notes'])
+        self.assertEqual(completed['outcome'], 'no_findings')
+        self.sign_in('admin')
+        edited = await self.client.patch('/api/reviews/bcp', json={'title':'Changed definition', 'expected_occurrence_id':done.json()['review']['current_occurrence_id']})
+        self.assertEqual(edited.status_code, 200, edited.text)
+        replay = await self.client.post('/api/reviews/bcp/complete', json={**action, 'conclusion':'Do not overwrite'})
+        self.assertEqual(replay.json()['occurrence'], completed)
+        self.assertEqual((await self.client.get('/api/reviews/bcp/history')).json()[0], completed)
+
+    async def test_completion_rejects_unknown_fields(self):
+        action = await self.seed()
+        response = await self.client.post('/api/reviews/bcp/complete', json={**action, 'effectiveness_score':100})
+        self.assertEqual(response.status_code, 422, response.text)
+        self.assertEqual(await server.db.reviews.count_documents({'status':'completed'}), 0)
+
+    async def test_completion_evaluation_validation_does_not_advance_occurrence(self):
+        action=await self.seed()
+        for payload in ({'tested_scope':'x'*4001},{'conclusion':'x'*20001},{'checklist_confirmed':'yes'},
+                        {'risk_next_review':'2090-01-01'}):
+            response=await self.client.post('/api/reviews/bcp/complete',json={**action,**payload})
+            self.assertEqual(response.status_code,422,response.text)
+        self.assertEqual((await server.db.reviews.find_one({'review_id':'bcp'})).get('occurrences',[]),[])
+
     def test_snapshot_retains_governance_source_without_copying_mutable_history(self):
         review = {'review_id':'r','client_id':'a','due_date':'2026-09-30','recurrence':'annual',
                   'risk_id':'risk-a','vendor_id':'vendor-a','vendor_purpose':'assurance','occurrences':[{'old':True}]}
@@ -122,6 +157,8 @@ class OccurrenceTests(ClientDashboardSourcesTests):
         self.assertEqual(len(h),1)
         self.assertEqual(h[0]["notes"],"Retain")
         self.assertTrue(h[0]["legacy"])
+        for key in ('conclusion','tested_scope','tested_period','checklist_confirmed','no_evidence_reason'):
+            self.assertNotIn(key,h[0])
 
     def test_calendar_cadence_and_anchor(self):
         for recurrence, expected in [("monthly","2026-10-31"),("quarterly","2026-12-31"),("semiannual","2027-03-31"),("annual","2027-09-30")]:

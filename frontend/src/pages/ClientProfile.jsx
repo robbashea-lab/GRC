@@ -63,7 +63,10 @@ function ProfileWorkspace({clientId}){
       {tab==='program'&&<>
         {canEdit?<ProgramConfiguration clientId={clientId} onSaved={reload}/>:<p className="text-sm text-ink-secondary">An administrator can manage program configuration. Current records are shown below.</p>}
         <OnboardingHandoff embedded snapshot={handoff} state={data.baseline?.state} catalog={onboardingCatalog} clientId={clientId} canManage={canEdit}/>
-        <Baseline baseline={data.baseline}/>
+        <section aria-label="Historical onboarding answers">
+          <p className="text-xs text-ink-secondary mb-2">Historical onboarding answers reflect the initial intake, not current applicability. Current enabled programs appear in Program configuration above.</p>
+          <Baseline baseline={data.baseline}/>
+        </section>
         <details className="border border-line rounded-lg p-4"><summary className="text-sm cursor-pointer font-medium">All compliance & requirements</summary><ComplianceProfile key={revision} clientId={clientId}/></details>
         {requirements.some(r=>r.baseline_response==='retired')&&<section className="border border-line rounded-lg p-4 space-y-2"><h2 className="font-semibold text-sm">Retired programs</h2><p className="text-xs text-ink-secondary">Historical assessments and linked work remain in their authoritative workspaces.</p>{FRAMEWORKS.filter(f=>requirements.some(r=>r.baseline_key===f.key&&r.baseline_response==='retired')).map(f=><Link className="block text-sm underline text-link" key={f.key} to={'/compliance/'+f.key}>View retained {f.name} program</Link>)}</section>}
         {canEdit&&<Link className="inline-block text-sm underline text-link" to={'/admin/audit?client='+clientId}>View Audit History</Link>}

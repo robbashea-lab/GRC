@@ -12,6 +12,44 @@ async function configure(programs=['soc-2']){await api.post('/onboarding/baselin
 const scope=(categories,extra={})=>api.patch('/frameworks/soc-2/configuration',{client_id:cid,categories,...extra});
 beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');cid=(await api.post('/clients',{name:'SOC isolated fixture'})).data.client_id;});
 
+test('historical Demo seed does not manufacture judgment dates from today’s seed execution',async()=>{
+  const seeded=(await api.get('/frameworks/soc-2',{params:{client_id:'demo_prestige'}})).data.assessments;
+  expect(seeded.some(a=>a.last_assessed)).toBe(true);
+  for(const row of seeded){expect(row).not.toHaveProperty('assessment_recorded_at');expect(row).not.toHaveProperty('last_saved');}
+});
+
+test('SOC draft saves retain judgment dates; explicit status changes and reaffirmations record judgments',async()=>{
+  const workspace=await configure(),path='/framework_assessments/'+workspace.assessments[0].framework_assessment_id;
+  let saved=(await api.patch(path,{implementation:'Draft narrative'})).data;
+  expect(saved.last_saved).toBeTruthy();expect(saved.assessment_recorded_at).toBeNull();expect(saved.status).toBe('not_assessed');
+  saved=(await api.patch(path,{status:'in_progress'})).data;
+  const judgment=saved.assessment_recorded_at;expect(judgment).toBeTruthy();
+  saved=(await api.patch(path,{notes:'Additional operating context'})).data;
+  expect(saved.assessment_recorded_at).toBe(judgment);
+  saved=(await api.patch(path,{record_assessment:true})).data;
+  expect(saved.assessment_recorded_at>judgment).toBe(true);expect(saved).not.toHaveProperty('record_assessment');
+  expect(saved.assessment_history[0].assessment_recorded_at).toBeNull();
+  expect(saved.assessment_history[2].assessment_recorded_at).toBe(judgment);
+  await api.patch(path,{status:'not_assessed'});
+  await expect(api.patch(path,{record_assessment:true})).rejects.toThrow('Choose an assessment status');
+  await expect(api.patch(path,{assessment_recorded_at:'2000-01-01'})).rejects.toThrow();
+});
+
+test('Review evaluations survive replay, reload and changes to the recurring definition',async()=>{
+  await configure();
+  const review=(await get('/reviews'))[0],path='/reviews/'+review.review_id;
+  const scheduled=(await api.patch(path,{due_date:'2026-09-30',recurrence:'quarterly',expected_occurrence_id:review.current_occurrence_id})).data;
+  const evaluation={conclusion:'Operating gap remains',tested_scope:'Provider and client recovery responsibilities',tested_period:'2026 Q3',checklist_confirmed:true,no_evidence_reason:'Existing records examined, no separate artifact'};
+  const done=(await api.post(path+'/complete',{occurrence_id:scheduled.current_occurrence_id,...evaluation})).data;
+  expect(done.occurrence).toMatchObject(evaluation);expect(done.occurrence.outcome).toBe('no_findings');
+  await api.patch(path,{title:'Changed definition',expected_occurrence_id:done.review.current_occurrence_id});
+  const replay=(await api.post(path+'/complete',{occurrence_id:scheduled.current_occurrence_id,conclusion:'Do not overwrite'})).data;
+  expect(replay.occurrence).toEqual(done.occurrence);
+  expect((await get(path+'/history'))[0]).toEqual(done.occurrence);
+  await expect(api.post(path+'/complete',{occurrence_id:replay.review.current_occurrence_id,effectiveness_score:100})).rejects.toThrow('Unsupported');
+  expect((await get('/frameworks/soc-2')).assessments.every(a=>a.status==='not_assessed')).toBe(true);
+});
+
 test('default scope is 33 Common Criteria; optional categories retain history without affecting current totals',async()=>{
   expect(CATALOGS['soc-2'].requirements).toHaveLength(61);
   expect((await get('/frameworks/soc-2')).assessments).toHaveLength(0);

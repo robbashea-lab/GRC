@@ -22,6 +22,7 @@ export function dateMatches(value, range, now = new Date()) {
   if (range === 'overdue') return delta < 0;
   if (range === 'today') return delta === 0;
   if (range === 'next7') return delta >= 0 && delta <= 7;
+  if (range === 'next14') return delta >= 0 && delta <= 14;
   if (range === 'next30') return delta >= 0 && delta <= 30;
   if (range === 'next90') return delta >= 0 && delta <= 90;
   if (range === 'next31_90') return delta >= 31 && delta <= 90;

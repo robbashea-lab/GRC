@@ -3,6 +3,25 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class RiskLifecycleTests(ClientDashboardSourcesTests):
+    async def test_admin_schedule_override_is_validated_preserved_and_replay_safe(self):
+        self.sign_in('admin')
+        risk=(await self.client.post('/api/risks',json={'title':'Synthetic override','client_id':'a','owner_id':'member','next_review':'2026-11-02','review_cadence':'annual'})).json()
+        review=(await self.client.post('/api/risks/'+risk['risk_id']+'/review')).json()['review']
+        path='/api/reviews/'+review['review_id']+'/complete'
+        payload={'occurrence_id':review['current_occurrence_id'],'risk_next_review':'2090-01-01'}
+        self.sign_in('member')
+        self.assertEqual((await self.client.post(path,json=payload)).status_code,403)
+        self.sign_in('admin')
+        for value in ('2026-02-30','2000-01-01','2090-01-01T00:00:00Z'):
+            self.assertEqual((await self.client.post(path,json={**payload,'risk_next_review':value})).status_code,422)
+        done=await self.client.post(path,json=payload)
+        self.assertEqual(done.status_code,200,done.text)
+        self.assertEqual(done.json()['occurrence']['next_review_override'],'2090-01-01')
+        self.assertEqual(done.json()['review']['due_date'],'2090-01-01')
+        replay=await self.client.post(path,json=payload)
+        self.assertEqual(replay.json()['occurrence'],done.json()['occurrence'])
+        self.assertEqual((await server.db.risks.find_one({'risk_id':risk['risk_id']}))['next_review'],'2090-01-01')
+
     async def test_review_completion_reassessment_acceptance_closure(self):
         self.sign_in('admin')
         created = await self.client.post('/api/risks',json={'title':'Ransomware disruption to core systems','client_id':'a',

@@ -1,5 +1,6 @@
 // Derived register views for the reference workspace. Each signal is a filter over
 // existing records (no stored flags); counts and filtered rows use the same predicate.
+import {dateMatches} from './tableFilters';
 const DAY=86400000;
 const ymd=d=>d.toISOString().slice(0,10);
 const due=(r,key)=>r[key]?String(r[key]).slice(0,10):null;
@@ -8,10 +9,10 @@ const open=r=>!done.includes(r.status);
 // Legacy Systems retired through the former form option were stored as "terminated".
 const inScope=r=>!['retired','terminated'].includes(r.status);
 export function registerSignals(kind,today=new Date()){
-  const t=ymd(today),soon=ymd(new Date(today.getTime()+14*DAY)),month=ymd(new Date(today.getTime()+30*DAY)),recent=ymd(new Date(today.getTime()-30*DAY));
+  const t=ymd(today),month=ymd(new Date(today.getTime()+30*DAY)),recent=ymd(new Date(today.getTime()-30*DAY));
   const owner=r=>r.owner_id||r.assignee_id||r.business_owner_id;
   if(kind==='reviews')return [
-    {id:'due14',label:'Due in 14 days',tone:'moderate',test:r=>open(r)&&due(r,'due_date')>=t&&due(r,'due_date')<=soon},
+    {id:'due14',label:'Due in 14 days',tone:'moderate',test:r=>open(r)&&dateMatches(r.due_date,'next14',today)},
     {id:'unowned',label:'No owner',tone:'moderate',test:r=>open(r)&&!owner(r)},
     {id:'recent',label:'Completed in last 30 days',tone:'success',test:r=>(r.occurrences||[]).some(o=>o.completed_at&&String(o.completed_at).slice(0,10)>=recent)},
   ];

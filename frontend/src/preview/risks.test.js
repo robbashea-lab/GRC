@@ -4,6 +4,17 @@ import {STORE_KEY} from './store';
 const api=axios.create({adapter:previewAdapter});
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const db=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
+test('administrator schedule override is preserved for a shared, non-reference Risk Review',async()=>{
+  const cid=(await api.post('/clients',{name:'Shared Risk override QA'})).data.client_id;
+  const risk=(await api.post('/risks',{title:'Exposure',client_id:cid,likelihood_score:3,impact_score:4,next_review:'2026-11-02',review_cadence:'annual'})).data;
+  const review=(await api.post('/risks/'+risk.risk_id+'/review')).data.review;
+  const route='/reviews/'+review.review_id+'/complete';
+  await expect(api.post(route,{occurrence_id:review.current_occurrence_id,risk_next_review:'2028-01-01T00:00:00Z'})).rejects.toThrow();
+  const done=(await api.post(route,{occurrence_id:review.current_occurrence_id,risk_next_review:'2028-01-01'})).data;
+  expect(done.occurrence.next_review_override).toBe('2028-01-01');
+  expect(done.review.due_date).toBe('2028-01-01');
+  expect((await api.post(route,{occurrence_id:review.current_occurrence_id})).data.occurrence).toEqual(done.occurrence);
+});
 test('one Risk obligation, repeatable No Change completion, fixed cadence and historical snapshots',async()=>{
   const cid=(await api.post('/clients',{name:'Risk lifecycle QA'})).data.client_id;
   const risk=(await api.post('/risks',{title:'Exposure',client_id:cid,likelihood_score:3,impact_score:4,next_review:'2026-11-02',review_cadence:'annual'})).data;

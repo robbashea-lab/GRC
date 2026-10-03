@@ -9,6 +9,46 @@ from routes.onboarding import BASELINE_CATALOG
 
 
 class SocTests(unittest.IsolatedAsyncioTestCase):
+    async def test_draft_save_and_explicit_assessment_dates_are_independent(self):
+        workspace = await self.configure()
+        path = '/api/framework_assessments/' + workspace['assessments'][0]['framework_assessment_id']
+        draft = await self.client.patch(path, json={'implementation':'Working notes'})
+        self.assertEqual(draft.status_code, 200, draft.text)
+        self.assertTrue(draft.json().get('last_saved'))
+        self.assertIsNone(draft.json().get('assessment_recorded_at'))
+        assessed = await self.client.patch(path, json={'status':'in_progress'})
+        self.assertEqual(assessed.status_code, 200, assessed.text)
+        recorded = assessed.json()['assessment_recorded_at']
+        edited = await self.client.patch(path, json={'implementation':'Additional context'})
+        self.assertEqual(edited.json()['assessment_recorded_at'], recorded)
+        confirmed = await self.client.patch(path, json={'record_assessment':True})
+        self.assertEqual(confirmed.status_code, 200, confirmed.text)
+        self.assertGreater(confirmed.json()['assessment_recorded_at'], recorded)
+        self.assertEqual(confirmed.json().get('verification'), workspace['assessments'][0].get('verification'))
+        self.assertNotIn('record_assessment', confirmed.json())
+        history = confirmed.json()['assessment_history']
+        self.assertIsNone(history[0]['assessment_recorded_at'])
+        self.assertEqual(history[2]['assessment_recorded_at'], recorded)
+        await self.client.patch(path, json={'status':'not_assessed'})
+        self.assertEqual((await self.client.patch(path, json={'record_assessment':True})).status_code, 422)
+
+    async def test_judgment_dates_are_server_owned_and_stale_commands_do_not_overwrite(self):
+        workspace=await self.configure(('soc-2','cis-ig1'))
+        path='/api/framework_assessments/'+workspace['assessments'][0]['framework_assessment_id']
+        first=(await self.client.patch(path,json={'status':'in_progress'})).json()
+        second=await self.client.patch(path,json={'implementation':'Updated narrative'})
+        self.assertEqual(second.status_code,200,second.text)
+        stale=await self.client.patch(path,json={'record_assessment':True,'expected_last_assessed':first['last_assessed']})
+        self.assertEqual(stale.status_code,409,stale.text)
+        self.assertEqual((await self.client.get(path)).json()['assessment_recorded_at'],first['assessment_recorded_at'])
+        for key in ('last_saved','assessment_recorded_at','assessment_recorded_by'):
+            self.assertEqual((await self.client.patch(path,json={key:'forged'})).status_code,422)
+        cis=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()['assessments'][0]
+        response=await self.client.patch('/api/framework_assessments/'+cis['framework_assessment_id'],json={'record_assessment':True})
+        self.assertEqual(response.status_code,422,response.text)
+        self.sign_in('member')
+        self.assertEqual((await self.client.patch(path,json={'record_assessment':True})).status_code,403)
+
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
 

@@ -408,6 +408,11 @@ export function finishDemoStore(db, clock, {
       a.created_at = date(-580);
       a.last_assessed = date(-10);
       a.assessment_history.forEach(h => h.at = date(-10));
+      if(a.framework_key==='soc-2'){
+        // These imported fictional histories predate explicit judgment dates.
+        // Do not leak the seed command's current clock into their metadata.
+        for(const saved of [a,...a.assessment_history])for(const key of ['last_saved','assessment_recorded_at','assessment_recorded_by'])delete saved[key];
+      }
       if (reference) {
         a.last_assessed = reference[1] == null ? null : date(-reference[1]);
         if (reference[1] == null) a.assessment_history = [];

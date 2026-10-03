@@ -18,3 +18,20 @@ test('applicability selection previews effects before any write; placeholder cla
   await act(async()=>confirm.click());
   expect(api.patch).toHaveBeenCalledWith('/onboarding/programs/cmmc',expect.objectContaining({client_id:'a',applicability:'applies',expected_updated_at:null}));
 });
+
+test('client profile owns SOC scope without program dates; saving preserves legacy dates and supports retry',async()=>{
+ const configuration={categories:['security'],system_description:'Service boundary',period_start:'2026-01-01',period_end:'2026-12-31',expected_updated_at:'v1'};
+ api.get.mockImplementation(async path=>({data:path==='/frameworks/soc-2'?{selected:true,configuration}:{completed:true,client:{client_id:'a'},records:{requirements:[{baseline_key:'soc-2',baseline_response:'applies'}],framework_assessments:[]}}}));
+ await act(async()=>root.render(<ProgramConfiguration clientId="a"/>));
+ const scope=[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='SOC 2 scope');
+ expect(scope).toBeTruthy();expect(scope.querySelector('input[type="date"]')).toBeNull();
+ expect(scope.querySelector('[aria-label="Security / Common Criteria"]').disabled).toBe(true);
+ await act(async()=>scope.querySelector('summary').click());
+ await act(async()=>scope.querySelector('[aria-label="Availability"]').click());
+ api.patch.mockRejectedValueOnce(new Error('Scope could not be saved'));
+ const save=()=>[...scope.querySelectorAll('button')].find(b=>b.textContent==='Save SOC 2 scope');
+ await act(async()=>save().click());expect(scope.querySelector('[role="alert"]').textContent).toBe('Scope could not be saved');
+ expect(scope.querySelector('[aria-label="Availability"]').checked).toBe(true);
+ await act(async()=>save().click());
+ expect(api.patch).toHaveBeenLastCalledWith('/frameworks/soc-2/configuration',{client_id:'a',...configuration,categories:['security','availability']});
+});

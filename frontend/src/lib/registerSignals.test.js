@@ -3,6 +3,33 @@ import {summarize} from '@/components/RecordSummary';
 import {dateMatches} from './tableFilters';
 const today=new Date('2026-09-25T12:00:00Z');
 const pick=(kind,id)=>registerSignals(kind,today).find(s=>s.id===id).test;
+
+test.each(['2026-10-03T00:30:00Z','2026-10-03T04:30:00Z','2026-03-08T06:30:00Z','2026-11-01T05:30:00Z'])('Review signals agree with local date-only tabs across UTC and DST boundaries: %s',instant=>{
+  const now=new Date(instant),day=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+  const due=offset=>new Date(day+offset*86400000).toISOString().slice(0,10);
+  const signal=registerSignals('reviews',now).find(s=>s.id==='due14').test;
+  for(const [offset,expected] of [[-1,false],[0,true],[14,true],[15,false]]){
+    const row={status:'upcoming',recurrence:'none',due_date:due(offset)};
+    expect(signal(row)).toBe(expected);
+    expect(dateMatches(row.due_date,'overdue',now)).toBe(offset<0);
+  }
+  expect(signal({status:'completed',due_date:due(0)})).toBe(false);
+  expect(signal({status:'needs_scheduling'})).toBe(false);
+  expect(signal({status:'upcoming',due_date:'invalid'})).toBe(false);
+});
+
+test('UTC midnight does not move the local due day in America/New_York',()=>{
+  const now=new Date('2026-10-03T00:30:00Z');
+  const zone=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if(zone==='America/New_York'){
+    expect(now.getDate()).toBe(2);
+    expect(registerSignals('reviews',now).find(s=>s.id==='due14').test({status:'upcoming',due_date:'2026-10-02'})).toBe(true);
+  }else if(zone==='UTC'){
+    expect(now.getDate()).toBe(3);
+    expect(registerSignals('reviews',now).find(s=>s.id==='due14').test({status:'upcoming',due_date:'2026-10-02'})).toBe(false);
+  }
+  expect(registerSignals('reviews',now).find(s=>s.id==='due14').test({status:'upcoming',due_date:'2026-10-02'})).toBe(now.getDate()===2);
+});
 test('register signals are derived predicates over existing records',()=>{
   expect(pick('reviews','due14')({status:'upcoming',due_date:'2026-10-01'})).toBe(true);
   expect(pick('reviews','due14')({status:'completed',due_date:'2026-10-01'})).toBe(false);

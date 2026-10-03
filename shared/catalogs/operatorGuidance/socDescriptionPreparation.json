@@ -1,0 +1,17 @@
+{
+  "version": "2026-10-02.1",
+  "classification": "operational_guidance",
+  "source": "https://assets.ctfassets.net/rb9cdnjh59cm/1vCduR1U2OnhIvFFaDBjMv/836050054707e9afb65adeb30d2e95d8/92317096_dc_section_200_clean_version.pdf",
+  "source_title": "AICPA DC section 200 — 2018 Description Criteria (revised implementation guidance, 2022)",
+  "items": [
+    {"id": "DC1", "text": "Identify the services described and their boundaries."},
+    {"id": "DC2", "text": "Confirm principal service commitments and system requirements."},
+    {"id": "DC3", "text": "Describe infrastructure, software, people, procedures and data, including responsibilities."},
+    {"id": "DC4", "text": "Evaluate significant system incidents, their timing, impact and disposition during the period."},
+    {"id": "DC5", "text": "Connect applicable criteria with the controls actually designed and implemented."},
+    {"id": "DC6", "text": "Identify necessary complementary user entity controls, if applicable; distinguish other customer responsibilities."},
+    {"id": "DC7", "text": "Describe relevant subservice organizations, inclusive or carve-out treatment, dependencies and monitoring."},
+    {"id": "DC8", "text": "Explain why any otherwise applicable criterion is not relevant; outsourcing alone is not an exclusion."},
+    {"id": "DC9", "text": "For Type 2, describe significant system and control changes across the reporting period."}
+  ]
+}

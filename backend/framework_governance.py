@@ -117,6 +117,7 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
 class AssessmentPatch(BaseModel):
     model_config=ConfigDict(extra='forbid')
     expected_last_assessed: Optional[str]=Field(default=None,max_length=100)
+    record_assessment: bool=False
     status: Optional[Literal['not_assessed','in_progress','addressed','needs_attention','not_applicable']]=None
     implementation: Optional[str]=Field(default=None,max_length=20000)
     technology: Optional[str]=Field(default=None,max_length=4000)
@@ -346,7 +347,12 @@ def router_for(s):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)
         s._require_snapshot(changes,old,'last_assessed')
         changes.pop('expected_last_assessed')
+        record_assessment=changes.pop('record_assessment',False)
+        if 'record_assessment' in body.model_fields_set and old['framework_key']!='soc-2':
+            raise HTTPException(422,'Explicit assessment recording applies only to SOC 2')
         data={**old,**changes}
+        if record_assessment and data['status']=='not_assessed':
+            raise HTTPException(422,'Choose an assessment status before recording an assessment')
         supported=capabilities(old['framework_key'])
         if 'soc_assessment_checks' in changes:
             if 'soc_assessment_checks' not in supported:
@@ -401,9 +407,19 @@ def router_for(s):
         await assignment_eligibility.validate(s.db, 'framework_assessments', data, s._can_access_client, old)
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         changed=[k for k in changes if changes[k]!=old.get(k)]
-        if changed:
+        if changed or record_assessment:
             history_verification=set(VERIFICATION_FIELDS)&set(supported)
-            at=s._next_write_time(old.get('last_assessed'));snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k!='expected_last_assessed' and (k not in ('cis_assessment_criteria','soc_assessment_checks') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            at=s._next_write_time(old.get('last_assessed'))
+            if old['framework_key']=='soc-2':
+                # Keep last_assessed as the legacy write token; never infer a
+                # judgment date from old narrative saves or rewrite old history.
+                judgment=record_assessment or ('status' in changed and data['status']!='not_assessed')
+                changes.update(last_saved=at,assessment_recorded_at=at if judgment else old.get('assessment_recorded_at'),
+                               assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
+                data.update(changes)
+            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            if old['framework_key']=='soc-2':
+                snapshot.update({k:data.get(k) for k in ('last_saved','assessment_recorded_at','assessment_recorded_by')})
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}
             if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
             result=await s.db.framework_assessments.update_one(predicate,{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
