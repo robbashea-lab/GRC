@@ -154,6 +154,25 @@ No production database or hosted preview was modified.
 
 ## Continuation finalization — 2026-10-02
 
+### Follow-up: workspace configuration ownership — 2026-10-03
+
+SOC scope categories and system boundary/service commitments now use the existing
+editor inside Client Profile → Program configuration, not the SOC assessment
+workspace. This shared placement applies to Prestige and other SOC clients.
+Program start/end date inputs and the workspace observation-period countdown
+are removed: the program supports ongoing operational work, not an auditor's
+certification window. Existing stored configuration dates are preserved on scope
+save for compatibility; immutable dated Control observations and Review history
+are untouched. No database deletion or migration is performed. Administrator
+access remains through the profile's existing permission gate and server API.
+
+Follow-up verification: six frontend suites / 63 tests passed (workspace,
+ProgramConfiguration, ProgramContext, Demo client profile, CIS and ISO assessment).
+Profile tests cover scope editing, failed-save retry, mandatory Common Criteria,
+no date inputs, and retention of hidden legacy dates. Preview build and diff check
+passed; existing bundle/deprecation advisories remain. This follow-up was not
+browser-verified. Main/hosted preview publication remains gated as described below.
+
 Implementation parent: `7dd16c012841fefbc329e07b1a603d5897c16d9e`.
 Fetched main again after verification: unchanged at the baseline above.
 

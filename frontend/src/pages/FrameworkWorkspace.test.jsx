@@ -31,7 +31,6 @@ const prestige=async({clientId='demo_prestige',selected=true}={})=>{mockUser.wor
  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[{user_id:'u1',name:'David Wallace'}]:response}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));return response;};
 const socSettings=()=>[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='Scope and observation period settings');
-const changeInput=(input,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));});
 
 test.each(['demo_prestige','new-soc-client','later-enabled-soc'])('shared SOC program guidance is discoverable without creating records for %s',async clientId=>{
  await prestige({clientId});
@@ -44,39 +43,13 @@ test.each(['demo_prestige','new-soc-client','later-enabled-soc'])('shared SOC pr
  expect(description.querySelector('a[href="/reviews"]')).toBeTruthy();
  expect(api.patch).not.toHaveBeenCalled();
 });
-test.each(['demo_prestige','new-soc-client'])('SOC scope and period remain editable through the existing editor for %s',async clientId=>{
- const response=await prestige({clientId}),settings=socSettings();expect(settings).toBeTruthy();expect(settings.open).toBe(false);
- await act(async()=>settings.querySelector('summary').click());expect(settings.open).toBe(true);
- expect(settings.querySelector('[aria-label="Security / Common Criteria"]').disabled).toBe(true);
- await act(async()=>settings.querySelector('[aria-label="Privacy"]').click());
- await changeInput(settings.querySelector('[aria-label="Program period start"]'),'2027-01-01');
- await changeInput(settings.querySelector('[aria-label="Program period end"]'),'2027-12-31');
- api.patch.mockImplementation(async(path,body)=>{response.configuration={...body};response.active_definition_ids=response.definitions.filter(d=>body.categories.includes(d.category)).map(d=>d.id);return {data:{}};});
- const loads=api.get.mock.calls.filter(([path])=>path==='/frameworks/soc-2').length;
- await act(async()=>buttons('Save SOC 2 scope')[0].click());
- expect(api.patch).toHaveBeenCalledWith('/frameworks/soc-2/configuration',{client_id:clientId,categories:['security','availability','confidentiality','privacy'],system_description:'',period_start:'2027-01-01',period_end:'2027-12-31',expected_updated_at:null});
- expect(api.get.mock.calls.filter(([path])=>path==='/frameworks/soc-2')).toHaveLength(loads+1);
- expect(container.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(4);
+test.each(['demo_prestige','new-soc-client'])('SOC workspace has no configuration or program date inputs for %s',async clientId=>{
+ await prestige({clientId});expect(socSettings()).toBeUndefined();
+ expect(container.querySelector('[aria-label="Security / Common Criteria"]')).toBeNull();
+ expect(container.querySelector('input[type="date"]')).toBeNull();
+ expect(buttons('Save SOC 2 scope')).toHaveLength(0);expect(api.patch).not.toHaveBeenCalled();
 });
-test.each([['client_readonly',true],['super_admin',false]])('SOC settings stay read-only for role %s with selected=%s',async(role,selected)=>{
- mockUser.role=role;await prestige({selected});const settings=socSettings();expect(settings).toBeTruthy();
- expect(settings.querySelector('fieldset').disabled).toBe(true);expect(buttons('Save SOC 2 scope')).toHaveLength(0);expect(api.patch).not.toHaveBeenCalled();
-});
-test('SOC settings retain the scope draft after a failed save and allow retry',async()=>{
- await prestige();const settings=socSettings();await act(async()=>settings.querySelector('summary').click());
- await act(async()=>settings.querySelector('[aria-label="Privacy"]').click());
- await changeInput(settings.querySelector('[aria-label="Program period start"]'),'2027-01-01');
- await changeInput(settings.querySelector('[aria-label="Program period end"]'),'2027-12-31');
- api.patch.mockRejectedValueOnce(new Error('Scope could not be saved'));
- await act(async()=>buttons('Save SOC 2 scope')[0].click());
- expect(settings.querySelector('[role="alert"]').textContent).toBe('Scope could not be saved');
- expect(settings.querySelector('[aria-label="Privacy"]').checked).toBe(true);
- expect(settings.querySelector('[aria-label="Program period start"]').value).toBe('2027-01-01');
- expect(settings.querySelector('[aria-label="Program period end"]').value).toBe('2027-12-31');
- expect(container.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);
- await act(async()=>buttons('Save SOC 2 scope')[0].click());
- expect(api.patch).toHaveBeenCalledTimes(2);expect(api.patch.mock.calls[1]).toEqual(api.patch.mock.calls[0]);expect(settings.querySelector('[role="alert"]')).toBeNull();
-});
+
 test('Brawndo summary, bar tooltips, and removed sections; Controls follow the summary',async()=>{
  await brawndo();
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
@@ -119,9 +92,9 @@ test('Brawndo filters are separate from navigation and clear back to controls',a
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'no-result');search.dispatchEvent(new Event('input',{bubbles:true}));});
  expect(container.textContent).toContain('No safeguards match this view.');expect(crumbs()).toEqual(['CIS IG1','Search results']);
 });
-test('Prestige SOC 2 uses scoped progress and category-first hierarchy with collapsed scope settings',async()=>{
+test('Prestige SOC 2 uses scoped progress and category-first hierarchy without program settings',async()=>{
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
- expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).toContain('Client organizational Controls');expect(workspace.textContent).not.toContain('Include retained out-of-scope criteria');expect(socSettings().open).toBe(false);
+ expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).toContain('Client organizational Controls');expect(workspace.textContent).not.toContain('Include retained out-of-scope criteria');expect(socSettings()).toBeUndefined();
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
  expect(summary).toContain('Implemented74%28 of 38');expect(summary).toContain('Assessed92%');expect(summary).toContain('3 still to assess');
  const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Implemented: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Implemented5 of 38 criteria13%');

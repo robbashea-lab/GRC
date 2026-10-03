@@ -7,10 +7,20 @@ import {useCompliance} from '@/context/ComplianceContext';
 import {Button} from './ui/button';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription,DialogFooter} from './ui/dialog';
 import {Input} from './ui/input';
+import {SocProgramSettings} from './SocReadiness';
 
 export default function ProgramConfiguration({clientId, onSaved}) {
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
   const compliance=useCompliance();
+  const [soc,setSoc]=useState(null),[socError,setSocError]=useState('');
+  const socEnabled=snapshot?.client.client_id===clientId&&snapshot.records.requirements.some(r=>r.baseline_key==='soc-2'&&r.baseline_response==='applies');
+  useEffect(()=>{
+    const controller=new AbortController();setSoc(null);setSocError('');
+    if(socEnabled)api.get('/frameworks/soc-2',{params:{client_id:clientId},signal:controller.signal})
+      .then(({data})=>{if(!controller.signal.aborted)setSoc(data);})
+      .catch(e=>{if(!controller.signal.aborted)setSocError(formatError(e));});
+    return()=>controller.abort();
+  },[clientId,socEnabled,revision]);
   const [proposal,setProposal]=useState(null),[reason,setReason]=useState(''),[effectiveDate,setEffectiveDate]=useState('');
   useEffect(()=>{
     const controller=new AbortController();setSnapshot(null);setError('');setProposal(null);
@@ -26,6 +36,7 @@ export default function ProgramConfiguration({clientId, onSaved}) {
   }
   return <section className="border border-line rounded-lg p-4 mb-5 space-y-3" aria-label="Program configuration">
     <h3 className="text-sm font-semibold">Program configuration</h3>
+    {socEnabled&&<>{socError?<div role="alert"><p>{socError}</p><Button variant="outline" size="sm" onClick={()=>setRevision(n=>n+1)}>Retry SOC 2 scope</Button></div>:soc?.configuration?<SocProgramSettings clientId={clientId} configuration={soc.configuration} writable={soc.selected} onSaved={()=>{setRevision(n=>n+1);compliance.refresh?.();onSaved?.();}}/>:<p role="status" className="text-sm">Loading SOC 2 scope…</p>}</>}
     <p className="text-xs text-ink-secondary">Adjust applicability without repeating onboarding. Operational programs initialize their assessments and reuse mapped Reviews. Existing work and history are retained when a program is removed.</p>
     {error&&<div role="alert" className="text-sm"><p>{error}</p><Button variant="outline" size="sm" onClick={()=>setRevision(n=>n+1)}>Retry configuration</Button></div>}
     {!snapshot&&!error&&<p role="status" className="text-sm">Loading program configuration…</p>}

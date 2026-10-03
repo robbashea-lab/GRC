@@ -48,13 +48,10 @@ export function isoPosture(rows) {
 
 export default function ProgramContext({frameworkKey, rows, configuration, controls}) {
   if (frameworkKey === 'soc-2') {
-    const period = socPeriod(configuration), exceptions = socControlExceptions(rows, controls);
+    const exceptions = socControlExceptions(rows, controls);
     return <div className="program-context" data-testid="soc-period">
-      <p className="cis-measure-label">Observation period</p>
-      <p className="text-sm">{period ? <>
-        <strong>{period.start} to {period.end}</strong> · {period.state === 'current' ? `day ${period.elapsed} of ${period.length}` : period.state === 'upcoming' ? 'not started' : 'ended'}
-        {' · '}{(configuration?.categories || []).map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')}
-      </> : 'Not defined. Set the scope and observation period below.'}</p>
+      <p className="cis-measure-label">Ongoing operational program</p>
+      <p className="text-sm">{(configuration?.categories || []).map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')}</p>
       <p className="text-sm text-ink-secondary">{plural(exceptions.controls, 'Control reference')} · {exceptions.gaps} with a design / operating gap or reconciliation need · {exceptions.short} short of expected instances</p>
       {!!exceptions.legacyExceptions&&<p className="text-sm text-ink-secondary">{exceptions.legacyExceptions} Controls retain legacy exceptions. Inspect preserved criterion observations; migration does not resolve them or establish shared operating effectiveness.</p>}
       <p className="cis-footnote">Internal readiness based on management's own testing. A SOC 2 report and its opinion come only from an independent CPA firm.</p>
