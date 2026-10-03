@@ -21,6 +21,31 @@ const input=async(node,value)=>act(async()=>{
   Object.getOwnPropertyDescriptor(node.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(node,value);
   node.dispatchEvent(new Event('input',{bubbles:true}));
 });
+
+test.each(['cis','iso','both'])('combined non-pilot %s Review keeps Notes through cancel, save and historical discard',async framework=>{
+  const drivers=[{framework_key:'cis-ig1',framework_plan_key:require('@/lib/frameworks').cis.review_plans[0].key},{framework_key:'iso-27001',framework_plan_key:'iso-management-review'}];
+  saved={...saved,client_id:'synthetic-combined',framework_drivers:framework==='both'?drivers:[drivers[framework==='iso'?1:0]]};
+  const close=jest.fn(),old={...saved,occurrence_id:'old',period:'Prior period',status:'completed',notes:'Retained minutes'};
+  api.get.mockImplementation(async path=>({data:path.endsWith('/history')?[old]:path.startsWith('/frameworks/')?{assessments:[]}:path==='/related'?{}:[]}));
+  await act(async()=>root.render(<ReviewDrawer open record={saved} clientId={saved.client_id} onOpenChange={close}/>));
+  await input(document.querySelector('[data-testid="field-notes"]'),'Unsaved combined Notes');
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close'));
+  expect(document.body.textContent).toContain('Leave unsaved changes?');expect(close).not.toHaveBeenCalled();
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Keep editing'));
+  expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Unsaved combined Notes');
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save changes'));
+  expect(api.patch).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({notes:'Unsaved combined Notes'}));
+  await input(document.querySelector('[data-testid="field-notes"]'),'Discard this current draft');
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Prior period'));
+  expect(document.body.textContent).toContain('Leave unsaved changes?');
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Discard changes'));
+  expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Retained minutes');
+  expect(document.querySelector('[data-testid="field-notes"]').disabled).toBe(true);
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Back to current Review'));
+  expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Unsaved combined Notes');
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close'));
+  expect(close).toHaveBeenCalledWith(false);
+});
 beforeEach(()=>{
   jest.useFakeTimers({now:new Date('2026-10-03T00:30:00Z'),doNotFake:['setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate','nextTick','queueMicrotask','performance']});
   global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockSearch='';

@@ -124,6 +124,15 @@ workflow walkthrough, not a WCAG audit or real persistence/restart test.
 
 ## Limits and decisions
 
+Integration clarification: `backend/server.py` normalizes uploaded bytes into
+MongoDB `evidence.content_base64` and stores decoded size and SHA-256; the
+authenticated download reads that same record. There is no approved separate
+object store to provision. The original ISO-only infrastructure observation below
+is historical. CIS subsequently prepared a shared local MongoDB target, but
+trusted browser HTTPS remains blocked. Use that shared effort and the extended
+[combined persistent acceptance plan](cis-pr24-integration-handoff.md), not a
+second database, certificate or storage setup.
+
 No authorized full ISO/IEC 27001:2022 / Amd 1:2024 text was available. Existing
 original explanations are reused and marked non-official; no exhaustive catalog
 or normative-wording validation is claimed. Guidance wording needing normative
@@ -131,9 +140,9 @@ confirmation still requires authorized source comparison.
 
 No approved isolated real MongoDB/storage target was supplied, and no local
 MongoDB service/tool was available. Real database indexing, concurrency,
-transactions, process-restart durability and external/object-storage behavior
-were not executed. Minimum additional setup: an approved disposable MongoDB
-target and isolated Evidence storage, test-only credentials and explicit
+transactions and process-restart durability were not executed. Minimum additional
+setup: the approved shared disposable MongoDB target (including its Evidence
+content store), trusted HTTPS, test-only credentials and explicit
 permission to create/delete synthetic fixtures and restart the test service.
 
 No broad multi-year simulation or withdrawn F07 implementation. Any automatic

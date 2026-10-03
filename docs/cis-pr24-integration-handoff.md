@@ -1,5 +1,46 @@
 # PR #24: persistent integration gate handoff
 
+## Combined ISO/CIS acceptance extension - 2026-10-03
+
+The sections below preserve the original CIS preparation record. The next
+persistent application run must use `codex/iso-cis-bounded-integration` and record
+its exact `git rev-parse HEAD`, normal frontend build identity and backend source
+in one manifest. Do not replay either original branch's outcomes as combined
+evidence. Combined sources: main `c57a57f0f5549dce7d4c9dc128387823a85af617`,
+CIS PR24 `b8b0a59fa2c1079dfbfddb2a9b6afc4457b2e6b9`, ISO PR25
+`bc96e58e58bd4c9ae8b1d6f130634012d1152ec1`.
+
+Reuse the CIS agent's shared preparation. Its local MongoDB preflight succeeded,
+but trusted localhost HTTPS was not established; see
+[local attempt](cis-pr24-local-integration-attempt.md). No additional database,
+certificate or environment was provisioned by the ISO/CIS integration. Normal
+authentication against Mongo mocks and Demo QA do not close this gate.
+
+Evidence storage is MongoDB itself: normalized `evidence.content_base64`, decoded
+size and SHA-256 in the same document, read by authenticated download. No separate
+object store is required. After approved backend and MongoDB restarts, re-login
+in a fresh browser and compare actual downloaded bytes/hash, not just metadata.
+
+Extend the existing manifest/acceptance table with these cases, all **NOT EXECUTED
+on a persistent target** until the shared target is available:
+
+| Combined case | Acceptance |
+| --- | --- |
+| Clients and later enablement | Create CIS-only, ISO-only, dual-framework and unrelated tenant clients. Reload saved onboarding answers; enable the second framework normally. Preserve the first framework's exact assessment IDs/history, existing schedules and unique Review IDs; show only the applicable framework handoff(s). |
+| Both draft guards | In normal CIS, ISO management and dual-driver Reviews, edit Notes and setup/assessment drafts. Test close, Escape, cancel/keep editing, explicit discard, navigation/history and successful save. Save & next waits for successful save and remains blocked by unfinished Review setup; error retains drafts. |
+| Nested focus and history | CIS Review brief -> exact safeguard -> close returns focus to opener; parent draft stays intact. Completed occurrences remain read-only, preserving their original Notes/evaluation/conclusions and linked Actions. Current guides must not replace results. |
+| ISO discovery | Save scope/context, responsibility, risk approval basis, objective/register and document/change references in existing clause records. Reload and restart; information recorded is not Implemented, Verified or conformity. Do not auto-assign owners/dates or reschedule Reviews. External controlled references remain usable. |
+| Necessary custom Control / complete SoA | Save/reopen a shared Control mapped to ISO 6.1.3 with Risk/treatment relationship and necessity basis. Retain versioned complete SoA supplement on the SoA Review. Later design/mapping/relationship/applicability edits must not mutate old Annex-only snapshots or the original supplemental file bytes/hash. No snapshot schema expansion. |
+| Management Review and recurrence | Execute real Notes/evaluation/participants/inputs/decisions with a linked Action. Complete using the selected operational cadence; later edits/restarts preserve old occurrence and next anchor. No inferred annual ISO mandate. |
+| Mixed-frame independence | On shared/dual-driver Reviews, both current briefs may appear; one completion/history and schedule remain authoritative. CIS setup confirmation and ISO discovery never copy implementation or verification conclusions across frameworks. |
+| Authorization and files | Reuse normal scoped roles and direct-request denial checks for both frameworks, custom Controls, Reviews, relationships and downloads. Check read-only allow/deny, unassigned contributor denial, foreign IDs and logged-out file denial without widening permissions. |
+| Failure and restart | During approved API interruption, both frameworks retain unsaved work and display failure. Safe retry does not duplicate relationships/Reviews/Actions. Restart only identified shared test processes with unchanged JWT configuration and Mongo data directory; compare saved IDs, histories, schedules, links and file hashes. |
+
+The original source-verification gate also remains separate: authorized full ISO
+27001:2022/Amd 1:2024 comparison was not performed. Combined tests are software
+evidence, not normative validation or organizational conformity. Keep both source
+PRs draft/unmerged, with no hosted preview or production release.
+
 Inspected 2026-10-03. This is preparation, not a completed integration run.
 
 ## Source and delivery boundary
