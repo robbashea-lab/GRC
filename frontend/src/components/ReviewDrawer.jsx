@@ -34,6 +34,8 @@ import RecordSummary, {reviewStatus} from './RecordSummary';
 import EvidencePanel from './EvidencePanel';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import {auditPackage,auditProgress} from '@/lib/isoAudit';
+import CisReviewBrief from './CisReviewBrief';
+import {cisReviewBriefs} from '@/lib/cisOperations';
 
 const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
@@ -44,9 +46,10 @@ const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scop
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user} = useAuth();
   const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferencePresentation(clientId,user) && (!record || record.client_id===clientId);
+  const guarded=pilot||cisReviewBriefs(record||{}).length>0;
   const clientPresentation=useContext(ClientPresentationContext),dialogLayout=pilot||!!clientPresentation;
   const Root=dialogLayout?Dialog:Sheet, Content=dialogLayout?DialogContent:SheetContent;
-  const opener=useRef(null),heading=useRef(null);
+  const opener=useRef(null),heading=useRef(null),cisBriefOpener=useRef(null);
   const [pending,setPending]=useState(null);
   const admin = ['super_admin','platform_admin'].includes(user?.role);
   const writable = admin || user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
@@ -133,10 +136,10 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return Object.fromEntries(fields.map(k => [k,k === 'custom_recurrence_days' ? (form[k] ? Number(form[k]) : null) : form[k] || null])
       .filter(([k,v]) => !current || (k === 'due_date' ? (current[k]?.slice(0,10) || null) !== v : JSON.stringify(current[k] || null) !== JSON.stringify(v))));
   }
-  const dirty=!frozen&&Object.values(evaluation).some(Boolean) || pilot && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
-    pilot && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&(riskOutcome!=="Reviewed — No Change"||!!riskNext));
+  const dirty=!frozen&&Object.values(evaluation).some(Boolean) || guarded && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
+    guarded && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&(riskOutcome!=="Reviewed — No Change"||!!riskNext));
   function leave(action,hasDraft=dirty) {
-    if(pilot&&busy)return;
+    if(guarded&&busy)return;
     if(hasDraft)setPending(()=>action);
     else action();
   }
@@ -203,6 +206,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       <div className={dialogLayout?"flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5":"flex-1 overflow-y-auto px-6 py-5 space-y-4"}>
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
+          <CisReviewBrief record={{...current,...shown,client_id:cid}} historical={!!selected} onOpen={(r,target)=>{cisBriefOpener.current=target;setLinked({kind:'framework_assessments',record:r});}}/>
           {pilot?<ReviewFacts record={shown} users={members} history={history}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
           {pilot?<ReviewExpectations record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
             policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.filter(p=>!(p.schedule_from_reviews&&p.next_review_date)).map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
@@ -300,7 +304,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction data-testid="review-complete-confirmed" onClick={()=>{setConfirmComplete(false);lifecycle('complete');}}>Complete Review</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>}
-    {linked && <RecordDrawer open kind={linked.kind} record={linked.record} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();}}} onSaved={() => {reload();onSaved?.();}} />}
+    {linked && <RecordDrawer open kind={linked.kind} record={linked.record} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();const target=cisBriefOpener.current;cisBriefOpener.current=null;if(target)requestAnimationFrame(()=>{if(target.isConnected)target.focus({preventScroll:true});});}}} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
       <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form"><SheetHeader><SheetTitle>Raise Finding</SheetTitle></SheetHeader>
         {finding && <form className="mt-5 space-y-4" onSubmit={e => {e.preventDefault();run(async () => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>

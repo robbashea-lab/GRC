@@ -137,7 +137,7 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Loopback Demo required');
   await expect(page.getByTestId('requirement-1.1')).toBeFocused();
   await expect(page.getByRole('link',{name:'Program configuration',exact:true})).toHaveCount(0);
   // Real existing framework records; do not activate CIS for canonical ISO/SOC clients.
-  for(const [cid,framework,testId] of [['demo_dunder','iso-27001','framework-assessment-workspace'],['demo_prestige','soc-2','prestige-soc-assessment']]){
+  for(const [cid,framework,testId] of [['demo_dunder','iso-27001','iso-assessment-workspace'],['demo_prestige','soc-2','prestige-soc-assessment']]){
    const target=await page.evaluate(({cid,framework})=>{
     localStorage.setItem('grc_client_id',cid);
     return JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')).framework_assessments.find(a=>a.client_id===cid&&a.framework_key===framework);
@@ -145,7 +145,8 @@ if(new URL(base).hostname!=='127.0.0.1')throw Error('Loopback Demo required');
    assert(target,'Existing '+framework+' assessment required');
    await page.goto(base+'/compliance/'+framework+'?assessment='+target.framework_assessment_id);
    await expect(page.getByTestId(testId)).toBeVisible();
-   await expect(page.locator('.cis-requirement-guide')).toHaveCount(0);
+   await expect(page.getByTestId('cis-operation')).toHaveCount(0);
+   await expect(page.getByTestId('cis-supporting-records')).toHaveCount(0);
   }
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({safeguardsSavedAndReloaded:tested.length,guideAnswersChecked:tested.length*5,guideNeverMutatesRecords:true,guideKeyboard:true,findingAndSingleAction:true,evidenceUploadDownloadReload:true,widths:[1440,1280,1024,768],themes:['light','dark'],draftGuard:true,saveNext:true,previous:true,escape:true,focusTrap:true,focusReturn:true,breadcrumb:true,runtimeErrors:errors}));
