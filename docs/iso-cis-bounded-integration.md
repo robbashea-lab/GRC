@@ -1,5 +1,45 @@
 # Bounded ISO PR25 / CIS PR24 integration
 
+## Authorized Demo finalization follow-up — 2026-10-03
+
+The sections below retain the earlier bounded-integration evidence and its then-current
+release boundary. The user subsequently authorized one combined PR/main merge and
+publication to the existing private Demo, not a production backend release.
+
+Refetched main `c57a57f0f5549dce7d4c9dc128387823a85af617`, ISO
+`bc96e58e58bd4c9ae8b1d6f130634012d1152ec1` and CIS
+`980441ed9280b57819385aa1cdce0019ac997a9e`. Merged the newer CIS persistent
+verification script and results documentation without altering its source branch.
+CIS agent agreed this integration checkout owns merge/publication; no concurrent release.
+
+The specifically authorized CIS handoff defect is corrected: backend and Demo return
+three derived `cis_setup` facts (accountable person recorded, operating method recorded,
+arrangement confirmed). `operationGaps` uses those for projected rows and the existing
+full-record rules elsewhere. No new stored state, narratives, provider details or owner
+identifiers are exposed. Saved confirmation survives reload; editing a method retains
+the existing confirmation-reset rule. Conclusions, permissions and ISO discovery facts
+are unchanged. The earlier "separate direction required" limitation is superseded.
+
+Fresh deduplicated validation: 21 frontend suites / **272 tests**; backend **121 tests
+plus 48 subtests**. Normal and Demo optimized builds passed. Normal authenticated
+browser QA uses disposable mocked Mongo, not a real persistent environment, and now
+asserts saved CIS projection facts. Existing bundle/deprecation advisories remain.
+
+Read-only production safety inspection: Railway `serviceAutoDeployTool` reported
+`enabled=false`, `canEnable=false`, `NO_INSTALLATION`; main pushes cannot currently
+trigger its backend deployment. The old source link remains; it was not removed or
+changed. Latest deployment remains the 2026-09-23 failed deployment. No infrastructure,
+certificate, machine trust or production data was changed.
+
+Preserve the CIS source's 15 real-backend acceptance cases at `d17e713` as source-only
+evidence, not combined-branch browser/restart proof. Combined real-database browser,
+restart/index/transaction/concurrency acceptance is still deferred and is a production
+release limitation. The ISO 27001:2022 / Amd 1:2024 normative comparison is outstanding.
+Mock/Demo tests do not prove conformity, normative completeness or production readiness.
+
+Final merged SHA, replacement PR, saved preview version and deployment status must be
+reported from actual GitHub/Sites results, not inferred from these local tests.
+
 ## Exact sources and boundary
 
 - Branch: `codex/iso-cis-bounded-integration` in its own worktree.

@@ -723,11 +723,18 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
     fields = json.loads((CATALOG_ROOT / 'onboardingHandoffFields.json').read_text(encoding='utf-8'))
 
     async def rows(kind, names):
-        supporting_fields = ('implementation', 'notes', 'related_links') if kind == 'framework_assessments' else ()
+        supporting_fields = ('implementation', 'notes', 'related_links', 'owner_id', 'process_owner_id', 'cis_operation') if kind == 'framework_assessments' else ()
         result = await server.db[kind].find({'client_id': client_id}, {'_id': 0, **dict.fromkeys((*names, *supporting_fields), 1)}).to_list(2001)
         if len(result) > 2000:
             raise HTTPException(413, 'Setup summary is too large. Use the operational registers for this client.')
         for row in result:
+            if kind == 'framework_assessments' and row.get('framework_key') == 'cis-ig1':
+                # Derived setup facts only; do not expose narratives or imply effectiveness.
+                row['cis_setup'] = {
+                    'accountable_person_recorded': bool(row.get('owner_id') or row.get('process_owner_id')),
+                    'operating_method_recorded': isinstance(row.get('implementation'), str) and bool(row['implementation'].strip()),
+                    'arrangement_confirmed': bool((row.get('cis_operation') or {}).get('confirmed')),
+                }
             if kind == 'framework_assessments' and row.get('framework_key') == 'iso-27001':
                 # Discovery metadata only, never an assessment or setup conclusion.
                 row['iso_establishment_information_recorded'] = any(isinstance(row.get(k), str) and bool(row[k].strip()) for k in ('implementation', 'notes')) or bool(row.get('related_links'))

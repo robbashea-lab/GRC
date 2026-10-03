@@ -2,9 +2,13 @@ import {cis,reviewDrivers} from './frameworks';
 import guidance from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
 
 export const EMPTY_OPERATION={provider:'',confirmed:false};
+export function cisSetupFacts(row){
+  return {accountable_person_recorded:!!(row.owner_id||row.process_owner_id),operating_method_recorded:!!row.implementation?.trim(),arrangement_confirmed:!!row.cis_operation?.confirmed};
+}
 // Confirmation records a responsibility/arrangement, never effectiveness or compliance.
 export function operationGaps(row){
-  return [!row.owner_id&&!row.process_owner_id&&'Accountable person',!row.implementation?.trim()&&'Operating method or procedure reference',!row.cis_operation?.confirmed&&'Arrangement confirmation'].filter(Boolean);
+  const facts=row.cis_setup||cisSetupFacts(row);
+  return [!facts.accountable_person_recorded&&'Accountable person',!facts.operating_method_recorded&&'Operating method or procedure reference',!facts.arrangement_confirmed&&'Arrangement confirmation'].filter(Boolean);
 }
 export function cisReviewBriefs(record){
   return reviewDrivers(record).filter(d=>d.framework_key==='cis-ig1').map(driver=>{
