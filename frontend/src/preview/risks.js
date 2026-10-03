@@ -48,10 +48,10 @@ export function completeRiskReview(db,review,completed,body) {
   if(body.risk_outcome&&!['Reviewed — No Change','Additional Action Required','Closure Recommended'].includes(body.risk_outcome)) throw new Error('Invalid Risk Review outcome.');
   completed.outcome=completed.risk_before.acceptance_date!==completed.risk_after.acceptance_date?'Risk Accepted':['likelihood_score','impact_score','assessment_rationale','likelihood_rationale','impact_rationale'].some(k=>completed.risk_before[k]!==completed.risk_after[k])?'Assessment Updated':completed.risk_before.treatment!==completed.risk_after.treatment?'Treatment Updated':body.risk_outcome||'Reviewed — No Change';
   let next=reviewView(review).next_review_date;
-  if(risk.client_id==='demo_brawndo'){
+  if(risk.client_id==='demo_brawndo'||body.risk_next_review){
     if(body.risk_next_review){
       if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Only platform administrators can override the Risk review schedule.');
-      if(!scheduledDate(body.risk_next_review)||body.risk_next_review.slice(0,10)<=completed.completed_at.slice(0,10))throw new Error('Choose a next review after the completed review date.');
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(body.risk_next_review)||!scheduledDate(body.risk_next_review)||body.risk_next_review<=completed.completed_at.slice(0,10))throw new Error('Choose a next review after the completed review date.');
       next=body.risk_next_review.slice(0,10);
     }
     completed.next_review_override=body.risk_next_review||null;

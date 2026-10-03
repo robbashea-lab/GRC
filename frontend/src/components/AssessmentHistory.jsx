@@ -1,6 +1,7 @@
 import {personLabel} from '@/lib/people';
 import {operatorStatuses} from '@/lib/frameworkOperator';
 import {VERIFICATION_LABELS} from './BrawndoCisControls';
+import {socAssessmentDate,socSavedDate} from '@/lib/socAssessmentDates';
 
 // Saved snapshots remain readable when a framework adopts a different editor.
 export default function AssessmentHistory({record,users=[],activity=[]}){
@@ -10,6 +11,7 @@ export default function AssessmentHistory({record,users=[],activity=[]}){
     <ul>{history.slice().reverse().map((entry,i)=><li key={i} className="mt-3 text-sm whitespace-pre-wrap break-words">
       <p className="font-medium">{statuses[entry.status]||entry.status} · {entry.at?.slice(0,10)}</p>
       <p className="text-xs">{personLabel(users,entry.by,'Not recorded')}</p>
+      {record.framework_key==='soc-2'&&<p className="text-xs">Last saved: {socSavedDate({...entry,last_assessed:entry.at})} · Last assessed: {socAssessmentDate({...entry,last_assessed:entry.at})}</p>}
       <p>{entry.implementation}</p>
       {entry.notes&&<p>{entry.notes}</p>}
       {entry.technology&&<p>Technology: {entry.technology}</p>}

@@ -191,6 +191,21 @@ test('new pilot reviews do not wait for nonexistent requirement relationships',a
   expect(dialog.textContent).toContain('Requirement source not documented');
 });
 
+test('optional Review evaluation is protected as a draft and sent only on completion',async()=>{
+ const close=jest.fn();
+ api.post.mockResolvedValue({data:{review:{...saved,status:'completed'},occurrence:{occurrence_id:'done'}}});
+ await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={close}/>));
+ await click([...document.querySelectorAll('summary')].find(s=>s.textContent==='Review evaluation'));
+ await input(document.querySelector('[aria-label="Reviewer conclusion"]'),'Operating gap remains despite completed activity');
+ await input(document.querySelector('[aria-label="Scope examined"]'),'Client and provider responsibilities');
+ await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close'));
+ expect(document.body.textContent).toContain('Leave unsaved changes?');expect(close).not.toHaveBeenCalled();
+ await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Keep editing'));
+ await click(document.querySelector('[data-testid="review-complete"]'));
+ await click(document.querySelector('[data-testid="review-complete-confirmed"]'));
+ expect(api.post).toHaveBeenCalledWith(expect.stringMatching(/\/complete$/),expect.objectContaining({conclusion:'Operating gap remains despite completed activity',tested_scope:'Client and provider responsibilities'}));
+});
+
 test('Risk review completion is confirmed first and sends only changed assessment fields',async()=>{
  saved={...saved,risk_id:'risk'};
  api.get.mockImplementation(async path=>({data:path==='/related'?{risks:[{risk_id:'risk',client_id:'demo_brawndo',likelihood_score:3,impact_score:4}]}:[]}));

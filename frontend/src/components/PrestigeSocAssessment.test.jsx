@@ -21,11 +21,20 @@ beforeEach(()=>{
  record={framework_assessment_id:'soc-a',framework_key:'soc-2',definition_id:'CC9.2',client_id:'demo_prestige',status:'in_progress',verification:'needs_validation',implementation:'Existing vendor monitoring process.',technology:'Retained legacy field',notes:'Retained note',na_rationale:'',owner_id:null,assessment_history:[],last_assessed:'2026-09-22T12:00:00Z'};
  related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path==='/frameworks/soc-2'?{assessments:[record],work:{}}:path.includes('/members')?[{user_id:'david',name:'David Wallace'}]:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:[]}));
- api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-10-01T12:00:00Z',assessed_by:'u',assessment_history:[{...body,at:'2026-10-01T12:00:00Z',by:'u'}]};return {data:record};});
+ api.patch.mockImplementation(async(path,body)=>{const judgment=body.record_assessment||body.status!==record.status&&body.status!=='not_assessed';record={...record,...body,last_saved:'2026-10-01T12:00:00Z',assessment_recorded_at:judgment?'2026-10-01T12:00:00Z':record.assessment_recorded_at??null,last_assessed:'2026-10-01T12:00:00Z',assessed_by:'u',assessment_history:[{...body,at:'2026-10-01T12:00:00Z',by:'u'}]};return {data:record};});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 const render=async(clientId='demo_prestige')=>act(async()=>root.render(<FrameworkDrawer open record={{...record,client_id:clientId}} clientId={clientId} onOpenChange={close} position="33 of 38 in framework order" breadcrumb={[{label:'SOC 2',onClick:jest.fn()},{label:'Security',onClick:jest.fn()},{label:'CC9',onClick:jest.fn()},{label:'CC9.2'}]}/>));
 const headings=()=>[...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent.replace(/^\d/,''));
+
+test('first narrative save does not claim an assessment when absent metadata becomes null',async()=>{
+ record.status='not_assessed';await render();
+ await setValue('Current implementation','Draft context only');
+ await act(async()=>button('Save assessment').click());
+ expect(container.textContent).toContain('Changes saved; assessment date unchanged.');
+ expect(container.textContent).toContain('Last assessed: Not assessed');
+ expect(record.assessment_recorded_at).toBeNull();
+});
 
 test('Prestige SOC criterion workspace is focused, source-qualified and ordered',async()=>{
  await render();expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();expect(headings()).toEqual(['What SOC 2 Requires','SOC 2 Assessment Guidance','Implementation Status','Current Implementation']);
@@ -158,7 +167,7 @@ test('new SOC tenants retain historical management-Control observations',async()
 test('status, verification, owner and current implementation persist with the concurrency token',async()=>{
  await render();await act(async()=>container.querySelector('input[value="addressed"]').click());await setValue('Verification result','verified');await setValue('Owner','david');await setValue('Current implementation','Prestige reviews critical vendors and tracks exceptions through the existing Findings workflow.');await act(async()=>button('Save assessment').click());
  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({status:'addressed',verification:'verified',owner_id:'david',implementation:'Prestige reviews critical vendors and tracks exceptions through the existing Findings workflow.',technology:'Retained legacy field',notes:'Retained note',expected_last_assessed:'2026-09-22T12:00:00Z'}));
- expect(container.textContent).toContain('Assessment saved.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Verified');
+ expect(container.textContent).toContain('Assessment recorded.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Verified');
 });
 
 test('helper precedes the implementation field, N/A rationale is preserved and breadcrumbs remain guarded',async()=>{

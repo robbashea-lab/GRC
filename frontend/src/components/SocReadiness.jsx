@@ -2,9 +2,21 @@ import {useEffect,useState} from 'react';
 import api,{formatError} from '@/lib/api';
 import {SOC_CATEGORIES} from '@/lib/socReadiness';
 import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
+import descriptionGuidance from '@catalogs/operatorGuidance/socDescriptionPreparation.json';
+import {Link} from 'react-router-dom';
 import {Button} from './ui/button';
 import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
+
+export function SocDescriptionPreparation(){
+  return <details className="border border-line rounded bg-surface-card p-3 text-sm" data-guidance-version={descriptionGuidance.version}>
+    <summary className="cursor-pointer font-medium">System-description preparation</summary>
+    <p className="my-3 text-xs text-ink-secondary">Program-level preparation guidance, not nine additional controls or an assessment score. Internal readiness, not an auditor opinion.</p>
+    <ul className="space-y-2">{descriptionGuidance.items.map(item=><li key={item.id}><strong>{item.id}</strong> · {item.text}</li>)}</ul>
+    <p className="my-3">Use an existing Review and Notes, an external description or equivalent record. Record the responsible owner, reference/version examined, reporting period and remaining gaps. Reuse existing work before creating a Review; choose a cadence or trigger suited to your program.</p>
+    <div className="flex flex-wrap gap-4"><Link className="text-link underline" to="/reviews">Open Reviews</Link><a className="text-link underline" href={descriptionGuidance.source} target="_blank" rel="noopener noreferrer">AICPA description criteria ↗</a></div>
+  </details>;
+}
 
 export function SocProgramSettings({clientId,configuration,writable,onSaved}){
   const [form,setForm]=useState(configuration),[busy,setBusy]=useState(false),[error,setError]=useState('');

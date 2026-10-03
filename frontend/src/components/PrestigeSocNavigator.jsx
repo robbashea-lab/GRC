@@ -4,7 +4,7 @@ import {SearchField} from './Register';
 import {CIS_TONE} from './CisStatus';
 import {CisBreadcrumb,VERIFICATION_LABELS,verificationOf} from './BrawndoCisControls';
 import {groupRequirements,needsAttention,sectionSummary} from '@/lib/frameworkWorkspace';
-import {freshness} from '@/lib/cisVerification';
+import {socAssessmentDate} from '@/lib/socAssessmentDates';
 
 // The SOC 2 reference workspace's conclusion labels (also used by its dashboard programme card).
 export const SOC_STATUS_LABELS={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed',not_applicable:'Not Applicable'};
@@ -47,7 +47,7 @@ function GroupRows({category,onPath}){
 }
 function CriterionRows({rows,owner,onOpen,label}){
   if(!rows.length)return <p className="bcis-foot" role="status">No criteria match this view.</p>;
-  return <table className="bcis-table bcis-safeguards" aria-label={`${label}: ${rows.length} criteria`}><thead><tr><th scope="col">Criterion</th><th scope="col">Implementation status</th><th scope="col">Verification</th><th scope="col">Owner</th><th scope="col">Last assessed</th></tr></thead><tbody>{rows.map(r=>{const v=verificationOf(r),fresh=freshness(r);
+  return <table className="bcis-table bcis-safeguards" aria-label={`${label}: ${rows.length} criteria`}><thead><tr><th scope="col">Criterion</th><th scope="col">Implementation status</th><th scope="col">Verification</th><th scope="col">Owner</th><th scope="col">Last assessed</th></tr></thead><tbody>{rows.map(r=>{const v=verificationOf(r);
     return <tr key={r.framework_assessment_id} className="bcis-row" tabIndex={0} role="link" aria-label={`Open criterion ${r.definition_id} ${r.title}`} data-testid={`requirement-${r.definition_id}`} onClick={()=>onOpen(r)} onKeyDown={activate(()=>onOpen(r))}>
-      <td><span className="bcis-sg"><span className="bcis-sg-id">{r.definition_id}</span><span className="bcis-name">{r.title}</span></span></td><td><SocStatusPill status={r.status}/></td><td><span className={`cis-flag cis-tone-${VERIFICATION_TONE[v]}`}>{VERIFICATION_LABELS[v]}</span></td><td>{owner(r.owner_id)}</td><td className="bcis-muted">{fresh.state==='never'?'Never':new Date(String(r.last_assessed).slice(0,10)+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td></tr>;})}</tbody></table>;
+      <td><span className="bcis-sg"><span className="bcis-sg-id">{r.definition_id}</span><span className="bcis-name">{r.title}</span></span></td><td><SocStatusPill status={r.status}/></td><td><span className={`cis-flag cis-tone-${VERIFICATION_TONE[v]}`}>{VERIFICATION_LABELS[v]}</span></td><td>{owner(r.owner_id)}</td><td className="bcis-muted">{socAssessmentDate(r)}</td></tr>;})}</tbody></table>;
 }

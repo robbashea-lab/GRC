@@ -38,7 +38,8 @@ import {auditPackage,auditProgress} from '@/lib/isoAudit';
 const tabs = ['Overview','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
 const date = value => value ? new Date(String(value).slice(0,10) + 'T00:00:00').toLocaleDateString() : '—';
-const outcome = o => o.outcome === 'no_findings' ? 'No Findings' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
+const outcome = o => o.outcome === 'no_findings' ? 'No findings recorded' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
+const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scope','Scope examined',4000],['tested_period','Period examined',4000],['no_evidence_reason','Supporting records / reason no separate artifact is appropriate',4000]];
 
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user} = useAuth();
@@ -54,6 +55,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const [riskOutcome,setRiskOutcome]=useState("Reviewed — No Change");
   const [riskNext,setRiskNext]=useState("");
   const [confirmComplete,setConfirmComplete]=useState(false);
+  const [evaluation,setEvaluation]=useState({});
   const [current,setCurrent] = useState(null), [form,setForm] = useState({});
   const [history,setHistory] = useState([]), [selected,setSelected] = useState(null);
   const [tab,setTab] = useState('Overview'), [busy,setBusy] = useState(false);
@@ -89,6 +91,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     setForm(record ? {...record,due_date:record.due_date?.slice(0,10) || ''} : {title:'',review_type:'',owner_id:'',due_date:'',recurrence:'none',notes:''});
     setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskNext("");setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setComments([]); setActivity([]); setRelated({});
     setComment(''); setFinding(null); setLinked(null); setMembers([]);setPending(null);
+    setEvaluation({});
     const version = generation.current;
     setBasisLoading(pilot ? !!record : true);setBasisError('');
     api.get(`/clients/${record?.client_id || clientId}/members`).then(({data}) => { if (generation.current === version) setMembers(data); }).catch(e => toast.error(formatError(e)));
@@ -130,11 +133,11 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return Object.fromEntries(fields.map(k => [k,k === 'custom_recurrence_days' ? (form[k] ? Number(form[k]) : null) : form[k] || null])
       .filter(([k,v]) => !current || (k === 'due_date' ? (current[k]?.slice(0,10) || null) !== v : JSON.stringify(current[k] || null) !== JSON.stringify(v))));
   }
-  const dirty=pilot && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
+  const dirty=!frozen&&Object.values(evaluation).some(Boolean) || pilot && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
     pilot && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&(riskOutcome!=="Reviewed — No Change"||!!riskNext));
   function leave(action,hasDraft=dirty) {
     if(pilot&&busy)return;
-    if(pilot&&hasDraft)setPending(()=>action);
+    if(hasDraft)setPending(()=>action);
     else action();
   }
   function close(value) { if(value)onOpenChange(true);else leave(()=>onOpenChange(false)); }
@@ -159,11 +162,12 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const lifecycle = action => run(async () => {
     if(pilot&&(comment.trim()||finding)) throw new Error('Post or discard the unfinished comment or Finding before starting or completing this Review.');
     const saved = await saveChanges();
-    const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'&&saved.risk_id?{risk_assessment:pilot&&riskDraft?Object.fromEntries(Object.entries(riskDraft).filter(([k,v])=>(v??'')!==(riskBase.current?.[k]??''))):riskDraft||{},risk_outcome:riskOutcome,...(pilot&&riskNext?{risk_next_review:riskNext}:{})}:{})});
+    const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'?evaluation:{}),...(action==='complete'&&saved.risk_id?{risk_assessment:pilot&&riskDraft?Object.fromEntries(Object.entries(riskDraft).filter(([k,v])=>(v??'')!==(riskBase.current?.[k]??''))):riskDraft||{},risk_outcome:riskOutcome,...(pilot&&riskNext?{risk_next_review:riskNext}:{})}:{})});
     const updated = data.review || data;
     setCurrent(updated); setForm({...updated,due_date:updated.due_date?.slice(0,10) || ''});
     if (data.occurrence) setHistory(items => [data.occurrence,...items.filter(o => o.occurrence_id !== data.occurrence.occurrence_id)]);
     setSelected(null); setRiskNext(''); setComment(''); onSaved?.();
+    if(action==='complete')setEvaluation({});
     toast.success(action === 'start' ? 'Review started' : updated.status === 'completed' ? 'Completed and preserved in Review history' : 'Occurrence completed; next Review scheduled');
   });
   function picker(label,value,onChange,options,disabled=false,testId) {
@@ -173,7 +177,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
       </SelectContent></Select></div>;
   }
-  const chooseHistory = o => leave(()=>{ if(pilot){setForm({...current,due_date:current.due_date?.slice(0,10)||''});setComment('');setFinding(null);setRiskDraft(riskBase.current);setRiskOutcome("Reviewed — No Change");setRiskNext('');} generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); });
+  const chooseHistory = o => leave(()=>{ setEvaluation({});if(pilot){setForm({...current,due_date:current.due_date?.slice(0,10)||''});setComment('');setFinding(null);setRiskDraft(riskBase.current);setRiskOutcome("Reviewed — No Change");setRiskNext('');} generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); });
   const configuration = selected || form;
   const derived = reviewSchedule(configuration);
   useEffect(()=>{setShowHistorical(false);},[rid,oid,open]);
@@ -234,6 +238,10 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           </div>
           {!pilot&&<GovernanceContextFields value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
           <div><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>
+          {current&&<details className="border border-line rounded p-3 text-sm"><summary className="cursor-pointer font-medium">Review evaluation</summary>
+            <p className="my-2 text-ink-secondary">Completion records the activity; Finding counts and effectiveness are separate. Notes, existing records or external references may support your judgment. A separate uploaded file is not required. Evaluation below is recorded when you complete this occurrence.</p>
+            {frozen?(()=>{const recorded=selected||current.occurrences?.find(o=>o.occurrence_id===oid)||{};return <div className="space-y-2">{evaluationFields.map(([key,label])=>recorded[key]?<p key={key} className="whitespace-pre-wrap break-words"><strong>{label}: </strong>{recorded[key]}</p>:null)}{'checklist_confirmed' in recorded&&<p>Reviewer checklist confirmed: {recorded.checklist_confirmed?'Yes':'No'} (not an effectiveness conclusion)</p>}{!evaluationFields.some(([key])=>recorded[key])&&!('checklist_confirmed' in recorded)&&<p>No evaluation recorded for this occurrence.</p>}</div>;})():<fieldset disabled={!writable||busy} className="space-y-2">{evaluationFields.map(([key,label,max])=><label key={key} className="block">{label}<Textarea aria-label={label} maxLength={max} rows={key==='conclusion'?3:2} value={evaluation[key]||''} onChange={e=>setEvaluation(p=>({...p,[key]:e.target.value}))}/></label>)}<label className="flex gap-2 items-center"><input type="checkbox" checked={evaluation.checklist_confirmed||false} onChange={e=>setEvaluation(p=>({...p,checklist_confirmed:e.target.checked}))}/>Reviewer checklist confirmed (not an effectiveness conclusion)</label></fieldset>}
+          </details>}
           {selected && <p className="text-sm">Completed {date(selected.completed_at || selected.completion_date)} by {selected.completed_by_name || person(selected.completed_by)} · {outcome(selected)}</p>}
           {current && !frozen && writable && <div className="flex flex-wrap gap-2">
             {current.status !== 'in_progress' && <Button size="sm" variant="outline" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-start" onClick={() => lifecycle('start')}>Start Review</Button>}
@@ -280,7 +288,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       </div>
       <div className="px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2"><Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && tab === 'Overview' && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
     </Content>
-    {pilot&&<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
+    {<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
       <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>
         <AlertDialogDescription>Saved records are unchanged. Keep editing, or discard the unfinished draft for this action.</AlertDialogDescription>
         <AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const action=pending;setPending(null);action?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter>

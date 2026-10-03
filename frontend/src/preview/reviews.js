@@ -22,10 +22,17 @@ export function history(db, review) {
   return result.sort((a,b) => String(b.completed_at || '').localeCompare(String(a.completed_at || '')));
 }
 export function reviewAction(db, id, name, body) {
+  if(name==='complete') {
+    const supported=['occurrence_id','completion_notes','risk_assessment','risk_outcome','risk_next_review','completion_date','spawn_next','conclusion','tested_period','tested_scope','no_evidence_reason','checklist_confirmed'];
+    if(Object.keys(body).some(k=>!supported.includes(k)))throw new Error('Unsupported Review completion field');
+    for(const [key,limit] of [['conclusion',20000],['tested_period',4000],['tested_scope',4000],['no_evidence_reason',4000]])if(body[key]!=null&&(typeof body[key]!=='string'||body[key].length>limit))throw new Error('Invalid Review evaluation field');
+    if('checklist_confirmed' in body&&typeof body.checklist_confirmed!=='boolean')throw new Error('Checklist confirmation must be boolean');
+  }
   const review = record(db, 'reviews', id), current = reviewView(review);
   if(review.ai_system_id&&(db.ai_systems||[]).some(a=>a.ai_system_id===review.ai_system_id&&a.status==='retired')&&review.status!=='in_progress')throw new Error('Retired AI only permits completion of already-started closure work');
   const previous = review.occurrences?.find(o => o.occurrence_id === body.occurrence_id);
   if (name === 'complete' && previous) return {review:current, occurrence:previous, spawned:null};
+  if(name==='complete'&&body.risk_next_review&&!review.risk_id)throw new Error('Schedule overrides apply only to Risk Reviews');
   if(review.vendor_id&&db.vendors.some(v=>v.vendor_id===review.vendor_id&&v.status==='inactive')&&review.vendor_purpose!=='offboarding') throw new Error('Inactive Vendors have no active recurring Reviews.');
   assertCurrentOccurrence(review, body.occurrence_id);
   if (current.status === 'needs_scheduling') throw new Error('An administrator must schedule this Review first.');
@@ -41,6 +48,7 @@ export function reviewAction(db, id, name, body) {
   const evidence = list(db,'evidence',review.client_id).filter(e => !e.archived_at&& (auditEvidenceIds(review.iso_audit).includes(e.evidence_id)||(e.linked_id === id && ['review','reviews'].includes(e.linked_type) && belongsToOccurrence(e,review)) || e.relationships?.some(r=>r.kind==='reviews'&&r.id===id&&r.occurrence_id===occurrenceId(review))));
   const {occurrences, ...execution} = current;
   const completed = clone({...execution, ...isoCompletionSnapshot(db,review), occurrence_id:occurrenceId(review), status:'completed', completed_at:now(), completion_date:now(),
+    ...Object.fromEntries(Object.entries(body).filter(([k])=>['conclusion','tested_scope','tested_period','checklist_confirmed','no_evidence_reason'].includes(k))),
     completed_by:db.user.user_id, completed_by_name:db.user.name, notes:body.completion_notes ?? review.notes,
     outcome:findings.length ? 'findings_raised' : 'no_findings', finding_count:findings.length,
     evidence:evidence.map(e => ({evidence_id:e.evidence_id,filename:e.filename,version:e.version,sha256:e.sha256}))});

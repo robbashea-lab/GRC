@@ -32,6 +32,18 @@ const prestige=async({clientId='demo_prestige',selected=true}={})=>{mockUser.wor
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));return response;};
 const socSettings=()=>[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='Scope and observation period settings');
 const changeInput=(input,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));});
+
+test.each(['demo_prestige','new-soc-client','later-enabled-soc'])('shared SOC program guidance is discoverable without creating records for %s',async clientId=>{
+ await prestige({clientId});
+ const description=[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='System-description preparation');
+ const controls=[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='Client organizational Controls');
+ expect(description.open).toBe(false);expect(controls.open).toBe(false);
+ await act(async()=>description.querySelector('summary').click());
+ expect(description.querySelectorAll('li')).toHaveLength(9);
+ expect(description.textContent).toContain('owner, reference/version');
+ expect(description.querySelector('a[href="/reviews"]')).toBeTruthy();
+ expect(api.patch).not.toHaveBeenCalled();
+});
 test.each(['demo_prestige','new-soc-client'])('SOC scope and period remain editable through the existing editor for %s',async clientId=>{
  const response=await prestige({clientId}),settings=socSettings();expect(settings).toBeTruthy();expect(settings.open).toBe(false);
  await act(async()=>settings.querySelector('summary').click());expect(settings.open).toBe(true);
@@ -109,7 +121,7 @@ test('Brawndo filters are separate from navigation and clear back to controls',a
 });
 test('Prestige SOC 2 uses scoped progress and category-first hierarchy with collapsed scope settings',async()=>{
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
- expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toMatch(/Client organizational Controls|Include retained out-of-scope criteria/);expect(socSettings().open).toBe(false);
+ expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).toContain('Client organizational Controls');expect(workspace.textContent).not.toContain('Include retained out-of-scope criteria');expect(socSettings().open).toBe(false);
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
  expect(summary).toContain('Implemented74%28 of 38');expect(summary).toContain('Assessed92%');expect(summary).toContain('3 still to assess');
  const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Implemented: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Implemented5 of 38 criteria13%');
