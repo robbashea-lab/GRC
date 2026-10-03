@@ -6,7 +6,7 @@ import hipaaGuidance from './operatorGuidance/hipaa.json';
 import isoGuidance from './operatorGuidance/iso.json';
 import socGuidance from './operatorGuidance/soc.json';
 
-export const operatorStatuses=key=>key==='nist-csf-2'?CSF_STATUSES:key==='soc-2'?{...ASSESSMENT_STATUSES,in_progress:'Partially Addressed',addressed:'Addressed (Readiness)',needs_attention:'Needs Remediation / Validation'}:{...ASSESSMENT_STATUSES,in_progress:'Partially Implemented',addressed:'Implemented',needs_attention:'Not Implemented / Needs Validation'};
+export const operatorStatuses=key=>key==='nist-csf-2'?CSF_STATUSES:key==='soc-2'?{...ASSESSMENT_STATUSES,in_progress:'Partially Addressed',addressed:'Addressed (Readiness)',needs_attention:'Needs Remediation / Validation'}:{...ASSESSMENT_STATUSES,in_progress:'Partially Implemented',addressed:'Implemented',needs_attention:key==='cis-ig1'?'Not Implemented':'Not Implemented / Needs Validation'};
 // Each workspace speaks its framework's language: its item nouns and conclusion labels.
 const ITEM_WORDS={'cis-ig1':['safeguard','safeguards','IG1'],'iso-27001':['requirement','requirements','the ISMS scope'],'soc-2':['criterion','criteria','the SOC 2 scope'],'hipaa':['specification','specifications','the Security Rule'],'nist-csf-2':['outcome','outcomes','the target profile']};
 export function operatorVocabulary(key){

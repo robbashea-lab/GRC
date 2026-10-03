@@ -22,7 +22,7 @@
       "version": "8.1",
       "implementation_group": 1,
       "workspace": "cis",
-      "capabilities": ["verification", "verification_checklist", "cis_assessment_criteria"]
+      "capabilities": ["verification", "verification_checklist", "cis_assessment_criteria", "cis_operation"]
     },
     {
       "key": "nist-csf-2",
