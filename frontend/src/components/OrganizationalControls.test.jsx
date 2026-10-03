@@ -68,3 +68,20 @@ test('failed save retains draft and never reports success',async()=>{
   expect(document.body.textContent).not.toContain('Control saved.');fail.mockRestore();
   await click('Close Control');expect(document.body.textContent).toContain('Leave unsaved Control work?');
 });
+
+test('ISO necessary control reuses the shared register, maps 6.1.3, saves/reopens and retains design history without assessing the requirement',async()=>{
+ const {data:client}=await api.post('/clients',{name:'Synthetic ISO necessary control'}),cid=client.client_id;
+ await api.post('/onboarding/baseline',{client_id:cid,finalize:true,state:{version:3,step:3,policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure'])),requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,f.key==='iso-27001'?'applies':'does_not_apply'])),reviews:[],framework_reviews:{}}});
+ const before=(await api.get('/frameworks/iso-27001',{params:{client_id:cid}})).data.assessments;
+ const clause=before.find(r=>r.definition_id==='6.1.3');
+ await act(async()=>root.render(<OrganizationalControls clientId={cid} assessmentId={clause.framework_assessment_id}/>));
+ await click('Create organizational Control');await fill('Organizational Control name','Necessary export authorization');
+ await fill('Organizational Control design','Necessary for export risk; two-person authorization; implementation reference register v1');await click('Save Control');await click('Close Control');
+ const saved=(await api.get('/organizational-controls',{params:{client_id:cid}})).data.items[0];
+ expect(saved.assessment_ids).toContain(clause.framework_assessment_id);
+ await click('Necessary export authorization');expect(document.querySelector('[aria-label="Organizational Control design"]').value).toContain('register v1');
+ await fill('Organizational Control design','Necessary for export risk; revised design v2');await click('Save Control');
+ const changed=(await api.get('/organizational-controls/'+encodeURIComponent(saved.control_id))).data;
+ expect(changed.history.some(h=>h.description.includes('register v1'))).toBe(true);
+ expect((await api.get('/frameworks/iso-27001',{params:{client_id:cid}})).data.assessments).toEqual(before);
+});

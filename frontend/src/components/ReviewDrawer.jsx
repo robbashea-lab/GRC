@@ -10,6 +10,7 @@ import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
 import {isReferencePresentation,isPrestigeReference} from '@/lib/reference';
 import ReviewExpectations,{ReviewFacts} from './BrawndoReviewDetails';
+import IsoManagementReviewGuide,{isIsoManagementReview} from './IsoManagementReviewGuide';
 import './BrawndoCisAssessment.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,7 +47,6 @@ const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scop
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user} = useAuth();
   const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferencePresentation(clientId,user) && (!record || record.client_id===clientId);
-  const guarded=pilot||cisReviewBriefs(record||{}).length>0;
   const clientPresentation=useContext(ClientPresentationContext),dialogLayout=pilot||!!clientPresentation;
   const Root=dialogLayout?Dialog:Sheet, Content=dialogLayout?DialogContent:SheetContent;
   const opener=useRef(null),heading=useRef(null),cisBriefOpener=useRef(null);
@@ -136,10 +136,11 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return Object.fromEntries(fields.map(k => [k,k === 'custom_recurrence_days' ? (form[k] ? Number(form[k]) : null) : form[k] || null])
       .filter(([k,v]) => !current || (k === 'due_date' ? (current[k]?.slice(0,10) || null) !== v : JSON.stringify(current[k] || null) !== JSON.stringify(v))));
   }
-  const dirty=!frozen&&Object.values(evaluation).some(Boolean) || guarded && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
-    guarded && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&(riskOutcome!=="Reviewed — No Change"||!!riskNext));
+  const draftProtected=pilot||cisReviewBriefs(current||record||{}).length>0||isIsoManagementReview(shown,related);
+  const dirty=!frozen&&Object.values(evaluation).some(Boolean) || draftProtected && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
+    draftProtected && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&(riskOutcome!=="Reviewed — No Change"||!!riskNext));
   function leave(action,hasDraft=dirty) {
-    if(guarded&&busy)return;
+    if(draftProtected&&busy)return;
     if(hasDraft)setPending(()=>action);
     else action();
   }
@@ -163,7 +164,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return current;
   }
   const lifecycle = action => run(async () => {
-    if(pilot&&(comment.trim()||finding)) throw new Error('Post or discard the unfinished comment or Finding before starting or completing this Review.');
+    if(draftProtected&&(comment.trim()||finding)) throw new Error('Post or discard the unfinished comment or Finding before starting or completing this Review.');
     const saved = await saveChanges();
     const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'?evaluation:{}),...(action==='complete'&&saved.risk_id?{risk_assessment:pilot&&riskDraft?Object.fromEntries(Object.entries(riskDraft).filter(([k,v])=>(v??'')!==(riskBase.current?.[k]??''))):riskDraft||{},risk_outcome:riskOutcome,...(pilot&&riskNext?{risk_next_review:riskNext}:{})}:{})});
     const updated = data.review || data;
@@ -180,7 +181,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
       </SelectContent></Select></div>;
   }
-  const chooseHistory = o => leave(()=>{ setEvaluation({});if(pilot){setForm({...current,due_date:current.due_date?.slice(0,10)||''});setComment('');setFinding(null);setRiskDraft(riskBase.current);setRiskOutcome("Reviewed — No Change");setRiskNext('');} generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); });
+  const chooseHistory = o => leave(()=>{ setEvaluation({});if(draftProtected){setForm({...current,due_date:current.due_date?.slice(0,10)||''});setComment('');setFinding(null);setRiskDraft(riskBase.current);setRiskOutcome("Reviewed — No Change");setRiskNext('');} generation.current++; setSelected(o); setTab('Overview'); setComments([]); setActivity([]); });
   const configuration = selected || form;
   const derived = reviewSchedule(configuration);
   useEffect(()=>{setShowHistorical(false);},[rid,oid,open]);
@@ -217,8 +218,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             <p>Closure requires completed workpapers, Findings for recorded exceptions, and the issued report. Remediation remains independently tracked.</p>
             <a className="text-link underline" target="_blank" rel="noopener noreferrer" href={'/compliance/iso-27001?iso_view=audit&package='+encodeURIComponent(shown.iso_audit.package_key)+(selected?'&audit_occurrence='+encodeURIComponent(oid):'')}>Open {selected?'historical':'current'} audit workpapers in a new tab ↗</a>
           </section>}
-          {selected?.iso_soa_snapshot&&<details className="border border-line rounded p-3 text-sm"><summary>Statement of Applicability captured at completion</summary>
-            <p className="my-2">{selected.iso_soa_snapshot.assessments.length} control records · captured {date(selected.iso_soa_snapshot.captured_at)}. This historical snapshot does not change with the current SoA.</p>
+          {selected?.iso_soa_snapshot&&<details className="border border-line rounded p-3 text-sm"><summary>Annex A SoA snapshot captured at completion</summary>
+            <p className="my-2">{selected.iso_soa_snapshot.assessments.length} Annex A control records · captured {date(selected.iso_soa_snapshot.captured_at)}. This historical snapshot does not change with the current SoA. Necessary custom controls and a controlled complete SoA are outside this snapshot; inspect this occurrence's retained supporting records, not current Control design. A supporting link is not a completeness conclusion.</p>
             <ul className="divide-y divide-line">{selected.iso_soa_snapshot.assessments.map(a=><li className="py-2" key={a.framework_assessment_id}><strong>{a.definition_id}</strong> · {({included:'Applicable',excluded:'Not Applicable'})[a.soa_applicability]||'Undetermined'} · {({addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Needs Validation',not_applicable:'Not Applicable'})[a.status]||'Not Assessed'}<p>{a.soa_justification}</p><p className="whitespace-pre-wrap">{a.implementation}</p></li>)}</ul>
           </details>}
           {current?.risk_id&&<section className="space-y-3 border border-line rounded-md p-3"><h3 className="font-medium text-sm">Risk reassessment</h3><p className="text-sm text-ink-secondary">Confirm the current assessment or record what changed. Use the linked Risk for acceptance, closure, and treatment work.</p>
@@ -241,6 +242,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{date(selected?.next_review_date || derived.next_review_date)}</p></div>
           </div>
           {!pilot&&<GovernanceContextFields value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
+          <IsoManagementReviewGuide record={shown} related={related} historical={!!selected}/>
           <div><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>
           {current&&<details className="border border-line rounded p-3 text-sm"><summary className="cursor-pointer font-medium">Review evaluation</summary>
             <p className="my-2 text-ink-secondary">Completion records the activity; Finding counts and effectiveness are separate. Notes, existing records or external references may support your judgment. A separate uploaded file is not required. Evaluation below is recorded when you complete this occurrence.</p>

@@ -723,9 +723,16 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
     fields = json.loads((CATALOG_ROOT / 'onboardingHandoffFields.json').read_text(encoding='utf-8'))
 
     async def rows(kind, names):
-        result = await server.db[kind].find({'client_id': client_id}, {'_id': 0, **dict.fromkeys(names, 1)}).to_list(2001)
+        supporting_fields = ('implementation', 'notes', 'related_links') if kind == 'framework_assessments' else ()
+        result = await server.db[kind].find({'client_id': client_id}, {'_id': 0, **dict.fromkeys((*names, *supporting_fields), 1)}).to_list(2001)
         if len(result) > 2000:
             raise HTTPException(413, 'Setup summary is too large. Use the operational registers for this client.')
+        for row in result:
+            if kind == 'framework_assessments' and row.get('framework_key') == 'iso-27001':
+                # Discovery metadata only, never an assessment or setup conclusion.
+                row['iso_establishment_information_recorded'] = any(isinstance(row.get(k), str) and bool(row[k].strip()) for k in ('implementation', 'notes')) or bool(row.get('related_links'))
+            for key in supporting_fields:
+                row.pop(key, None)
         return result
 
     values = await asyncio.gather(*(rows(kind, names) for kind, names in fields.items()))

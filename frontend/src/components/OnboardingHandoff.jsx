@@ -3,6 +3,7 @@ import PageHeader from './PageHeader';
 import {Button} from './ui/button';
 import ClientRelationshipValue from './ClientRelationshipValue';
 import CisSetupHandoff from './CisSetupHandoff';
+import IsoEstablishmentChecklist from './IsoEstablishmentChecklist';
 import {grcLead, primaryContact} from '@/lib/clientRelationships';
 import {APPLICABILITY, currentHandoff, SETUP_FILTERS} from '@/lib/onboardingHandoff';
 
@@ -45,6 +46,7 @@ export default function OnboardingHandoff({snapshot, state, catalog, clientId, c
         </section>
       </div>
       {data.programs.some(f=>f.key==='cis-ig1')&&<CisSetupHandoff rows={data.records.framework_assessments}/>}
+      {data.programs.some(f=>f.key==='iso-27001')&&<IsoEstablishmentChecklist rows={data.records.framework_assessments} clientId={clientId}/>}
       <p className="text-xs text-ink-secondary">These counts reflect current client records, including later operational changes—not a completion-time snapshot or a compliance score.</p>
       {!embedded&&<details className="rounded-lg border border-line bg-surface-card p-4"><summary className="cursor-pointer text-sm font-medium">View onboarding baseline</summary>
         <p className="text-xs text-ink-secondary mt-3">Saved intake responses. Current Policies and program applicability may differ; manage changes in their normal modules.</p>

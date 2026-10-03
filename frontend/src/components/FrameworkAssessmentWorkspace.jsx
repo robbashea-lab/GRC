@@ -156,7 +156,7 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
             </Step>
             </div>
             {isIso?<>{findingsSection}{evidenceSection}</>:<>{evidenceSection}{findingsSection}</>}
-{framework!=='iso-27001'&&<section className="brawndo-step" aria-label="Organizational Controls"><OrganizationalControls clientId={clientId} assessmentId={aid} onDraftChange={setControlDraft} onSaved={controlSaved}/></section>}
+<section className="brawndo-step" aria-label="Organizational Controls"><OrganizationalControls clientId={clientId} assessmentId={aid} onDraftChange={setControlDraft} onSaved={controlSaved}/></section>
 
     </div>
   </AssessmentShell>;

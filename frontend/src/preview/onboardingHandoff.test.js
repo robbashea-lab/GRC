@@ -17,6 +17,19 @@ beforeEach(async()=>{
 });
 const complete=()=>api.post('/onboarding/baseline',{client_id:cid,state,finalize:true});
 
+test('ISO handoff derives discovery metadata without narratives or assessment conclusions',async()=>{
+  state.requirements['iso-27001']='applies';await complete();
+  const before=await get(),row=before.records.framework_assessments.find(r=>r.framework_key==='iso-27001'&&r.definition_id==='6.3');
+  expect(row.iso_establishment_information_recorded).toBe(false);
+  await api.patch(`/framework_assessments/${row.framework_assessment_id}`,{notes:'Controlled external objective register https://records.example/v1'});
+  const projected=(await get()).records.framework_assessments.find(r=>r.framework_assessment_id===row.framework_assessment_id);
+  expect(projected.iso_establishment_information_recorded).toBe(true);expect(projected.status).toBe('not_assessed');
+  for(const key of ['notes','implementation','related_links'])expect(projected).not.toHaveProperty(key);
+  expect(before.records.framework_assessments.filter(r=>r.framework_key==='cis-ig1').every(r=>!('iso_establishment_information_recorded' in r))).toBe(true);
+  await api.patch(`/framework_assessments/${row.framework_assessment_id}`,{notes:''});
+  expect((await get()).records.framework_assessments.find(r=>r.framework_assessment_id===row.framework_assessment_id).iso_establishment_information_recorded).toBe(false);
+});
+
 test('preview matches create/retain behavior and live source counts after operations',async()=>{
   expect(unansweredPolicies(catalog,state)).toHaveLength(0);
   const initial=await get(), planned=onboardingPreview(catalog,state,initial.records);
