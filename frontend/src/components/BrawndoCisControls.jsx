@@ -4,6 +4,7 @@ import api from '@/lib/api';
 import {SearchField} from './Register';
 import {CisStatusPill} from './CisStatus';
 import {groupRequirements,sectionSummary} from '@/lib/frameworkWorkspace';
+import {cisScopeLabel} from '@/lib/cisScope';
 import {freshness} from '@/lib/cisVerification';
 
 // Brawndo CIS IG1 controls: one breadcrumb (CIS IG1 › Control N › Safeguard N.M), whole-row navigation,
@@ -57,7 +58,7 @@ function SafeguardList({implementationGroup,rows,owner,onOpen,label}){
   return <table className="bcis-table bcis-safeguards" aria-label={`${label}: ${rows.length} safeguards`}><thead><tr><th scope="col">Safeguard</th><th scope="col">Implementation status</th><th scope="col">Verification</th><th scope="col">Owner</th><th scope="col">Last assessed</th></tr></thead>
     <tbody>{rows.map(r=>{const v=verificationOf(r),fresh=freshness(r);
       return <tr key={r.framework_assessment_id} className="bcis-row" tabIndex={0} role="link" aria-label={`Open safeguard ${r.definition_id} ${r.title}`} data-testid={'requirement-'+r.definition_id} onClick={()=>onOpen(r)} onKeyDown={activate(()=>onOpen(r))}>
-        <td><span className="bcis-sg"><span className="bcis-sg-id">{r.definition_id}</span><span className="bcis-name">{r.title}{implementationGroup===2&&<span className="block text-xs text-ink-secondary">{r.implementation_group===2?'Added in IG2':'IG1 baseline'}</span>}</span></span></td>
+        <td><span className="bcis-sg"><span className="bcis-sg-id">{r.definition_id}</span><span className="bcis-name">{r.title}{implementationGroup>=2&&<span className="block text-xs text-ink-secondary">{cisScopeLabel(r)}</span>}</span></span></td>
         <td><CisStatusPill status={r.status} framework="cis-ig1"/></td>
         <td><span className={`cis-flag cis-tone-${VERIFICATION_TONE[v]}`}>{VERIFICATION_LABELS[v]}</span></td>
         <td>{owner(r.owner_id)}</td>

@@ -129,7 +129,7 @@ export function frameworkRequest(db,path,method,params,body){
     const config=validateCisConfiguration(body),client=record(db,'clients',body.client_id),before=cisConfiguration(client);
     if(!Object.hasOwn(body,'expected_updated_at'))fail('Reload the record before saving; an edit version is required',428);
     if(body.expected_updated_at!==before.expected_updated_at)fail('Record changed since it was opened; reload before saving',409);
-    if(before.implementation_group===2&&config.implementation_group===1&&(!body.confirm_reduction||!body.reason?.trim()||!body.effective_date))fail('Scope reduction requires impact confirmation, reason and effective date; assessments, links and open work are retained');
+    if(config.implementation_group<before.implementation_group&&(!body.confirm_reduction||!body.reason?.trim()||!body.effective_date))fail('Scope reduction requires impact confirmation, reason and effective date; assessments, links and open work are retained');
     reconcileFramework(db,body.client_id,{...db.baselines[body.client_id],requirements:{'cis-ig1':'applies'},framework_settings:{'cis-ig1':config}});
     client.framework_settings={...client.framework_settings,'cis-ig1':config};
     client.cis_configuration_updated_at=new Date(Math.max(Date.now(),(Date.parse(before.expected_updated_at)||0)+1)).toISOString();
@@ -158,7 +158,7 @@ export function frameworkRequest(db,path,method,params,body){
       const cell=value=>{let text=String(value??'');if(/^[\s]*[=+\-@]/.test(text)||/^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};
       const includeRetained=params.include_retained===true||params.include_retained==='true';
       const selected=assessments.filter(r=>includeRetained||active.has(r.definition_id)).sort((a,b)=>a.definition_id.localeCompare(b.definition_id,undefined,{numeric:true}));
-      const lines=selected.map(row=>{const d=frameworkDefinition(id,row.definition_id),values={...row,title:d.title,scope_group:d.implementation_group===2?'Added in IG2':'IG1 baseline',in_active_scope:active.has(row.definition_id),client_implementation_group:configuration.implementation_group,verification:row.verification||'not_verified'};return fields.map(f=>cell(typeof values[f]==='object'&&values[f]!==null?JSON.stringify(values[f]):values[f])).join(',');});
+      const lines=selected.map(row=>{const d=frameworkDefinition(id,row.definition_id),values={...row,title:d.title,scope_group:d.implementation_group>1?`Added in IG${d.implementation_group}`:'IG1 baseline',in_active_scope:active.has(row.definition_id),client_implementation_group:configuration.implementation_group,verification:row.verification||'not_verified'};return fields.map(f=>cell(typeof values[f]==='object'&&values[f]!==null?JSON.stringify(values[f]):values[f])).join(',');});
       audit(db,'CIS assessment export','clients',record(db,'clients',params.client_id),{implementation_group:configuration.implementation_group,include_retained:includeRetained});
       return new Blob([[fields.join(','),...lines].join('\r\n')],{type:'text/csv;charset=utf-8'});
     }

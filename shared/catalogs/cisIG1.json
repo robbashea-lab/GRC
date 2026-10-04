@@ -1,5 +1,6 @@
 {
   "framework": "cis-ig1",
+  "available_implementation_groups": [1, 2],
   "version": "8.1",
   "implementation_group": 1,
   "verified_on": "2026-10-04",
