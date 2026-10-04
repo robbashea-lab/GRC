@@ -11,6 +11,7 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();cis.av
 test('production selector exposes only released IG1 and IG2',async()=>{
   await act(async()=>root.render(<CisGroupSelect value={1} onChange={()=>{}}/>));
   expect([...container.querySelectorAll('option')].map(o=>o.value)).toEqual(['1','2']);
+  expect([...container.querySelectorAll('option')].every(o=>o.textContent.includes('safeguards')&&!o.querySelector('span'))).toBe(true);
   expect(container.textContent).not.toContain('IG3');
 });
 

@@ -59,5 +59,3 @@ test('unavailable IG3 is rejected by onboarding and scope without persisted chan
   const initialized=clone(readStore());await expect(scope(3)).rejects.toBeTruthy();expect(readStore()).toEqual(initialized);
   for(const group of [true,'3',0,4,null])expect(()=>validateCisSettings({'cis-ig1':{implementation_group:group}})).toThrow();
 });
-
-

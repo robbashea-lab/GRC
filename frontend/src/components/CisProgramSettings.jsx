@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {createElement,useEffect,useRef,useState} from 'react';
 import {cisAvailableGroups,cisScopeCounts} from '@/lib/cisScope';
 import api,{formatError} from '@/lib/api';
 import {recordUuid} from '@/lib/recordUuid';
@@ -7,7 +7,8 @@ import {Input} from './ui/input';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription,DialogFooter} from './ui/dialog';
 
 export function CisGroupSelect({value,onChange,disabled=false}){
-  return <label className="block text-sm">CIS implementation group<select aria-label="CIS implementation group" className="block mt-1 border border-line rounded p-2 bg-surface-card" value={value||1} disabled={disabled} onChange={e=>onChange(Number(e.target.value))}>{cisAvailableGroups().map(group=><option key={group} value={group} label={`IG${group} · ${cisScopeCounts[group]} safeguards${group>1?', including earlier groups':''}`}/>)}</select></label>;
+  // JSX instrumentation wraps dynamic text in spans; options require native text.
+  return <label className="block text-sm">CIS implementation group<select aria-label="CIS implementation group" className="block mt-1 border border-line rounded p-2 bg-surface-card" value={value||1} disabled={disabled} onChange={e=>onChange(Number(e.target.value))}>{cisAvailableGroups().map(group=>createElement('option',{key:group,value:group},`IG${group} · ${cisScopeCounts[group]} safeguards${group>1?', including earlier groups':''}`))}</select></label>;
 }
 export default function CisProgramSettings({clientId,configuration,onSaved}){
   const [group,setGroup]=useState(configuration.implementation_group||1),[open,setOpen]=useState(false),[reason,setReason]=useState(''),[date,setDate]=useState(new Date().toISOString().slice(0,10)),[error,setError]=useState(''),[busy,setBusy]=useState(false);
