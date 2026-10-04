@@ -1,6 +1,6 @@
 # CIS IG3 implementation checklist — draft, release blocked
 
-Original baseline: `95b574b0efef1bf1cf22297d6a54ea7266e818c2`. Current main after PR #29: `f4c09c218153044291847d1fa5030d769a2327c0` (October 4, 2026). Branch: `codex/cis-ig3-extension`. No merge, preview publication, deployment or production-data changes are authorized.
+Original baseline: `95b574b0efef1bf1cf22297d6a54ea7266e818c2`. Current main after PR #31: `9f702444d3203f98d528cd4dfeabf8585139da6b` (October 4, 2026). Branch: `codex/cis-ig3-extension`. No merge, preview publication, deployment or production-data changes are authorized.
 
 ## Content authorization and release boundary
 
@@ -50,7 +50,7 @@ The planning report and companion `CIS_IG3_Coverage_Matrix.xlsx` cover all 153 c
 
 The IG2 corrections are incorporated from [PR #31](https://github.com/robbashea-lab/GRC/pull/31), source commit `dfbaa93ee38d5e89e80a12b1de0e1ee336d63270`: logging fields, browser extensions, cloud/hardening scope, per-safeguard Review prompts and the stale arrangement warning. Stable criteria identities and scope membership are preserved.
 
-The temporary integration foundation `codex/cis-ig3-foundation`, commit `d47d1b77796ccaea4b4b854f1bd450f79700a8df`, now starts from merged main `f4c09c218153044291847d1fa5030d769a2327c0` (PR #29) and retains only the unmerged PR #31 correction content. Only the five IG3-extension commits were rebased onto it; the draft PR still targets this foundation so its diff excludes the IG2 correction dependency and does not reintroduce unified-ticket changes. Once #31 lands, reconcile with current main and retarget the draft to main. The hourly thread follow-up stays quiet while unchanged and cannot merge or release anything.
+PR #31 merged at `9f702444d3203f98d528cd4dfeabf8585139da6b`, including PR #29 and its subsequent verification fixes. The IG3 extension was rebased onto that current main. PR #30 now targets main; the temporary foundation is no longer its dependency. Its diff contains only IG3 preparation, cumulative labels/tests/checklist and the attributable onboarding notification fix below. It excludes unified-ticket implementation and IG2 source corrections already in main. The dependency follow-up is paused after this completed integration. No merge or publication was performed by this task.
 
 Cumulative group labels now derive from the selected or persisted configuration across intake, onboarding confirmation, Client Profile, program configuration and handoff. Historical onboarding labels derive from their recorded configuration.
 
@@ -72,3 +72,17 @@ Follow-up reconciliation checks: 17 focused frontend suites / 287 tests passed, 
 Latest PR #29 reconciliation (dc1e3f3): 22 frontend suites / 301 tests passed; 14 backend CIS scope tests and 15 backend ticket-integrity tests passed; normal and Demo builds passed. These supersede the earlier focused follow-up counts. Persistent Mongo was not rerun after these final upstream corrections; its 78-test result above is from the earlier combined build.
 
 Post-merge main reconciliation verification: 22 frontend suites / 301 tests, 14 backend CIS scope tests and 16 backend ticket-integrity tests passed. Normal and Demo builds passed. Final diff against d47d1b7 contains only the IG3 extension, its cumulative labels, tests and checklist; catalog availability remains [1,2]. No new browser or persistent Mongo verification was performed in this reconciliation; the previously reported browser Next issue remains unresolved.
+
+## Onboarding Next investigation and final combined runtime verification
+
+Reproduced on a fresh temporary local Demo tenant at 1280×720: create a client, open Client Profile, select CIS Applies and group 2, then pointer-click Next while the “client saved” action notification is present. The notification occupied the bottom-right control area. A read-only DOM hit test at the Next button centre (x=1201, y=627) returned the Sonner notification, not the button. No application error or validation was reported. Keyboard Enter on Next reached Policies. Sonner 2.0.3 pauses dismissal while expanded/interacting, so clicking the overlapping notification kept it present. The browser document was visible; hidden-document behaviour is not asserted as the cause.
+
+This was an attributable UI obstruction plus a flaw in the earlier test sequence: it failed to assert the Policies heading before treating the single AI-intake Unsure button as Policy responses. The creation notification alone now uses Sonner's supported per-toast top-right position and close button; its action and ten-second duration remain. No validation or authorization was bypassed. The new component regression verifies IG2 Compliance→Policies, all 17 required responses, visible omission feedback and advancement to Reviews. Browser checks assert each stage before continuing and use no forced clicks or arbitrary sleeps.
+
+Verified code revision `7d8909f0b96b510b527d7c6eb67fb5f9a0ddeae9` on merged main `9f702444d3203f98d528cd4dfeabf8585139da6b` (subsequent commit changes this checklist only):
+
+- 22 focused frontend suites / 302 tests passed, including the new intake/validation regression and shared CIS, onboarding, Review and ticket checks.
+- Fresh disposable MongoDB 8.0.28: `python scripts/verify_mongo_recovery.py --mongo-url mongodb://127.0.0.1:27943 --include-cis-ig2 --include-cis-ig3-scope --include-remediation-tickets` — 83 passed. Includes normal FastAPI route authentication/tenant-denial, onboarding recovery, cumulative scope/retention and shared ticket/ISO integrity. Each test's unique generated database was cleaned; no real data or default connection used.
+- Normal and Demo builds passed again.
+- Browser on this newly built combined revision: pointer Next advanced while the repaired top-right creation notification remained visible and dismissible; omitted Policy answers blocked Next with visible feedback; all 17 answers allowed Reviews and completion. IG2 workspace showed 130 assessments, full totals persisted with the additions filter, Save & next and Previous preserved the synthetic implementation, and scope reduction confirmed 130→56/74 retained and preserved the answered baseline assessment. Client Profile selector offered only groups 1/2, 15 Reviews remained unscheduled/unowned, and no browser runtime errors were captured.
+- The earlier unresolved Next finding is resolved by this reproduction and fix; earlier incomplete browser results remain historical evidence only. This bounded local Demo run does not establish real-authenticated browser integration, a full responsive/keyboard matrix, or actual IG3 content-browser acceptance. IG3 remains unavailable with 0/23 production content additions; permission and content/verification gates above remain unchanged.
