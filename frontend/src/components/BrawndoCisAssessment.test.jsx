@@ -136,8 +136,7 @@ test('guide selects one answer without writes or drafts and resets on safeguard/
  expect(container.querySelector('.cis-guide-questions [aria-pressed="true"]').textContent).toBe('Explain this in plain language.');
 });
 
-test('approved layout applies to all 56 safeguards for a non-Brawndo CIS client',async()=>{
- for(const definition of catalog.requirements){
+test.each(catalog.requirements)('approved layout applies to safeguard $id for a non-Brawndo CIS client',async definition=>{
   record={...record,client_id:'new-cis-client',definition_id:definition.id,framework_assessment_id:'new-'+definition.id};
   await render('new-cis-client');
   expect(container.querySelector('.cis-assessment-layout')).toBeTruthy();
@@ -145,7 +144,6 @@ test('approved layout applies to all 56 safeguards for a non-Brawndo CIS client'
   expect(container.querySelector('.cis-guide-answer p').textContent).toBe(guide.requirements[definition.id].plain);
   expect(container.querySelector('.cis-assessment-guidance').children).toHaveLength(3);
   expect(container.querySelector('.cis-implementation-layout').nextElementSibling).toBe(container.querySelector('.bcsg-findings'));
- }
  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
