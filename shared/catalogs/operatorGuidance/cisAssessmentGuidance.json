@@ -1406,7 +1406,7 @@
     },
     "12.7": {
       "review": [
-        "Review end-user device access paths to enterprise resources. Confirm authentication to enterprise-managed VPN and authentication services precedes access; do not limit this check to a subset of remote users.",
+        "Review end-user device access paths to enterprise resources. Confirm users authenticate to enterprise-managed VPN and authentication services before access; do not limit this check to a subset of remote users.",
         "Require VPN and authentication before resource access. Check actual execution rather than a policy statement alone.",
         "Before accessing enterprise resources. Confirm relevant exceptions and follow-up with the accountable owner."
       ],

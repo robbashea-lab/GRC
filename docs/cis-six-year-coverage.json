@@ -42,6 +42,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -94,6 +95,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -143,6 +145,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -194,6 +197,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -244,6 +248,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -293,6 +298,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -342,6 +348,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -391,6 +398,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -439,6 +447,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -487,6 +496,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -535,6 +545,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -583,6 +594,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -632,6 +644,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -681,6 +694,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -729,6 +743,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -777,6 +792,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -825,6 +841,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -873,6 +890,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -921,6 +939,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -972,6 +991,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1020,6 +1040,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1068,6 +1089,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1117,6 +1139,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1165,6 +1188,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1214,6 +1238,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1262,6 +1287,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1310,6 +1336,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1358,6 +1385,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1407,6 +1435,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1456,6 +1485,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1504,6 +1534,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1552,6 +1583,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1601,6 +1633,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1649,6 +1682,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1697,6 +1731,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1745,6 +1780,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1793,6 +1829,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1841,6 +1878,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1889,6 +1927,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1937,6 +1976,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -1986,6 +2026,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2034,6 +2075,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2082,6 +2124,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2130,6 +2173,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2179,6 +2223,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2228,6 +2273,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2276,6 +2322,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2324,6 +2371,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2372,6 +2420,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2420,6 +2469,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2468,6 +2518,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2516,6 +2567,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2564,6 +2616,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2613,6 +2666,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2663,6 +2717,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2712,6 +2767,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2762,6 +2818,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2813,6 +2870,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2864,6 +2922,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2914,6 +2973,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -2965,6 +3025,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3016,6 +3077,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3067,6 +3129,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3118,6 +3181,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3168,6 +3232,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3218,6 +3283,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3268,6 +3334,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3318,6 +3385,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3368,6 +3436,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3418,6 +3487,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3469,6 +3539,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3520,6 +3591,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3573,6 +3645,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3623,6 +3696,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3674,6 +3748,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3724,6 +3799,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3775,6 +3851,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3826,6 +3903,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3877,6 +3955,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3927,6 +4006,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -3978,6 +4058,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4028,6 +4109,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4078,6 +4160,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4128,6 +4211,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4178,6 +4262,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4229,6 +4314,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4280,6 +4366,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4330,6 +4417,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4380,6 +4468,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4430,6 +4519,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4480,6 +4570,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4531,6 +4622,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4581,6 +4673,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4631,6 +4724,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4681,6 +4775,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4732,6 +4827,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4782,6 +4878,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4832,6 +4929,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4883,6 +4981,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4933,6 +5032,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -4983,6 +5083,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5001,10 +5102,10 @@
         "12.7-c2",
         "12.7-c3"
       ],
-      "authored_summary": "Require end-user devices to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources.",
+      "authored_summary": "Require users to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices.",
       "source_timing_explanation": "Before accessing enterprise resources.",
       "review_questions": [
-        "Review end-user device access paths to enterprise resources. Confirm authentication to enterprise-managed VPN and authentication services precedes access; do not limit this check to a subset of remote users.",
+        "Review end-user device access paths to enterprise resources. Confirm users authenticate to enterprise-managed VPN and authentication services before access; do not limit this check to a subset of remote users.",
         "Require VPN and authentication before resource access. Check actual execution rather than a policy statement alone.",
         "Before accessing enterprise resources. Confirm relevant exceptions and follow-up with the accountable owner."
       ],
@@ -5013,10 +5114,10 @@
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
       ],
       "requirement_guide": {
-        "plain": "Require end-user devices to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources. Compare the access paths with effective authentication settings.",
+        "plain": "Require users to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices. Compare the access paths with effective authentication settings.",
         "start": "Identify end-user device access paths to enterprise resources and the enterprise-managed VPN and authentication services. Ask the Network service owner to compare effective settings and authentication results across those paths.",
         "evidence": "End-user device access-path configuration and authentication samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-        "ask": "Do end-user device access paths require enterprise-managed VPN and authentication before enterprise resource access? Which paths can bypass those prerequisites?",
+        "ask": "Must users authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices? Which paths can bypass those prerequisites?",
         "gaps": "For 12.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Require VPN and authentication before resource access. Use Findings and Actions for follow-up and validation."
       },
       "content_review": "Remove remote-only scope restriction from requirement explanation.",
@@ -5034,6 +5135,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5084,6 +5186,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5134,6 +5237,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5184,6 +5288,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5234,6 +5339,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5285,6 +5391,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5335,6 +5442,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5386,6 +5494,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5439,6 +5548,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5490,6 +5600,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5541,6 +5652,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5594,6 +5706,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5647,6 +5760,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5698,6 +5812,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5751,6 +5866,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5804,6 +5920,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5857,6 +5974,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5907,6 +6025,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -5957,6 +6076,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6008,6 +6128,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6061,6 +6182,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6114,6 +6236,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6167,6 +6290,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6220,6 +6344,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6273,6 +6398,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6326,6 +6452,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6379,6 +6506,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6432,6 +6560,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6485,6 +6614,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6538,6 +6668,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6590,6 +6721,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6642,6 +6774,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6693,6 +6826,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6744,6 +6878,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6795,6 +6930,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6846,6 +6982,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6897,6 +7034,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6948,6 +7086,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -6999,6 +7138,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7050,6 +7190,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7101,6 +7242,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7152,6 +7294,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7203,6 +7346,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7255,6 +7399,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7307,6 +7452,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7358,6 +7504,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7409,6 +7556,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7460,6 +7608,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7511,6 +7660,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7562,6 +7712,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7613,6 +7764,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",
@@ -7664,6 +7816,7 @@
       "control_match": true,
       "group_match": true,
       "title_match": true,
+      "official_text_match": true,
       "description_verbatim": false,
       "guidance_parts": [
         "evidence",

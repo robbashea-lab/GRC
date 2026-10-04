@@ -1,6 +1,7 @@
 """2027–2032 synthetic CIS operation via supported routes; IG3 test gate only."""
 import base64
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -62,7 +63,13 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
         foreign = copy.deepcopy(await server.db.framework_assessments.find({'client_id': {'$ne': cid}}).to_list(None))
         self.assertTrue(foreign)
         timeline, upgrades, snapshots, gaps, evidence_ids = [], [], {}, [], []
+        histories, evidence_hashes = {}, {}
         probe = None
+
+        async def verify_saved_payloads():
+            for eid, expected in evidence_hashes.items():
+                payload = await self.get('/evidence/' + eid + '/download')
+                self.assertEqual(hashlib.sha256(base64.b64decode(payload['content_base64'])).hexdigest(), expected, eid)
 
         for group, start_year, count, additions in [(1, 2027, 56, 56), (2, 2029, 130, 74), (3, 2031, 153, 23)]:
             self.clock(f'{start_year}-01-01')
@@ -99,6 +106,11 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
                     self.assertTrue(all(link in retained.get('related_links', []) for link in row.get('related_links', [])))
                 fresh = [r for r in after['assessments'] if r['definition_id'] not in {r['definition_id'] for r in before['assessments']}]
                 self.assertEqual(len(fresh), additions)
+                self.assertEqual({r['definition_id'] for r in fresh}, {d['id'] for d in CIS['requirements'] if d['implementation_group'] == group})
+                for row in fresh:
+                    for field in ['implementation', 'owner_id', 'assessment_history', 'cis_assessment_criteria']:
+                        self.assertFalse(row.get(field), (group, row['definition_id'], field))
+                    self.assertFalse([link for link in row.get('related_links', []) if link.get('kind') in ('evidence', 'tasks', 'findings')])
                 self.assertTrue(all(r['status'] == 'not_assessed' and r.get('verification') != 'verified' and not r.get('last_assessed') for r in fresh))
                 reviews_after = await self.get('/reviews', client_id=cid)
                 for row in reviews_before:
@@ -108,6 +120,7 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(await self.get('/findings', client_id=cid), findings_before)
                 self.assertEqual(await self.get('/tasks', client_id=cid), tasks_before)
                 self.assertEqual(await self.get('/evidence', client_id=cid), evidence_before)
+                await verify_saved_payloads()
                 self.assertEqual(len(reviews_after), 15)
                 upgrades.append({'group': group, 'preserved_assessments': count - additions, 'new_unassessed': additions, 'interrupted_retry': True, 'replay': True, 'preserved_reviews': len(reviews_before)})
 
@@ -153,12 +166,18 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
                     content += ' This is test evidence, not actual technical execution or independent operational assurance.'
                     evidence = await self.post('/evidence', {'client_id': cid, 'linked_type': 'framework_assessment', 'linked_id': row['framework_assessment_id'], 'filename': f'synthetic-{ident}-{year}.txt', 'content_base64': base64.b64encode(content.encode()).decode()})
                     evidence_ids.append(evidence['evidence_id'])
+                    evidence_hashes[evidence['evidence_id']] = hashlib.sha256(content.encode()).hexdigest()
                     self.assertEqual(base64.b64decode((await self.get('/evidence/' + evidence['evidence_id'] + '/download'))['content_base64']).decode(), content)
                     if is_gap:
                         finding = await self.post(path + '/findings', {'request_id': f'gap-{group}-{ident}', 'title': f'Synthetic coverage gap {ident}', 'description': 'Sample indicates incomplete operating coverage.', 'remediation_title': 'Correct coverage and validate results', 'due_date': f'{year + 1}-01-10', 'owner_id': 'admin'})
                         phase_gaps.append(finding['finding_id'])
                         gaps.append(finding['finding_id'])
-                    await self.edit(path, {'implementation': content, 'owner_id': 'admin', 'notes': 'Synthetic validation; evidence alternatives are not mandatory paperwork.', 'status': 'in_progress' if is_gap else 'addressed', 'verification': 'gap_identified' if is_gap else 'verified', 'cis_assessment_criteria': [] if is_gap else [c['id'] for c in framework_governance.CIS_CRITERIA[ident]['criteria']], 'cis_operation': {'provider': 'Synthetic operating provider', 'confirmed': False}})
+                    saved = await self.edit(path, {'implementation': content, 'owner_id': 'admin', 'notes': 'Synthetic validation; evidence alternatives are not mandatory paperwork.', 'status': 'in_progress' if is_gap else 'addressed', 'verification': 'gap_identified' if is_gap else 'verified', 'cis_assessment_criteria': [] if is_gap else [c['id'] for c in framework_governance.CIS_CRITERIA[ident]['criteria']], 'cis_operation': {'provider': 'Synthetic operating provider', 'confirmed': False}})
+                    previous = histories.get(ident, [])
+                    history = saved['assessment_history']
+                    self.assertEqual(history[:-1], previous, (year, ident, 'history prefix'))
+                    self.assertEqual(len(history), len(previous) + 1, (year, ident, 'history append'))
+                    histories[ident] = copy.deepcopy(history)
 
                 if year == start_year + 1:
                     for fid in phase_gaps:
@@ -182,6 +201,7 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
                     path = '/reviews/' + review['review_id']
                     await self.post(path + '/start', {'occurrence_id': review['current_occurrence_id']})
                     evidence = await self.post('/evidence', {'client_id': cid, 'linked_type': 'review', 'linked_id': review['review_id'], 'occurrence_id': review['current_occurrence_id'], 'filename': f'synthetic-review-{scheduled}.txt', 'content_base64': base64.b64encode(b'SYNTHETIC governance sampling; external technical activity records examined separately.').decode()})
+                    evidence_hashes[evidence['evidence_id']] = hashlib.sha256(b'SYNTHETIC governance sampling; external technical activity records examined separately.').hexdigest()
                     result = await self.post(path + '/complete', {'occurrence_id': review['current_occurrence_id']})
                     occurrence = result['occurrence']
                     self.assertEqual(occurrence['due_date'][:10], scheduled)
@@ -200,9 +220,13 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
                 if year == start_year + 1:
                     self.assertTrue(all(r['status'] == 'addressed' and r['verification'] == 'verified' for r in live['assessments']))
                     self.assertTrue(all(f['status'] == 'closed' for f in await self.get('/findings', client_id=cid)))
-                    self.assertTrue(all(t['status'] in ('done', 'cancelled') for t in await self.get('/tasks', client_id=cid)))
-                timeline.append({'year': year, 'group': group, 'active_assessments': count, 'review_executions': executions, 'completed_snapshots': len(snapshots), 'open_planned_gaps': 3 if year == start_year else 0})
+                    self.assertTrue(all(t['status'] == 'done' for t in await self.get('/tasks', client_id=cid)))
+                open_gaps = [f for f in await self.get('/findings', client_id=cid) if f['status'] != 'closed']
+                self.assertEqual(len(open_gaps), 3 if year == start_year else 0)
+                timeline.append({'year': year, 'group': group, 'active_assessments': count, 'review_executions': executions, 'completed_snapshots': len(snapshots), 'open_planned_gaps': len(open_gaps)})
 
+        await verify_saved_payloads()
+        self.assertTrue(all(histories.values()))
         self.assertEqual(len(set(evidence_ids)), len(evidence_ids))
         # The six-year evidence population exceeds the legacy list limit.
         # Verify the supported paginated Library exposes every retained record.

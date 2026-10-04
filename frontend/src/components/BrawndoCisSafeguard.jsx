@@ -54,7 +54,8 @@ export default function BrawndoCisSafeguard({state,actions}){
     <div className="cis-guidance-main">
     <Step number="1" title="What CIS Requires">
       <p className="brawndo-requirement-title">{definition.title}</p>
-      {source.text?<><p className="text-xs text-ink-secondary">Official requirement</p><p className="whitespace-pre-wrap" data-testid="cis-official-text">{source.text}</p></>:<><p className="text-xs text-ink-secondary">Requirement summary · Omnisciente</p><p>{definition.guidance}</p></>}
+      {source.text&&<><p className="text-xs text-ink-secondary">Official requirement · CIS v8.1</p><p className="whitespace-pre-wrap" data-testid="cis-official-text">{source.text}</p></>}
+      <p className="text-xs text-ink-secondary">Requirement summary · Omnisciente</p><p data-testid="cis-authored-summary">{definition.guidance}</p>
       {source.url&&<a className="bcsg-ref" href={criteria?.source||source.url} target="_blank" rel="noopener noreferrer">Official CIS reference ↗</a>}
     </Step>
     <p className="text-xs text-ink-secondary">{cisScopeLabel(definition)}</p>

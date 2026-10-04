@@ -68,6 +68,7 @@ def compare(path):
                        'control_match': row.get('control') == source['control'],
                        'group_match': row.get('implementation_group') == source['group'],
                        'title_match': normalize(row.get('title', '')) == normalize(source['title']),
+                       'official_text_match': row.get('official_text_mode') == 'LICENSED_TEXT' and row.get('official_text') == source['description'],
                        'description_verbatim': normalize(row.get('guidance', '')) == normalize(source['description']),
                        'guidance_parts': sorted(guidance.get(ident, {})),
                        'guide_parts': sorted(guide.get(ident, {})),
@@ -105,5 +106,5 @@ if __name__ == '__main__':
     invalid = (result['reference_rows'] != 153 or result['catalog_rows'] != 153
                or result['reference_duplicates'] or result['catalog_duplicates']
                or any(p['missing'] or p['unexpected'] for p in result['populations'])
-               or any(not all(r[k] for k in ('control_match', 'group_match', 'title_match')) for r in result['matrix']))
+               or any(not all(r[k] for k in ('control_match', 'group_match', 'title_match', 'official_text_match')) for r in result['matrix']))
     raise SystemExit(1 if invalid else 0)

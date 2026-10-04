@@ -1280,7 +1280,7 @@
       "criteria": [
         {
           "id": "12.7-c1",
-          "text": "Require end-user devices to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources."
+          "text": "Require users to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices."
         },
         {
           "id": "12.7-c2",

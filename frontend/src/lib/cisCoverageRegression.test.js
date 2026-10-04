@@ -7,7 +7,7 @@ test.each([
   ['1.4', /(?:all DHCP servers|every DHCP server).*IP address management.*weekly/i],
   ['3.8', /service-provider data flows.*data management process/i],
   ['12.2', /segmentation.*least privilege.*availability/i],
-  ['12.7', /end-user device.*VPN.*authentication/i],
+  ['12.7', /(?=.*end-user device)(?=.*users.*authenticate)(?=.*VPN.*authentication)/i],
   ['15.4', /security requirements.*service provider management policy/i],
 ])('%s retains source-specific scope in assessment and guide', (id, expected) => {
   expect(guidance.requirements[id].review.join(' ')).toMatch(expected);

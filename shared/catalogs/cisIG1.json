@@ -19,7 +19,10 @@
       "guidance": "Inventory all enterprise assets, including regularly connected assets outside enterprise control; record ownership, identifiers and authorization status, and reconcile changes.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain an accurate, detailed, and up-to-date inventory of all enterprise assets with the potential to store or process data, to include: end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. Ensure the inventory records the network address (if static), hardware address, machine name, enterprise asset owner, department for each asset, and whether the asset has been approved to connect to the network. For mobile end-user devices, MDM type tools can support this process, where appropriate. This inventory includes assets connected to the infrastructure physically, virtually, remotely, and those within cloud environments. Additionally, it includes assets that are regularly connected to the enterprise’s network infrastructure, even if they are not under control of the enterprise. Review and update the inventory of all enterprise assets bi-annually, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 1.1"
     },
     {
       "id": "1.2",
@@ -31,7 +34,10 @@
       "guidance": "Remove, block or isolate devices that lack authorization.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure that a process exists to address unauthorized assets on a weekly basis. The enterprise may choose to remove the asset from the network, deny the asset from connecting remotely to the network, or quarantine the asset.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 1.2"
     },
     {
       "id": "1.3",
@@ -50,7 +56,10 @@
         "establish": "Configure discovery coverage and accountable operator.",
         "operate": "Run discovery and reconcile unexpected devices.",
         "dependencies": "1.1; 4.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Utilize an active discovery tool to identify assets connected to the enterprise’s network. Configure the active discovery tool to execute daily, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 1.3"
     },
     {
       "id": "1.4",
@@ -69,7 +78,10 @@
         "establish": "Identify all DHCP servers or IP address management tools and the inventory reconciliation owner.",
         "operate": "Collect observations and resolve inventory differences.",
         "dependencies": "1.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use DHCP logging on all DHCP servers or Internet Protocol (IP) address management tools to update the enterprise’s asset inventory. Review and use logs to update the enterprise’s asset inventory weekly, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 1.4"
     },
     {
       "id": "1.5",
@@ -88,7 +100,10 @@
         "establish": "Confirm monitored network segments and reconcile dated discoveries to inventory entries. Trace an unknown asset through ownership and authorization decisions; check gaps between weekly reconciliations.",
         "operate": "Discover connected assets passively; use the results to refresh the asset inventory at least weekly. At least weekly: review discovery results and use them to update inventory. Passive discovery operates between those reviews.",
         "dependencies": "Safeguard 4.2: Establish and Maintain a Secure Configuration Process for Network Infrastructure Safeguard 12.4: Establish and Maintain Architecture Diagram(s)"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use a passive discovery tool to identify assets connected to the enterprise’s network. Review and use scans to update the enterprise’s asset inventory at least weekly, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 1.5"
     },
     {
       "id": "2.1",
@@ -100,7 +115,10 @@
       "guidance": "Track installed software, ownership, licensing and business purpose.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a detailed inventory of all licensed software installed on enterprise assets. The software inventory must document the title, publisher, initial install/use date, and business purpose for each entry; where appropriate, include the Uniform Resource Locator (URL), app store(s), version(s), deployment mechanism, decommission date, and number of licenses. Review and update the software inventory bi-annually, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 2.1"
     },
     {
       "id": "2.2",
@@ -112,7 +130,10 @@
       "guidance": "Check vendor support and document necessary unsupported-software exceptions.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure that only currently supported software is designated as authorized in the software inventory for enterprise assets. If software is unsupported, yet necessary for the fulfillment of the enterprise’s mission, document an exception detailing mitigating controls and residual risk acceptance. For any unsupported software without an exception documentation, designate as unauthorized. Review the software list to verify software support at least monthly, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 2.2"
     },
     {
       "id": "2.3",
@@ -124,7 +145,10 @@
       "guidance": "Review unauthorized installations and record removal or approved exceptions.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure that unauthorized software is either removed from use on enterprise assets or receives a documented exception. Review monthly, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 2.3"
     },
     {
       "id": "2.4",
@@ -143,7 +167,10 @@
         "establish": "Choose coverage and document technical limitations.",
         "operate": "Maintain discovery coverage and inventory feed.",
         "dependencies": "2.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Utilize software inventory tools, when possible, throughout the enterprise to automate the discovery and documentation of installed software.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 2.4"
     },
     {
       "id": "2.5",
@@ -162,7 +189,10 @@
         "establish": "Define approved software and exception handling.",
         "operate": "Enforce application restrictions.",
         "dependencies": "2.1; 2.2; 2.3"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use technical controls, such as application allowlisting, to ensure that only authorized software can execute or be accessed. Reassess bi-annually, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 2.5"
     },
     {
       "id": "2.6",
@@ -181,7 +211,10 @@
         "establish": "Define authorized libraries and deployment limitations.",
         "operate": "Enforce library controls; handle changes safely.",
         "dependencies": "2.1; 2.5"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use technical controls to ensure that only authorized software libraries, such as specific .dll, .ocx,  and .so files, are allowed to load into a system process. Block unauthorized libraries from loading into a system process. Reassess bi-annually, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 2.6"
     },
     {
       "id": "2.7",
@@ -200,7 +233,10 @@
         "establish": "Identify script execution paths, including administrative tools, email and browser handling. Confirm authorized execution and blocked unauthorized execution using safe existing test results; check the latest reassessment date.",
         "operate": "Enforce execution of authorized scripts only and block others; reassess at least every six months. CIS says bi-annually or more frequently. Interpret as every six months, supported by the CAS six-month test; enforcement is ongoing.",
         "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory Safeguard 4.1: Establish and Maintain a Secure Configuration Process"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use technical controls, such as digital signatures and version control, to ensure that only authorized scripts, such as specific .ps1, and .py files are allowed to execute. Block unauthorized scripts from executing. Reassess bi-annually, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 2.7"
     },
     {
       "id": "3.1",
@@ -212,7 +248,10 @@
       "guidance": "Document data ownership, sensitivity, handling, retention and disposal.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a documented data management process. In the process, address data sensitivity, data owner, handling of data, data retention limits, and disposal requirements, based on sensitivity and retention standards for the enterprise. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.1"
     },
     {
       "id": "3.2",
@@ -224,7 +263,10 @@
       "guidance": "Locate sensitive information and keep its inventory current.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a data inventory based on the enterprise’s data management process. Inventory sensitive data, at a minimum. Review and update inventory annually, at a minimum, with a priority on sensitive data.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.2"
     },
     {
       "id": "3.3",
@@ -236,7 +278,10 @@
       "guidance": "Limit data permissions to justified business needs.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Configure data access control lists based on a user’s need to know. Apply data access control lists, also known as access permissions, to local and remote file systems, databases, and applications.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.3"
     },
     {
       "id": "3.4",
@@ -248,7 +293,10 @@
       "guidance": "Apply documented minimum and maximum retention periods.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Retain data according to the enterprise’s documented data management process. Data retention must include both minimum and maximum timelines.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.4"
     },
     {
       "id": "3.5",
@@ -260,7 +308,10 @@
       "guidance": "Select disposal methods appropriate to information sensitivity.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Securely dispose of data as outlined in the enterprise’s documented data management process. Ensure the disposal process and method are commensurate with the data sensitivity.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.5"
     },
     {
       "id": "3.6",
@@ -272,7 +323,10 @@
       "guidance": "Protect sensitive endpoint information with device encryption.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Encrypt data on end-user devices containing sensitive data. Example implementations can include: Windows BitLocker®, Apple FileVault®, Linux® dm-crypt.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.6"
     },
     {
       "id": "3.7",
@@ -291,7 +345,10 @@
         "establish": "Agree classification criteria with data owners.",
         "operate": "Apply classification in handling decisions.",
         "dependencies": "3.1; 3.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain an overall data classification scheme for the enterprise. Enterprises may use labels, such as “Sensitive,” “Confidential,” and “Public,” and classify their data according to those labels. Review and update the classification scheme annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.7"
     },
     {
       "id": "3.8",
@@ -310,7 +367,10 @@
         "establish": "Map material flows and external destinations.",
         "operate": "Maintain flows through service changes.",
         "dependencies": "3.1; 3.2; 15.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Document data flows. Data flow documentation includes service provider data flows and should be based on the enterprise’s data management process. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.8"
     },
     {
       "id": "3.9",
@@ -329,7 +389,10 @@
         "establish": "Define permitted media and encryption arrangements.",
         "operate": "Enforce media encryption.",
         "dependencies": "3.1; 3.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Encrypt data on removable media.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.9"
     },
     {
       "id": "3.10",
@@ -348,7 +411,10 @@
         "establish": "Identify sensitive flows and protected transports.",
         "operate": "Maintain encrypted transport.",
         "dependencies": "3.2; 3.8"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Encrypt sensitive data in transit. Example implementations can include: Transport Layer Security (TLS) and Open Secure Shell (OpenSSH).",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.10"
     },
     {
       "id": "3.11",
@@ -367,7 +433,10 @@
         "establish": "Identify storage and encryption coverage; storage-layer protection suffices for the stated minimum.",
         "operate": "Maintain encryption coverage.",
         "dependencies": "3.2; 3.7"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Encrypt sensitive data at rest on servers, applications, and databases. Storage-layer encryption, also known as server-side encryption, meets the minimum requirement of this Safeguard. Additional encryption methods may include application-layer encryption, also known as client-side encryption, where access to the data storage device(s) does not permit access to the plain-text data.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.11"
     },
     {
       "id": "3.12",
@@ -386,7 +455,10 @@
         "establish": "Define sensitivity boundaries and permitted processing locations.",
         "operate": "Enforce storage and processing separation.",
         "dependencies": "3.7; 3.8"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Segment data processing and storage based on the sensitivity of the data. Do not process sensitive data on enterprise assets intended for lower sensitivity data.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.12"
     },
     {
       "id": "3.13",
@@ -405,7 +477,10 @@
         "establish": "Confirm coverage of stored, processed and transmitted sensitive information, including remote-provider locations. Trace a detected data location to the inventory and investigate blind spots.",
         "operate": "Use automated sensitive-data discovery across enterprise and provider assets, and update the data inventory. No fixed interval specified. The automated capability and inventory-update process must operate.",
         "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory Safeguard 3.2: Establish and Maintain a Data Inventory"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Implement an automated tool, such as a host-based Data Loss Prevention (DLP) tool to identify all sensitive data stored, processed, or transmitted through enterprise assets, including those located onsite or at a remote service provider, and update the enterprise's  data inventory.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.13"
     },
     {
       "id": "3.14",
@@ -424,7 +499,10 @@
         "establish": "Compare sensitive-data locations to enabled audit sources. Inspect representative access, modification and deletion records and identify locations or event types that are not recorded.",
         "operate": "Record access to sensitive data, including changes and disposal. No fixed review interval specified. Logging must cover relevant access events as they occur.",
         "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 2.1: Establish and Maintain a Software Inventory Safeguard 4.1: Establish and Maintain a Secure Configuration Process"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Log sensitive data access, including modification and disposal.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 3.14"
     },
     {
       "id": "4.1",
@@ -436,7 +514,10 @@
       "guidance": "Document secure device and software configurations and maintain baselines.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a documented secure configuration process for enterprise assets (end-user devices, including portable and mobile, non-computing/IoT devices, and servers) and software (operating systems and applications). Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.1"
     },
     {
       "id": "4.2",
@@ -448,7 +529,10 @@
       "guidance": "Maintain documented secure network-device configurations.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a documented secure configuration process for network devices. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.2"
     },
     {
       "id": "4.3",
@@ -460,7 +544,10 @@
       "guidance": "Enforce appropriate inactivity lock settings.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Configure automatic session locking on enterprise assets after a defined period of inactivity. For general purpose operating systems, the period must not exceed 15 minutes. For mobile end-user devices, the period must not exceed 2 minutes.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.3"
     },
     {
       "id": "4.4",
@@ -472,7 +559,10 @@
       "guidance": "Enable supported server firewall protections.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Implement and manage a firewall on servers, where supported. Example implementations include a virtual firewall, operating system firewall, or a third-party firewall agent.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.4"
     },
     {
       "id": "4.5",
@@ -484,7 +574,10 @@
       "guidance": "Use default-deny endpoint firewall rules with justified exceptions.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Implement and manage a host-based firewall or port-filtering tool on end-user devices, with a default-deny rule that drops all traffic except those services and ports that are explicitly allowed.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.5"
     },
     {
       "id": "4.6",
@@ -496,7 +589,10 @@
       "guidance": "Use secure administrative channels and controlled configuration changes.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Securely manage enterprise assets and software. Example implementations include managing configuration through version-controlled Infrastructure-as-Code (IaC) and accessing administrative interfaces over secure network protocols, such as Secure Shell (SSH) and Hypertext Transfer Protocol Secure (HTTPS). Do not use insecure management protocols, such as Telnet (Teletype Network) and HTTP, unless operationally essential.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.6"
     },
     {
       "id": "4.7",
@@ -508,7 +604,10 @@
       "guidance": "Disable or secure preconfigured accounts.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Manage default accounts on enterprise assets and software, such as root, administrator, and other pre-configured vendor accounts. Example implementations can include: disabling default accounts or making them unusable.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.7"
     },
     {
       "id": "4.8",
@@ -527,7 +626,10 @@
         "establish": "Identify required services and approved baselines.",
         "operate": "Remove or disable unnecessary services.",
         "dependencies": "2.1; 4.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Uninstall or disable unnecessary services on enterprise assets and software, such as an unused file sharing service, web application module, or service function.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.8"
     },
     {
       "id": "4.9",
@@ -546,7 +648,10 @@
         "establish": "Agree approved DNS resolvers for network infrastructure.",
         "operate": "Maintain trusted resolver settings.",
         "dependencies": "4.2; 12.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Configure trusted DNS servers on network infrastructure. Example implementations include configuring network devices to use enterprise-controlled DNS servers and/or reputable externally accessible DNS servers.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.9"
     },
     {
       "id": "4.10",
@@ -565,7 +670,10 @@
         "establish": "Define lockout configuration by device class.",
         "operate": "Enforce lockout thresholds.",
         "dependencies": "1.1; 4.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Enforce automatic device lockout following a predetermined threshold of local failed authentication attempts on portable end-user devices, where supported. For laptops, do not allow more than 20 failed authentication attempts; for tablets and smartphones, no more than 10 failed authentication attempts. Example implementations include Microsoft® InTune Device Lock and Apple® Configuration Profile maxFailedAttempts.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.10"
     },
     {
       "id": "4.11",
@@ -584,7 +692,10 @@
         "establish": "Establish authorized wipe process for enterprise-owned portable devices.",
         "operate": "Maintain capability; execute on approved events.",
         "dependencies": "1.1; 6.2; 17.3"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Remotely wipe enterprise data from enterprise-owned portable end-user devices when deemed appropriate such as lost or stolen devices, or when an individual no longer supports the enterprise.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.11"
     },
     {
       "id": "4.12",
@@ -603,7 +714,10 @@
         "establish": "Establish the supported mobile population, examine assigned profiles and confirm enterprise applications/data are separated from personal use. Record unsupported-device conditions without treating the whole safeguard as excluded.",
         "operate": "Separate enterprise and personal workspaces on mobile devices wherever supported. No fixed interval specified; maintain the separation on supported devices.",
         "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 2.1: Establish and Maintain a Software Inventory Safeguard 4.1: Establish and Maintain a Secure Configuration Process"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure separate enterprise workspaces are used on mobile end-user devices, where supported. Example implementations include using an Apple® Configuration Profile or Android™ Work Profile to separate enterprise applications and data from personal applications and data.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 4.12"
     },
     {
       "id": "5.1",
@@ -615,7 +729,10 @@
       "guidance": "Inventory accounts and verify continuing authorization.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain an inventory of all accounts managed in the enterprise. The inventory must at a minimum include user, administrator accounts, and service accounts. The inventory, at a minimum, should contain the person’s name, username, start/stop dates, and department. Validate that all active accounts are authorized, on a recurring schedule at a minimum quarterly, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 5.1"
     },
     {
       "id": "5.2",
@@ -627,7 +744,10 @@
       "guidance": "Use distinct passwords; source guidance distinguishes MFA and non-MFA accounts.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use unique passwords for all enterprise assets. Best practice implementation includes, at a minimum, an 8-character password for accounts using Multi-Factor Authentication (MFA) and a 14-character password for accounts not using MFA.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 5.2"
     },
     {
       "id": "5.3",
@@ -639,7 +759,10 @@
       "guidance": "Detect inactive accounts and disable or remove them.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Delete or disable any dormant accounts after a period of 45 days of inactivity, where supported.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 5.3"
     },
     {
       "id": "5.4",
@@ -651,7 +774,10 @@
       "guidance": "Separate privileged administration from ordinary computing.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Restrict administrator privileges to dedicated administrator accounts on enterprise assets. Conduct general computing activities, such as internet browsing, email, and productivity suite use, from the user’s primary, non-privileged account.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 5.4"
     },
     {
       "id": "5.5",
@@ -670,7 +796,10 @@
         "establish": "Identify service accounts, department owners, purpose and review dates.",
         "operate": "Maintain inventory through account changes. Service-account records identify the responsible department, owner, purpose and review date; authorization reviews occur at least quarterly.",
         "dependencies": "5.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain an inventory of service accounts. The inventory, at a minimum, must contain department owner, review date, and purpose. Perform service account reviews to validate that all active accounts are authorized, on a recurring schedule at a minimum quarterly, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 5.5"
     },
     {
       "id": "5.6",
@@ -689,7 +818,10 @@
         "establish": "Identify directory/identity authority and exceptions.",
         "operate": "Operate centralized account management.",
         "dependencies": "5.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Centralize account management through a directory or identity service.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 5.6"
     },
     {
       "id": "6.1",
@@ -701,7 +833,10 @@
       "guidance": "Document and follow access approval and provisioning.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and follow a documented process, preferably automated, for granting access to enterprise assets upon new hire or role change of a user.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 6.1"
     },
     {
       "id": "6.2",
@@ -713,7 +848,10 @@
       "guidance": "Revoke access immediately on termination, rights revocation or role change; retain disabled accounts when needed to preserve audit history.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and follow a process, preferably automated, for revoking access to enterprise assets, through disabling accounts immediately upon termination, rights revocation, or role change of a user. Disabling accounts, instead of deleting accounts, may be necessary to preserve audit trails.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 6.2"
     },
     {
       "id": "6.3",
@@ -725,7 +863,10 @@
       "guidance": "Enforce supported MFA for externally accessible applications.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Require all externally-exposed enterprise or third-party applications to enforce MFA, where supported. Enforcing MFA through a directory service or SSO provider is a satisfactory implementation of this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 6.3"
     },
     {
       "id": "6.4",
@@ -737,7 +878,10 @@
       "guidance": "Protect remote network entry with MFA.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Require MFA for remote network access.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 6.4"
     },
     {
       "id": "6.5",
@@ -749,7 +893,10 @@
       "guidance": "Apply supported MFA to privileged accounts.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Require MFA for all administrative access accounts, where supported, on all enterprise assets, whether managed on-site or through a service provider.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 6.5"
     },
     {
       "id": "6.6",
@@ -768,7 +915,10 @@
         "establish": "Inventory internal and provider-hosted identity systems.",
         "operate": "Maintain system inventory.",
         "dependencies": "5.1; 15.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain an inventory of the enterprise’s authentication and authorization systems, including those hosted on-site or at a remote service provider. Review and update the inventory, at a minimum, annually, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 6.6"
     },
     {
       "id": "6.7",
@@ -787,7 +937,10 @@
         "establish": "Define directory/SSO coverage and limitations.",
         "operate": "Operate centralized access control.",
         "dependencies": "5.6; 6.6"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Centralize access control for all enterprise assets through a directory service or SSO provider, where supported.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 6.7"
     },
     {
       "id": "6.8",
@@ -806,7 +959,10 @@
         "establish": "Compare job duties, role definitions and actual asset privileges. Confirm reviews cover all privileges, including privileged and service access where relevant; investigate excessive and unmapped rights.",
         "operate": "Document necessary rights by role; review asset privileges for authorization at least annually. Access-control review at least annually or more often. Role definitions and rights are maintained.",
         "dependencies": "Safeguard 5.1: Establish and Maintain an Inventory of Accounts"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Define and maintain role-based access control, through determining and documenting the access rights necessary for each role within the enterprise to successfully carry out its assigned duties. Perform access control reviews of enterprise assets to validate that all privileges are authorized, on a recurring schedule at a minimum annually, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 6.8"
     },
     {
       "id": "7.1",
@@ -818,7 +974,10 @@
       "guidance": "Document how vulnerabilities are identified and managed.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a documented vulnerability management process for enterprise assets. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 7.1"
     },
     {
       "id": "7.2",
@@ -830,7 +989,10 @@
       "guidance": "Review a documented risk-prioritized remediation process.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a risk-based remediation strategy documented in a remediation process, with monthly, or more frequent, reviews.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 7.2"
     },
     {
       "id": "7.3",
@@ -842,7 +1004,10 @@
       "guidance": "Automate operating-system updates and manage failed deployments.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform operating system updates on enterprise assets through automated patch management on a monthly, or more frequent, basis.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 7.3"
     },
     {
       "id": "7.4",
@@ -854,7 +1019,10 @@
       "guidance": "Automate application updates and manage failed deployments.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform application updates on enterprise assets through automated patch management on a monthly, or more frequent, basis.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 7.4"
     },
     {
       "id": "7.5",
@@ -873,7 +1041,10 @@
         "establish": "Define internal scope, credentials and authorized scanning windows.",
         "operate": "Run scans and route results.",
         "dependencies": "1.1; 7.1; 7.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform automated vulnerability scans of internal enterprise assets on a quarterly, or more frequent, basis. Conduct both authenticated and unauthenticated scans.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 7.5"
     },
     {
       "id": "7.6",
@@ -892,7 +1063,10 @@
         "establish": "Identify external attack surface and scanning owner.",
         "operate": "Run external scans and route results.",
         "dependencies": "1.1; 7.1; 7.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform automated vulnerability scans of externally-exposed enterprise assets. Perform scans on a monthly, or more frequent, basis.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 7.6"
     },
     {
       "id": "7.7",
@@ -911,7 +1085,10 @@
         "establish": "Define triage and remediation accountability.",
         "operate": "Remediate and validate outcomes.",
         "dependencies": "7.2; 7.5; 7.6"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Remediate detected vulnerabilities in software through processes and tooling on a monthly, or more frequent, basis, based on the remediation process.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 7.7"
     },
     {
       "id": "8.1",
@@ -923,7 +1100,10 @@
       "guidance": "Document log collection, retention and review expectations.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a documented audit log management process that defines the enterprise’s logging requirements. At a minimum, address the collection, review, and retention of audit logs for enterprise assets. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.1"
     },
     {
       "id": "8.2",
@@ -935,7 +1115,10 @@
       "guidance": "Enable required audit events across assets.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Collect audit logs. Ensure that logging, per the enterprise’s audit log management process, has been enabled across enterprise assets.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.2"
     },
     {
       "id": "8.3",
@@ -947,7 +1130,10 @@
       "guidance": "Size and manage storage to meet documented logging needs.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure that logging destinations maintain adequate storage to comply with the enterprise’s audit log management process.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.3"
     },
     {
       "id": "8.4",
@@ -966,7 +1152,10 @@
         "establish": "Define time sources and supported asset coverage.",
         "operate": "Operate time synchronization.",
         "dependencies": "1.1; 8.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Standardize time synchronization. Configure at least two synchronized time sources across enterprise assets, where supported.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.4"
     },
     {
       "id": "8.5",
@@ -985,7 +1174,10 @@
         "establish": "Identify sensitive-data assets and define the required detailed logging fields.",
         "operate": "Collect the event source, date, username, timestamp, source and destination addresses, and other useful investigation details. Identify missing required fields as coverage gaps; availability alone does not remove the requirement.",
         "dependencies": "3.2; 8.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Configure detailed audit logging for enterprise assets containing sensitive data. Include event source, date, username, timestamp, source addresses, destination addresses, and other useful elements that could assist in a forensic investigation.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.5"
     },
     {
       "id": "8.6",
@@ -1004,7 +1196,10 @@
         "establish": "Identify DNS logging coverage and limitations.",
         "operate": "Collect DNS query events.",
         "dependencies": "8.1; 8.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Collect DNS query audit logs on enterprise assets, where appropriate and supported.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.6"
     },
     {
       "id": "8.7",
@@ -1023,7 +1218,10 @@
         "establish": "Identify URL logging coverage and limitations.",
         "operate": "Collect URL request events.",
         "dependencies": "8.1; 8.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Collect URL request audit logs on enterprise assets, where appropriate and supported.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.7"
     },
     {
       "id": "8.8",
@@ -1042,7 +1240,10 @@
         "establish": "Define command-line logging sources.",
         "operate": "Collect command-line events.",
         "dependencies": "8.1; 8.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Collect command-line audit logs. Example implementations include collecting audit logs from PowerShell®, BASH™, and remote administrative terminals.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.8"
     },
     {
       "id": "8.9",
@@ -1061,7 +1262,10 @@
         "establish": "Define central destinations and exceptions.",
         "operate": "Operate centralized collection/retention.",
         "dependencies": "8.1; 8.3"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Centralize, to the extent possible, audit log collection and retention across enterprise assets in accordance with the documented audit log management process. Example implementations include leveraging a SIEM tool to centralize multiple log sources.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.9"
     },
     {
       "id": "8.10",
@@ -1080,7 +1284,10 @@
         "establish": "Configure retention and capacity together.",
         "operate": "Retain events throughout the required window.",
         "dependencies": "8.1; 8.3; 8.9"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Retain audit logs across enterprise assets for a minimum of 90 days.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.10"
     },
     {
       "id": "8.11",
@@ -1099,7 +1306,10 @@
         "establish": "Assign log-review coverage, escalation and substitute coverage.",
         "operate": "Review logs and investigate anomalies.",
         "dependencies": "8.2; 8.9; 17.3"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Conduct reviews of audit logs to detect anomalies or abnormal events that could indicate a potential threat. Conduct reviews on a weekly, or more frequent, basis.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.11"
     },
     {
       "id": "8.12",
@@ -1118,7 +1328,10 @@
         "establish": "Match the provider inventory to available log interfaces and actual received records. Distinguish unavailable provider functionality from supported logging that has not been configured.",
         "operate": "Obtain service-provider logs wherever the provider supports them. No fixed collection or human-review interval specified here; collect on an ongoing basis where supported.",
         "dependencies": "Safeguard 4.1: Establish and Maintain a Secure Configuration Process Safeguard 15.1: Establish and Maintain an Inventory of Service Providers"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Collect service provider logs, where supported. Example implementations include collecting authentication and authorization events, data creation and disposal events, and user management events.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 8.12"
     },
     {
       "id": "9.1",
@@ -1130,7 +1343,10 @@
       "guidance": "Restrict browser and email software to current supported releases.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure only fully supported browsers and email clients are allowed to execute in the enterprise, only using the latest version of browsers and email clients provided through the vendor.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 9.1"
     },
     {
       "id": "9.2",
@@ -1142,7 +1358,10 @@
       "guidance": "Block known malicious domains for local and remote endpoints.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use DNS filtering services on all end-user devices, including remote and on-premises assets, to block access to known malicious domains.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 9.2"
     },
     {
       "id": "9.3",
@@ -1161,7 +1380,10 @@
         "establish": "Define network URL restrictions for all enterprise assets.",
         "operate": "Enforce and update URL filtering.",
         "dependencies": "1.1; 9.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Enforce and update network-based URL filters to limit an enterprise asset from connecting to potentially malicious or unapproved websites. Example implementations include category-based filtering, reputation-based filtering, or through the use of block lists. Enforce filters for all enterprise assets.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 9.3"
     },
     {
       "id": "9.4",
@@ -1180,7 +1402,10 @@
         "establish": "Identify authorized and necessary browser and email-client plugins, extensions and add-on applications across the covered assets.",
         "operate": "Uninstall or disable unauthorized or unnecessary browser and email-client plugins, extensions and add-on applications.",
         "dependencies": "2.1; 2.3; 9.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Restrict, either through uninstalling or disabling, any unauthorized or unnecessary browser or email client plugins, extensions, and add-on applications.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 9.4"
     },
     {
       "id": "9.5",
@@ -1199,7 +1424,10 @@
         "establish": "Establish SPF/DKIM before DMARC policy and verification.",
         "operate": "Operate domain authentication.",
         "dependencies": "15.1; 9.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "To lower the chance of spoofed or modified emails from valid domains, implement DMARC policy and verification, starting with implementing the Sender Policy Framework (SPF) and the DomainKeys Identified Mail (DKIM) standards.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 9.5"
     },
     {
       "id": "9.6",
@@ -1218,7 +1446,10 @@
         "establish": "Agree unnecessary file types and gateway coverage.",
         "operate": "Enforce email file-type blocking.",
         "dependencies": "9.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Block unnecessary file types attempting to enter the enterprise’s email gateway.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 9.6"
     },
     {
       "id": "9.7",
@@ -1237,7 +1468,10 @@
         "establish": "Include hosted email responsibility arrangements. Inspect enabled protection and existing detection/blocking results; distinguish mail-client protection from coverage of the email service.",
         "operate": "Operate and maintain anti-malware protection for email servers. No fixed interval specified. Protection is maintained in operation.",
         "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 4.1: Establish and Maintain a Secure Configuration Process"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Deploy and maintain email server anti-malware protections, such as attachment scanning and/or sandboxing.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 9.7"
     },
     {
       "id": "10.1",
@@ -1249,7 +1483,10 @@
       "guidance": "Maintain endpoint malware protection.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Deploy and maintain anti-malware software on all enterprise assets.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 10.1"
     },
     {
       "id": "10.2",
@@ -1261,7 +1498,10 @@
       "guidance": "Keep malware detection signatures automatically updated.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Configure automatic updates for anti-malware signature files on all enterprise assets.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 10.2"
     },
     {
       "id": "10.3",
@@ -1273,7 +1513,10 @@
       "guidance": "Prevent removable media from executing automatically.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Disable autorun and autoplay auto-execute functionality for removable media.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 10.3"
     },
     {
       "id": "10.4",
@@ -1292,7 +1535,10 @@
         "establish": "Configure scanning coverage.",
         "operate": "Run automatic media malware scans.",
         "dependencies": "10.1; 10.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Configure anti-malware software to automatically scan removable media.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 10.4"
     },
     {
       "id": "10.5",
@@ -1311,7 +1557,10 @@
         "establish": "Identify supported asset/software protections.",
         "operate": "Maintain enabled anti-exploitation features.",
         "dependencies": "1.1; 2.1; 4.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Enable anti-exploitation features on enterprise assets and software, where possible, such as Microsoft® Data Execution Prevention (DEP), Windows® Defender Exploit Guard (WDEG), or Apple® System Integrity Protection (SIP) and Gatekeeper™.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 10.5"
     },
     {
       "id": "10.6",
@@ -1330,7 +1579,10 @@
         "establish": "Define central management and asset enrollment.",
         "operate": "Maintain centralized policy and coverage.",
         "dependencies": "10.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Centrally manage anti-malware software.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 10.6"
     },
     {
       "id": "10.7",
@@ -1349,7 +1601,10 @@
         "establish": "Establish behavior-detection coverage.",
         "operate": "Operate behavior-based malware protection.",
         "dependencies": "10.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use behavior-based anti-malware software.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 10.7"
     },
     {
       "id": "11.1",
@@ -1361,7 +1616,10 @@
       "guidance": "Document recovery scope, priorities, backup procedures and protection.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a documented data recovery process. In the process, address the scope of data recovery activities, \nrecovery prioritization, and the security of backup data. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 11.1"
     },
     {
       "id": "11.2",
@@ -1373,7 +1631,10 @@
       "guidance": "Automate in-scope backups and investigate failures.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform automated backups of in-scope enterprise assets. Run backups weekly, or more frequently, based on the sensitivity of the data.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 11.2"
     },
     {
       "id": "11.3",
@@ -1385,7 +1646,10 @@
       "guidance": "Protect backups consistently with original-data sensitivity.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Protect recovery data with equivalent controls to the original data. Reference encryption or data separation, based on requirements.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 11.3"
     },
     {
       "id": "11.4",
@@ -1397,7 +1661,10 @@
       "guidance": "Maintain a backup copy isolated from primary-system compromise.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain an isolated instance of recovery data. Example implementations include, version controlling backup destinations through offline, cloud, or off-site systems or services.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 11.4"
     },
     {
       "id": "11.5",
@@ -1416,7 +1683,10 @@
         "establish": "Select representative recovery samples and success criteria.",
         "operate": "Execute restore tests and resolve failures.",
         "dependencies": "11.1; 11.2; 11.3; 11.4"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Test backup recovery quarterly, or more frequently, for a sampling of in-scope enterprise assets.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 11.5"
     },
     {
       "id": "12.1",
@@ -1428,7 +1698,10 @@
       "guidance": "Verify network software support and maintain current infrastructure.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure network infrastructure is kept up-to-date. Example implementations include running the latest stable release of software and/or using currently supported network-as-a-service (NaaS) offerings. Review software versions monthly, or more frequently, to verify software support.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 12.1"
     },
     {
       "id": "12.2",
@@ -1447,7 +1720,10 @@
         "establish": "Define architecture and security boundaries.",
         "operate": "Maintain implemented network architecture.",
         "dependencies": "1.1; 4.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Design and maintain a secure network architecture. A secure network architecture must address segmentation, least privilege, and availability, at a minimum. Example implementations will not solely include documentation, but also policy and design components.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 12.2"
     },
     {
       "id": "12.3",
@@ -1466,7 +1742,10 @@
         "establish": "Define secure administrative methods.",
         "operate": "Use secure infrastructure management.",
         "dependencies": "4.2; 12.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Securely manage network infrastructure. Example implementations include version-controlled Infrastructure-as-Code (IaC), and the use of secure network protocols, such as SSH and HTTPS.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 12.3"
     },
     {
       "id": "12.4",
@@ -1485,7 +1764,10 @@
         "establish": "Establish diagrams or equivalent system documentation.",
         "operate": "Maintain documentation with network changes.",
         "dependencies": "1.1; 12.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain architecture diagram(s) and/or other network system documentation. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 12.4"
     },
     {
       "id": "12.5",
@@ -1504,7 +1786,10 @@
         "establish": "Define centralized AAA coverage.",
         "operate": "Operate centralized network AAA.",
         "dependencies": "5.6; 6.6; 12.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Centralize network AAA.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 12.5"
     },
     {
       "id": "12.6",
@@ -1523,7 +1808,10 @@
         "establish": "Select secure protocols for applicable network services.",
         "operate": "Maintain secure protocol configurations.",
         "dependencies": "4.2; 12.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use secure network management and communication protocols (e.g., 802.1X, Wi-Fi Protected Access 2 (WPA2) Enterprise or greater).",
+      "source_citation": "CIS Controls v8.1 · Safeguard 12.6"
     },
     {
       "id": "12.7",
@@ -1532,7 +1820,7 @@
       "control_name": "Network Infrastructure Management",
       "type": "event",
       "source_cadence": "Before accessing enterprise resources.",
-      "guidance": "Require end-user devices to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources.",
+      "guidance": "Require users to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#127-ensure-remote-devices-utilize-a-vpn-and-are-connecting-to-an-enterprises-aaa-infrastructure",
       "version": "8.1",
       "implementation_group": 2,
@@ -1542,7 +1830,10 @@
         "establish": "Identify end-user device access paths and enterprise-managed VPN and authentication services.",
         "operate": "Require VPN and authentication before resource access.",
         "dependencies": "6.4; 12.5"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Require users to authenticate to enterprise-managed VPN and authentication services prior to accessing enterprise resources on end-user devices.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 12.7"
     },
     {
       "id": "12.8",
@@ -1561,7 +1852,10 @@
         "establish": "Identify all administrative tasks and the resources used for them. Confirm network separation and denied internet access using existing configuration/test records, including remote administrative routes.",
         "operate": "Use physically or logically dedicated administrative computing resources, segmented from the primary network and without internet access. No fixed interval specified; the restrictions apply during administrative work.",
         "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 4.2: Establish and Maintain a Secure Configuration Process for Network Infrastructure"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain dedicated computing resources, either physically or logically separated, for all administrative tasks or tasks requiring administrative access. The computing resources should be segmented from the enterprise's primary network and not be allowed internet access.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 12.8"
     },
     {
       "id": "13.1",
@@ -1580,7 +1874,10 @@
         "establish": "Define correlation, alert ownership and escalation; equivalent log analytics can satisfy the outcome.",
         "operate": "Operate correlated security alerting.",
         "dependencies": "8.9; 17.3"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Centralize security event alerting across enterprise assets for log correlation and analysis. Best practice implementation requires the use of a SIEM, which includes vendor-defined event correlation alerts. A log analytics platform configured with security-relevant correlation alerts also satisfies this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.1"
     },
     {
       "id": "13.2",
@@ -1599,7 +1896,10 @@
         "establish": "Define host detection coverage and limitations.",
         "operate": "Operate host intrusion detection.",
         "dependencies": "1.1; 13.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Deploy a host-based intrusion detection solution on enterprise assets, where appropriate and/or supported.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.2"
     },
     {
       "id": "13.3",
@@ -1618,7 +1918,10 @@
         "establish": "Select observation points or equivalent cloud capability.",
         "operate": "Operate network intrusion detection.",
         "dependencies": "12.2; 13.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Deploy a network intrusion detection solution on enterprise assets, where appropriate. Example implementations include the use of a Network Intrusion Detection System (NIDS) or equivalent cloud service provider (CSP) service.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.3"
     },
     {
       "id": "13.4",
@@ -1637,7 +1940,10 @@
         "establish": "Define permitted inter-segment flows.",
         "operate": "Enforce boundary filtering.",
         "dependencies": "12.2; 3.8"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform traffic filtering between network segments, where appropriate.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.4"
     },
     {
       "id": "13.5",
@@ -1656,7 +1962,10 @@
         "establish": "Define checks for malware protection, configuration and patch currency.",
         "operate": "Apply posture-based access decisions.",
         "dependencies": "4.1; 7.3; 7.4; 10.1; 12.7"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Manage access control for assets remotely connecting to enterprise resources. Determine amount of access to enterprise resources based on: up-to-date anti-malware software installed, configuration compliance with the enterprise’s secure configuration process, and ensuring the operating system and applications are up-to-date.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.5"
     },
     {
       "id": "13.6",
@@ -1675,7 +1984,10 @@
         "establish": "Identify flow/traffic collection coverage and destinations.",
         "operate": "Collect network flow or traffic records.",
         "dependencies": "12.2; 13.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Collect network traffic flow logs and/or network traffic to review and alert upon from network devices.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.6"
     },
     {
       "id": "13.7",
@@ -1694,7 +2006,10 @@
         "establish": "Confirm prevention capability and enabled mode, identify coverage gaps, and document support/appropriateness decisions. Distinguish detection-only telemetry from prevention.",
         "operate": "Provide host intrusion prevention where appropriate and/or supported. No fixed interval specified; prevention operates on applicable assets.",
         "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 2.1: Establish and Maintain a Software Inventory"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Deploy a host-based intrusion prevention solution on enterprise assets, where appropriate and/or supported. Example implementations include use of an Endpoint Detection and Response (EDR) client or host-based IPS agent.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.7"
     },
     {
       "id": "13.8",
@@ -1713,7 +2028,10 @@
         "establish": "Map relevant traffic paths to prevention controls and confirm blocking mode. Review uncovered or bypass routes and the rationale for where prevention is appropriate.",
         "operate": "Provide network intrusion prevention where appropriate. No fixed interval specified; prevention operates on relevant network paths.",
         "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 12.4: Establish and Maintain Architecture Diagram(s)"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Deploy a network intrusion prevention solution, where appropriate. Example implementations include the use of a Network Intrusion Prevention System (NIPS) or equivalent CSP service.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.8"
     },
     {
       "id": "13.9",
@@ -1732,7 +2050,10 @@
         "establish": "Confirm which access ports are controlled and how devices/users authenticate. Examine existing authorized and unauthorized access test results and bypass arrangements.",
         "operate": "Enforce port-level network access using 802.1X or a similar authentication-based approach. No fixed interval specified; enforce when network access is attempted.",
         "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Deploy port-level access control. Port-level access control utilizes 802.1x, or similar network access control protocols, such as certificates, and may incorporate user and/or device authentication.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.9"
     },
     {
       "id": "13.10",
@@ -1751,7 +2072,10 @@
         "establish": "Identify application-aware filtering points, relevant traffic paths and enabled policies. Review a representative permitted and blocked application request from existing records.",
         "operate": "Filter network traffic at the application layer. No fixed interval specified; filtering operates on relevant traffic.",
         "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 2.1: Establish and Maintain a Software Inventory"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform application layer filtering. Example implementations include a filtering proxy, application layer firewall, or gateway.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.10"
     },
     {
       "id": "13.11",
@@ -1770,7 +2094,10 @@
         "establish": "Examine a dated tuning history, the thresholds considered and the rationale/results. Investigate repeated missed periods and entries that merely acknowledge alerts without evaluating thresholds.",
         "operate": "Adjust security-event alert thresholds at least monthly. Monthly or more frequently. This is the tuning activity, not just a governance meeting.",
         "dependencies": "Safeguard 13.1: Centralize Security Event Alerting"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Tune security event alerting thresholds monthly, or more frequently.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 13.11"
     },
     {
       "id": "14.1",
@@ -1782,7 +2109,10 @@
       "guidance": "Maintain an awareness program and review content; track workforce participation.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a security awareness program. The purpose of a security awareness program is to educate the enterprise’s workforce on how to interact with enterprise assets and data in a secure manner. Conduct training at hire and, at a minimum, annually. Review and update content annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.1"
     },
     {
       "id": "14.2",
@@ -1794,7 +2124,10 @@
       "guidance": "Teach recognition of phishing and other social manipulation.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Train workforce members to recognize social engineering attacks, such as phishing, business email compromise (BEC), pretexting, and tailgating.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.2"
     },
     {
       "id": "14.3",
@@ -1806,7 +2139,10 @@
       "guidance": "Teach secure authentication and credential handling.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Train workforce members on authentication best practices. Example topics include MFA, password composition, and credential management.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.3"
     },
     {
       "id": "14.4",
@@ -1818,7 +2154,10 @@
       "guidance": "Teach safe storage, sharing and disposal of sensitive information.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Train workforce members on how to identify and properly store, transfer, archive, and destroy sensitive data. This also includes training workforce members on clear screen and desk best practices, such as locking their screen when they step away from their enterprise asset, erasing physical and virtual whiteboards at the end of meetings, and storing data and assets securely.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.4"
     },
     {
       "id": "14.5",
@@ -1830,7 +2169,10 @@
       "guidance": "Explain accidental disclosure and prevention.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Train workforce members to be aware of causes for unintentional data exposure. Example topics include mis-delivery of sensitive data, losing a portable end-user device, or publishing data to unintended audiences.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.5"
     },
     {
       "id": "14.6",
@@ -1842,7 +2184,10 @@
       "guidance": "Teach workers to identify and report potential incidents.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Train workforce members to be able to recognize a potential incident and be able to report such an incident.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.6"
     },
     {
       "id": "14.7",
@@ -1854,7 +2199,10 @@
       "guidance": "Teach recognition and reporting of failed security updates.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Train workforce to understand how to verify and report out-of-date software patches or any failures in automated processes and tools. Part of this training should include notifying IT personnel of any failures in automated processes and tools.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.7"
     },
     {
       "id": "14.8",
@@ -1866,7 +2214,10 @@
       "guidance": "Cover insecure connections and safe remote/home networking.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Train workforce members on the dangers of connecting to, and transmitting data over, insecure networks for enterprise activities. If the enterprise has remote workers, training must include guidance to ensure that all users securely configure their home network infrastructure.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.8"
     },
     {
       "id": "14.9",
@@ -1885,7 +2236,10 @@
         "establish": "Identify role skills and training gaps.",
         "operate": "Deliver role-specific awareness/skills training.",
         "dependencies": "14.1; 16.9"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Conduct role-specific security awareness and skills training. Example implementations include secure system administration courses for IT professionals, OWASP® Top 10 vulnerability awareness and prevention training for web application developers, and advanced social engineering awareness training for high-profile roles.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 14.9"
     },
     {
       "id": "15.1",
@@ -1897,7 +2251,10 @@
       "guidance": "Inventory providers, classifications and accountable contacts.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain an inventory of service providers. The inventory is to list all known service providers, include classification(s), and designate an enterprise contact for each service provider. Review and update the inventory annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 15.1"
     },
     {
       "id": "15.2",
@@ -1916,7 +2273,10 @@
         "establish": "Document inventory, classification, assessment, monitoring and decommissioning policy.",
         "operate": "Follow the approved provider policy. The provider policy addresses classification, inventory, assessment, monitoring and decommissioning. This policy does not add the separate IG3 safeguards 15.5 through 15.7 to IG2.",
         "dependencies": "15.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a service provider management policy. Ensure the policy addresses the classification, inventory, assessment, monitoring, and decommissioning of service providers. Review and update the policy annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 15.2"
     },
     {
       "id": "15.3",
@@ -1935,7 +2295,10 @@
         "establish": "Agree provider classification criteria.",
         "operate": "Classify providers and update changes.",
         "dependencies": "15.1; 15.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Classify service providers. Classification consideration may include one or more characteristics, such as data sensitivity, data volume, availability requirements, applicable regulations, inherent risk, and mitigated risk. Update and review classifications annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 15.3"
     },
     {
       "id": "15.4",
@@ -1954,7 +2317,10 @@
         "establish": "Identify required security terms and gaps.",
         "operate": "Maintain contractual security commitments.",
         "dependencies": "15.2; 15.3"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure service provider contracts include security requirements. Example requirements may include minimum security program requirements, security incident and/or data breach notification and response, data encryption requirements, and data disposal commitments. These security requirements must be consistent with the enterprise’s service provider management policy. Review service provider contracts annually to ensure contracts are not missing security requirements.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 15.4"
     },
     {
       "id": "15.5",
@@ -1973,7 +2339,10 @@
         "establish": "Reconcile provider classifications to assessments, dates and contract events. Confirm the policy-defined depth is met and follow up missing, outdated or adverse results.",
         "operate": "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts. Source wording: annually, at a minimum, or with new and renewed contracts. Plan for annual coverage plus contract-triggered assessment; do not use contract renewal to excuse multi-year gaps.",
         "dependencies": "Safeguard 15.1: Establish and Maintain an Inventory of Service Providers Safeguard 15.2: Establish and Maintain a Service Provider Management Policy"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Assess service providers consistent with the enterprise’s service provider management policy. Assessment scope may vary based on classification(s), and may include review of standardized assessment reports, such as Service Organization Control 2 (SOC 2) and Payment Card Industry (PCI) Attestation of Compliance (AoC), customized questionnaires, or other appropriately rigorous processes. Reassess service providers annually, at a minimum, or with new and renewed contracts.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 15.5"
     },
     {
       "id": "15.6",
@@ -1992,7 +2361,10 @@
         "establish": "Identify the promised monitoring for each provider class and compare it with actual results and escalation. Review policy-defined timing without relabeling it as a CIS universal frequency.",
         "operate": "Monitor providers according to the enterprise provider-management policy. No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy.",
         "dependencies": "Safeguard 15.1: Establish and Maintain an Inventory of Service Providers Safeguard 15.2: Establish and Maintain a Service Provider Management Policy"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Monitor service providers consistent with the enterprise’s service provider management policy. Monitoring may include periodic reassessment of service provider compliance, monitoring service provider release notes, and dark web monitoring.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 15.6"
     },
     {
       "id": "15.7",
@@ -2011,7 +2383,10 @@
         "establish": "For a terminated provider, follow the relevant access, data-flow and data-disposition decisions through completion. If there were no terminations, examine readiness and record that operating evidence was unavailable.",
         "operate": "End provider relationships securely. Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window.",
         "dependencies": "Safeguard 15.1: Establish and Maintain an Inventory of Service Providers Safeguard 15.2: Establish and Maintain a Service Provider Management Policy"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Securely decommission service providers. Example considerations include user and service account deactivation, termination of data flows, and secure disposal of enterprise data within service provider systems.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 15.7"
     },
     {
       "id": "16.1",
@@ -2030,7 +2405,10 @@
         "establish": "Define development security process and responsibilities.",
         "operate": "Follow secure lifecycle procedures. The development process addresses secure design, coding, developer training, vulnerability handling, third-party software security and application testing.",
         "dependencies": "2.1; 7.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a secure application development process. In the process, address such items as: secure application design standards, secure coding practices, developer training, vulnerability management, security of third-party code, and application security testing procedures. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.1"
     },
     {
       "id": "16.2",
@@ -2049,7 +2427,10 @@
         "establish": "Establish external reporting path, triage, severity tracking and timing metrics.",
         "operate": "Receive, assign, remediate and retest reports. Provide an external reporting channel and documented intake, ownership, remediation and retesting. Track severity and identification, analysis and remediation dates; review the handling process annually and after significant changes.",
         "dependencies": "7.2; 16.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a process to accept and address reports of software vulnerabilities, including providing a means for external entities to report. The process is to include such items as: a vulnerability handling policy that identifies reporting process, responsible party for handling vulnerability reports, and a process for intake, assignment, remediation, and remediation testing. As part of the process, use a vulnerability tracking system that includes severity ratings, and metrics for measuring timing for identification, analysis, and remediation of vulnerabilities. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.\n\nThird-party application developers need to consider this an externally-facing policy that helps to set expectations for outside stakeholders.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.2"
     },
     {
       "id": "16.3",
@@ -2068,7 +2449,10 @@
         "establish": "Define root-cause responsibilities.",
         "operate": "Analyze causes and prevention actions.",
         "dependencies": "16.1; 16.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform root cause analysis on security vulnerabilities. When reviewing vulnerabilities, root cause analysis is the task of evaluating underlying issues that create vulnerabilities in code, and allows development teams to move beyond just fixing individual vulnerabilities as they arise.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.3"
     },
     {
       "id": "16.4",
@@ -2087,7 +2471,10 @@
         "establish": "Inventory current/planned third-party components and risks.",
         "operate": "Check changes, updates and continued support. Track current and planned components, associated risks, updates and support status. Review component inventory at least monthly and identify unsupported components.",
         "dependencies": "2.1; 16.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and manage an updated inventory of third-party components used in development, often referred to as a “bill of materials,” as well as components slated for future use. This inventory is to include any risks that each third-party component could pose. Evaluate the list at least monthly to identify any changes or updates to these components, and validate that the component is still supported.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.4"
     },
     {
       "id": "16.5",
@@ -2106,7 +2493,10 @@
         "establish": "Define acquisition and vulnerability-evaluation practices.",
         "operate": "Obtain trusted, up-to-date components. Use current trusted components and established frameworks or libraries where possible. Obtain components from trusted sources or evaluate vulnerabilities before use.",
         "dependencies": "16.4"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use up-to-date and trusted third-party software components. When possible, choose established and proven frameworks and libraries that provide adequate security. Acquire these components from trusted sources or evaluate the software for vulnerabilities before use.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.5"
     },
     {
       "id": "16.6",
@@ -2125,7 +2515,10 @@
         "establish": "Define severity model and minimum release acceptance.",
         "operate": "Triage vulnerabilities and apply release criteria. Use a consistent vulnerability severity system with a minimum acceptance threshold for release; review the system annually.",
         "dependencies": "7.2; 16.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a severity rating system and process for application vulnerabilities that facilitates prioritizing the order in which discovered vulnerabilities are fixed. This process includes setting a minimum level of security acceptability for releasing code or applications. Severity ratings bring a systematic way of triaging vulnerabilities that improves risk management and helps ensure the most severe bugs are fixed first. Review and update the system and process annually.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.6"
     },
     {
       "id": "16.7",
@@ -2144,7 +2537,10 @@
         "establish": "Adopt industry-recommended hardening templates for underlying servers, databases, web servers, cloud containers, PaaS and SaaS application components.",
         "operate": "Maintain application infrastructure hardening across the covered components. Do not allow in-house developed software to weaken configuration hardening.",
         "dependencies": "4.1; 4.2; 16.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Use standard, industry-recommended hardening configuration templates for application infrastructure components. This includes underlying servers, databases, and web servers, and applies to cloud containers, Platform as a Service (PaaS) components, and SaaS components. Do not allow in-house developed software to weaken configuration hardening.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.7"
     },
     {
       "id": "16.8",
@@ -2163,7 +2559,10 @@
         "establish": "Define production/non-production boundaries.",
         "operate": "Maintain environment separation.",
         "dependencies": "12.2; 16.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Maintain separate environments for production and non-production systems.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.8"
     },
     {
       "id": "16.9",
@@ -2182,7 +2581,10 @@
         "establish": "Identify development roles and relevant training.",
         "operate": "Deliver environment-specific developer training.",
         "dependencies": "14.9; 16.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Ensure that all software development personnel receive training in writing secure code for their specific development environment and responsibilities. Training can include general security principles and application security standard practices. Conduct training at least annually and design in a way to promote security within the development team, and build a culture of security among the developers.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.9"
     },
     {
       "id": "16.10",
@@ -2201,7 +2603,10 @@
         "establish": "Define secure design principles and review responsibility.",
         "operate": "Apply principles through design and change. Apply least privilege, check access at each operation, validate untrusted input type, size, range and format, and minimize exposed functionality.",
         "dependencies": "16.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Apply secure design principles in application architectures. Secure design principles include the concept of least privilege and enforcing mediation to validate every operation that the user makes, promoting the concept of \"never trust user input.\" Examples include ensuring that explicit error checking is performed and documented for all input, including for size, data type, and acceptable ranges or formats. Secure design also means minimizing the application infrastructure attack surface, such as turning off unprotected ports and services, removing unnecessary programs and files, and renaming or removing default accounts.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.10"
     },
     {
       "id": "16.11",
@@ -2220,7 +2625,10 @@
         "establish": "Identify vetted security modules/services.",
         "operate": "Maintain use of proven identity, crypto and audit capabilities. Use vetted identity, cryptographic, audit and logging modules with accepted reviewed algorithms; avoid custom security implementations.",
         "dependencies": "16.1; 16.4; 16.5"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Leverage vetted modules or services for application security components, such as identity management, encryption, and auditing and logging. Using platform features in critical security functions will reduce developers’ workload and minimize the likelihood of design or implementation errors. Modern operating systems provide effective mechanisms for identification, authentication, and authorization and make those mechanisms available to applications. Use only standardized, currently accepted, and extensively reviewed encryption algorithms. Operating systems also provide mechanisms to create and maintain secure audit logs.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.11"
     },
     {
       "id": "16.12",
@@ -2239,7 +2647,10 @@
         "establish": "Review the application/release population and where each analysis type operates. Trace representative results to triage and relevant remediation, without requiring a new Omnisciente integration.",
         "operate": "Use both static and dynamic code-analysis tools during the application lifecycle to check secure coding. Within the application lifecycle; no fixed calendar frequency or universal every-commit rule specified.",
         "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Apply static and dynamic analysis tools within the application life cycle to verify that secure coding practices are being followed.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.12"
     },
     {
       "id": "16.13",
@@ -2258,7 +2669,10 @@
         "establish": "Identify tested applications, criticality, authentication coverage and manual business-logic exploration. Review test scope, findings and follow-up; distinguish scanning from penetration testing.",
         "operate": "Perform application penetration testing, considering authenticated testing for critical applications and manual tester analysis. No fixed frequency specified in 16.13. Use application/program requirements; do not import the annual infrastructure-test interval as this safeguard's wording.",
         "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Conduct application penetration testing. For critical applications, authenticated penetration testing is better suited to finding business logic vulnerabilities than code scanning and automated security testing. Penetration testing relies on the skill of the tester to manually manipulate an application as an authenticated and unauthenticated user.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.13"
     },
     {
       "id": "16.14",
@@ -2277,7 +2691,10 @@
         "establish": "Inspect a design-stage model, participants' relevant training, entry points and access levels. Trace identified design risks to decisions before implementation.",
         "operate": "Have specially trained people model application threats and address design flaws before code is created. During design, before coding. No fixed calendar interval specified.",
         "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Conduct threat modeling. Threat modeling is the process of identifying and addressing application security design flaws within a design, before code is created. It is conducted through specially trained individuals who evaluate the application design and gauge security risks for each entry point and access level. The goal is to map out the application, architecture, and infrastructure in a structured way to understand its weaknesses.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 16.14"
     },
     {
       "id": "17.1",
@@ -2289,7 +2706,10 @@
       "guidance": "Identify incident leadership, backup coverage and internal oversight.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Designate one key person, and at least one backup, who will manage the enterprise’s incident handling process. Management personnel are responsible for the coordination and documentation of incident response and recovery efforts and can consist of employees internal to the enterprise, service providers, or a hybrid approach. If using a service provider, designate at least one person internal to the enterprise to oversee any third-party work. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.1"
     },
     {
       "id": "17.2",
@@ -2301,7 +2721,10 @@
       "guidance": "Verify incident notification contacts.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain contact information for parties that need to be informed of security incidents. Contacts may include internal staff, service vendors, law enforcement, cyber insurance providers, relevant government agencies, Information Sharing and Analysis Center (ISAC) partners, or other stakeholders. Verify contacts annually to ensure that information is up-to-date.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.2"
     },
     {
       "id": "17.3",
@@ -2313,7 +2736,10 @@
       "guidance": "Document and communicate the workforce incident-reporting process.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/",
       "version": "8.1",
-      "implementation_group": 1
+      "implementation_group": 1,
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain an documented enterprise process for the workforce to report security incidents. The process includes reporting timeframe, personnel to report to, mechanism for reporting, and the minimum information to be reported. Ensure the process is publicly available to all of the workforce. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.3"
     },
     {
       "id": "17.4",
@@ -2332,7 +2758,10 @@
         "establish": "Document response roles, obligations and communications.",
         "operate": "Execute response process during incidents. Document response roles, compliance obligations and communications, and review the response process annually and after significant changes.",
         "dependencies": "17.1; 17.2; 17.3"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a documented incident response process that addresses roles and responsibilities, compliance requirements, and a communication plan. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.4"
     },
     {
       "id": "17.5",
@@ -2351,7 +2780,10 @@
         "establish": "Agree cross-functional and provider responsibilities.",
         "operate": "Activate assigned roles during incidents. Include relevant legal, IT, security, facilities, public relations, HR, responders, analysts and third-party responsibilities.",
         "dependencies": "17.1; 17.4"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Assign key roles and responsibilities for incident response, including staff from legal, IT, information security, facilities, public relations, human resources, incident responders, and analysts. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.5"
     },
     {
       "id": "17.6",
@@ -2370,7 +2802,10 @@
         "establish": "Define primary and fallback communication methods.",
         "operate": "Use available incident communication channels. Define primary and alternate incident communication channels, accounting for unavailable or compromised email.",
         "dependencies": "17.2; 17.4"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Determine which primary and secondary mechanisms will be used to communicate and report during a security incident. Mechanisms can include phone calls, emails, secure chat, or notification letters. Keep in mind that certain mechanisms, such as emails, can be affected during a security incident. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.6"
     },
     {
       "id": "17.7",
@@ -2389,7 +2824,10 @@
         "establish": "Plan realistic scenarios, participants and objectives.",
         "operate": "Run exercises covering channels, decisions and workflows. Conduct actual exercises at least annually that test communications, decisions and response workflows; track resulting improvements.",
         "dependencies": "17.4; 17.5; 17.6"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Plan and conduct routine incident response exercises and scenarios for key personnel involved in the incident response process to prepare for responding to real-world incidents. Exercises need to test communication channels, decision making, and workflows. Conduct testing on an annual basis, at a minimum.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.7"
     },
     {
       "id": "17.8",
@@ -2408,7 +2846,10 @@
         "establish": "Define post-incident review responsibility.",
         "operate": "Capture lessons and assign improvements. After incidents, capture lessons and follow up improvements. The safeguard does not prescribe a separate fixed numeric review interval.",
         "dependencies": "17.4"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Conduct post-incident reviews. Post-incident reviews help prevent incident recurrence through identifying lessons learned and follow-up action.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.8"
     },
     {
       "id": "17.9",
@@ -2427,7 +2868,10 @@
         "establish": "Confirm the event/incident distinction is usable by responders and linked to the response process. Check the last review and relevant changes; keep CAS prioritization/escalation prompts separate from the safeguard minimum.",
         "operate": "Define and maintain incident thresholds distinguishing incidents from events; review annually and after relevant significant changes. Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review.",
         "dependencies": "Safeguard 17.4: Establish and Maintain an Incident Response Process"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain security incident thresholds, including, at a minimum, differentiating between an incident and an event. Examples can include: abnormal activity, security vulnerability, security weakness, data breach, privacy incident, etc. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 17.9"
     },
     {
       "id": "18.1",
@@ -2446,7 +2890,10 @@
         "establish": "Agree scope, frequency, limits, contacts, remediation and retrospectives.",
         "operate": "Maintain the testing program. Scale testing to organizational size, complexity, industry and maturity. Define network, application, API, hosted and physical scope where relevant, frequency, testing limits and hours, excluded attacks, contacts, remediation routing and retrospective review.",
         "dependencies": "1.1; 7.2; 12.4"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Establish and maintain a penetration testing program appropriate to the size, complexity, industry, and maturity of the enterprise. Penetration testing program characteristics include scope, such as network, web application, Application Programming Interface (API), hosted services, and physical premise controls; frequency; limitations, such as acceptable hours, and excluded attack types; point of contact information; remediation, such as how findings will be routed internally; and retrospective requirements.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 18.1"
     },
     {
       "id": "18.2",
@@ -2465,7 +2912,10 @@
         "establish": "Select qualified party and authorize scope/limits.",
         "operate": "Execute external penetration tests. At least annually, use qualified external testers and include reconnaissance of the enterprise and its environment.",
         "dependencies": "18.1"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform periodic external penetration tests based on program requirements, no less than annually. External penetration testing must include enterprise and environmental reconnaissance to detect exploitable information. Penetration testing requires specialized skills and experience and must be conducted through a qualified party. The testing may be clear box or opaque box.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 18.2"
     },
     {
       "id": "18.3",
@@ -2484,7 +2934,10 @@
         "establish": "Define finding ownership and routing.",
         "operate": "Remediate penetration-test findings. Prioritize test findings by risk and apply documented vulnerability remediation timelines and effort according to impact and priority.",
         "dependencies": "7.2; 18.1; 18.2"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Remediate penetration test findings based on the enterprise’s documented vulnerability remediation process. This should include determining a timeline and level of effort based on the impact and prioritization of each identified finding.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 18.3"
     },
     {
       "id": "18.4",
@@ -2503,7 +2956,10 @@
         "establish": "Match each completed test to a defense-validation result. Check whether techniques used were detected and whether necessary changes were made; include application tests where relevant.",
         "operate": "Validate defenses after every penetration test; adjust detection rules or capabilities when needed. After each penetration test. No fixed number of days for follow-up specified.",
         "dependencies": "Safeguard 18.1: Establish and Maintain a Penetration Testing Program"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Validate security measures after each penetration test. If deemed necessary, modify rulesets and capabilities to detect the techniques used during testing.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 18.4"
     },
     {
       "id": "18.5",
@@ -2522,7 +2978,10 @@
         "establish": "Verify internal scope, test completion date and alignment with the program; inspect findings and their follow-up. Keep external and internal test coverage separately visible.",
         "operate": "Perform internal penetration tests under the program at least annually. No less than annually; more frequent testing follows the program where specified.",
         "dependencies": "Safeguard 18.1: Establish and Maintain a Penetration Testing Program"
-      }
+      },
+      "official_text_mode": "LICENSED_TEXT",
+      "official_text": "Perform periodic internal penetration tests based on program requirements, no less than annually. The testing may be clear box or opaque box.",
+      "source_citation": "CIS Controls v8.1 · Safeguard 18.5"
     }
   ],
   "review_plans": [
