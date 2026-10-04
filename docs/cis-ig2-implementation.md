@@ -17,7 +17,7 @@ commits/push/draft PR. No merge, hosted publication, production deployment or sh
 - [x] Fresh Demo Initech: 130 unassessed/unverified rows, seven Contacts, no login grants.
 - [x] Exact membership, lifecycle, retry/failure/concurrency, permission and regression checks.
 - [x] Isolated browser QA, normal/Demo builds, final main refresh/diff review.
-- [ ] Coherent commits, push, draft PR and precise handoff.
+- [x] Coherent commits, push, draft PR and precise handoff.
 
 ## Content provenance
 
@@ -171,3 +171,8 @@ remain as described above. Client operating arrangements remain intentionally
 unconfirmed in the fresh fixture. No merge, hosted preview publication,
 production deployment or real external security-service operation is included.
 The delivery commit and draft PR provide exact implementation provenance.
+
+Implementation commit: `e986c14ed250c107340a4954d5630afceef87fa1`.
+Pushed branch: `codex/cis-ig2-extension`.
+Draft PR: [#27](https://github.com/robbashea-lab/GRC/pull/27), targeting unchanged main.
+The documentation-only delivery follow-up is included in the PR's final head.
