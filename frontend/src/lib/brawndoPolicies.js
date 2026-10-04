@@ -15,7 +15,8 @@ export const nextPolicyReview=(day,cadence='annual',days)=>reviewSchedule({due_d
 
 // A required documented process is not a mandate for a separately titled policy.
 // Only retain catalog-owned mappings; never infer alignment from a document title.
-export function policyAlignment(row, programs=[], assessments=[]) {
+export function policyAlignment(row, programs=[], assessments=[], cisGroup) {
+  const group=cisGroup||(assessments.some(a=>a.client_id===row.client_id&&a.framework_key==='cis-ig1'&&CATALOGS['cis-ig1'].requirements.find(d=>d.id===a.definition_id)?.implementation_group===2)?2:1);
   return programs.flatMap(key=>{
     const catalog=CATALOGS[key];
     if(!catalog)return [];
@@ -24,9 +25,9 @@ export function policyAlignment(row, programs=[], assessments=[]) {
     assessments.filter(a=>a.client_id===row.client_id&&a.framework_key===key&&a.related_links?.some(l=>l.kind==='policies'&&l.id===row.policy_id)).forEach(a=>ids.add(a.definition_id));
     return [...ids].flatMap(id=>{
       const definition=catalog.requirements.find(d=>d.id===id);
-      if(!definition||key==='cis-ig1'&&definition.implementation_group>1)return [];
+      if(!definition||key==='cis-ig1'&&definition.implementation_group>1&&!assessments.some(a=>a.client_id===row.client_id&&a.framework_key===key&&a.definition_id===id))return [];
       const mapping=mapped.find(m=>m.safeguards.includes(id));
-      return [{key,id,title:definition.title,version:catalog.version,label:FRAMEWORKS.find(f=>f.key===key)?.label||key,
+      return [{key,id,title:definition.title,version:catalog.version,label:key==='cis-ig1'?`CIS IG${group}`:FRAMEWORKS.find(f=>f.key===key)?.label||key,
         relation:'Supports',purpose:mapping?.rationale||mapping?.reason,source:definition.source,sourceCadence:definition.source_cadence,
         assessment:assessments.find(a=>a.client_id===row.client_id&&a.framework_key===key&&a.definition_id===id)}];
     });

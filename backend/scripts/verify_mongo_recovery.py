@@ -19,6 +19,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mongo-url', required=True, help='Explicit mongodb://127.0.0.1:PORT origin')
     parser.add_argument('--include-program-lifecycle', action='store_true', help='Also run the three-framework 36-month API matrix')
+    parser.add_argument('--include-cis-ig2', action='store_true', help='Also run cumulative CIS scope, recovery and authorization checks')
     args = parser.parse_args()
     parsed = urlsplit(args.mongo_url)
     if (parsed.scheme != 'mongodb' or parsed.hostname != '127.0.0.1' or not parsed.port
@@ -83,6 +84,10 @@ def main():
     if args.include_program_lifecycle:
         from test_framework_three_year import FrameworkThreeYearTests
         concrete = type('MongoFrameworkThreeYearTests', (MongoStorage, FrameworkThreeYearTests), {})
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
+    if args.include_cis_ig2:
+        from test_cis_ig2 import CisIG2Tests
+        concrete = type('MongoCisIG2Tests', (MongoStorage, CisIG2Tests), {})
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     logging.getLogger('httpx').setLevel(logging.WARNING)
     result = unittest.TextTestRunner(verbosity=2).run(suite)

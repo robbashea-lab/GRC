@@ -40,7 +40,7 @@ export async function previewAdapter(config) {
   };
   const method = (config.method || 'get').toLowerCase();
   const respond = data => ({
-    data: clone(data),
+    data: data instanceof Blob ? data : clone(data),
     status: 200,
     statusText: 'OK',
     headers: {},
@@ -129,6 +129,7 @@ export async function previewAdapter(config) {
     if (approval !== undefined) return method === 'get' ? respond(approval) : save(approval);
     if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
+    if(path==='/frameworks/cis-ig1/configuration'&&method==='patch')return save(commandRequest(db,path,body.client_id,config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
     if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));
     if (path === '/demo/onboarding-draft') {
       record(db, 'clients', params.client_id || body.client_id);
@@ -142,7 +143,7 @@ export async function previewAdapter(config) {
     if (path.startsWith('/onboarding/programs/') && method === 'patch') return save(adjustProgram(db, body.client_id, path.split('/').pop(), body));
     if (path === '/onboarding/baseline') {
       const cid = params.client_id || body.client_id;
-      if (method === 'get') return respond({catalog, state:baselineState(db,cid), record_versions:baselineRecordVersions(db,cid)});
+      if (method === 'get') return respond({catalog,framework_settings:record(db,'clients',cid).framework_settings||{}, state:baselineState(db,cid), record_versions:baselineRecordVersions(db,cid)});
       const execute=()=>saveBaseline(db,cid,body.state,body.finalize,body);
       const key=config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'];
       return save(body.finalize?commandRequest(db,path,cid,key,body,execute):execute());

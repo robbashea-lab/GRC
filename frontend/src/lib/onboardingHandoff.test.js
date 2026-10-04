@@ -1,6 +1,6 @@
 import {SETUP_FILTERS,unansweredPolicies,onboardingPreview,currentHandoff,reviewConfigurationIssues} from './onboardingHandoff';
 import catalog from '@catalogs/onboardingCatalog.json';
-import {cis} from './frameworks';
+import {cis,activePlans} from './frameworks';
 test('Unsure is answered; missing and invalid answers remain required',()=>{
   const state={policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure']))};
   expect(unansweredPolicies(catalog,state)).toHaveLength(0);
@@ -22,7 +22,7 @@ test('preview keeps title-matched generic records and mapped overrides without d
   const state={policies:{},requirements:{'cis-ig1':'applies'},reviews:[item.key],framework_reviews:{}};
   const records={policies:[{title:catalog.policies[0].name}],reviews:[{baseline_key:plan.baseline_key,status:'upcoming',due_date:'2027-01-01',recurrence:'annual',owner_id:'owner'}],framework_assessments:[]};
   const preview=onboardingPreview(catalog,state,records);
-  expect(preview.reviews.total).toBe(cis.review_plans.length);
+  expect(preview.reviews.total).toBe(activePlans('cis-ig1').length);
   expect(preview.reviews.retain).toBe(1);expect(preview.reviews.owners).toBe(1);
   expect(preview.policies.retain).toBe(1);
 });

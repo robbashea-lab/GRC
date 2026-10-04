@@ -16,7 +16,7 @@ def frameworks(client, requirements):
                 if r.get('client_id') == client['client_id'] and r.get('baseline_response') == 'applies'}
     if not client.get('onboarding_baseline', {}).get('completed'):
         return []
-    return [{'key': f['key'], 'label': f['label'], 'to': '/compliance/' + f['key']}
+    return [{'key': f['key'], 'label': f"CIS IG{client.get('framework_settings',{}).get('cis-ig1',{}).get('implementation_group',1)}" if f['key']=='cis-ig1' else f['label'], 'to': '/compliance/' + f['key']}
             for f in FRAMEWORKS if f['key'] in selected]
 
 

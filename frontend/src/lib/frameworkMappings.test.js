@@ -4,9 +4,9 @@ import {mappingsFor} from './frameworkMappings';
 
 test('every Review cadence source driver resolves inside its own mapped definitions',()=>{
   const plans=Object.entries(CATALOGS).flatMap(([framework,catalog])=>catalog.review_plans.map(plan=>({framework,plan})));
-  expect(plans).toHaveLength(47);
+  expect(plans).toHaveLength(50);
   expect(plans.filter(({plan})=>plan.cadence_class==='A')).toHaveLength(11);
-  expect(plans.filter(({plan})=>plan.cadence_class==='D')).toHaveLength(36);
+  expect(plans.filter(({plan})=>plan.cadence_class==='D')).toHaveLength(39);
   for(const {framework,plan} of plans){
     for(const id of plan.safeguards)expect(frameworkDefinition(framework,id)).toBeDefined();
     if(plan.cadence_class==='A'){

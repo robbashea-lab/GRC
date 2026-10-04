@@ -12,7 +12,7 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 
 test('current guidance retains historical conclusions and links the exact authorized safeguard with its focus target',async()=>{
  const row={framework_assessment_id:'assessment-a',definition_id:'1.1',client_id:'a'},onOpen=jest.fn(),review=record('a'),before=JSON.stringify(review);
- api.get.mockResolvedValue({data:{assessments:[row]}});
+ api.get.mockImplementation(path=>Promise.resolve({data:path==='/frameworks/cis-ig1'?{assessments:[row]}:[]}));
  await act(async()=>root.render(<CisReviewBrief record={review} historical onOpen={onOpen}/>));
  const link=[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('1.1'));
  await act(async()=>link.click());expect(onOpen).toHaveBeenCalledWith(row,link);
@@ -22,7 +22,7 @@ test('current guidance retains historical conclusions and links the exact author
 });
 
 test('a late workspace response cannot expose the previous client’s safeguard link',async()=>{
- let resolveOld;api.get.mockImplementation((path,{params})=>params.client_id==='a'?new Promise(resolve=>{resolveOld=resolve;}):Promise.resolve({data:{assessments:[{framework_assessment_id:'b1',definition_id:'1.1',client_id:'b'}]}}));
+ let resolveOld;api.get.mockImplementation((path,{params}={})=>path!=='/frameworks/cis-ig1'?Promise.resolve({data:[]}):params.client_id==='a'?new Promise(resolve=>{resolveOld=resolve;}):Promise.resolve({data:{assessments:[{framework_assessment_id:'b1',definition_id:'1.1',client_id:'b'}]}}));
  const onOpen=jest.fn();
  await act(async()=>root.render(<CisReviewBrief record={record('a')} onOpen={onOpen}/>));
  await act(async()=>root.render(<CisReviewBrief record={record('b')} onOpen={onOpen}/>));

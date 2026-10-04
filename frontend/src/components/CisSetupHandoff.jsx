@@ -2,8 +2,8 @@ import {Link} from 'react-router-dom';
 import {cis} from '@/lib/frameworks';
 import {operationGaps} from '@/lib/cisOperations';
 
-export default function CisSetupHandoff({rows=[],onOpen}){
-  const cisRows=rows.filter(r=>r.framework_key==='cis-ig1'),pending=cisRows.filter(r=>operationGaps(r).length);
+export default function CisSetupHandoff({rows=[],onOpen,configuration}){
+  const cisRows=rows.filter(r=>r.framework_key==='cis-ig1'&&(!configuration||(cis.requirements.find(d=>d.id===r.definition_id)?.implementation_group||1)<=(configuration.implementation_group||1))),pending=cisRows.filter(r=>operationGaps(r).length);
   if(!cisRows.length)return null;
   return <details className="border border-line bg-surface-card rounded-lg p-4 text-sm" data-testid="cis-setup-handoff">
     <summary className="cursor-pointer font-medium">CIS operating setup · {pending.length} arrangements unconfirmed</summary>

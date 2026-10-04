@@ -9,6 +9,7 @@ import { buildDemoStore } from './demoSeed';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
 import {finishDunder} from './programs/dunder';
+import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
 import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
@@ -67,6 +68,9 @@ export function seedStore(clock=new Date()) {
   const finished=finishDunder(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock);
   // Policy dates derive from their Review history once that history exists.
   finished.reviews.filter(r=>r.client_id==='demo_brawndo'&&r.policy_id).forEach(r=>syncPolicyReview(finished,r));
+  addInitech(finished,clock);
+  reconcileFramework(finished,'demo_initech',finished.baselines.demo_initech);
+  finishInitech(finished,clock);
   return finished;
 }
 function installCanonicalDunder(db){
@@ -89,8 +93,10 @@ export function readStore() {
     let db;try{db=JSON.parse(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
     const retired=removeRetiredDemoClients(db),installed=installCanonicalDunder(db);
+    const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
+    if(initech){reconcileFramework(db,'demo_initech',db.baselines.demo_initech);finishInitech(db);}
     const light=lightweightStore(db,db.evidence);
-    if(retired||installed||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
+    if(retired||installed||initech||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
     return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
   }
   clearFileCache();

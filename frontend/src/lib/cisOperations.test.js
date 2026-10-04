@@ -2,16 +2,16 @@ import {cis,reviewDriver} from './frameworks';
 import {cisReviewBriefs,operationGaps} from './cisOperations';
 import {operatorStatuses} from './frameworkOperator';
 
-test('all 12 shared briefs derive their mapped checks, examples and timing from reviewed guidance',()=>{
+test('all 15 shared IG2 briefs derive their mapped checks, examples and timing from reviewed guidance',()=>{
   const ids=new Set();
   for(const plan of cis.review_plans){
     const record={framework_drivers:[reviewDriver('cis-ig1',plan)],description:'Client instructions',recurrence:'custom',occurrences:[{notes:'Historical'}]};
-    const original=JSON.stringify(record),[brief]=cisReviewBriefs(record);
+    const original=JSON.stringify(record),[brief]=cisReviewBriefs(record,cis.requirements.map(d=>d.id));
     expect(brief.items.map(d=>d.id)).toEqual(plan.safeguards);
     for(const item of brief.items){ids.add(item.id);expect(item.review).toBeTruthy();expect(item.outcome).toBeTruthy();expect(item.evidence).toBeTruthy();expect(item.source_cadence).toBeTruthy();}
     expect(JSON.stringify(record)).toBe(original);
   }
-  expect(ids.size).toBe(56);
+  expect(ids.size).toBe(130);
   expect(cisReviewBriefs({title:cis.review_plans[0].title})).toEqual([]);
   expect(cisReviewBriefs({framework_key:'iso-27001',framework_plan_key:'iso-management-review'})).toEqual([]);
 });

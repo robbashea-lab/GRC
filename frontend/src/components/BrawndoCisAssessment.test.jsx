@@ -33,6 +33,12 @@ beforeEach(()=>{
 afterEach(async()=>{mockOfficial=null;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 async function render(clientId='demo_brawndo'){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
 
+test('retained IG2 assessment identifies its scope inside the assessment dialog',async()=>{
+ record={...record,definition_id:'18.2'};
+ await render();
+ expect(container.querySelector('[data-testid="brawndo-cis-assessment"]').textContent).toContain('Retained out-of-scope safeguard');
+});
+
 test.each(['client_grc_manager','client_contributor'])('%s can edit an assigned assessment without admin-only relationship actions',async role=>{
  mockUser={...mockUser,role};record={...record,owner_id:mockUser.user_id};
  related.evidence=[{evidence_id:'e',filename:'Validation.txt',linked_type:'framework_assessment',linked_id:record.framework_assessment_id}];
@@ -59,7 +65,7 @@ async function tick(el){await act(async()=>el.click());}
 
 test('four sections in order; verification remains editable near the top',async()=>{
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
- expect(headings()).toEqual(['What CIS Requires','CIS IG1 Assessment Criteria','Implementation Status','Current Implementation']);
+ expect(headings()).toEqual(['What CIS Requires','CIS Assessment Criteria','Implementation Status','Current Implementation']);
  expect(container.querySelector('[aria-label="Verification result"]').closest('.brawndo-step')).toBeNull();
  for(const gone of ['Required actions','Organizational Controls','Remediation','Create Finding'])expect(container.textContent).not.toContain(gone);
  expect(container.querySelector('[data-testid="cis-supporting-records"]').open).toBe(false);
@@ -182,7 +188,7 @@ test('load failure disables writes and offers retry',async()=>{
 });
 test('other clients retain their assessment content with explicit modal semantics',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Implementation Status');expect(container.textContent).toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
+ expect(container.textContent).toContain('Implementation Status');expect(container.textContent).toContain('CIS Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
 test('ISO assessments expose the existing organizational controls section',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};

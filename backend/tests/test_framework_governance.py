@@ -3,6 +3,7 @@ import unittest
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 from routes.onboarding import BASELINE_CATALOG
 from framework_governance import CIS, FRAMEWORKS
+from framework_catalog import active_definitions, active_plans
 CADENCE_DAYS = {'monthly': 30, 'quarterly': 91, 'semiannual': 182, 'annual': 365}
 
 
@@ -12,7 +13,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_workspace_review_setup_reuses_onboarding_and_preserves_schedule(self):
         workspace=await self.configure()
-        plan=CIS['review_plans'][0]
+        plan=active_plans('cis-ig1')[0]
         row=next(a for a in workspace['assessments'] if a['definition_id'] in plan['safeguards'])
         old=await server.db.reviews.find_one({'client_id':'a','framework_plan_key':plan['key']})
         count=await server.db.reviews.count_documents({'client_id':'a'})
@@ -94,13 +95,13 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
     def test_verified_membership_and_mapping_integrity(self):
         counts = {1:2,2:3,3:6,4:7,5:4,6:5,7:4,8:3,9:2,10:3,11:4,12:1,14:8,15:1,17:3}
         expected = {f'{control}.{n}' for control, count in counts.items() for n in range(1, count+1)}
-        self.assertEqual({d['id'] for d in CIS['requirements']}, expected)
-        self.assertEqual(len(CIS['requirements']), 56)
+        self.assertEqual({d['id'] for d in active_definitions('cis-ig1')}, expected)
+        self.assertEqual(len(active_definitions('cis-ig1')), 56)
         self.assertEqual([f['key'] for f in FRAMEWORKS if f['implemented']], ['hipaa','cis-ig1','nist-csf-2','iso-27001','soc-2'])
-        for plan in CIS['review_plans']:
+        for plan in active_plans('cis-ig1'):
             self.assertTrue(set(plan['safeguards']) <= expected)
             for field in ('basis','reason','source_cadence','default_cadence'): self.assertTrue(plan[field])
-        self.assertEqual(len(CIS['review_plans']),12)
+        self.assertEqual(len(active_plans('cis-ig1')),12)
         self.assertEqual(next(p for p in CIS['review_plans'] if p['key']=='data-recovery')['default_cadence'],'annual')
 
     def test_cis_source_scope_and_event_timing_regressions(self):
@@ -117,7 +118,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
 
     def test_cis_review_cadence_provenance(self):
         definitions = {d['id']: d for d in CIS['requirements']}
-        for plan in CIS['review_plans']:
+        for plan in active_plans('cis-ig1'):
             with self.subTest(plan=plan['key']):
                 self.assertIn(plan['cadence_class'], ('A', 'D'))
                 if plan['cadence_class'] == 'A':

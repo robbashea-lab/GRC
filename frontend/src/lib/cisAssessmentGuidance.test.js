@@ -2,11 +2,11 @@ import data from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
 import catalog from '@catalogs/cisIG1.json';
 import legacy from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 
-test('versioned, shared read-only guidance covers exactly the 56 IG1 safeguards',()=>{
+test('versioned, shared read-only guidance covers exactly the 130 cumulative IG2 safeguards',()=>{
   expect(data.framework).toBe('cis-ig1');expect(data.version).toBe(catalog.version);
-  expect(data.revision).toBe('2026-10-02');
+  expect(data.revision).toBe('2026-10-03');
   expect(Object.keys(data.requirements)).toEqual(catalog.requirements.map(r=>r.id));
-  expect(Object.keys(data.requirements)).toHaveLength(56);
+  expect(Object.keys(data.requirements)).toHaveLength(130);
   for(const [id,guidance] of Object.entries(data.requirements)){
     expect(Object.keys(guidance)).toEqual(['review','evidence','outcome']);
     for(const group of Object.values(guidance)){
@@ -20,7 +20,7 @@ test('versioned, shared read-only guidance covers exactly the 56 IG1 safeguards'
     for(const text of guidance.review)expect(text).toMatch(/review|confirm|compare|identify|verify|check|inspect|examine|CIS gives/i);
     expect(legacy.requirements[id].source).toMatch(/^https:\/\/cas\.docs\.cisecurity\.org\/en\/latest\/source\/Controls\d+\/#/);
   }
-  expect(new Set(Object.values(data.requirements).map(r=>JSON.stringify(r))).size).toBe(56);
+  expect(new Set(Object.values(data.requirements).map(r=>JSON.stringify(r))).size).toBe(130);
 });
 
 const text=id=>JSON.stringify(data.requirements[id]);
@@ -45,9 +45,10 @@ test.each([
   ['17.3',/timeframes.*recipients.*mechanism.*minimum information/],
 ])('%s retains its specific source detail (%s)',(id,detail)=>expect(text(id)).toMatch(detail));
 
-test('new guidance does not rewrite the legacy response catalog or use response IDs as conclusions',()=>{
-  expect(legacy.revision).toBe('2026-09-30');
-  expect(Object.values(legacy.requirements).flatMap(r=>r.criteria)).toHaveLength(85);
+test('guidance preserves legacy criteria and does not use response IDs as conclusions',()=>{
+  expect(legacy.revision).toBe('2026-10-03');
+  const inherited=catalog.requirements.filter(d=>d.implementation_group===1);
+  expect(inherited.flatMap(d=>legacy.requirements[d.id].criteria)).toHaveLength(85);
   expect(JSON.stringify(data)).not.toMatch(/"status"|"score"|cis_assessment_criteria|verification_checklist/);
   expect(text('1.2')).not.toContain('risk acceptance');
   expect(text('5.3')).toContain('generic risk acceptance is not a substitute');

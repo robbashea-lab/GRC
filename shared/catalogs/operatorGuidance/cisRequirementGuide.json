@@ -1,7 +1,7 @@
 {
   "framework": "cis-ig1",
   "version": "8.1",
-  "revision": "2026-10-02",
+  "revision": "2026-10-03",
   "basis": "Optional Omnisciente explanations, not assessment responses. Based on the reviewed CIS v8.1 assessment guidance and official safeguard descriptions. Source links remain in cisAssessmentCriteria.json.",
   "requirements": {
     "1.1": {
@@ -17,6 +17,20 @@
       "evidence": "A weekly device review can identify what was investigated. A matching network change, blocked-connection result or isolation record can show what happened next. A ticket is useful when it records the completed action, not merely a request.",
       "ask": "Who handles an unfamiliar device this week? How do you determine whether it is authorized? Can you show a recent device whose access was removed or isolated? How do you confirm it did not remain connected?",
       "gaps": "Look into unknown devices repeatedly appearing without a disposition, weeks with no review, or tickets marked resolved without a connection change. A planned fix or accepted risk does not itself demonstrate that unauthorized access was addressed."
+    },
+    "1.3": {
+      "plain": "Discover connected devices automatically. Run discovery and reconcile unexpected devices. Daily or more often. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Configure discovery coverage and accountable operator. Start with the responsible client role: IT asset owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Discovery run and reconciliation records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 1.3, ask the IT asset owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 1.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Run discovery and reconcile unexpected devices. Use Findings and Actions for follow-up and validation."
+    },
+    "1.4": {
+      "plain": "Feed address-allocation observations into inventory. Collect observations and resolve inventory differences. At least weekly inventory updates using logs. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify DHCP servers or IPAM sources and reconciliation owner. Start with the responsible client role: IT asset owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Dated reconciliation and source coverage. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 1.4, ask the IT asset owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 1.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect observations and resolve inventory differences. Use Findings and Actions for follow-up and validation."
     },
     "2.1": {
       "plain": "Keep a usable record of licensed software installed on the organization's devices. It should explain what each product is, who publishes it, when use began and why it is needed. Review and update it at least every six months.",
@@ -38,6 +52,27 @@
       "evidence": "An installed-versus-approved comparison can identify unauthorized software. Uninstall results can show removal; a documented exception can explain authorized continued use. Together with dated monthly reviews, these establish more than a list of open tickets.",
       "ask": "How are unapproved applications identified? What happened to the last one found? Is it still installed or in use? Where is its removal result or exception, and when was the software population last reviewed?",
       "gaps": "Investigate applications repeatedly flagged with no outcome, informal verbal exceptions, or uninstall requests without results. A future removal date is not evidence that software has already been removed."
+    },
+    "2.4": {
+      "plain": "Automate installed-software visibility where possible. Maintain discovery coverage and inventory feed. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Choose coverage and document technical limitations. Start with the responsible client role: IT software owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Tool coverage and inventory samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 2.4, ask the IT software owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 2.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain discovery coverage and inventory feed. Use Findings and Actions for follow-up and validation."
+    },
+    "2.5": {
+      "plain": "Restrict execution/access to approved applications. Enforce application restrictions. Reassess at least every six months. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define approved software and exception handling. Start with the responsible client role: IT software owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Policy configuration, exception and reassessment records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 2.5, ask the IT software owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 2.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce application restrictions. Use Findings and Actions for follow-up and validation."
+    },
+    "2.6": {
+      "plain": "Prevent unapproved libraries loading. Enforce library controls; handle changes safely. Reassess at least every six months. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define authorized libraries and deployment limitations. Start with the responsible client role: IT software owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Library rule samples and reassessment results. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 2.6, ask the IT software owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 2.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce library controls; handle changes safely. Use Findings and Actions for follow-up and validation."
     },
     "3.1": {
       "plain": "Write down how information should be handled through its life: who owns it, how sensitive it is, how to use it, how long to keep it and how to dispose of it. Review this process annually and after significant relevant changes.",
@@ -80,6 +115,48 @@
       "evidence": "An encryption-status report matched to device records can demonstrate coverage. Effective device settings or a responsible-provider demonstration can support individual cases. Do not collect recovery keys or passwords as evidence.",
       "ask": "Which devices hold sensitive data? Is encryption actually active on each, rather than merely assigned by policy? Are any devices missing or showing errors? How is coverage checked for mobile and remotely managed devices?",
       "gaps": "Investigate devices marked pending, disabled or unknown, and a policy that exists without device results. An encrypted server does not establish protection for sensitive copies downloaded to an unencrypted laptop."
+    },
+    "3.7": {
+      "plain": "Give information consistent sensitivity classifications. Apply classification in handling decisions. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Agree classification criteria with data owners. Start with the responsible client role: Client data owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Classification scheme and owner decisions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 3.7, ask the Client data owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 3.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Apply classification in handling decisions. Use Findings and Actions for follow-up and validation."
+    },
+    "3.8": {
+      "plain": "Make internal and provider data movements traceable. Maintain flows through service changes. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Map material flows and external destinations. Start with the responsible client role: Client data owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Flow diagrams or equivalent controlled records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 3.8, ask the Client data owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 3.8, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain flows through service changes. Use Findings and Actions for follow-up and validation."
+    },
+    "3.9": {
+      "plain": "Protect removable-media contents with encryption. Enforce media encryption. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define permitted media and encryption arrangements. Start with the responsible client role: Client data owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Configuration sample and coverage exceptions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 3.9, ask the Client data owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 3.9, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce media encryption. Use Findings and Actions for follow-up and validation."
+    },
+    "3.10": {
+      "plain": "Protect sensitive information during transfer. Maintain encrypted transport. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify sensitive flows and protected transports. Start with the responsible client role: Client data owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Transport configurations and sampled connection results. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 3.10, ask the Client data owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 3.10, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain encrypted transport. Use Findings and Actions for follow-up and validation."
+    },
+    "3.11": {
+      "plain": "Protect stored sensitive server/application/database information. Maintain encryption coverage. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify storage and encryption coverage; storage-layer protection suffices for the stated minimum. Start with the responsible client role: Client data owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Storage encryption settings and scoped assurance. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 3.11, ask the Client data owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 3.11, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain encryption coverage. Use Findings and Actions for follow-up and validation."
+    },
+    "3.12": {
+      "plain": "Keep sensitive processing out of lower-trust environments. Enforce storage and processing separation. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define sensitivity boundaries and permitted processing locations. Start with the responsible client role: Client data owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Architecture and boundary configuration samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 3.12, ask the Client data owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 3.12, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce storage and processing separation. Use Findings and Actions for follow-up and validation."
     },
     "4.1": {
       "plain": "Have documented instructions for setting up and maintaining devices and software securely, instead of relying on installation defaults or individual memory. Cover the technologies actually used, and review the process annually and after significant relevant changes.",
@@ -130,6 +207,34 @@
       "ask": "Which default accounts exist on these systems? How are they managed now? Can you show that the intended treatment was applied? Who checks default accounts when a new appliance or application is introduced?",
       "gaps": "Look for enabled accounts nobody recognizes, setup checklists with no recorded outcome, or an account renamed but otherwise unchanged. A normal employee account review may miss accounts built into an appliance."
     },
+    "4.8": {
+      "plain": "Remove unnecessary exposed functionality. Remove or disable unnecessary services. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify required services and approved baselines. Start with the responsible client role: IT configuration owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Baseline and sampled service inventory. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 4.8, ask the IT configuration owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 4.8, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Remove or disable unnecessary services. Use Findings and Actions for follow-up and validation."
+    },
+    "4.9": {
+      "plain": "Use trustworthy infrastructure name resolution. Maintain trusted resolver settings. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Agree approved DNS resolvers for network infrastructure. Start with the responsible client role: IT configuration owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Network configuration samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 4.9, ask the IT configuration owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 4.9, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain trusted resolver settings. Use Findings and Actions for follow-up and validation."
+    },
+    "4.10": {
+      "plain": "Limit repeated local authentication failures on portable devices. Enforce lockout thresholds. Where supported: at most 20 failed attempts on laptops; 10 on tablets/phones. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define lockout configuration by device class. Start with the responsible client role: IT configuration owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Device policy and representative test result. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 4.10, ask the IT configuration owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 4.10, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce lockout thresholds. Use Findings and Actions for follow-up and validation."
+    },
+    "4.11": {
+      "plain": "Remove enterprise data remotely when appropriate. Maintain capability; execute on approved events. Event: loss, theft or end of engagement are examples; no fixed interval. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Establish authorized wipe process for enterprise-owned portable devices. Start with the responsible client role: IT configuration owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Capability coverage and authorized wipe record. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 4.11, ask the IT configuration owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 4.11, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain capability; execute on approved events. Use Findings and Actions for follow-up and validation."
+    },
     "5.1": {
       "plain": "Keep track of accounts that can use the organization's systems, including administrator and service accounts—accounts used by software rather than a person. Record the identifying details and validate active-account authorization at least quarterly.",
       "start": "Ask IT for directory and application account lists, then compare them with the account inventory and HR records. Identify missing names, usernames, start/stop dates and departments. Ask who confirms that each active account remains authorized.",
@@ -157,6 +262,20 @@
       "evidence": "Role listings can show which accounts have administrative rights. Ordinary-account records and relevant activity examples can support separation in practice. Procedures explain the intended behavior but should agree with actual role assignments.",
       "ask": "Do administrators have distinct everyday and administrative accounts? Can their email account also change system settings? Are ordinary browsing and productivity tasks performed without administrator privileges? How are provider administrators separated?",
       "gaps": "Look for everyday accounts with broad administrative rights, administrators using one account for everything, or dedicated accounts that exist but are not used. Separate account names alone do not establish the intended separation of work."
+    },
+    "5.5": {
+      "plain": "Keep service-account purpose and ownership accountable. Maintain inventory through account changes. Authorization review at least quarterly. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify service accounts, department owners, purpose and review dates. Start with the responsible client role: Identity/access owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Service-account register and authorization decisions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 5.5, ask the Identity/access owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 5.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain inventory through account changes. Use Findings and Actions for follow-up and validation."
+    },
+    "5.6": {
+      "plain": "Consolidate account administration. Operate centralized account management. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify directory/identity authority and exceptions. Start with the responsible client role: Identity/access owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Directory coverage and exception records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 5.6, ask the Identity/access owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 5.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate centralized account management. Use Findings and Actions for follow-up and validation."
     },
     "6.1": {
       "plain": "Have a documented way to give people access when they join or change roles. The process should result in the access needed for their work. Automation is preferred, but this safeguard does not require buying a particular tool or adopting a new approval hierarchy.",
@@ -193,6 +312,20 @@
       "ask": "Which accounts can administer these systems? Is multi-factor authentication enforced for them wherever supported? Does that include provider-managed and emergency access? Are any administrative interfaces reachable with only a password?",
       "gaps": "Investigate administrators exempted from the normal policy, protection on user accounts but not management interfaces, or unsupported claims with no product information. A provider contract alone does not establish how administrative sign-in actually works."
     },
+    "6.6": {
+      "plain": "Identify all authentication/authorization systems. Maintain system inventory. Review/update at least annually. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Inventory internal and provider-hosted identity systems. Start with the responsible client role: Client access owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Identity-system register and reviewed changes. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 6.6, ask the Client access owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 6.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain system inventory. Use Findings and Actions for follow-up and validation."
+    },
+    "6.7": {
+      "plain": "Consolidate supported access enforcement. Operate centralized access control. No numeric interval specified; where supported. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define directory/SSO coverage and limitations. Start with the responsible client role: Client access owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "SSO coverage and access configuration samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 6.7, ask the Client access owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 6.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate centralized access control. Use Findings and Actions for follow-up and validation."
+    },
     "7.1": {
       "plain": "Have a documented process for managing security weaknesses in devices and software: identifying the work, deciding who handles it and maintaining the process. Review and update it annually and after significant relevant changes. This does not import higher-group scanning requirements into IG1.",
       "start": "Ask the security or IT owner how weaknesses become managed work today. Find the documented process and compare it with the systems and providers in use. Check who maintains it and when it was last reviewed.",
@@ -221,6 +354,27 @@
       "ask": "Which applications are updated automatically at least monthly? What is outside that coverage? How do you detect failed updates? Does the report include our business applications as well as commonly used desktop software?",
       "gaps": "Investigate applications never included in the updater, versions unchanged after a reported deployment, or manually handled software described as automated. A current operating system does not establish that its applications are current."
     },
+    "7.5": {
+      "plain": "Find internal vulnerabilities with both scan perspectives. Run scans and route results. At least quarterly; authenticated and unauthenticated scans. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define internal scope, credentials and authorized scanning windows. Start with the responsible client role: Security/remediation owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Dated scope/coverage and scan summaries. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 7.5, ask the Security/remediation owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 7.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Run scans and route results. Use Findings and Actions for follow-up and validation."
+    },
+    "7.6": {
+      "plain": "Find weaknesses in externally exposed assets. Run external scans and route results. At least monthly. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify external attack surface and scanning owner. Start with the responsible client role: Security/remediation owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Dated external coverage and results. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 7.6, ask the Security/remediation owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 7.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Run external scans and route results. Use Findings and Actions for follow-up and validation."
+    },
+    "7.7": {
+      "plain": "Resolve detected software weaknesses systematically. Remediate and validate outcomes. Remediation at least monthly, following the remediation process. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define triage and remediation accountability. Start with the responsible client role: Security/remediation owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Remediation tickets and closure checks. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 7.7, ask the Security/remediation owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 7.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Remediate and validate outcomes. Use Findings and Actions for follow-up and validation."
+    },
     "8.1": {
       "plain": "Document how activity records, called audit logs, are collected, reviewed and retained. These records help explain what happened in systems. Review the process annually and after significant relevant changes; the organization's process sets the applicable review and retention expectations.",
       "start": "Ask IT or security which logs are needed and where they go. Find the instructions for collecting, reviewing and keeping them. Compare the process with current systems and outsourced responsibilities.",
@@ -242,6 +396,62 @@
       "ask": "Is there enough capacity for our documented logging needs? What happens when a destination fills? Are records being overwritten earlier than intended? Can you show retained history rather than just the purchased storage allowance?",
       "gaps": "Look into full disks, repeated capacity alerts, unexpected gaps or shorter actual history than the process expects. Buying storage does not demonstrate sufficiency if the volume of collected logs has since increased."
     },
+    "8.4": {
+      "plain": "Make event times comparable. Operate time synchronization. No numeric interval; at least two synchronized sources where supported. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define time sources and supported asset coverage. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Time configuration and drift observations. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 8.4, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 8.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate time synchronization. Use Findings and Actions for follow-up and validation."
+    },
+    "8.5": {
+      "plain": "Capture investigation-useful events on sensitive-data assets. Collect detailed events. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define required event fields and sensitive-asset scope. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Representative event fields and coverage. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 8.5, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 8.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect detailed events. Use Findings and Actions for follow-up and validation."
+    },
+    "8.6": {
+      "plain": "Preserve relevant DNS-query observations. Collect DNS query events. No numeric interval; where appropriate and supported. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify DNS logging coverage and limitations. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "DNS event sample and source coverage. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 8.6, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 8.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect DNS query events. Use Findings and Actions for follow-up and validation."
+    },
+    "8.7": {
+      "plain": "Preserve relevant web-request observations. Collect URL request events. No numeric interval; where appropriate and supported. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify URL logging coverage and limitations. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "URL event sample and source coverage. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 8.7, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 8.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect URL request events. Use Findings and Actions for follow-up and validation."
+    },
+    "8.8": {
+      "plain": "Make command execution traceable. Collect command-line events. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define command-line logging sources. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Shell event samples and configuration. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 8.8, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 8.8, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect command-line events. Use Findings and Actions for follow-up and validation."
+    },
+    "8.9": {
+      "plain": "Make logs jointly accessible for investigation. Operate centralized collection/retention. No numeric interval; centralize to the extent possible. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define central destinations and exceptions. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Source inventory and ingestion health. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 8.9, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 8.9, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate centralized collection/retention. Use Findings and Actions for follow-up and validation."
+    },
+    "8.10": {
+      "plain": "Keep adequate historical audit events. Retain events throughout the required window. At least 90 days retention. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Configure retention and capacity together. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Retention configuration and oldest retrievable sample. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 8.10, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 8.10, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Retain events throughout the required window. Use Findings and Actions for follow-up and validation."
+    },
+    "8.11": {
+      "plain": "Detect suspicious behavior through log examination. Review logs and investigate anomalies. At least weekly. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Assign log-review coverage, escalation and substitute coverage. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Dated review outcomes and escalations. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 8.11, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 8.11, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Review logs and investigate anomalies. Use Findings and Actions for follow-up and validation."
+    },
     "9.1": {
       "plain": "Allow only fully supported browsers and email clients using the vendor's latest version. Older executable versions can leave known weaknesses available even when a newer version has also been installed.",
       "start": "Ask IT which browsers and email applications can run on devices. Compare installed versions with the vendors' current release and support information. Include secondary browsers or email clients used by individual teams.",
@@ -255,6 +465,34 @@
       "evidence": "Filtering settings and coverage records can show the intended protection. Block events or a safe test can demonstrate operation. Remote-device results are useful because an office-only configuration does not establish coverage elsewhere.",
       "ask": "Does this protect devices when they leave the office? What happens if a device uses different DNS settings? Can you demonstrate a safe blocked-domain test? Are all end-user devices accounted for?",
       "gaps": "Look for filtering limited to office Wi-Fi, remote devices using an unfiltered resolver, or a service purchased but not deployed. A browser warning alone may not establish that DNS filtering is the protection doing the blocking."
+    },
+    "9.3": {
+      "plain": "Limit risky web destinations through network controls. Enforce and update URL filtering. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define network URL restrictions for all enterprise assets. Start with the responsible client role: Messaging/endpoint owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Filtering policy, coverage and exceptions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 9.3, ask the Messaging/endpoint owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 9.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce and update URL filtering. Use Findings and Actions for follow-up and validation."
+    },
+    "9.4": {
+      "plain": "Remove unneeded browser/mail extensions. Restrict or remove unauthorized/unneeded extensions. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define authorized extensions and exception process. Start with the responsible client role: Messaging/endpoint owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Extension inventory and restrictions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 9.4, ask the Messaging/endpoint owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 9.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Restrict or remove unauthorized/unneeded extensions. Use Findings and Actions for follow-up and validation."
+    },
+    "9.5": {
+      "plain": "Authenticate domain email to reduce spoofing. Operate domain authentication. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Establish SPF/DKIM before DMARC policy and verification. Start with the responsible client role: Messaging/endpoint owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "DNS records, validation and mail-domain scope. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 9.5, ask the Messaging/endpoint owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 9.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate domain authentication. Use Findings and Actions for follow-up and validation."
+    },
+    "9.6": {
+      "plain": "Prevent unwanted email attachment types entering. Enforce email file-type blocking. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Agree unnecessary file types and gateway coverage. Start with the responsible client role: Messaging/endpoint owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Gateway policy and representative blocking record. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 9.6, ask the Messaging/endpoint owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 9.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce email file-type blocking. Use Findings and Actions for follow-up and validation."
     },
     "10.1": {
       "plain": "Deploy and maintain anti-malware protection across enterprise assets. Anti-malware helps detect or stop harmful software. Owning licenses or installing an agent is not enough if protection is missing, disabled or unhealthy.",
@@ -276,6 +514,34 @@
       "evidence": "Effective device settings and applied-policy reports can demonstrate both protections. A responsible provider's configuration observation may support the same point. A policy prohibiting USB use does not by itself show the technical settings.",
       "ask": "Are both autorun and autoplay auto-execution disabled? Do these settings apply to all relevant devices? Can users override them? How do you confirm that an assigned policy has reached the device?",
       "gaps": "Investigate one setting disabled while the other remains active, unmanaged devices outside policy coverage, or policy assignment mistaken for application. Avoid treating a general removable-media rule as proof of effective device behavior."
+    },
+    "10.4": {
+      "plain": "Inspect removable media automatically. Run automatic media malware scans. Automatic scanning on media use; no calendar interval. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Configure scanning coverage. Start with the responsible client role: Endpoint security owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Policy and scan event samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 10.4, ask the Endpoint security owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 10.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Run automatic media malware scans. Use Findings and Actions for follow-up and validation."
+    },
+    "10.5": {
+      "plain": "Use available exploitation resistance. Maintain enabled anti-exploitation features. No numeric interval; where possible. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify supported asset/software protections. Start with the responsible client role: Endpoint security owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Configuration and coverage limitations. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 10.5, ask the Endpoint security owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 10.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain enabled anti-exploitation features. Use Findings and Actions for follow-up and validation."
+    },
+    "10.6": {
+      "plain": "Coordinate malware protection centrally. Maintain centralized policy and coverage. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define central management and asset enrollment. Start with the responsible client role: Endpoint security owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Management-console coverage summary. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 10.6, ask the Endpoint security owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 10.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain centralized policy and coverage. Use Findings and Actions for follow-up and validation."
+    },
+    "10.7": {
+      "plain": "Detect malware by behavior. Operate behavior-based malware protection. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Establish behavior-detection coverage. Start with the responsible client role: Endpoint security owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Capability configuration and detection samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 10.7, ask the Endpoint security owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 10.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate behavior-based malware protection. Use Findings and Actions for follow-up and validation."
     },
     "11.1": {
       "plain": "Document how the organization backs up and recovers information: what is covered, what comes back first, how backups are made and how they are protected. Review the process annually and after significant relevant changes.",
@@ -305,12 +571,103 @@
       "ask": "Which recovery copy is isolated? What keeps normal system activity or compromised access from affecting it? How is it maintained? If it is off site or in the cloud, what actually provides the isolation?",
       "gaps": "Investigate a second folder on the same exposed system, a cloud copy controlled by the same unrestricted access, or an offline copy no longer updated. Multiple copies are not automatically isolated copies."
     },
+    "11.5": {
+      "plain": "Demonstrate sampled recovery actually works. Execute restore tests and resolve failures. At least quarterly recovery tests. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Select representative recovery samples and success criteria. Start with the responsible client role: Client service/recovery owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Restore results, sample scope and follow-up Actions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 11.5, ask the Client service/recovery owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 11.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Execute restore tests and resolve failures. Use Findings and Actions for follow-up and validation."
+    },
     "12.1": {
       "plain": "Keep network infrastructure current and supported, checking software support at least monthly. Network infrastructure includes the equipment and services connecting systems. Current stable software and supported managed network services are examples of ways to meet this expectation.",
       "start": "Ask IT or the network provider for device and software versions. Compare them with vendor support and stable-release information. Identify who performs the monthly support check and how outdated infrastructure is addressed.",
       "evidence": "A network version inventory paired with vendor information can establish current support. Dated monthly checks and upgrade results can show maintenance. Provider records can cover managed services without assuming the contract alone proves current versions.",
       "ask": "Which network components are unsupported or behind current stable software? When was support last checked? Who handles updates for managed equipment? Can we see installed versions and completed maintenance results?",
       "gaps": "Look for network devices absent from inventories, firmware never checked after installation, or unsupported equipment covered only by a replacement plan. Hardware still functioning is not the same as software still supported."
+    },
+    "12.2": {
+      "plain": "Design segmented, least-privilege, available networks. Maintain implemented network architecture. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define architecture and security boundaries. Start with the responsible client role: Network service owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Design and deployed boundary evidence. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 12.2, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 12.2, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain implemented network architecture. Use Findings and Actions for follow-up and validation."
+    },
+    "12.3": {
+      "plain": "Protect network administration. Use secure infrastructure management. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define secure administrative methods. Start with the responsible client role: Network service owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Administrative configuration samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 12.3, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 12.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Use secure infrastructure management. Use Findings and Actions for follow-up and validation."
+    },
+    "12.4": {
+      "plain": "Keep network architecture understandable and current. Maintain documentation with network changes. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Establish diagrams or equivalent system documentation. Start with the responsible client role: Network service owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Reviewed architecture record. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 12.4, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 12.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain documentation with network changes. Use Findings and Actions for follow-up and validation."
+    },
+    "12.5": {
+      "plain": "Consolidate network identity, permissions and audit. Operate centralized network AAA. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define centralized AAA coverage. Start with the responsible client role: Network service owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "AAA configuration and covered devices. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 12.5, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 12.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate centralized network AAA. Use Findings and Actions for follow-up and validation."
+    },
+    "12.6": {
+      "plain": "Protect network management and communications. Maintain secure protocol configurations. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Select secure protocols for applicable network services. Start with the responsible client role: Network service owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Protocol and wireless configuration samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 12.6, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 12.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain secure protocol configurations. Use Findings and Actions for follow-up and validation."
+    },
+    "12.7": {
+      "plain": "Authenticate remote devices through enterprise VPN/AAA. Require VPN and authentication before resource access. Before accessing enterprise resources. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define enterprise-managed remote-access path and authentication. Start with the responsible client role: Network service owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Remote-access configuration and authentication sample. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 12.7, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 12.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Require VPN and authentication before resource access. Use Findings and Actions for follow-up and validation."
+    },
+    "13.1": {
+      "plain": "Correlate security events into actionable alerts. Operate correlated security alerting. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define correlation, alert ownership and escalation; equivalent log analytics can satisfy the outcome. Start with the responsible client role: Security monitoring owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Source coverage, correlation rules and alert cases. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 13.1, ask the Security monitoring owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 13.1, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate correlated security alerting. Use Findings and Actions for follow-up and validation."
+    },
+    "13.2": {
+      "plain": "Detect intrusions on supported/appropriate hosts. Operate host intrusion detection. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define host detection coverage and limitations. Start with the responsible client role: Security monitoring owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Sensor coverage and representative alert. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 13.2, ask the Security monitoring owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 13.2, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate host intrusion detection. Use Findings and Actions for follow-up and validation."
+    },
+    "13.3": {
+      "plain": "Detect network intrusions where appropriate. Operate network intrusion detection. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Select observation points or equivalent cloud capability. Start with the responsible client role: Security monitoring owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Network observation points, sensor coverage and representative intrusion alerts can support this safeguard. Explain which segments or cloud networks are visible and how blind spots are handled. These examples can be combined with existing operational records.",
+      "ask": "For 13.3, ask the Security monitoring owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 13.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate network intrusion detection. Use Findings and Actions for follow-up and validation."
+    },
+    "13.4": {
+      "plain": "Control traffic crossing network boundaries. Enforce boundary filtering. No numeric interval specified; where appropriate. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define permitted inter-segment flows. Start with the responsible client role: Security monitoring owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Rules and sampled flow validation. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 13.4, ask the Security monitoring owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 13.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce boundary filtering. Use Findings and Actions for follow-up and validation."
+    },
+    "13.5": {
+      "plain": "Condition remote access on asset security posture. Apply posture-based access decisions. On remote connection; no numeric interval. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define checks for malware protection, configuration and patch currency. Start with the responsible client role: Security monitoring owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Posture policy and allow/deny examples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 13.5, ask the Security monitoring owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 13.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Apply posture-based access decisions. Use Findings and Actions for follow-up and validation."
+    },
+    "13.6": {
+      "plain": "Make network flows available for review/alerts. Collect network flow or traffic records. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify flow/traffic collection coverage and destinations. Start with the responsible client role: Security monitoring owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Collection coverage and flow samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 13.6, ask the Security monitoring owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 13.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect network flow or traffic records. Use Findings and Actions for follow-up and validation."
     },
     "14.1": {
       "plain": "Teach the workforce how to use systems and information securely when hired and at least annually. Maintain the training content through annual review and significant relevant changes. Purchasing training does not establish that people received it.",
@@ -368,12 +725,117 @@
       "ask": "Ask HR or the awareness owner: Do staff understand risks on public or otherwise insecure networks? Do remote workers receive usable home-network setup guidance? Where can they ask for help when unsure about a connection?",
       "gaps": "Look for training limited to office Wi-Fi, home-network guidance omitted for remote workers, or technical instructions too unclear to use. Avoid assuming that a protected work device makes every network situation safe."
     },
+    "14.9": {
+      "plain": "Prepare people for their security-specific duties. Deliver role-specific awareness/skills training. No separate numeric interval in 14.9; select role-based schedule. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify role skills and training gaps. Start with the responsible client role: Awareness/HR owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Role-to-training mapping and participation. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 14.9, ask the Awareness/HR owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 14.9, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Deliver role-specific awareness/skills training. Use Findings and Actions for follow-up and validation."
+    },
     "15.1": {
       "plain": "Know which service providers the organization uses, how they are classified and who inside the organization is responsible for the relationship. Review the inventory annually and after significant changes. This inventory safeguard is not a separate mandate to audit every supplier.",
       "start": "Ask procurement, Finance and department leads for their provider lists. Reconcile them with contracts and service records. Add missing classifications and internal contacts, including services purchased directly by a department.",
       "evidence": "A provider register can show names, classifications and internal contacts. Purchasing or contract records can help check completeness. Dated annual reconciliation and change records can show the inventory stays current.",
       "ask": "Ask procurement and business owners: Which providers support your work? Are they in the shared inventory? What classification and internal contact does each have? How are new or ended relationships reflected in the list?",
       "gaps": "Investigate recurring service payments with no inventory entry, provider contacts confused with internal relationship owners, or classifications left blank. A contracts folder may not be a maintained inventory with the required details."
+    },
+    "15.2": {
+      "plain": "Govern the provider lifecycle consistently. Follow the approved provider policy. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Document inventory, classification, assessment, monitoring and decommissioning policy. Start with the responsible client role: Procurement/business owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Controlled policy and lifecycle responsibilities. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 15.2, ask the Procurement/business owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 15.2, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Follow the approved provider policy. Use Findings and Actions for follow-up and validation."
+    },
+    "15.3": {
+      "plain": "Prioritize providers by relevant exposure. Classify providers and update changes. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Agree provider classification criteria. Start with the responsible client role: Procurement/business owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Vendor classification rationale. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 15.3, ask the Procurement/business owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 15.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Classify providers and update changes. Use Findings and Actions for follow-up and validation."
+    },
+    "15.4": {
+      "plain": "Align provider contracts with security policy. Maintain contractual security commitments. Review contracts at least annually. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify required security terms and gaps. Start with the responsible client role: Procurement/business owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Contract review, relevant clauses and Actions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 15.4, ask the Procurement/business owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 15.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain contractual security commitments. Use Findings and Actions for follow-up and validation."
+    },
+    "16.1": {
+      "plain": "Make secure development repeatable. Follow secure lifecycle procedures. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define development security process and responsibilities. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Controlled development process and delivery sample. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.1, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.1, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Follow secure lifecycle procedures. Use Findings and Actions for follow-up and validation."
+    },
+    "16.2": {
+      "plain": "Handle reported software weaknesses through resolution. Receive, assign, remediate and retest reports. Annual/change process review; intake when reports arrive. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Establish external reporting path, triage, severity tracking and timing metrics. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Reporting channel and vulnerability-tracker sample. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.2, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.2, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Receive, assign, remediate and retest reports. Use Findings and Actions for follow-up and validation."
+    },
+    "16.3": {
+      "plain": "Address recurring causes of software vulnerabilities. Analyze causes and prevention actions. When reviewing vulnerabilities; no numeric interval. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define root-cause responsibilities. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Root-cause analysis and follow-up. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.3, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Analyze causes and prevention actions. Use Findings and Actions for follow-up and validation."
+    },
+    "16.4": {
+      "plain": "Know component dependencies and their risks. Check changes, updates and continued support. Evaluate component inventory at least monthly. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Inventory current/planned third-party components and risks. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Component inventory and monthly evaluation. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.4, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Check changes, updates and continued support. Use Findings and Actions for follow-up and validation."
+    },
+    "16.5": {
+      "plain": "Use trustworthy, maintained software dependencies. Obtain trusted, up-to-date components. At component selection/use; no numeric interval. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define acquisition and vulnerability-evaluation practices. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Provenance, support and vulnerability evaluation. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.5, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Obtain trusted, up-to-date components. Use Findings and Actions for follow-up and validation."
+    },
+    "16.6": {
+      "plain": "Prioritize application weaknesses and control releases. Triage vulnerabilities and apply release criteria. Review severity system/process at least annually. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define severity model and minimum release acceptance. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Severity policy and release decision sample. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.6, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Triage vulnerabilities and apply release criteria. Use Findings and Actions for follow-up and validation."
+    },
+    "16.7": {
+      "plain": "Keep application platforms securely configured. Maintain hardening across application infrastructure. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Adopt appropriate standard hardening templates. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Baselines and exception/change records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.7, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain hardening across application infrastructure. Use Findings and Actions for follow-up and validation."
+    },
+    "16.8": {
+      "plain": "Separate live and non-live application environments. Maintain environment separation. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define production/non-production boundaries. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Environment inventory and access/boundary evidence. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.8, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.8, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain environment separation. Use Findings and Actions for follow-up and validation."
+    },
+    "16.9": {
+      "plain": "Equip developers to write secure code. Deliver environment-specific developer training. Training at least annually. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify development roles and relevant training. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Curriculum and participation records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.9, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.9, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Deliver environment-specific developer training. Use Findings and Actions for follow-up and validation."
+    },
+    "16.10": {
+      "plain": "Build security into application architecture. Apply principles through design and change. During design; no numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define secure design principles and review responsibility. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Architecture decisions and design review. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.10, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.10, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Apply principles through design and change. Use Findings and Actions for follow-up and validation."
+    },
+    "16.11": {
+      "plain": "Use established security building blocks. Maintain use of proven identity, crypto and audit capabilities. At selection/use; no numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Identify vetted security modules/services. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Component decisions and platform security references. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 16.11, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 16.11, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain use of proven identity, crypto and audit capabilities. Use Findings and Actions for follow-up and validation."
     },
     "17.1": {
       "plain": "Name a lead and at least one backup to coordinate and document incident response and recovery. If a provider handles incidents, keep at least one internal person overseeing that work. Review the assignments annually and after significant relevant changes.",
@@ -395,6 +857,62 @@
       "evidence": "A staff procedure, intranet page or job aid can state the reporting steps. Communication or access records can support workforce availability. Dated reviews and revisions show that changes to contacts or reporting methods are reflected.",
       "ask": "Ask the incident and HR owners: How quickly should staff report under our process? Who receives reports, through which channel, and what information is needed? Can every workforce group find the instructions? When were they last reviewed?",
       "gaps": "Look for instructions saying only 'report promptly' without the organization's timeframes, missing recipients or minimum details, or a page some staff cannot access. A response plan restricted to the incident team may not serve workforce reporting."
+    },
+    "17.4": {
+      "plain": "Coordinate complete incident response. Execute response process during incidents. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Document response roles, obligations and communications. Start with the responsible client role: Client incident lead and backup. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Response plan and incident records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 17.4, ask the Client incident lead and backup: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 17.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Execute response process during incidents. Use Findings and Actions for follow-up and validation."
+    },
+    "17.5": {
+      "plain": "Make incident roles and handoffs explicit. Activate assigned roles during incidents. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Agree cross-functional and provider responsibilities. Start with the responsible client role: Client incident lead and backup. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Role roster and contact/escalation record. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 17.5, ask the Client incident lead and backup: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 17.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Activate assigned roles during incidents. Use Findings and Actions for follow-up and validation."
+    },
+    "17.6": {
+      "plain": "Keep incident communications usable during disruption. Use available incident communication channels. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define primary and fallback communication methods. Start with the responsible client role: Client incident lead and backup. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Communication plan and exercise observations. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 17.6, ask the Client incident lead and backup: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 17.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Use available incident communication channels. Use Findings and Actions for follow-up and validation."
+    },
+    "17.7": {
+      "plain": "Exercise incident decisions and coordination. Run exercises covering channels, decisions and workflows. Exercises at least annually. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Plan realistic scenarios, participants and objectives. Start with the responsible client role: Client incident lead and backup. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Exercise results and improvement Actions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 17.7, ask the Client incident lead and backup: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 17.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Run exercises covering channels, decisions and workflows. Use Findings and Actions for follow-up and validation."
+    },
+    "17.8": {
+      "plain": "Learn from actual incidents. Capture lessons and assign improvements. After incidents; no fixed calendar interval. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define post-incident review responsibility. Start with the responsible client role: Client incident lead and backup. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Post-incident review and tracked Actions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 17.8, ask the Client incident lead and backup: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 17.8, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Capture lessons and assign improvements. Use Findings and Actions for follow-up and validation."
+    },
+    "18.1": {
+      "plain": "Make penetration testing purposeful and controlled. Maintain the testing program. Program-defined frequency; no separate numeric minimum in 18.1. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Agree scope, frequency, limits, contacts, remediation and retrospectives. Start with the responsible client role: Client security sponsor. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Authorized scope and program record. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 18.1, ask the Client security sponsor: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 18.1, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain the testing program. Use Findings and Actions for follow-up and validation."
+    },
+    "18.2": {
+      "plain": "Have qualified testers probe external exposure. Execute external penetration tests. At least annually; include reconnaissance. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Select qualified party and authorize scope/limits. Start with the responsible client role: Client security sponsor. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Scoped test report and qualifications. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 18.2, ask the Client security sponsor: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 18.2, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Execute external penetration tests. Use Findings and Actions for follow-up and validation."
+    },
+    "18.3": {
+      "plain": "Resolve penetration-test weaknesses by risk. Remediate penetration-test findings. After findings, on risk-prioritized remediation timelines. The assessment should explain how this works for the client’s actual scope.",
+      "start": "Define finding ownership and routing. Start with the responsible client role: Client security sponsor. Agree the covered systems or people and use existing procedures before creating new records.",
+      "evidence": "Finding-to-Action trace and remediation support. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "For 18.3, ask the Client security sponsor: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "gaps": "For 18.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Remediate penetration-test findings. Use Findings and Actions for follow-up and validation."
     }
   }
 }

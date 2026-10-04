@@ -6,7 +6,7 @@ test('native catalog order and hierarchy survive grouping without losing require
     const roots=groupRequirements(key,catalog.requirements);
     expect(roots.flatMap(n=>n.rows.map(r=>r.id))).toEqual(catalog.requirements.map(r=>r.id));
   }
-  expect(groupRequirements('cis-ig1',CATALOGS['cis-ig1'].requirements)).toHaveLength(15);
+  expect(groupRequirements('cis-ig1',CATALOGS['cis-ig1'].requirements)).toHaveLength(18);
   const nist=groupRequirements('nist-csf-2',CATALOGS['nist-csf-2'].requirements);
   expect(nist).toHaveLength(6);expect(nist.every(n=>n.children.length>0)).toBe(true);
   expect(groupRequirements('iso-27001',CATALOGS['iso-27001'].requirements).map(n=>n.id)).toEqual(['isms_clause','annex_control']);
