@@ -1,5 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
-import {NavLink,useNavigate} from 'react-router-dom';
+import {NavLink,useNavigate,useLocation} from 'react-router-dom';
+import {ticketRecords} from '@/lib/remediationTickets';
+import {pilotActionMatches} from '@/lib/brawndoActions';
 import {LayoutDashboard,CalendarDays,ClipboardCheck,ListChecks,ShieldAlert,FileText,Building2,FolderArchive,Users,Server,Sparkles,Settings2,ShieldCheck,ArrowLeft,ChevronsUpDown,UserCircle2,LogOut,Briefcase} from 'lucide-react';
 import api from '@/lib/api';
 import {useOrg} from '@/context/OrgContext';
@@ -18,7 +20,7 @@ const GROUPS=[
 ];
 const BADGE_LABEL={reviews:'overdue reviews',actions:'overdue action items',risks:'significant risks',vendors:'vendors with assurance needing attention'};
 
-// One summary request per client; counts are the dashboard's own authoritative totals.
+// Dashboard totals plus the register's unique-ticket population for Action counts.
 export function sidebarCounts(summary){
   const k=summary?.kpis||{},v=(summary?.posture?.vendorHealth||[]).find(g=>g.key==='assurance');
   return {reviews:[k.overdue_reviews||0,'critical'],actions:[(k.overdue_actions||0),'critical'],risks:[k.significant_risks||0,'critical'],vendors:[v?.total??v?.items?.length??0,'attention']};
@@ -79,14 +81,16 @@ export function BrawndoPlatformSidebar({adminItems=[]}){
 
 export default function BrawndoSidebar({complianceItems=[],isInternal,showFindings=false}){
   const {currentClient,currentClientId}=useOrg(),nav=useNavigate();
+  const location=useLocation();
   const [theme]=useBrawndoTheme(),[counts,setCounts]=useState({});
   useEffect(()=>{
     if(!currentClientId)return;const c=new AbortController();
-    api.get('/dashboard',{params:{client_id:currentClientId,scope:'org'},signal:c.signal})
-      .then(({data})=>{if(!c.signal.aborted&&data.client_id===currentClientId)setCounts(sidebarCounts(data));})
+    const load=()=>Promise.all(['/dashboard','/findings','/tasks'].map(path=>api.get(path,{params:{client_id:currentClientId,scope:'org'},signal:c.signal})))
+      .then(([{data},findings,tasks])=>{if(!c.signal.aborted&&data.client_id===currentClientId)setCounts({...sidebarCounts(data),actions:[ticketRecords({findings:findings.data,tasks:tasks.data},currentClientId).filter(t=>pilotActionMatches(t,'overdue')).length,'critical']});})
       .catch(()=>{/* badges are supplementary; navigation never depends on them */});
-    return()=>c.abort();
-  },[currentClientId]);
+    load();window.addEventListener('grc:ticket-saved',load);
+    return()=>{c.abort();window.removeEventListener('grc:ticket-saved',load);};
+  },[currentClientId,location.key]);
   const link=([to,label,Icon,testid,badge])=>{const [n,tone]=counts[badge]||[];
     return <NavLink key={to} to={to} data-testid={testid} className={({isActive})=>`bsb-link${isActive?' is-active':''}`}>
       <Icon size={17} aria-hidden="true"/><span>{label}</span>

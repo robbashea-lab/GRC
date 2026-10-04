@@ -276,14 +276,15 @@ describe('safeguard Findings',()=>{
  const f=(id,status,extra={})=>({finding_id:id,client_id:'demo_brawndo',title:'Finding '+id,status,severity:'high',framework_assessment_id:'a',...extra});
  test('lists direct open, Pending Validation and closed Findings with their Action state',async()=>{
   related.findings=[f('o','in_remediation'),f('p','remediated',{severity:'medium'}),f('c','closed'),f('x','open',{framework_assessment_id:'other'})];
-  related.tasks=[{task_id:'t1',finding_id:'o',client_id:'demo_brawndo',status:'in_progress',due_date:'2026-11-01'},{task_id:'t2',finding_id:'p',client_id:'demo_brawndo',status:'done'}];
+  related.tasks=[{task_id:'t1',title:'Correct open issue',finding_id:'o',client_id:'demo_brawndo',status:'in_progress',due_date:'2026-11-01'},{task_id:'t2',title:'Verify correction',finding_id:'p',client_id:'demo_brawndo',status:'done'}];
   await render();
-  const open=container.querySelector('[aria-label="Open Findings"]').textContent;
-  expect(open).toContain('Finding o');expect(open).toContain('High · In remediation · Action in progress · due 2026-11-01');
-  expect(open).toContain('Moderate · Pending Validation · Action completed');
+  const open=container.querySelector('[aria-label="Remediation tickets"]').textContent;
+  expect(open).toContain('Correct open issue');expect(open).toContain('in progress · Unassigned · Due 2026-11-01');
+  expect(open).toContain('pending validation');
   expect(open).not.toContain('Finding x');
-  expect(container.querySelector('.bcsg-closed summary').textContent).toBe('1 closed / validated');
-  await act(async()=>button('Finding p').click());expect(container.querySelector('[data-testid="nested"]').textContent).toContain('findings Finding p');
+  expect(container.querySelectorAll('[data-ticket-id]')).toHaveLength(3);
+  expect(open).toContain('completed');
+  await act(async()=>button('Verify correction').click());expect(container.querySelector('[data-testid="nested"]').textContent).toContain('findings Finding p');
  });
  test('Raise Finding records the safeguard origin, owner and target date, once per draft',async()=>{
   api.post.mockResolvedValue({data:{}});await render();

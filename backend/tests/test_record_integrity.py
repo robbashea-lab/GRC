@@ -5,10 +5,23 @@ from unittest.mock import patch
 from mongomock_motor import AsyncMongoMockClient
 
 from migrate_record_contracts import run
-from record_integrity import inspect_client
+from record_integrity import inspect_client, ticket_diagnostics
 
 
 class RecordIntegrityTests(unittest.IsolatedAsyncioTestCase):
+    def test_ticket_diagnostics_preserve_ambiguous_assignments_without_repair(self):
+        records={'findings':[{'finding_id':'f'},{'finding_id':'empty'},{'finding_id':'bad','primary_task_id':'foreign'}],
+                 'tasks':[{'task_id':'one','finding_id':'f','assignee_id':'a','status':'done'},
+                          {'task_id':'two','finding_id':'f','assignee_id':'b','status':'blocked'},
+                          {'task_id':'orphan','finding_id':'missing'}]}
+        before=copy.deepcopy(records);report=ticket_diagnostics(records)
+        row=next(r for r in report if r['ticket_id']=='finding:f')
+        self.assertEqual(row['code'],'ambiguous_primary_action')
+        self.assertIsNone(row['primary_task_id'])
+        self.assertEqual([a['owner_id'] for a in row['actions']],['a','b'])
+        self.assertEqual(row['outstanding_actions'],1)
+        self.assertEqual(records,before)
+        self.assertEqual({r['code'] for r in report},{'ambiguous_primary_action','no_action','primary_action_unavailable','linked_finding_unavailable'})
     async def asyncSetUp(self):
         self.db = AsyncMongoMockClient()['isolated_record_contracts']
         await self.db.users.insert_many([

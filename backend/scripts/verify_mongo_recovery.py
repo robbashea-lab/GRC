@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--mongo-url', required=True, help='Explicit mongodb://127.0.0.1:PORT origin')
     parser.add_argument('--include-program-lifecycle', action='store_true', help='Also run the three-framework 36-month API matrix')
     parser.add_argument('--include-cis-ig2', action='store_true', help='Also run cumulative CIS scope, recovery and authorization checks')
+    parser.add_argument('--include-remediation-tickets', action='store_true', help='Also run ticket integrity and exact ISO audit-item association checks')
     args = parser.parse_args()
     parsed = urlsplit(args.mongo_url)
     if (parsed.scheme != 'mongodb' or parsed.hostname != '127.0.0.1' or not parsed.port
@@ -89,6 +90,12 @@ def main():
         from test_cis_ig2 import CisIG2Tests
         concrete = type('MongoCisIG2Tests', (MongoStorage, CisIG2Tests), {})
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
+    if args.include_remediation_tickets:
+        from test_remediation_tickets import TicketIntegrityTests
+        from test_iso_audit_program import IsoAuditTests
+        for base in (TicketIntegrityTests, IsoAuditTests):
+            concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
+            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     logging.getLogger('httpx').setLevel(logging.WARNING)
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     return 0 if result.wasSuccessful() else 1

@@ -214,6 +214,7 @@ export function finishDemoStore(db, clock, {
         }),
         old = t.task_id;
       t.task_id = cid + '_task_' + i;
+      f.primary_task_id = t.task_id;
       // Only references to this just-created seed task can exist in these events.
       for (const l of db.logs) {
         if (l.entity_id === old) l.entity_id = t.task_id;
@@ -456,6 +457,7 @@ export function finishDemoStore(db, clock, {
       for (const t of db.tasks.filter(t => t.finding_id === f.finding_id)) {
         const old = t.task_id;
         t.task_id = cid === 'demo_brawndo' ? cid + '_cis_action_' + id : cid + '_gap_action_' + n;
+        f.primary_task_id = t.task_id;
         for (const l of db.logs) {
           if (l.entity_id === old) l.entity_id = t.task_id;
           if (l.meta?.task_id === old) l.meta.task_id = t.task_id;

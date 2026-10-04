@@ -65,7 +65,7 @@ test('failed ISO save keeps narrative and blocks next; retry keeps concurrency t
 });
 
 test('read-only ISO assessment retains guide and linked findings without write affordances',async()=>{
- mockUser.role='client_readonly';related.findings=[{finding_id:'f',title:'Context gap',status:'open'}];await render();
+ mockUser.role='client_readonly';related.findings=[{finding_id:'f',client_id:record.client_id,title:'Context gap',status:'open'}];await render();
  expect(container.textContent).toContain('Context gap');expect(button('Raise Finding')).toBeUndefined();expect(button('Save assessment')).toBeUndefined();
  expect(container.querySelector('[aria-label="Assessment Owner"]').disabled).toBe(true);
  expect(container.querySelector('[aria-label="Current implementation"]').closest('fieldset').disabled).toBe(true);

@@ -20,6 +20,7 @@ import { clone, readStore, saveStore, resetStore, ids, list, record, write, libr
 import { portfolio, dashboard } from './summaries';
 import { onboard, action } from './workflows';
 import {commandRequest} from './commandRequests';
+import {retainFinding} from './remediationTickets';
 import { guardEdit } from './decisions';
 import { history, reviewEvent } from './reviews';
 import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
@@ -94,7 +95,7 @@ export async function previewAdapter(config) {
       if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))return fail(403,'Forbidden for this client');}
     }
     // Role limits mirror the server so persona QA in the Demo sees the same refusals.
-    try { authorizeDemo(db, method, parts, body); } catch (error) { return fail(403, error.message); }
+    try { authorizeDemo(db, method, parts, body, config.headers?.['Idempotency-Key']); } catch (error) { return fail(error.status||403, error.message); }
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
@@ -129,6 +130,7 @@ export async function previewAdapter(config) {
     if (approval !== undefined) return method === 'get' ? respond(approval) : save(approval);
     if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
+    if(kind==='framework_assessments'&&method==='post'&&name==='findings')return save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
     if(path==='/frameworks/cis-ig1/configuration'&&method==='patch')return save(commandRequest(db,path,body.client_id,config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
     if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));
     if (path === '/demo/onboarding-draft') {
@@ -296,6 +298,7 @@ export async function previewAdapter(config) {
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
         throw new Error('Review history must be retained.');
       if (body.kind === 'tasks' && body.action === 'delete' && rows.some(r=>r.status==='done'||r.completed_at)) throw new Error('Completed Action Items must be retained.');
+      if(body.kind==='findings'&&body.action==='delete')rows.forEach(r=>retainFinding(db,r));
       if(body.kind==='ai_systems'||body.action==='delete'&&(['risks','vendors'].includes(body.kind)||body.kind==='reviews'&&rows.some(r=>r.risk_id||r.vendor_id||r.ai_system_id))) throw new Error('Governance records and their Review obligations must be retained.');
       const payload = body.payload || {};
       if(body.kind==='policies'&&body.action==='delete'&&rows.some(retainedPolicy))throw new Error('Policy approval history must be retained; retire the Policy instead');
@@ -359,6 +362,12 @@ export async function previewAdapter(config) {
       return save(db.user);
     }
     if (ids[kind] && name) {
+      if(kind==='findings'&&['validate','reopen','accept'].includes(name)&&body.request_id){
+        const finding=record(db,kind,id);
+        return save(commandRequest(db,path,finding.client_id,body.request_id,body,()=>{
+          const result=action(db,kind,id,name,body);audit(db,name,kind,result);return result;
+        }));
+      }
       if(kind==='reviews' && name==='create-finding') {
         const review=record(db,kind,id);
         return save(commandRequest(db,path,review.client_id,body.request_id,body,()=>action(db,kind,id,name,body)));
@@ -398,6 +407,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if(kind==='findings')retainFinding(db,r);
         if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw Object.assign(new Error('Record changed; reload before deleting'), { status: 409 });
         if(kind==='policies'&&retainedPolicy(r))throw new Error('Policy approval history must be retained; retire the Policy instead');
         if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
@@ -454,6 +464,11 @@ export async function previewAdapter(config) {
         assertCurrentOccurrence(record(db,kind,id),body.expected_occurrence_id);
         delete body.expected_occurrence_id;
       }
+      const updateKey=kind==='tasks'&&id&&method==='patch'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+      if(updateKey)return save(commandRequest(db,path,record(db,kind,id).client_id,updateKey,body,()=>{
+        guardEdit(kind,body,record(db,kind,id),db.user);
+        return write(db,kind,body,id);
+      }));
       if (!['evidence','users','clients','comments'].includes(kind)) guardEdit(kind, body, id ? record(db, kind, id) : {}, db.user);
       if (kind === 'reviews' && id && body.status === 'completed' && record(db, kind, id).status !== 'completed') {
         const { status, ...fields } = body;

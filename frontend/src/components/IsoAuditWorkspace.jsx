@@ -1,5 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import IsoRequirementGuide from './IsoRequirementGuide';
+import RemediationTickets from './RemediationTickets';
+import TicketAssignment from './TicketAssignment';
 import {auditProgrammeMetrics,auditProgrammeYears} from '@/lib/isoProgramMetrics';
 import './IsoAssessment.css';
 import './BrawndoCisSafeguard.css';
@@ -66,12 +68,15 @@ function AuditItemWorkspace({review,centralReview=review,item,position,previous,
   async function createFinding(){
     setBusy(true);setError('');
     try{
-      const {data}=await api.post('/reviews/'+review.review_id+'/create-finding',{...finding,occurrence_id:oid});
+      const {data}=await api.post('/reviews/'+review.review_id+'/create-finding',{...finding,occurrence_id:oid,audit_item_key:item.key,expected_updated_at:version??null});
       // Creating the shared Finding is durable independently from the workpaper draft.
       setForm(old=>({...old,finding_ids:[...new Set([...old.finding_ids,data.finding_id])]}));
+      setSaved(old=>({...old,finding_ids:[...new Set([...old.finding_ids,data.finding_id])]}));
+      const refreshed=await api.get('/reviews/'+review.review_id);
+      setVersion(refreshed.data.updated_at);onSaved(refreshed.data);
       setFinding(null);setRelated(old=>({...old,findings:[...(old?.findings||[]).filter(f=>f.finding_id!==data.finding_id),data]}));
       setRelatedRevision(n=>n+1);
-      setFeedback('Finding and Action Item created. Save this workpaper to retain its item-level link.');
+      setFeedback('Ticket saved and linked to this audit item. Other workpaper edits remain unsaved.');
     }catch(e){setError(formatError(e));}finally{setBusy(false);}
   }
   const source=sourcePresentation(frameworkDefinition('iso-27001',item.definition_id));
@@ -101,10 +106,9 @@ function AuditItemWorkspace({review,centralReview=review,item,position,previous,
       {writable&&<EvidenceCatalogPicker clientId={review.client_id} linkedIds={form.evidence_ids} disabled={busy} onLink={id=>put('evidence_ids',[...new Set([...form.evidence_ids,id])])}/>}
     </AssessmentStep>
     <AssessmentStep number="4" title="Findings & remediation"><p className="text-xs text-ink-secondary">Observations and Nonconformities need a shared Finding before package closure. Completing the audit does not complete remediation.</p>
-      <ul>{linkedFindings.map(f=><li className="brawndo-linked-row" key={f.finding_id}><button className="text-link text-left" onClick={()=>setNested({kind:'findings',record:f})}>{f.title}</button><StatusBadge value={f.status}/></li>)}</ul>
-      {(related?.tasks||[]).filter(t=>form.finding_ids.includes(t.finding_id)).map(t=><p key={t.task_id}><button className="text-link underline" onClick={()=>setNested({kind:'tasks',record:t})}>{t.title}</button></p>)}
+      <RemediationTickets records={{findings:linkedFindings,tasks:(related?.tasks||[]).filter(t=>form.finding_ids.includes(t.finding_id)),reviews:[centralReview]}} clientId={review.client_id} users={users} onOpen={setNested} disabled={busy}/>
       {writable&&!finding&&<><Button size="sm" variant="outline" disabled={busy} onClick={()=>setFinding({title:item.reference+' — '+(AUDIT_RESULTS[form.result]||'Audit gap'),description:form.notes,remediation_title:'Address '+item.reference+' audit gap',severity:'medium',request_id:recordUuid()})}>Create Finding</Button><label className="block mt-3">Link an existing package Finding<select aria-label="Link audit Finding" className={SELECT} value="" disabled={busy} onChange={e=>put('finding_ids',[...new Set([...form.finding_ids,e.target.value])])}><option value="">Select Finding</option>{(related?.findings||[]).filter(f=>!form.finding_ids.includes(f.finding_id)).map(f=><option key={f.finding_id} value={f.finding_id}>{f.title}</option>)}</select></label></>}
-      {finding&&<fieldset disabled={busy} className="space-y-3 brawndo-inset">{[['title','Finding title'],['description','Finding description'],['remediation_title','Remediation Action title']].map(([k,label])=><label className="block" key={k}>{label}{k==='description'?<Textarea aria-label={label} value={finding[k]} onChange={e=>setFinding({...finding,[k]:e.target.value})}/>:<Input aria-label={label} value={finding[k]} onChange={e=>setFinding({...finding,[k]:e.target.value})}/>}</label>)}<Button onClick={createFinding}>Create Finding & Action</Button><Button variant="ghost" onClick={()=>setFinding(null)}>Cancel Finding</Button></fieldset>}
+      {finding&&<fieldset disabled={busy} className="space-y-3 brawndo-inset">{[['title','Finding title'],['description','Finding description'],['remediation_title','Remediation Action title']].map(([k,label])=><label className="block" key={k}>{label}{k==='description'?<Textarea aria-label={label} value={finding[k]} onChange={e=>setFinding({...finding,[k]:e.target.value})}/>:<Input aria-label={label} value={finding[k]} onChange={e=>setFinding({...finding,[k]:e.target.value})}/>}</label>)}<TicketAssignment clientId={review.client_id} users={users} {...{finding,setFinding}} defaultOwner={review.owner_id} disabled={busy}/><Button onClick={createFinding}>Create Finding & Action</Button><Button variant="ghost" onClick={()=>setFinding(null)}>Cancel Finding</Button></fieldset>}
     </AssessmentStep>
   </AssessmentShell><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>The saved audit workpaper is unchanged. Keep editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     {nested&&<RecordDrawer {...nested} open clientId={review.client_id} users={users} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v)setNested(null);}} onSaved={()=>{setRelatedRevision(n=>n+1);if(nested.kind==='reviews')setFeedback('Central Review changed. Close and reopen the package to load its latest cycle before editing further.');}}/>}

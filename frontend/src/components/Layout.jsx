@@ -220,7 +220,7 @@ function Sidebar() {
   }))];
 
   // Default client navigation uses the reference presentation; route permissions stay unchanged.
-  if(!atPlatform&&currentClientId)return <BrawndoSidebar complianceItems={complianceItems} isInternal={isInternal} showFindings={!isReferenceRegister(currentClientId,user)}/>;
+  if(!atPlatform&&currentClientId)return <BrawndoSidebar complianceItems={complianceItems} isInternal={isInternal} showFindings={false}/>;
   if(atPlatform&&isInternal&&isReferencePortfolio(user))return <BrawndoPlatformSidebar adminItems={PLATFORM_NAV.filter(n=>!n.section)}/>;
   return (
     <aside className="app-sidebar w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">

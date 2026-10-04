@@ -10,6 +10,9 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.cre
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 jest.mock('@/components/ui/sheet',()=>({Sheet:({open,children})=>open?<div>{children}</div>:null,SheetContent:({children,...props})=><section {...props}>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>}));
 
+jest.mock('@/components/ui/dialog',()=>({Dialog:({open,children})=>open?<div>{children}</div>:null,DialogContent:({children,...props})=><section {...props}>{children}</section>,DialogTitle:({children})=><h2>{children}</h2>,DialogDescription:({children})=><p>{children}</p>}));
+beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:require('crypto').webcrypto,configurable:true}));
+const setText=async(label,value)=>act(async()=>{const el=container.querySelector('[aria-label="'+label+'"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});
 let root,container,client,review,finding,task,members;
 const button=(text)=>Array.from(container.querySelectorAll('button')).find(b=>b.textContent===text);
 const click=async text=>act(async()=>button(text).click());
@@ -27,77 +30,69 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 test('Review groups current statuses, refreshes transitions and preserves Q3 origin after Q4 advance',async()=>{
   await act(async()=>root.render(<RecordDrawer open kind="reviews" record={review} clientId={client.client_id} onOpenChange={()=>{}}/>));
   await click('Related');
-  expect(container.querySelectorAll('[data-testid="review-remediation-group"]')).toHaveLength(1);
-  expect(container.querySelectorAll('[data-testid="review-corrective-action"]')).toHaveLength(1);
-  expect(container.textContent).toContain('Origin: Q3 2026');
+  expect(container.querySelectorAll('[data-ticket-id]')).toHaveLength(1);
+  expect(container.querySelectorAll('[data-ticket-id]')).toHaveLength(1);
+  expect(container.textContent).toContain('Q3 2026');
   await api.patch('/tasks/'+task.task_id,{status:'in_progress'});
   await click('Related');
-  expect(container.querySelector('[data-testid="review-corrective-action"] [data-status="in_progress"]')).toBeTruthy();
+  expect(container.querySelector('[data-ticket-id]').textContent).toContain('in progress');
   const next=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data.review;
   await act(async()=>root.render(<RecordDrawer open kind="reviews" record={next} clientId={client.client_id} onOpenChange={()=>{}}/>));
-  await click('Related');expect(container.textContent).toContain('Origin: Q3 2026');
+  await click('Related');expect(container.textContent).toContain('Q3 2026');
   await api.patch('/tasks/'+task.task_id,{status:'done'});await click('Related');
-  expect(container.querySelector('[data-status="remediated"]')).toBeTruthy();
-  expect(container.querySelector('[data-status="completed"]')).toBeTruthy();
-  expect(container.textContent).toContain('Current Finding Status');
+  expect(container.querySelector('[data-ticket-id]').textContent).toContain('pending validation');
   await api.post(`/findings/${finding.finding_id}/validate`,{rationale:'Policy approval verified'});await click('Related');
-  expect(container.querySelectorAll('[data-testid="review-remediation-group"]')).toHaveLength(0);
+  expect(container.querySelectorAll('[data-ticket-id]')).toHaveLength(0);
   await click('Show completed / closed records (1)');
-  expect(container.querySelector('[data-status="closed"]')).toBeTruthy();
+  expect(container.querySelector('[data-ticket-id]').textContent).toContain('completed');
   expect(container.textContent).toContain('Statuses below are current');
 });
 
-test('Finding-linked completion acknowledges current readiness without forcing navigation',async()=>{
+test('Finding-linked completion and validation remain in the same stable ticket',async()=>{
   const onSaved=jest.fn(),onClose=jest.fn();
-  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={task} clientId={client.client_id} users={members} onSaved={onSaved} onOpenChange={onClose}/>));
-  const chain=container.querySelector('[aria-label="Action context"]');
-  expect(chain.textContent).toContain('NO ISP');expect(chain.textContent).toContain('Origin: Q3 2026');
-  expect(chain.textContent.match(/Policy Review and Approval/g)).toHaveLength(1);
-  await click('Complete Action Item');
-  expect(container.querySelector('[data-testid="action-completion-handoff"]').textContent).toContain('is now awaiting validation');
+  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={task} clientId={client.client_id} onSaved={onSaved} onOpenChange={onClose}/>));
+  expect(container.textContent).toContain('Policy is not documented.');
+  expect(container.textContent).toContain('Q3 2026');
+  expect(container.querySelector('h2').textContent).toBe('MAKE AN ISP');
+  await click('Complete work');
+  expect(container.textContent).toContain('Pending validation');
   expect(onClose).not.toHaveBeenCalled();expect(onSaved).toHaveBeenCalled();
-  await click('View Finding');
-  expect(container.querySelector('[data-testid="finding-validate"]')).toBeTruthy();
-  await click('Validate and close');
-  const context=container.querySelector('[aria-label="Validation context"]');
-  expect(context.textContent).toContain('Policy is not documented.');
-  expect(context.textContent).toContain('MAKE AN ISP');expect(context.textContent).toContain('Completed');expect(context.textContent).toContain('By ');
+  await setText('Validation rationale','Policy approval verified');await click('Validate and complete');
+  expect((await api.get('/findings/'+finding.finding_id)).data.status).toBe('closed');
+  expect(container.querySelectorAll('[data-testid="remediation-ticket-drawer"]')).toHaveLength(1);
+  expect(container.textContent).toContain('finding:'+finding.finding_id);
 });
 
-test('multiple Actions keep one group and unfinished work prevents a false validation handoff',async()=>{
+test('multiple Actions remain in one ticket and outstanding work prevents validation',async()=>{
   const second=(await api.post('/tasks',{client_id:client.client_id,title:'Second action',source_type:'finding',source_id:finding.finding_id})).data;
   await api.post('/tasks',{client_id:client.client_id,title:'Third action',source_type:'finding',source_id:finding.finding_id});
-  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={second} clientId={client.client_id} users={members} onOpenChange={()=>{}}/>));
-  await click('Complete Action Item');expect(container.textContent).toContain('other corrective work is still outstanding');
+  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={second} clientId={client.client_id} onOpenChange={()=>{}}/>));
+  expect(container.querySelectorAll('[aria-label="Work status"]')).toHaveLength(3);
+  await act(async()=>[...container.querySelector('[aria-label="Second action"]').querySelectorAll('button')].find(b=>b.textContent==='Complete work').click());
+  expect(button('Validate and complete')).toBeUndefined();
+  expect(container.textContent).toContain('Complete outstanding work');
   await act(async()=>root.render(<RecordDrawer open kind="reviews" record={review} clientId={client.client_id} onOpenChange={()=>{}}/>));await click('Related');
-  expect(container.querySelectorAll('[data-testid="review-remediation-group"]')).toHaveLength(1);
-  expect(container.querySelectorAll('[data-testid="review-corrective-action"]')).toHaveLength(3);
+  expect(container.querySelectorAll('[data-ticket-id]')).toHaveLength(1);
+  expect((await api.get('/tasks',{params:{client_id:client.client_id}})).data).toHaveLength(3);
 });
 
-test('seeded framework Action completion opens its Finding and shows the saved status',async()=>{
+test('seeded framework ticket validates without changing its control conclusion',async()=>{
   const seeded=(await api.get('/tasks',{params:{client_id:'demo_brawndo'}})).data.find(t=>t.task_id==='demo_brawndo_cis_action_1.1');
   await act(async()=>root.render(<RecordDrawer open kind="tasks" record={seeded} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
-  await click('Complete Action Item');
-  expect(container.querySelector('[data-testid="action-completion-handoff"]').textContent).toContain('is now awaiting validation');
-  const summary=container.querySelector('[aria-label="Record summary"]');
-  expect(summary.textContent).toContain('Completed');
-  expect(summary.textContent).not.toContain('Action is overdue');
-  expect(summary.textContent).not.toContain('In Progress');
-  await click('View Finding');
-  expect(container.querySelector('[data-testid="finding-validate"]')).toBeTruthy();
-  expect((await api.get('/findings/'+encodeURIComponent(seeded.finding_id))).data.status).toBe('remediated');
-  await api.post('/findings/'+seeded.finding_id+'/validate',{rationale:'Synthetic validation of the corrective work'});
-  await act(async()=>container.querySelector('[data-testid="findings-drawer"] [data-testid="drawer-close"]').click());
-  expect(container.querySelector('[data-testid="action-completion-handoff"]').textContent).toContain('is Closed.');
+  expect(container.textContent).not.toContain('Primary Action unavailable');
+  await click('Complete work');expect(container.textContent).toContain('Pending validation');
+  expect((await api.get('/findings/'+seeded.finding_id)).data.status).toBe('remediated');
+  await setText('Validation rationale','Synthetic validation of the corrective work');await click('Validate and complete');
+  expect(container.textContent).toContain('Ticket completed. Validation saved.');
   const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data;
   expect(workspace.assessments.find(a=>a.definition_id==='1.1').status).toBe('needs_attention');
 });
 
-test('standalone completion closes normally without Finding handoff or creation',async()=>{
+test('standalone completion stays in the ticket without creating a Finding',async()=>{
   const manual=(await api.post('/tasks',{client_id:client.client_id,title:'Manual work',source_type:'manual'})).data,onClose=jest.fn();
   await act(async()=>root.render(<RecordDrawer open kind="tasks" record={manual} clientId={client.client_id} onOpenChange={onClose}/>));
-  await click('Complete Action Item');expect(onClose).toHaveBeenCalledWith(false);
-  expect(container.querySelector('[data-testid="action-completion-handoff"]')).toBeNull();
+  await click('Complete work');expect(onClose).not.toHaveBeenCalled();
+  expect(container.textContent).toContain('Completed');expect(button('Validate and complete')).toBeUndefined();
   expect((await api.get('/findings',{params:{client_id:client.client_id}})).data).toHaveLength(1);
 });
 
@@ -119,7 +114,7 @@ test('assessment source opens through the authorized Related response',async()=>
   const assessment={assessment_id:'assessment-phase2',client_id:client.client_id,title:'Internal assessment',status:'completed'};
   const sourceTask={...task,finding_id:null,review_id:null,source_type:'audit',source_id:assessment.assessment_id,assessment_id:assessment.assessment_id};
   const originalGet=api.get.bind(api);
-  const get=jest.spyOn(api,'get').mockImplementation((path,options)=>path==='/related'?Promise.resolve({data:{assessments:[assessment]}}):originalGet(path,options));
+  const get=jest.spyOn(api,'get').mockImplementation((path,options)=>path==='/tasks'?Promise.resolve({data:[sourceTask]}):path==='/findings'?Promise.resolve({data:[]}):path==='/onboarding/state'?Promise.resolve({data:{assessments:[assessment]}}):path==='/related'?Promise.resolve({data:{assessments:[assessment]}}):originalGet(path,options));
   try {
     await act(async()=>root.render(<RecordDrawer open kind="tasks" record={sourceTask} clientId={client.client_id} onOpenChange={()=>{}}/>));
     await click('Internal assessment');

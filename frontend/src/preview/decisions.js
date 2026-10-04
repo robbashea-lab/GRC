@@ -3,6 +3,8 @@ import { scheduledDate } from '../lib/reviewOccurrences';
 export function guardEdit(kind, body, existing = {}, user) {
   body = {...body};
   delete body.expected_updated_at; // Concurrency precondition, not a business-field edit.
+  if(kind==='tasks'&&body.resolution!=null&&(typeof body.resolution!=='string'||body.resolution.length>20000))throw new Error('Resolution must be text of at most 20000 characters');
+  if('primary_task_id' in body)throw new Error('Primary Action is managed by remediation commands');
   if(body.due_date&&!scheduledDate(body.due_date))throw new Error('Invalid due date');
   if(kind==='policies') {
     if(['approval_account_id','approver_contact_id','approval_request_id','approval_source','approval_subject'].some(k=>k in body && JSON.stringify(body[k])!==JSON.stringify(existing[k])) || body.status==='in_review' && body.status!==existing.status) throw new Error('Use the dedicated approval action');

@@ -23,7 +23,8 @@ test('multiple corrective actions preserve one Finding, occurrence, comments and
   const saved=(await api.get('/tasks/'+first.task_id)).data;
   expect(saved).toMatchObject({description:'Verified outcome',status:'done',finding_id:f.finding_id,review_id:r.review_id,occurrence_id:r.current_occurrence_id});
   expect((await api.get('/comments',{params:{entity_type:'tasks',entity_id:first.task_id}})).data.some(c=>c.body==='Preserved operator note')).toBe(true);
-  expect(unifiedActions({tasks:[saved,second],findings:[f]},client_id)).toHaveLength(2);
+  const tickets=unifiedActions({tasks:[saved,second],findings:[f]},client_id);
+  expect(tickets).toHaveLength(1);expect(tickets[0].actions).toHaveLength(2);
   await api.patch('/tasks/'+second.task_id,{status:'done'});
   expect((await api.get('/findings/'+f.finding_id)).data.status).toBe('remediated');
   expect((await api.get('/reviews/'+r.review_id)).data.status).not.toBe('completed');

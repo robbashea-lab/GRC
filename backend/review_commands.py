@@ -8,6 +8,7 @@ import assignment_eligibility
 import authorization
 import create_requests
 import remediation
+import iso_audit
 
 
 async def create_finding(s, review_id, body, user):
@@ -33,13 +34,19 @@ async def create_finding(s, review_id, body, user):
             await s.db.create_requests.update_one({'_id': identity}, {'$set': {'primary_started': True}})
         if not doc:
             await s._review_selection(review, body["occurrence_id"], write=True)
+            if body.get('audit_item_key'):
+                s._require_snapshot(body, review)
+                state = review.get('iso_audit') or {}
+                package = iso_audit.PACKAGES.get(state.get('package_key'), {})
+                if body['audit_item_key'] not in {i['key'] for i in package.get('items', [])}:
+                    raise HTTPException(422, 'Select an item from this audit package')
             for field, label in (("title", "Finding title"), ("remediation_title", "Remediation action")):
                 if not isinstance(body.get(field), str) or not body[field].strip() or len(body[field]) > 1000:
                     raise HTTPException(422, label + " is required (maximum 1000 characters)")
             if body.get("severity", "medium") not in ("low", "medium", "high", "critical"):
                 raise HTTPException(422, "Invalid severity")
             allowed = {"request_id", "occurrence_id", "title", "remediation_title", "severity", "description",
-                       "owner_id", "due_date", "remediation_plan"}
+                       "owner_id", "due_date", "remediation_plan", "audit_item_key", "expected_updated_at"}
             if set(body) - allowed:
                 raise HTTPException(422, "Unsupported Finding fields")
             doc = {"finding_id": fid, "client_id": review["client_id"], "status": "open",
@@ -50,6 +57,8 @@ async def create_finding(s, review_id, body, user):
                    "identified_at": s._now(), "remediation_plan": body.get("remediation_plan") or "",
                    "remediation_title": body["remediation_title"].strip(), "request_id": request_id,
                    "created_at": s._now(), "updated_at": s._now(), "created_by": user["user_id"]}
+            if body.get('audit_item_key'):
+                doc['audit_item_key'] = body['audit_item_key']
             # Reuse boundary validation without accepting caller-controlled parent or lifecycle fields.
             fields = ('client_id', 'title', 'description', 'severity', 'owner_id', 'due_date', 'remediation_plan')
             checked = {k: body.get(k, doc[k]) for k in fields}
@@ -57,6 +66,20 @@ async def create_finding(s, review_id, body, user):
             await authorization.require_creation_assignee(s.db, user, doc['client_id'], doc.get('owner_id'))
             await assignment_eligibility.validate(s.db, "findings", doc, s._can_access_client)
             doc = await create_requests.insert_primary(s.db, "findings", doc, identity)
+        if doc.get('audit_item_key'):
+            # Only the source relationship is saved, never unrelated workpaper drafts.
+            current = await s.db.reviews.find_one({'review_id':review_id, 'client_id':review['client_id']})
+            path = 'iso_audit.items.' + doc['audit_item_key'] + '.finding_ids'
+            import review_occurrences
+            source=current if review_occurrences.occurrence_id(current)==body['occurrence_id'] else next(
+                (o for o in current.get('occurrences',[]) if o.get('occurrence_id')==body['occurrence_id']),{})
+            linked = source.get('iso_audit',{}).get('items', {}).get(doc['audit_item_key'], {}).get('finding_ids', [])
+            if fid not in linked:
+                await s._review_selection(current, body['occurrence_id'], write=True)
+                await s.db.reviews.update_one({'review_id':review_id, 'client_id':review['client_id']},
+                    {'$addToSet':{path:fid}, '$set':{'updated_at':s._next_write_time(current.get('updated_at'))}})
+            await s._review_event(user, review, 'Audit item Finding linked', body['occurrence_id'],
+                finding_id=fid, audit_item_key=doc['audit_item_key'])
         await s.audit(user, "create", "finding", fid, review["client_id"], meta={"from_review": review_id})
         await s.finding_create_task(fid, {"title": doc.get("remediation_title") or doc["title"]}, user)
         await s._review_event(user, review, "Finding raised", body["occurrence_id"], finding_id=fid, title=doc["title"])
@@ -99,6 +122,7 @@ async def _ensure_action(s, finding, body, user, doc):
     identity = create_requests.current.get()
     receipt = await s.db.create_requests.find_one({'_id': identity})
     original = (receipt or {}).get('action_document')
+    creating = not doc
     if not doc:
         tid = "tsk_" + uuid.uuid5(uuid.NAMESPACE_URL, "finding-remediation:" + finding_id).hex
         doc = original
@@ -121,9 +145,13 @@ async def _ensure_action(s, finding, body, user, doc):
             doc = await action_items.prepare(s.db, doc, s._can_access_client)
             original = doc.copy()
             await s.db.create_requests.update_one({'_id': identity},
-                {'$set': {'action_document': original, 'primary_started': True}})
+                {'$set': {'action_document': original, 'action_primary_new': True, 'primary_started': True}})
         await s.db.tasks.update_one({"_id": tid}, {"$setOnInsert": doc}, upsert=True)
         doc = await s.db.tasks.find_one({"_id": tid}, {"_id": 0})
+    if creating or (receipt or {}).get('action_primary_new'):
+        # Explicit for new pairs and their retries; never choose among legacy Actions.
+        await s.db.findings.update_one({'finding_id':finding_id, 'client_id':finding['client_id'],
+            'primary_task_id':{'$exists':False}}, {'$set':{'primary_task_id':doc['task_id']}})
     if not original:
         original = doc.copy()
         await s.db.create_requests.update_one({'_id': identity}, {'$set': {'action_document': original}})

@@ -18,7 +18,7 @@ export function editableFields(kind, user, record) {
   if (isInternal(user) || (!record && kind === 'tasks' && canOperate(user))) return null;
   if (!canOperate(user)) return new Set();
   const fields = new Set(['notes']);
-  if (kind === 'tasks') ['status', 'description', 'title', 'priority', 'due_date', 'reason', 'context'].forEach(f => fields.add(f));
+  if (kind === 'tasks') ['status', 'description', 'resolution', 'title', 'priority', 'due_date', 'reason', 'context'].forEach(f => fields.add(f));
   if (kind === 'findings') fields.add('remediation_plan');
   if (user.role === 'client_grc_manager') (OWNER_FIELDS[kind] || []).forEach(f => fields.add(f));
   return fields;

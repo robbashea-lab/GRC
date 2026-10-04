@@ -1,6 +1,6 @@
 // One session-storage commit persists both command effects and their replay receipt.
 // This models Demo persistence only; it does not stand in for Mongo recovery tests.
-const stable = value => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
+export const stable = value => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
   ? Object.fromEntries(Object.keys(item).sort().map(key => [key,item[key]])) : item);
 export function commandRequest(db, path, clientId, key, body, execute) {
   if (typeof key !== 'string' || key.length < 1 || key.length > 128)
@@ -17,7 +17,7 @@ export function commandRequest(db, path, clientId, key, body, execute) {
   try { result=execute(); }
   catch(error) {
     // These synchronous effects are still local: the adapter has not saved yet.
-    if(error.status===422)error.create_rejected=true;
+    if([403,409,422,428].includes(error.status))error.create_rejected=true;
     throw error;
   }
   db.command_requests ||= {};

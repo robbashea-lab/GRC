@@ -22,6 +22,19 @@ async function activate(){
   return {body,data:(await api.post('/iso-audit/activate',body)).data};
 }
 const token=r=>({occurrence_id:r.current_occurrence_id,expected_updated_at:r.updated_at??null});
+
+test('one ticket command saves the exact audit item link without saving workpaper notes',async()=>{
+  const {data}=await activate(),r=data.reviews[0],key=auditPackage(r.iso_audit.package_key).items[0].key;
+  const body={...token(r),request_id:'audit-ticket-once',audit_item_key:key,title:'Gap',description:'Issue',remediation_title:'Correct gap',owner_id:null,due_date:'2030-01-01'};
+  const path='/reviews/'+r.review_id+'/create-finding';
+  const f=(await api.post(path,body)).data;
+  const saved=await get('/reviews/'+r.review_id);
+  expect(saved.iso_audit.items[key].finding_ids).toEqual([f.finding_id]);
+  expect(saved.iso_audit.items[key].notes).toBe('');
+  expect((await api.post(path,body)).data).toEqual(f);
+  await expect(api.post(path,{...body,description:'Changed'})).rejects.toMatchObject({response:{status:409}});
+  await expect(api.delete('/findings/'+f.finding_id,{data:{expected_updated_at:f.updated_at}})).rejects.toMatchObject({response:{status:409}});
+});
 test('prospective rotation is deterministic and does not turn workbook quarters into historical dates',()=>{
   expect(auditActivationPlan('2031-07-01','people-access-suppliers').map(r=>r.due_date)).toEqual(['2031-09-30','2031-12-31','2032-03-31','2032-06-30']);
   expect(auditActivationPlan('2031-02-31','governance-risk')).toEqual([]);
