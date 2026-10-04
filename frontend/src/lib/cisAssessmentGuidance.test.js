@@ -2,11 +2,11 @@ import data from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
 import catalog from '@catalogs/cisIG1.json';
 import legacy from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 
-test('versioned, shared read-only guidance covers exactly the 130 cumulative IG2 safeguards',()=>{
+test('versioned, shared read-only guidance covers exactly the 153 cumulative IG3 safeguards',()=>{
   expect(data.framework).toBe('cis-ig1');expect(data.version).toBe(catalog.version);
   expect(data.revision).toBe('2026-10-04');
   expect(Object.keys(data.requirements)).toEqual(catalog.requirements.map(r=>r.id));
-  expect(Object.keys(data.requirements)).toHaveLength(130);
+  expect(Object.keys(data.requirements)).toHaveLength(153);
   for(const [id,guidance] of Object.entries(data.requirements)){
     expect(Object.keys(guidance)).toEqual(['review','evidence','outcome']);
     for(const group of Object.values(guidance)){
@@ -20,7 +20,7 @@ test('versioned, shared read-only guidance covers exactly the 130 cumulative IG2
     for(const text of guidance.review)expect(text).toMatch(/review|confirm|compare|identify|verify|check|inspect|examine|CIS gives/i);
     expect(legacy.requirements[id].source).toMatch(/^https:\/\/cas\.docs\.cisecurity\.org\/en\/latest\/source\/Controls\d+\/#/);
   }
-  expect(new Set(Object.values(data.requirements).map(r=>JSON.stringify(r))).size).toBe(130);
+  expect(new Set(Object.values(data.requirements).map(r=>JSON.stringify(r))).size).toBe(153);
 });
 
 const text=id=>JSON.stringify(data.requirements[id]);

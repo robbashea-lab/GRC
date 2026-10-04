@@ -1,4 +1,4 @@
-"""IG3 mechanics only: neutral test content, never a production catalog."""
+"""Actual IG3 content through isolated routes; release enabled only in the test."""
 import asyncio
 import copy
 import csv
@@ -26,12 +26,6 @@ class CisIG3ScopeTests(unittest.IsolatedAsyncioTestCase):
         await harness.FrameworkTests.asyncSetUp(self)
         fixture = copy.deepcopy(CIS)
         fixture['available_implementation_groups'] = [1, 2, 3]
-        for ident in IG3_IDS:
-            definition = copy.deepcopy(CIS['requirements'][0])
-            definition.update(id=ident, implementation_group=3, title='Synthetic scope fixture '+ident,
-                              guidance='Synthetic persistence verification only.', source='https://example.test/synthetic')
-            fixture['requirements'].append(definition)
-            fixture['review_plans'][0]['safeguards'].append(ident)
         override = patch.dict(CIS, fixture)
         override.start()
         self.addCleanup(override.stop)
@@ -150,3 +144,27 @@ class CisIG3ScopeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.scope(2,key=key,**context)).status_code,200)
         self.assertEqual(await db.framework_assessments.find({'client_id':'a'}).to_list(None),before)
         self.assertEqual((await db.tasks.find_one({'task_id':'synthetic-open'}))['status'],'open')
+
+    async def test_optional_weekly_review_is_explicit_and_reused_after_scope_changes(self):
+        await self.configure()
+        await self.scope(3)
+        db=harness.server.db
+        self.assertEqual(await db.reviews.count_documents({'client_id':'a'}),15)
+        row=await db.framework_assessments.find_one({'client_id':'a','definition_id':'1.5'})
+        body={'plan_key':'passive-discovery-reconciliation','title':'Client discovery reconciliation','recurrence':'custom','custom_recurrence_days':7}
+        path='/api/framework_assessments/'+row['framework_assessment_id']+'/reviews'
+        invalid=await self.client.post(path,json={**body,'custom_recurrence_days':0})
+        self.assertEqual(invalid.status_code,422)
+        created=await self.client.post(path,json=body)
+        self.assertEqual(created.status_code,200,created.text)
+        self.assertEqual(created.json()['custom_recurrence_days'],7)
+        retry=await self.client.post(path,json=body)
+        self.assertEqual(retry.json()['review_id'],created.json()['review_id'])
+        self.assertEqual(await db.reviews.count_documents({'client_id':'a'}),16)
+        token=(await self.workspace())['configuration']['expected_updated_at']
+        reduced=await self.scope(2,token=token,confirm_reduction=True,reason='Isolated preservation check',effective_date='2026-10-03')
+        self.assertEqual(reduced.status_code,200,reduced.text)
+        await self.scope(3,token=reduced.json()['expected_updated_at'])
+        retained=await db.reviews.find_one({'review_id':created.json()['review_id']})
+        self.assertEqual((retained['title'],retained['recurrence'],retained['custom_recurrence_days']),('Client discovery reconciliation','custom',7))
+        self.assertTrue(retained['framework_driver_active'])

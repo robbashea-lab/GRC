@@ -1,4 +1,5 @@
-import {CATALOGS, FRAMEWORKS, SPECIFICATION_LABELS, reviewDrivers, cadenceDays} from './frameworks';
+import {operatorProgram} from './frameworkOperator';
+import {CATALOGS, SPECIFICATION_LABELS, reviewDrivers, cadenceDays} from './frameworks';
 
 export const BUSINESS_BASIS={organizational:'Organizational requirement',management:'Management decision',contractual:'Contractual requirement',customer:'Customer requirement',risk:'Risk-driven',recommended:'Best practice / recommendation',enhancement:'Recommended enhancement'};
 export const CADENCE_BASIS={organization_defined:'Organization-defined',risk_based:'Risk-based',contractual:'Contractual',recommended:'Recommendation recorded by organization'};
@@ -25,7 +26,7 @@ export function requirementBasis(kind,row={},related={}) {
   const add=(key,id,assessment)=>{
     if(!key||!id)return;
     const catalog=CATALOGS[key],definition=catalog?.requirements.find(d=>d.id===id)||{id,title:'Reference retained; definition unavailable',unavailable:true};
-    if(!groups.has(key))groups.set(key,{key,label:FRAMEWORKS.find(f=>f.key===key)?.label||key,version:catalog?.version||row.framework_version||'Version not recorded',requirements:[],plans:[],policyMappings:[]});
+    if(!groups.has(key))groups.set(key,{key,label:operatorProgram(key),version:catalog?.version||row.framework_version||'Version not recorded',requirements:[],plans:[],policyMappings:[]});
     const group=groups.get(key),old=group.requirements.find(r=>r.definition.id===id);
     if(old){if(assessment)old.assessment=assessment;return;}
     group.requirements.push({definition,assessment,classification:nativeClassification(key,definition)});
@@ -44,7 +45,7 @@ export function requirementBasis(kind,row={},related={}) {
 export function basisSummary(row) {
   const keys=[...new Set([row.framework_key,...(row.basis_framework_keys||[])].filter(Boolean))];
   if(keys.length>2)return `${keys.length} frameworks`;
-  if(keys.length)return keys.map(k=>FRAMEWORKS.find(f=>f.key===k)?.label||k).join(' + ');
+  if(keys.length)return keys.map(k=>operatorProgram(k)).join(' + ');
   return BUSINESS_BASIS[row.governance_context?.category]|| (row.risk_id?'Risk-driven':row.vendor_id?'Vendor governance':row.policy_id?'Policy governance':'Basis not recorded');
 }
 export function cadenceBasis(row,groups=[]) {
@@ -54,6 +55,6 @@ export function cadenceBasis(row,groups=[]) {
   return {current:row.recurrence==='custom'?`Every ${row.custom_recurrence_days} days`:row.recurrence||'Not recorded',
     classification:CADENCE_BASIS[context.cadence_source]||'Client configuration · rationale not recorded',rationale:context.cadence_rationale,
     proposed:explicit[0]||null,belowSource:!!explicit[0]&&cadenceDays(row.recurrence,row.custom_recurrence_days)>cadenceDays(explicit[0]),
-    sources:row.framework_drivers?drivers.map(d=>({framework:FRAMEWORKS.find(f=>f.key===d.framework_key)?.label||d.framework_key,key:d.framework_plan_key,basis:d.framework_basis,source:d.framework_source_cadence,minimum:d.framework_source_minimum,recommended:d.framework_default_cadence,refs:d.framework_cadence_references||[],active:d.framework_driver_active})):
+    sources:row.framework_drivers?drivers.map(d=>({framework:operatorProgram(d.framework_key),key:d.framework_plan_key,basis:d.framework_basis,source:d.framework_source_cadence,minimum:d.framework_source_minimum,recommended:d.framework_default_cadence,refs:d.framework_cadence_references||[],active:d.framework_driver_active})):
       groups.flatMap(g=>g.plans.map(p=>({framework:g.label,key:p.key,basis:p.basis,source:p.source_cadence,minimum:p.source_minimum,recommended:p.default_cadence,reason:p.reason,refs:p.cadence_references||[]})))};
 }

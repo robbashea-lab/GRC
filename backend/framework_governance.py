@@ -111,6 +111,8 @@ async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configurat
         if not old and plan.get('baseline_key'):
             equivalent=[p['key'] for c in CATALOGS.values() for p in c['review_plans'] if p.get('baseline_key')==plan['baseline_key']]
             old=await s.db.reviews.find_one({'client_id':cid,'$or':[{'baseline_key':plan['baseline_key']},{'framework_plan_key':{'$in':equivalent}}]},{'_id':0})
+        if old and plan.get('default_enabled') is False and plan['key'] not in state.get('framework_reviews', {}):
+            config['enabled'] = True
         if not config['enabled']:
             if old:await add_driver(s,cid,old['review_id'],key,plan,False)
             continue

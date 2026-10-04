@@ -2,7 +2,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import baseline from '@catalogs/onboardingCatalog.json';
-import {cis,FRAMEWORKS,reviewDrivers} from '../lib/frameworks';
+import {cis,FRAMEWORKS,reviewDrivers,activePlans} from '../lib/frameworks';
 import {cisReviewBriefs} from '../lib/cisOperations';
 import {reviewSchedule} from '../lib/reviewOccurrences';
 const api=axios.create({adapter:previewAdapter});
@@ -15,7 +15,7 @@ afterEach(()=>jest.useRealTimers());
 
 test('a fresh cumulative IG2 program retains source duties through 24 months of all 15 governance Reviews',async()=>{
  const cid=(await post('/clients',{name:'Synthetic IG2 operating-cycle regression'})).client_id;
- const state={version:3,step:3,requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,f.key==='cis-ig1'?'applies':'does_not_apply'])),policies:Object.fromEntries(baseline.policies.map(p=>[p.key,'unsure'])),reviews:[],framework_settings:{'cis-ig1':{implementation_group:2}},framework_reviews:Object.fromEntries(cis.review_plans.map(p=>[p.key,{enabled:true,recurrence:p.key==='data-recovery'?'quarterly':p.default_cadence,due_date:'2026-11-30'}]))};
+ const state={version:3,step:3,requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,f.key==='cis-ig1'?'applies':'does_not_apply'])),policies:Object.fromEntries(baseline.policies.map(p=>[p.key,'unsure'])),reviews:[],framework_settings:{'cis-ig1':{implementation_group:2}},framework_reviews:Object.fromEntries(activePlans('cis-ig1',{implementation_group:2}).map(p=>[p.key,{enabled:true,recurrence:p.key==='data-recovery'?'quarterly':p.default_cadence,due_date:'2026-11-30'}]))};
  await post('/onboarding/baseline',{client_id:cid,state,finalize:true});
  const original=await get('/frameworks/cis-ig1',cid),reviews=await get('/reviews',cid),snapshots=new Map(),counts={};
  expect(original.assessments).toHaveLength(130);expect(reviews).toHaveLength(15);

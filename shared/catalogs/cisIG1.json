@@ -1,6 +1,9 @@
 {
   "framework": "cis-ig1",
-  "available_implementation_groups": [1, 2],
+  "available_implementation_groups": [
+    1,
+    2
+  ],
   "version": "8.1",
   "implementation_group": 1,
   "verified_on": "2026-10-04",
@@ -66,6 +69,25 @@
         "establish": "Identify DHCP servers or IPAM sources and reconciliation owner.",
         "operate": "Collect observations and resolve inventory differences.",
         "dependencies": "1.1"
+      }
+    },
+    {
+      "id": "1.5",
+      "title": "Use a Passive Asset Discovery Tool",
+      "control": 1,
+      "control_name": "Inventory and Control of Enterprise Assets",
+      "type": "recurring",
+      "source_cadence": "At least weekly: review discovery results and use them to update inventory. Passive discovery operates between those reviews.",
+      "guidance": "Discover connected assets passively; use the results to refresh the asset inventory at least weekly.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#15-use-a-passive-asset-discovery-tool",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Confirm monitored network segments and reconcile dated discoveries to inventory entries. Trace an unknown asset through ownership and authorization decisions; check gaps between weekly reconciliations.",
+        "operate": "Discover connected assets passively; use the results to refresh the asset inventory at least weekly. At least weekly: review discovery results and use them to update inventory. Passive discovery operates between those reviews.",
+        "dependencies": "Safeguard 4.2: Establish and Maintain a Secure Configuration Process for Network Infrastructure Safeguard 12.4: Establish and Maintain Architecture Diagram(s)"
       }
     },
     {
@@ -159,6 +181,25 @@
         "establish": "Define authorized libraries and deployment limitations.",
         "operate": "Enforce library controls; handle changes safely.",
         "dependencies": "2.1; 2.5"
+      }
+    },
+    {
+      "id": "2.7",
+      "title": "Allowlist Authorized Scripts",
+      "control": 2,
+      "control_name": "Inventory and Control of Software Assets",
+      "type": "recurring",
+      "source_cadence": "CIS says bi-annually or more frequently. Interpret as every six months, supported by the CAS six-month test; enforcement is ongoing.",
+      "guidance": "Enforce execution of authorized scripts only and block others; reassess at least every six months.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#27-allowlist-authorized-scripts",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Identify script execution paths, including administrative tools, email and browser handling. Confirm authorized execution and blocked unauthorized execution using safe existing test results; check the latest reassessment date.",
+        "operate": "Enforce execution of authorized scripts only and block others; reassess at least every six months. CIS says bi-annually or more frequently. Interpret as every six months, supported by the CAS six-month test; enforcement is ongoing.",
+        "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory Safeguard 4.1: Establish and Maintain a Secure Configuration Process"
       }
     },
     {
@@ -348,6 +389,44 @@
       }
     },
     {
+      "id": "3.13",
+      "title": "Deploy a Data Loss Prevention Solution",
+      "control": 3,
+      "control_name": "Data Protection",
+      "type": "operational",
+      "source_cadence": "No fixed interval specified. The automated capability and inventory-update process must operate.",
+      "guidance": "Use automated sensitive-data discovery across enterprise and provider assets, and update the data inventory.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#313-deploy-a-data-loss-prevention-solution",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Confirm coverage of stored, processed and transmitted sensitive information, including remote-provider locations. Trace a detected data location to the inventory and investigate blind spots.",
+        "operate": "Use automated sensitive-data discovery across enterprise and provider assets, and update the data inventory. No fixed interval specified. The automated capability and inventory-update process must operate.",
+        "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory Safeguard 3.2: Establish and Maintain a Data Inventory"
+      }
+    },
+    {
+      "id": "3.14",
+      "title": "Log Sensitive Data Access",
+      "control": 3,
+      "control_name": "Data Protection",
+      "type": "operational",
+      "source_cadence": "No fixed review interval specified. Logging must cover relevant access events as they occur.",
+      "guidance": "Record access to sensitive data, including changes and disposal.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#314-log-sensitive-data-access",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Compare sensitive-data locations to enabled audit sources. Inspect representative access, modification and deletion records and identify locations or event types that are not recorded.",
+        "operate": "Record access to sensitive data, including changes and disposal. No fixed review interval specified. Logging must cover relevant access events as they occur.",
+        "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 2.1: Establish and Maintain a Software Inventory Safeguard 4.1: Establish and Maintain a Secure Configuration Process"
+      }
+    },
+    {
       "id": "4.1",
       "title": "Establish and Maintain a Secure Configuration Process",
       "control": 4,
@@ -505,6 +584,25 @@
         "establish": "Establish authorized wipe process for enterprise-owned portable devices.",
         "operate": "Maintain capability; execute on approved events.",
         "dependencies": "1.1; 6.2; 17.3"
+      }
+    },
+    {
+      "id": "4.12",
+      "title": "Separate Enterprise Workspaces on Mobile End-User Devices",
+      "control": 4,
+      "control_name": "Secure Configuration of Enterprise Assets and Software",
+      "type": "state",
+      "source_cadence": "No fixed interval specified; maintain the separation on supported devices.",
+      "guidance": "Separate enterprise and personal workspaces on mobile devices wherever supported.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#412-separate-enterprise-workspaces-on-mobile-end-user-devices",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Establish the supported mobile population, examine assigned profiles and confirm enterprise applications/data are separated from personal use. Record unsupported-device conditions without treating the whole safeguard as excluded.",
+        "operate": "Separate enterprise and personal workspaces on mobile devices wherever supported. No fixed interval specified; maintain the separation on supported devices.",
+        "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 2.1: Establish and Maintain a Software Inventory Safeguard 4.1: Establish and Maintain a Secure Configuration Process"
       }
     },
     {
@@ -689,6 +787,25 @@
         "establish": "Define directory/SSO coverage and limitations.",
         "operate": "Operate centralized access control.",
         "dependencies": "5.6; 6.6"
+      }
+    },
+    {
+      "id": "6.8",
+      "title": "Define and Maintain Role-Based Access Control",
+      "control": 6,
+      "control_name": "Access Control Management",
+      "type": "recurring",
+      "source_cadence": "Access-control review at least annually or more often. Role definitions and rights are maintained.",
+      "guidance": "Document necessary rights by role; review asset privileges for authorization at least annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#68-define-and-maintain-role-based-access-control",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Compare job duties, role definitions and actual asset privileges. Confirm reviews cover all privileges, including privileged and service access where relevant; investigate excessive and unmapped rights.",
+        "operate": "Document necessary rights by role; review asset privileges for authorization at least annually. Access-control review at least annually or more often. Role definitions and rights are maintained.",
+        "dependencies": "Safeguard 5.1: Establish and Maintain an Inventory of Accounts"
       }
     },
     {
@@ -985,6 +1102,25 @@
       }
     },
     {
+      "id": "8.12",
+      "title": "Collect Service Provider Logs",
+      "control": 8,
+      "control_name": "Audit Log Management",
+      "type": "state",
+      "source_cadence": "No fixed collection or human-review interval specified here; collect on an ongoing basis where supported.",
+      "guidance": "Obtain service-provider logs wherever the provider supports them.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#812-collect-service-provider-logs",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Match the provider inventory to available log interfaces and actual received records. Distinguish unavailable provider functionality from supported logging that has not been configured.",
+        "operate": "Obtain service-provider logs wherever the provider supports them. No fixed collection or human-review interval specified here; collect on an ongoing basis where supported.",
+        "dependencies": "Safeguard 4.1: Establish and Maintain a Secure Configuration Process Safeguard 15.1: Establish and Maintain an Inventory of Service Providers"
+      }
+    },
+    {
       "id": "9.1",
       "title": "Ensure Use of Only Fully Supported Browsers and Email Clients",
       "control": 9,
@@ -1082,6 +1218,25 @@
         "establish": "Agree unnecessary file types and gateway coverage.",
         "operate": "Enforce email file-type blocking.",
         "dependencies": "9.1"
+      }
+    },
+    {
+      "id": "9.7",
+      "title": "Deploy and Maintain Email Server Anti-Malware Protections",
+      "control": 9,
+      "control_name": "Email and Web Browser Protections",
+      "type": "operational",
+      "source_cadence": "No fixed interval specified. Protection is maintained in operation.",
+      "guidance": "Operate and maintain anti-malware protection for email servers.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#97-deploy-and-maintain-email-server-anti-malware-protections",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Include hosted email responsibility arrangements. Inspect enabled protection and existing detection/blocking results; distinguish mail-client protection from coverage of the email service.",
+        "operate": "Operate and maintain anti-malware protection for email servers. No fixed interval specified. Protection is maintained in operation.",
+        "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 4.1: Establish and Maintain a Secure Configuration Process"
       }
     },
     {
@@ -1390,6 +1545,25 @@
       }
     },
     {
+      "id": "12.8",
+      "title": "Establish and Maintain Dedicated Computing Resources for All Administrative Work",
+      "control": 12,
+      "control_name": "Network Infrastructure Management",
+      "type": "state",
+      "source_cadence": "No fixed interval specified; the restrictions apply during administrative work.",
+      "guidance": "Use physically or logically dedicated administrative computing resources, segmented from the primary network and without internet access.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#128-establish-and-maintain-dedicated-computing-resources-for-all-administrative-work",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Identify all administrative tasks and the resources used for them. Confirm network separation and denied internet access using existing configuration/test records, including remote administrative routes.",
+        "operate": "Use physically or logically dedicated administrative computing resources, segmented from the primary network and without internet access. No fixed interval specified; the restrictions apply during administrative work.",
+        "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 4.2: Establish and Maintain a Secure Configuration Process for Network Infrastructure"
+      }
+    },
+    {
       "id": "13.1",
       "title": "Centralize Security Event Alerting",
       "control": 13,
@@ -1501,6 +1675,101 @@
         "establish": "Identify flow/traffic collection coverage and destinations.",
         "operate": "Collect network flow or traffic records.",
         "dependencies": "12.2; 13.1"
+      }
+    },
+    {
+      "id": "13.7",
+      "title": "Deploy a Host-Based Intrusion Prevention Solution",
+      "control": 13,
+      "control_name": "Network Monitoring and Defense",
+      "type": "operational",
+      "source_cadence": "No fixed interval specified; prevention operates on applicable assets.",
+      "guidance": "Provide host intrusion prevention where appropriate and/or supported.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#137-deploy-a-host-based-intrusion-prevention-solution",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Confirm prevention capability and enabled mode, identify coverage gaps, and document support/appropriateness decisions. Distinguish detection-only telemetry from prevention.",
+        "operate": "Provide host intrusion prevention where appropriate and/or supported. No fixed interval specified; prevention operates on applicable assets.",
+        "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 2.1: Establish and Maintain a Software Inventory"
+      }
+    },
+    {
+      "id": "13.8",
+      "title": "Deploy a Network Intrusion Prevention Solution",
+      "control": 13,
+      "control_name": "Network Monitoring and Defense",
+      "type": "operational",
+      "source_cadence": "No fixed interval specified; prevention operates on relevant network paths.",
+      "guidance": "Provide network intrusion prevention where appropriate.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#138-deploy-a-network-intrusion-prevention-solutions",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Map relevant traffic paths to prevention controls and confirm blocking mode. Review uncovered or bypass routes and the rationale for where prevention is appropriate.",
+        "operate": "Provide network intrusion prevention where appropriate. No fixed interval specified; prevention operates on relevant network paths.",
+        "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 12.4: Establish and Maintain Architecture Diagram(s)"
+      }
+    },
+    {
+      "id": "13.9",
+      "title": "Deploy Port-Level Access Control",
+      "control": 13,
+      "control_name": "Network Monitoring and Defense",
+      "type": "state",
+      "source_cadence": "No fixed interval specified; enforce when network access is attempted.",
+      "guidance": "Enforce port-level network access using 802.1X or a similar authentication-based approach.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#139-deploy-port-level-access-control",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Confirm which access ports are controlled and how devices/users authenticate. Examine existing authorized and unauthorized access test results and bypass arrangements.",
+        "operate": "Enforce port-level network access using 802.1X or a similar authentication-based approach. No fixed interval specified; enforce when network access is attempted.",
+        "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory"
+      }
+    },
+    {
+      "id": "13.10",
+      "title": "Perform Application Layer Filtering",
+      "control": 13,
+      "control_name": "Network Monitoring and Defense",
+      "type": "operational",
+      "source_cadence": "No fixed interval specified; filtering operates on relevant traffic.",
+      "guidance": "Filter network traffic at the application layer.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1310-perform-application-layer-filtering",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Identify application-aware filtering points, relevant traffic paths and enabled policies. Review a representative permitted and blocked application request from existing records.",
+        "operate": "Filter network traffic at the application layer. No fixed interval specified; filtering operates on relevant traffic.",
+        "dependencies": "Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory Safeguard 2.1: Establish and Maintain a Software Inventory"
+      }
+    },
+    {
+      "id": "13.11",
+      "title": "Tune Security Event Alerting Thresholds",
+      "control": 13,
+      "control_name": "Network Monitoring and Defense",
+      "type": "recurring",
+      "source_cadence": "Monthly or more frequently. This is the tuning activity, not just a governance meeting.",
+      "guidance": "Adjust security-event alert thresholds at least monthly.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1311-tune-security-event-alerting-thresholds",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Examine a dated tuning history, the thresholds considered and the rationale/results. Investigate repeated missed periods and entries that merely acknowledge alerts without evaluating thresholds.",
+        "operate": "Adjust security-event alert thresholds at least monthly. Monthly or more frequently. This is the tuning activity, not just a governance meeting.",
+        "dependencies": "Safeguard 13.1: Centralize Security Event Alerting"
       }
     },
     {
@@ -1685,6 +1954,63 @@
         "establish": "Identify required security terms and gaps.",
         "operate": "Maintain contractual security commitments.",
         "dependencies": "15.2; 15.3"
+      }
+    },
+    {
+      "id": "15.5",
+      "title": "Assess Service Providers",
+      "control": 15,
+      "control_name": "Service Provider Management",
+      "type": "recurring",
+      "source_cadence": "Source wording: annually, at a minimum, or with new and renewed contracts. Plan for annual coverage plus contract-triggered assessment; do not use contract renewal to excuse multi-year gaps.",
+      "guidance": "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#155-assess-service-providers",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Reconcile provider classifications to assessments, dates and contract events. Confirm the policy-defined depth is met and follow up missing, outdated or adverse results.",
+        "operate": "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts. Source wording: annually, at a minimum, or with new and renewed contracts. Plan for annual coverage plus contract-triggered assessment; do not use contract renewal to excuse multi-year gaps.",
+        "dependencies": "Safeguard 15.1: Establish and Maintain an Inventory of Service Providers Safeguard 15.2: Establish and Maintain a Service Provider Management Policy"
+      }
+    },
+    {
+      "id": "15.6",
+      "title": "Monitor Service Providers",
+      "control": 15,
+      "control_name": "Service Provider Management",
+      "type": "state",
+      "source_cadence": "No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy.",
+      "guidance": "Monitor providers according to the enterprise provider-management policy.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#156-monitor-service-providers",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Identify the promised monitoring for each provider class and compare it with actual results and escalation. Review policy-defined timing without relabeling it as a CIS universal frequency.",
+        "operate": "Monitor providers according to the enterprise provider-management policy. No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy.",
+        "dependencies": "Safeguard 15.1: Establish and Maintain an Inventory of Service Providers Safeguard 15.2: Establish and Maintain a Service Provider Management Policy"
+      }
+    },
+    {
+      "id": "15.7",
+      "title": "Securely Decommission Service Providers",
+      "control": 15,
+      "control_name": "Service Provider Management",
+      "type": "event",
+      "source_cadence": "Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window.",
+      "guidance": "End provider relationships securely.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#157-securely-decommission-service-providers",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "For a terminated provider, follow the relevant access, data-flow and data-disposition decisions through completion. If there were no terminations, examine readiness and record that operating evidence was unavailable.",
+        "operate": "End provider relationships securely. Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window.",
+        "dependencies": "Safeguard 15.1: Establish and Maintain an Inventory of Service Providers Safeguard 15.2: Establish and Maintain a Service Provider Management Policy"
       }
     },
     {
@@ -1897,6 +2223,63 @@
       }
     },
     {
+      "id": "16.12",
+      "title": "Implement Code-Level Security Checks",
+      "control": 16,
+      "control_name": "Application Software Security",
+      "type": "event",
+      "source_cadence": "Within the application lifecycle; no fixed calendar frequency or universal every-commit rule specified.",
+      "guidance": "Use both static and dynamic code-analysis tools during the application lifecycle to check secure coding.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1612-implement-code-level-security-checks",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Review the application/release population and where each analysis type operates. Trace representative results to triage and relevant remediation, without requiring a new Omnisciente integration.",
+        "operate": "Use both static and dynamic code-analysis tools during the application lifecycle to check secure coding. Within the application lifecycle; no fixed calendar frequency or universal every-commit rule specified.",
+        "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory"
+      }
+    },
+    {
+      "id": "16.13",
+      "title": "Conduct Application Penetration Testing",
+      "control": 16,
+      "control_name": "Application Software Security",
+      "type": "state",
+      "source_cadence": "No fixed frequency specified in 16.13. Use application/program requirements; do not import the annual infrastructure-test interval as this safeguard's wording.",
+      "guidance": "Perform application penetration testing, considering authenticated testing for critical applications and manual tester analysis.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1613-conduct-application-penetration-testing",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Identify tested applications, criticality, authentication coverage and manual business-logic exploration. Review test scope, findings and follow-up; distinguish scanning from penetration testing.",
+        "operate": "Perform application penetration testing, considering authenticated testing for critical applications and manual tester analysis. No fixed frequency specified in 16.13. Use application/program requirements; do not import the annual infrastructure-test interval as this safeguard's wording.",
+        "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory"
+      }
+    },
+    {
+      "id": "16.14",
+      "title": "Conduct Threat Modeling",
+      "control": 16,
+      "control_name": "Application Software Security",
+      "type": "event",
+      "source_cadence": "During design, before coding. No fixed calendar interval specified.",
+      "guidance": "Have specially trained people model application threats and address design flaws before code is created.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1614-conduct-threat-modeling",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Inspect a design-stage model, participants' relevant training, entry points and access levels. Trace identified design risks to decisions before implementation.",
+        "operate": "Have specially trained people model application threats and address design flaws before code is created. During design, before coding. No fixed calendar interval specified.",
+        "dependencies": "Safeguard 2.1: Establish and Maintain a Software Inventory"
+      }
+    },
+    {
       "id": "17.1",
       "title": "Designate Personnel to Manage Incident Handling",
       "control": 17,
@@ -2028,6 +2411,25 @@
       }
     },
     {
+      "id": "17.9",
+      "title": "Establish and Maintain Security Incident Thresholds",
+      "control": 17,
+      "control_name": "Incident Response Management",
+      "type": "recurring",
+      "source_cadence": "Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review.",
+      "guidance": "Define and maintain incident thresholds distinguishing incidents from events; review annually and after relevant significant changes.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#179-establish-and-maintain-security-incident-thresholds",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Confirm the event/incident distinction is usable by responders and linked to the response process. Check the last review and relevant changes; keep CAS prioritization/escalation prompts separate from the safeguard minimum.",
+        "operate": "Define and maintain incident thresholds distinguishing incidents from events; review annually and after relevant significant changes. Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review.",
+        "dependencies": "Safeguard 17.4: Establish and Maintain an Incident Response Process"
+      }
+    },
+    {
       "id": "18.1",
       "title": "Establish and Maintain a Penetration Testing Program",
       "control": 18,
@@ -2083,6 +2485,44 @@
         "operate": "Remediate penetration-test findings. Prioritize test findings by risk and apply documented vulnerability remediation timelines and effort according to impact and priority.",
         "dependencies": "7.2; 18.1; 18.2"
       }
+    },
+    {
+      "id": "18.4",
+      "title": "Validate Security Measures",
+      "control": 18,
+      "control_name": "Penetration Testing",
+      "type": "event",
+      "source_cadence": "After each penetration test. No fixed number of days for follow-up specified.",
+      "guidance": "Validate defenses after every penetration test; adjust detection rules or capabilities when needed.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#184-validate-security-measures",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Match each completed test to a defense-validation result. Check whether techniques used were detected and whether necessary changes were made; include application tests where relevant.",
+        "operate": "Validate defenses after every penetration test; adjust detection rules or capabilities when needed. After each penetration test. No fixed number of days for follow-up specified.",
+        "dependencies": "Safeguard 18.1: Establish and Maintain a Penetration Testing Program"
+      }
+    },
+    {
+      "id": "18.5",
+      "title": "Perform Periodic Internal Penetration Tests",
+      "control": 18,
+      "control_name": "Penetration Testing",
+      "type": "recurring",
+      "source_cadence": "No less than annually; more frequent testing follows the program where specified.",
+      "guidance": "Perform internal penetration tests under the program at least annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#185-perform-periodic-internal-penetration-tests",
+      "version": "8.1",
+      "implementation_group": 3,
+      "operating_guidance": {
+        "accountable_role": "Responsible client team or provider (client to identify)",
+        "client_provider_split": "Client approves scope and exceptions; the responsible client team or provider performs the activity and supplies relevant records.",
+        "establish": "Verify internal scope, test completion date and alignment with the program; inspect findings and their follow-up. Keep external and internal test coverage separately visible.",
+        "operate": "Perform internal penetration tests under the program at least annually. No less than annually; more frequent testing follows the program where specified.",
+        "dependencies": "Safeguard 18.1: Establish and Maintain a Penetration Testing Program"
+      }
     }
   ],
   "review_plans": [
@@ -2101,7 +2541,8 @@
         "1.1",
         "1.2",
         "1.3",
-        "1.4"
+        "1.4",
+        "1.5"
       ],
       "default_cadence": "semiannual",
       "review_type": "asset",
@@ -2145,7 +2586,8 @@
         "2.5",
         "2.6",
         "9.1",
-        "12.1"
+        "12.1",
+        "2.7"
       ],
       "default_cadence": "monthly",
       "review_type": "software",
@@ -2183,7 +2625,8 @@
         "3.9",
         "3.10",
         "3.11",
-        "3.12"
+        "3.12",
+        "3.13"
       ],
       "default_cadence": "annual",
       "review_type": "policy",
@@ -2245,7 +2688,8 @@
         "6.4",
         "6.5",
         "6.6",
-        "6.7"
+        "6.7",
+        "6.8"
       ],
       "default_cadence": "quarterly",
       "review_type": "access",
@@ -2310,7 +2754,9 @@
         "8.8",
         "8.9",
         "8.10",
-        "8.11"
+        "8.11",
+        "3.14",
+        "8.12"
       ],
       "default_cadence": "annual",
       "review_type": "configuration",
@@ -2393,7 +2839,10 @@
         "15.1",
         "15.2",
         "15.3",
-        "15.4"
+        "15.4",
+        "15.5",
+        "15.6",
+        "15.7"
       ],
       "default_cadence": "annual",
       "review_type": "vendor",
@@ -2432,7 +2881,8 @@
         "17.5",
         "17.6",
         "17.7",
-        "17.8"
+        "17.8",
+        "17.9"
       ],
       "default_cadence": "annual",
       "review_type": "incident",
@@ -2468,7 +2918,9 @@
         "10.4",
         "10.5",
         "10.6",
-        "10.7"
+        "10.7",
+        "4.12",
+        "9.7"
       ],
       "default_cadence": "quarterly",
       "review_type": "configuration",
@@ -2493,7 +2945,13 @@
         "13.3",
         "13.4",
         "13.5",
-        "13.6"
+        "13.6",
+        "12.8",
+        "13.7",
+        "13.8",
+        "13.9",
+        "13.10",
+        "13.11"
       ],
       "default_cadence": "quarterly",
       "review_type": "configuration",
@@ -2519,7 +2977,9 @@
         "16.8",
         "16.9",
         "16.10",
-        "16.11"
+        "16.11",
+        "16.12",
+        "16.14"
       ],
       "default_cadence": "monthly",
       "review_type": "configuration",
@@ -2538,7 +2998,10 @@
       "safeguards": [
         "18.1",
         "18.2",
-        "18.3"
+        "18.3",
+        "16.13",
+        "18.4",
+        "18.5"
       ],
       "default_cadence": "annual",
       "review_type": "vulnerability",
@@ -2549,7 +3012,94 @@
       "cadence_class": "D",
       "cadence_references": [],
       "reason": "Group related work without replacing external technical activity or automatically changing an existing schedule.",
-      "ig2_operating_context": "18.2: qualified external testing at least annually, including reconnaissance; 18.3: risk-prioritized remediation. A Review alone is not a penetration test."
+      "ig2_operating_context": "18.2: qualified external testing at least annually, including reconnaissance; 18.3: risk-prioritized remediation. A Review alone is not a penetration test.",
+      "ig3_title": "Penetration Testing Program Review"
+    },
+    {
+      "key": "passive-discovery-reconciliation",
+      "title": "Passive Discovery Inventory Reconciliation",
+      "safeguards": [
+        "1.5"
+      ],
+      "default_cadence": "custom",
+      "review_type": "asset",
+      "baseline_key": null,
+      "source_cadence": "Weekly or more frequently. Review passive-discovery results and update the inventory.",
+      "source_minimum": null,
+      "cadence_class": "B",
+      "cadence_references": [],
+      "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
+      "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
+      "default_enabled": false,
+      "default_custom_recurrence_days": 7
+    },
+    {
+      "key": "script-allowlist-reassessment",
+      "title": "Script Allowlist Reassessment",
+      "safeguards": [
+        "2.7"
+      ],
+      "default_cadence": "semiannual",
+      "review_type": "software",
+      "baseline_key": null,
+      "source_cadence": "At least every six months; enforcement operates between reassessments.",
+      "source_minimum": null,
+      "cadence_class": "B",
+      "cadence_references": [],
+      "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
+      "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
+      "default_enabled": false
+    },
+    {
+      "key": "event-alert-tuning",
+      "title": "Security Event Alert Threshold Tuning",
+      "safeguards": [
+        "13.11"
+      ],
+      "default_cadence": "monthly",
+      "review_type": "security",
+      "baseline_key": null,
+      "source_cadence": "Tune alert thresholds monthly or more frequently.",
+      "source_minimum": null,
+      "cadence_class": "B",
+      "cadence_references": [],
+      "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
+      "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
+      "default_enabled": false
+    },
+    {
+      "key": "provider-assessment",
+      "title": "Service Provider Assessment",
+      "safeguards": [
+        "15.5"
+      ],
+      "default_cadence": "annual",
+      "review_type": "vendor",
+      "baseline_key": null,
+      "source_cadence": "At least annually and on new or renewed contracts. Contract events require timely one-off follow-up.",
+      "source_minimum": null,
+      "cadence_class": "B",
+      "cadence_references": [],
+      "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
+      "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
+      "default_enabled": false
+    },
+    {
+      "key": "internal-penetration-test",
+      "title": "Internal Penetration Testing",
+      "safeguards": [
+        "18.5"
+      ],
+      "default_cadence": "annual",
+      "review_type": "security",
+      "baseline_key": null,
+      "source_cadence": "Internal testing at least annually under program requirements. Validate defenses after each test separately.",
+      "source_minimum": null,
+      "cadence_class": "B",
+      "cadence_references": [],
+      "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
+      "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
+      "default_enabled": false
     }
   ],
   "policy_mappings": [

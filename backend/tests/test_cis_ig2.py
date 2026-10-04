@@ -35,7 +35,7 @@ class CisIG2Tests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual({d['id'] for d in active_definitions('cis-ig1',{'implementation_group':2})},expected)
         self.assertEqual(len(active_definitions('cis-ig1')),56)
         self.assertEqual(sum(d['implementation_group']==2 for d in CIS['requirements']),74)
-        self.assertEqual(set(CIS_CRITERIA),expected)
+        self.assertEqual({ident for ident in CIS_CRITERIA if next(d for d in CIS['requirements'] if d['id']==ident)['implementation_group']<=2},expected)
         self.assertEqual(len(active_plans('cis-ig1')),12)
         self.assertEqual(len(active_plans('cis-ig1',{'implementation_group':2})),15)
         self.assertNotIn('15.5',expected)

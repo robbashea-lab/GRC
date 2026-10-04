@@ -70,6 +70,7 @@ function reconcileCatalog(db,cid,state,key,catalog){
     const equivalent=Object.values(CATALOGS).flatMap(c=>c.review_plans).filter(other=>p.baseline_key&&other.baseline_key===p.baseline_key).map(other=>other.key);
     const shared=sharedFrameworkPlans(state).find(group=>group.drivers.some(d=>d.key===p.key))||p;
     const c=reviewConfig(state,shared),old=db.reviews.find(r=>r.client_id===cid&&r.framework_plan_key===p.key)||(p.baseline_key&&db.reviews.find(r=>r.client_id===cid&&(r.baseline_key===p.baseline_key||equivalent.includes(r.framework_plan_key))));
+    if(old&&p.default_enabled===false&&!Object.hasOwn(state.framework_reviews||{},p.key))c.enabled=true;
     if(!c.enabled){if(old)addReviewDriver(old,key,p,false);continue;}
     const mapping={framework_key:key,framework_version:catalog.version,framework_plan_key:p.key,framework_driver_active:true,framework_safeguards:p.safeguards,framework_basis:p.basis,framework_source_cadence:p.source_cadence,framework_default_cadence:p.default_cadence};
     let review=old;

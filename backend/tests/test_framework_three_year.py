@@ -11,7 +11,7 @@ from datetime import datetime as RealDatetime, time, timezone, timedelta
 import test_client_dashboard_sources as harness
 import test_ten_year_operation as clocks
 import iso_audit, onboarding_recovery, policy_reviews, review_commands, risk_lifecycle
-from framework_catalog import CATALOGS, FRAMEWORKS, active_definitions
+from framework_catalog import FRAMEWORKS, active_definitions, active_plans
 from routes.onboarding import BASELINE_CATALOG
 
 server=harness.server
@@ -52,7 +52,7 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                 cid=client['client_id']
                 state={'version':3,'step':3,'policies':{p['key']:'unsure' for p in BASELINE_CATALOG['policies']},
                     'requirements':{f['key']:'applies' if f['key']==framework else 'does_not_apply' for f in FRAMEWORKS},
-                    'reviews':[],'framework_reviews':{p['key']:{'enabled':True,'recurrence':p['default_cadence'],'due_date':'2027-03-31'} for p in CATALOGS[framework]['review_plans']}}
+                    'reviews':[],'framework_reviews':{p['key']:{'enabled':True,'recurrence':p['default_cadence'],'due_date':'2027-03-31'} for p in active_plans(framework)}}
                 await self.post('/onboarding/baseline',{'client_id':cid,'state':state,'finalize':True})
                 workspace=await self.get('/frameworks/'+framework,client_id=cid)
                 self.assertEqual(len(workspace['assessments']),TIMELINE['assessment_counts'][framework])

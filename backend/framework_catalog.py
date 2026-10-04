@@ -39,7 +39,7 @@ def client_configuration(key, client, state=None):
 
 def active_plans(key, configuration=None):
     allowed = {d['id'] for d in active_definitions(key, configuration)}
-    return [{**p, 'safeguards': [ident for ident in p['safeguards'] if ident in allowed]}
+    return [{**p, 'title': p.get('ig3_title', p['title']) if key == 'cis-ig1' and (configuration or {}).get('implementation_group') == 3 else p['title'], 'safeguards': [ident for ident in p['safeguards'] if ident in allowed]}
             for p in CATALOGS[key]['review_plans'] if any(ident in allowed for ident in p['safeguards'])]
 
 

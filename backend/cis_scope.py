@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator, field_valida
 
 
 def available_groups():
-    # Explicit release gate: IG3 content and authorization are not yet delivered.
+    # Explicit release gate: prepared IG3 content awaits completed release verification.
     return CIS['available_implementation_groups']
 
 

@@ -1,7 +1,7 @@
 import {actionTitle,daysDue,taskSource} from './actionItems';
 import {dateMatches} from './tableFilters';
 import {findingOpen} from './findingMetrics';
-import {FRAMEWORKS} from './frameworks';
+import {operatorProgram} from './frameworkOperator';
 import {occurrenceId,relatedReviewInitialValues} from './reviewOccurrences';
 import {ticketRecords,ticketStage} from './remediationTickets';
 
@@ -31,7 +31,7 @@ export function actionOrigin(record,records={},finding) {
   const source=finding||record,cid=record.client_id;
   const find=(kind,key,id)=>(records[kind]||[]).find(r=>r[key]===id&&r.client_id===cid);
   const aid=source.framework_assessment_id||record.framework_assessment_id;
-  if(aid){const target=find('framework_assessments','framework_assessment_id',aid);return {kind:'framework_assessments',target,label:target?`${FRAMEWORKS.find(f=>f.key===target.framework_key)?.label||target.framework_key} Assessment → ${target.framework_key==='cis-ig1'?'Safeguard ':''}${target.definition_id}`:'Assessment unavailable',id:aid};}
+  if(aid){const target=find('framework_assessments','framework_assessment_id',aid);return {kind:'framework_assessments',target,label:target?`${operatorProgram(target.framework_key)} Assessment → ${target.framework_key==='cis-ig1'?'Safeguard ':''}${target.definition_id}`:'Assessment unavailable',id:aid};}
   const rid=source.review_id||record.review_id;
   if(rid){const target=find('reviews','review_id',rid),origin={...source,review_id:rid,occurrence_id:source.occurrence_id||record.occurrence_id};
     const initialValues=target?relatedReviewInitialValues(target,origin):{};

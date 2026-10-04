@@ -32,6 +32,13 @@
       "ask": "For 1.4, ask the IT asset owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 1.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect observations and resolve inventory differences. Use Findings and Actions for follow-up and validation."
     },
+    "1.5": {
+      "plain": "Discover connected assets passively; use the results to refresh the asset inventory at least weekly. A sensor reports what it sees; someone or an operating process must use that information to keep the inventory current. Ask the network operator for one recent discovery and its inventory disposition.",
+      "start": "Confirm monitored network segments and reconcile dated discoveries to inventory entries. Trace an unknown asset through ownership and authorization decisions; check gaps between weekly reconciliations. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Sensor coverage map, discovery output, dated inventory change log or provider reconciliation record. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 1.5] Were passive-discovery results reviewed and used to update inventory at least weekly? [Explanatory prompt] Which networks or weeks lack supporting records? At least weekly: review discovery results and use them to update inventory. Passive discovery operates between those reviews.",
+      "gaps": "Unmonitored segments; recurring discoveries never added to inventory; weekly reconciliation missed. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
     "2.1": {
       "plain": "Keep a usable record of licensed software installed on the organization's devices. It should explain what each product is, who publishes it, when use began and why it is needed. Review and update it at least every six months.",
       "start": "Bring together IT's installed-software list and purchasing or subscription records. Ask business teams to identify applications they use. Reconcile missing entries and complete the required and, where appropriate, additional details listed in the assessment guidance.",
@@ -73,6 +80,13 @@
       "evidence": "Library rule samples and reassessment results. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
       "ask": "For 2.6, ask the IT software owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 2.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce library controls; handle changes safely. Use Findings and Actions for follow-up and validation."
+    },
+    "2.7": {
+      "plain": "Enforce execution of authorized scripts only and block others; reassess at least every six months. An approved list alone does not stop execution. Digital signatures and version control are examples, not a mandate to buy a specific tool or use both in every environment.",
+      "start": "Identify script execution paths, including administrative tools, email and browser handling. Confirm authorized execution and blocked unauthorized execution using safe existing test results; check the latest reassessment date. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Approved script list, enforcement configuration, safe allow/block test results, reassessment record. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 2.7] Does technical enforcement allow authorized scripts and block unauthorized scripts, and was it reassessed within six months? [Explanatory prompt] Which execution paths were examined? CIS says bi-annually or more frequently. Interpret as every six months, supported by the CAS six-month test; enforcement is ongoing.",
+      "gaps": "A script list exists without enforcement; unsigned or unapproved scripts bypass controls; reassessment is overdue. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
     },
     "3.1": {
       "plain": "Write down how information should be handled through its life: who owns it, how sensitive it is, how to use it, how long to keep it and how to dispose of it. Review this process annually and after significant relevant changes.",
@@ -158,6 +172,20 @@
       "ask": "For 3.12, ask the Client data owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 3.12, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce storage and processing separation. Use Findings and Actions for follow-up and validation."
     },
+    "3.13": {
+      "plain": "Use automated sensitive-data discovery across enterprise and provider assets, and update the data inventory. The title refers to DLP, but this safeguard focuses on finding sensitive data and updating its inventory. Do not add a universal blocking requirement or a mandated scan interval.",
+      "start": "Confirm coverage of stored, processed and transmitted sensitive information, including remote-provider locations. Trace a detected data location to the inventory and investigate blind spots. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Discovery coverage/export, DLP configuration, provider coverage statement and matched data-inventory update. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 3.13] Does automated discovery cover sensitive data across the stated locations and feed the inventory? [Explanatory prompt] Show a recent detected location and its inventory entry. No fixed interval specified. The automated capability and inventory-update process must operate.",
+      "gaps": "Remote providers excluded without analysis; data detected but inventory unchanged; automation absent. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "3.14": {
+      "plain": "Record access to sensitive data, including changes and disposal. Logging is technical execution. The annual process Review checks coverage; inherited 8.11 still requires actual log review at least weekly. Neither duty is satisfied merely by linking the Review.",
+      "start": "Compare sensitive-data locations to enabled audit sources. Inspect representative access, modification and deletion records and identify locations or event types that are not recorded. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Audit-source configuration and representative access, change and disposal log entries. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 3.14] Are sensitive-data access, modification and disposal recorded? [Explanatory prompt] Which data stores and event types do the examples cover? No fixed review interval specified. Logging must cover relevant access events as they occur.",
+      "gaps": "Read access omitted; modification/deletion absent; important data locations have no logs. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
     "4.1": {
       "plain": "Have documented instructions for setting up and maintaining devices and software securely, instead of relying on installation defaults or individual memory. Cover the technologies actually used, and review the process annually and after significant relevant changes.",
       "start": "Ask IT for its setup procedures for computers, mobile devices, servers and applications. Compare their coverage with the asset and software inventories. Identify who maintains the instructions when a technology or business process changes.",
@@ -234,6 +262,13 @@
       "evidence": "Capability coverage and authorized wipe record. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
       "ask": "For 4.11, ask the IT configuration owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 4.11, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain capability; execute on approved events. Use Findings and Actions for follow-up and validation."
+    },
+    "4.12": {
+      "plain": "Separate enterprise and personal workspaces on mobile devices wherever supported. Start with the mobile fleet owner and device capability list. Named vendor profile types are examples; the criterion is the separation achieved, not the brand.",
+      "start": "Establish the supported mobile population, examine assigned profiles and confirm enterprise applications/data are separated from personal use. Record unsupported-device conditions without treating the whole safeguard as excluded. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Device capability inventory, management-profile configuration, representative device compliance record. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 4.12] Do supported mobile devices separate enterprise and personal workspaces? [Explanatory prompt] Which devices cannot support separation and how was that established? No fixed interval specified; maintain the separation on supported devices.",
+      "gaps": "Supported devices use mixed workspaces; profiles assigned but ineffective; support limitation unsubstantiated. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
     },
     "5.1": {
       "plain": "Keep track of accounts that can use the organization's systems, including administrator and service accounts—accounts used by software rather than a person. Record the identifying details and validate active-account authorization at least quarterly.",
@@ -325,6 +360,13 @@
       "evidence": "SSO coverage and access configuration samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
       "ask": "For 6.7, ask the Client access owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 6.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate centralized access control. Use Findings and Actions for follow-up and validation."
+    },
+    "6.8": {
+      "plain": "Document necessary rights by role; review asset privileges for authorization at least annually. The existing quarterly Review can carry this check if its scope includes rights and roles. A list of active accounts alone is insufficient. This concerns the client enterprise, not Omnisciente permission redesign.",
+      "start": "Compare job duties, role definitions and actual asset privileges. Confirm reviews cover all privileges, including privileged and service access where relevant; investigate excessive and unmapped rights. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Role-to-rights matrix, entitlement export, dated authorization review and resulting corrections. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 6.8] Are role rights documented and all asset privileges validated as authorized at least annually? [Explanatory prompt] Does the existing quarterly account review cover privileges as well as account existence? Access-control review at least annually or more often. Role definitions and rights are maintained.",
+      "gaps": "Role names have no defined rights; actual rights differ; annual review omits asset classes or privileges. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
     },
     "7.1": {
       "plain": "Have a documented process for managing security weaknesses in devices and software: identifying the work, deciding who handles it and maintaining the process. Review and update it annually and after significant relevant changes. This does not import higher-group scanning requirements into IG1.",
@@ -452,6 +494,13 @@
       "ask": "For 8.11, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 8.11, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Review logs and investigate anomalies. Use Findings and Actions for follow-up and validation."
     },
+    "8.12": {
+      "plain": "Obtain service-provider logs wherever the provider supports them. Ask for actual received records rather than a subscription name. Authentication, authorization and data events are source examples; do not make every example universally mandatory under this safeguard alone.",
+      "start": "Match the provider inventory to available log interfaces and actual received records. Distinguish unavailable provider functionality from supported logging that has not been configured. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Provider logging capability record, connector configuration, representative received logs. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 8.12] Are supported service-provider logs being collected? [Explanatory prompt] Which providers lack support, and which supported sources have collection gaps? No fixed collection or human-review interval specified here; collect on an ongoing basis where supported.",
+      "gaps": "Supported sources not enabled; connector configured but no records received; unsupported claim lacks support. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
     "9.1": {
       "plain": "Allow only fully supported browsers and email clients using the vendor's latest version. Older executable versions can leave known weaknesses available even when a newer version has also been installed.",
       "start": "Ask IT which browsers and email applications can run on devices. Compare installed versions with the vendors' current release and support information. Include secondary browsers or email clients used by individual teams.",
@@ -493,6 +542,13 @@
       "evidence": "Gateway policy and representative blocking record. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
       "ask": "For 9.6, ask the Messaging/endpoint owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 9.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce email file-type blocking. Use Findings and Actions for follow-up and validation."
+    },
+    "9.7": {
+      "plain": "Operate and maintain anti-malware protection for email servers. Attachment scanning and sandboxing illustrate possible approaches. CIS does not require a named product, or both approaches as separate mandatory purchases.",
+      "start": "Include hosted email responsibility arrangements. Inspect enabled protection and existing detection/blocking results; distinguish mail-client protection from coverage of the email service. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Email-service protection settings, provider service-scope record, recent protection event or safe test record. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 9.7] Is email-server anti-malware protection deployed and maintained? [Explanatory prompt] What demonstrates that the hosted or local email service is covered? No fixed interval specified. Protection is maintained in operation.",
+      "gaps": "Only endpoints protected; email protection disabled or unmaintained; hosted-service responsibility unclear. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
     },
     "10.1": {
       "plain": "Deploy and maintain anti-malware protection across enterprise assets. Anti-malware helps detect or stop harmful software. Owning licenses or installing an agent is not enough if protection is missing, disabled or unhealthy.",
@@ -627,6 +683,13 @@
       "ask": "For 12.7, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 12.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Require VPN and authentication before resource access. Use Findings and Actions for follow-up and validation."
     },
+    "12.8": {
+      "plain": "Use physically or logically dedicated administrative computing resources, segmented from the primary network and without internet access. A dedicated account is not itself a dedicated computing resource. Physical or logical separation is allowed; do not relax the no-internet condition to make a preferred architecture fit.",
+      "start": "Identify all administrative tasks and the resources used for them. Confirm network separation and denied internet access using existing configuration/test records, including remote administrative routes. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Administrative-resource inventory, network/egress rules, existing connectivity test, operating procedure. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 12.8] Do all administrative tasks use dedicated, separated resources with no internet access? [Explanatory prompt] Which administrative paths bypass those resources? No fixed interval specified; the restrictions apply during administrative work.",
+      "gaps": "Administration from general-use endpoints; direct internet access; logical separation claimed without supporting configuration. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
     "13.1": {
       "plain": "Correlate security events into actionable alerts. Operate correlated security alerting. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
       "start": "Define correlation, alert ownership and escalation; equivalent log analytics can satisfy the outcome. Start with the responsible client role: Security monitoring owner. Agree the covered systems or people and use existing procedures before creating new records.",
@@ -668,6 +731,41 @@
       "evidence": "Collection coverage and flow samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
       "ask": "For 13.6, ask the Security monitoring owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 13.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect network flow or traffic records. Use Findings and Actions for follow-up and validation."
+    },
+    "13.7": {
+      "plain": "Provide host intrusion prevention where appropriate and/or supported. A product label such as EDR does not establish prevention. Ask what the installed capability actually does and where it is enabled.",
+      "start": "Confirm prevention capability and enabled mode, identify coverage gaps, and document support/appropriateness decisions. Distinguish detection-only telemetry from prevention. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Endpoint capability/coverage export, prevention settings and representative block result. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 13.7] Is host prevention operating where appropriate and/or supported? [Explanatory prompt] Which assets are excluded and what supports the decision? No fixed interval specified; prevention operates on applicable assets.",
+      "gaps": "Detection-only deployment presented as prevention; capable assets omitted; scope decisions unexplained. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "13.8": {
+      "plain": "Provide network intrusion prevention where appropriate. A cloud-provider service can deliver the capability. Record the actual protected paths rather than requiring a separate appliance. The CAS heading has a pluralization typo; the singular title is used here.",
+      "start": "Map relevant traffic paths to prevention controls and confirm blocking mode. Review uncovered or bypass routes and the rationale for where prevention is appropriate. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Boundary diagram, prevention policy, cloud-service configuration, representative blocking record. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 13.8] Is network prevention deployed where appropriate? [Explanatory prompt] Which relevant traffic paths lack coverage? No fixed interval specified; prevention operates on relevant network paths.",
+      "gaps": "Only detection enabled; significant paths bypass prevention; appropriateness not evaluated. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "13.9": {
+      "plain": "Enforce port-level network access using 802.1X or a similar authentication-based approach. 802.1X is an example of the required class of control, not the only allowable protocol. CAS architecture examples do not create a universal requirement to deploy a particular CMDB.",
+      "start": "Confirm which access ports are controlled and how devices/users authenticate. Examine existing authorized and unauthorized access test results and bypass arrangements. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Port/authenticator configuration, authentication records, existing allow/deny test results. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 13.9] Is port-level access control enforced through the selected protocol? [Explanatory prompt] What prevents an unauthorized connection on an in-scope port? No fixed interval specified; enforce when network access is attempted.",
+      "gaps": "Uncontrolled ports; broad bypass policies; authentication configured but not enforced. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "13.10": {
+      "plain": "Filter network traffic at the application layer. A proxy, firewall or gateway may supply the capability. The practitioner checks the layer and behavior, not the product category alone.",
+      "start": "Identify application-aware filtering points, relevant traffic paths and enabled policies. Review a representative permitted and blocked application request from existing records. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Filtering policy, traffic-path diagram, application-aware allow/block records. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 13.10] Is application-layer filtering operating? [Explanatory prompt] Which paths and requests do the supporting records demonstrate? No fixed interval specified; filtering operates on relevant traffic.",
+      "gaps": "Only port/protocol filtering; application rules disabled; intended traffic bypasses filtering. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "13.11": {
+      "plain": "Adjust security-event alert thresholds at least monthly. Use a monthly technical process. If the existing quarterly governance Review samples its results, preserve that distinction. A separate monthly Review is useful only if it is needed to assign and track the actual tuning duty.",
+      "start": "Examine a dated tuning history, the thresholds considered and the rationale/results. Investigate repeated missed periods and entries that merely acknowledge alerts without evaluating thresholds. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Tuning change records, threshold versions and before/after operational observations. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 13.11] Was threshold tuning performed monthly or more often? [Explanatory prompt] What changed or was evaluated, and where are the dated results? Monthly or more frequently. This is the tuning activity, not just a governance meeting.",
+      "gaps": "Quarterly-only tuning; no dated operational record; meeting completion substitutes for tuning. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
     },
     "14.1": {
       "plain": "Teach the workforce how to use systems and information securely when hired and at least annually. Maintain the training content through annual review and significant relevant changes. Purchasing training does not establish that people received it.",
@@ -760,6 +858,27 @@
       "ask": "For 15.4, ask the Procurement/business owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 15.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain contractual security commitments. Use Findings and Actions for follow-up and validation."
     },
+    "15.5": {
+      "plain": "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts. Existing assurance reports or questionnaires may support an assessment; neither is universally required. References to other assurance schemes in CIS are evidence examples, not additional framework obligations.",
+      "start": "Reconcile provider classifications to assessments, dates and contract events. Confirm the policy-defined depth is met and follow up missing, outdated or adverse results. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Provider register/classification, dated assessment result, contract-event record, linked follow-up. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 15.5] Are policy-aligned provider assessments current annually and for new/renewed contracts? [Explanatory prompt] Does the assessment depth match the provider classification? Source wording: annually, at a minimum, or with new and renewed contracts. Plan for annual coverage plus contract-triggered assessment; do not use contract renewal to excuse multi-year gaps.",
+      "gaps": "Provider skipped; assessment older than annual minimum; new/renewed contract unassessed; report collected without evaluation. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "15.6": {
+      "plain": "Monitor providers according to the enterprise provider-management policy. Monitoring can use existing provider-management work. Release-note or dark-web monitoring are examples, not a mandatory package of services.",
+      "start": "Identify the promised monitoring for each provider class and compare it with actual results and escalation. Review policy-defined timing without relabeling it as a CIS universal frequency. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Monitoring plan, service/release/advisory review records, provider notices and follow-up. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 15.6] Is provider monitoring performed as the policy defines? [Explanatory prompt] Which observations required follow-up and what happened? No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy.",
+      "gaps": "Policy promises monitoring that is not performed; providers absent from coverage; signals receive no disposition. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "15.7": {
+      "plain": "End provider relationships securely. Use a one-off Review or existing offboarding work when a provider exits. An annual lookback can verify completed events but must not delay the actual exit actions.",
+      "start": "For a terminated provider, follow the relevant access, data-flow and data-disposition decisions through completion. If there were no terminations, examine readiness and record that operating evidence was unavailable. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Offboarding record, access revocation, data-transfer/disposal confirmation, closure approval as applicable. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 15.7] Were decommissioned providers exited securely? [Explanatory prompt] What remains open for access, data flows or enterprise data? Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window.",
+      "gaps": "Provider relationship closed administratively while access or data flows remain; data disposition unresolved. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
     "16.1": {
       "plain": "Make secure development repeatable. Follow secure lifecycle procedures. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
       "start": "Define development security process and responsibilities. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
@@ -837,6 +956,27 @@
       "ask": "For 16.11, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 16.11, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain use of proven identity, crypto and audit capabilities. Use Findings and Actions for follow-up and validation."
     },
+    "16.12": {
+      "plain": "Use both static and dynamic code-analysis tools during the application lifecycle to check secure coding. Code scanning and dynamic tests address different aspects. Link existing engineering records; do not create a GRC ticket for every automated run.",
+      "start": "Review the application/release population and where each analysis type operates. Trace representative results to triage and relevant remediation, without requiring a new Omnisciente integration. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Static/dynamic analysis output, pipeline configuration, release record and linked issue disposition. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 16.12] Are static and dynamic tools used within the lifecycle? [Explanatory prompt] Which applications and release stages do the records cover? Within the application lifecycle; no fixed calendar frequency or universal every-commit rule specified.",
+      "gaps": "One analysis type missing; applications excluded without a supported scope rationale; results never examined. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "16.13": {
+      "plain": "Perform application penetration testing, considering authenticated testing for critical applications and manual tester analysis. Keep the safeguard requirement and CAS coverage checks distinct. Schedule under the existing program; the source gives no new universal annual application-testing deadline.",
+      "start": "Identify tested applications, criticality, authentication coverage and manual business-logic exploration. Review test scope, findings and follow-up; distinguish scanning from penetration testing. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Application test scope/report, criticality inventory, authenticated/unauthenticated coverage and remediation links. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 16.13] Has application penetration testing been performed? [CAS-informed prompt] Does critical-application testing include authenticated coverage? [Explanatory prompt] What business logic did the tester examine? No fixed frequency specified in 16.13. Use application/program requirements; do not import the annual infrastructure-test interval as this safeguard's wording.",
+      "gaps": "Scanner-only output presented as penetration testing; critical business logic omitted; planned applications never tested. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "16.14": {
+      "plain": "Have specially trained people model application threats and address design flaws before code is created. A monthly development Review can look back at design work, but it cannot move the required activity until after implementation. No particular modeling notation or tool is required.",
+      "start": "Inspect a design-stage model, participants' relevant training, entry points and access levels. Trace identified design risks to decisions before implementation. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Dated design model, review participants, design decisions and resolved or tracked design issues. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 16.14] Was threat modeling performed by suitably trained people before coding? [Explanatory prompt] Which design decision changed because of the analysis? During design, before coding. No fixed calendar interval specified.",
+      "gaps": "Model created only after coding; entry/access paths absent; no suitably trained participation or follow-through. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
     "17.1": {
       "plain": "Name a lead and at least one backup to coordinate and document incident response and recovery. If a provider handles incidents, keep at least one internal person overseeing that work. Review the assignments annually and after significant relevant changes.",
       "start": "Ask management who would coordinate a security incident today and who would cover their absence. Check those assignments against the documented responsibilities. If response is outsourced, identify the internal overseer as well as the provider contact.",
@@ -893,6 +1033,13 @@
       "ask": "For 17.8, ask the Client incident lead and backup: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 17.8, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Capture lessons and assign improvements. Use Findings and Actions for follow-up and validation."
     },
+    "17.9": {
+      "plain": "Define and maintain incident thresholds distinguishing incidents from events; review annually and after relevant significant changes. These thresholds determine when response is treated as an incident. They are different from the detection-alert thresholds tuned monthly under 13.11.",
+      "start": "Confirm the event/incident distinction is usable by responders and linked to the response process. Check the last review and relevant changes; keep CAS prioritization/escalation prompts separate from the safeguard minimum. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Threshold document, dated review/change record, representative classification or exercise example. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 17.9] Are incident thresholds maintained and reviewed annually and after relevant changes? [CAS-informed prompt] How do prioritization and escalation use them? Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review.",
+      "gaps": "No event/incident distinction; obsolete threshold document; significant change not considered. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
     "18.1": {
       "plain": "Make penetration testing purposeful and controlled. Maintain the testing program. Program-defined frequency; no separate numeric minimum in 18.1. The assessment should explain how this works for the client’s actual scope.",
       "start": "Agree scope, frequency, limits, contacts, remediation and retrospectives. Start with the responsible client role: Client security sponsor. Agree the covered systems or people and use existing procedures before creating new records.",
@@ -913,6 +1060,20 @@
       "evidence": "Finding-to-Action trace and remediation support. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
       "ask": "For 18.3, ask the Client security sponsor: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
       "gaps": "For 18.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Remediate penetration-test findings. Use Findings and Actions for follow-up and validation."
+    },
+    "18.4": {
+      "plain": "Validate defenses after every penetration test; adjust detection rules or capabilities when needed. Use test-linked follow-up, not an annual waiting list. Remediation of discovered vulnerabilities under 18.3 and validation of security measures under 18.4 are related but distinct outcomes.",
+      "start": "Match each completed test to a defense-validation result. Check whether techniques used were detected and whether necessary changes were made; include application tests where relevant. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Test-to-validation log, detection comparison, ruleset change and retest records. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 18.4] Were defenses validated after each test and needed changes made? [Explanatory prompt] What test techniques exposed a detection or capability gap? After each penetration test. No fixed number of days for follow-up specified.",
+      "gaps": "Test report filed without defense validation; required changes remain unaddressed; some tests omitted. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
+    },
+    "18.5": {
+      "plain": "Perform internal penetration tests under the program at least annually. Existing program Reviews can cover both internal and external testing without duplicating assessment records. Clear-box and opaque-box approaches are permitted choices, not two separate required tests.",
+      "start": "Verify internal scope, test completion date and alignment with the program; inspect findings and their follow-up. Keep external and internal test coverage separately visible. Start with the responsible team or provider and existing operational records; do not invent assignments or completed activity.",
+      "evidence": "Internal test scope/report, test date, program reference, findings and defense-validation links. Use representative existing support and explain scope, dates and limitations.",
+      "ask": "[Requirement check 18.5] Was internal penetration testing performed at least annually and in line with the program? [Explanatory prompt] What internal scope was covered? No less than annually; more frequent testing follows the program where specified.",
+      "gaps": "Only external testing exists; internal test overdue; scope does not meet program requirements. Use existing Findings and Actions for follow-up. Event-driven work is not automatically detected by Omnisciente."
     }
   }
 }

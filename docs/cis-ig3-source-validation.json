@@ -1,0 +1,249 @@
+{
+  "confirmed_by": "User in this Codex task",
+  "confirmation_date": "2026-10-04",
+  "confirmation": "User answered yes to the full license-scope question, after stating that they have a license.",
+  "covered_uses": [
+    "Relevant entity commercial use in Omnisciente",
+    "Full CIS Controls v8.1 including IG3",
+    "Protected text embedding and customer distribution",
+    "CAS material if reused",
+    "Adaptations if distributed"
+  ],
+  "license_reference_date_conditions_expiry": "Not supplied; no agreement independently inspected. This records the user confirmation, not legal verification of an agreement.",
+  "sources": [
+    {
+      "id": "1.5",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#15-use-a-passive-asset-discovery-tool",
+      "source_page_sha256": "ad366711310451131e32b0c9f9b8a9f1f9f15ff7114db326e611eb25356769ef",
+      "review_plan_key": "asset-inventory",
+      "technical_timing": "At least weekly: review discovery results and use them to update inventory. Passive discovery operates between those reviews.",
+      "kind": "Recurring + ongoing technical operation",
+      "cas_assessment_context": "Check discovery-tool configuration and network coverage against network diagrams.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "2.7",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#27-allowlist-authorized-scripts",
+      "source_page_sha256": "59f438759f8704d42d908fd3e9ef9d632bf2c2984a4f033713634b3ae616b64a",
+      "review_plan_key": "software-support",
+      "technical_timing": "CIS says bi-annually or more frequently. Interpret as every six months, supported by the CAS six-month test; enforcement is ongoing.",
+      "kind": "Recurring + ongoing enforcement",
+      "cas_assessment_context": "Compare script-capable software and its configurations with authorized scripts; check elapsed reassessment time.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "3.13",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#313-deploy-a-data-loss-prevention-solution",
+      "source_page_sha256": "11fd754951b6a390a90698dc500f38102544886e1da073c7830910e2c338bb09",
+      "review_plan_key": "data-governance",
+      "technical_timing": "No fixed interval specified. The automated capability and inventory-update process must operate.",
+      "kind": "Ongoing technical operation; no fixed interval",
+      "cas_assessment_context": "Compare relevant assets with DLP deployment and configuration coverage.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "3.14",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#314-log-sensitive-data-access",
+      "source_page_sha256": "11fd754951b6a390a90698dc500f38102544886e1da073c7830910e2c338bb09",
+      "review_plan_key": "audit-logging",
+      "technical_timing": "No fixed review interval specified. Logging must cover relevant access events as they occur.",
+      "kind": "Ongoing event logging",
+      "cas_assessment_context": "Check logging deployment and configuration on relevant assets.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "4.12",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#412-separate-enterprise-workspaces-on-mobile-end-user-devices",
+      "source_page_sha256": "613d6086318545f0a7ba221af501dc788acdb3f79c3370d891e1d6ea2cf1190c",
+      "review_plan_key": "endpoint-validation",
+      "technical_timing": "No fixed interval specified; maintain the separation on supported devices.",
+      "kind": "Ongoing configuration; conditional support",
+      "cas_assessment_context": "Identify capable mobile devices and inspect workspace-separation configurations.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "6.8",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#68-define-and-maintain-role-based-access-control",
+      "source_page_sha256": "f05309c876fa1a941f5b41071ee4764daa9848b4eb967755b390547fe1f078c5",
+      "review_plan_key": "account-authorization",
+      "technical_timing": "Access-control review at least annually or more often. Role definitions and rights are maintained.",
+      "kind": "Recurring + maintained authorization model",
+      "cas_assessment_context": "Check role assignment against the defined process and date of review.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "8.12",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#812-collect-service-provider-logs",
+      "source_page_sha256": "bb5c01e764d3a2c232d06d1f839f90311343d93e4a858cb123e6d9911b5a4dc4",
+      "review_plan_key": "audit-logging",
+      "technical_timing": "No fixed collection or human-review interval specified here; collect on an ongoing basis where supported.",
+      "kind": "Ongoing collection; conditional support",
+      "cas_assessment_context": "Identify providers with logging support and verify collection configuration.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "9.7",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#97-deploy-and-maintain-email-server-anti-malware-protections",
+      "source_page_sha256": "893b95999a6acdc28f3de11419ef6e6640e491ba628ea37586763e76c0ff99c7",
+      "review_plan_key": "endpoint-validation",
+      "technical_timing": "No fixed interval specified. Protection is maintained in operation.",
+      "kind": "Ongoing technical protection",
+      "cas_assessment_context": "Identify email servers and confirm anti-malware configuration.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "12.8",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#128-establish-and-maintain-dedicated-computing-resources-for-all-administrative-work",
+      "source_page_sha256": "b86c7314f9857ee4afd9acad5661b3a82b1f8b43c6c0d91165de0b14b6531e53",
+      "review_plan_key": "network-defense",
+      "technical_timing": "No fixed interval specified; the restrictions apply during administrative work.",
+      "kind": "Ongoing configuration and use",
+      "cas_assessment_context": "Check administrative assets for separation and absence of internet access.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "13.7",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#137-deploy-a-host-based-intrusion-prevention-solution",
+      "source_page_sha256": "f31ffe89de5087977e7cb6fbd81ec876602871f30c8ea815c0df862ca40f65bf",
+      "review_plan_key": "network-defense",
+      "technical_timing": "No fixed interval specified; prevention operates on applicable assets.",
+      "kind": "Ongoing technical prevention; conditional scope",
+      "cas_assessment_context": "Compare capable assets with installed authorized host-prevention coverage.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "13.8",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#138-deploy-a-network-intrusion-prevention-solutions",
+      "source_page_sha256": "f31ffe89de5087977e7cb6fbd81ec876602871f30c8ea815c0df862ca40f65bf",
+      "review_plan_key": "network-defense",
+      "technical_timing": "No fixed interval specified; prevention operates on relevant network paths.",
+      "kind": "Ongoing technical prevention; conditional scope",
+      "cas_assessment_context": "Compare network boundaries with network-prevention coverage.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "13.9",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#139-deploy-port-level-access-control",
+      "source_page_sha256": "f31ffe89de5087977e7cb6fbd81ec876602871f30c8ea815c0df862ca40f65bf",
+      "review_plan_key": "network-defense",
+      "technical_timing": "No fixed interval specified; enforce when network access is attempted.",
+      "kind": "Ongoing access enforcement",
+      "cas_assessment_context": "Inspect the selected authentication architecture and its configurations.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "13.10",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1310-perform-application-layer-filtering",
+      "source_page_sha256": "f31ffe89de5087977e7cb6fbd81ec876602871f30c8ea815c0df862ca40f65bf",
+      "review_plan_key": "network-defense",
+      "technical_timing": "No fixed interval specified; filtering operates on relevant traffic.",
+      "kind": "Ongoing technical filtering",
+      "cas_assessment_context": "Check network assets for application-layer filtering coverage.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "13.11",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1311-tune-security-event-alerting-thresholds",
+      "source_page_sha256": "f31ffe89de5087977e7cb6fbd81ec876602871f30c8ea815c0df862ca40f65bf",
+      "review_plan_key": "network-defense",
+      "technical_timing": "Monthly or more frequently. This is the tuning activity, not just a governance meeting.",
+      "kind": "Recurring technical activity",
+      "cas_assessment_context": "Check elapsed time since threshold tuning; CAS expresses its metric in days.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "15.5",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#155-assess-service-providers",
+      "source_page_sha256": "6987c580534344d0fe4c30694efba342a165145b53fb87bfe53160867b099415",
+      "review_plan_key": "provider-inventory",
+      "technical_timing": "Source wording: annually, at a minimum, or with new and renewed contracts. Plan for annual coverage plus contract-triggered assessment; do not use contract renewal to excuse multi-year gaps.",
+      "kind": "Recurring + contract-triggered",
+      "cas_assessment_context": "Check policy assessment coverage by provider; the CAS operation text uses monitoring language.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "15.6",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#156-monitor-service-providers",
+      "source_page_sha256": "6987c580534344d0fe4c30694efba342a165145b53fb87bfe53160867b099415",
+      "review_plan_key": "provider-inventory",
+      "technical_timing": "No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy.",
+      "kind": "Policy-defined recurring or ongoing monitoring",
+      "cas_assessment_context": "Check that policy monitoring guidance covers listed providers.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "15.7",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#157-securely-decommission-service-providers",
+      "source_page_sha256": "6987c580534344d0fe4c30694efba342a165145b53fb87bfe53160867b099415",
+      "review_plan_key": "provider-inventory",
+      "technical_timing": "Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window.",
+      "kind": "Event-triggered",
+      "cas_assessment_context": "Inspect terminated providers and whether policy decommissioning steps were completed.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "16.12",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1612-implement-code-level-security-checks",
+      "source_page_sha256": "78befd8eb1628e546ca330222996dca16dd2c9ef7fc70a606844c44a4f64872e",
+      "review_plan_key": "secure-development",
+      "technical_timing": "Within the application lifecycle; no fixed calendar frequency or universal every-commit rule specified.",
+      "kind": "Lifecycle-driven technical activity",
+      "cas_assessment_context": "Compare developed applications with static and dynamic analysis coverage.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "16.13",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1613-conduct-application-penetration-testing",
+      "source_page_sha256": "78befd8eb1628e546ca330222996dca16dd2c9ef7fc70a606844c44a4f64872e",
+      "review_plan_key": "penetration-testing",
+      "technical_timing": "No fixed frequency specified in 16.13. Use application/program requirements; do not import the annual infrastructure-test interval as this safeguard's wording.",
+      "kind": "Program/lifecycle activity; no fixed interval",
+      "cas_assessment_context": "Check application test coverage, including authenticated testing of critical applications.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "16.14",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1614-conduct-threat-modeling",
+      "source_page_sha256": "78befd8eb1628e546ca330222996dca16dd2c9ef7fc70a606844c44a4f64872e",
+      "review_plan_key": "secure-development",
+      "technical_timing": "During design, before coding. No fixed calendar interval specified.",
+      "kind": "Design-stage event/lifecycle activity",
+      "cas_assessment_context": "Check developed applications for a threat-modeling process and its use.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "17.9",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#179-establish-and-maintain-security-incident-thresholds",
+      "source_page_sha256": "a6dcca0952c7f7b3c5fd75c759ea550966b498275e2e955d804b3d61d116e575",
+      "review_plan_key": "incident-governance",
+      "technical_timing": "Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review.",
+      "kind": "Recurring + significant-change trigger",
+      "cas_assessment_context": "Check threshold documentation, prioritization, communication/escalation guidance and review date.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "18.4",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#184-validate-security-measures",
+      "source_page_sha256": "aa6508da60a7da98047c8ee9e1d8b688f97a3668ee857f585e9b87511299f62a",
+      "review_plan_key": "penetration-testing",
+      "technical_timing": "After each penetration test. No fixed number of days for follow-up specified.",
+      "kind": "Event-triggered",
+      "cas_assessment_context": "Inspect the validation process and completion of needed defense changes.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    },
+    {
+      "id": "18.5",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#185-perform-periodic-internal-penetration-tests",
+      "source_page_sha256": "aa6508da60a7da98047c8ee9e1d8b688f97a3668ee857f585e9b87511299f62a",
+      "review_plan_key": "penetration-testing",
+      "technical_timing": "No less than annually; more frequent testing follows the program where specified.",
+      "kind": "Recurring technical test",
+      "cas_assessment_context": "Check the most recent internal test date.",
+      "authorship": "Omnisciente authored explanation and assessment guidance; source requirement and CAS assessment context distinguished."
+    }
+  ],
+  "release_gate": [
+    1,
+    2
+  ]
+}

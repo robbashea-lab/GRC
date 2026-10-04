@@ -71,6 +71,23 @@
         }
       ]
     },
+    "1.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#15-use-a-passive-asset-discovery-tool",
+      "criteria": [
+        {
+          "id": "1.5-c1",
+          "text": "Discover connected assets passively; use the results to refresh the asset inventory at least weekly."
+        },
+        {
+          "id": "1.5-c2",
+          "text": "Confirm monitored network segments and reconcile dated discoveries to inventory entries. Trace an unknown asset through ownership and authorization decisions; check gaps between weekly reconciliations."
+        },
+        {
+          "id": "1.5-c3",
+          "text": "At least weekly: review discovery results and use them to update inventory. Passive discovery operates between those reviews."
+        }
+      ]
+    },
     "2.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#21-establish-and-maintain-a-software-inventory",
       "criteria": [
@@ -162,6 +179,23 @@
         {
           "id": "2.6-c3",
           "text": "Reassess at least every six months."
+        }
+      ]
+    },
+    "2.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#27-allowlist-authorized-scripts",
+      "criteria": [
+        {
+          "id": "2.7-c1",
+          "text": "Enforce execution of authorized scripts only and block others; reassess at least every six months."
+        },
+        {
+          "id": "2.7-c2",
+          "text": "Identify script execution paths, including administrative tools, email and browser handling. Confirm authorized execution and blocked unauthorized execution using safe existing test results; check the latest reassessment date."
+        },
+        {
+          "id": "2.7-c3",
+          "text": "CIS says bi-annually or more frequently. Interpret as every six months, supported by the CAS six-month test; enforcement is ongoing."
         }
       ]
     },
@@ -313,6 +347,40 @@
         }
       ]
     },
+    "3.13": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#313-deploy-a-data-loss-prevention-solution",
+      "criteria": [
+        {
+          "id": "3.13-c1",
+          "text": "Use automated sensitive-data discovery across enterprise and provider assets, and update the data inventory."
+        },
+        {
+          "id": "3.13-c2",
+          "text": "Confirm coverage of stored, processed and transmitted sensitive information, including remote-provider locations. Trace a detected data location to the inventory and investigate blind spots."
+        },
+        {
+          "id": "3.13-c3",
+          "text": "No fixed interval specified. The automated capability and inventory-update process must operate."
+        }
+      ]
+    },
+    "3.14": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#314-log-sensitive-data-access",
+      "criteria": [
+        {
+          "id": "3.14-c1",
+          "text": "Record access to sensitive data, including changes and disposal."
+        },
+        {
+          "id": "3.14-c2",
+          "text": "Compare sensitive-data locations to enabled audit sources. Inspect representative access, modification and deletion records and identify locations or event types that are not recorded."
+        },
+        {
+          "id": "3.14-c3",
+          "text": "No fixed review interval specified. Logging must cover relevant access events as they occur."
+        }
+      ]
+    },
     "4.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#41-establish-and-maintain-a-secure-configuration-process",
       "criteria": [
@@ -441,6 +509,23 @@
         {
           "id": "4.11-c3",
           "text": "Event: loss, theft or end of engagement are examples; no fixed interval."
+        }
+      ]
+    },
+    "4.12": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#412-separate-enterprise-workspaces-on-mobile-end-user-devices",
+      "criteria": [
+        {
+          "id": "4.12-c1",
+          "text": "Separate enterprise and personal workspaces on mobile devices wherever supported."
+        },
+        {
+          "id": "4.12-c2",
+          "text": "Establish the supported mobile population, examine assigned profiles and confirm enterprise applications/data are separated from personal use. Record unsupported-device conditions without treating the whole safeguard as excluded."
+        },
+        {
+          "id": "4.12-c3",
+          "text": "No fixed interval specified; maintain the separation on supported devices."
         }
       ]
     },
@@ -602,6 +687,23 @@
         {
           "id": "6.7-c2",
           "text": "Operate centralized access control. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "6.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#68-define-and-maintain-role-based-access-control",
+      "criteria": [
+        {
+          "id": "6.8-c1",
+          "text": "Document necessary rights by role; review asset privileges for authorization at least annually."
+        },
+        {
+          "id": "6.8-c2",
+          "text": "Compare job duties, role definitions and actual asset privileges. Confirm reviews cover all privileges, including privileged and service access where relevant; investigate excessive and unmapped rights."
+        },
+        {
+          "id": "6.8-c3",
+          "text": "Access-control review at least annually or more often. Role definitions and rights are maintained."
         }
       ]
     },
@@ -847,6 +949,23 @@
         }
       ]
     },
+    "8.12": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#812-collect-service-provider-logs",
+      "criteria": [
+        {
+          "id": "8.12-c1",
+          "text": "Obtain service-provider logs wherever the provider supports them."
+        },
+        {
+          "id": "8.12-c2",
+          "text": "Match the provider inventory to available log interfaces and actual received records. Distinguish unavailable provider functionality from supported logging that has not been configured."
+        },
+        {
+          "id": "8.12-c3",
+          "text": "No fixed collection or human-review interval specified here; collect on an ongoing basis where supported."
+        }
+      ]
+    },
     "9.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#91-ensure-use-of-only-fully-supported-browsers-and-email-clients",
       "criteria": [
@@ -914,6 +1033,23 @@
         {
           "id": "9.6-c2",
           "text": "Enforce email file-type blocking. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "9.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#97-deploy-and-maintain-email-server-anti-malware-protections",
+      "criteria": [
+        {
+          "id": "9.7-c1",
+          "text": "Operate and maintain anti-malware protection for email servers."
+        },
+        {
+          "id": "9.7-c2",
+          "text": "Include hosted email responsibility arrangements. Inspect enabled protection and existing detection/blocking results; distinguish mail-client protection from coverage of the email service."
+        },
+        {
+          "id": "9.7-c3",
+          "text": "No fixed interval specified. Protection is maintained in operation."
         }
       ]
     },
@@ -1156,6 +1292,23 @@
         }
       ]
     },
+    "12.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#128-establish-and-maintain-dedicated-computing-resources-for-all-administrative-work",
+      "criteria": [
+        {
+          "id": "12.8-c1",
+          "text": "Use physically or logically dedicated administrative computing resources, segmented from the primary network and without internet access."
+        },
+        {
+          "id": "12.8-c2",
+          "text": "Identify all administrative tasks and the resources used for them. Confirm network separation and denied internet access using existing configuration/test records, including remote administrative routes."
+        },
+        {
+          "id": "12.8-c3",
+          "text": "No fixed interval specified; the restrictions apply during administrative work."
+        }
+      ]
+    },
     "13.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#131-centralize-security-event-alerting",
       "criteria": [
@@ -1235,6 +1388,91 @@
         {
           "id": "13.6-c2",
           "text": "Collect network flow or traffic records. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "13.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#137-deploy-a-host-based-intrusion-prevention-solution",
+      "criteria": [
+        {
+          "id": "13.7-c1",
+          "text": "Provide host intrusion prevention where appropriate and/or supported."
+        },
+        {
+          "id": "13.7-c2",
+          "text": "Confirm prevention capability and enabled mode, identify coverage gaps, and document support/appropriateness decisions. Distinguish detection-only telemetry from prevention."
+        },
+        {
+          "id": "13.7-c3",
+          "text": "No fixed interval specified; prevention operates on applicable assets."
+        }
+      ]
+    },
+    "13.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#138-deploy-a-network-intrusion-prevention-solutions",
+      "criteria": [
+        {
+          "id": "13.8-c1",
+          "text": "Provide network intrusion prevention where appropriate."
+        },
+        {
+          "id": "13.8-c2",
+          "text": "Map relevant traffic paths to prevention controls and confirm blocking mode. Review uncovered or bypass routes and the rationale for where prevention is appropriate."
+        },
+        {
+          "id": "13.8-c3",
+          "text": "No fixed interval specified; prevention operates on relevant network paths."
+        }
+      ]
+    },
+    "13.9": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#139-deploy-port-level-access-control",
+      "criteria": [
+        {
+          "id": "13.9-c1",
+          "text": "Enforce port-level network access using 802.1X or a similar authentication-based approach."
+        },
+        {
+          "id": "13.9-c2",
+          "text": "Confirm which access ports are controlled and how devices/users authenticate. Examine existing authorized and unauthorized access test results and bypass arrangements."
+        },
+        {
+          "id": "13.9-c3",
+          "text": "No fixed interval specified; enforce when network access is attempted."
+        }
+      ]
+    },
+    "13.10": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1310-perform-application-layer-filtering",
+      "criteria": [
+        {
+          "id": "13.10-c1",
+          "text": "Filter network traffic at the application layer."
+        },
+        {
+          "id": "13.10-c2",
+          "text": "Identify application-aware filtering points, relevant traffic paths and enabled policies. Review a representative permitted and blocked application request from existing records."
+        },
+        {
+          "id": "13.10-c3",
+          "text": "No fixed interval specified; filtering operates on relevant traffic."
+        }
+      ]
+    },
+    "13.11": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1311-tune-security-event-alerting-thresholds",
+      "criteria": [
+        {
+          "id": "13.11-c1",
+          "text": "Adjust security-event alert thresholds at least monthly."
+        },
+        {
+          "id": "13.11-c2",
+          "text": "Examine a dated tuning history, the thresholds considered and the rationale/results. Investigate repeated missed periods and entries that merely acknowledge alerts without evaluating thresholds."
+        },
+        {
+          "id": "13.11-c3",
+          "text": "Monthly or more frequently. This is the tuning activity, not just a governance meeting."
         }
       ]
     },
@@ -1396,6 +1634,57 @@
         {
           "id": "15.4-c3",
           "text": "Review contracts at least annually."
+        }
+      ]
+    },
+    "15.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#155-assess-service-providers",
+      "criteria": [
+        {
+          "id": "15.5-c1",
+          "text": "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts."
+        },
+        {
+          "id": "15.5-c2",
+          "text": "Reconcile provider classifications to assessments, dates and contract events. Confirm the policy-defined depth is met and follow up missing, outdated or adverse results."
+        },
+        {
+          "id": "15.5-c3",
+          "text": "Source wording: annually, at a minimum, or with new and renewed contracts. Plan for annual coverage plus contract-triggered assessment; do not use contract renewal to excuse multi-year gaps."
+        }
+      ]
+    },
+    "15.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#156-monitor-service-providers",
+      "criteria": [
+        {
+          "id": "15.6-c1",
+          "text": "Monitor providers according to the enterprise provider-management policy."
+        },
+        {
+          "id": "15.6-c2",
+          "text": "Identify the promised monitoring for each provider class and compare it with actual results and escalation. Review policy-defined timing without relabeling it as a CIS universal frequency."
+        },
+        {
+          "id": "15.6-c3",
+          "text": "No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy."
+        }
+      ]
+    },
+    "15.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#157-securely-decommission-service-providers",
+      "criteria": [
+        {
+          "id": "15.7-c1",
+          "text": "End provider relationships securely."
+        },
+        {
+          "id": "15.7-c2",
+          "text": "For a terminated provider, follow the relevant access, data-flow and data-disposition decisions through completion. If there were no terminations, examine readiness and record that operating evidence was unavailable."
+        },
+        {
+          "id": "15.7-c3",
+          "text": "Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window."
         }
       ]
     },
@@ -1606,6 +1895,57 @@
         }
       ]
     },
+    "16.12": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1612-implement-code-level-security-checks",
+      "criteria": [
+        {
+          "id": "16.12-c1",
+          "text": "Use both static and dynamic code-analysis tools during the application lifecycle to check secure coding."
+        },
+        {
+          "id": "16.12-c2",
+          "text": "Review the application/release population and where each analysis type operates. Trace representative results to triage and relevant remediation, without requiring a new Omnisciente integration."
+        },
+        {
+          "id": "16.12-c3",
+          "text": "Within the application lifecycle; no fixed calendar frequency or universal every-commit rule specified."
+        }
+      ]
+    },
+    "16.13": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1613-conduct-application-penetration-testing",
+      "criteria": [
+        {
+          "id": "16.13-c1",
+          "text": "Perform application penetration testing, considering authenticated testing for critical applications and manual tester analysis."
+        },
+        {
+          "id": "16.13-c2",
+          "text": "Identify tested applications, criticality, authentication coverage and manual business-logic exploration. Review test scope, findings and follow-up; distinguish scanning from penetration testing."
+        },
+        {
+          "id": "16.13-c3",
+          "text": "No fixed frequency specified in 16.13. Use application/program requirements; do not import the annual infrastructure-test interval as this safeguard's wording."
+        }
+      ]
+    },
+    "16.14": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1614-conduct-threat-modeling",
+      "criteria": [
+        {
+          "id": "16.14-c1",
+          "text": "Have specially trained people model application threats and address design flaws before code is created."
+        },
+        {
+          "id": "16.14-c2",
+          "text": "Inspect a design-stage model, participants' relevant training, entry points and access levels. Trace identified design risks to decisions before implementation."
+        },
+        {
+          "id": "16.14-c3",
+          "text": "During design, before coding. No fixed calendar interval specified."
+        }
+      ]
+    },
     "17.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#171-designate-personnel-to-manage-incident-handling",
       "criteria": [
@@ -1758,6 +2098,23 @@
         }
       ]
     },
+    "17.9": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#179-establish-and-maintain-security-incident-thresholds",
+      "criteria": [
+        {
+          "id": "17.9-c1",
+          "text": "Define and maintain incident thresholds distinguishing incidents from events; review annually and after relevant significant changes."
+        },
+        {
+          "id": "17.9-c2",
+          "text": "Confirm the event/incident distinction is usable by responders and linked to the response process. Check the last review and relevant changes; keep CAS prioritization/escalation prompts separate from the safeguard minimum."
+        },
+        {
+          "id": "17.9-c3",
+          "text": "Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review."
+        }
+      ]
+    },
     "18.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#181-establish-and-maintain-a-penetration-testing-program",
       "criteria": [
@@ -1818,6 +2175,40 @@
         {
           "id": "18.3-c4",
           "text": "Prioritize test findings by risk and apply documented vulnerability remediation timelines and effort according to impact and priority."
+        }
+      ]
+    },
+    "18.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#184-validate-security-measures",
+      "criteria": [
+        {
+          "id": "18.4-c1",
+          "text": "Validate defenses after every penetration test; adjust detection rules or capabilities when needed."
+        },
+        {
+          "id": "18.4-c2",
+          "text": "Match each completed test to a defense-validation result. Check whether techniques used were detected and whether necessary changes were made; include application tests where relevant."
+        },
+        {
+          "id": "18.4-c3",
+          "text": "After each penetration test. No fixed number of days for follow-up specified."
+        }
+      ]
+    },
+    "18.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#185-perform-periodic-internal-penetration-tests",
+      "criteria": [
+        {
+          "id": "18.5-c1",
+          "text": "Perform internal penetration tests under the program at least annually."
+        },
+        {
+          "id": "18.5-c2",
+          "text": "Verify internal scope, test completion date and alignment with the program; inspect findings and their follow-up. Keep external and internal test coverage separately visible."
+        },
+        {
+          "id": "18.5-c3",
+          "text": "No less than annually; more frequent testing follows the program where specified."
         }
       ]
     }

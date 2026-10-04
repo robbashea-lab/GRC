@@ -16,10 +16,8 @@ const scope=async(group,context={})=>api.patch('/frameworks/cis-ig1/configuratio
 beforeEach(async()=>{
   sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');
   cid=(await api.post('/clients',{name:'Temporary synthetic scope verification'})).data.client_id;
-  // Neutral fixture text exercises mechanics; it is not CIS product guidance.
+  // Actual content; release capability is enabled only inside this isolated test.
   cis.available_implementation_groups=[1,2,3];
-  cis.requirements.push(...ids.map(id=>({...original.requirements[0],id,title:'Synthetic fixture '+id,implementation_group:3,guidance:'Persistence fixture only.'})));
-  cis.review_plans[0].safeguards.push(...ids);
 });
 afterEach(()=>Object.assign(cis,clone(original)));
 
