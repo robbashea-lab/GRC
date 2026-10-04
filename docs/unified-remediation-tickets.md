@@ -209,3 +209,28 @@ Review references consulted: [Google's code-review guidance](https://google.gith
 This is self-reviewed implementation and automated/browser verification, not
 independent security assurance. The PR should receive normal independent review
 before any separately authorized merge or publication.
+
+### Authorized PR 29 final review (2026-10-04)
+
+An independent reviewer inspected the actual code and tests for authorization,
+ownership-change recovery, validation/reopening, history and legacy multiple Actions.
+Two reproduced defects were corrected: an already-applied reassignment can now
+repair its pending receipt after the target loses eligibility, without relaxing
+current actor/tenant authorization or allowing changed intent; reopening with a
+departed owner creates unassigned new work and leaves historical work untouched.
+Backend regression coverage includes administrator/manager and disabled/removed
+membership combinations. Demo regressions cover inactive and foreign owners.
+
+Post-fix verification: 101 backend tests plus 45 subtests, 66 disposable Mongo
+recovery tests, six frontend suites / 48 tests, and the normal build passed.
+Unchanged dependency advisories and the bundle-size warning remain separate triage.
+The accepted authenticated-browser production integration limitation remains open.
+
+The browser scripts support `--published` with the existing private Site and an
+absolute evidence directory supplied on stdin. They use fresh browser storage and
+synthetic Demo records. The owner dispatch credential is not persisted or logged;
+only the exact Site origin is allowed, redirect following is disabled, and 3xx
+responses are rejected. This follows the [Playwright Route API](https://playwright.dev/docs/api/class-route)
+warning that overridden headers persist through redirects. The meeting script
+also compares rendered history after refreshing the register and assessment.
+Publication remains limited to the existing private Demo; no production backend.

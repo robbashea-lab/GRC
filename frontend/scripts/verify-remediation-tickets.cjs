@@ -1,13 +1,14 @@
-// Disposable browser storage, loopback only. No real API or shared client writes.
+// Disposable Demo browser storage. No real API or shared client writes.
 const {chromium,expect}=require('playwright/test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const base='http://127.0.0.1:4387',prefix='Unified ticket verification',out=path.resolve(__dirname,'../../docs');
+const prefix='Unified ticket verification';
 (async()=>{
+ const {base,out,route}=await require('./ticket-verification-target.cjs')();
  const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
  const context=await browser.newContext({viewport:{width:1440,height:1100}}),page=await context.newPage();
- await context.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
+ await context.route('**/*',route);
  const result={assessments:[],tickets:[],checks:[],errors:[]};let stage='enter';
  const store=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')));
  const go=p=>page.goto(base+p),drawer=page.getByTestId('remediation-ticket-drawer');
@@ -52,8 +53,10 @@ const base='http://127.0.0.1:4387',prefix='Unified ticket verification',out=path
   await go('/compliance/cis-ig1?assessment='+t.aid);await assessment.getByRole('button',{name:t.title,exact:true}).click();await validate();
   await go('/action-items?view=completed');await page.getByTestId('ai-search').fill(t.title);await expect(page.locator('tbody tr')).toHaveCount(1);await page.getByRole('button',{name:t.title,exact:true}).click();
   await expect(drawer.getByLabel('Actual resolution',{exact:true})).toHaveValue('Actual correction and verified sample');await expect(drawer.getByLabel('Planned action',{exact:true})).toHaveValue('Planned correction');await expect(drawer).toContainText('synthetic-ticket.txt');
+  const history=drawer.locator('details').filter({has:page.getByText('History and comments',{exact:true})});await history.locator('summary').click();await expect(history).toContainText('validate');const completedHistory=await history.locator('ul').innerText();
   await drawer.getByRole('button',{name:/CIS IG1 Assessment/}).click();await expect(assessment).toBeVisible();await expect(assessment).toContainText('1.1');
-  result.checks.push('one Completed entry; source/register same resolution, plan and evidence; exact assessment origin');
+  await page.reload();await assessment.getByRole('button',{name:t.title,exact:true}).click();await expect(drawer).toContainText('Completed');await expect(drawer.getByLabel('Actual resolution',{exact:true})).toHaveValue('Actual correction and verified sample');await expect(drawer).toContainText('synthetic-ticket.txt');await history.locator('summary').click();await expect(history.locator('ul')).toHaveText(completedHistory);
+  result.checks.push('one Completed entry; refreshed source/register matching status, resolution, plan, evidence and history; exact assessment origin');
   stage='reopen';await open(t);await drawer.getByRole('button',{name:'Reopen ticket',exact:true}).click();await expect(drawer).toContainText('Ticket reopened');
   const reopened=await store(),f=reopened.findings.find(f=>f.finding_id===t.fid);assert.notEqual(f.primary_task_id,t.tid);assert.equal(reopened.tasks.find(x=>x.task_id===t.tid).status,'done');assert.equal(f.decision_history.length,2);
   await go('/action-items?view=active');await page.getByTestId('ai-search').fill(prefix);await expect(page.locator('tbody tr')).toHaveCount(3);result.checks.push('reopen retains completed work and decisions; stable identity; unique active counts');

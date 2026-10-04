@@ -10,6 +10,7 @@ import { assertCurrentOccurrence, reviewSchedule } from '../lib/reviewOccurrence
 import {requireCreationAssignee} from './authorization';
 import {guardEdit} from './decisions';
 import {auditPackage,blankAuditItem} from '../lib/isoAudit';
+import {eligible} from './assignmentEligibility';
 
 function commandFields(body, allowed) {
   if(Object.entries(body).some(([key,value])=>!allowed.includes(key)||(value!=null&&typeof value!=='string')))
@@ -158,9 +159,10 @@ export function action(db, kind, id, name, body) {
     const primary=r.primary_task_id?tasks.find(t=>t.task_id===r.primary_task_id):tasks.length===1?tasks[0]:null;
     let taskId=r.primary_task_id;
     if(!active.length){
+      const owner=primary?primary.assignee_id:r.owner_id;
       const task=write(db,'tasks',{client_id:cid,finding_id:id,source_type:'finding',source_id:id,
         title:primary?.title||r.remediation_title||r.title,description:primary?.description||r.remediation_plan,
-        assignee_id:primary?primary.assignee_id:r.owner_id,due_date:primary?primary.due_date:r.due_date,priority:primary?.priority||r.severity,status:'open'});
+        assignee_id:owner&&eligible(db.users.find(u=>u.user_id===owner),cid)?owner:null,due_date:primary?primary.due_date:r.due_date,priority:primary?.priority||r.severity,status:'open'});
       taskId=task.task_id;
     }
     const result=patch({status:'in_remediation',primary_task_id:taskId,decision_history:[...(r.decision_history||[]),{action:'reopened',by:db.user.user_id,at:now(),previous_primary_task_id:r.primary_task_id}]});

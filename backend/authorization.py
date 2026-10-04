@@ -124,6 +124,7 @@ async def authorize_request(request, user, db):
         raise HTTPException(403, 'This operation requires a service-provider administrator')
     params = request.path_params
     kind = params.get('kind')
+    applied_retry = False
     record_id = params.get('item_id')
     if path == '/api/{kind}' and method == 'POST':
         if kind != 'tasks':
@@ -152,6 +153,7 @@ async def authorize_request(request, user, db):
                 # require current assignment, and pending writes retain their marker.
                 if (before.get('task_id') == record_id and before.get('client_id') == row['client_id']
                         and (receipt['state'] == 'complete' or row.get('_ticket_command') == identity)):
+                    applied_retry = True
                     row = before
         require_assigned(user, kind, row)
         if method == 'PATCH':
@@ -161,7 +163,7 @@ async def authorize_request(request, user, db):
                     continue
                 if role == CONTRIBUTOR and not (kind == 'tasks' and body[field] in (None, '', user['user_id'])):
                     raise HTTPException(403, 'Contributors cannot reassign this activity')
-                if body[field]:
+                if body[field] and not applied_retry:
                     target = await db.users.find_one({'user_id':body[field], 'status':'active',
                         'role':{'$in':list(CLIENT_ROLES)}, 'client_ids':row['client_id']})
                     if not target:

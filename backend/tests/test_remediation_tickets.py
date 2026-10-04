@@ -12,6 +12,55 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
     body = framework.FrameworkTests.body
     configure = framework.FrameworkTests.configure
 
+    async def test_applied_reassignment_recovers_when_target_becomes_ineligible(self):
+        await server.db.users.insert_one({'user_id':'manager','role':'client_grc_manager','status':'active','client_ids':['a']})
+        for actor in ('admin','manager'):
+            for change in ({'status':'disabled'},{'client_ids':['b']}):
+                with self.subTest(actor=actor,change=change):
+                    await server.db.users.update_one({'user_id':'member'},{'$set':{'status':'active','client_ids':['a']}})
+                    self.sign_in('admin')
+                    created=await self.client.post('/api/tasks',json={'client_id':'a','title':'Reassignment recovery'})
+                    self.assertEqual(created.status_code,200,created.text)
+                    t=created.json();path='/api/tasks/'+t['task_id']
+                    self.sign_in(actor)
+                    body={'assignee_id':'member','expected_updated_at':t['updated_at']}
+                    headers={'Idempotency-Key':'assignment-recovery-intent-001'}
+                    original=server.audit
+                    async def fail(user,event,*args,**kwargs):
+                        if event=='Assignment changed':raise RuntimeError('Injected assignment audit failure')
+                        return await original(user,event,*args,**kwargs)
+                    with patch.object(server,'audit',fail):
+                        first=await self.client.patch(path,json=body,headers=headers)
+                    self.assertEqual(first.status_code,503,first.text)
+                    applied=await server.db.tasks.find_one({'task_id':t['task_id']})
+                    await server.db.users.update_one({'user_id':'member'},{'$set':change})
+                    recovered=await self.client.patch(path,json=body,headers=headers)
+                    self.assertEqual(recovered.status_code,200,recovered.text)
+                    self.assertEqual(recovered.json()['assignee_id'],'member')
+                    self.assertEqual(recovered.json()['updated_at'],applied['updated_at'])
+                    self.assertEqual((await self.client.patch(path,json={**body,'title':'Contradiction'},headers=headers)).status_code,409)
+                    self.assertEqual(await server.db.audit_logs.count_documents({'entity_id':t['task_id'],'action':'Assignment changed'}),1)
+                    # A different Task/new intent still rejects the ineligible target.
+                    self.sign_in('admin')
+                    fresh=await self.client.post('/api/tasks',json={'client_id':'a','title':'New work'})
+                    self.sign_in(actor)
+                    denied=await self.client.patch('/api/tasks/'+fresh.json()['task_id'],json={'assignee_id':'member','expected_updated_at':fresh.json()['updated_at']},headers={'Idempotency-Key':'new-assignment-intent-001'})
+                    self.assertIn(denied.status_code,(403,422),denied.text)
+
+    async def test_reopening_with_departed_owner_preserves_history_and_starts_unassigned(self):
+        _,_,_,f,t=await self.pair()
+        await server.db.tasks.update_one({'task_id':t['task_id']},{'$set':{'assignee_id':'member'}})
+        await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done','resolution':'Original correction'})
+        closed=await self.client.post('/api/findings/'+f['finding_id']+'/validate',json={'rationale':'Original checked sample'})
+        prior=await server.db.tasks.find_one({'task_id':t['task_id']})
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'status':'disabled'}})
+        reopened=await self.client.post('/api/findings/'+f['finding_id']+'/reopen',json={'request_id':'reopen-departed-owner','expected_updated_at':closed.json()['updated_at']})
+        self.assertEqual(reopened.status_code,200,reopened.text)
+        new=await server.db.tasks.find_one({'task_id':reopened.json()['primary_task_id']})
+        self.assertIsNone(new['assignee_id'])
+        self.assertEqual(await server.db.tasks.find_one({'task_id':t['task_id']}),prior)
+        self.assertEqual(len(reopened.json()['decision_history']),2)
+
     async def test_contributor_unassignment_retry_keeps_original_authority_only(self):
         _,_,_,_,t = await self.pair()
         await server.db.tasks.update_one({'task_id':t['task_id']}, {'$set':{'assignee_id':'member','created_by':'admin'}})

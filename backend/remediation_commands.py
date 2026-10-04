@@ -2,6 +2,7 @@
 from fastapi import HTTPException
 import create_requests
 import action_items
+import assignment_eligibility
 import uuid
 
 
@@ -44,6 +45,8 @@ async def reopen(s, finding, body, user):
                         'assignee_id':source.get('assignee_id') if primary else current.get('owner_id'),
                         'due_date':source.get('due_date'),'priority':source.get('priority') or current.get('severity','medium'),
                         'status':'open','source_type':'finding','source_id':fid,'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'_ticket_command':identity}
+                    if task.get('assignee_id') and not await assignment_eligibility.eligible(s.db,task['assignee_id'],cid,s._can_access_client):
+                        task['assignee_id'] = None
                     task=await action_items.prepare(s.db,task,s._can_access_client)
                     await s.db.create_requests.update_one({'_id':identity},{'$set':{'reopen_task':task}})
                 task=await create_requests.insert_primary(s.db,'tasks',task,identity)

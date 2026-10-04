@@ -2716,6 +2716,7 @@ async def _update_entity(kind, item_id, body, user, command=None):
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
     persisted = existing
+    applied_retry = bool(command and persisted.get('_ticket_command') == command)
     if command:
         receipt = await db.create_requests.find_one({'_id':command})
         if receipt.get('task_before'):
@@ -2738,9 +2739,13 @@ async def _update_entity(kind, item_id, body, user, command=None):
     if kind == "tasks" and "assignee_id" in incoming and incoming["assignee_id"] in (None, "") and existing.get("owner_id"):
         body["assignee_id"] = None
     if kind == "tasks":
-        await action_items.prepare(db, {**existing, **body}, _can_access_client, existing)
+        if not applied_retry:
+            await action_items.prepare(db, {**existing, **body}, _can_access_client, existing)
         if 'title' in body: body['title_generated']=False
-    await assignment_eligibility.validate(db, kind, {**existing, **body}, _can_access_client, existing)
+    if not applied_retry:
+        # This assignment was validated before the marked primary write. Recovery
+        # finishes required effects even if the target's eligibility later changes.
+        await assignment_eligibility.validate(db, kind, {**existing, **body}, _can_access_client, existing)
     if kind == "vendors":
         await vendor_governance.validate(db,{**existing,**body},_can_access_client,existing)
         for risk_id in body.get("related_risk_ids") or []:

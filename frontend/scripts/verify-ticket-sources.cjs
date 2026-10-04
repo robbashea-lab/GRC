@@ -1,10 +1,11 @@
-// Synthetic Demo-only UI checks, isolated storage and loopback networking.
+// Synthetic Demo-only UI checks with isolated storage and same-origin networking.
 const {chromium,expect}=require('playwright/test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 (async()=>{
+ const {base,out,route}=await require('./ticket-verification-target.cjs')();
  const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
  const page=await browser.newPage({viewport:{width:1440,height:1100}});page.setDefaultTimeout(15000);
- await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
- const go=p=>page.goto('http://127.0.0.1:4387'+p),store=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3'))),result={checks:[],errors:[]};
+ await page.route('**/*',route);
+ const go=p=>page.goto(base+p),store=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3'))),result={checks:[],errors:[]};
  let stage='enter';const drawer=page.getByTestId('remediation-ticket-drawer');
  async function exercise(cid,key,id){
   stage=[cid,key,id].join(' ');await go('/clients');await page.getByTestId('sidebar-open-'+cid).click();
@@ -47,8 +48,8 @@ const {chromium,expect}=require('playwright/test'),assert=require('node:assert/s
   const unsure=page.getByRole('button',{name:'Unsure',exact:true});const n=await unsure.count();assert(n>0);for(let i=0;i<n;i++)await unsure.nth(i).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Complete onboarding',exact:true}).click();await expect.poll(async()=> (await store()).framework_assessments.some(a=>a.client_id===cid&&a.framework_key==='soc-2')).toBe(true);
   await exercise(cid,'soc-2','CC1.1');
   stage='add framework';await go('/client-profile?tab=program');await page.getByLabel(/Applicability — ISO/).selectOption('applies');await page.getByRole('button',{name:'Confirm Program Change',exact:true}).click();await expect.poll(async()=> (await store()).framework_assessments.some(a=>a.client_id===cid&&a.framework_key==='iso-27001')).toBe(true);await exercise(cid,'iso-27001','4.1');
-  stage='themes';await go('/action-items');await page.getByRole('button',{name:'Switch to dark mode',exact:true}).click();await expect(page.locator('html')).toHaveAttribute('data-brawndo-portal','dark');await page.getByTestId('ai-view-completed').click();await page.getByRole('button',{name:'Source ticket '+cid+' 4.1',exact:true}).click();await drawer.evaluate(async e=>Promise.all(e.getAnimations().map(a=>a.finished)));await page.screenshot({path:path.resolve(__dirname,'../../docs/unified-ticket-dark.png')});result.checks.push({scenario:'shared dark theme and source drawer',result:'passed'});
+  stage='themes';await go('/action-items');await page.getByRole('button',{name:'Switch to dark mode',exact:true}).click();await expect(page.locator('html')).toHaveAttribute('data-brawndo-portal','dark');await page.getByTestId('ai-view-completed').click();await page.getByRole('button',{name:'Source ticket '+cid+' 4.1',exact:true}).click();await drawer.evaluate(async e=>Promise.all(e.getAnimations().map(a=>a.finished)));await page.screenshot({path:path.join(out,'unified-ticket-dark.png')});result.checks.push({scenario:'shared dark theme and source drawer',result:'passed'});
   result.status='passed';
  }catch(e){result.status='failed';result.errors.push({stage,message:e.message,url:page.url(),body:(await page.locator('body').innerText()).slice(-14000)});}
- fs.writeFileSync(path.resolve(__dirname,'../../docs/unified-ticket-sources.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));await browser.close();if(result.status!=='passed')process.exitCode=1;
+ fs.writeFileSync(path.join(out,'unified-ticket-sources.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));await browser.close();if(result.status!=='passed')process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});
