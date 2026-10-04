@@ -1,6 +1,6 @@
 {
   "version": "8.1",
-  "revision": "2026-10-03",
+  "revision": "2026-10-04",
   "basis": "Safeguard text only; paraphrased assessment aid. CAS metrics, implementation examples and enhanced practices are not additional requirements.",
   "requirements": {
     "1.1": {
@@ -749,15 +749,15 @@
       "criteria": [
         {
           "id": "8.5-c1",
-          "text": "Capture investigation-useful events on sensitive-data assets."
+          "text": "Configure detailed audit logs on enterprise assets containing sensitive data."
         },
         {
           "id": "8.5-c2",
-          "text": "Collect detailed events. Confirm coverage and resolve unsupported or uncovered cases."
+          "text": "Confirm actual logging coverage and resolve missing fields or uncovered assets."
         },
         {
           "id": "8.5-c3",
-          "text": "Detailed event records include the event source, date, user, timestamp, source address and destination address where available for relevant events."
+          "text": "Include the event source, date, username, timestamp, source and destination addresses, and other useful investigation details. Missing required fields remain coverage gaps."
         }
       ]
     },
@@ -883,11 +883,11 @@
       "criteria": [
         {
           "id": "9.4-c1",
-          "text": "Remove unneeded browser/mail extensions."
+          "text": "Cover browser and email-client plugins, extensions and add-on applications; identify unauthorized or unnecessary items."
         },
         {
           "id": "9.4-c2",
-          "text": "Restrict or remove unauthorized/unneeded extensions. Confirm coverage and resolve unsupported or uncovered cases."
+          "text": "Uninstall or disable those items. Confirm actual treatment and resolve uncovered cases; permission restrictions alone do not demonstrate uninstalling or disabling."
         }
       ]
     },
@@ -1526,11 +1526,11 @@
       "criteria": [
         {
           "id": "16.7-c1",
-          "text": "Keep application platforms securely configured."
+          "text": "Use industry-recommended hardening templates for underlying application servers, databases, web servers, cloud containers, PaaS and SaaS components."
         },
         {
           "id": "16.7-c2",
-          "text": "Maintain hardening across application infrastructure. Confirm coverage and resolve unsupported or uncovered cases."
+          "text": "Maintain hardening across the covered application infrastructure. In-house developed software must not weaken configuration hardening; identify uncovered components and configuration gaps."
         }
       ]
     },

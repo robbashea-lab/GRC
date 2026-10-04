@@ -1,7 +1,7 @@
 {
   "framework": "cis-ig1",
   "version": "8.1",
-  "revision": "2026-10-03",
+  "revision": "2026-10-04",
   "basis": "Omnisciente assessment guidance, checked against CIS v8.1 safeguard descriptions. Evidence examples are alternatives, not additional requirements. CAS scoring, inputs and metrics are not imported.",
   "requirements": {
     "1.1": {
@@ -831,17 +831,16 @@
     },
     "8.5": {
       "review": [
-        "Define required event fields and sensitive-asset scope. Confirm the covered population and client decisions.",
-        "Collect detailed events. Check actual execution rather than a policy statement alone.",
-        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner.",
-        "Check the following aspects: Detailed event records include the event source, date, user, timestamp, source address and destination address where available for relevant events."
+        "Confirm detailed logging is configured across enterprise assets containing sensitive data.",
+        "Inspect representative events for the event source, date, username, timestamp, source and destination addresses, and other useful investigation details.",
+        "Identify missing required fields and uncovered assets, and confirm corrective follow-up with the accountable owner."
       ],
       "evidence": [
-        "Representative event fields and coverage. Use representative records covering the stated population.",
+        "Representative log events, sensitive-asset coverage and investigation-useful fields, with any missing-field limitations explained. Use representative records covering the stated population.",
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
       ],
       "outcome": [
-        "Capture investigation-useful events on sensitive-data assets. Collect detailed events.",
+        "Configure detailed audit logs on enterprise assets containing sensitive data, including the event source, date, username, timestamp, source and destination addresses, and other useful investigation details.",
         "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
@@ -980,16 +979,16 @@
     },
     "9.4": {
       "review": [
-        "Define authorized extensions and exception process. Confirm the covered population and client decisions.",
-        "Restrict or remove unauthorized/unneeded extensions. Check actual execution rather than a policy statement alone.",
+        "Confirm the covered assets and which browser and email-client plugins, extensions and add-on applications are authorized and necessary.",
+        "Inspect actual settings or representative installed and enabled items. Verify unauthorized or unnecessary items are uninstalled or disabled; restricting their permissions while leaving them enabled is not the stated treatment.",
         "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
       ],
       "evidence": [
-        "Extension inventory and restrictions. Use representative records covering the stated population.",
+        "Browser and email-client plugin, extension and add-on inventories, with settings or records showing uninstalling or disabling. Use representative records covering the stated population.",
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
       ],
       "outcome": [
-        "Remove unneeded browser/mail extensions. Restrict or remove unauthorized/unneeded extensions.",
+        "Uninstall or disable unauthorized or unnecessary browser and email-client plugins, extensions and add-on applications.",
         "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
@@ -1674,16 +1673,16 @@
     },
     "16.7": {
       "review": [
-        "Adopt appropriate standard hardening templates. Confirm the covered population and client decisions.",
-        "Maintain hardening across application infrastructure. Check actual execution rather than a policy statement alone.",
+        "Confirm industry-recommended hardening templates cover underlying servers, databases, web servers, cloud containers, Platform as a Service (PaaS) and Software as a Service (SaaS) application components.",
+        "Compare actual configurations and application changes with the adopted hardening baselines. Verify in-house developed software does not weaken configuration hardening.",
         "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
       ],
       "evidence": [
-        "Baselines and exception/change records. Use representative records covering the stated population.",
+        "Application infrastructure baselines, configuration samples and change records covering conventional and cloud components, including changes made for in-house software. Use representative records covering the stated population.",
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
       ],
       "outcome": [
-        "Keep application platforms securely configured. Maintain hardening across application infrastructure.",
+        "Use industry-recommended hardening templates for application infrastructure: underlying servers, databases, web servers, cloud containers, Platform as a Service (PaaS) and Software as a Service (SaaS) components. In-house developed software must not weaken configuration hardening.",
         "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },

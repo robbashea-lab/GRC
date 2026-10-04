@@ -2,7 +2,7 @@
   "framework": "cis-ig1",
   "version": "8.1",
   "implementation_group": 1,
-  "verified_on": "2026-10-03",
+  "verified_on": "2026-10-04",
   "count_source": "https://www.cisecurity.org/controls/implementation-groups/ig1",
   "requirements": [
     {
@@ -857,15 +857,15 @@
       "control_name": "Audit Log Management",
       "type": "operational",
       "source_cadence": "No numeric interval specified.",
-      "guidance": "Capture investigation-useful events on sensitive-data assets. Collect detailed events.",
+      "guidance": "Configure detailed audit logs on enterprise assets containing sensitive data, including the event source, date, username, timestamp, source and destination addresses, and other useful investigation details.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#85-collect-detailed-audit-logs",
       "version": "8.1",
       "implementation_group": 2,
       "operating_guidance": {
         "accountable_role": "Security logging owner",
         "client_provider_split": "Client sets scope and escalation; internal team/provider collects and reviews logs.",
-        "establish": "Define required event fields and sensitive-asset scope.",
-        "operate": "Collect detailed events. Detailed event records include the event source, date, user, timestamp, source address and destination address where available for relevant events.",
+        "establish": "Identify sensitive-data assets and define the required detailed logging fields.",
+        "operate": "Collect the event source, date, username, timestamp, source and destination addresses, and other useful investigation details. Identify missing required fields as coverage gaps; availability alone does not remove the requirement.",
         "dependencies": "3.2; 8.1"
       }
     },
@@ -1033,15 +1033,15 @@
       "control_name": "Email and Web Browser Protections",
       "type": "operational",
       "source_cadence": "No numeric interval specified.",
-      "guidance": "Remove unneeded browser/mail extensions. Restrict or remove unauthorized/unneeded extensions.",
+      "guidance": "Uninstall or disable unauthorized or unnecessary browser and email-client plugins, extensions and add-on applications.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#94-restrict-unnecessary-or-unauthorized-browser-and-email-client-extensions",
       "version": "8.1",
       "implementation_group": 2,
       "operating_guidance": {
         "accountable_role": "Messaging/endpoint owner",
         "client_provider_split": "Client sets acceptable use; IT/mail provider configures protections.",
-        "establish": "Define authorized extensions and exception process.",
-        "operate": "Restrict or remove unauthorized/unneeded extensions.",
+        "establish": "Identify authorized and necessary browser and email-client plugins, extensions and add-on applications across the covered assets.",
+        "operate": "Uninstall or disable unauthorized or unnecessary browser and email-client plugins, extensions and add-on applications.",
         "dependencies": "2.1; 2.3; 9.1"
       }
     },
@@ -1807,15 +1807,15 @@
       "control_name": "Application Software Security",
       "type": "operational",
       "source_cadence": "No numeric interval specified.",
-      "guidance": "Keep application platforms securely configured. Maintain hardening across application infrastructure.",
+      "guidance": "Use industry-recommended hardening templates for application infrastructure: underlying servers, databases, web servers, cloud containers, Platform as a Service (PaaS) and Software as a Service (SaaS) components. In-house developed software must not weaken configuration hardening.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#167-use-standard-hardening-configuration-templates-for-application-infrastructure",
       "version": "8.1",
       "implementation_group": 2,
       "operating_guidance": {
         "accountable_role": "Engineering lead",
         "client_provider_split": "Client owns delivery/security decisions; development team or contracted developer performs work.",
-        "establish": "Adopt appropriate standard hardening templates.",
-        "operate": "Maintain hardening across application infrastructure.",
+        "establish": "Adopt industry-recommended hardening templates for underlying servers, databases, web servers, cloud containers, PaaS and SaaS application components.",
+        "operate": "Maintain application infrastructure hardening across the covered components. Do not allow in-house developed software to weaken configuration hardening.",
         "dependencies": "4.1; 4.2; 16.1"
       }
     },
