@@ -1,4 +1,4 @@
-"""2027–2032 synthetic CIS operation via supported routes; IG3 test gate only."""
+"""2027–2032 synthetic CIS operation via supported routes and actual availability."""
 import base64
 import copy
 import hashlib
@@ -31,7 +31,7 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
         return await self.get('/frameworks/cis-ig1', client_id=cid)
 
     async def test_fresh_released_groups_are_unassessed_and_optional(self):
-        for group, count, review_count in [(1, 56, 12), (2, 130, 15)]:
+        for group, count, review_count in [(1, 56, 12), (2, 130, 15), (3, 153, 15)]:
             cid = (await self.post('/clients', {'name': f'Synthetic fresh IG{group}'}))['client_id']
             body = self.body(cid=cid)
             body['state']['framework_settings'] = {'cis-ig1': {'implementation_group': group}}
@@ -51,9 +51,7 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual({i for r in reviews for i in r['framework_safeguards']}, set(ws['active_definition_ids']))
 
     async def test_six_year_progression_preserves_supported_work(self):
-        override = patch.dict(CIS, {'available_implementation_groups': [1, 2, 3]})
-        override.start()
-        self.addCleanup(override.stop)
+        self.assertEqual(CIS['available_implementation_groups'], [1, 2, 3])
         self.clock('2027-01-01')
         # Give the isolation assertion real foreign-framework records to protect.
         await self.post('/onboarding/baseline', self.body(cid='b', programs=('hipaa',)))
@@ -242,6 +240,6 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(library_ids), len(evidence_ids) + len(snapshots))
         self.assertTrue(set(evidence_ids).issubset(library_ids))
         self.assertEqual(await server.db.framework_assessments.find({'client_id': {'$ne': cid}}).to_list(None), foreign)
-        report = {'simulation': '2027–2032; supported route commands, synthetic external activity evidence, controlled Python clock', 'ig3_gate': 'test-only; released product remains unavailable', 'timeline': timeline, 'upgrades': upgrades, 'resolved_findings': len(gaps), 'assessment_evidence_records': len(evidence_ids), 'completed_review_snapshots': len(snapshots)}
+        report = {'simulation': '2027–2032; supported route commands, synthetic external activity evidence, controlled Python clock', 'ig3_gate': 'actual implementation availability; no test override', 'timeline': timeline, 'upgrades': upgrades, 'resolved_findings': len(gaps), 'assessment_evidence_records': len(evidence_ids), 'completed_review_snapshots': len(snapshots)}
         if os.environ.get('CIS_SIX_YEAR_REPORT'):
             Path(os.environ['CIS_SIX_YEAR_REPORT']).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

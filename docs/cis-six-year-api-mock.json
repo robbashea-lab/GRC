@@ -1,6 +1,6 @@
 {
   "simulation": "2027\u20132032; supported route commands, synthetic external activity evidence, controlled Python clock",
-  "ig3_gate": "test-only; released product remains unavailable",
+  "ig3_gate": "actual implementation availability; no test override",
   "timeline": [
     {
       "year": 2027,

@@ -1,4 +1,4 @@
-"""Actual IG3 content through isolated routes; release enabled only in the test."""
+"""Actual IG3 content and availability through isolated routes."""
 import asyncio
 import copy
 import csv
@@ -24,11 +24,9 @@ class CisIG3ScopeTests(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         await harness.FrameworkTests.asyncSetUp(self)
-        fixture = copy.deepcopy(CIS)
-        fixture['available_implementation_groups'] = [1, 2, 3]
-        override = patch.dict(CIS, fixture)
-        override.start()
-        self.addCleanup(override.stop)
+        self.assertEqual(CIS['available_implementation_groups'], [1, 2, 3])
+        original = copy.deepcopy(CIS)
+        self.addCleanup(lambda: CIS.update(original))
 
     async def test_all_transitions_preserve_rows_reviews_and_exports(self):
         await self.configure()

@@ -88,7 +88,7 @@ test('IG2 operating work uses shared Finding, Action, evidence and Review histor
 test('new IG2, later enablement, persisted save failure and authorization boundaries',async()=>{
   await api.post('/onboarding/baseline',{client_id:cid,state:{...state(1),requirements:{...state(1).requirements,'cis-ig1':'does_not_apply'}},finalize:true});
   await api.patch('/onboarding/programs/cis-ig1',{client_id:cid,applicability:'applies',implementation_group:2});expect((await workspace()).assessments).toHaveLength(130);
-  for(const group of [0,3,true,'2',null])await expect(scope(group)).rejects.toBeTruthy();
+  for(const group of [0,4,true,'2',null])await expect(scope(group)).rejects.toBeTruthy();
   const db=readStore(),old=db.clients.find(r=>r.client_id===cid).cis_configuration_updated_at;
   const storage=jest.spyOn(Storage.prototype,'setItem').mockImplementationOnce(()=>{throw new DOMException('Quota exceeded','QuotaExceededError');});
   await expect(scope(2)).rejects.toBeTruthy();storage.mockRestore();expect(readStore().clients.find(r=>r.client_id===cid).cis_configuration_updated_at).toBe(old);

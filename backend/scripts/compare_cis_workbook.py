@@ -22,17 +22,19 @@ def read_reference(path):
             if not re.fullmatch(r'xl/worksheets/sheet\d+\.xml', name):
                 continue
             for row in ET.fromstring(archive.read(name)).findall('.//s:sheetData/s:row', NS):
-                values = {}
+                values, coordinates = {}, {}
                 for cell in row.findall('s:c', NS):
                     value = cell.find('s:v', NS)
                     text = value.text or '' if value is not None else ''.join(t.text or '' for t in cell.findall('.//s:t', NS))
                     if cell.get('t') == 's':
                         text = strings[int(text)]
-                    values[re.sub(r'\d', '', cell.get('r'))] = text
+                    column = re.sub(r'\d', '', cell.get('r'))
+                    values[column] = text
+                    coordinates[column] = cell.get('r')
                 if re.fullmatch(r'\d+\.\d+', values.get('B', '')):
                     rows.append({'id': values['B'], 'control': int(values['A']),
                                  'title': values['C'], 'group': int(values['E']),
-                                 'description': values['F'], 'cell': f'{name}!F{row.get("r")}'})
+                                 'description': values['F'], 'cell': f'{name}!{coordinates["F"]}'})
         return rows
 
 

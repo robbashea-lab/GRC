@@ -7,7 +7,7 @@ import {activePlans,reviewConfig} from './frameworks';
 const ids='1.5 2.7 3.13 3.14 4.12 6.8 8.12 9.7 12.8 13.7 13.8 13.9 13.10 13.11 15.5 15.6 15.7 16.12 16.13 16.14 17.9 18.4 18.5'.split(' ');
 test('all actual IG3 definitions have stable criteria, review/evidence/outcome and five guide answers',()=>{
  expect(cis.requirements.filter(d=>d.implementation_group===3).map(d=>d.id)).toEqual(ids);
- expect(cis.available_implementation_groups).toEqual([1,2]);
+ expect(cis.available_implementation_groups).toEqual([1,2,3]);
  for(const id of ids){
   expect(criteria.requirements[id].criteria.map(c=>c.id)).toEqual([id+'-c1',id+'-c2',id+'-c3']);
   for(const field of ['review','evidence','outcome'])expect(guidance.requirements[id][field].length).toBeGreaterThanOrEqual(2);

@@ -2,7 +2,8 @@
   "framework": "cis-ig1",
   "available_implementation_groups": [
     1,
-    2
+    2,
+    3
   ],
   "version": "8.1",
   "implementation_group": 1,
