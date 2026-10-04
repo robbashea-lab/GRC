@@ -160,7 +160,7 @@ async def authorize_request(request, user, db):
                   if field not in {'expected_updated_at', 'expected_occurrence_id'} and value != row.get(field)
                   and not (value in (None, '') and row.get(field) in (None, ''))}
         allowed = {'notes'}
-        if kind == 'tasks': allowed |= {'status', 'description', 'title', 'priority', 'due_date', 'reason', 'context'}
+        if kind == 'tasks': allowed |= {'status', 'description', 'resolution', 'title', 'priority', 'due_date', 'reason', 'context'}
         if kind == 'tasks' and role == CONTRIBUTOR and body.get('assignee_id') in (None, '', user['user_id']):
             allowed.add('assignee_id')
         if kind == 'findings': allowed |= {'remediation_plan'}

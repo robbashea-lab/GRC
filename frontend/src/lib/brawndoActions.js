@@ -3,14 +3,13 @@ import {dateMatches} from './tableFilters';
 import {findingOpen} from './findingMetrics';
 import {FRAMEWORKS} from './frameworks';
 import {occurrenceId,relatedReviewInitialValues} from './reviewOccurrences';
+import {ticketRecords,ticketStage} from './remediationTickets';
 
 export const pilotPriority=value=>({medium:'Moderate',moderate:'Moderate',high:'High',low:'Low',informational:'Informational',critical:'Critical',immediate:'Critical / Immediate'})[value]||'Classification needed';
-export const finished=row=>row.kind==='findings'?['closed','accepted'].includes(row.raw.status):['done','cancelled'].includes(row.raw.status);
+export const finished=row=>['completed','accepted','cancelled'].includes(ticketStage(row));
 export function pilotActionStatus(row,now=new Date()) {
-  if(finished(row))return 'completed';
-  // Remediation is done but the Finding is still open until it is validated.
-  if(row.kind==='findings'&&row.raw.status==='remediated')return 'pending_validation';
-  if(row.raw.started_at||['in_progress','blocked','in_remediation','remediated'].includes(row.raw.status))return 'in_progress';
+  const stage=ticketStage(row);
+  if(stage!=='open')return stage;
   return daysDue(row,now)<0&&daysDue(row,now)!==null?'overdue':'open';
 }
 export function pilotActionMatches(row,view,now=new Date()) {
@@ -46,13 +45,9 @@ export function actionOrigin(record,records={},finding) {
 }
 // Read-only projection: no migration, no refresh-time creation, no title-based deduplication.
 export function unifiedActions(records,clientId) {
-  const findings=(records.findings||[]).filter(f=>f.client_id===clientId),tasks=(records.tasks||[]).filter(t=>t.client_id===clientId);
-  // A Finding is represented by its active Action; once no Action is active (e.g. Pending Validation) the Finding is the open work item.
-  const paired=new Set(tasks.filter(t=>!['done','cancelled'].includes(t.status)).map(t=>t.finding_id).filter(Boolean));
-  return [...tasks.map(raw=>({kind:'tasks',raw,finding:findings.find(f=>f.finding_id===raw.finding_id)})),...findings.filter(f=>!paired.has(f.finding_id)).map(raw=>({kind:'findings',raw,finding:raw,hasAction:tasks.some(t=>t.finding_id===raw.finding_id&&t.client_id===raw.client_id&&t.status==='done')}))].map(row=>({
-    ...row,id:row.raw.task_id||row.raw.finding_id,title:row.kind==='tasks'?actionTitle(row.raw):row.raw.title,
-    client_id:clientId,owner_id:row.kind==='tasks'?(row.raw.assignee_id??row.raw.owner_id):row.raw.owner_id,
-    due_date:row.raw.due_date,priority:row.raw.priority||row.raw.severity,
+  return ticketRecords(records,clientId).map(row=>({
+    ...row,id:row.raw.task_id||row.raw.finding_id,hasAction:row.actions.length>0,
+    title:row.finding?row.title:actionTitle(row.raw),client_id:clientId,
     itemType:row.finding||row.raw.finding_id?'Finding':'Task',source:actionOrigin(row.raw,records,row.finding),
   }));
 }

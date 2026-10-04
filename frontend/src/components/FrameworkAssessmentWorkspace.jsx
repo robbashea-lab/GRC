@@ -26,13 +26,15 @@ import {verificationLadder,verificationChecks,stackCapability,ageDays,STALE_DAYS
 import './BrawndoCisAssessment.css';
 import './BrawndoCisWorkspace.css';
 
+import RemediationTickets from './RemediationTickets';
+import TicketAssignment from './TicketAssignment';
 const LADDER_STATE={done:'confirmed',partial:'partly confirmed',missing:'not established',gap:'gap identified'};
 
 const RECORD_IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',vendors:'vendor_id'};
 
 export default function FrameworkAssessmentWorkspace({state,actions}){
   const {open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,otherDraft,breadcrumb}=state;
-  const {put,save,saveAndNext,run,download,setComment,setFinding,setTab,setNested,setReviewDraft,setLink,setControlDraft,controlSaved,close,previous,next,reviewSaved,retry}=actions;
+  const {put,save,saveAndNext,run,download,setComment,setFinding,setTab,setNested,setReviewDraft,setLink,setControlDraft,controlSaved,close,previous,next,reviewSaved,retry,setFeedback}=actions;
   const clientId=record.client_id,aid=record.framework_assessment_id,framework=record.framework_key,isCis=framework==='cis-ig1',isIso=framework==='iso-27001';
   const isoGuide=isIso?isoGuideEntry(definition.id):null;
   const program=operatorProgram(framework),vocab=operatorVocabulary(framework);
@@ -80,20 +82,14 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
   const findingsSection=(<Step number="5" title={isIso?'Findings & corrective actions':'Required actions'}>
               {ctx&&gapWithoutFinding&&<p className="brawndo-caution" role="note">This {vocab.item.toLowerCase()} has a recorded gap but no Finding. Raise one so remediation is owned and tracked.</p>}
               <div className="brawndo-subhead"><h4>Findings · {related.findings?.length||0}</h4>{writable&&!finding&&<Button variant="outline" size="sm" disabled={disabled} onClick={startFinding}>{isIso?'Raise Finding':'Create Finding'}</Button>}</div>
-              <ul>{records('findings',related.findings)}</ul>
+              <RemediationTickets records={{...related,framework_assessments:[current]}} clientId={clientId} users={ctx?.users} onOpen={setNested} disabled={busy}/>
               {ctx&&!related.findings?.length&&!gapWithoutFinding&&<p className="text-sm text-ink-secondary">No linked Findings.</p>}
               {finding&&<fieldset disabled={disabled} className="brawndo-inset space-y-3"><legend className="font-medium">New Finding</legend>
                 {[['title','Finding title'],['remediation_title','Remediation Action title'],['description','Finding description']].map(([key,label])=>{const Field=key==='description'?Textarea:Input;return <label className="block" key={key}>{label}<Field aria-label={label} value={finding[key]} onChange={e=>setFinding({...finding,[key]:e.target.value})}/></label>;})}
                 <label className="block">Severity<select aria-label="Finding severity" value={finding.severity} onChange={e=>setFinding({...finding,severity:e.target.value})}>{['low','medium','high','critical'].map(s=><option key={s}>{s}</option>)}</select></label>
-                <p className="text-xs text-ink-secondary">The Finding records the gap; its Action Item is where remediation is assigned and tracked.</p>
-                <div className="flex flex-wrap gap-2"><Button onClick={()=>run(async()=>{await api.post(`/framework_assessments/${aid}/findings`,finding);setFinding(null);})}>Create Finding & Action</Button><Button variant="ghost" onClick={()=>setFinding(null)}>Cancel Finding</Button></div>
+                <TicketAssignment clientId={clientId} users={ctx?.users} {...{finding,setFinding}} defaultOwner={current.owner_id} disabled={busy}/>
+                <div className="flex flex-wrap gap-2"><Button onClick={()=>run(async()=>{await api.post(`/framework_assessments/${aid}/findings`,finding);setFinding(null);setFeedback?.('Ticket saved. Assessment changes remain separate.');})}>Create Finding & Action</Button><Button variant="ghost" onClick={()=>setFinding(null)}>Cancel Finding</Button></div>
               </fieldset>}
-              <h4 className="mt-5">Remediation Action Items · {related.tasks?.length||0}</h4>
-              <ul>{related.tasks?.map(t=><li key={t.task_id} className="brawndo-linked-row">
-                <button type="button" className="text-link text-left" disabled={busy} onClick={()=>setNested({kind:'tasks',record:t})}>{t.title}</button>
-                <span className={`text-xs ${overdueTask(t)?'text-semantic-critical font-medium':'text-ink-secondary'}`}>{[actionStatus(t.status),who(t.assignee_id),t.due_date&&(overdueTask(t)?`Overdue · ${t.due_date.slice(0,10)}`:`Due ${t.due_date.slice(0,10)}`)].filter(Boolean).join(' · ')}</span>
-              </li>)}</ul>
-              {ctx&&!related.tasks?.length&&<p className="text-sm text-ink-secondary">No linked Action Items.</p>}
             </Step>);
   return <AssessmentShell open={open} title={`${program} ${definition.id} — ${definition.title}`}
     description={`${definition.control_name||definition.category||definition.specification||'Framework assessment'} · ${definition.source_citation||definition.id}`}

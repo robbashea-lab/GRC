@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import {recordUuid} from '@/lib/recordUuid';
 import {actionStatus} from '@/lib/actionItems';
 import {findingOpen} from '@/lib/findingMetrics';
+import RemediationTickets from './RemediationTickets';
 
 // Compact safeguard-level Findings for the Brawndo CIS workspace. The safeguard is the authoritative
 // origin (framework_assessment_id); the Finding owns its Action and its validation lifecycle.
@@ -18,7 +19,7 @@ export function directFindings(record,related){
   return (related?.findings||[]).filter(f=>f.client_id===record.client_id&&(f.framework_assessment_id===record.framework_assessment_id||links.has(f.finding_id)));
 }
 
-export default function BrawndoCisFindings({record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested}){
+export default function BrawndoCisFindings({record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}){
   const findings=directFindings(current,related),open=findings.filter(findingOpen),closed=findings.filter(f=>!findingOpen(f));
   const actions=f=>(related?.tasks||[]).filter(t=>t.finding_id===f.finding_id&&t.client_id===record.client_id);
   const disabled=!writable||busy||!ctx,aid=record.framework_assessment_id;
@@ -29,6 +30,7 @@ export default function BrawndoCisFindings({record,definition,current,ctx,relate
     // An unchanged owner is inherited from the safeguard (with the existing eligibility fallback).
     await api.post(`/framework_assessments/${aid}/findings`,{...body,due_date:body.due_date||null,...(owner_id!==(current.owner_id||'')?{owner_id:owner_id||null}:{})});
     setFinding(null);
+    setFeedback?.('Ticket saved. Assessment changes remain separate.');
   });
   const row=f=>{const work=actions(f),active=work.filter(t=>!['done','cancelled'].includes(t.status));
     const action=active[0]||work[0];
@@ -41,8 +43,7 @@ export default function BrawndoCisFindings({record,definition,current,ctx,relate
   return <section className="bcsg-findings" aria-labelledby="bcsg-findings-heading">
     <div className="bcsg-findings-head"><h3 id="bcsg-findings-heading">Findings</h3>
       {writable&&!finding&&<Button size="sm" variant="outline" disabled={disabled} onClick={start}>Raise Finding</Button>}</div>
-    {open.length?<ul aria-label="Open Findings">{open.map(row)}</ul>:<p className="bcsg-muted">No open Findings for this safeguard.</p>}
-    {!!closed.length&&<details className="bcsg-closed"><summary>{closed.length} closed / validated</summary><ul aria-label="Closed Findings">{closed.map(row)}</ul></details>}
+    {findings.length?<RemediationTickets records={{...related,findings,tasks:(related.tasks||[]).filter(t=>findings.some(f=>f.finding_id===t.finding_id)),framework_assessments:[current]}} clientId={record.client_id} users={ctx?.users} onOpen={setNested} disabled={busy}/>:<p className="bcsg-muted">No open Findings for this safeguard.</p>}
     {finding&&<fieldset disabled={disabled} className="bcsg-finding-form"><legend>Raise Finding</legend>
       <p className="bcsg-muted" data-testid="finding-origin">Origin: CIS IG1 · Safeguard {definition.id} — {definition.title}</p>
       <label>Finding title<Input aria-label="Finding title" required value={finding.title} onChange={e=>put('title',e.target.value)}/></label>

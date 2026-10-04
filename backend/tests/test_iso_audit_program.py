@@ -77,6 +77,36 @@ class IsoAuditTests(unittest.IsolatedAsyncioTestCase):
         current=(await self.client.get('/api/reviews/'+review['review_id'])).json()
         self.assertEqual((await self.item(current,key,notes='Assigned auditor update')).status_code,200)
 
+    async def test_ticket_creation_durably_links_only_exact_item_and_recovers_audit(self):
+        from unittest.mock import patch
+        data,_=await self.activate()
+        review=data['reviews'][0];rid=review['review_id']
+        key=iso_audit.PACKAGES[review['iso_audit']['package_key']]['items'][0]['key']
+        response=await self.item(review,key,notes='Previously saved notes',result='nonconformity')
+        review=response.json()
+        body={'request_id':'audit-item-ticket','occurrence_id':review['current_occurrence_id'],
+              'expected_updated_at':review['updated_at'],'audit_item_key':key,'title':'Recorded gap',
+              'description':'Actual finding, not workpaper edits','remediation_title':'Correct the gap'}
+        path='/api/reviews/'+rid+'/create-finding'
+        original=server._review_event
+        async def fail(user,record,event,*args,**kwargs):
+            if event=='Audit item Finding linked':raise RuntimeError('Injected audit outage')
+            return await original(user,record,event,*args,**kwargs)
+        with patch.object(server,'_review_event',fail):
+            self.assertEqual((await self.client.post(path,json=body)).status_code,503)
+        response=await self.client.post(path,json=body)
+        self.assertEqual(response.status_code,200,response.text)
+        finding=response.json();review=(await self.client.get('/api/reviews/'+rid)).json()
+        item=review['iso_audit']['items'][key]
+        self.assertEqual(item['notes'],'Previously saved notes')
+        self.assertEqual(item['finding_ids'],[finding['finding_id']])
+        self.assertEqual(finding['audit_item_key'],key)
+        self.assertEqual(await server.db.tasks.count_documents({'finding_id':finding['finding_id']}),1)
+        self.assertEqual((await self.client.post(path,json=body)).json(),finding)
+        self.assertEqual((await self.client.post(path,json={**body,'audit_item_key':'other'})).status_code,409)
+        invalid={**body,'request_id':'invalid-item','expected_updated_at':review['updated_at'],'audit_item_key':'$bad.path'}
+        self.assertEqual((await self.client.post(path,json=invalid)).status_code,422)
+
     async def test_closure_results_findings_evidence_and_five_year_history(self):
         data,_=await self.activate()
         review=data['reviews'][0];rid=review['review_id'];package=iso_audit.PACKAGES[review['iso_audit']['package_key']]

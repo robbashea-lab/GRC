@@ -1,0 +1,137 @@
+"""Ticket integrity through real routes; isolated fixtures, no external target."""
+import unittest
+from unittest.mock import patch
+import test_framework_governance as framework
+
+server = framework.server
+
+
+class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
+    asyncSetUp = framework.FrameworkTests.asyncSetUp
+    sign_in = framework.FrameworkTests.sign_in
+    body = framework.FrameworkTests.body
+    configure = framework.FrameworkTests.configure
+
+    async def pair(self):
+        workspace = await self.configure()
+        aid = workspace['assessments'][0]['framework_assessment_id']
+        path = '/api/framework_assessments/' + aid + '/findings'
+        body = {'request_id':'ticket-test', 'title':'Issue', 'description':'Actual issue',
+                'remediation_title':'Correct the issue', 'owner_id':None, 'due_date':'2027-01-01'}
+        response = await self.client.post(path, json=body)
+        self.assertEqual(response.status_code, 200, response.text)
+        finding = response.json()
+        task = await server.db.tasks.find_one({'finding_id':finding['finding_id']})
+        return aid, path, body, finding, task
+
+    async def test_framework_retry_rejects_contradictory_payload(self):
+        _, path, body, finding, _ = await self.pair()
+        replay = await self.client.post(path, json=body)
+        self.assertEqual(replay.json(), finding)
+        conflict = await self.client.post(path, json={**body, 'remediation_title':'Different work'})
+        self.assertEqual(conflict.status_code, 409, conflict.text)
+
+    async def test_framework_creation_recovers_missing_source_audit(self):
+        workspace = await self.configure()
+        aid = workspace['assessments'][0]['framework_assessment_id']
+        path = '/api/framework_assessments/' + aid + '/findings'
+        body = {'request_id':'source-audit', 'title':'Issue', 'remediation_title':'Correct it'}
+        original = server.audit
+        async def fail(user, action, *args, **kwargs):
+            if action == 'Finding raised': raise RuntimeError('Injected audit outage')
+            return await original(user, action, *args, **kwargs)
+        with patch.object(server, 'audit', fail):
+            first = await self.client.post(path, json=body)
+        self.assertEqual(first.status_code, 503, first.text)
+        result = await self.client.post(path, json=body)
+        self.assertEqual(result.status_code, 200, result.text)
+        self.assertEqual(await server.db.findings.count_documents({'framework_assessment_id':aid}), 1)
+        self.assertEqual(await server.db.tasks.count_documents({'finding_id':result.json()['finding_id']}), 1)
+        self.assertEqual(await server.db.audit_logs.count_documents({'entity_id':aid,'action':'Finding raised'}), 1)
+
+    async def test_validation_retry_repairs_audit_without_duplicate_decision(self):
+        _, _, _, f, t = await self.pair()
+        await self.client.patch('/api/tasks/'+t['task_id'], json={'status':'done'})
+        f = await server.db.findings.find_one({'finding_id':f['finding_id']})
+        path = '/api/findings/'+f['finding_id']+'/validate'
+        body = {'request_id':'validation-one', 'rationale':'Checked the correction', 'expected_updated_at':f['updated_at']}
+        original = server.audit
+        async def fail(user, action, *args, **kwargs):
+            if action == 'validate': raise RuntimeError('Injected validation audit outage')
+            return await original(user, action, *args, **kwargs)
+        with patch.object(server, 'audit', fail):
+            response = await self.client.post(path, json=body)
+        self.assertEqual(response.status_code, 503, response.text)
+        recovered = await self.client.post(path, json=body)
+        self.assertEqual(recovered.status_code, 200, recovered.text)
+        self.assertEqual(recovered.json()['status'], 'closed')
+        self.assertEqual(len(recovered.json()['decision_history']), 1)
+        self.assertEqual((await self.client.post(path,json=body)).json(), recovered.json())
+        self.assertEqual((await self.client.post(path,json={**body,'rationale':'Changed'})).status_code,409)
+        self.assertEqual(await server.db.audit_logs.count_documents({'action':'validate','entity_id':f['finding_id']}),1)
+
+    async def test_linked_finding_cannot_be_deleted(self):
+        _, _, _, f, t = await self.pair()
+        response = await self.client.request('DELETE','/api/findings/'+f['finding_id'],json={'expected_updated_at':f['updated_at']})
+        self.assertEqual(response.status_code,409,response.text)
+        self.assertIsNotNone(await server.db.findings.find_one({'finding_id':f['finding_id']}))
+        self.assertIsNotNone(await server.db.tasks.find_one({'task_id':t['task_id']}))
+
+    async def test_validation_checks_stale_version_and_tenant(self):
+        _, _, _, f, t = await self.pair()
+        await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done'})
+        path='/api/findings/'+f['finding_id']+'/validate'
+        body={'request_id':'stale-validation','rationale':'Checked','expected_updated_at':f['updated_at']}
+        self.assertEqual((await self.client.post(path,json=body)).status_code,409)
+        self.sign_in('member')
+        self.assertEqual((await self.client.post(path,json=body)).status_code,403)
+
+    async def test_completion_retry_preserves_resolution_and_repairs_audit(self):
+        _,_,_,f,t=await self.pair()
+        path='/api/tasks/'+t['task_id']
+        body={'status':'done','description':'Planned correction','resolution':'Actual correction',
+              'expected_updated_at':t['updated_at']}
+        headers={'Idempotency-Key':'ticket-complete-intent-001'}
+        original=server.audit
+        async def fail(user,event,*args,**kwargs):
+            if event=='Action Item completed':raise RuntimeError('Injected audit failure')
+            return await original(user,event,*args,**kwargs)
+        with patch.object(server,'audit',fail):
+            self.assertEqual((await self.client.patch(path,json=body,headers=headers)).status_code,503)
+        current=await server.db.tasks.find_one({'task_id':t['task_id']})
+        self.assertEqual(current['resolution'],'Actual correction')
+        self.assertEqual((await self.client.patch(path,json={'title':'Concurrent edit','expected_updated_at':current['updated_at']})).status_code,409)
+        recovered=await self.client.patch(path,json=body,headers=headers)
+        self.assertEqual(recovered.status_code,200,recovered.text)
+        self.assertEqual(recovered.json()['completed_at'],current['completed_at'])
+        self.assertEqual(recovered.json()['description'],'Planned correction')
+        self.assertEqual((await self.client.patch(path,json=body,headers=headers)).json(),recovered.json())
+        self.assertEqual((await self.client.patch(path,json={**body,'resolution':'Different'},headers=headers)).status_code,409)
+        self.assertEqual(await server.db.audit_logs.count_documents({'action':'Action Item completed','entity_id':t['task_id']}),1)
+
+    async def test_reopen_preserves_completed_action_and_recovers_once(self):
+        _,_,_,f,t=await self.pair()
+        await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done','resolution':'Original correction'})
+        closed=await self.client.post('/api/findings/'+f['finding_id']+'/validate',json={'rationale':'Original validation'})
+        self.assertEqual(closed.status_code,200,closed.text)
+        prior=await server.db.tasks.find_one({'task_id':t['task_id']})
+        body={'request_id':'reopen-one','expected_updated_at':closed.json()['updated_at']}
+        path='/api/findings/'+f['finding_id']+'/reopen'
+        original=server.audit
+        async def fail(user,event,*args,**kwargs):
+            if event=='Remediation reopened':raise RuntimeError('Injected audit failure')
+            return await original(user,event,*args,**kwargs)
+        with patch.object(server,'audit',fail):
+            self.assertEqual((await self.client.post(path,json=body)).status_code,503)
+        response=await self.client.post(path,json=body)
+        self.assertEqual(response.status_code,200,response.text)
+        reopened=response.json()
+        self.assertEqual(reopened['finding_id'],f['finding_id'])
+        self.assertEqual(reopened['status'],'in_remediation')
+        self.assertNotEqual(reopened['primary_task_id'],t['task_id'])
+        self.assertEqual(await server.db.tasks.find_one({'task_id':t['task_id']}),prior)
+        self.assertEqual(len(reopened['decision_history']),2)
+        self.assertEqual(await server.db.tasks.count_documents({'finding_id':f['finding_id']}),2)
+        self.assertEqual((await self.client.post(path,json=body)).json(),reopened)
+        self.sign_in('member')
+        self.assertEqual((await self.client.post(path,json=body)).status_code,403)

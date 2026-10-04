@@ -78,7 +78,7 @@ export function authorizeDemo(db, method, parts, body = {}) {
     && value !== row[field] && !([null, undefined, ''].includes(value) && [null, undefined, ''].includes(row[field]))).map(([field]) => field);
   if (kind === 'framework_assessments') return;
   const fields = new Set(['notes']);
-  if (kind === 'tasks') ['status', 'description', 'title', 'priority', 'due_date', 'reason', 'context'].forEach(f => fields.add(f));
+  if (kind === 'tasks') ['status', 'description', 'resolution', 'title', 'priority', 'due_date', 'reason', 'context'].forEach(f => fields.add(f));
   if (kind === 'tasks' && role === CONTRIBUTOR && [undefined, null, '', user.user_id].includes(body.assignee_id)) fields.add('assignee_id');
   if (kind === 'findings') fields.add('remediation_plan');
   if (role === MANAGER && ['tasks', 'findings', 'reviews', 'risks', 'policies', 'vendors', 'assets'].includes(kind)) OWNERS[kind].forEach(f => fields.add(f));

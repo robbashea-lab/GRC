@@ -1,5 +1,7 @@
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
 import AssessmentHistory from './AssessmentHistory';
+import RemediationTickets from './RemediationTickets';
+import TicketAssignment from './TicketAssignment';
 import SocRequirementGuide from './SocRequirementGuide';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
@@ -69,13 +71,14 @@ export default function PrestigeSocAssessment({state,actions}){
     <section className="psoc-findings" aria-label="Criterion Findings">
       <h3>Findings</h3>
       <p className="text-xs text-ink-secondary">Completing remediation does not change the assessment conclusion automatically.</p>
-      {related?.findings?.length?<ul>{related.findings.map(item=><li key={item.finding_id}><button type="button" disabled={busy} onClick={()=>setNested({kind:'findings',record:item})}>{item.title||item.finding_id}</button>{item.status&&` · ${item.status.replaceAll('_',' ')}`}</li>)}</ul>:<p className="text-sm text-ink-secondary">No linked Findings for this criterion.</p>}
+      <RemediationTickets records={{...related,framework_assessments:[current]}} clientId={record.client_id} users={ctx?.users} onOpen={setNested} disabled={busy}/>
       {writable&&<div className="space-y-2">
         <Button variant="outline" disabled={disabled||!!finding} onClick={()=>setFinding({title:`${definition.id} · ${definition.title} — implementation gap`,description:current.implementation||'',remediation_title:`Address ${definition.id} implementation gap`,severity:'medium',request_id:recordUuid()})}>Raise Finding</Button>
         {finding&&<div className="space-y-2">
           <label className="block text-sm">Finding title<input aria-label="Finding title" className="w-full border border-line rounded p-2" value={finding.title} onChange={e=>setFinding({...finding,title:e.target.value})}/></label>
           <label className="block text-sm">Remediation Action title<input aria-label="Remediation Action title" className="w-full border border-line rounded p-2" value={finding.remediation_title} onChange={e=>setFinding({...finding,remediation_title:e.target.value})}/></label>
           <label className="block text-sm">Finding description<Textarea aria-label="Finding description" value={finding.description} onChange={e=>setFinding({...finding,description:e.target.value})}/></label>
+          <TicketAssignment clientId={record.client_id} users={ctx?.users} {...{finding,setFinding}} defaultOwner={current.owner_id} disabled={busy}/>
           <label className="block text-sm">Severity<select aria-label="Finding severity" value={finding.severity} onChange={e=>setFinding({...finding,severity:e.target.value})}>{['low','medium','high','critical'].map(s=><option key={s}>{s}</option>)}</select></label>
           <Button disabled={busy||!finding.title.trim()||!finding.remediation_title.trim()} onClick={()=>run(async()=>{await api.post(`/framework_assessments/${record.framework_assessment_id}/findings`,finding);setFinding(null);setFeedback('Finding and remediation Action created.');})}>Create Finding & Action</Button>
           <Button variant="ghost" onClick={()=>setFinding(null)}>Cancel</Button>
@@ -89,7 +92,7 @@ export default function PrestigeSocAssessment({state,actions}){
       {!!current.management_controls?.length&&<ul>{current.management_controls.map((control,index)=><li key={control.control_id||index}><strong>{control.name||'Previously recorded control'}</strong><p className="whitespace-pre-wrap">{control.description}</p><p className="text-xs text-ink-secondary">Retained description · {control.frequency||'Frequency not recorded'} · Design: {control.design||'Not recorded'} · Operation: {control.operating||'Not recorded'}</p></li>)}</ul>}
       {!!ctx?.retainedControls?.length&&<ul>{ctx.retainedControls.map(control=><li key={control.control_id}><button type="button" onClick={()=>setNested({kind:'organizational_controls',record:control})}>Open retained supporting record · {control.control_id}</button></li>)}</ul>}
       {[
-        ['reviews','Reviews','review_id'],['tasks','Action Items','task_id'],
+        ['reviews','Reviews','review_id'],
         ['risks','Risks','risk_id'],['policies','Policies','policy_id'],['evidence','Evidence','evidence_id']
       ].map(([kind,label,id])=><section key={kind}>
         <h3>{label} · {related?.[kind]?.length||0}</h3>

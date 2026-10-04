@@ -8,8 +8,8 @@ const finding=(id,extra={})=>({finding_id:id,client_id:cid,title:id,status:'open
 test('projection preserves orphans and distinct actions, does not mutate or duplicate on refresh, isolates clients',()=>{
   const data={findings:[finding('paired'),finding('orphan'),finding('foreign',{client_id:'other'})],tasks:[task('a',{finding_id:'paired'}),task('b',{finding_id:'paired'}),task('manual'),task('foreign',{client_id:'other'})]};
   const before=JSON.stringify(data),rows=unifiedActions(data,cid);
-  expect(rows.map(r=>r.id)).toEqual(['a','b','manual','orphan']);
-  expect(rows.slice(0,2).every(r=>r.finding.finding_id==='paired')).toBe(true);
+  expect(rows.map(r=>r.id)).toEqual(['paired','orphan','manual']);
+  expect(rows[0].actions.map(t=>t.task_id)).toEqual(['a','b']);
   expect(rows[2].source.label).toBe('Manual Entry');
   expect(unifiedActions(data,cid)).toEqual(rows);expect(JSON.stringify(data)).toBe(before);
 });
@@ -51,13 +51,13 @@ test('source follows exact framework assessment and historical Review occurrence
 });
 test('a Pending Validation Finding is an open work item, overdue by its own target date',()=>{
   const finding={finding_id:'pv',client_id:cid,title:'Gap',status:'remediated',due_date:'2026-09-20',severity:'high'};
-  const rows=unifiedActions({findings:[finding],tasks:[task('done',{finding_id:'pv',status:'done'})]},cid);
+  const rows=unifiedActions({findings:[finding],tasks:[task('done',{finding_id:'pv',status:'done',due_date:'2026-09-20'})]},cid);
   const row=rows.find(r=>r.kind==='findings');
   expect(row).toBeTruthy();expect(pilotActionStatus(row,now)).toBe('pending_validation');
   expect(row.hasAction).toBe(true);expect(unifiedActions({findings:[finding],tasks:[]},cid).find(r=>r.kind==='findings').hasAction).toBe(false);
   expect(pilotActionMatches(row,'active',now)).toBe(true);expect(pilotActionMatches(row,'overdue',now)).toBe(true);
   const active=unifiedActions({findings:[{...finding,status:'in_remediation'}],tasks:[task('open',{finding_id:'pv'})]},cid);
-  expect(active.filter(r=>r.kind==='findings')).toHaveLength(0);
+  expect(active.filter(r=>r.kind==='findings')).toHaveLength(1);
 });
 test('the Status filter labels Pending Validation rows (filter options render)',()=>{
   const {columnOptions}=require('./tableFilters');

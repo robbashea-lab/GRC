@@ -49,6 +49,7 @@ import RequirementBasis, {GovernanceContextFields} from './RequirementBasis';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import ContactWorkspace from './ContactWorkspace';
 import AssignmentHelp from './AssignmentHelp';
+import RemediationTicketDrawer from './RemediationTicketDrawer';
 import { personLabel, useClientPeople } from '@/lib/people';
 import { editableFields } from '@/lib/permissions';
 
@@ -98,6 +99,7 @@ function toDateInput(v) {
 }
 
 export default function RecordDrawer(props) {
+  if(props.record&&['tasks','findings'].includes(props.kind))return <RemediationTicketDrawer {...props}/>;
   if(props.kind==='contacts')return <ContactWorkspace {...props}/>;
   if(props.kind==='organizational_controls')return <OrganizationalControlDrawer {...props}/>;
   if(props.kind==='framework_assessments')return <FrameworkDrawer {...props}/>;

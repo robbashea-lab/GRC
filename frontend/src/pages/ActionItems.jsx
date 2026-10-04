@@ -41,7 +41,7 @@ export default function ActionItems() {
       const next=new URLSearchParams(params);['owner','unassigned','finding_id','id','view','q'].forEach(k=>next.delete(k));setParams(next,{replace:true});
     }
   },[currentClientId,user,params,setParams]);
-  return isReferenceRegister(currentClientId,user)?<BrawndoActionItems key={currentClientId}/>:<OriginalActionItems/>;
+  return <BrawndoActionItems key={currentClientId}/>;
 }
 function OriginalActionItems() {
   const location = useLocation();
