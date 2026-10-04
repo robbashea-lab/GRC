@@ -95,7 +95,7 @@ async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configurat
             'owner_id':None,'process_owner_id':None,'created_at':s._now(),'related_links':[],'assessment_history':[]}},upsert=True)
     plans=active_plans(key,configuration)
     # A scope proposal may initialize retained records, but its current drivers
-    # must describe the authoritative client scope until that scope is published.
+    # must not exceed either side of the transition before scope is published.
     published_plans={p['key']:p for p in active_plans(key,cis_active_configuration if cis_active_configuration is not None else configuration)}
     if key=='cis-ig1':
         active_keys=set(published_plans)
@@ -348,7 +348,7 @@ def router_for(s):
             # Reconcile the proposal first. A partial failure leaves the old active scope
             # intact; deterministic IDs and the receipt resume the same proposal safely.
             state={**current['onboarding_baseline'],'requirements':{'cis-ig1':'applies'},'framework_settings':{'cis-ig1':{'implementation_group':intent['after']}}}
-            await reconcile(s,body.client_id,state,user,cis_active_configuration=client_configuration('cis-ig1',current))
+            await reconcile(s,body.client_id,state,user,cis_active_configuration={'implementation_group':min(intent['before'],intent['after'])})
             changed=await s.db.clients.update_one({'client_id':body.client_id,'cis_configuration_updated_at':current.get('cis_configuration_updated_at')},
                 {'$set':{'framework_settings.cis-ig1':{'implementation_group':intent['after']},'cis_configuration_updated_at':intent['updated_at'],'cis_scope_change':intent}})
             if not changed.matched_count:raise HTTPException(409,'CIS scope changed; reload configuration')

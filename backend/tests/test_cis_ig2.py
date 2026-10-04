@@ -206,3 +206,36 @@ class CisIG2Tests(unittest.IsolatedAsyncioTestCase):
         replay=await self.scope(2,key=key)
         self.assertEqual(replay.json(),retry.json())
         self.assertEqual((await self.workspace())['configuration']['implementation_group'],1)
+
+    async def test_postpublication_reduction_failure_has_no_active_ig2_review_drivers(self):
+        s=harness.server
+        await self.configure()
+        upgraded=await self.scope(2)
+        before=await s.db.framework_assessments.find({'client_id':'a'}).to_list(None)
+        original_reconcile=framework_governance.reconcile
+        async def fail_after_publication(*args,**kwargs):
+            if kwargs.get('cis_active_configuration') is None:
+                raise RuntimeError('Injected interruption immediately after reduced scope publication')
+            await original_reconcile(*args,**kwargs)
+        key=uuid.uuid4().hex
+        context={'token':upgraded.json()['expected_updated_at'],'confirm_reduction':True,'reason':'Reduction recovery QA','effective_date':'2026-10-03'}
+        with patch.object(framework_governance,'reconcile',side_effect=fail_after_publication):
+            failed=await self.scope(1,key=key,**context)
+        self.assertEqual(failed.status_code,503,failed.text)
+        workspace=await self.workspace()
+        self.assertEqual(workspace['configuration']['implementation_group'],1)
+        allowed=set(workspace['active_definition_ids'])
+        self.assertEqual(len(allowed),56)
+        for review in await s.db.reviews.find({'client_id':'a'}).to_list(None):
+            for driver in review['framework_drivers']:
+                if driver['framework_key']=='cis-ig1' and driver['framework_driver_active']:
+                    self.assertLessEqual(set(driver['framework_safeguards']),allowed)
+            if review['framework_plan_key'] in {'network-defense','secure-development','penetration-testing'}:
+                self.assertFalse(review['framework_driver_active'])
+        retry=await self.scope(1,key=key,**context)
+        self.assertEqual(retry.status_code,200,retry.text)
+        self.assertEqual(await s.db.framework_assessments.find({'client_id':'a'}).to_list(None),before)
+        reenabling=await self.scope(2,token=retry.json()['expected_updated_at'])
+        self.assertEqual(reenabling.status_code,200,reenabling.text)
+        self.assertEqual(await s.db.framework_assessments.find({'client_id':'a'}).to_list(None),before)
+        self.assertEqual(await s.db.reviews.count_documents({'client_id':'a'}),15)
