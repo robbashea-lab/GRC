@@ -69,6 +69,9 @@ class OnboardingHandoffTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200, response.text)
         saved = next(r for r in (await self.snapshot())['records']['framework_assessments'] if r['framework_assessment_id'] == row['framework_assessment_id'])
         self.assertTrue(all(saved['cis_setup'].values()))
+        await server.db.users.update_one({'user_id': 'member'}, {'$set': {'status': 'disabled'}})
+        retained = next(r for r in (await self.snapshot())['records']['framework_assessments'] if r['framework_assessment_id'] == row['framework_assessment_id'])
+        self.assertTrue(retained['cis_setup']['accountable_person_recorded'])  # Recorded reference, not new-assignment eligibility.
         self.assertEqual(saved['status'], row['status'])
         for field in ('owner_id', 'process_owner_id', 'implementation', 'notes', 'cis_operation'):
             self.assertNotIn(field, saved)

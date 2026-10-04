@@ -52,6 +52,25 @@ One repeated mocked-auth browser run timed out finding parent CIS Next after a n
 Review closed; a subsequent complete run passed unchanged. This intermittent browser/
 harness observation is retained, not represented as a flawless browser run.
 
+Second review follow-up: CIS supporting-record mutations are now visible only to the
+existing internal administrator roles; managers/assigned contributors still edit their
+assessments and inspect linked records without being offered server-denied relationship
+actions. No server permission is broadened. The optional persistent verifier reads its
+Mongo version from authenticated `buildInfo` rather than labeling arbitrary binaries
+8.0.28. Syntax checked; no new persistent environment run is claimed.
+
+Two suggestions were evaluated rather than implemented blindly. Mongo8.0.28's
+[PingCommand](https://github.com/mongodb/mongo/blob/r8.0.28/src/mongo/db/commands/generic.cpp#L84-L86)
+explicitly requires no authentication; the CIS source's actual database-restart PASS
+corroborates this. The loopback liveness probe is unchanged; authenticated operations
+still verify database access. Recorded CIS accountability intentionally means a retained
+Owner/Process Owner reference, not current platform-assignment eligibility. Existing
+identity lifecycle preserves these historical references, and business contacts do not
+need platform access. Both setup views now explicitly disclaim current availability/
+eligibility and direct users to review Owner/Contacts. Altering that business rule or
+invalidating saved confirmation solely for platform access changes is outside this
+bounded correction; the authoritative assignment checks and permissions are unchanged.
+
 ## Exact sources and boundary
 
 - Branch: `codex/iso-cis-bounded-integration` in its own worktree.

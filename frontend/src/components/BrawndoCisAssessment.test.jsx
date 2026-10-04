@@ -33,6 +33,16 @@ beforeEach(()=>{
 afterEach(async()=>{mockOfficial=null;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 async function render(clientId='demo_brawndo'){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
 
+test.each(['client_grc_manager','client_contributor'])('%s can edit an assigned assessment without admin-only relationship actions',async role=>{
+ mockUser={...mockUser,role};record={...record,owner_id:mockUser.user_id};
+ related.evidence=[{evidence_id:'e',filename:'Validation.txt',linked_type:'framework_assessment',linked_id:record.framework_assessment_id}];
+ await render();
+ expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(false);
+ expect(button('Create or link recurring Review')).toBeUndefined();
+ expect(button('Link Evidence')).toBeUndefined();expect(button('Unlink')).toBeUndefined();
+ expect(container.textContent).toContain('Validation.txt');
+});
+
 test('framework configuration selects distinct workspaces without tenant identities',()=>{
  expect(frameworkWorkspace('cis-ig1')).toBe('cis');
  expect(frameworkWorkspace('soc-2')).toBe('soc');

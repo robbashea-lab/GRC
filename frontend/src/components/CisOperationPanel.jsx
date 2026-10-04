@@ -16,6 +16,7 @@ export default function CisOperationPanel({form,definition,contacts=[],put,disab
       </fieldset>
       {!!gaps.length&&<p role="status" className="text-xs">Still unconfirmed: {gaps.join(' · ')}.</p>}
       <p className="text-xs text-ink-secondary">Saved with the assessment. Use supporting records below to evaluate operation and Findings for gaps.</p>
+      <p className="text-xs text-ink-secondary">Recorded accountability is separate from current platform access or availability. Retained Owner references are not revalidated by this setup summary; review the Owner and Contacts as responsibilities change.</p>
     </div>
   </details>;
 }

@@ -158,6 +158,7 @@ def run(args):
                                     roles=[{'role': 'root', 'db': 'admin'}])
         with MongoClient('mongodb://127.0.0.1:27026', username='pr24bootstrap', password=mongo_admin_password,
                          authSource='admin') as bootstrap:
+            mongo_version = bootstrap.admin.command('buildInfo')['version']
             bootstrap.admin.command('createUser', 'pr24runtime', pwd=mongo_password,
                                     roles=[{'role': 'readWrite', 'db': db_name}])
         start_api()
@@ -321,7 +322,7 @@ def run(args):
         for c in (owner, writer, reader):
             c.close()
         summary = {'scope': 'backend/database-only; no browser gate closed', 'database': db_name,
-            'origin': origin, 'mongo_version': '8.0.28', 'client_ids': [a, b],
+            'origin': origin, 'mongo_version': mongo_version, 'client_ids': [a, b],
             'uploaded_sha256': digest, 'results': results}
     finally:
         stop_api()
