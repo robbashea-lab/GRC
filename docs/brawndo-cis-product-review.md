@@ -1,5 +1,17 @@
 # Brawndo CIS IG1 product review — 2026-09-23
 
+## Current product direction — 2026-10-04
+
+The approved experience is **Framework → control or criterion → assessment**, with relevant guidance in the assessment's existing collapsible requirement guide. This applies to existing clients, new clients, and clients adding frameworks later.
+
+Coverage recommendations do not authorize new features. Do not add tabs, setup stages, dashboards, counters, mandatory fields or parallel checklists without explicit user approval. First improve existing assessments, requirement guides, Reviews or established modules. Keep framework-specific structures and the approved desktop assessment layout, with Findings after Current Implementation.
+
+CIS operating setup and ISO establishment checklists are removed from program workspaces and onboarding handoff. Assessment content, optional operational responsibility records and linked Reviews remain authoritative. ISO navigation remains Overview → Statement of Applicability → ISMS Requirements → Annex A Controls → Internal Audit. SoA starts applicability decisions; it does not replace other ISMS activities.
+
+SOC 2 has no separate system-description/program-preparation section or client organization-control panel in its assessment workspace. Whole-system guidance belongs with the existing Client Profile SOC 2 scope information and Systems & Scope records; criterion guidance belongs with its relevant criterion. Never copy all program guidance into CC1.1 or repeat it across criteria. Preserve underlying organization/control records and client-management functionality.
+
+Use American English “program” and “programs” in our own UI, reports and exports. Preserve authoritative quotations, internal identifiers and saved data. Preserve assessment conclusions, verification, evidence, origin links, Review history, recurrence, Save & next, draft protection, keyboard/focus behavior, permissions, tenant isolation and optimistic concurrency. No destructive migration or silent deletion is authorized.
+
 > Historical task report: deployment restrictions below applied to that task only.
 > Current merge/publication authority is [GitHub main → ChatGPT preview](publishing-workflow.md).
 > Railway is retired from the intended workflow; the one-time disconnection hold

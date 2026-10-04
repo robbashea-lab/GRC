@@ -27,6 +27,19 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 const render=async(clientId='demo_prestige')=>act(async()=>root.render(<FrameworkDrawer open record={{...record,client_id:clientId}} clientId={clientId} onOpenChange={close} position="33 of 38 in framework order" breadcrumb={[{label:'SOC 2',onClick:jest.fn()},{label:'Security',onClick:jest.fn()},{label:'CC9',onClick:jest.fn()},{label:'CC9.2'}]}/>));
 const headings=()=>[...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent.replace(/^\d/,''));
 
+test('removed control editor retains saved descriptions and mapped record access in linked work',async()=>{
+ record.management_controls=[{control_id:'legacy',name:'Saved vendor monitoring',description:'Quarterly provider assurance',frequency:'quarterly',design:'adequate',operating:'effective'}];
+ const get=api.get.getMockImplementation();
+ api.get.mockImplementation(async(path,options)=>path==='/frameworks/soc-2'?{data:{assessments:[record],work:{},organizational_controls:[{control_id:'shared-saved',assessment_ids:['soc-a']},{control_id:'unrelated',assessment_ids:['other']}]}}:get(path,options));
+ await render();
+ expect(container.textContent).toContain('Saved vendor monitoring');
+ expect(container.textContent).toContain('Quarterly provider assurance');
+ expect(container.textContent).toContain('Open retained supporting record · shared-saved');
+ expect(container.textContent).not.toContain('Open retained supporting record · unrelated');
+ expect(container.textContent).not.toContain('Client organizational Controls');
+ expect(api.patch).not.toHaveBeenCalled();
+});
+
 test('first narrative save does not claim an assessment when absent metadata becomes null',async()=>{
  record.status='not_assessed';await render();
  await setValue('Current implementation','Draft context only');

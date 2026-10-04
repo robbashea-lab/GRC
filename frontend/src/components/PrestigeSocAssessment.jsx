@@ -85,6 +85,9 @@ export default function PrestigeSocAssessment({state,actions}){
     <details className="psoc-linked">
       <summary>Linked work and history</summary>
       <p className="text-xs text-ink-secondary">These are existing governance records. Completing remediation does not change the assessment conclusion automatically.</p>
+      <p className="text-xs text-ink-secondary">System boundaries and service commitments remain in Client Profile. Use <a className="text-link underline" href="/systems" target="_blank" rel="noopener noreferrer">Systems &amp; Scope ↗</a> for system records and link relevant supporting evidence here.</p>
+      {!!current.management_controls?.length&&<ul>{current.management_controls.map((control,index)=><li key={control.control_id||index}><strong>{control.name||'Previously recorded control'}</strong><p className="whitespace-pre-wrap">{control.description}</p><p className="text-xs text-ink-secondary">Retained description · {control.frequency||'Frequency not recorded'} · Design: {control.design||'Not recorded'} · Operation: {control.operating||'Not recorded'}</p></li>)}</ul>}
+      {!!ctx?.retainedControls?.length&&<ul>{ctx.retainedControls.map(control=><li key={control.control_id}><button type="button" onClick={()=>setNested({kind:'organizational_controls',record:control})}>Open retained supporting record · {control.control_id}</button></li>)}</ul>}
       {[
         ['reviews','Reviews','review_id'],['tasks','Action Items','task_id'],
         ['risks','Risks','risk_id'],['policies','Policies','policy_id'],['evidence','Evidence','evidence_id']
