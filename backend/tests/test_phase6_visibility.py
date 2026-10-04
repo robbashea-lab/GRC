@@ -121,7 +121,7 @@ class Phase6VisibilityTests(unittest.IsolatedAsyncioTestCase):
         self.sign_in('member')
         before=await server.db.audit_logs.count_documents({})
         result=await self.summary()
-        self.assertNotIn('Private',str(result));self.assertNotIn('implementation',str(result))
+        self.assertNotIn('Private',str(result));self.assertTrue(all('implementation' not in item for item in result['items']))
         self.assertEqual(result['client_id'],'a')
         self.assertEqual(await server.db.audit_logs.count_documents({}),before)
         self.assertEqual((await self.client.get('/api/frameworks/summary?client_id=b')).status_code,403)

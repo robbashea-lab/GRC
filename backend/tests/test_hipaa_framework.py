@@ -2,7 +2,7 @@
 import asyncio
 import unittest
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
-from framework_catalog import HIPAA, CIS
+from framework_catalog import HIPAA, CIS, active_plans
 from framework_governance import reconcile
 from routes.onboarding import BASELINE_CATALOG
 
@@ -114,7 +114,7 @@ class HipaaTests(unittest.IsolatedAsyncioTestCase):
         policy=next(p for p in related['policies'] if p['baseline_key']=='policy-cryptography-key-management-policy')
         reverse=(await self.client.get('/api/related',params={'entity_type':'policies','entity_id':policy['policy_id']})).json()
         self.assertIn(a['framework_assessment_id'],[r['framework_assessment_id'] for r in reverse['framework_assessments']])
-        expected=len({p['baseline_key'] or p['key'] for c in [CIS,HIPAA] for p in c['review_plans']})
+        expected=len({p['baseline_key'] or p['key'] for key in ['cis-ig1','hipaa'] for p in active_plans(key)})
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),expected)
         await self.client.patch('/api/onboarding/programs/hipaa',json={'client_id':'a','applicability':'does_not_apply'})
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a','framework_key':'cis-ig1','framework_driver_active':True}),12)
@@ -123,7 +123,7 @@ class HipaaTests(unittest.IsolatedAsyncioTestCase):
         self.sign_in('admin')
         await asyncio.gather(*(reconcile(server,'a',{'requirements':{key:'applies'}},{'user_id':'admin'}) for key in ['hipaa','cis-ig1','hipaa']))
         self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),132)
-        self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),len({p['baseline_key'] or p['key'] for c in [CIS,HIPAA] for p in c['review_plans']}))
+        self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),len({p['baseline_key'] or p['key'] for key in ['cis-ig1','hipaa'] for p in active_plans(key)}))
 
     async def test_evidence_unlink_preserves_shared_artifact_and_provenance(self):
         workspace=await self.configure(('cis-ig1','hipaa'))

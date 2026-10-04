@@ -45,8 +45,8 @@ test('workspace Review setup reuses onboarding, creates normal scheduled work an
 
 test('new intake begins with programs; catalog is IG1 only; cadence warning separates automation',()=>{
   expect(onboardingDraft({version:2,step:0,policies:{},requirements:{},reviews:['inventory']})).toMatchObject({step:0,reviews:[]});
-  expect(cis.requirements).toHaveLength(56);expect(new Set(cis.requirements.map(d=>d.id)).size).toBe(56);
-  expect(cis.requirements.filter(d=>['13','16','18'].includes(d.id.split('.')[0]))).toEqual([]);
+  expect(cis.requirements.filter(d=>d.implementation_group===1)).toHaveLength(56);expect(new Set(cis.requirements.map(d=>d.id)).size).toBe(130);
+  expect(cis.requirements.filter(d=>d.implementation_group===1&&['13','16','18'].includes(d.id.split('.')[0]))).toEqual([]);
   expect(FRAMEWORKS.filter(f=>f.implemented).map(f=>f.key)).toEqual(['hipaa','cis-ig1','nist-csf-2','iso-27001','soc-2']);
   expect(belowSource(cis.review_plans.find(p=>p.key==='account-authorization'),{recurrence:'annual'})).toBe(true);
   expect(cis.review_plans.find(p=>p.key==='data-recovery').default_cadence).toBe('annual');

@@ -34,7 +34,7 @@ export function onboardingPreview(catalog, state, records) {
     reviews.push({existing:!!old, row:old || {status:'needs_scheduling',recurrence:null}});
   }
   const count = (items, fn) => items.filter(fn).length;
-    const assessmentsByProgram=Object.fromEntries(Object.keys(CATALOGS).map(key=>[key,state.requirements[key]==='applies'?activeDefinitions(key).filter(d=>!records.framework_assessments.some(a=>a.framework_key===key&&a.definition_id===d.id)).length:0]));
+    const assessmentsByProgram=Object.fromEntries(Object.keys(CATALOGS).map(key=>[key,state.requirements[key]==='applies'?activeDefinitions(key,state.framework_settings?.[key]).filter(d=>!records.framework_assessments.some(a=>a.framework_key===key&&a.definition_id===d.id)).length:0]));
   const newAssessments=Object.values(assessmentsByProgram).reduce((n,count)=>n+count,0);
   return {policies:{total:policies.length, create:count(policies,p=>!p.existing), retain:count(policies,p=>p.existing),
     yes:count(policies,p=>p.response==='yes'), no:count(policies,p=>p.response==='no'), unsure:count(policies,p=>p.response==='unsure')},
@@ -46,8 +46,9 @@ export function currentHandoff(snapshot, cid) {
   const records = Object.fromEntries(Object.entries(snapshot.records).map(([kind, rows]) => [kind, rows.filter(r => r.client_id === cid)]));
   const counts = Object.fromEntries(Object.entries(SETUP_FILTERS).map(([kind, filters]) => [kind, Object.fromEntries(Object.entries(filters).map(([key,f]) => [key, records[kind].filter(f.matches).length]))]));
   const programs = FRAMEWORKS.filter(f => records.requirements.some(r => r.baseline_key === f.key && r.baseline_response === 'applies')).map(f => {
-    const rows = records.framework_assessments.filter(a => a.framework_key === f.key);
-    return {...f, assessments:rows.length, not_assessed:rows.filter(a=>a.status==='not_assessed').length};
+    const active=new Set(activeDefinitions(f.key,snapshot.client.framework_settings?.[f.key]).map(d=>d.id));
+    const rows = records.framework_assessments.filter(a => a.framework_key === f.key&&active.has(a.definition_id));
+    return {...f,...(f.key==='cis-ig1'?{label:`CIS IG${snapshot.client.framework_settings?.[f.key]?.implementation_group||1}`}:{ }), assessments:rows.length, not_assessed:rows.filter(a=>a.status==='not_assessed').length};
   });
   return {...snapshot, records, counts, programs,
     unsurePrograms:FRAMEWORKS.filter(f=>records.requirements.some(r=>r.baseline_key===f.key && ['potentially_applicable','needs_review'].includes(r.applicability))),

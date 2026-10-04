@@ -10,6 +10,7 @@
     "test_client_management.py",
     "test_client_profile.py",
     "test_client_relationships.py",
+    "test_cis_ig2.py",
     "test_cis_operational_handoff.py",
     "test_core_audit.py",
     "test_create_requests.py",

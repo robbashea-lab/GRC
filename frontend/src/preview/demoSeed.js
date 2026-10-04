@@ -1,5 +1,5 @@
 import catalog from '@catalogs/onboardingCatalog.json';
-import { CATALOGS } from '../lib/frameworks';
+import { CATALOGS,activePlans } from '../lib/frameworks';
 import { reviewView } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
 import { demoOrganizations, demoDates, demoProfile, providerStaff, clientPersonaRoles } from './demoPortfolio';
@@ -169,7 +169,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       });
     });
     const selected = catalog.reviews.filter(r => ['user-access', 'user-lifecycle', 'inventory', 'awareness', 'vendor', 'restore', 'bcp-dr', 'policy-review'].includes(r.key));
-    const plans = org.frameworks.flatMap(key => (CATALOGS[key]?.review_plans || []).map(p => ({
+    const plans = org.frameworks.flatMap(key => (key==='cis-ig1'?activePlans(key):CATALOGS[key]?.review_plans || []).map(p => ({
       ...p,
       framework_key: key
     })));

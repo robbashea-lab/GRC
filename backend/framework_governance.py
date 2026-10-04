@@ -1,11 +1,15 @@
 """Tenant-authorized framework assessments and shared operational relationships."""
 import json
+import csv
+import io
 import re
 import uuid
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi.responses import StreamingResponse
+import security_runtime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 import review_occurrences
 import assignment_eligibility
@@ -14,6 +18,9 @@ import shared_review_plans
 from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
+from cis_scope import CisConfiguration, validate_settings
+from framework_catalog import client_configuration, active_plans
+import create_requests
 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
 CIS_CRITERIA=json.loads((CATALOG_ROOT/'operatorGuidance/cisAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
@@ -27,6 +34,8 @@ def stable(cid,kind,key,framework='cis-ig1'):
     return 'fw_'+uuid.uuid5(uuid.NAMESPACE_URL,f'{cid}:{framework}:{version}:{kind}:{key}').hex
 
 def validate_configuration(state):
+    try: validate_settings(state.get('framework_settings', {}))
+    except ValueError as error: raise HTTPException(422, str(error)) from error
     configs=state.get('framework_reviews',{})
     if not isinstance(configs,dict) or set(configs)-{p['key'] for c in CATALOGS.values() for p in c['review_plans']}:
         raise HTTPException(422,'Invalid framework Review configuration')
@@ -38,7 +47,7 @@ def validate_configuration(state):
         if config.get('recurrence')=='custom' and (type(config.get('custom_recurrence_days')) is not int or not 1<=config['custom_recurrence_days']<=3650): raise HTTPException(422,'Custom cadence must be 1–3650 days')
         if config.get('due_date') and not review_occurrences.scheduled_date(config['due_date']): raise HTTPException(422,'Invalid Review date')
 
-async def reconcile(s,cid,state,user):
+async def reconcile(s,cid,state,user,*,cis_active_configuration=None):
     """Explicit activation only. Absent keys are untouched (single-program Settings edits)."""
     for key,catalog in CATALOGS.items():
         if key not in state.get('requirements',{}):
@@ -49,7 +58,7 @@ async def reconcile(s,cid,state,user):
                 drivers=[{**d,'framework_driver_active':False} if d['framework_key']==key else d for d in shared_review_plans.drivers(row)]
                 await save_drivers(s,row,drivers)
             continue
-        await reconcile_catalog(s,cid,state,user,key,catalog)
+        await reconcile_catalog(s,cid,state,user,key,catalog,cis_active_configuration=cis_active_configuration if key=='cis-ig1' else None)
 
 
 async def save_drivers(s,row,drivers):
@@ -73,16 +82,28 @@ async def add_driver(s,cid,rid,key,plan,active=True):
     await save_drivers(s,row,drivers)
 
 
-async def reconcile_catalog(s,cid,state,user,key,catalog):
-    client=await s.db.clients.find_one({'client_id':cid},{'_id':0,'framework_settings':1}) if key=='soc-2' else {}
-    definitions=active_definitions(key,soc_configuration(client or {}))
+async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configuration=None):
+    client=await s.db.clients.find_one({'client_id':cid},{'_id':0,'framework_settings':1})
+    configuration=client_configuration(key,client,state)
+    definitions=active_definitions(key,configuration)
+    # Shared schedule proposals use current settings, not the immutable intake baseline.
+    state={**state,'framework_settings':{**(client or {}).get('framework_settings',{}),**state.get('framework_settings',{})}}
     for definition in definitions:
         aid=stable(cid,'assessment',definition['id'],key)
         await s.db.framework_assessments.update_one({'_id':aid},{'$setOnInsert':{
             'framework_assessment_id':aid,'client_id':cid,'framework_key':key,'definition_id':definition['id'],
             'framework_version':catalog['version'],'status':'not_assessed','implementation':'','technology':'','notes':'','na_rationale':'',
             'owner_id':None,'process_owner_id':None,'created_at':s._now(),'related_links':[],'assessment_history':[]}},upsert=True)
-    for plan in catalog['review_plans']:
+    plans=active_plans(key,configuration)
+    # A scope proposal may initialize retained records, but its current drivers
+    # must not exceed either side of the transition before scope is published.
+    published_plans={p['key']:p for p in active_plans(key,cis_active_configuration if cis_active_configuration is not None else configuration)}
+    if key=='cis-ig1':
+        active_keys=set(published_plans)
+        retained=await s.db.reviews.find({'client_id':cid,'$or':[{'framework_key':key},{'framework_drivers.framework_key':key}]},{'_id':0}).to_list(None)
+        for row in retained:
+            await save_drivers(s,row,[{**d,'framework_driver_active':False} if d['framework_key']==key and d['framework_plan_key'] not in active_keys else d for d in shared_review_plans.drivers(row)])
+    for plan in plans:
         try:config=shared_review_plans.shared_config(state,plan)
         except ValueError as error:raise HTTPException(422,str(error)) from error
         old=await s.db.reviews.find_one({'client_id':cid,'framework_plan_key':plan['key']},{'_id':0})
@@ -92,8 +113,10 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
         if not config['enabled']:
             if old:await add_driver(s,cid,old['review_id'],key,plan,False)
             continue
-        mapping={'framework_key':key,'framework_version':catalog['version'],'framework_plan_key':plan['key'],'framework_driver_active':True,
-                 'framework_safeguards':plan['safeguards'],'framework_basis':plan['basis'],'framework_source_cadence':plan['source_cadence'],
+        published_plan=published_plans.get(plan['key'],{**plan,'safeguards':[]})
+        driver_active=plan['key'] in published_plans
+        mapping={'framework_key':key,'framework_version':catalog['version'],'framework_plan_key':plan['key'],'framework_driver_active':driver_active,
+                 'framework_safeguards':published_plan['safeguards'],'framework_basis':plan['basis'],'framework_source_cadence':plan['source_cadence'],
                  'framework_default_cadence':plan['default_cadence']}
         mapping.update({'framework_'+field:plan[field] for field in ('purpose','evidence_expectations','completion_criteria') if field in plan})
         if old:
@@ -110,7 +133,7 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
                  'owner_id':None,'created_at':s._now(),'created_by':user['user_id'],**mapping}
             row.update(review_occurrences.schedule(row));row['current_occurrence_id']=review_occurrences.occurrence_id(row)
             await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':row},upsert=True)
-        await add_driver(s,cid,rid,key,plan)
+        await add_driver(s,cid,rid,key,published_plan,driver_active)
         await s.db.framework_assessments.update_many(
             {'client_id':cid,'framework_key':key,'definition_id':{'$in':plan['safeguards']}},
             {'$addToSet':{'related_links':{'kind':'reviews','id':rid}}})
@@ -293,13 +316,63 @@ def router_for(s):
         program=await s.db.requirements.find_one({'client_id':client_id,'baseline_key':key,'baseline_response':'applies'})
         rows=await s.db.framework_assessments.find({'client_id':client_id,'framework_key':key},{'_id':0}).to_list(None) if framework['implemented'] else []
         catalog=CATALOGS.get(key,{})
-        config=soc_configuration(client) if key=='soc-2' else {}
+        config=client_configuration(key,client)
         retained={a['definition_id'] for a in rows}
         controls = await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1,'legacy_id':1,'assessment_ids':1,'design':1,'conflicts':1,'observations.operating':1,'observations.expected_instances':1,'observations.collected_instances':1}).to_list(None) if key=='soc-2' else []
         return {'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
                 'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows),
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
+    @router.patch('/frameworks/cis-ig1/configuration')
+    @s.configuration_mutation
+    async def configure_cis(body:CisConfiguration,user=Depends(s.get_current_user),idempotency_key:Optional[str]=Header(default=None,alias='Idempotency-Key')):
+        client=await scoped(body.client_id,user)
+        if not client.get('onboarding_baseline',{}).get('completed'):
+            raise HTTPException(409,'Complete onboarding before adjusting program configuration')
+        if not await s.db.requirements.find_one({'client_id':body.client_id,'baseline_key':'cis-ig1','baseline_response':'applies'}):
+            raise HTTPException(409,'Select CIS Applies before configuring its scope')
+        async def execute(identity):
+            current=await scoped(body.client_id,user)
+            receipt=await s.db.create_requests.find_one({'_id':identity})
+            intent=receipt.get('cis_scope_intent')
+            if not intent:
+                s._require_snapshot(body.model_dump(exclude_unset=True),{'updated_at':current.get('cis_configuration_updated_at')})
+                before=client_configuration('cis-ig1',current)['implementation_group']
+                if before==2 and body.implementation_group==1 and (not body.confirm_reduction or not body.reason or not body.effective_date):
+                    raise HTTPException(422,'Scope reduction requires impact confirmation, reason and effective date; assessments, links and open work are retained')
+                intent={'before':before,'after':body.implementation_group,'previous_updated_at':current.get('cis_configuration_updated_at'),
+                    'updated_at':s._next_write_time(current.get('cis_configuration_updated_at')),'reason':body.reason,
+                    'effective_date':body.effective_date or datetime.now(timezone.utc).date().isoformat(),'changed_by':user['user_id']}
+                await s.db.create_requests.update_one({'_id':identity},{'$set':{'cis_scope_intent':intent}})
+            if current.get('cis_configuration_updated_at') not in (intent['previous_updated_at'],intent['updated_at']):
+                raise HTTPException(409,'CIS scope changed during recovery; reload before starting a new change')
+            # Reconcile the proposal first. A partial failure leaves the old active scope
+            # intact; deterministic IDs and the receipt resume the same proposal safely.
+            state={**current['onboarding_baseline'],'requirements':{'cis-ig1':'applies'},'framework_settings':{'cis-ig1':{'implementation_group':intent['after']}}}
+            await reconcile(s,body.client_id,state,user,cis_active_configuration={'implementation_group':min(intent['before'],intent['after'])})
+            changed=await s.db.clients.update_one({'client_id':body.client_id,'cis_configuration_updated_at':current.get('cis_configuration_updated_at')},
+                {'$set':{'framework_settings.cis-ig1':{'implementation_group':intent['after']},'cis_configuration_updated_at':intent['updated_at'],'cis_scope_change':intent}})
+            if not changed.matched_count:raise HTTPException(409,'CIS scope changed; reload configuration')
+            await reconcile(s,body.client_id,state,user)
+            await s.audit(user,'CIS scope updated','client',body.client_id,body.client_id,meta=intent)
+            return {'implementation_group':intent['after'],'expected_updated_at':intent['updated_at']}
+        return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'/frameworks/cis-ig1/configuration',body.model_dump(exclude_unset=True),execute)
+    @router.get('/frameworks/cis-ig1/export')
+    async def export_cis(client_id:str,include_retained:bool=False,user=Depends(s.get_current_user)):
+        client=await scoped(client_id,user)
+        configuration=client_configuration('cis-ig1',client)
+        active={d['id'] for d in active_definitions('cis-ig1',configuration)}
+        rows=await s._bounded(s.db.framework_assessments.find({'client_id':client_id,'framework_key':'cis-ig1'},{'_id':0}),10000,'assessments')
+        fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links']
+        output=io.StringIO();writer=csv.DictWriter(output,fieldnames=fields);writer.writeheader()
+        for row in sorted(rows,key=lambda r:tuple(map(int,r['definition_id'].split('.')))):
+            if not include_retained and row['definition_id'] not in active:continue
+            d=definition_for('cis-ig1',row['definition_id'])
+            values={**row,'title':d.get('title',row['definition_id']),'scope_group':'Added in IG2' if d.get('implementation_group')==2 else 'IG1 baseline',
+                'in_active_scope':row['definition_id'] in active,'client_implementation_group':configuration['implementation_group'],'verification':row.get('verification') or 'not_verified'}
+            writer.writerow({field:security_runtime.csv_cell(json.dumps(values[field],ensure_ascii=False) if isinstance(values.get(field),(dict,list)) else values.get(field,'')) for field in fields})
+        await s.audit(user,'CIS assessment export','client',client_id,client_id,meta={'implementation_group':configuration['implementation_group'],'include_retained':include_retained})
+        return StreamingResponse(iter([output.getvalue()]),media_type='text/csv; charset=utf-8',headers={'Content-Disposition':'attachment; filename="cis-assessments.csv"'})
     @router.patch('/frameworks/soc-2/configuration')
     @s.configuration_mutation
     async def configure_soc(body:SocConfiguration,user=Depends(s.get_current_user)):
@@ -321,7 +394,11 @@ def router_for(s):
     async def setup_review(aid:str,body:ReviewSetup,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True);cid=row['client_id'];key=row['framework_key'];catalog=CATALOGS[key]
         if not await s.db.requirements.find_one({'client_id':cid,'baseline_key':key,'baseline_response':'applies'}):raise HTTPException(409,'Activate the program before configuring Reviews')
-        plan=next((p for p in catalog['review_plans'] if p['key']==body.plan_key and row['definition_id'] in p['safeguards']),None)
+        client=await scoped(cid,user)
+        scope=client_configuration(key,client)
+        if row['definition_id'] not in {d['id'] for d in active_definitions(key,scope)}:
+            raise HTTPException(409,'This assessment is retained outside the active program scope; existing work and history remain available')
+        plan=next((p for p in active_plans(key,scope) if p['key']==body.plan_key and row['definition_id'] in p['safeguards']),None)
         if body.plan_key and not plan:raise HTTPException(422,'Review plan does not map to this requirement')
         old=None
         if body.review_id:

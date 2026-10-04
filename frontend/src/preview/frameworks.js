@@ -4,6 +4,8 @@ import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import {calendarDay} from '../lib/managementDates';
 import { validateAssignment, eligible } from './assignmentEligibility';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,frameworkCapabilities,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
+import {cisConfiguration,validateCisSettings,validateCisConfiguration} from '../lib/cisScope';
+import {activePlans} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
 import {action} from './workflows';
@@ -30,6 +32,7 @@ export function frameworkScope(db,cid){
   if(db.user.role!=='super_admin'&&!(db.user.role==='platform_admin'&&!db.user.client_ids?.length)&&!db.user.client_ids?.includes(cid))fail('Forbidden',403);
 }
 export function validateFrameworkConfig(state){
+  validateCisSettings(state.framework_settings);
   const configs=state.framework_reviews||{};
   if(typeof configs!=='object'||Array.isArray(configs)||Object.keys(configs).some(k=>!Object.values(CATALOGS).some(c=>c.review_plans.some(p=>p.key===k))))throw new Error('Invalid framework Review configuration');
   for(const c of Object.values(configs)){
@@ -55,11 +58,15 @@ export function reconcileFramework(db,cid,state){
   }
 }
 function reconcileCatalog(db,cid,state,key,catalog){
-  for(const d of activeDefinitions(key,socConfiguration(db.clients.find(c=>c.client_id===cid)))){
+  const client=db.clients.find(c=>c.client_id===cid),configuration=key==='cis-ig1'?{...cisConfiguration(client),...state.framework_settings?.['cis-ig1']}:socConfiguration(client);
+  state={...state,framework_settings:{...client.framework_settings,...state.framework_settings}};
+  const plans=activePlans(key,configuration),planKeys=new Set(plans.map(p=>p.key));
+  if(key==='cis-ig1')for(const row of db.reviews.filter(r=>r.client_id===cid))for(const driver of reviewDrivers(row).filter(d=>d.framework_key===key&&!planKeys.has(d.framework_plan_key)))addReviewDriver(row,key,{...catalog.review_plans.find(p=>p.key===driver.framework_plan_key),safeguards:driver.framework_safeguards},false);
+  for(const d of activeDefinitions(key,configuration)){
     const aid=stable(cid,'assessment',d.id,key);
     if(!db.framework_assessments.some(a=>a.framework_assessment_id===aid))db.framework_assessments.push({framework_assessment_id:aid,client_id:cid,framework_key:key,framework_version:catalog.version,definition_id:d.id,status:'not_assessed',implementation:'',technology:'',notes:'',na_rationale:'',owner_id:null,process_owner_id:null,created_at:now(),related_links:[],assessment_history:[]});
   }
-  for(const p of catalog.review_plans){
+  for(const p of plans){
     const equivalent=Object.values(CATALOGS).flatMap(c=>c.review_plans).filter(other=>p.baseline_key&&other.baseline_key===p.baseline_key).map(other=>other.key);
     const shared=sharedFrameworkPlans(state).find(group=>group.drivers.some(d=>d.key===p.key))||p;
     const c=reviewConfig(state,shared),old=db.reviews.find(r=>r.client_id===cid&&r.framework_plan_key===p.key)||(p.baseline_key&&db.reviews.find(r=>r.client_id===cid&&(r.baseline_key===p.baseline_key||equivalent.includes(r.framework_plan_key))));
@@ -114,6 +121,22 @@ export function frameworkReverse(db,kind,source,result){
 export function frameworkRequest(db,path,method,params,body){
   db.framework_assessments||=[];
   const [,kind,id,operation]=path.split('/');
+  if(kind==='frameworks'&&id==='cis-ig1'&&operation==='configuration'&&method==='patch'){
+    frameworkScope(db,body.client_id);
+    if(!['super_admin','platform_admin'].includes(db.user.role))fail('Program configuration requires a service-provider administrator',403);
+    if(!db.baselines?.[body.client_id]?.completed)fail('Complete onboarding before adjusting program configuration',409);
+    if(!db.requirements.some(r=>r.client_id===body.client_id&&r.baseline_key==='cis-ig1'&&r.baseline_response==='applies'))fail('Select CIS Applies before configuring its scope',409);
+    const config=validateCisConfiguration(body),client=record(db,'clients',body.client_id),before=cisConfiguration(client);
+    if(!Object.hasOwn(body,'expected_updated_at'))fail('Reload the record before saving; an edit version is required',428);
+    if(body.expected_updated_at!==before.expected_updated_at)fail('Record changed since it was opened; reload before saving',409);
+    if(before.implementation_group===2&&config.implementation_group===1&&(!body.confirm_reduction||!body.reason?.trim()||!body.effective_date))fail('Scope reduction requires impact confirmation, reason and effective date; assessments, links and open work are retained');
+    reconcileFramework(db,body.client_id,{...db.baselines[body.client_id],requirements:{'cis-ig1':'applies'},framework_settings:{'cis-ig1':config}});
+    client.framework_settings={...client.framework_settings,'cis-ig1':config};
+    client.cis_configuration_updated_at=new Date(Math.max(Date.now(),(Date.parse(before.expected_updated_at)||0)+1)).toISOString();
+    client.cis_scope_change={before:before.implementation_group,after:config.implementation_group,reason:body.reason||'',effective_date:body.effective_date||new Date().toISOString().slice(0,10),changed_by:db.user.user_id,updated_at:client.cis_configuration_updated_at};
+    audit(db,'CIS scope updated','clients',client,client.cis_scope_change);
+    return {...config,expected_updated_at:client.cis_configuration_updated_at};
+  }
   if(kind==='frameworks'&&id==='soc-2'&&operation==='configuration'&&method==='patch'){
     frameworkScope(db,body.client_id);writable(db);
     if(!db.baselines?.[body.client_id]?.completed)throw new Error('Complete onboarding before adjusting program configuration');
@@ -129,7 +152,16 @@ export function frameworkRequest(db,path,method,params,body){
   if(kind==='frameworks'&&method==='get'){
     frameworkScope(db,params.client_id);const framework=FRAMEWORKS.find(f=>f.key===id);if(!framework)throw new Error('Framework not found');
     const assessments=framework.implemented?db.framework_assessments.filter(a=>a.client_id===params.client_id&&a.framework_key===id):[];
-    const configuration=id==='soc-2'?socConfiguration(record(db,'clients',params.client_id)):{};
+    const configuration=id==='cis-ig1'?cisConfiguration(record(db,'clients',params.client_id)):id==='soc-2'?socConfiguration(record(db,'clients',params.client_id)):{};
+    if(id==='cis-ig1'&&operation==='export'){
+      const active=new Set(activeDefinitions(id,configuration).map(d=>d.id)),fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links'];
+      const cell=value=>{let text=String(value??'');if(/^[\s]*[=+\-@]/.test(text)||/^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};
+      const includeRetained=params.include_retained===true||params.include_retained==='true';
+      const selected=assessments.filter(r=>includeRetained||active.has(r.definition_id)).sort((a,b)=>a.definition_id.localeCompare(b.definition_id,undefined,{numeric:true}));
+      const lines=selected.map(row=>{const d=frameworkDefinition(id,row.definition_id),values={...row,title:d.title,scope_group:d.implementation_group===2?'Added in IG2':'IG1 baseline',in_active_scope:active.has(row.definition_id),client_implementation_group:configuration.implementation_group,verification:row.verification||'not_verified'};return fields.map(f=>cell(typeof values[f]==='object'&&values[f]!==null?JSON.stringify(values[f]):values[f])).join(',');});
+      audit(db,'CIS assessment export','clients',record(db,'clients',params.client_id),{implementation_group:configuration.implementation_group,include_retained:includeRetained});
+      return new Blob([[fields.join(','),...lines].join('\r\n')],{type:'text/csv;charset=utf-8'});
+    }
     return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
       definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,
       organizational_controls:id==='soc-2'?(db.organizational_controls||[]).filter(c=>c.client_id===params.client_id).map(c=>({control_id:c.control_id,legacy_id:c.legacy_id,assessment_ids:c.assessment_ids,design:c.design,conflicts:c.conflicts,observations:c.observations.map(o=>({operating:o.operating,expected_instances:o.expected_instances,collected_instances:o.collected_instances}))})):[],
@@ -139,7 +171,9 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='post'&&operation==='reviews'){
     if(Object.keys(body).some(k=>!['plan_key','review_id','title','owner_id','recurrence','custom_recurrence_days','due_date'].includes(k)))throw new Error('Invalid Review setup fields');
     if(!db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key===row.framework_key&&r.baseline_response==='applies'))throw new Error('Activate the program before configuring Reviews');
-    const catalog=frameworkCatalog(row.framework_key),plan=catalog.review_plans.find(p=>p.key===body.plan_key&&p.safeguards.includes(row.definition_id));
+    const catalog=frameworkCatalog(row.framework_key),client=record(db,'clients',row.client_id),configuration=row.framework_key==='cis-ig1'?cisConfiguration(client):socConfiguration(client);
+    if(!activeDefinitions(row.framework_key,configuration).some(d=>d.id===row.definition_id))fail('This assessment is retained outside the active program scope; existing work and history remain available',409);
+    const plan=activePlans(row.framework_key,configuration).find(p=>p.key===body.plan_key&&p.safeguards.includes(row.definition_id));
     if(body.plan_key&&!plan)throw new Error('Review plan does not map to this requirement');
     let review=body.review_id?record(db,'reviews',body.review_id):plan?existingFrameworkReview(db.reviews.filter(r=>r.client_id===row.client_id),plan):null;
     if(review&&review.client_id!==row.client_id)throw new Error('Relationship must belong to this client');

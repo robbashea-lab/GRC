@@ -1,5 +1,6 @@
 import {FRAMEWORKS, ASSESSMENT_STATUSES, activeDefinitions, frameworkDefinition} from '../lib/frameworks';
 import {reviewedProgress,ongoingProgram} from '../lib/programProgress';
+import {cisConfiguration,cisLabel} from '../lib/cisScope';
 import {socConfiguration} from '../lib/socReadiness';
 import rules from '../lib/grcRules.json';
 import {frameworkScope} from './frameworks';
@@ -12,7 +13,9 @@ export function frameworkSummary(db, cid, params={}) {
   const items=programs.map(f=>{
     const item={key:f.key,tracking_available:f.implemented,total:null,status_counts:null,unrecognized_status_count:null,last_assessed:null,open_findings:null,open_actions:null};
     if(!f.implemented)return item;
-    const active=new Set(activeDefinitions(f.key,socConfiguration(db.clients.find(c=>c.client_id===cid))).map(d=>d.id));
+    const client=db.clients.find(c=>c.client_id===cid),configuration=f.key==='cis-ig1'?cisConfiguration(client):socConfiguration(client);
+    if(f.key==='cis-ig1')Object.assign(item,{implementation_group:configuration.implementation_group,label:cisLabel(configuration)});
+    const active=new Set(activeDefinitions(f.key,configuration).map(d=>d.id));
     const rows=bounded((db.framework_assessments||[]).filter(a=>a.client_id===cid&&a.framework_key===f.key&&active.has(a.definition_id)));
     const aids=new Set(rows.map(a=>a.framework_assessment_id)),definitions=new Set(rows.map(a=>a.definition_id));
     const direct=kind=>new Set(rows.flatMap(a=>(a.related_links||[]).filter(l=>l.kind===kind).map(l=>l.id)));

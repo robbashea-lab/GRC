@@ -15,7 +15,7 @@ beforeEach(()=>{
  mockUser={user_id:'u',role:'super_admin'};mockNavigate=jest.fn();mockHistory=[];mockLocation={pathname:'/compliance/cis-ig1',search:'',state:null,params:new URLSearchParams()};
  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
  api.patch.mockReset();api.patch.mockResolvedValue({data:{}});
- api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:cis.requirements,assessments:cis.requirements.map((d,i)=>({framework_assessment_id:'a'+i,definition_id:d.id,client_id:'a',status:i===1?'not_assessed':'addressed'})),work:{}}});
+ api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:cis.requirements.filter(d=>d.implementation_group===1),assessments:cis.requirements.filter(d=>d.implementation_group===1).map((d,i)=>({framework_assessment_id:'a'+i,definition_id:d.id,client_id:'a',status:i===1?'not_assessed':'addressed'})),work:{}}});
 });
 
 const brawndo=async(pref)=>{mockUser.workspace_mode='demo';const response=(await api.get()).data;

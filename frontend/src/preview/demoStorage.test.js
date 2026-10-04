@@ -122,7 +122,7 @@ test('a retired seven-client store is discarded, never read back, and never recr
  sessionStorage.clear();
  sessionStorage.setItem('grc_interactive_demo_v2',JSON.stringify({clients:[{client_id:'demo_globo',name:'Globo Gym'}],evidence:[]}));
  const db=readStore();
- expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide']);
+ expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide','Initech']);
  expect(sessionStorage.getItem('grc_interactive_demo_v2')).toBeNull();
- expect(readStore().clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige']);
+ expect(readStore().clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige','demo_initech']);
 });

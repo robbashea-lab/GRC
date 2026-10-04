@@ -18,7 +18,7 @@ const NOTE={'soc-2':'Internal readiness, not an auditor opinion.'};
 const LINKABLE=new Set(['cis-ig1','soc-2']);
 // Conclusion labels each workspace uses (SOC 2 reference workspace has its own map).
 export const readinessLabels=key=>LABELS[key]||operatorStatuses(key);
-export const shortName=program=>SHORT[program.key]||program.label||program.name||program.key;
+export const shortName=program=>(program.key==='cis-ig1'&&program.implementation_group?`CIS IG${program.implementation_group}`:SHORT[program.key])||program.label||program.name||program.key;
 const sentence=s=>s.charAt(0)+s.slice(1).toLowerCase();
 const firstWord=s=>s.split(/[\s(]/)[0];
 

@@ -5,7 +5,7 @@ const stable = value => JSON.stringify(value, (_key, item) => item && typeof ite
 export function commandRequest(db, path, clientId, key, body, execute) {
   if (typeof key !== 'string' || key.length < 1 || key.length > 128)
     throw Object.assign(new Error('A request ID is required for this command'), {status:422,create_rejected:true});
-  if (path.startsWith('/onboarding/') && !/^[A-Za-z0-9_-]{16,128}$/.test(key))
+  if ((path.startsWith('/onboarding/')||path==='/frameworks/cis-ig1/configuration') && !/^[A-Za-z0-9_-]{16,128}$/.test(key))
     throw Object.assign(new Error('Invalid Idempotency-Key'), {status:422,create_rejected:true});
   const scope = JSON.stringify([db.user.user_id,clientId,path,key]);
   const fingerprint = stable(body), prior = db.command_requests?.[scope];

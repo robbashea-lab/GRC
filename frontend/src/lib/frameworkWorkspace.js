@@ -39,7 +39,8 @@ const VIEWS={
   overdue_actions:r=>(r.work?.overdue_actions||0)>0,
 };
 // Retained SOC criteria remain available, but are outside the default active scope.
-export const workspaceScope=(key,data,definition)=>key!=='soc-2'||!!data?.active_definition_ids?.includes(definition.definition_id??definition.id);
+export const workspaceScope=(key,data,definition)=>!['soc-2','cis-ig1'].includes(key)||
+  (key==='cis-ig1'&&!data?.active_definition_ids?(definition.implementation_group||1)<=(data?.configuration?.implementation_group||1):!!data?.active_definition_ids?.includes(definition.definition_id??definition.id));
 export function matchesAssessment(row,filter,search=''){
   const status=filter==='all'||(VIEWS[filter]?VIEWS[filter](row):row.status===filter);
   return status&&`${row.definition_id} ${row.title} ${row.control_name} ${row.function_name||''}`.toLowerCase().includes(search.trim().toLowerCase());

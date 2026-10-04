@@ -8,10 +8,10 @@ import {reviewSchedule} from '../lib/reviewOccurrences';
 beforeEach(()=>sessionStorage.clear());
 test('canonical clients reset independently of standard session material',()=>{
   const db=seedStore();
-  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide']);
+  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide','Initech']);
   db.clients.push({client_id:'test-demo-only',name:'Session mutation'});saveStore(db);
   localStorage.setItem('grc_token','test-standard-token');resetStore();
-  expect(readStore().clients).toHaveLength(3);
+  expect(readStore().clients).toHaveLength(4);
   expect(localStorage.getItem('grc_token')).toBe('test-standard-token');localStorage.clear();
 });
 test('every relationship, owner and occurrence belongs to its client',()=>{
@@ -41,7 +41,7 @@ test('Year-2 portfolios have limited derived work instead of abandoned programs'
   const db=seedStore(),result=portfolio(db,false);
   // Due-soon work is bounded but real: monthly Reviews, a departing employee's handover item and each
   // program's own remediation (Prestige: SOC exceptions inside the observation period) keep it at most 15.
-  for(const row of result.clients){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(15);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
+  for(const row of result.clients.filter(r=>r.client_id!=='demo_initech')){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(15);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
   for(const key of ['past_due','critical_high_open','unassigned'])expect(result.portfolio[key]).toBe(result.clients.reduce((sum,c)=>sum+c[key],0));
   const assurance=db.vendors.flatMap(v=>v.assurance_records.map(a=>assuranceStatus(v,a)));
   expect(assurance).toEqual(expect.arrayContaining(['current','due_soon']));
@@ -52,7 +52,8 @@ test('Year-2 portfolios have limited derived work instead of abandoned programs'
 test('seeded recurring Review history has no silently missing periods',()=>{
   const db=seedStore(new Date('2026-09-28T14:00:00Z'));
   const recurring=db.reviews.filter(r=>['monthly','quarterly','semiannual','annual'].includes(r.recurrence)&&!['completed','cancelled'].includes(r.status)&&r.occurrences?.length);
-  for(const client of db.clients)expect(recurring.some(r=>r.client_id===client.client_id)).toBe(true);
+  expect(db.reviews.filter(r=>r.client_id==='demo_initech').every(r=>!r.occurrences?.length&&!r.due_date)).toBe(true);
+  for(const client of db.clients.filter(c=>c.client_id!=='demo_initech'))expect(recurring.some(r=>r.client_id===client.client_id)).toBe(true);
   for(const r of recurring){
     const last=[...r.occurrences].sort((a,b)=>a.due_date.localeCompare(b.due_date)).at(-1);
     // The current occurrence is the period directly after the latest completed one.

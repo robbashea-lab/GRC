@@ -1,7 +1,7 @@
 {
   "framework": "cis-ig1",
   "version": "8.1",
-  "revision": "2026-10-02",
+  "revision": "2026-10-03",
   "basis": "Omnisciente assessment guidance, checked against CIS v8.1 safeguard descriptions. Evidence examples are alternatives, not additional requirements. CAS scoring, inputs and metrics are not imported.",
   "requirements": {
     "1.1": {
@@ -10,283 +10,1914 @@
         "Confirm each entry records its static network address when applicable, hardware address, machine name, owner, department and approval to connect. Look for missing devices, duplicate entries and retired devices still shown as active.",
         "Check dated inventory reviews and updates occur at least every six months. Discovery and device-management tools can help reconcile coverage; a particular tool is not required."
       ],
-      "evidence": ["An asset inventory export with the specified identifying fields.", "Dated reconciliation notes compared with network, endpoint or responsible-provider records."],
-      "outcome": ["The inventory accounts for the full asset population and identifies who owns each device and whether it may connect.", "Inventory changes and reviews demonstrate currency within the six-month interval."]
+      "evidence": [
+        "An asset inventory export with the specified identifying fields.",
+        "Dated reconciliation notes compared with network, endpoint or responsible-provider records."
+      ],
+      "outcome": [
+        "The inventory accounts for the full asset population and identifies who owns each device and whether it may connect.",
+        "Inventory changes and reviews demonstrate currency within the six-month interval."
+      ]
     },
     "1.2": {
-      "review": ["Review how unknown or unauthorized devices are identified and handled each week. Compare recent inventory differences or network observations with the handling records.", "Confirm unauthorized devices are removed from the network, denied remote connection or quarantined. Identify devices that remain connected without authorization; an open remediation ticket alone does not resolve them."],
-      "evidence": ["Weekly unauthorized-device review records or provider reports showing the devices examined.", "Dated removal, connection-denial or quarantine results matched to the identified devices."],
-      "outcome": ["Weekly handling operates, and unauthorized devices do not retain unaddressed network access.", "Records demonstrate the disposition of identified devices, not only their discovery."]
+      "review": [
+        "Review how unknown or unauthorized devices are identified and handled each week. Compare recent inventory differences or network observations with the handling records.",
+        "Confirm unauthorized devices are removed from the network, denied remote connection or quarantined. Identify devices that remain connected without authorization; an open remediation ticket alone does not resolve them."
+      ],
+      "evidence": [
+        "Weekly unauthorized-device review records or provider reports showing the devices examined.",
+        "Dated removal, connection-denial or quarantine results matched to the identified devices."
+      ],
+      "outcome": [
+        "Weekly handling operates, and unauthorized devices do not retain unaddressed network access.",
+        "Records demonstrate the disposition of identified devices, not only their discovery."
+      ]
+    },
+    "1.3": {
+      "review": [
+        "Configure discovery coverage and accountable operator. Confirm the covered population and client decisions.",
+        "Run discovery and reconcile unexpected devices. Check actual execution rather than a policy statement alone.",
+        "Daily or more often. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Discovery run and reconciliation records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Discover connected devices automatically. Run discovery and reconcile unexpected devices.",
+        "Daily or more often. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "1.4": {
+      "review": [
+        "Identify DHCP servers or IPAM sources and reconciliation owner. Confirm the covered population and client decisions.",
+        "Collect observations and resolve inventory differences. Check actual execution rather than a policy statement alone.",
+        "At least weekly inventory updates using logs. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Dated reconciliation and source coverage. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Feed address-allocation observations into inventory. Collect observations and resolve inventory differences.",
+        "At least weekly inventory updates using logs. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "2.1": {
-      "review": ["Review the inventory of licensed software installed on enterprise assets. Confirm each entry has a title, publisher, initial installation/use date and business purpose.", "Check URL, app store, versions, deployment mechanism, retirement date and license count where appropriate. Compare recorded software with installed applications and operating systems to find omissions.", "Verify the inventory is reviewed and updated at least every six months. Automated inventory tools are an option, not an IG1 prerequisite."],
-      "evidence": ["Software inventory or application catalog containing the relevant fields.", "Dated reconciliation with installed-software reports, licensing records or provider-maintained inventories."],
-      "outcome": ["Installed software can be identified and connected to a documented business purpose.", "The inventory has the specified details and a current six-month review/update record."]
+      "review": [
+        "Review the inventory of licensed software installed on enterprise assets. Confirm each entry has a title, publisher, initial installation/use date and business purpose.",
+        "Check URL, app store, versions, deployment mechanism, retirement date and license count where appropriate. Compare recorded software with installed applications and operating systems to find omissions.",
+        "Verify the inventory is reviewed and updated at least every six months. Automated inventory tools are an option, not an IG1 prerequisite."
+      ],
+      "evidence": [
+        "Software inventory or application catalog containing the relevant fields.",
+        "Dated reconciliation with installed-software reports, licensing records or provider-maintained inventories."
+      ],
+      "outcome": [
+        "Installed software can be identified and connected to a documented business purpose.",
+        "The inventory has the specified details and a current six-month review/update record."
+      ]
     },
     "2.2": {
-      "review": ["Compare authorized software versions against publisher support information at least monthly. Identify end-of-support products incorrectly marked as supported.", "For necessary mission-supporting software that is unsupported, examine a documented exception covering mitigating controls and acceptance of residual risk. Without that exception, confirm it is classified as unauthorized."],
-      "evidence": ["Version inventory matched to publisher lifecycle notices and dated monthly support checks.", "For necessary unsupported software, its exception and evidence that the stated mitigation operates."],
-      "outcome": ["Authorization reflects current vendor support or the safeguard's documented exception conditions.", "Unsupported software is not silently treated as supported; monthly checks identify changes."]
+      "review": [
+        "Compare authorized software versions against publisher support information at least monthly. Identify end-of-support products incorrectly marked as supported.",
+        "For necessary mission-supporting software that is unsupported, examine a documented exception covering mitigating controls and acceptance of residual risk. Without that exception, confirm it is classified as unauthorized."
+      ],
+      "evidence": [
+        "Version inventory matched to publisher lifecycle notices and dated monthly support checks.",
+        "For necessary unsupported software, its exception and evidence that the stated mitigation operates."
+      ],
+      "outcome": [
+        "Authorization reflects current vendor support or the safeguard's documented exception conditions.",
+        "Unsupported software is not silently treated as supported; monthly checks identify changes."
+      ]
     },
     "2.3": {
-      "review": ["Compare installed software with the authorized inventory and examine the disposition of unapproved installations.", "Confirm unauthorized software is removed from use or has a documented exception, with review at least monthly. Pending investigation or a planned removal is not completed handling."],
-      "evidence": ["Monthly software reconciliation or provider review identifying unauthorized installations.", "Removal results or documented exceptions tied to the software and affected assets."],
-      "outcome": ["Unauthorized installations have a demonstrated removal or a documented exception.", "Monthly reviews can account for software that was discovered and what happened to it."]
+      "review": [
+        "Compare installed software with the authorized inventory and examine the disposition of unapproved installations.",
+        "Confirm unauthorized software is removed from use or has a documented exception, with review at least monthly. Pending investigation or a planned removal is not completed handling."
+      ],
+      "evidence": [
+        "Monthly software reconciliation or provider review identifying unauthorized installations.",
+        "Removal results or documented exceptions tied to the software and affected assets."
+      ],
+      "outcome": [
+        "Unauthorized installations have a demonstrated removal or a documented exception.",
+        "Monthly reviews can account for software that was discovered and what happened to it."
+      ]
+    },
+    "2.4": {
+      "review": [
+        "Choose coverage and document technical limitations. Confirm the covered population and client decisions.",
+        "Maintain discovery coverage and inventory feed. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Tool coverage and inventory samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Automate installed-software visibility where possible. Maintain discovery coverage and inventory feed.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "2.5": {
+      "review": [
+        "Define approved software and exception handling. Confirm the covered population and client decisions.",
+        "Enforce application restrictions. Check actual execution rather than a policy statement alone.",
+        "Reassess at least every six months. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Policy configuration, exception and reassessment records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Restrict execution/access to approved applications. Enforce application restrictions.",
+        "Reassess at least every six months. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "2.6": {
+      "review": [
+        "Define authorized libraries and deployment limitations. Confirm the covered population and client decisions.",
+        "Enforce library controls; handle changes safely. Check actual execution rather than a policy statement alone.",
+        "Reassess at least every six months. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Library rule samples and reassessment results. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Prevent unapproved libraries loading. Enforce library controls; handle changes safely.",
+        "Reassess at least every six months. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "3.1": {
-      "review": ["Review the documented data-management process for sensitivity, ownership, handling, retention limits and disposal requirements.", "Confirm these expectations reflect the organization's sensitivity and retention standards. Check review/update dates annually and after significant changes affecting the process."],
-      "evidence": ["Data-management procedures or standards addressing the required subjects.", "Revision records or dated reviews explaining updates after relevant changes."],
-      "outcome": ["People responsible for data can determine its handling, retention and disposal requirements.", "Documentation reflects current operations and receives annual and significant-change review."]
+      "review": [
+        "Review the documented data-management process for sensitivity, ownership, handling, retention limits and disposal requirements.",
+        "Confirm these expectations reflect the organization's sensitivity and retention standards. Check review/update dates annually and after significant changes affecting the process."
+      ],
+      "evidence": [
+        "Data-management procedures or standards addressing the required subjects.",
+        "Revision records or dated reviews explaining updates after relevant changes."
+      ],
+      "outcome": [
+        "People responsible for data can determine its handling, retention and disposal requirements.",
+        "Documentation reflects current operations and receives annual and significant-change review."
+      ]
     },
     "3.2": {
-      "review": ["Compare the data inventory with the documented data-management process. Confirm sensitive data is included at a minimum, rather than inventorying systems alone.", "Review relevant repositories and business processes for omitted data. Verify inventory reviews and updates at least annually, prioritizing sensitive information."],
-      "evidence": ["Data inventory linked to the systems or locations holding the identified data.", "Dated annual reconciliation with data owners or responsible providers."],
-      "outcome": ["The organization can identify its sensitive data and account for it in the inventory.", "The inventory follows the data-management process and has been reviewed within the annual interval."]
+      "review": [
+        "Compare the data inventory with the documented data-management process. Confirm sensitive data is included at a minimum, rather than inventorying systems alone.",
+        "Review relevant repositories and business processes for omitted data. Verify inventory reviews and updates at least annually, prioritizing sensitive information."
+      ],
+      "evidence": [
+        "Data inventory linked to the systems or locations holding the identified data.",
+        "Dated annual reconciliation with data owners or responsible providers."
+      ],
+      "outcome": [
+        "The organization can identify its sensitive data and account for it in the inventory.",
+        "The inventory follows the data-management process and has been reviewed within the annual interval."
+      ]
     },
     "3.3": {
-      "review": ["Inspect access permissions for local and remote file systems, databases and applications. Compare access with users' need to know.", "Identify broad groups, inherited permissions and unnecessary access that expose data beyond business need. An access policy alone does not demonstrate the configured permissions."],
-      "evidence": ["Permission exports or configuration views from the relevant repositories.", "Business-role information or access-review records explaining why the observed access is needed."],
-      "outcome": ["Effective permissions restrict access according to business need across the relevant data locations.", "The observed configuration agrees with the stated access model."]
+      "review": [
+        "Inspect access permissions for local and remote file systems, databases and applications. Compare access with users' need to know.",
+        "Identify broad groups, inherited permissions and unnecessary access that expose data beyond business need. An access policy alone does not demonstrate the configured permissions."
+      ],
+      "evidence": [
+        "Permission exports or configuration views from the relevant repositories.",
+        "Business-role information or access-review records explaining why the observed access is needed."
+      ],
+      "outcome": [
+        "Effective permissions restrict access according to business need across the relevant data locations.",
+        "The observed configuration agrees with the stated access model."
+      ]
     },
     "3.4": {
-      "review": ["Review the documented minimum and maximum retention periods for the relevant data.", "Compare retention settings and actual retained data with those periods. Identify premature deletion and data kept beyond its maximum period; a written schedule alone is insufficient."],
-      "evidence": ["Retention requirements together with repository or system retention settings.", "Dated retention/deletion results or provider records showing how the periods are enforced."],
-      "outcome": ["Data is retained for the required minimum period and not kept beyond the documented maximum.", "Actual retention behavior matches the organization's data-management process."]
+      "review": [
+        "Review the documented minimum and maximum retention periods for the relevant data.",
+        "Compare retention settings and actual retained data with those periods. Identify premature deletion and data kept beyond its maximum period; a written schedule alone is insufficient."
+      ],
+      "evidence": [
+        "Retention requirements together with repository or system retention settings.",
+        "Dated retention/deletion results or provider records showing how the periods are enforced."
+      ],
+      "outcome": [
+        "Data is retained for the required minimum period and not kept beyond the documented maximum.",
+        "Actual retention behavior matches the organization's data-management process."
+      ]
     },
     "3.5": {
-      "review": ["Review disposal procedures and recent disposal activity for electronic and physical data.", "Confirm the method matches data sensitivity and the documented data-management process. Check that a request to dispose was actually carried out."],
-      "evidence": ["Disposal procedure and dated deletion, sanitization or destruction records.", "Provider disposal certificates or execution reports identifying the affected data or media."],
-      "outcome": ["Disposal follows the documented process using a method suited to the sensitivity involved.", "Completed disposal can be distinguished from work merely scheduled or requested."]
+      "review": [
+        "Review disposal procedures and recent disposal activity for electronic and physical data.",
+        "Confirm the method matches data sensitivity and the documented data-management process. Check that a request to dispose was actually carried out."
+      ],
+      "evidence": [
+        "Disposal procedure and dated deletion, sanitization or destruction records.",
+        "Provider disposal certificates or execution reports identifying the affected data or media."
+      ],
+      "outcome": [
+        "Disposal follows the documented process using a method suited to the sensitivity involved.",
+        "Completed disposal can be distinguished from work merely scheduled or requested."
+      ]
     },
     "3.6": {
-      "review": ["Identify end-user devices containing sensitive data, including portable and mobile devices, and inspect their encryption state.", "Compare the device population with encryption results to find missing or disabled protection. Product selection is optional; encryption of the sensitive data is the requirement."],
-      "evidence": ["Encryption-state reports or device configuration views matched to the sensitive-data device population.", "Client or provider verification of actual encryption coverage, excluding passwords and recovery keys."],
-      "outcome": ["Sensitive data on end-user devices is encrypted.", "The claim is supported by device-level state, not only an intended encryption policy."]
+      "review": [
+        "Identify end-user devices containing sensitive data, including portable and mobile devices, and inspect their encryption state.",
+        "Compare the device population with encryption results to find missing or disabled protection. Product selection is optional; encryption of the sensitive data is the requirement."
+      ],
+      "evidence": [
+        "Encryption-state reports or device configuration views matched to the sensitive-data device population.",
+        "Client or provider verification of actual encryption coverage, excluding passwords and recovery keys."
+      ],
+      "outcome": [
+        "Sensitive data on end-user devices is encrypted.",
+        "The claim is supported by device-level state, not only an intended encryption policy."
+      ]
+    },
+    "3.7": {
+      "review": [
+        "Agree classification criteria with data owners. Confirm the covered population and client decisions.",
+        "Apply classification in handling decisions. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Classification scheme and owner decisions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Give information consistent sensitivity classifications. Apply classification in handling decisions.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "3.8": {
+      "review": [
+        "Map material flows and external destinations. Confirm the covered population and client decisions.",
+        "Maintain flows through service changes. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Flow diagrams or equivalent controlled records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Make internal and provider data movements traceable. Maintain flows through service changes.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "3.9": {
+      "review": [
+        "Define permitted media and encryption arrangements. Confirm the covered population and client decisions.",
+        "Enforce media encryption. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Configuration sample and coverage exceptions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Protect removable-media contents with encryption. Enforce media encryption.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "3.10": {
+      "review": [
+        "Identify sensitive flows and protected transports. Confirm the covered population and client decisions.",
+        "Maintain encrypted transport. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Transport configurations and sampled connection results. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Protect sensitive information during transfer. Maintain encrypted transport.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "3.11": {
+      "review": [
+        "Identify storage and encryption coverage; storage-layer protection suffices for the stated minimum. Confirm the covered population and client decisions.",
+        "Maintain encryption coverage. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Storage encryption settings and scoped assurance. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Protect stored sensitive server/application/database information. Maintain encryption coverage.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "3.12": {
+      "review": [
+        "Define sensitivity boundaries and permitted processing locations. Confirm the covered population and client decisions.",
+        "Enforce storage and processing separation. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Architecture and boundary configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Keep sensitive processing out of lower-trust environments. Enforce storage and processing separation.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "4.1": {
-      "review": ["Review the documented secure-configuration process for endpoints, portable/mobile devices, IoT/non-computing assets, servers, operating systems and applications.", "Confirm the process covers the technologies actually used. Check annual documentation reviews and updates following significant changes that affect configuration."],
-      "evidence": ["Configuration procedures and relevant baseline examples.", "Dated process reviews and change records showing that documentation remains current."],
-      "outcome": ["There is a documented way to establish and maintain secure configurations across the asset and software scope.", "The process is reviewed annually and when significant changes affect it."]
+      "review": [
+        "Review the documented secure-configuration process for endpoints, portable/mobile devices, IoT/non-computing assets, servers, operating systems and applications.",
+        "Confirm the process covers the technologies actually used. Check annual documentation reviews and updates following significant changes that affect configuration."
+      ],
+      "evidence": [
+        "Configuration procedures and relevant baseline examples.",
+        "Dated process reviews and change records showing that documentation remains current."
+      ],
+      "outcome": [
+        "There is a documented way to establish and maintain secure configurations across the asset and software scope.",
+        "The process is reviewed annually and when significant changes affect it."
+      ]
     },
     "4.2": {
-      "review": ["Review the documented secure-configuration process specifically for network devices, such as routers, switches, firewalls and wireless infrastructure.", "Compare the process with the current network estate. Verify annual review/update and review after significant changes affecting the safeguard."],
-      "evidence": ["Network configuration procedures or standards, with relevant device baselines.", "Annual review records and revisions resulting from network changes."],
-      "outcome": ["Network infrastructure is covered by a maintained configuration process, not just endpoint guidance.", "Documentation keeps pace with annual review and significant network changes."]
+      "review": [
+        "Review the documented secure-configuration process specifically for network devices, such as routers, switches, firewalls and wireless infrastructure.",
+        "Compare the process with the current network estate. Verify annual review/update and review after significant changes affecting the safeguard."
+      ],
+      "evidence": [
+        "Network configuration procedures or standards, with relevant device baselines.",
+        "Annual review records and revisions resulting from network changes."
+      ],
+      "outcome": [
+        "Network infrastructure is covered by a maintained configuration process, not just endpoint guidance.",
+        "Documentation keeps pace with annual review and significant network changes."
+      ]
     },
     "4.3": {
-      "review": ["Inspect applied inactivity-lock settings and confirm sessions lock automatically within 15 minutes on general-purpose operating systems and within 2 minutes on mobile end-user devices.", "Compare assigned policies with effective device settings or observed behavior. Look for exclusions or overrides that leave sessions unlocked."],
-      "evidence": ["Effective session-lock settings or policy-deployment reports by device type.", "A safe observation of automatic locking on representative devices."],
-      "outcome": ["Sessions lock automatically within the applicable 15-minute or 2-minute limit.", "The limits operate on devices rather than existing only in a proposed policy."]
+      "review": [
+        "Inspect applied inactivity-lock settings and confirm sessions lock automatically within 15 minutes on general-purpose operating systems and within 2 minutes on mobile end-user devices.",
+        "Compare assigned policies with effective device settings or observed behavior. Look for exclusions or overrides that leave sessions unlocked."
+      ],
+      "evidence": [
+        "Effective session-lock settings or policy-deployment reports by device type.",
+        "A safe observation of automatic locking on representative devices."
+      ],
+      "outcome": [
+        "Sessions lock automatically within the applicable 15-minute or 2-minute limit.",
+        "The limits operate on devices rather than existing only in a proposed policy."
+      ]
     },
     "4.4": {
-      "review": ["Identify servers that support a firewall and inspect whether firewall protection is implemented and managed.", "Check for disabled protection or servers missed by the selected solution. An operating-system firewall, virtual firewall or third-party agent can be used; no named product is required."],
-      "evidence": ["Server inventory compared with firewall coverage and effective configuration.", "Management or provider records showing the deployed firewall state."],
-      "outcome": ["Servers have managed firewall protection wherever supported.", "Coverage and active settings substantiate the implementation claim."]
+      "review": [
+        "Identify servers that support a firewall and inspect whether firewall protection is implemented and managed.",
+        "Check for disabled protection or servers missed by the selected solution. An operating-system firewall, virtual firewall or third-party agent can be used; no named product is required."
+      ],
+      "evidence": [
+        "Server inventory compared with firewall coverage and effective configuration.",
+        "Management or provider records showing the deployed firewall state."
+      ],
+      "outcome": [
+        "Servers have managed firewall protection wherever supported.",
+        "Coverage and active settings substantiate the implementation claim."
+      ]
     },
     "4.5": {
-      "review": ["Inspect host firewall or port-filtering settings on end-user devices, including laptops used away from the office.", "Confirm the effective default is to deny traffic, with only explicitly allowed services and ports permitted. Look for disabled profiles and broad rules that undermine that default."],
-      "evidence": ["Effective endpoint firewall rules and deployment/coverage reports.", "Configuration observations or provider reports confirming the policy operates on devices."],
-      "outcome": ["End-user devices apply default-deny filtering with explicit permitted services and ports.", "Protection remains active in the device's relevant network profiles."]
+      "review": [
+        "Inspect host firewall or port-filtering settings on end-user devices, including laptops used away from the office.",
+        "Confirm the effective default is to deny traffic, with only explicitly allowed services and ports permitted. Look for disabled profiles and broad rules that undermine that default."
+      ],
+      "evidence": [
+        "Effective endpoint firewall rules and deployment/coverage reports.",
+        "Configuration observations or provider reports confirming the policy operates on devices."
+      ],
+      "outcome": [
+        "End-user devices apply default-deny filtering with explicit permitted services and ports.",
+        "Protection remains active in the device's relevant network profiles."
+      ]
     },
     "4.6": {
-      "review": ["Review how assets and software are administered, including the protocols used to reach management interfaces.", "Confirm secure management methods are used. Identify insecure protocols such as Telnet or HTTP and verify any continued use is operationally essential, not merely convenient. Infrastructure-as-Code is an example, not mandatory."],
-      "evidence": ["Administrative-interface settings, connection configurations or management procedures.", "Change records or provider demonstrations showing secure administration in use and any operationally essential exception."],
-      "outcome": ["Administration uses secure methods appropriate to the assets and software.", "Insecure management protocols are absent unless the safeguard's operational-necessity condition applies."]
+      "review": [
+        "Review how assets and software are administered, including the protocols used to reach management interfaces.",
+        "Confirm secure management methods are used. Identify insecure protocols such as Telnet or HTTP and verify any continued use is operationally essential, not merely convenient. Infrastructure-as-Code is an example, not mandatory."
+      ],
+      "evidence": [
+        "Administrative-interface settings, connection configurations or management procedures.",
+        "Change records or provider demonstrations showing secure administration in use and any operationally essential exception."
+      ],
+      "outcome": [
+        "Administration uses secure methods appropriate to the assets and software.",
+        "Insecure management protocols are absent unless the safeguard's operational-necessity condition applies."
+      ]
     },
     "4.7": {
-      "review": ["Identify vendor-preconfigured accounts on assets and software, including administrator and root accounts, and inspect how they are managed.", "Confirm the selected treatment is applied. Disabling or making such accounts unusable are examples; do not assume merely renaming an account establishes secure management."],
-      "evidence": ["Default-account configuration or account-state records for relevant systems.", "Provisioning or provider records showing the treatment applied to preconfigured accounts."],
-      "outcome": ["Default accounts are deliberately managed rather than left in an unmanaged installation state.", "Observed account settings agree with the organization's chosen treatment."]
+      "review": [
+        "Identify vendor-preconfigured accounts on assets and software, including administrator and root accounts, and inspect how they are managed.",
+        "Confirm the selected treatment is applied. Disabling or making such accounts unusable are examples; do not assume merely renaming an account establishes secure management."
+      ],
+      "evidence": [
+        "Default-account configuration or account-state records for relevant systems.",
+        "Provisioning or provider records showing the treatment applied to preconfigured accounts."
+      ],
+      "outcome": [
+        "Default accounts are deliberately managed rather than left in an unmanaged installation state.",
+        "Observed account settings agree with the organization's chosen treatment."
+      ]
+    },
+    "4.8": {
+      "review": [
+        "Identify required services and approved baselines. Confirm the covered population and client decisions.",
+        "Remove or disable unnecessary services. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Baseline and sampled service inventory. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Remove unnecessary exposed functionality. Remove or disable unnecessary services.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "4.9": {
+      "review": [
+        "Agree approved DNS resolvers for network infrastructure. Confirm the covered population and client decisions.",
+        "Maintain trusted resolver settings. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Network configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Use trustworthy infrastructure name resolution. Maintain trusted resolver settings.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "4.10": {
+      "review": [
+        "Define lockout configuration by device class. Confirm the covered population and client decisions.",
+        "Enforce lockout thresholds. Check actual execution rather than a policy statement alone.",
+        "Where supported: at most 20 failed attempts on laptops; 10 on tablets/phones. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Device policy and representative test result. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Limit repeated local authentication failures on portable devices. Enforce lockout thresholds.",
+        "Where supported: at most 20 failed attempts on laptops; 10 on tablets/phones. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "4.11": {
+      "review": [
+        "Establish authorized wipe process for enterprise-owned portable devices. Confirm the covered population and client decisions.",
+        "Maintain capability; execute on approved events. Check actual execution rather than a policy statement alone.",
+        "Event: loss, theft or end of engagement are examples; no fixed interval. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Capability coverage and authorized wipe record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Remove enterprise data remotely when appropriate. Maintain capability; execute on approved events.",
+        "Event: loss, theft or end of engagement are examples; no fixed interval. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "5.1": {
-      "review": ["Compare the account inventory with directories, applications and platforms, including user, administrator and service accounts.", "Confirm records contain the person's name, username, start/stop dates and department. Identify active accounts missing from the inventory or lacking authorization.", "Verify active-account authorization is validated at least quarterly; collecting an export alone is not an authorization review."],
-      "evidence": ["Account inventory and account/role exports from the client or responsible provider.", "Dated quarterly authorization decisions tied to the reviewed accounts."],
-      "outcome": ["Accounts are identifiable in the inventory with the specified details.", "Active-account authorization is demonstrated by recurring quarterly or more frequent validation."]
+      "review": [
+        "Compare the account inventory with directories, applications and platforms, including user, administrator and service accounts.",
+        "Confirm records contain the person's name, username, start/stop dates and department. Identify active accounts missing from the inventory or lacking authorization.",
+        "Verify active-account authorization is validated at least quarterly; collecting an export alone is not an authorization review."
+      ],
+      "evidence": [
+        "Account inventory and account/role exports from the client or responsible provider.",
+        "Dated quarterly authorization decisions tied to the reviewed accounts."
+      ],
+      "outcome": [
+        "Accounts are identifiable in the inventory with the specified details.",
+        "Active-account authorization is demonstrated by recurring quarterly or more frequent validation."
+      ]
     },
     "5.2": {
-      "review": ["Review password-setting and credential-management practices to confirm passwords are unique across enterprise assets. Do not request actual passwords to prove this.", "CIS gives best-practice examples of at least 8 characters with MFA and 14 without MFA. Compare those examples with the organization's approach without treating them as a new Omnisciente scoring rule."],
-      "evidence": ["Password-policy configuration and credential-handling procedures without secret values.", "A responsible-party demonstration or explanation of how reuse across assets is avoided; settings alone may not prove uniqueness."],
-      "outcome": ["Passwords are not reused across enterprise assets.", "The assessment explains the basis for that conclusion without collecting credentials."]
+      "review": [
+        "Review password-setting and credential-management practices to confirm passwords are unique across enterprise assets. Do not request actual passwords to prove this.",
+        "CIS gives best-practice examples of at least 8 characters with MFA and 14 without MFA. Compare those examples with the organization's approach without treating them as a new Omnisciente scoring rule."
+      ],
+      "evidence": [
+        "Password-policy configuration and credential-handling procedures without secret values.",
+        "A responsible-party demonstration or explanation of how reuse across assets is avoided; settings alone may not prove uniqueness."
+      ],
+      "outcome": [
+        "Passwords are not reused across enterprise assets.",
+        "The assessment explains the basis for that conclusion without collecting credentials."
+      ]
     },
     "5.3": {
-      "review": ["Review account-activity data and the handling of accounts inactive for 45 days. Confirm they are disabled or deleted where supported.", "Compare inactivity dates with actual disablement/deletion results. A monthly evidence-review meeting must not extend the 45-day threshold; a generic risk acceptance is not a substitute."],
-      "evidence": ["Account inactivity reports and dated account-state changes.", "Client or provider execution records confirming which dormant accounts were disabled or deleted."],
-      "outcome": ["Dormant accounts are disabled or removed after the 45-day inactivity period where the system supports it.", "The record demonstrates the action, not only identification of inactivity."]
+      "review": [
+        "Review account-activity data and the handling of accounts inactive for 45 days. Confirm they are disabled or deleted where supported.",
+        "Compare inactivity dates with actual disablement/deletion results. A monthly evidence-review meeting must not extend the 45-day threshold; a generic risk acceptance is not a substitute."
+      ],
+      "evidence": [
+        "Account inactivity reports and dated account-state changes.",
+        "Client or provider execution records confirming which dormant accounts were disabled or deleted."
+      ],
+      "outcome": [
+        "Dormant accounts are disabled or removed after the 45-day inactivity period where the system supports it.",
+        "The record demonstrates the action, not only identification of inactivity."
+      ]
     },
     "5.4": {
-      "review": ["Compare privileged-role assignments with the accounts used for ordinary work. Confirm administrator privileges are restricted to dedicated administrative accounts.", "Check that web browsing, email and productivity work use the person's primary nonprivileged account. Look for everyday accounts retaining administrator privileges."],
-      "evidence": ["Privileged-account and role listings alongside ordinary user-account records.", "Access procedures or representative activity records showing separation in practice."],
-      "outcome": ["Dedicated accounts perform administration; routine computing uses nonprivileged accounts.", "Actual role assignments support that separation."]
+      "review": [
+        "Compare privileged-role assignments with the accounts used for ordinary work. Confirm administrator privileges are restricted to dedicated administrative accounts.",
+        "Check that web browsing, email and productivity work use the person's primary nonprivileged account. Look for everyday accounts retaining administrator privileges."
+      ],
+      "evidence": [
+        "Privileged-account and role listings alongside ordinary user-account records.",
+        "Access procedures or representative activity records showing separation in practice."
+      ],
+      "outcome": [
+        "Dedicated accounts perform administration; routine computing uses nonprivileged accounts.",
+        "Actual role assignments support that separation."
+      ]
+    },
+    "5.5": {
+      "review": [
+        "Identify service accounts, department owners, purpose and review dates. Confirm the covered population and client decisions.",
+        "Maintain inventory through account changes. Check actual execution rather than a policy statement alone.",
+        "Authorization review at least quarterly. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Service-account records identify the responsible department, owner, purpose and review date; authorization reviews occur at least quarterly."
+      ],
+      "evidence": [
+        "Service-account register and authorization decisions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Keep service-account purpose and ownership accountable. Maintain inventory through account changes.",
+        "Authorization review at least quarterly. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "5.6": {
+      "review": [
+        "Identify directory/identity authority and exceptions. Confirm the covered population and client decisions.",
+        "Operate centralized account management. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Directory coverage and exception records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Consolidate account administration. Operate centralized account management.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "6.1": {
-      "review": ["Review the documented access-granting process for new hires and role changes.", "Compare recent hires or changes with resulting access to confirm the process is followed. Automation is preferred in the safeguard, not a prerequisite or a requirement for a particular approval chain."],
-      "evidence": ["Access-granting procedure and relevant hire/role-change requests.", "Provisioning records or responsible-provider results showing the resulting access."],
-      "outcome": ["A documented granting process operates for both new hires and changed roles.", "Access decisions and resulting provisioning can be followed through actual examples."]
+      "review": [
+        "Review the documented access-granting process for new hires and role changes.",
+        "Compare recent hires or changes with resulting access to confirm the process is followed. Automation is preferred in the safeguard, not a prerequisite or a requirement for a particular approval chain."
+      ],
+      "evidence": [
+        "Access-granting procedure and relevant hire/role-change requests.",
+        "Provisioning records or responsible-provider results showing the resulting access."
+      ],
+      "outcome": [
+        "A documented granting process operates for both new hires and changed roles.",
+        "Access decisions and resulting provisioning can be followed through actual examples."
+      ]
     },
     "6.2": {
-      "review": ["Review the revocation process and compare termination, rights-revocation and role-change times with account disablement.", "Confirm access is disabled immediately when those events require revocation. A later periodic review does not replace immediate action. Disabling rather than deleting may be needed to preserve audit trails."],
-      "evidence": ["Offboarding/role-change records compared with timestamped disablement logs.", "Revocation procedure and provider execution records where access is externally managed."],
-      "outcome": ["Required revocation takes effect immediately, rather than waiting for the next scheduled review.", "The organization can demonstrate when access was disabled and retain necessary attribution."]
+      "review": [
+        "Review the revocation process and compare termination, rights-revocation and role-change times with account disablement.",
+        "Confirm access is disabled immediately when those events require revocation. A later periodic review does not replace immediate action. Disabling rather than deleting may be needed to preserve audit trails."
+      ],
+      "evidence": [
+        "Offboarding/role-change records compared with timestamped disablement logs.",
+        "Revocation procedure and provider execution records where access is externally managed."
+      ],
+      "outcome": [
+        "Required revocation takes effect immediately, rather than waiting for the next scheduled review.",
+        "The organization can demonstrate when access was disabled and retain necessary attribution."
+      ]
     },
     "6.3": {
-      "review": ["Identify externally exposed enterprise and third-party applications. Inspect whether MFA is enforced wherever supported, rather than merely available for enrollment.", "Check direct sign-in and SSO routes for bypasses. Enforcement through a directory or SSO provider is acceptable; note actual support limitations separately from incomplete deployment."],
-      "evidence": ["Application/sign-in inventory and MFA or conditional-access configuration.", "Authentication results or provider records demonstrating enforced MFA on applicable routes."],
-      "outcome": ["Externally exposed applications enforce MFA wherever they support it.", "Alternative access paths do not silently bypass the intended enforcement."]
+      "review": [
+        "Identify externally exposed enterprise and third-party applications. Inspect whether MFA is enforced wherever supported, rather than merely available for enrollment.",
+        "Check direct sign-in and SSO routes for bypasses. Enforcement through a directory or SSO provider is acceptable; note actual support limitations separately from incomplete deployment."
+      ],
+      "evidence": [
+        "Application/sign-in inventory and MFA or conditional-access configuration.",
+        "Authentication results or provider records demonstrating enforced MFA on applicable routes."
+      ],
+      "outcome": [
+        "Externally exposed applications enforce MFA wherever they support it.",
+        "Alternative access paths do not silently bypass the intended enforcement."
+      ]
     },
     "6.4": {
-      "review": ["Review all remote network-access methods and confirm MFA is required for connections.", "Inspect applied authentication policies and representative connection results. Identify alternate remote-access paths that still permit a password alone."],
-      "evidence": ["Remote-access configurations and authentication policies.", "Connection/authentication logs or a safe sign-in demonstration from the client or provider."],
-      "outcome": ["Remote network access requires MFA.", "The implemented connection behavior matches the configuration claim."]
+      "review": [
+        "Review all remote network-access methods and confirm MFA is required for connections.",
+        "Inspect applied authentication policies and representative connection results. Identify alternate remote-access paths that still permit a password alone."
+      ],
+      "evidence": [
+        "Remote-access configurations and authentication policies.",
+        "Connection/authentication logs or a safe sign-in demonstration from the client or provider."
+      ],
+      "outcome": [
+        "Remote network access requires MFA.",
+        "The implemented connection behavior matches the configuration claim."
+      ]
     },
     "6.5": {
-      "review": ["Review administrative accounts across enterprise assets, including on-site and service-provider-managed environments.", "Confirm MFA is enforced for administrative access wherever supported. Identify excluded accounts, alternative admin interfaces and enrollment without enforcement."],
-      "evidence": ["Administrative-account lists matched to effective MFA policies.", "Admin sign-in results or scoped provider evidence confirming enforcement."],
-      "outcome": ["Administrative access requires MFA wherever supported, including provider-managed assets.", "Coverage is demonstrated for the administrative population, not inferred from ordinary-user MFA."]
+      "review": [
+        "Review administrative accounts across enterprise assets, including on-site and service-provider-managed environments.",
+        "Confirm MFA is enforced for administrative access wherever supported. Identify excluded accounts, alternative admin interfaces and enrollment without enforcement."
+      ],
+      "evidence": [
+        "Administrative-account lists matched to effective MFA policies.",
+        "Admin sign-in results or scoped provider evidence confirming enforcement."
+      ],
+      "outcome": [
+        "Administrative access requires MFA wherever supported, including provider-managed assets.",
+        "Coverage is demonstrated for the administrative population, not inferred from ordinary-user MFA."
+      ]
+    },
+    "6.6": {
+      "review": [
+        "Inventory internal and provider-hosted identity systems. Confirm the covered population and client decisions.",
+        "Maintain system inventory. Check actual execution rather than a policy statement alone.",
+        "Review/update at least annually. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Identity-system register and reviewed changes. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Identify all authentication/authorization systems. Maintain system inventory.",
+        "Review/update at least annually. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "6.7": {
+      "review": [
+        "Define directory/SSO coverage and limitations. Confirm the covered population and client decisions.",
+        "Operate centralized access control. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified; where supported. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "SSO coverage and access configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Consolidate supported access enforcement. Operate centralized access control.",
+        "No numeric interval specified; where supported. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "7.1": {
-      "review": ["Review the documented vulnerability-management process and its coverage of enterprise assets.", "Confirm the process reflects current operations and is reviewed/updated annually and after significant changes. Do not import IG2 scanning frequencies into this IG1 process requirement."],
-      "evidence": ["Vulnerability-management procedures and their asset scope.", "Dated reviews or revisions showing annual and significant-change maintenance."],
-      "outcome": ["A current, documented process governs vulnerability management for enterprise assets.", "Relevant changes and annual reviews keep the process usable."]
+      "review": [
+        "Review the documented vulnerability-management process and its coverage of enterprise assets.",
+        "Confirm the process reflects current operations and is reviewed/updated annually and after significant changes. Do not import IG2 scanning frequencies into this IG1 process requirement."
+      ],
+      "evidence": [
+        "Vulnerability-management procedures and their asset scope.",
+        "Dated reviews or revisions showing annual and significant-change maintenance."
+      ],
+      "outcome": [
+        "A current, documented process governs vulnerability management for enterprise assets.",
+        "Relevant changes and annual reviews keep the process usable."
+      ]
     },
     "7.2": {
-      "review": ["Review the documented remediation process and how its strategy prioritizes work by risk.", "Confirm monthly or more frequent process reviews. Examine remediation records to understand how prioritization operates; the safeguard does not impose one universal deadline for every vulnerability."],
-      "evidence": ["Risk-based remediation procedure and prioritization criteria.", "Dated monthly reviews supported by remediation queues, decisions or provider reports."],
-      "outcome": ["Risk drives a documented remediation strategy.", "Monthly or more frequent reviews evaluate the process; unresolved work is not mistaken for completed remediation."]
+      "review": [
+        "Review the documented remediation process and how its strategy prioritizes work by risk.",
+        "Confirm monthly or more frequent process reviews. Examine remediation records to understand how prioritization operates; the safeguard does not impose one universal deadline for every vulnerability."
+      ],
+      "evidence": [
+        "Risk-based remediation procedure and prioritization criteria.",
+        "Dated monthly reviews supported by remediation queues, decisions or provider reports."
+      ],
+      "outcome": [
+        "Risk drives a documented remediation strategy.",
+        "Monthly or more frequent reviews evaluate the process; unresolved work is not mistaken for completed remediation."
+      ]
     },
     "7.3": {
-      "review": ["Compare operating-system patch schedules and deployment results with the enterprise asset population.", "Confirm automated patch management actually applies OS updates monthly or more frequently. Identify failed, missed and incomplete deployments; a monthly report or accepted delay is not equivalent to applying updates."],
-      "evidence": ["Automated patch configuration and dated OS deployment results.", "Asset-level update status or provider execution reports, including failed jobs and subsequent outcomes."],
-      "outcome": ["OS updates are applied through automated patch management at least monthly.", "Results substantiate deployment across the asset population, not only the existence of a schedule."]
+      "review": [
+        "Compare operating-system patch schedules and deployment results with the enterprise asset population.",
+        "Confirm automated patch management actually applies OS updates monthly or more frequently. Identify failed, missed and incomplete deployments; a monthly report or accepted delay is not equivalent to applying updates."
+      ],
+      "evidence": [
+        "Automated patch configuration and dated OS deployment results.",
+        "Asset-level update status or provider execution reports, including failed jobs and subsequent outcomes."
+      ],
+      "outcome": [
+        "OS updates are applied through automated patch management at least monthly.",
+        "Results substantiate deployment across the asset population, not only the existence of a schedule."
+      ]
     },
     "7.4": {
-      "review": ["Review automated application patching coverage, including business applications and other installed software; do not infer it from OS patching alone.", "Confirm application updates are applied monthly or more frequently. Compare results with the software inventory to identify omitted applications and failed or incomplete deployments."],
-      "evidence": ["Application update configuration and dated deployment results.", "Installed-version comparisons or responsible-provider reports demonstrating completed updates."],
-      "outcome": ["Application updates are applied automatically at least monthly.", "Coverage and results support the claim for applications, independently of OS patch status."]
+      "review": [
+        "Review automated application patching coverage, including business applications and other installed software; do not infer it from OS patching alone.",
+        "Confirm application updates are applied monthly or more frequently. Compare results with the software inventory to identify omitted applications and failed or incomplete deployments."
+      ],
+      "evidence": [
+        "Application update configuration and dated deployment results.",
+        "Installed-version comparisons or responsible-provider reports demonstrating completed updates."
+      ],
+      "outcome": [
+        "Application updates are applied automatically at least monthly.",
+        "Coverage and results support the claim for applications, independently of OS patch status."
+      ]
+    },
+    "7.5": {
+      "review": [
+        "Define internal scope, credentials and authorized scanning windows. Confirm the covered population and client decisions.",
+        "Run scans and route results. Check actual execution rather than a policy statement alone.",
+        "At least quarterly; authenticated and unauthenticated scans. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Dated scope/coverage and scan summaries. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Find internal vulnerabilities with both scan perspectives. Run scans and route results.",
+        "At least quarterly; authenticated and unauthenticated scans. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "7.6": {
+      "review": [
+        "Identify external attack surface and scanning owner. Confirm the covered population and client decisions.",
+        "Run external scans and route results. Check actual execution rather than a policy statement alone.",
+        "At least monthly. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Dated external coverage and results. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Find weaknesses in externally exposed assets. Run external scans and route results.",
+        "At least monthly. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "7.7": {
+      "review": [
+        "Define triage and remediation accountability. Confirm the covered population and client decisions.",
+        "Remediate and validate outcomes. Check actual execution rather than a policy statement alone.",
+        "Remediation at least monthly, following the remediation process. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Remediation tickets and closure checks. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Resolve detected software weaknesses systematically. Remediate and validate outcomes.",
+        "Remediation at least monthly, following the remediation process. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "8.1": {
-      "review": ["Review the documented logging process for collection, review and retention expectations across enterprise assets.", "Confirm annual review/update and updates following significant changes affecting logging. Organization-defined review and retention expectations should not be replaced with an invented IG1 interval."],
-      "evidence": ["Audit-log management procedures covering collection, review and retention.", "Dated annual reviews or revisions after relevant changes."],
-      "outcome": ["The organization has current, documented logging expectations covering all three subjects.", "Annual and significant-change reviews maintain the process."]
+      "review": [
+        "Review the documented logging process for collection, review and retention expectations across enterprise assets.",
+        "Confirm annual review/update and updates following significant changes affecting logging. Organization-defined review and retention expectations should not be replaced with an invented IG1 interval."
+      ],
+      "evidence": [
+        "Audit-log management procedures covering collection, review and retention.",
+        "Dated annual reviews or revisions after relevant changes."
+      ],
+      "outcome": [
+        "The organization has current, documented logging expectations covering all three subjects.",
+        "Annual and significant-change reviews maintain the process."
+      ]
     },
     "8.2": {
-      "review": ["Compare the documented logging process with actual logging configuration across enterprise assets.", "Confirm audit logs are being collected, not just that logging is intended. Identify missing sources, disabled logging or gaps in generated records."],
-      "evidence": ["Logging settings together with recent audit records from the relevant assets.", "Source-coverage reports or provider records demonstrating collection."],
-      "outcome": ["Logging is enabled and collects records according to the documented process.", "Observed records substantiate operation for the relevant asset scope."]
+      "review": [
+        "Compare the documented logging process with actual logging configuration across enterprise assets.",
+        "Confirm audit logs are being collected, not just that logging is intended. Identify missing sources, disabled logging or gaps in generated records."
+      ],
+      "evidence": [
+        "Logging settings together with recent audit records from the relevant assets.",
+        "Source-coverage reports or provider records demonstrating collection."
+      ],
+      "outcome": [
+        "Logging is enabled and collects records according to the documented process.",
+        "Observed records substantiate operation for the relevant asset scope."
+      ]
     },
     "8.3": {
-      "review": ["Review logging destinations and compare storage capacity with the requirements in the audit-log management process.", "Inspect capacity, overwrite or dropped-log conditions that could prevent those requirements being met. Do not impose the separate IG2 90-day retention safeguard on IG1."],
-      "evidence": ["Storage configuration and utilization reports for logging destinations.", "Retention/capacity observations or provider reports compared with the organization's logging requirements."],
-      "outcome": ["Logging destinations have sufficient storage to meet the documented process.", "Capacity limits are not silently causing loss of required logs."]
+      "review": [
+        "Review logging destinations and compare storage capacity with the requirements in the audit-log management process.",
+        "Inspect capacity, overwrite or dropped-log conditions that could prevent those requirements being met. Do not impose the separate IG2 90-day retention safeguard on IG1."
+      ],
+      "evidence": [
+        "Storage configuration and utilization reports for logging destinations.",
+        "Retention/capacity observations or provider reports compared with the organization's logging requirements."
+      ],
+      "outcome": [
+        "Logging destinations have sufficient storage to meet the documented process.",
+        "Capacity limits are not silently causing loss of required logs."
+      ]
+    },
+    "8.4": {
+      "review": [
+        "Define time sources and supported asset coverage. Confirm the covered population and client decisions.",
+        "Operate time synchronization. Check actual execution rather than a policy statement alone.",
+        "No numeric interval; at least two synchronized sources where supported. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Time configuration and drift observations. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Make event times comparable. Operate time synchronization.",
+        "No numeric interval; at least two synchronized sources where supported. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "8.5": {
+      "review": [
+        "Define required event fields and sensitive-asset scope. Confirm the covered population and client decisions.",
+        "Collect detailed events. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Detailed event records include the event source, date, user, timestamp, source address and destination address where available for relevant events."
+      ],
+      "evidence": [
+        "Representative event fields and coverage. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Capture investigation-useful events on sensitive-data assets. Collect detailed events.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "8.6": {
+      "review": [
+        "Identify DNS logging coverage and limitations. Confirm the covered population and client decisions.",
+        "Collect DNS query events. Check actual execution rather than a policy statement alone.",
+        "No numeric interval; where appropriate and supported. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "DNS event sample and source coverage. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Preserve relevant DNS-query observations. Collect DNS query events.",
+        "No numeric interval; where appropriate and supported. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "8.7": {
+      "review": [
+        "Identify URL logging coverage and limitations. Confirm the covered population and client decisions.",
+        "Collect URL request events. Check actual execution rather than a policy statement alone.",
+        "No numeric interval; where appropriate and supported. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "URL event sample and source coverage. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Preserve relevant web-request observations. Collect URL request events.",
+        "No numeric interval; where appropriate and supported. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "8.8": {
+      "review": [
+        "Define command-line logging sources. Confirm the covered population and client decisions.",
+        "Collect command-line events. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Shell event samples and configuration. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Make command execution traceable. Collect command-line events.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "8.9": {
+      "review": [
+        "Define central destinations and exceptions. Confirm the covered population and client decisions.",
+        "Operate centralized collection/retention. Check actual execution rather than a policy statement alone.",
+        "No numeric interval; centralize to the extent possible. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Source inventory and ingestion health. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Make logs jointly accessible for investigation. Operate centralized collection/retention.",
+        "No numeric interval; centralize to the extent possible. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "8.10": {
+      "review": [
+        "Configure retention and capacity together. Confirm the covered population and client decisions.",
+        "Retain events throughout the required window. Check actual execution rather than a policy statement alone.",
+        "At least 90 days retention. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Retention configuration and oldest retrievable sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Keep adequate historical audit events. Retain events throughout the required window.",
+        "At least 90 days retention. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "8.11": {
+      "review": [
+        "Assign log-review coverage, escalation and substitute coverage. Confirm the covered population and client decisions.",
+        "Review logs and investigate anomalies. Check actual execution rather than a policy statement alone.",
+        "At least weekly. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Dated review outcomes and escalations. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Detect suspicious behavior through log examination. Review logs and investigate anomalies.",
+        "At least weekly. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "9.1": {
-      "review": ["Compare installed browsers and email clients with current vendor releases and support information.", "Confirm only fully supported products using the vendor's latest version are allowed to execute. Identify unsupported or outdated versions that can still run; a future upgrade plan does not establish this state."],
-      "evidence": ["Browser/email-client version inventory compared with vendor release information.", "Update/enforcement settings and observed installed versions or provider coverage reports."],
-      "outcome": ["Executable browsers and email clients are fully supported and on the vendor's latest version.", "Version and execution evidence agree with the stated policy."]
+      "review": [
+        "Compare installed browsers and email clients with current vendor releases and support information.",
+        "Confirm only fully supported products using the vendor's latest version are allowed to execute. Identify unsupported or outdated versions that can still run; a future upgrade plan does not establish this state."
+      ],
+      "evidence": [
+        "Browser/email-client version inventory compared with vendor release information.",
+        "Update/enforcement settings and observed installed versions or provider coverage reports."
+      ],
+      "outcome": [
+        "Executable browsers and email clients are fully supported and on the vendor's latest version.",
+        "Version and execution evidence agree with the stated policy."
+      ]
     },
     "9.2": {
-      "review": ["Review DNS filtering coverage on all end-user devices, both on-premises and remote.", "Confirm known malicious domains are blocked. Check whether roaming devices or alternative DNS settings bypass the service; no particular filtering product is required."],
-      "evidence": ["DNS filtering configuration and endpoint coverage information.", "Block events or a provider-approved safe test demonstrating filtering, including remote devices."],
-      "outcome": ["Known malicious domains are blocked through DNS filtering for local and remote end-user devices.", "Coverage is demonstrated beyond the office network alone."]
+      "review": [
+        "Review DNS filtering coverage on all end-user devices, both on-premises and remote.",
+        "Confirm known malicious domains are blocked. Check whether roaming devices or alternative DNS settings bypass the service; no particular filtering product is required."
+      ],
+      "evidence": [
+        "DNS filtering configuration and endpoint coverage information.",
+        "Block events or a provider-approved safe test demonstrating filtering, including remote devices."
+      ],
+      "outcome": [
+        "Known malicious domains are blocked through DNS filtering for local and remote end-user devices.",
+        "Coverage is demonstrated beyond the office network alone."
+      ]
+    },
+    "9.3": {
+      "review": [
+        "Define network URL restrictions for all enterprise assets. Confirm the covered population and client decisions.",
+        "Enforce and update URL filtering. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Filtering policy, coverage and exceptions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Limit risky web destinations through network controls. Enforce and update URL filtering.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "9.4": {
+      "review": [
+        "Define authorized extensions and exception process. Confirm the covered population and client decisions.",
+        "Restrict or remove unauthorized/unneeded extensions. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Extension inventory and restrictions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Remove unneeded browser/mail extensions. Restrict or remove unauthorized/unneeded extensions.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "9.5": {
+      "review": [
+        "Establish SPF/DKIM before DMARC policy and verification. Confirm the covered population and client decisions.",
+        "Operate domain authentication. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "DNS records, validation and mail-domain scope. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Authenticate domain email to reduce spoofing. Operate domain authentication.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "9.6": {
+      "review": [
+        "Agree unnecessary file types and gateway coverage. Confirm the covered population and client decisions.",
+        "Enforce email file-type blocking. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Gateway policy and representative blocking record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Prevent unwanted email attachment types entering. Enforce email file-type blocking.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "10.1": {
-      "review": ["Compare the enterprise asset population with anti-malware deployment and health information.", "Confirm anti-malware is deployed and maintained; identify absent, disabled or unhealthy protection. A purchased license or intended rollout is not deployment."],
-      "evidence": ["Anti-malware deployment/health reports matched to the asset inventory.", "Effective device settings or provider records confirming active protection."],
-      "outcome": ["Enterprise assets have maintained anti-malware protection.", "Observed deployment and health support the claimed coverage."]
+      "review": [
+        "Compare the enterprise asset population with anti-malware deployment and health information.",
+        "Confirm anti-malware is deployed and maintained; identify absent, disabled or unhealthy protection. A purchased license or intended rollout is not deployment."
+      ],
+      "evidence": [
+        "Anti-malware deployment/health reports matched to the asset inventory.",
+        "Effective device settings or provider records confirming active protection."
+      ],
+      "outcome": [
+        "Enterprise assets have maintained anti-malware protection.",
+        "Observed deployment and health support the claimed coverage."
+      ]
     },
     "10.2": {
-      "review": ["Inspect anti-malware signature-update configuration across enterprise assets.", "Confirm updates are automatic and check recent results for stale signatures or failed updates. Manual updates alone do not establish automatic configuration."],
-      "evidence": ["Automatic-update settings alongside signature-version or update-status reports.", "Dated endpoint or provider update results."],
-      "outcome": ["Signature files update automatically across the asset scope.", "Recent results corroborate that the configured mechanism works."]
+      "review": [
+        "Inspect anti-malware signature-update configuration across enterprise assets.",
+        "Confirm updates are automatic and check recent results for stale signatures or failed updates. Manual updates alone do not establish automatic configuration."
+      ],
+      "evidence": [
+        "Automatic-update settings alongside signature-version or update-status reports.",
+        "Dated endpoint or provider update results."
+      ],
+      "outcome": [
+        "Signature files update automatically across the asset scope.",
+        "Recent results corroborate that the configured mechanism works."
+      ]
     },
     "10.3": {
-      "review": ["Inspect removable-media settings for both autorun and autoplay auto-execution.", "Confirm auto-execute functionality is disabled in effective configurations, including devices excluded from central policy. This does not require a blanket ban on removable media."],
-      "evidence": ["Effective autorun/autoplay settings or applied-policy reports.", "A safe configuration observation from representative devices or their responsible provider."],
-      "outcome": ["Removable media does not trigger autorun or autoplay auto-execution.", "Both settings are covered by the implemented treatment."]
+      "review": [
+        "Inspect removable-media settings for both autorun and autoplay auto-execution.",
+        "Confirm auto-execute functionality is disabled in effective configurations, including devices excluded from central policy. This does not require a blanket ban on removable media."
+      ],
+      "evidence": [
+        "Effective autorun/autoplay settings or applied-policy reports.",
+        "A safe configuration observation from representative devices or their responsible provider."
+      ],
+      "outcome": [
+        "Removable media does not trigger autorun or autoplay auto-execution.",
+        "Both settings are covered by the implemented treatment."
+      ]
+    },
+    "10.4": {
+      "review": [
+        "Configure scanning coverage. Confirm the covered population and client decisions.",
+        "Run automatic media malware scans. Check actual execution rather than a policy statement alone.",
+        "Automatic scanning on media use; no calendar interval. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Policy and scan event samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Inspect removable media automatically. Run automatic media malware scans.",
+        "Automatic scanning on media use; no calendar interval. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "10.5": {
+      "review": [
+        "Identify supported asset/software protections. Confirm the covered population and client decisions.",
+        "Maintain enabled anti-exploitation features. Check actual execution rather than a policy statement alone.",
+        "No numeric interval; where possible. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Configuration and coverage limitations. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Use available exploitation resistance. Maintain enabled anti-exploitation features.",
+        "No numeric interval; where possible. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "10.6": {
+      "review": [
+        "Define central management and asset enrollment. Confirm the covered population and client decisions.",
+        "Maintain centralized policy and coverage. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Management-console coverage summary. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Coordinate malware protection centrally. Maintain centralized policy and coverage.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "10.7": {
+      "review": [
+        "Establish behavior-detection coverage. Confirm the covered population and client decisions.",
+        "Operate behavior-based malware protection. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Capability configuration and detection samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Detect malware by behavior. Operate behavior-based malware protection.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "11.1": {
-      "review": ["Review the documented recovery process for detailed backup procedures, recovery scope, prioritization and backup-data security.", "Confirm annual review/update and updates after significant changes affecting recovery. Keep this process requirement distinct from backup execution and recovery testing."],
-      "evidence": ["Recovery procedures identifying scope, priorities and backup protection.", "Dated annual reviews and change-driven revisions."],
-      "outcome": ["The recovery process explains what is recoverable, its priority and how backups are made and secured.", "Documentation remains current through annual and significant-change review."]
+      "review": [
+        "Review the documented recovery process for detailed backup procedures, recovery scope, prioritization and backup-data security.",
+        "Confirm annual review/update and updates after significant changes affecting recovery. Keep this process requirement distinct from backup execution and recovery testing."
+      ],
+      "evidence": [
+        "Recovery procedures identifying scope, priorities and backup protection.",
+        "Dated annual reviews and change-driven revisions."
+      ],
+      "outcome": [
+        "The recovery process explains what is recoverable, its priority and how backups are made and secured.",
+        "Documentation remains current through annual and significant-change review."
+      ]
     },
     "11.2": {
-      "review": ["Compare in-scope assets with automated backup coverage and schedules. Confirm backups run at least weekly, with greater frequency when data sensitivity requires it.", "Inspect recent job results for successful execution and missing, failed or incomplete jobs. A weekly evidence review is not a substitute for weekly backup execution."],
-      "evidence": ["Backup scope and schedule configuration together with dated job results.", "Client or provider backup reports showing success, failure and subsequent resolution."],
-      "outcome": ["Automated backups execute at least weekly for the in-scope assets, with frequency reflecting data sensitivity.", "Actual results substantiate the schedule; unresolved failures remain visible as gaps."]
+      "review": [
+        "Compare in-scope assets with automated backup coverage and schedules. Confirm backups run at least weekly, with greater frequency when data sensitivity requires it.",
+        "Inspect recent job results for successful execution and missing, failed or incomplete jobs. A weekly evidence review is not a substitute for weekly backup execution."
+      ],
+      "evidence": [
+        "Backup scope and schedule configuration together with dated job results.",
+        "Client or provider backup reports showing success, failure and subsequent resolution."
+      ],
+      "outcome": [
+        "Automated backups execute at least weekly for the in-scope assets, with frequency reflecting data sensitivity.",
+        "Actual results substantiate the schedule; unresolved failures remain visible as gaps."
+      ]
     },
     "11.3": {
-      "review": ["Compare recovery-data protections with those required for the original data.", "Inspect access and other relevant controls, including encryption or separation where the data requirements call for them. A protected destination alone does not establish the separate isolation requirement in 11.4."],
-      "evidence": ["Backup access/encryption configurations compared with the original data's protection requirements.", "Provider protection records or demonstrations covering the recovery copy."],
-      "outcome": ["Recovery data receives protection equivalent to the original data.", "Implemented controls substantiate the comparison, rather than relying on a generic secure-backup claim."]
+      "review": [
+        "Compare recovery-data protections with those required for the original data.",
+        "Inspect access and other relevant controls, including encryption or separation where the data requirements call for them. A protected destination alone does not establish the separate isolation requirement in 11.4."
+      ],
+      "evidence": [
+        "Backup access/encryption configurations compared with the original data's protection requirements.",
+        "Provider protection records or demonstrations covering the recovery copy."
+      ],
+      "outcome": [
+        "Recovery data receives protection equivalent to the original data.",
+        "Implemented controls substantiate the comparison, rather than relying on a generic secure-backup claim."
+      ]
     },
     "11.4": {
-      "review": ["Identify the isolated recovery-data instance and inspect how its isolation is maintained.", "Confirm it is an actual maintained recovery copy, not merely a proposed destination. Offline, cloud or off-site arrangements are examples; their location or a restricted folder alone does not demonstrate isolation."],
-      "evidence": ["Backup destination/version configuration and records identifying the isolated copy.", "Access or separation details from the client or provider showing how isolation is maintained."],
-      "outcome": ["An isolated instance of recovery data exists and is maintained.", "The assessment can explain the isolation mechanism without assuming a particular product or architecture."]
+      "review": [
+        "Identify the isolated recovery-data instance and inspect how its isolation is maintained.",
+        "Confirm it is an actual maintained recovery copy, not merely a proposed destination. Offline, cloud or off-site arrangements are examples; their location or a restricted folder alone does not demonstrate isolation."
+      ],
+      "evidence": [
+        "Backup destination/version configuration and records identifying the isolated copy.",
+        "Access or separation details from the client or provider showing how isolation is maintained."
+      ],
+      "outcome": [
+        "An isolated instance of recovery data exists and is maintained.",
+        "The assessment can explain the isolation mechanism without assuming a particular product or architecture."
+      ]
+    },
+    "11.5": {
+      "review": [
+        "Select representative recovery samples and success criteria. Confirm the covered population and client decisions.",
+        "Execute restore tests and resolve failures. Check actual execution rather than a policy statement alone.",
+        "At least quarterly recovery tests. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Restore results, sample scope and follow-up Actions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Demonstrate sampled recovery actually works. Execute restore tests and resolve failures.",
+        "At least quarterly recovery tests. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "12.1": {
-      "review": ["Review network device/software versions and supported service offerings to confirm infrastructure is kept current. CIS examples include latest stable software and supported network-as-a-service.", "Compare versions with vendor support information monthly or more frequently. Identify unsupported or outdated infrastructure rather than treating a replacement plan as a current implementation."],
-      "evidence": ["Network version inventory and vendor lifecycle/release information.", "Dated monthly support checks and upgrade or provider maintenance results."],
-      "outcome": ["Network infrastructure is up to date and software support is verified at least monthly.", "The current-state conclusion is supported by observed versions and support information."]
+      "review": [
+        "Review network device/software versions and supported service offerings to confirm infrastructure is kept current. CIS examples include latest stable software and supported network-as-a-service.",
+        "Compare versions with vendor support information monthly or more frequently. Identify unsupported or outdated infrastructure rather than treating a replacement plan as a current implementation."
+      ],
+      "evidence": [
+        "Network version inventory and vendor lifecycle/release information.",
+        "Dated monthly support checks and upgrade or provider maintenance results."
+      ],
+      "outcome": [
+        "Network infrastructure is up to date and software support is verified at least monthly.",
+        "The current-state conclusion is supported by observed versions and support information."
+      ]
+    },
+    "12.2": {
+      "review": [
+        "Define architecture and security boundaries. Confirm the covered population and client decisions.",
+        "Maintain implemented network architecture. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Design and deployed boundary evidence. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Design segmented, least-privilege, available networks. Maintain implemented network architecture.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "12.3": {
+      "review": [
+        "Define secure administrative methods. Confirm the covered population and client decisions.",
+        "Use secure infrastructure management. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Administrative configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Protect network administration. Use secure infrastructure management.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "12.4": {
+      "review": [
+        "Establish diagrams or equivalent system documentation. Confirm the covered population and client decisions.",
+        "Maintain documentation with network changes. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Reviewed architecture record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Keep network architecture understandable and current. Maintain documentation with network changes.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "12.5": {
+      "review": [
+        "Define centralized AAA coverage. Confirm the covered population and client decisions.",
+        "Operate centralized network AAA. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "AAA configuration and covered devices. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Consolidate network identity, permissions and audit. Operate centralized network AAA.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "12.6": {
+      "review": [
+        "Select secure protocols for applicable network services. Confirm the covered population and client decisions.",
+        "Maintain secure protocol configurations. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Protocol and wireless configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Protect network management and communications. Maintain secure protocol configurations.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "12.7": {
+      "review": [
+        "Define enterprise-managed remote-access path and authentication. Confirm the covered population and client decisions.",
+        "Require VPN and authentication before resource access. Check actual execution rather than a policy statement alone.",
+        "Before accessing enterprise resources. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Remote-access configuration and authentication sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Authenticate remote devices through enterprise VPN/AAA. Require VPN and authentication before resource access.",
+        "Before accessing enterprise resources. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "13.1": {
+      "review": [
+        "Define correlation, alert ownership and escalation; equivalent log analytics can satisfy the outcome. Confirm the covered population and client decisions.",
+        "Operate correlated security alerting. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Source coverage, correlation rules and alert cases. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Correlate security events into actionable alerts. Operate correlated security alerting.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "13.2": {
+      "review": [
+        "Define host detection coverage and limitations. Confirm the covered population and client decisions.",
+        "Operate host intrusion detection. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Sensor coverage and representative alert. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Detect intrusions on supported/appropriate hosts. Operate host intrusion detection.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "13.3": {
+      "review": [
+        "Select observation points or equivalent cloud capability. Confirm the covered population and client decisions.",
+        "Operate network intrusion detection. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Network intrusion detection coverage, sensor configuration and dated alert investigations. Use representative network segments and traffic paths.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Detect network intrusions where appropriate. Operate network intrusion detection.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "13.4": {
+      "review": [
+        "Define permitted inter-segment flows. Confirm the covered population and client decisions.",
+        "Enforce boundary filtering. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified; where appropriate. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Rules and sampled flow validation. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Control traffic crossing network boundaries. Enforce boundary filtering.",
+        "No numeric interval specified; where appropriate. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "13.5": {
+      "review": [
+        "Define checks for malware protection, configuration and patch currency. Confirm the covered population and client decisions.",
+        "Apply posture-based access decisions. Check actual execution rather than a policy statement alone.",
+        "On remote connection; no numeric interval. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Posture policy and allow/deny examples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Condition remote access on asset security posture. Apply posture-based access decisions.",
+        "On remote connection; no numeric interval. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "13.6": {
+      "review": [
+        "Identify flow/traffic collection coverage and destinations. Confirm the covered population and client decisions.",
+        "Collect network flow or traffic records. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Collection coverage and flow samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Make network flows available for review/alerts. Collect network flow or traffic records.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "14.1": {
-      "review": ["Review the awareness program and workforce training records. Confirm training on secure use of assets and data takes place at hire and at least annually.", "Compare participation with the workforce population to find missed hires or overdue training. Verify content is reviewed/updated annually and after significant changes affecting the program."],
-      "evidence": ["Training content and hire/annual completion records from internal or provider-led delivery.", "Workforce reconciliation and dated content reviews/revisions."],
-      "outcome": ["New hires and the existing workforce receive the required training at the stated times.", "Current program content reflects annual and significant-change review."]
+      "review": [
+        "Review the awareness program and workforce training records. Confirm training on secure use of assets and data takes place at hire and at least annually.",
+        "Compare participation with the workforce population to find missed hires or overdue training. Verify content is reviewed/updated annually and after significant changes affecting the program."
+      ],
+      "evidence": [
+        "Training content and hire/annual completion records from internal or provider-led delivery.",
+        "Workforce reconciliation and dated content reviews/revisions."
+      ],
+      "outcome": [
+        "New hires and the existing workforce receive the required training at the stated times.",
+        "Current program content reflects annual and significant-change review."
+      ]
     },
     "14.2": {
-      "review": ["Review training content and delivery records for recognizing social engineering, including examples such as phishing, business email compromise, pretexting and tailgating.", "Confirm the topic is actually taught within the awareness program. A phishing simulation can support evaluation but is not a mandatory IG1 artifact."],
-      "evidence": ["Relevant lesson material and training/attendance records.", "Discussion, exercise or knowledge-check results where used by the organization."],
-      "outcome": ["Workforce training explains how to recognize social-engineering attempts.", "Delivery records demonstrate that the content was provided, not merely purchased."]
+      "review": [
+        "Review training content and delivery records for recognizing social engineering, including examples such as phishing, business email compromise, pretexting and tailgating.",
+        "Confirm the topic is actually taught within the awareness program. A phishing simulation can support evaluation but is not a mandatory IG1 artifact."
+      ],
+      "evidence": [
+        "Relevant lesson material and training/attendance records.",
+        "Discussion, exercise or knowledge-check results where used by the organization."
+      ],
+      "outcome": [
+        "Workforce training explains how to recognize social-engineering attempts.",
+        "Delivery records demonstrate that the content was provided, not merely purchased."
+      ]
     },
     "14.3": {
-      "review": ["Review authentication training and how it is delivered. CIS example topics include MFA, password composition and credential management.", "Confirm practical instruction fits the authentication methods used by the workforce. A technical MFA configuration alone does not demonstrate training."],
-      "evidence": ["Authentication lesson material with attendance or completion records.", "Workforce guidance or knowledge checks used to reinforce the lesson."],
-      "outcome": ["The workforce is taught authentication best practices.", "Training explains usable behavior rather than only listing available security features."]
+      "review": [
+        "Review authentication training and how it is delivered. CIS example topics include MFA, password composition and credential management.",
+        "Confirm practical instruction fits the authentication methods used by the workforce. A technical MFA configuration alone does not demonstrate training."
+      ],
+      "evidence": [
+        "Authentication lesson material with attendance or completion records.",
+        "Workforce guidance or knowledge checks used to reinforce the lesson."
+      ],
+      "outcome": [
+        "The workforce is taught authentication best practices.",
+        "Training explains usable behavior rather than only listing available security features."
+      ]
     },
     "14.4": {
-      "review": ["Review training on identifying sensitive data and securely storing, transferring, archiving and destroying it.", "Confirm clear-screen and clear-desk practices are taught, including locking unattended screens, clearing physical/virtual whiteboards and securing data/assets."],
-      "evidence": ["Data-handling and clear-screen/desk lesson material.", "Training delivery records or exercises relevant to the organization's data handling."],
-      "outcome": ["The workforce receives practical instruction across the sensitive-data lifecycle.", "Training includes both information handling and clear-screen/desk behavior."]
+      "review": [
+        "Review training on identifying sensitive data and securely storing, transferring, archiving and destroying it.",
+        "Confirm clear-screen and clear-desk practices are taught, including locking unattended screens, clearing physical/virtual whiteboards and securing data/assets."
+      ],
+      "evidence": [
+        "Data-handling and clear-screen/desk lesson material.",
+        "Training delivery records or exercises relevant to the organization's data handling."
+      ],
+      "outcome": [
+        "The workforce receives practical instruction across the sensitive-data lifecycle.",
+        "Training includes both information handling and clear-screen/desk behavior."
+      ]
     },
     "14.5": {
-      "review": ["Review training on accidental exposure, such as sending data to the wrong recipient, losing portable devices or sharing with unintended audiences.", "Confirm relevant examples and delivery records show the topic is taught, rather than covered only by a data-handling policy."],
-      "evidence": ["Lessons or communications explaining accidental-exposure scenarios.", "Attendance, completion or scenario-discussion records."],
-      "outcome": ["Training makes common causes of unintentional exposure recognizable to the workforce.", "Examples relate to how people actually handle and share enterprise data."]
+      "review": [
+        "Review training on accidental exposure, such as sending data to the wrong recipient, losing portable devices or sharing with unintended audiences.",
+        "Confirm relevant examples and delivery records show the topic is taught, rather than covered only by a data-handling policy."
+      ],
+      "evidence": [
+        "Lessons or communications explaining accidental-exposure scenarios.",
+        "Attendance, completion or scenario-discussion records."
+      ],
+      "outcome": [
+        "Training makes common causes of unintentional exposure recognizable to the workforce.",
+        "Examples relate to how people actually handle and share enterprise data."
+      ]
     },
     "14.6": {
-      "review": ["Review training on recognizing a possible security incident and reporting it through the organization's reporting process.", "Confirm workforce-facing instructions identify a usable reporting route. Compare training with current contacts so staff are not directed to obsolete channels."],
-      "evidence": ["Incident-recognition/reporting training and completion records.", "Current reporting instructions or exercise/discussion results where used."],
-      "outcome": ["The workforce is taught both recognition and reporting of potential incidents.", "Instruction points to a reporting method people can use."]
+      "review": [
+        "Review training on recognizing a possible security incident and reporting it through the organization's reporting process.",
+        "Confirm workforce-facing instructions identify a usable reporting route. Compare training with current contacts so staff are not directed to obsolete channels."
+      ],
+      "evidence": [
+        "Incident-recognition/reporting training and completion records.",
+        "Current reporting instructions or exercise/discussion results where used."
+      ],
+      "outcome": [
+        "The workforce is taught both recognition and reporting of potential incidents.",
+        "Instruction points to a reporting method people can use."
+      ]
     },
     "14.7": {
-      "review": ["Review training showing the workforce how to identify and report outdated software patches or failures in automated processes and tools.", "Confirm the instruction includes notifying IT about failures. An automated patch report alone does not show that this workforce topic was taught."],
-      "evidence": ["Lessons or job aids explaining update/failure indicators and how to notify IT.", "Training records or practical demonstrations used by the organization."],
-      "outcome": ["People receive actionable instruction for recognizing update problems and reporting them to IT.", "Training covers automation/tool failures as well as missing patches."]
+      "review": [
+        "Review training showing the workforce how to identify and report outdated software patches or failures in automated processes and tools.",
+        "Confirm the instruction includes notifying IT about failures. An automated patch report alone does not show that this workforce topic was taught."
+      ],
+      "evidence": [
+        "Lessons or job aids explaining update/failure indicators and how to notify IT.",
+        "Training records or practical demonstrations used by the organization."
+      ],
+      "outcome": [
+        "People receive actionable instruction for recognizing update problems and reporting them to IT.",
+        "Training covers automation/tool failures as well as missing patches."
+      ]
     },
     "14.8": {
-      "review": ["Review training on the risks of connecting to insecure networks and transmitting enterprise data over them.", "Where remote workers exist, confirm training includes secure configuration of home network infrastructure. Check that delivery reaches the relevant workforce."],
-      "evidence": ["Insecure-network and, where relevant, home-network training material.", "Attendance/completion records or remote-worker guidance supporting delivery."],
-      "outcome": ["The workforce is taught the risks of insecure networks for enterprise work.", "Remote workers receive guidance on securing their home infrastructure."]
+      "review": [
+        "Review training on the risks of connecting to insecure networks and transmitting enterprise data over them.",
+        "Where remote workers exist, confirm training includes secure configuration of home network infrastructure. Check that delivery reaches the relevant workforce."
+      ],
+      "evidence": [
+        "Insecure-network and, where relevant, home-network training material.",
+        "Attendance/completion records or remote-worker guidance supporting delivery."
+      ],
+      "outcome": [
+        "The workforce is taught the risks of insecure networks for enterprise work.",
+        "Remote workers receive guidance on securing their home infrastructure."
+      ]
+    },
+    "14.9": {
+      "review": [
+        "Identify role skills and training gaps. Confirm the covered population and client decisions.",
+        "Deliver role-specific awareness/skills training. Check actual execution rather than a policy statement alone.",
+        "No separate numeric interval in 14.9; select role-based schedule. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Role-to-training mapping and participation. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Prepare people for their security-specific duties. Deliver role-specific awareness/skills training.",
+        "No separate numeric interval in 14.9; select role-based schedule. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "15.1": {
-      "review": ["Compare the provider inventory with known services and relationships. Confirm it includes all known providers, their classifications and an internal enterprise contact for each.", "Verify annual review/update and updates after significant changes. Do not turn this inventory safeguard into a mandatory IG2 provider-assessment program."],
-      "evidence": ["Provider inventory with classifications and designated contacts.", "Annual reconciliation or change records compared with contracts, purchasing or service records."],
-      "outcome": ["Known service providers are inventoried, classified and assigned an enterprise contact.", "The inventory stays current through annual and significant-change review."]
+      "review": [
+        "Compare the provider inventory with known services and relationships. Confirm it includes all known providers, their classifications and an internal enterprise contact for each.",
+        "Verify annual review/update and updates after significant changes. Do not turn this inventory safeguard into a mandatory provider-assessment program (standalone safeguard 15.5 is IG3)."
+      ],
+      "evidence": [
+        "Provider inventory with classifications and designated contacts.",
+        "Annual reconciliation or change records compared with contracts, purchasing or service records."
+      ],
+      "outcome": [
+        "Known service providers are inventoried, classified and assigned an enterprise contact.",
+        "The inventory stays current through annual and significant-change review."
+      ]
+    },
+    "15.2": {
+      "review": [
+        "Document inventory, classification, assessment, monitoring and decommissioning policy. Confirm the covered population and client decisions.",
+        "Follow the approved provider policy. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: The provider policy addresses classification, inventory, assessment, monitoring and decommissioning. This policy does not add the separate IG3 safeguards 15.5 through 15.7 to IG2."
+      ],
+      "evidence": [
+        "Controlled policy and lifecycle responsibilities. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Govern the provider lifecycle consistently. Follow the approved provider policy.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "15.3": {
+      "review": [
+        "Agree provider classification criteria. Confirm the covered population and client decisions.",
+        "Classify providers and update changes. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Vendor classification rationale. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Prioritize providers by relevant exposure. Classify providers and update changes.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "15.4": {
+      "review": [
+        "Identify required security terms and gaps. Confirm the covered population and client decisions.",
+        "Maintain contractual security commitments. Check actual execution rather than a policy statement alone.",
+        "Review contracts at least annually. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Contract review, relevant clauses and Actions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Align provider contracts with security policy. Maintain contractual security commitments.",
+        "Review contracts at least annually. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.1": {
+      "review": [
+        "Define development security process and responsibilities. Confirm the covered population and client decisions.",
+        "Follow secure lifecycle procedures. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: The development process addresses secure design, coding, developer training, vulnerability handling, third-party software security and application testing."
+      ],
+      "evidence": [
+        "Controlled development process and delivery sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Make secure development repeatable. Follow secure lifecycle procedures.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.2": {
+      "review": [
+        "Establish external reporting path, triage, severity tracking and timing metrics. Confirm the covered population and client decisions.",
+        "Receive, assign, remediate and retest reports. Check actual execution rather than a policy statement alone.",
+        "Annual/change process review; intake when reports arrive. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Provide an external reporting channel and documented intake, ownership, remediation and retesting. Track severity and identification, analysis and remediation dates; review the handling process annually and after significant changes."
+      ],
+      "evidence": [
+        "Reporting channel and vulnerability-tracker sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Handle reported software weaknesses through resolution. Receive, assign, remediate and retest reports.",
+        "Annual/change process review; intake when reports arrive. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.3": {
+      "review": [
+        "Define root-cause responsibilities. Confirm the covered population and client decisions.",
+        "Analyze causes and prevention actions. Check actual execution rather than a policy statement alone.",
+        "When reviewing vulnerabilities; no numeric interval. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Root-cause analysis and follow-up. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Address recurring causes of software vulnerabilities. Analyze causes and prevention actions.",
+        "When reviewing vulnerabilities; no numeric interval. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.4": {
+      "review": [
+        "Inventory current/planned third-party components and risks. Confirm the covered population and client decisions.",
+        "Check changes, updates and continued support. Check actual execution rather than a policy statement alone.",
+        "Evaluate component inventory at least monthly. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Track current and planned components, associated risks, updates and support status. Review component inventory at least monthly and identify unsupported components."
+      ],
+      "evidence": [
+        "Component inventory and monthly evaluation. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Know component dependencies and their risks. Check changes, updates and continued support.",
+        "Evaluate component inventory at least monthly. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.5": {
+      "review": [
+        "Define acquisition and vulnerability-evaluation practices. Confirm the covered population and client decisions.",
+        "Obtain trusted, up-to-date components. Check actual execution rather than a policy statement alone.",
+        "At component selection/use; no numeric interval. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Use current trusted components and established frameworks or libraries where possible. Obtain components from trusted sources or evaluate vulnerabilities before use."
+      ],
+      "evidence": [
+        "Provenance, support and vulnerability evaluation. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Use trustworthy, maintained software dependencies. Obtain trusted, up-to-date components.",
+        "At component selection/use; no numeric interval. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.6": {
+      "review": [
+        "Define severity model and minimum release acceptance. Confirm the covered population and client decisions.",
+        "Triage vulnerabilities and apply release criteria. Check actual execution rather than a policy statement alone.",
+        "Review severity system/process at least annually. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Use a consistent vulnerability severity system with a minimum acceptance threshold for release; review the system annually."
+      ],
+      "evidence": [
+        "Severity policy and release decision sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Prioritize application weaknesses and control releases. Triage vulnerabilities and apply release criteria.",
+        "Review severity system/process at least annually. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.7": {
+      "review": [
+        "Adopt appropriate standard hardening templates. Confirm the covered population and client decisions.",
+        "Maintain hardening across application infrastructure. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Baselines and exception/change records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Keep application platforms securely configured. Maintain hardening across application infrastructure.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.8": {
+      "review": [
+        "Define production/non-production boundaries. Confirm the covered population and client decisions.",
+        "Maintain environment separation. Check actual execution rather than a policy statement alone.",
+        "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Environment inventory and access/boundary evidence. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Separate live and non-live application environments. Maintain environment separation.",
+        "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.9": {
+      "review": [
+        "Identify development roles and relevant training. Confirm the covered population and client decisions.",
+        "Deliver environment-specific developer training. Check actual execution rather than a policy statement alone.",
+        "Training at least annually. Confirm relevant exceptions and follow-up with the accountable owner."
+      ],
+      "evidence": [
+        "Curriculum and participation records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Equip developers to write secure code. Deliver environment-specific developer training.",
+        "Training at least annually. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.10": {
+      "review": [
+        "Define secure design principles and review responsibility. Confirm the covered population and client decisions.",
+        "Apply principles through design and change. Check actual execution rather than a policy statement alone.",
+        "During design; no numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Apply least privilege, check access at each operation, validate untrusted input type, size, range and format, and minimize exposed functionality."
+      ],
+      "evidence": [
+        "Architecture decisions and design review. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Build security into application architecture. Apply principles through design and change.",
+        "During design; no numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "16.11": {
+      "review": [
+        "Identify vetted security modules/services. Confirm the covered population and client decisions.",
+        "Maintain use of proven identity, crypto and audit capabilities. Check actual execution rather than a policy statement alone.",
+        "At selection/use; no numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Use vetted identity, cryptographic, audit and logging modules with accepted reviewed algorithms; avoid custom security implementations."
+      ],
+      "evidence": [
+        "Component decisions and platform security references. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Use established security building blocks. Maintain use of proven identity, crypto and audit capabilities.",
+        "At selection/use; no numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     },
     "17.1": {
-      "review": ["Confirm a lead and at least one backup are designated to manage incident handling, coordinating and documenting response and recovery.", "If providers perform incident handling, confirm at least one internal person oversees their work. Verify designations are reviewed annually and after significant relevant changes."],
-      "evidence": ["Incident-handling role assignments, including lead, backup and any internal provider overseer.", "Dated reviews, responsibility records or provider agreements supporting the assignments."],
-      "outcome": ["Incident handling has a known lead and backup with coordination/documentation responsibilities.", "Provider involvement retains internal oversight, and assignments remain current."]
+      "review": [
+        "Confirm a lead and at least one backup are designated to manage incident handling, coordinating and documenting response and recovery.",
+        "If providers perform incident handling, confirm at least one internal person oversees their work. Verify designations are reviewed annually and after significant relevant changes."
+      ],
+      "evidence": [
+        "Incident-handling role assignments, including lead, backup and any internal provider overseer.",
+        "Dated reviews, responsibility records or provider agreements supporting the assignments."
+      ],
+      "outcome": [
+        "Incident handling has a known lead and backup with coordination/documentation responsibilities.",
+        "Provider involvement retains internal oversight, and assignments remain current."
+      ]
     },
     "17.2": {
-      "review": ["Review contact information for parties that need incident notification. Consider the organization's actual stakeholders, including providers, insurers or authorities where relevant.", "Confirm contact details are verified annually. This notification list is distinct from the workforce's reporting instructions in 17.3; not every example stakeholder must apply to every organization."],
-      "evidence": ["Incident-notification contact list relevant to the organization.", "Dated annual contact verification or provider confirmation records."],
-      "outcome": ["Relevant notification recipients can be reached using current contact information.", "Annual verification demonstrates that the list has been checked, not merely retained."]
+      "review": [
+        "Review contact information for parties that need incident notification. Consider the organization's actual stakeholders, including providers, insurers or authorities where relevant.",
+        "Confirm contact details are verified annually. This notification list is distinct from the workforce's reporting instructions in 17.3; not every example stakeholder must apply to every organization."
+      ],
+      "evidence": [
+        "Incident-notification contact list relevant to the organization.",
+        "Dated annual contact verification or provider confirmation records."
+      ],
+      "outcome": [
+        "Relevant notification recipients can be reached using current contact information.",
+        "Annual verification demonstrates that the list has been checked, not merely retained."
+      ]
     },
     "17.3": {
-      "review": ["Review the documented workforce incident-reporting process for reporting timeframes, recipients, reporting mechanism and minimum information to provide.", "Confirm all workforce members can access it. Verify annual review and review after significant changes affecting the process; workforce availability does not mean publishing internal details to the internet."],
-      "evidence": ["Reporting instructions showing all four required elements.", "Workforce access/communication records and dated annual or change-driven reviews."],
-      "outcome": ["The workforce can find usable instructions for when, how, to whom and what to report.", "The reporting process is maintained annually and after significant relevant changes."]
+      "review": [
+        "Review the documented workforce incident-reporting process for reporting timeframes, recipients, reporting mechanism and minimum information to provide.",
+        "Confirm all workforce members can access it. Verify annual review and review after significant changes affecting the process; workforce availability does not mean publishing internal details to the internet."
+      ],
+      "evidence": [
+        "Reporting instructions showing all four required elements.",
+        "Workforce access/communication records and dated annual or change-driven reviews."
+      ],
+      "outcome": [
+        "The workforce can find usable instructions for when, how, to whom and what to report.",
+        "The reporting process is maintained annually and after significant relevant changes."
+      ]
+    },
+    "17.4": {
+      "review": [
+        "Document response roles, obligations and communications. Confirm the covered population and client decisions.",
+        "Execute response process during incidents. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Document response roles, compliance obligations and communications, and review the response process annually and after significant changes."
+      ],
+      "evidence": [
+        "Response plan and incident records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Coordinate complete incident response. Execute response process during incidents.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "17.5": {
+      "review": [
+        "Agree cross-functional and provider responsibilities. Confirm the covered population and client decisions.",
+        "Activate assigned roles during incidents. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Include relevant legal, IT, security, facilities, public relations, HR, responders, analysts and third-party responsibilities."
+      ],
+      "evidence": [
+        "Role roster and contact/escalation record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Make incident roles and handoffs explicit. Activate assigned roles during incidents.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "17.6": {
+      "review": [
+        "Define primary and fallback communication methods. Confirm the covered population and client decisions.",
+        "Use available incident communication channels. Check actual execution rather than a policy statement alone.",
+        "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Define primary and alternate incident communication channels, accounting for unavailable or compromised email."
+      ],
+      "evidence": [
+        "Communication plan and exercise observations. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Keep incident communications usable during disruption. Use available incident communication channels.",
+        "Annual review and significant-change updates. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "17.7": {
+      "review": [
+        "Plan realistic scenarios, participants and objectives. Confirm the covered population and client decisions.",
+        "Run exercises covering channels, decisions and workflows. Check actual execution rather than a policy statement alone.",
+        "Exercises at least annually. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Conduct actual exercises at least annually that test communications, decisions and response workflows; track resulting improvements."
+      ],
+      "evidence": [
+        "Exercise results and improvement Actions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Exercise incident decisions and coordination. Run exercises covering channels, decisions and workflows.",
+        "Exercises at least annually. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "17.8": {
+      "review": [
+        "Define post-incident review responsibility. Confirm the covered population and client decisions.",
+        "Capture lessons and assign improvements. Check actual execution rather than a policy statement alone.",
+        "After incidents; no fixed calendar interval. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: After incidents, capture lessons and follow up improvements. The safeguard does not prescribe a separate fixed numeric review interval."
+      ],
+      "evidence": [
+        "Post-incident review and tracked Actions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Learn from actual incidents. Capture lessons and assign improvements.",
+        "After incidents; no fixed calendar interval. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "18.1": {
+      "review": [
+        "Agree scope, frequency, limits, contacts, remediation and retrospectives. Confirm the covered population and client decisions.",
+        "Maintain the testing program. Check actual execution rather than a policy statement alone.",
+        "Program-defined frequency; no separate numeric minimum in 18.1. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Scale testing to organizational size, complexity, industry and maturity. Define network, application, API, hosted and physical scope where relevant, frequency, testing limits and hours, excluded attacks, contacts, remediation routing and retrospective review."
+      ],
+      "evidence": [
+        "Authorized scope and program record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Make penetration testing purposeful and controlled. Maintain the testing program.",
+        "Program-defined frequency; no separate numeric minimum in 18.1. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "18.2": {
+      "review": [
+        "Select qualified party and authorize scope/limits. Confirm the covered population and client decisions.",
+        "Execute external penetration tests. Check actual execution rather than a policy statement alone.",
+        "At least annually; include reconnaissance. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: At least annually, use qualified external testers and include reconnaissance of the enterprise and its environment."
+      ],
+      "evidence": [
+        "Scoped test report and qualifications. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Have qualified testers probe external exposure. Execute external penetration tests.",
+        "At least annually; include reconnaissance. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "18.3": {
+      "review": [
+        "Define finding ownership and routing. Confirm the covered population and client decisions.",
+        "Remediate penetration-test findings. Check actual execution rather than a policy statement alone.",
+        "After findings, on risk-prioritized remediation timelines. Confirm relevant exceptions and follow-up with the accountable owner.",
+        "Check the following aspects: Prioritize test findings by risk and apply documented vulnerability remediation timelines and effort according to impact and priority."
+      ],
+      "evidence": [
+        "Finding-to-Action trace and remediation support. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "outcome": [
+        "Resolve penetration-test weaknesses by risk. Remediate penetration-test findings.",
+        "After findings, on risk-prioritized remediation timelines. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
     }
   }
 }

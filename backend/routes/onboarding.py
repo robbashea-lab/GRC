@@ -519,6 +519,7 @@ class BaselineState(BaseModel):
     reviews: List[str] = Field(default_factory=list)
     completed: bool = False
     framework_reviews: Dict[str, Any] = Field(default_factory=dict)
+    framework_settings: Dict[str, Any] = Field(default_factory=dict)
 
 
 class BaselineSave(BaseModel):
@@ -572,7 +573,7 @@ async def baseline_state(client_id: str, user: Dict = Depends(get_current_user))
             for item in BASELINE_CATALOG[group]:
                 row = _baseline_match(rows, item) or {}
                 state[group][item['key']] = maps[group].get(row.get('presence' if group == 'policies' else 'applicability'), '')
-    return {'catalog': BASELINE_CATALOG, 'state': state, 'record_versions':await baseline_record_versions(client_id)}
+    return {'catalog': BASELINE_CATALOG, 'state': state, 'framework_settings':client.get('framework_settings',{}), 'record_versions':await baseline_record_versions(client_id)}
 
 
 @router.post('/onboarding/baseline')
@@ -602,6 +603,8 @@ async def _prepare_baseline(body, user, identity):
     server._require_snapshot(body.model_dump(exclude_unset=True),client.get('onboarding_baseline') or {})
     state = body.state.model_dump()
     framework_governance.validate_configuration(state)
+    if previous_baseline:
+        state['framework_settings']={'cis-ig1':client.get('framework_settings',{}).get('cis-ig1',{'implementation_group':1})}
     if state['version']>=3:
         for item in BASELINE_CATALOG['requirements']:
             state['requirements'].setdefault(item['key'],'does_not_apply')
@@ -628,7 +631,7 @@ async def _prepare_baseline(body, user, identity):
         if body.expected_records != await baseline_record_versions(cid):
             raise HTTPException(409,'Setup records changed since this form was opened; reload before finalizing')
         if state['version']>=3:
-            mapped={p['baseline_key'] for key,c in framework_governance.CATALOGS.items() if state['requirements'].get(key)=='applies' for p in c['review_plans'] if state['framework_reviews'].get(p['key'],{}).get('enabled',True)}
+            mapped={p.get('baseline_key') for p in shared_review_plans.selected_plans(state) if state['framework_reviews'].get(p['key'],{}).get('enabled',True)}
             state['reviews']=[k for k in state['reviews'] if k not in mapped]
         for group, id_field in [('policies', 'policy_id'), ('requirements', 'requirement_id'), ('reviews', 'review_id')]:
             rows = await server.db[group].find({'client_id': cid}, {'_id': 0}).to_list(2000)
@@ -684,6 +687,8 @@ async def _finish_baseline(identity, plan, user):
     completion = receipt.get('onboarding_completion')
     if completion is None:
         updates = {'onboarding_baseline': state}
+        if plan['finalize']:
+            updates['framework_settings.cis-ig1'] = state.get('framework_settings', {}).get('cis-ig1', {'implementation_group': 1})
         if not plan['client'].get('initial_program_baseline'):
             if plan['previous_baseline']:
                 updates['initial_program_baseline'] = plan['previous_baseline']
@@ -744,7 +749,7 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
         return result
 
     values = await asyncio.gather(*(rows(kind, names) for kind, names in fields.items()))
-    minimal_client = {k: client.get(k) for k in ('client_id', 'name', 'primary_contact_id', 'primary_contact', 'assigned_owner_id')}
+    minimal_client = {k: client.get(k) for k in ('client_id', 'name', 'primary_contact_id', 'primary_contact', 'assigned_owner_id','framework_settings')}
     projected = (await client_relationships.project(server.db, [minimal_client]))[0]
     contacts, client_users, candidates = await asyncio.gather(
         server.db.contacts.count_documents({'client_id': client_id}),
@@ -763,6 +768,7 @@ class ProgramApplicabilityChange(BaseModel):
     reason: Optional[str] = Field(default=None,max_length=2000)
     effective_date: Optional[str] = Field(default=None,max_length=10)
     expected_updated_at: Optional[str] = Field(default=None,max_length=100)
+    implementation_group: Optional[int] = Field(default=None,strict=True,ge=1,le=2)
 
 
 @router.patch('/onboarding/programs/{key}')
@@ -788,6 +794,14 @@ async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict 
     cid = body.client_id
     old = await server.db.requirements.find_one({'client_id': cid, 'baseline_key': key})
     server._require_snapshot(body.model_dump(exclude_unset=True),old or {})
+    if body.implementation_group is not None:
+        if key!='cis-ig1':raise HTTPException(422,'Implementation group applies only to CIS')
+        from framework_catalog import client_configuration
+        if old and old.get('baseline_response')=='applies' and client_configuration(key,client)['implementation_group']!=body.implementation_group:
+            raise HTTPException(409,'Use CIS scope settings to change an active implementation group')
+        await server.db.clients.update_one({'client_id':cid},{'$set':{'framework_settings.cis-ig1':{'implementation_group':body.implementation_group}}})
+    # Later enablement uses current scope, never the historical intake value.
+    baseline={**baseline,'framework_settings':{}}
     if old and old.get('baseline_response')==body.applicability:
         if key in framework_governance.CATALOGS:
             await framework_governance.reconcile(server,cid,{**baseline,'requirements':{key:body.applicability}},user)

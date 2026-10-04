@@ -1,6 +1,6 @@
 {
   "version": "8.1",
-  "revision": "2026-09-30",
+  "revision": "2026-10-03",
   "basis": "Safeguard text only; paraphrased assessment aid. CAS metrics, implementation examples and enhanced practices are not additional requirements.",
   "requirements": {
     "1.1": {
@@ -34,6 +34,40 @@
         {
           "id": "1.2-c2",
           "text": "Unauthorized connections are removed, denied or quarantined."
+        }
+      ]
+    },
+    "1.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#13-utilize-an-active-discovery-tool",
+      "criteria": [
+        {
+          "id": "1.3-c1",
+          "text": "Discover connected devices automatically."
+        },
+        {
+          "id": "1.3-c2",
+          "text": "Run discovery and reconcile unexpected devices. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "1.3-c3",
+          "text": "Daily or more often."
+        }
+      ]
+    },
+    "1.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#14-use-dynamic-host-configuration-protocol-dhcp-logging-to-update-enterprise-asset-inventory",
+      "criteria": [
+        {
+          "id": "1.4-c1",
+          "text": "Feed address-allocation observations into inventory."
+        },
+        {
+          "id": "1.4-c2",
+          "text": "Collect observations and resolve inventory differences. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "1.4-c3",
+          "text": "At least weekly inventory updates using logs."
         }
       ]
     },
@@ -81,6 +115,53 @@
         {
           "id": "2.3-c2",
           "text": "Unauthorized-software handling is reviewed at least monthly."
+        }
+      ]
+    },
+    "2.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#24-utilize-automated-software-inventory-tools",
+      "criteria": [
+        {
+          "id": "2.4-c1",
+          "text": "Automate installed-software visibility where possible."
+        },
+        {
+          "id": "2.4-c2",
+          "text": "Maintain discovery coverage and inventory feed. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "2.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#25-allowlist-authorized-software",
+      "criteria": [
+        {
+          "id": "2.5-c1",
+          "text": "Restrict execution/access to approved applications."
+        },
+        {
+          "id": "2.5-c2",
+          "text": "Enforce application restrictions. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "2.5-c3",
+          "text": "Reassess at least every six months."
+        }
+      ]
+    },
+    "2.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#26-allowlist-authorized-libraries",
+      "criteria": [
+        {
+          "id": "2.6-c1",
+          "text": "Prevent unapproved libraries loading."
+        },
+        {
+          "id": "2.6-c2",
+          "text": "Enforce library controls; handle changes safely. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "2.6-c3",
+          "text": "Reassess at least every six months."
         }
       ]
     },
@@ -143,6 +224,92 @@
         {
           "id": "3.6-c1",
           "text": "Data is encrypted on end-user devices that contain sensitive information."
+        }
+      ]
+    },
+    "3.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#37-establish-and-maintain-a-data-classification-scheme",
+      "criteria": [
+        {
+          "id": "3.7-c1",
+          "text": "Give information consistent sensitivity classifications."
+        },
+        {
+          "id": "3.7-c2",
+          "text": "Apply classification in handling decisions. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "3.7-c3",
+          "text": "Annual review and significant-change updates."
+        }
+      ]
+    },
+    "3.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#38-document-data-flows",
+      "criteria": [
+        {
+          "id": "3.8-c1",
+          "text": "Make internal and provider data movements traceable."
+        },
+        {
+          "id": "3.8-c2",
+          "text": "Maintain flows through service changes. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "3.8-c3",
+          "text": "Annual review and significant-change updates."
+        }
+      ]
+    },
+    "3.9": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#39-encrypt-data-on-removable-media",
+      "criteria": [
+        {
+          "id": "3.9-c1",
+          "text": "Protect removable-media contents with encryption."
+        },
+        {
+          "id": "3.9-c2",
+          "text": "Enforce media encryption. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "3.10": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#310-encrypt-sensitive-data-in-transit",
+      "criteria": [
+        {
+          "id": "3.10-c1",
+          "text": "Protect sensitive information during transfer."
+        },
+        {
+          "id": "3.10-c2",
+          "text": "Maintain encrypted transport. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "3.11": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#311-encrypt-sensitive-data-at-rest",
+      "criteria": [
+        {
+          "id": "3.11-c1",
+          "text": "Protect stored sensitive server/application/database information."
+        },
+        {
+          "id": "3.11-c2",
+          "text": "Maintain encryption coverage. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "3.12": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#312-segment-data-processing-and-storage-based-on-sensitivity",
+      "criteria": [
+        {
+          "id": "3.12-c1",
+          "text": "Keep sensitive processing out of lower-trust environments."
+        },
+        {
+          "id": "3.12-c2",
+          "text": "Enforce storage and processing separation. Confirm coverage and resolve unsupported or uncovered cases."
         }
       ]
     },
@@ -217,6 +384,66 @@
         }
       ]
     },
+    "4.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#48-uninstall-or-disable-unnecessary-services-on-enterprise-assets-and-software",
+      "criteria": [
+        {
+          "id": "4.8-c1",
+          "text": "Remove unnecessary exposed functionality."
+        },
+        {
+          "id": "4.8-c2",
+          "text": "Remove or disable unnecessary services. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "4.9": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#49-configure-trusted-dns-servers-on-enterprise-assets",
+      "criteria": [
+        {
+          "id": "4.9-c1",
+          "text": "Use trustworthy infrastructure name resolution."
+        },
+        {
+          "id": "4.9-c2",
+          "text": "Maintain trusted resolver settings. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "4.10": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#410-enforce-automatic-device-lockout-on-portable-end-user-devices",
+      "criteria": [
+        {
+          "id": "4.10-c1",
+          "text": "Limit repeated local authentication failures on portable devices."
+        },
+        {
+          "id": "4.10-c2",
+          "text": "Enforce lockout thresholds. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "4.10-c3",
+          "text": "Where supported: at most 20 failed attempts on laptops; 10 on tablets/phones."
+        }
+      ]
+    },
+    "4.11": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#411-enforce-remote-wipe-capability-on-portable-end-user-devices",
+      "criteria": [
+        {
+          "id": "4.11-c1",
+          "text": "Remove enterprise data remotely when appropriate."
+        },
+        {
+          "id": "4.11-c2",
+          "text": "Maintain capability; execute on approved events. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "4.11-c3",
+          "text": "Event: loss, theft or end of engagement are examples; no fixed interval."
+        }
+      ]
+    },
     "5.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#51-establish-and-maintain-an-inventory-of-accounts",
       "criteria": [
@@ -262,6 +489,40 @@
         {
           "id": "5.4-c2",
           "text": "Routine computing uses the person's nonprivileged account."
+        }
+      ]
+    },
+    "5.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#55-establish-and-maintain-an-inventory-of-service-accounts",
+      "criteria": [
+        {
+          "id": "5.5-c1",
+          "text": "Keep service-account purpose and ownership accountable."
+        },
+        {
+          "id": "5.5-c2",
+          "text": "Maintain inventory through account changes. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "5.5-c3",
+          "text": "Authorization review at least quarterly."
+        },
+        {
+          "id": "5.5-c4",
+          "text": "Service-account records identify the responsible department, owner, purpose and review date; authorization reviews occur at least quarterly."
+        }
+      ]
+    },
+    "5.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#56-centralize-account-management",
+      "criteria": [
+        {
+          "id": "5.6-c1",
+          "text": "Consolidate account administration."
+        },
+        {
+          "id": "5.6-c2",
+          "text": "Operate centralized account management. Confirm coverage and resolve unsupported or uncovered cases."
         }
       ]
     },
@@ -314,6 +575,36 @@
         }
       ]
     },
+    "6.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#66-establish-and-maintain-an-inventory-of-authentication-and-authorization-systems",
+      "criteria": [
+        {
+          "id": "6.6-c1",
+          "text": "Identify all authentication/authorization systems."
+        },
+        {
+          "id": "6.6-c2",
+          "text": "Maintain system inventory. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "6.6-c3",
+          "text": "Review/update at least annually."
+        }
+      ]
+    },
+    "6.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#67-centralize-access-control",
+      "criteria": [
+        {
+          "id": "6.7-c1",
+          "text": "Consolidate supported access enforcement."
+        },
+        {
+          "id": "6.7-c2",
+          "text": "Operate centralized access control. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
     "7.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#71-establish-and-maintain-a-vulnerability-management-process",
       "criteria": [
@@ -358,6 +649,57 @@
         }
       ]
     },
+    "7.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#75-perform-automated-vulnerability-scans-of-internal-enterprise-assets",
+      "criteria": [
+        {
+          "id": "7.5-c1",
+          "text": "Find internal vulnerabilities with both scan perspectives."
+        },
+        {
+          "id": "7.5-c2",
+          "text": "Run scans and route results. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "7.5-c3",
+          "text": "At least quarterly; authenticated and unauthenticated scans."
+        }
+      ]
+    },
+    "7.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#76-perform-automated-vulnerability-scans-of-externally-exposed-enterprise-assets",
+      "criteria": [
+        {
+          "id": "7.6-c1",
+          "text": "Find weaknesses in externally exposed assets."
+        },
+        {
+          "id": "7.6-c2",
+          "text": "Run external scans and route results. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "7.6-c3",
+          "text": "At least monthly."
+        }
+      ]
+    },
+    "7.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#77-remediate-detected-vulnerabilities",
+      "criteria": [
+        {
+          "id": "7.7-c1",
+          "text": "Resolve detected software weaknesses systematically."
+        },
+        {
+          "id": "7.7-c2",
+          "text": "Remediate and validate outcomes. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "7.7-c3",
+          "text": "Remediation at least monthly, following the remediation process."
+        }
+      ]
+    },
     "8.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#81-establish-and-maintain-an-audit-log-management-process",
       "criteria": [
@@ -389,6 +731,122 @@
         }
       ]
     },
+    "8.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#84-standardize-time-synchronization",
+      "criteria": [
+        {
+          "id": "8.4-c1",
+          "text": "Make event times comparable."
+        },
+        {
+          "id": "8.4-c2",
+          "text": "Operate time synchronization. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "8.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#85-collect-detailed-audit-logs",
+      "criteria": [
+        {
+          "id": "8.5-c1",
+          "text": "Capture investigation-useful events on sensitive-data assets."
+        },
+        {
+          "id": "8.5-c2",
+          "text": "Collect detailed events. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "8.5-c3",
+          "text": "Detailed event records include the event source, date, user, timestamp, source address and destination address where available for relevant events."
+        }
+      ]
+    },
+    "8.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#86-collect-dns-query-audit-logs",
+      "criteria": [
+        {
+          "id": "8.6-c1",
+          "text": "Preserve relevant DNS-query observations."
+        },
+        {
+          "id": "8.6-c2",
+          "text": "Collect DNS query events. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "8.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#87-collect-url-request-audit-logs",
+      "criteria": [
+        {
+          "id": "8.7-c1",
+          "text": "Preserve relevant web-request observations."
+        },
+        {
+          "id": "8.7-c2",
+          "text": "Collect URL request events. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "8.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#88-collect-command-line-audit-logs",
+      "criteria": [
+        {
+          "id": "8.8-c1",
+          "text": "Make command execution traceable."
+        },
+        {
+          "id": "8.8-c2",
+          "text": "Collect command-line events. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "8.9": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#89-centralize-audit-logs",
+      "criteria": [
+        {
+          "id": "8.9-c1",
+          "text": "Make logs jointly accessible for investigation."
+        },
+        {
+          "id": "8.9-c2",
+          "text": "Operate centralized collection/retention. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "8.10": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#810-retain-audit-logs",
+      "criteria": [
+        {
+          "id": "8.10-c1",
+          "text": "Keep adequate historical audit events."
+        },
+        {
+          "id": "8.10-c2",
+          "text": "Retain events throughout the required window. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "8.10-c3",
+          "text": "At least 90 days retention."
+        }
+      ]
+    },
+    "8.11": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#811-conduct-audit-log-reviews",
+      "criteria": [
+        {
+          "id": "8.11-c1",
+          "text": "Detect suspicious behavior through log examination."
+        },
+        {
+          "id": "8.11-c2",
+          "text": "Review logs and investigate anomalies. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "8.11-c3",
+          "text": "At least weekly."
+        }
+      ]
+    },
     "9.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#91-ensure-use-of-only-fully-supported-browsers-and-email-clients",
       "criteria": [
@@ -404,6 +862,58 @@
         {
           "id": "9.2-c1",
           "text": "DNS filtering blocks known malicious domains on all local and remote endpoints."
+        }
+      ]
+    },
+    "9.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#93-maintain-and-enforce-network-based-url-filters",
+      "criteria": [
+        {
+          "id": "9.3-c1",
+          "text": "Limit risky web destinations through network controls."
+        },
+        {
+          "id": "9.3-c2",
+          "text": "Enforce and update URL filtering. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "9.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#94-restrict-unnecessary-or-unauthorized-browser-and-email-client-extensions",
+      "criteria": [
+        {
+          "id": "9.4-c1",
+          "text": "Remove unneeded browser/mail extensions."
+        },
+        {
+          "id": "9.4-c2",
+          "text": "Restrict or remove unauthorized/unneeded extensions. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "9.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#95-implement-dmarc",
+      "criteria": [
+        {
+          "id": "9.5-c1",
+          "text": "Authenticate domain email to reduce spoofing."
+        },
+        {
+          "id": "9.5-c2",
+          "text": "Operate domain authentication. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "9.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#96-block-unnecessary-file-types",
+      "criteria": [
+        {
+          "id": "9.6-c1",
+          "text": "Prevent unwanted email attachment types entering."
+        },
+        {
+          "id": "9.6-c2",
+          "text": "Enforce email file-type blocking. Confirm coverage and resolve unsupported or uncovered cases."
         }
       ]
     },
@@ -431,6 +941,62 @@
         {
           "id": "10.3-c1",
           "text": "Removable-media autorun and autoplay execution are disabled."
+        }
+      ]
+    },
+    "10.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#104-configure-automatic-anti-malware-scanning-of-removable-media",
+      "criteria": [
+        {
+          "id": "10.4-c1",
+          "text": "Inspect removable media automatically."
+        },
+        {
+          "id": "10.4-c2",
+          "text": "Run automatic media malware scans. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "10.4-c3",
+          "text": "Automatic scanning on media use; no calendar interval."
+        }
+      ]
+    },
+    "10.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#105-enable-anti-exploitation-features",
+      "criteria": [
+        {
+          "id": "10.5-c1",
+          "text": "Use available exploitation resistance."
+        },
+        {
+          "id": "10.5-c2",
+          "text": "Maintain enabled anti-exploitation features. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "10.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#106-centrally-manage-anti-malware-software",
+      "criteria": [
+        {
+          "id": "10.6-c1",
+          "text": "Coordinate malware protection centrally."
+        },
+        {
+          "id": "10.6-c2",
+          "text": "Maintain centralized policy and coverage. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "10.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#107-use-behavior-based-anti-malware-software",
+      "criteria": [
+        {
+          "id": "10.7-c1",
+          "text": "Detect malware by behavior."
+        },
+        {
+          "id": "10.7-c2",
+          "text": "Operate behavior-based malware protection. Confirm coverage and resolve unsupported or uncovered cases."
         }
       ]
     },
@@ -474,6 +1040,23 @@
         }
       ]
     },
+    "11.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#115-test-data-recovery",
+      "criteria": [
+        {
+          "id": "11.5-c1",
+          "text": "Demonstrate sampled recovery actually works."
+        },
+        {
+          "id": "11.5-c2",
+          "text": "Execute restore tests and resolve failures. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "11.5-c3",
+          "text": "At least quarterly recovery tests."
+        }
+      ]
+    },
     "12.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#121-ensure-network-infrastructure-is-up-to-date",
       "criteria": [
@@ -484,6 +1067,174 @@
         {
           "id": "12.1-c2",
           "text": "Software versions and support are checked at least monthly."
+        }
+      ]
+    },
+    "12.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#122-establish-and-maintain-a-secure-network-architecture",
+      "criteria": [
+        {
+          "id": "12.2-c1",
+          "text": "Design segmented, least-privilege, available networks."
+        },
+        {
+          "id": "12.2-c2",
+          "text": "Maintain implemented network architecture. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "12.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#123-securely-manage-network-infrastructure",
+      "criteria": [
+        {
+          "id": "12.3-c1",
+          "text": "Protect network administration."
+        },
+        {
+          "id": "12.3-c2",
+          "text": "Use secure infrastructure management. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "12.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#124-establish-and-maintain-architecture-diagrams",
+      "criteria": [
+        {
+          "id": "12.4-c1",
+          "text": "Keep network architecture understandable and current."
+        },
+        {
+          "id": "12.4-c2",
+          "text": "Maintain documentation with network changes. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "12.4-c3",
+          "text": "Annual review and significant-change updates."
+        }
+      ]
+    },
+    "12.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#125-centralize-network-authentication-authorization-and-aucentralize-network-aaa",
+      "criteria": [
+        {
+          "id": "12.5-c1",
+          "text": "Consolidate network identity, permissions and audit."
+        },
+        {
+          "id": "12.5-c2",
+          "text": "Operate centralized network AAA. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "12.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#126-use-of-secure-network-management-and-communication-protocols",
+      "criteria": [
+        {
+          "id": "12.6-c1",
+          "text": "Protect network management and communications."
+        },
+        {
+          "id": "12.6-c2",
+          "text": "Maintain secure protocol configurations. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "12.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#127-ensure-remote-devices-utilize-a-vpn-and-are-connecting-to-an-enterprises-aaa-infrastructure",
+      "criteria": [
+        {
+          "id": "12.7-c1",
+          "text": "Authenticate remote devices through enterprise VPN/AAA."
+        },
+        {
+          "id": "12.7-c2",
+          "text": "Require VPN and authentication before resource access. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "12.7-c3",
+          "text": "Before accessing enterprise resources."
+        }
+      ]
+    },
+    "13.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#131-centralize-security-event-alerting",
+      "criteria": [
+        {
+          "id": "13.1-c1",
+          "text": "Correlate security events into actionable alerts."
+        },
+        {
+          "id": "13.1-c2",
+          "text": "Operate correlated security alerting. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "13.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#132-deploy-a-host-based-intrusion-detection-solution",
+      "criteria": [
+        {
+          "id": "13.2-c1",
+          "text": "Detect intrusions on supported/appropriate hosts."
+        },
+        {
+          "id": "13.2-c2",
+          "text": "Operate host intrusion detection. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "13.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#133-deploy-a-network-intrusion-detection-solution",
+      "criteria": [
+        {
+          "id": "13.3-c1",
+          "text": "Detect network intrusions where appropriate."
+        },
+        {
+          "id": "13.3-c2",
+          "text": "Operate network intrusion detection. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "13.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#134-perform-traffic-filtering-between-network-segments",
+      "criteria": [
+        {
+          "id": "13.4-c1",
+          "text": "Control traffic crossing network boundaries."
+        },
+        {
+          "id": "13.4-c2",
+          "text": "Enforce boundary filtering. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "13.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#135-manage-access-control-for-remote-assets",
+      "criteria": [
+        {
+          "id": "13.5-c1",
+          "text": "Condition remote access on asset security posture."
+        },
+        {
+          "id": "13.5-c2",
+          "text": "Apply posture-based access decisions. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "13.5-c3",
+          "text": "On remote connection; no numeric interval."
+        }
+      ]
+    },
+    "13.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#136-collect-network-traffic-flow-logs",
+      "criteria": [
+        {
+          "id": "13.6-c1",
+          "text": "Make network flows available for review/alerts."
+        },
+        {
+          "id": "13.6-c2",
+          "text": "Collect network flow or traffic records. Confirm coverage and resolve unsupported or uncovered cases."
         }
       ]
     },
@@ -563,6 +1314,23 @@
         }
       ]
     },
+    "14.9": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#149-conduct-role-specific-security-awareness-and-skills-training",
+      "criteria": [
+        {
+          "id": "14.9-c1",
+          "text": "Prepare people for their security-specific duties."
+        },
+        {
+          "id": "14.9-c2",
+          "text": "Deliver role-specific awareness/skills training. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "14.9-c3",
+          "text": "No separate numeric interval in 14.9; select role-based schedule."
+        }
+      ]
+    },
     "15.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#151-establish-and-maintain-an-inventory-of-service-providers",
       "criteria": [
@@ -573,6 +1341,268 @@
         {
           "id": "15.1-c2",
           "text": "Inventory is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "15.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#152-establish-and-maintain-a-service-provider-management-policy",
+      "criteria": [
+        {
+          "id": "15.2-c1",
+          "text": "Govern the provider lifecycle consistently."
+        },
+        {
+          "id": "15.2-c2",
+          "text": "Follow the approved provider policy. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "15.2-c3",
+          "text": "Annual review and significant-change updates."
+        },
+        {
+          "id": "15.2-c4",
+          "text": "The provider policy addresses classification, inventory, assessment, monitoring and decommissioning. This policy does not add the separate IG3 safeguards 15.5 through 15.7 to IG2."
+        }
+      ]
+    },
+    "15.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#153-classify-service-providers",
+      "criteria": [
+        {
+          "id": "15.3-c1",
+          "text": "Prioritize providers by relevant exposure."
+        },
+        {
+          "id": "15.3-c2",
+          "text": "Classify providers and update changes. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "15.3-c3",
+          "text": "Annual review and significant-change updates."
+        }
+      ]
+    },
+    "15.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#154-ensure-service-provider-contracts-include-security-requirements",
+      "criteria": [
+        {
+          "id": "15.4-c1",
+          "text": "Align provider contracts with security policy."
+        },
+        {
+          "id": "15.4-c2",
+          "text": "Maintain contractual security commitments. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "15.4-c3",
+          "text": "Review contracts at least annually."
+        }
+      ]
+    },
+    "16.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#161-establish-and-maintain-a-secure-application-development-process",
+      "criteria": [
+        {
+          "id": "16.1-c1",
+          "text": "Make secure development repeatable."
+        },
+        {
+          "id": "16.1-c2",
+          "text": "Follow secure lifecycle procedures. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.1-c3",
+          "text": "Annual review and significant-change updates."
+        },
+        {
+          "id": "16.1-c4",
+          "text": "The development process addresses secure design, coding, developer training, vulnerability handling, third-party software security and application testing."
+        }
+      ]
+    },
+    "16.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#162-establish-and-maintain-a-process-to-accept-and-address-software-vulnerabilities",
+      "criteria": [
+        {
+          "id": "16.2-c1",
+          "text": "Handle reported software weaknesses through resolution."
+        },
+        {
+          "id": "16.2-c2",
+          "text": "Receive, assign, remediate and retest reports. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.2-c3",
+          "text": "Annual/change process review; intake when reports arrive."
+        },
+        {
+          "id": "16.2-c4",
+          "text": "Provide an external reporting channel and documented intake, ownership, remediation and retesting. Track severity and identification, analysis and remediation dates; review the handling process annually and after significant changes."
+        }
+      ]
+    },
+    "16.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#163-perform-root-cause-analysis-on-security-vulnerabilities",
+      "criteria": [
+        {
+          "id": "16.3-c1",
+          "text": "Address recurring causes of software vulnerabilities."
+        },
+        {
+          "id": "16.3-c2",
+          "text": "Analyze causes and prevention actions. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.3-c3",
+          "text": "When reviewing vulnerabilities; no numeric interval."
+        }
+      ]
+    },
+    "16.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#164-establish-and-manage-an-inventory-of-third-party-software-components",
+      "criteria": [
+        {
+          "id": "16.4-c1",
+          "text": "Know component dependencies and their risks."
+        },
+        {
+          "id": "16.4-c2",
+          "text": "Check changes, updates and continued support. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.4-c3",
+          "text": "Evaluate component inventory at least monthly."
+        },
+        {
+          "id": "16.4-c4",
+          "text": "Track current and planned components, associated risks, updates and support status. Review component inventory at least monthly and identify unsupported components."
+        }
+      ]
+    },
+    "16.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#165-use-up-to-date-and-trusted-third-party-software-components",
+      "criteria": [
+        {
+          "id": "16.5-c1",
+          "text": "Use trustworthy, maintained software dependencies."
+        },
+        {
+          "id": "16.5-c2",
+          "text": "Obtain trusted, up-to-date components. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.5-c3",
+          "text": "At component selection/use; no numeric interval."
+        },
+        {
+          "id": "16.5-c4",
+          "text": "Use current trusted components and established frameworks or libraries where possible. Obtain components from trusted sources or evaluate vulnerabilities before use."
+        }
+      ]
+    },
+    "16.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#166-establish-and-maintain-a-severity-rating-system-and-process-for-application-vulnerabilities",
+      "criteria": [
+        {
+          "id": "16.6-c1",
+          "text": "Prioritize application weaknesses and control releases."
+        },
+        {
+          "id": "16.6-c2",
+          "text": "Triage vulnerabilities and apply release criteria. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.6-c3",
+          "text": "Review severity system/process at least annually."
+        },
+        {
+          "id": "16.6-c4",
+          "text": "Use a consistent vulnerability severity system with a minimum acceptance threshold for release; review the system annually."
+        }
+      ]
+    },
+    "16.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#167-use-standard-hardening-configuration-templates-for-application-infrastructure",
+      "criteria": [
+        {
+          "id": "16.7-c1",
+          "text": "Keep application platforms securely configured."
+        },
+        {
+          "id": "16.7-c2",
+          "text": "Maintain hardening across application infrastructure. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "16.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#168-separate-production-and-non-production-systems",
+      "criteria": [
+        {
+          "id": "16.8-c1",
+          "text": "Separate live and non-live application environments."
+        },
+        {
+          "id": "16.8-c2",
+          "text": "Maintain environment separation. Confirm coverage and resolve unsupported or uncovered cases."
+        }
+      ]
+    },
+    "16.9": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#169-train-developers-in-application-security-concepts-and-secure-coding",
+      "criteria": [
+        {
+          "id": "16.9-c1",
+          "text": "Equip developers to write secure code."
+        },
+        {
+          "id": "16.9-c2",
+          "text": "Deliver environment-specific developer training. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.9-c3",
+          "text": "Training at least annually."
+        }
+      ]
+    },
+    "16.10": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1610-apply-secure-design-principles-in-application-architectures",
+      "criteria": [
+        {
+          "id": "16.10-c1",
+          "text": "Build security into application architecture."
+        },
+        {
+          "id": "16.10-c2",
+          "text": "Apply principles through design and change. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.10-c3",
+          "text": "During design; no numeric interval specified."
+        },
+        {
+          "id": "16.10-c4",
+          "text": "Apply least privilege, check access at each operation, validate untrusted input type, size, range and format, and minimize exposed functionality."
+        }
+      ]
+    },
+    "16.11": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1611-leverage-vetted-modules-or-services-for-application-security-components",
+      "criteria": [
+        {
+          "id": "16.11-c1",
+          "text": "Use established security building blocks."
+        },
+        {
+          "id": "16.11-c2",
+          "text": "Maintain use of proven identity, crypto and audit capabilities. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "16.11-c3",
+          "text": "At selection/use; no numeric interval specified."
+        },
+        {
+          "id": "16.11-c4",
+          "text": "Use vetted identity, cryptographic, audit and logging modules with accepted reviewed algorithms; avoid custom security implementations."
         }
       ]
     },
@@ -620,6 +1650,174 @@
         {
           "id": "17.3-c3",
           "text": "The process is reviewed annually and after relevant significant changes."
+        }
+      ]
+    },
+    "17.4": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#174-establish-and-maintain-an-incident-response-process",
+      "criteria": [
+        {
+          "id": "17.4-c1",
+          "text": "Coordinate complete incident response."
+        },
+        {
+          "id": "17.4-c2",
+          "text": "Execute response process during incidents. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "17.4-c3",
+          "text": "Annual review and significant-change updates."
+        },
+        {
+          "id": "17.4-c4",
+          "text": "Document response roles, compliance obligations and communications, and review the response process annually and after significant changes."
+        }
+      ]
+    },
+    "17.5": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities",
+      "criteria": [
+        {
+          "id": "17.5-c1",
+          "text": "Make incident roles and handoffs explicit."
+        },
+        {
+          "id": "17.5-c2",
+          "text": "Activate assigned roles during incidents. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "17.5-c3",
+          "text": "Annual review and significant-change updates."
+        },
+        {
+          "id": "17.5-c4",
+          "text": "Include relevant legal, IT, security, facilities, public relations, HR, responders, analysts and third-party responsibilities."
+        }
+      ]
+    },
+    "17.6": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#176-define-mechanisms-for-communicating-during-incident-response",
+      "criteria": [
+        {
+          "id": "17.6-c1",
+          "text": "Keep incident communications usable during disruption."
+        },
+        {
+          "id": "17.6-c2",
+          "text": "Use available incident communication channels. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "17.6-c3",
+          "text": "Annual review and significant-change updates."
+        },
+        {
+          "id": "17.6-c4",
+          "text": "Define primary and alternate incident communication channels, accounting for unavailable or compromised email."
+        }
+      ]
+    },
+    "17.7": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#177-conduct-routine-incident-response-exercises",
+      "criteria": [
+        {
+          "id": "17.7-c1",
+          "text": "Exercise incident decisions and coordination."
+        },
+        {
+          "id": "17.7-c2",
+          "text": "Run exercises covering channels, decisions and workflows. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "17.7-c3",
+          "text": "Exercises at least annually."
+        },
+        {
+          "id": "17.7-c4",
+          "text": "Conduct actual exercises at least annually that test communications, decisions and response workflows; track resulting improvements."
+        }
+      ]
+    },
+    "17.8": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#178-conduct-post-incident-reviews",
+      "criteria": [
+        {
+          "id": "17.8-c1",
+          "text": "Learn from actual incidents."
+        },
+        {
+          "id": "17.8-c2",
+          "text": "Capture lessons and assign improvements. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "17.8-c3",
+          "text": "After incidents; no fixed calendar interval."
+        },
+        {
+          "id": "17.8-c4",
+          "text": "After incidents, capture lessons and follow up improvements. The safeguard does not prescribe a separate fixed numeric review interval."
+        }
+      ]
+    },
+    "18.1": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#181-establish-and-maintain-a-penetration-testing-program",
+      "criteria": [
+        {
+          "id": "18.1-c1",
+          "text": "Make penetration testing purposeful and controlled."
+        },
+        {
+          "id": "18.1-c2",
+          "text": "Maintain the testing program. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "18.1-c3",
+          "text": "Program-defined frequency; no separate numeric minimum in 18.1."
+        },
+        {
+          "id": "18.1-c4",
+          "text": "Scale testing to organizational size, complexity, industry and operating readiness. Define network, application, API, hosted and physical scope where relevant, frequency, testing limits and hours, excluded attacks, contacts, remediation routing and retrospective review."
+        }
+      ]
+    },
+    "18.2": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#182-perform-periodic-external-penetration-tests",
+      "criteria": [
+        {
+          "id": "18.2-c1",
+          "text": "Have qualified testers probe external exposure."
+        },
+        {
+          "id": "18.2-c2",
+          "text": "Execute external penetration tests. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "18.2-c3",
+          "text": "At least annually; include reconnaissance."
+        },
+        {
+          "id": "18.2-c4",
+          "text": "At least annually, use qualified external testers and include reconnaissance of the enterprise and its environment."
+        }
+      ]
+    },
+    "18.3": {
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#183-remediate-penetration-test-findings",
+      "criteria": [
+        {
+          "id": "18.3-c1",
+          "text": "Resolve penetration-test weaknesses by risk."
+        },
+        {
+          "id": "18.3-c2",
+          "text": "Remediate penetration-test findings. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "18.3-c3",
+          "text": "After findings, on risk-prioritized remediation timelines."
+        },
+        {
+          "id": "18.3-c4",
+          "text": "Prioritize test findings by risk and apply documented vulnerability remediation timelines and effort according to impact and priority."
         }
       ]
     }

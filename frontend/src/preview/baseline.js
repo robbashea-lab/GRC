@@ -64,7 +64,9 @@ export function saveBaseline(db,cid,state,finalize,precondition={}) {
       write(db,'reviews',{client_id:cid,title:item.name,review_type:item.review_type,baseline_key:item.key,baseline_selection:'selected',source:'GRC Program Onboarding',status:'needs_scheduling',due_date:null,next_review_date:null,recurrence:null,owner_id:null});
     }
     audit(db,'onboarding-complete','clients',record(db,'clients',cid));
+    if(priorBaseline)state.framework_settings={'cis-ig1':record(db,'clients',cid).framework_settings?.['cis-ig1']||{implementation_group:1}};
     if(state.version>=3)reconcileFramework(db,cid,state);
+    record(db,'clients',cid).framework_settings={...record(db,'clients',cid).framework_settings,'cis-ig1':state.framework_settings?.['cis-ig1']||{implementation_group:1}};
   }
   const firstCompletion=finalize&&!priorBaseline;
   const existingClient=record(db,'clients',cid);

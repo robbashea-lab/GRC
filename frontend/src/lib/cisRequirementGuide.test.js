@@ -2,7 +2,7 @@ import guide from '@catalogs/operatorGuidance/cisRequirementGuide.json';
 import catalog from '@catalogs/cisIG1.json';
 import {GUIDE_QUESTIONS} from '@/components/CisRequirementGuide';
 
-test('all 56 safeguards have five distinct, concise, versioned static answers',()=>{
+test('all 130 safeguards have five distinct, concise, versioned static answers',()=>{
   expect(guide.framework).toBe('cis-ig1');expect(guide.version).toBe(catalog.version);
   expect(guide.revision).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   expect(Object.keys(guide.requirements)).toEqual(catalog.requirements.map(r=>r.id));
@@ -16,7 +16,7 @@ test('all 56 safeguards have five distinct, concise, versioned static answers',(
       answers.push(answer);
     }
   }
-  expect(answers).toHaveLength(280);expect(new Set(answers).size).toBe(280);
+  expect(answers).toHaveLength(650);expect(new Set(answers).size).toBe(650);
   expect(JSON.stringify(guide)).not.toMatch(/"score"|"status"|"client_id"|cis_assessment_criteria|verification_checklist/);
 });
 

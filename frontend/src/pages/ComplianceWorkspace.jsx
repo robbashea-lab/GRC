@@ -14,7 +14,7 @@ export default function ComplianceWorkspace() {
   const { user } = useAuth();
   // Brawndo CIS IG1 renders its own themed header inside the workspace.
   const ownHeader = requirementKey === 'cis-ig1' && isBrawndoReference(currentClientId, user) && !loading && !error;
-  const section = COMPLIANCE_SECTIONS.find(item => item.key === requirementKey);
+  const section = items.find(item => item.key === requirementKey)||COMPLIANCE_SECTIONS.find(item => item.key === requirementKey);
   const enabled = items.some(item => item.key === requirementKey);
   // The sidebar names the client; the subtitle names the framework version the workspace carries.
   const edition = section && (section.version && !section.name.includes(section.version) ? `${section.name} · ${section.version}` : section.name);
