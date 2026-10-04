@@ -17,10 +17,10 @@ const implementationItems=c=>[`${c.implemented} implemented`,`${c.partial} parti
 export function IsoSoaSummary({rows}){
   const {soa}=isoProgramMetrics(rows);
   return <section className="bcis-card iso-workspace-summary" aria-label="Statement of Applicability status">
-    <div><p className="bcis-measure-label">Applicability decisions</p><p className="iso-workspace-figure">{percent(soa.decided,soa.total)}%</p><p className="text-sm text-ink-secondary">{soa.decided} of {soa.total} decisions recorded</p></div>
+    <div><p className="bcis-measure-label">Annex A applicability decisions</p><p className="iso-workspace-figure">{percent(soa.decided,soa.total)}%</p><p className="text-sm text-ink-secondary">{soa.decided} of {soa.total} decisions recorded</p></div>
     <Segments total={soa.total} label={`Statement of Applicability: ${soa.decided} of ${soa.total} decisions recorded`} segments={[{value:soa.applicable,tone:'good',label:'Applicable'},{value:soa.excluded,tone:'attention',label:'Excluded'},{value:soa.undetermined,tone:'neutral',label:'Not determined'}]}/>
     <div className="iso-workspace-breakdown"><span>Applicable <strong>{soa.applicable}</strong></span><span>Not applicable / excluded <strong>{soa.excluded}</strong></span><span>Not determined <strong>{soa.undetermined}</strong></span></div>
-    <p className="bcis-note">Applicability decisions and implementation assessments are separate. Additional necessary controls may be documented through risk treatment and linked organization controls.</p>
+    <p className="bcis-note">Annex A reference scope only, not the complete necessary-control universe. Applicability decisions and implementation assessments are separate. Open Necessary organization-specific Controls below to connect additional controls and retain a controlled complete SoA through the existing SoA Review. A link does not establish completeness.</p>
   </section>;
 }
 

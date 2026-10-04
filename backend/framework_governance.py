@@ -114,6 +114,11 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
             {'client_id':cid,'framework_key':key,'definition_id':{'$in':plan['safeguards']}},
             {'$addToSet':{'related_links':{'kind':'reviews','id':rid}}})
 
+class CisOperation(BaseModel):
+    model_config=ConfigDict(extra='forbid',strict=True)
+    provider: str=Field(default='',max_length=2000)
+    confirmed: bool=False
+
 class AssessmentPatch(BaseModel):
     model_config=ConfigDict(extra='forbid')
     expected_last_assessed: Optional[str]=Field(default=None,max_length=100)
@@ -125,6 +130,7 @@ class AssessmentPatch(BaseModel):
     na_rationale: Optional[str]=Field(default=None,max_length=4000)
     owner_id: Optional[str]=None
     process_owner_id: Optional[str]=None
+    cis_operation: CisOperation = Field(default_factory=CisOperation)
     addressable_decision: Optional[Literal['','as_written','equivalent_alternative','not_reasonable_appropriate']]=None
     addressable_rationale: Optional[str]=Field(default=None,max_length=4000)
     soa_applicability: Optional[Literal['','included','excluded']]=None
@@ -245,7 +251,11 @@ async def related(s,row):
     tasks=[t for t in tasks if t.get('framework_assessment_id')==aid or
         (t.get('finding_id') in {f['finding_id'] for f in out['findings']} if t.get('finding_id') else not t.get('framework_assessment_id'))]
     out['tasks']=list({r['task_id']:r for r in out['tasks']+tasks}.values())
-    review_evidence=await s.db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}},{'_id':0,'content_base64':0}).to_list(None)
+    review_evidence_query={'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}}
+    if row['framework_key']=='cis-ig1':
+        review_evidence_query={'client_id':cid,'$or':[{'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}},
+            {'relationships':{'$elemMatch':{'kind':'reviews','id':{'$in':rids}}}}]}
+    review_evidence=await s.db.evidence.find(review_evidence_query,{'_id':0,'content_base64':0}).to_list(None)
     out['evidence']=list({e['evidence_id']:e for e in out['evidence']+review_evidence}.values())
     excluded=set(row.get('unlinked_evidence_ids',[]))
     out['evidence']=[e for e in out['evidence'] if e['evidence_id'] not in excluded and not e.get('archived_at')]
@@ -345,6 +355,8 @@ def router_for(s):
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)
+        if 'cis_operation' in changes:
+            changes['cis_operation']=body.cis_operation.model_dump()
         s._require_snapshot(changes,old,'last_assessed')
         changes.pop('expected_last_assessed')
         record_assessment=changes.pop('record_assessment',False)
@@ -354,6 +366,15 @@ def router_for(s):
         if record_assessment and data['status']=='not_assessed':
             raise HTTPException(422,'Choose an assessment status before recording an assessment')
         supported=capabilities(old['framework_key'])
+        if 'cis_operation' in changes:
+            if 'cis_operation' not in supported:
+                raise HTTPException(422,'Operating arrangements apply only to CIS IG1')
+            if changes['cis_operation']['confirmed'] and (not (data.get('owner_id') or data.get('process_owner_id')) or not (data.get('implementation') or '').strip()):
+                raise HTTPException(422,'Record an accountable person and operating method before confirming the arrangement')
+        # A changed responsibility/method needs a new explicit setup confirmation.
+        if any(k in changes and changes[k]!=old.get(k) for k in ('owner_id','process_owner_id','implementation')) and old.get('cis_operation') and 'cis_operation' not in changes:
+            changes['cis_operation']={**old['cis_operation'],'confirmed':False}
+            data.update(changes)
         if 'soc_assessment_checks' in changes:
             if 'soc_assessment_checks' not in supported:
                 raise HTTPException(422,'SOC assessment guidance applies only to SOC 2')
@@ -417,7 +438,7 @@ def router_for(s):
                 changes.update(last_saved=at,assessment_recorded_at=at if judgment else old.get('assessment_recorded_at'),
                                assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
                 data.update(changes)
-            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks','cis_operation') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             if old['framework_key']=='soc-2':
                 snapshot.update({k:data.get(k) for k in ('last_saved','assessment_recorded_at','assessment_recorded_by')})
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}

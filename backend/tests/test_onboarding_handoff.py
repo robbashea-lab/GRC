@@ -60,6 +60,26 @@ class OnboardingHandoffTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(next(x for x in after['records']['framework_assessments'] if x['framework_assessment_id']==a['framework_assessment_id'])['status'],'in_progress')
         self.assertEqual((await self.client.get('/api/onboarding/baseline?client_id=a')).json()['state'],baseline)
 
+    async def test_cis_setup_projection_tracks_saved_arrangement_without_narratives(self):
+        await self.complete()
+        row = (await self.snapshot())['records']['framework_assessments'][0]
+        self.assertEqual(row['cis_setup'], {'accountable_person_recorded': False, 'operating_method_recorded': False, 'arrangement_confirmed': False})
+        url = '/api/framework_assessments/' + row['framework_assessment_id']
+        response = await self.client.patch(url, json={'owner_id': 'member', 'implementation': 'Weekly procedure', 'cis_operation': {'provider': 'Internal', 'confirmed': True}})
+        self.assertEqual(response.status_code, 200, response.text)
+        saved = next(r for r in (await self.snapshot())['records']['framework_assessments'] if r['framework_assessment_id'] == row['framework_assessment_id'])
+        self.assertTrue(all(saved['cis_setup'].values()))
+        await server.db.users.update_one({'user_id': 'member'}, {'$set': {'status': 'disabled'}})
+        retained = next(r for r in (await self.snapshot())['records']['framework_assessments'] if r['framework_assessment_id'] == row['framework_assessment_id'])
+        self.assertTrue(retained['cis_setup']['accountable_person_recorded'])  # Recorded reference, not new-assignment eligibility.
+        self.assertEqual(saved['status'], row['status'])
+        for field in ('owner_id', 'process_owner_id', 'implementation', 'notes', 'cis_operation'):
+            self.assertNotIn(field, saved)
+        response = await self.client.patch(url, json={'implementation': ' '})
+        self.assertEqual(response.status_code, 200, response.text)
+        saved = next(r for r in (await self.snapshot())['records']['framework_assessments'] if r['framework_assessment_id'] == row['framework_assessment_id'])
+        self.assertFalse(saved['cis_setup']['operating_method_recorded'])
+
     async def test_read_authorization_minimal_payload_and_no_mutation(self):
         await self.complete()
         await server.db.reviews.insert_one({'review_id':'foreign','client_id':'b','title':'Private'})

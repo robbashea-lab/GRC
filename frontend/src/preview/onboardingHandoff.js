@@ -6,6 +6,8 @@ import {frameworkScope, reconcileFramework} from './frameworks';
 import {CATALOGS} from '../lib/frameworks';
 import {assignmentCandidates} from './assignmentEligibility';
 import {clientProjection} from './clientRelationships';
+import {cisSetupFacts} from '../lib/cisOperations';
+import {isoEstablishmentInformationRecorded} from '../lib/isoWorkspace';
 
 export function handoffSnapshot(db, cid) {
   frameworkScope(db, cid);
@@ -13,7 +15,9 @@ export function handoffSnapshot(db, cid) {
   const records = Object.fromEntries(Object.entries(fields).map(([kind, names]) => {
     const rows = list(db, kind, cid);
     if (rows.length > 2000) throw new Error('Setup summary is too large. Use the operational registers for this client.');
-    return [kind, rows.map(row => Object.fromEntries(names.filter(k => k in row).map(k => [k, row[k]])))];
+    return [kind, rows.map(row => ({...Object.fromEntries(names.filter(k => k in row).map(k => [k, row[k]])),
+      ...(kind==='framework_assessments'&&row.framework_key==='cis-ig1'?{cis_setup:cisSetupFacts(row)}:{}),
+      ...(kind==='framework_assessments'&&row.framework_key==='iso-27001'?{iso_establishment_information_recorded:isoEstablishmentInformationRecorded(row)}:{})}))];
   }));
   return {
     client: clientProjection(db, Object.fromEntries(['client_id','name','primary_contact_id','primary_contact','assigned_owner_id'].map(k => [k, client[k]]))),

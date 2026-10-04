@@ -12,7 +12,7 @@ let mockUser,mockOfficial=null;
 jest.mock('@/lib/frameworks',()=>{const a=jest.requireActual('@/lib/frameworks');return {...a,frameworkDefinition:(k,id)=>{const d=a.frameworkDefinition(k,id);return mockOfficial&&d?{...d,official_text_mode:'LICENSED_TEXT',official_text:mockOfficial}:d;}};});
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
-jest.mock('./RecordDrawer',()=>({kind,record,onOpenChange})=><div data-testid="nested">{kind} {record.title}<button onClick={()=>onOpenChange(false)}>Close linked record</button></div>);
+jest.mock('./RecordDrawer',()=>({kind,record,initialValues,onOpenChange})=><div data-testid="nested">{kind} {record.title}{initialValues?.occurrence?.occurrence_id}<button onClick={()=>onOpenChange(false)}>Close linked record</button></div>);
 jest.mock('./AssigneeSelect',()=>()=>null);
 jest.mock('./ui/dialog',()=>{
  const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef(({children,...props},ref)=><h2 {...props} ref={ref}>{children}</h2>),DialogDescription:({children})=><p>{children}</p>};
@@ -33,6 +33,16 @@ beforeEach(()=>{
 afterEach(async()=>{mockOfficial=null;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 async function render(clientId='demo_brawndo'){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
 
+test.each(['client_grc_manager','client_contributor'])('%s can edit an assigned assessment without admin-only relationship actions',async role=>{
+ mockUser={...mockUser,role};record={...record,owner_id:mockUser.user_id};
+ related.evidence=[{evidence_id:'e',filename:'Validation.txt',linked_type:'framework_assessment',linked_id:record.framework_assessment_id}];
+ await render();
+ expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(false);
+ expect(button('Create or link recurring Review')).toBeUndefined();
+ expect(button('Link Evidence')).toBeUndefined();expect(button('Unlink')).toBeUndefined();
+ expect(container.textContent).toContain('Validation.txt');
+});
+
 test('framework configuration selects distinct workspaces without tenant identities',()=>{
  expect(frameworkWorkspace('cis-ig1')).toBe('cis');
  expect(frameworkWorkspace('soc-2')).toBe('soc');
@@ -51,7 +61,9 @@ test('four sections in order; verification remains editable near the top',async(
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
  expect(headings()).toEqual(['What CIS Requires','CIS IG1 Assessment Criteria','Implementation Status','Current Implementation']);
  expect(container.querySelector('[aria-label="Verification result"]').closest('.brawndo-step')).toBeNull();
- for(const gone of ['Required actions','Organizational Controls','Remediation','Create Finding','Link Evidence'])expect(container.textContent).not.toContain(gone);
+ for(const gone of ['Required actions','Organizational Controls','Remediation','Create Finding'])expect(container.textContent).not.toContain(gone);
+ expect(container.querySelector('[data-testid="cis-supporting-records"]').open).toBe(false);
+ expect(container.querySelector('[data-testid="cis-operation"]').open).toBe(false);
  expect(container.querySelector('h2').textContent).toBe('CIS IG1 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
  expect(container.querySelector('header').textContent).not.toContain('Last assessed');
  expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
@@ -172,10 +184,10 @@ test('other clients retain their assessment content with explicit modal semantic
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
  expect(container.textContent).toContain('Implementation Status');expect(container.textContent).toContain('CIS IG1 Assessment Criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
-test('ISO assessments omit the duplicate organizational controls section',async()=>{
+test('ISO assessments expose the existing organizational controls section',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} position="1 of 30"/>));
- expect(container.textContent).not.toContain('Organizational Controls');
+ expect(container.textContent).toContain('Organizational Controls');
   expect(container.querySelector('.iso-guide-disclosure').open).toBe(false);
   expect(container.querySelector('.cis-requirement-guide')).not.toBeNull();
 });
@@ -194,7 +206,7 @@ test('readable guidance preserves previous criteria, legacy checks and historica
  expect(container.querySelector('[data-testid="criteria-source"]').textContent).toBe('Sources: CIS Safeguard 1.1 · v8.1');
  expect(container.querySelectorAll('.cis-assessment-guidance')).toHaveLength(1);
  expect(container.querySelectorAll('.bcsg-criteria input')).toHaveLength(0);
- for(const text of ['Foundation','Operational','Mature','Stronger practice','Manage people'])expect(container.textContent).not.toContain(text);
+ for(const text of ['Foundation','Mature','Stronger practice','Manage people'])expect(container.textContent).not.toContain(text);
  await input('Current implementation','Retained legacy responses');await act(async()=>button('Save assessment').click());
  expect(record.verification_checklist).toEqual({foundation:['1.1-f1'],mature:['1.1-m1']});
  expect(record.cis_assessment_criteria).toEqual(['1.1-c1']);
@@ -214,6 +226,44 @@ test.each(['new-cis-client','existing-iso-client'])('shared guidance is identica
 test('a never-assessed safeguard does not name an assessor',async()=>{
  record={...record,last_assessed:null,assessed_by:'u'};await render();
  expect(container.querySelector('.bcsg-meta').textContent).toBe('Last assessed: Not assessed');
+});
+
+test('operating arrangement saves independently and invalidates on a changed method',async()=>{
+ record.owner_id='u';await render();
+ await input('Provider involvement','MSP weekly quarantine with internal oversight');
+ await tick(container.querySelector('[aria-label="Operating arrangement recorded"]'));
+ await tick(button('Save assessment'));
+ expect(record.cis_operation).toEqual({provider:'MSP weekly quarantine with internal oversight',confirmed:true});
+ expect(record.status).toBe('addressed');expect(record.verification).toBe('not_verified');
+ await input('Current implementation','Scope changed');
+ expect(container.querySelector('[aria-label="Operating arrangement recorded"]').checked).toBe(false);
+});
+test('supporting records open without losing the assessment draft and history uses its precise occurrence',async()=>{
+ related.reviews=[{review_id:'r',client_id:record.client_id,title:'Inventory review',framework_key:'cis-ig1',framework_safeguards:['1.1'],recurrence:'semiannual'}];
+ record.related_links=[{kind:'reviews',id:'r'}];
+ related.evidence=[{evidence_id:'direct',linked_type:'framework_assessment',linked_id:'a',filename:'Inventory.txt'},{evidence_id:'inherited',linked_type:'reviews',linked_id:'r',occurrence_id:'old',filename:'Review sample.txt'}];
+ const get=api.get.getMockImplementation();api.get.mockImplementation(async(path,opts)=>path==='/reviews/r/history'?{data:[{occurrence_id:'old',period:'2025 annual review',completed_at:'2025-10-01'}]}:get(path,opts));
+ await render();await input('Current implementation','Retain linked-record draft');
+ await tick(button('Inventory review'));expect(container.querySelector('[data-testid="nested"]').textContent).toContain('reviews Inventory review');
+ await tick(button('Close linked record'));expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain linked-record draft');
+ await tick(button('Completed occurrences'));expect(container.textContent).toContain('2025 annual review');
+ await tick(button('2025 annual review · Completed 2025-10-01'));expect(container.querySelector('[data-testid="nested"]').textContent).toContain('old');
+ await tick(button('Close linked record'));expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain linked-record draft');
+ expect(container.textContent).toContain('Direct Evidence');expect(container.textContent).toContain('Evidence through linked Reviews');
+ expect(container.querySelector('[data-testid="cis-supporting-records"]')).toBeTruthy();expect(api.patch).not.toHaveBeenCalled();
+});
+test('unfinished recurring Review setup blocks Save & next until cancelled',async()=>{
+ await render();await tick(button('Create or link recurring Review'));
+ expect(button('Save & next').disabled).toBe(true);await tick(button('Save & next'));expect(next).not.toHaveBeenCalled();
+ await tick(button('Cancel Review setup'));expect(button('Save & next').disabled).toBe(false);
+});
+test.each(['addressed','in_progress','needs_attention','not_assessed','not_applicable'])('implementation %s stays separate across all verification states',async status=>{
+ const labels={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed',not_applicable:'Not Applicable'};
+ for(const verification of ['not_verified','needs_validation','gap_identified','verified']){
+  record={...record,status,verification};await act(async()=>root.unmount());root=createRoot(container);await render();
+  expect(container.querySelector('[aria-label="Saved implementation status"]').textContent).toBe(labels[status]);
+  expect(container.querySelector('[aria-label="Verification result"]').value).toBe(verification);expect(api.patch).not.toHaveBeenCalled();
+ }
 });
 
 describe('safeguard Findings',()=>{

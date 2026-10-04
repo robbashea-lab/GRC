@@ -20,7 +20,7 @@ beforeEach(()=>{
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
  record={framework_assessment_id:'iso-a',client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1',status:'in_progress',owner_id:'u',implementation:'Current context',assessment_history:[],last_assessed:null};
  related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
- api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path.startsWith('/frameworks/')?{assessments:[record]}:path.endsWith('/members')?[{user_id:'u',name:'Pam'}]:[]}));
+ api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path.startsWith('/organizational-controls')?{items:[],migration_pending:0}:path.startsWith('/frameworks/')?{assessments:[record]}:path.endsWith('/members')?[{user_id:'u',name:'Pam'}]:[]}));
  api.patch.mockImplementation(async(path,body)=>({data:{...record,...body,last_assessed:'2026-10-02'}}));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.resetAllMocks();});
@@ -32,7 +32,8 @@ test('ISO ownership, mandatory clause status and findings precede evidence',asyn
  expect(container.querySelector('input[value="not_applicable"]')).toBeNull();
  const headings=[...container.querySelectorAll('.brawndo-step h3')].map(h=>h.textContent);
  expect(headings.findIndex(t=>t.includes('Findings & corrective actions'))).toBeLessThan(headings.findIndex(t=>t.includes('Evidence & verification')));
- expect(container.textContent).not.toContain('Organizational Controls');
+ expect(container.textContent).toContain('Organizational Controls');
+ expect(button('Create organizational Control')).toBeTruthy();
 });
 
 test('legacy mandatory-clause N/A is reported without rewriting its saved value',async()=>{
@@ -72,7 +73,8 @@ test('read-only ISO assessment retains guide and linked findings without write a
 });
 
 test('context load failure disables ISO save and offers retry',async()=>{
- api.get.mockRejectedValueOnce(new Error('Context unavailable'));await render();
+ const successful=api.get.getMockImplementation();
+ api.get.mockImplementation((path,...args)=>path.endsWith('/related')?Promise.reject(new Error('Context unavailable')):successful(path,...args));await render();
  expect(container.querySelector('[role="alert"]').textContent).toContain('Context unavailable');
  expect(button('Save assessment').disabled).toBe(true);expect(button('Retry')).toBeTruthy();
 });

@@ -93,6 +93,7 @@ export function frameworkRelated(db,row){
   const fids=result.findings.map(f=>f.finding_id);
   result.tasks=[...new Map([...result.tasks,...db.tasks.filter(t=>t.client_id===cid&&(t.finding_id?fids.includes(t.finding_id):!t.framework_assessment_id&&rids.includes(t.review_id)))].map(r=>[r.task_id,r])).values()];
   result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&['review','reviews'].includes(e.linked_type)&&rids.includes(e.linked_id))].map(r=>[r.evidence_id,r])).values()];
+  if(row.framework_key==='cis-ig1')result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&e.relationships?.some(l=>l.kind==='reviews'&&rids.includes(l.id)))].map(e=>[e.evidence_id,e])).values()];
   result.evidence=result.evidence.filter(e=>!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id));
   return result;
 }
@@ -166,7 +167,16 @@ export function frameworkRequest(db,path,method,params,body){
     if('record_assessment' in body&&(row.framework_key!=='soc-2'||typeof body.record_assessment!=='boolean'))fail('Explicit assessment recording applies only to SOC 2');
     delete body.record_assessment;
     const supported=frameworkCapabilities(row.framework_key);
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks'].filter(k=>supported.includes(k))];
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k))];
+    if('cis_operation' in body){
+      if(!supported.includes('cis_operation'))fail('Operating arrangements apply only to CIS IG1');
+      const op=body.cis_operation;
+      if(!op||typeof op!=='object'||Array.isArray(op)||Object.keys(op).some(k=>!['provider','confirmed'].includes(k))||('provider' in op&&typeof op.provider!=='string')||(op.provider||'').length>2000||('confirmed' in op&&typeof op.confirmed!=='boolean'))fail('Invalid CIS operating arrangement');
+      body.cis_operation={provider:op.provider??'',confirmed:op.confirmed??false};
+      const proposed={...row,...body};
+      if(body.cis_operation.confirmed&&(!(proposed.owner_id||proposed.process_owner_id)||!proposed.implementation?.trim()))fail('Record an accountable person and operating method before confirming the arrangement');
+    }
+    if(row.cis_operation&&!('cis_operation' in body)&&['owner_id','process_owner_id','implementation'].some(k=>k in body&&body[k]!==row[k]))body.cis_operation={...row.cis_operation,confirmed:false};
     if('soc_assessment_checks' in body){
       if(!supported.includes('soc_assessment_checks'))fail('SOC assessment guidance applies only to SOC 2');
       const valid=new Set((socGuidance.criteria[row.definition_id]?.items||[]).map(c=>c.id));
@@ -219,7 +229,7 @@ export function frameworkRequest(db,path,method,params,body){
     }else if(body.addressable_decision||body.addressable_rationale)throw new Error('Addressability fields apply only to addressable specifications');
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
-    const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
+    const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks','cis_operation'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
     if(changed.length||recordAssessment){
       const at=new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString();
       if(row.framework_key==='soc-2'){
