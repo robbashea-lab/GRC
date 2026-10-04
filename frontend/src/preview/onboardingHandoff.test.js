@@ -20,14 +20,14 @@ const complete=()=>api.post('/onboarding/baseline',{client_id:cid,state,finalize
 
 test('CIS confirmation survives handoff reload without exposing setup narratives',async()=>{
   await complete();const row=(await get()).records.framework_assessments[0];
-  expect(operationGaps(row)).toHaveLength(3);
+  expect(operationGaps(row)).toEqual(['Accountable person','Operating method or procedure reference']);
   const owner=(await api.get(`/clients/${cid}/assignees`)).data.items[0].user_id;
   await api.patch(`/framework_assessments/${row.framework_assessment_id}`,{owner_id:owner,implementation:'Weekly procedure',cis_operation:{provider:'Internal',confirmed:true}});
   const saved=(await get()).records.framework_assessments.find(r=>r.framework_assessment_id===row.framework_assessment_id);
   expect(operationGaps(saved)).toEqual([]);expect(saved.status).toBe(row.status);
   for(const field of ['owner_id','process_owner_id','implementation','notes','cis_operation'])expect(saved).not.toHaveProperty(field);
   await api.patch(`/framework_assessments/${row.framework_assessment_id}`,{implementation:' '});
-  expect(operationGaps((await get()).records.framework_assessments.find(r=>r.framework_assessment_id===row.framework_assessment_id))).toEqual(['Operating method or procedure reference','Arrangement confirmation']);
+  expect(operationGaps((await get()).records.framework_assessments.find(r=>r.framework_assessment_id===row.framework_assessment_id))).toEqual(['Operating method or procedure reference']);
 });
 
 test('ISO handoff derives discovery metadata without narratives or assessment conclusions',async()=>{

@@ -16,10 +16,12 @@ test('all 15 shared IG2 briefs derive their mapped checks, examples and timing f
   expect(cisReviewBriefs({framework_key:'iso-27001',framework_plan_key:'iso-management-review'})).toEqual([]);
 });
 test('setup gaps are independent of implementation, verification and file counts',()=>{
-  expect(operationGaps({status:'addressed',verification:'verified',implementation:'Configured'})).toEqual(['Accountable person','Arrangement confirmation']);
+  expect(operationGaps({status:'addressed',verification:'verified',implementation:'Configured'})).toEqual(['Accountable person']);
   const row={status:'needs_attention',verification:'gap_identified',process_owner_id:'contact',implementation:'Weekly provider operation',cis_operation:{provider:'Provider',confirmed:true}};
   expect(operationGaps(row)).toEqual([]);expect(row.status).toBe('needs_attention');
   expect(operationGaps({...row,implementation:''})).toContain('Operating method or procedure reference');
+  expect(operationGaps({...row,cis_operation:{provider:'Provider',confirmed:false}})).toEqual([]);
+  expect(operationGaps({cis_setup:{accountable_person_recorded:true,operating_method_recorded:true,arrangement_confirmed:false}})).toEqual([]);
 });
 test('CIS label is canonical and other framework presentation is unchanged',()=>{
   expect(operatorStatuses('cis-ig1').needs_attention).toBe('Not Implemented');

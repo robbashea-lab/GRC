@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import CisReviewBrief from './CisReviewBrief';
 import {cis,reviewDriver} from '@/lib/frameworks';
 import api from '@/lib/api';
+import guidance from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
 let root,container;
@@ -29,4 +30,29 @@ test('a late workspace response cannot expose the previous client’s safeguard 
  await act(async()=>resolveOld({data:{assessments:[{framework_assessment_id:'a1',definition_id:'1.1',client_id:'a'}]}}));
  const link=container.querySelector('button');await act(async()=>link.click());
  expect(onOpen.mock.calls[0][0].framework_assessment_id).toBe('b1');
+});
+
+test('all 130 mapped safeguards expose every review prompt, consolidate shared timing, and preserve records',async()=>{
+ const ids=cis.requirements.map(d=>d.id),seen=new Set(),rows=ids.map(id=>({framework_assessment_id:'synthetic-'+id,definition_id:id,owner_id:'owner',implementation:'Existing customized method',cis_operation:{confirmed:false}}));
+ api.get.mockImplementation(path=>Promise.resolve({data:path==='/frameworks/cis-ig1'?{assessments:rows,active_definition_ids:ids}:[]}));
+ for(const plan of cis.review_plans){
+  const review={client_id:'synthetic',recurrence:'custom',custom_recurrence_days:45,framework_drivers:[reviewDriver('cis-ig1',plan)],occurrences:[{conclusion:'Retained historical conclusion',notes:'Original instructions'}]},before=JSON.stringify(review);
+  await act(async()=>root.render(<CisReviewBrief record={review} historical onOpen={jest.fn()}/>));
+  for(const id of plan.safeguards){
+   seen.add(id);const definition=cis.requirements.find(d=>d.id===id);
+   const item=[...container.querySelectorAll('button')].find(button=>button.textContent.startsWith(id+' · ')).closest('li');
+   for(const question of guidance.requirements[id].review){
+    if(question===`${definition.source_cadence} Confirm relevant exceptions and follow-up with the accountable owner.`){
+     expect(item.textContent).toContain(definition.source_cadence);
+     expect(container.textContent).toContain('Confirm relevant exceptions and follow-up with the accountable owner.');
+    }else expect(item.textContent).toContain(question);
+   }
+   const more=item.querySelector(`[data-testid="cis-review-questions-${id}"]`);
+   if(more){expect(more.open).toBe(false);expect(more.querySelector('summary').textContent).toContain(id);}
+  }
+  expect(container.textContent).not.toContain('Arrangement confirmation');
+  expect(container.textContent).not.toContain('Responsibility details missing');
+  expect(JSON.stringify(review)).toBe(before);
+ }
+ expect(seen.size).toBe(130);expect(api.patch).not.toHaveBeenCalled();
 });
