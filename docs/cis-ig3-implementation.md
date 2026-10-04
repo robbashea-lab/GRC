@@ -1,6 +1,6 @@
 # CIS IG3 implementation checklist — draft, release blocked
 
-Baseline: `95b574b0efef1bf1cf22297d6a54ea7266e818c2` (remote main, refreshed October 4, 2026). Branch: `codex/cis-ig3-extension`. No merge, preview publication, deployment or production-data changes are authorized.
+Original baseline: `95b574b0efef1bf1cf22297d6a54ea7266e818c2`. Current main after PR #29: `f4c09c218153044291847d1fa5030d769a2327c0` (October 4, 2026). Branch: `codex/cis-ig3-extension`. No merge, preview publication, deployment or production-data changes are authorized.
 
 ## Content authorization and release boundary
 
@@ -50,7 +50,7 @@ The planning report and companion `CIS_IG3_Coverage_Matrix.xlsx` cover all 153 c
 
 The IG2 corrections are incorporated from [PR #31](https://github.com/robbashea-lab/GRC/pull/31), source commit `dfbaa93ee38d5e89e80a12b1de0e1ee336d63270`: logging fields, browser extensions, cloud/hardening scope, per-safeguard Review prompts and the stale arrangement warning. Stable criteria identities and scope membership are preserved.
 
-The temporary integration foundation `codex/cis-ig3-foundation`, commit `0d66fdc7b09755ba7d64a761ef41156a9cc28fe9`, contains PR #29 head `dc1e3f3c362afc28692e7270b4cda4c6beb3545e` plus PR #31. The draft IG3 PR targets this foundation so its diff excludes both dependencies. Both PRs remain unmerged at this check; current main is still `95b574b0efef1bf1cf22297d6a54ea7266e818c2`. After #29 merges, rebuild the foundation on current main retaining only any still-unmerged #31 correction, rebase only the IG3 extension, and retarget to main once both dependencies are present. An hourly thread follow-up checks for these transitions and stays quiet while unchanged. It cannot merge or release anything.
+The temporary integration foundation `codex/cis-ig3-foundation`, commit `d47d1b77796ccaea4b4b854f1bd450f79700a8df`, now starts from merged main `f4c09c218153044291847d1fa5030d769a2327c0` (PR #29) and retains only the unmerged PR #31 correction content. Only the five IG3-extension commits were rebased onto it; the draft PR still targets this foundation so its diff excludes the IG2 correction dependency and does not reintroduce unified-ticket changes. Once #31 lands, reconcile with current main and retarget the draft to main. The hourly thread follow-up stays quiet while unchanged and cannot merge or release anything.
 
 Cumulative group labels now derive from the selected or persisted configuration across intake, onboarding confirmation, Client Profile, program configuration and handoff. Historical onboarding labels derive from their recorded configuration.
 
@@ -70,3 +70,5 @@ Follow-up reconciliation checks: 17 focused frontend suites / 287 tests passed, 
 
 
 Latest PR #29 reconciliation (dc1e3f3): 22 frontend suites / 301 tests passed; 14 backend CIS scope tests and 15 backend ticket-integrity tests passed; normal and Demo builds passed. These supersede the earlier focused follow-up counts. Persistent Mongo was not rerun after these final upstream corrections; its 78-test result above is from the earlier combined build.
+
+Post-merge main reconciliation verification: 22 frontend suites / 301 tests, 14 backend CIS scope tests and 16 backend ticket-integrity tests passed. Normal and Demo builds passed. Final diff against d47d1b7 contains only the IG3 extension, its cumulative labels, tests and checklist; catalog availability remains [1,2]. No new browser or persistent Mongo verification was performed in this reconciliation; the previously reported browser Next issue remains unresolved.
