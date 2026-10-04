@@ -1,0 +1,75 @@
+{
+  "simulation": "2027\u20132032; supported route commands, synthetic external activity evidence, controlled Python clock",
+  "ig3_gate": "test-only; released product remains unavailable",
+  "timeline": [
+    {
+      "year": 2027,
+      "group": 1,
+      "active_assessments": 56,
+      "review_executions": 42,
+      "completed_snapshots": 42,
+      "open_planned_gaps": 3
+    },
+    {
+      "year": 2028,
+      "group": 1,
+      "active_assessments": 56,
+      "review_executions": 48,
+      "completed_snapshots": 90,
+      "open_planned_gaps": 0
+    },
+    {
+      "year": 2029,
+      "group": 2,
+      "active_assessments": 130,
+      "review_executions": 62,
+      "completed_snapshots": 152,
+      "open_planned_gaps": 3
+    },
+    {
+      "year": 2030,
+      "group": 2,
+      "active_assessments": 130,
+      "review_executions": 65,
+      "completed_snapshots": 217,
+      "open_planned_gaps": 0
+    },
+    {
+      "year": 2031,
+      "group": 3,
+      "active_assessments": 153,
+      "review_executions": 65,
+      "completed_snapshots": 282,
+      "open_planned_gaps": 3
+    },
+    {
+      "year": 2032,
+      "group": 3,
+      "active_assessments": 153,
+      "review_executions": 65,
+      "completed_snapshots": 347,
+      "open_planned_gaps": 0
+    }
+  ],
+  "upgrades": [
+    {
+      "group": 2,
+      "preserved_assessments": 56,
+      "new_unassessed": 74,
+      "interrupted_retry": true,
+      "replay": true,
+      "preserved_reviews": 12
+    },
+    {
+      "group": 3,
+      "preserved_assessments": 130,
+      "new_unassessed": 23,
+      "interrupted_retry": true,
+      "replay": true,
+      "preserved_reviews": 15
+    }
+  ],
+  "resolved_findings": 9,
+  "assessment_evidence_records": 678,
+  "completed_review_snapshots": 347
+}

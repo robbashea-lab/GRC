@@ -59,14 +59,14 @@
       "control_name": "Inventory and Control of Enterprise Assets",
       "type": "operational",
       "source_cadence": "At least weekly inventory updates using logs.",
-      "guidance": "Feed address-allocation observations into inventory. Collect observations and resolve inventory differences.",
+      "guidance": "Use logs from all DHCP servers or IP address management tools to keep the asset inventory current. Review and use those logs at least weekly.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#14-use-dynamic-host-configuration-protocol-dhcp-logging-to-update-enterprise-asset-inventory",
       "version": "8.1",
       "implementation_group": 2,
       "operating_guidance": {
         "accountable_role": "IT asset owner",
         "client_provider_split": "IT/provider discovers and reconciles; client owners resolve authorization.",
-        "establish": "Identify DHCP servers or IPAM sources and reconciliation owner.",
+        "establish": "Identify all DHCP servers or IP address management tools and the inventory reconciliation owner.",
         "operate": "Collect observations and resolve inventory differences.",
         "dependencies": "1.1"
       }
@@ -300,7 +300,7 @@
       "control_name": "Data Protection",
       "type": "operational",
       "source_cadence": "Annual review and significant-change updates.",
-      "guidance": "Make internal and provider data movements traceable. Maintain flows through service changes.",
+      "guidance": "Document internal and service-provider data flows using the enterprise data management process. Review and update the documentation annually and after significant relevant changes.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#38-document-data-flows",
       "version": "8.1",
       "implementation_group": 2,
@@ -352,7 +352,7 @@
     },
     {
       "id": "3.11",
-      "title": "Encrypt Sensitive Data At Rest",
+      "title": "Encrypt Sensitive Data at Rest",
       "control": 3,
       "control_name": "Data Protection",
       "type": "operational",
@@ -1437,7 +1437,7 @@
       "control_name": "Network Infrastructure Management",
       "type": "operational",
       "source_cadence": "No numeric interval specified.",
-      "guidance": "Design segmented, least-privilege, available networks. Maintain implemented network architecture.",
+      "guidance": "Design and maintain secure network architecture addressing segmentation, least privilege and availability. Documentation supports the architecture but does not replace policy and design components.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#122-establish-and-maintain-a-secure-network-architecture",
       "version": "8.1",
       "implementation_group": 2,
@@ -1532,14 +1532,14 @@
       "control_name": "Network Infrastructure Management",
       "type": "event",
       "source_cadence": "Before accessing enterprise resources.",
-      "guidance": "Authenticate remote devices through enterprise VPN/AAA. Require VPN and authentication before resource access.",
+      "guidance": "Require end-user devices to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#127-ensure-remote-devices-utilize-a-vpn-and-are-connecting-to-an-enterprises-aaa-infrastructure",
       "version": "8.1",
       "implementation_group": 2,
       "operating_guidance": {
         "accountable_role": "Network service owner",
         "client_provider_split": "Client approves boundaries; network operator/provider implements and documents.",
-        "establish": "Define enterprise-managed remote-access path and authentication.",
+        "establish": "Identify end-user device access paths and enterprise-managed VPN and authentication services.",
         "operate": "Require VPN and authentication before resource access.",
         "dependencies": "6.4; 12.5"
       }
@@ -1944,7 +1944,7 @@
       "control_name": "Service Provider Management",
       "type": "operational",
       "source_cadence": "Review contracts at least annually.",
-      "guidance": "Align provider contracts with security policy. Maintain contractual security commitments.",
+      "guidance": "Include security requirements in provider contracts consistent with the enterprise service provider management policy. Review contracts annually for missing requirements.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#154-ensure-service-provider-contracts-include-security-requirements",
       "version": "8.1",
       "implementation_group": 2,
@@ -2672,6 +2672,11 @@
           "definition_id": "5.1",
           "interval": "quarterly",
           "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/"
+        },
+        {
+          "definition_id": "6.8",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#68-define-and-maintain-role-based-access-control"
         }
       ],
       "title": "Account Authorization & Access Review",
@@ -2870,6 +2875,11 @@
           "definition_id": "17.3",
           "interval": "annual",
           "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/"
+        },
+        {
+          "definition_id": "17.9",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#179-establish-and-maintain-security-incident-thresholds"
         }
       ],
       "title": "Incident Reporting & Contact Review",
@@ -3027,7 +3037,13 @@
       "source_cadence": "Weekly or more frequently. Review passive-discovery results and update the inventory.",
       "source_minimum": null,
       "cadence_class": "B",
-      "cadence_references": [],
+      "cadence_references": [
+        {
+          "definition_id": "1.5",
+          "interval": "weekly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#15-use-a-passive-asset-discovery-tool"
+        }
+      ],
       "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
       "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
       "default_enabled": false,
@@ -3045,7 +3061,13 @@
       "source_cadence": "At least every six months; enforcement operates between reassessments.",
       "source_minimum": null,
       "cadence_class": "B",
-      "cadence_references": [],
+      "cadence_references": [
+        {
+          "definition_id": "2.7",
+          "interval": "semiannual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#27-allowlist-authorized-scripts"
+        }
+      ],
       "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
       "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
       "default_enabled": false
@@ -3062,7 +3084,13 @@
       "source_cadence": "Tune alert thresholds monthly or more frequently.",
       "source_minimum": null,
       "cadence_class": "B",
-      "cadence_references": [],
+      "cadence_references": [
+        {
+          "definition_id": "13.11",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1311-tune-security-event-alerting-thresholds"
+        }
+      ],
       "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
       "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
       "default_enabled": false
@@ -3079,7 +3107,13 @@
       "source_cadence": "At least annually and on new or renewed contracts. Contract events require timely one-off follow-up.",
       "source_minimum": null,
       "cadence_class": "B",
-      "cadence_references": [],
+      "cadence_references": [
+        {
+          "definition_id": "15.5",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#155-assess-service-providers"
+        }
+      ],
       "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
       "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
       "default_enabled": false
@@ -3096,7 +3130,13 @@
       "source_cadence": "Internal testing at least annually under program requirements. Validate defenses after each test separately.",
       "source_minimum": null,
       "cadence_class": "B",
-      "cadence_references": [],
+      "cadence_references": [
+        {
+          "definition_id": "18.5",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#185-perform-periodic-internal-penetration-tests"
+        }
+      ],
       "basis": "Optional focused operational activity; source timing applies regardless of tracking method",
       "reason": "Select only when separate scheduling is needed; existing operational records or a suitable shared Review may already cover the work.",
       "default_enabled": false

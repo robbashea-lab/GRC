@@ -50,7 +50,7 @@
     },
     "1.4": {
       "review": [
-        "Identify DHCP servers or IPAM sources and reconciliation owner. Confirm the covered population and client decisions.",
+        "Identify every DHCP server or the IP address management tools and compare their log coverage with the inventory. Confirm the logs are reviewed and used for inventory updates at least weekly.",
         "Collect observations and resolve inventory differences. Check actual execution rather than a policy statement alone.",
         "At least weekly inventory updates using logs. Confirm relevant exceptions and follow-up with the accountable owner."
       ],
@@ -282,7 +282,7 @@
     },
     "3.8": {
       "review": [
-        "Map material flows and external destinations. Confirm the covered population and client decisions.",
+        "Compare documented internal and service-provider data flows with the enterprise data management process. Confirm annual updates and updates after significant changes affecting those flows.",
         "Maintain flows through service changes. Check actual execution rather than a policy statement alone.",
         "Annual review and significant-change updates. Confirm relevant exceptions and follow-up with the accountable owner."
       ],
@@ -1246,7 +1246,7 @@
     },
     "11.1": {
       "review": [
-        "Review the documented recovery process for detailed backup procedures, recovery scope, prioritization and backup-data security.",
+        "Review the documented recovery process for recovery scope, prioritization and backup-data security. Detailed backup procedures can support this review but are not a separate requirement in this safeguard.",
         "Confirm annual review/update and updates after significant changes affecting recovery. Keep this process requirement distinct from backup execution and recovery testing."
       ],
       "evidence": [
@@ -1331,7 +1331,7 @@
     },
     "12.2": {
       "review": [
-        "Define architecture and security boundaries. Confirm the covered population and client decisions.",
+        "Inspect segmentation, least privilege and availability in the network architecture. Compare the documented architecture with its policy, design and implemented boundaries.",
         "Maintain implemented network architecture. Check actual execution rather than a policy statement alone.",
         "No numeric interval specified. Confirm relevant exceptions and follow-up with the accountable owner."
       ],
@@ -1406,12 +1406,12 @@
     },
     "12.7": {
       "review": [
-        "Define enterprise-managed remote-access path and authentication. Confirm the covered population and client decisions.",
+        "Review end-user device access paths to enterprise resources. Confirm authentication to enterprise-managed VPN and authentication services precedes access; do not limit this check to a subset of remote users.",
         "Require VPN and authentication before resource access. Check actual execution rather than a policy statement alone.",
         "Before accessing enterprise resources. Confirm relevant exceptions and follow-up with the accountable owner."
       ],
       "evidence": [
-        "Remote-access configuration and authentication sample. Use representative records covering the stated population.",
+        "End-user device access-path configuration and authentication samples. Use representative records covering the stated population.",
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
       ],
       "outcome": [
@@ -1773,7 +1773,7 @@
     },
     "15.4": {
       "review": [
-        "Identify required security terms and gaps. Confirm the covered population and client decisions.",
+        "Compare provider contract security requirements with the service provider management policy. Check annual contract reviews for missing terms; incident handling, encryption and disposal are examples to consider according to the policy.",
         "Maintain contractual security commitments. Check actual execution rather than a policy statement alone.",
         "Review contracts at least annually. Confirm relevant exceptions and follow-up with the accountable owner."
       ],
