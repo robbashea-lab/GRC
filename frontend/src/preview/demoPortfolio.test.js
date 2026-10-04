@@ -22,7 +22,7 @@ test('same day produces byte-identical seed and dates advance with the clock', (
   expect(b).toEqual(a);
   const c = seedStore(new Date('2030-01-01T12:00:00Z'));
   expect(c.clients.map(c => c.client_id)).toEqual(a.clients.map(c => c.client_id));
-  expect(c.reviews[0].due_date).toBe(demoDates(new Date('2030-01-01'))(-8));
+  expect(c.reviews.find(r=>r.client_id!=='demo_initech').due_date).toBe(demoDates(new Date('2030-01-01'))(-8));
   expect(JSON.stringify(a).length).toBeLessThan(4000000);
 });
 test('canonical framework programs, real profiles, scoped people and valid assessments', () => {
@@ -88,7 +88,8 @@ test('historical occurrences, remediation chronology and downloadable evidence r
     expect(atob(e.content_base64)).toContain('Collected: ' + e.evidence_date);
   }
   for (const risk of db.risks.filter(r => r.status === 'closed')) expect(risk.last_reviewed <= risk.closed_at).toBe(true);
-  for (const c of db.clients) expect(db.evidence.filter(e => e.client_id === c.client_id).length).toBeGreaterThanOrEqual(8);
+  for (const c of db.clients.filter(c=>c.client_id!=='demo_initech')) expect(db.evidence.filter(e => e.client_id === c.client_id).length).toBeGreaterThanOrEqual(8);
+  expect(db.evidence.filter(e=>e.client_id==='demo_initech')).toEqual([]);
 });
 test('reset recovers creations edits deletions completions and baseline without touching standard storage', async () => {
   await api.post('/demo/enter');
@@ -115,7 +116,8 @@ test('reset recovers creations edits deletions completions and baseline without 
   expect(restored.tasks.some(t => t.task_id === created.task_id)).toBe(false);
   expect(localStorage.getItem('standard-sentinel')).toBe('unchanged');
   const metrics = portfolio(restored, false);
-  expect(metrics.clients.every(c => c.last_activity)).toBe(true);
+  expect(metrics.clients.filter(c=>c.client_id!=='demo_initech').every(c => c.last_activity)).toBe(true);
+  expect(metrics.clients.find(c=>c.client_id==='demo_initech').last_activity).toBeFalsy();
 });
 test('scoped demo actors cannot read or mutate another client or evidence', async () => {
   await api.post('/demo/enter');

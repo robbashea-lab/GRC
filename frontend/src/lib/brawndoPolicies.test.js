@@ -15,7 +15,7 @@ test('only catalog references in the applicable IG are presented as supporting m
   const refs=policyAlignment({baseline_key:'policy-configuration-management-policy'},['cis-ig1']);
   expect(refs.map(r=>r.id)).toEqual(['4.1','4.2']); // Both are IG1 in the authoritative CIS v8.1 source.
   expect(policyAlignment({baseline_key:'policy-information-security-policy'},['cis-ig1']).map(r=>r.id)).toEqual(['8.1']);
-  expect(policyAlignment({client_id:'c',policy_id:'p'},['cis-ig1'],[{client_id:'c',framework_key:'cis-ig1',definition_id:'8.4',related_links:[{kind:'policies',id:'p'}]}])).toEqual([]);
+  expect(policyAlignment({client_id:'c',policy_id:'p'},['cis-ig1'],[{client_id:'c',framework_key:'cis-ig1',definition_id:'8.4',related_links:[{kind:'policies',id:'p'}]}]).map(r=>r.id)).toEqual(['8.4']);
   expect(refs.every(r=>r.relation==='Supports')).toBe(true);
   expect(policyAlignment({title:'Access Control Policy'},['cis-ig1'])).toEqual([]);
   expect(policyAlignment({baseline_key:'policy-configuration-management-policy'},[])).toEqual([]);

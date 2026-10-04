@@ -1,9 +1,13 @@
 // Explicit synthetic identities only. Never runs against backend tenant data.
-const RETIRED = new Set(['demo_initech']);
+import {INITECH_VERSION} from './programs/initech';
+const RETIRED = new Set();
 export function removeRetiredDemoClients(db) {
+  // Replace the former retired scenario, never a current greenfield program or its edits.
+  const staleInitech=(db.clients||[]).some(c=>c.client_id==='demo_initech'&&c.demo_program_version!==INITECH_VERSION)||db.user?.user_id?.startsWith('demo_initech_');
+  const retiredIds=new Set([...RETIRED,...(staleInitech?['demo_initech']:[])]);
   const staleDunder=(db.clients||[]).some(c=>c.client_id==='demo_dunder'&&c.demo_program_version!=='iso27001-year2-v1');
-  const retiredClient=id=>RETIRED.has(id)||(staleDunder&&id==='demo_dunder');
-  const retiredUser = id => [...RETIRED,...(staleDunder?['demo_dunder']:[])].some(cid => id?.startsWith(cid + '_'));
+  const retiredClient=id=>retiredIds.has(id)||(staleDunder&&id==='demo_dunder');
+  const retiredUser = id => [...retiredIds,...(staleDunder?['demo_dunder']:[])].some(cid => id?.startsWith(cid + '_'));
   let changed = false;
   for (const [key, value] of Object.entries(db)) {
     if (Array.isArray(value)) {
@@ -17,7 +21,7 @@ export function removeRetiredDemoClients(db) {
       if (kept.length !== user[field].length) { user[field] = kept; changed = true; }
     }
   }
-  for (const field of ['baselines', 'drafts', 'riskSequences', 'ai_intake', 'ai_counters']) for (const id of [...RETIRED,...(staleDunder?['demo_dunder']:[])]) {
+  for (const field of ['baselines', 'drafts', 'riskSequences', 'ai_intake', 'ai_counters']) for (const id of [...retiredIds,...(staleDunder?['demo_dunder']:[])]) {
     if (db[field] && Object.hasOwn(db[field], id)) { delete db[field][id]; changed = true; }
   }
   // A removed client persona cannot remain the active simulated identity.

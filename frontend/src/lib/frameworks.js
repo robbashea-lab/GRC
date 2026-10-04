@@ -8,7 +8,8 @@ export {cis};
 export const CATALOGS={'cis-ig1':cis,hipaa,'iso-27001':iso,'soc-2':soc,'nist-csf-2':nist};
 export const frameworkCatalog=key=>CATALOGS[key];
 export const frameworkDefinition=(key,id)=>frameworkCatalog(key)?.requirements.find(d=>d.id===id);
-export const activeDefinitions=(key,configuration={})=>(frameworkCatalog(key)?.requirements||[]).filter(d=>key!=='soc-2'||(configuration.categories||['security']).includes(d.category));
+export const activeDefinitions=(key,configuration={})=>(frameworkCatalog(key)?.requirements||[]).filter(d=>key==='cis-ig1'?(d.implementation_group||1)<=(configuration.implementation_group||1):key!=='soc-2'||(configuration.categories||['security']).includes(d.category));
+export const activePlans=(key,configuration={})=>{const ids=new Set(activeDefinitions(key,configuration).map(d=>d.id));return (frameworkCatalog(key)?.review_plans||[]).map(p=>({...p,safeguards:p.safeguards.filter(id=>ids.has(id))})).filter(p=>p.safeguards.length);};
 export const FRAMEWORKS=definitions.frameworks;
 // Capabilities select product behavior. Authorization remains with the backend.
 export const frameworkCapabilities=key=>FRAMEWORKS.find(f=>f.key===key)?.capabilities||[];
@@ -38,7 +39,7 @@ export function reviewConfig(state,plan){
   const signature=c=>JSON.stringify([c.enabled??true,c.recurrence||proposed,c.recurrence==='custom'?c.custom_recurrence_days:null,c.due_date||'']);
   return {...result,conflict:configured.some(c=>signature(c)!==signature(result))};
 }
-export function frameworkPlans(state){return Object.entries(CATALOGS).filter(([key])=>state.requirements?.[key]==='applies').flatMap(([key,catalog])=>catalog.review_plans.map(p=>({...p,framework_key:key})));}
+export function frameworkPlans(state){return Object.keys(CATALOGS).filter(key=>state.requirements?.[key]==='applies').flatMap(key=>activePlans(key,state.framework_settings?.[key]).map(p=>({...p,framework_key:key})));}
 export function sharedFrameworkPlans(state){
   const groups=new Map();
   for(const p of frameworkPlans(state)){

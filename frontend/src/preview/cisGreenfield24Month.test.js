@@ -3,7 +3,7 @@ import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
-import {CATALOGS,FRAMEWORKS} from '../lib/frameworks';
+import {CATALOGS,FRAMEWORKS,activeDefinitions} from '../lib/frameworks';
 import {reviewSchedule} from '../lib/reviewOccurrences';
 
 const api=axios.create({adapter:previewAdapter});
@@ -28,7 +28,7 @@ test('greenfield CIS-only intake retains 24 months of authoritative operations',
   framework_reviews:Object.fromEntries(catalog.review_plans.map(p=>[p.key,{enabled:true,recurrence:p.default_cadence,due_date:'2026-10-31'}]))};
  await post('/onboarding/baseline',{client_id:cid,state,finalize:true});
  let ws=await get('/frameworks/cis-ig1',cid),reviews=await get('/reviews',cid),policies=await get('/policies',cid);
- expect(ws.assessments).toHaveLength(56);expect(new Set(catalog.requirements.map(r=>r.control)).size).toBe(15);
+ expect(ws.assessments).toHaveLength(56);expect(new Set(activeDefinitions('cis-ig1').map(r=>r.control)).size).toBe(15);
  expect(ws.assessments.every(a=>a.status==='not_assessed'&&!a.owner_id)).toBe(true);
  expect(db().framework_assessments.filter(a=>a.client_id===cid&&a.framework_key!=='cis-ig1')).toHaveLength(0);
  expect(reviews).toHaveLength(12);expect(policies).toHaveLength(17);

@@ -11,7 +11,7 @@ from datetime import datetime as RealDatetime, time, timezone, timedelta
 import test_client_dashboard_sources as harness
 import test_ten_year_operation as clocks
 import iso_audit, onboarding_recovery, policy_reviews, review_commands, risk_lifecycle
-from framework_catalog import CATALOGS, FRAMEWORKS
+from framework_catalog import CATALOGS, FRAMEWORKS, active_definitions
 from routes.onboarding import BASELINE_CATALOG
 
 server=harness.server
@@ -58,7 +58,7 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(workspace['assessments']),TIMELINE['assessment_counts'][framework])
                 self.assertEqual({a['framework_key'] for a in workspace['assessments']},{framework})
                 if framework=='cis-ig1':
-                    self.assertEqual({a['definition_id'] for a in workspace['assessments']},{d['id'] for d in CATALOGS[framework]['requirements']})
+                    self.assertEqual({a['definition_id'] for a in workspace['assessments']},{d['id'] for d in active_definitions(framework)})
                 reviews=await self.get('/reviews',client_id=cid)
                 self.assertTrue(all(r['due_date']=='2027-03-31' for r in reviews))
                 ids={r['review_id'] for r in reviews}

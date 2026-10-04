@@ -128,7 +128,7 @@ function EntityListPage({ kind }) {
       .then(async({ data }) => {
         if(controller.signal.aborted||data.client_id!==currentClientId)return;
         const enabled=(data.items||[]).filter(p=>p.tracking_available).map(p=>p.key);setPrograms(enabled);
-        if(policiesPilot){const results=await Promise.all(enabled.map(key=>api.get('/frameworks/'+key,{params:{client_id:currentClientId},signal:controller.signal})));if(!controller.signal.aborted)setPolicyAssessments(results.flatMap(r=>r.data.assessments||[]).filter(a=>a.client_id===currentClientId));}
+        if(policiesPilot){const results=await Promise.all(enabled.map(key=>api.get('/frameworks/'+key,{params:{client_id:currentClientId},signal:controller.signal})));if(!controller.signal.aborted)setPolicyAssessments(results.flatMap(r=>(r.data.assessments||[]).filter(a=>!r.data.active_definition_ids||r.data.active_definition_ids.includes(a.definition_id))).filter(a=>a.client_id===currentClientId));}
       })
       .catch(() => { if (!controller.signal.aborted) {setPrograms([]);if(policiesPilot)setAlignmentError('Alignment unavailable');} });
     return () => controller.abort();

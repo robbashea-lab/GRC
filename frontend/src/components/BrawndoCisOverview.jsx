@@ -18,7 +18,7 @@ export function FrameworkHeader({eyebrow,title,subtitle,resume,onContinue}){
     </div>
   </header>;
 }
-export const BrawndoCisHeader=props=><FrameworkHeader eyebrow="CIS Controls v8.1 IG1" title="CIS IG1" {...props}/>;
+export const BrawndoCisHeader=({implementationGroup=1,...props})=><FrameworkHeader eyebrow={`CIS Controls v8.1 IG${implementationGroup}`} title={`CIS IG${implementationGroup}`} {...props}/>;
 // Share of applicable safeguards for a segment; assessment progress only, never a compliance score.
 export function segmentShare(n,applicable){return applicable?Math.round(n/applicable*100):0;}
 export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='safeguards',continueNoun='safeguard',testIdPrefix='bcis',segmentLabels={}}){

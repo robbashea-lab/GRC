@@ -22,7 +22,25 @@ def active_definitions(key, configuration=None):
     if key == 'soc-2':
         categories = (configuration or {}).get('categories', ['security'])
         return [d for d in definitions if d['category'] in categories]
+    if key == 'cis-ig1':
+        return [d for d in definitions if d.get('implementation_group', 1) <= (configuration or {}).get('implementation_group', 1)]
     return definitions
+
+
+def client_configuration(key, client, state=None):
+    if key == 'soc-2':
+        from soc_readiness import configuration
+        return configuration(client or {})
+    if key == 'cis-ig1':
+        from cis_scope import configuration
+        return {**configuration(client), **(state or {}).get('framework_settings', {}).get(key, {})}
+    return {}
+
+
+def active_plans(key, configuration=None):
+    allowed = {d['id'] for d in active_definitions(key, configuration)}
+    return [{**p, 'safeguards': [ident for ident in p['safeguards'] if ident in allowed]}
+            for p in CATALOGS[key]['review_plans'] if any(ident in allowed for ident in p['safeguards'])]
 
 
 def definition_for(framework_key, definition_id):

@@ -18,7 +18,7 @@ export function ComplianceProvider({ children }) {
       api.get('/onboarding/baseline', { params: { client_id: currentClientId } }),
       api.get('/requirements', { params: { client_id: currentClientId } }),
     ]).then(([baseline, requirements]) => {
-      if (!cancelled) setResult({ clientId: currentClientId, pathname, items: complianceNavigation(currentClientId, baseline.data.state, requirements.data), error: '' });
+      if (!cancelled) setResult({ clientId: currentClientId, pathname, items: complianceNavigation(currentClientId, {...baseline.data.state,framework_settings:baseline.data.framework_settings}, requirements.data), error: '' });
     }).catch(error => {
       if (!cancelled) setResult({ clientId: currentClientId, pathname, items: [], error: formatError(error) });
     });

@@ -5,10 +5,11 @@ import nistGuidance from './operatorGuidance/nist.json';
 import hipaaGuidance from './operatorGuidance/hipaa.json';
 import isoGuidance from './operatorGuidance/iso.json';
 import socGuidance from './operatorGuidance/soc.json';
+import cisAssessmentGuidance from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
 
 export const operatorStatuses=key=>key==='nist-csf-2'?CSF_STATUSES:key==='soc-2'?{...ASSESSMENT_STATUSES,in_progress:'Partially Addressed',addressed:'Addressed (Readiness)',needs_attention:'Needs Remediation / Validation'}:{...ASSESSMENT_STATUSES,in_progress:'Partially Implemented',addressed:'Implemented',needs_attention:key==='cis-ig1'?'Not Implemented':'Not Implemented / Needs Validation'};
 // Each workspace speaks its framework's language: its item nouns and conclusion labels.
-const ITEM_WORDS={'cis-ig1':['safeguard','safeguards','IG1'],'iso-27001':['requirement','requirements','the ISMS scope'],'soc-2':['criterion','criteria','the SOC 2 scope'],'hipaa':['specification','specifications','the Security Rule'],'nist-csf-2':['outcome','outcomes','the target profile']};
+const ITEM_WORDS={'cis-ig1':['safeguard','safeguards','the selected CIS scope'],'iso-27001':['requirement','requirements','the ISMS scope'],'soc-2':['criterion','criteria','the SOC 2 scope'],'hipaa':['specification','specifications','the Security Rule'],'nist-csf-2':['outcome','outcomes','the target profile']};
 export function operatorVocabulary(key){
   const [item,items,scope]=ITEM_WORDS[key]||['requirement','requirements','the program'];
   return {key,item,items,scope,statuses:operatorStatuses(key)};
@@ -22,6 +23,7 @@ export const STATUS_HELP={
 };
 export const operatorProgram=key=>FRAMEWORKS.find(f=>f.key===key)?.label||key;
 export function operatorGuidance(key,definition){
+  if(key==='cis-ig1'&&definition.implementation_group===2){const guidance=cisAssessmentGuidance.requirements[definition.id];return {meaning:definition.guidance,implementation:guidance.review.join(' '),evidence:guidance.evidence.join(' ')};}
   if(key==='soc-2'){const criterion=socGuidance.criteria[definition.id];return {meaning:criterion?.[0],implementation:criterion?.[2]||socGuidance.groups[definition.control]||socGuidance.groups.privacy,evidence:criterion?.[1]};}
   if(key==='iso-27001'){const annex=isoGuidance.annex[definition.id];return {meaning:annex?.[0]||isoGuidance.clauses[definition.id],implementation:isoGuidance.groups[definition.control],evidence:annex?.[1]||definition.evidence_guidance};}
   if(key==='hipaa')return {meaning:hipaaGuidance.meanings[definition.id],...(hipaaGuidance.groups[definition.id.slice(0,7)]||hipaaGuidance.groups.support),evidence:hipaaGuidance.evidence[definition.id]};

@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from framework_governance import FRAMEWORKS, STATUSES
 from framework_catalog import active_definitions, definition_for
 from soc_readiness import configuration as soc_configuration
+from framework_catalog import client_configuration
 from management_obligations import calendar_day, active_record
 import review_occurrences
 
@@ -65,9 +66,10 @@ async def read(s, client, detail=None, offset=0, limit=25):
                                         ['framework_assessment_id', 'definition_id', 'status', 'related_links', 'last_assessed',
                                          'na_rationale', 'soa_applicability', 'soa_justification'])
             configuration = None
-            if key == 'soc-2':
+            if key in ('soc-2','cis-ig1'):
                 scoped_client = await s.db.clients.find_one({'client_id': cid}, {'_id': 0, 'framework_settings': 1})
-                configuration = soc_configuration(scoped_client or {})
+                configuration = client_configuration(key,scoped_client or {})
+            if key=='cis-ig1':item.update(implementation_group=configuration['implementation_group'],label=f"CIS IG{configuration['implementation_group']}")
             active = {d['id'] for d in active_definitions(key, configuration)}
             assessments = [a for a in assessments if a['definition_id'] in active]
             counts = Counter(a.get('status') for a in assessments)

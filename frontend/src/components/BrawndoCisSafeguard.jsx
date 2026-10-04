@@ -15,6 +15,7 @@ import BrawndoCisFindings from './BrawndoCisFindings';
 import CisOperationPanel from './CisOperationPanel';
 import CisSupportingRecords from './CisSupportingRecords';
 import './BrawndoCisAssessment.css';
+import {cisLabel,cisScopeLabel} from '@/lib/cisScope';
 import './BrawndoCisSafeguard.css';
 
 // Shared CIS IG1 workspace. The historical name is retained for existing callers.
@@ -32,7 +33,8 @@ export default function BrawndoCisSafeguard({state,actions}){
   const source=sourcePresentation(definition),criteria=criteriaData.requirements[id];
   const guidance=guidanceData.requirements[id];
   const verification=verificationOf(form),saved=verificationOf(current);
-  return <AssessmentShell open={open} title={`CIS IG1 ${id} — ${definition.title}`} description={<span className="sr-only">Safeguard assessment workspace</span>}
+  const programLabel=ctx?cisLabel(ctx.configuration):breadcrumb?.[0]?.label||'CIS';
+  return <AssessmentShell open={open} title={`${programLabel} ${id} — ${definition.title}`} description={<span className="sr-only">Safeguard assessment workspace</span>}
     status={<><span aria-label="Saved implementation status"><CisStatusPill status={current.status} framework="cis-ig1"/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
     {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment" ariaModal
     crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb}/>:null}
@@ -46,6 +48,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     <p className="bcsg-meta">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}{current.last_assessed&&current.assessed_by?` · ${personLabel(ctx?.users,current.assessed_by,'Not recorded')}`:''}</p>
     </div>
     <div className="cis-assessment-layout">
+    {ctx&&definition.implementation_group>(ctx.configuration.implementation_group||1)&&<p role="status" className="text-sm">Retained out-of-scope safeguard. History and linked work remain available; this assessment is excluded from active program totals.</p>}
     <details key={`${clientId}:${id}`} className="cis-guide-disclosure"><summary>Requirement guide</summary><CisRequirementGuide safeguardId={id}/></details>
     <div className="cis-guidance-layout">
     <div className="cis-guidance-main">
@@ -54,7 +57,8 @@ export default function BrawndoCisSafeguard({state,actions}){
       {source.text?<><p className="text-xs text-ink-secondary">Official requirement</p><p className="whitespace-pre-wrap" data-testid="cis-official-text">{source.text}</p></>:<><p className="text-xs text-ink-secondary">Requirement summary · Omnisciente</p><p>{definition.guidance}</p></>}
       {source.url&&<a className="bcsg-ref" href={criteria?.source||source.url} target="_blank" rel="noopener noreferrer">Official CIS reference ↗</a>}
     </Step>
-    <Step number="2" title="CIS IG1 Assessment Criteria">
+    <p className="text-xs text-ink-secondary">{cisScopeLabel(definition)}</p>
+    <Step number="2" title="CIS Assessment Criteria">
       <p className="text-sm text-ink-secondary">{GUIDANCE_NOTE}</p>
       <p className="text-xs text-ink-secondary" data-testid="criteria-source">Sources: CIS Safeguard {id} · v8.1</p>
       <div className="cis-assessment-guidance" data-guidance-revision={guidanceData.revision}>

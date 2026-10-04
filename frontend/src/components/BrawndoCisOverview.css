@@ -117,3 +117,12 @@
 .bcis-sg-id { font-family: 'Space Grotesk', var(--font-heading); font-weight: 600; color: var(--cs-muted); min-width: 34px; }
 .bcis-muted { color: var(--cs-muted) !important; white-space: nowrap; }
 @media (max-width: 760px) { .bcis-safeguards th:nth-child(4), .bcis-safeguards td:nth-child(4), .bcis-safeguards th:nth-child(5), .bcis-safeguards td:nth-child(5) { display: none; } }
+@media (max-width: 700px) {
+  /* Keep the existing navigation available without squeezing the CIS workspace. */
+  .app-shell:has(.bcis) { flex-direction: column; }
+  .app-shell:has(.bcis) > .app-sidebar { width: 100%; height: auto; position: static; }
+  .app-shell:has(.bcis) .bsb-nav { display: flex; flex-wrap: wrap; gap: 12px; }
+  .app-shell:has(.bcis) .bsb-group { flex: 1; min-width: 110px; }
+  .bcis-safeguards th:first-child { width: auto; }
+  .bcis-safeguards th:nth-child(2) { width: 116px; }
+}

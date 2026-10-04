@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {Button} from './ui/button';
 import {EvidenceCatalogPicker} from './EvidencePanel';
+import {activePlans,activeDefinitions} from '@/lib/frameworks';
 import FrameworkReviewSetup from './FrameworkReviewSetup';
 import api,{formatError} from '@/lib/api';
 import {downloadEvidence,EvidenceSource,sourceReference,resolveEvidenceSource} from '@/lib/evidenceContext';
@@ -32,7 +33,7 @@ export default function CisSupportingRecords({record,current,definition,ctx,rela
     <div className="space-y-4 mt-3 text-sm">
       <p className="text-xs text-ink-secondary">Relationships save immediately; assessment text saves separately. A linked file or completed Review is not proof of effectiveness. Opening linked records keeps this assessment draft in place.</p>
       <section aria-label="Linked Reviews"><h4 className="font-medium mb-2">Reviews</h4>
-        <FrameworkReviewSetup record={current} definition={definition} catalog={frameworkCatalog('cis-ig1')} reviews={ctx?.options.reviews||[]} users={ctx?.users||[]} clientId={record.client_id} writable={manageRelationships&&!busy&&!!ctx} onDraftChange={setReviewDraft} onOpen={r=>setNested({kind:'reviews',record:r})} onSaved={reviewSaved}/>
+        <FrameworkReviewSetup record={current} definition={definition} catalog={{...frameworkCatalog('cis-ig1'),review_plans:activePlans('cis-ig1',ctx?.configuration)}} reviews={ctx?.options.reviews||[]} users={ctx?.users||[]} clientId={record.client_id} writable={manageRelationships&&!busy&&!!ctx&&activeDefinitions('cis-ig1',ctx.configuration).some(d=>d.id===definition.id)} onDraftChange={setReviewDraft} onOpen={r=>setNested({kind:'reviews',record:r})} onSaved={reviewSaved}/>
         {(related.reviews||[]).map(r=><ReviewHistory key={r.review_id} review={r} busy={busy} onOpen={setNested}/>)}
         {ctx&&!related.reviews?.length&&<p className="text-xs text-ink-secondary">No Review linked. Link an existing activity or configure one when useful.</p>}
       </section>

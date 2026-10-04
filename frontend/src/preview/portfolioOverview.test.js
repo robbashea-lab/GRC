@@ -36,8 +36,8 @@ test('scoped Demo client lists and drill-ins exclude unrelated clients even if t
 });
 test('archived clients are opt-in; empty scoped assignment does not fall back to all',()=>{
   const db=seedStore();db.clients.find(client=>client.client_id==='demo_brawndo').status='archived';
-  expect(portfolio(db,false).clients.map(client=>client.client_id).sort()).toEqual(['demo_dunder','demo_prestige']);
-  expect(portfolio(db,true).clients.map(client=>client.client_id).sort()).toEqual(['demo_brawndo','demo_dunder','demo_prestige']);
+  expect(portfolio(db,false).clients.map(client=>client.client_id).sort()).toEqual(['demo_dunder','demo_initech','demo_prestige']);
+  expect(portfolio(db,true).clients.map(client=>client.client_id).sort()).toEqual(['demo_brawndo','demo_dunder','demo_initech','demo_prestige']);
   db.user={...db.user,role:'platform_admin',client_ids:['nonexistent-assignment']};
   expect(portfolio(db,true).clients).toEqual([]);
   db.user.role='client_readonly';expect(()=>portfolio(db,false)).toThrow('restricted');

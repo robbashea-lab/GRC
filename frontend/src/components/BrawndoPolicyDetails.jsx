@@ -7,6 +7,7 @@ import {displayDay} from '@/lib/managementDates';
 import {personLabel} from '@/lib/people';
 import {ApprovalSubject} from './PolicyApprovalSubject';
 import {SourceReference} from './RequirementBasis';
+import {activeDefinitions} from '@/lib/frameworks';
 
 export function PolicyStatusField({record,disabled,onChange}) {
   const value=policyStatus(record),options={...POLICY_STATUS};
@@ -20,8 +21,8 @@ export function PolicyStatusField({record,disabled,onChange}) {
   </fieldset>;
 }
 
-export function PolicyAlignment({record,programs=[],assessments=[],onOpen}) {
-  const refs=policyAlignment(record,programs,assessments),[busy,setBusy]=useState(false);
+export function PolicyAlignment({record,programs=[],assessments=[],cisGroup,onOpen}) {
+  const refs=policyAlignment(record,programs,assessments,cisGroup),[busy,setBusy]=useState(false);
   async function open(ref) {
     setBusy(true);
     try {
@@ -40,17 +41,19 @@ export function PolicyAlignment({record,programs=[],assessments=[],onOpen}) {
 }
 
 export default function BrawndoPolicyDetails({record,related={},users=[],onOpen}) {
-  const [programs,setPrograms]=useState([]),[error,setError]=useState('');
-  useEffect(()=>{const c=new AbortController();setPrograms([]);setError('');api.get('/frameworks/summary',{params:{client_id:record.client_id},signal:c.signal}).then(({data})=>{if(!c.signal.aborted&&data.client_id===record.client_id)setPrograms(data.items.filter(p=>p.tracking_available).map(p=>p.key));}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[record.client_id]);
+  const [programs,setPrograms]=useState([]),[cisGroup,setCisGroup]=useState(1),[error,setError]=useState('');
+  useEffect(()=>{const c=new AbortController();setPrograms([]);setCisGroup(1);setError('');api.get('/frameworks/summary',{params:{client_id:record.client_id},signal:c.signal}).then(({data})=>{if(!c.signal.aborted&&data.client_id===record.client_id){setPrograms(data.items.filter(p=>p.tracking_available).map(p=>p.key));setCisGroup(data.items.find(p=>p.key==='cis-ig1')?.implementation_group||1);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[record.client_id]);
+  const activeCis=new Set(activeDefinitions('cis-ig1',{implementation_group:cisGroup}).map(d=>d.id));
+  const alignedAssessments=(related.framework_assessments||[]).filter(a=>a.framework_key!=='cis-ig1'||activeCis.has(a.definition_id));
   const reviews=(related.reviews||[]).filter(r=>r.client_id===record.client_id&&(r.policy_id===record.policy_id||r.policy_ids?.includes(record.policy_id)));
   const purpose=record.governance_context?.rationale||record.framework_purpose||record.summary;
-  const cadenceRefs=policyAlignment(record,programs,related.framework_assessments).filter(r=>r.sourceCadence&&/annual|month|quarter|day/i.test(r.sourceCadence));
+  const cadenceRefs=policyAlignment(record,programs,alignedAssessments,cisGroup).filter(r=>r.sourceCadence&&/annual|month|quarter|day/i.test(r.sourceCadence));
   const approved=[...(record.approval_history||[]).filter(h=>h.action==='approved'),...(record.decision_history||[]).filter(h=>h.action==='external_approval_recorded')].sort((a,b)=>String(b.at||b.recorded_at).localeCompare(String(a.at||a.recorded_at)))[0];
   return <div className="space-y-5">
     {record.policy_id&&<dl className="grid grid-cols-2 md:grid-cols-5 gap-3 rounded-md bg-surface-subtle p-3 text-sm">{[['Policy Status',policyStatusLabel(policyStatus(record))],['Version',record.version||'Not recorded'],['Owner',personLabel(users,record.owner_id)],['Last Reviewed',displayDay(record.last_reviewed_at)||'Not recorded'],['Next Review',displayDay(record.next_review_date)||'Not scheduled']].map(([label,value])=><div key={label}><dt className="text-xs text-ink-secondary">{label}</dt><dd className="mt-1 break-words">{value}</dd></div>)}</dl>}
     <section aria-label="Policy Requirements & Framework Alignment" className="space-y-3 text-sm border-b border-line pb-4">
       <h3 className="font-semibold">Policy Requirements &amp; Framework Alignment</h3>
-      <div><h4 className="font-medium text-xs mb-1">Framework Alignment</h4>{error?<p role="alert">Alignment could not be loaded: {error}</p>:<PolicyAlignment record={record} programs={programs} assessments={related.framework_assessments} onOpen={onOpen}/>}</div>
+      <div><h4 className="font-medium text-xs mb-1">Framework Alignment</h4>{error?<p role="alert">Alignment could not be loaded: {error}</p>:<PolicyAlignment record={record} programs={programs} assessments={alignedAssessments} cisGroup={cisGroup} onOpen={onOpen}/>}</div>
       {purpose&&<div><h4 className="font-medium text-xs">Policy Purpose</h4><p className="whitespace-pre-wrap break-words">{purpose}</p></div>}
       <div><h4 className="font-medium text-xs">Review Schedule</h4><p className="text-ink-secondary">{reviews.length?'Linked Reviews own the schedule shown below.':'Annual is the organization-selected default; no Review date is inferred from document creation.'} Review following significant changes is an expectation, not a recorded completion or a universal framework mandate.</p>
         {reviews.map(r=><button key={r.review_id} type="button" className="block text-link underline mt-1 text-left" onClick={()=>onOpen({kind:'reviews',record:r})}>{r.title} · {r.recurrence||'Not scheduled'} · {displayDay(r.due_date)||'No due date'}</button>)}

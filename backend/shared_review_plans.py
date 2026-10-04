@@ -1,5 +1,5 @@
 """Catalog-declared shared activities; no new scheduling or assessment engine."""
-from framework_catalog import CATALOGS
+from framework_catalog import CATALOGS, active_plans
 
 INTERVALS = {'monthly': 1, 'quarterly': 3, 'semiannual': 6, 'annual': 12}
 
@@ -7,7 +7,7 @@ INTERVALS = {'monthly': 1, 'quarterly': 3, 'semiannual': 6, 'annual': 12}
 def selected_plans(state):
     return [{**p, 'framework_key': key} for key, catalog in CATALOGS.items()
             if state.get('requirements', {}).get(key) == 'applies'
-            for p in catalog['review_plans']]
+            for p in active_plans(key, state.get('framework_settings', {}).get(key, {}))]
 
 
 def shared_config(state, plan):

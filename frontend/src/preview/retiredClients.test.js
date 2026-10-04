@@ -12,7 +12,7 @@ test('removing a provider client does not change Brawndo internal-owner rotation
 test('stale Dunder is replaced by the canonical ISO client without resetting surviving work',()=>{
   sessionStorage.clear();
   const db=seedStore();
-  const preserved=JSON.stringify(db.framework_assessments.filter(a=>a.client_id!=='demo_dunder'));
+  const preserved=JSON.stringify(db.framework_assessments.filter(a=>a.client_id!=='demo_dunder'&&a.client_id!=='demo_initech'));
   const custom={client_id:'custom',name:'User-created demo client'};
   db.clients.push(custom,{client_id:'demo_dunder'},{client_id:'demo_initech'});
   db.users.push({user_id:'demo_dunder_user_0',client_ids:['demo_dunder']});
@@ -27,8 +27,8 @@ test('stale Dunder is replaced by the canonical ISO client without resetting sur
   db.logs.push({entity_type:'users',entity_id:'demo_dunder_user_0'});
   saveStore(db);
   const migrated=readStore();
-  expect(migrated.clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_prestige','custom','demo_dunder']);
-  expect(JSON.stringify(migrated.framework_assessments.filter(a=>a.client_id!=='demo_dunder'))).toBe(preserved);
+  expect(migrated.clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_prestige','custom','demo_dunder','demo_initech']);
+  expect(JSON.stringify(migrated.framework_assessments.filter(a=>a.client_id!=='demo_dunder'&&a.client_id!=='demo_initech'))).toBe(preserved);
   expect(migrated.reviews.some(r=>r.review_id==='retired')).toBe(false);
   expect(migrated.evidence.some(r=>r.evidence_id==='retired-file')).toBe(false);
   expect(migrated.clients.find(c=>c.client_id==='demo_dunder').demo_program_version).toBe('iso27001-year2-v1');

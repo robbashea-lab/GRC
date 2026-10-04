@@ -10,5 +10,5 @@ export function complianceNavigation(clientId, baseline, requirements = []) {
   if (!clientId || !baseline?.completed) return [];
   return COMPLIANCE_SECTIONS.filter(section => requirements.some(record =>
     record.client_id === clientId && record.baseline_key === section.key && record.baseline_response === 'applies'
-  )).map(section => ({ ...section, id: `${clientId}:${section.key}` }));
+  )).map(section => ({ ...section,...(section.key==='cis-ig1'?{label:`CIS IG${baseline.framework_settings?.['cis-ig1']?.implementation_group||1}`,name:`CIS Controls v8.1 IG${baseline.framework_settings?.['cis-ig1']?.implementation_group||1}`}:{ }), id: `${clientId}:${section.key}` }));
 }
