@@ -45,3 +45,11 @@ test('governance questions go to business owners rather than assuming IT owns ev
     expect(guide.requirements[id].ask).toMatch(/data owners|HR|training owner|procurement|management|incident owner/i);
   }
 });
+
+test('corrected five-answer guides explain actual 8.5, 9.4 and 16.7 scope and treatment',()=>{
+ expect(guide.requirements['8.5'].plain).toMatch(/event source.*date.*username.*timestamp.*source.*destination addresses/);
+ expect(guide.requirements['8.5'].plain).toContain('coverage gaps');
+ expect(guide.requirements['9.4'].plain).toMatch(/Uninstall or disable.*browser and email-client plugins, extensions and add-on applications/);
+ expect(guide.requirements['16.7'].plain).toMatch(/servers.*databases.*web servers.*cloud containers.*PaaS.*SaaS/);
+ expect(guide.requirements['16.7'].plain).toContain('In-house developed software must not weaken configuration hardening');
+});

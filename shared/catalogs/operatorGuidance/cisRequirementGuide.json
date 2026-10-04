@@ -1,7 +1,7 @@
 {
   "framework": "cis-ig1",
   "version": "8.1",
-  "revision": "2026-10-03",
+  "revision": "2026-10-04",
   "basis": "Optional Omnisciente explanations, not assessment responses. Based on the reviewed CIS v8.1 assessment guidance and official safeguard descriptions. Source links remain in cisAssessmentCriteria.json.",
   "requirements": {
     "1.1": {
@@ -404,11 +404,11 @@
       "gaps": "For 8.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate time synchronization. Use Findings and Actions for follow-up and validation."
     },
     "8.5": {
-      "plain": "Capture investigation-useful events on sensitive-data assets. Collect detailed events. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
-      "start": "Define required event fields and sensitive-asset scope. Start with the responsible client role: Security logging owner. Agree the covered systems or people and use existing procedures before creating new records.",
-      "evidence": "Representative event fields and coverage. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-      "ask": "For 8.5, ask the Security logging owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
-      "gaps": "For 8.5, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect detailed events. Use Findings and Actions for follow-up and validation."
+      "plain": "Configure detailed audit logs on enterprise assets containing sensitive data. Include the event source, date, username, timestamp, source and destination addresses, and other useful investigation details. CIS specifies no numeric interval here. Missing required fields are coverage gaps to evaluate, not automatically permitted because a source does not supply them.",
+      "start": "Ask the Security logging owner to identify sensitive-data assets and the detailed fields required by the logging process. Compare actual configuration and representative events across that scope. Use the existing implementation description to explain the method and any limitations; a policy statement alone does not demonstrate collection.",
+      "evidence": "Representative log events, sensitive-asset coverage and investigation-useful fields, with any missing-field limitations explained. These are supporting examples, not separate mandatory files. Link existing records and explain their scope, date and limitations.",
+      "ask": "For 8.5, ask the Security logging owner which sensitive-data assets are covered and how event source, date, username, timestamp, source and destination addresses are collected. Who investigates missing fields, uncovered assets or collection failures, and how is correction checked?",
+      "gaps": "For 8.5, investigate uncovered sensitive-data assets, missing required fields and collection failures. Record limitations honestly and use existing Findings and Actions for corrective follow-up and validation. Do not treat field availability as a blanket exemption or claim effective collection from configuration alone."
     },
     "8.6": {
       "plain": "Preserve relevant DNS-query observations. Collect DNS query events. No numeric interval; where appropriate and supported. The assessment should explain how this works for the client’s actual scope.",
@@ -474,11 +474,11 @@
       "gaps": "For 9.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Enforce and update URL filtering. Use Findings and Actions for follow-up and validation."
     },
     "9.4": {
-      "plain": "Remove unneeded browser/mail extensions. Restrict or remove unauthorized/unneeded extensions. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
-      "start": "Define authorized extensions and exception process. Start with the responsible client role: Messaging/endpoint owner. Agree the covered systems or people and use existing procedures before creating new records.",
-      "evidence": "Extension inventory and restrictions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-      "ask": "For 9.4, ask the Messaging/endpoint owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
-      "gaps": "For 9.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Restrict or remove unauthorized/unneeded extensions. Use Findings and Actions for follow-up and validation."
+      "plain": "Uninstall or disable unauthorized or unnecessary browser and email-client plugins, extensions and add-on applications. Check both browser and email-client scope. CIS specifies no numeric interval here. Merely restricting permissions while an unauthorized item remains enabled does not establish the specified treatment.",
+      "start": "Ask the Messaging/endpoint owner which browser and email-client plugins, extensions and add-on applications are authorized and necessary. Compare installed and enabled items across the covered assets, then uninstall or disable items that are unauthorized or unnecessary. Use existing configuration and software records.",
+      "evidence": "Browser and email-client plugin, extension and add-on inventories, with settings or records showing uninstalling or disabling. These are supporting examples, not separate mandatory files. Link existing records and explain their scope, date and limitations.",
+      "ask": "For 9.4, ask the Messaging/endpoint owner how both browser and email-client plugins, extensions and add-on applications are identified. Who uninstalls or disables unauthorized or unnecessary items, and how do you verify they no longer remain enabled across the covered assets?",
+      "gaps": "For 9.4, investigate unexamined email-client add-ons, unauthorized or unnecessary items left enabled, incomplete asset coverage and failed uninstalling or disabling. Use existing Findings and Actions to track correction and validation. A list of approved extensions alone does not demonstrate enforcement."
     },
     "9.5": {
       "plain": "Authenticate domain email to reduce spoofing. Operate domain authentication. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
@@ -803,11 +803,11 @@
       "gaps": "For 16.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Triage vulnerabilities and apply release criteria. Use Findings and Actions for follow-up and validation."
     },
     "16.7": {
-      "plain": "Keep application platforms securely configured. Maintain hardening across application infrastructure. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
-      "start": "Adopt appropriate standard hardening templates. Start with the responsible client role: Engineering lead. Agree the covered systems or people and use existing procedures before creating new records.",
-      "evidence": "Baselines and exception/change records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-      "ask": "For 16.7, ask the Engineering lead: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
-      "gaps": "For 16.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain hardening across application infrastructure. Use Findings and Actions for follow-up and validation."
+      "plain": "Use industry-recommended hardening templates for application infrastructure, including underlying servers, databases, web servers, cloud containers, Platform as a Service (PaaS) and Software as a Service (SaaS) components. In-house developed software must not weaken configuration hardening. CIS specifies no numeric interval here; assess the actual application infrastructure scope.",
+      "start": "Ask the Engineering lead to identify application infrastructure, including underlying servers, databases, web servers, cloud containers, PaaS and SaaS components. Adopt industry-recommended hardening templates and compare actual configurations with them. Include application deployment and change practices so in-house software does not weaken the hardened configuration.",
+      "evidence": "Application infrastructure baselines, configuration samples and change records covering conventional and cloud components, including changes made for in-house software. These are supporting examples, not separate mandatory files. Link existing records and explain their scope, date and limitations.",
+      "ask": "For 16.7, ask the Engineering lead which conventional and cloud application components are covered by hardening templates. How do you check actual configurations and changes, and prevent in-house developed software from weakening configuration hardening? Confirm the internal team and provider responsibilities for those checks.",
+      "gaps": "For 16.7, investigate missing cloud components, configurations that depart from hardening baselines and application changes that weaken hardening. An accepted change does not remove the prohibition on in-house software weakening configuration hardening. Use existing Findings and Actions to record gaps and validate correction."
     },
     "16.8": {
       "plain": "Separate live and non-live application environments. Maintain environment separation. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
