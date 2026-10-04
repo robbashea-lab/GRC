@@ -12,9 +12,9 @@ test.each(['demo_brawndo','demo_prestige','demo_dunder'])('%s: completed Review 
   expect(b).toBeTruthy();
   const {data:r}=await api.post('/reviews',{client_id:cid,title:'History QA review',review_type:'access',recurrence:'quarterly',due_date:'2026-09-30',owner_id:a});
   const first=r.current_occurrence_id;
-  await api.post(`/reviews/${r.review_id}/complete`,{occurrence_id:first,notes:'Completed by A'});
+  await api.post(`/reviews/${r.review_id}/complete`,{occurrence_id:first,completion_notes:'Completed by A'});
   const recorded=occurrence(r.review_id,first);
-  expect(recorded).toMatchObject({owner_id:a,title:'History QA review'});
+  expect(recorded).toMatchObject({owner_id:a,title:'History QA review',notes:'Completed by A'});
   // Change the recurring definition (owner and title), then touch the store repeatedly.
   const edit=async body=>{const cur=readStore().reviews.find(x=>x.review_id===r.review_id);await api.patch('/reviews/'+r.review_id,{...body,expected_updated_at:cur.updated_at,expected_occurrence_id:cur.current_occurrence_id});};
   await edit({owner_id:b,title:'History QA review (renamed)'});

@@ -141,6 +141,43 @@ class CisIG2Tests(unittest.IsolatedAsyncioTestCase):
         await harness.server.db.users.update_one({'user_id':'member'},{'$set':{'role':'platform_admin','client_ids':['b']}})
         denied=await self.scope(2);self.assertEqual(denied.status_code,403)
 
+    async def test_prepublication_failure_keeps_proposed_review_work_inactive(self):
+        s=harness.server
+        await self.configure()
+        original_reconcile=framework_governance.reconcile
+        async def fail_publication(*args,**kwargs):
+            await original_reconcile(*args,**kwargs)
+            if kwargs.get('cis_active_configuration') is not None:
+                raise RuntimeError('Injected failure after proposed Review initialization')
+        key=uuid.uuid4().hex
+        with patch.object(framework_governance,'reconcile',side_effect=fail_publication):
+            response=await self.scope(2,key=key)
+        self.assertEqual(response.status_code,503,response.text)
+        workspace=await self.workspace()
+        self.assertEqual(workspace['configuration']['implementation_group'],1)
+        self.assertEqual(len(workspace['assessments']),130)
+        self.assertEqual(len(workspace['active_definition_ids']),56)
+        allowed=set(workspace['active_definition_ids'])
+        reviews=await s.db.reviews.find({'client_id':'a'}).to_list(None)
+        self.assertEqual(len(reviews),15)
+        for review in reviews:
+            for driver in review['framework_drivers']:
+                if driver['framework_key']=='cis-ig1':
+                    self.assertLessEqual(set(driver['framework_safeguards']),allowed)
+                    if review['framework_plan_key'] in {'network-defense','secure-development','penetration-testing'}:
+                        self.assertFalse(driver['framework_driver_active'])
+                        self.assertFalse(review['framework_driver_active'])
+        summary=(await self.client.get('/api/frameworks/summary',params={'client_id':'a'})).json()
+        self.assertEqual(summary['items'][0]['total'],56)
+        exported=await self.client.get('/api/frameworks/cis-ig1/export',params={'client_id':'a'})
+        self.assertEqual(len(list(csv.DictReader(io.StringIO(exported.text)))),56)
+        recovered=await self.scope(2,key=key)
+        self.assertEqual(recovered.status_code,200,recovered.text)
+        self.assertEqual((await self.workspace())['configuration']['implementation_group'],2)
+        self.assertEqual(await s.db.reviews.count_documents({'client_id':'a'}),15)
+        for review in await s.db.reviews.find({'client_id':'a'}).to_list(None):
+            self.assertTrue(review['framework_driver_active'])
+
     async def test_reduction_preserves_other_review_drivers_and_audit_failure_recovers(self):
         s=harness.server
         await self.configure()

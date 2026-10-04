@@ -46,7 +46,7 @@ def validate_configuration(state):
         if config.get('recurrence')=='custom' and (type(config.get('custom_recurrence_days')) is not int or not 1<=config['custom_recurrence_days']<=3650): raise HTTPException(422,'Custom cadence must be 1–3650 days')
         if config.get('due_date') and not review_occurrences.scheduled_date(config['due_date']): raise HTTPException(422,'Invalid Review date')
 
-async def reconcile(s,cid,state,user):
+async def reconcile(s,cid,state,user,*,cis_active_configuration=None):
     """Explicit activation only. Absent keys are untouched (single-program Settings edits)."""
     for key,catalog in CATALOGS.items():
         if key not in state.get('requirements',{}):
@@ -57,7 +57,7 @@ async def reconcile(s,cid,state,user):
                 drivers=[{**d,'framework_driver_active':False} if d['framework_key']==key else d for d in shared_review_plans.drivers(row)]
                 await save_drivers(s,row,drivers)
             continue
-        await reconcile_catalog(s,cid,state,user,key,catalog)
+        await reconcile_catalog(s,cid,state,user,key,catalog,cis_active_configuration=cis_active_configuration if key=='cis-ig1' else None)
 
 
 async def save_drivers(s,row,drivers):
@@ -81,7 +81,7 @@ async def add_driver(s,cid,rid,key,plan,active=True):
     await save_drivers(s,row,drivers)
 
 
-async def reconcile_catalog(s,cid,state,user,key,catalog):
+async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configuration=None):
     client=await s.db.clients.find_one({'client_id':cid},{'_id':0,'framework_settings':1})
     configuration=client_configuration(key,client,state)
     definitions=active_definitions(key,configuration)
@@ -94,8 +94,11 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
             'framework_version':catalog['version'],'status':'not_assessed','implementation':'','technology':'','notes':'','na_rationale':'',
             'owner_id':None,'process_owner_id':None,'created_at':s._now(),'related_links':[],'assessment_history':[]}},upsert=True)
     plans=active_plans(key,configuration)
+    # A scope proposal may initialize retained records, but its current drivers
+    # must describe the authoritative client scope until that scope is published.
+    published_plans={p['key']:p for p in active_plans(key,cis_active_configuration if cis_active_configuration is not None else configuration)}
     if key=='cis-ig1':
-        active_keys={p['key'] for p in plans}
+        active_keys=set(published_plans)
         retained=await s.db.reviews.find({'client_id':cid,'$or':[{'framework_key':key},{'framework_drivers.framework_key':key}]},{'_id':0}).to_list(None)
         for row in retained:
             await save_drivers(s,row,[{**d,'framework_driver_active':False} if d['framework_key']==key and d['framework_plan_key'] not in active_keys else d for d in shared_review_plans.drivers(row)])
@@ -109,8 +112,10 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
         if not config['enabled']:
             if old:await add_driver(s,cid,old['review_id'],key,plan,False)
             continue
-        mapping={'framework_key':key,'framework_version':catalog['version'],'framework_plan_key':plan['key'],'framework_driver_active':True,
-                 'framework_safeguards':plan['safeguards'],'framework_basis':plan['basis'],'framework_source_cadence':plan['source_cadence'],
+        published_plan=published_plans.get(plan['key'],{**plan,'safeguards':[]})
+        driver_active=plan['key'] in published_plans
+        mapping={'framework_key':key,'framework_version':catalog['version'],'framework_plan_key':plan['key'],'framework_driver_active':driver_active,
+                 'framework_safeguards':published_plan['safeguards'],'framework_basis':plan['basis'],'framework_source_cadence':plan['source_cadence'],
                  'framework_default_cadence':plan['default_cadence']}
         mapping.update({'framework_'+field:plan[field] for field in ('purpose','evidence_expectations','completion_criteria') if field in plan})
         if old:
@@ -127,7 +132,7 @@ async def reconcile_catalog(s,cid,state,user,key,catalog):
                  'owner_id':None,'created_at':s._now(),'created_by':user['user_id'],**mapping}
             row.update(review_occurrences.schedule(row));row['current_occurrence_id']=review_occurrences.occurrence_id(row)
             await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':row},upsert=True)
-        await add_driver(s,cid,rid,key,plan)
+        await add_driver(s,cid,rid,key,published_plan,driver_active)
         await s.db.framework_assessments.update_many(
             {'client_id':cid,'framework_key':key,'definition_id':{'$in':plan['safeguards']}},
             {'$addToSet':{'related_links':{'kind':'reviews','id':rid}}})
@@ -343,10 +348,11 @@ def router_for(s):
             # Reconcile the proposal first. A partial failure leaves the old active scope
             # intact; deterministic IDs and the receipt resume the same proposal safely.
             state={**current['onboarding_baseline'],'requirements':{'cis-ig1':'applies'},'framework_settings':{'cis-ig1':{'implementation_group':intent['after']}}}
-            await reconcile(s,body.client_id,state,user)
+            await reconcile(s,body.client_id,state,user,cis_active_configuration=client_configuration('cis-ig1',current))
             changed=await s.db.clients.update_one({'client_id':body.client_id,'cis_configuration_updated_at':current.get('cis_configuration_updated_at')},
                 {'$set':{'framework_settings.cis-ig1':{'implementation_group':intent['after']},'cis_configuration_updated_at':intent['updated_at'],'cis_scope_change':intent}})
             if not changed.matched_count:raise HTTPException(409,'CIS scope changed; reload configuration')
+            await reconcile(s,body.client_id,state,user)
             await s.audit(user,'CIS scope updated','client',body.client_id,body.client_id,meta=intent)
             return {'implementation_group':intent['after'],'expected_updated_at':intent['updated_at']}
         return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'/frameworks/cis-ig1/configuration',body.model_dump(exclude_unset=True),execute)
