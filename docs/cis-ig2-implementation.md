@@ -1,5 +1,9 @@
 # CIS v8.1 cumulative IG2 extension
 
+Historical initial implementation record (2026-10-03). See
+`cis-ig2-finalization.md` for the later authorized merge/private Demo publication,
+resolved baseline failures and final verification gate.
+
 Baseline: `e3753e9` (merged PR26), fetched 2026-10-03. Branch: `codex/cis-ig2-extension`.
 Bounded authorization: application changes, isolated tests, fresh Initech Demo fixture,
 commits/push/draft PR. No merge, hosted publication, production deployment or shared-backend writes.
