@@ -4,15 +4,12 @@ import {Textarea} from './ui/textarea';
 import AssigneeSelect from './AssigneeSelect';
 import api from '@/lib/api';
 import {recordUuid} from '@/lib/recordUuid';
-import {actionStatus} from '@/lib/actionItems';
-import {findingOpen} from '@/lib/findingMetrics';
 import RemediationTickets from './RemediationTickets';
 
 // Compact safeguard-level Findings for the Brawndo CIS workspace. The safeguard is the authoritative
 // origin (framework_assessment_id); the Finding owns its Action and its validation lifecycle.
 export const SEVERITY_LABELS={low:'Low',medium:'Moderate',high:'High',critical:'Critical'};
 export const FINDING_STATUS_LABELS={open:'Open',in_remediation:'In remediation',remediated:'Pending Validation',closed:'Closed',accepted:'Accepted'};
-const day=v=>v?String(v).slice(0,10):null;
 
 export function directFindings(record,related){
   const links=new Set((record.related_links||[]).filter(l=>l.kind==='findings').map(l=>l.id));
@@ -20,8 +17,7 @@ export function directFindings(record,related){
 }
 
 export default function BrawndoCisFindings({record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}){
-  const findings=directFindings(current,related),open=findings.filter(findingOpen),closed=findings.filter(f=>!findingOpen(f));
-  const actions=f=>(related?.tasks||[]).filter(t=>t.finding_id===f.finding_id&&t.client_id===record.client_id);
+  const findings=directFindings(current,related);
   const disabled=!writable||busy||!ctx,aid=record.framework_assessment_id;
   const start=()=>setFinding({request_id:recordUuid(),title:'',description:'',severity:'medium',owner_id:current.owner_id||'',due_date:'',remediation_title:''});
   const put=(k,v)=>setFinding(p=>({...p,[k]:v}));
@@ -32,14 +28,6 @@ export default function BrawndoCisFindings({record,definition,current,ctx,relate
     setFinding(null);
     setFeedback?.('Ticket saved. Assessment changes remain separate.');
   });
-  const row=f=>{const work=actions(f),active=work.filter(t=>!['done','cancelled'].includes(t.status));
-    const action=active[0]||work[0];
-    return <li key={f.finding_id} className="bcsg-finding" data-testid={`safeguard-finding-${f.finding_id}`}>
-      <button type="button" className="bcsg-finding-title" disabled={busy} onClick={()=>setNested({kind:'findings',record:f})}>{f.title}</button>
-      <span className="bcsg-finding-meta">{[SEVERITY_LABELS[f.severity]||f.severity,FINDING_STATUS_LABELS[f.status]||f.status,
-        action?`Action ${actionStatus(action.status).toLowerCase()}${action.due_date&&!['done','cancelled'].includes(action.status)?` · due ${day(action.due_date)}`:''}`:'No Action',
-        f.due_date&&findingOpen(f)?`Target ${day(f.due_date)}`:null].filter(Boolean).join(' · ')}</span>
-    </li>;};
   return <section className="bcsg-findings" aria-labelledby="bcsg-findings-heading">
     <div className="bcsg-findings-head"><h3 id="bcsg-findings-heading">Findings</h3>
       {writable&&!finding&&<Button size="sm" variant="outline" disabled={disabled} onClick={start}>Raise Finding</Button>}</div>

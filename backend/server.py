@@ -2871,6 +2871,8 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(409, "Completed reviews must be retained")
     if kind == "tasks" and (existing.get("status") == "done" or existing.get("completed_at")):
         raise HTTPException(409, "Completed Action Items must be retained")
+    if kind == 'tasks' and existing.get('_ticket_command') and await db.create_requests.find_one({'_id':existing['_ticket_command'],'state':'pending'}):
+        raise HTTPException(409, 'Recover the pending ticket save before deleting this Action')
     if kind == 'findings':
         import remediation_commands
         await remediation_commands.retain_finding(sys.modules[__name__], existing)
@@ -3528,17 +3530,11 @@ async def approve_exception(exception_id: str, body: DecisionIn, user: Dict = De
 @api.post("/findings/{finding_id}/accept")
 @finding_mutation
 async def accept_finding(finding_id: str, body: DecisionIn, user: Dict = Depends(get_current_user)):
+    import remediation_commands
     item = await _authorized_parent("findings", finding_id, user, write=True)
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Only platform-level roles can accept findings")
-    _require_snapshot(body.model_dump(exclude_unset=True),item)
-    if not body.rationale.strip():
-        raise HTTPException(422, "Acceptance rationale is required")
-    decision = {"action":"accepted", "by":user["user_id"], "at":_now(), "rationale":body.rationale.strip()}
-    changed=await db.findings.update_one({"finding_id":finding_id,'updated_at':item.get('updated_at')}, {"$set":{"status":"accepted", "updated_at":_next_write_time(item.get('updated_at'))}, "$push":{"decision_history":decision}})
-    if not changed.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
-    await audit(user, "accept", "finding", finding_id, item["client_id"], meta=decision)
-    return await db.findings.find_one({"finding_id":finding_id}, {"_id":0})
+    return await remediation_commands.validate(sys.modules[__name__], item, body, user, action='accept')
 
 
 @api.post("/findings/{finding_id}/validate")
@@ -4382,6 +4378,8 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
             raise HTTPException(409, "Completed reviews must be retained")
         if body.kind == "tasks" and any(d.get("status") == "done" or d.get("completed_at") for d in docs):
             raise HTTPException(409, "Completed Action Items must be retained")
+        if body.kind == 'tasks' and await db.create_requests.find_one({'_id':{'$in':[d.get('_ticket_command') for d in docs if d.get('_ticket_command')]},'state':'pending'}):
+            raise HTTPException(409, 'Recover pending ticket saves before deleting Actions')
         if body.kind == "findings":
             import remediation_commands
             for d in docs:

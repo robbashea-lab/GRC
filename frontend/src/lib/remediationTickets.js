@@ -22,12 +22,12 @@ export function ticketRecords(records,clientId) {
 }
 
 export function ticketStage(ticket) {
-  if(ticket.finding?.status==='accepted')return 'accepted';
   const active=ticket.actions.filter(t=>!['done','cancelled'].includes(t.status));
   // Inconsistent historical closure never hides outstanding work.
   if(active.some(t=>t.status==='blocked'))return 'blocked';
   if(active.some(t=>t.status==='in_progress'||t.started_at))return 'in_progress';
   if(active.length)return 'open';
+  if(ticket.finding?.status==='accepted')return 'accepted';
   if(ticket.finding){
     if(ticket.finding.status==='closed')return 'completed';
     if(ticket.finding.status==='remediated')return 'pending_validation';

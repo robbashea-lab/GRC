@@ -15,6 +15,8 @@ test('multiple Actions never select an arbitrary primary or conceal unfinished w
   expect(row.primary).toBeNull();expect(row.diagnostic).toMatch(/Multiple/);expect(row.actions).toEqual(tasks);expect(ticketStage(row)).toBe('blocked');
   [row]=ticketRecords({findings:[{...f,primary_task_id:'t'}],tasks:[...tasks].reverse()},f.client_id);
   expect(row.primary.task_id).toBe('t');expect(row.actions).toHaveLength(2);expect(ticketStage(row)).toBe('blocked');
+  [row]=ticketRecords({findings:[{...f,status:'accepted'}],tasks},f.client_id);
+  expect(ticketStage(row)).toBe('blocked');
 });
 test('unavailable, foreign, standalone and no-Action records are retained without invented Findings',()=>{
   const records={findings:[f,{...f,client_id:'foreign',finding_id:'foreign'}],tasks:[{...t,task_id:'orphan',finding_id:'foreign'},{...t,task_id:'manual',finding_id:null,status:'cancelled'}]};

@@ -4,6 +4,7 @@ Persisted role IDs are retained. Membership is always explicit except for the
 Platform Owner. Route and lifecycle checks further restrict these permissions.
 """
 from fastapi import HTTPException
+from create_requests import digest
 
 OWNER = 'super_admin'
 PROVIDER = 'platform_admin'
@@ -139,6 +140,19 @@ async def authorize_request(request, user, db):
         row = await db[kind].find_one({key:record_id, **scope(user)}, {'_id':0})
         if not row:
             raise HTTPException(403, 'Record unavailable for this client')
+        if kind == 'tasks' and method == 'PATCH' and request.headers.get('Idempotency-Key'):
+            identity = digest([user['user_id'], row['client_id'], 'tasks/' + record_id + '/update', request.headers['Idempotency-Key']])
+            receipt = await db.create_requests.find_one({'_id': identity})
+            if receipt:
+                if receipt['fingerprint'] != digest(await object_body(request)):
+                    raise HTTPException(409, 'This request has different data; restore the original request before retrying')
+                before = receipt.get('task_before', {})
+                # An exact actor-bound retry may finish after its own assignment change.
+                # Current role and tenant access were checked above; new intents still
+                # require current assignment, and pending writes retain their marker.
+                if (before.get('task_id') == record_id and before.get('client_id') == row['client_id']
+                        and (receipt['state'] == 'complete' or row.get('_ticket_command') == identity)):
+                    row = before
         require_assigned(user, kind, row)
         if method == 'PATCH':
             body = await object_body(request)

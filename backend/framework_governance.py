@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 import review_occurrences
 import assignment_eligibility
 import create_requests
+import authorization
 import shared_review_plans
 from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
@@ -576,6 +577,7 @@ def router_for(s):
                      'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':owner,'due_date':due,
                      'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'remediation_title':body.remediation_title.strip()}
                 await assignment_eligibility.validate(s.db, 'findings', doc, s._can_access_client)
+                await authorization.require_creation_assignee(s.db,user,row['client_id'],owner)
                 saved=await create_requests.insert_primary(s.db,'findings',doc,identity)
             fid=saved['finding_id']
             await s.finding_create_task(fid,{'title':saved['remediation_title']},user)

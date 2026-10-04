@@ -12,6 +12,70 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
     body = framework.FrameworkTests.body
     configure = framework.FrameworkTests.configure
 
+    async def test_contributor_unassignment_retry_keeps_original_authority_only(self):
+        _,_,_,_,t = await self.pair()
+        await server.db.tasks.update_one({'task_id':t['task_id']}, {'$set':{'assignee_id':'member','created_by':'admin'}})
+        self.sign_in('member')
+        path = '/api/tasks/' + t['task_id']
+        body = {'assignee_id':None,'expected_updated_at':t['updated_at']}
+        headers = {'Idempotency-Key':'unassign-ticket-intent-001'}
+        original = server.audit
+        async def fail(user,event,*args,**kwargs):
+            if event == 'Assignment changed': raise RuntimeError('Injected audit failure')
+            return await original(user,event,*args,**kwargs)
+        with patch.object(server,'audit',fail):
+            first = await self.client.patch(path,json=body,headers=headers)
+        self.assertEqual(first.status_code,503,first.text)
+        self.assertIsNone((await server.db.tasks.find_one({'task_id':t['task_id']}))['assignee_id'])
+        self.assertEqual((await self.client.patch(path,json={**body,'title':'Different'},headers=headers)).status_code,409)
+        self.assertEqual((await self.client.patch(path,json=body,headers={'Idempotency-Key':'new-unassigned-intent-001'})).status_code,403)
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'client_ids':['b']}})
+        self.assertEqual((await self.client.patch(path,json=body,headers=headers)).status_code,403)
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'client_ids':['a']}})
+        recovered = await self.client.patch(path,json=body,headers=headers)
+        self.assertEqual(recovered.status_code,200,recovered.text)
+        self.assertEqual((await self.client.patch(path,json=body,headers=headers)).json(),recovered.json())
+        self.assertEqual(await server.db.audit_logs.count_documents({'action':'Assignment changed','entity_id':t['task_id']}),1)
+
+    async def test_acceptance_recovers_audit_and_retains_unfinished_work(self):
+        _,_,_,f,t=await self.pair()
+        self.client.event_hooks['request'] = []
+        path='/api/findings/'+f['finding_id']+'/accept'
+        missing=await self.client.post(path,json={'request_id':'missing-version','rationale':'Must retain version guard'})
+        self.assertEqual(missing.status_code,428,missing.text)
+        body={'request_id':'accept-once','rationale':'Recorded management decision','expected_updated_at':f['updated_at']}
+        original=server.audit
+        async def fail(user,event,*args,**kwargs):
+            if event=='accept':raise RuntimeError('Injected audit failure')
+            return await original(user,event,*args,**kwargs)
+        with patch.object(server,'audit',fail):
+            self.assertEqual((await self.client.post(path,json=body)).status_code,503)
+        accepted=await self.client.post(path,json=body)
+        self.assertEqual(accepted.status_code,200,accepted.text)
+        self.assertEqual(accepted.json()['status'],'accepted')
+        self.assertEqual(len(accepted.json()['decision_history']),1)
+        self.assertEqual((await server.db.tasks.find_one({'task_id':t['task_id']}))['status'],'open')
+        self.assertEqual((await self.client.post(path,json=body)).json(),accepted.json())
+
+    async def test_cross_tenant_ticket_commands_and_reads_are_denied(self):
+        _,_,_,f,t=await self.pair()
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'client_ids':['b']}})
+        self.sign_in('member')
+        for kind,ident in [('findings',f['finding_id']),('tasks',t['task_id'])]:
+            self.assertIn((await self.client.get('/api/'+kind+'/'+ident)).status_code,(403,404))
+        self.assertIn((await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done'})).status_code,(403,404))
+        for action in ['validate','accept','reopen']:
+            response=await self.client.post('/api/findings/'+f['finding_id']+'/'+action,json={'request_id':'foreign','rationale':'Must not save','expected_updated_at':f['updated_at']})
+            self.assertIn(response.status_code,(403,404),response.text)
+        self.assertEqual((await server.db.tasks.find_one({'task_id':t['task_id']}))['status'],'open')
+
+    async def test_comments_protect_an_unlinked_legacy_finding(self):
+        await server.db.findings.insert_one({'finding_id':'legacy','client_id':'a','title':'Retained','status':'open','updated_at':'2026-01-01T00:00:00Z'})
+        await server.db.comments.insert_one({'comment_id':'comment','client_id':'a','entity_type':'findings','entity_id':'legacy','body':'Retained investigation'})
+        self.sign_in('admin')
+        response=await self.client.request('DELETE','/api/findings/legacy',json={'expected_updated_at':'2026-01-01T00:00:00Z'})
+        self.assertEqual(response.status_code,409,response.text)
+
     async def pair(self):
         workspace = await self.configure()
         aid = workspace['assessments'][0]['framework_assessment_id']
@@ -123,6 +187,8 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
             return await original(user,event,*args,**kwargs)
         with patch.object(server,'audit',fail):
             self.assertEqual((await self.client.post(path,json=body)).status_code,503)
+        pending=await server.db.tasks.find_one({'finding_id':f['finding_id'],'task_id':{'$ne':t['task_id']}})
+        self.assertEqual((await self.client.request('DELETE','/api/tasks/'+pending['task_id'],json={'expected_updated_at':pending['updated_at']})).status_code,409)
         response=await self.client.post(path,json=body)
         self.assertEqual(response.status_code,200,response.text)
         reopened=response.json()

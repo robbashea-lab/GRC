@@ -95,7 +95,7 @@ export async function previewAdapter(config) {
       if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))return fail(403,'Forbidden for this client');}
     }
     // Role limits mirror the server so persona QA in the Demo sees the same refusals.
-    try { authorizeDemo(db, method, parts, body); } catch (error) { return fail(403, error.message); }
+    try { authorizeDemo(db, method, parts, body, config.headers?.['Idempotency-Key']); } catch (error) { return fail(error.status||403, error.message); }
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
@@ -362,7 +362,7 @@ export async function previewAdapter(config) {
       return save(db.user);
     }
     if (ids[kind] && name) {
-      if(kind==='findings'&&['validate','reopen'].includes(name)&&body.request_id){
+      if(kind==='findings'&&['validate','reopen','accept'].includes(name)&&body.request_id){
         const finding=record(db,kind,id);
         return save(commandRequest(db,path,finding.client_id,body.request_id,body,()=>{
           const result=action(db,kind,id,name,body);audit(db,name,kind,result);return result;

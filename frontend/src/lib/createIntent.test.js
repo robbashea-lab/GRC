@@ -1,4 +1,5 @@
 import {createIntent} from './createIntent';
+beforeEach(()=>sessionStorage.clear());
 beforeAll(() => {Object.defineProperty(global, 'crypto', {configurable:true,value:require('crypto').webcrypto});});
 
 test('duplicate submits and uncertain retries reuse one intent; successful new creates do not', async () => {
@@ -12,6 +13,18 @@ test('duplicate submits and uncertain retries reuse one intent; successful new c
   expect(post.mock.calls[1][2]).toEqual(post.mock.calls[0][2]);
   await create('/findings',body);
   expect(post.mock.calls[2][2]).not.toEqual(post.mock.calls[0][2]);
+});
+
+test('ticket recovery survives remount and reload with its original payload and identity',async()=>{
+  const post=jest.fn().mockRejectedValueOnce(new Error('audit failed')).mockResolvedValue({});
+  const first=createIntent(post,'actor:client:ticket');
+  await expect(first('/tasks/t',{status:'done',expected_updated_at:'v1'})).rejects.toThrow();
+  const reloaded=createIntent(post,'actor:client:ticket');
+  expect(reloaded.unconfirmed()).toBe(true);
+  await reloaded.retry();
+  expect(post.mock.calls[1]).toEqual(post.mock.calls[0]);
+  expect(createIntent(post,'actor:client:ticket').unconfirmed()).toBe(false);
+  expect(createIntent(post,'other-actor:client:ticket').unconfirmed()).toBe(false);
 });
 
 test('only explicit no-primary rejection permits changing a failed intent', async () => {

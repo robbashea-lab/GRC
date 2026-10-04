@@ -1,6 +1,6 @@
 // One session-storage commit persists both command effects and their replay receipt.
 // This models Demo persistence only; it does not stand in for Mongo recovery tests.
-const stable = value => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
+export const stable = value => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
   ? Object.fromEntries(Object.keys(item).sort().map(key => [key,item[key]])) : item);
 export function commandRequest(db, path, clientId, key, body, execute) {
   if (typeof key !== 'string' || key.length < 1 || key.length > 128)

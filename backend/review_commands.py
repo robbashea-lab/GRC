@@ -69,10 +69,13 @@ async def create_finding(s, review_id, body, user):
         if doc.get('audit_item_key'):
             # Only the source relationship is saved, never unrelated workpaper drafts.
             current = await s.db.reviews.find_one({'review_id':review_id, 'client_id':review['client_id']})
-            await s._review_selection(current, body['occurrence_id'], write=True)
             path = 'iso_audit.items.' + doc['audit_item_key'] + '.finding_ids'
-            linked = current['iso_audit'].get('items', {}).get(doc['audit_item_key'], {}).get('finding_ids', [])
+            import review_occurrences
+            source=current if review_occurrences.occurrence_id(current)==body['occurrence_id'] else next(
+                (o for o in current.get('occurrences',[]) if o.get('occurrence_id')==body['occurrence_id']),{})
+            linked = source.get('iso_audit',{}).get('items', {}).get(doc['audit_item_key'], {}).get('finding_ids', [])
             if fid not in linked:
+                await s._review_selection(current, body['occurrence_id'], write=True)
                 await s.db.reviews.update_one({'review_id':review_id, 'client_id':review['client_id']},
                     {'$addToSet':{path:fid}, '$set':{'updated_at':s._next_write_time(current.get('updated_at'))}})
             await s._review_event(user, review, 'Audit item Finding linked', body['occurrence_id'],

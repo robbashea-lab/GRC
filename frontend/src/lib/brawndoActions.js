@@ -35,7 +35,7 @@ export function actionOrigin(record,records={},finding) {
   const rid=source.review_id||record.review_id;
   if(rid){const target=find('reviews','review_id',rid),origin={...source,review_id:rid,occurrence_id:source.occurrence_id||record.occurrence_id};
     const initialValues=target?relatedReviewInitialValues(target,origin):{};
-    const missing=target&&origin.occurrence_id&&origin.occurrence_id!==occurrenceId(target)&&!initialValues.occurrence;
+    const missing=target&&(!origin.occurrence_id||origin.occurrence_id!==occurrenceId(target)&&!initialValues.occurrence);
     return {kind:'reviews',target:missing?null:target,id:rid,label:target?.title||'Review unavailable',detail:missing?'Original occurrence unavailable':initialValues.occurrence?.period||target?.period,initialValues};}
   const origin=taskSource(source,records);
   if(record.client_id==='demo_brawndo'&&record.assurance_id&&origin.kind==='vendors')return {...origin,detail:'Linked assurance document',initialValues:{vendorTab:'assurance',assuranceId:record.assurance_id}};

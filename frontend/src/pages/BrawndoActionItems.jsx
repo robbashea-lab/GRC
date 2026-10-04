@@ -3,10 +3,8 @@ import {Navigate,useLocation,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import {useActionRegisterData} from '@/lib/useActionRegisterData';
-import {isReferenceRegister} from '@/lib/reference';
 import {unifiedActions,pilotActionMatches,pilotActionStatus,pilotActionColumns,pilotPriority,finished} from '@/lib/brawndoActions';
 import {tableColumns} from '@/lib/tableColumns';
-import RecordListPage from './RecordListPage';
 import RecordDrawer from '@/components/RecordDrawer';
 import {BrawndoSurface,BrawndoPageHeader,BrawndoTiles,BrawndoChips,plural,shortDate,daysUntil} from '@/components/BrawndoPage';
 import {PrimaryAction,SearchField,SortableHeader} from '@/components/Register';
@@ -37,8 +35,8 @@ export function actionTiles(rows,now=new Date()){
 const labels={open:'Open',in_progress:'In Progress',overdue:'Overdue',completed:'Completed',pending_validation:'Pending Validation'};
 
 export function FindingsRoute(){
-  const {currentClientId}=useOrg(),{user}=useAuth(),location=useLocation();
-  // Preserve Finding deep links while every Demo client uses the consolidated register.
+  const location=useLocation();
+  // Preserve Finding deep links in the shared normal and Demo register.
   return <Navigate replace to={'/action-items'+location.search} state={location.state}/>;
 }
 

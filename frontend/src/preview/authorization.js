@@ -1,6 +1,7 @@
 // Demo-only mirror of backend/authorization.py authorize_request. It lets persona QA in the
 // Demo show the same 403s the server returns; it never protects real data.
 import { ids } from './store';
+import { stable } from './commandRequests';
 
 const OWNER = 'super_admin', PROVIDER = 'platform_admin', MANAGER = 'client_grc_manager';
 const CONTRIBUTOR = 'client_contributor', READER = 'client_readonly';
@@ -35,7 +36,7 @@ function requireAssigned(user, kind, row) {
 }
 
 // Returns nothing when allowed; throws an error carrying status 403 when the server would refuse.
-export function authorizeDemo(db, method, parts, body = {}) {
+export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   const user = db.user, role = roleOf(user);
   if (!ROLES.includes(role)) deny('Unsupported role');
   if (method === 'get') return;
@@ -66,6 +67,16 @@ export function authorizeDemo(db, method, parts, body = {}) {
   }
   const row = (db[kind] || []).find(r => r[ids[kind]] === id);
   if (!row) deny('Record unavailable for this client');
+  if (!user.client_ids?.includes(row.client_id)) deny('Forbidden for this client');
+  if (kind === 'tasks' && method === 'patch' && parts.length === 2 && requestKey) {
+    const receipt = db.command_requests?.[JSON.stringify([user.user_id,row.client_id,'/'+parts.join('/'),requestKey])];
+    // Demo receipts are committed atomically with their effects. Replay only the
+    // exact completed intent, after current role and tenant checks, not a new edit.
+    if (receipt) {
+      if (receipt.fingerprint !== stable(body)) throw Object.assign(new Error('This request has different data; restore the original request before retrying'), {status:409});
+      return;
+    }
+  }
   requireAssigned(user, kind, row);
   if (method !== 'patch') return;
   for (const field of Object.keys(body).filter(f => OWNERS[kind].includes(f))) {

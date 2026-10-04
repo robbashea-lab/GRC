@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import BrawndoSidebar,{BrawndoPlatformSidebar,sidebarCounts} from './BrawndoSidebar';
 import api from '@/lib/api';
 let mockOrg;
-jest.mock('react-router-dom',()=>({NavLink:({to,children,className,end,...rest})=><a href={to} className={typeof className==='function'?className({isActive:to==='/dashboard'}):className} {...rest}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
+jest.mock('react-router-dom',()=>({NavLink:({to,children,className,end,...rest})=><a href={to} className={typeof className==='function'?className({isActive:to==='/dashboard'}):className} {...rest}>{children}</a>,useLocation:()=>({key:'test'}),useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()}}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{name:'Demo',role:'super_admin'},logout:jest.fn()})}));
@@ -16,7 +16,7 @@ test('badge counts come from the dashboard summary and zero counts show no badge
 });
 test('grouped navigation, labelled badges and the shared theme preference',async()=>{
   localStorage.setItem('omnisciente:brawndo-dashboard-theme','dark');
-  api.get.mockResolvedValue({data:{client_id:'demo_brawndo',kpis:{overdue_reviews:1,overdue_actions:2,significant_risks:1},posture:{vendorHealth:[]}}});
+  api.get.mockImplementation(async path=>({data:path==='/findings'?[]:path==='/tasks'?[{client_id:'demo_brawndo',task_id:'a',status:'open',due_date:'2000-01-01'},{client_id:'demo_brawndo',task_id:'b',status:'open',due_date:'2000-01-02'}]:{client_id:'demo_brawndo',kpis:{overdue_reviews:1,overdue_actions:99,significant_risks:1},posture:{vendorHealth:[]}}}));
   await act(async()=>root.render(<BrawndoSidebar complianceItems={[{key:'cis-ig1',label:'CIS IG1',to:'/compliance/cis-ig1'}]} isInternal/>));
   expect([...container.querySelectorAll('.bsb-group > .bsb-group-label')].map(e=>e.textContent)).toEqual(['Work','Program','Client']);
   expect(container.querySelector('[aria-label="2 overdue action items"]').textContent).toBe('2');
@@ -37,7 +37,7 @@ test('grouped navigation, labelled badges and the shared theme preference',async
 
 test.each(['client','platform'])('%s sidebar identifies product attribution separately from the selected client',async context=>{
   mockOrg={currentClient:{name:'Independent lifecycle client'},currentClientId:'client-independent',clients:[]};
-  api.get.mockResolvedValue({data:{client_id:'client-independent',kpis:{}}});
+  api.get.mockImplementation(async path=>({data:path==='/dashboard'?{client_id:'client-independent',kpis:{}}:[]}));
   await act(async()=>root.render(context==='client'?<BrawndoSidebar isInternal/>:<BrawndoPlatformSidebar/>));
   expect(container.querySelector('.bsb-sub').textContent).toBe('By Prestige Worldwide');
   expect(container.querySelector('.bsb-brand').getAttribute('aria-label')).toBe('Omnisciente by Prestige Worldwide');

@@ -94,6 +94,9 @@ class IsoAuditTests(unittest.IsolatedAsyncioTestCase):
             return await original(user,record,event,*args,**kwargs)
         with patch.object(server,'_review_event',fail):
             self.assertEqual((await self.client.post(path,json=body)).status_code,503)
+        premature=await self.client.post('/api/reviews/'+rid+'/complete',json={'occurrence_id':body['occurrence_id']})
+        self.assertEqual(premature.status_code,409,premature.text)
+        self.assertIn('pending audit ticket',premature.text)
         response=await self.client.post(path,json=body)
         self.assertEqual(response.status_code,200,response.text)
         finding=response.json();review=(await self.client.get('/api/reviews/'+rid)).json()

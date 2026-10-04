@@ -47,6 +47,7 @@ test('source follows exact framework assessment and historical Review occurrence
   const occurrence={occurrence_id:'old',period:'September 2026'},review={review_id:'r',client_id:cid,title:'Training Review',current_occurrence_id:'new',period:'October 2026',occurrences:[occurrence]};
   expect(actionOrigin(task('t',{review_id:'r',occurrence_id:'old'}),{reviews:[review]})).toMatchObject({target:review,detail:'September 2026',initialValues:{occurrence}});
   expect(actionOrigin(task('t',{review_id:'r',occurrence_id:'missing'}),{reviews:[review]}).target).toBeNull();
+  expect(actionOrigin(task('t',{review_id:'r'}),{reviews:[review]}).target).toBeNull();
   expect(actionOrigin(task('t',{review_id:'r'}),{reviews:[{...review,client_id:'other'}]}).target).toBeUndefined();
 });
 test('a Pending Validation Finding is an open work item, overdue by its own target date',()=>{
