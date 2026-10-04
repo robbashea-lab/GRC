@@ -53,7 +53,7 @@ export default function ClientManagement() {
   async function saved(client) {
     const created = dialog && !dialog.client;
     setDialog(null);
-    toast.success(`${client.name} saved`, created ? {duration:10000, action:{label:'Open Client Profile',onClick:()=>{switchClient(client.client_id);navigate('/client-profile');}}} : undefined);
+    toast.success(`${client.name} saved`, created ? {position:'top-right', closeButton:true, duration:10000, action:{label:'Open Client Profile',onClick:()=>{switchClient(client.client_id);navigate('/client-profile');}}} : undefined);
     await load(); await refresh();
   }
   async function archive(client) {
