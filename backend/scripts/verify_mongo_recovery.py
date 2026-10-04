@@ -21,6 +21,7 @@ def main():
     parser.add_argument('--include-program-lifecycle', action='store_true', help='Also run the three-framework 36-month API matrix')
     parser.add_argument('--include-cis-ig2', action='store_true', help='Also run cumulative CIS scope, recovery and authorization checks')
     parser.add_argument('--include-remediation-tickets', action='store_true', help='Also run ticket integrity and exact ISO audit-item association checks')
+    parser.add_argument('--include-cis-ig3-scope', action='store_true', help='Also run actual IG3 catalog mechanics with an isolated test-only release gate')
     args = parser.parse_args()
     parsed = urlsplit(args.mongo_url)
     if (parsed.scheme != 'mongodb' or parsed.hostname != '127.0.0.1' or not parsed.port
@@ -96,6 +97,10 @@ def main():
         for base in (TicketIntegrityTests, IsoAuditTests):
             concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
             suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
+    if args.include_cis_ig3_scope:
+        from test_cis_ig3_scope import CisIG3ScopeTests
+        concrete = type('MongoCisIG3ScopeTests', (MongoStorage, CisIG3ScopeTests), {})
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     logging.getLogger('httpx').setLevel(logging.WARNING)
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     return 0 if result.wasSuccessful() else 1

@@ -768,7 +768,7 @@ class ProgramApplicabilityChange(BaseModel):
     reason: Optional[str] = Field(default=None,max_length=2000)
     effective_date: Optional[str] = Field(default=None,max_length=10)
     expected_updated_at: Optional[str] = Field(default=None,max_length=100)
-    implementation_group: Optional[int] = Field(default=None,strict=True,ge=1,le=2)
+    implementation_group: Optional[int] = Field(default=None,strict=True,ge=1,le=3)
 
 
 @router.patch('/onboarding/programs/{key}')
@@ -796,6 +796,9 @@ async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict 
     server._require_snapshot(body.model_dump(exclude_unset=True),old or {})
     if body.implementation_group is not None:
         if key!='cis-ig1':raise HTTPException(422,'Implementation group applies only to CIS')
+        from cis_scope import validate_settings
+        try: validate_settings({'cis-ig1':{'implementation_group':body.implementation_group}})
+        except ValueError as exc: raise HTTPException(422,str(exc)) from exc
         from framework_catalog import client_configuration
         if old and old.get('baseline_response')=='applies' and client_configuration(key,client)['implementation_group']!=body.implementation_group:
             raise HTTPException(409,'Use CIS scope settings to change an active implementation group')

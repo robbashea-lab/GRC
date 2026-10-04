@@ -21,9 +21,9 @@ export const STATUS_HELP={
   needs_attention:'Implementation is absent or evidence is insufficient to validate it. Record which condition applies in Assessment notes; use a Finding when remediation is needed.',
   not_applicable:'Record why this item is outside scope. Framework-specific applicability rules still apply; the assessment remains in history.'
 };
-export const operatorProgram=key=>FRAMEWORKS.find(f=>f.key===key)?.label||key;
+export const operatorProgram=key=>key==='cis-ig1'?'CIS Controls v8.1':FRAMEWORKS.find(f=>f.key===key)?.label||key;
 export function operatorGuidance(key,definition){
-  if(key==='cis-ig1'&&definition.implementation_group===2){const guidance=cisAssessmentGuidance.requirements[definition.id];return {meaning:definition.guidance,implementation:guidance.review.join(' '),evidence:guidance.evidence.join(' ')};}
+  if(key==='cis-ig1'&&definition.implementation_group>=2){const guidance=cisAssessmentGuidance.requirements[definition.id];return {meaning:definition.guidance,implementation:guidance.review.join(' '),evidence:guidance.evidence.join(' ')};}
   if(key==='soc-2'){const criterion=socGuidance.criteria[definition.id];return {meaning:criterion?.[0],implementation:criterion?.[2]||socGuidance.groups[definition.control]||socGuidance.groups.privacy,evidence:criterion?.[1]};}
   if(key==='iso-27001'){const annex=isoGuidance.annex[definition.id];return {meaning:annex?.[0]||isoGuidance.clauses[definition.id],implementation:isoGuidance.groups[definition.control],evidence:annex?.[1]||definition.evidence_guidance};}
   if(key==='hipaa')return {meaning:hipaaGuidance.meanings[definition.id],...(hipaaGuidance.groups[definition.id.slice(0,7)]||hipaaGuidance.groups.support),evidence:hipaaGuidance.evidence[definition.id]};

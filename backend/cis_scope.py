@@ -1,7 +1,13 @@
 """Client scope inside the original CIS v8.1 assessment namespace."""
 from datetime import date, datetime, timezone
 from typing import Literal, Optional
+from framework_catalog import CIS
 from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
+
+
+def available_groups():
+    # Explicit release gate: prepared IG3 content awaits completed release verification.
+    return CIS['available_implementation_groups']
 
 
 def configuration(client):
@@ -15,14 +21,14 @@ def validate_settings(settings):
         raise ValueError('Invalid onboarding framework settings')
     cis = settings.get('cis-ig1', {})
     if not isinstance(cis, dict) or set(cis) - {'implementation_group'} or (
-            'implementation_group' in cis and (type(cis['implementation_group']) is not int or cis['implementation_group'] not in (1, 2))):
-        raise ValueError('CIS implementation group must be 1 or 2')
+            'implementation_group' in cis and (type(cis['implementation_group']) is not int or cis['implementation_group'] not in available_groups())):
+        raise ValueError('CIS implementation group is not available')
 
 
 class CisConfiguration(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     client_id: str = Field(min_length=1, max_length=160)
-    implementation_group: Literal[1, 2]
+    implementation_group: Literal[1, 2, 3]
     expected_updated_at: Optional[str] = Field(default=None, max_length=100)
     confirm_reduction: bool = Field(default=False, strict=True)
     reason: str = Field(default='', max_length=2000)
@@ -31,8 +37,8 @@ class CisConfiguration(BaseModel):
     @field_validator('implementation_group', mode='before')
     @classmethod
     def strict_group(cls, value):
-        if type(value) is not int or value not in (1, 2):
-            raise ValueError('CIS implementation group must be 1 or 2')
+        if type(value) is not int or value not in available_groups():
+            raise ValueError('CIS implementation group is not available')
         return value
 
     @model_validator(mode='after')

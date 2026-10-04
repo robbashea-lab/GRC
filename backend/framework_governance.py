@@ -111,6 +111,8 @@ async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configurat
         if not old and plan.get('baseline_key'):
             equivalent=[p['key'] for c in CATALOGS.values() for p in c['review_plans'] if p.get('baseline_key')==plan['baseline_key']]
             old=await s.db.reviews.find_one({'client_id':cid,'$or':[{'baseline_key':plan['baseline_key']},{'framework_plan_key':{'$in':equivalent}}]},{'_id':0})
+        if old and plan.get('default_enabled') is False and plan['key'] not in state.get('framework_reviews', {}):
+            config['enabled'] = True
         if not config['enabled']:
             if old:await add_driver(s,cid,old['review_id'],key,plan,False)
             continue
@@ -339,7 +341,7 @@ def router_for(s):
             if not intent:
                 s._require_snapshot(body.model_dump(exclude_unset=True),{'updated_at':current.get('cis_configuration_updated_at')})
                 before=client_configuration('cis-ig1',current)['implementation_group']
-                if before==2 and body.implementation_group==1 and (not body.confirm_reduction or not body.reason or not body.effective_date):
+                if body.implementation_group<before and (not body.confirm_reduction or not body.reason or not body.effective_date):
                     raise HTTPException(422,'Scope reduction requires impact confirmation, reason and effective date; assessments, links and open work are retained')
                 intent={'before':before,'after':body.implementation_group,'previous_updated_at':current.get('cis_configuration_updated_at'),
                     'updated_at':s._next_write_time(current.get('cis_configuration_updated_at')),'reason':body.reason,
@@ -369,7 +371,7 @@ def router_for(s):
         for row in sorted(rows,key=lambda r:tuple(map(int,r['definition_id'].split('.')))):
             if not include_retained and row['definition_id'] not in active:continue
             d=definition_for('cis-ig1',row['definition_id'])
-            values={**row,'title':d.get('title',row['definition_id']),'scope_group':'Added in IG2' if d.get('implementation_group')==2 else 'IG1 baseline',
+            values={**row,'title':d.get('title',row['definition_id']),'scope_group':f"Added in IG{d['implementation_group']}" if d.get('implementation_group',1)>1 else 'IG1 baseline',
                 'in_active_scope':row['definition_id'] in active,'client_implementation_group':configuration['implementation_group'],'verification':row.get('verification') or 'not_verified'}
             writer.writerow({field:security_runtime.csv_cell(json.dumps(values[field],ensure_ascii=False) if isinstance(values.get(field),(dict,list)) else values.get(field,'')) for field in fields})
         await s.audit(user,'CIS assessment export','client',client_id,client_id,meta={'implementation_group':configuration['implementation_group'],'include_retained':include_retained})

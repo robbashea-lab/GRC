@@ -1,4 +1,5 @@
 import {FRAMEWORKS, CATALOGS, activeDefinitions, sharedFrameworkPlans, reviewConfig, genericReviews,existingFrameworkReview} from './frameworks';
+import {cisProgramName,cisLabel} from './cisScope';
 import {reviewView} from './reviewOccurrences';
 
 export const APPLICABILITY = [['applies','Applies'],['does_not_apply','Does Not Apply'],['unsure','Unsure']];
@@ -48,7 +49,7 @@ export function currentHandoff(snapshot, cid) {
   const programs = FRAMEWORKS.filter(f => records.requirements.some(r => r.baseline_key === f.key && r.baseline_response === 'applies')).map(f => {
     const active=new Set(activeDefinitions(f.key,snapshot.client.framework_settings?.[f.key]).map(d=>d.id));
     const rows = records.framework_assessments.filter(a => a.framework_key === f.key&&active.has(a.definition_id));
-    return {...f,...(f.key==='cis-ig1'?{label:`CIS IG${snapshot.client.framework_settings?.[f.key]?.implementation_group||1}`}:{ }), assessments:rows.length, not_assessed:rows.filter(a=>a.status==='not_assessed').length};
+    return {...f,...(f.key==='cis-ig1'?{label:cisLabel(snapshot.client.framework_settings?.[f.key]),name:cisProgramName(f,snapshot.client.framework_settings?.[f.key])}:{ }), assessments:rows.length, not_assessed:rows.filter(a=>a.status==='not_assessed').length};
   });
   return {...snapshot, records, counts, programs,
     unsurePrograms:FRAMEWORKS.filter(f=>records.requirements.some(r=>r.baseline_key===f.key && ['potentially_applicable','needs_review'].includes(r.applicability))),

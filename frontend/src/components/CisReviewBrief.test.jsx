@@ -32,14 +32,17 @@ test('a late workspace response cannot expose the previous client’s safeguard 
  expect(onOpen.mock.calls[0][0].framework_assessment_id).toBe('b1');
 });
 
-test('all 130 mapped safeguards expose every review prompt, consolidate shared timing, and preserve records',async()=>{
- const ids=cis.requirements.map(d=>d.id),seen=new Set(),rows=ids.map(id=>({framework_assessment_id:'synthetic-'+id,definition_id:id,owner_id:'owner',implementation:'Existing customized method',cis_operation:{confirmed:false}}));
+test('all 153 safeguards have Review mappings',()=>{
+ expect(new Set(cis.review_plans.flatMap(p=>p.safeguards)).size).toBe(153);
+});
+
+test.each(cis.review_plans)('$key exposes every prompt, consolidates timing, and preserves records',async plan=>{
+ const ids=cis.requirements.map(d=>d.id),rows=ids.map(id=>({framework_assessment_id:'synthetic-'+id,definition_id:id,owner_id:'owner',implementation:'Existing customized method',cis_operation:{confirmed:false}}));
  api.get.mockImplementation(path=>Promise.resolve({data:path==='/frameworks/cis-ig1'?{assessments:rows,active_definition_ids:ids}:[]}));
- for(const plan of cis.review_plans){
   const review={client_id:'synthetic',recurrence:'custom',custom_recurrence_days:45,framework_drivers:[reviewDriver('cis-ig1',plan)],occurrences:[{conclusion:'Retained historical conclusion',notes:'Original instructions'}]},before=JSON.stringify(review);
   await act(async()=>root.render(<CisReviewBrief record={review} historical onOpen={jest.fn()}/>));
   for(const id of plan.safeguards){
-   seen.add(id);const definition=cis.requirements.find(d=>d.id===id);
+   const definition=cis.requirements.find(d=>d.id===id);
    const item=[...container.querySelectorAll('button')].find(button=>button.textContent.startsWith(id+' · ')).closest('li');
    for(const question of guidance.requirements[id].review){
     if(question===`${definition.source_cadence} Confirm relevant exceptions and follow-up with the accountable owner.`){
@@ -53,6 +56,5 @@ test('all 130 mapped safeguards expose every review prompt, consolidate shared t
   expect(container.textContent).not.toContain('Arrangement confirmation');
   expect(container.textContent).not.toContain('Responsibility details missing');
   expect(JSON.stringify(review)).toBe(before);
- }
- expect(seen.size).toBe(130);expect(api.patch).not.toHaveBeenCalled();
+ expect(api.patch).not.toHaveBeenCalled();
 });

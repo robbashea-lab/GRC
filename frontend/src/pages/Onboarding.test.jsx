@@ -22,6 +22,27 @@ beforeEach(()=>{
   api.post.mockImplementation(async(_,body)=>{mockState={...body.state,completed:!!body.finalize};return {data:mockState};});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+test('IG2 intake advances to Policies and requires all responses before Reviews',async()=>{
+  mockState={...mockState,step:0,requirements:{'cis-ig1':'applies'},framework_settings:{'cis-ig1':{implementation_group:2}}};
+  await act(async()=>root.render(<Onboarding/>));
+  expect(container.querySelector('h2').textContent).toBe('Compliance & Requirements');
+  await act(async()=>button('Next').click());
+  expect(container.querySelector('h2').textContent).toBe('Policies & Governance Documents');
+  expect(container.querySelectorAll('[role="group"]')).toHaveLength(17);
+  await act(async()=>button('Next').click());
+  expect(container.querySelector('h2').textContent).toBe('Policies & Governance Documents');
+  expect(container.querySelector('[role="alert"]').textContent).toContain('each unanswered Policy');
+  for(const group of container.querySelectorAll('[role="group"]')) await act(async()=>Array.from(group.querySelectorAll('button')).find(b=>b.textContent==='Unsure').click());
+  await act(async()=>button('Next').click());
+  expect(container.querySelector('h2').textContent).toBe('Recurring Reviews');
+});
+
+test('IG2 confirmation uses the selected cumulative scope name',async()=>{
+  mockState={...mockState,step:3,requirements:{'cis-ig1':'applies'},framework_settings:{'cis-ig1':{implementation_group:2}}};
+  await act(async()=>root.render(<Onboarding/>));
+  expect(container.textContent).toContain('CIS Controls v8.1 IG2');
+  expect(container.textContent).not.toContain('CIS Controls v8.1 IG1');
+});
 test('contributor is told which operator can run onboarding',async()=>{
   mockRole='client_contributor';
   await act(async()=>root.render(<Onboarding/>));

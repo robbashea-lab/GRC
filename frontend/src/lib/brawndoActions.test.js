@@ -48,7 +48,7 @@ test('dates sort both ways with undated last; categorical controls offer filters
 });
 test('source follows exact framework assessment and historical Review occurrence, never foreign or missing records',()=>{
   const a={framework_assessment_id:'a',client_id:cid,framework_key:'cis-ig1',definition_id:'1.1'};
-  expect(actionOrigin(task('t'),{framework_assessments:[a]},finding('f',{framework_assessment_id:'a'}))).toMatchObject({target:a,label:'CIS IG1 Assessment → Safeguard 1.1'});
+  expect(actionOrigin(task('t'),{framework_assessments:[a]},finding('f',{framework_assessment_id:'a'}))).toMatchObject({target:a,label:'CIS Controls v8.1 Assessment → Safeguard 1.1'});
   const occurrence={occurrence_id:'old',period:'September 2026'},review={review_id:'r',client_id:cid,title:'Training Review',current_occurrence_id:'new',period:'October 2026',occurrences:[occurrence]};
   expect(actionOrigin(task('t',{review_id:'r',occurrence_id:'old'}),{reviews:[review]})).toMatchObject({target:review,detail:'September 2026',initialValues:{occurrence}});
   expect(actionOrigin(task('t',{review_id:'r',occurrence_id:'missing'}),{reviews:[review]}).target).toBeNull();

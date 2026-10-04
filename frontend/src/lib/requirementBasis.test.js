@@ -51,3 +51,11 @@ test('finding/review legacy ambiguity resolves IDs correctly and unavailable sou
   expect(taskSource(row).target).toBeUndefined();
   expect(taskSource(row,{findings:[{client_id:'b',finding_id:'f',title:'Secret'}]}).target).toBeUndefined();
 });
+
+ test('IG3 supporting references identify the versioned CIS framework without claiming IG1 scope',()=>{
+ const row={framework_key:'cis-ig1',framework_safeguards:['1.5'],recurrence:'custom',custom_recurrence_days:7};
+ const groups=requirementBasis('reviews',row);
+ expect(groups[0].label).toBe('CIS Controls v8.1');
+ expect(groups[0].requirements[0].classification).toBe('IG3 Safeguard');
+ expect(basisSummary(row)).toBe('CIS Controls v8.1');
+});

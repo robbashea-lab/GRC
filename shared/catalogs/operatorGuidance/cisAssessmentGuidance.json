@@ -63,6 +63,21 @@
         "At least weekly inventory updates using logs. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
+    "1.5": {
+      "review": [
+        "[Requirement check 1.5] Were passive-discovery results reviewed and used to update inventory at least weekly? [Explanatory prompt] Which networks or weeks lack supporting records?",
+        "Confirm monitored network segments and reconcile dated discoveries to inventory entries. Trace an unknown asset through ownership and authorization decisions; check gaps between weekly reconciliations.",
+        "Scope and timing: At least weekly: review discovery results and use them to update inventory. Passive discovery operates between those reviews. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Sensor coverage map, discovery output, dated inventory change log or provider reconciliation record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Discover connected assets passively; use the results to refresh the asset inventory at least weekly. At least weekly: review discovery results and use them to update inventory. Passive discovery operates between those reviews.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
     "2.1": {
       "review": [
         "Review the inventory of licensed software installed on enterprise assets. Confirm each entry has a title, publisher, initial installation/use date and business purpose.",
@@ -149,6 +164,21 @@
       "outcome": [
         "Prevent unapproved libraries loading. Enforce library controls; handle changes safely.",
         "Reassess at least every six months. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "2.7": {
+      "review": [
+        "[Requirement check 2.7] Does technical enforcement allow authorized scripts and block unauthorized scripts, and was it reassessed within six months? [Explanatory prompt] Which execution paths were examined?",
+        "Identify script execution paths, including administrative tools, email and browser handling. Confirm authorized execution and blocked unauthorized execution using safe existing test results; check the latest reassessment date.",
+        "Scope and timing: CIS says bi-annually or more frequently. Interpret as every six months, supported by the CAS six-month test; enforcement is ongoing. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Approved script list, enforcement configuration, safe allow/block test results, reassessment record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Enforce execution of authorized scripts only and block others; reassess at least every six months. CIS says bi-annually or more frequently. Interpret as every six months, supported by the CAS six-month test; enforcement is ongoing.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
       ]
     },
     "3.1": {
@@ -325,6 +355,36 @@
         "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
+    "3.13": {
+      "review": [
+        "[Requirement check 3.13] Does automated discovery cover sensitive data across the stated locations and feed the inventory? [Explanatory prompt] Show a recent detected location and its inventory entry.",
+        "Confirm coverage of stored, processed and transmitted sensitive information, including remote-provider locations. Trace a detected data location to the inventory and investigate blind spots.",
+        "Scope and timing: No fixed interval specified. The automated capability and inventory-update process must operate. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Discovery coverage/export, DLP configuration, provider coverage statement and matched data-inventory update.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Use automated sensitive-data discovery across enterprise and provider assets, and update the data inventory. No fixed interval specified. The automated capability and inventory-update process must operate.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "3.14": {
+      "review": [
+        "[Requirement check 3.14] Are sensitive-data access, modification and disposal recorded? [Explanatory prompt] Which data stores and event types do the examples cover?",
+        "Compare sensitive-data locations to enabled audit sources. Inspect representative access, modification and deletion records and identify locations or event types that are not recorded.",
+        "Scope and timing: No fixed review interval specified. Logging must cover relevant access events as they occur. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Audit-source configuration and representative access, change and disposal log entries.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Record access to sensitive data, including changes and disposal. No fixed review interval specified. Logging must cover relevant access events as they occur.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
     "4.1": {
       "review": [
         "Review the documented secure-configuration process for endpoints, portable/mobile devices, IoT/non-computing assets, servers, operating systems and applications.",
@@ -481,6 +541,21 @@
       "outcome": [
         "Remove enterprise data remotely when appropriate. Maintain capability; execute on approved events.",
         "Event: loss, theft or end of engagement are examples; no fixed interval. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "4.12": {
+      "review": [
+        "[Requirement check 4.12] Do supported mobile devices separate enterprise and personal workspaces? [Explanatory prompt] Which devices cannot support separation and how was that established?",
+        "Establish the supported mobile population, examine assigned profiles and confirm enterprise applications/data are separated from personal use. Record unsupported-device conditions without treating the whole safeguard as excluded.",
+        "Scope and timing: No fixed interval specified; maintain the separation on supported devices. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Device capability inventory, management-profile configuration, representative device compliance record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Separate enterprise and personal workspaces on mobile devices wherever supported. No fixed interval specified; maintain the separation on supported devices.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
       ]
     },
     "5.1": {
@@ -669,6 +744,21 @@
       "outcome": [
         "Consolidate supported access enforcement. Operate centralized access control.",
         "No numeric interval specified; where supported. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "6.8": {
+      "review": [
+        "[Requirement check 6.8] Are role rights documented and all asset privileges validated as authorized at least annually? [Explanatory prompt] Does the existing quarterly account review cover privileges as well as account existence?",
+        "Compare job duties, role definitions and actual asset privileges. Confirm reviews cover all privileges, including privileged and service access where relevant; investigate excessive and unmapped rights.",
+        "Scope and timing: Access-control review at least annually or more often. Role definitions and rights are maintained. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Role-to-rights matrix, entitlement export, dated authorization review and resulting corrections.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Document necessary rights by role; review asset privileges for authorization at least annually. Access-control review at least annually or more often. Role definitions and rights are maintained.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
       ]
     },
     "7.1": {
@@ -934,6 +1024,21 @@
         "At least weekly. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
+    "8.12": {
+      "review": [
+        "[Requirement check 8.12] Are supported service-provider logs being collected? [Explanatory prompt] Which providers lack support, and which supported sources have collection gaps?",
+        "Review: Match the provider inventory to available log interfaces and actual received records. Distinguish unavailable provider functionality from supported logging that has not been configured.",
+        "Scope and timing: No fixed collection or human-review interval specified here; collect on an ongoing basis where supported. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Provider logging capability record, connector configuration, representative received logs.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Obtain service-provider logs wherever the provider supports them. No fixed collection or human-review interval specified here; collect on an ongoing basis where supported.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
     "9.1": {
       "review": [
         "Compare installed browsers and email clients with current vendor releases and support information.",
@@ -1020,6 +1125,21 @@
       "outcome": [
         "Prevent unwanted email attachment types entering. Enforce email file-type blocking.",
         "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "9.7": {
+      "review": [
+        "[Requirement check 9.7] Is email-server anti-malware protection deployed and maintained? [Explanatory prompt] What demonstrates that the hosted or local email service is covered?",
+        "Include hosted email responsibility arrangements. Inspect enabled protection and existing detection/blocking results; distinguish mail-client protection from coverage of the email service.",
+        "Scope and timing: No fixed interval specified. Protection is maintained in operation. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Email-service protection settings, provider service-scope record, recent protection event or safe test record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Operate and maintain anti-malware protection for email servers. No fixed interval specified. Protection is maintained in operation.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
       ]
     },
     "10.1": {
@@ -1299,6 +1419,21 @@
         "Before accessing enterprise resources. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
+    "12.8": {
+      "review": [
+        "[Requirement check 12.8] Do all administrative tasks use dedicated, separated resources with no internet access? [Explanatory prompt] Which administrative paths bypass those resources?",
+        "Identify all administrative tasks and the resources used for them. Confirm network separation and denied internet access using existing configuration/test records, including remote administrative routes.",
+        "Scope and timing: No fixed interval specified; the restrictions apply during administrative work. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Administrative-resource inventory, network/egress rules, existing connectivity test, operating procedure.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Use physically or logically dedicated administrative computing resources, segmented from the primary network and without internet access. No fixed interval specified; the restrictions apply during administrative work.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
     "13.1": {
       "review": [
         "Define correlation, alert ownership and escalation; equivalent log analytics can satisfy the outcome. Confirm the covered population and client decisions.",
@@ -1387,6 +1522,81 @@
       "outcome": [
         "Make network flows available for review/alerts. Collect network flow or traffic records.",
         "No numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "13.7": {
+      "review": [
+        "[Requirement check 13.7] Is host prevention operating where appropriate and/or supported? [Explanatory prompt] Which assets are excluded and what supports the decision?",
+        "Confirm prevention capability and enabled mode, identify coverage gaps, and document support/appropriateness decisions. Distinguish detection-only telemetry from prevention.",
+        "Scope and timing: No fixed interval specified; prevention operates on applicable assets. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Endpoint capability/coverage export, prevention settings and representative block result.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Provide host intrusion prevention where appropriate and/or supported. No fixed interval specified; prevention operates on applicable assets.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "13.8": {
+      "review": [
+        "[Requirement check 13.8] Is network prevention deployed where appropriate? [Explanatory prompt] Which relevant traffic paths lack coverage?",
+        "Map relevant traffic paths to prevention controls and confirm blocking mode. Review uncovered or bypass routes and the rationale for where prevention is appropriate.",
+        "Scope and timing: No fixed interval specified; prevention operates on relevant network paths. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Boundary diagram, prevention policy, cloud-service configuration, representative blocking record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Provide network intrusion prevention where appropriate. No fixed interval specified; prevention operates on relevant network paths.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "13.9": {
+      "review": [
+        "[Requirement check 13.9] Is port-level access control enforced through the selected protocol? [Explanatory prompt] What prevents an unauthorized connection on an in-scope port?",
+        "Confirm which access ports are controlled and how devices/users authenticate. Examine existing authorized and unauthorized access test results and bypass arrangements.",
+        "Scope and timing: No fixed interval specified; enforce when network access is attempted. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Port/authenticator configuration, authentication records, existing allow/deny test results.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Enforce port-level network access using 802.1X or a similar authentication-based approach. No fixed interval specified; enforce when network access is attempted.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "13.10": {
+      "review": [
+        "[Requirement check 13.10] Is application-layer filtering operating? [Explanatory prompt] Which paths and requests do the supporting records demonstrate?",
+        "Identify application-aware filtering points, relevant traffic paths and enabled policies. Review a representative permitted and blocked application request from existing records.",
+        "Scope and timing: No fixed interval specified; filtering operates on relevant traffic. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Filtering policy, traffic-path diagram, application-aware allow/block records.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Filter network traffic at the application layer. No fixed interval specified; filtering operates on relevant traffic.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "13.11": {
+      "review": [
+        "[Requirement check 13.11] Was threshold tuning performed monthly or more often? [Explanatory prompt] What changed or was evaluated, and where are the dated results?",
+        "Examine a dated tuning history, the thresholds considered and the rationale/results. Investigate repeated missed periods and entries that merely acknowledge alerts without evaluating thresholds.",
+        "Scope and timing: Monthly or more frequently. This is the tuning activity, not just a governance meeting. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Tuning change records, threshold versions and before/after operational observations.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Adjust security-event alert thresholds at least monthly. Monthly or more frequently. This is the tuning activity, not just a governance meeting.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
       ]
     },
     "14.1": {
@@ -1576,6 +1786,51 @@
         "Review contracts at least annually. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
+    "15.5": {
+      "review": [
+        "[Requirement check 15.5] Are policy-aligned provider assessments current annually and for new/renewed contracts? [Explanatory prompt] Does the assessment depth match the provider classification?",
+        "Reconcile provider classifications to assessments, dates and contract events. Confirm the policy-defined depth is met and follow up missing, outdated or adverse results.",
+        "Scope and timing: Source wording: annually, at a minimum, or with new and renewed contracts. Plan for annual coverage plus contract-triggered assessment; do not use contract renewal to excuse multi-year gaps. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Provider register/classification, dated assessment result, contract-event record, linked follow-up.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts. Source wording: annually, at a minimum, or with new and renewed contracts. Plan for annual coverage plus contract-triggered assessment; do not use contract renewal to excuse multi-year gaps.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "15.6": {
+      "review": [
+        "[Requirement check 15.6] Is provider monitoring performed as the policy defines? [Explanatory prompt] Which observations required follow-up and what happened?",
+        "Identify the promised monitoring for each provider class and compare it with actual results and escalation. Review policy-defined timing without relabeling it as a CIS universal frequency.",
+        "Scope and timing: No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Monitoring plan, service/release/advisory review records, provider notices and follow-up.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Monitor providers according to the enterprise provider-management policy. No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "15.7": {
+      "review": [
+        "[Requirement check 15.7] Were decommissioned providers exited securely? [Explanatory prompt] What remains open for access, data flows or enterprise data?",
+        "For a terminated provider, follow the relevant access, data-flow and data-disposition decisions through completion. If there were no terminations, examine readiness and record that operating evidence was unavailable.",
+        "Scope and timing: Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Offboarding record, access revocation, data-transfer/disposal confirmation, closure approval as applicable.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "End provider relationships securely. Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
     "16.1": {
       "review": [
         "Define development security process and responsibilities. Confirm the covered population and client decisions.",
@@ -1748,6 +2003,51 @@
         "At selection/use; no numeric interval specified. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
+    "16.12": {
+      "review": [
+        "[Requirement check 16.12] Are static and dynamic tools used within the lifecycle? [Explanatory prompt] Which applications and release stages do the records cover?",
+        "Review the application/release population and where each analysis type operates. Trace representative results to triage and relevant remediation, without requiring a new Omnisciente integration.",
+        "Scope and timing: Within the application lifecycle; no fixed calendar frequency or universal every-commit rule specified. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Static/dynamic analysis output, pipeline configuration, release record and linked issue disposition.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Use both static and dynamic code-analysis tools during the application lifecycle to check secure coding. Within the application lifecycle; no fixed calendar frequency or universal every-commit rule specified.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "16.13": {
+      "review": [
+        "[Requirement check 16.13] Has application penetration testing been performed? [CAS-informed prompt] Does critical-application testing include authenticated coverage? [Explanatory prompt] What business logic did the tester examine?",
+        "Identify tested applications, criticality, authentication coverage and manual business-logic exploration. Review test scope, findings and follow-up; distinguish scanning from penetration testing.",
+        "Scope and timing: No fixed frequency specified in 16.13. Use application/program requirements; do not import the annual infrastructure-test interval as this safeguard's wording. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Application test scope/report, criticality inventory, authenticated/unauthenticated coverage and remediation links.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Perform application penetration testing, considering authenticated testing for critical applications and manual tester analysis. No fixed frequency specified in 16.13. Use application/program requirements; do not import the annual infrastructure-test interval as this safeguard's wording.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "16.14": {
+      "review": [
+        "[Requirement check 16.14] Was threat modeling performed by suitably trained people before coding? [Explanatory prompt] Which design decision changed because of the analysis?",
+        "Inspect a design-stage model, participants' relevant training, entry points and access levels. Trace identified design risks to decisions before implementation.",
+        "Scope and timing: During design, before coding. No fixed calendar interval specified. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Dated design model, review participants, design decisions and resolved or tracked design issues.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Have specially trained people model application threats and address design flaws before code is created. During design, before coding. No fixed calendar interval specified.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
     "17.1": {
       "review": [
         "Confirm a lead and at least one backup are designated to manage incident handling, coordinating and documenting response and recovery.",
@@ -1870,6 +2170,21 @@
         "After incidents; no fixed calendar interval. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },
+    "17.9": {
+      "review": [
+        "[Requirement check 17.9] Are incident thresholds maintained and reviewed annually and after relevant changes? [CAS-informed prompt] How do prioritization and escalation use them?",
+        "Confirm the event/incident distinction is usable by responders and linked to the response process. Check the last review and relevant changes; keep CAS prioritization/escalation prompts separate from the safeguard minimum.",
+        "Scope and timing: Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Threshold document, dated review/change record, representative classification or exercise example.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Define and maintain incident thresholds distinguishing incidents from events; review annually and after relevant significant changes. Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
     "18.1": {
       "review": [
         "Agree scope, frequency, limits, contacts, remediation and retrospectives. Confirm the covered population and client decisions.",
@@ -1916,6 +2231,36 @@
       "outcome": [
         "Resolve penetration-test weaknesses by risk. Remediate penetration-test findings.",
         "After findings, on risk-prioritized remediation timelines. Retain a clear account of scope, operating responsibility and unresolved gaps."
+      ]
+    },
+    "18.4": {
+      "review": [
+        "[Requirement check 18.4] Were defenses validated after each test and needed changes made? [Explanatory prompt] What test techniques exposed a detection or capability gap?",
+        "Match each completed test to a defense-validation result. Check whether techniques used were detected and whether necessary changes were made; include application tests where relevant.",
+        "Scope and timing: After each penetration test. No fixed number of days for follow-up specified. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Test-to-validation log, detection comparison, ruleset change and retest records.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Validate defenses after every penetration test; adjust detection rules or capabilities when needed. After each penetration test. No fixed number of days for follow-up specified.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
+      ]
+    },
+    "18.5": {
+      "review": [
+        "[Requirement check 18.5] Was internal penetration testing performed at least annually and in line with the program? [Explanatory prompt] What internal scope was covered?",
+        "Verify internal scope, test completion date and alignment with the program; inspect findings and their follow-up. Keep external and internal test coverage separately visible.",
+        "Scope and timing: No less than annually; more frequent testing follows the program where specified. Use dated operational records; completing this governance Review does not itself demonstrate technical execution."
+      ],
+      "evidence": [
+        "Internal test scope/report, test date, program reference, findings and defense-validation links.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "outcome": [
+        "Perform internal penetration tests under the program at least annually. No less than annually; more frequent testing follows the program where specified.",
+        "Coverage, exceptions and unresolved gaps are accurately recorded, with implementation and verification assessed separately."
       ]
     }
   }

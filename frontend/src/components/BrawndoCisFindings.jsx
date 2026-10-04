@@ -1,3 +1,4 @@
+import {cisLabel} from '@/lib/cisScope';
 import {Button} from './ui/button';
 import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
@@ -33,7 +34,7 @@ export default function BrawndoCisFindings({record,definition,current,ctx,relate
       {writable&&!finding&&<Button size="sm" variant="outline" disabled={disabled} onClick={start}>Raise Finding</Button>}</div>
     {findings.length?<RemediationTickets records={{...related,findings,tasks:(related.tasks||[]).filter(t=>findings.some(f=>f.finding_id===t.finding_id)),framework_assessments:[current]}} clientId={record.client_id} users={ctx?.users} onOpen={setNested} disabled={busy}/>:<p className="bcsg-muted">No open Findings for this safeguard.</p>}
     {finding&&<fieldset disabled={disabled} className="bcsg-finding-form"><legend>Raise Finding</legend>
-      <p className="bcsg-muted" data-testid="finding-origin">Origin: CIS IG1 · Safeguard {definition.id} — {definition.title}</p>
+      <p className="bcsg-muted" data-testid="finding-origin">Origin: {cisLabel(ctx?.configuration)} · Safeguard {definition.id} — {definition.title}</p>
       <label>Finding title<Input aria-label="Finding title" required value={finding.title} onChange={e=>put('title',e.target.value)}/></label>
       <label>Description<Textarea aria-label="Finding description" maxLength={20000} value={finding.description} onChange={e=>put('description',e.target.value)}/></label>
       <div className="bcsg-finding-grid">

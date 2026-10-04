@@ -1,3 +1,4 @@
+import {cisProgramName} from '@/lib/cisScope';
 import {Link} from 'react-router-dom';
 import PageHeader from './PageHeader';
 import {Button} from './ui/button';
@@ -46,7 +47,7 @@ export default function OnboardingHandoff({snapshot, state, catalog, clientId, c
       <p className="text-xs text-ink-secondary">These counts reflect current client records, including later operational changes—not a completion-time snapshot or a compliance score.</p>
       {!embedded&&<details className="rounded-lg border border-line bg-surface-card p-4"><summary className="cursor-pointer text-sm font-medium">View onboarding baseline</summary>
         <p className="text-xs text-ink-secondary mt-3">Saved intake responses. Current Policies and program applicability may differ; manage changes in their normal modules.</p>
-        <div className="grid md:grid-cols-2 gap-5 mt-4 text-sm"><div><h3 className="font-semibold mb-2">Policies</h3>{catalog.policies.map(p=><p key={p.key}>{p.name} — {{yes:'Reported Existing',no:'Reported Missing',unsure:'Needs Confirmation'}[state.policies[p.key]] || 'Not recorded'}</p>)}</div><div><h3 className="font-semibold mb-2">Compliance</h3>{catalog.requirements.map(f=><p key={f.key}>{f.name} — {APPLICABILITY.find(([v])=>v===state.requirements[f.key])?.[1] || 'Not recorded'}</p>)}<h3 className="font-semibold mt-4 mb-2">General Review selections</h3>{catalog.reviews.filter(r=>state.reviews.includes(r.key)).map(r=><p key={r.key}>{r.name}</p>)}</div></div>
+        <div className="grid md:grid-cols-2 gap-5 mt-4 text-sm"><div><h3 className="font-semibold mb-2">Policies</h3>{catalog.policies.map(p=><p key={p.key}>{p.name} — {{yes:'Reported Existing',no:'Reported Missing',unsure:'Needs Confirmation'}[state.policies[p.key]] || 'Not recorded'}</p>)}</div><div><h3 className="font-semibold mb-2">Compliance</h3>{catalog.requirements.map(f=><p key={f.key}>{cisProgramName(f,state.framework_settings?.[f.key])} — {APPLICABILITY.find(([v])=>v===state.requirements[f.key])?.[1] || 'Not recorded'}</p>)}<h3 className="font-semibold mt-4 mb-2">General Review selections</h3>{catalog.reviews.filter(r=>state.reviews.includes(r.key)).map(r=><p key={r.key}>{r.name}</p>)}</div></div>
       </details>}
     </div>
   </div>;
