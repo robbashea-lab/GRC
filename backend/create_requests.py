@@ -65,7 +65,7 @@ async def run(db, key, actor, client_id, route, payload, execute):
         return result
     except HTTPException as exc:
         latest = await db.create_requests.find_one({"_id": identity})
-        if exc.status_code in (403, 422) and not latest.get("primary_started"):
+        if exc.status_code in (403, 409, 422, 428) and not latest.get("primary_started"):
             exc.headers = {**(exc.headers or {}), "X-Create-Rejected": "true"}
         raise
     except Exception as exc:

@@ -12,6 +12,49 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
     body = framework.FrameworkTests.body
     configure = framework.FrameworkTests.configure
 
+    async def test_requestless_decisions_recover_original_generation(self):
+        for action, versioned in [('validate',True),('validate',False),('accept',True)]:
+            with self.subTest(action=action,versioned=versioned):
+                _,_,_,f,t=await self.pair(request_id='legacy-'+action+str(versioned))
+                if action=='validate':
+                    await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done'})
+                current=await server.db.findings.find_one({'finding_id':f['finding_id']})
+                body={'rationale':'Legacy same decision'}
+                if versioned:body['expected_updated_at']=current['updated_at']
+                path='/api/findings/'+f['finding_id']+'/'+action
+                original=server.audit
+                async def fail(user,event,*args,**kwargs):
+                    if event==action:raise RuntimeError('Injected legacy decision audit failure')
+                    return await original(user,event,*args,**kwargs)
+                with patch.object(server,'audit',fail):
+                    first=await self.client.post(path,json=body)
+                self.assertEqual(first.status_code,503,first.text)
+                recovered=await self.client.post(path,json=body)
+                self.assertEqual(recovered.status_code,200,recovered.text)
+                self.assertEqual(len(recovered.json()['decision_history']),1)
+                self.assertEqual((await self.client.post(path,json=body)).json(),recovered.json())
+                reopened=await self.client.post('/api/findings/'+f['finding_id']+'/reopen',json={'request_id':'legacy-reopen-cycle','expected_updated_at':recovered.json()['updated_at']})
+                self.assertEqual(reopened.status_code,200,reopened.text)
+                await self.client.patch('/api/tasks/'+reopened.json()['primary_task_id'],json={'status':'done'})
+                if versioned:
+                    current=await server.db.findings.find_one({'finding_id':f['finding_id']})
+                    body['expected_updated_at']=current['updated_at']
+                second=await self.client.post(path,json=body)
+                self.assertEqual(second.status_code,200,second.text)
+                self.assertEqual(len(second.json()['decision_history']),3)
+
+    async def test_definitive_prewrite_conflict_releases_intent_but_applied_retry_does_not(self):
+        _,_,_,f,t=await self.pair()
+        path='/api/tasks/'+t['task_id']
+        stale=await self.client.patch(path,json={'title':'Stale','expected_updated_at':'obsolete'},headers={'Idempotency-Key':'stale-task-intent-001'})
+        self.assertEqual(stale.status_code,409,stale.text)
+        self.assertEqual(stale.headers.get('x-create-rejected'),'true')
+        self.assertEqual((await server.db.tasks.find_one({'task_id':t['task_id']}))['title'],t['title'])
+        await self.client.patch(path,json={'status':'done'})
+        stale_decision=await self.client.post('/api/findings/'+f['finding_id']+'/validate',json={'request_id':'stale-decision-intent','rationale':'Checked','expected_updated_at':'obsolete'})
+        self.assertEqual(stale_decision.status_code,409,stale_decision.text)
+        self.assertEqual(stale_decision.headers.get('x-create-rejected'),'true')
+
     async def test_applied_reassignment_recovers_when_target_becomes_ineligible(self):
         await server.db.users.insert_one({'user_id':'manager','role':'client_grc_manager','status':'active','client_ids':['a']})
         for actor in ('admin','manager'):
@@ -125,11 +168,11 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
         response=await self.client.request('DELETE','/api/findings/legacy',json={'expected_updated_at':'2026-01-01T00:00:00Z'})
         self.assertEqual(response.status_code,409,response.text)
 
-    async def pair(self):
+    async def pair(self, request_id='ticket-test'):
         workspace = await self.configure()
         aid = workspace['assessments'][0]['framework_assessment_id']
         path = '/api/framework_assessments/' + aid + '/findings'
-        body = {'request_id':'ticket-test', 'title':'Issue', 'description':'Actual issue',
+        body = {'request_id':request_id, 'title':'Issue', 'description':'Actual issue',
                 'remediation_title':'Correct the issue', 'owner_id':None, 'due_date':'2027-01-01'}
         response = await self.client.post(path, json=body)
         self.assertEqual(response.status_code, 200, response.text)

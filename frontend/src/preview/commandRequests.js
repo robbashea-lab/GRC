@@ -17,7 +17,7 @@ export function commandRequest(db, path, clientId, key, body, execute) {
   try { result=execute(); }
   catch(error) {
     // These synchronous effects are still local: the adapter has not saved yet.
-    if(error.status===422)error.create_rejected=true;
+    if([403,409,422,428].includes(error.status))error.create_rejected=true;
     throw error;
   }
   db.command_requests ||= {};

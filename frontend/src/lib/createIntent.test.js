@@ -27,8 +27,8 @@ test('ticket recovery survives remount and reload with its original payload and 
   expect(createIntent(post,'other-actor:client:ticket').unconfirmed()).toBe(false);
 });
 
-test('only explicit no-primary rejection permits changing a failed intent', async () => {
-  const post = jest.fn().mockRejectedValueOnce({response:{status:422,headers:{'x-create-rejected':'true'}}}).mockResolvedValue({});
+test.each([409,422,428])('only explicit no-primary rejection permits changing a failed intent (%s)', async status => {
+  const post = jest.fn().mockRejectedValueOnce({response:{status,headers:{'x-create-rejected':'true'}}}).mockResolvedValue({});
   const create = createIntent(post);
   await expect(create('/reviews',{title:''})).rejects.toBeDefined();
   await create('/reviews',{title:'Corrected'});

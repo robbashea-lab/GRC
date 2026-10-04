@@ -15,10 +15,12 @@ import {actionOrigin} from '@/lib/brawndoActions';
 import {useCreateIntent} from '@/lib/createIntent';
 import {readEvidenceFile} from '@/lib/evidenceFile';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
+import {SCHEMAS} from '@/lib/schemas';
 import api,{formatError} from '@/lib/api';
 
 const labels={open:'Open',in_progress:'In progress',blocked:'Blocked',pending_validation:'Pending validation',completed:'Completed',accepted:'Accepted',cancelled:'Cancelled'};
-const fields=['title','assignee_id','due_date','description','resolution','status'];
+const priorities=SCHEMAS.tasks.fields.find(f=>f.name==='priority').options;
+const fields=['title','assignee_id','due_date','description','resolution','status','priority'];
 const draft=t=>Object.fromEntries(fields.map(k=>[k,t[k]??'']));
 const mayEdit=(user,task)=>canOperate(user)&&(user.role!=='client_contributor'||isAssignedTo(user,task)||!task.assignee_id&&task.created_by===user.user_id);
 
@@ -43,6 +45,7 @@ function Work({task,users,user,onSaved,onDirty}) {
       <div className="grid sm:grid-cols-2 gap-3"><div>Responsible owner<AssigneeSelect label="Responsible owner" clientId={task.client_id} users={users} value={form.assignee_id||null} disabled={!enabled('assignee_id')} onChange={v=>put('assignee_id',v||'')}/></div>
         <label>Due date (optional)<Input aria-label="Due date" type="date" value={form.due_date.slice(0,10)} disabled={!enabled('due_date')} onChange={e=>put('due_date',e.target.value)}/></label></div>
       {!form.assignee_id&&<p className="text-sm">Unassigned</p>}
+      <label className="block">Priority<select aria-label="Priority" value={form.priority} disabled={!enabled('priority')} onChange={e=>put('priority',e.target.value)}><option value="">Classification needed</option>{!priorities.some(o=>o.value===form.priority)&&form.priority&&<option value={form.priority}>{form.priority}</option>}{priorities.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>
       <label className="block">Planned action<Textarea aria-label="Planned action" value={form.description} disabled={!enabled('description')} onChange={e=>put('description',e.target.value)}/></label>
       <label className="block">Actual resolution (optional)<Textarea aria-label="Actual resolution" maxLength={20000} value={form.resolution} disabled={!enabled('resolution')} onChange={e=>put('resolution',e.target.value)}/></label>
       <label className="block">Work status<select className="block bg-surface-card border border-line rounded p-2" aria-label="Work status" value={form.status} disabled={!enabled('status')||task.status==='done'} onChange={e=>put('status',e.target.value)}>
@@ -61,7 +64,7 @@ function History({ticket,onDirty}) {
   const [comment,setComment]=useState(''),[busy,setBusy]=useState(false),[version,setVersion]=useState(0);
   const [rows,setRows]=useState([]),[error,setError]=useState('');
   useEffect(()=>{onDirty('comment',!!comment);return()=>onDirty('comment',false);},[comment,onDirty]);
-  const target=ticket.primary&&mayEdit(user,ticket.primary)?ticket.primary:ticket.finding;
+  const target=ticket.primary&&mayEdit(user,ticket.primary)?ticket.primary:ticket.actions.find(t=>mayEdit(user,t))||ticket.finding;
   const kind=target?.task_id?'tasks':'findings',id=target?.task_id||target?.finding_id;
   const writable=target&&canOperate(user)&&(user.role!=='client_contributor'||isAssignedTo(user,target));
   const key=JSON.stringify([...(ticket.finding?[['findings',ticket.finding.finding_id,ticket.finding.updated_at]]:[]),...ticket.actions.map(t=>['tasks',t.task_id,t.updated_at])]);
@@ -111,7 +114,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
       {ticket.finding&&['open','in_progress','blocked'].includes(stage)&&<p className="text-sm">Complete outstanding work, then validate the resolution here. Control implementation and verification are unchanged.</p>}
       {commandError&&<p role="alert">{commandError}</p>}{feedback&&<p role="status">{feedback}</p>}
       {[[decision,'decision'],[reopen,'reopening']].filter(([command])=>command.unconfirmed()).map(([command,name])=><Button key={name} disabled={busy} onClick={async()=>{setBusy(true);setCommandError('');try{await command.retry();setRationale('');await saved();}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Retry unconfirmed {name}</Button>)}
-      {ticket.primary&&mayEdit(user,ticket.primary)&&<label className="block text-sm">Attach supporting evidence (optional)<Input type="file" aria-label="Attach ticket evidence" disabled={busy} onChange={async e=>{const file=e.target.files?.[0];if(!file)return;setBusy(true);setCommandError('');try{await api.post('/evidence',{client_id:ticket.raw.client_id,linked_type:'task',linked_id:ticket.primary.task_id,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:await readEvidenceFile(file)});setEvidenceVersion(v=>v+1);setFeedback('Evidence attached to this ticket.');}catch(err){setCommandError(formatError(err));}finally{setBusy(false);}}}/></label>}
+      {ticket.actions.filter(task=>mayEdit(user,task)).map(task=><label key={task.task_id} className="block text-sm">Attach supporting evidence (optional){ticket.actions.length>1?' — '+task.title:''}<Input type="file" aria-label={ticket.actions.length===1?'Attach ticket evidence':'Attach evidence to '+task.title} disabled={busy} onChange={async e=>{const file=e.target.files?.[0];if(!file)return;setBusy(true);setCommandError('');try{await api.post('/evidence',{client_id:ticket.raw.client_id,linked_type:'task',linked_id:task.task_id,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:await readEvidenceFile(file)});setEvidenceVersion(v=>v+1);setFeedback('Evidence attached to this ticket.');}catch(err){setCommandError(formatError(err));}finally{setBusy(false);}}}/></label>)}
       <EvidencePanel clientId={ticket.raw.client_id} kind={ticket.kind} id={ticket.raw.finding_id||ticket.raw.task_id} refreshKey={evidenceVersion} validatedAt={ticket.finding?.validated_at} onOpen={async ref=>{try{const target=await resolveEvidenceSource(ref,ticket.raw.client_id);if(target.kind==='tasks'&&ticket.actions.some(t=>t.task_id===target.record.task_id)){Array.from(surface.current?.querySelectorAll('[data-ticket-task]')||[]).find(e=>e.dataset.ticketTask===target.record.task_id)?.querySelector('input')?.focus();}else if(!(target.kind==='findings'&&target.record.finding_id===ticket.finding?.finding_id))setNested(target);}catch(e){setCommandError(formatError(e));}}} allowLink={isInternal(user)}/>
       <History ticket={ticket} onDirty={markDirty}/>
     </div>}

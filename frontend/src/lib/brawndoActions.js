@@ -48,6 +48,7 @@ export function unifiedActions(records,clientId) {
   return ticketRecords(records,clientId).map(row=>({
     ...row,id:row.raw.task_id||row.raw.finding_id,hasAction:row.actions.length>0,
     title:row.finding?row.title:actionTitle(row.raw),client_id:clientId,
+    actionSearchText:row.actions.flatMap(t=>[t.title,t.description,t.resolution]).filter(Boolean).join(' '),
     itemType:row.finding||row.raw.finding_id?'Finding':'Task',source:actionOrigin(row.raw,records,row.finding),
   }));
 }

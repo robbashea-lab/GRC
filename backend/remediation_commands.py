@@ -82,7 +82,14 @@ async def validate(s, finding, body, user, action='validate'):
     payload = body.model_dump(exclude_unset=True)
     # New ticket callers retain an explicit intent. Keep legacy callers compatible
     # without replaying an old closure after a subsequent reopening.
-    key = create_requests.digest(body.request_id or [fid, finding.get('updated_at'), payload])
+    key = create_requests.digest(body.request_id or [fid, payload.get('expected_updated_at', finding.get('updated_at')), payload])
+    if not body.request_id and 'expected_updated_at' not in payload:
+        previous = next((d for d in reversed(finding.get('decision_history', []))
+            if d.get('at') == finding.get('updated_at') and d.get('by') == user['user_id']
+            and d.get('action') == ('validated' if action == 'validate' else 'accepted')
+            and d.get('legacy_payload') == create_requests.digest(payload)), None)
+        if previous:
+            key = previous['legacy_key']
 
     async def execute(identity):
         current = await s.db.findings.find_one({'finding_id':fid, 'client_id':cid}, {'_id':0})
@@ -97,6 +104,8 @@ async def validate(s, finding, body, user, action='validate'):
                 raise HTTPException(409, 'Complete outstanding remediation first')
             decision = {'action':'validated' if action=='validate' else 'accepted', 'by':user['user_id'], 'at':s._next_write_time(current.get('updated_at')),
                         'rationale':body.rationale.strip(), 'request_id':identity}
+            if not body.request_id:
+                decision.update(legacy_key=key, legacy_payload=create_requests.digest(payload))
             await s.db.create_requests.update_one({'_id':identity}, {'$set':{'primary_started':True}})
             result = await s.db.findings.update_one({'finding_id':fid, 'client_id':cid,
                 'status':current.get('status'), 'updated_at':current.get('updated_at')}, {'$set':{

@@ -5,6 +5,11 @@ import {applyTableFilters} from './tableFilters';
 const cid='demo_brawndo',now=new Date(2026,8,29,12);
 const task=(id,extra={})=>({task_id:id,client_id:cid,title:id,status:'open',source_type:'manual',...extra});
 const finding=(id,extra={})=>({finding_id:id,client_id:cid,title:id,status:'open',...extra});
+
+test('ticket search projection retains every legacy Action plan and resolution',()=>{
+  const [row]=unifiedActions({findings:[finding('f')],tasks:[task('one',{finding_id:'f',description:'First planned correction',resolution:'First outcome'}),task('two',{finding_id:'f',description:'Second planned correction',resolution:'Second outcome'})]},cid);
+  expect(row.actionSearchText).toContain('First planned correction');expect(row.actionSearchText).toContain('Second planned correction');expect(row.actionSearchText).toContain('First outcome');expect(row.actionSearchText).toContain('Second outcome');
+});
 test('projection preserves orphans and distinct actions, does not mutate or duplicate on refresh, isolates clients',()=>{
   const data={findings:[finding('paired'),finding('orphan'),finding('foreign',{client_id:'other'})],tasks:[task('a',{finding_id:'paired'}),task('b',{finding_id:'paired'}),task('manual'),task('foreign',{client_id:'other'})]};
   const before=JSON.stringify(data),rows=unifiedActions(data,cid);

@@ -234,3 +234,17 @@ responses are rejected. This follows the [Playwright Route API](https://playwrig
 warning that overridden headers persist through redirects. The meeting script
 also compares rendered history after refreshing the register and assessment.
 Publication remains limited to the existing private Demo; no production backend.
+
+GitHub's review of the earlier head also demonstrated pre-write stale conflicts
+retaining browser intents, unstable requestless decision retry identities, and
+lost legacy editor capabilities. Definitive pre-write rejection now releases the
+intent while applied/uncertain writes retain recovery; requestless decisions use
+the submitted generation or their matching latest recorded legacy generation.
+Tests cover audit failure, exact retry, and a subsequent reopen/closure cycle.
+The existing priority selector is restored; search includes every linked Action's
+plan/resolution; evidence and comments target an editable Action rather than
+silently using an inaccessible primary. No records are migrated or consolidated.
+Final affected runs passed 103 backend tests / 48 subtests, 21 shared creation and
+onboarding recovery tests / 23 subtests, 68 real disposable-Mongo checks, and
+10 frontend suites / 82 tests. Normal production build passed with unchanged
+bundle-size warning. Published Demo verification is recorded separately after release.
