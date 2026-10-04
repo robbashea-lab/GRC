@@ -248,3 +248,6 @@ Final affected runs passed 103 backend tests / 48 subtests, 21 shared creation a
 onboarding recovery tests / 23 subtests, 68 real disposable-Mongo checks, and
 10 frontend suites / 82 tests. Normal production build passed with unchanged
 bundle-size warning. Published Demo verification is recorded separately after release.
+The final conditional-write regression also confirms that a concurrent edit is
+preserved and a refreshed save succeeds after explicit no-write rejection.
+The combined affected backend rerun passed 125 tests and 71 subtests.

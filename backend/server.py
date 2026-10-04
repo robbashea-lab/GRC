@@ -2814,7 +2814,9 @@ async def _update_entity(kind, item_id, body, user, command=None):
             body['_ticket_command'] = command
         result = await db[_coll_for(kind)].update_one(query, {"$set": body})
         if not result.matched_count:
-            raise HTTPException(409, "Record changed; reload before saving")
+            # A failed conditional write is a definitive rejection, not an
+            # uncertain acknowledgement of an applied ticket command.
+            raise HTTPException(409, "Record changed; reload before saving", headers={"X-Create-Rejected":"true"})
     if command:
         body.pop('_ticket_command', None)
     if kind == "tasks" and existing.get("finding_id"):

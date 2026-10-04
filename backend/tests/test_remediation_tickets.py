@@ -55,6 +55,23 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stale_decision.status_code,409,stale_decision.text)
         self.assertEqual(stale_decision.headers.get('x-create-rejected'),'true')
 
+    async def test_task_compare_and_swap_conflict_releases_intent(self):
+        _,_,_,_,t=await self.pair()
+        collection_type=type(server.db.tasks)
+        original=collection_type.update_one
+        async def concurrent(collection,query,update,*args,**kwargs):
+            if query.get('task_id')==t['task_id'] and 'updated_at' in query and update.get('$set',{}).get('_ticket_command'):
+                await original(collection,{'task_id':t['task_id']},{'$set':{'updated_at':'2030-01-01T00:00:00+00:00','title':'Concurrent edit'}})
+            return await original(collection,query,update,*args,**kwargs)
+        with patch.object(collection_type,'update_one',concurrent):
+            conflict=await self.client.patch('/api/tasks/'+t['task_id'],json={'title':'Must not overwrite','expected_updated_at':t['updated_at']},headers={'Idempotency-Key':'cas-race-intent-001'})
+        self.assertEqual(conflict.status_code,409,conflict.text)
+        self.assertEqual(conflict.headers.get('x-create-rejected'),'true')
+        current=await server.db.tasks.find_one({'task_id':t['task_id']})
+        self.assertEqual(current['title'],'Concurrent edit')
+        corrected=await self.client.patch('/api/tasks/'+t['task_id'],json={'title':'Corrected after reload','expected_updated_at':current['updated_at']},headers={'Idempotency-Key':'cas-corrected-intent-001'})
+        self.assertEqual(corrected.status_code,200,corrected.text)
+
     async def test_applied_reassignment_recovers_when_target_becomes_ineligible(self):
         await server.db.users.insert_one({'user_id':'manager','role':'client_grc_manager','status':'active','client_ids':['a']})
         for actor in ('admin','manager'):

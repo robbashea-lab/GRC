@@ -113,7 +113,7 @@ async def validate(s, finding, body, user, action='validate'):
                     **({'validated_by':user['user_id'],'validated_at':decision['at'],'closed_by':user['user_id'],'closed_at':decision['at']} if action=='validate' else {})},
                 '$push':{'decision_history':decision}})
             if not result.modified_count:
-                raise HTTPException(409, 'Finding changed; reload before validating')
+                raise HTTPException(409, 'Finding changed; reload before validating', headers={'X-Create-Rejected':'true'})
         # Identity travels in the business write, surviving lost acknowledgements.
         await s.audit(user, action, 'finding', fid, cid, meta=decision)
         for task in await s.db.tasks.find({'finding_id':fid,'client_id':cid}, {'_id':0}).to_list(None):
