@@ -425,14 +425,14 @@
       "source_organization": "ISO/IEC",
       "verified_on": "2026-09-22",
       "id": "9.2.2",
-      "title": "Internal audit programme",
+      "title": "Internal audit program",
       "control": "9",
       "control_name": "ISMS · Performance evaluation",
       "specification": "isms_clause",
       "classification": "framework_expectation",
       "type": "recurring",
       "guidance": "Document risk-informed audit planning, impartiality, reporting and follow-up.",
-      "evidence_guidance": "Audit programme, auditor independence and reports.",
+      "evidence_guidance": "Audit program, auditor independence and reports.",
       "source_cadence": "Use the clause-specific planning or change trigger. ISO does not prescribe a universal annual or quarterly Review interval."
     },
     {

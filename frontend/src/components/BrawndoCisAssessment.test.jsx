@@ -228,15 +228,17 @@ test('a never-assessed safeguard does not name an assessor',async()=>{
  expect(container.querySelector('.bcsg-meta').textContent).toBe('Last assessed: Not assessed');
 });
 
-test('operating arrangement saves independently and invalidates on a changed method',async()=>{
- record.owner_id='u';await render();
+test('optional operating details retain saved information without a confirmation checklist',async()=>{
+ record.owner_id='u';record.cis_operation={provider:'Previously saved provider',confirmed:true};await render();
+ expect(container.querySelector('[aria-label="Provider involvement"]').value).toBe('Previously saved provider');
+ expect(container.textContent).toContain('Previously recorded arrangement confirmation retained');
+ expect(container.querySelector('[aria-label="Operating arrangement recorded"]')).toBeNull();
  await input('Provider involvement','MSP weekly quarantine with internal oversight');
- await tick(container.querySelector('[aria-label="Operating arrangement recorded"]'));
  await tick(button('Save assessment'));
- expect(record.cis_operation).toEqual({provider:'MSP weekly quarantine with internal oversight',confirmed:true});
+ expect(record.cis_operation).toEqual({provider:'MSP weekly quarantine with internal oversight',confirmed:false});
  expect(record.status).toBe('addressed');expect(record.verification).toBe('not_verified');
  await input('Current implementation','Scope changed');
- expect(container.querySelector('[aria-label="Operating arrangement recorded"]').checked).toBe(false);
+ expect(container.textContent).not.toContain('Previously recorded arrangement confirmation retained');
 });
 test('supporting records open without losing the assessment draft and history uses its precise occurrence',async()=>{
  related.reviews=[{review_id:'r',client_id:record.client_id,title:'Inventory review',framework_key:'cis-ig1',framework_safeguards:['1.1'],recurrence:'semiannual'}];

@@ -25,6 +25,9 @@ test('client profile owns SOC scope without program dates; saving preserves lega
  await act(async()=>root.render(<ProgramConfiguration clientId="a"/>));
  const scope=[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='SOC 2 scope');
  expect(scope).toBeTruthy();expect(scope.querySelector('input[type="date"]')).toBeNull();
+ expect(scope.querySelector('[aria-label="System boundary and service commitments"]').value).toBe('Service boundary');
+ expect(scope.textContent).toContain('subservice organizations');
+ expect(scope.querySelector('a[href="/systems"]')).toBeTruthy();
  expect(scope.querySelector('[aria-label="Security / Common Criteria"]').disabled).toBe(true);
  await act(async()=>scope.querySelector('summary').click());
  await act(async()=>scope.querySelector('[aria-label="Availability"]').click());

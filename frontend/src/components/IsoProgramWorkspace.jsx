@@ -31,10 +31,10 @@ export default function IsoProgramWorkspace({clientId,mode,rows,onSelect}){
   const now=String(new Date().getFullYear()),year=selectedYear||(years.includes(now)?now:years.at(-1)||now),audit=auditProgrammeMetrics(reviews||[],year);
   if(mode!=='overview')return null;
   return <section className="space-y-4" aria-label="ISMS Overview">
-    <p className="text-sm text-ink-secondary">Figures show assessment and programme progress, not certification status or audit opinion.</p>
+    <p className="text-sm text-ink-secondary">Figures show assessment and program progress, not certification status or audit opinion.</p>
     {!!isoAssessmentConflicts(rows).length&&<p role="alert" className="text-sm text-semantic-critical">Legacy assessment conflicts require review: {isoAssessmentConflicts(rows).map(r=>r.definition_id).join(', ')}. A mandatory requirement or applicable control has a Not Applicable implementation status. Saved values are retained, not counted as implemented, and have not been migrated.</p>}
     <label className="block text-sm">Audit-program year <select aria-label="Audit-program year" value={year} onChange={e=>setSelectedYear(e.target.value)}>{(years.length?years:[now]).map(y=><option key={y}>{y}</option>)}</select></label>
-    {error&&<p role="alert" className="text-sm text-semantic-critical">Audit programme could not be loaded. {error}</p>}
+    {error&&<p role="alert" className="text-sm text-semantic-critical">Audit program could not be loaded. {error}</p>}
     <div className="iso-program-grid">
       <Card view="soa" title="Statement of Applicability" metric={`${soa.decided} of ${soa.total} applicability decisions completed`} complete={soa.decided} total={soa.total} onSelect={onSelect}
         segments={[{value:soa.applicable,tone:'good',label:'Applicable'},{value:soa.excluded,tone:'attention',label:'Excluded'},{value:soa.undetermined,tone:'neutral',label:'Not determined'}]}
@@ -43,7 +43,7 @@ export default function IsoProgramWorkspace({clientId,mode,rows,onSelect}){
       <Card view="annex_control" title="Annex A Controls" metric={`${annex.implemented} of ${annex.total} applicable controls implemented`} complete={annex.implemented} total={annex.total} segments={implementationSegments(annex)} items={[...implementationItems(annex),`${soa.undetermined} applicability not determined · ${soa.excluded} excluded`]} onSelect={onSelect}/>
       {reviews&&!error?<Card view="audit" title="Internal Audit" metric={`${audit.complete} of ${audit.total} planned audit checks completed · ${year}`} complete={audit.complete} total={audit.total} onSelect={view=>onSelect(view,{audit_year:year})}
         segments={[{value:audit.complete,tone:'good',label:'Complete'},{value:audit.total-audit.complete,tone:'neutral',label:'Pending'}]}
-        items={audit.quarters.map(q=>`Q${q.quarter}: ${q.total?`${q.complete} of ${q.total} · ${percent(q.complete,q.total)}%`:'Not scheduled'}`)}/>:<div className="iso-program-card" role="status">Internal Audit · {error?'Unavailable':'Loading programme…'}</div>}
+        items={audit.quarters.map(q=>`Q${q.quarter}: ${q.total?`${q.complete} of ${q.total} · ${percent(q.complete,q.total)}%`:'Not scheduled'}`)}/>:<div className="iso-program-card" role="status">Internal Audit · {error?'Unavailable':'Loading program…'}</div>}
     </div>
   </section>;
 }

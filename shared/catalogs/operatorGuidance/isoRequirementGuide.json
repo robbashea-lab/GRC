@@ -531,24 +531,24 @@
       ]
     },
     "9.2.2": {
-      "title": "Internal audit programme",
+      "title": "Internal audit program",
       "author": "Omnisciente",
       "content_label": "Omnisciente-authored implementation guidance — not official ISO text",
-      "plain": "The audit programme needs deliberate planning, impartiality, reporting and follow-up so its results support reliable oversight.",
-      "start": "Review programme coverage, auditor impartiality and follow-up for completed audits.",
-      "evidence": "Audit programme, auditor independence and reports.",
-      "ask": "Consult the audit programme owner and assigned auditors. How do process importance and earlier audit results affect the programme?",
+      "plain": "The audit program needs deliberate planning, impartiality, reporting and follow-up so its results support reliable oversight.",
+      "start": "Review program coverage, auditor impartiality and follow-up for completed audits.",
+      "evidence": "Audit program, auditor independence and reports.",
+      "ask": "Consult the audit program owner and assigned auditors. How do process importance and earlier audit results affect the program?",
       "gaps": "Coverage is incomplete or an auditor assesses their own work without safeguards.",
       "review": [
-        "Review programme coverage, auditor impartiality and follow-up for completed audits.",
-        "Consult the audit programme owner and assigned auditors. How do process importance and earlier audit results affect the programme?"
+        "Review program coverage, auditor impartiality and follow-up for completed audits.",
+        "Consult the audit program owner and assigned auditors. How do process importance and earlier audit results affect the program?"
       ],
       "evidence_examples": [
-        "Audit programme, auditor independence and reports.",
-        "An audit programme with coverage decisions, impartial assignments and reporting follow-up."
+        "Audit program, auditor independence and reports.",
+        "An audit program with coverage decisions, impartial assignments and reporting follow-up."
       ],
       "outcome": [
-        "The audit programme provides planned coverage, impartiality and follow-up."
+        "The audit program provides planned coverage, impartiality and follow-up."
       ]
     },
     "9.3.1": {

@@ -33,7 +33,7 @@ const CLAUSES=[
   ['8.3',P,50,0,'Risk treatment plan tracker','Most treatment actions are on schedule. DLP rollout for price lists and WMS change-control fixes are behind plan.',48],
   ['9.1',P,45,0,'KPI dashboard (spreadsheet)','Metrics defined for patching, phishing, access reviews and incidents. Collection is manual and two metrics were not reported last quarter.',null],
   ['9.2.1',A,110,0,'Internal Audit Report FY2','Internal audit covered clauses 4-10 and 40 Annex A controls this cycle; remaining controls scheduled for next year.',108],
-  ['9.2.2',A,160,0,'Audit Programme 3-year plan','Three-year programme assigns independent auditors; Oscar Martinez audits IT areas and the MSP consultant audits Finance, avoiding self-audit.',155],
+  ['9.2.2',A,160,0,'Audit Program 3-year plan','Three-year program assigns independent auditors; Oscar Martinez audits IT areas and the MSP consultant audits Finance, avoiding self-audit.',155],
   ['9.3.1',A,45,1,'Management Review minutes','Management review held twice a year, chaired by David Wallace with Michael Scott and Dwight Schrute attending.',44],
   ['9.3.2',P,45,1,'Management review agenda template','Agenda covers most required inputs. Interested-party feedback and supplier performance were not presented at the last review.',44],
   ['9.3.3',A,45,1,'Management review action log','Decisions and actions from review logged with owners and dates, including approval of the customer-portal risk acceptance.',40],
@@ -76,7 +76,7 @@ const ANNEX=[
   ['A.5.32',A,390,0,'Software licence inventory','Licences tracked for Microsoft 365 and ERP seats; last true-up was over a year ago.',390,I,'Unlicensed software creates legal exposure and unsupported installs.'],
   ['A.5.33',A,160,2,'Microsoft 365 retention labels','Finance and HR records retained per the register; invoices kept seven years.',150,I,'Finance and HR record retention obligations apply to the in-scope departments.'],
   ['A.5.34',A,140,0,'Privacy Notice; HR data procedure','Employee and customer contact personal data handled per the privacy procedure; access limited to HR and Sales Ops.',135,I,'Protects employee and customer contact personal data handled by HR and sales.'],
-  ['A.5.35',A,200,1,'External ISMS review report (fictional firm)','Independent review by a fictional advisory firm, Lakeside Assurance Partners, completed last year; findings tracked.',195,I,'Independent review gives management assurance beyond the internal audit programme.'],
+  ['A.5.35',A,200,1,'External ISMS review report (fictional firm)','Independent review by a fictional advisory firm, Lakeside Assurance Partners, completed last year; findings tracked.',195,I,'Independent review gives management assurance beyond the internal audit program.'],
   ['A.5.36',A,110,0,'Compliance check schedule','Managers self-check policy compliance each quarter and results feed internal audit.',100,I,'Regular compliance checks confirm the documented controls are actually followed.'],
   ['A.5.37',A,170,0,'IT operating procedures wiki','Documented procedures for backups, account admin and WMS batch jobs held in the IT wiki.',null,I,'Written procedures reduce dependency on individual staff for WMS and ERP operations.'],
   ['A.6.1',A,150,2,'Background check provider (fictional)','Background checks run for office and Finance hires; warehouse temps screened by the staffing agency under contract.',140,I,'Screening reduces insider risk for staff with payment and customer data access.'],
@@ -155,7 +155,7 @@ const program={
   assessments:Object.fromEntries([...CLAUSES,...ANNEX].map(row)),
   findings:[
     {definition:'7.5.3',title:'Minor NC: obsolete policy copies in use at the warehouse',severity:'medium',description:'Printed copies of the superseded Acceptable Use Policy were posted in the warehouse break room and used in onboarding.',action:'Withdraw printed copies and publish read-only current versions only',assignee:2,due_in:-230,age:260,closed_ago:200},
-    {definition:'9.2.2',title:'Minor NC: internal auditor audited own area',severity:'medium',description:'The IT access controls audit was performed by the person who administers those controls.',action:'Reassign audit areas to independent auditors in the audit programme',assignee:0,due_in:-170,age:210,closed_ago:150},
+    {definition:'9.2.2',title:'Minor NC: internal auditor audited own area',severity:'medium',description:'The IT access controls audit was performed by the person who administers those controls.',action:'Reassign audit areas to independent auditors in the audit program',assignee:0,due_in:-170,age:210,closed_ago:150},
     {definition:'A.5.18',title:'Minor NC: WMS access review evidence missing',severity:'high',description:'Two quarterly WMS entitlement reviews had no signed record, so review completion could not be demonstrated.',action:'Complete and retain signed WMS access review for the current quarter',assignee:0,due_in:-100,age:150,closed_ago:90},
     {definition:'6.2',title:'OFI: security objectives not measurable',severity:'low',description:'Objectives were stated as intentions without targets or measurement methods.',action:'Define targets, data sources and owners for each objective',assignee:1,due_in:-70,age:120,closed_ago:60},
     {definition:'A.8.32',title:'Major NC: unapproved emergency WMS changes',severity:'high',description:'Three emergency WMS configuration changes in the sample had no approval or post-implementation review, one causing a shipping outage.',action:'Enforce emergency change approval and retrospective CAB review for WMS vendor changes',assignee:0,due_in:-18,age:75},
@@ -201,7 +201,7 @@ const OBJECTIVES=[
   {key:'recovery',objective:'Demonstrate recoverability of critical order services',target:'Restore the ERP and WMS dependency set within the approved four-hour recovery target',owner:0,method:'Semiannual recovery exercise with timed results',status:'on_track',result:'Latest exercise: 3h 32m; one application dependency follow-up remains open',due:120},
 ];
 
-const cadence=(rationale,source='organization_defined')=>({category:'organizational',rationale:'Recurring ISMS governance with retained occurrence evidence and follow-up.',cadence_source:source,cadence_rationale:rationale,citation:'ISO/IEC 27001:2022 operating programme; consult the licensed standard for normative wording.'});
+const cadence=(rationale,source='organization_defined')=>({category:'organizational',rationale:'Recurring ISMS governance with retained occurrence evidence and follow-up.',cadence_source:source,cadence_rationale:rationale,citation:'ISO/IEC 27001:2022 operating program; consult the licensed standard for normative wording.'});
 const completedOccurrence=(r,due,db)=>{
   const completed=demoDates(new Date(due+'T12:00:00Z'))(-1),who=r.reviewer_id||r.owner_id,snapshot=Object.fromEntries(['review_id','client_id','title','review_type','recurrence','owner_id','reviewer_id','scope','framework_drivers','baseline_key','framework_key','framework_safeguards','framework_plan_key','governance_context','policy_id'].filter(k=>r[k]!==undefined).map(k=>[k,JSON.parse(JSON.stringify(r[k]))]));
   return {...snapshot,...reviewSchedule({...r,due_date:due},true),occurrence_id:r.review_id+'_'+due,due_date:due,status:'completed',completed_at:completed,completion_date:completed,completed_by:who,completed_by_name:db.users.find(u=>u.user_id===who)?.name||'Historical user',outcome:'no_findings',finding_count:0,evidence:[]};
@@ -231,8 +231,8 @@ export function finishDunder(db,clock){
     const key=r.framework_plan_key||r.baseline_key;
     if(key==='iso-user-access'||key==='user-access')r.governance_context=cadence('iVenture operating cadence: quarterly access review. ISO requires controlled access and periodic review where appropriate, but does not prescribe this exact interval.','risk_based');
     else if(key==='iso-management-review'||key==='management-review')r.governance_context=cadence('Program Standard: management selected an annual formal review. ISO requires review at planned intervals; it does not prescribe annual frequency.');
-    else if(key==='iso-internal-audit')r.governance_context=cadence('Program Standard: annual package recurrence, staggered across quarters for usability. ISO requires a planned audit programme, not quarterly audits.');
-    else if(key?.startsWith('iso-'))r.governance_context=cadence('Omnisciente recommended cadence: annual programme review and review after material change. The configured interval is operational unless a cited source states otherwise.','recommended');
+    else if(key==='iso-internal-audit')r.governance_context=cadence('Program Standard: annual package recurrence, staggered across quarters for usability. ISO requires a planned audit program, not quarterly audits.');
+    else if(key?.startsWith('iso-'))r.governance_context=cadence('Omnisciente recommended cadence: annual program review and review after material change. The configured interval is operational unless a cited source states otherwise.','recommended');
   }
 
   const management=review('iso-management-review')||review('management-review');
@@ -269,7 +269,7 @@ export function finishDunder(db,clock){
     if(i===1)pack.items.slice(0,8).forEach(item=>{r.iso_audit.items[item.key]={...blankAuditItem(),status:'reviewed',result:'conforming',notes:'Current-cycle synthetic sample completed.',updated_at:date(-5),updated_by:r.owner_id};});
     db.reviews.push(r);for(const a of db.framework_assessments.filter(a=>a.client_id===CID&&a.framework_key==='iso-27001'&&r.framework_safeguards.includes(a.definition_id)))a.related_links.push({kind:'reviews',id:rid});
   });
-  const oldAudit=review('iso-internal-audit');if(oldAudit)Object.assign(oldAudit,{status:'cancelled',cancelled_at:date(-2),notes:'Replaced prospectively by the four-package annual audit programme; prior history remains retained.'});
+  const oldAudit=review('iso-internal-audit');if(oldAudit)Object.assign(oldAudit,{status:'cancelled',cancelled_at:date(-2),notes:'Replaced prospectively by the four-package annual audit program; prior history remains retained.'});
 
   const auditReview=db.reviews.find(r=>r.review_id===CID+'_audit_'+isoAuditCatalog.packages[0].key),auditOccurrence=auditReview?.occurrences.at(-1);
   if(auditReview&&auditOccurrence){
