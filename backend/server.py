@@ -582,6 +582,7 @@ class AssetIn(BaseModel):
 
 
 class TaskIn(BaseModel):
+    resolution: Optional[str] = Field(default=None, max_length=20000)
     governance_context: Optional[GovernanceContext] = None
     title: str
     client_id: str
@@ -2689,7 +2690,23 @@ async def _finish_entity_create(kind, doc, user):
 @vendor_mutation
 @review_mutation
 @finding_mutation
-async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), body: Dict[str, Any] = None, user: Dict = Depends(get_current_user)):
+async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), body: Dict[str, Any] = None, user: Dict = Depends(get_current_user), request: Request = None):
+    if kind == 'tasks':
+        existing = await _authorized_parent(kind, item_id, user, write=True)
+        key = request.headers.get('Idempotency-Key') if request else None
+        route = 'tasks/' + item_id + '/update'
+        identity = create_requests.digest([user['user_id'], existing['client_id'], route, key]) if key else None
+        prior = await db.create_requests.find_one({'_id':existing.get('_ticket_command')}) if existing.get('_ticket_command') else None
+        if prior and prior['state'] != 'complete' and prior['_id'] != identity:
+            raise HTTPException(409, 'An earlier ticket save needs recovery; retry that request first')
+        if key:
+            async def execute(command):
+                return await _update_entity(kind, item_id, body, user, command)
+            return await create_requests.run(db, key, user['user_id'], existing['client_id'], route, body, execute)
+    return await _update_entity(kind, item_id, body, user)
+
+
+async def _update_entity(kind, item_id, body, user, command=None):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
     entity_type, _Model, id_field, _pfx = ENTITY_MAP[kind]
@@ -2698,6 +2715,14 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
+    persisted = existing
+    applied_retry = bool(command and persisted.get('_ticket_command') == command)
+    if command:
+        receipt = await db.create_requests.find_one({'_id':command})
+        if receipt.get('task_before'):
+            existing = receipt['task_before']
+        else:
+            await db.create_requests.update_one({'_id':command}, {'$set':{'task_before':existing}})
     expected_occurrence = (body or {}).get("expected_occurrence_id")
     incoming = dict(body or {})
     _require_snapshot(incoming, existing)
@@ -2714,9 +2739,13 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     if kind == "tasks" and "assignee_id" in incoming and incoming["assignee_id"] in (None, "") and existing.get("owner_id"):
         body["assignee_id"] = None
     if kind == "tasks":
-        await action_items.prepare(db, {**existing, **body}, _can_access_client, existing)
+        if not applied_retry:
+            await action_items.prepare(db, {**existing, **body}, _can_access_client, existing)
         if 'title' in body: body['title_generated']=False
-    await assignment_eligibility.validate(db, kind, {**existing, **body}, _can_access_client, existing)
+    if not applied_retry:
+        # This assignment was validated before the marked primary write. Recovery
+        # finishes required effects even if the target's eligibility later changes.
+        await assignment_eligibility.validate(db, kind, {**existing, **body}, _can_access_client, existing)
     if kind == "vendors":
         await vendor_governance.validate(db,{**existing,**body},_can_access_client,existing)
         for risk_id in body.get("related_risk_ids") or []:
@@ -2779,9 +2808,17 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         query["current_occurrence_id"] = existing.get("current_occurrence_id")
     # Also protect the read/validate/write window, independently of browser state.
     query["updated_at"] = existing.get("updated_at")
-    result = await db[_coll_for(kind)].update_one(query, {"$set": body})
-    if not result.matched_count:
-        raise HTTPException(409, "Record changed; reload before saving")
+    if not command or persisted.get('_ticket_command') != command:
+        if command:
+            await db.create_requests.update_one({'_id':command}, {'$set':{'primary_started':True}})
+            body['_ticket_command'] = command
+        result = await db[_coll_for(kind)].update_one(query, {"$set": body})
+        if not result.matched_count:
+            # A failed conditional write is a definitive rejection, not an
+            # uncertain acknowledgement of an applied ticket command.
+            raise HTTPException(409, "Record changed; reload before saving", headers={"X-Create-Rejected":"true"})
+    if command:
+        body.pop('_ticket_command', None)
     if kind == "tasks" and existing.get("finding_id"):
         await remediation.synchronize(db, existing, user, _now, audit)
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})
@@ -2841,6 +2878,11 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(409, "Completed reviews must be retained")
     if kind == "tasks" and (existing.get("status") == "done" or existing.get("completed_at")):
         raise HTTPException(409, "Completed Action Items must be retained")
+    if kind == 'tasks' and existing.get('_ticket_command') and await db.create_requests.find_one({'_id':existing['_ticket_command'],'state':'pending'}):
+        raise HTTPException(409, 'Recover the pending ticket save before deleting this Action')
+    if kind == 'findings':
+        import remediation_commands
+        await remediation_commands.retain_finding(sys.modules[__name__], existing)
     _require_snapshot(body or {}, existing)
     delete_query = {id_field: item_id, "updated_at": existing.get("updated_at")}
     if kind == "policies":
@@ -3474,6 +3516,7 @@ class ReviewCompleteIn(BaseModel):
 class DecisionIn(BaseModel):
     rationale: str
     expected_updated_at: Optional[str] = Field(default=None,max_length=100)
+    request_id: Optional[str] = Field(default=None,min_length=1,max_length=128)
 
 
 @api.post("/exceptions/{exception_id}/approve")
@@ -3494,46 +3537,33 @@ async def approve_exception(exception_id: str, body: DecisionIn, user: Dict = De
 @api.post("/findings/{finding_id}/accept")
 @finding_mutation
 async def accept_finding(finding_id: str, body: DecisionIn, user: Dict = Depends(get_current_user)):
+    import remediation_commands
     item = await _authorized_parent("findings", finding_id, user, write=True)
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Only platform-level roles can accept findings")
-    _require_snapshot(body.model_dump(exclude_unset=True),item)
-    if not body.rationale.strip():
-        raise HTTPException(422, "Acceptance rationale is required")
-    decision = {"action":"accepted", "by":user["user_id"], "at":_now(), "rationale":body.rationale.strip()}
-    changed=await db.findings.update_one({"finding_id":finding_id,'updated_at':item.get('updated_at')}, {"$set":{"status":"accepted", "updated_at":_next_write_time(item.get('updated_at'))}, "$push":{"decision_history":decision}})
-    if not changed.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
-    await audit(user, "accept", "finding", finding_id, item["client_id"], meta=decision)
-    return await db.findings.find_one({"finding_id":finding_id}, {"_id":0})
+    return await remediation_commands.validate(sys.modules[__name__], item, body, user, action='accept')
 
 
 @api.post("/findings/{finding_id}/validate")
 @finding_mutation
 async def validate_finding(finding_id: str, body: DecisionIn, user: Dict = Depends(get_current_user)):
     finding = await _authorized_parent("findings", finding_id, user, write=True)
-    if user.get("role") not in ("super_admin", "platform_admin"):
-        raise HTTPException(403, "Only platform-level roles can validate remediation")
-    if not body.rationale.strip():
-        raise HTTPException(422, "Validation rationale is required")
-    if finding.get("status") != "remediated":
-        raise HTTPException(409, "Finding must be pending validation")
-    if await db.tasks.find_one({"finding_id": finding_id, "client_id": finding["client_id"], "status": {"$nin": ["done", "cancelled"]}}):
-        raise HTTPException(409, "Complete outstanding remediation first")
-    decision = {"action": "validated", "by": user["user_id"], "at": _now(), "rationale": body.rationale.strip()}
-    result = await db.findings.update_one({"finding_id": finding_id, "status": "remediated", "updated_at":finding.get('updated_at')}, {"$set": {
-        "status": "closed", "validated_by": user["user_id"], "validated_at": decision["at"],
-        "closed_by": user["user_id"], "closed_at": decision["at"], "updated_at": decision["at"]}, "$push": {"decision_history": decision}})
-    if not result.modified_count:
-        raise HTTPException(409, "Finding changed; reload before validating")
-    await audit(user, "validate", "finding", finding_id, finding["client_id"], meta=decision)
-    for task in await db.tasks.find({"finding_id": finding_id, "client_id": finding["client_id"]}, {"_id": 0}).to_list(2000):
-        await audit(user, "Related Finding validated and closed", "task", task["task_id"], finding["client_id"], meta={"finding_id": finding_id})
-    if finding.get("review_id"):
-        review = await db.reviews.find_one({"review_id": finding["review_id"], "client_id": finding["client_id"]}, {"_id": 0})
-        if review:
-            await _review_event(user, review, "Finding validated and closed",
-                finding.get("occurrence_id") or "occ_" + review["review_id"], finding_id=finding_id, title=finding["title"])
-    return await db.findings.find_one({"finding_id": finding_id}, {"_id": 0})
+    import remediation_commands
+    return await remediation_commands.validate(sys.modules[__name__], finding, body, user)
+
+
+class ReopenTicketIn(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    request_id: str = Field(min_length=1,max_length=128)
+    expected_updated_at: Optional[str] = Field(max_length=100)
+
+
+@api.post('/findings/{finding_id}/reopen')
+@finding_mutation
+async def reopen_ticket(finding_id: str, body: ReopenTicketIn, user: Dict = Depends(get_current_user)):
+    finding = await _authorized_parent('findings', finding_id, user, write=True)
+    import remediation_commands
+    return await remediation_commands.reopen(sys.modules[__name__], finding, body.model_dump(), user)
 
 
 @api.post("/reviews/{review_id}/amend")
@@ -4355,6 +4385,12 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
             raise HTTPException(409, "Completed reviews must be retained")
         if body.kind == "tasks" and any(d.get("status") == "done" or d.get("completed_at") for d in docs):
             raise HTTPException(409, "Completed Action Items must be retained")
+        if body.kind == 'tasks' and await db.create_requests.find_one({'_id':{'$in':[d.get('_ticket_command') for d in docs if d.get('_ticket_command')]},'state':'pending'}):
+            raise HTTPException(409, 'Recover pending ticket saves before deleting Actions')
+        if body.kind == "findings":
+            import remediation_commands
+            for d in docs:
+                await remediation_commands.retain_finding(sys.modules[__name__], d)
         for d in docs:
             if d[id_field] not in body.expected_versions:
                 raise HTTPException(428, "Reload selected records before deleting; edit versions are required")

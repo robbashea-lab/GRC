@@ -4,6 +4,7 @@ Persisted role IDs are retained. Membership is always explicit except for the
 Platform Owner. Route and lifecycle checks further restrict these permissions.
 """
 from fastapi import HTTPException
+from create_requests import digest
 
 OWNER = 'super_admin'
 PROVIDER = 'platform_admin'
@@ -123,6 +124,7 @@ async def authorize_request(request, user, db):
         raise HTTPException(403, 'This operation requires a service-provider administrator')
     params = request.path_params
     kind = params.get('kind')
+    applied_retry = False
     record_id = params.get('item_id')
     if path == '/api/{kind}' and method == 'POST':
         if kind != 'tasks':
@@ -139,6 +141,20 @@ async def authorize_request(request, user, db):
         row = await db[kind].find_one({key:record_id, **scope(user)}, {'_id':0})
         if not row:
             raise HTTPException(403, 'Record unavailable for this client')
+        if kind == 'tasks' and method == 'PATCH' and request.headers.get('Idempotency-Key'):
+            identity = digest([user['user_id'], row['client_id'], 'tasks/' + record_id + '/update', request.headers['Idempotency-Key']])
+            receipt = await db.create_requests.find_one({'_id': identity})
+            if receipt:
+                if receipt['fingerprint'] != digest(await object_body(request)):
+                    raise HTTPException(409, 'This request has different data; restore the original request before retrying')
+                before = receipt.get('task_before', {})
+                # An exact actor-bound retry may finish after its own assignment change.
+                # Current role and tenant access were checked above; new intents still
+                # require current assignment, and pending writes retain their marker.
+                if (before.get('task_id') == record_id and before.get('client_id') == row['client_id']
+                        and (receipt['state'] == 'complete' or row.get('_ticket_command') == identity)):
+                    applied_retry = True
+                    row = before
         require_assigned(user, kind, row)
         if method == 'PATCH':
             body = await object_body(request)
@@ -147,7 +163,7 @@ async def authorize_request(request, user, db):
                     continue
                 if role == CONTRIBUTOR and not (kind == 'tasks' and body[field] in (None, '', user['user_id'])):
                     raise HTTPException(403, 'Contributors cannot reassign this activity')
-                if body[field]:
+                if body[field] and not applied_retry:
                     target = await db.users.find_one({'user_id':body[field], 'status':'active',
                         'role':{'$in':list(CLIENT_ROLES)}, 'client_ids':row['client_id']})
                     if not target:
@@ -160,7 +176,7 @@ async def authorize_request(request, user, db):
                   if field not in {'expected_updated_at', 'expected_occurrence_id'} and value != row.get(field)
                   and not (value in (None, '') and row.get(field) in (None, ''))}
         allowed = {'notes'}
-        if kind == 'tasks': allowed |= {'status', 'description', 'title', 'priority', 'due_date', 'reason', 'context'}
+        if kind == 'tasks': allowed |= {'status', 'description', 'resolution', 'title', 'priority', 'due_date', 'reason', 'context'}
         if kind == 'tasks' and role == CONTRIBUTOR and body.get('assignee_id') in (None, '', user['user_id']):
             allowed.add('assignee_id')
         if kind == 'findings': allowed |= {'remediation_plan'}

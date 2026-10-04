@@ -1,5 +1,6 @@
 {
   "offline": [
+    "test_remediation_tickets.py",
     "test_action_items.py",
     "test_ai_governance.py",
     "test_assessment_verification.py",

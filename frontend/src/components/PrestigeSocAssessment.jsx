@@ -1,5 +1,7 @@
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
 import AssessmentHistory from './AssessmentHistory';
+import RemediationTickets from './RemediationTickets';
+import TicketAssignment from './TicketAssignment';
 import SocRequirementGuide from './SocRequirementGuide';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
@@ -34,7 +36,7 @@ export default function PrestigeSocAssessment({state,actions}){
   return <AssessmentShell open={open} title={`SOC 2 ${definition.id} — ${definition.title}`} description={<span className="psoc-context">{context}</span>}
     status={<><span aria-label="Saved implementation status"><SocStatusPill status={current.status}/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
     {...{position,previous,next,close,busy}} testId="prestige-soc-assessment" ariaModal crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb} label="SOC 2 location"/>:null} returnSelector={`[data-testid="requirement-${definition.id}"]`}
-    footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?'Unsaved assessment changes':feedback||(!writable?'Read-only assessment':'Changes are saved when you choose Save assessment.')}</span></div><div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
+    footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes are saved when you choose Save assessment.')}</span></div><div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading assessment…</p>}
     <div className="bcsg-metadata"><div className="bcsg-owner"><span>Owner</span><AssigneeSelect clientId={record.client_id} label="Owner" value={form.owner_id} onChange={v=>put('owner_id',v)} users={ctx?.users||[]} disabled={disabled} showGuidance={false}/></div><label className="bcsg-verification">Verification<select aria-label="Verification result" disabled={disabled} value={verification} onChange={e=>put('verification',e.target.value)}>{Object.entries(VERIFICATION_LABELS).map(([v,label])=><option key={v} value={v}>{label}</option>)}</select></label><div className="bcsg-meta"><p>Last saved: {socSavedDate(current)}</p><p>Last assessed: {socAssessmentDate(current)}{current.assessment_recorded_by?` · ${personLabel(ctx?.users,current.assessment_recorded_by,'Not recorded')}`:''}</p>{writable&&<Button size="sm" variant="ghost" disabled={disabled||form.status==='not_assessed'} onClick={()=>save({recordAssessment:true})}>Record assessment</Button>}<p className="text-xs">Saving a changed assessment status records your judgment. Narrative-only saves retain its date; Record assessment reaffirms it.</p></div></div>
     <div className="psoc-assessment-layout">
@@ -69,13 +71,14 @@ export default function PrestigeSocAssessment({state,actions}){
     <section className="psoc-findings" aria-label="Criterion Findings">
       <h3>Findings</h3>
       <p className="text-xs text-ink-secondary">Completing remediation does not change the assessment conclusion automatically.</p>
-      {related?.findings?.length?<ul>{related.findings.map(item=><li key={item.finding_id}><button type="button" disabled={busy} onClick={()=>setNested({kind:'findings',record:item})}>{item.title||item.finding_id}</button>{item.status&&` · ${item.status.replaceAll('_',' ')}`}</li>)}</ul>:<p className="text-sm text-ink-secondary">No linked Findings for this criterion.</p>}
+      <RemediationTickets records={{...related,framework_assessments:[current]}} clientId={record.client_id} users={ctx?.users} onOpen={setNested} disabled={busy}/>
       {writable&&<div className="space-y-2">
         <Button variant="outline" disabled={disabled||!!finding} onClick={()=>setFinding({title:`${definition.id} · ${definition.title} — implementation gap`,description:current.implementation||'',remediation_title:`Address ${definition.id} implementation gap`,severity:'medium',request_id:recordUuid()})}>Raise Finding</Button>
         {finding&&<div className="space-y-2">
           <label className="block text-sm">Finding title<input aria-label="Finding title" className="w-full border border-line rounded p-2" value={finding.title} onChange={e=>setFinding({...finding,title:e.target.value})}/></label>
           <label className="block text-sm">Remediation Action title<input aria-label="Remediation Action title" className="w-full border border-line rounded p-2" value={finding.remediation_title} onChange={e=>setFinding({...finding,remediation_title:e.target.value})}/></label>
           <label className="block text-sm">Finding description<Textarea aria-label="Finding description" value={finding.description} onChange={e=>setFinding({...finding,description:e.target.value})}/></label>
+          <TicketAssignment clientId={record.client_id} users={ctx?.users} {...{finding,setFinding}} defaultOwner={current.owner_id} disabled={busy}/>
           <label className="block text-sm">Severity<select aria-label="Finding severity" value={finding.severity} onChange={e=>setFinding({...finding,severity:e.target.value})}>{['low','medium','high','critical'].map(s=><option key={s}>{s}</option>)}</select></label>
           <Button disabled={busy||!finding.title.trim()||!finding.remediation_title.trim()} onClick={()=>run(async()=>{await api.post(`/framework_assessments/${record.framework_assessment_id}/findings`,finding);setFinding(null);setFeedback('Finding and remediation Action created.');})}>Create Finding & Action</Button>
           <Button variant="ghost" onClick={()=>setFinding(null)}>Cancel</Button>
@@ -89,7 +92,7 @@ export default function PrestigeSocAssessment({state,actions}){
       {!!current.management_controls?.length&&<ul>{current.management_controls.map((control,index)=><li key={control.control_id||index}><strong>{control.name||'Previously recorded control'}</strong><p className="whitespace-pre-wrap">{control.description}</p><p className="text-xs text-ink-secondary">Retained description · {control.frequency||'Frequency not recorded'} · Design: {control.design||'Not recorded'} · Operation: {control.operating||'Not recorded'}</p></li>)}</ul>}
       {!!ctx?.retainedControls?.length&&<ul>{ctx.retainedControls.map(control=><li key={control.control_id}><button type="button" onClick={()=>setNested({kind:'organizational_controls',record:control})}>Open retained supporting record · {control.control_id}</button></li>)}</ul>}
       {[
-        ['reviews','Reviews','review_id'],['tasks','Action Items','task_id'],
+        ['reviews','Reviews','review_id'],
         ['risks','Risks','risk_id'],['policies','Policies','policy_id'],['evidence','Evidence','evidence_id']
       ].map(([kind,label,id])=><section key={kind}>
         <h3>{label} · {related?.[kind]?.length||0}</h3>

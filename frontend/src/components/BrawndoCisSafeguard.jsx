@@ -28,7 +28,7 @@ export const GUIDANCE_NOTE='Omnisciente guidance for assessing this safeguard, n
 
 export default function BrawndoCisSafeguard({state,actions}){
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,breadcrumb,related,finding,otherDraft}=state;
-  const {put,save,saveAndNext,close,previous,next,retry,run,setFinding,setNested,setReviewDraft,reviewSaved}=actions;
+  const {put,save,saveAndNext,close,previous,next,retry,run,setFinding,setNested,setReviewDraft,reviewSaved,setFeedback}=actions;
   const clientId=record.client_id,id=definition.id,disabled=!writable||busy||!ctx;
   const source=sourcePresentation(definition),criteria=criteriaData.requirements[id];
   const guidance=guidanceData.requirements[id];
@@ -39,7 +39,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment" ariaModal
     crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb}/>:null}
     returnSelector={`[data-testid="requirement-${id}"]`}
-    footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?'Unsaved assessment changes':feedback||(!writable?'Read-only assessment':'Changes are saved when you choose Save assessment.')}</span>{finding&&<p id="bcsg-finding-draft" className="text-xs text-ink-secondary">Create or cancel the open Finding before using Save & next.</p>}</div>
+    footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes are saved when you choose Save assessment.')}</span>{finding&&<p id="bcsg-finding-draft" className="text-xs text-ink-secondary">Create or cancel the open Finding before using Save & next.</p>}</div>
       <div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={finding?'bcsg-finding-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading assessment…</p>}
     <div className="bcsg-metadata">
@@ -86,7 +86,7 @@ export default function BrawndoCisSafeguard({state,actions}){
         <Textarea aria-label="Current implementation" aria-describedby="bcsg-current-help" rows={5} disabled={disabled} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)}/></label>
     </Step>
     </div>
-    <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested}}/>
+    <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>
     <CisOperationPanel {...{form,definition,put,disabled}} contacts={ctx?.contacts||[]}/>
     <CisSupportingRecords {...{record,current,definition,ctx,related,writable,busy,run,setNested,setReviewDraft,reviewSaved}}/>
     {otherDraft&&!finding&&<p role="status" className="text-xs text-ink-secondary">Save or cancel recurring Review setup before using Save & next.</p>}

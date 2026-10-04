@@ -13,6 +13,8 @@ import security_runtime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 import review_occurrences
 import assignment_eligibility
+import create_requests
+import authorization
 import shared_review_plans
 from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
@@ -553,33 +555,37 @@ def router_for(s):
     @router.post('/framework_assessments/{aid}/findings')
     async def finding(aid:str,body:FindingInput,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)
-        if not body.title.strip() or not body.remediation_title.strip():raise HTTPException(422,'Finding and Action titles are required')
-        fid=stable(row['client_id'],'finding',aid+':'+body.request_id)
-        # A departed or out-of-scope safeguard owner is never copied onto new work:
-        # the Finding and its Action start visibly unassigned instead of failing.
-        owner=row.get('owner_id')
-        if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):owner=None
-        if 'owner_id' in body.model_fields_set:
-            owner=body.owner_id or None
-            if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):
-                raise HTTPException(422,'Finding owner must be an active user with access to this client')
-        due=None
-        if body.due_date:
-            try:due=date.fromisoformat(body.due_date[:10]).isoformat()
-            except ValueError:raise HTTPException(422,'Enter a valid target date')
-        doc={'finding_id':fid,'client_id':row['client_id'],'title':body.title.strip(),'description':body.description,'severity':body.severity,
-             'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':owner,'due_date':due,
-             'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'remediation_title':body.remediation_title.strip()}
-        previous=await s.db.findings.find_one({'finding_id':fid,'client_id':row['client_id']})
-        if not previous:
-            await assignment_eligibility.validate(s.db, 'findings', doc, s._can_access_client)
-        result=await s.db.findings.update_one({'_id':fid},{'$setOnInsert':doc},upsert=True)
-        saved=await s.db.findings.find_one({'finding_id':fid},{'_id':0})
-        await s.finding_create_task(fid,{'title':saved['remediation_title']},user)
-        if result.upserted_id:
+        async def execute(identity):
+            legacy=stable(row['client_id'],'finding',aid+':'+body.request_id)
+            saved=await s.db.findings.find_one({'_id':'create:'+identity},{'_id':0})
+            if not saved:
+                saved=await s.db.findings.find_one({'finding_id':legacy,'client_id':row['client_id'],'created_by':user['user_id']},{'_id':0})
+            if not saved:
+                if not body.title.strip() or not body.remediation_title.strip():raise HTTPException(422,'Finding and Action titles are required')
+                owner=row.get('owner_id')
+                if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):owner=None
+                if 'owner_id' in body.model_fields_set:
+                    owner=body.owner_id or None
+                    if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):
+                        raise HTTPException(422,'Finding owner must be an active user with access to this client')
+                due=None
+                if body.due_date:
+                    try:due=date.fromisoformat(body.due_date[:10]).isoformat()
+                    except ValueError:raise HTTPException(422,'Enter a valid target date')
+                fid=stable(row['client_id'],'finding',identity)
+                doc={'finding_id':fid,'client_id':row['client_id'],'title':body.title.strip(),'description':body.description,'severity':body.severity,
+                     'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':owner,'due_date':due,
+                     'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'remediation_title':body.remediation_title.strip()}
+                await assignment_eligibility.validate(s.db, 'findings', doc, s._can_access_client)
+                await authorization.require_creation_assignee(s.db,user,row['client_id'],owner)
+                saved=await create_requests.insert_primary(s.db,'findings',doc,identity)
+            fid=saved['finding_id']
+            await s.finding_create_task(fid,{'title':saved['remediation_title']},user)
             await s.audit(user,'Finding raised','framework_assessment',aid,row['client_id'],meta={'finding_id':fid})
             await s.audit(user,'create','finding',fid,row['client_id'],meta={'framework_assessment_id':aid})
-        return await s.db.findings.find_one({'finding_id':fid},{'_id':0})
+            return await s.db.findings.find_one({'finding_id':fid},{'_id':0})
+        return await create_requests.run(s.db,create_requests.digest(body.request_id),user['user_id'],row['client_id'],
+            'framework_assessments/'+aid+'/findings',body.model_dump(exclude_unset=True),execute)
     @router.get('/framework_assessments/{aid}/activity')
     async def activity(aid:str,user=Depends(s.get_current_user)):
         row=await parent(aid,user)

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 import assignment_eligibility
 import review_occurrences
+import create_requests
 
 CATALOG = json.loads((CATALOG_ROOT / 'isoAuditProgram.json').read_text(encoding='utf-8'))
 PACKAGES = {p['key']: p for p in CATALOG['packages']}
@@ -112,6 +113,12 @@ async def completion_snapshot(s, review):
     """Called by central completion before its atomic history/advance update."""
     output = {}
     if review.get('iso_audit'):
+        findings=await s.db.findings.find({'review_id':review['review_id'],'client_id':review['client_id'],
+            **review_occurrences.occurrence_query(review),'audit_item_key':{'$exists':True}}, {'request_id':1,'created_by':1}).to_list(None)
+        receipts=[create_requests.digest([f['created_by'],review['client_id'],'reviews/'+review['review_id']+'/create-finding',
+            create_requests.digest(f['request_id'])]) for f in findings if f.get('request_id') and f.get('created_by')]
+        if await s.db.create_requests.find_one({'_id':{'$in':receipts},'state':'pending'}):
+            raise HTTPException(409,'Finish the pending audit ticket creation before closing this occurrence')
         state = review['iso_audit']
         if progress(state)['complete'] != progress(state)['total']:
             raise HTTPException(422, 'Complete every applicable audit item and record each result before closing the package')

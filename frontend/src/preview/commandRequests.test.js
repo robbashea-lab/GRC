@@ -4,6 +4,12 @@ import {STORE_KEY} from './store';
 import contract from '@contracts/review-command.json';
 
 const api=axios.create({adapter:previewAdapter});
+
+test('pre-save stale ticket rejection releases a persisted intent without changing records',async()=>{
+ const task=(await api.post('/tasks',{client_id:'demo_brawndo',title:'Stale ticket test'})).data;
+ await expect(api.patch('/tasks/'+task.task_id,{title:'Stale overwrite',expected_updated_at:'obsolete'},{headers:{'Idempotency-Key':'stale-task-command-001'}})).rejects.toMatchObject({response:{status:409,headers:{'x-create-rejected':'true'}}});
+ expect((await api.get('/tasks/'+task.task_id)).data.title).toBe('Stale ticket test');
+});
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 async function setup(){
   const client=(await api.post('/clients',{name:'Isolated replay scenario'})).data;

@@ -9,6 +9,8 @@ import { reviewAction, reviewEvent } from './reviews';
 import { assertCurrentOccurrence, reviewSchedule } from '../lib/reviewOccurrences';
 import {requireCreationAssignee} from './authorization';
 import {guardEdit} from './decisions';
+import {auditPackage,blankAuditItem} from '../lib/isoAudit';
+import {eligible} from './assignmentEligibility';
 
 function commandFields(body, allowed) {
   if(Object.entries(body).some(([key,value])=>!allowed.includes(key)||(value!=null&&typeof value!=='string')))
@@ -149,6 +151,24 @@ export function action(db, kind, id, name, body) {
   if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   body={...body};delete body.expected_updated_at;
   const patch = b => write(db, kind, b, id);
+  if(kind==='findings'&&name==='reopen'){
+    if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Only platform-level roles can reopen remediation');
+    if(!['closed','accepted'].includes(r.status))throw Object.assign(new Error('Only completed or accepted remediation can be reopened'),{status:409});
+    commandFields(body,['request_id']);
+    const tasks=list(db,'tasks',cid).filter(t=>t.finding_id===id),active=tasks.filter(t=>!['done','cancelled'].includes(t.status));
+    const primary=r.primary_task_id?tasks.find(t=>t.task_id===r.primary_task_id):tasks.length===1?tasks[0]:null;
+    let taskId=r.primary_task_id;
+    if(!active.length){
+      const owner=primary?primary.assignee_id:r.owner_id;
+      const task=write(db,'tasks',{client_id:cid,finding_id:id,source_type:'finding',source_id:id,
+        title:primary?.title||r.remediation_title||r.title,description:primary?.description||r.remediation_plan,
+        assignee_id:owner&&eligible(db.users.find(u=>u.user_id===owner),cid)?owner:null,due_date:primary?primary.due_date:r.due_date,priority:primary?.priority||r.severity,status:'open'});
+      taskId=task.task_id;
+    }
+    const result=patch({status:'in_remediation',primary_task_id:taskId,decision_history:[...(r.decision_history||[]),{action:'reopened',by:db.user.user_id,at:now(),previous_primary_task_id:r.primary_task_id}]});
+    if(r.review_id)reviewEvent(db,record(db,'reviews',r.review_id),'Remediation reopened',r.occurrence_id,{finding_id:id});
+    return result;
+  }
   if (kind === 'exceptions' && name === 'approve' || kind === 'findings' && name === 'accept') {
     if (!['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can record this decision.');
     if (!body.rationale?.trim()) throw new Error('Decision rationale is required.');
@@ -173,7 +193,8 @@ export function action(db, kind, id, name, body) {
     const prior = body.request_id && list(db,'findings',cid).find(f => f.created_by === db.user.user_id && f.review_id === id && f.occurrence_id === body.occurrence_id && f.request_id === body.request_id);
     if (prior) return prior;
     assertCurrentOccurrence(r, body.occurrence_id);
-    commandFields(body,['request_id','occurrence_id','title','remediation_title','severity','description','owner_id','due_date','remediation_plan']);
+    commandFields(body,['request_id','occurrence_id','title','remediation_title','severity','description','owner_id','due_date','remediation_plan','audit_item_key']);
+    if(body.audit_item_key&&!auditPackage(r.iso_audit?.package_key)?.items.some(i=>i.key===body.audit_item_key))throw Object.assign(new Error('Select an item from this audit package'),{status:422});
     for(const [field,label] of [['title','Finding title'],['remediation_title','Remediation action']])
       if(typeof body[field]!=='string'||!body[field].trim()||body[field].length>1000)
         throw Object.assign(new Error(label+' is required (maximum 1000 characters)'),{status:422});
@@ -183,11 +204,17 @@ export function action(db, kind, id, name, body) {
     commandEdit('findings',{due_date:body.due_date},db.user);
     const finding = write(db, 'findings', {
       title: body.title.trim(), description: body.description || '', severity: body.severity || 'medium',
-      remediation_plan: body.remediation_plan || '', due_date: body.due_date || null,
+      remediation_plan: body.remediation_plan || '', remediation_title:body.remediation_title.trim(), audit_item_key:body.audit_item_key, due_date: body.due_date || null,
       client_id: cid, review_id: id, vendor_id:r.vendor_id, occurrence_id:body.occurrence_id, request_id:body.request_id, source: r.title, identified_at: now(),
       owner_id: owner
     });
     action(db, 'findings', finding.finding_id, 'create-task', { title: body.remediation_title.trim() });
+    if(body.audit_item_key){
+      const item=r.iso_audit.items[body.audit_item_key]||blankAuditItem();
+      r.iso_audit.items[body.audit_item_key]={...item,finding_ids:[...new Set([...item.finding_ids,finding.finding_id])]};
+      write(db,'reviews',{iso_audit:r.iso_audit},id);
+      reviewEvent(db,r,'Audit item Finding linked',body.occurrence_id,{finding_id:finding.finding_id,audit_item_key:body.audit_item_key});
+    }
     reviewEvent(db, r, 'Finding raised', body.occurrence_id, {finding_id:finding.finding_id,title:finding.title});
     return record(db, 'findings', finding.finding_id);
   }
@@ -213,6 +240,7 @@ export function action(db, kind, id, name, body) {
       due_date: body.due_date || r.due_date,
       description: body.description || r.remediation_plan
     });
+    patch({primary_task_id:task.task_id});
     if (r.status === 'open') {patch({
       status: 'in_remediation'
     });audit(db,'Finding moved to In Remediation','findings',r,{task_id:task.task_id});}

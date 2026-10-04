@@ -152,4 +152,27 @@ async def inspect_client(db, client_id):
                 if row.get(keys[target]) != row['source_id']:
                     issues.append({**context, 'field': 'source_id', 'code': 'conflicting_source_relationship'})
     return {'client_id': client_id, 'records': {kind: len(rows) for kind, rows in records.items()},
-            'issues': issues, 'repairs': repairs}
+            'issues': issues, 'repairs': repairs, 'remediation_tickets': ticket_diagnostics(records)}
+
+
+def ticket_diagnostics(records):
+    """Report compatibility cases; never propose merging or choosing an Action."""
+    findings={f.get('finding_id'):f for f in records.get('findings',[])}
+    grouped={fid:[] for fid in findings}
+    output=[]
+    for task in records.get('tasks',[]):
+        fid=task.get('finding_id')
+        if fid in grouped:grouped[fid].append(task)
+        elif fid:output.append({'ticket_id':'task:'+task['task_id'],'code':'linked_finding_unavailable','finding_id':fid})
+    for fid,finding in findings.items():
+        if not isinstance(fid,str):continue
+        tasks=grouped[fid];ids=[t.get('task_id') for t in tasks]
+        primary=finding.get('primary_task_id')
+        code=('primary_action_unavailable' if primary and primary not in ids else
+              'no_action' if not tasks else 'ambiguous_primary_action' if len(tasks)>1 and not primary else
+              'explicit_primary' if primary else 'single_action_compatibility')
+        output.append({'ticket_id':'finding:'+fid,'code':code,'primary_task_id':primary or (ids[0] if len(ids)==1 else None),
+            'actions':[{'task_id':t.get('task_id'),'owner_id':t.get('assignee_id',t.get('owner_id')),
+                        'due_date':t.get('due_date'),'status':t.get('status')} for t in tasks],
+            'outstanding_actions':sum(t.get('status') not in ('done','cancelled') for t in tasks)})
+    return output

@@ -218,8 +218,8 @@ test.each(['PI1.1','P1.1'])('%s retains its existing reference and assessment wi
 
 test('Prestige criterion exposes linked governance work and creates one sourced Finding and Action',async()=>{
  related.reviews=[{review_id:'r1',title:'Vendor review',status:'upcoming'}];
- related.findings=[{finding_id:'f1',title:'Existing deficiency',status:'in_remediation'}];
- related.tasks=[{task_id:'t1',title:'Existing correction',status:'open'}];
+ related.findings=[{finding_id:'f1',client_id:record.client_id,title:'Existing deficiency',description:'Existing deficiency',status:'in_remediation'}];
+ related.tasks=[{task_id:'t1',finding_id:'f1',client_id:record.client_id,title:'Existing correction',status:'open'}];
  related.evidence=[{evidence_id:'e1',filename:'vendor-report.pdf'}];
  await render();await act(async()=>container.querySelector('.psoc-linked summary').click());
  expect(container.textContent).toContain('Vendor review');expect(container.textContent).toContain('Existing deficiency');

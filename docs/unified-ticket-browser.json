@@ -1,0 +1,49 @@
+{
+  "assessments": [
+    "fw_demo_brawndo_assessment_1.1",
+    "fw_demo_brawndo_assessment_1.2",
+    "fw_demo_brawndo_assessment_2.1",
+    "fw_demo_brawndo_assessment_2.2",
+    "fw_demo_brawndo_assessment_2.3",
+    "fw_demo_brawndo_assessment_3.1",
+    "fw_demo_brawndo_assessment_3.2",
+    "fw_demo_brawndo_assessment_3.3",
+    "fw_demo_brawndo_assessment_3.4",
+    "fw_demo_brawndo_assessment_3.5"
+  ],
+  "tickets": [
+    {
+      "aid": "fw_demo_brawndo_assessment_1.1",
+      "fid": "fw_demo_brawndo_finding_fw_demo_brawndo_assessment_1.1:15b66108-1824-4cd3-bdd5-94427b16226e",
+      "tid": "tasks_demo_muu0qymz_e3cj02kd",
+      "title": "Unified ticket verification action 0",
+      "owner": "demo_admin",
+      "due": "2026-12-10"
+    },
+    {
+      "aid": "fw_demo_brawndo_assessment_2.1",
+      "fid": "fw_demo_brawndo_finding_fw_demo_brawndo_assessment_2.1:fa5a3f96-70a7-4937-b348-93c1ef224e19",
+      "tid": "tasks_demo_muu0r394_i9qg69pa",
+      "title": "Unified ticket verification action 2",
+      "owner": "demo_brawndo_user_2",
+      "due": "2026-12-12"
+    },
+    {
+      "aid": "fw_demo_brawndo_assessment_3.1",
+      "fid": "fw_demo_brawndo_finding_fw_demo_brawndo_assessment_3.1:2390f465-eb7b-42c6-ba69-cfa4b32a79f4",
+      "tid": "tasks_demo_muu0r8tu_fbetq9x4",
+      "title": "Unified ticket verification action 5",
+      "owner": null,
+      "due": "2026-12-15"
+    }
+  ],
+  "checks": [
+    "ten consecutive assessments; three tickets; different owners, dates and unassigned work",
+    "one Completed entry; source/register same resolution, plan and evidence; exact assessment origin",
+    "reopen retains completed work and decisions; stable identity; unique active counts",
+    "source-side completion/validation; standalone direct completion without Finding",
+    "mobile layout and keyboard focus"
+  ],
+  "errors": [],
+  "status": "passed"
+}
