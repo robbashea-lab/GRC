@@ -4,6 +4,7 @@ export const cisScopeCounts={1:56,2:130,3:153};
 // Scope is client configuration; assessment IDs stay in the original CIS namespace.
 export const cisConfiguration=client=>({implementation_group:1,...client?.framework_settings?.['cis-ig1'],expected_updated_at:client?.cis_configuration_updated_at??null});
 export const cisLabel=configuration=>`CIS IG${configuration?.implementation_group||1}`;
+export const cisProgramName=(framework,configuration)=>framework.key==='cis-ig1'?`CIS Controls v${cis.version} IG${configuration?.implementation_group||1}`:framework.name;
 export const cisScopeLabel=definition=>definition.implementation_group>1?`Added in IG${definition.implementation_group}`:'IG1 baseline';
 export function validateCisSettings(settings={}){
   if(!settings||typeof settings!=='object'||Array.isArray(settings)||Object.keys(settings).some(k=>k!=='cis-ig1'))throw new Error('Invalid onboarding framework settings');

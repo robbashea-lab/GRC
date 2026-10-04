@@ -5,6 +5,7 @@ import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
 import {catalog,completeness,applicabilityPrompts} from '@/lib/clientProfile';
 import onboardingCatalog from '@catalogs/onboardingCatalog.json';
+import {cisProgramName,cisConfiguration} from '@/lib/cisScope';
 import {FRAMEWORKS} from '@/lib/frameworks';
 import Onboarding from './Onboarding';
 import {UsersTable} from './PlatformAdmin';
@@ -44,7 +45,7 @@ function ProfileWorkspace({clientId}){
   if(!data||!handoff)return shell(<p role="status" className="text-sm text-ink-muted">Loading Client Profile…</p>);
   if(!data.completed)return <><div className="page-gutter pt-4 text-sm font-medium">Client Profile · Setup Required</div><Onboarding onComplete={reload}/></>;
   const profile=data.profile||{},progress=completeness(profile),requirements=handoff.records.requirements;
-  const programs=FRAMEWORKS.filter(f=>requirements.some(r=>r.baseline_key===f.key&&r.applicability==='applicable'));
+  const programs=FRAMEWORKS.filter(f=>requirements.some(r=>r.baseline_key===f.key&&r.applicability==='applicable')).map(f=>({...f,name:cisProgramName(f,cisConfiguration(handoff.client))}));
   async function save(values){try{await api.patch('/clients/'+clientId+'/profile',{section:tab,values,expected_updated_at:data.updated_at??null});await org.refresh();reload();}catch(e){throw new Error(formatError(e));}}
   const extras=<>{!!progress.missing.length&&<section className="border border-line rounded-lg p-4 space-y-2"><h2 className="font-semibold">Optional profile completeness · {progress.percent}%</h2><p className="text-xs text-ink-secondary">Eight recommended context fields only. Not compliance, readiness, risk, or program health. Operational work is never blocked.</p><p className="text-sm">{progress.missing.length?'Not yet provided: '+progress.missing.join(' · '):'Recommended context fields provided.'}</p><Button variant="outline" size="sm" onClick={()=>setParams({tab:'organization'})}>Complete profile</Button></section>}
     {applicabilityPrompts(profile,requirements).map(text=><p key={text} className="text-sm border border-line rounded p-3">{text} <Link className="underline text-link" to="/client-profile?tab=program">Review configuration</Link></p>)}</>;
@@ -68,7 +69,7 @@ function ProfileWorkspace({clientId}){
           <Baseline baseline={data.baseline}/>
         </section>
         <details className="border border-line rounded-lg p-4"><summary className="text-sm cursor-pointer font-medium">All compliance & requirements</summary><ComplianceProfile key={revision} clientId={clientId}/></details>
-        {requirements.some(r=>r.baseline_response==='retired')&&<section className="border border-line rounded-lg p-4 space-y-2"><h2 className="font-semibold text-sm">Retired programs</h2><p className="text-xs text-ink-secondary">Historical assessments and linked work remain in their authoritative workspaces.</p>{FRAMEWORKS.filter(f=>requirements.some(r=>r.baseline_key===f.key&&r.baseline_response==='retired')).map(f=><Link className="block text-sm underline text-link" key={f.key} to={'/compliance/'+f.key}>View retained {f.name} program</Link>)}</section>}
+        {requirements.some(r=>r.baseline_response==='retired')&&<section className="border border-line rounded-lg p-4 space-y-2"><h2 className="font-semibold text-sm">Retired programs</h2><p className="text-xs text-ink-secondary">Historical assessments and linked work remain in their authoritative workspaces.</p>{FRAMEWORKS.filter(f=>requirements.some(r=>r.baseline_key===f.key&&r.baseline_response==='retired')).map(f=><Link className="block text-sm underline text-link" key={f.key} to={'/compliance/'+f.key}>View retained {cisProgramName(f,cisConfiguration(handoff.client))} program</Link>)}</section>}
         {canEdit&&<Link className="inline-block text-sm underline text-link" to={'/admin/audit?client='+clientId}>View Audit History</Link>}
         <details className="border border-line rounded-lg p-4"><summary className="text-sm cursor-pointer font-medium">Recent profile & program changes</summary><p className="text-xs text-ink-secondary my-2">Latest 50 material changes, from the existing activity log.</p>{data.history.length?data.history.map((event,i)=><article className="text-sm py-3 border-t border-line" key={i}><p>{event.at} · {event.user_name||'Recorded actor'} · {event.action}</p>{event.meta?.program&&<p>{event.meta.program}: {event.meta.previous_status||'Not recorded'} → {event.meta.applicability}{event.meta.reason?' · '+event.meta.reason:''}{event.meta.effective_date?' · Effective '+event.meta.effective_date:''}</p>}{Object.entries(event.meta?.changes||{}).map(([key,v])=><p key={key}>{catalog.sections[event.meta.section]?.find(f=>f.id===key)?.label||key}: {JSON.stringify(v.before)} → {JSON.stringify(v.after)}</p>)}</article>):<p className="text-sm">No recorded profile changes yet.</p>}</details>
       </>}
