@@ -126,3 +126,5 @@ The primary six-year simulation uses supported application commands for client c
 - [ ] Browser: Client Profile IG2 → IG3 with inherited answers, dates, Evidence, tickets and history retained; exactly 23 additions unassessed.
 
 PR33 remains unmerged and unpublished. The missing browser journey is not marked complete.
+
+Follow-up cleanup: all temporary test databases were dropped (only admin/config/local remained), the owned Mongo server was shut down with its normal administrative command, and the temporary browser/dev server were closed. Automatic approval review rejected the combined filesystem/process cleanup command with only "blocked by policy"; temporary Mongo files/logs are therefore retained outside Git. No cleanup bypass was attempted.
