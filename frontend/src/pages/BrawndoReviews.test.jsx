@@ -22,6 +22,24 @@ const input=async(node,value)=>act(async()=>{
   node.dispatchEvent(new Event('input',{bubbles:true}));
 });
 
+test('uncertain Review save remains recoverable after remount without reapplying a new draft',async()=>{
+ const original={...saved},close=jest.fn();
+ api.patch.mockRejectedValueOnce(new Error('response unconfirmed'));
+ await act(async()=>root.render(<ReviewDrawer open record={original} clientId={original.client_id} onOpenChange={close}/>));
+ await input(document.querySelector('[data-testid="field-notes"]'),'Original pending save');
+ await click(document.querySelector('[data-testid="drawer-save"]'));
+ const first=api.patch.mock.calls[0];
+ expect(document.body.textContent).toContain('Retry unconfirmed save');
+ await act(async()=>root.unmount());root=createRoot(container);
+ await act(async()=>root.render(<ReviewDrawer open record={{...original,notes:'Original pending save',updated_at:'new-version'}} clientId={original.client_id} onOpenChange={close}/>));
+ await click(document.querySelector('[data-testid="drawer-save"]'));
+ expect(api.patch).toHaveBeenCalledTimes(1);
+ expect(document.body.textContent).toContain('Retry unconfirmed save');
+ await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Retry unconfirmed save'));
+ expect(api.patch.mock.calls[1]).toEqual(first);
+ expect(document.body.textContent).not.toContain('Retry unconfirmed save');
+});
+
 test.each(['cis','iso','both'])('combined non-pilot %s Review keeps Notes through cancel, save and historical discard',async framework=>{
   const drivers=[{framework_key:'cis-ig1',framework_plan_key:require('@/lib/frameworks').cis.review_plans[0].key},{framework_key:'iso-27001',framework_plan_key:'iso-management-review'}];
   saved={...saved,client_id:'synthetic-combined',framework_drivers:framework==='both'?drivers:[drivers[framework==='iso'?1:0]]};
@@ -34,7 +52,7 @@ test.each(['cis','iso','both'])('combined non-pilot %s Review keeps Notes throug
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Keep editing'));
   expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Unsaved combined Notes');
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save changes'));
-  expect(api.patch).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({notes:'Unsaved combined Notes'}));
+  expect(api.patch).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({notes:'Unsaved combined Notes'}),expect.objectContaining({headers:{'Idempotency-Key':expect.any(String)}}));
   await input(document.querySelector('[data-testid="field-notes"]'),'Discard this current draft');
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Prior period'));
   expect(document.body.textContent).toContain('Leave unsaved changes?');
@@ -47,6 +65,7 @@ test.each(['cis','iso','both'])('combined non-pilot %s Review keeps Notes throug
   expect(close).toHaveBeenCalledWith(false);
 });
 beforeEach(()=>{
+  sessionStorage.clear();
   jest.useFakeTimers({now:new Date('2026-10-03T00:30:00Z'),doNotFake:['setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate','nextTick','queueMicrotask','performance']});
   global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockSearch='';
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
@@ -187,7 +206,10 @@ test('centered detail preserves policy/context and guards unsaved and failed sav
   await click(dialog.querySelector('[data-testid="drawer-save"]'));
   expect(notes.value).toBe('Updated narrative');expect(close).not.toHaveBeenCalled();
   await click(dialog.querySelector('[data-testid="drawer-save"]'));
+  expect(api.patch).toHaveBeenCalledTimes(1);
+  await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Retry unconfirmed save'));
   expect(saved.notes).toBe('Updated narrative');
+  expect(api.patch.mock.calls[1][2]).toEqual(api.patch.mock.calls[0][2]);
   expect(api.patch.mock.calls[1][1]).toEqual(expect.objectContaining({expected_occurrence_id:'occ_late',notes:'Updated narrative'}));
   window.confirm.mockClear();
   await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Close'));
@@ -266,7 +288,7 @@ test.each(['demo_prestige','new-client'])('evaluation survives Save changes and 
  await input(document.querySelector('[aria-label="Reviewer conclusion"]'),'Pending effectiveness judgment');
  await input(document.querySelector('[data-testid="field-notes"]'),'Saved Notes, unfinished evaluation');
  await click(document.querySelector('[data-testid="drawer-save"]'));
- expect(api.patch).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({notes:'Saved Notes, unfinished evaluation'}));
+ expect(api.patch).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({notes:'Saved Notes, unfinished evaluation'}),expect.objectContaining({headers:{'Idempotency-Key':expect.any(String)}}));
  expect(api.patch.mock.calls[0][1]).not.toHaveProperty('conclusion');
  expect(document.querySelector('[aria-label="Reviewer conclusion"]').value).toBe('Pending effectiveness judgment');
  await click(document.querySelector('[data-testid="tab-related"]'));

@@ -73,6 +73,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const shown = selected || current;
   const cid = current?.client_id || record?.client_id || clientId;
   const createRecord = useCreateIntent((...args) => api.post(...args), cid);
+  const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${cid}:${record?.review_id}:update`, true);
   const createFinding = useCreateIntent(async (...args) => {
     try { return await api.post(...args); }
     catch(error) {
@@ -152,13 +153,14 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return ()=>window.removeEventListener('beforeunload',warn);
   },[open,dirty]);
   async function saveChanges() {
+    if(updateRecord.unconfirmed())throw new Error('Save is unconfirmed. Use Retry unconfirmed save before another edit or Review action.');
     const patch = changes();
     if (!current) {
       const {data} = await createRecord('/reviews',{...patch,client_id:cid});
       setCurrent(data); setForm({...data,due_date:data.due_date?.slice(0,10) || ''}); onSaved?.(); return data;
     }
     if (Object.keys(patch).length) {
-      const {data} = await api.patch(`/reviews/${current.review_id}`,{...patch,expected_occurrence_id:occurrenceId(current),expected_updated_at:current.updated_at??null});
+      const {data} = await updateRecord(`/reviews/${current.review_id}`,{...patch,expected_occurrence_id:occurrenceId(current),expected_updated_at:current.updated_at??null});
       setCurrent(data); onSaved?.(); return data;
     }
     return current;
@@ -288,7 +290,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {activity.map(a => <div key={a.log_id || a.audit_id} className="border-b border-line py-2 text-sm"><div className="text-xs text-ink-help">{new Date(a.at).toLocaleString()} · {a.meta?.by_name || a.user_name || a.user_email}</div><p>{a.action}{a.meta?.task_id ? ` · ${a.meta.task_id}` : a.meta?.finding_id ? ` · ${a.meta.finding_id}` : ''}{a.meta?.filename ? ` · ${a.meta.filename}` : ''}{a.meta?.due_date ? ` · ${date(a.meta.due_date)}` : ''}</p></div>)}
         </>}
       </div>
-      <div className="px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2"><Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && tab === 'Overview' && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
+      <div className="px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(async()=>{const {data}=await updateRecord.retry();setCurrent(data);await reload();onSaved?.();toast.success('Saved');})}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && tab === 'Overview' && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
     </Content>
     {<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
       <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>

@@ -464,7 +464,7 @@ export async function previewAdapter(config) {
         assertCurrentOccurrence(record(db,kind,id),body.expected_occurrence_id);
         delete body.expected_occurrence_id;
       }
-      const updateKey=kind==='tasks'&&id&&method==='patch'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+      const updateKey=CREATE_REPLAY_KINDS.includes(kind)&&id&&method==='patch'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
       if(updateKey)return save(commandRequest(db,path,record(db,kind,id).client_id,updateKey,body,()=>{
         guardEdit(kind,body,record(db,kind,id),db.user);
         return write(db,kind,body,id);

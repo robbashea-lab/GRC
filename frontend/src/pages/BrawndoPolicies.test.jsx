@@ -13,10 +13,11 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/policies',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/components/EvidencePanel',()=>()=> <div>Existing evidence panel</div>);
 let root,container,rows;
+beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 const click=node=>act(async()=>node.click());
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();
+  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();sessionStorage.clear();
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   rows=[{policy_id:'p',client_id:mockClient,title:'Access Policy',status:'draft',presence:'reported_missing',version:'1',onboarding_note:'Preserved historical note'}];
   api.get.mockImplementation(async path=>({data:path==='/policies'?rows:path==='/frameworks/summary'?{client_id:mockClient,items:[]}:path==='/related'?{}:path.endsWith('/approval-context')?{status:'draft',history:[],subject:null,can_configure:false,can_submit:false}:[]}));
@@ -62,8 +63,10 @@ test('centered policy retains legacy context and protects edits on close and fai
   api.patch.mockRejectedValueOnce(new Error('Write failed'));
   await click(dialog.querySelector('[data-testid="drawer-save"]'));
   expect(title.value).toBe('Updated Policy');expect(close).not.toHaveBeenCalled();
-  await click(dialog.querySelector('[data-testid="drawer-save"]'));
+  expect(api.patch).toHaveBeenCalledTimes(1);
+  await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Retry unconfirmed save'));
   expect(api.patch.mock.calls[1][1]).toEqual({title:'Updated Policy',expected_updated_at:null});
+  expect(api.patch.mock.calls[1][2]).toEqual(api.patch.mock.calls[0][2]);
   expect(close).toHaveBeenCalledWith(false);
 });
 test('new policy has one status control and no manufactured dates; non-pilot retains drawer',async()=>{

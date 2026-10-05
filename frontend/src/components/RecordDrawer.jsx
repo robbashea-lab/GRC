@@ -115,6 +115,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   schema = schema || SCHEMAS[kind]?.fields || [];
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [saveError,setSaveError]=useState('');
   const createRecord = useCreateIntent((...args) => api.post(...args), `${clientId}:${kind}`);
   const [decisionOpen, setDecisionOpen] = useState(false);
   const [decisionForm, setDecisionForm] = useState({});
@@ -145,6 +146,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const inputRef = useRef(null);
   const loadGeneration = useRef(0);
   const { user } = useAuth();
+  const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${record?.client_id||clientId}:${kind}:${record?.[ID_FIELD[kind]]}:update`, true);
   const pilot=['tasks','findings','risks','policies','vendors'].includes(kind)&&isReferencePresentation(clientId,user)&&(!record||record.client_id===clientId);
   const vendorPilot=pilot&&kind==='vendors';
   const riskPilot=pilot&&kind==='risks';
@@ -344,6 +346,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
     if (missing) { toast.error(`${missing.label} is required`); return; }
     setSaving(true);
+    setSaveError('');
     try {
       const clean = cleanForm();
       if(kind==="risks" && clean.custom_recurrence_days==="") clean.custom_recurrence_days=null;
@@ -359,7 +362,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (kind === "policies" && (record?.schedule_from_reviews || related.reviews?.length)) { delete clean.next_review_date; delete clean.last_reviewed_at; }
       let savedRecord;
       if (isEdit) {
-        savedRecord=(await api.patch(`/${kind}/${record[idField]}`, {...clean,expected_updated_at:record.updated_at??null})).data;
+        savedRecord=(await updateRecord(`/${kind}/${record[idField]}`, {...clean,expected_updated_at:record.updated_at??null})).data;
         if(kind!=="tasks"||savedRecord.status!=="done"||record.status==="done")toast.success("Saved");
       } else {
         savedRecord=(await createRecord(`/${kind}`, clean)).data;
@@ -379,7 +382,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if(policyPilot&&!isEdit)return savedRecord;
       if(!keepOpen)onOpenChange(false);
       return savedRecord;
-    } catch (e) { toast.error(formatError(e)); }
+    } catch (e) { setSaveError(formatError(e));toast.error(formatError(e)); }
     finally { setSaving(false); }
   }
 
@@ -397,7 +400,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     setSaving(true);
     try {
       const { status: ignoredStatus, ...changes } = cleanForm();
-      if (Object.keys(changes).length) {const saved=await api.patch(`/${kind}/${record[idField]}`, {...changes,expected_updated_at:record.updated_at??null});Object.assign(record,saved.data);}
+      if (Object.keys(changes).length) {const saved=await updateRecord(`/${kind}/${record[idField]}`, {...changes,expected_updated_at:record.updated_at??null});Object.assign(record,saved.data);}
       const action = decisionForm.action || "validate";
       const { data } = await api.post(`/${kind}/${record[idField]}/${action}`, { ...decisionForm, expected_updated_at:record.updated_at??null });
       Object.assign(record, data);
@@ -923,6 +926,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         </div>
 
         <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${dialogLayout?' flex-wrap shrink-0':''}`}>
+          {saveError&&<p role="alert" className="text-sm">{saveError}{updateRecord.unconfirmed()?' Save is unconfirmed; retry the original save before making another edit.':''}</p>}
+          {isEdit&&updateRecord.unconfirmed()&&<Button size="sm" disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setSaveError('');try{const {data}=await updateRecord.retry();Object.assign(record,data);onSaved?.(data);toast.success('Saved');onOpenChange(false);}catch(e){setSaveError(formatError(e));toast.error(formatError(e));}finally{setSaving(false);}}}>Retry unconfirmed save</Button>}
           <Button variant="outline" size="sm" onClick={() => pilot?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
           {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : vendorPilot?'Add to Register':"Create"}</Button>

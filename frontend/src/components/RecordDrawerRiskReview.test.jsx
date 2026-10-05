@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import {toast} from 'sonner';
 
 let mockUser;
+beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/adapter').previewAdapter}),formatError:e=>e.response?.data?.detail||e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
