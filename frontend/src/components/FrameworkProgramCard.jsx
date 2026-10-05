@@ -26,8 +26,7 @@ function Donut({counts,summary,name,labels}) {
   return <svg className="bd-donut" viewBox="0 0 42 42" role="img" aria-label={`${name}: ${segments.map(s=>`${counts[s]} ${labels[s]} (${(counts[s]/total*100).toFixed(1)}%, ${counts[s]} of ${summary.applicable})`).join(', ')}`}>
     <circle cx="21" cy="21" r="15.9" className="bd-donut-track"/>
     {segments.map(s=>{const len=counts[s]/total*100,el=len?<circle key={s} cx="21" cy="21" r="15.9" className={`bd-seg-${s}`} strokeDasharray={`${len} ${100-len}`} strokeDashoffset={offset}><title>{`${labels[s]} · ${len.toFixed(1)}% · ${counts[s]} of ${summary.applicable} ${keyNoun(name)}`}</title></circle>:null;offset-=len;return el;})}
-    <text x="21" y="22.4" className="bd-donut-value">{summary.applicable?`${summary.implemented}%`:'—'}</text>
-    <text x="21" y="27.6" className="bd-donut-label">{firstWord(labels.addressed).toLowerCase()}</text>
+    <text x="21" y="23.7" className="bd-donut-value">{summary.applicable?`${summary.implemented}%`:'—'}</text>
   </svg>;
 }
 
