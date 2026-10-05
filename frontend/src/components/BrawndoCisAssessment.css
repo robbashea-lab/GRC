@@ -84,3 +84,16 @@
 .brawndo-subhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-top: 18px; margin-top: 18px; border-top: 1px dashed var(--color-border); }
 .brawndo-subhead h4 { margin-bottom: 0; }
 @media (max-width: 760px) { .brawndo-verify-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Approved assessment mockup proportions. */
+:root .ui-dialog.brawndo-cis-assessment[data-state] { width:calc(100vw - 60px); max-width:1440px; height:auto; }
+.brawndo-assessment-header { padding:16px 56px 13px 22px; }
+.brawndo-assessment-header h2 { font-size:18px; }
+.brawndo-assessment-main { padding:0 22px 18px; }
+.brawndo-assessment-footer { padding:13px 22px; background:var(--color-bg-subtle); font-size:12px; }
+@media(max-width:450px) {
+  :root .ui-dialog.brawndo-cis-assessment[data-state] { width:calc(100vw - 24px); }
+  .brawndo-assessment-header { padding:16px 48px 16px 16px; }
+  .brawndo-assessment-main { padding:0 16px 18px; }
+  .brawndo-assessment-footer { padding:12px 16px; }
+}

@@ -20,6 +20,7 @@ export default function AssessmentHistory({record,users=[],activity=[]}){
       {entry.soa_applicability&&<p>Applicability: {entry.soa_applicability==='included'?'Applicable':'Not Applicable'} · {entry.soa_justification}</p>}
       {!!entry.cis_assessment_criteria?.length&&<p>Assessment criteria: {entry.cis_assessment_criteria.join(', ')}</p>}
       {!!entry.soc_assessment_checks?.length&&<p>Assessment guidance: {entry.soc_assessment_checks.join(', ')}</p>}
+      {!!entry.iso_assessment_checks?.length&&<p>Assessment criteria: {entry.iso_assessment_checks.join(', ')}</p>}
       {entry.management_controls?.map(control=><p key={control.control_id} className="mt-2 text-xs">{control.name} · {control.design} / {control.operating} · {control.period_start||'No period'} — {control.period_end} · {control.collected_instances??'—'} / {control.expected_instances??'—'} instances{`\n${control.description||''}\n${control.testing_notes||''}`}</p>)}
     </li>)}</ul>
     {!history.length&&<p className="text-xs mt-3">No saved assessments yet.</p>}

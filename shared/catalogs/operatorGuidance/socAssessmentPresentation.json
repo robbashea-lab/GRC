@@ -1,0 +1,250 @@
+{
+  "version": "soc-assessment-presentation-v1",
+  "framework": "soc-2",
+  "criteria": {
+    "CC1.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC1.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC1.3": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC1.4": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC1.5": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC2.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC2.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC2.3": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC3.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC3.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC3.3": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC3.4": {
+      "trigger": "Assess changes that could significantly affect internal control.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC4.1": {
+      "trigger": "Perform ongoing or separate evaluations.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC4.2": {
+      "trigger": "Evaluate and communicate internal-control deficiencies promptly.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC5.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC5.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC5.3": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC6.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC6.2": {
+      "trigger": "Register and authorize users before issuing credentials or granting access; remove credentials when access is no longer authorized.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC6.3": {
+      "trigger": "Modify or remove access when roles, responsibilities, or system design change.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC6.4": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC6.5": {
+      "trigger": "Reduce recoverability before ending protection of physical assets.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC6.6": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC6.7": {
+      "trigger": "Protect information during transmission, movement, or removal.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC6.8": {
+      "trigger": "Act when unauthorized or malicious software is introduced.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC7.1": {
+      "trigger": "Identify configuration changes introducing vulnerabilities and susceptibility to newly discovered vulnerabilities.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC7.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC7.3": {
+      "trigger": "Take action when security events could cause or have caused failure to meet objectives.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC7.4": {
+      "trigger": "Respond to identified security incidents.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC7.5": {
+      "trigger": "Recover from identified security incidents.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC8.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC9.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "CC9.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "A1.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "A1.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "A1.3": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "C1.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "C1.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "PI1.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "PI1.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "PI1.3": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "PI1.4": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "PI1.5": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P1.1": {
+      "trigger": "Update and communicate notice promptly when privacy practices change.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P2.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P3.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P3.2": {
+      "trigger": "Obtain required explicit consent before collecting personal information.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P4.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P4.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P4.3": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P5.1": {
+      "trigger": "Provide copies on request; explain access denials where required.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P5.2": {
+      "trigger": "Communicate corrections where committed or required; explain denied correction requests.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P6.1": {
+      "trigger": "Obtain explicit consent before third-party disclosure.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P6.2": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P6.3": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P6.4": {
+      "trigger": "Assess third-party compliance periodically and as needed; take corrective action where necessary.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P6.5": {
+      "trigger": "Report and act on notifications of actual or suspected unauthorized disclosures.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P6.6": {
+      "trigger": "Notify relevant recipients of breaches and incidents according to privacy objectives.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P6.7": {
+      "trigger": "Provide an accounting of information held and disclosures on request.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P7.1": {
+      "trigger": null,
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    },
+    "P8.1": {
+      "trigger": "Monitor privacy compliance periodically; address identified deficiencies promptly.",
+      "source": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf"
+    }
+  }
+}

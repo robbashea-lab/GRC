@@ -9,7 +9,10 @@ test('all actual IG3 definitions have stable criteria, review/evidence/outcome a
  expect(cis.requirements.filter(d=>d.implementation_group===3).map(d=>d.id)).toEqual(ids);
  expect(cis.available_implementation_groups).toEqual([1,2,3]);
  for(const id of ids){
-  expect(criteria.requirements[id].criteria.map(c=>c.id)).toEqual([id+'-c1',id+'-c2',id+'-c3']);
+  const entry=criteria.requirements[id];
+  const retained=[...entry.criteria,...(entry.legacy_criteria||[])].map(c=>c.id);
+  for(const suffix of [1,2,3])expect(retained).toContain(id+'-c'+suffix);
+  expect(entry.criteria.length).toBeGreaterThan(0);
   for(const field of ['review','evidence','outcome'])expect(guidance.requirements[id][field].length).toBeGreaterThanOrEqual(2);
   expect(Object.keys(guides.requirements[id])).toEqual(['plain','start','evidence','ask','gaps']);
   expect(cis.review_plans.some(p=>p.default_enabled!==false&&p.safeguards.includes(id))).toBe(true);

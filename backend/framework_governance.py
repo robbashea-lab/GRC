@@ -26,6 +26,7 @@ import create_requests
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
 CIS_CRITERIA=json.loads((CATALOG_ROOT/'operatorGuidance/cisAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
 SOC_GUIDANCE=json.loads((CATALOG_ROOT/'operatorGuidance/socAssessmentGuidance.json').read_text(encoding='utf-8'))['criteria']
+ISO_CRITERIA=json.loads((CATALOG_ROOT/'operatorGuidance/isoAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
 STATUSES=('not_assessed','in_progress','addressed','needs_attention','not_applicable')
 CADENCES=('monthly','quarterly','semiannual','annual','custom')
 
@@ -168,6 +169,7 @@ class AssessmentPatch(BaseModel):
     verification_checklist: Optional[dict[Literal['foundation','operational','mature'],list[str]]]=None
     cis_assessment_criteria: list[str]=Field(default_factory=list,max_length=20)
     soc_assessment_checks: list[str]=Field(default_factory=list,max_length=30)
+    iso_assessment_checks: list[str]=Field(default_factory=list,max_length=30)
 
     @field_validator('verification_checklist')
     @classmethod
@@ -467,11 +469,21 @@ def router_for(s):
         if 'cis_assessment_criteria' in changes:
             if 'cis_assessment_criteria' not in supported:
                 raise HTTPException(422,'CIS assessment criteria apply only to CIS Controls IG1')
-            valid={c['id'] for c in CIS_CRITERIA.get(old['definition_id'],{}).get('criteria',[])}
+            entry=CIS_CRITERIA.get(old['definition_id'],{})
+            valid={c['id'] for c in entry.get('criteria',[])+entry.get('legacy_criteria',[])}
             if any(c not in valid for c in changes['cis_assessment_criteria']):
                 raise HTTPException(422,'Invalid CIS assessment criterion')
             changes['cis_assessment_criteria']=list(dict.fromkeys(changes['cis_assessment_criteria']))
             data['cis_assessment_criteria']=changes['cis_assessment_criteria']
+        if 'iso_assessment_checks' in changes:
+            if old['framework_key']!='iso-27001':
+                raise HTTPException(422,'ISO assessment checks apply only to ISO 27001')
+            entry=ISO_CRITERIA.get(old['definition_id'],{})
+            valid={c['id'] for c in entry.get('criteria',[]) if entry.get('coverage')=='verified'} | set(old.get('iso_assessment_checks',[]))
+            if any(c not in valid for c in changes['iso_assessment_checks']):
+                raise HTTPException(422,'Invalid ISO assessment check')
+            changes['iso_assessment_checks']=list(dict.fromkeys(changes['iso_assessment_checks']))
+            data['iso_assessment_checks']=changes['iso_assessment_checks']
         if 'csf_profile' in changes and 'csf_profile' not in supported:
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
         verification_allowed='verification' in supported
@@ -519,7 +531,7 @@ def router_for(s):
                 changes.update(last_saved=at,assessment_recorded_at=at if judgment else old.get('assessment_recorded_at'),
                                assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
                 data.update(changes)
-            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks','cis_operation') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             if old['framework_key']=='soc-2':
                 snapshot.update({k:data.get(k) for k in ('last_saved','assessment_recorded_at','assessment_recorded_by')})
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}

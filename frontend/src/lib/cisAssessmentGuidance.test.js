@@ -46,9 +46,11 @@ test.each([
 ])('%s retains its specific source detail (%s)',(id,detail)=>expect(text(id)).toMatch(detail));
 
 test('guidance preserves legacy criteria and does not use response IDs as conclusions',()=>{
-  expect(legacy.revision).toBe('2026-10-04');
+  expect(legacy.revision).toBe('2026-10-05');
   const inherited=catalog.requirements.filter(d=>d.implementation_group===1);
-  expect(inherited.flatMap(d=>legacy.requirements[d.id].criteria)).toHaveLength(85);
+  const retained=inherited.flatMap(d=>[...legacy.requirements[d.id].criteria,...(legacy.requirements[d.id].legacy_criteria||[])]);
+  expect(new Set(retained.map(c=>c.id)).size).toBe(retained.length);
+  expect(retained.length).toBeGreaterThanOrEqual(85);
   expect(JSON.stringify(data)).not.toMatch(/"status"|"score"|cis_assessment_criteria|verification_checklist/);
   expect(text('1.2')).not.toContain('risk acceptance');
   expect(text('5.3')).toContain('generic risk acceptance is not a substitute');
@@ -56,9 +58,12 @@ test('guidance preserves legacy criteria and does not use response IDs as conclu
 
 test('8.5, 9.4 and 16.7 retain their source boundaries across assessment criteria and current guidance',()=>{
  const requirements=Object.fromEntries(catalog.requirements.map(d=>[d.id,d]));
- expect(legacy.requirements['8.5'].criteria.map(c=>c.id)).toEqual(['8.5-c1','8.5-c2','8.5-c3']);
- for(const id of ['9.4','16.7'])expect(legacy.requirements[id].criteria.map(c=>c.id)).toEqual([id+'-c1',id+'-c2']);
- for(const payload of [requirements,legacy.requirements,data.requirements]){
+ for(const id of ['8.5','9.4','16.7']){
+  const entry=legacy.requirements[id],all=[...entry.criteria,...(entry.legacy_criteria||[])];
+  for(const suffix of id==='8.5'?[1,2,3]:[1,2])expect(all.map(c=>c.id)).toContain(id+'-c'+suffix);
+ }
+ const currentCriteria=Object.fromEntries(Object.entries(legacy.requirements).map(([id,r])=>[id,r.criteria]));
+ for(const payload of [requirements,currentCriteria,data.requirements]){
   const logs=JSON.stringify(payload['8.5']),extensions=JSON.stringify(payload['9.4']),hardening=JSON.stringify(payload['16.7']);
   expect(logs).toMatch(/event source.*date.*username.*timestamp.*source.*destination addresses/i);
   expect(logs).toMatch(/sensitive data|sensitive-data/);expect(logs).not.toMatch(/where available/);

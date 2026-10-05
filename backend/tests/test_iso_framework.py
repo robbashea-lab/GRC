@@ -37,6 +37,29 @@ class IsoTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(set(p['safeguards']) <= set(definitions))
             self.assertIn(p['policy_key'], [x['key'] for x in BASELINE_CATALOG['policies']])
 
+    async def test_iso_check_selection_identity_history_legacy_and_boundaries(self):
+        workspace=await self.configure(('iso-27001','cis-ig1'))
+        row=next(a for a in workspace['assessments'] if a['definition_id']=='4.1')
+        path='/api/framework_assessments/'+row['framework_assessment_id']
+        await server.db.framework_assessments.update_one({'framework_assessment_id':row['framework_assessment_id']},{'$set':{'iso_assessment_checks':['retired:context']}})
+        response=await self.client.patch(path,json={'iso_assessment_checks':['4.1:context','4.1:context','retired:context'],'expected_last_assessed':row.get('last_assessed')})
+        self.assertEqual(response.status_code,200,response.text)
+        saved=response.json()
+        self.assertEqual(saved['iso_assessment_checks'],['4.1:context','retired:context'])
+        self.assertEqual(saved['assessment_history'][-1]['iso_assessment_checks'],saved['iso_assessment_checks'])
+        for invalid in [['4.2:parties'],['new:unknown'],['4.1:context']*31]:
+            response=await self.client.patch(path,json={'iso_assessment_checks':invalid,'expected_last_assessed':saved.get('last_assessed')})
+            self.assertEqual(response.status_code,422,response.text)
+        response=await self.client.patch(path,json={'notes':'Preserve selections','expected_last_assessed':saved.get('last_assessed')})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(response.json()['iso_assessment_checks'],saved['iso_assessment_checks'])
+        cis=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()['assessments'][0]
+        response=await self.client.patch('/api/framework_assessments/'+cis['framework_assessment_id'],json={'iso_assessment_checks':[],'expected_last_assessed':cis.get('last_assessed')})
+        self.assertEqual(response.status_code,422,response.text)
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.sign_in('member')
+        self.assertEqual((await self.client.patch(path,json={'iso_assessment_checks':[]})).status_code,403)
+
     async def test_activation_history_and_settings_toggles(self):
         self.sign_in('admin')
         self.assertFalse((await self.client.get('/api/frameworks/iso-27001',params={'client_id':'a'})).json()['configured'])

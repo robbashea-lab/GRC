@@ -16,7 +16,7 @@ const {chromium,expect}=require('playwright/test'),assert=require('node:assert/s
   await shell.getByLabel('Current implementation',{exact:true}).fill('Unsaved assessment narrative');
   await shell.getByRole('button',{name:'Raise Finding',exact:true}).click();
   await shell.getByLabel('Finding title',{exact:true}).fill(title+' issue');await shell.getByLabel('Finding description',{exact:true}).fill('Actual issue recorded independently');
-  await shell.getByLabel(key==='cis-ig1'?'Corrective action':'Remediation Action title',{exact:true}).fill(title);
+  await shell.getByLabel('Corrective action',{exact:true}).fill(title);
   await shell.getByLabel('Finding target date',{exact:true}).fill('2027-03-01');
   await expect(shell.getByRole('button',{name:'Finding owner',exact:true})).toBeVisible();
   if(id==='4.1'){
@@ -36,8 +36,8 @@ const {chromium,expect}=require('playwright/test'),assert=require('node:assert/s
   for(const [cid,key,id]of [['demo_prestige','soc-2','CC1.1'],['demo_dunder','iso-27001','4.1'],['demo_dunder','iso-27001','A.5.1'],['demo_initech','cis-ig1','1.3']])await exercise(cid,key,id);
   stage='ISO audit item';await go('/clients');await page.getByTestId('sidebar-open-demo_dunder').click();const before=await store(),r=before.reviews.find(r=>r.client_id==='demo_dunder'&&r.iso_audit&&!['completed','cancelled'].includes(r.status));
   await go('/compliance/iso-27001?iso_view=audit&package='+r.iso_audit.package_key);const item=page.locator('[data-audit-item]').first();const key=await item.getAttribute('data-audit-item');await item.click();const shell=page.locator('[data-assessment-shell]');
-  await shell.getByLabel('Auditor notes',{exact:true}).fill('Uncommitted notes must be discarded');await shell.getByRole('button',{name:'Create Finding',exact:true}).click();
-  await shell.getByLabel('Finding title',{exact:true}).fill('Audit exact item issue');await shell.getByLabel('Remediation Action title',{exact:true}).fill('Audit exact item correction');await shell.getByRole('button',{name:'Create Finding & Action',exact:true}).click();await expect(shell.getByLabel('Finding title',{exact:true})).toHaveCount(0);
+  await shell.getByLabel('Auditor notes',{exact:true}).fill('Uncommitted notes must be discarded');await shell.getByRole('button',{name:'Raise Finding',exact:true}).click();
+  await shell.getByLabel('Finding title',{exact:true}).fill('Audit exact item issue');await shell.getByLabel('Corrective action',{exact:true}).fill('Audit exact item correction');await shell.getByRole('button',{name:'Create Finding & Action',exact:true}).click();await expect(shell.getByLabel('Finding title',{exact:true})).toHaveCount(0);
   const f=(await store()).findings.find(f=>f.title==='Audit exact item issue');assert((await store()).reviews.find(x=>x.review_id===r.review_id).iso_audit.items[key].finding_ids.includes(f.finding_id));
   await shell.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Discard changes',exact:true}).click();
   await go('/compliance/iso-27001?iso_view=audit&package='+r.iso_audit.package_key);await page.locator('[data-audit-item="'+key+'"]').click();await expect(shell.getByRole('button',{name:'Audit exact item correction',exact:true})).toBeVisible();await expect(shell.getByLabel('Auditor notes',{exact:true})).not.toHaveValue('Uncommitted notes must be discarded');result.checks.push({scenario:'ISO item association survives discarded draft and reload',result:'passed'});

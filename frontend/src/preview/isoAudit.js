@@ -1,4 +1,5 @@
 import {isoAuditCatalog,auditPackage,auditActivationPlan,auditProgress,initialAuditState,AUDIT_STATUSES,AUDIT_RESULTS} from '../lib/isoAudit';
+import criteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import {record,write,now,audit,clone} from './store';
 import {clientAccess,validateAssignment} from './assignmentEligibility';
 import {reviewView,reviewSchedule,occurrenceId,assertCurrentOccurrence,belongsToOccurrence} from '../lib/reviewOccurrences';
@@ -64,12 +65,21 @@ export function isoAuditRequest(db,parts,method,params,body){
     assertCurrentOccurrence(review,body.occurrence_id);
     if(!Object.prototype.hasOwnProperty.call(body,'expected_updated_at')||body.expected_updated_at!==(review.updated_at??null))fail('Audit package changed; reload before saving',409);
     if(!review.iso_audit)fail('This Review is not an audit package');
-    const allowed=itemKey?['status','result','notes','na_rationale','evidence_ids','finding_ids']:['report_evidence_id'];
+    const allowed=itemKey?['status','result','notes','na_rationale','evidence_ids','finding_ids','assessment_checks']:['report_evidence_id'];
     if(Object.keys(body).some(k=>!['expected_updated_at','occurrence_id',...allowed].includes(k)))fail('Unknown audit fields');
     const state=clone(review.iso_audit);
     if(itemKey){
-      if(!auditPackage(state.package_key).items.some(i=>i.key===itemKey))fail('Audit item not found',404);
-      const item=Object.fromEntries(allowed.map(k=>[k,body[k]]));validateItem(db,review,item);
+      const definition=auditPackage(state.package_key).items.find(i=>i.key===itemKey);
+      if(!definition)fail('Audit item not found',404);
+      const item=Object.fromEntries(allowed.filter(k=>k!=='assessment_checks').map(k=>[k,body[k]]));
+      const previous=state.items[itemKey]||{};
+      if(Object.prototype.hasOwnProperty.call(body,'assessment_checks')){
+        const entry=criteria.requirements[definition.definition_id]||{};
+        const valid=new Set([...(entry.coverage==='verified'?entry.criteria.map(c=>c.id):[]),...(previous.assessment_checks||[])]);
+        if(!Array.isArray(body.assessment_checks)||body.assessment_checks.length>30||body.assessment_checks.some(c=>typeof c!=='string'||!valid.has(c)))fail('Invalid ISO audit assessment checks');
+        item.assessment_checks=[...new Set(body.assessment_checks)];
+      }else if('assessment_checks' in previous)item.assessment_checks=previous.assessment_checks;
+      validateItem(db,review,item);
       state.items[itemKey]={...item,updated_at:now(),updated_by:db.user.user_id};
     }else{if(body.report_evidence_id)evidence(db,review,body.report_evidence_id);state.report_evidence_id=body.report_evidence_id;}
     write(db,'reviews',{iso_audit:state},id);audit(db,'Audit work updated','reviews',review,{occurrence_id:occurrenceId(review)});

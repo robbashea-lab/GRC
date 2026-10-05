@@ -1,0 +1,1295 @@
+{
+  "version": 1,
+  "framework": "iso-27001",
+  "standard_version": "2022 + Amd 1:2024",
+  "content_label": "Repository-authored assessment paraphrases; not official ISO text or a conformity opinion.",
+  "verified_on": "2026-10-05",
+  "coverage_note": "Only explicitly verified units have selectable criteria. The public preview fully exposes clauses 4–6; clauses 7–10 and Annex A remain pending because the full licensed standard was unavailable. Empty criteria do not imply no requirements.",
+  "source_limitations": [
+    "No full licensed standard was supplied.",
+    "The preview covers clauses 4–6 only.",
+    "No universal annual or quarterly review frequency is introduced."
+  ],
+  "requirements": {
+    "4.1": {
+      "criteria": [
+        {
+          "id": "4.1:context",
+          "text": "Internal and external conditions relevant to organizational purpose and affecting ISMS outcomes are determined."
+        },
+        {
+          "id": "4.1:climate",
+          "text": "Climate relevance is considered and determined."
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "4.1"
+        },
+        {
+          "url": "https://www.iso.org/files/live/sites/isoorg/files/standards/popular_standards/management_systems/ISO-IAF%20Joint%20Communique%20Feb%202024.pdf",
+          "section": "4.1"
+        }
+      ],
+      "trigger": null
+    },
+    "4.2": {
+      "criteria": [
+        {
+          "id": "4.2:parties",
+          "text": "Relevant interested parties are identified."
+        },
+        {
+          "id": "4.2:requirements",
+          "text": "Those parties' relevant requirements are determined."
+        },
+        {
+          "id": "4.2:addressed",
+          "text": "Requirements addressed through the ISMS are determined."
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "4.2"
+        },
+        {
+          "url": "https://www.iso.org/files/live/sites/isoorg/files/standards/popular_standards/management_systems/ISO-IAF%20Joint%20Communique%20Feb%202024.pdf",
+          "section": "4.2"
+        }
+      ],
+      "trigger": null
+    },
+    "4.3": {
+      "criteria": [
+        {
+          "id": "4.3:scope",
+          "text": "ISMS boundaries and applicability are determined."
+        },
+        {
+          "id": "4.3:context",
+          "text": "Scope determination considers internal and external context."
+        },
+        {
+          "id": "4.3:requirements",
+          "text": "Scope determination considers interested-party requirements."
+        },
+        {
+          "id": "4.3:interfaces",
+          "text": "Scope determination considers interfaces and dependencies with other organizations."
+        },
+        {
+          "id": "4.3:documented",
+          "text": "The scope is available as documented information."
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "4.3"
+        }
+      ],
+      "trigger": null
+    },
+    "4.4": {
+      "criteria": [
+        {
+          "id": "4.4:established",
+          "text": "The ISMS and its required processes and interactions are established."
+        },
+        {
+          "id": "4.4:implemented",
+          "text": "The ISMS is implemented in accordance with the standard."
+        },
+        {
+          "id": "4.4:maintained",
+          "text": "The ISMS is maintained."
+        },
+        {
+          "id": "4.4:improved",
+          "text": "The ISMS continually improves."
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "4.4"
+        }
+      ],
+      "trigger": null
+    },
+    "5.1": {
+      "criteria": [
+        {
+          "id": "5.1:policy",
+          "text": "Leadership ensures the security policy is established.",
+          "source_reference": "5.1 a"
+        },
+        {
+          "id": "5.1:objectives",
+          "text": "Leadership ensures security objectives are established.",
+          "source_reference": "5.1 a"
+        },
+        {
+          "id": "5.1:strategy",
+          "text": "Policy and objectives align with organizational direction.",
+          "source_reference": "5.1 a"
+        },
+        {
+          "id": "5.1:integration",
+          "text": "ISMS requirements are integrated into business processes.",
+          "source_reference": "5.1 b"
+        },
+        {
+          "id": "5.1:resources",
+          "text": "Leadership ensures ISMS resources are available.",
+          "source_reference": "5.1 c"
+        },
+        {
+          "id": "5.1:communication",
+          "text": "Leadership communicates the importance of effective security and meeting ISMS requirements.",
+          "source_reference": "5.1 d"
+        },
+        {
+          "id": "5.1:outcomes",
+          "text": "Leadership ensures intended ISMS outcomes are achieved.",
+          "source_reference": "5.1 e"
+        },
+        {
+          "id": "5.1:people",
+          "text": "Leadership directs and supports people contributing to ISMS effectiveness.",
+          "source_reference": "5.1 f"
+        },
+        {
+          "id": "5.1:improvement",
+          "text": "Leadership promotes continual improvement.",
+          "source_reference": "5.1 g"
+        },
+        {
+          "id": "5.1:management",
+          "text": "Leadership supports other managers in their security responsibilities.",
+          "source_reference": "5.1 h"
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "5.1"
+        }
+      ],
+      "trigger": null
+    },
+    "5.2": {
+      "criteria": [
+        {
+          "id": "5.2:purpose",
+          "text": "Leadership establishes a security policy appropriate to organizational purpose.",
+          "source_reference": "5.2 a"
+        },
+        {
+          "id": "5.2:objectives",
+          "text": "The policy includes objectives or a basis for setting them.",
+          "source_reference": "5.2 b"
+        },
+        {
+          "id": "5.2:requirements",
+          "text": "The policy commits to meeting applicable security requirements.",
+          "source_reference": "5.2 c"
+        },
+        {
+          "id": "5.2:improvement",
+          "text": "The policy commits to continual ISMS improvement.",
+          "source_reference": "5.2 d"
+        },
+        {
+          "id": "5.2:documented",
+          "text": "The policy is available as documented information.",
+          "source_reference": "5.2 e"
+        },
+        {
+          "id": "5.2:communication",
+          "text": "The policy is communicated internally.",
+          "source_reference": "5.2 f"
+        },
+        {
+          "id": "5.2:parties",
+          "text": "The policy is available to interested parties as appropriate.",
+          "source_reference": "5.2 g"
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "5.2"
+        }
+      ],
+      "trigger": null
+    },
+    "5.3": {
+      "criteria": [
+        {
+          "id": "5.3:roles",
+          "text": "Relevant security responsibilities and authorities are assigned and communicated."
+        },
+        {
+          "id": "5.3:conformity",
+          "text": "Responsibility and authority for ISMS conformity are assigned."
+        },
+        {
+          "id": "5.3:reporting",
+          "text": "Responsibility and authority for reporting ISMS performance to leadership are assigned."
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "5.3"
+        }
+      ],
+      "trigger": null
+    },
+    "6.1.1": {
+      "criteria": [
+        {
+          "id": "6.1.1:context",
+          "text": "ISMS planning considers organizational context.",
+          "source_reference": "6.1.1 intro"
+        },
+        {
+          "id": "6.1.1:requirements",
+          "text": "ISMS planning considers interested-party requirements.",
+          "source_reference": "6.1.1 intro"
+        },
+        {
+          "id": "6.1.1:risks",
+          "text": "Risks requiring attention are determined.",
+          "source_reference": "6.1.1 intro"
+        },
+        {
+          "id": "6.1.1:opportunities",
+          "text": "Opportunities requiring attention are determined.",
+          "source_reference": "6.1.1 intro"
+        },
+        {
+          "id": "6.1.1:outcomes",
+          "text": "Selected risks and opportunities address intended ISMS outcomes.",
+          "source_reference": "6.1.1 a"
+        },
+        {
+          "id": "6.1.1:effects",
+          "text": "Risks and opportunities are determined to prevent or reduce unwanted effects.",
+          "source_reference": "6.1.1 b"
+        },
+        {
+          "id": "6.1.1:improvement",
+          "text": "Selected risks and opportunities address continual improvement.",
+          "source_reference": "6.1.1 c"
+        },
+        {
+          "id": "6.1.1:actions",
+          "text": "Actions addressing selected risks and opportunities are planned.",
+          "source_reference": "6.1.1 d"
+        },
+        {
+          "id": "6.1.1:integration",
+          "text": "Integration of those actions into ISMS processes is planned.",
+          "source_reference": "6.1.1 e 1"
+        },
+        {
+          "id": "6.1.1:implementation",
+          "text": "Implementation of those actions is planned.",
+          "source_reference": "6.1.1 e 1"
+        },
+        {
+          "id": "6.1.1:evaluation",
+          "text": "Evaluation of those actions’ effectiveness is planned.",
+          "source_reference": "6.1.1 e 2"
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "6.1.1"
+        }
+      ],
+      "trigger": "When planning the ISMS."
+    },
+    "6.1.2": {
+      "criteria": [
+        {
+          "id": "6.1.2:defined",
+          "text": "A security risk-assessment process is defined.",
+          "source_reference": "6.1.2 intro"
+        },
+        {
+          "id": "6.1.2:applied",
+          "text": "The risk-assessment process is applied.",
+          "source_reference": "6.1.2 intro"
+        },
+        {
+          "id": "6.1.2:acceptance",
+          "text": "Risk-acceptance criteria are established.",
+          "source_reference": "6.1.2 a 1"
+        },
+        {
+          "id": "6.1.2:acceptance-maintained",
+          "text": "Risk-acceptance criteria are maintained.",
+          "source_reference": "6.1.2 a 1"
+        },
+        {
+          "id": "6.1.2:assessment",
+          "text": "Criteria for conducting risk assessments are established.",
+          "source_reference": "6.1.2 a 2"
+        },
+        {
+          "id": "6.1.2:assessment-maintained",
+          "text": "Risk-assessment criteria are maintained.",
+          "source_reference": "6.1.2 a 2"
+        },
+        {
+          "id": "6.1.2:consistent",
+          "text": "Repeated assessments produce consistent results.",
+          "source_reference": "6.1.2 b"
+        },
+        {
+          "id": "6.1.2:valid",
+          "text": "Repeated assessments produce valid results.",
+          "source_reference": "6.1.2 b"
+        },
+        {
+          "id": "6.1.2:comparable",
+          "text": "Repeated assessments produce comparable results.",
+          "source_reference": "6.1.2 b"
+        },
+        {
+          "id": "6.1.2:confidentiality",
+          "text": "Confidentiality-loss risks to information are identified.",
+          "source_reference": "6.1.2 c 1"
+        },
+        {
+          "id": "6.1.2:integrity",
+          "text": "Integrity-loss risks to information are identified.",
+          "source_reference": "6.1.2 c 1"
+        },
+        {
+          "id": "6.1.2:availability",
+          "text": "Availability-loss risks to information are identified.",
+          "source_reference": "6.1.2 c 1"
+        },
+        {
+          "id": "6.1.2:scope",
+          "text": "Risk identification covers information within ISMS scope.",
+          "source_reference": "6.1.2 c 1"
+        },
+        {
+          "id": "6.1.2:owners",
+          "text": "Risk owners are identified.",
+          "source_reference": "6.1.2 c 2"
+        },
+        {
+          "id": "6.1.2:consequences",
+          "text": "Potential consequences are assessed.",
+          "source_reference": "6.1.2 d 1"
+        },
+        {
+          "id": "6.1.2:likelihood",
+          "text": "Realistic likelihood is assessed.",
+          "source_reference": "6.1.2 d 2"
+        },
+        {
+          "id": "6.1.2:levels",
+          "text": "Risk levels are determined.",
+          "source_reference": "6.1.2 d 3"
+        },
+        {
+          "id": "6.1.2:comparison",
+          "text": "Analysis results are compared with risk criteria.",
+          "source_reference": "6.1.2 e 1"
+        },
+        {
+          "id": "6.1.2:priorities",
+          "text": "Risks are prioritized for treatment.",
+          "source_reference": "6.1.2 e 2"
+        },
+        {
+          "id": "6.1.2:documented",
+          "text": "Documented information about the assessment process is retained.",
+          "source_reference": "6.1.2 closing"
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "6.1.2"
+        }
+      ],
+      "trigger": null
+    },
+    "6.1.3": {
+      "criteria": [
+        {
+          "id": "6.1.3:defined",
+          "text": "A security risk-treatment process is defined.",
+          "source_reference": "6.1.3 intro"
+        },
+        {
+          "id": "6.1.3:applied",
+          "text": "The risk-treatment process is applied.",
+          "source_reference": "6.1.3 intro"
+        },
+        {
+          "id": "6.1.3:options",
+          "text": "Appropriate treatment options are selected using risk-assessment results.",
+          "source_reference": "6.1.3 a"
+        },
+        {
+          "id": "6.1.3:controls",
+          "text": "All controls necessary for chosen treatment options are determined.",
+          "source_reference": "6.1.3 b"
+        },
+        {
+          "id": "6.1.3:annex-comparison",
+          "text": "Necessary controls are compared with Annex A.",
+          "source_reference": "6.1.3 c"
+        },
+        {
+          "id": "6.1.3:omissions",
+          "text": "The comparison verifies no necessary controls were omitted.",
+          "source_reference": "6.1.3 c"
+        },
+        {
+          "id": "6.1.3:soa-controls",
+          "text": "The SoA identifies necessary controls, including controls beyond Annex A when needed.",
+          "source_reference": "6.1.3 d"
+        },
+        {
+          "id": "6.1.3:soa-inclusion",
+          "text": "The SoA justifies including necessary controls.",
+          "source_reference": "6.1.3 d"
+        },
+        {
+          "id": "6.1.3:soa-implementation",
+          "text": "The SoA records whether necessary controls are implemented.",
+          "source_reference": "6.1.3 d"
+        },
+        {
+          "id": "6.1.3:soa-exclusions",
+          "text": "The SoA justifies every excluded Annex A control.",
+          "source_reference": "6.1.3 d"
+        },
+        {
+          "id": "6.1.3:plan",
+          "text": "A risk-treatment plan is formulated.",
+          "source_reference": "6.1.3 e"
+        },
+        {
+          "id": "6.1.3:approval",
+          "text": "Risk owners approve the treatment plan.",
+          "source_reference": "6.1.3 f"
+        },
+        {
+          "id": "6.1.3:acceptance",
+          "text": "Risk owners accept residual security risks.",
+          "source_reference": "6.1.3 f"
+        },
+        {
+          "id": "6.1.3:documented",
+          "text": "Documented information about the treatment process is retained.",
+          "source_reference": "6.1.3 closing"
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "6.1.3"
+        }
+      ],
+      "trigger": null
+    },
+    "6.2": {
+      "criteria": [
+        {
+          "id": "6.2:levels",
+          "text": "Security objectives are established at relevant functions and levels.",
+          "source_reference": "6.2 intro"
+        },
+        {
+          "id": "6.2:policy",
+          "text": "Objectives align with the security policy.",
+          "source_reference": "6.2 a"
+        },
+        {
+          "id": "6.2:measurable",
+          "text": "Objectives are measurable where practicable.",
+          "source_reference": "6.2 b"
+        },
+        {
+          "id": "6.2:requirements",
+          "text": "Objectives account for applicable security requirements.",
+          "source_reference": "6.2 c"
+        },
+        {
+          "id": "6.2:assessment",
+          "text": "Objectives account for risk-assessment results.",
+          "source_reference": "6.2 c"
+        },
+        {
+          "id": "6.2:treatment",
+          "text": "Objectives account for risk-treatment results.",
+          "source_reference": "6.2 c"
+        },
+        {
+          "id": "6.2:monitoring",
+          "text": "Objectives are monitored.",
+          "source_reference": "6.2 d"
+        },
+        {
+          "id": "6.2:communication",
+          "text": "Objectives are communicated.",
+          "source_reference": "6.2 e"
+        },
+        {
+          "id": "6.2:updating",
+          "text": "Objectives are updated as appropriate.",
+          "source_reference": "6.2 f"
+        },
+        {
+          "id": "6.2:documented",
+          "text": "Objectives are available as documented information.",
+          "source_reference": "6.2 g"
+        },
+        {
+          "id": "6.2:retained",
+          "text": "Documented information on objectives is retained.",
+          "source_reference": "6.2 middle"
+        },
+        {
+          "id": "6.2:work",
+          "text": "Achievement planning identifies what will be done.",
+          "source_reference": "6.2 h"
+        },
+        {
+          "id": "6.2:resources",
+          "text": "Achievement planning identifies required resources.",
+          "source_reference": "6.2 i"
+        },
+        {
+          "id": "6.2:responsibility",
+          "text": "Achievement planning identifies responsible people.",
+          "source_reference": "6.2 j"
+        },
+        {
+          "id": "6.2:completion",
+          "text": "Achievement planning identifies completion timing.",
+          "source_reference": "6.2 k"
+        },
+        {
+          "id": "6.2:evaluation",
+          "text": "Achievement planning identifies how results will be evaluated.",
+          "source_reference": "6.2 l"
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "6.2"
+        }
+      ],
+      "trigger": "Update security objectives as appropriate."
+    },
+    "6.3": {
+      "criteria": [
+        {
+          "id": "6.3:changes",
+          "text": "Identified ISMS changes are planned before execution."
+        }
+      ],
+      "coverage": "verified",
+      "source": [
+        {
+          "url": "https://preview.sist.si/sist-preview/82875/726bcf58250e43d9a666b4d929c8fbdb/ISO-IEC-27001-2022.pdf",
+          "section": "6.3"
+        }
+      ],
+      "trigger": "When an ISMS change is identified."
+    },
+    "7.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "7.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "7.3": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "7.4": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "7.5.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "7.5.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "7.5.3": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "8.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "8.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "8.3": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "9.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "9.2.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "9.2.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "9.3.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "9.3.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "9.3.3": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "10.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "10.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.3": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.4": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.5": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.6": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.7": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.8": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.9": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.10": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.11": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.12": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.13": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.14": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.15": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.16": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.17": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.18": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.19": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.20": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.21": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.22": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.23": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.24": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.25": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.26": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.27": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.28": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.29": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.30": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.31": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.32": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.33": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.34": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.35": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.36": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.5.37": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.6.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.6.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.6.3": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.6.4": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.6.5": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.6.6": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.6.7": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.6.8": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.3": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.4": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.5": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.6": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.7": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.8": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.9": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.10": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.11": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.12": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.13": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.7.14": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.1": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.2": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.3": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.4": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.5": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.6": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.7": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.8": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.9": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.10": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.11": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.12": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.13": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.14": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.15": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.16": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.17": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.18": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.19": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.20": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.21": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.22": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.23": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.24": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.25": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.26": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.27": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.28": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.29": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.30": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.31": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.32": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.33": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    },
+    "A.8.34": {
+      "criteria": [],
+      "coverage": "pending",
+      "source": [],
+      "trigger": null
+    }
+  }
+}

@@ -15,6 +15,7 @@ import create_requests
 
 CATALOG = json.loads((CATALOG_ROOT / 'isoAuditProgram.json').read_text(encoding='utf-8'))
 PACKAGES = {p['key']: p for p in CATALOG['packages']}
+CRITERIA = json.loads((CATALOG_ROOT / 'operatorGuidance/isoAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
 
 
 class Activation(BaseModel):
@@ -37,6 +38,7 @@ class ItemPatch(BaseModel):
     na_rationale: str = Field(default='', max_length=4000)
     evidence_ids: list[str] = Field(default_factory=list, max_length=50)
     finding_ids: list[str] = Field(default_factory=list, max_length=50)
+    assessment_checks: list[str] = Field(default_factory=list, max_length=30)
 
 
 class ReportPatch(BaseModel):
@@ -226,9 +228,21 @@ def router_for(s):
     async def update_item(review_id: str, item_key: str, body: ItemPatch, user=Depends(s.get_current_user)):
         review = await current_review(review_id, body, user)
         state = copy.deepcopy(review['iso_audit'])
-        if item_key not in {i['key'] for i in PACKAGES[state['package_key']]['items']}:
+        definition = next((i for i in PACKAGES[state['package_key']]['items'] if i['key']==item_key), None)
+        if not definition:
             raise HTTPException(404, 'Audit item not found')
         item = body.model_dump(exclude={'occurrence_id', 'expected_updated_at'})
+        previous = state['items'].get(item_key, {})
+        if 'assessment_checks' not in body.model_fields_set:
+            item.pop('assessment_checks')
+            if 'assessment_checks' in previous:
+                item['assessment_checks'] = previous['assessment_checks']
+        else:
+            entry = CRITERIA.get(definition['definition_id'], {})
+            valid = {c['id'] for c in entry.get('criteria', []) if entry.get('coverage')=='verified'} | set(previous.get('assessment_checks', []))
+            if any(c not in valid for c in item['assessment_checks']):
+                raise HTTPException(422, 'Invalid ISO audit assessment check')
+            item['assessment_checks'] = list(dict.fromkeys(item['assessment_checks']))
         await validate_item(s, review, item)
         # A draft may be Reviewed without a result, but it never counts as complete.
         item.update(updated_at=s._now(), updated_by=user['user_id'])

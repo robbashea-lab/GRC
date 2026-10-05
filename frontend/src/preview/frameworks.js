@@ -1,6 +1,7 @@
 import {validateCsfProfile} from '../lib/csfProfile';
 import cisCriteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
+import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import {calendarDay} from '../lib/managementDates';
 import { validateAssignment, eligible } from './assignmentEligibility';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,frameworkCapabilities,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
@@ -202,7 +203,7 @@ export function frameworkRequest(db,path,method,params,body){
     if('record_assessment' in body&&(row.framework_key!=='soc-2'||typeof body.record_assessment!=='boolean'))fail('Explicit assessment recording applies only to SOC 2');
     delete body.record_assessment;
     const supported=frameworkCapabilities(row.framework_key);
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k))];
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k)),...(row.framework_key==='iso-27001'?['iso_assessment_checks']:[])];
     if('cis_operation' in body){
       if(!supported.includes('cis_operation'))fail('Operating arrangements apply only to CIS IG1');
       const op=body.cis_operation;
@@ -220,9 +221,17 @@ export function frameworkRequest(db,path,method,params,body){
     }
     if('cis_assessment_criteria' in body){
       if(!supported.includes('cis_assessment_criteria'))fail('CIS assessment criteria apply only to CIS Controls IG1');
-      const valid=new Set((cisCriteria.requirements[row.definition_id]?.criteria||[]).map(c=>c.id));
+      const entry=cisCriteria.requirements[row.definition_id]||{};
+      const valid=new Set([...(entry.criteria||[]),...(entry.legacy_criteria||[])].map(c=>c.id));
       if(!Array.isArray(body.cis_assessment_criteria)||body.cis_assessment_criteria.length>20||body.cis_assessment_criteria.some(c=>!valid.has(c)))fail('Invalid CIS assessment criteria');
       body.cis_assessment_criteria=[...new Set(body.cis_assessment_criteria)];
+    }
+    if('iso_assessment_checks' in body){
+      if(row.framework_key!=='iso-27001')fail('ISO assessment checks apply only to ISO 27001');
+      const entry=isoCriteria.requirements[row.definition_id]||{};
+      const valid=new Set([...(entry.coverage==='verified'?entry.criteria.map(c=>c.id):[]),...(row.iso_assessment_checks||[])]);
+      if(!Array.isArray(body.iso_assessment_checks)||body.iso_assessment_checks.length>30||body.iso_assessment_checks.some(c=>typeof c!=='string'||!valid.has(c)))fail('Invalid ISO assessment checks');
+      body.iso_assessment_checks=[...new Set(body.iso_assessment_checks)];
     }
     if(Object.keys(body).some(k=>!fields.includes(k)&&!VERIFICATION_FIELDS.includes(k)))fail('Unknown or immutable assessment fields');
     const verificationAllowed=supported.includes('verification');
@@ -264,7 +273,7 @@ export function frameworkRequest(db,path,method,params,body){
     }else if(body.addressable_decision||body.addressable_rationale)throw new Error('Addressability fields apply only to addressable specifications');
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
-    const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks','cis_operation'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
+    const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
     if(changed.length||recordAssessment){
       const at=new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString();
       if(row.framework_key==='soc-2'){
