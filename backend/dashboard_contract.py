@@ -20,7 +20,37 @@ PROJECTION = {key: 1 for key in (
     'assurance_records', 'assurance_window_days', 'assurance_expires_at', 'assurance_status',
     'contract_renewal', 'contract_expiration', 'contract_end', 'contract_lead_days',
     'applicability', 'baseline_key', 'baseline_response')}
+PROJECTION.update({key: 1 for key in ('finding_id', 'review_id', 'risk_id', 'vendor_id', 'policy_id',
+                                     'framework_key', 'framework_drivers', 'source_type', 'source_id', 'source',
+                                     'title_generated', 'governance_context')})
 PROJECTION['_id'] = 0
+
+
+def work_queue(model, members):
+    """The Demo queue's read-only population/order, on authorized management rows."""
+    day = calendar_day(model['as_of'])
+    eligible = {u['user_id']: u.get('name') or u.get('email') for u in members}
+    findings = {r.get('finding_id') for r in model['activeRecords']['tasks'] if r.get('finding_id')}
+    rows = []
+    for row in model['work']:
+        if row['kind'] == 'findings' and row['status'] != 'remediated' and row['id'] in findings:
+            continue
+        row = dict(row)
+        record = row['record']
+        if row['kind'] == 'tasks' and record.get('title_generated') and row['title'].startswith('Remediate: '):
+            row['title'] = row['title'][11:]
+        row['unassigned'] = row.get('owner_id') not in eligible
+        row['owner'] = eligible.get(row.get('owner_id')) or 'Unassigned'
+        rows.append(row)
+    levels = {'critical': 0, 'immediate': 0, 'high': 1, 'medium': 2, 'moderate': 2, 'low': 3}
+    overdue = lambda r: r['day'] is not None and r['day'] < day
+    soon = lambda r: r['day'] is not None and day <= r['day'] <= day + 30
+    rows.sort(key=lambda r: (not overdue(r), r['day'] if overdue(r) else 0,
+                            min(levels.get(r['severity'], 4), 2), not soon(r), not r['unassigned'],
+                            levels.get(r['severity'], 4), r['day'] if r['day'] is not None else float('inf'),
+                            r['record'].get('created_at') or '', r['key']))
+    return {'all': rows, 'pastDue': [r for r in rows if overdue(r)],
+            'due30': [r for r in rows if soon(r)], 'unassigned': [r for r in rows if r['unassigned']]}
 
 
 def brief(row):
