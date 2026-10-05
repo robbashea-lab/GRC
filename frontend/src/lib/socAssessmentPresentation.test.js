@@ -33,3 +33,16 @@ test('source presentation preserves explicit timing without inventing numeric ca
  expect(presentation.criteria['P4.2'].trigger).toBeNull();
  for(const row of Object.values(presentation.criteria))expect(row.trigger||'').not.toMatch(/annually|quarterly|monthly|weekly|six months/i);
 });
+
+// Criterion-row distinctions established by the all-category source comparison.
+test('SOC checklist retains shared qualifications and criterion obligations without stronger outcomes',()=>{
+ const texts=id=>guidance.criteria[id].assessment_criteria.map(item=>item.text);
+ expect(texts('CC1.3').every(text=>/governance oversight/.test(text))).toBe(true);
+ expect(texts('CC1.4').every(text=>text.startsWith('Demonstrate a commitment to '))).toBe(true);
+ expect(texts('CC6.3')[0]).toMatch(/applicable roles, responsibilities, or system design/);
+ expect(texts('CC6.3')[1]).toMatch(/Modify or remove.*applicable roles, responsibilities, system design, and changes/);
+ expect(texts('CC6.3').slice(2)).toEqual(['Consider least privilege when managing access.','Consider segregation of duties when managing access.']);
+ expect(texts('CC9.1')[0]).toMatch(/^Identify activities that mitigate risks/);
+ expect(texts('P8.1')[0]).toMatch(/^Implement a process to receive and address/);
+ expect(texts('P8.1')[1]).toMatch(/^Use that process to resolve.*communicate/);
+});

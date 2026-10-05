@@ -15,8 +15,8 @@ class CisIG3ContentTests(unittest.TestCase):
         self.assertEqual(set(CIS_CRITERIA),expected)
         self.assertEqual([len(active_definitions('cis-ig1',{'implementation_group':g})) for g in [1,2,3]],[56,130,153])
         criteria=[c['id'] for r in CIS_CRITERIA.values() for c in r['criteria']]
-        self.assertEqual(len(criteria),483)
-        self.assertEqual(len(set(criteria)),483)
+        self.assertEqual(len(criteria),480)
+        self.assertEqual(len(set(criteria)),480)
         retained=[c['id'] for r in CIS_CRITERIA.values() for c in r['criteria']+r.get('legacy_criteria',[])]
         self.assertEqual(len(set(retained)),len(retained))
         self.assertTrue(all(len(r['criteria'])+len(r.get('legacy_criteria',[]))<=20 for r in CIS_CRITERIA.values()))

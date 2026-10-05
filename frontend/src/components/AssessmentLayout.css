@@ -54,3 +54,31 @@ html[data-brawndo-portal="dark"] .ui-dialog.brawndo-cis-assessment[data-state] {
 
 .ui-dialog.brawndo-cis-assessment .assessment-layout > [role=tablist] > [role=tab] { transition:none; }
 .ui-dialog.brawndo-cis-assessment .bcis-crumbs ol { font:400 12px/1.5 system-ui,sans-serif; }
+/* Approved reference dimensions override shared form and button typography. */
+.ui-dialog.brawndo-cis-assessment .assessment-check { font-size:13px; line-height:1.5; color:var(--color-text-primary); }
+.ui-dialog.brawndo-cis-assessment .assessment-criteria-columns > section { font-size:14px; line-height:1.5; }
+.ui-dialog.brawndo-cis-assessment .assessment-criteria-columns > section > p:not(.assessment-check-caption) { font-size:13px; line-height:1.65; }
+.ui-dialog.brawndo-cis-assessment .assessment-layout > [role=tablist] > [role=tab] { font-weight:400; line-height:1.5; }
+.ui-dialog.brawndo-cis-assessment .assessment-layout > [role=tablist] > [role=tab][data-state=active] { font-weight:600; }
+.ui-dialog.brawndo-cis-assessment .brawndo-status-options label { font-family:system-ui,sans-serif; }
+.ui-dialog.brawndo-cis-assessment .brawndo-status-options label:not(.is-selected) { color:var(--color-text-primary); }
+.ui-dialog.brawndo-cis-assessment .assessment-layout textarea { margin-top:0; }
+.ui-dialog.brawndo-cis-assessment .brawndo-assessment-footer { font-size:14px; line-height:1.5; gap:12px; }
+.ui-dialog.brawndo-cis-assessment .brawndo-assessment-footer .ui-button { line-height:1.5; font-weight:400; background:var(--color-bg-subtle); border:1px solid var(--color-input-border); }
+.ui-dialog.brawndo-cis-assessment .brawndo-assessment-footer .ui-button.bg-primary { font-weight:600; background:#b7ee30; border-color:#b7ee30; }
+.ui-dialog.brawndo-cis-assessment .brawndo-assessment-header h2 { font-family:system-ui,sans-serif; margin-bottom:12px; }
+.ui-dialog.brawndo-cis-assessment .brawndo-header-status { margin-top:0; }
+.ui-dialog.brawndo-cis-assessment .brawndo-header-status .cis-pill { border:0; border-radius:5px; padding:3px 8px; font-weight:400; }
+.ui-dialog.brawndo-cis-assessment .assessment-layout [data-ticket-id] { border-color:var(--color-input-border); }
+.ui-dialog.brawndo-cis-assessment .assessment-layout [data-ticket-id] > button { font-size:13px; font-weight:600; }
+.ui-dialog.brawndo-cis-assessment .assessment-layout [data-ticket-id] > p { margin:6px 0; }
+.ui-dialog.brawndo-cis-assessment .brawndo-assessment-header h2 { letter-spacing:normal; line-height:1.4; }
+.ui-dialog.brawndo-cis-assessment .brawndo-assessment-header h2,
+.ui-dialog.brawndo-cis-assessment .assessment-requirement > p,
+.ui-dialog.brawndo-cis-assessment .assessment-criteria-columns > section > p { font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol"; }
+.ui-dialog.brawndo-cis-assessment .assessment-criteria-columns fieldset { display:grid; gap:11px; min-width:0; padding:0; }
+.ui-dialog.brawndo-cis-assessment .assessment-check { margin:0; }
+.ui-dialog.brawndo-cis-assessment .brawndo-status-options { gap:0; }
+.ui-dialog.brawndo-cis-assessment .brawndo-status-options label { margin-bottom:5px; }
+.ui-dialog.brawndo-cis-assessment .cis-tone-critical { --tone:#a82740; --tone-bg:#fcecef; --tone-border:#a82740; }
+html[data-brawndo-portal="dark"] .ui-dialog.brawndo-cis-assessment .cis-tone-critical { --tone:#ff8a9b; --tone-bg:#351e29; --tone-border:#ff8a9b; }

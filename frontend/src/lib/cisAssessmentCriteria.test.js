@@ -30,7 +30,7 @@ test('all 153 safeguards have distinct source-only checks and preserve historica
       if(legacy)expect(legacy.text).toBe(historical.text);
     }
   }
-  expect(count).toBe(483);
+  expect(count).toBe(480);
 });
 
 const text=id=>data.requirements[id].criteria.map(c=>c.text).join(' ');
@@ -70,4 +70,24 @@ test('independently satisfiable inventory and process attributes have independen
  expect(items('7.5')).toContain('Authenticated internal vulnerability scans are conducted.');
  expect(items('7.5')).toContain('Unauthenticated internal vulnerability scans are conducted.');
  expect(data.requirements['1.1'].legacy_criteria.find(c=>c.id==='1.1-c3').text).toBe('Records identify static network address, hardware address, machine name, owner, department and connection approval.');
+});
+
+test('workbook authority keeps mandatory obligations complete without promoting optional implementations',()=>{
+ expect(text('7.1')).toMatch(/process is established and maintained.*reviewed and updated annually, or when significant enterprise changes/);
+ expect(data.requirements['7.1'].legacy_criteria).toEqual(expect.arrayContaining([
+  {id:'7.1-c1',text:'Enterprise assets are covered by a documented vulnerability-management process.'},
+  {id:'7.1-c2',text:'Documentation is reviewed annually and after relevant significant changes.'}
+ ]));
+ expect(data.requirements['4.12'].criteria.map(c=>c.id)).toEqual(['4.12-c1']);
+ expect(data.requirements['4.12'].legacy_criteria).toEqual(expect.arrayContaining([
+  {id:'4.12-c4',text:'Enterprise applications are separated from personal applications.'},
+  {id:'4.12-c5',text:'Enterprise data is separated from personal data.'}
+ ]));
+ expect(text('3.7')).not.toMatch(/data is classified/);
+ expect(data.requirements['3.7'].legacy_criteria).toContainEqual({id:'3.7-c5',text:'Enterprise data is classified according to the scheme.'});
+ expect(text('11.1')).toMatch(/scope.*prioriti.*backup-data security.*reviewed and updated/i);
+ expect(text('11.1')).not.toMatch(/detailed backup procedures/);
+ expect(text('12.2')).toMatch(/designed and maintained.*segmentation.*least privilege.*availability/i);
+ expect(text('17.5')).toMatch(/legal.*IT.*information-security.*facilities.*public-relations.*HR.*incident responders.*analysts/);
+ expect(text('17.5')).not.toMatch(/third parties/);
 });

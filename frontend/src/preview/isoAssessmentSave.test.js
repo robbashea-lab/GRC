@@ -63,3 +63,10 @@ test('ISO clause subrequirements cannot be concealed in one combined response',(
   expect(criteria.requirements['4.3'].criteria.map(c=>c.id)).toEqual(['4.3:scope','4.3:context','4.3:requirements','4.3:interfaces','4.3:documented']);
   expect(criteria.requirements['4.4'].criteria.map(c=>c.id)).toEqual(['4.4:established','4.4:implemented','4.4:maintained','4.4:improved']);
 });
+
+test('ISO source qualifiers retain purpose, prevention/reduction and appropriate treatment selection',()=>{
+  const check=(unit,id)=>criteria.requirements[unit].criteria.find(c=>c.id===id).text;
+  expect(check('4.1','4.1:context')).toContain('relevant to organizational purpose');
+  expect(check('6.1.1','6.1.1:effects')).toContain('prevent or reduce unwanted effects');
+  expect(check('6.1.3','6.1.3:options')).toBe('Appropriate treatment options are selected using risk-assessment results.');
+});

@@ -11,6 +11,14 @@ clause units with 96 checks, and 111 pending units (18 clause units and 93 Annex
 references). Pending means requirement-checklist completeness is unverified;
 it does not mean the organization has no corresponding obligation.
 
+The complete public clause 4–6 comparison is recorded in
+[iso-assessment-criteria.md](iso-assessment-criteria.md). Source comparison of all
+12 available units / 96 checks is closed after three qualifier corrections,
+with all criterion identities retained. Official-paragraph reproduction remains
+a separate conditional question, not a blocker to that completed comparison. The
+111 pending units keep their existing guidance, applicability, save behavior,
+links and history. Their missing source does not require disabling those workflows.
+
 | Input | Available content | Permitted engineering use / remaining limitation |
 | --- | --- | --- |
 | [ISO edition metadata](https://www.iso.org/standard/27001) | Publication identity: ISO/IEC 27001:2022, edition 3; amendment listed | Edition identity only; no full clauses or control wording |
@@ -25,8 +33,10 @@ it does not mean the organization has no corresponding obligation.
 
 Local checks covered tracked repository source/document paths, the current task's
 `work/` tree for ISO/ISMS PDF, DOCX, XLSX or TXT source candidates, and the supplied
-attachment directory `3e284623-21b7-41e6-8bfe-75971d1893e3`. The attachment directory
-contains the task request only. No full ISO standard, source workbook or licensed
+attachment directory `3e284623-21b7-41e6-8bfe-75971d1893e3`. The approved layout is
+available separately at `C:/Users/RobbA/Downloads/approved-assessment-mockup.html`
+and has been rendered for the coordinator's visual comparison; it is not an ISO
+source document. No full ISO standard, source workbook or licensed
 excerpt was found in those checked locations. No unrelated directories, accounts,
 repositories or customer records were searched. A workbook filename/hash in the
 catalog identifies provenance; it does not establish that the original file is
@@ -115,3 +125,17 @@ translate a new checklist into automatic status, applicability or audit results.
 Then run the existing focused source/persistence/UI checks and document exactly
 which of the 111 pending units have been closed. This document does not claim
 those missing-source comparisons, publication rights or delivery gates are closed.
+
+## Consolidated owner inputs
+
+The single remaining input list is maintained in
+[assessment-layout-inputs.md](assessment-layout-inputs.md): legitimate access to
+the 111 missing ISO units, plus the separate conditional question of applicable
+official-paragraph reproduction permission/terms. The approved HTML is available;
+no additional layout artifact is requested. The completed public-source comparison
+of 12 units / 96 checks is not reopened by either remaining input.
+
+These inputs do not replace technical verification. The public-source check
+comparison and existing automated UI/persistence checks can proceed within
+their bounded scope; missing inputs remain explicit delivery gates rather than
+an invented requirement or a claim that everything has been verified.

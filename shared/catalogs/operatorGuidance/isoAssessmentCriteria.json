@@ -15,7 +15,7 @@
       "criteria": [
         {
           "id": "4.1:context",
-          "text": "Relevant internal and external conditions affecting ISMS outcomes are determined."
+          "text": "Internal and external conditions relevant to organizational purpose and affecting ISMS outcomes are determined."
         },
         {
           "id": "4.1:climate",
@@ -285,7 +285,7 @@
         },
         {
           "id": "6.1.1:effects",
-          "text": "Selected risks and opportunities address unwanted effects.",
+          "text": "Risks and opportunities are determined to prevent or reduce unwanted effects.",
           "source_reference": "6.1.1 b"
         },
         {
@@ -449,7 +449,7 @@
         },
         {
           "id": "6.1.3:options",
-          "text": "Treatment options account for risk-assessment results.",
+          "text": "Appropriate treatment options are selected using risk-assessment results.",
           "source_reference": "6.1.3 a"
         },
         {

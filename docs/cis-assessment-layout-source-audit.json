@@ -7,9 +7,9 @@
   "source_priority": "Canonical repository descriptions match the previously verified supplied licensed v8.1 workbook (docs/cis-pr33-final-corrections.md). Current CAS links are verified as real safeguard headings. Live CAS/workbook differences are recorded rather than silently changing official text or requirement membership.",
   "counts": {
     "safeguards": 153,
-    "current_criteria": 483,
+    "current_criteria": 480,
     "baseline_criteria": 361,
-    "legacy_criteria": 286,
+    "legacy_criteria": 291,
     "maximum_current_and_historical_per_record": 20,
     "explicit_trigger_entries": 76,
     "live_source_anchors": 153,
@@ -17,8 +17,6 @@
   },
   "limitations": [
     "No licensed agreement independently inspected in this task; existing user license confirmation remains the basis for embedded text.",
-    "The supplied licensed workbook itself was not re-opened in this task; its prior exact comparison and immutable canonical descriptions were reused.",
-    "Live CAS paragraph conflicts at 11.1 and 17.5 need independent source review against the licensed workbook before claiming literal identity with the linked webpage.",
     "Content tests catch structural preservation and selected important boundaries; passing them does not prove all wording semantically accurate independently."
   ],
   "sources": [
@@ -880,17 +878,12 @@
         {
           "item_id": "3.7-c4",
           "source_requirement": "CIS Controls v8.1 Safeguard 3.7",
-          "basis": "Canonical official safeguard paragraph; examples, evaluator methods and CAS metrics excluded."
-        },
-        {
-          "item_id": "3.7-c5",
-          "source_requirement": "CIS Controls v8.1 Safeguard 3.7",
-          "basis": "Canonical official safeguard paragraph; examples, evaluator methods and CAS metrics excluded."
+          "basis": "User-confirmed supplied Navigator workbook safeguard; examples and evaluator methods excluded."
         },
         {
           "item_id": "3.7-c3",
           "source_requirement": "CIS Controls v8.1 Safeguard 3.7",
-          "basis": "Canonical official safeguard paragraph; examples, evaluator methods and CAS metrics excluded."
+          "basis": "User-confirmed supplied Navigator workbook safeguard; examples and evaluator methods excluded."
         }
       ],
       "trigger": "Review and update the classification scheme annually, or when significant enterprise changes could affect this safeguard.",
@@ -1539,17 +1532,7 @@
         {
           "item_id": "4.12-c1",
           "source_requirement": "CIS Controls v8.1 Safeguard 4.12",
-          "basis": "Canonical official safeguard paragraph; examples, evaluator methods and CAS metrics excluded."
-        },
-        {
-          "item_id": "4.12-c4",
-          "source_requirement": "CIS Controls v8.1 Safeguard 4.12",
-          "basis": "Canonical official safeguard paragraph; examples, evaluator methods and CAS metrics excluded."
-        },
-        {
-          "item_id": "4.12-c5",
-          "source_requirement": "CIS Controls v8.1 Safeguard 4.12",
-          "basis": "Canonical official safeguard paragraph; examples, evaluator methods and CAS metrics excluded."
+          "basis": "User-confirmed supplied Navigator workbook safeguard; examples and evaluator methods excluded."
         }
       ],
       "trigger": null,
@@ -2057,14 +2040,14 @@
       "source_difference": null,
       "checklist_mapping": [
         {
-          "item_id": "7.1-c1",
+          "item_id": "7.1-c3",
           "source_requirement": "CIS Controls v8.1 Safeguard 7.1",
-          "basis": "Canonical official safeguard paragraph; examples, evaluator methods and CAS metrics excluded."
+          "basis": "User-confirmed supplied Navigator workbook safeguard; examples and evaluator methods excluded."
         },
         {
-          "item_id": "7.1-c2",
+          "item_id": "7.1-c4",
           "source_requirement": "CIS Controls v8.1 Safeguard 7.1",
-          "basis": "Canonical official safeguard paragraph; examples, evaluator methods and CAS metrics excluded."
+          "basis": "User-confirmed supplied Navigator workbook safeguard; examples and evaluator methods excluded."
         }
       ],
       "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
@@ -5791,5 +5774,6 @@
         }
       ]
     }
-  }
+  },
+  "workbook_reverification": "All153 raw canonical descriptions re-compared with actual supplied workbook; user-confirmed catalog authority. See cis-assessment-workbook-verification.json and cis-assessment-source-reconciliation.md."
 }

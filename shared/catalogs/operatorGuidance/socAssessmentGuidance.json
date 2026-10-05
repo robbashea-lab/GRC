@@ -220,7 +220,7 @@
         },
         {
           "id": "CC1.3-assessment-v1-2",
-          "text": "Management establishes appropriate authority and responsibilities to achieve objectives.",
+          "text": "Management establishes appropriate authority and responsibilities under governance oversight to achieve objectives.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "CC1.3"
@@ -250,7 +250,7 @@
         },
         {
           "id": "CC1.3-assessment-v1-2",
-          "text": "Management establishes appropriate authority and responsibilities to achieve objectives."
+          "text": "Management establishes appropriate authority and responsibilities under governance oversight to achieve objectives."
         }
       ]
     },
@@ -289,21 +289,21 @@
         },
         {
           "id": "CC1.4-assessment-v1-1",
-          "text": "Attract people with the competence needed for objectives.",
+          "text": "Demonstrate a commitment to attracting people with the competence needed for objectives.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "CC1.4"
         },
         {
           "id": "CC1.4-assessment-v1-2",
-          "text": "Develop people’s competence to support objectives.",
+          "text": "Demonstrate a commitment to developing people’s competence to support objectives.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "CC1.4"
         },
         {
           "id": "CC1.4-assessment-v1-3",
-          "text": "Retain competent people to support objectives.",
+          "text": "Demonstrate a commitment to retaining competent people to support objectives.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "CC1.4"
@@ -332,15 +332,15 @@
       "assessment_criteria": [
         {
           "id": "CC1.4-assessment-v1-1",
-          "text": "Attract people with the competence needed for objectives."
+          "text": "Demonstrate a commitment to attracting people with the competence needed for objectives."
         },
         {
           "id": "CC1.4-assessment-v1-2",
-          "text": "Develop people’s competence to support objectives."
+          "text": "Demonstrate a commitment to developing people’s competence to support objectives."
         },
         {
           "id": "CC1.4-assessment-v1-3",
-          "text": "Retain competent people to support objectives."
+          "text": "Demonstrate a commitment to retaining competent people to support objectives."
         }
       ]
     },
@@ -1423,14 +1423,14 @@
         },
         {
           "id": "CC6.3-assessment-v1-1",
-          "text": "Authorize access according to roles, responsibilities, and system design.",
+          "text": "Authorize access to protected information assets according to applicable roles, responsibilities, or system design.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "CC6.3"
         },
         {
           "id": "CC6.3-assessment-v1-2",
-          "text": "Modify or remove access when roles, responsibilities, or systems change.",
+          "text": "Modify or remove that access according to applicable roles, responsibilities, system design, and changes.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "CC6.3"
@@ -1473,11 +1473,11 @@
       "assessment_criteria": [
         {
           "id": "CC6.3-assessment-v1-1",
-          "text": "Authorize access according to roles, responsibilities, and system design."
+          "text": "Authorize access to protected information assets according to applicable roles, responsibilities, or system design."
         },
         {
           "id": "CC6.3-assessment-v1-2",
-          "text": "Modify or remove access when roles, responsibilities, or systems change."
+          "text": "Modify or remove that access according to applicable roles, responsibilities, system design, and changes."
         },
         {
           "id": "CC6.3-assessment-v1-3",
@@ -2427,7 +2427,7 @@
         },
         {
           "id": "CC9.1-assessment-v1-1",
-          "text": "Identify risks arising from potential business disruptions.",
+          "text": "Identify activities that mitigate risks arising from potential business disruptions.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "CC9.1"
@@ -2462,7 +2462,7 @@
       "assessment_criteria": [
         {
           "id": "CC9.1-assessment-v1-1",
-          "text": "Identify risks arising from potential business disruptions."
+          "text": "Identify activities that mitigate risks arising from potential business disruptions."
         },
         {
           "id": "CC9.1-assessment-v1-2",
@@ -4176,14 +4176,14 @@
       "items": [
         {
           "id": "P8.1-assessment-v1-1",
-          "text": "Receive and address privacy inquiries, complaints, and disputes from people and others.",
+          "text": "Implement a process to receive and address privacy inquiries, complaints, and disputes from people and others.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "P8.1"
         },
         {
           "id": "P8.1-assessment-v1-2",
-          "text": "Resolve those matters and communicate their resolution.",
+          "text": "Use that process to resolve those matters and communicate their resolution.",
           "tier": "criterion_requirements",
           "source_type": "criterion",
           "source_reference": "P8.1"
@@ -4224,11 +4224,11 @@
       "assessment_criteria": [
         {
           "id": "P8.1-assessment-v1-1",
-          "text": "Receive and address privacy inquiries, complaints, and disputes from people and others."
+          "text": "Implement a process to receive and address privacy inquiries, complaints, and disputes from people and others."
         },
         {
           "id": "P8.1-assessment-v1-2",
-          "text": "Resolve those matters and communicate their resolution."
+          "text": "Use that process to resolve those matters and communicate their resolution."
         },
         {
           "id": "P8.1-assessment-v1-3",

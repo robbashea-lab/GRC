@@ -545,10 +545,6 @@
           "text": "An overall enterprise data-classification scheme is established and maintained."
         },
         {
-          "id": "3.7-c5",
-          "text": "Enterprise data is classified according to the scheme."
-        },
-        {
           "id": "3.7-c3",
           "text": "The scheme is reviewed and updated annually and when significant changes could affect the safeguard."
         }
@@ -561,6 +557,10 @@
         {
           "id": "3.7-c2",
           "text": "Apply classification in handling decisions. Confirm coverage and resolve unsupported or uncovered cases."
+        },
+        {
+          "id": "3.7-c5",
+          "text": "Enterprise data is classified according to the scheme."
         }
       ]
     },
@@ -1036,14 +1036,6 @@
         {
           "id": "4.12-c1",
           "text": "Supported mobile end-user devices use separate enterprise workspaces."
-        },
-        {
-          "id": "4.12-c4",
-          "text": "Enterprise applications are separated from personal applications."
-        },
-        {
-          "id": "4.12-c5",
-          "text": "Enterprise data is separated from personal data."
         }
       ],
       "legacy_criteria": [
@@ -1054,6 +1046,14 @@
         {
           "id": "4.12-c3",
           "text": "No fixed interval specified; maintain the separation on supported devices."
+        },
+        {
+          "id": "4.12-c4",
+          "text": "Enterprise applications are separated from personal applications."
+        },
+        {
+          "id": "4.12-c5",
+          "text": "Enterprise data is separated from personal data."
         }
       ]
     },
@@ -1380,6 +1380,16 @@
     "7.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#71-establish-and-maintain-a-vulnerability-management-process",
       "criteria": [
+        {
+          "id": "7.1-c3",
+          "text": "A documented vulnerability-management process is established and maintained for enterprise assets."
+        },
+        {
+          "id": "7.1-c4",
+          "text": "Documentation is reviewed and updated annually, or when significant enterprise changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "7.1-c1",
           "text": "Enterprise assets are covered by a documented vulnerability-management process."

@@ -45,6 +45,7 @@ let diagnostics=''; server.stderr.on('data', chunk => {diagnostics+=chunk.toStri
       const clients=await page.evaluate(async()=>{const r=await fetch('/api/clients');return await r.json();});
       assert.deepEqual(clients.map(x=>x.client_id).sort(), role==='owner'?['a','b']:['a']);
       if(role==='owner') {
+        await page.setViewportSize({width:1440,height:1000});
         const setup=await page.evaluate(async()=>{
           const baseline=await (await fetch('/api/onboarding/baseline?client_id=a')).json(),catalog=baseline.catalog;
           const state={version:3,step:3,policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure'])),requirements:Object.fromEntries(catalog.requirements.map(p=>[p.key,['cis-ig1','soc-2','iso-27001'].includes(p.key)?'applies':'does_not_apply'])),reviews:[],framework_reviews:{}};
@@ -56,9 +57,15 @@ let diagnostics=''; server.stderr.on('data', chunk => {diagnostics+=chunk.toStri
           await page.evaluate(()=>localStorage.setItem('grc_client_id','a'));
           await page.goto(origin+'/compliance/'+framework+'?assessment='+row.framework_assessment_id);
           const dialog=page.locator('[data-assessment-shell]'),field=dialog.getByLabel('Current implementation',{exact:true});
+          const implementationGeometry=await dialog.locator('.assessment-implementation').evaluate(el=>({columns:getComputedStyle(el).gridTemplateColumns,gap:getComputedStyle(el).columnGap}));assert.equal(Number.parseFloat(implementationGeometry.columns),200);assert.equal(implementationGeometry.gap,'22px');
+          if(process.env.SECURITY_TEST_OUTPUT)await dialog.screenshot({path:path.join(process.env.SECURITY_TEST_OUTPUT,'normal-'+framework+'-'+id+'-implementation.png')});
           await field.fill('SYNTHETIC authenticated assessment '+id);
           await dialog.getByRole('tab',{name:'Assessment criteria',exact:true}).click();
           const check=dialog.locator('.assessment-check input').first(),hasCheck=await check.count();if(hasCheck)await check.check();
+          const panel=await dialog.locator('.assessment-criteria-columns > section').first().evaluate(el=>({padding:getComputedStyle(el).padding,radius:getComputedStyle(el).borderRadius}));assert.equal(panel.padding,'16px');assert.equal(panel.radius,'6px');
+          if(hasCheck)assert.equal(await dialog.locator('.assessment-check').first().evaluate(el=>getComputedStyle(el).fontSize),'13px');
+          if(process.env.SECURITY_TEST_OUTPUT)await dialog.screenshot({path:path.join(process.env.SECURITY_TEST_OUTPUT,'normal-'+framework+'-'+id+'-criteria.png')});
+
           await dialog.getByRole('tab',{name:'Requirement & implementation',exact:true}).click();
           await field.waitFor();assert.equal(await field.inputValue(),'SYNTHETIC authenticated assessment '+id);
           await dialog.getByRole('button',{name:'Save assessment',exact:true}).click();
