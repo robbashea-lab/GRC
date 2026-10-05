@@ -1,0 +1,17 @@
+{
+  "name": "omnisciente-staging",
+  "account_id": "775c0a39a7897512fc6ca499edd2b933",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-05",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*"]
+  },
+  "vars": {
+    "API_ORIGIN": ""
+  }
+}

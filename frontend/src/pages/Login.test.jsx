@@ -43,3 +43,29 @@ test("blank standard sign-in and credentialless demo are separate paths", async 
     container.remove();
   }
 });
+
+test("hosted staging exposes Demo alongside enabled standard sign-in", async () => {
+  require('@/lib/api').STANDARD_AUTH_ENABLED = true;
+  mockLogin.mockClear(); mockExploreDemo.mockClear(); mockNavigate.mockClear();
+  mockLogin.mockResolvedValue({ role: 'super_admin' });
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<Login />));
+    expect(container.querySelector('#email').disabled).toBe(false);
+    expect(container.querySelector('#password').disabled).toBe(false);
+    expect(container.querySelector('[data-testid="submit-auth"]').disabled).toBe(false);
+    expect(container.querySelector('[data-testid="explore-demo"]')).not.toBeNull();
+    expect(container.querySelector('#standard-auth-notice')).toBeNull();
+    await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})));
+    expect(mockLogin).toHaveBeenCalledWith('', '');
+    expect(mockExploreDemo).not.toHaveBeenCalled();
+    await act(async () => container.querySelector('[data-testid="explore-demo"]').click());
+    expect(mockExploreDemo).toHaveBeenCalledWith();
+    expect(mockLogin).toHaveBeenCalledTimes(1);
+  } finally {
+    await act(async () => root.unmount()); container.remove();
+    require('@/lib/api').STANDARD_AUTH_ENABLED = false;
+  }
+});
