@@ -62,6 +62,12 @@ test('program cards follow finalized client selections, with no fabricated asses
   expect(complianceProgress('a',{completed:true},[])).toEqual([]);
 });
 
+test.each([2,3])('recorded CIS IG%i updates the full program name as well as its label',group=>{
+  const records=[{client_id:'a',baseline_key:'cis-ig1',baseline_response:'applies'}];
+  const summary={client_id:'a',items:[{key:'cis-ig1',implementation_group:group,label:`CIS IG${group}`,total:0}]};
+  expect(complianceProgress('a',{completed:true},records,summary)[0]).toMatchObject({name:`CIS Controls v8.1 IG${group}`,label:`CIS IG${group}`,implementation_group:group});
+});
+
 test('vendor health reuses review, assurance and contract windows and excludes inactive vendors',()=>{
   const vendor={client_id:'a',vendor_id:'v',name:'Provider',status:'active',criticality:'critical',next_review:date(5),contract_renewal:date(40),assurance_required:true,assurance_records:[{type:'Security Questionnaire',required:true,refresh_due:date(-1),received_at:date(-100),evidence_ids:['e']}]};
   const result=posture({vendors:[vendor,{...vendor,vendor_id:'inactive',status:'inactive'}],reviews:[{client_id:'a',review_id:'vr',vendor_id:'v',title:'Vendor review',status:'upcoming',due_date:date(5)}]});

@@ -1,4 +1,5 @@
 import { complianceNavigation } from './complianceNavigation';
+import {cisProgramName} from './cisScope';
 
 // Applicability, assessment state and remediation are separate facts. No scoring
 // methodology is assumed. Assessment resolution is separate from operational health.
@@ -7,7 +8,7 @@ export function complianceProgress(clientId, baseline, requirements, summary) {
   return complianceNavigation(clientId, baseline, requirements).map(program => {
     const recorded=summary?.items.find(item=>item.key===program.key);
     const trackingAvailable=!!program.implemented;
-    return {...program,...(recorded?.implementation_group?{implementation_group:recorded.implementation_group,label:recorded.label}:{}),progress:recorded?.assessment_progress?.percent??null,denominator:recorded?.assessment_progress?.total??null,trackingAvailable,assessment:trackingAvailable?recorded||null:null,
+    return {...program,...(recorded?.implementation_group?{implementation_group:recorded.implementation_group,label:recorded.label,name:cisProgramName(program,recorded)}:{}),progress:recorded?.assessment_progress?.percent??null,denominator:recorded?.assessment_progress?.total??null,trackingAvailable,assessment:trackingAvailable?recorded||null:null,
       status:trackingAvailable?'Assessment tracking available':'Configured — detailed assessment not yet available',
       explanation:!trackingAvailable?'Program workspace only. Detailed assessment and mapping are not yet implemented.'
         :!recorded?'Assessment summary is unavailable. Open the framework workspace for current records.'
