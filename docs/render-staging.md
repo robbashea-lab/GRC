@@ -32,8 +32,9 @@ build minutes stop builds; recheck billing controls if the account changes.
 Secrets remain provider-side and in owner-only local files outside Git.
 The three `ADMIN_*` bootstrap settings were removed from Render after the
 existing administrator successfully authenticated. Verify authentication again
-on the next deployed/restarted revision; removing settings does not delete or
-reset the stored account.
+on any subsequent revision; revision `3c8915fcf1db1abdc7247edf9f2b0c9b436444df`
+completed startup and existing administrator login without these settings.
+Removing settings did not delete or reset the stored account.
 
 ## Portable packaging and authentication
 
@@ -185,8 +186,17 @@ this in-app-browser automation: both evidence (data URI) and CSV (Blob) download
 controls timed out waiting for a download event, without an application error.
 This does not demonstrate an application defect; no helper rewrite was made to
 satisfy automation. Do not represent decoded API bytes as a completed browser
-file save. Final hosted Demo/mode-transition results and exact deployed revision
-are recorded in PR #34's delivery comment after deployment.
+file save. On deployed `3c8915fcf1db1abdc7247edf9f2b0c9b436444df`, Demo opened
+the four established fictional clients; a Brawndo vendor note saved and survived
+reload. Demo sign-out followed by normal administrator login displayed only the
+two labelled staging clients. Protected API snapshots of clients, assets,
+vendors, evidence, reviews and tasks were identical before and after the Demo
+edit. The final API pass had 38 successful checks, including normal logout,
+revoked membership, read-only and cross-client denial. Retrieved evidence was
+saved outside Git and its SHA-256 matched the original uploaded bytes:
+`5203dec4bb8b3600b52dd4b0b43d3181db81685bbe9836117e8b01f5ff02d775`.
+This artifact was retrieved through the API, not a native browser download.
+Exact final merged/deployed revision is recorded in PR #34's delivery comment.
 
 Unavailable checks: hosted editor remount/lost-response Retry interaction,
 actual hosted post-primary audit/Review outage injection, email invitation/reset
