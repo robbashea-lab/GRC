@@ -36,7 +36,7 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
   expect((await get('requirements',a.client_id)).find(r=>r.baseline_response==='does_not_apply').applicability).toBe('not_applicable');
   const reviews=await get('reviews',a.client_id);expect(reviews).toHaveLength(16);
   for(const r of reviews)expect(r).toMatchObject({status:'needs_scheduling',due_date:null,next_review_date:null,recurrence:null,owner_id:null});
-  expect((await get('calendar',a.client_id))).toEqual({reviews:{},findings:{},tasks:{}});
+  expect((await get('calendar',a.client_id))).toEqual({reviews:{},findings:{},tasks:{},vendor_dates:{}});
   const summary=await get('dashboard',a.client_id);expect(summary.kpis.overdue_actions).toBe(0);expect(summary.kpis.due_next_30).toBe(0);
   expect(await get('reviews',b.client_id)).toEqual([]);expect(await get('tasks',a.client_id)).toEqual([]);expect(await get('risks',a.client_id)).toEqual([]);
   const manuallyEdited=reviews[0];
