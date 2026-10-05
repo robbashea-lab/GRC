@@ -126,6 +126,37 @@ class IdentityLifecycleTests(unittest.IsolatedAsyncioTestCase):
         candidates = (await self.client.get('/api/clients/a/assignees')).json()['items']
         self.assertNotIn('member', [row['user_id'] for row in candidates])
 
+    async def test_user_list_versions_support_reload_then_disable_without_lost_updates(self):
+        self.sign_in('admin')
+        # Use only the list payload the real editor receives, never a DB version
+        # or the harness's implicit read-before-write snapshot.
+        async def listed_member():
+            response = await self.client.get('/api/users')
+            self.assertEqual(response.status_code, 200)
+            row = next(x for x in response.json() if x['user_id'] == 'member')
+            self.assertNotIn('password_hash', row)
+            return row
+
+        before = await listed_member()
+        renamed = await self.client.patch('/api/users/member', json={
+            'name': 'Updated fictional member', 'expected_updated_at': before.get('updated_at'),
+        })
+        self.assertEqual(renamed.status_code, 200, renamed.text)
+        refreshed = await listed_member()
+        self.assertEqual(refreshed.get('updated_at'), renamed.json()['updated_at'])
+        stale = await self.client.patch('/api/users/member', json={
+            'name': 'Stale edit', 'expected_updated_at': before.get('updated_at'),
+        })
+        self.assertEqual(stale.status_code, 409)
+        disabled = await self.client.patch('/api/users/member', json={
+            'status': 'disabled', 'expected_updated_at': refreshed.get('updated_at'),
+        })
+        self.assertEqual(disabled.status_code, 200, disabled.text)
+        after = await listed_member()
+        self.assertEqual(after['status'], 'disabled')
+        self.assertEqual(after['name'], 'Updated fictional member')
+        self.assertEqual(after['client_ids'], before['client_ids'])
+
     async def test_missing_account_status_requires_explicit_activation(self):
         await server.db.users.update_one({'user_id': 'member'}, {'$unset': {'status': ''}})
         self.assertIsNone(await server._get_user_from_token(
