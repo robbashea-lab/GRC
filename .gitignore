@@ -60,6 +60,7 @@ chainlit.md
 
 # Deployment
 .vercel
+deploy/cloudflare/dist/
 
 # Data and databases
 agenthub/agents/youtube/db
