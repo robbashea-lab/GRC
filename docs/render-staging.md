@@ -2,43 +2,38 @@
 
 ## Scope and current status, 2026-10-05
 
-Use one Render **Free** web service for the normal React frontend and existing
-FastAPI application, with a new MongoDB Atlas **Free** cluster. Cloudflare,
-Railway, all prior databases and the private ChatGPT Demo v108 stay unchanged.
-No account registration, Demo data seed or legacy migration is enabled.
+The existing Render **Free** Docker service serves the normal React frontend
+and unchanged FastAPI API at https://omnisciente-staging.onrender.com, backed
+by the separate Atlas **Free** cluster `omnisciente-staging` in project
+**Omnisciente Staging**, database `staging_omnisciente_render`.
+Cloudflare, Railway, prior databases and the private ChatGPT Demo version 109
+remain unchanged. No backend Demo seed or legacy migration is enabled.
 
-Render account sign-in is verified. Before provisioning, its Hobby workspace
-had no payment card, no pending charges, and unused 750 Free hours, 5 GB
-bandwidth and 500 Starter pipeline minutes this month. The initial staging
-build now consumes the included build allowance. Do not add a payment method or upgrade.
-Without a card, exceeding Free bandwidth suspends service and exhausting build
-minutes stops new builds rather than buying overages. Check these controls
-again before deployment; do not assume a future account change preserves $0.
-Build-pipeline caps do not cap every kind of billable usage.
+Service `srv-db1s0cugekts73f72reg` uses Virginia, root Docker context,
+`deploy/RenderStaging.Dockerfile`, `/api/` health check, and manual deployments.
+Its dashboard environment label is not an application readiness assertion.
+`APP_ENV=staging` and the separate database are authoritative.
+The initial missing-MONGO_URL startup failure was corrected by the owner;
+revision `14c56286af4ae4d475e7503757f7fd3457f3296d` subsequently completed Mongo
+connection/index startup and real hosted authentication and persistence checks.
+Final revision/deployment evidence belongs in the PR's delivery comment.
 
-A separate Atlas project **Omnisciente Staging** and active cluster
-**omnisciente-staging** were created: Free, MongoDB 8.0.34, AWS N. Virginia.
-Sample data, automatic security setup, backups and auto-scaling are off.
-The owner created `omnisciente_staging` with only
-`readWrite@staging_omnisciente_render`. Network access is still empty. Existing
-Project 0 was not modified. No paid resources were selected.
+Atlas uses MongoDB 8.0.34, AWS N. Virginia. The staging database user has only
+`readWrite@staging_omnisciente_render`. Its network list contains Render's shared
+regional outbound CIDRs `74.220.49.0/24`, `74.220.57.0/24` and owner-added access.
+Existing Project 0 was not modified. No paid resources, automatic backups or
+sample-data import were enabled. Shared CIDRs are not exclusive service identity.
 
-Render Free service `srv-db1s0cugekts73f72reg` is created at
-`https://omnisciente-staging.onrender.com`, using branch
-`codex/cloudflare-staging-preparation`, Docker, Virginia, root build context,
-`deploy/RenderStaging.Dockerfile`, `/api/` health check and automatic deployments
-Off. Render's default project environment label is “Production”; this new
-service is explicitly configured with `APP_ENV=staging` and a separate database.
-The initial Linux image for `f87daaa9bdfe7ece9593e7141b5b018d24c84636` built and
-launched Uvicorn, then exited at import with `KeyError: 'MONGO_URL'`. It is not a
-healthy deployment. Secret entry, database connectivity and hosted acceptance
-remain pending. Exact HTTPS origin variables were saved after URL assignment.
-
-Render Connect reports regional shared outbound ranges `74.220.49.0/24` and
-`74.220.57.0/24`; these are the only proposed Atlas allowlist additions.
-Independent random JWT/admin credentials were generated outside Git in an
-owner-only local directory. No generated credential or supplied password was
-committed or printed. The owner must enter and submit credentials in Render.
+At provisioning the Render Hobby workspace had no payment card or pending
+charges and included 750 Free hours, 5 GB bandwidth and 500 Starter pipeline
+minutes. Builds consume that allowance. Do not add a card, paid resources or
+upgrade. Without a card, exhausted Free bandwidth suspends service and exhausted
+build minutes stop builds; recheck billing controls if the account changes.
+Secrets remain provider-side and in owner-only local files outside Git.
+The three `ADMIN_*` bootstrap settings were removed from Render after the
+existing administrator successfully authenticated. Verify authentication again
+on the next deployed/restarted revision; removing settings does not delete or
+reset the stored account.
 
 ## Portable packaging and authentication
 
@@ -58,8 +53,14 @@ variables and a TLS MongoDB connection. `FRONTEND_BUILD_DIR` optionally selects
 an absolute build directory; the image default is `/app/frontend/build`.
 
 Frontend and API share one HTTPS origin. Keep Secure, HttpOnly, host-only,
-SameSite=Lax cookies unchanged. `REACT_APP_PREVIEW=false`, normal password
-sign-in and same-origin `/api` are fixed by the build script. Do not embed any
+SameSite=Lax cookies unchanged. The staging build selects the existing
+`REACT_APP_PREVIEW=true` and `REACT_APP_STANDARD_SIGN_IN=true` combination:
+normal email/password sign-in plus the established Explore Demo entry.
+Intentional Demo sessions use only the browser-local adapter and fictional
+fixtures; they strip credentials, bypass HTTP transport, and clear cached data,
+client selection and document-local bearer tokens on mode changes. This frontend
+flag does not enable backend `DEMO_MODE`, which remains false. Normal sessions
+use the existing authenticated same-origin `/api` and persistent Mongo records. Do not embed any
 backend secret or database URI in a browser bundle. Docker context is an
 allowlist excluding `.env`, keys and credentials; no secret Docker ARG is used.
 Render exposes environment variables as potential build arguments, so never
@@ -154,38 +155,46 @@ be verified. Backup and restore have not yet been executed against this cluster.
 
 ## Verification and free-tier stop conditions
 
-Preparation results:
+Verification evidence (2026-10-05):
 
-- Clean `yarn install --frozen-lockfile --non-interactive` with Yarn 1.22.22
-  verified against the repository's package-manager integrity hash; unchanged
-  lockfile. Existing resolution/peer warnings remain.
-- `node frontend/scripts/staging.cjs`: normal production build passed (local
-  Node 24.19.0). Existing bundle-size warning remains; Docker's Node 22/Linux
-  build still requires hosted verification.
-- `python -m unittest discover -s deploy -p test_render_staging.py -v`: 5 passed,
-  including API error/method preservation, SPA navigation, missing files,
-  frontend mutation rejection and traversal denial. API fixture is a stub.
-- Existing `test_auth_boundaries.py`: 3 passed; `test_security_campaign.py`:
-  22 passed, real application auth/routes with synthetic Mongo, not hosted DB.
-  Initial imports required installing existing test harness dependency
-  `mongomock-motor==0.0.36` into an isolated local venv; application dependency
-  manifests are unchanged. Starlette's httpx TestClient deprecation is noted.
-- Existing Cloudflare proxy suite: 7 passed; no Cloudflare resource changed.
-  YAML assertions confirm Free, manual deployment, root Docker context and
-  isolated namespace; credentials/origins have no committed values.
-- Docker engine unavailable locally. Provider deployment validation, actual
-  Mongo connection/index initialization, hosted browser workflows, restart
-  durability and export/restore remain pending. No independent security review
-  of the new hosting wrapper has been performed.
+- Frozen Yarn 1.22.22 install and production staging build passed; lockfile and
+  runtime dependencies unchanged. Existing peer/resolution, bundle-size and
+  local Node deprecation warnings remain. Render's Linux Docker build passed;
+  no local Docker engine is available.
+- `python -m unittest discover -s deploy -p test_render_staging.py -v`: 5 passed
+  (stub API hosting boundaries); `node --test deploy/cloudflare/worker.test.mjs`:
+  7 passed (retained inactive Cloudflare wrapper).
+- Main reconciliation: 58 existing application auth/security/save/create/ticket
+  tests and 325 subtests passed with synthetic persistence, separate from Atlas.
+- `craco test --watchAll=false --runInBand --runTestsByPath
+  src/lib/workspaceMode.test.js src/pages/Login.test.jsx`: 6 passed. Checks both
+  sign-in paths, Demo never using HTTP, cleared bearer/client selection, mode
+  refresh and rejection of email/password authentication by the Demo adapter.
+- Hosted real API checks: 46 before and 48 after an actual Render restart passed,
+  with 6 additional authorization/revocation checks. Secure/HttpOnly/Lax cookies,
+  anonymous and cross-client denial, read-only denial, logout revocation, Origin
+  enforcement, keyed retries, stale-save conflicts, retained newer edits,
+  once-only audit/Review effects and exact decoded evidence bytes were checked.
+- Hosted browser: standard administrator and read-only login, labelled staging
+  vendor save/reopen, schedule and notes after restart, read-only controls and
+  logout verified. Independent hosting-wrapper review found no material blocker.
 
-Local checks cover static hosting boundaries and existing auth/permission tests
-using synthetic Mongo. They are not hosted durability evidence. Use the normal
-browser application with fictional tenants and controlled role accounts to
-verify login, reopening the session, logout/revocation, saving/reopening,
-evidence retrieval/downloads, read-only mutation denial and cross-client record,
-file/export isolation. Verify role changes and duplicate/retry handling.
-Restart the Render backend and reopen the same records and evidence; verify
-they remain in Atlas. Record outcomes and versions before calling delivery done.
+Evidence retrieval through the authenticated API returned the original uploaded
+synthetic bytes. Native completed browser file download remains unavailable in
+this in-app-browser automation: both evidence (data URI) and CSV (Blob) download
+controls timed out waiting for a download event, without an application error.
+This does not demonstrate an application defect; no helper rewrite was made to
+satisfy automation. Do not represent decoded API bytes as a completed browser
+file save. Final hosted Demo/mode-transition results and exact deployed revision
+are recorded in PR #34's delivery comment after deployment.
+
+Unavailable checks: hosted editor remount/lost-response Retry interaction,
+actual hosted post-primary audit/Review outage injection, email invitation/reset
+without SMTP, database export/restore, broader framework onboarding, and local
+Docker engine execution. Controlled synthetic lifecycle/outage tests are
+separate evidence and do not prove these hosted browser paths. Fictional labelled
+staging clients/accounts/files are retained; temporary private verification
+artifacts remain outside Git. Never reset an existing database for verification.
 
 Free Render sleeps after 15 idle minutes, takes about a minute to wake, and may
 restart or suspend at quotas/high external traffic. Free compute has 512 MB

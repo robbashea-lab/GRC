@@ -18,12 +18,13 @@ Local reconciliation checks:
   ChatGPT publication. Existing bundle-size warning retained. Free/manual/scoped
   database/absent-secret YAML assertions, script syntax and git diff checks pass.
 
-Deployment owner remains the coordinated Bigger Picture task. It confirmed
-the previous Render attempt failed with missing MONGO_URL; public environment
-keys exist but required secret values were not attached. Owner enters and
-saves JWT_SECRET, ADMIN_PASSWORD_HASH and MONGO_URL directly in Render.
-No credentials are included here. Do not deploy until settings are complete;
-do not change provider plans, security controls or ChatGPT Demo version 109.
+The missing-MONGO_URL startup was resolved by owner-entered provider settings.
+Render subsequently ran `14c56286af4ae4d475e7503757f7fd3457f3296d` successfully.
+The follow-up staging build retains standard authentication and enables only the
+existing browser-isolated Demo; backend DEMO_MODE stays false. No ChatGPT Demo
+version 109 publication or provider plan change is part of this delivery.
+Current hosted outcomes and unavailable checks are in render-staging.md; exact
+final merged/deployed SHA and final browser results are recorded in PR #34.
 
 ## Hosted persistence/restart acceptance additions
 

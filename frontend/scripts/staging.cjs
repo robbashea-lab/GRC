@@ -1,4 +1,4 @@
-// Normal authentication build, separate from the delivered ChatGPT Demo artifacts.
+// Standard authentication plus the existing isolated browser Demo; separate preview artifacts.
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const frontend = path.resolve(__dirname, '..');
@@ -8,7 +8,7 @@ for (const name of Object.keys(env)) {
   if (name.startsWith('REACT_APP_')) delete env[name];
 }
 Object.assign(env, {
-  REACT_APP_PREVIEW: 'false',
+  REACT_APP_PREVIEW: 'true',
   REACT_APP_STANDARD_SIGN_IN: 'true',
   REACT_APP_BACKEND_URL: '',
   BUILD_PATH: path.resolve(frontend, '../deploy/cloudflare/dist'),
