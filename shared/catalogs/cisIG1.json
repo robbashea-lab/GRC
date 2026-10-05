@@ -365,7 +365,7 @@
       "operating_guidance": {
         "accountable_role": "Client data owner",
         "client_provider_split": "Client determines sensitivity/handling; IT/provider implements protection and supplies coverage.",
-        "establish": "Map material flows and external destinations.",
+        "establish": "Document internal and service-provider data flows based on the enterprise data management process.",
         "operate": "Maintain flows through service changes.",
         "dependencies": "3.1; 3.2; 15.1"
       },
@@ -1614,7 +1614,7 @@
       "control_name": "Data Recovery",
       "type": "recurring",
       "source_cadence": "Annually and on significant change",
-      "guidance": "Document recovery scope, priorities, backup procedures and protection.",
+      "guidance": "Document the data recovery process, covering recovery scope, prioritization and backup-data security. Review and update it annually and after significant relevant changes.",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/",
       "version": "8.1",
       "implementation_group": 1,

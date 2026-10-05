@@ -1141,7 +1141,7 @@
       "criteria": [
         {
           "id": "11.1-c1",
-          "text": "A documented recovery process details backup procedures, scope, priorities and backup security."
+          "text": "A documented data recovery process addresses recovery scope, prioritization and the security of backup data."
         },
         {
           "id": "11.1-c2",

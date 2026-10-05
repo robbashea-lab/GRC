@@ -26,6 +26,7 @@ import framework_governance, management_obligations, portfolio_overview, review_
 from routes import baseline as baseline_routes, onboarding as onboarding_routes, portfolio as portfolio_routes
 from routes.onboarding import BASELINE_CATALOG
 from framework_governance import CIS, FRAMEWORKS
+from framework_catalog import active_plans
 
 START, END = REAL_DATE(2026, 9, 28), REAL_DATE.fromisoformat(os.environ.get('TEN_YEAR_END', '2036-09-29'))
 A, B = 'a', 'b'
@@ -132,7 +133,7 @@ class TenYearOperationTests(unittest.IsolatedAsyncioTestCase):
             {'user_id': 'other_member', 'email': 'other@example.test', 'name': 'Other Client Member', 'role': 'client_contributor', 'client_ids': [B], 'status': 'active'}])
         await server.db.clients.update_one({'client_id': A}, {'$set': {'name': 'Brawndo (server twin)'}})
         self.sign_in('admin')
-        plans = {p['key']: {'enabled': True, 'recurrence': p['default_cadence'], 'due_date': add_days(self.today, 10 + i * 6)} for i, p in enumerate(CIS['review_plans'])}
+        plans = {p['key']: {'enabled': True, 'recurrence': p['default_cadence'], 'due_date': add_days(self.today, 10 + i * 6)} for i, p in enumerate(active_plans('cis-ig1'))}
         for cid in (A, B):
             state = {'version': 3, 'step': 3, 'policies': {p['key']: 'yes' for p in BASELINE_CATALOG['policies']},
                      'requirements': {f['key']: 'applies' if f['key'] == 'cis-ig1' else 'does_not_apply' for f in FRAMEWORKS},

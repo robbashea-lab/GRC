@@ -1,5 +1,6 @@
 import catalog from '@catalogs/cisIG1.json';
 import guidance from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
+import criteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import guide from '@catalogs/operatorGuidance/cisRequirementGuide.json';
 import {cisReviewBriefs} from './cisOperations';
 
@@ -34,4 +35,33 @@ test('every safeguard retains all non-repeated grouped Review prompts and suppor
   expect(guide.requirements['12.7'].start).toMatch(/end-user device access paths/i);
   expect(guide.requirements['12.7'].evidence).toMatch(/end-user device access-path/i);
   expect(guidance.requirements['12.7'].evidence.join(' ')).toMatch(/end-user device access-path/i);
+});
+
+
+test('11.1 consistently separates recovery-process requirements from optional backup detail',()=>{
+  const definition=catalog.requirements.find(r=>r.id==='11.1');
+  const checks=guidance.requirements['11.1'],help=guide.requirements['11.1'];
+  for(const text of [definition.guidance,checks.outcome[0],criteria.requirements['11.1'].criteria[0].text,help.plain]){
+    expect(text).toMatch(/scope/i);expect(text).toMatch(/prioriti/i);expect(text).toMatch(/(?=.*backup)(?=.*secur)/i);
+    expect(text).not.toMatch(/how backups are made|details backup procedures/i);
+  }
+  expect(checks.review[0]).toMatch(/backup procedures.*not a separate requirement/i);
+  expect(help.plain).toMatch(/backup procedures.*not required/i);
+  expect(help.ask).toMatch(/backup instructions.*optional/i);
+  expect(help.gaps).toMatch(/Do not require detailed backup procedures/i);
+  const [brief]=cisReviewBriefs({framework_key:'cis-ig1',framework_plan_key:'data-recovery',framework_safeguards:['11.1']},['11.1']);
+  expect(brief.items[0].outcome).toBe(checks.outcome[0]);
+});
+
+test('3.8 setup covers internal and provider flows under the data management process',()=>{
+  const definition=catalog.requirements.find(r=>r.id==='3.8');
+  for(const text of [definition.operating_guidance.establish,guide.requirements['3.8'].start])
+    expect(text).toMatch(/internal and service-provider data flows.*enterprise data management process/i);
+  expect(definition.operating_guidance.establish).not.toMatch(/material flows|external destinations/i);
+  expect(guide.requirements['3.8'].start).toMatch(/without limiting coverage/i);
+});
+
+test('12.7 expected outcome retains user authentication across end-user access paths',()=>{
+  expect(guidance.requirements['12.7'].outcome[0]).toMatch(/Users authenticate.*VPN and authentication services.*end-user devices/i);
+  expect(guidance.requirements['12.7'].outcome[0]).not.toMatch(/authenticate remote devices/i);
 });

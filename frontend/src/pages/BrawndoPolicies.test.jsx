@@ -98,3 +98,13 @@ test('linked Brawndo Policy Review shows its next date from the scheduled cycle'
   const next=document.querySelector('[data-testid="review-next-date"]').textContent;
   expect(next).not.toMatch(/Calculated/);expect(next).toMatch(/2025/);
 });
+
+
+test.each([1,2,3])('register uses configured IG%i even while assessment payload is empty',async group=>{
+  rows[0].baseline_key='policy-information-security-policy';
+  const original=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...args)=>path==='/frameworks/summary'?{data:{client_id:mockClient,items:[{key:'cis-ig1',tracking_available:true,implementation_group:group}]}}:original(path,...args));
+  await act(async()=>root.render(<RecordListPage kind="policies"/>));
+  expect(container.querySelector('tbody').textContent).toContain(`Supports CIS IG${group}`);
+  expect(container.querySelector('[data-testid="tile-mapped"]').textContent).toContain(`Mapped to CIS IG${group}`);
+});

@@ -1254,7 +1254,7 @@
         "Dated annual reviews and change-driven revisions."
       ],
       "outcome": [
-        "The recovery process explains what is recoverable, its priority and how backups are made and secured.",
+        "The documented data recovery process addresses recovery scope, prioritization and the security of backup data. Detailed backup procedures are optional supporting detail for this safeguard.",
         "Documentation remains current through annual and significant-change review."
       ]
     },
@@ -1415,7 +1415,7 @@
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
       ],
       "outcome": [
-        "Authenticate remote devices through enterprise VPN/AAA. Require VPN and authentication before resource access.",
+        "Users authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices.",
         "Before accessing enterprise resources. Retain a clear account of scope, operating responsibility and unresolved gaps."
       ]
     },

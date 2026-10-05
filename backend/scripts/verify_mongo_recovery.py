@@ -21,7 +21,7 @@ def main():
     parser.add_argument('--include-program-lifecycle', action='store_true', help='Also run the three-framework 36-month API matrix')
     parser.add_argument('--include-cis-ig2', action='store_true', help='Also run cumulative CIS scope, recovery and authorization checks')
     parser.add_argument('--include-remediation-tickets', action='store_true', help='Also run ticket integrity and exact ISO audit-item association checks')
-    parser.add_argument('--include-cis-ig3-scope', action='store_true', help='Also run actual IG3 catalog mechanics with an isolated test-only release gate')
+    parser.add_argument('--include-cis-ig3-scope', action='store_true', help='Also run actual IG3 catalog availability, preservation and negative-gate checks')
     parser.add_argument('--include-cis-six-year', action='store_true', help='Also run fresh onboarding and 2027–2032 cumulative CIS simulation')
     args = parser.parse_args()
     parsed = urlsplit(args.mongo_url)

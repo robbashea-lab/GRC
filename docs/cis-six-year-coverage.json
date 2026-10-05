@@ -1995,7 +1995,7 @@
         "11.1-c1",
         "11.1-c2"
       ],
-      "authored_summary": "Document recovery scope, priorities, backup procedures and protection.",
+      "authored_summary": "Document the data recovery process, covering recovery scope, prioritization and backup-data security. Review and update it annually and after significant relevant changes.",
       "source_timing_explanation": "Annually and on significant change",
       "review_questions": [
         "Review the documented recovery process for recovery scope, prioritization and backup-data security. Detailed backup procedures can support this review but are not a separate requirement in this safeguard.",
@@ -2006,11 +2006,11 @@
         "Dated annual reviews and change-driven revisions."
       ],
       "requirement_guide": {
-        "plain": "Document how the organization backs up and recovers information: what is covered, what comes back first, how backups are made and how they are protected. Review the process annually and after significant relevant changes.",
-        "start": "Ask business owners what information and services they would need to recover. Compare that with IT's recovery procedures and backup scope. Clarify priorities, responsible teams and provider dependencies already present in the process.",
+        "plain": "Document the data recovery process: its recovery scope, prioritization (what comes back first) and the security of backup data. Review and update the process annually and after significant relevant enterprise changes. Detailed backup procedures can support the process but are not required by this safeguard.",
+        "start": "Ask business owners what information and services they would need to recover. Compare that with the documented data recovery process. Clarify recovery scope, priorities and backup-data security; existing backup instructions can provide optional supporting detail.",
         "evidence": "Recovery procedures can describe scope, priorities and backup protection. Supporting backup instructions can add operational detail. Dated annual reviews and change records show the process remains current; backup-job results alone do not document the recovery process.",
-        "ask": "Ask business owners and IT: What would we recover first, and why? What is outside the documented scope? Where are the backup and recovery instructions? Did recent system changes update the process?",
-        "gaps": "Look for a backup schedule with no recovery instructions, undocumented priorities, or procedures that rely on a departed employee. Do not add a separate higher-group restore-test frequency as an IG1 requirement."
+        "ask": "What recovery activities are covered, what is prioritized and how is backup data secured? Does the documented process reflect significant enterprise changes and its annual review? Detailed backup instructions may help explain implementation but are optional support for this safeguard.",
+        "gaps": "Look for an undocumented recovery scope, unclear recovery priorities, missing backup-data security or outdated process documentation. A backup schedule alone does not document the recovery process. Do not require detailed backup procedures or a separate higher-group restore-test frequency under this safeguard."
       },
       "content_review": "Separate optional backup procedures from recovery-process minimum.",
       "review_plans": [
@@ -3162,7 +3162,7 @@
       ],
       "requirement_guide": {
         "plain": "Document internal and service-provider data flows using the enterprise data management process. Review and update the documentation annually and after significant relevant changes.",
-        "start": "Map material flows and external destinations. Start with the responsible client role: Client data owner. Agree the covered systems or people and use existing procedures before creating new records.",
+        "start": "Document internal and service-provider data flows based on the enterprise data management process. Start with the responsible client role: Client data owner. Use existing documentation and identify missing flows without limiting coverage to material flows or external destinations.",
         "evidence": "Flow diagrams or equivalent controlled records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
         "ask": "Does the flow documentation follow the data management process and include service-provider flows? Which service changes have not been reflected?",
         "gaps": "For 3.8, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain flows through service changes. Use Findings and Actions for follow-up and validation."

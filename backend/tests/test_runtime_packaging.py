@@ -60,6 +60,6 @@ class RuntimePackagingTests(unittest.TestCase):
                 "from routes.onboarding import BASELINE_CATALOG; "
                 "assert BASELINE_CATALOG['policies']; "
                 "assert framework_governance.SOC_GUIDANCE; "
-                "assert len(framework_catalog.active_definitions('cis-ig1')) == 56; assert len(framework_catalog.CIS['requirements']) == 130"],
+                "assert len(framework_catalog.active_definitions('cis-ig1')) == 56; assert len(framework_catalog.CIS['requirements']) == 153"],
                 cwd=backend,env={**os.environ,"PYTHONPATH":str(backend),"MONGO_URL":"mongodb://127.0.0.1:1","DB_NAME":"runtime_import_smoke"},capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stderr)

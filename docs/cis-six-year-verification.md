@@ -136,3 +136,7 @@ Earlier focused follow-up cleanup: all temporary test databases were dropped (on
 Retained current QA files: Mongo data/logs under `work/cis-six-year-mongo`; scripts, sanitized session metadata, raw synthetic snapshots, screenshots and test logs under `work/cis-ig3-browser`; synthetic CSV downloads `(1)` through `(4)` and `synthetic-review.txt` / `synthetic-ticket.txt` in Downloads. These are outside Git. The local credential is redacted after disposal of its test database. The earlier blocked combined cleanup command is not retried.
 
 Current cleanup verified: the normal-auth browser server and tab closed, its uniquely named disposable database was removed, and only admin/config/local remained before normal Mongo administrative shutdown. No listeners remain on task ports 4197 or 27954. Session metadata was retained with the ephemeral password redacted. No blocked filesystem/process command was repeated.
+
+## Subsequent focused delivery authorization
+
+The user later authorized focused correction, independent review, merge after checks and publication of the existing private Demo. Earlier unmerged/unpublished statements above describe their historical handoff. See [the focused correction report](cis-pr33-final-corrections.md) for the new six-thread dispositions and verification; exact final SHA and publication metadata belong to the delivery handoff. Manual usability review remains pending.
