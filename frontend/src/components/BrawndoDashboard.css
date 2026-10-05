@@ -52,4 +52,10 @@
 .bd-program .bd-gaps{border-left:1px solid var(--bd-border);padding-left:24px;min-width:0;}.bd-program .bd-gaps a{font-size:12px;padding:10px 0;align-items:center;}.bd-program .bd-gaps strong{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;}
 .bd-program>.bd-program-note{margin:0;padding-top:14px;border-top:1px solid var(--bd-border);}
 @media(max-width:930px){.bd-program-body{grid-template-columns:1fr 1fr;gap:18px;}.bd-program .bd-gaps{grid-column:1/-1;border-left:0;padding-left:0;display:grid;grid-template-columns:1fr 1fr;column-gap:24px;border-top:1px solid var(--bd-border);padding-top:8px;}.bd-program .bd-gaps a{border-bottom:0;}.bd-program{padding:18px;}}
-@media(max-width:560px){.bd-program-body{grid-template-columns:1fr;}.bd-program .bd-legend{border-left:0;border-top:1px solid var(--bd-border);padding-left:0;padding-top:6px;}.bd-program .bd-gaps{grid-template-columns:1fr;}.bdash .bd-program .assessment-metrics{display:grid;grid-template-columns:1fr 1fr;flex:1;}.bd-program .bd-card-head{flex-wrap:wrap;}.bd-program-progress{flex-wrap:wrap;}.bd-program .assessment-metric{min-width:0;}}
+@media(max-width:560px){.bd-program-body{grid-template-columns:1fr;}.bd-program .bd-legend{border-left:0;border-top:1px solid var(--bd-border);padding-left:0;padding-top:6px;}.bd-program .bd-gaps{grid-template-columns:1fr;}.bdash .bd-program .assessment-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));flex:1 1 100%;}.bd-program .bd-card-head{flex-wrap:wrap;}.bd-program-progress{flex-wrap:wrap;}.bd-program .assessment-metric{min-width:0;}}
+
+@media(max-width:560px){.bdash .bd-program .assessment-metric{overflow-wrap:anywhere;}.bdash .bd-program .assessment-metric dd>span,.bdash .bd-table td:last-child{white-space:normal;}}
+
+@media(max-width:480px){.bd-tiles{grid-template-columns:1fr;}.bdash .bd-program .assessment-metrics{grid-template-columns:1fr;}.bd-program .bd-donut{max-width:100%;flex:0 1 104px;}}
+
+@media(max-width:480px){.bd-heading-group,.bd-heading-group>div{min-width:0;}.bd-heading-group{max-width:100%;}.bdash h1,.bd-eyebrow{overflow-wrap:anywhere;}.bd-program{padding:12px;}.bd-program .bd-legend a>span:nth-child(2){min-width:0;overflow-wrap:anywhere;}.bd-queue .bd-card-head{flex-wrap:wrap;}}
