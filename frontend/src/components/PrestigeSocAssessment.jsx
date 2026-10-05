@@ -1,5 +1,4 @@
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
-import AssessmentHistory from './AssessmentHistory';
 import BrawndoCisFindings from './BrawndoCisFindings';
 
 import AssessmentLayout,{AssessmentChecklist,AssessmentRequirement} from './AssessmentLayout';
@@ -31,7 +30,7 @@ export const PrestigeSocHeader=props=><FrameworkHeader eyebrow="SOC 2 readiness"
 
 export default function PrestigeSocAssessment({state,actions}){
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,related,finding,breadcrumb}=state;
-  const {put,save,saveAndNext,close,previous,next,retry,run,download,setFinding,setNested,setFeedback}=actions;
+  const {put,save,saveAndNext,close,previous,next,retry,run,setFinding,setNested,setFeedback}=actions;
   const disabled=!writable||busy||!ctx,source=sourcePresentation(definition),presentation=presentationData.criteria[definition.id];
   const entry=socGuidance.criteria[definition.id],practical=entry?.practical;
   const saved=verificationOf(current),context=definition.category==='security'?'Security · Common Criteria':socCategoryCrumb(definition.category);
@@ -43,34 +42,14 @@ export default function PrestigeSocAssessment({state,actions}){
     <AssessmentLayout criteriaSummary="Omnisciente guidance for assessing this criterion. These are not additional SOC 2 requirements." criteriaTitle="SOC 2 assessment criteria" reference={`SOC 2 · Criterion ${definition.id}`} key={record.client_id+':'+definition.id} summary={summaryData.requirements[definition.id]?.plain}
       requirement={<AssessmentRequirement heading="What SOC 2 requires" text={source.text||practical?.summary} official={!!source.text} trigger={presentation?.trigger} source={presentation?.source||source.url} label="Official AICPA source"/>}
       checklist={<AssessmentChecklist title={`${definition.id} checklist`} items={entry?.assessment_criteria} historicalItems={entry?.items} value={form.soc_assessment_checks||[]} disabled={disabled} onChange={value=>put('soc_assessment_checks',value)}/>}
+      findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>}
       review={practical?.review} outcome={practical?.outcome}>
     <div className="assessment-implementation">
     <Step title="Implementation status"><fieldset disabled={disabled}><legend className="sr-only">Implementation status</legend><div className="brawndo-status-options">{SOC_STATUS_OPTIONS.map(([status,label])=><label key={status} className={`cis-tone-${CIS_TONE[status]} ${form.status===status?'is-selected':''}`}><input type="radio" name="psoc-status" value={status} checked={form.status===status} onChange={()=>put('status',status)}/><span className="cis-dot" aria-hidden="true"/><span>{label}</span></label>)}</div></fieldset>{form.status==='not_applicable'&&<label className="block text-sm">Why is this criterion not applicable?<Textarea aria-label="N/A Rationale" disabled={disabled} value={form.na_rationale||''} onChange={e=>put('na_rationale',e.target.value)} maxLength={4000}/></label>}</Step>
     <div><Step title="Current implementation"><label className="block text-sm"><span className="sr-only">Current implementation</span><Textarea aria-label="Current implementation" rows={5} disabled={disabled} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)}/></label></Step>
 </div></div>
-    <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>
 
     {writable&&<Button size="sm" variant="ghost" disabled={disabled||form.status==='not_assessed'} onClick={()=>save({recordAssessment:true})}>Record assessment</Button>}
-    <details className="psoc-linked">
-      <summary>Linked work and history</summary>
-      <p className="text-xs text-ink-secondary">These are existing governance records. Completing remediation does not change the assessment conclusion automatically.</p>
-      <p className="text-xs text-ink-secondary">System boundaries and service commitments remain in Client Profile. Use <a className="text-link underline" href="/systems" target="_blank" rel="noopener noreferrer">Systems &amp; Scope ↗</a> for system records and link relevant supporting evidence here.</p>
-      {!!current.management_controls?.length&&<ul>{current.management_controls.map((control,index)=><li key={control.control_id||index}><strong>{control.name||'Previously recorded control'}</strong><p className="whitespace-pre-wrap">{control.description}</p><p className="text-xs text-ink-secondary">Retained description · {control.frequency||'Frequency not recorded'} · Design: {control.design||'Not recorded'} · Operation: {control.operating||'Not recorded'}</p></li>)}</ul>}
-      {!!ctx?.retainedControls?.length&&<ul>{ctx.retainedControls.map(control=><li key={control.control_id}><button type="button" onClick={()=>setNested({kind:'organizational_controls',record:control})}>Open retained supporting record · {control.control_id}</button></li>)}</ul>}
-      {[
-        ['reviews','Reviews','review_id'],
-        ['risks','Risks','risk_id'],['policies','Policies','policy_id'],['evidence','Evidence','evidence_id']
-      ].map(([kind,label,id])=><section key={kind}>
-        <h3>{label} · {related?.[kind]?.length||0}</h3>
-        <ul>{related?.[kind]?.map(item=><li key={item[id]}>
-          {kind==='evidence'
-            ? <button type="button" disabled={busy} onClick={()=>download(item)}>{item.filename}</button>
-            : <button type="button" onClick={()=>setNested({kind,record:item})}>{item.title||item.name||item[id]}</button>}
-          {item.status&&` · ${item.status.replaceAll('_',' ')}`}
-        </li>)}</ul>
-      </section>)}
-    </details>
-    <AssessmentHistory record={current} users={ctx?.users} activity={ctx?.activity}/>
     </AssessmentLayout>
   </AssessmentShell>;
 }
