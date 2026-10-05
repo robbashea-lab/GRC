@@ -23,6 +23,21 @@ async function activate(){
 }
 const token=r=>({occurrence_id:r.current_occurrence_id,expected_updated_at:r.updated_at??null});
 
+test('audit checks are item-scoped, preserve omitted legacy selections and use existing concurrency',async()=>{
+  const {data}=await activate(),r=data.reviews[0],key='4-1',path='/reviews/'+r.review_id+'/iso-audit/'+key;
+  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  db.reviews.find(x=>x.review_id===r.review_id).iso_audit.items[key]={...blankAuditItem(),assessment_checks:['retired:audit-context']};
+  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  let saved=(await api.patch(path,{...token(r),...blankAuditItem(),assessment_checks:['4.1:context','4.1:context','retired:audit-context']})).data;
+  expect(saved.iso_audit.items[key].assessment_checks).toEqual(['4.1:context','retired:audit-context']);
+  await expect(api.patch(path,{...token(saved),...blankAuditItem(),assessment_checks:['4.2:parties']})).rejects.toBeTruthy();
+  await expect(api.patch(path,{...token(r),...blankAuditItem(),assessment_checks:[]})).rejects.toMatchObject({response:{status:409}});
+  const unchanged=blankAuditItem();delete unchanged.assessment_checks;
+  saved=(await api.patch(path,{...token(saved),...unchanged,notes:'Retain prior selections'})).data;
+  expect(saved.iso_audit.items[key].assessment_checks).toEqual(['4.1:context','retired:audit-context']);
+  expect((await get('/reviews/'+r.review_id)).iso_audit.items[key].assessment_checks).toEqual(saved.iso_audit.items[key].assessment_checks);
+});
+
 test('one ticket command saves the exact audit item link without saving workpaper notes',async()=>{
   const {data}=await activate(),r=data.reviews[0],key=auditPackage(r.iso_audit.package_key).items[0].key;
   const body={...token(r),request_id:'audit-ticket-once',audit_item_key:key,title:'Gap',description:'Issue',remediation_title:'Correct gap',owner_id:null,due_date:'2030-01-01'};

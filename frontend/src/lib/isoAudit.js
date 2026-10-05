@@ -3,7 +3,7 @@ export {catalog as isoAuditCatalog};
 export const AUDIT_STATUSES={not_started:'Not Started',in_progress:'In Progress',reviewed:'Reviewed',not_applicable:'N/A'};
 export const AUDIT_RESULTS={conforming:'Conforming',observation:'Observation',nonconformity:'Nonconformity'};
 export const auditPackage=key=>catalog.packages.find(p=>p.key===key);
-export const blankAuditItem=()=>({status:'not_started',result:'',notes:'',na_rationale:'',evidence_ids:[],finding_ids:[]});
+export const blankAuditItem=()=>({status:'not_started',result:'',notes:'',na_rationale:'',evidence_ids:[],finding_ids:[],assessment_checks:[]});
 export const initialAuditState=(key,cycle=1)=>({package_key:key,catalog_version:catalog.version,cycle,items:{},report_evidence_id:null});
 export const auditEvidenceIds=state=>[...new Set([...Object.values(state?.items||{}).flatMap(i=>i.evidence_ids||[]),...(state?.report_evidence_id?[state.report_evidence_id]:[])])];
 export const auditItemComplete=item=>item.status==='not_applicable'?!!item.na_rationale?.trim():item.status==='reviewed'&&!!AUDIT_RESULTS[item.result];

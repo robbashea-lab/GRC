@@ -1,0 +1,620 @@
+{
+  "framework": "cis-ig1",
+  "version": "8.1",
+  "revision": "2026-10-05",
+  "basis": "Explicit safeguard timing, event triggers and durations only. No organizational default or inferred operating cadence. Source links address the official safeguard headings.",
+  "requirements": {
+    "1.1": {
+      "trigger": "Review and update the inventory at least every six months.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#11-establish-and-maintain-detailed-enterprise-asset-inventory"
+    },
+    "1.2": {
+      "trigger": "Address unauthorized assets at least weekly.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#12-address-unauthorized-assets"
+    },
+    "1.3": {
+      "trigger": "Execute active discovery daily or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#13-utilize-an-active-discovery-tool"
+    },
+    "1.4": {
+      "trigger": "Review and use logs to update the inventory weekly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#14-use-dynamic-host-configuration-protocol-dhcp-logging-to-update-enterprise-asset-inventory"
+    },
+    "1.5": {
+      "trigger": "Review and use scans to update the inventory at least weekly.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#15-use-a-passive-asset-discovery-tool"
+    },
+    "2.1": {
+      "trigger": "Review and update the inventory at least every six months.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#21-establish-and-maintain-a-software-inventory"
+    },
+    "2.2": {
+      "trigger": "Review software support at least monthly.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#22-ensure-authorized-software-is-currently-supported"
+    },
+    "2.3": {
+      "trigger": "Review unauthorized software monthly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#23-address-unauthorized-software"
+    },
+    "2.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#24-utilize-automated-software-inventory-tools"
+    },
+    "2.5": {
+      "trigger": "Reassess at least every six months.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#25-allowlist-authorized-software"
+    },
+    "2.6": {
+      "trigger": "Reassess at least every six months.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#26-allowlist-authorized-libraries"
+    },
+    "2.7": {
+      "trigger": "Reassess at least every six months.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#27-allowlist-authorized-scripts"
+    },
+    "3.1": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#31-establish-and-maintain-a-data-management-process"
+    },
+    "3.2": {
+      "trigger": "Review and update the data inventory at least annually, prioritizing sensitive data.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#32-establish-and-maintain-a-data-inventory"
+    },
+    "3.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#33-configure-data-access-control-lists"
+    },
+    "3.4": {
+      "trigger": "Retain data within the minimum and maximum timelines in the documented data-management process.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#34-enforce-data-retention"
+    },
+    "3.5": {
+      "trigger": "At data disposal, use methods appropriate to data sensitivity.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#35-securely-dispose-of-data"
+    },
+    "3.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#36-encrypt-data-on-end-user-devices"
+    },
+    "3.7": {
+      "trigger": "Review and update the classification scheme annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#37-establish-and-maintain-a-data-classification-scheme"
+    },
+    "3.8": {
+      "trigger": "Review and update data-flow documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#38-document-data-flows"
+    },
+    "3.9": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#39-encrypt-data-on-removable-media"
+    },
+    "3.10": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#310-encrypt-sensitive-data-in-transit"
+    },
+    "3.11": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#311-encrypt-sensitive-data-at-rest"
+    },
+    "3.12": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#312-segment-data-processing-and-storage-based-on-sensitivity"
+    },
+    "3.13": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#313-deploy-a-data-loss-prevention-solution"
+    },
+    "3.14": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#314-log-sensitive-data-access"
+    },
+    "4.1": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#41-establish-and-maintain-a-secure-configuration-process"
+    },
+    "4.2": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#42-establish-and-maintain-a-secure-configuration-process-for-network-infrastructure"
+    },
+    "4.3": {
+      "trigger": "Lock after inactivity: no more than 15 minutes on general-purpose operating systems and two minutes on mobile end-user devices.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#43-configure-automatic-session-locking-on-enterprise-assets"
+    },
+    "4.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#44-implement-and-manage-a-firewall-on-servers"
+    },
+    "4.5": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#45-implement-and-manage-a-firewall-on-end-user-devices"
+    },
+    "4.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#46-securely-manage-enterprise-assets-and-software"
+    },
+    "4.7": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#47-manage-default-accounts-on-enterprise-assets-and-software"
+    },
+    "4.8": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#48-uninstall-or-disable-unnecessary-services-on-enterprise-assets-and-software"
+    },
+    "4.9": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#49-configure-trusted-dns-servers-on-enterprise-assets"
+    },
+    "4.10": {
+      "trigger": "Automatically lock out after no more than 20 failed local attempts on laptops and 10 on tablets or smartphones, where supported.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#410-enforce-automatic-device-lockout-on-portable-end-user-devices"
+    },
+    "4.11": {
+      "trigger": "Remotely wipe enterprise data from enterprise-owned portable devices when deemed appropriate.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#411-enforce-remote-wipe-capability-on-portable-end-user-devices"
+    },
+    "4.12": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#412-separate-enterprise-workspaces-on-mobile-end-user-devices"
+    },
+    "5.1": {
+      "trigger": "Validate active-account authorization at least quarterly.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#51-establish-and-maintain-an-inventory-of-accounts"
+    },
+    "5.2": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#52-use-unique-passwords"
+    },
+    "5.3": {
+      "trigger": "Delete or disable accounts after 45 days of inactivity, where supported.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#53-disable-dormant-accounts"
+    },
+    "5.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#54-restrict-administrator-privileges-to-dedicated-administrator-accounts"
+    },
+    "5.5": {
+      "trigger": "Validate active-account authorization at least quarterly.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#55-establish-and-maintain-an-inventory-of-service-accounts"
+    },
+    "5.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#56-centralize-account-management"
+    },
+    "6.1": {
+      "trigger": "Grant access through the documented process upon new hire or user role change.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#61-establish-an-access-granting-process"
+    },
+    "6.2": {
+      "trigger": "Disable accounts immediately upon termination, rights revocation or user role change.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#62-establish-an-access-revoking-process"
+    },
+    "6.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#63-require-mfa-for-externally-exposed-applications"
+    },
+    "6.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#64-require-mfa-for-remote-network-access"
+    },
+    "6.5": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#65-require-mfa-for-administrative-access"
+    },
+    "6.6": {
+      "trigger": "Review and update the authentication and authorization system inventory at least annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#66-establish-and-maintain-an-inventory-of-authentication-and-authorization-systems"
+    },
+    "6.7": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#67-centralize-access-control"
+    },
+    "6.8": {
+      "trigger": "Review enterprise-asset privileges for authorization at least annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#68-define-and-maintain-role-based-access-control"
+    },
+    "7.1": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#71-establish-and-maintain-a-vulnerability-management-process"
+    },
+    "7.2": {
+      "trigger": "Review the documented risk-based remediation process monthly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#72-establish-and-maintain-a-remediation-process"
+    },
+    "7.3": {
+      "trigger": "Apply operating-system updates through automated patch management monthly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#73-perform-automated-operating-system-patch-management"
+    },
+    "7.4": {
+      "trigger": "Apply application updates through automated patch management monthly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#74-perform-automated-application-patch-management"
+    },
+    "7.5": {
+      "trigger": "Perform authenticated and unauthenticated internal scans quarterly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#75-perform-automated-vulnerability-scans-of-internal-enterprise-assets"
+    },
+    "7.6": {
+      "trigger": "Perform external vulnerability scans monthly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#76-perform-automated-vulnerability-scans-of-externally-exposed-enterprise-assets"
+    },
+    "7.7": {
+      "trigger": "Remediate detected software vulnerabilities monthly or more frequently, following the remediation process.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#77-remediate-detected-vulnerabilities"
+    },
+    "8.1": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#81-establish-and-maintain-an-audit-log-management-process"
+    },
+    "8.2": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#82-collect-audit-logs"
+    },
+    "8.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#83-ensure-adequate-audit-log-storage"
+    },
+    "8.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#84-standardize-time-synchronization"
+    },
+    "8.5": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#85-collect-detailed-audit-logs"
+    },
+    "8.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#86-collect-dns-query-audit-logs"
+    },
+    "8.7": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#87-collect-url-request-audit-logs"
+    },
+    "8.8": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#88-collect-command-line-audit-logs"
+    },
+    "8.9": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#89-centralize-audit-logs"
+    },
+    "8.10": {
+      "trigger": "Retain enterprise-asset audit logs for at least 90 days.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#810-retain-audit-logs"
+    },
+    "8.11": {
+      "trigger": "Review audit logs weekly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#811-conduct-audit-log-reviews"
+    },
+    "8.12": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#812-collect-service-provider-logs"
+    },
+    "9.1": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#91-ensure-use-of-only-fully-supported-browsers-and-email-clients"
+    },
+    "9.2": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#92-use-dns-filtering-services"
+    },
+    "9.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#93-maintain-and-enforce-network-based-url-filters"
+    },
+    "9.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#94-restrict-unnecessary-or-unauthorized-browser-and-email-client-extensions"
+    },
+    "9.5": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#95-implement-dmarc"
+    },
+    "9.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#96-block-unnecessary-file-types"
+    },
+    "9.7": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#97-deploy-and-maintain-email-server-anti-malware-protections"
+    },
+    "10.1": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#101-deploy-and-maintain-anti-malware-software"
+    },
+    "10.2": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#102-configure-automatic-anti-malware-signature-updates"
+    },
+    "10.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#103-disable-autorun-and-autoplay-for-removable-media"
+    },
+    "10.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#104-configure-automatic-anti-malware-scanning-of-removable-media"
+    },
+    "10.5": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#105-enable-anti-exploitation-features"
+    },
+    "10.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#106-centrally-manage-anti-malware-software"
+    },
+    "10.7": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#107-use-behavior-based-anti-malware-software"
+    },
+    "11.1": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#111-establish-and-maintain-a-data-recovery-process"
+    },
+    "11.2": {
+      "trigger": "Run automated backups weekly or more frequently, based on data sensitivity.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#112-perform-automated-backups"
+    },
+    "11.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#113-protect-recovery-data"
+    },
+    "11.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#114-establish-and-maintain-an-isolated-instance-of-recovery-data"
+    },
+    "11.5": {
+      "trigger": "Test sampled in-scope asset recovery quarterly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#115-test-data-recovery"
+    },
+    "12.1": {
+      "trigger": "Review network-infrastructure software versions monthly or more frequently to verify support.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#121-ensure-network-infrastructure-is-up-to-date"
+    },
+    "12.2": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#122-establish-and-maintain-a-secure-network-architecture"
+    },
+    "12.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#123-securely-manage-network-infrastructure"
+    },
+    "12.4": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#124-establish-and-maintain-architecture-diagrams"
+    },
+    "12.5": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#125-centralize-network-authentication-authorization-and-aucentralize-network-aaa"
+    },
+    "12.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#126-use-of-secure-network-management-and-communication-protocols"
+    },
+    "12.7": {
+      "trigger": "Authenticate before accessing enterprise resources on end-user devices.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#127-ensure-remote-devices-utilize-a-vpn-and-are-connecting-to-an-enterprises-aaa-infrastructure"
+    },
+    "12.8": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#128-establish-and-maintain-dedicated-computing-resources-for-all-administrative-work"
+    },
+    "13.1": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#131-centralize-security-event-alerting"
+    },
+    "13.2": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#132-deploy-a-host-based-intrusion-detection-solution"
+    },
+    "13.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#133-deploy-a-network-intrusion-detection-solution"
+    },
+    "13.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#134-perform-traffic-filtering-between-network-segments"
+    },
+    "13.5": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#135-manage-access-control-for-remote-assets"
+    },
+    "13.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#136-collect-network-traffic-flow-logs"
+    },
+    "13.7": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#137-deploy-a-host-based-intrusion-prevention-solution"
+    },
+    "13.8": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#138-deploy-a-network-intrusion-prevention-solutions"
+    },
+    "13.9": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#139-deploy-port-level-access-control"
+    },
+    "13.10": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1310-perform-application-layer-filtering"
+    },
+    "13.11": {
+      "trigger": "Tune security-event alerting thresholds monthly or more frequently.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1311-tune-security-event-alerting-thresholds"
+    },
+    "14.1": {
+      "trigger": "Train at hire and at least annually; review and update content annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#141-establish-and-maintain-a-security-awareness-program"
+    },
+    "14.2": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#142-train-workforce-members-to-recognize-social-engineering-attacks"
+    },
+    "14.3": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#143-train-workforce-members-on-authentication-best-practices"
+    },
+    "14.4": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#144-train-workforce-on-data-handling-best-practices"
+    },
+    "14.5": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#145-train-workforce-members-on-causes-of-unintentional-data-exposure"
+    },
+    "14.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#146-train-workforce-members-on-recognizing-and-reporting-security-incidents"
+    },
+    "14.7": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#147-train-workforce-on-how-to-identify-and-report-if-their-enterprise-assets-are-missing-security-updates"
+    },
+    "14.8": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#148-train-workforce-on-the-dangers-of-connecting-to-and-transmitting-enterprise-data-over-insecure-networks"
+    },
+    "14.9": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#149-conduct-role-specific-security-awareness-and-skills-training"
+    },
+    "15.1": {
+      "trigger": "Review and update the provider inventory annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#151-establish-and-maintain-an-inventory-of-service-providers"
+    },
+    "15.2": {
+      "trigger": "Review and update the provider-management policy annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#152-establish-and-maintain-a-service-provider-management-policy"
+    },
+    "15.3": {
+      "trigger": "Review and update provider classifications annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#153-classify-service-providers"
+    },
+    "15.4": {
+      "trigger": "Review provider contracts annually for missing security requirements.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#154-ensure-service-provider-contracts-include-security-requirements"
+    },
+    "15.5": {
+      "trigger": "Reassess service providers annually, at minimum, or with new and renewed contracts.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#155-assess-service-providers"
+    },
+    "15.6": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#156-monitor-service-providers"
+    },
+    "15.7": {
+      "trigger": "Securely decommission service providers when ending the service relationship.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#157-securely-decommission-service-providers"
+    },
+    "16.1": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#161-establish-and-maintain-a-secure-application-development-process"
+    },
+    "16.2": {
+      "trigger": "Review and update documentation annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#162-establish-and-maintain-a-process-to-accept-and-address-software-vulnerabilities"
+    },
+    "16.3": {
+      "trigger": "Perform root-cause analysis when reviewing security vulnerabilities.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#163-perform-root-cause-analysis-on-security-vulnerabilities"
+    },
+    "16.4": {
+      "trigger": "Evaluate component changes, updates and continued support at least monthly.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#164-establish-and-manage-an-inventory-of-third-party-software-components"
+    },
+    "16.5": {
+      "trigger": "Acquire components from trusted sources or evaluate them for vulnerabilities before use.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#165-use-up-to-date-and-trusted-third-party-software-components"
+    },
+    "16.6": {
+      "trigger": "Review and update the severity-rating system and process annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#166-establish-and-maintain-a-severity-rating-system-and-process-for-application-vulnerabilities"
+    },
+    "16.7": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#167-use-standard-hardening-configuration-templates-for-application-infrastructure"
+    },
+    "16.8": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#168-separate-production-and-non-production-systems"
+    },
+    "16.9": {
+      "trigger": "Conduct developer secure-coding training at least annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#169-train-developers-in-application-security-concepts-and-secure-coding"
+    },
+    "16.10": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1610-apply-secure-design-principles-in-application-architectures"
+    },
+    "16.11": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1611-leverage-vetted-modules-or-services-for-application-security-components"
+    },
+    "16.12": {
+      "trigger": "Apply static and dynamic analysis within the application lifecycle.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1612-implement-code-level-security-checks"
+    },
+    "16.13": {
+      "trigger": null,
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1613-conduct-application-penetration-testing"
+    },
+    "16.14": {
+      "trigger": "Conduct threat modeling during design, before code is created.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1614-conduct-threat-modeling"
+    },
+    "17.1": {
+      "trigger": "Review annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#171-designate-personnel-to-manage-incident-handling"
+    },
+    "17.2": {
+      "trigger": "Verify incident-notification contact information annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#172-establish-and-maintain-contact-information-for-reporting-security-incidents"
+    },
+    "17.3": {
+      "trigger": "Review annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#173-establish-and-maintain-an-enterprise-process-for-reporting-incidents"
+    },
+    "17.4": {
+      "trigger": "Review annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#174-establish-and-maintain-an-incident-response-process"
+    },
+    "17.5": {
+      "trigger": "Review annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities"
+    },
+    "17.6": {
+      "trigger": "Review annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#176-define-mechanisms-for-communicating-during-incident-response"
+    },
+    "17.7": {
+      "trigger": "Conduct incident-response exercise testing at least annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#177-conduct-routine-incident-response-exercises"
+    },
+    "17.8": {
+      "trigger": "Conduct reviews after security incidents.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#178-conduct-post-incident-reviews"
+    },
+    "17.9": {
+      "trigger": "Review annually, or when significant enterprise changes could affect this safeguard.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#179-establish-and-maintain-security-incident-thresholds"
+    },
+    "18.1": {
+      "trigger": "Define penetration-testing frequency in the enterprise testing program.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#181-establish-and-maintain-a-penetration-testing-program"
+    },
+    "18.2": {
+      "trigger": "Perform external penetration tests under program requirements, no less than annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#182-perform-periodic-external-penetration-tests"
+    },
+    "18.3": {
+      "trigger": "Set remediation timelines and effort based on the impact and prioritization of each penetration-test finding.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#183-remediate-penetration-test-findings"
+    },
+    "18.4": {
+      "trigger": "Validate security measures after each penetration test; modify detection rules and capabilities if deemed necessary.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#184-validate-security-measures"
+    },
+    "18.5": {
+      "trigger": "Perform internal penetration tests under program requirements, no less than annually.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#185-perform-periodic-internal-penetration-tests"
+    }
+  }
+}

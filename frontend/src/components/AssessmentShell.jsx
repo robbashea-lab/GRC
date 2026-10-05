@@ -30,9 +30,9 @@ export default function AssessmentShell({open=true,title,description,status,posi
         </nav>
       </header>
       <div className="brawndo-assessment-scroll">
-        <div className="brawndo-assessment-columns">
+        <div className="brawndo-assessment-columns" style={context?undefined:{gridTemplateColumns:'minmax(0,1fr)'}}>
           <div className="brawndo-assessment-main">{children}</div>
-          <aside className="brawndo-assessment-details" aria-label="Assessment Details">{context}</aside>
+          {context&&<aside className="brawndo-assessment-details" aria-label="Assessment Details">{context}</aside>}
         </div>
       </div>
       <footer className="brawndo-assessment-footer">{footer}</footer>
@@ -41,8 +41,8 @@ export default function AssessmentShell({open=true,title,description,status,posi
 }
 
 export function AssessmentStep({number,title,children}) {
-  return <section className="brawndo-step" aria-label={title}>
-    <h3><span className="brawndo-step-number" aria-hidden="true">{number}</span>{title}</h3>
+  return <section className="brawndo-step" aria-label={`${title} section`}>
+    <h3>{number&&<span className="brawndo-step-number" aria-hidden="true">{number}</span>}{title}</h3>
     <div className="brawndo-step-body">{children}</div>
   </section>;
 }

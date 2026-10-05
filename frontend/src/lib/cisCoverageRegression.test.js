@@ -41,7 +41,7 @@ test('every safeguard retains all non-repeated grouped Review prompts and suppor
 test('11.1 consistently separates recovery-process requirements from optional backup detail',()=>{
   const definition=catalog.requirements.find(r=>r.id==='11.1');
   const checks=guidance.requirements['11.1'],help=guide.requirements['11.1'];
-  for(const text of [definition.guidance,checks.outcome[0],criteria.requirements['11.1'].criteria[0].text,help.plain]){
+  for(const text of [definition.guidance,checks.outcome[0],criteria.requirements['11.1'].criteria.map(c=>c.text).join(' '),help.plain]){
     expect(text).toMatch(/scope/i);expect(text).toMatch(/prioriti/i);expect(text).toMatch(/(?=.*backup)(?=.*secur)/i);
     expect(text).not.toMatch(/how backups are made|details backup procedures/i);
   }

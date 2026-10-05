@@ -1,0 +1,21 @@
+.assessment-layout { padding-top: 16px; }
+.assessment-layout > [role=tablist] { display: flex; width: fit-content; max-width: 100%; height: auto; flex-wrap: wrap; }
+.assessment-layout > [role=tabpanel][data-state=inactive] { display: none; }
+.assessment-layout > [role=tabpanel] { padding-top: 16px; }
+.assessment-summary { margin-bottom: 24px; }
+.assessment-summary p { margin-top: 12px; font-size: 14px; line-height: 1.65; }
+.assessment-requirement { margin-bottom: 24px; font-size: 14px; line-height: 1.65; }
+.assessment-requirement h3, .assessment-criteria-columns h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+.assessment-requirement > * + * { margin-top: 12px; }
+.assessment-requirement a { display: block; color: var(--color-link); text-decoration: underline; text-underline-offset: 3px; }
+.assessment-criteria-columns { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 28px; padding-block: 8px 24px; font-size: 14px; line-height: 1.65; }
+.assessment-criteria-columns section { min-width: 0; }
+.assessment-criteria-columns li + li { margin-top: 12px; }
+.assessment-check { display: flex; align-items: flex-start; gap: 10px; padding-block: 10px; cursor: pointer; }
+.assessment-check input { margin-top: 5px; accent-color: var(--color-link); flex-shrink: 0; }
+.assessment-check:focus-within { outline: 2px solid var(--color-link); outline-offset: 2px; border-radius: 4px; }
+.assessment-implementation { display: grid; grid-template-columns: minmax(200px,25%) minmax(0,1fr); gap: 28px; }
+.assessment-implementation > * { min-width: 0; }
+.assessment-implementation .brawndo-status-options { grid-template-columns: minmax(0,1fr); }
+@media (max-width: 900px) { .assessment-criteria-columns { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 760px) { .assessment-implementation { grid-template-columns: minmax(0,1fr); gap: 0; } }

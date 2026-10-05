@@ -3,7 +3,8 @@ import {createRoot} from 'react-dom/client';
 import IsoAuditWorkspace from './IsoAuditWorkspace';
 import {initialAuditState,auditPackage} from '@/lib/isoAudit';
 import api from '@/lib/api';
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'u',role:'super_admin'}})}));
+let mockUser;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn()},formatError:e=>e.message}));
 jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('react-router-dom',()=>({useSearchParams:()=>require('react').useState(new URLSearchParams('package=governance-risk')),Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
@@ -12,6 +13,7 @@ const button=name=>[...document.querySelectorAll('button')].find(b=>b.textConten
 async function fill(label,value){await act(async()=>{const el=document.querySelector('[aria-label="'+label+'"]');Object.getOwnPropertyDescriptor(el.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLTextAreaElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));});}
 beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;global.crypto=require('crypto').webcrypto;
+  mockUser={user_id:'u',role:'super_admin'};
   review={review_id:'r',client_id:'c',title:'Audit',owner_id:'u',due_date:'2030-12-31',updated_at:'v1',current_occurrence_id:'o1',recurrence:'annual',iso_audit:initialAuditState('governance-risk'),occurrences:[]};
   api.get.mockImplementation(async path=>({data:path==='/iso-audit'?{program:{status:'active',activated_at:'2030-10-01',configuration:{start_date:'2030-10-01'}},reviews:[review]}:path==='/related'?{findings:[],tasks:[]}:path==='/evidence/catalog'?{items:[],total:0,page:1,page_size:25}:[]}));
   api.patch.mockImplementation(async(path,body)=>{review={...review,updated_at:'v2',iso_audit:{...review.iso_audit,items:{...review.iso_audit.items,[path.split('/').at(-1)]:body}}};return {data:review};});
@@ -35,12 +37,57 @@ test('wide audit shell separates result and progress and preserves a failed-save
 });
 test('unfinished Finding and narrative drafts cannot silently navigate or close',async()=>{
   await fill('Auditor notes','Keep my audit draft');
-  await act(async()=>button('Create Finding').click());
+  await act(async()=>button('Raise Finding').click());
   expect(button('Save & next').disabled).toBe(true);
   await act(async()=>button('Close assessment').click());
   expect(document.body.textContent).toContain('Leave unsaved changes?');
   await act(async()=>button('Keep editing').click());
   expect(document.querySelector('[aria-label="Auditor notes"]').value).toBe('Keep my audit draft');
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('audit criteria tab saves selections without changing progress or result',async()=>{
+  await act(async()=>button('Assessment criteria').click());
+  expect(document.querySelectorAll('.assessment-summary')).toHaveLength(1);
+  expect(document.body.textContent).toContain('Review guidance');expect(document.body.textContent).toContain('Expected outcome');
+  await act(async()=>document.querySelector('.assessment-check input').click());
+  expect(api.patch).not.toHaveBeenCalled();
+  expect(document.querySelector('[aria-label="Audit progress"]').value).toBe('not_started');
+  expect(document.querySelector('[aria-label="Audit result"]').value).toBe('');
+  await act(async()=>button('Save assessment').click());
+  expect(api.patch).toHaveBeenLastCalledWith('/reviews/r/iso-audit/4-1',expect.objectContaining({assessment_checks:['4.1:context'],status:'not_started',result:'',occurrence_id:'o1',expected_updated_at:'v1'}));
+});
+
+test('audit checklist retains saved unknown selections while editing known checks',async()=>{
+  await act(async()=>button('Close assessment').click());
+  review.iso_audit.items['4-1']={status:'not_started',result:'',notes:'',na_rationale:'',evidence_ids:[],finding_ids:[],assessment_checks:['retired:audit-context']};
+  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('4.1 ·')).click());
+  await act(async()=>button('Assessment criteria').click());
+  expect(document.body.textContent).toContain('Previous checklist responses');
+  await act(async()=>document.querySelector('.assessment-check input').click());
+  await act(async()=>button('Save assessment').click());
+  expect(api.patch).toHaveBeenLastCalledWith('/reviews/r/iso-audit/4-1',expect.objectContaining({assessment_checks:['retired:audit-context','4.1:context']}));
+});
+
+test('read-only audit retains criteria and disables workpaper mutation',async()=>{
+  mockUser.role='client_readonly';await act(async()=>root.render(<IsoAuditWorkspace clientId="c"/>));
+  expect(button('Save assessment')).toBeUndefined();expect(button('Raise Finding')).toBeUndefined();
+  expect(document.querySelector('[aria-label="Auditor notes"]').closest('fieldset').disabled).toBe(true);
+  await act(async()=>button('Assessment criteria').click());
+  expect(document.querySelector('.assessment-check input').closest('fieldset').disabled).toBe(true);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('historical audit selections remain frozen and do not rewrite current cycle',async()=>{
+  await act(async()=>button('Close assessment').click());
+  review.occurrences=[{...review,occurrence_id:'history-o',completed_at:'2029-12-30',iso_audit:{...initialAuditState('governance-risk'),items:{'4-1':{status:'reviewed',result:'conforming',notes:'Historical evidence',na_rationale:'',evidence_ids:[],finding_ids:[],assessment_checks:['4.1:context']}}}}];
+  await act(async()=>root.render(<IsoAuditWorkspace clientId="c"/>));
+  await fill('Audit occurrence','history-o');
+  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('4.1 ·')).click());
+  await act(async()=>button('Assessment criteria').click());
+  expect(document.querySelector('.assessment-check input').checked).toBe(true);
+  expect(document.querySelector('.assessment-check input').closest('fieldset').disabled).toBe(true);
+  expect(button('Save assessment')).toBeUndefined();expect(document.body.textContent).toContain('Historical workpaper');
   expect(api.patch).not.toHaveBeenCalled();
 });
 

@@ -55,6 +55,20 @@
           "text": "Review recurring conduct concerns and whether corrective responses address their causes.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC1.1"
+        },
+        {
+          "id": "CC1.1-assessment-v1-1",
+          "text": "Demonstrate a commitment to integrity.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.1"
+        },
+        {
+          "id": "CC1.1-assessment-v1-2",
+          "text": "Demonstrate a commitment to ethical values.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.1"
         }
       ],
       "practical": {
@@ -76,7 +90,17 @@
         "enhanced": [
           "Review patterns in conduct concerns and repeat issues to see whether the response changed behavior."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC1.1-assessment-v1-1",
+          "text": "Demonstrate a commitment to integrity."
+        },
+        {
+          "id": "CC1.1-assessment-v1-2",
+          "text": "Demonstrate a commitment to ethical values."
+        }
+      ]
     },
     "CC1.2": {
       "source_reference": "CC1.2",
@@ -103,6 +127,27 @@
           "text": "Have oversight members evaluate whether their challenge changed management decisions.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC1.2"
+        },
+        {
+          "id": "CC1.2-assessment-v1-1",
+          "text": "Governance demonstrates independence from management, appropriate to the entity’s structure.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.2"
+        },
+        {
+          "id": "CC1.2-assessment-v1-2",
+          "text": "Governance oversees the development of internal control.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.2"
+        },
+        {
+          "id": "CC1.2-assessment-v1-3",
+          "text": "Governance oversees the performance of internal control.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.2"
         }
       ],
       "practical": {
@@ -124,7 +169,21 @@
         "enhanced": [
           "Seek suitably independent expertise when governance lacks the knowledge to challenge a material technical or control issue."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC1.2-assessment-v1-1",
+          "text": "Governance demonstrates independence from management, appropriate to the entity’s structure."
+        },
+        {
+          "id": "CC1.2-assessment-v1-2",
+          "text": "Governance oversees the development of internal control."
+        },
+        {
+          "id": "CC1.2-assessment-v1-3",
+          "text": "Governance oversees the performance of internal control."
+        }
+      ]
     },
     "CC1.3": {
       "source_reference": "CC1.3",
@@ -151,6 +210,20 @@
           "text": "Clarify the handoffs between internal teams and outsourced providers.",
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC1.3"
+        },
+        {
+          "id": "CC1.3-assessment-v1-1",
+          "text": "Management establishes structures and reporting lines under governance oversight.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.3"
+        },
+        {
+          "id": "CC1.3-assessment-v1-2",
+          "text": "Management establishes appropriate authority and responsibilities to achieve objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.3"
         }
       ],
       "practical": {
@@ -169,7 +242,17 @@
           "Update responsibilities during staffing, service, and provider changes, and confirm the affected people understand the handoff."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC1.3-assessment-v1-1",
+          "text": "Management establishes structures and reporting lines under governance oversight."
+        },
+        {
+          "id": "CC1.3-assessment-v1-2",
+          "text": "Management establishes appropriate authority and responsibilities to achieve objectives."
+        }
+      ]
     },
     "CC1.4": {
       "source_reference": "CC1.4",
@@ -203,6 +286,27 @@
           "text": "Evaluate whether training resolves observed execution errors.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC1.4"
+        },
+        {
+          "id": "CC1.4-assessment-v1-1",
+          "text": "Attract people with the competence needed for objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.4"
+        },
+        {
+          "id": "CC1.4-assessment-v1-2",
+          "text": "Develop people’s competence to support objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.4"
+        },
+        {
+          "id": "CC1.4-assessment-v1-3",
+          "text": "Retain competent people to support objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.4"
         }
       ],
       "practical": {
@@ -224,7 +328,21 @@
         "enhanced": [
           "Use a task walkthrough or practical exercise to validate capability for a critical responsibility where attendance records give limited assurance."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC1.4-assessment-v1-1",
+          "text": "Attract people with the competence needed for objectives."
+        },
+        {
+          "id": "CC1.4-assessment-v1-2",
+          "text": "Develop people’s competence to support objectives."
+        },
+        {
+          "id": "CC1.4-assessment-v1-3",
+          "text": "Retain competent people to support objectives."
+        }
+      ]
     },
     "CC1.5": {
       "source_reference": "CC1.5",
@@ -251,6 +369,13 @@
           "text": "Review whether delivery incentives encourage staff to bypass controls.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC1.5"
+        },
+        {
+          "id": "CC1.5-assessment-v1-1",
+          "text": "Hold people accountable for their internal-control responsibilities in achieving objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC1.5"
         }
       ],
       "practical": {
@@ -271,7 +396,13 @@
         "enhanced": [
           "Compare recurring missed responsibilities across teams to identify workload or incentive problems that individual reminders do not resolve."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC1.5-assessment-v1-1",
+          "text": "Hold people accountable for their internal-control responsibilities in achieving objectives."
+        }
+      ]
     },
     "CC2.1": {
       "source_reference": "CC2.1",
@@ -305,6 +436,20 @@
           "text": "Reconcile a sample of management reports to their underlying records.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC2.1"
+        },
+        {
+          "id": "CC2.1-assessment-v1-1",
+          "text": "Obtain or generate relevant information of suitable quality for internal control.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC2.1"
+        },
+        {
+          "id": "CC2.1-assessment-v1-2",
+          "text": "Use that information to support internal control.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC2.1"
         }
       ],
       "practical": {
@@ -326,7 +471,17 @@
         "enhanced": [
           "Reconcile a critical review population against an independent inventory or source to identify omissions that the report cannot reveal about itself."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC2.1-assessment-v1-1",
+          "text": "Obtain or generate relevant information of suitable quality for internal control."
+        },
+        {
+          "id": "CC2.1-assessment-v1-2",
+          "text": "Use that information to support internal control."
+        }
+      ]
     },
     "CC2.2": {
       "source_reference": "CC2.2",
@@ -353,6 +508,20 @@
           "text": "Ask a sample of recipients to demonstrate how they would report a control concern.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC2.2"
+        },
+        {
+          "id": "CC2.2-assessment-v1-1",
+          "text": "Communicate internal-control objectives internally.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC2.2"
+        },
+        {
+          "id": "CC2.2-assessment-v1-2",
+          "text": "Communicate internal-control responsibilities and other necessary information internally.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC2.2"
         }
       ],
       "practical": {
@@ -374,7 +543,17 @@
         "enhanced": [
           "Ask personnel to explain a relevant reporting or security task to check whether the communication was understood, not merely delivered."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC2.2-assessment-v1-1",
+          "text": "Communicate internal-control objectives internally."
+        },
+        {
+          "id": "CC2.2-assessment-v1-2",
+          "text": "Communicate internal-control responsibilities and other necessary information internally."
+        }
+      ]
     },
     "CC2.3": {
       "source_reference": "CC2.3",
@@ -401,6 +580,13 @@
           "text": "Route incoming concerns to a responsible team and track the response.",
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC2.3"
+        },
+        {
+          "id": "CC2.3-assessment-v1-1",
+          "text": "Communicate with external parties about matters affecting internal control.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC2.3"
         }
       ],
       "practical": {
@@ -420,7 +606,13 @@
           "Maintain contact and approval routes for communication scenarios that matter to the service. Reconcile notification responsibilities with MSP/MSSP and other provider arrangements."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC2.3-assessment-v1-1",
+          "text": "Communicate with external parties about matters affecting internal control."
+        }
+      ]
     },
     "CC3.1": {
       "source_reference": "CC3.1",
@@ -440,6 +632,20 @@
           "text": "Connect scoped service commitments to clear objectives used in risk assessment.",
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC3.1"
+        },
+        {
+          "id": "CC3.1-assessment-v1-1",
+          "text": "Define objectives clearly enough to identify associated risks.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC3.1"
+        },
+        {
+          "id": "CC3.1-assessment-v1-2",
+          "text": "Define objectives clearly enough to assess associated risks.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC3.1"
         }
       ],
       "practical": {
@@ -458,7 +664,17 @@
           "Keep objectives aligned when services, commitments, or scope change. Treat system-description preparation as readiness context rather than a substitute for clear objectives."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC3.1-assessment-v1-1",
+          "text": "Define objectives clearly enough to identify associated risks."
+        },
+        {
+          "id": "CC3.1-assessment-v1-2",
+          "text": "Define objectives clearly enough to assess associated risks."
+        }
+      ]
     },
     "CC3.2": {
       "source_reference": "CC3.2",
@@ -492,6 +708,20 @@
           "text": "Challenge major risk assumptions using observed incidents and near misses.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC3.2"
+        },
+        {
+          "id": "CC3.2-assessment-v1-1",
+          "text": "Identify risks to objectives across the organization.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC3.2"
+        },
+        {
+          "id": "CC3.2-assessment-v1-2",
+          "text": "Analyze identified risks to determine how they should be managed.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC3.2"
         }
       ],
       "practical": {
@@ -513,7 +743,17 @@
         "enhanced": [
           "Challenge high-impact scenarios against incident experience and provider dependencies to identify optimistic assumptions or overlooked exposure."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC3.2-assessment-v1-1",
+          "text": "Identify risks to objectives across the organization."
+        },
+        {
+          "id": "CC3.2-assessment-v1-2",
+          "text": "Analyze identified risks to determine how they should be managed."
+        }
+      ]
     },
     "CC3.3": {
       "source_reference": "CC3.3",
@@ -533,6 +773,13 @@
           "text": "Include realistic fraud scenarios and relevant participants in risk discussions.",
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC3.3"
+        },
+        {
+          "id": "CC3.3-assessment-v1-1",
+          "text": "Consider potential fraud when assessing risks to objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC3.3"
         }
       ],
       "practical": {
@@ -551,7 +798,13 @@
           "Include process owners when considering misuse of privileged access or sensitive workflows, and revisit scenarios when access models or incentives change."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC3.3-assessment-v1-1",
+          "text": "Consider potential fraud when assessing risks to objectives."
+        }
+      ]
     },
     "CC3.4": {
       "source_reference": "CC3.4",
@@ -578,6 +831,20 @@
           "text": "Compare completed changes with risk reviews to identify missed triggers.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC3.4"
+        },
+        {
+          "id": "CC3.4-assessment-v1-1",
+          "text": "Identify changes that could significantly affect internal control.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC3.4"
+        },
+        {
+          "id": "CC3.4-assessment-v1-2",
+          "text": "Assess how those significant changes affect internal control.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC3.4"
         }
       ],
       "practical": {
@@ -598,7 +865,17 @@
         "enhanced": [
           "Compare major changes recorded by business and technical teams against the risk-review record to find changes that bypassed assessment."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC3.4-assessment-v1-1",
+          "text": "Identify changes that could significantly affect internal control."
+        },
+        {
+          "id": "CC3.4-assessment-v1-2",
+          "text": "Assess how those significant changes affect internal control."
+        }
+      ]
     },
     "CC4.1": {
       "source_reference": "CC4.1",
@@ -625,6 +902,20 @@
           "text": "Compare conclusions from different evaluators where results conflict.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC4.1"
+        },
+        {
+          "id": "CC4.1-assessment-v1-1",
+          "text": "Select and develop ongoing or separate evaluations of internal control.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC4.1"
+        },
+        {
+          "id": "CC4.1-assessment-v1-2",
+          "text": "Perform evaluations to determine whether internal-control components exist and function.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC4.1"
         }
       ],
       "practical": {
@@ -646,7 +937,17 @@
         "enhanced": [
           "Use a reviewer separate from the operator for a higher-risk control to challenge the conclusion using the underlying records."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC4.1-assessment-v1-1",
+          "text": "Select and develop ongoing or separate evaluations of internal control."
+        },
+        {
+          "id": "CC4.1-assessment-v1-2",
+          "text": "Perform evaluations to determine whether internal-control components exist and function."
+        }
+      ]
     },
     "CC4.2": {
       "source_reference": "CC4.2",
@@ -673,6 +974,20 @@
           "text": "Have someone other than the action owner challenge closure support for significant deficiencies.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC4.2"
+        },
+        {
+          "id": "CC4.2-assessment-v1-1",
+          "text": "Evaluate internal-control deficiencies promptly.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC4.2"
+        },
+        {
+          "id": "CC4.2-assessment-v1-2",
+          "text": "Communicate deficiencies promptly to those responsible for correction, including management and governance where appropriate.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC4.2"
         }
       ],
       "practical": {
@@ -693,7 +1008,17 @@
         "enhanced": [
           "Review recurring deficiencies across teams to distinguish isolated mistakes from a control design or resourcing problem."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC4.2-assessment-v1-1",
+          "text": "Evaluate internal-control deficiencies promptly."
+        },
+        {
+          "id": "CC4.2-assessment-v1-2",
+          "text": "Communicate deficiencies promptly to those responsible for correction, including management and governance where appropriate."
+        }
+      ]
     },
     "CC5.1": {
       "source_reference": "CC5.1",
@@ -713,6 +1038,20 @@
           "text": "Map selected controls to the risks they address and explain any compensating arrangements.",
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC5.1"
+        },
+        {
+          "id": "CC5.1-assessment-v1-1",
+          "text": "Select control activities that reduce risks to objectives to acceptable levels.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC5.1"
+        },
+        {
+          "id": "CC5.1-assessment-v1-2",
+          "text": "Develop the selected risk-reducing control activities.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC5.1"
         }
       ],
       "practical": {
@@ -731,7 +1070,17 @@
           "Record enough about each selected control to make its purpose, operator, trigger, and expected result understandable. Reconsider the design when risks or responsibilities change."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC5.1-assessment-v1-1",
+          "text": "Select control activities that reduce risks to objectives to acceptable levels."
+        },
+        {
+          "id": "CC5.1-assessment-v1-2",
+          "text": "Develop the selected risk-reducing control activities."
+        }
+      ]
     },
     "CC5.2": {
       "source_reference": "CC5.2",
@@ -751,6 +1100,20 @@
           "text": "Identify technology dependencies and assign ownership of supporting access, change and maintenance controls.",
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC5.2"
+        },
+        {
+          "id": "CC5.2-assessment-v1-1",
+          "text": "Select general technology control activities that support objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC5.2"
+        },
+        {
+          "id": "CC5.2-assessment-v1-2",
+          "text": "Develop the selected general technology control activities.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC5.2"
         }
       ],
       "practical": {
@@ -769,7 +1132,17 @@
           "Include supporting technology controls when a service is introduced or changed. Make client-side duties explicit where an MSP, cloud service, or other provider performs part of the work."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC5.2-assessment-v1-1",
+          "text": "Select general technology control activities that support objectives."
+        },
+        {
+          "id": "CC5.2-assessment-v1-2",
+          "text": "Develop the selected general technology control activities."
+        }
+      ]
     },
     "CC5.3": {
       "source_reference": "CC5.3",
@@ -803,6 +1176,20 @@
           "text": "Compare actual execution with the procedure after significant operational changes.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC5.3"
+        },
+        {
+          "id": "CC5.3-assessment-v1-1",
+          "text": "Establish policy expectations for control activities.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC5.3"
+        },
+        {
+          "id": "CC5.3-assessment-v1-2",
+          "text": "Deploy procedures that put those policies into operation.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC5.3"
         }
       ],
       "practical": {
@@ -824,7 +1211,17 @@
         "enhanced": [
           "Observe or reperform a higher-risk workflow to identify differences between the written procedure and routine execution."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC5.3-assessment-v1-1",
+          "text": "Establish policy expectations for control activities."
+        },
+        {
+          "id": "CC5.3-assessment-v1-2",
+          "text": "Deploy procedures that put those policies into operation."
+        }
+      ]
     },
     "CC6.1": {
       "source_reference": "CC6.1",
@@ -858,6 +1255,13 @@
           "text": "Validate that a sample of disallowed access attempts is blocked across different access paths.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.1"
+        },
+        {
+          "id": "CC6.1-assessment-v1-1",
+          "text": "Implement logical-access security across software, infrastructure, and architecture to protect information assets against security events.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.1"
         }
       ],
       "practical": {
@@ -879,7 +1283,13 @@
         "enhanced": [
           "Validate selected access paths from an unauthorized-user perspective to check whether the configured restrictions work as intended."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC6.1-assessment-v1-1",
+          "text": "Implement logical-access security across software, infrastructure, and architecture to protect information assets against security events."
+        }
+      ]
     },
     "CC6.2": {
       "source_reference": "CC6.2",
@@ -920,6 +1330,27 @@
           "text": "Reconcile account records with personnel and supplier records to identify missed removals.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.2"
+        },
+        {
+          "id": "CC6.2-assessment-v1-1",
+          "text": "Register new internal and external users before issuing credentials or granting organization-administered access.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.2"
+        },
+        {
+          "id": "CC6.2-assessment-v1-2",
+          "text": "Authorize those users before issuing credentials or granting access.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.2"
+        },
+        {
+          "id": "CC6.2-assessment-v1-3",
+          "text": "Remove organization-administered credentials when access is no longer authorized.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.2"
         }
       ],
       "practical": {
@@ -941,7 +1372,21 @@
         "enhanced": [
           "Reconcile active accounts to personnel and third-party rosters to find accounts missed by event-driven provisioning and removal workflows."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC6.2-assessment-v1-1",
+          "text": "Register new internal and external users before issuing credentials or granting organization-administered access."
+        },
+        {
+          "id": "CC6.2-assessment-v1-2",
+          "text": "Authorize those users before issuing credentials or granting access."
+        },
+        {
+          "id": "CC6.2-assessment-v1-3",
+          "text": "Remove organization-administered credentials when access is no longer authorized."
+        }
+      ]
     },
     "CC6.3": {
       "source_reference": "CC6.3",
@@ -975,6 +1420,34 @@
           "text": "Test effective permissions rather than relying only on the requested access list.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.3"
+        },
+        {
+          "id": "CC6.3-assessment-v1-1",
+          "text": "Authorize access according to roles, responsibilities, and system design.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.3"
+        },
+        {
+          "id": "CC6.3-assessment-v1-2",
+          "text": "Modify or remove access when roles, responsibilities, or systems change.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.3"
+        },
+        {
+          "id": "CC6.3-assessment-v1-3",
+          "text": "Consider least privilege when managing access.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.3"
+        },
+        {
+          "id": "CC6.3-assessment-v1-4",
+          "text": "Consider segregation of duties when managing access.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.3"
         }
       ],
       "practical": {
@@ -996,7 +1469,25 @@
         "enhanced": [
           "Compare actual privilege use with approved need to identify long-unused administration rights or combinations missed by role-based reviews."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC6.3-assessment-v1-1",
+          "text": "Authorize access according to roles, responsibilities, and system design."
+        },
+        {
+          "id": "CC6.3-assessment-v1-2",
+          "text": "Modify or remove access when roles, responsibilities, or systems change."
+        },
+        {
+          "id": "CC6.3-assessment-v1-3",
+          "text": "Consider least privilege when managing access."
+        },
+        {
+          "id": "CC6.3-assessment-v1-4",
+          "text": "Consider segregation of duties when managing access."
+        }
+      ]
     },
     "CC6.4": {
       "source_reference": "CC6.4",
@@ -1016,6 +1507,20 @@
           "text": "Assign responsibility for visitor access, badge changes and recovery of physical devices.",
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for CC6.4"
+        },
+        {
+          "id": "CC6.4-assessment-v1-1",
+          "text": "Restrict physical access to facilities to authorized people.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.4"
+        },
+        {
+          "id": "CC6.4-assessment-v1-2",
+          "text": "Restrict physical access to protected information assets to authorized people.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.4"
         }
       ],
       "practical": {
@@ -1034,7 +1539,17 @@
           "Include badges, keys, and equipment custody in personnel changes. Review physical access at a frequency suited to the organization's selected controls and locations."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC6.4-assessment-v1-1",
+          "text": "Restrict physical access to facilities to authorized people."
+        },
+        {
+          "id": "CC6.4-assessment-v1-2",
+          "text": "Restrict physical access to protected information assets to authorized people."
+        }
+      ]
     },
     "CC6.5": {
       "source_reference": "CC6.5",
@@ -1061,6 +1576,20 @@
           "text": "Validate sanitization results for a sample of retired assets, including supplier-handled disposal.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.5"
+        },
+        {
+          "id": "CC6.5-assessment-v1-1",
+          "text": "Reduce the ability to read or recover data and software before ending logical or physical protection of physical assets.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.5"
+        },
+        {
+          "id": "CC6.5-assessment-v1-2",
+          "text": "End protection only when recovering that data and software is no longer needed for objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.5"
         }
       ],
       "practical": {
@@ -1079,7 +1608,17 @@
           "Keep assets under controlled custody until the selected sanitization method is confirmed. Include leased devices, removable media, and disposal vendors in the retirement workflow."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC6.5-assessment-v1-1",
+          "text": "Reduce the ability to read or recover data and software before ending logical or physical protection of physical assets."
+        },
+        {
+          "id": "CC6.5-assessment-v1-2",
+          "text": "End protection only when recovering that data and software is no longer needed for objectives."
+        }
+      ]
     },
     "CC6.6": {
       "source_reference": "CC6.6",
@@ -1113,6 +1652,13 @@
           "text": "Validate exposed access paths against the approved boundary design.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.6"
+        },
+        {
+          "id": "CC6.6-assessment-v1-1",
+          "text": "Implement logical-access protections against threats originating outside system boundaries.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.6"
         }
       ],
       "practical": {
@@ -1134,7 +1680,13 @@
         "enhanced": [
           "Validate external exposure independently of configuration inventories to find reachable services that were overlooked."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC6.6-assessment-v1-1",
+          "text": "Implement logical-access protections against threats originating outside system boundaries."
+        }
+      ]
     },
     "CC6.7": {
       "source_reference": "CC6.7",
@@ -1168,6 +1720,20 @@
           "text": "Test whether an unauthorized transfer attempt is prevented or detected as intended.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.7"
+        },
+        {
+          "id": "CC6.7-assessment-v1-1",
+          "text": "Allow only authorized users and processes to transmit, move, or remove information.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.7"
+        },
+        {
+          "id": "CC6.7-assessment-v1-2",
+          "text": "Protect information while it is transmitted, moved, or removed.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.7"
         }
       ],
       "practical": {
@@ -1189,7 +1755,17 @@
         "enhanced": [
           "Compare observed sharing and transfer activity with approved destinations to identify persistent bypasses or unintended public access."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC6.7-assessment-v1-1",
+          "text": "Allow only authorized users and processes to transmit, move, or remove information."
+        },
+        {
+          "id": "CC6.7-assessment-v1-2",
+          "text": "Protect information while it is transmitted, moved, or removed."
+        }
+      ]
     },
     "CC6.8": {
       "source_reference": "CC6.8",
@@ -1216,6 +1792,20 @@
           "text": "Exercise malware response safely in an isolated test environment.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC6.8"
+        },
+        {
+          "id": "CC6.8-assessment-v1-1",
+          "text": "Implement controls to prevent or detect unauthorized or malicious software.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.8"
+        },
+        {
+          "id": "CC6.8-assessment-v1-2",
+          "text": "Act on the introduction of unauthorized or malicious software.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC6.8"
         }
       ],
       "practical": {
@@ -1237,7 +1827,17 @@
         "enhanced": [
           "Use a safe, authorized validation exercise to confirm that the chosen protections detect or block the expected behavior and reach a responder."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC6.8-assessment-v1-1",
+          "text": "Implement controls to prevent or detect unauthorized or malicious software."
+        },
+        {
+          "id": "CC6.8-assessment-v1-2",
+          "text": "Act on the introduction of unauthorized or malicious software."
+        }
+      ]
     },
     "CC7.1": {
       "source_reference": "CC7.1",
@@ -1271,6 +1871,20 @@
           "text": "Measure repeat vulnerabilities and verify whether prior fixes remain effective.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.1"
+        },
+        {
+          "id": "CC7.1-assessment-v1-1",
+          "text": "Detect configuration changes that introduce vulnerabilities.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.1"
+        },
+        {
+          "id": "CC7.1-assessment-v1-2",
+          "text": "Monitor for susceptibility to newly discovered vulnerabilities.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.1"
         }
       ],
       "practical": {
@@ -1292,7 +1906,17 @@
         "enhanced": [
           "Compare repeat findings and missed-asset trends to determine whether the detection process itself needs improvement."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC7.1-assessment-v1-1",
+          "text": "Detect configuration changes that introduce vulnerabilities."
+        },
+        {
+          "id": "CC7.1-assessment-v1-2",
+          "text": "Monitor for susceptibility to newly discovered vulnerabilities."
+        }
+      ]
     },
     "CC7.2": {
       "source_reference": "CC7.2",
@@ -1333,6 +1957,20 @@
           "text": "Use controlled scenarios to check that important anomalies reach the right responder.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.2"
+        },
+        {
+          "id": "CC7.2-assessment-v1-1",
+          "text": "Monitor system components and their operation for anomalies indicating malicious acts, natural disasters, or errors affecting objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.2"
+        },
+        {
+          "id": "CC7.2-assessment-v1-2",
+          "text": "Analyze anomalies to determine whether they are security events.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.2"
         }
       ],
       "practical": {
@@ -1354,7 +1992,17 @@
         "enhanced": [
           "Run authorized detection checks and compare time-to-analysis or missed-detection trends with the organization's expectations."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC7.2-assessment-v1-1",
+          "text": "Monitor system components and their operation for anomalies indicating malicious acts, natural disasters, or errors affecting objectives."
+        },
+        {
+          "id": "CC7.2-assessment-v1-2",
+          "text": "Analyze anomalies to determine whether they are security events."
+        }
+      ]
     },
     "CC7.3": {
       "source_reference": "CC7.3",
@@ -1388,6 +2036,20 @@
           "text": "Revisit a sample of closed events to challenge missed-incident assumptions.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.3"
+        },
+        {
+          "id": "CC7.3-assessment-v1-1",
+          "text": "Evaluate whether security events could cause or have caused failure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.3"
+        },
+        {
+          "id": "CC7.3-assessment-v1-2",
+          "text": "Take action to prevent or address those failures when identified.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.3"
         }
       ],
       "practical": {
@@ -1408,7 +2070,17 @@
         "enhanced": [
           "Have a second reviewer challenge selected non-incident closures to identify missed impacts or inconsistent classification."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC7.3-assessment-v1-1",
+          "text": "Evaluate whether security events could cause or have caused failure to meet objectives."
+        },
+        {
+          "id": "CC7.3-assessment-v1-2",
+          "text": "Take action to prevent or address those failures when identified."
+        }
+      ]
     },
     "CC7.4": {
       "source_reference": "CC7.4",
@@ -1442,6 +2114,34 @@
           "text": "Review incident patterns and exercise outcomes to improve response decisions.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.4"
+        },
+        {
+          "id": "CC7.4-assessment-v1-1",
+          "text": "Execute a defined response program to understand identified security incidents.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.4"
+        },
+        {
+          "id": "CC7.4-assessment-v1-2",
+          "text": "Contain identified incidents as appropriate.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.4"
+        },
+        {
+          "id": "CC7.4-assessment-v1-3",
+          "text": "Remediate identified incidents as appropriate.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.4"
+        },
+        {
+          "id": "CC7.4-assessment-v1-4",
+          "text": "Communicate identified incidents as appropriate.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.4"
         }
       ],
       "practical": {
@@ -1463,7 +2163,25 @@
         "enhanced": [
           "Review response delays and recurring incident patterns to test whether changes from previous incidents improved later responses."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC7.4-assessment-v1-1",
+          "text": "Execute a defined response program to understand identified security incidents."
+        },
+        {
+          "id": "CC7.4-assessment-v1-2",
+          "text": "Contain identified incidents as appropriate."
+        },
+        {
+          "id": "CC7.4-assessment-v1-3",
+          "text": "Remediate identified incidents as appropriate."
+        },
+        {
+          "id": "CC7.4-assessment-v1-4",
+          "text": "Communicate identified incidents as appropriate."
+        }
+      ]
     },
     "CC7.5": {
       "source_reference": "CC7.5",
@@ -1490,6 +2208,20 @@
           "text": "Review whether incident recovery changes prevent recurrence.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC7.5"
+        },
+        {
+          "id": "CC7.5-assessment-v1-1",
+          "text": "Identify and develop activities for recovery from identified security incidents.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.5"
+        },
+        {
+          "id": "CC7.5-assessment-v1-2",
+          "text": "Implement the recovery activities.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC7.5"
         }
       ],
       "practical": {
@@ -1510,7 +2242,17 @@
         "enhanced": [
           "Validate a recovery scenario that includes compromised credentials or unavailable personnel to challenge assumptions beyond a routine successful restore."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC7.5-assessment-v1-1",
+          "text": "Identify and develop activities for recovery from identified security incidents."
+        },
+        {
+          "id": "CC7.5-assessment-v1-2",
+          "text": "Implement the recovery activities."
+        }
+      ]
     },
     "CC8.1": {
       "source_reference": "CC8.1",
@@ -1544,6 +2286,62 @@
           "text": "Compare deployed changes with approved records to identify untracked releases.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC8.1"
+        },
+        {
+          "id": "CC8.1-assessment-v1-1",
+          "text": "Authorize changes to infrastructure, data, software, and procedures.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
+        },
+        {
+          "id": "CC8.1-assessment-v1-2",
+          "text": "Design those changes.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
+        },
+        {
+          "id": "CC8.1-assessment-v1-3",
+          "text": "Develop or acquire those changes.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
+        },
+        {
+          "id": "CC8.1-assessment-v1-4",
+          "text": "Configure those changes.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
+        },
+        {
+          "id": "CC8.1-assessment-v1-5",
+          "text": "Document those changes.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
+        },
+        {
+          "id": "CC8.1-assessment-v1-6",
+          "text": "Test those changes.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
+        },
+        {
+          "id": "CC8.1-assessment-v1-7",
+          "text": "Approve those changes.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
+        },
+        {
+          "id": "CC8.1-assessment-v1-8",
+          "text": "Implement those changes to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC8.1"
         }
       ],
       "practical": {
@@ -1565,7 +2363,41 @@
         "enhanced": [
           "Reconcile actual deployments and configuration changes against approved records to detect changes that bypassed the workflow."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC8.1-assessment-v1-1",
+          "text": "Authorize changes to infrastructure, data, software, and procedures."
+        },
+        {
+          "id": "CC8.1-assessment-v1-2",
+          "text": "Design those changes."
+        },
+        {
+          "id": "CC8.1-assessment-v1-3",
+          "text": "Develop or acquire those changes."
+        },
+        {
+          "id": "CC8.1-assessment-v1-4",
+          "text": "Configure those changes."
+        },
+        {
+          "id": "CC8.1-assessment-v1-5",
+          "text": "Document those changes."
+        },
+        {
+          "id": "CC8.1-assessment-v1-6",
+          "text": "Test those changes."
+        },
+        {
+          "id": "CC8.1-assessment-v1-7",
+          "text": "Approve those changes."
+        },
+        {
+          "id": "CC8.1-assessment-v1-8",
+          "text": "Implement those changes to meet objectives."
+        }
+      ]
     },
     "CC9.1": {
       "source_reference": "CC9.1",
@@ -1592,6 +2424,20 @@
           "text": "Exercise dependency failures that could defeat the planned alternative processing approach.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC9.1"
+        },
+        {
+          "id": "CC9.1-assessment-v1-1",
+          "text": "Identify risks arising from potential business disruptions.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC9.1"
+        },
+        {
+          "id": "CC9.1-assessment-v1-2",
+          "text": "Select and develop activities that mitigate those disruption risks.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC9.1"
         }
       ],
       "practical": {
@@ -1612,7 +2458,17 @@
         "enhanced": [
           "Challenge a critical disruption assumption with a scenario exercise involving both client and provider decision-makers."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC9.1-assessment-v1-1",
+          "text": "Identify risks arising from potential business disruptions."
+        },
+        {
+          "id": "CC9.1-assessment-v1-2",
+          "text": "Select and develop activities that mitigate those disruption risks."
+        }
+      ]
     },
     "CC9.2": {
       "source_reference": "CC9.2",
@@ -1646,6 +2502,20 @@
           "text": "Challenge concentration risk across critical providers and their dependencies.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for CC9.2"
+        },
+        {
+          "id": "CC9.2-assessment-v1-1",
+          "text": "Assess risks associated with vendors and business partners.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC9.2"
+        },
+        {
+          "id": "CC9.2-assessment-v1-2",
+          "text": "Manage the risks associated with those relationships.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "CC9.2"
         }
       ],
       "practical": {
@@ -1668,7 +2538,17 @@
         "enhanced": [
           "Validate a critical shared responsibility end to end with the provider, including whether agreed notifications actually lead to client action."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "CC9.2-assessment-v1-1",
+          "text": "Assess risks associated with vendors and business partners."
+        },
+        {
+          "id": "CC9.2-assessment-v1-2",
+          "text": "Manage the risks associated with those relationships."
+        }
+      ]
     },
     "A1.1": {
       "source_reference": "A1.1",
@@ -1695,6 +2575,27 @@
           "text": "Compare forecasts with observed peaks and investigate persistent forecasting errors.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for A1.1"
+        },
+        {
+          "id": "A1.1-assessment-v1-1",
+          "text": "Maintain current processing capacity across infrastructure, data, and software.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.1"
+        },
+        {
+          "id": "A1.1-assessment-v1-2",
+          "text": "Monitor and evaluate capacity and component use to manage demand.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.1"
+        },
+        {
+          "id": "A1.1-assessment-v1-3",
+          "text": "Enable additional capacity needed to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.1"
         }
       ],
       "practical": {
@@ -1715,7 +2616,21 @@
         "enhanced": [
           "Validate a peak-demand or reduced-capacity scenario to check whether the organization's forecasts and scaling assumptions hold."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "A1.1-assessment-v1-1",
+          "text": "Maintain current processing capacity across infrastructure, data, and software."
+        },
+        {
+          "id": "A1.1-assessment-v1-2",
+          "text": "Monitor and evaluate capacity and component use to manage demand."
+        },
+        {
+          "id": "A1.1-assessment-v1-3",
+          "text": "Enable additional capacity needed to meet objectives."
+        }
+      ]
     },
     "A1.2": {
       "source_reference": "A1.2",
@@ -1749,6 +2664,62 @@
           "text": "Evaluate whether a shared failure could defeat both primary and recovery infrastructure.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for A1.2"
+        },
+        {
+          "id": "A1.2-assessment-v1-1",
+          "text": "Authorize environmental protections, software, backup processes, and recovery infrastructure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
+        },
+        {
+          "id": "A1.2-assessment-v1-2",
+          "text": "Design environmental protections, software, backup processes, and recovery infrastructure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
+        },
+        {
+          "id": "A1.2-assessment-v1-3",
+          "text": "Develop or acquire environmental protections, software, backup processes, and recovery infrastructure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
+        },
+        {
+          "id": "A1.2-assessment-v1-4",
+          "text": "Implement environmental protections, software, backup processes, and recovery infrastructure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
+        },
+        {
+          "id": "A1.2-assessment-v1-5",
+          "text": "Operate environmental protections, software, backup processes, and recovery infrastructure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
+        },
+        {
+          "id": "A1.2-assessment-v1-6",
+          "text": "Approve environmental protections, software, backup processes, and recovery infrastructure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
+        },
+        {
+          "id": "A1.2-assessment-v1-7",
+          "text": "Maintain environmental protections, software, backup processes, and recovery infrastructure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
+        },
+        {
+          "id": "A1.2-assessment-v1-8",
+          "text": "Monitor environmental protections, software, backup processes, and recovery infrastructure to meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.2"
         }
       ],
       "practical": {
@@ -1770,7 +2741,41 @@
         "enhanced": [
           "Review correlated failures to challenge whether the same incident could disable the primary environment and the recovery protections relied upon."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "A1.2-assessment-v1-1",
+          "text": "Authorize environmental protections, software, backup processes, and recovery infrastructure to meet objectives."
+        },
+        {
+          "id": "A1.2-assessment-v1-2",
+          "text": "Design environmental protections, software, backup processes, and recovery infrastructure to meet objectives."
+        },
+        {
+          "id": "A1.2-assessment-v1-3",
+          "text": "Develop or acquire environmental protections, software, backup processes, and recovery infrastructure to meet objectives."
+        },
+        {
+          "id": "A1.2-assessment-v1-4",
+          "text": "Implement environmental protections, software, backup processes, and recovery infrastructure to meet objectives."
+        },
+        {
+          "id": "A1.2-assessment-v1-5",
+          "text": "Operate environmental protections, software, backup processes, and recovery infrastructure to meet objectives."
+        },
+        {
+          "id": "A1.2-assessment-v1-6",
+          "text": "Approve environmental protections, software, backup processes, and recovery infrastructure to meet objectives."
+        },
+        {
+          "id": "A1.2-assessment-v1-7",
+          "text": "Maintain environmental protections, software, backup processes, and recovery infrastructure to meet objectives."
+        },
+        {
+          "id": "A1.2-assessment-v1-8",
+          "text": "Monitor environmental protections, software, backup processes, and recovery infrastructure to meet objectives."
+        }
+      ]
     },
     "A1.3": {
       "source_reference": "A1.3",
@@ -1811,6 +2816,13 @@
           "text": "Use an independent observer for a significant recovery exercise.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for A1.3"
+        },
+        {
+          "id": "A1.3-assessment-v1-1",
+          "text": "Test recovery-plan procedures that support system recovery and objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "A1.3"
         }
       ],
       "practical": {
@@ -1831,7 +2843,13 @@
         "enhanced": [
           "Extend validation to a less familiar failure scenario, unavailable key personnel, or end-to-end provider recovery where these would challenge existing assurance."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "A1.3-assessment-v1-1",
+          "text": "Test recovery-plan procedures that support system recovery and objectives."
+        }
+      ]
     },
     "C1.1": {
       "source_reference": "C1.1",
@@ -1851,6 +2869,20 @@
           "text": "Define confidential information and connect handling and retention decisions to applicable commitments.",
           "source_type": "operational_guidance",
           "source_reference": "Omnisciente implementation guidance for C1.1"
+        },
+        {
+          "id": "C1.1-assessment-v1-1",
+          "text": "Identify information subject to confidentiality objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "C1.1"
+        },
+        {
+          "id": "C1.1-assessment-v1-2",
+          "text": "Maintain that information consistently with confidentiality objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "C1.1"
         }
       ],
       "practical": {
@@ -1870,7 +2902,17 @@
           "Update data locations and handling instructions when commitments, services, or providers change. Connect access, transfer, and provider safeguards to their relevant Common Criteria rather than treating every confidentiality activity as a separate C1.1 requirement."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "C1.1-assessment-v1-1",
+          "text": "Identify information subject to confidentiality objectives."
+        },
+        {
+          "id": "C1.1-assessment-v1-2",
+          "text": "Maintain that information consistently with confidentiality objectives."
+        }
+      ]
     },
     "C1.2": {
       "source_reference": "C1.2",
@@ -1897,6 +2939,13 @@
           "text": "Sample completed disposal records and validate the intended result across relevant storage locations.",
           "source_type": "enhanced_assurance",
           "source_reference": "Omnisciente additional assurance guidance for C1.2"
+        },
+        {
+          "id": "C1.2-assessment-v1-1",
+          "text": "Dispose of confidential information consistently with confidentiality objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "C1.2"
         }
       ],
       "practical": {
@@ -1917,13 +2966,41 @@
         "enhanced": [
           "Validate selected disposal outcomes against the relevant systems or provider process to detect data that remains accessible after reported completion."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "C1.2-assessment-v1-1",
+          "text": "Dispose of confidential information consistently with confidentiality objectives."
+        }
+      ]
     },
     "PI1.1": {
       "source_reference": "PI1.1",
       "source_page": 53,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "PI1.1-assessment-v1-1",
+          "text": "Obtain or generate relevant information of suitable quality about processing objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.1"
+        },
+        {
+          "id": "PI1.1-assessment-v1-2",
+          "text": "Include definitions of processed data and product or service specifications.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.1"
+        },
+        {
+          "id": "PI1.1-assessment-v1-3",
+          "text": "Use and communicate that information to support products and services.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.1"
+        }
+      ],
       "practical": {
         "summary": "Define and communicate the information and processing specifications needed to meet processing objectives.",
         "review": [
@@ -1941,13 +3018,49 @@
         "enhanced": [
           "Compare interpretations among users and operators to identify ambiguous specifications before they cause incorrect processing."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "PI1.1-assessment-v1-1",
+          "text": "Obtain or generate relevant information of suitable quality about processing objectives."
+        },
+        {
+          "id": "PI1.1-assessment-v1-2",
+          "text": "Include definitions of processed data and product or service specifications."
+        },
+        {
+          "id": "PI1.1-assessment-v1-3",
+          "text": "Use and communicate that information to support products and services."
+        }
+      ]
     },
     "PI1.2": {
       "source_reference": "PI1.2",
       "source_page": 54,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "PI1.2-assessment-v1-1",
+          "text": "Implement policies and procedures over system inputs.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.2"
+        },
+        {
+          "id": "PI1.2-assessment-v1-2",
+          "text": "Control input completeness.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.2"
+        },
+        {
+          "id": "PI1.2-assessment-v1-3",
+          "text": "Control input accuracy so products, services, and reporting meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.2"
+        }
+      ],
       "practical": {
         "summary": "Process inputs consistently with defined requirements for completeness and accuracy.",
         "review": [
@@ -1965,13 +3078,35 @@
         "enhanced": [
           "Test alternative input channels to see whether an integration bypasses the intended acceptance checks."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "PI1.2-assessment-v1-1",
+          "text": "Implement policies and procedures over system inputs."
+        },
+        {
+          "id": "PI1.2-assessment-v1-2",
+          "text": "Control input completeness."
+        },
+        {
+          "id": "PI1.2-assessment-v1-3",
+          "text": "Control input accuracy so products, services, and reporting meet objectives."
+        }
+      ]
     },
     "PI1.3": {
       "source_reference": "PI1.3",
       "source_page": 54,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "PI1.3-assessment-v1-1",
+          "text": "Implement policies and procedures over system processing so products, services, and reporting meet objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.3"
+        }
+      ],
       "practical": {
         "summary": "Execute processing according to specifications and address processing errors.",
         "review": [
@@ -1989,13 +3124,48 @@
         "enhanced": [
           "Examine interruption and recovery scenarios for duplicate, inconsistent, or incomplete processing results."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "PI1.3-assessment-v1-1",
+          "text": "Implement policies and procedures over system processing so products, services, and reporting meet objectives."
+        }
+      ]
     },
     "PI1.4": {
       "source_reference": "PI1.4",
       "source_page": 55,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "PI1.4-assessment-v1-1",
+          "text": "Implement policies and procedures to make outputs available or deliver them according to specifications.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.4"
+        },
+        {
+          "id": "PI1.4-assessment-v1-2",
+          "text": "Ensure outputs are complete.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.4"
+        },
+        {
+          "id": "PI1.4-assessment-v1-3",
+          "text": "Ensure outputs are accurate.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.4"
+        },
+        {
+          "id": "PI1.4-assessment-v1-4",
+          "text": "Ensure outputs are timely.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.4"
+        }
+      ],
       "practical": {
         "summary": "Deliver complete, accurate, and timely outputs to intended recipients according to specifications.",
         "review": [
@@ -2013,13 +3183,60 @@
         "enhanced": [
           "Reconcile delivered outputs independently of successful internal processing status where useful."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "PI1.4-assessment-v1-1",
+          "text": "Implement policies and procedures to make outputs available or deliver them according to specifications."
+        },
+        {
+          "id": "PI1.4-assessment-v1-2",
+          "text": "Ensure outputs are complete."
+        },
+        {
+          "id": "PI1.4-assessment-v1-3",
+          "text": "Ensure outputs are accurate."
+        },
+        {
+          "id": "PI1.4-assessment-v1-4",
+          "text": "Ensure outputs are timely."
+        }
+      ]
     },
     "PI1.5": {
       "source_reference": "PI1.5",
       "source_page": 56,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "PI1.5-assessment-v1-1",
+          "text": "Implement policies and procedures for storing inputs, work in progress, and outputs according to system specifications.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.5"
+        },
+        {
+          "id": "PI1.5-assessment-v1-2",
+          "text": "Ensure stored items are complete.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.5"
+        },
+        {
+          "id": "PI1.5-assessment-v1-3",
+          "text": "Ensure stored items are accurate.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.5"
+        },
+        {
+          "id": "PI1.5-assessment-v1-4",
+          "text": "Ensure storage is timely.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "PI1.5"
+        }
+      ],
       "practical": {
         "summary": "Preserve inputs, in-process data, and outputs in storage according to processing specifications.",
         "review": [
@@ -2037,13 +3254,53 @@
         "enhanced": [
           "Validate that processing can continue correctly after a relevant storage-loss or corruption scenario."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "PI1.5-assessment-v1-1",
+          "text": "Implement policies and procedures for storing inputs, work in progress, and outputs according to system specifications."
+        },
+        {
+          "id": "PI1.5-assessment-v1-2",
+          "text": "Ensure stored items are complete."
+        },
+        {
+          "id": "PI1.5-assessment-v1-3",
+          "text": "Ensure stored items are accurate."
+        },
+        {
+          "id": "PI1.5-assessment-v1-4",
+          "text": "Ensure storage is timely."
+        }
+      ]
     },
     "P1.1": {
       "source_reference": "P1.1",
       "source_page": 57,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P1.1-assessment-v1-1",
+          "text": "Provide people with notice of privacy practices consistent with privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P1.1"
+        },
+        {
+          "id": "P1.1-assessment-v1-2",
+          "text": "Update privacy notices promptly when practices change, including changes in personal-information use.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P1.1"
+        },
+        {
+          "id": "P1.1-assessment-v1-3",
+          "text": "Communicate those notice changes promptly to affected people.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P1.1"
+        }
+      ],
       "practical": {
         "summary": "Give notice of privacy practices and update affected people when those practices change.",
         "review": [
@@ -2061,13 +3318,63 @@
         "enhanced": [
           "Check whether less visible collection channels receive the same relevant notice information."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P1.1-assessment-v1-1",
+          "text": "Provide people with notice of privacy practices consistent with privacy objectives."
+        },
+        {
+          "id": "P1.1-assessment-v1-2",
+          "text": "Update privacy notices promptly when practices change, including changes in personal-information use."
+        },
+        {
+          "id": "P1.1-assessment-v1-3",
+          "text": "Communicate those notice changes promptly to affected people."
+        }
+      ]
     },
     "P2.1": {
       "source_reference": "P2.1",
       "source_page": 58,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P2.1-assessment-v1-1",
+          "text": "Communicate choices about personal-information collection, use, retention, disclosure, and disposal.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P2.1"
+        },
+        {
+          "id": "P2.1-assessment-v1-2",
+          "text": "Communicate any consequences of those choices.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P2.1"
+        },
+        {
+          "id": "P2.1-assessment-v1-3",
+          "text": "Obtain explicit consent from people or authorized representatives where required.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P2.1"
+        },
+        {
+          "id": "P2.1-assessment-v1-4",
+          "text": "Limit consent to the information’s intended purpose.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P2.1"
+        },
+        {
+          "id": "P2.1-assessment-v1-5",
+          "text": "Document the basis for determining implicit consent.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P2.1"
+        }
+      ],
       "practical": {
         "summary": "Communicate privacy choices and consequences and handle consent consistently with privacy objectives.",
         "review": [
@@ -2085,13 +3392,43 @@
         "enhanced": [
           "Validate a changed preference through downstream handling rather than only the collection interface."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P2.1-assessment-v1-1",
+          "text": "Communicate choices about personal-information collection, use, retention, disclosure, and disposal."
+        },
+        {
+          "id": "P2.1-assessment-v1-2",
+          "text": "Communicate any consequences of those choices."
+        },
+        {
+          "id": "P2.1-assessment-v1-3",
+          "text": "Obtain explicit consent from people or authorized representatives where required."
+        },
+        {
+          "id": "P2.1-assessment-v1-4",
+          "text": "Limit consent to the information’s intended purpose."
+        },
+        {
+          "id": "P2.1-assessment-v1-5",
+          "text": "Document the basis for determining implicit consent."
+        }
+      ]
     },
     "P3.1": {
       "source_reference": "P3.1",
       "source_page": 59,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P3.1-assessment-v1-1",
+          "text": "Collect personal information consistently with privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P3.1"
+        }
+      ],
       "practical": {
         "summary": "Collect personal information consistently with privacy objectives.",
         "review": [
@@ -2109,13 +3446,34 @@
         "enhanced": [
           "Review less visible or automated collection paths for information not included in the stated collection model."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P3.1-assessment-v1-1",
+          "text": "Collect personal information consistently with privacy objectives."
+        }
+      ]
     },
     "P3.2": {
       "source_reference": "P3.2",
       "source_page": 60,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P3.2-assessment-v1-1",
+          "text": "Explain required explicit consent and the consequences of refusal.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P3.2"
+        },
+        {
+          "id": "P3.2-assessment-v1-2",
+          "text": "Obtain required explicit consent before collecting personal information.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P3.2"
+        }
+      ],
       "practical": {
         "summary": "Obtain required explicit consent before collection and explain the consequences of refusal.",
         "review": [
@@ -2131,13 +3489,31 @@
           "Ensure changes to collection flows do not move data capture ahead of the required consent decision."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P3.2-assessment-v1-1",
+          "text": "Explain required explicit consent and the consequences of refusal."
+        },
+        {
+          "id": "P3.2-assessment-v1-2",
+          "text": "Obtain required explicit consent before collecting personal information."
+        }
+      ]
     },
     "P4.1": {
       "source_reference": "P4.1",
       "source_page": 60,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P4.1-assessment-v1-1",
+          "text": "Limit personal-information use to purposes identified in privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P4.1"
+        }
+      ],
       "practical": {
         "summary": "Use personal information for identified purposes consistent with privacy objectives.",
         "review": [
@@ -2155,13 +3531,27 @@
         "enhanced": [
           "Investigate unexpected downstream uses revealed by data-flow or access analysis."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P4.1-assessment-v1-1",
+          "text": "Limit personal-information use to purposes identified in privacy objectives."
+        }
+      ]
     },
     "P4.2": {
       "source_reference": "P4.2",
       "source_page": 60,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P4.2-assessment-v1-1",
+          "text": "Retain personal information consistently with privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P4.2"
+        }
+      ],
       "practical": {
         "summary": "Retain personal information consistently with privacy purposes and applicable obligations.",
         "review": [
@@ -2179,13 +3569,27 @@
         "enhanced": [
           "Compare actual aged populations with intended retention to detect settings that do not produce the expected result."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P4.2-assessment-v1-1",
+          "text": "Retain personal information consistently with privacy objectives."
+        }
+      ]
     },
     "P4.3": {
       "source_reference": "P4.3",
       "source_page": 61,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P4.3-assessment-v1-1",
+          "text": "Dispose of personal information securely and consistently with privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P4.3"
+        }
+      ],
       "practical": {
         "summary": "Dispose of personal information securely when retention purposes end.",
         "review": [
@@ -2203,13 +3607,48 @@
         "enhanced": [
           "Validate that a selected disposal method leaves information appropriately inaccessible or no longer identifiable."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P4.3-assessment-v1-1",
+          "text": "Dispose of personal information securely and consistently with privacy objectives."
+        }
+      ]
     },
     "P5.1": {
       "source_reference": "P5.1",
       "source_page": 61,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P5.1-assessment-v1-1",
+          "text": "Identify and authenticate people before granting access to their stored personal information.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P5.1"
+        },
+        {
+          "id": "P5.1-assessment-v1-2",
+          "text": "Allow those people to review their stored personal information.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P5.1"
+        },
+        {
+          "id": "P5.1-assessment-v1-3",
+          "text": "Provide physical or electronic copies when requested, consistently with privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P5.1"
+        },
+        {
+          "id": "P5.1-assessment-v1-4",
+          "text": "Explain access denials and their reasons where required.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P5.1"
+        }
+      ],
       "practical": {
         "summary": "Provide authenticated individuals appropriate access to their personal information and explain applicable denials.",
         "review": [
@@ -2227,13 +3666,53 @@
         "enhanced": [
           "Compare response coverage with the information inventory to detect omitted systems or copies."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P5.1-assessment-v1-1",
+          "text": "Identify and authenticate people before granting access to their stored personal information."
+        },
+        {
+          "id": "P5.1-assessment-v1-2",
+          "text": "Allow those people to review their stored personal information."
+        },
+        {
+          "id": "P5.1-assessment-v1-3",
+          "text": "Provide physical or electronic copies when requested, consistently with privacy objectives."
+        },
+        {
+          "id": "P5.1-assessment-v1-4",
+          "text": "Explain access denials and their reasons where required."
+        }
+      ]
     },
     "P5.2": {
       "source_reference": "P5.2",
       "source_page": 62,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P5.2-assessment-v1-1",
+          "text": "Correct, amend, or append personal information using information supplied by the person.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P5.2"
+        },
+        {
+          "id": "P5.2-assessment-v1-2",
+          "text": "Communicate those changes to third parties where committed or required.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P5.2"
+        },
+        {
+          "id": "P5.2-assessment-v1-3",
+          "text": "Explain denied correction requests and the reasons for denial.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P5.2"
+        }
+      ],
       "practical": {
         "summary": "Handle corrections or amendments to personal information and communicate appropriate changes or denials.",
         "review": [
@@ -2251,13 +3730,35 @@
         "enhanced": [
           "Check whether a resolved request left conflicting values in systems that continue to use the information."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P5.2-assessment-v1-1",
+          "text": "Correct, amend, or append personal information using information supplied by the person."
+        },
+        {
+          "id": "P5.2-assessment-v1-2",
+          "text": "Communicate those changes to third parties where committed or required."
+        },
+        {
+          "id": "P5.2-assessment-v1-3",
+          "text": "Explain denied correction requests and the reasons for denial."
+        }
+      ]
     },
     "P6.1": {
       "source_reference": "P6.1",
       "source_page": 63,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P6.1-assessment-v1-1",
+          "text": "Obtain people’s explicit consent before disclosing their personal information to third parties.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.1"
+        }
+      ],
       "practical": {
         "summary": "Obtain explicit consent before third-party disclosure of personal information in accordance with privacy objectives.",
         "review": [
@@ -2275,13 +3776,34 @@
         "enhanced": [
           "Compare onward-sharing paths with the recipients and purposes understood when consent was obtained."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P6.1-assessment-v1-1",
+          "text": "Obtain people’s explicit consent before disclosing their personal information to third parties."
+        }
+      ]
     },
     "P6.2": {
       "source_reference": "P6.2",
       "source_page": 63,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P6.2-assessment-v1-1",
+          "text": "Create complete, accurate, and timely records of authorized personal-information disclosures.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.2"
+        },
+        {
+          "id": "P6.2-assessment-v1-2",
+          "text": "Retain those disclosure records consistently with privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.2"
+        }
+      ],
       "practical": {
         "summary": "Maintain complete, accurate, and timely records of authorized personal-information disclosures.",
         "review": [
@@ -2299,13 +3821,38 @@
         "enhanced": [
           "Reconcile an independent transfer population with disclosure records to detect unrecorded authorized sharing."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P6.2-assessment-v1-1",
+          "text": "Create complete, accurate, and timely records of authorized personal-information disclosures."
+        },
+        {
+          "id": "P6.2-assessment-v1-2",
+          "text": "Retain those disclosure records consistently with privacy objectives."
+        }
+      ]
     },
     "P6.3": {
       "source_reference": "P6.3",
       "source_page": 64,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P6.3-assessment-v1-1",
+          "text": "Create complete, accurate, and timely records of detected or reported unauthorized personal-information disclosures, including breaches.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.3"
+        },
+        {
+          "id": "P6.3-assessment-v1-2",
+          "text": "Retain those disclosure records consistently with privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.3"
+        }
+      ],
       "practical": {
         "summary": "Record detected or reported unauthorized personal-information disclosures accurately and promptly.",
         "review": [
@@ -2321,13 +3868,45 @@
           "Assign responsibility for maintaining the disclosure record when different teams supply investigation information."
         ],
         "enhanced": []
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P6.3-assessment-v1-1",
+          "text": "Create complete, accurate, and timely records of detected or reported unauthorized personal-information disclosures, including breaches."
+        },
+        {
+          "id": "P6.3-assessment-v1-2",
+          "text": "Retain those disclosure records consistently with privacy objectives."
+        }
+      ]
     },
     "P6.4": {
       "source_reference": "P6.4",
       "source_page": 64,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P6.4-assessment-v1-1",
+          "text": "Obtain privacy commitments from vendors and other third parties with personal-information access.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.4"
+        },
+        {
+          "id": "P6.4-assessment-v1-2",
+          "text": "Assess their compliance periodically and when needed.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.4"
+        },
+        {
+          "id": "P6.4-assessment-v1-3",
+          "text": "Take corrective action where necessary.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.4"
+        }
+      ],
       "practical": {
         "summary": "Obtain appropriate third-party privacy commitments, evaluate them periodically and as needed, and address failures.",
         "review": [
@@ -2345,13 +3924,49 @@
         "enhanced": [
           "Use service or data-flow changes to challenge whether existing provider evaluations still cover the actual privacy exposure."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P6.4-assessment-v1-1",
+          "text": "Obtain privacy commitments from vendors and other third parties with personal-information access."
+        },
+        {
+          "id": "P6.4-assessment-v1-2",
+          "text": "Assess their compliance periodically and when needed."
+        },
+        {
+          "id": "P6.4-assessment-v1-3",
+          "text": "Take corrective action where necessary."
+        }
+      ]
     },
     "P6.5": {
       "source_reference": "P6.5",
       "source_page": 65,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P6.5-assessment-v1-1",
+          "text": "Obtain third-party commitments to report actual or suspected unauthorized personal-information disclosures.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.5"
+        },
+        {
+          "id": "P6.5-assessment-v1-2",
+          "text": "Report those notifications to appropriate personnel.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.5"
+        },
+        {
+          "id": "P6.5-assessment-v1-3",
+          "text": "Act on the notifications through established incident-response procedures.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.5"
+        }
+      ],
       "practical": {
         "summary": "Require provider reporting of actual or suspected unauthorized disclosures and act on the reports.",
         "review": [
@@ -2369,13 +3984,42 @@
         "enhanced": [
           "Exercise a provider-reporting scenario involving suspected rather than already confirmed disclosure."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P6.5-assessment-v1-1",
+          "text": "Obtain third-party commitments to report actual or suspected unauthorized personal-information disclosures."
+        },
+        {
+          "id": "P6.5-assessment-v1-2",
+          "text": "Report those notifications to appropriate personnel."
+        },
+        {
+          "id": "P6.5-assessment-v1-3",
+          "text": "Act on the notifications through established incident-response procedures."
+        }
+      ]
     },
     "P6.6": {
       "source_reference": "P6.6",
       "source_page": 65,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P6.6-assessment-v1-1",
+          "text": "Notify affected people of breaches and incidents as needed to meet privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.6"
+        },
+        {
+          "id": "P6.6-assessment-v1-2",
+          "text": "Notify regulators and other relevant recipients as needed to meet privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.6"
+        }
+      ],
       "practical": {
         "summary": "Notify affected people, regulators, and others of breaches or incidents according to privacy objectives and applicable obligations.",
         "review": [
@@ -2393,13 +4037,38 @@
         "enhanced": [
           "Compare the incident timeline with applicable duties to identify avoidable delays in decision-making or communication."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P6.6-assessment-v1-1",
+          "text": "Notify affected people of breaches and incidents as needed to meet privacy objectives."
+        },
+        {
+          "id": "P6.6-assessment-v1-2",
+          "text": "Notify regulators and other relevant recipients as needed to meet privacy objectives."
+        }
+      ]
     },
     "P6.7": {
       "source_reference": "P6.7",
       "source_page": 65,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P6.7-assessment-v1-1",
+          "text": "On request, give people an accounting of their personal information held.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.7"
+        },
+        {
+          "id": "P6.7-assessment-v1-2",
+          "text": "On request, give people an accounting of disclosures of their personal information.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P6.7"
+        }
+      ],
       "practical": {
         "summary": "Provide a requested accounting of personal information held and its disclosures.",
         "review": [
@@ -2417,13 +4086,52 @@
         "enhanced": [
           "Compare an assembled response with independent system and provider inventories to identify omissions."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P6.7-assessment-v1-1",
+          "text": "On request, give people an accounting of their personal information held."
+        },
+        {
+          "id": "P6.7-assessment-v1-2",
+          "text": "On request, give people an accounting of disclosures of their personal information."
+        }
+      ]
     },
     "P7.1": {
       "source_reference": "P7.1",
       "source_page": 66,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P7.1-assessment-v1-1",
+          "text": "Collect and maintain accurate personal information.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P7.1"
+        },
+        {
+          "id": "P7.1-assessment-v1-2",
+          "text": "Keep personal information current.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P7.1"
+        },
+        {
+          "id": "P7.1-assessment-v1-3",
+          "text": "Collect and maintain complete personal information.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P7.1"
+        },
+        {
+          "id": "P7.1-assessment-v1-4",
+          "text": "Collect and maintain information relevant to privacy objectives.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P7.1"
+        }
+      ],
       "practical": {
         "summary": "Keep personal information accurate, current, complete, and relevant for its intended use.",
         "review": [
@@ -2441,13 +4149,60 @@
         "enhanced": [
           "Examine recurring discrepancies to identify source or synchronization problems rather than correcting individual values alone."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P7.1-assessment-v1-1",
+          "text": "Collect and maintain accurate personal information."
+        },
+        {
+          "id": "P7.1-assessment-v1-2",
+          "text": "Keep personal information current."
+        },
+        {
+          "id": "P7.1-assessment-v1-3",
+          "text": "Collect and maintain complete personal information."
+        },
+        {
+          "id": "P7.1-assessment-v1-4",
+          "text": "Collect and maintain information relevant to privacy objectives."
+        }
+      ]
     },
     "P8.1": {
       "source_reference": "P8.1",
       "source_page": 66,
       "review_note": "Criterion outcome checked against the AICPA reference. Practical assessment, evidence, operation, and assurance suggestions are authored Omnisciente guidance; Points of Focus are interpretive context, not additional mandatory controls.",
-      "items": [],
+      "items": [
+        {
+          "id": "P8.1-assessment-v1-1",
+          "text": "Receive and address privacy inquiries, complaints, and disputes from people and others.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P8.1"
+        },
+        {
+          "id": "P8.1-assessment-v1-2",
+          "text": "Resolve those matters and communicate their resolution.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P8.1"
+        },
+        {
+          "id": "P8.1-assessment-v1-3",
+          "text": "Monitor compliance with privacy objectives periodically.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P8.1"
+        },
+        {
+          "id": "P8.1-assessment-v1-4",
+          "text": "Correct identified deficiencies and take other necessary action promptly.",
+          "tier": "criterion_requirements",
+          "source_type": "criterion",
+          "source_reference": "P8.1"
+        }
+      ],
       "practical": {
         "summary": "Address and communicate privacy complaint resolutions, monitor privacy objectives, and correct identified deficiencies.",
         "review": [
@@ -2465,7 +4220,25 @@
         "enhanced": [
           "Examine repeat complaints or deficiencies to determine whether corrective responses changed the underlying practice."
         ]
-      }
+      },
+      "assessment_criteria": [
+        {
+          "id": "P8.1-assessment-v1-1",
+          "text": "Receive and address privacy inquiries, complaints, and disputes from people and others."
+        },
+        {
+          "id": "P8.1-assessment-v1-2",
+          "text": "Resolve those matters and communicate their resolution."
+        },
+        {
+          "id": "P8.1-assessment-v1-3",
+          "text": "Monitor compliance with privacy objectives periodically."
+        },
+        {
+          "id": "P8.1-assessment-v1-4",
+          "text": "Correct identified deficiencies and take other necessary action promptly."
+        }
+      ]
     }
   },
   "legacy_items_version": "soc-guidance-v1",

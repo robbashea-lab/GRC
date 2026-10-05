@@ -1,11 +1,85 @@
 {
   "version": "8.1",
-  "revision": "2026-10-04",
-  "basis": "Safeguard text only; paraphrased assessment aid. CAS metrics, implementation examples and enhanced practices are not additional requirements.",
+  "revision": "2026-10-05",
+  "basis": "CIS Controls v8.1 safeguard obligations only; concise authored assessment aid. Existing item identities are preserved. CAS metrics, evidence-review methods, examples and optional practices are not additional checklist obligations.",
   "requirements": {
     "1.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#11-establish-and-maintain-detailed-enterprise-asset-inventory",
       "criteria": [
+        {
+          "id": "1.1-c10",
+          "text": "Inventory covers all data-capable end-user devices, including portable and mobile devices."
+        },
+        {
+          "id": "1.1-c11",
+          "text": "Inventory covers data-capable network devices."
+        },
+        {
+          "id": "1.1-c12",
+          "text": "Inventory covers data-capable non-computing/IoT devices."
+        },
+        {
+          "id": "1.1-c13",
+          "text": "Inventory covers data-capable servers."
+        },
+        {
+          "id": "1.1-c14",
+          "text": "Physically connected assets are included."
+        },
+        {
+          "id": "1.1-c15",
+          "text": "Virtually connected assets are included."
+        },
+        {
+          "id": "1.1-c16",
+          "text": "Remotely connected assets are included."
+        },
+        {
+          "id": "1.1-c17",
+          "text": "Cloud assets are included."
+        },
+        {
+          "id": "1.1-c18",
+          "text": "Regularly connected externally controlled assets are included."
+        },
+        {
+          "id": "1.1-c9",
+          "text": "Inventory is accurate, detailed and up to date."
+        },
+        {
+          "id": "1.1-c5",
+          "text": "Records include static network addresses when applicable."
+        },
+        {
+          "id": "1.1-c19",
+          "text": "Records include hardware address."
+        },
+        {
+          "id": "1.1-c20",
+          "text": "Records include machine name."
+        },
+        {
+          "id": "1.1-c21",
+          "text": "Records identify enterprise asset owner."
+        },
+        {
+          "id": "1.1-c22",
+          "text": "Records identify department."
+        },
+        {
+          "id": "1.1-c8",
+          "text": "Records identify whether the asset is approved to connect."
+        },
+        {
+          "id": "1.1-c4",
+          "text": "Inventory is reviewed and updated at least every six months."
+        }
+      ],
+      "legacy_criteria": [
+        {
+          "id": "1.1-c3",
+          "text": "Records identify static network address, hardware address, machine name, owner, department and connection approval."
+        },
         {
           "id": "1.1-c1",
           "text": "Inventory covers data-capable endpoints, mobile devices, network devices, IoT and servers."
@@ -13,14 +87,6 @@
         {
           "id": "1.1-c2",
           "text": "Physical, virtual, remote, cloud and regularly connected externally controlled assets are included."
-        },
-        {
-          "id": "1.1-c3",
-          "text": "Records identify static network address, hardware address, machine name, owner, department and connection approval."
-        },
-        {
-          "id": "1.1-c4",
-          "text": "Inventory is reviewed and updated at least every six months."
         }
       ]
     },
@@ -41,16 +107,26 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#13-utilize-an-active-discovery-tool",
       "criteria": [
         {
+          "id": "1.3-c4",
+          "text": "An active discovery tool identifies assets connected to the enterprise network."
+        },
+        {
+          "id": "1.3-c5",
+          "text": "The active discovery tool is configured to execute automatically."
+        },
+        {
+          "id": "1.3-c3",
+          "text": "Execution occurs daily or more frequently."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "1.3-c1",
           "text": "Discover connected devices automatically."
         },
         {
           "id": "1.3-c2",
           "text": "Run discovery and reconcile unexpected devices. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "1.3-c3",
-          "text": "Daily or more often."
         }
       ]
     },
@@ -58,22 +134,46 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#14-use-dynamic-host-configuration-protocol-dhcp-logging-to-update-enterprise-asset-inventory",
       "criteria": [
         {
+          "id": "1.4-c4",
+          "text": "DHCP logging covers all DHCP servers, or IP address management tools are used."
+        },
+        {
+          "id": "1.4-c5",
+          "text": "These logs update the enterprise asset inventory."
+        },
+        {
+          "id": "1.4-c3",
+          "text": "Logs are reviewed and used to update inventory weekly or more frequently."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "1.4-c1",
           "text": "Use logs from all DHCP servers or IP address management tools to keep the asset inventory current. Review and use those logs at least weekly."
         },
         {
           "id": "1.4-c2",
           "text": "Collect observations and resolve inventory differences. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "1.4-c3",
-          "text": "At least weekly inventory updates using logs."
         }
       ]
     },
     "1.5": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#15-use-a-passive-asset-discovery-tool",
       "criteria": [
+        {
+          "id": "1.5-c4",
+          "text": "A passive discovery tool identifies assets connected to the enterprise network."
+        },
+        {
+          "id": "1.5-c5",
+          "text": "Its scans are reviewed and used to update the enterprise asset inventory."
+        },
+        {
+          "id": "1.5-c6",
+          "text": "Scan review and inventory updates occur at least weekly."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "1.5-c1",
           "text": "Discover connected assets passively; use the results to refresh the asset inventory at least weekly."
@@ -93,21 +193,85 @@
       "criteria": [
         {
           "id": "2.1-c1",
-          "text": "Inventory covers licensed software installed on enterprise assets."
+          "text": "A maintained inventory covers all licensed software installed on enterprise assets."
         },
         {
-          "id": "2.1-c2",
-          "text": "Entries record title, publisher, initial use/install date and purpose; applicable URL, store, version, deployment, retirement and license details are included."
+          "id": "2.1-c6",
+          "text": "Each entry records software title."
+        },
+        {
+          "id": "2.1-c7",
+          "text": "Each entry records publisher."
+        },
+        {
+          "id": "2.1-c8",
+          "text": "Each entry records initial install/use date."
+        },
+        {
+          "id": "2.1-c9",
+          "text": "Each entry records business purpose."
         },
         {
           "id": "2.1-c3",
           "text": "Inventory is reviewed and updated at least every six months."
+        },
+        {
+          "id": "2.1-c10",
+          "text": "Where appropriate, entries include software URLs."
+        },
+        {
+          "id": "2.1-c11",
+          "text": "Where appropriate, entries include app stores."
+        },
+        {
+          "id": "2.1-c12",
+          "text": "Where appropriate, entries include versions."
+        },
+        {
+          "id": "2.1-c13",
+          "text": "Where appropriate, entries include deployment mechanism."
+        },
+        {
+          "id": "2.1-c14",
+          "text": "Where appropriate, entries include decommission date."
+        },
+        {
+          "id": "2.1-c15",
+          "text": "Where appropriate, entries include license count."
+        }
+      ],
+      "legacy_criteria": [
+        {
+          "id": "2.1-c2",
+          "text": "Entries record title, publisher, initial use/install date and purpose; applicable URL, store, version, deployment, retirement and license details are included."
         }
       ]
     },
     "2.2": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#22-ensure-authorized-software-is-currently-supported",
       "criteria": [
+        {
+          "id": "2.2-c4",
+          "text": "Only supported software is designated authorized unless necessary unsupported software has a documented exception."
+        },
+        {
+          "id": "2.2-c5",
+          "text": "Necessary unsupported-software exceptions document mitigating controls."
+        },
+        {
+          "id": "2.2-c6",
+          "text": "Exceptions document residual-risk acceptance."
+        },
+        {
+          "id": "2.2-c7",
+          "text": "Unsupported software without exception documentation is designated unauthorized."
+        },
+        {
+          "id": "2.2-c8",
+          "text": "Software support is reviewed at least monthly."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "2.2-c1",
           "text": "Authorized software is supported or has a necessary-use exception documenting mitigation and residual-risk acceptance."
@@ -139,6 +303,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#24-utilize-automated-software-inventory-tools",
       "criteria": [
         {
+          "id": "2.4-c3",
+          "text": "Software inventory tools automate discovery of installed software throughout the enterprise, when possible."
+        },
+        {
+          "id": "2.4-c4",
+          "text": "The tools automate documentation of installed software, when possible."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "2.4-c1",
           "text": "Automate installed-software visibility where possible."
         },
@@ -153,15 +327,21 @@
       "criteria": [
         {
           "id": "2.5-c1",
-          "text": "Restrict execution/access to approved applications."
+          "text": "Technical controls permit execution or access only to authorized software."
         },
         {
-          "id": "2.5-c2",
-          "text": "Enforce application restrictions. Confirm coverage and resolve unsupported or uncovered cases."
+          "id": "2.5-c4",
+          "text": "The controls enforce authorized-software restrictions."
         },
         {
           "id": "2.5-c3",
-          "text": "Reassess at least every six months."
+          "text": "Controls are reassessed at least every six months."
+        }
+      ],
+      "legacy_criteria": [
+        {
+          "id": "2.5-c2",
+          "text": "Enforce application restrictions. Confirm coverage and resolve unsupported or uncovered cases."
         }
       ]
     },
@@ -170,21 +350,41 @@
       "criteria": [
         {
           "id": "2.6-c1",
-          "text": "Prevent unapproved libraries loading."
+          "text": "Technical controls allow only authorized software libraries to load into system processes."
         },
         {
-          "id": "2.6-c2",
-          "text": "Enforce library controls; handle changes safely. Confirm coverage and resolve unsupported or uncovered cases."
+          "id": "2.6-c4",
+          "text": "Unauthorized libraries are blocked from loading."
         },
         {
           "id": "2.6-c3",
-          "text": "Reassess at least every six months."
+          "text": "Controls are reassessed at least every six months."
+        }
+      ],
+      "legacy_criteria": [
+        {
+          "id": "2.6-c2",
+          "text": "Enforce library controls; handle changes safely. Confirm coverage and resolve unsupported or uncovered cases."
         }
       ]
     },
     "2.7": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#27-allowlist-authorized-scripts",
       "criteria": [
+        {
+          "id": "2.7-c4",
+          "text": "Technical controls allow only authorized scripts to execute."
+        },
+        {
+          "id": "2.7-c5",
+          "text": "Unauthorized scripts are blocked from executing."
+        },
+        {
+          "id": "2.7-c6",
+          "text": "Controls are reassessed at least every six months."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "2.7-c1",
           "text": "Enforce execution of authorized scripts only and block others; reassess at least every six months."
@@ -203,6 +403,36 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#31-establish-and-maintain-a-data-management-process",
       "criteria": [
         {
+          "id": "3.1-c6",
+          "text": "A documented data-management process is established and maintained."
+        },
+        {
+          "id": "3.1-c10",
+          "text": "The process addresses data sensitivity."
+        },
+        {
+          "id": "3.1-c11",
+          "text": "The process identifies data owners."
+        },
+        {
+          "id": "3.1-c8",
+          "text": "The process addresses data handling."
+        },
+        {
+          "id": "3.1-c12",
+          "text": "The process addresses retention limits based on enterprise sensitivity and retention standards."
+        },
+        {
+          "id": "3.1-c13",
+          "text": "The process addresses disposal requirements based on enterprise sensitivity and retention standards."
+        },
+        {
+          "id": "3.1-c4",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "3.1-c1",
           "text": "A documented process covers sensitivity, ownership, handling, retention limits and disposal."
         },
@@ -217,17 +447,39 @@
       "criteria": [
         {
           "id": "3.2-c1",
-          "text": "Inventory follows the data-management process and includes sensitive data."
+          "text": "A maintained data inventory follows the data-management process and includes sensitive data at minimum."
         },
         {
           "id": "3.2-c2",
-          "text": "Inventory is reviewed and updated annually, prioritizing sensitive data."
+          "text": "Inventory is reviewed and updated at least annually, prioritizing sensitive data."
         }
       ]
     },
     "3.3": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#33-configure-data-access-control-lists",
       "criteria": [
+        {
+          "id": "3.3-c2",
+          "text": "Data access permissions are based on user need to know."
+        },
+        {
+          "id": "3.3-c5",
+          "text": "Need-to-know permissions apply to local file systems."
+        },
+        {
+          "id": "3.3-c6",
+          "text": "Need-to-know permissions apply to remote file systems."
+        },
+        {
+          "id": "3.3-c7",
+          "text": "Need-to-know permissions apply to databases."
+        },
+        {
+          "id": "3.3-c8",
+          "text": "Need-to-know permissions apply to applications."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "3.3-c1",
           "text": "Permissions enforce need-to-know across local and remote files, databases and applications."
@@ -238,6 +490,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#34-enforce-data-retention",
       "criteria": [
         {
+          "id": "3.4-c2",
+          "text": "Data is retained according to the documented data-management process."
+        },
+        {
+          "id": "3.4-c4",
+          "text": "Retention includes minimum timelines."
+        },
+        {
+          "id": "3.4-c5",
+          "text": "Retention includes maximum timelines."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "3.4-c1",
           "text": "Retention follows the documented process, including minimum and maximum periods."
         }
@@ -246,6 +512,16 @@
     "3.5": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#35-securely-dispose-of-data",
       "criteria": [
+        {
+          "id": "3.5-c2",
+          "text": "Data is securely disposed of according to the documented data-management process."
+        },
+        {
+          "id": "3.5-c3",
+          "text": "Disposal processes and methods are appropriate to data sensitivity."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "3.5-c1",
           "text": "Disposal follows the documented process using methods appropriate to sensitivity."
@@ -265,16 +541,26 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#37-establish-and-maintain-a-data-classification-scheme",
       "criteria": [
         {
+          "id": "3.7-c4",
+          "text": "An overall enterprise data-classification scheme is established and maintained."
+        },
+        {
+          "id": "3.7-c5",
+          "text": "Enterprise data is classified according to the scheme."
+        },
+        {
+          "id": "3.7-c3",
+          "text": "The scheme is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "3.7-c1",
           "text": "Give information consistent sensitivity classifications."
         },
         {
           "id": "3.7-c2",
           "text": "Apply classification in handling decisions. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "3.7-c3",
-          "text": "Annual review and significant-change updates."
         }
       ]
     },
@@ -282,22 +568,38 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#38-document-data-flows",
       "criteria": [
         {
+          "id": "3.8-c4",
+          "text": "Data flows are documented, including service-provider data flows."
+        },
+        {
+          "id": "3.8-c5",
+          "text": "Flow documentation follows the enterprise data-management process."
+        },
+        {
+          "id": "3.8-c3",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "3.8-c1",
           "text": "Document internal and service-provider data flows using the enterprise data management process. Review and update the documentation annually and after significant relevant changes."
         },
         {
           "id": "3.8-c2",
           "text": "Maintain flows through service changes. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "3.8-c3",
-          "text": "Annual review and significant-change updates."
         }
       ]
     },
     "3.9": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#39-encrypt-data-on-removable-media",
       "criteria": [
+        {
+          "id": "3.9-c3",
+          "text": "Data on removable media is encrypted."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "3.9-c1",
           "text": "Protect removable-media contents with encryption."
@@ -312,6 +614,12 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#310-encrypt-sensitive-data-in-transit",
       "criteria": [
         {
+          "id": "3.10-c3",
+          "text": "Sensitive data is encrypted in transit."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "3.10-c1",
           "text": "Protect sensitive information during transfer."
         },
@@ -324,6 +632,20 @@
     "3.11": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#311-encrypt-sensitive-data-at-rest",
       "criteria": [
+        {
+          "id": "3.11-c5",
+          "text": "Sensitive data at rest is encrypted on servers."
+        },
+        {
+          "id": "3.11-c7",
+          "text": "Sensitive data at rest is encrypted in applications."
+        },
+        {
+          "id": "3.11-c8",
+          "text": "Sensitive data at rest is encrypted in databases."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "3.11-c1",
           "text": "Protect stored sensitive server/application/database information."
@@ -338,6 +660,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#312-segment-data-processing-and-storage-based-on-sensitivity",
       "criteria": [
         {
+          "id": "3.12-c5",
+          "text": "Data processing is segmented by data sensitivity."
+        },
+        {
+          "id": "3.12-c6",
+          "text": "Data storage is segmented by data sensitivity."
+        },
+        {
+          "id": "3.12-c4",
+          "text": "Sensitive data is not processed on assets intended for lower-sensitivity data."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "3.12-c1",
           "text": "Keep sensitive processing out of lower-trust environments."
         },
@@ -350,6 +686,32 @@
     "3.13": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#313-deploy-a-data-loss-prevention-solution",
       "criteria": [
+        {
+          "id": "3.13-c7",
+          "text": "An automated tool identifies all sensitive data stored through enterprise assets."
+        },
+        {
+          "id": "3.13-c8",
+          "text": "An automated tool identifies all sensitive data processed through enterprise assets."
+        },
+        {
+          "id": "3.13-c9",
+          "text": "An automated tool identifies all sensitive data transmitted through enterprise assets."
+        },
+        {
+          "id": "3.13-c10",
+          "text": "Discovery covers enterprise assets onsite."
+        },
+        {
+          "id": "3.13-c11",
+          "text": "Discovery covers enterprise assets at remote service providers."
+        },
+        {
+          "id": "3.13-c6",
+          "text": "Discovered sensitive data updates the enterprise data inventory."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "3.13-c1",
           "text": "Use automated sensitive-data discovery across enterprise and provider assets, and update the data inventory."
@@ -368,6 +730,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#314-log-sensitive-data-access",
       "criteria": [
         {
+          "id": "3.14-c4",
+          "text": "Sensitive-data access is logged."
+        },
+        {
+          "id": "3.14-c5",
+          "text": "Sensitive-data modification is logged."
+        },
+        {
+          "id": "3.14-c6",
+          "text": "Sensitive-data disposal is logged."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "3.14-c1",
           "text": "Record access to sensitive data, including changes and disposal."
         },
@@ -385,6 +761,36 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#41-establish-and-maintain-a-secure-configuration-process",
       "criteria": [
         {
+          "id": "4.1-c3",
+          "text": "A documented secure-configuration process is established and maintained for enterprise assets."
+        },
+        {
+          "id": "4.1-c7",
+          "text": "The configuration process covers end-user devices, including portable and mobile devices."
+        },
+        {
+          "id": "4.1-c8",
+          "text": "The configuration process covers non-computing/IoT devices."
+        },
+        {
+          "id": "4.1-c9",
+          "text": "The configuration process covers servers."
+        },
+        {
+          "id": "4.1-c10",
+          "text": "The configuration process covers operating systems."
+        },
+        {
+          "id": "4.1-c11",
+          "text": "The configuration process covers applications."
+        },
+        {
+          "id": "4.1-c6",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "4.1-c1",
           "text": "A documented configuration process covers endpoints, mobile, IoT, servers, operating systems and applications."
         },
@@ -397,6 +803,16 @@
     "4.2": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#42-establish-and-maintain-a-secure-configuration-process-for-network-infrastructure",
       "criteria": [
+        {
+          "id": "4.2-c3",
+          "text": "A documented secure-configuration process is established and maintained for network devices."
+        },
+        {
+          "id": "4.2-c4",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "4.2-c1",
           "text": "Network devices have a documented secure-configuration process."
@@ -411,6 +827,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#43-configure-automatic-session-locking-on-enterprise-assets",
       "criteria": [
         {
+          "id": "4.3-c2",
+          "text": "Enterprise assets automatically lock sessions after a defined inactivity period."
+        },
+        {
+          "id": "4.3-c3",
+          "text": "General-purpose operating-system inactivity limits do not exceed 15 minutes."
+        },
+        {
+          "id": "4.3-c4",
+          "text": "Mobile end-user device inactivity limits do not exceed two minutes."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "4.3-c1",
           "text": "Inactivity locks sessions within 15 minutes on general-purpose operating systems and two minutes on mobile endpoints."
         }
@@ -419,6 +849,16 @@
     "4.4": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#44-implement-and-manage-a-firewall-on-servers",
       "criteria": [
+        {
+          "id": "4.4-c2",
+          "text": "A server firewall is implemented where supported."
+        },
+        {
+          "id": "4.4-c3",
+          "text": "Server firewalls are managed where supported."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "4.4-c1",
           "text": "Server firewalls are implemented and managed wherever supported."
@@ -429,6 +869,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#45-implement-and-manage-a-firewall-on-end-user-devices",
       "criteria": [
         {
+          "id": "4.5-c2",
+          "text": "End-user devices have a managed host-based firewall or port-filtering tool."
+        },
+        {
+          "id": "4.5-c3",
+          "text": "Default-deny rules drop traffic except explicitly allowed services and ports."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "4.5-c1",
           "text": "Endpoint firewall or port filtering denies traffic except explicitly allowed services and ports."
         }
@@ -437,6 +887,20 @@
     "4.6": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#46-securely-manage-enterprise-assets-and-software",
       "criteria": [
+        {
+          "id": "4.6-c4",
+          "text": "Enterprise assets are securely managed."
+        },
+        {
+          "id": "4.6-c5",
+          "text": "Enterprise software is securely managed."
+        },
+        {
+          "id": "4.6-c3",
+          "text": "Insecure management protocols are used only when operationally essential."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "4.6-c1",
           "text": "Assets and software use secure administration; insecure management protocols are used only when operationally essential."
@@ -447,6 +911,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#47-manage-default-accounts-on-enterprise-assets-and-software",
       "criteria": [
         {
+          "id": "4.7-c2",
+          "text": "Default accounts on enterprise assets are managed."
+        },
+        {
+          "id": "4.7-c3",
+          "text": "Default accounts in enterprise software are managed."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "4.7-c1",
           "text": "Preconfigured accounts on assets and software are actively managed."
         }
@@ -455,6 +929,16 @@
     "4.8": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#48-uninstall-or-disable-unnecessary-services-on-enterprise-assets-and-software",
       "criteria": [
+        {
+          "id": "4.8-c3",
+          "text": "Unnecessary services on enterprise assets are uninstalled or disabled."
+        },
+        {
+          "id": "4.8-c4",
+          "text": "Unnecessary services in enterprise software are uninstalled or disabled."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "4.8-c1",
           "text": "Remove unnecessary exposed functionality."
@@ -468,6 +952,16 @@
     "4.9": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#49-configure-trusted-dns-servers-on-enterprise-assets",
       "criteria": [
+        {
+          "id": "4.9-c3",
+          "text": "Network infrastructure uses trusted DNS servers."
+        },
+        {
+          "id": "4.9-c4",
+          "text": "Network device DNS configuration points to trusted servers."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "4.9-c1",
           "text": "Use trustworthy infrastructure name resolution."
@@ -483,8 +977,22 @@
       "criteria": [
         {
           "id": "4.10-c1",
-          "text": "Limit repeated local authentication failures on portable devices."
+          "text": "Supported portable devices automatically lock out after predetermined local authentication failures."
         },
+        {
+          "id": "4.10-c4",
+          "text": "Laptop thresholds permit no more than 20 failed attempts."
+        },
+        {
+          "id": "4.10-c6",
+          "text": "Tablet thresholds permit no more than 10 failed attempts where supported."
+        },
+        {
+          "id": "4.10-c7",
+          "text": "Smartphone thresholds permit no more than 10 failed attempts where supported."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "4.10-c2",
           "text": "Enforce lockout thresholds. Confirm coverage and resolve unsupported or uncovered cases."
@@ -500,8 +1008,18 @@
       "criteria": [
         {
           "id": "4.11-c1",
-          "text": "Remove enterprise data remotely when appropriate."
+          "text": "Enterprise data can be remotely wiped from enterprise-owned portable end-user devices."
         },
+        {
+          "id": "4.11-c4",
+          "text": "Enterprise data is remotely wiped when deemed appropriate."
+        },
+        {
+          "id": "4.11-c5",
+          "text": "Wiping applies to the enterprise data on those devices."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "4.11-c2",
           "text": "Maintain capability; execute on approved events. Confirm coverage and resolve unsupported or uncovered cases."
@@ -517,8 +1035,18 @@
       "criteria": [
         {
           "id": "4.12-c1",
-          "text": "Separate enterprise and personal workspaces on mobile devices wherever supported."
+          "text": "Supported mobile end-user devices use separate enterprise workspaces."
         },
+        {
+          "id": "4.12-c4",
+          "text": "Enterprise applications are separated from personal applications."
+        },
+        {
+          "id": "4.12-c5",
+          "text": "Enterprise data is separated from personal data."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "4.12-c2",
           "text": "Establish the supported mobile population, examine assigned profiles and confirm enterprise applications/data are separated from personal use. Record unsupported-device conditions without treating the whole safeguard as excluded."
@@ -532,6 +1060,44 @@
     "5.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#51-establish-and-maintain-an-inventory-of-accounts",
       "criteria": [
+        {
+          "id": "5.1-c8",
+          "text": "The maintained account inventory covers all enterprise-managed user accounts."
+        },
+        {
+          "id": "5.1-c9",
+          "text": "The maintained account inventory covers all enterprise-managed administrator accounts."
+        },
+        {
+          "id": "5.1-c10",
+          "text": "The maintained account inventory covers all enterprise-managed service accounts."
+        },
+        {
+          "id": "5.1-c11",
+          "text": "Records contain person name."
+        },
+        {
+          "id": "5.1-c12",
+          "text": "Records contain username."
+        },
+        {
+          "id": "5.1-c13",
+          "text": "Records contain start dates."
+        },
+        {
+          "id": "5.1-c14",
+          "text": "Records contain stop dates."
+        },
+        {
+          "id": "5.1-c15",
+          "text": "Records contain department."
+        },
+        {
+          "id": "5.1-c7",
+          "text": "All active accounts are validated as authorized at least quarterly."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "5.1-c1",
           "text": "Inventory includes user, administrator and service accounts."
@@ -581,16 +1147,34 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#55-establish-and-maintain-an-inventory-of-service-accounts",
       "criteria": [
         {
+          "id": "5.5-c5",
+          "text": "An inventory of service accounts is established and maintained."
+        },
+        {
+          "id": "5.5-c8",
+          "text": "Records identify department owner."
+        },
+        {
+          "id": "5.5-c10",
+          "text": "Records include review date."
+        },
+        {
+          "id": "5.5-c11",
+          "text": "Records include purpose."
+        },
+        {
+          "id": "5.5-c3",
+          "text": "Reviews validate authorization of all active service accounts at least quarterly."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "5.5-c1",
           "text": "Keep service-account purpose and ownership accountable."
         },
         {
           "id": "5.5-c2",
           "text": "Maintain inventory through account changes. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "5.5-c3",
-          "text": "Authorization review at least quarterly."
         },
         {
           "id": "5.5-c4",
@@ -601,6 +1185,16 @@
     "5.6": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#56-centralize-account-management",
       "criteria": [
+        {
+          "id": "5.6-c3",
+          "text": "Account management is centralized through a directory or identity service."
+        },
+        {
+          "id": "5.6-c4",
+          "text": "The directory or identity service manages enterprise accounts centrally."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "5.6-c1",
           "text": "Consolidate account administration."
@@ -614,6 +1208,20 @@
     "6.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#61-establish-an-access-granting-process",
       "criteria": [
+        {
+          "id": "6.1-c2",
+          "text": "A documented access-granting process is established."
+        },
+        {
+          "id": "6.1-c4",
+          "text": "The documented access-granting process is followed upon new hire."
+        },
+        {
+          "id": "6.1-c5",
+          "text": "The documented access-granting process is followed upon user role change."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "6.1-c1",
           "text": "A documented access-granting process is followed for new hires and role changes."
@@ -637,6 +1245,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#63-require-mfa-for-externally-exposed-applications",
       "criteria": [
         {
+          "id": "6.3-c2",
+          "text": "All externally exposed enterprise applications enforce MFA where supported."
+        },
+        {
+          "id": "6.3-c3",
+          "text": "All externally exposed third-party applications enforce MFA where supported."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "6.3-c1",
           "text": "External enterprise and third-party applications enforce MFA wherever supported, directly or through SSO."
         }
@@ -655,6 +1273,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#65-require-mfa-for-administrative-access",
       "criteria": [
         {
+          "id": "6.5-c2",
+          "text": "All administrative access accounts enforce MFA where supported."
+        },
+        {
+          "id": "6.5-c4",
+          "text": "MFA covers administrative access on onsite enterprise assets where supported."
+        },
+        {
+          "id": "6.5-c5",
+          "text": "MFA covers administrative access on service-provider-managed enterprise assets where supported."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "6.5-c1",
           "text": "Administrative accounts require MFA wherever supported, including on-site and provider-managed assets."
         }
@@ -664,16 +1296,34 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#66-establish-and-maintain-an-inventory-of-authentication-and-authorization-systems",
       "criteria": [
         {
-          "id": "6.6-c1",
-          "text": "Identify all authentication/authorization systems."
+          "id": "6.6-c5",
+          "text": "The maintained inventory identifies enterprise authentication systems."
         },
+        {
+          "id": "6.6-c6",
+          "text": "The maintained inventory identifies enterprise authorization systems."
+        },
+        {
+          "id": "6.6-c7",
+          "text": "The system inventory includes onsite systems."
+        },
+        {
+          "id": "6.6-c8",
+          "text": "The system inventory includes systems at remote service providers."
+        },
+        {
+          "id": "6.6-c3",
+          "text": "Inventory is reviewed and updated at least annually."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "6.6-c2",
           "text": "Maintain system inventory. Confirm coverage and resolve unsupported or uncovered cases."
         },
         {
-          "id": "6.6-c3",
-          "text": "Review/update at least annually."
+          "id": "6.6-c1",
+          "text": "Identify all authentication/authorization systems."
         }
       ]
     },
@@ -682,8 +1332,14 @@
       "criteria": [
         {
           "id": "6.7-c1",
-          "text": "Consolidate supported access enforcement."
+          "text": "Access control for enterprise assets is centralized where supported."
         },
+        {
+          "id": "6.7-c3",
+          "text": "Centralized access control uses a directory service or SSO provider."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "6.7-c2",
           "text": "Operate centralized access control. Confirm coverage and resolve unsupported or uncovered cases."
@@ -693,6 +1349,20 @@
     "6.8": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#68-define-and-maintain-role-based-access-control",
       "criteria": [
+        {
+          "id": "6.8-c4",
+          "text": "Role-based access control is defined and maintained."
+        },
+        {
+          "id": "6.8-c5",
+          "text": "Necessary access rights for each role are determined and documented."
+        },
+        {
+          "id": "6.8-c6",
+          "text": "Reviews validate authorization of all enterprise-asset privileges at least annually."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "6.8-c1",
           "text": "Document necessary rights by role; review asset privileges for authorization at least annually."
@@ -737,6 +1407,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#73-perform-automated-operating-system-patch-management",
       "criteria": [
         {
+          "id": "7.3-c2",
+          "text": "Automated patch management applies operating-system updates to enterprise assets."
+        },
+        {
+          "id": "7.3-c3",
+          "text": "Operating-system updates are performed at least monthly."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "7.3-c1",
           "text": "Automated patch management applies operating-system updates at least monthly."
         }
@@ -746,6 +1426,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#74-perform-automated-application-patch-management",
       "criteria": [
         {
+          "id": "7.4-c2",
+          "text": "Automated patch management applies application updates to enterprise assets."
+        },
+        {
+          "id": "7.4-c3",
+          "text": "Application updates are performed at least monthly."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "7.4-c1",
           "text": "Automated patch management applies application updates at least monthly."
         }
@@ -754,6 +1444,24 @@
     "7.5": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#75-perform-automated-vulnerability-scans-of-internal-enterprise-assets",
       "criteria": [
+        {
+          "id": "7.5-c4",
+          "text": "Automated vulnerability scans cover internal enterprise assets."
+        },
+        {
+          "id": "7.5-c7",
+          "text": "Authenticated internal vulnerability scans are conducted."
+        },
+        {
+          "id": "7.5-c8",
+          "text": "Unauthenticated internal vulnerability scans are conducted."
+        },
+        {
+          "id": "7.5-c6",
+          "text": "Scans occur at least quarterly."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "7.5-c1",
           "text": "Find internal vulnerabilities with both scan perspectives."
@@ -772,16 +1480,26 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#76-perform-automated-vulnerability-scans-of-externally-exposed-enterprise-assets",
       "criteria": [
         {
+          "id": "7.6-c4",
+          "text": "Automated vulnerability scans cover externally exposed enterprise assets."
+        },
+        {
+          "id": "7.6-c5",
+          "text": "Externally exposed assets undergo vulnerability scanning."
+        },
+        {
+          "id": "7.6-c3",
+          "text": "Scans occur at least monthly."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "7.6-c1",
           "text": "Find weaknesses in externally exposed assets."
         },
         {
           "id": "7.6-c2",
           "text": "Run external scans and route results. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "7.6-c3",
-          "text": "At least monthly."
         }
       ]
     },
@@ -789,22 +1507,54 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#77-remediate-detected-vulnerabilities",
       "criteria": [
         {
+          "id": "7.7-c4",
+          "text": "Detected software vulnerabilities are remediated using processes and tooling."
+        },
+        {
+          "id": "7.7-c5",
+          "text": "Remediation follows the enterprise remediation process."
+        },
+        {
+          "id": "7.7-c3",
+          "text": "Remediation occurs at least monthly."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "7.7-c1",
           "text": "Resolve detected software weaknesses systematically."
         },
         {
           "id": "7.7-c2",
           "text": "Remediate and validate outcomes. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "7.7-c3",
-          "text": "Remediation at least monthly, following the remediation process."
         }
       ]
     },
     "8.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#81-establish-and-maintain-an-audit-log-management-process",
       "criteria": [
+        {
+          "id": "8.1-c3",
+          "text": "A documented audit-log management process defines enterprise logging requirements."
+        },
+        {
+          "id": "8.1-c4",
+          "text": "The process addresses collection of enterprise-asset audit logs."
+        },
+        {
+          "id": "8.1-c7",
+          "text": "The process addresses review of audit logs."
+        },
+        {
+          "id": "8.1-c8",
+          "text": "The process addresses retention of audit logs."
+        },
+        {
+          "id": "8.1-c6",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "8.1-c1",
           "text": "A documented logging process covers collection, review and retention for enterprise assets."
@@ -837,6 +1587,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#84-standardize-time-synchronization",
       "criteria": [
         {
+          "id": "8.4-c3",
+          "text": "Time synchronization is standardized across enterprise assets where supported."
+        },
+        {
+          "id": "8.4-c4",
+          "text": "At least two synchronized time sources are configured where supported."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "8.4-c1",
           "text": "Make event times comparable."
         },
@@ -851,8 +1611,38 @@
       "criteria": [
         {
           "id": "8.5-c1",
-          "text": "Configure detailed audit logs on enterprise assets containing sensitive data."
+          "text": "Detailed audit logging is configured on enterprise assets containing sensitive data."
         },
+        {
+          "id": "8.5-c10",
+          "text": "Logs include event source."
+        },
+        {
+          "id": "8.5-c11",
+          "text": "Logs include date."
+        },
+        {
+          "id": "8.5-c12",
+          "text": "Logs include username."
+        },
+        {
+          "id": "8.5-c13",
+          "text": "Logs include timestamp."
+        },
+        {
+          "id": "8.5-c14",
+          "text": "Logs include source addresses."
+        },
+        {
+          "id": "8.5-c15",
+          "text": "Logs include destination addresses."
+        },
+        {
+          "id": "8.5-c9",
+          "text": "Logs include other useful elements for forensic investigation."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "8.5-c2",
           "text": "Confirm actual logging coverage and resolve missing fields or uncovered assets."
@@ -867,6 +1657,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#86-collect-dns-query-audit-logs",
       "criteria": [
         {
+          "id": "8.6-c3",
+          "text": "DNS query audit logs are collected on enterprise assets where appropriate."
+        },
+        {
+          "id": "8.6-c4",
+          "text": "Collection applies where DNS query logging is supported."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "8.6-c1",
           "text": "Preserve relevant DNS-query observations."
         },
@@ -879,6 +1679,16 @@
     "8.7": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#87-collect-url-request-audit-logs",
       "criteria": [
+        {
+          "id": "8.7-c3",
+          "text": "URL request audit logs are collected on enterprise assets where appropriate."
+        },
+        {
+          "id": "8.7-c4",
+          "text": "Collection applies where URL request logging is supported."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "8.7-c1",
           "text": "Preserve relevant web-request observations."
@@ -893,6 +1703,12 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#88-collect-command-line-audit-logs",
       "criteria": [
         {
+          "id": "8.8-c3",
+          "text": "Command-line audit logs are collected."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "8.8-c1",
           "text": "Make command execution traceable."
         },
@@ -906,6 +1722,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#89-centralize-audit-logs",
       "criteria": [
         {
+          "id": "8.9-c5",
+          "text": "Audit-log collection is centralized to the extent possible across enterprise assets."
+        },
+        {
+          "id": "8.9-c6",
+          "text": "Audit-log retention is centralized to the extent possible across enterprise assets."
+        },
+        {
+          "id": "8.9-c4",
+          "text": "Centralized collection and retention follow the documented audit-log management process."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "8.9-c1",
           "text": "Make logs jointly accessible for investigation."
         },
@@ -918,6 +1748,12 @@
     "8.10": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#810-retain-audit-logs",
       "criteria": [
+        {
+          "id": "8.10-c6",
+          "text": "Audit logs are retained across enterprise assets for at least 90 days."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "8.10-c1",
           "text": "Keep adequate historical audit events."
@@ -936,16 +1772,26 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#811-conduct-audit-log-reviews",
       "criteria": [
         {
+          "id": "8.11-c4",
+          "text": "Audit logs are reviewed for anomalies or abnormal events indicating potential threats."
+        },
+        {
+          "id": "8.11-c5",
+          "text": "Review examines logs for potential threat indications."
+        },
+        {
+          "id": "8.11-c3",
+          "text": "Reviews occur at least weekly."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "8.11-c1",
           "text": "Detect suspicious behavior through log examination."
         },
         {
           "id": "8.11-c2",
           "text": "Review logs and investigate anomalies. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "8.11-c3",
-          "text": "At least weekly."
         }
       ]
     },
@@ -954,8 +1800,10 @@
       "criteria": [
         {
           "id": "8.12-c1",
-          "text": "Obtain service-provider logs wherever the provider supports them."
-        },
+          "text": "Service-provider logs are collected where supported."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "8.12-c2",
           "text": "Match the provider inventory to available log interfaces and actual received records. Distinguish unavailable provider functionality from supported logging that has not been configured."
@@ -970,6 +1818,24 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#91-ensure-use-of-only-fully-supported-browsers-and-email-clients",
       "criteria": [
         {
+          "id": "9.1-c4",
+          "text": "Only fully supported browsers are allowed to execute."
+        },
+        {
+          "id": "9.1-c5",
+          "text": "Only fully supported email clients are allowed to execute."
+        },
+        {
+          "id": "9.1-c6",
+          "text": "Browsers use the latest versions provided by their vendors."
+        },
+        {
+          "id": "9.1-c7",
+          "text": "Email clients use the latest versions provided by their vendors."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "9.1-c1",
           "text": "Only fully supported browsers and email clients can execute, using the vendor's latest version."
         }
@@ -979,6 +1845,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#92-use-dns-filtering-services",
       "criteria": [
         {
+          "id": "9.2-c2",
+          "text": "DNS filtering blocks known malicious domains on all onsite end-user devices."
+        },
+        {
+          "id": "9.2-c3",
+          "text": "DNS filtering blocks known malicious domains on all remote end-user devices."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "9.2-c1",
           "text": "DNS filtering blocks known malicious domains on all local and remote endpoints."
         }
@@ -987,6 +1863,16 @@
     "9.3": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#93-maintain-and-enforce-network-based-url-filters",
       "criteria": [
+        {
+          "id": "9.3-c3",
+          "text": "Network-based URL filters limit connections to potentially malicious or unapproved websites."
+        },
+        {
+          "id": "9.3-c4",
+          "text": "URL filters are enforced and updated for all enterprise assets."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "9.3-c1",
           "text": "Limit risky web destinations through network controls."
@@ -1002,8 +1888,14 @@
       "criteria": [
         {
           "id": "9.4-c1",
-          "text": "Cover browser and email-client plugins, extensions and add-on applications; identify unauthorized or unnecessary items."
+          "text": "Browser and email-client plugins, extensions and add-on applications are covered."
         },
+        {
+          "id": "9.4-c3",
+          "text": "Unauthorized or unnecessary items are uninstalled or disabled."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "9.4-c2",
           "text": "Uninstall or disable those items. Confirm actual treatment and resolve uncovered cases; permission restrictions alone do not demonstrate uninstalling or disabling."
@@ -1013,6 +1905,24 @@
     "9.5": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#95-implement-dmarc",
       "criteria": [
+        {
+          "id": "9.5-c7",
+          "text": "DMARC policy is implemented."
+        },
+        {
+          "id": "9.5-c8",
+          "text": "DMARC verification is implemented."
+        },
+        {
+          "id": "9.5-c5",
+          "text": "SPF is implemented as part of the starting point."
+        },
+        {
+          "id": "9.5-c6",
+          "text": "DKIM is implemented as part of the starting point."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "9.5-c1",
           "text": "Authenticate domain email to reduce spoofing."
@@ -1026,6 +1936,12 @@
     "9.6": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#96-block-unnecessary-file-types",
       "criteria": [
+        {
+          "id": "9.6-c3",
+          "text": "Unnecessary file types are blocked at the enterprise email gateway."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "9.6-c1",
           "text": "Prevent unwanted email attachment types entering."
@@ -1041,8 +1957,14 @@
       "criteria": [
         {
           "id": "9.7-c1",
-          "text": "Operate and maintain anti-malware protection for email servers."
+          "text": "Anti-malware protection is deployed on email servers."
         },
+        {
+          "id": "9.7-c4",
+          "text": "Email-server anti-malware protection is maintained."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "9.7-c2",
           "text": "Include hosted email responsibility arrangements. Inspect enabled protection and existing detection/blocking results; distinguish mail-client protection from coverage of the email service."
@@ -1056,6 +1978,16 @@
     "10.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#101-deploy-and-maintain-anti-malware-software",
       "criteria": [
+        {
+          "id": "10.1-c2",
+          "text": "Anti-malware software is deployed on all enterprise assets."
+        },
+        {
+          "id": "10.1-c3",
+          "text": "Anti-malware software is maintained on all enterprise assets."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "10.1-c1",
           "text": "Anti-malware is deployed and maintained across all enterprise assets."
@@ -1075,6 +2007,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#103-disable-autorun-and-autoplay-for-removable-media",
       "criteria": [
         {
+          "id": "10.3-c2",
+          "text": "Removable-media autorun execution is disabled."
+        },
+        {
+          "id": "10.3-c3",
+          "text": "Removable-media autoplay execution is disabled."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "10.3-c1",
           "text": "Removable-media autorun and autoplay execution are disabled."
         }
@@ -1083,6 +2025,12 @@
     "10.4": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#104-configure-automatic-anti-malware-scanning-of-removable-media",
       "criteria": [
+        {
+          "id": "10.4-c7",
+          "text": "Anti-malware software automatically scans removable media."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "10.4-c1",
           "text": "Inspect removable media automatically."
@@ -1101,6 +2049,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#105-enable-anti-exploitation-features",
       "criteria": [
         {
+          "id": "10.5-c3",
+          "text": "Anti-exploitation features are enabled on enterprise assets where possible."
+        },
+        {
+          "id": "10.5-c4",
+          "text": "Anti-exploitation features are enabled in enterprise software where possible."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "10.5-c1",
           "text": "Use available exploitation resistance."
         },
@@ -1113,6 +2071,12 @@
     "10.6": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#106-centrally-manage-anti-malware-software",
       "criteria": [
+        {
+          "id": "10.6-c3",
+          "text": "Anti-malware software is centrally managed."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "10.6-c1",
           "text": "Coordinate malware protection centrally."
@@ -1127,6 +2091,12 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#107-use-behavior-based-anti-malware-software",
       "criteria": [
         {
+          "id": "10.7-c3",
+          "text": "Behavior-based anti-malware software is used."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "10.7-c1",
           "text": "Detect malware by behavior."
         },
@@ -1140,6 +2110,28 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#111-establish-and-maintain-a-data-recovery-process",
       "criteria": [
         {
+          "id": "11.1-c3",
+          "text": "A documented data-recovery process is established and maintained."
+        },
+        {
+          "id": "11.1-c4",
+          "text": "The process addresses the scope of recovery activities."
+        },
+        {
+          "id": "11.1-c5",
+          "text": "The process addresses recovery prioritization."
+        },
+        {
+          "id": "11.1-c6",
+          "text": "The process addresses backup-data security."
+        },
+        {
+          "id": "11.1-c7",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "11.1-c1",
           "text": "A documented data recovery process addresses recovery scope, prioritization and the security of backup data."
         },
@@ -1152,6 +2144,16 @@
     "11.2": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#112-perform-automated-backups",
       "criteria": [
+        {
+          "id": "11.2-c2",
+          "text": "In-scope enterprise assets are backed up automatically."
+        },
+        {
+          "id": "11.2-c3",
+          "text": "Backups run at least weekly, or more frequently based on data sensitivity."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "11.2-c1",
           "text": "In-scope assets are backed up automatically at least weekly, more often where sensitivity requires."
@@ -1180,16 +2182,26 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#115-test-data-recovery",
       "criteria": [
         {
+          "id": "11.5-c4",
+          "text": "Backup recovery is tested."
+        },
+        {
+          "id": "11.5-c5",
+          "text": "Testing samples in-scope enterprise assets."
+        },
+        {
+          "id": "11.5-c3",
+          "text": "Recovery tests occur at least quarterly."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "11.5-c1",
           "text": "Demonstrate sampled recovery actually works."
         },
         {
           "id": "11.5-c2",
           "text": "Execute restore tests and resolve failures. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "11.5-c3",
-          "text": "At least quarterly recovery tests."
         }
       ]
     },
@@ -1210,6 +2222,24 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#122-establish-and-maintain-a-secure-network-architecture",
       "criteria": [
         {
+          "id": "12.2-c3",
+          "text": "Secure network architecture is designed and maintained."
+        },
+        {
+          "id": "12.2-c5",
+          "text": "Architecture addresses segmentation."
+        },
+        {
+          "id": "12.2-c6",
+          "text": "Architecture addresses least privilege."
+        },
+        {
+          "id": "12.2-c7",
+          "text": "Architecture addresses availability."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "12.2-c1",
           "text": "Design and maintain secure network architecture addressing segmentation, least privilege and availability. Documentation supports the architecture but does not replace policy and design components."
         },
@@ -1222,6 +2252,12 @@
     "12.3": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#123-securely-manage-network-infrastructure",
       "criteria": [
+        {
+          "id": "12.3-c3",
+          "text": "Network infrastructure is securely managed."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "12.3-c1",
           "text": "Protect network administration."
@@ -1236,22 +2272,46 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#124-establish-and-maintain-architecture-diagrams",
       "criteria": [
         {
+          "id": "12.4-c4",
+          "text": "Architecture diagrams or other network system documentation are established and maintained."
+        },
+        {
+          "id": "12.4-c5",
+          "text": "Documentation describes the network architecture or systems."
+        },
+        {
+          "id": "12.4-c3",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "12.4-c1",
           "text": "Keep network architecture understandable and current."
         },
         {
           "id": "12.4-c2",
           "text": "Maintain documentation with network changes. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "12.4-c3",
-          "text": "Annual review and significant-change updates."
         }
       ]
     },
     "12.5": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#125-centralize-network-authentication-authorization-and-aucentralize-network-aaa",
       "criteria": [
+        {
+          "id": "12.5-c5",
+          "text": "Network authentication is centralized."
+        },
+        {
+          "id": "12.5-c6",
+          "text": "Network authorization is centralized."
+        },
+        {
+          "id": "12.5-c7",
+          "text": "Network auditing is centralized."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "12.5-c1",
           "text": "Consolidate network identity, permissions and audit."
@@ -1266,6 +2326,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#126-use-of-secure-network-management-and-communication-protocols",
       "criteria": [
         {
+          "id": "12.6-c3",
+          "text": "Secure network management protocols are used."
+        },
+        {
+          "id": "12.6-c4",
+          "text": "Secure network communication protocols are used."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "12.6-c1",
           "text": "Protect network management and communications."
         },
@@ -1279,22 +2349,50 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#127-ensure-remote-devices-utilize-a-vpn-and-are-connecting-to-an-enterprises-aaa-infrastructure",
       "criteria": [
         {
+          "id": "12.7-c6",
+          "text": "Users authenticate to enterprise-managed VPN services."
+        },
+        {
+          "id": "12.7-c7",
+          "text": "Users authenticate to enterprise-managed authentication services."
+        },
+        {
+          "id": "12.7-c5",
+          "text": "Authentication covers access to enterprise resources on end-user devices."
+        },
+        {
+          "id": "12.7-c3",
+          "text": "Authentication occurs before resource access."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "12.7-c1",
           "text": "Require users to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices."
         },
         {
           "id": "12.7-c2",
           "text": "Require VPN and authentication before resource access. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "12.7-c3",
-          "text": "Before accessing enterprise resources."
         }
       ]
     },
     "12.8": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#128-establish-and-maintain-dedicated-computing-resources-for-all-administrative-work",
       "criteria": [
+        {
+          "id": "12.8-c4",
+          "text": "Dedicated physically or logically separated computing resources cover all administrative tasks."
+        },
+        {
+          "id": "12.8-c5",
+          "text": "Administrative computing resources are segmented from the primary network."
+        },
+        {
+          "id": "12.8-c6",
+          "text": "Administrative computing resources are not allowed internet access."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "12.8-c1",
           "text": "Use physically or logically dedicated administrative computing resources, segmented from the primary network and without internet access."
@@ -1313,6 +2411,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#131-centralize-security-event-alerting",
       "criteria": [
         {
+          "id": "13.1-c3",
+          "text": "Security-event alerting is centralized across enterprise assets."
+        },
+        {
+          "id": "13.1-c4",
+          "text": "Centralized alerting supports log correlation and analysis."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "13.1-c1",
           "text": "Correlate security events into actionable alerts."
         },
@@ -1325,6 +2433,16 @@
     "13.2": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#132-deploy-a-host-based-intrusion-detection-solution",
       "criteria": [
+        {
+          "id": "13.2-c3",
+          "text": "Host-based intrusion detection is deployed on enterprise assets."
+        },
+        {
+          "id": "13.2-c4",
+          "text": "Deployment applies where appropriate and/or supported."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "13.2-c1",
           "text": "Detect intrusions on supported/appropriate hosts."
@@ -1339,6 +2457,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#133-deploy-a-network-intrusion-detection-solution",
       "criteria": [
         {
+          "id": "13.3-c3",
+          "text": "Network intrusion detection is deployed on enterprise assets."
+        },
+        {
+          "id": "13.3-c4",
+          "text": "Deployment applies where appropriate."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "13.3-c1",
           "text": "Detect network intrusions where appropriate."
         },
@@ -1352,6 +2480,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#134-perform-traffic-filtering-between-network-segments",
       "criteria": [
         {
+          "id": "13.4-c3",
+          "text": "Traffic is filtered between network segments."
+        },
+        {
+          "id": "13.4-c4",
+          "text": "Filtering applies where appropriate."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "13.4-c1",
           "text": "Control traffic crossing network boundaries."
         },
@@ -1364,6 +2502,28 @@
     "13.5": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#135-manage-access-control-for-remote-assets",
       "criteria": [
+        {
+          "id": "13.5-c4",
+          "text": "Remote-asset access is controlled according to asset security posture."
+        },
+        {
+          "id": "13.5-c7",
+          "text": "Access considers whether installed anti-malware is up to date."
+        },
+        {
+          "id": "13.5-c8",
+          "text": "Access considers compliance with the enterprise secure-configuration process."
+        },
+        {
+          "id": "13.5-c10",
+          "text": "Access considers whether operating systems are up to date."
+        },
+        {
+          "id": "13.5-c11",
+          "text": "Access considers whether applications are up to date."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "13.5-c1",
           "text": "Condition remote access on asset security posture."
@@ -1382,6 +2542,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#136-collect-network-traffic-flow-logs",
       "criteria": [
         {
+          "id": "13.6-c3",
+          "text": "Network traffic flow logs or network traffic are collected from network devices."
+        },
+        {
+          "id": "13.6-c4",
+          "text": "Collected traffic information supports review and alerting."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "13.6-c1",
           "text": "Make network flows available for review/alerts."
         },
@@ -1394,6 +2564,20 @@
     "13.7": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#137-deploy-a-host-based-intrusion-prevention-solution",
       "criteria": [
+        {
+          "id": "13.7-c4",
+          "text": "Host-based intrusion prevention is deployed on enterprise assets."
+        },
+        {
+          "id": "13.7-c5",
+          "text": "Deployment applies where appropriate and/or supported."
+        },
+        {
+          "id": "13.7-c6",
+          "text": "The solution provides intrusion prevention, rather than detection alone."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "13.7-c1",
           "text": "Provide host intrusion prevention where appropriate and/or supported."
@@ -1412,6 +2596,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#138-deploy-a-network-intrusion-prevention-solutions",
       "criteria": [
         {
+          "id": "13.8-c4",
+          "text": "Network intrusion prevention is deployed."
+        },
+        {
+          "id": "13.8-c5",
+          "text": "Deployment applies where appropriate."
+        },
+        {
+          "id": "13.8-c6",
+          "text": "The solution provides network intrusion prevention."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "13.8-c1",
           "text": "Provide network intrusion prevention where appropriate."
         },
@@ -1428,6 +2626,20 @@
     "13.9": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#139-deploy-port-level-access-control",
       "criteria": [
+        {
+          "id": "13.9-c4",
+          "text": "Port-level access control is deployed."
+        },
+        {
+          "id": "13.9-c5",
+          "text": "Access control uses 802.1X or similar network access control protocols."
+        },
+        {
+          "id": "13.9-c6",
+          "text": "Network access is controlled at the port level."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "13.9-c1",
           "text": "Enforce port-level network access using 802.1X or a similar authentication-based approach."
@@ -1447,8 +2659,10 @@
       "criteria": [
         {
           "id": "13.10-c1",
-          "text": "Filter network traffic at the application layer."
-        },
+          "text": "Application-layer filtering is performed."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "13.10-c2",
           "text": "Identify application-aware filtering points, relevant traffic paths and enabled policies. Review a representative permitted and blocked application request from existing records."
@@ -1462,6 +2676,12 @@
     "13.11": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1311-tune-security-event-alerting-thresholds",
       "criteria": [
+        {
+          "id": "13.11-c7",
+          "text": "Security-event alerting thresholds are tuned at least monthly."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "13.11-c1",
           "text": "Adjust security-event alert thresholds at least monthly."
@@ -1481,8 +2701,18 @@
       "criteria": [
         {
           "id": "14.1-c1",
-          "text": "An awareness program teaches safe use of assets and data."
+          "text": "A maintained security-awareness program teaches secure use of enterprise assets and data."
         },
+        {
+          "id": "14.1-c3",
+          "text": "Training occurs at hire and at least annually."
+        },
+        {
+          "id": "14.1-c4",
+          "text": "Content is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "14.1-c2",
           "text": "Training occurs at hire and annually; content is reviewed annually and after relevant significant changes."
@@ -1511,6 +2741,36 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#144-train-workforce-on-data-handling-best-practices",
       "criteria": [
         {
+          "id": "14.4-c4",
+          "text": "Training covers identifying sensitive data."
+        },
+        {
+          "id": "14.4-c7",
+          "text": "Training covers proper sensitive-data storage."
+        },
+        {
+          "id": "14.4-c8",
+          "text": "Training covers proper sensitive-data transfer."
+        },
+        {
+          "id": "14.4-c9",
+          "text": "Training covers proper sensitive-data archiving."
+        },
+        {
+          "id": "14.4-c10",
+          "text": "Training covers proper sensitive-data destruction."
+        },
+        {
+          "id": "14.4-c11",
+          "text": "Training covers clear-screen best practices."
+        },
+        {
+          "id": "14.4-c12",
+          "text": "Training covers clear-desk best practices."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "14.4-c1",
           "text": "Training covers sensitive-data identification, storage, transfer, archiving and destruction, plus clear-screen and clear-desk practices."
         }
@@ -1529,6 +2789,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#146-train-workforce-members-on-recognizing-and-reporting-security-incidents",
       "criteria": [
         {
+          "id": "14.6-c2",
+          "text": "Training teaches recognition of potential incidents."
+        },
+        {
+          "id": "14.6-c3",
+          "text": "Training teaches how to report potential incidents."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "14.6-c1",
           "text": "Training teaches recognition and reporting of potential incidents."
         }
@@ -1537,6 +2807,16 @@
     "14.7": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#147-train-workforce-on-how-to-identify-and-report-if-their-enterprise-assets-are-missing-security-updates",
       "criteria": [
+        {
+          "id": "14.7-c2",
+          "text": "Training teaches how to verify and report out-of-date patches."
+        },
+        {
+          "id": "14.7-c3",
+          "text": "Training teaches how to verify and report automated-process and tool failures, including notifying IT."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "14.7-c1",
           "text": "Training covers detecting outdated patches and reporting automation or tool failures to IT."
@@ -1547,6 +2827,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#148-train-workforce-on-the-dangers-of-connecting-to-and-transmitting-enterprise-data-over-insecure-networks",
       "criteria": [
         {
+          "id": "14.8-c2",
+          "text": "Training covers insecure-network connection and transmission risks for enterprise activities."
+        },
+        {
+          "id": "14.8-c3",
+          "text": "Where remote workers exist, training teaches secure configuration of home network infrastructure."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "14.8-c1",
           "text": "Training covers insecure-network risks and secure home-network configuration for remote workers."
         }
@@ -1555,6 +2845,16 @@
     "14.9": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#149-conduct-role-specific-security-awareness-and-skills-training",
       "criteria": [
+        {
+          "id": "14.9-c4",
+          "text": "Role-specific security awareness training is conducted."
+        },
+        {
+          "id": "14.9-c5",
+          "text": "Role-specific security skills training is conducted."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "14.9-c1",
           "text": "Prepare people for their security-specific duties."
@@ -1573,6 +2873,24 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#151-establish-and-maintain-an-inventory-of-service-providers",
       "criteria": [
         {
+          "id": "15.1-c3",
+          "text": "An inventory covers all known service providers."
+        },
+        {
+          "id": "15.1-c4",
+          "text": "Records include classifications."
+        },
+        {
+          "id": "15.1-c5",
+          "text": "Each provider has a designated enterprise contact."
+        },
+        {
+          "id": "15.1-c6",
+          "text": "Inventory is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "15.1-c1",
           "text": "Provider inventory includes all known providers, classifications and internal contacts."
         },
@@ -1586,16 +2904,42 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#152-establish-and-maintain-a-service-provider-management-policy",
       "criteria": [
         {
+          "id": "15.2-c5",
+          "text": "A service-provider management policy is established and maintained."
+        },
+        {
+          "id": "15.2-c11",
+          "text": "The policy addresses provider classification."
+        },
+        {
+          "id": "15.2-c12",
+          "text": "The policy addresses provider inventory."
+        },
+        {
+          "id": "15.2-c9",
+          "text": "The policy addresses provider assessment."
+        },
+        {
+          "id": "15.2-c13",
+          "text": "The policy addresses provider monitoring."
+        },
+        {
+          "id": "15.2-c14",
+          "text": "The policy addresses provider decommissioning."
+        },
+        {
+          "id": "15.2-c3",
+          "text": "The policy is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "15.2-c1",
           "text": "Govern the provider lifecycle consistently."
         },
         {
           "id": "15.2-c2",
           "text": "Follow the approved provider policy. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "15.2-c3",
-          "text": "Annual review and significant-change updates."
         },
         {
           "id": "15.2-c4",
@@ -1607,16 +2951,26 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#153-classify-service-providers",
       "criteria": [
         {
+          "id": "15.3-c4",
+          "text": "Service providers are classified."
+        },
+        {
+          "id": "15.3-c5",
+          "text": "Classifications are updated and reviewed."
+        },
+        {
+          "id": "15.3-c3",
+          "text": "Review and updates occur annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "15.3-c1",
           "text": "Prioritize providers by relevant exposure."
         },
         {
           "id": "15.3-c2",
           "text": "Classify providers and update changes. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "15.3-c3",
-          "text": "Annual review and significant-change updates."
         }
       ]
     },
@@ -1624,22 +2978,42 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#154-ensure-service-provider-contracts-include-security-requirements",
       "criteria": [
         {
+          "id": "15.4-c4",
+          "text": "Service-provider contracts include security requirements."
+        },
+        {
+          "id": "15.4-c5",
+          "text": "Contract requirements are consistent with the service-provider management policy."
+        },
+        {
+          "id": "15.4-c3",
+          "text": "Contracts are reviewed annually for missing security requirements."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "15.4-c1",
           "text": "Include security requirements in provider contracts consistent with the enterprise service provider management policy. Review contracts annually for missing requirements."
         },
         {
           "id": "15.4-c2",
           "text": "Maintain contractual security commitments. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "15.4-c3",
-          "text": "Review contracts at least annually."
         }
       ]
     },
     "15.5": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#155-assess-service-providers",
       "criteria": [
+        {
+          "id": "15.5-c4",
+          "text": "Service providers are assessed consistently with the provider-management policy."
+        },
+        {
+          "id": "15.5-c6",
+          "text": "Providers are reassessed annually at minimum, or with new and renewed contracts."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "15.5-c1",
           "text": "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts."
@@ -1658,9 +3032,11 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#156-monitor-service-providers",
       "criteria": [
         {
-          "id": "15.6-c1",
-          "text": "Monitor providers according to the enterprise provider-management policy."
-        },
+          "id": "15.6-c6",
+          "text": "Service providers are monitored according to the enterprise provider-management policy."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "15.6-c2",
           "text": "Identify the promised monitoring for each provider class and compare it with actual results and escalation. Review policy-defined timing without relabeling it as a CIS universal frequency."
@@ -1668,6 +3044,10 @@
         {
           "id": "15.6-c3",
           "text": "No fixed CIS interval. Follow the monitoring arrangements defined by the enterprise policy."
+        },
+        {
+          "id": "15.6-c1",
+          "text": "Monitor providers according to the enterprise provider-management policy."
         }
       ]
     },
@@ -1675,9 +3055,11 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#157-securely-decommission-service-providers",
       "criteria": [
         {
-          "id": "15.7-c1",
+          "id": "15.7-c6",
           "text": "End provider relationships securely."
-        },
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "15.7-c2",
           "text": "For a terminated provider, follow the relevant access, data-flow and data-disposition decisions through completion. If there were no terminations, examine readiness and record that operating evidence was unavailable."
@@ -1685,6 +3067,10 @@
         {
           "id": "15.7-c3",
           "text": "Triggered by provider decommissioning. No recurring interval specified; the CAS twelve-month lookback is an assessment sample window."
+        },
+        {
+          "id": "15.7-c1",
+          "text": "End provider relationships securely."
         }
       ]
     },
@@ -1692,16 +3078,46 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#161-establish-and-maintain-a-secure-application-development-process",
       "criteria": [
         {
+          "id": "16.1-c5",
+          "text": "A secure application-development process is established and maintained."
+        },
+        {
+          "id": "16.1-c13",
+          "text": "The process addresses secure application design."
+        },
+        {
+          "id": "16.1-c14",
+          "text": "The process addresses secure coding practices."
+        },
+        {
+          "id": "16.1-c9",
+          "text": "The process addresses developer training."
+        },
+        {
+          "id": "16.1-c10",
+          "text": "The process addresses vulnerability management."
+        },
+        {
+          "id": "16.1-c11",
+          "text": "The process addresses third-party code security."
+        },
+        {
+          "id": "16.1-c12",
+          "text": "The process addresses application security testing."
+        },
+        {
+          "id": "16.1-c3",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "16.1-c1",
           "text": "Make secure development repeatable."
         },
         {
           "id": "16.1-c2",
           "text": "Follow secure lifecycle procedures. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "16.1-c3",
-          "text": "Annual review and significant-change updates."
         },
         {
           "id": "16.1-c4",
@@ -1712,6 +3128,60 @@
     "16.2": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#162-establish-and-maintain-a-process-to-accept-and-address-software-vulnerabilities",
       "criteria": [
+        {
+          "id": "16.2-c9",
+          "text": "A maintained process accepts and addresses software vulnerability reports."
+        },
+        {
+          "id": "16.2-c10",
+          "text": "External entities have a means to report vulnerabilities."
+        },
+        {
+          "id": "16.2-c16",
+          "text": "The handling policy identifies the reporting process."
+        },
+        {
+          "id": "16.2-c17",
+          "text": "The handling policy identifies responsible parties."
+        },
+        {
+          "id": "16.2-c18",
+          "text": "The vulnerability-handling process addresses intake."
+        },
+        {
+          "id": "16.2-c19",
+          "text": "The vulnerability-handling process addresses assignment."
+        },
+        {
+          "id": "16.2-c20",
+          "text": "The vulnerability-handling process addresses remediation."
+        },
+        {
+          "id": "16.2-c21",
+          "text": "The vulnerability-handling process addresses remediation testing."
+        },
+        {
+          "id": "16.2-c14",
+          "text": "A vulnerability-tracking system records severity ratings."
+        },
+        {
+          "id": "16.2-c22",
+          "text": "Tracking includes metrics for vulnerability identification timing."
+        },
+        {
+          "id": "16.2-c23",
+          "text": "Tracking includes metrics for vulnerability analysis timing."
+        },
+        {
+          "id": "16.2-c24",
+          "text": "Tracking includes metrics for vulnerability remediation timing."
+        },
+        {
+          "id": "16.2-c7",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "16.2-c1",
           "text": "Handle reported software weaknesses through resolution."
@@ -1734,6 +3204,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#163-perform-root-cause-analysis-on-security-vulnerabilities",
       "criteria": [
         {
+          "id": "16.3-c4",
+          "text": "Security vulnerabilities undergo root-cause analysis."
+        },
+        {
+          "id": "16.3-c5",
+          "text": "Analysis evaluates underlying issues creating code vulnerabilities."
+        },
+        {
+          "id": "16.3-c6",
+          "text": "Root-cause analysis occurs when reviewing vulnerabilities."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "16.3-c1",
           "text": "Address recurring causes of software vulnerabilities."
         },
@@ -1751,16 +3235,38 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#164-establish-and-manage-an-inventory-of-third-party-software-components",
       "criteria": [
         {
+          "id": "16.4-c8",
+          "text": "The updated inventory includes third-party components currently used in development."
+        },
+        {
+          "id": "16.4-c9",
+          "text": "The updated inventory includes third-party components planned for future use."
+        },
+        {
+          "id": "16.4-c6",
+          "text": "The inventory records risks posed by each component."
+        },
+        {
+          "id": "16.4-c3",
+          "text": "The component list is evaluated at least monthly."
+        },
+        {
+          "id": "16.4-c10",
+          "text": "Evaluation identifies third-party component changes or updates."
+        },
+        {
+          "id": "16.4-c11",
+          "text": "Evaluation validates continued component support."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "16.4-c1",
           "text": "Know component dependencies and their risks."
         },
         {
           "id": "16.4-c2",
           "text": "Check changes, updates and continued support. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "16.4-c3",
-          "text": "Evaluate component inventory at least monthly."
         },
         {
           "id": "16.4-c4",
@@ -1771,6 +3277,24 @@
     "16.5": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#165-use-up-to-date-and-trusted-third-party-software-components",
       "criteria": [
+        {
+          "id": "16.5-c8",
+          "text": "Third-party software components are up to date."
+        },
+        {
+          "id": "16.5-c9",
+          "text": "Third-party software components are trusted."
+        },
+        {
+          "id": "16.5-c6",
+          "text": "Established, proven frameworks and libraries providing adequate security are chosen when possible."
+        },
+        {
+          "id": "16.5-c7",
+          "text": "Components are acquired from trusted sources or evaluated for vulnerabilities before use."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "16.5-c1",
           "text": "Use trustworthy, maintained software dependencies."
@@ -1793,16 +3317,30 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#166-establish-and-maintain-a-severity-rating-system-and-process-for-application-vulnerabilities",
       "criteria": [
         {
+          "id": "16.6-c5",
+          "text": "An application-vulnerability severity-rating system and process are established and maintained."
+        },
+        {
+          "id": "16.6-c6",
+          "text": "Severity ratings facilitate prioritizing the order of vulnerability fixes."
+        },
+        {
+          "id": "16.6-c3",
+          "text": "The severity-rating system and process are reviewed and updated annually."
+        },
+        {
+          "id": "16.6-c7",
+          "text": "The process defines a minimum security-acceptability level for releasing code or applications."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "16.6-c1",
           "text": "Prioritize application weaknesses and control releases."
         },
         {
           "id": "16.6-c2",
           "text": "Triage vulnerabilities and apply release criteria. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "16.6-c3",
-          "text": "Review severity system/process at least annually."
         },
         {
           "id": "16.6-c4",
@@ -1813,6 +3351,16 @@
     "16.7": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#167-use-standard-hardening-configuration-templates-for-application-infrastructure",
       "criteria": [
+        {
+          "id": "16.7-c3",
+          "text": "Industry-recommended hardening templates cover servers, databases, web servers, cloud containers, PaaS and SaaS application infrastructure."
+        },
+        {
+          "id": "16.7-c4",
+          "text": "In-house developed software does not weaken configuration hardening."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "16.7-c1",
           "text": "Use industry-recommended hardening templates for underlying application servers, databases, web servers, cloud containers, PaaS and SaaS components."
@@ -1828,8 +3376,14 @@
       "criteria": [
         {
           "id": "16.8-c1",
-          "text": "Separate live and non-live application environments."
+          "text": "Production and non-production environments are separate."
         },
+        {
+          "id": "16.8-c3",
+          "text": "Environment separation is maintained."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "16.8-c2",
           "text": "Maintain environment separation. Confirm coverage and resolve unsupported or uncovered cases."
@@ -1840,22 +3394,54 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#169-train-developers-in-application-security-concepts-and-secure-coding",
       "criteria": [
         {
+          "id": "16.9-c4",
+          "text": "All software-development personnel receive secure-coding training."
+        },
+        {
+          "id": "16.9-c5",
+          "text": "Training addresses their specific development environments and responsibilities."
+        },
+        {
+          "id": "16.9-c3",
+          "text": "Training occurs at least annually and promotes security within the development team."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "16.9-c1",
           "text": "Equip developers to write secure code."
         },
         {
           "id": "16.9-c2",
           "text": "Deliver environment-specific developer training. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "16.9-c3",
-          "text": "Training at least annually."
         }
       ]
     },
     "16.10": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1610-apply-secure-design-principles-in-application-architectures",
       "criteria": [
+        {
+          "id": "16.10-c5",
+          "text": "Application architectures apply secure-design principles."
+        },
+        {
+          "id": "16.10-c9",
+          "text": "Least privilege limits access."
+        },
+        {
+          "id": "16.10-c11",
+          "text": "Mediation validates every user operation."
+        },
+        {
+          "id": "16.10-c12",
+          "text": "Application architecture treats user input as untrusted."
+        },
+        {
+          "id": "16.10-c7",
+          "text": "Application design minimizes the infrastructure attack surface."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "16.10-c1",
           "text": "Build security into application architecture."
@@ -1878,6 +3464,28 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1611-leverage-vetted-modules-or-services-for-application-security-components",
       "criteria": [
         {
+          "id": "16.11-c5",
+          "text": "Application security components use vetted modules or services."
+        },
+        {
+          "id": "16.11-c6",
+          "text": "Vetted components cover relevant security functions such as identity, encryption and auditing/logging."
+        },
+        {
+          "id": "16.11-c9",
+          "text": "Encryption algorithms are standardized."
+        },
+        {
+          "id": "16.11-c10",
+          "text": "Encryption algorithms are currently accepted."
+        },
+        {
+          "id": "16.11-c8",
+          "text": "Encryption algorithms are extensively reviewed."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "16.11-c1",
           "text": "Use established security building blocks."
         },
@@ -1899,6 +3507,20 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1612-implement-code-level-security-checks",
       "criteria": [
         {
+          "id": "16.12-c4",
+          "text": "Static analysis tools check secure-coding practices."
+        },
+        {
+          "id": "16.12-c5",
+          "text": "Dynamic analysis tools check secure-coding practices."
+        },
+        {
+          "id": "16.12-c6",
+          "text": "Both analysis types operate within the application lifecycle."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "16.12-c1",
           "text": "Use both static and dynamic code-analysis tools during the application lifecycle to check secure coding."
         },
@@ -1915,6 +3537,16 @@
     "16.13": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1613-conduct-application-penetration-testing",
       "criteria": [
+        {
+          "id": "16.13-c4",
+          "text": "Application penetration testing is conducted."
+        },
+        {
+          "id": "16.13-c5",
+          "text": "Testing involves skilled manual manipulation as authenticated and unauthenticated users."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "16.13-c1",
           "text": "Perform application penetration testing, considering authenticated testing for critical applications and manual tester analysis."
@@ -1933,6 +3565,24 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1614-conduct-threat-modeling",
       "criteria": [
         {
+          "id": "16.14-c4",
+          "text": "Threat modeling identifies and addresses application security design flaws before code is created."
+        },
+        {
+          "id": "16.14-c7",
+          "text": "Specially trained individuals evaluate design risks for each entry point."
+        },
+        {
+          "id": "16.14-c8",
+          "text": "Specially trained individuals evaluate design risks for each access level."
+        },
+        {
+          "id": "16.14-c6",
+          "text": "The application, architecture and infrastructure are mapped to understand weaknesses."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "16.14-c1",
           "text": "Have specially trained people model application threats and address design flaws before code is created."
         },
@@ -1949,6 +3599,28 @@
     "17.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#171-designate-personnel-to-manage-incident-handling",
       "criteria": [
+        {
+          "id": "17.1-c4",
+          "text": "A key incident-handling person is designated."
+        },
+        {
+          "id": "17.1-c5",
+          "text": "At least one backup is designated."
+        },
+        {
+          "id": "17.1-c6",
+          "text": "Incident management coordinates and documents response and recovery efforts."
+        },
+        {
+          "id": "17.1-c7",
+          "text": "Where a provider is used, an internal person oversees third-party work."
+        },
+        {
+          "id": "17.1-c8",
+          "text": "Designations are reviewed annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "17.1-c1",
           "text": "A lead and at least one backup coordinate and document response and recovery."
@@ -1980,6 +3652,36 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#173-establish-and-maintain-an-enterprise-process-for-reporting-incidents",
       "criteria": [
         {
+          "id": "17.3-c4",
+          "text": "A documented workforce incident-reporting process is established and maintained."
+        },
+        {
+          "id": "17.3-c5",
+          "text": "The process specifies reporting timeframes."
+        },
+        {
+          "id": "17.3-c10",
+          "text": "The process identifies incident-reporting recipients."
+        },
+        {
+          "id": "17.3-c11",
+          "text": "The process identifies incident-reporting mechanisms."
+        },
+        {
+          "id": "17.3-c7",
+          "text": "The process specifies minimum information to report."
+        },
+        {
+          "id": "17.3-c8",
+          "text": "The process is available to the whole workforce."
+        },
+        {
+          "id": "17.3-c9",
+          "text": "The process is reviewed annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "17.3-c1",
           "text": "The documented reporting process specifies timing, recipients, mechanism and minimum information."
         },
@@ -1997,16 +3699,34 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#174-establish-and-maintain-an-incident-response-process",
       "criteria": [
         {
+          "id": "17.4-c5",
+          "text": "A documented incident-response process is established and maintained."
+        },
+        {
+          "id": "17.4-c6",
+          "text": "The process addresses roles and responsibilities."
+        },
+        {
+          "id": "17.4-c8",
+          "text": "The process addresses compliance requirements."
+        },
+        {
+          "id": "17.4-c9",
+          "text": "The process includes a communication plan."
+        },
+        {
+          "id": "17.4-c3",
+          "text": "The process is reviewed annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "17.4-c1",
           "text": "Coordinate complete incident response."
         },
         {
           "id": "17.4-c2",
           "text": "Execute response process during incidents. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "17.4-c3",
-          "text": "Annual review and significant-change updates."
         },
         {
           "id": "17.4-c4",
@@ -2018,16 +3738,54 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities",
       "criteria": [
         {
+          "id": "17.5-c5",
+          "text": "Key incident-response roles and responsibilities are assigned."
+        },
+        {
+          "id": "17.5-c8",
+          "text": "Incident roles cover legal personnel."
+        },
+        {
+          "id": "17.5-c9",
+          "text": "Incident roles cover IT personnel."
+        },
+        {
+          "id": "17.5-c10",
+          "text": "Incident roles cover information-security personnel."
+        },
+        {
+          "id": "17.5-c11",
+          "text": "Incident roles cover facilities personnel."
+        },
+        {
+          "id": "17.5-c12",
+          "text": "Incident roles cover public-relations personnel."
+        },
+        {
+          "id": "17.5-c3",
+          "text": "Assignments are reviewed annually and when significant changes could affect the safeguard."
+        },
+        {
+          "id": "17.5-c13",
+          "text": "Incident roles cover HR personnel."
+        },
+        {
+          "id": "17.5-c14",
+          "text": "Incident roles cover incident responders."
+        },
+        {
+          "id": "17.5-c15",
+          "text": "Incident roles cover analysts."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "17.5-c1",
           "text": "Make incident roles and handoffs explicit."
         },
         {
           "id": "17.5-c2",
           "text": "Activate assigned roles during incidents. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "17.5-c3",
-          "text": "Annual review and significant-change updates."
         },
         {
           "id": "17.5-c4",
@@ -2039,16 +3797,30 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#176-define-mechanisms-for-communicating-during-incident-response",
       "criteria": [
         {
+          "id": "17.6-c5",
+          "text": "Primary mechanisms for incident communication and reporting are determined."
+        },
+        {
+          "id": "17.6-c6",
+          "text": "Secondary mechanisms for incident communication and reporting are determined."
+        },
+        {
+          "id": "17.6-c3",
+          "text": "Mechanisms are reviewed annually and when significant changes could affect the safeguard."
+        },
+        {
+          "id": "17.6-c7",
+          "text": "Mechanism selection accounts for channels that may be affected during an incident."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "17.6-c1",
           "text": "Keep incident communications usable during disruption."
         },
         {
           "id": "17.6-c2",
           "text": "Use available incident communication channels. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "17.6-c3",
-          "text": "Annual review and significant-change updates."
         },
         {
           "id": "17.6-c4",
@@ -2060,16 +3832,34 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#177-conduct-routine-incident-response-exercises",
       "criteria": [
         {
+          "id": "17.7-c5",
+          "text": "Routine incident-response exercises and scenarios are planned and conducted for key personnel."
+        },
+        {
+          "id": "17.7-c6",
+          "text": "Exercises test communication channels."
+        },
+        {
+          "id": "17.7-c8",
+          "text": "Exercises test decision making."
+        },
+        {
+          "id": "17.7-c9",
+          "text": "Exercises test response workflows."
+        },
+        {
+          "id": "17.7-c3",
+          "text": "Testing occurs at least annually."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "17.7-c1",
           "text": "Exercise incident decisions and coordination."
         },
         {
           "id": "17.7-c2",
           "text": "Run exercises covering channels, decisions and workflows. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "17.7-c3",
-          "text": "Exercises at least annually."
         },
         {
           "id": "17.7-c4",
@@ -2081,20 +3871,34 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#178-conduct-post-incident-reviews",
       "criteria": [
         {
-          "id": "17.8-c1",
-          "text": "Learn from actual incidents."
+          "id": "17.8-c7",
+          "text": "Post-incident reviews are conducted."
         },
+        {
+          "id": "17.8-c5",
+          "text": "Reviews identify lessons learned."
+        },
+        {
+          "id": "17.8-c3",
+          "text": "Reviews occur following incidents."
+        },
+        {
+          "id": "17.8-c6",
+          "text": "Reviews identify follow-up action to prevent recurrence."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "17.8-c2",
           "text": "Capture lessons and assign improvements. Confirm coverage and resolve unsupported or uncovered cases."
         },
         {
-          "id": "17.8-c3",
-          "text": "After incidents; no fixed calendar interval."
-        },
-        {
           "id": "17.8-c4",
           "text": "After incidents, capture lessons and follow up improvements. The safeguard does not prescribe a separate fixed numeric review interval."
+        },
+        {
+          "id": "17.8-c1",
+          "text": "Learn from actual incidents."
         }
       ]
     },
@@ -2102,22 +3906,62 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#179-establish-and-maintain-security-incident-thresholds",
       "criteria": [
         {
+          "id": "17.9-c4",
+          "text": "Security-incident thresholds are established and maintained."
+        },
+        {
+          "id": "17.9-c5",
+          "text": "Thresholds distinguish an incident from an event at minimum."
+        },
+        {
+          "id": "17.9-c3",
+          "text": "Thresholds are reviewed annually and when significant changes could affect the safeguard."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "17.9-c1",
           "text": "Define and maintain incident thresholds distinguishing incidents from events; review annually and after relevant significant changes."
         },
         {
           "id": "17.9-c2",
           "text": "Confirm the event/incident distinction is usable by responders and linked to the response process. Check the last review and relevant changes; keep CAS prioritization/escalation prompts separate from the safeguard minimum."
-        },
-        {
-          "id": "17.9-c3",
-          "text": "Annually, or when significant enterprise changes could affect the safeguard. Preserve both planned review and change-triggered review."
         }
       ]
     },
     "18.1": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#181-establish-and-maintain-a-penetration-testing-program",
       "criteria": [
+        {
+          "id": "18.1-c5",
+          "text": "A maintained penetration-testing program fits enterprise size, complexity, industry and maturity."
+        },
+        {
+          "id": "18.1-c9",
+          "text": "The program defines testing scope."
+        },
+        {
+          "id": "18.1-c10",
+          "text": "The program defines testing frequency."
+        },
+        {
+          "id": "18.1-c11",
+          "text": "The program defines testing limitations."
+        },
+        {
+          "id": "18.1-c12",
+          "text": "The program defines contact information."
+        },
+        {
+          "id": "18.1-c13",
+          "text": "The program defines remediation routing."
+        },
+        {
+          "id": "18.1-c14",
+          "text": "The program defines retrospective requirements."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "18.1-c1",
           "text": "Make penetration testing purposeful and controlled."
@@ -2140,16 +3984,30 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#182-perform-periodic-external-penetration-tests",
       "criteria": [
         {
+          "id": "18.2-c5",
+          "text": "External penetration tests are performed according to program requirements."
+        },
+        {
+          "id": "18.2-c6",
+          "text": "Testing includes enterprise and environmental reconnaissance for exploitable information."
+        },
+        {
+          "id": "18.2-c3",
+          "text": "Tests occur at least annually."
+        },
+        {
+          "id": "18.2-c7",
+          "text": "A qualified party with specialized skills and experience conducts the testing."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "18.2-c1",
           "text": "Have qualified testers probe external exposure."
         },
         {
           "id": "18.2-c2",
           "text": "Execute external penetration tests. Confirm coverage and resolve unsupported or uncovered cases."
-        },
-        {
-          "id": "18.2-c3",
-          "text": "At least annually; include reconnaissance."
         },
         {
           "id": "18.2-c4",
@@ -2160,6 +4018,24 @@
     "18.3": {
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#183-remediate-penetration-test-findings",
       "criteria": [
+        {
+          "id": "18.3-c5",
+          "text": "Penetration-test findings are remediated."
+        },
+        {
+          "id": "18.3-c6",
+          "text": "Remediation follows the documented vulnerability-remediation process."
+        },
+        {
+          "id": "18.3-c7",
+          "text": "Timelines are determined based on finding impact and prioritization."
+        },
+        {
+          "id": "18.3-c8",
+          "text": "Level of effort is determined based on finding impact and prioritization."
+        }
+      ],
+      "legacy_criteria": [
         {
           "id": "18.3-c1",
           "text": "Resolve penetration-test weaknesses by risk."
@@ -2182,6 +4058,16 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#184-validate-security-measures",
       "criteria": [
         {
+          "id": "18.4-c4",
+          "text": "Security measures are validated after each penetration test."
+        },
+        {
+          "id": "18.4-c5",
+          "text": "Rulesets and capabilities are modified to detect tested techniques if deemed necessary."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "18.4-c1",
           "text": "Validate defenses after every penetration test; adjust detection rules or capabilities when needed."
         },
@@ -2199,16 +4085,26 @@
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#185-perform-periodic-internal-penetration-tests",
       "criteria": [
         {
+          "id": "18.5-c4",
+          "text": "Internal penetration tests are performed."
+        },
+        {
+          "id": "18.5-c5",
+          "text": "Testing follows penetration-testing program requirements."
+        },
+        {
+          "id": "18.5-c3",
+          "text": "Internal tests occur at least annually."
+        }
+      ],
+      "legacy_criteria": [
+        {
           "id": "18.5-c1",
           "text": "Perform internal penetration tests under the program at least annually."
         },
         {
           "id": "18.5-c2",
           "text": "Verify internal scope, test completion date and alignment with the program; inspect findings and their follow-up. Keep external and internal test coverage separately visible."
-        },
-        {
-          "id": "18.5-c3",
-          "text": "No less than annually; more frequent testing follows the program where specified."
         }
       ]
     }

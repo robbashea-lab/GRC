@@ -27,7 +27,7 @@ test('versioned shared practical guidance covers every supported criterion witho
 });
 
 test('legacy checkbox definitions stay byte-for-byte equivalent in meaning and stable IDs',()=>{
- const items=Object.fromEntries(Object.entries(guidance.criteria).filter(([,entry])=>entry.items.length).map(([id,entry])=>[id,entry.items]));
+ const items=Object.fromEntries(Object.entries(guidance.criteria).map(([id,entry])=>[id,entry.items.filter(item=>!item.id.includes('-assessment-'))]).filter(([,items])=>items.length));
  expect(createHash('sha256').update(JSON.stringify(items)).digest('hex')).toBe('a7cffdb6268068f90be2b0497a0b7c0e9522f0bd405d4ff937cdc7038c080f0a');
 });
 

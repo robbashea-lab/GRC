@@ -27,6 +27,21 @@ class IsoAuditTests(unittest.IsolatedAsyncioTestCase):
             'status':'reviewed','result':'conforming','notes':'Synthetic walkthrough verified',
             'na_rationale':'','evidence_ids':[],'finding_ids':[],**fields})
 
+    async def test_check_selection_is_item_scoped_and_retains_omitted_legacy(self):
+        data,_=await self.activate()
+        review=data['reviews'][0]
+        await server.db.reviews.update_one({'review_id':review['review_id']},{'$set':{'iso_audit.items.4-1':{'status':'not_started','result':'','notes':'','na_rationale':'','evidence_ids':[],'finding_ids':[],'assessment_checks':['retired:context']}}})
+        response=await self.item(review,'4-1',assessment_checks=['4.1:context','4.1:context','retired:context'])
+        self.assertEqual(response.status_code,200,response.text)
+        saved=response.json()
+        self.assertEqual(saved['iso_audit']['items']['4-1']['assessment_checks'],['4.1:context','retired:context'])
+        for invalid in [['4.2:parties'],['4.1:context']*31]:
+            response=await self.item(saved,'4-1',assessment_checks=invalid)
+            self.assertEqual(response.status_code,422,response.text)
+        response=await self.item(saved,'4-1',notes='Retain selected checks')
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(response.json()['iso_audit']['items']['4-1']['assessment_checks'],saved['iso_audit']['items']['4-1']['assessment_checks'])
+
     def test_workbook_population_and_identifiers(self):
         items=[i for p in iso_audit.PACKAGES.values() for i in p['items']]
         self.assertEqual([len(p['items']) for p in iso_audit.PACKAGES.values()],[28,28,40,28])
