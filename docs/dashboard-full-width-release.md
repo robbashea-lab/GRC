@@ -25,7 +25,7 @@ The existing shared program cards follow the four summary tiles and precede the 
 
 The fixed existing sidebar leaves very little workspace width at320px. Cards do not cause page overflow, but the retained sidebar and narrow Priority table remain compressed. Overflow assertions do not establish whole-application mobile usability. Sidebar/navigation redesign is outside this layout change.
 
-Before merge: reconcile current main including PR #41 release gating and PR #39 CIS subtitle fix; rerun affected checks and normal GitHub gates. The starting-main backend registry rejects the unclassified `test_dashboard_work_queue.py`; preserve the registry correction from PR #41 instead of bypassing it.
+Current main `1b9691d7dc51bc7b5577fc49304d6422135f3889` (PR #41 CI gate and PR #39 CIS subtitle correction) reconciled without conflicts at `62d2ec498b1647fdc508efd915c2d2a08f79e190`. Both changes are preserved. The formerly unclassified backend dashboard suite now runs through the normal registry: 40 dashboard/source tests passed. Expanded affected frontend regressions passed: 11 suites,70 tests,1 snapshot. Both builds compiled on the reconciled revision. Before merge: fetch again, preserve intervening changes and require the protected Release gate.
 
 Coordinate the authenticated staging-session handoff and final release order with the release agent. Exactly one real staging login must remain enabled; no staging logout,account creation or redeployment has been performed by this change.
 
@@ -35,6 +35,6 @@ The111 source-pending ISO units and outstanding official-text permissions remain
 
 ## Release-gate handoff
 
-Last inspected pipeline candidate: PR #41 at `e11ededed8a95daeee6a18e670ec66193f9c6a5f`; replacement backend/frontend checks are queued. Its previous frontend run failed three stale contracts in FrameworkOperator, BrawndoCisFindings and reference tests. Assessment and release owners are coordinating those shared test corrections through GitHub. This PR does not bypass the gate or absorb unrelated application fixes.
+PR #41 merged as `2d13a3e`; PR #39 merged as `1b9691d7dc51bc7b5577fc49304d6422135f3889`. Earlier queued-PR41 status is superseded. PR #42 now runs the inherited Release gate on its reconciled head. Independent scoped code review approved `62d2ec498b1647fdc508efd915c2d2a08f79e190`; refreshed visual checks and final hosted acceptance remain separately tracked. The release owner is verifying the PR39 automatic deployment and will explicitly hand over the sole staging session. No staging login/logout or deployment from this task occurs during that acceptance window.
 
 The existing private preview is currently version 111 at https://iventure-grc-code-preview.mr-robbashea.chatgpt.site with the existing owner-only custom access policy, revision 1, and zero external visitors. No PR #42 source is published there or on Render yet. Authenticated hosted acceptance and the single-enabled-account check await the release agent's staging-session handoff; local Mongo and Demo evidence must not be presented as hosted acceptance. No further owner content input is needed for this layout change.
