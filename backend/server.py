@@ -2103,7 +2103,7 @@ async def list_users(user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Forbidden")
     query = {} if user.get("role") == "super_admin" else {"client_ids": {"$in": user.get("client_ids") or []}}
     docs = await _bounded(db.users.find(query, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1,
-                                      "status": 1, "client_ids": 1, "last_login_at": 1}), 500, "users")
+                                      "status": 1, "client_ids": 1, "last_login_at": 1, "updated_at": 1}), 500, "users")
     if user.get("role") == "platform_admin":
         for doc in docs:
             doc["client_ids"] = [cid for cid in (doc.get("client_ids") or []) if cid in user["client_ids"]]
