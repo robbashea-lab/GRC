@@ -10,7 +10,10 @@ Cloudflare, Railway, prior databases and the private ChatGPT Demo version 109
 remain unchanged. No backend Demo seed or legacy migration is enabled.
 
 Service `srv-db1s0cugekts73f72reg` uses Virginia, root Docker context,
-`deploy/RenderStaging.Dockerfile`, `/api/` health check, and manual deployments.
+`deploy/RenderStaging.Dockerfile`, `/api/` health check, and connected GitHub main
+with **After CI Checks Pass**. Follow [current release operations](render-release-operations.md)
+for CI, deployment proof, acceptance and rollback; the provisioning evidence below
+does not establish acceptance of a later revision.
 Its dashboard environment label is not an application readiness assertion.
 `APP_ENV=staging` and the separate database are authoritative.
 The initial missing-MONGO_URL startup failure was corrected by the owner;
@@ -68,7 +71,11 @@ Render exposes environment variables as potential build arguments, so never
 declare credential ARGs. All storage, including evidence bytes, remains in Mongo;
 the container's ephemeral filesystem is not the record store.
 
-## Deployment steps
+## Initial provisioning steps (historical)
+
+The service, database and administrator already exist. Do not repeat provisioning,
+create accounts or restore bootstrap settings for an ordinary release. Use
+[current release operations](render-release-operations.md) on the existing service.
 
 1. In the dedicated Atlas project, create a database user with only `readWrite`
    on `staging_omnisciente_render`. Use Database & Network Access > Database
@@ -77,8 +84,9 @@ the container's ephemeral filesystem is not the record store.
    directly in the provider UI/password manager. No credentials belong in chat.
 2. Configure the new Render Free service with the prepared settings above, or
    explicitly select `deploy/render.staging.yaml` as the custom Blueprint file.
-   Review the initial deployment action; automatic deployments remain Off.
-   Use public repository access rather than granting unnecessary GitHub access.
+   The initial setup used public repository access with automatic deployment Off.
+   Current delivery uses the existing GRC-only Git Provider connection and
+   **After CI Checks Pass** once exact-main CI is proven; preserve Docker and Free.
 3. Record the actual assigned HTTPS Render URL. Set these backend variables
    directly in Render, never in Git or frontend build settings:
 
