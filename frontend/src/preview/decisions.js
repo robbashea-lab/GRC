@@ -3,6 +3,10 @@ import { scheduledDate } from '../lib/reviewOccurrences';
 export function guardEdit(kind, body, existing = {}, user) {
   body = {...body};
   delete body.expected_updated_at; // Concurrency precondition, not a business-field edit.
+  if('calendar_move' in body) {
+    if(body.calendar_move!==true||kind!=='reviews'||!body.due_date||Object.keys(body).some(k=>!['calendar_move','due_date'].includes(k)))throw Object.assign(new Error('A Calendar move requires only a due date and current occurrence'),{status:422});
+    delete body.calendar_move;
+  }
   if(kind==='tasks'&&body.resolution!=null&&(typeof body.resolution!=='string'||body.resolution.length>20000))throw new Error('Resolution must be text of at most 20000 characters');
   if('primary_task_id' in body)throw new Error('Primary Action is managed by remediation commands');
   if(body.due_date&&!scheduledDate(body.due_date))throw new Error('Invalid due date');
@@ -37,7 +41,7 @@ export function guardEdit(kind, body, existing = {}, user) {
     if(!existing.risk_id&&changes.status&&!['open','identified','assessed'].includes(changes.status)) throw new Error('New Risks start as Identified or Assessed.');
   }
   const protectedFields = ['created_at','created_by','updated_at','completion_date','parent_review_id','completion_snapshot','next_occurrence_id','rating_history','approval_history','decision_history','validated_by','validated_at','verified_at','verified_by','approved_at','accepted','accepted_by','acceptance_date','acceptance_rationale','acceptance_expires_at'];
-  protectedFields.push('current_occurrence_id','occurrence_id','occurrences','schedule_anchor','started_at','started_by','completed_at','completed_by','closed_at','closed_by','title_generated');
+  protectedFields.push('current_occurrence_id','occurrence_id','occurrences','schedule_anchor','recurrence_due_date','started_at','started_by','completed_at','completed_by','closed_at','closed_by','title_generated');
   if (protectedFields.some(k => k in changes)) throw new Error('Decision and history fields cannot be edited directly.');
   const targets = {policies:['approved'], risks:['accepted','closed','retired'], findings:['closed','accepted','remediated'], reviews:['completed'], exceptions:['approved']};
   const riskPilot=kind==='risks'&&(existing.client_id||body.client_id)==='demo_brawndo';

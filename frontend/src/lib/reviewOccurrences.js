@@ -8,7 +8,8 @@ export function scheduledDate(value) {
   return date;
 }
 export function reviewSchedule(review, resetAnchor = false) {
-  const date = scheduledDate(review.due_date);
+  const original = resetAnchor ? null : review.recurrence_due_date || null;
+  const date = scheduledDate(original || review.due_date);
   const valid = !!date;
   const recurrence = review.recurrence || 'none';
   const anchor = (!resetAnchor && review.schedule_anchor) || (valid ? {
@@ -34,7 +35,7 @@ export function reviewSchedule(review, resetAnchor = false) {
       if (!Number.isNaN(candidate.getTime()) && candidate.getUTCFullYear() <= 9999) next = candidate.toISOString();
     }
   }
-  return {period, next_review_date:next, schedule_anchor:anchor};
+  return {period, next_review_date:next, schedule_anchor:anchor, recurrence_due_date:original};
 }
 export function reviewView(review) {
   const result = {...review, ...reviewSchedule(review), current_occurrence_id:occurrenceId(review)};

@@ -184,8 +184,7 @@ export async function previewAdapter(config) {
       if (path === '/calendar') {
         frameworkScope(db,params.client_id);
         const buckets=calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,list(db,k,params.client_id)])),db.user,params);
-        // Brawndo only: vendor assurance and contract dates come straight from the Vendor record.
-        if(params.client_id==='demo_brawndo')buckets.vendor_dates=vendorCalendarItems(list(db,'vendors',params.client_id),list(db,'reviews',params.client_id),params);
+        buckets.vendor_dates=vendorCalendarItems(list(db,'vendors',params.client_id),list(db,'reviews',params.client_id),params);
         return respond(buckets);
       }
       if (path === '/related') {

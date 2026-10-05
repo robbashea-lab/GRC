@@ -4,6 +4,19 @@ import {readStore} from './store';
 const api=axios.create({adapter:previewAdapter});
 beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');});
 const occurrence=(rid,oid)=>readStore().reviews.find(r=>r.review_id===rid).occurrences.find(o=>o.occurrence_id===oid);
+test('Calendar date saves replay once, retain the cycle and preserve moved completion history',async()=>{
+  const {data:r}=await api.post('/reviews',{client_id:'demo_prestige',title:'Calendar synthetic review',review_type:'access',recurrence:'monthly',due_date:'2026-01-31'});
+  const path='/reviews/'+r.review_id,body={due_date:'2026-03-05',calendar_move:true,expected_updated_at:r.updated_at,expected_occurrence_id:r.current_occurrence_id},config={headers:{'Idempotency-Key':'calendar-original-cycle'}};
+  const {data:moved}=await api.patch(path,body,config);
+  expect(moved.next_review_date.slice(0,10)).toBe('2026-02-28');
+  expect((await api.patch(path,body,config)).data).toEqual(moved);
+  await expect(api.patch(path,{...body,due_date:'2026-03-06'})).rejects.toThrow('Record changed');
+  const {data:done}=await api.post(path+'/complete',{occurrence_id:r.current_occurrence_id});
+  expect(done.occurrence).toMatchObject({due_date:'2026-03-05',recurrence_due_date:'2026-01-31'});
+  expect(done.review.due_date.slice(0,10)).toBe('2026-02-28');
+  expect(done.review.next_review_date.slice(0,10)).toBe('2026-03-31');
+  expect(done.review.recurrence_due_date).toBeNull();
+});
 // Completed occurrences keep the owner and title recorded at completion, through storage
 // compaction and many save/read cycles, after the definition and future occurrences change.
 test.each(['demo_brawndo','demo_prestige','demo_dunder'])('%s: completed Review history is not rewritten by later definition changes',async cid=>{

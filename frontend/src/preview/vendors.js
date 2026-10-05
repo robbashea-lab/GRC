@@ -66,7 +66,7 @@ export function ensureVendorReviews(db,v) {
     if(!due&&(!review||['completed','cancelled'].includes(review.status))) {if(review)result.push(review);continue;}
     if(review?.status==='completed'&&review.due_date?.slice(0,10)===due?.slice(0,10)) {result.push(review);continue;}
     if(purpose==='assurance'&&due?.slice(0,10)===v.next_review?.slice(0,10)) {if(review&&!['completed','cancelled'].includes(review.status))review.status='cancelled';continue;}
-    const changed=review?.due_date?.slice(0,10)!==due?.slice(0,10);
+    const changed=review?.due_date?.slice(0,10)!==due?.slice(0,10)||review?.recurrence!==recurrence||review?.custom_recurrence_days!==custom;
     if(!review) {review={review_id:'vendor_review_'+v.vendor_id+'_'+purpose,client_id:v.client_id,vendor_id:v.vendor_id,review_type:'vendor',created_at:new Date().toISOString(),status:'upcoming'};db.reviews.push(review);}
     if(['completed','cancelled'].includes(review.status)) Object.assign(review,{status:'upcoming',current_occurrence_id:'occ_'+recordUuid(),notes:null,completion_date:null,started_at:null});
     Object.assign(review,{vendor_purpose:purpose,title:VENDOR_PURPOSES[purpose]+' — '+v.name,due_date:due,recurrence,custom_recurrence_days:custom,owner_id:review.vendor_business_owner_id===(v.business_owner_id||null)?review.owner_id:v.business_owner_id||null,vendor_business_owner_id:v.business_owner_id||null});

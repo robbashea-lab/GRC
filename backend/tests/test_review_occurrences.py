@@ -4,6 +4,52 @@ from review_occurrences import schedule, snapshot
 
 
 class OccurrenceTests(ClientDashboardSourcesTests):
+    async def test_calendar_move_preserves_cycle_replay_and_completed_history(self):
+        action = await self.seed('monthly', '2026-01-31')
+        self.sign_in('admin')
+        before = (await self.client.get('/api/reviews/bcp')).json()
+        request = {'due_date':'2026-03-05', 'calendar_move':True,
+                   'expected_updated_at':before.get('updated_at'), 'expected_occurrence_id':action['occurrence_id']}
+        first = await self.client.patch('/api/reviews/bcp', json=request, headers={'Idempotency-Key':'calendar-cycle-0001'})
+        self.assertEqual(first.status_code, 200, first.text)
+        self.assertEqual(first.json()['next_review_date'][:10], '2026-02-28')
+        self.assertEqual(first.json()['recurrence_due_date'], '2026-01-31')
+        replay = await self.client.patch('/api/reviews/bcp', json=request, headers={'Idempotency-Key':'calendar-cycle-0001'})
+        self.assertEqual(replay.json(), first.json())
+        stale = await self.client.patch('/api/reviews/bcp', json={**request, 'due_date':'2026-03-06'})
+        self.assertEqual(stale.status_code, 409, stale.text)
+        moved = await self.client.patch('/api/reviews/bcp', json={**request, 'due_date':'2026-03-07', 'expected_updated_at':first.json()['updated_at']})
+        self.assertEqual(moved.status_code, 200, moved.text)
+        self.assertEqual(moved.json()['next_review_date'][:10], '2026-02-28')
+        done = await self.client.post('/api/reviews/bcp/complete', json=action)
+        self.assertEqual(done.status_code, 200, done.text)
+        self.assertEqual(done.json()['occurrence']['due_date'], '2026-03-07')
+        self.assertEqual(done.json()['occurrence']['recurrence_due_date'], '2026-01-31')
+        self.assertEqual(done.json()['review']['due_date'][:10], '2026-02-28')
+        self.assertEqual(done.json()['review']['next_review_date'][:10], '2026-03-31')
+        self.assertIsNone(done.json()['review']['recurrence_due_date'])
+        again = await self.client.post('/api/reviews/bcp/complete', json=action)
+        self.assertEqual(again.json()['occurrence'], done.json()['occurrence'])
+
+    async def test_calendar_move_transport_does_not_bypass_permissions_or_definition_guards(self):
+        action = await self.seed()
+        request = {'due_date':'2026-10-05', 'calendar_move':True, 'expected_updated_at':None, 'expected_occurrence_id':action['occurrence_id']}
+        forbidden = await self.client.patch('/api/reviews/bcp', json=request)
+        self.assertEqual(forbidden.status_code, 403, forbidden.text)
+        self.sign_in('admin')
+        for extra in ({'recurrence':'monthly'}, {'calendar_move':'true'}, {'recurrence_due_date':'2026-01-01'}):
+            rejected = await self.client.patch('/api/reviews/bcp', json={**request, **extra})
+            self.assertEqual(rejected.status_code, 422, rejected.text)
+        normal = await self.client.patch('/api/reviews/bcp', json={k:v for k,v in request.items() if k != 'calendar_move'})
+        self.assertEqual(normal.status_code, 200, normal.text)
+        self.assertEqual(normal.json()['next_review_date'][:10], '2027-01-05')
+        self.assertIsNone(normal.json()['recurrence_due_date'])
+
+    def test_calendar_custom_cycle_uses_original_date(self):
+        result = schedule({'due_date':'2026-03-08', 'recurrence_due_date':'2026-01-31', 'recurrence':'custom', 'custom_recurrence_days':10})
+        self.assertEqual(result['next_review_date'][:10], '2026-02-10')
+        self.assertEqual(schedule({'due_date':'2026-03-08', 'recurrence_due_date':'2026-01-31', 'recurrence':'custom', 'custom_recurrence_days':10}, reset_anchor=True)['next_review_date'][:10], '2026-03-18')
+
     async def test_evaluation_survives_history_replay_and_definition_edits(self):
         action = await self.seed()
         evaluation = {'conclusion':'Exceptions remain; effectiveness not established',

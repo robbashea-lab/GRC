@@ -168,7 +168,8 @@ async def ensure_reviews(db, vendor, user, now):
             updated.update({'created_at':now,'created_by':user['user_id'],'status':'upcoming'})
         if not review or review.get('status') in ('completed','cancelled'):
             updated.update({'status':'upcoming','current_occurrence_id':'occ_'+uuid.uuid4().hex,'notes':None,'completion_date':None,'started_at':None})
-        updated.update(review_occurrences.schedule(updated, reset_anchor=not review or day(review.get('due_date')) != day(due)))
+        reset = not review or day(review.get('due_date'))!=day(due) or any(review.get(k)!=fields[k] for k in ('recurrence','custom_recurrence_days'))
+        updated.update(review_occurrences.schedule(updated, reset_anchor=reset))
         updated = review_occurrences.view(updated)
         if review:
             await db.reviews.update_one({'review_id':rid},{'$set':updated})

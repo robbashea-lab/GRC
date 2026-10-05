@@ -1,5 +1,13 @@
 import {reviewSchedule,reviewView,belongsToOccurrence,relatedReviewInitialValues} from './reviewOccurrences';
 import {reviewMatches} from './tableFilters';
+test('occurrence-only moves preserve the original cycle, but definition edits re-anchor',()=>{
+  const row={due_date:'2026-03-05',recurrence_due_date:'2026-01-31',recurrence:'monthly'};
+  expect(reviewSchedule(row).next_review_date.slice(0,10)).toBe('2026-02-28');
+  expect(reviewSchedule(row).period).toBe('January 2026');
+  expect(reviewSchedule(row,true).next_review_date.slice(0,10)).toBe('2026-04-05');
+  expect(reviewSchedule(row,true).recurrence_due_date).toBeNull();
+  expect(reviewSchedule({...row,recurrence:'custom',custom_recurrence_days:10}).next_review_date.slice(0,10)).toBe('2026-02-10');
+});
 
 test.each(['monthly','quarterly','semiannual','annual','custom'])('out-of-range next %s date remains readable and requires scheduling',recurrence=>{
   const row={review_id:'boundary',due_date:'9999-12-31',recurrence,custom_recurrence_days:3650,status:'upcoming'};

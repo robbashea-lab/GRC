@@ -7,7 +7,7 @@
 .bcal-nav { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .bcal-icon { padding:0 10px; }
 .bcal-month { margin:0 0 0 6px; font:600 20px/1.2 'Space Grotesk',var(--font-heading); color:var(--bp-text); }
-.bcal-legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin:0 0 0 auto; padding:0; list-style:none; font-size:12px; color:var(--bp-muted); }
+.bcal-legend { display:flex; flex-wrap:wrap; flex-basis:100%; gap:6px 14px; margin:0; padding:0; list-style:none; font-size:12px; color:var(--bp-muted); }
 .bcal-legend li { display:inline-flex; align-items:center; gap:6px; }
 .bcal-dot { display:inline-block; flex:none; width:8px; height:8px; border-radius:50%; background:var(--k-review); }
 .bcal-dot.k-finding { background:var(--k-finding); } .bcal-dot.k-task { background:var(--k-task); }
@@ -16,6 +16,10 @@
 .bcal-status,.bcal-note { margin:0; padding:0 16px 8px; font-size:12px; color:var(--bp-muted); }
 .bcal-scroll { position:relative; overflow-x:auto; border-top:1px solid var(--bp-border); }
 .bcal-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); min-width:600px; }
+.bcal-grid.view-day { grid-template-columns:minmax(0,1fr); min-width:0; }
+.bcal-grid.view-day .bcal-day,.bcal-grid.view-week .bcal-day { min-height:260px; }
+.bcal-popup { width:calc(100% - 32px); max-width:420px; }
+.bcal-toolbar .bpage-chips { margin-left:auto; }
 .bcal-wd { padding:8px; font:500 11px 'IBM Plex Mono',var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--bp-muted); background:var(--bp-subtle); border-bottom:1px solid var(--bp-border); }
 .bcal-day { min-width:0; min-height:104px; padding:6px; border-right:1px solid var(--bp-border); border-bottom:1px solid var(--bp-border); font-size:12px; }
 .bcal-day:nth-child(7n) { border-right:0; }

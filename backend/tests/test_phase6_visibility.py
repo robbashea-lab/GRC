@@ -12,6 +12,35 @@ class Phase6VisibilityTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = harness.ClientDashboardSourcesTests.asyncSetUp
     sign_in = harness.ClientDashboardSourcesTests.sign_in
 
+    async def test_calendar_period_adds_old_outstanding_not_old_completion_and_scopes_derived_vendor_dates(self):
+        self.sign_in('admin')
+        await server.db.tasks.insert_many([{'task_id':identity,'client_id':cid,'title':identity,'status':status,'due_date':due}
+            for identity,cid,status,due in [('old','a','open','2020-01-01'),('old-done','a','done','2020-01-01'),('done','a','done','2026-10-01'),('foreign','b','open','2020-01-01')]])
+        await server.db.vendors.insert_many([{'vendor_id':'v'+cid,'client_id':cid,'name':'Vendor '+cid,'status':'active',
+            'contract_renewal':'2026-10-20','contract_notice_deadline':'2026-10-15',
+            'assurance_records':[{'assurance_id':'assurance-'+cid,'type':'SOC 2','next_follow_up':'2020-01-01'}]} for cid in ['a','b']])
+        response=await self.client.get('/api/calendar',params={'client_id':'a','start':'2026-10-01','end':'2026-10-31','scope':'all','overdue_before':'2026-10-05'})
+        self.assertEqual(response.status_code,200,response.text)
+        rows=[r for bucket in response.json().values() for items in bucket.values() for r in items]
+        self.assertTrue(all(r['client_id']=='a' for r in rows))
+        self.assertEqual({r['id'] for r in rows if r['kind']=='task'},{'old','done'})
+        vendor=[r for r in rows if r['kind'].startswith('vendor_')]
+        self.assertEqual({r['kind'] for r in vendor},{'vendor_assurance','vendor_contract_renewal','vendor_contract_notice'})
+        self.assertTrue(all(not r['can_reschedule'] for r in vendor))
+        self.assertEqual(len({r['key'] for r in rows}),len(rows))
+        self.sign_in('member')
+        denied=await self.client.get('/api/calendar',params={'client_id':'b','overdue_before':'2026-10-05'})
+        self.assertEqual(denied.status_code,403)
+        bad=await self.client.get('/api/calendar',params={'client_id':'a','overdue_before':'2026-02-30'})
+        self.assertEqual(bad.status_code,422)
+
+    async def test_calendar_editability_matches_task_assignment_and_internal_review_rules(self):
+        self.sign_in('member')
+        await server.db.tasks.insert_many([{'task_id':uid,'client_id':'a','title':uid,'status':'open','due_date':'2026-10-05','assignee_id':uid} for uid in ['member','admin']])
+        response=await self.client.get('/api/calendar',params={'client_id':'a','start':'2026-10-01','end':'2026-10-31','scope':'all'})
+        rows=response.json()['tasks']['2026-10-05']
+        self.assertEqual({r['id']:r['can_reschedule'] for r in rows},{'member':True,'admin':False})
+
     def test_resolution_rules_and_empty_scope(self):
         rows=[{'definition_id':'1.1','status':state,'na_rationale':'Reason' if i==4 else ''}
               for i,state in enumerate(['addressed','in_progress','not_assessed','needs_attention','not_applicable','not_applicable','legacy'])]
