@@ -69,3 +69,11 @@ Source-supported comparison is closed: CIS153 Navigator safeguards/480current ch
 Final focused regression:14frontend suites/376tests passed;55backend tests+19subtests passed; both normal and Demo builds compiled successfully. Separate source-focused runs are recorded in source docs. Independent scoped review found no new material defect. Final normal authenticated real-route synthetic-in-memory browser checks passed four assessment samples plus five-role login/tenant/mutation/storage/logout gates. Hosted Atlas/browser/restart acceptance is not claimed.
 
 Only remaining owner inputs are consolidated in assessment-layout-inputs.md. Source access for111ISO checklist comparison and conditional permission for requested verbatim official paragraphs are distinct. Existing authored UI/checklists/testing are not blocked by official reproduction questions. PR36 remains draft; no merge or hosted assessment publication/deployment.
+
+## Final tested implementation provenance
+
+Tested implementation commit:0bcb780f5c462949c232af4d04527deee5fb701e (visual and source-supported completion). Main reconciled:e8f600da3996f6a7f757152e7e176bb7de6b645e. Final frontend/backend results above apply to this source; the last presentation-only spacing/font/tone changes were included in both final builds and all final rendered-style/Demo/authenticated screenshots. The follow-up provenance commit changes documentation only.
+
+Full visual/style comparison and source-supported checklists are verified independently of official-text reproduction. The111pending ISO unit objects and all96supported IDs are mechanically unchanged except the three documented supported labels; every prior CIS current/history ID and text remains available, within20 selections. All SOC148 current IDs/129historical definitions remain. Normal screenshots show actual synthetic Not Assessed state and native Annex SoA fields rather than replacing them with sample CIS values.
+
+No merged or deployed assessment commit exists; private preview version/URL/access and Render/Atlas remain unchanged by this task. PR36 stays draft for the consolidated content inputs. No additional UI approval, framework redesign, infrastructure change or broader audit is requested.
