@@ -2142,6 +2142,7 @@ async def dashboard(
     client_id: Optional[str] = Query(None),
     scope: Optional[str] = Query("org"),  # org | mine | user | unassigned
     user_id: Optional[str] = Query(None),
+    work_queue: bool = Query(False),
     detail: Optional[str] = Query(None, max_length=40),
     offset: int = Query(0, ge=0),
     limit: int = Query(25, ge=1, le=100),
@@ -2189,6 +2190,22 @@ async def dashboard(
     import dashboard_contract
     records = await load_records(db, scope_filter, dashboard_contract.PROJECTION)
     management = management_for_scope(records, today=now_iso, scope=scope, user_id=target_uid)
+    if work_queue:
+        if not client_id:
+            raise HTTPException(422, 'client_id required for the client work queue')
+        members = await db.users.find({'$or': [{'role': 'super_admin'}, {'client_ids': client_id}]},
+                                      {'_id': 0, 'user_id': 1, 'name': 1, 'email': 1, 'status': 1}).to_list(None)
+        queue_groups = dashboard_contract.work_queue(management, [m for m in members if m.get('status') == 'active'])
+        if detail:
+            if detail not in queue_groups:
+                raise HTTPException(422, 'Unknown dashboard detail')
+            rows = queue_groups[detail]
+            return {'client_id': client_id, 'as_of': management['as_of'],
+                    'items': [dashboard_contract.brief(r) for r in rows[offset:offset+limit]],
+                    'total': len(rows), 'offset': offset, 'limit': limit, 'has_more': offset+limit < len(rows)}
+        return {'client_id': client_id, 'as_of': management['as_of'], 'groups': {
+            key: {'total': len(rows), 'items': [dashboard_contract.brief(r) for r in rows[:9]]}
+            for key, rows in queue_groups.items()}}
     groups = dashboard_contract.populations(management)
     if detail:
         if detail not in groups:

@@ -4,12 +4,13 @@ import {aggregateClientDashboard} from './clientDashboard';
 import {managementMetrics} from './managementMetrics';
 
 const row=(id,due,extra={})=>({key:`tasks:${id}:due`,id,kind:'tasks',owner_id:'u',owner:'Owner',day:calendarDay(due),due_date:due,severity:'low',record:{task_id:id,client_id:'a',title:id,source_type:'manual'},...extra});
-test('reference dashboard applies to every selected Demo client, never the live backend',()=>{
+test('shared dashboard applies to normal and Demo selected clients',()=>{
   expect(dashboardPilot(true,'demo_brawndo')).toBe(true);
   // Every Demo client, including Dunder and newly created ones, gets the reference dashboard;
   // the live backend (no work_queue contract) and an unselected client do not.
+  expect(dashboardPilot(false,'normal_client')).toBe(true);
   for(const id of ['demo_prestige','demo_dunder','demo_new_client'])expect(dashboardPilot(true,id)).toBe(true);
-  for(const [demo,id] of [[false,'demo_brawndo'],[false,'demo_dunder'],[true,null],[true,''],[false,null]])expect(dashboardPilot(demo,id)).toBe(false);
+  for(const [demo,id] of [[true,null],[true,''],[false,null]])expect(dashboardPilot(demo,id)).toBe(false);
 });
 test('same population drives totals and filters; literal days, eligible users and deterministic ordering',()=>{
   const work=[row('today','2026-09-27'),row('30','2026-10-27'),row('31','2026-10-28'),row('old','2026-09-01'),row('critical','2026-09-26',{severity:'critical'}),row('none',null,{owner_id:'disabled'}),row('invalid','2026-02-30')];

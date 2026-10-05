@@ -5,6 +5,7 @@ import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/Ta
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
+import {occurrenceId,relatedReviewInitialValues} from '@/lib/reviewOccurrences';
 import {isReferencePresentation} from '@/lib/reference';
 import {policyStatus,policyStatusLabel,policyColumns,policyTiles,policyViewMatches} from '@/lib/brawndoPolicies';
 import {BrawndoPageHeader,BrawndoTiles,BrawndoChips} from '@/components/BrawndoPage';
@@ -48,7 +49,7 @@ import { toast } from "sonner";
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
-  vendors: "vendor_id", assets: "asset_id", tasks: "task_id", exceptions: "exception_id",
+  vendors: "vendor_id", assets: "asset_id", tasks: "task_id", exceptions: "exception_id", requirements: "requirement_id",
 };
 
 // Default sort per module. Falls back to `due_date` desc if module missing.
@@ -187,6 +188,8 @@ function EntityListPage({ kind }) {
 
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [linkedInitialValues,setLinkedInitialValues]=useState({});
+  const [linkError,setLinkError]=useState('');
   const [checked, setChecked] = useState(new Set());
   const [ownerPicker, setOwnerPicker] = useState(false);
   const [pickedOwner, setPickedOwner] = useState("");
@@ -223,7 +226,26 @@ function EntityListPage({ kind }) {
     finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [kind, currentClientId]);
 
-  useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setRows([]); load(); return () => { sequence.current++; }; }, [load]);
+  useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setLinkedInitialValues({});setLinkError('');setRows([]); load(); return () => { sequence.current++; }; }, [load]);
+
+  const linkedId=params.get('id'),linkedClient=params.get('client_id'),linkedOccurrence=params.get('occurrence');
+  useEffect(()=>{
+    if(!linkedId||!currentClientId||open)return;
+    const controller=new AbortController();setLinkError('');setLinkedInitialValues({});
+    if(linkedClient&&linkedClient!==currentClientId){setLinkError('This link belongs to another client. Select that client before opening it.');return;}
+    api.get(`/${kind}/${encodeURIComponent(linkedId)}`,{signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted)return;
+      if(data.client_id!==currentClientId)throw new Error('Record belongs to another client.');
+      const initial=kind==='reviews'?relatedReviewInitialValues(data,{review_id:data.review_id,occurrence_id:linkedOccurrence}):{};
+      if(kind==='reviews'&&linkedOccurrence&&linkedOccurrence!==occurrenceId(data)&&!initial.occurrence)throw new Error('The requested Review occurrence is unavailable.');
+      setLinkedInitialValues(initial);setSelected(data);setOpen(true);
+    }).catch(error=>{if(!controller.signal.aborted)setLinkError(formatError(error));});
+    return()=>controller.abort();
+  },[kind,currentClientId,linkedId,linkedClient,linkedOccurrence,open]);
+  function closeDrawer(value){
+    setOpen(value);
+    if(!value){setLinkedInitialValues({});const next=new URLSearchParams(params);next.delete('id');next.delete('occurrence');setParams(next,{replace:true});}
+  }
 
   const statusOptions = useMemo(() => policiesPilot ? [...new Set(rows.map(policyStatus))].map(value=>({value,label:policyStatusLabel(value)})) : schema.fields.find((x) => x.name === "status")?.options || [], [schema,policiesPilot,rows]);
   const filterClient = useRef(currentClientId);
@@ -685,15 +707,17 @@ function EntityListPage({ kind }) {
 
       <RecordDrawer
         reviewsPilot={guardedReviewDrawer}
-        open={open}
-        onOpenChange={setOpen}
+        open={open&&(!selected||selected.client_id===currentClientId)}
+        onOpenChange={closeDrawer}
         kind={kind}
         record={selected}
+        initialValues={linkedInitialValues}
         schema={schema.fields}
         clientId={currentClientId}
         users={users}
         onSaved={saved=>{if(policiesPilot&&saved&&!selected)setSelected(saved);load();}}
       />
+      {linkError&&<p role="alert">{linkError}</p>}
       {alignmentTarget&&<RecordDrawer open kind={alignmentTarget.kind} record={alignmentTarget.record} clientId={currentClientId} onOpenChange={value=>!value&&setAlignmentTarget(null)} onSaved={load}/>}
     </div>
   );
