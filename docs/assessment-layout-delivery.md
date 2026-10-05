@@ -16,7 +16,7 @@ Branch: `codex/assessment-layout-all-frameworks`.
 
 Approved HTML is available and the actual CIS workbook comparison is complete. Full ISO verification needs legitimate ISO/IEC27001:2022 clauses7–10 and Annex A for111 units. Applicable product reuse rights for official ISO/SOC2 wording remain unresolved. See assessment-layout-inputs.md for one exact list of blocked units and reusable content. Source access and implementation approval do not grant redistribution rights.
 
-PR36 stays draft. Release is authorized only after design/content acceptance, current-main reconciliation and normal GitHub gates, to the existing owner-private preview and existing Render staging. No provider settings or database changes are authorized. Local synthetic authenticated checks do not establish hosted Atlas acceptance.
+Historical initial gate: PR36 stayed draft pending design/content acceptance. October5 owner authorization now permits a bounded layout release with verified authored corrections and preserves111 pending ISO units as unfinished content work. Hosted candidate verification, independent review, current-main reconciliation and normal GitHub gates remain release prerequisites. Only the existing owner-private preview and existing Render staging are authorized; provider settings and existing data remain preserved. Labelled synthetic backend records are authorized for hosted verification.
 
 ## Verification
 
