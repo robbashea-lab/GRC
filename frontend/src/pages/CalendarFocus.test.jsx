@@ -52,6 +52,13 @@ test('closing the exact operational record keeps Scheduled items mounted and ret
   // ... it is the same element that opened the record, and focus is back on it.
   expect(container.querySelector('[data-testid^="cal-attn-task:t1"]')).toBe(row);
   expect(document.activeElement).toBe(row);
+  expect(row.getAttribute('aria-disabled')).toBe('true');
+  expect(container.querySelector('[data-testid^="cal-item-task:t1"]').getAttribute('aria-disabled')).toBe('true');
+  const requests=api.get.mock.calls.length;
+  await act(async()=>row.click());
+  expect(api.get.mock.calls).toHaveLength(requests);
+  expect(container.querySelector('[role="dialog"]')).toBeNull();
   await act(async()=>refresh());
   expect(container.querySelector('[data-testid^="cal-attn-task:t1"]')).toBe(row);
+  expect(row.getAttribute('aria-disabled')).toBe('false');
 });
