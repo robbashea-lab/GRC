@@ -1,5 +1,7 @@
 # Assessment PR36 integration handoff
 
+Current October5 status: PR36 bounded layout release merged at92044402686d51c07e0bafc31f57999166a6996b and deployed to existing owner-private preview111 and existing Render Free staging. The owner's later bounded-release authorization supersedes the historical draft/content hold below. Preserve111 source-pending ISO units and existing responses/native workflows; missing comparisons and conditional verbatim reproduction remain unfinished content work. See assessment-layout-bounded-release.md for exact source/deployment/hosted verification evidence and assessment-layout-inputs.md for the consolidated remaining inputs. No new product wording or feature is authorized.
+
 Owner:codex/assessment-layout-all-frameworks; PR36. Stable baseline27746e510240a11ab16392d93f55de1c9b604442; original tested source56dca744dd3e7b62be1eada43cb99e8aa65a5f5a; latest follow-up commit carries approved-HTML corrections.
 
 Dashboard components, metrics, queue, program summaries and page navigation are not edited here. Owned shared files:AssessmentLayout.jsx/CSS,AssessmentShell.jsx,FrameworkDrawer.jsx,BrawndoCisAssessment.css, framework assessment and ISO audit workspaces, BrawndoCisFindings.jsx, source catalogs and ISO checkbox validators/tests. No staging or production edits or competing preview publication.

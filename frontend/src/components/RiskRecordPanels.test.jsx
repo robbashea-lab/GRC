@@ -43,7 +43,7 @@ test('assessment and treatment keep one draft across tabs, failed save and retry
   await click(document.querySelector('[data-testid="drawer-save"]'));
   expect(close).not.toHaveBeenCalled();expect(toast.error).toHaveBeenCalledWith('Stale write');
   await click(document.querySelector('[data-testid="drawer-save"]'));
-  expect(api.patch.mock.calls[1]).toEqual(['/risks/risk',expect.objectContaining({impact_description:'Operational outage',notes:'Validate supplier recovery',expected_updated_at:'2026-10-01T12:00:00Z'})]);
+  expect(api.patch.mock.calls[1]).toEqual(['/risks/risk',expect.objectContaining({impact_description:'Operational outage',notes:'Validate supplier recovery',expected_updated_at:'2026-10-01T12:00:00Z'}),{headers:{'Idempotency-Key':expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)}}]);
   expect(close).toHaveBeenCalledWith(false);
 });
 

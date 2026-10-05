@@ -20,6 +20,7 @@
     "test_create_requests.py",
     "test_csf_framework.py",
     "test_dashboard_contract.py",
+    "test_dashboard_work_queue.py",
     "test_edit_versions.py",
     "test_record_contracts.py",
     "test_record_integrity.py",
