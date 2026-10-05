@@ -7,9 +7,10 @@ FastAPI application, with a new MongoDB Atlas **Free** cluster. Cloudflare,
 Railway, all prior databases and the private ChatGPT Demo v108 stay unchanged.
 No account registration, Demo data seed or legacy migration is enabled.
 
-Render account sign-in is verified. Its empty Hobby workspace has no payment
-card, no pending charges, and unused 750 Free hours, 5 GB bandwidth and 500
-Starter pipeline minutes this month. Do not add a payment method or upgrade.
+Render account sign-in is verified. Before provisioning, its Hobby workspace
+had no payment card, no pending charges, and unused 750 Free hours, 5 GB
+bandwidth and 500 Starter pipeline minutes this month. The initial staging
+build now consumes the included build allowance. Do not add a payment method or upgrade.
 Without a card, exceeding Free bandwidth suspends service and exhausting build
 minutes stops new builds rather than buying overages. Check these controls
 again before deployment; do not assume a future account change preserves $0.
@@ -18,14 +19,26 @@ Build-pipeline caps do not cap every kind of billable usage.
 A separate Atlas project **Omnisciente Staging** and active cluster
 **omnisciente-staging** were created: Free, MongoDB 8.0.34, AWS N. Virginia.
 Sample data, automatic security setup, backups and auto-scaling are off.
-Database credentials and network access are not yet configured. Existing
+The owner created `omnisciente_staging` with only
+`readWrite@staging_omnisciente_render`. Network access is still empty. Existing
 Project 0 was not modified. No paid resources were selected.
 
-The Render service form is prepared for the public repository, branch
-`codex/cloudflare-staging-preparation`, Docker runtime, Free, Virginia, root
-build context, `deploy/RenderStaging.Dockerfile`, `/api/` health check and
-automatic deployments Off. An actual running application and its URL are
-not yet verified. Provider credentials and hosted acceptance remain pending.
+Render Free service `srv-db1s0cugekts73f72reg` is created at
+`https://omnisciente-staging.onrender.com`, using branch
+`codex/cloudflare-staging-preparation`, Docker, Virginia, root build context,
+`deploy/RenderStaging.Dockerfile`, `/api/` health check and automatic deployments
+Off. Render's default project environment label is “Production”; this new
+service is explicitly configured with `APP_ENV=staging` and a separate database.
+The initial Linux image for `f87daaa9bdfe7ece9593e7141b5b018d24c84636` built and
+launched Uvicorn, then exited at import with `KeyError: 'MONGO_URL'`. It is not a
+healthy deployment. Secret entry, database connectivity and hosted acceptance
+remain pending. Exact HTTPS origin variables were saved after URL assignment.
+
+Render Connect reports regional shared outbound ranges `74.220.49.0/24` and
+`74.220.57.0/24`; these are the only proposed Atlas allowlist additions.
+Independent random JWT/admin credentials were generated outside Git in an
+owner-only local directory. No generated credential or supplied password was
+committed or printed. The owner must enter and submit credentials in Render.
 
 ## Portable packaging and authentication
 
