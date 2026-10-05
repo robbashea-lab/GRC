@@ -1,5 +1,10 @@
 # Omnisciente hosted staging preparation
 
+The current staging approach is [Render Free plus Atlas Free](render-staging.md).
+This document retains the earlier Cloudflare preparation and inventory;
+existing Cloudflare resources are now left unchanged. Follow the Render guide
+for the active deployment, not the earlier Cloudflare setup steps below.
+
 ## Observed state, 2026-10-05
 
 Inspected current `origin/main` at `57a2b4cd6adbf3e9d07fe24132ff28a3ad0bc215`.
