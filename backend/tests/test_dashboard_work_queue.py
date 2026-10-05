@@ -46,8 +46,8 @@ class DashboardWorkQueueTests(unittest.IsolatedAsyncioTestCase):
     async def test_only_active_client_members_or_super_admins_are_eligible_owners(self):
         self.sign_in('admin')
         await server.db.users.insert_many([
-            {'user_id': 'foreign', 'name': 'Foreign', 'status': 'active', 'client_ids': ['b'], 'role': 'client_contributor'},
-            {'user_id': 'inactive', 'name': 'Inactive', 'status': 'disabled', 'client_ids': ['a'], 'role': 'client_contributor'}])
+            {'user_id': 'foreign', 'email': 'foreign@example.test', 'name': 'Foreign', 'status': 'active', 'client_ids': ['b'], 'role': 'client_contributor'},
+            {'user_id': 'inactive', 'email': 'inactive@example.test', 'name': 'Inactive', 'status': 'disabled', 'client_ids': ['a'], 'role': 'client_contributor'}])
         await server.db.tasks.insert_many([{'client_id': 'a', 'task_id': uid or 'missing', 'title': uid or 'Missing',
             'status': 'open', 'priority': 'medium', 'assignee_id': uid} for uid in ['admin', 'member', 'foreign', 'inactive', None]])
         result = (await self.get_queue(detail='all')).json()['items']
