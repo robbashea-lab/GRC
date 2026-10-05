@@ -2691,6 +2691,18 @@ async def _finish_entity_create(kind, doc, user):
 @review_mutation
 @finding_mutation
 async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str = Path(...), body: Dict[str, Any] = None, user: Dict = Depends(get_current_user), request: Request = None):
+    if kind != 'tasks':
+        existing = await _authorized_parent(kind, item_id, user, write=True)
+        key = request.headers.get('Idempotency-Key') if request else None
+        route = kind + '/' + item_id + '/update'
+        identity = create_requests.digest([user['user_id'], existing['client_id'], route, key]) if key else None
+        prior = await db.create_requests.find_one({'_id':existing.get('_save_command')}) if existing.get('_save_command') else None
+        if prior and prior['state'] != 'complete' and prior['_id'] != identity:
+            raise HTTPException(409, 'An earlier save needs recovery; retry that request first', headers={'X-Create-Rejected':'true'})
+        if key:
+            async def execute(command):
+                return await _update_entity(kind, item_id, body, user, command)
+            return await create_requests.run(db, key, user['user_id'], existing['client_id'], route, body, execute)
     if kind == 'tasks':
         existing = await _authorized_parent(kind, item_id, user, write=True)
         key = request.headers.get('Idempotency-Key') if request else None
@@ -2716,13 +2728,15 @@ async def _update_entity(kind, item_id, body, user, command=None):
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
     persisted = existing
-    applied_retry = bool(command and persisted.get('_ticket_command') == command)
+    marker = '_ticket_command' if kind == 'tasks' else '_save_command'
+    before_field = 'task_before' if kind == 'tasks' else 'record_before'
+    applied_retry = bool(command and persisted.get(marker) == command)
     if command:
         receipt = await db.create_requests.find_one({'_id':command})
-        if receipt.get('task_before'):
-            existing = receipt['task_before']
+        if receipt.get(before_field):
+            existing = receipt[before_field]
         else:
-            await db.create_requests.update_one({'_id':command}, {'$set':{'task_before':existing}})
+            await db.create_requests.update_one({'_id':command}, {'$set':{before_field:existing}})
     expected_occurrence = (body or {}).get("expected_occurrence_id")
     incoming = dict(body or {})
     _require_snapshot(incoming, existing)
@@ -2746,20 +2760,20 @@ async def _update_entity(kind, item_id, body, user, command=None):
         # This assignment was validated before the marked primary write. Recovery
         # finishes required effects even if the target's eligibility later changes.
         await assignment_eligibility.validate(db, kind, {**existing, **body}, _can_access_client, existing)
-    if kind == "vendors":
+    if kind == "vendors" and not applied_retry:
         await vendor_governance.validate(db,{**existing,**body},_can_access_client,existing)
         for risk_id in body.get("related_risk_ids") or []:
             if not await db.risks.find_one({"risk_id":risk_id, "client_id":existing["client_id"]}):
                 raise HTTPException(422, "Related risk must belong to the same client")
     if "client_id" in body and body["client_id"] != existing["client_id"]:
         raise HTTPException(422, "A record cannot be moved to another client")
-    for related_kind, (related_type, related_model, related_key, related_prefix) in ENTITY_MAP.items():
+    for related_kind, (related_type, related_model, related_key, related_prefix) in ([] if applied_retry else ENTITY_MAP.items()):
         if related_key == id_field or not body.get(related_key):
             continue
         linked_record = await db[_coll_for(related_kind)].find_one({related_key: body[related_key], "client_id": existing["client_id"]}, {"_id": 0})
         if not linked_record:
             raise HTTPException(422, "Related record must belong to the same client")
-    if kind == "risks":
+    if kind == "risks" and not applied_retry:
         # Merge with existing so partial patches still compute a consistent score.
         merged = {**existing, **body}
         risk_lifecycle.validate_schedule(merged)
@@ -2803,25 +2817,33 @@ async def _update_entity(kind, item_id, body, user, command=None):
         body.update({"completed_at": _now() if body["status"] == "done" else None,
                      "completed_by": user["user_id"] if body["status"] == "done" else None})
     body["updated_at"] = _next_write_time(existing.get("updated_at"))
+    if command and kind != 'tasks':
+        # Persist the intended after-image before the conditional write. Recovery
+        # must audit that change, not a later operator's values or retry clock.
+        if receipt.get('record_patch'):
+            body = receipt['record_patch']
+        else:
+            await db.create_requests.update_one({'_id':command}, {'$set':{'record_patch':body}})
     query = {id_field: item_id}
     if kind == "reviews":
         query["current_occurrence_id"] = existing.get("current_occurrence_id")
     # Also protect the read/validate/write window, independently of browser state.
     query["updated_at"] = existing.get("updated_at")
-    if not command or persisted.get('_ticket_command') != command:
+    if not command or not applied_retry:
         if command:
             await db.create_requests.update_one({'_id':command}, {'$set':{'primary_started':True}})
-            body['_ticket_command'] = command
+            body[marker] = command
         result = await db[_coll_for(kind)].update_one(query, {"$set": body})
         if not result.matched_count:
             # A failed conditional write is a definitive rejection, not an
             # uncertain acknowledgement of an applied ticket command.
             raise HTTPException(409, "Record changed; reload before saving", headers={"X-Create-Rejected":"true"})
     if command:
-        body.pop('_ticket_command', None)
+        body.pop(marker, None)
     if kind == "tasks" and existing.get("finding_id"):
         await remediation.synchronize(db, existing, user, _now, audit)
     doc = await db[_coll_for(kind)].find_one({id_field: item_id}, {"_id": 0})
+    audit_doc = {**existing, **body} if command and kind != 'tasks' else doc
     if kind == "risks":
         await risk_lifecycle.ensure_review(db, doc, user, _now())
     if kind == "vendors":
@@ -2852,8 +2874,8 @@ async def _update_entity(kind, item_id, body, user, command=None):
     if kind == "vendors":
         event = "Vendor "+("moved to "+body["status"].replace("_"," ") if "status" in body else "criticality changed" if "criticality" in body else "Business Owner changed" if "business_owner_id" in body else "assurance updated" if "assurance_records" in body else "contract updated" if any(k.startswith("contract_") for k in body) else "Risk linked" if "related_risk_ids" in body else "updated")
     if kind == "risks":
-        event = "Risk reassessed" if any(existing.get(k) != doc.get(k) for k in ("likelihood_score","impact_score")) else "Risk owner assigned" if "owner_id" in incoming else "Treatment updated" if "treatment" in incoming else "Next Risk Review scheduled" if set(incoming) & {"next_review","review_cadence","custom_recurrence_days"} else "Risk updated"
-    await audit(user, event, entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys()), **({"governance_context_before":existing.get("governance_context"),"governance_context_after":doc.get("governance_context")} if "governance_context" in body else {}), **({"previous_score":existing.get("risk_score"),"score":doc.get("risk_score"),"level":doc.get("risk_level"),"owner_id":doc.get("owner_id")} if kind == "risks" else {})})
+        event = "Risk reassessed" if any(existing.get(k) != audit_doc.get(k) for k in ("likelihood_score","impact_score")) else "Risk owner assigned" if "owner_id" in incoming else "Treatment updated" if "treatment" in incoming else "Next Risk Review scheduled" if set(incoming) & {"next_review","review_cadence","custom_recurrence_days"} else "Risk updated"
+    await audit(user, event, entity_type, item_id, existing.get("client_id"), meta={"changed_fields": list(body.keys()), **({"governance_context_before":existing.get("governance_context"),"governance_context_after":audit_doc.get("governance_context")} if "governance_context" in body else {}), **({"previous_score":existing.get("risk_score"),"score":audit_doc.get("risk_score"),"level":audit_doc.get("risk_level"),"owner_id":audit_doc.get("owner_id")} if kind == "risks" else {})})
     return review_occurrences.view(doc) if kind == "reviews" else doc
 
 
@@ -2868,6 +2890,8 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
+    if existing.get('_save_command') and await db.create_requests.find_one({'_id':existing['_save_command'],'state':'pending'}):
+        raise HTTPException(409, 'Recover the pending save before deleting this record')
     if kind == "contacts" and await db.clients.find_one({"client_id": existing["client_id"], "primary_contact_id": item_id}):
         raise HTTPException(409, "This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.")
     if kind == "policies" and (existing.get("approval_history") or existing.get("decision_history") or existing.get("status") in ("approved", "in_review")):
@@ -4373,6 +4397,8 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
             raise HTTPException(403, "Forbidden for one or more records")
 
     if body.action == "delete":
+        if await db.create_requests.find_one({'_id':{'$in':[d['_save_command'] for d in docs if d.get('_save_command')]},'state':'pending'}):
+            raise HTTPException(409, 'Recover pending saves before deleting these records')
         if user.get("role") not in ("super_admin", "platform_admin"):
             raise HTTPException(403, "Destructive action restricted")
         if body.kind == "policies" and any(d.get("approval_history") or d.get("decision_history") or d.get("status") in ("approved", "in_review") for d in docs):

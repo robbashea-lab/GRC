@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--include-remediation-tickets', action='store_true', help='Also run ticket integrity and exact ISO audit-item association checks')
     parser.add_argument('--include-cis-ig3-scope', action='store_true', help='Also run actual IG3 catalog availability, preservation and negative-gate checks')
     parser.add_argument('--include-cis-six-year', action='store_true', help='Also run fresh onboarding and 2027–2032 cumulative CIS simulation')
+    parser.add_argument('--include-generic-saves', action='store_true', help='Also run generic record save audit/relationship recovery regressions')
     args = parser.parse_args()
     parsed = urlsplit(args.mongo_url)
     if (parsed.scheme != 'mongodb' or parsed.hostname != '127.0.0.1' or not parsed.port
@@ -84,6 +85,10 @@ def main():
         concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     suite.addTest(ReconnectReceiptTests('test_receipt_survives_a_new_database_connection'))
+    if args.include_generic_saves:
+        from test_generic_save_recovery import GenericSaveRecoveryTests
+        concrete = type('MongoGenericSaveRecoveryTests', (MongoStorage, GenericSaveRecoveryTests), {})
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     if args.include_program_lifecycle:
         from test_framework_three_year import FrameworkThreeYearTests
         concrete = type('MongoFrameworkThreeYearTests', (MongoStorage, FrameworkThreeYearTests), {})

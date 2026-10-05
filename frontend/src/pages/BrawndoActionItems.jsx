@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {Navigate,useLocation,useSearchParams} from 'react-router-dom';
+import {Navigate,useLocation,useSearchParams,useNavigationType} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import {useActionRegisterData} from '@/lib/useActionRegisterData';
@@ -14,6 +14,7 @@ import StatusBadge,{SeverityBadge} from '@/components/StatusBadge';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import {Button} from '@/components/ui/button';
+import {recordUuid} from '@/lib/recordUuid';
 import './BrawndoActionItems.css';
 
 const views=[['active','Active'],['overdue','Overdue'],['in_progress','In Progress'],['open','Open'],['completed','Completed'],['high_critical','High / Critical Findings']].map(([id,label])=>({id,label}));
@@ -42,7 +43,14 @@ export function FindingsRoute(){
 
 export default function BrawndoActionItems(){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
-  const [params,setParams]=useSearchParams(),view=params.get('view')||(params.get('signal')==='material'?'high_critical':'active'),q=params.get('q')||'';
+  const location=useLocation();
+  const navigationType=useNavigationType();
+  const [params,setParams]=useSearchParams(),view=params.get('view')||(params.get('signal')==='material'?'high_critical':'active');
+  const urlQuery=params.get('q')||'', [q,setQuery]=useState(urlQuery);
+  const searchRevision=useRef(0),searchOwner=useRef(null);searchOwner.current ||= recordUuid();
+  // Input is immediate; an older replace navigation must not erase newer keys.
+  useEffect(()=>{const search=location.state?.actionSearch;if(navigationType!=='POP'&&search?.owner===searchOwner.current&&search.revision<searchRevision.current)return;setQuery(urlQuery);},[urlQuery,location.state,navigationType]);
+  function changeSearch(value){setQuery(value);const next=new URLSearchParams(params);next.set('q',value);setParams(next,{replace:true,state:{...location.state,actionSearch:{owner:searchOwner.current,revision:++searchRevision.current}}});}
   const {data,users,loading,error,load}=useActionRegisterData(currentClientId);
   const [drawer,setDrawer]=useState(null),[deepLinkError,setDeepLinkError]=useState('');
   const opened=useRef('');
@@ -67,7 +75,7 @@ export default function BrawndoActionItems(){
   return <BrawndoSurface className="register-surface brawndo-ai">
     <BrawndoPageHeader eyebrow={`${clientName} · Corrective actions`} title="Action Items">{canWrite&&<>{['super_admin','platform_admin'].includes(user?.role)&&<Button variant="outline" onClick={()=>setDrawer({kind:'findings',record:null})}>New Finding</Button>}<PrimaryAction label="New Action Item" testid="new-action-item" onClick={()=>setDrawer({kind:'tasks',record:null})}/></>}</BrawndoPageHeader>
     <BrawndoTiles label="Action summaries" loading={loading&&!rows.length} tiles={actionTiles(rows).map(t=>({...t,pressed:view===t.id,onClick:()=>selectView(view===t.id?'all':t.id)}))}/>
-    <div className="register-toolbar"><SearchField label="Search action items" placeholder="Search action items…" testid="ai-search" value={q} onChange={value=>{const next=new URLSearchParams(params);next.set('q',value);setParams(next,{replace:true});}}/>
+    <div className="register-toolbar"><SearchField label="Search action items" placeholder="Search action items…" testid="ai-search" value={q} onChange={changeSearch}/>
       <div data-testid="ai-views"><BrawndoChips label="Action Item views" chips={views.map(v=>({id:v.id,label:v.label,count:rows.filter(r=>pilotActionMatches(r,v.id)).length,pressed:view===v.id,testid:'ai-view-'+v.id,onClick:()=>selectView(view===v.id?'all':v.id)}))}/></div>
       <div className="brawndo-ai-source-filter"><ColumnControl table={table} columnKey="source_type"/></div>
     </div>

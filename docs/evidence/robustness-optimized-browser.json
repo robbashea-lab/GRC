@@ -1,0 +1,80 @@
+[
+  {
+    "scenario": "rapid replacement",
+    "delay": 0,
+    "input": "Report",
+    "url": "http://127.0.0.1:4385/action-items?q=Report",
+    "matches": true
+  },
+  {
+    "scenario": "rapid replacement",
+    "delay": 30,
+    "input": "Report",
+    "url": "http://127.0.0.1:4385/action-items?q=Report",
+    "matches": true
+  },
+  {
+    "scenario": "rapid replacement",
+    "delay": 100,
+    "input": "Report",
+    "url": "http://127.0.0.1:4385/action-items?q=Report",
+    "matches": true
+  },
+  {
+    "scenario": "Escape invoking focus",
+    "contained": true,
+    "restored": true
+  },
+  {
+    "scenario": "back-forward query",
+    "matches": true
+  },
+  {
+    "scenario": "source Escape, Close, cancel and discard focus",
+    "cid": "demo_brawndo",
+    "key": "cis-ig1",
+    "matches": true
+  },
+  {
+    "scenario": "removed source invoker logical fallback",
+    "cid": "demo_brawndo",
+    "key": "cis-ig1",
+    "matches": true
+  },
+  {
+    "scenario": "source Escape, Close, cancel and discard focus",
+    "cid": "demo_initech",
+    "key": "cis-ig1",
+    "matches": true
+  },
+  {
+    "scenario": "removed source invoker logical fallback",
+    "cid": "demo_initech",
+    "key": "cis-ig1",
+    "matches": true
+  },
+  {
+    "scenario": "source Escape, Close, cancel and discard focus",
+    "cid": "demo_prestige",
+    "key": "soc-2",
+    "matches": true
+  },
+  {
+    "scenario": "removed source invoker logical fallback",
+    "cid": "demo_prestige",
+    "key": "soc-2",
+    "matches": true
+  },
+  {
+    "scenario": "source Escape, Close, cancel and discard focus",
+    "cid": "demo_dunder",
+    "key": "iso-27001",
+    "matches": true
+  },
+  {
+    "scenario": "removed source invoker logical fallback",
+    "cid": "demo_dunder",
+    "key": "iso-27001",
+    "matches": true
+  }
+]
