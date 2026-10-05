@@ -27,6 +27,16 @@ test('ticket recovery survives remount and reload with its original payload and 
   expect(createIntent(post,'other-actor:client:ticket').unconfirmed()).toBe(false);
 });
 
+test.each(['assets','vendors','reviews','contacts'])('%s save retains original version, payload and identity after reload',async kind=>{
+ const patch=jest.fn().mockRejectedValueOnce(new Error('save pending recovery')).mockResolvedValue({data:{updated_at:'saved'}});
+ const scope='actor:client:'+kind+':record:update',body={name:'Original intent',expected_updated_at:'original-version'};
+ await expect(createIntent(patch,scope)('/'+kind+'/record',body)).rejects.toThrow('pending recovery');
+ const reloaded=createIntent(patch,scope);
+ await expect(reloaded('/'+kind+'/record',{...body,expected_updated_at:'new-version'})).rejects.toThrow('not been confirmed');
+ await reloaded.retry();expect(patch.mock.calls[1]).toEqual(patch.mock.calls[0]);
+ expect(reloaded.unconfirmed()).toBe(false);
+});
+
 test.each([409,422,428])('only explicit no-primary rejection permits changing a failed intent (%s)', async status => {
   const post = jest.fn().mockRejectedValueOnce({response:{status,headers:{'x-create-rejected':'true'}}}).mockResolvedValue({});
   const create = createIntent(post);

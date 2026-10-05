@@ -80,6 +80,8 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
   const [nested,setNested]=useState(null),[rationale,setRationale]=useState(''),[busy,setBusy]=useState(false),[commandError,setCommandError]=useState(''),[feedback,setFeedback]=useState(''),[discard,setDiscard]=useState(false);
   const [evidenceVersion,setEvidenceVersion]=useState(0);
   const dirty=useRef(new Set()),surface=useRef(null);
+  const opener=useRef(null),openerSurface=useRef(null),discardOpener=useRef(null);
+  function restoreFocus(){const target=opener.current?.isConnected&&opener.current!==document.body?opener.current:openerSurface.current?.isConnected?openerSurface.current.querySelector('button,input,[tabindex]'):document.querySelector('[data-testid="ai-search"],main h1,main h2');if(target){if(!target.matches('button,input,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true});}}
   const decision=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']}),user.user_id+':'+record.client_id+':decision:'+(record.finding_id||record.task_id),true);
   const reopen=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']}),user.user_id+':'+record.client_id+':reopen:'+(record.finding_id||record.task_id),true);
   const markDirty=useRef((id,value)=>value?dirty.current.add(id):dirty.current.delete(id)).current;
@@ -95,7 +97,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
     try{await decision('/findings/'+ticket.finding.finding_id+'/'+action,body);setRationale('');await saved();setFeedback(action==='validate'?'Ticket completed. Validation saved.':'Ticket accepted, not remediated.');}
     catch(e){setCommandError(formatError(e));}finally{setBusy(false);}
   }
-  return <><Dialog open={open} onOpenChange={close}><DialogContent ref={surface} className="max-w-3xl max-h-[90vh] overflow-y-auto min-w-0 break-words" data-testid="remediation-ticket-drawer">
+  return <><Dialog open={open} onOpenChange={close}><DialogContent ref={surface} onOpenAutoFocus={()=>{opener.current=document.activeElement;openerSurface.current=opener.current?.closest('[role="dialog"]');}} onCloseAutoFocus={e=>{e.preventDefault();restoreFocus();}} className="max-w-3xl max-h-[90vh] overflow-y-auto min-w-0 break-words" data-testid="remediation-ticket-drawer">
     <DialogTitle>{ticket?.title||'Remediation ticket'}</DialogTitle><DialogDescription>{ticket?ticket.ticketId:'Loading ticket…'}</DialogDescription>
     {error&&<p role="alert">{error}<Button onClick={load}>Retry</Button></p>}
     {!loading&&!error&&!ticket&&<p role="alert">This ticket is unavailable for this client.</p>}
@@ -119,7 +121,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
       <History ticket={ticket} onDirty={markDirty}/>
     </div>}
   </DialogContent></Dialog>
-  <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent><AlertDialogTitle>Discard unsaved ticket changes?</AlertDialogTitle><AlertDialogDescription>Saved records remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{dirty.current.clear();setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+  <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent onOpenAutoFocus={()=>{discardOpener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();if(dirty.current.size){const target=discardOpener.current?.isConnected?discardOpener.current:surface.current?.querySelector('button,input');target?.focus({preventScroll:true});}else restoreFocus();}}><AlertDialogTitle>Discard unsaved ticket changes?</AlertDialogTitle><AlertDialogDescription>Saved records remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{dirty.current.clear();setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   {nested&&<RecordDrawer {...nested} open clientId={clientId} onSaved={saved} onOpenChange={v=>{if(!v)setNested(null);}}/>}
   </>;
 }

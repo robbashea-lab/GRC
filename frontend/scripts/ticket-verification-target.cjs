@@ -3,7 +3,8 @@
 const fs=require('node:fs'),path=require('node:path');
 module.exports=async()=>{
   const published=process.argv.includes('--published');
-  let token='',base='http://127.0.0.1:4387',out=path.resolve(__dirname,'../../docs');
+  let token='',base=process.env.TICKET_VERIFICATION_BASE||'http://127.0.0.1:4387',out=process.env.TICKET_VERIFICATION_OUTPUT||path.resolve(__dirname,'../../docs');
+  if(!published&&new URL(base).hostname!=='127.0.0.1')throw new Error('Local verification requires isolated loopback storage');
   if(published){
     // Windows PTYs need raw input to suppress credential echo; Enter arrives as CR.
     const wasRaw=!!process.stdin.isRaw;

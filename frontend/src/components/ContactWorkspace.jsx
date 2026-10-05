@@ -26,6 +26,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
   const [invite,setInvite]=useState(false),[role,setRole]=useState('client_readonly');
   const [saving,setSaving]=useState(false),[error,setError]=useState(''),[discard,setDiscard]=useState(false),[archive,setArchive]=useState(false);
   const create=useCreateIntent((...args)=>api.post(...args),`${clientId}:${user?.user_id}:contacts`);
+  const update=useCreateIntent((...args)=>api.patch(...args),`${user?.user_id}:${clientId}:contacts:${record?.contact_id}:update`,true);
   const context=useContactAccess(clientId,open,current);
   const state=directoryAccess(current||{client_id:clientId},clientId,context);
   const archived=isArchivedContact(current||{});
@@ -49,7 +50,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
     try{
       const body={...form,name:form.name.trim(),email:form.email.trim()};
       if(!body.name||!body.email)throw new Error('Full name and email are required.');
-      const response=current?await api.patch(`/contacts/${current.contact_id}`,{...body,expected_updated_at:current.updated_at??null}):await create('/contacts',{...body,client_id:clientId,status:'active'});
+      const response=current?await update(`/contacts/${current.contact_id}`,{...body,expected_updated_at:current.updated_at??null}):await create('/contacts',{...body,client_id:clientId,status:'active'});
       saved=response.data;setCurrent(saved);baseline.current=contactForm(saved);setForm(baseline.current);
       if(!current&&invite){
         // Contact creation and invitation are separate authoritative operations. Never recreate
@@ -69,7 +70,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
       const {data}=await api.get(`/clients/${clientId}/contact-accounts`);
       const latest=directoryAccess(current,clientId,{clientId,status:'ready',members:data});
       if(!archived&&!['none','disabled'].includes(latest.key))throw new Error('Manage active or pending access in Users & Access before archiving this contact.');
-      await api.patch(`/contacts/${current.contact_id}`,{status:archived?'active':'inactive',expected_updated_at:current.updated_at??null});
+      await update(`/contacts/${current.contact_id}`,{status:archived?'active':'inactive',expected_updated_at:current.updated_at??null});
       onSaved?.();onOpenChange(false);
     }catch(e){setError(formatError(e));}finally{setSaving(false);setArchive(false);}
   }
@@ -79,6 +80,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
       <form onSubmit={save} className="contact-workspace-form">
         <div className="contact-workspace-body">
           {error&&<p role="alert" className="text-sm text-semantic-critical">{error}</p>}
+          {update.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button type="button" disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setError('');try{const {data}=await update.retry();setCurrent(data);baseline.current=contactForm(data);setForm(baseline.current);onSaved?.();toast.success('Saved');}catch(e){setError(formatError(e));}finally{setSaving(false);}}}>Retry unconfirmed save</Button></>}
           {archived&&<p className="text-sm text-ink-secondary">Archived contact · historical relationships are retained.</p>}
           <section aria-labelledby="contact-info-heading"><h3 id="contact-info-heading">Contact Information</h3><div className="contact-field-grid">
             {CONTACT_FIELDS.map(([key,label,type,required])=><div key={key}><Label htmlFor={`contact-${key}`}>{label}{required?' *':''}</Label><Input id={`contact-${key}`} type={type} required={required} maxLength={key==='email'?254:200} disabled={!canWrite||saving} value={form[key]} onChange={e=>setForm({...form,[key]:e.target.value})}/></div>)}

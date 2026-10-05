@@ -9,7 +9,7 @@ let mockClient='demo_brawndo',mockUser={user_id:'admin',role:'super_admin',works
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Brawndo'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
-jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,Navigate:({to})=><div data-testid="redirect">{to}</div>,useLocation:()=>({pathname:'/findings',search:mockQuery}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams(mockQuery))}),{virtual:true});
+jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,Navigate:({to})=><div data-testid="redirect">{to}</div>,useLocation:()=>({pathname:'/findings',search:mockQuery}),useNavigationType:()=> 'REPLACE',useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams(mockQuery))}),{virtual:true});
 beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:require('crypto').webcrypto,configurable:true}));
 const named=text=>[...document.querySelectorAll('button')].find(b=>b.textContent===text);
 let root,container,rows,findings,saved;
