@@ -36,16 +36,16 @@ export default function BrawndoCisSafeguard({state,actions}){
   const guidance=guidanceData.requirements[id];
   const saved=verificationOf(current),presentation=presentationData.requirements[id];
   const programLabel=ctx?cisLabel(ctx.configuration):breadcrumb?.[0]?.label||'CIS';
-  return <AssessmentShell open={open} title={`${programLabel} ${id} — ${definition.title}`} description={<span className="sr-only">Safeguard assessment workspace</span>}
+  return <AssessmentShell open={open} title={definition.title} description={<span className="sr-only">Safeguard assessment workspace</span>}
     status={<><span aria-label="Saved implementation status"><CisStatusPill status={current.status} framework="cis-ig1"/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
     {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment" ariaModal
     crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb} label={`${programLabel} location`}/>:null}
     returnSelector={`[data-testid="requirement-${id}"]`}
     footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes are saved when you choose Save assessment.')}</span>{finding&&<p id="bcsg-finding-draft" className="text-xs text-ink-secondary">Create or cancel the open Finding before using Save & next.</p>}</div>
-      <div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={close}>Close assessment</Button>{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={finding?'bcsg-finding-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
+      <div className="flex flex-wrap gap-2">{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={finding?'bcsg-finding-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading assessment…</p>}
-    <AssessmentLayout key={clientId+':'+id} summary={summaryData.requirements[id]?.plain}
-      requirement={<AssessmentRequirement heading="What CIS requires" text={source.text} official trigger={presentation?.trigger} source={presentation?.source||criteria?.source||source.url} label="Official CIS source"/>}
+    <AssessmentLayout criteriaSummary="Omnisciente guidance for assessing this safeguard. These are not additional CIS requirements." criteriaTitle="CIS assessment criteria" reference={`CIS v8.1 · Safeguard ${id}`} key={clientId+':'+id} summary={summaryData.requirements[id]?.plain}
+      requirement={<AssessmentRequirement reference={`CIS v8.1 · Safeguard ${id}`} heading="What CIS requires" text={source.text} official trigger={presentation?.trigger} source={presentation?.source||criteria?.source||source.url} label="Official CIS source"/>}
       checklist={<AssessmentChecklist title={`Safeguard ${id} checklist`} items={criteria?.criteria} historicalItems={criteria?.legacy_criteria} value={form.cis_assessment_criteria||[]} disabled={disabled} onChange={value=>put('cis_assessment_criteria',value)}/>}
       review={guidance.review} outcome={guidance.outcome}>
     <div className="assessment-implementation">
@@ -61,7 +61,8 @@ export default function BrawndoCisSafeguard({state,actions}){
       <label className="block text-sm"><span className="sr-only">Current implementation</span>
         <Textarea aria-label="Current implementation" rows={5} disabled={disabled} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)}/></label>
     </Step>
-    <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/></div></div>
+</div></div>
+    <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>
     <CisOperationPanel {...{form,definition,put,disabled}} contacts={ctx?.contacts||[]}/>
     <CisSupportingRecords {...{record,current,definition,ctx,related,writable,busy,run,setNested,setReviewDraft,reviewSaved}}/>
     {otherDraft&&!finding&&<p role="status" className="text-xs text-ink-secondary">Save or cancel recurring Review setup before using Save & next.</p>}

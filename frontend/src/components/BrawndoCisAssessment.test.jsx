@@ -15,7 +15,7 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn
 jest.mock('./RecordDrawer',()=>({kind,record,initialValues,onOpenChange})=><div data-testid="nested">{kind} {record.title}{initialValues?.occurrence?.occurrence_id}<button onClick={()=>onOpenChange(false)}>Close linked record</button></div>);
 jest.mock('./AssigneeSelect',()=>()=>null);
 jest.mock('./ui/dialog',()=>{
- const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef(({children,...props},ref)=><h2 {...props} ref={ref}>{children}</h2>),DialogDescription:({children})=><p>{children}</p>};
+ const R=require('react'),Close=R.createContext(null);return {Dialog:({children,onOpenChange})=><Close.Provider value={onOpenChange}><div>{children}</div></Close.Provider>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}<Close.Consumer>{close=><button onClick={()=>close(false)}>Close</button>}</Close.Consumer></div>,DialogTitle:R.forwardRef(({children,...props},ref)=><h2 {...props} ref={ref}>{children}</h2>),DialogDescription:({children})=><p>{children}</p>};
 });
 let root,container,record,related,close,next;
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);
@@ -36,7 +36,8 @@ async function render(clientId='demo_brawndo'){await act(async()=>root.render(<F
 test('retained IG2 assessment keeps its safeguard identity and content inside the assessment dialog',async()=>{
  record={...record,definition_id:'18.2'};
  await render();
- expect(container.querySelector('h2').textContent).toContain('18.2');
+ expect(container.querySelector('h2').textContent).toBe(catalog.requirements.find(row=>row.id==='18.2').title);
+ expect(container.querySelector('.assessment-criteria-intro').textContent).toContain('Safeguard 18.2');
  expect(container.querySelector('[data-source-kind="official"]').textContent).toBe(catalog.requirements.find(row=>row.id==='18.2').official_text);
  expect(record.definition_id).toBe('18.2');expect(api.patch).not.toHaveBeenCalled();
 });
@@ -72,7 +73,7 @@ test('approved two-tab layout hides metadata rows and retains saved badges and s
  expect(container.querySelector('[role=tab][data-state=active]').textContent).toBe('Requirement & implementation');
  expect(container.querySelector('[aria-label="Verification result"]')).toBeNull();expect(container.querySelector('.bcsg-metadata')).toBeNull();
  expect(container.querySelector('[data-testid="cis-supporting-records"]').open).toBe(false);expect(container.querySelector('[data-testid="cis-operation"]').open).toBe(false);
- expect(container.querySelector('h2').textContent).toBe('CIS IG1 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
+ expect(container.querySelector('h2').textContent).toBe('Establish and Maintain Detailed Enterprise Asset Inventory');
  expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
  expect(container.querySelector('.assessment-summary').open).toBe(false);
  expect(container.querySelector('.assessment-implementation').children).toHaveLength(2);
@@ -146,7 +147,7 @@ test('status labels and N/A are preserved; legacy notes remain in a collapsed di
 test('next and close require explicit draft discard; cancel retains the draft',async()=>{
  await render();await input('Current implementation','Draft');await act(async()=>button('Next').click());expect(next).not.toHaveBeenCalled();
  expect(document.body.textContent).toContain('Leave unsaved changes?');await act(async()=>button('Keep editing').click());
- expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Draft');await act(async()=>button('Close assessment').click());expect(close).not.toHaveBeenCalled();
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Draft');await act(async()=>button('Close').click());expect(close).not.toHaveBeenCalled();
  await act(async()=>button('Discard changes').click());expect(close).toHaveBeenCalledWith(false);
 });
 test('Save & next waits for a successful save and never navigates after failure',async()=>{

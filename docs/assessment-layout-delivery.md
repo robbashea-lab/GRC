@@ -1,6 +1,6 @@
 # Assessment layout delivery status
 
-Baseline and last refetched main: `27746e510240a11ab16392d93f55de1c9b604442`.
+Original baseline: `27746e510240a11ab16392d93f55de1c9b604442`.
 Branch: `codex/assessment-layout-all-frameworks`.
 
 ## Implemented
@@ -12,14 +12,11 @@ Branch: `codex/assessment-layout-all-frameworks`.
 - ISO:12 source-verified units in clauses4–6,96 separate checks, max20 per unit.111 units remain source-pending (18 clause units and93 Annex A entries). Pending units have no invented checklist. SoA and audit lifecycle fields remain separate.
 - Backend and isolated Demo validate ISO selections against the correct definition, retain prior same-record IDs and omitted audit selections, and preserve authorization, tenant scoping, optimistic tokens and history. No dependencies, production backend deployment or staging infrastructure changes.
 
-## Release blockers
+## Current acceptance blockers
 
-1. Approved mockup screenshot was not attached or otherwise available. Written layout has been implemented; exact proportions and approved screenshot comparison are unverified.
-2. Complete licensed ISO source is unavailable. Clauses7–10 and Annex A cannot receive omission-free normative checklists without it.
-3. Full official SOC/ISO requirement wording is not authorized in the supplied reference-only catalogs. Authored summaries are visibly attributed; they cannot be represented as official text. This differs from the fixed requested wording until an authorized source is supplied.
-4. CIS canonical-source differences noted above require resolution before claiming a fully reconciled source comparison.
+Approved HTML is available and the actual CIS workbook comparison is complete. Full ISO verification needs legitimate ISO/IEC27001:2022 clauses7–10 and Annex A for111 units. Applicable product reuse rights for official ISO/SOC2 wording remain unresolved. See assessment-layout-inputs.md for one exact list of blocked units and reusable content. Source access and implementation approval do not grant redistribution rights.
 
-These are missing acceptance inputs, not requests for repeat Git/deployment authorization. The user authorized push/PR/merge/private preview; only draft PR is appropriate while required acceptance remains incomplete. Main and existing owner-private preview stay unchanged. Real authenticated backend/Mongo browser acceptance and production readiness are not established by Demo checks.
+PR36 stays draft. Release is authorized only after design/content acceptance, current-main reconciliation and normal GitHub gates, to the existing owner-private preview and existing Render staging. No provider settings or database changes are authorized. Local synthetic authenticated checks do not establish hosted Atlas acceptance.
 
 ## Verification
 
@@ -36,3 +33,23 @@ Final commands and evidence will be recorded below once running checks complete.
 - Earlier integration runs failed stale content-count fixtures and historical-response assertions; those assertions were corrected to the new requirements while preserving exact ID/text checks, then settled regressions passed. The earlier broad frontend run was interrupted; the final45-suite scope is reported, not a whole-frontend pass.
 
 Release disposition: draft PR only; no merge or publication. Existing owner-private preview URL/access/version untouched. No merged commit or new preview version exists for this change.
+
+## PR36 follow-up after approved reference supplied
+
+Approved HTML is now available and rendered; the earlier missing-mockup blocker is superseded. See assessment-layout-visual-comparison.md for measured differences, corrections and boundaries of screenshot evidence. New source inspection verified the actual original CIS workbook: all153 descriptions exactly match. The earlier ledger-only/CAS discrepancy blocker is superseded by cis-assessment-source-reconciliation.md; proposed source authority stays the supplied workbook, with CAS differences documented. No canonical wording or historical response was changed.
+
+The exact remaining input list is assessment-layout-inputs.md. SOC review source is available; official product wording rights remain unestablished. Remaining ISO requirement verification needs complete legitimate2022 clauses7–10 and Annex A. Public clause4–6 coverage remains12units/96checks. No licensed publication is copied into the product.
+
+Follow-up automated verification:328 frontend tests across10 suites;50 backend route tests +19 subtests;13 auth/assignment API tests +168 subtests. These use synthetic in-memory storage. Both optimized builds passed; normal sign-in was explicitly enabled for isolated authenticated-browser verification. Real login/routes passed for owner/provider/manager/contributor/reader, including tenant/mutation/route gates, reload, storage tampering and logout. This is authenticated synthetic-storage browser evidence, not real Mongo/browser acceptance. Existing complete offline626+690 and relevant frontend619 evidence remains from the prior tested commit; those entire collections are not claimed rerun after this presentation-only follow-up.
+
+Optimized Demo checks are separate: checklist/narrative save/reopen, draft tabs, independent status, existing/new/multi-framework clients, ordinary scope upgrades and unified source ticket synchronization. No production backend, staging infrastructure, main merge or private preview publication occurred. Prior source and interface reports are historical where superseded here.
+
+## Reconciled verification 2026-10-05
+
+Reconciled PR34 main bb9bcbfe5b7a36b4fb16ff98226adb3913a5ce41; both normal and Demo builds passed. Final six-suite frontend regression:295 passed. Backend ISO/governance/remediation/auth/assignment scope:63 passed +187 subtests. Optimized Demo:10 representative units, light/dark1440/1280/768/480, existing/new client and56→130→153 cumulative scope history checks passed. Unified ticket sources passed. Independent review found no new material code defect.
+
+Normal authenticated browser used real cookie/JWT/bcrypt/routes with synthetic in-memory Mongo, no mail/IdP/external database. CIS1.1,SOC CC1.1,ISO4.1 and Annex A.5.1 passed draft-tab retention, checklist where available, save/reload and independent status/verification/owners/evidence/relationships. Five-role normal login/reload, tenant and mutation gates, forged storage rejection and logout passed with zero page errors. This is not hosted Atlas/restart acceptance; ISO audit-occurrence save is separate from these four normal assessment samples.
+
+Native dialog X preserves dirty-close protection; redundant footer close removed from CIS/SOC/ISO assessments and canonical titles match the approved format. Navigation remains required by the original task. Tab transitions disabled for settled screenshot comparison. Source/history preservation means source-driven content differs from mockup sample data; no claim of whole-dialog pixel identity or complete normative coverage.
+
+PR36 remains draft because applicable source/content acceptance is incomplete. No merge, private preview publication or Render deployment from this branch occurred. Hosted results in PR34 are historical evidence for that deployment, not verification of this assessment change. Existing preview URL/access/version and Render/Atlas settings/data/Free plans remain unchanged by this branch.

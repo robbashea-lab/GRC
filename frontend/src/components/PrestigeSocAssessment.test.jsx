@@ -11,7 +11,7 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-id'}));
 jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('./AssigneeSelect',()=>({value,onChange,disabled})=><select aria-label="Owner" value={value||''} disabled={disabled} onChange={e=>onChange(e.target.value||null)}><option value="">Unassigned</option><option value="david">David Wallace</option></select>);
-jest.mock('./ui/dialog',()=>{const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};});
+jest.mock('./ui/dialog',()=>{const R=require('react'),Close=R.createContext(null);return {Dialog:({children,onOpenChange})=><Close.Provider value={onOpenChange}><div>{children}</div></Close.Provider>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}<Close.Consumer>{close=><button onClick={()=>close(false)}>Close</button>}</Close.Consumer></div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};});
 
 let root,container,record,close,related;
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);
@@ -54,7 +54,7 @@ test('Prestige SOC criterion workspace is focused, source-qualified and ordered'
  expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
  expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria']);
  expect(container.querySelector('[role=tabpanel][data-state=active]').textContent).toContain('What SOC 2 requires');
- expect(container.querySelector('h2').textContent).toBe('SOC 2 CC9.2 — Third-party risk oversight');
+ expect(container.querySelector('h2').textContent).toBe('Third-party risk oversight');
  expect(container.querySelector('.assessment-summary').open).toBe(false);
  expect(container.querySelector('.assessment-summary').querySelectorAll('summary')).toHaveLength(1);
  expect(container.querySelector('[data-source-kind="authored"]').textContent).toBe(socGuidance.criteria['CC9.2'].practical.summary);
@@ -107,8 +107,8 @@ test('shared context distinguishes selected controls, evidence alternatives and 
  await render();await criteriaTab();
  const columns=container.querySelector('.assessment-criteria-columns');
  expect([...columns.children].map(section=>section.querySelector('h3').textContent)).toEqual(['CC9.2 checklist','Review guidance','Expected outcome']);
- expect([...columns.children[1].querySelectorAll('li')].map(el=>el.textContent)).toEqual(socGuidance.criteria['CC9.2'].practical.review);
- expect([...columns.children[2].querySelectorAll('li')].map(el=>el.textContent)).toEqual(socGuidance.criteria['CC9.2'].practical.outcome);
+ expect([...columns.children[1].querySelectorAll('p')].map(el=>el.textContent)).toEqual(socGuidance.criteria['CC9.2'].practical.review);
+ expect([...columns.children[2].querySelectorAll('p')].map(el=>el.textContent)).toEqual(socGuidance.criteria['CC9.2'].practical.outcome);
  expect(api.patch).not.toHaveBeenCalled();
 
 });
@@ -143,8 +143,8 @@ test.each(Object.keys(socGuidance.criteria))('%s renders its requirement-only ch
  record={...record,definition_id:id};await render();await criteriaTab();
  const entry=socGuidance.criteria[id],columns=container.querySelector('.assessment-criteria-columns');
  expect([...columns.children[0].querySelectorAll('.assessment-check span')].map(el=>el.textContent)).toEqual(entry.assessment_criteria.map(item=>item.text));
- expect([...columns.children[1].querySelectorAll('li')].map(el=>el.textContent)).toEqual(entry.practical.review);
- expect([...columns.children[2].querySelectorAll('li')].map(el=>el.textContent)).toEqual(entry.practical.outcome);
+ expect([...columns.children[1].querySelectorAll('p')].map(el=>el.textContent)).toEqual(entry.practical.review);
+ expect([...columns.children[2].querySelectorAll('p')].map(el=>el.textContent)).toEqual(entry.practical.outcome);
  expect(container.querySelector('[data-source-kind="authored"]').textContent).toBe(entry.practical.summary);
 
 });
@@ -211,7 +211,8 @@ test('the standard workspace receives SOC guidance through framework configurati
 
 test.each(['PI1.1','P1.1'])('%s retains its existing reference and assessment with source-checked category-specific guidance',async id=>{
  record={...record,definition_id:id};await render('other-category-client');await criteriaTab();
- expect(container.querySelector('h2').textContent).toContain(id);
+ expect(container.querySelector('h2').textContent).toBe(socCatalog.requirements.find(row=>row.id===id).title);
+ expect(container.querySelector('.assessment-criteria-intro').textContent).toContain('Criterion '+id);
  expect(container.querySelector('[data-source-kind="authored"]').textContent).toBe(socGuidance.criteria[id].practical.summary);
  expect(container.querySelector('.assessment-check')).toBeTruthy();
  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
@@ -243,7 +244,7 @@ test('static guide is collapsed, read-only, and above the criterion; desktop reg
  expect(container.textContent).not.toContain('Unsaved assessment changes');
  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
  expect(container.querySelector('input[value="in_progress"]').checked).toBe(true);
- await act(async()=>button('Close assessment').click());expect(close).toHaveBeenCalledWith(false);expect(document.body.textContent).not.toContain('Leave unsaved changes?');
+ await act(async()=>button('Close').click());expect(close).toHaveBeenCalledWith(false);expect(document.body.textContent).not.toContain('Leave unsaved changes?');
 
 });
 test('guide expansion and selected answer reset when navigating between criteria',async()=>{

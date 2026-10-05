@@ -34,7 +34,7 @@ let diagnostics=''; server.stderr.on('data', chunk => {diagnostics+=chunk.toStri
       const page=await context.newPage();
       const errors=[];page.on('pageerror',e=>errors.push(e.message));
       await page.goto(origin+'/login');
-      await page.getByLabel('Email',{exact:true}).fill(role+'@example.com');
+      await page.getByLabel('Work email',{exact:true}).fill(role+'@example.com');
       await page.getByLabel('Password',{exact:true}).fill(password);
       await page.getByRole('button',{name:'Sign in',exact:true}).click();
       await page.waitForURL(url=>!url.pathname.includes('login'));
@@ -44,6 +44,35 @@ let diagnostics=''; server.stderr.on('data', chunk => {diagnostics+=chunk.toStri
       await page.reload();
       const clients=await page.evaluate(async()=>{const r=await fetch('/api/clients');return await r.json();});
       assert.deepEqual(clients.map(x=>x.client_id).sort(), role==='owner'?['a','b']:['a']);
+      if(role==='owner') {
+        const setup=await page.evaluate(async()=>{
+          const baseline=await (await fetch('/api/onboarding/baseline?client_id=a')).json(),catalog=baseline.catalog;
+          const state={version:3,step:3,policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'unsure'])),requirements:Object.fromEntries(catalog.requirements.map(p=>[p.key,['cis-ig1','soc-2','iso-27001'].includes(p.key)?'applies':'does_not_apply'])),reviews:[],framework_reviews:{}};
+          const r=await fetch('/api/onboarding/baseline',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify({client_id:'a',state,finalize:true,expected_updated_at:baseline.state.updated_at||null,expected_records:baseline.record_versions})});return {status:r.status,detail:await r.text()};
+        });assert.equal(setup.status,200,setup.detail);
+        for(const [framework,id] of [['cis-ig1','1.1'],['soc-2','CC1.1'],['iso-27001','4.1'],['iso-27001','A.5.1']]) {
+          const rows=await page.evaluate(async framework=>(await (await fetch('/api/frameworks/'+framework+'?client_id=a')).json()).assessments,framework);
+          const row=rows.find(r=>r.definition_id===id);assert(row,framework+' '+id);
+          await page.evaluate(()=>localStorage.setItem('grc_client_id','a'));
+          await page.goto(origin+'/compliance/'+framework+'?assessment='+row.framework_assessment_id);
+          const dialog=page.locator('[data-assessment-shell]'),field=dialog.getByLabel('Current implementation',{exact:true});
+          await field.fill('SYNTHETIC authenticated assessment '+id);
+          await dialog.getByRole('tab',{name:'Assessment criteria',exact:true}).click();
+          const check=dialog.locator('.assessment-check input').first(),hasCheck=await check.count();if(hasCheck)await check.check();
+          await dialog.getByRole('tab',{name:'Requirement & implementation',exact:true}).click();
+          await field.waitFor();assert.equal(await field.inputValue(),'SYNTHETIC authenticated assessment '+id);
+          await dialog.getByRole('button',{name:'Save assessment',exact:true}).click();
+          await dialog.getByText(/Assessment saved\.|Changes saved; assessment date unchanged\./).waitFor();
+          await page.reload();await page.getByLabel('Current implementation',{exact:true}).waitFor();
+          assert.equal(await page.getByLabel('Current implementation',{exact:true}).inputValue(),'SYNTHETIC authenticated assessment '+id);
+          await page.locator('[data-assessment-shell]').getByRole('tab',{name:'Assessment criteria',exact:true}).click();
+          if(hasCheck)assert.equal(await page.locator('.assessment-check input').first().isChecked(),true);
+          const saved=await page.evaluate(async ({framework,recordId})=>(await (await fetch('/api/frameworks/'+framework+'?client_id=a')).json()).assessments.find(r=>r.framework_assessment_id===recordId),{framework,recordId:row.framework_assessment_id});
+          for(const key of ['status','owner_id','process_owner_id','evidence_ids','related_links'])assert.deepEqual(saved[key]??null,row[key]??null,key+' remains independent');
+          assert.equal(saved.verification||'not_verified',row.verification||'not_verified','verification remains independent');
+          console.log(JSON.stringify({authenticatedAssessment:framework,id,syntheticInMemoryMongo:true,checklistAvailable:!!hasCheck,draftTabs:true,saveReload:true,independentStatus:true}));
+        }
+      }
       const attack=await page.evaluate(async()=>{
         const result={};
         for(const route of ['/api/tasks/task-b','/api/evidence?client_id=b','/api/clients/b/profile']) result[route]=(await fetch(route)).status;
