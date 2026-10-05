@@ -16,8 +16,7 @@ const scope=async(group,context={})=>api.patch('/frameworks/cis-ig1/configuratio
 beforeEach(async()=>{
   sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');
   cid=(await api.post('/clients',{name:'Temporary synthetic scope verification'})).data.client_id;
-  // Actual content; release capability is enabled only inside this isolated test.
-  cis.available_implementation_groups=[1,2,3];
+  expect(cis.available_implementation_groups).toEqual([1,2,3]);
 });
 afterEach(()=>Object.assign(cis,clone(original)));
 

@@ -1,0 +1,214 @@
+{
+  "environment": "normal authenticated interface; loopback real disposable Mongo; no availability override",
+  "fresh": {
+    "client_id": "cli_b3531648aca17e1c1c6086e5484ebb2165ddda904dc5bc1f0f2af2f3e1bd7b42",
+    "assessments": 153,
+    "unassessed": 153,
+    "reviews": 15,
+    "checks": "all rows empty/unverified/no dates/history/owners; all Reviews unscheduled/unowned"
+  },
+  "upgrade": {
+    "workflow": "Normal authenticated browser Client Profile IG2 to IG3; real disposable Mongo; no availability override",
+    "preserved_full_assessment_records": 130,
+    "additional_safeguards": [
+      "1.5",
+      "2.7",
+      "3.13",
+      "3.14",
+      "4.12",
+      "6.8",
+      "8.12",
+      "9.7",
+      "12.8",
+      "13.7",
+      "13.8",
+      "13.9",
+      "13.10",
+      "13.11",
+      "15.5",
+      "15.6",
+      "15.7",
+      "16.12",
+      "16.13",
+      "16.14",
+      "17.9",
+      "18.4",
+      "18.5"
+    ],
+    "additions_unassessed": 23,
+    "assessment_history_snapshots": 3,
+    "preserved_reviews": 15,
+    "completed_occurrences": 1,
+    "preserved_open_findings": 1,
+    "preserved_open_actions": 1,
+    "preserved_evidence": 2,
+    "payload_sha256": {
+      "ev_aed8a913a704": "9c305df455f07e81a4aa73dce54b5ed2ef1c87e2a25db93ff34bf937e944a7b0",
+      "ev_f8f6706da762": "0c66e3df61b73e92a9bfe31887cf6c138c2ae6e2fa1e41f0e94dde9915ca9b0e"
+    },
+    "review_changes": "Only cumulative safeguards, drivers and updated_at; all schedules, owners, dates, notes, identity and completed snapshots unchanged",
+    "foreign_records_unchanged": true
+  },
+  "official_requirement_browser": [
+    {
+      "id": "1.5",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "2.7",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "3.13",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "3.14",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "4.12",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "6.8",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "8.12",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "9.7",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "12.8",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "13.7",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "13.8",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "13.9",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "13.10",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "13.11",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "15.5",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "15.6",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "15.7",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "16.12",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "16.13",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "16.14",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "17.9",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "18.4",
+      "official_exact": true,
+      "summary_separate": true
+    },
+    {
+      "id": "18.5",
+      "official_exact": true,
+      "summary_separate": true
+    }
+  ],
+  "csv": [
+    {
+      "action": "Original normal interface Export program CSV",
+      "filename": "cis-assessments (1).csv",
+      "rows": 153,
+      "sha256": "82a8d3e8a7a58dee839699bbb8ab02ab44651915ab6d70396c5a996439a4210c",
+      "all_rows_match_browser_client": true,
+      "download_event_captured": false
+    },
+    {
+      "action": "Experimental Blob lifetime diagnostic; reverted",
+      "filename": "cis-assessments (2).csv",
+      "rows": 153,
+      "sha256": "82a8d3e8a7a58dee839699bbb8ab02ab44651915ab6d70396c5a996439a4210c",
+      "all_rows_match_browser_client": true,
+      "download_event_captured": false
+    },
+    {
+      "action": "Native authenticated attachment diagnostic",
+      "filename": "cis-assessments (3).csv",
+      "rows": 153,
+      "sha256": "82a8d3e8a7a58dee839699bbb8ab02ab44651915ab6d70396c5a996439a4210c",
+      "all_rows_match_browser_client": true,
+      "download_event_captured": true
+    },
+    {
+      "action": "Final unchanged normal Export program CSV while Partial2 display filter active",
+      "filename": "cis-assessments (4).csv",
+      "rows": 153,
+      "sha256": "c347943b60888cabba374ca1b9588fa4f07147e00230d57c3825b67ae1e98f28",
+      "display_filter_does_not_reduce_export": true,
+      "all_exported_saved_fields_match_upgraded_browser_client": true
+    }
+  ],
+  "postchecks": {
+    "reload_and_both_inherited_answers": true,
+    "completed_review_and_42_day_schedule": true,
+    "ticket_owner_and_due_date": true,
+    "browser_download_hashes_match_original": true,
+    "ig3_filter": 23,
+    "ig2_filter": 74,
+    "partial_filter": 2,
+    "total": 153
+  },
+  "independent_review": "no material code issue; full snapshots recomputed; fresh onboarding independently rerun"
+}

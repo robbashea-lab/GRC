@@ -26,10 +26,10 @@
       "gaps": "For 1.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Run discovery and reconcile unexpected devices. Use Findings and Actions for follow-up and validation."
     },
     "1.4": {
-      "plain": "Feed address-allocation observations into inventory. Collect observations and resolve inventory differences. At least weekly inventory updates using logs. The assessment should explain how this works for the client’s actual scope.",
-      "start": "Identify DHCP servers or IPAM sources and reconciliation owner. Start with the responsible client role: IT asset owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "plain": "Use logs from all DHCP servers or IP address management tools to keep the asset inventory current. Review and use those logs at least weekly.",
+      "start": "Identify all DHCP servers or IP address management tools and the inventory reconciliation owner. Compare log coverage with the enterprise asset inventory and use existing weekly update records.",
       "evidence": "Dated reconciliation and source coverage. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-      "ask": "For 1.4, ask the IT asset owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "ask": "Do all DHCP servers or the IP address management tools supply the logs used for weekly inventory updates? Which sources or weeks were missed?",
       "gaps": "For 1.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Collect observations and resolve inventory differences. Use Findings and Actions for follow-up and validation."
     },
     "1.5": {
@@ -138,10 +138,10 @@
       "gaps": "For 3.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Apply classification in handling decisions. Use Findings and Actions for follow-up and validation."
     },
     "3.8": {
-      "plain": "Make internal and provider data movements traceable. Maintain flows through service changes. Annual review and significant-change updates. The assessment should explain how this works for the client’s actual scope.",
-      "start": "Map material flows and external destinations. Start with the responsible client role: Client data owner. Agree the covered systems or people and use existing procedures before creating new records.",
+      "plain": "Document internal and service-provider data flows using the enterprise data management process. Review and update the documentation annually and after significant relevant changes.",
+      "start": "Document internal and service-provider data flows based on the enterprise data management process. Start with the responsible client role: Client data owner. Use existing documentation and identify missing flows without limiting coverage to material flows or external destinations.",
       "evidence": "Flow diagrams or equivalent controlled records. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-      "ask": "For 3.8, ask the Client data owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "ask": "Does the flow documentation follow the data management process and include service-provider flows? Which service changes have not been reflected?",
       "gaps": "For 3.8, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain flows through service changes. Use Findings and Actions for follow-up and validation."
     },
     "3.9": {
@@ -600,11 +600,11 @@
       "gaps": "For 10.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Operate behavior-based malware protection. Use Findings and Actions for follow-up and validation."
     },
     "11.1": {
-      "plain": "Document how the organization backs up and recovers information: what is covered, what comes back first, how backups are made and how they are protected. Review the process annually and after significant relevant changes.",
-      "start": "Ask business owners what information and services they would need to recover. Compare that with IT's recovery procedures and backup scope. Clarify priorities, responsible teams and provider dependencies already present in the process.",
+      "plain": "Document the data recovery process: its recovery scope, prioritization (what comes back first) and the security of backup data. Review and update the process annually and after significant relevant enterprise changes. Detailed backup procedures can support the process but are not required by this safeguard.",
+      "start": "Ask business owners what information and services they would need to recover. Compare that with the documented data recovery process. Clarify recovery scope, priorities and backup-data security; existing backup instructions can provide optional supporting detail.",
       "evidence": "Recovery procedures can describe scope, priorities and backup protection. Supporting backup instructions can add operational detail. Dated annual reviews and change records show the process remains current; backup-job results alone do not document the recovery process.",
-      "ask": "Ask business owners and IT: What would we recover first, and why? What is outside the documented scope? Where are the backup and recovery instructions? Did recent system changes update the process?",
-      "gaps": "Look for a backup schedule with no recovery instructions, undocumented priorities, or procedures that rely on a departed employee. Do not add a separate higher-group restore-test frequency as an IG1 requirement."
+      "ask": "What recovery activities are covered, what is prioritized and how is backup data secured? Does the documented process reflect significant enterprise changes and its annual review? Detailed backup instructions may help explain implementation but are optional support for this safeguard.",
+      "gaps": "Look for an undocumented recovery scope, unclear recovery priorities, missing backup-data security or outdated process documentation. A backup schedule alone does not document the recovery process. Do not require detailed backup procedures or a separate higher-group restore-test frequency under this safeguard."
     },
     "11.2": {
       "plain": "Run automated backups at least weekly, or more often when the data's sensitivity calls for it. Backups need to execute successfully; reviewing a weekly report is not the same as making a weekly backup.",
@@ -642,10 +642,10 @@
       "gaps": "Look for network devices absent from inventories, firmware never checked after installation, or unsupported equipment covered only by a replacement plan. Hardware still functioning is not the same as software still supported."
     },
     "12.2": {
-      "plain": "Design segmented, least-privilege, available networks. Maintain implemented network architecture. No numeric interval specified. The assessment should explain how this works for the client’s actual scope.",
+      "plain": "Design and maintain secure network architecture addressing segmentation, least privilege and availability. Documentation supports the architecture but does not replace policy and design components.",
       "start": "Define architecture and security boundaries. Start with the responsible client role: Network service owner. Agree the covered systems or people and use existing procedures before creating new records.",
       "evidence": "Design and deployed boundary evidence. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-      "ask": "For 12.2, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "ask": "How does the architecture address segmentation, least privilege and availability? Does the supporting material show the policy and design, rather than only a diagram?",
       "gaps": "For 12.2, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain implemented network architecture. Use Findings and Actions for follow-up and validation."
     },
     "12.3": {
@@ -677,10 +677,10 @@
       "gaps": "For 12.6, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain secure protocol configurations. Use Findings and Actions for follow-up and validation."
     },
     "12.7": {
-      "plain": "Authenticate remote devices through enterprise VPN/AAA. Require VPN and authentication before resource access. Before accessing enterprise resources. The assessment should explain how this works for the client’s actual scope.",
-      "start": "Define enterprise-managed remote-access path and authentication. Start with the responsible client role: Network service owner. Agree the covered systems or people and use existing procedures before creating new records.",
-      "evidence": "Remote-access configuration and authentication sample. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-      "ask": "For 12.7, ask the Network service owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "plain": "Require users to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices. Compare the access paths with effective authentication settings.",
+      "start": "Identify end-user device access paths to enterprise resources and the enterprise-managed VPN and authentication services. Ask the Network service owner to compare effective settings and authentication results across those paths.",
+      "evidence": "End-user device access-path configuration and authentication samples. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
+      "ask": "Must users authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices? Which paths can bypass those prerequisites?",
       "gaps": "For 12.7, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Require VPN and authentication before resource access. Use Findings and Actions for follow-up and validation."
     },
     "12.8": {
@@ -852,10 +852,10 @@
       "gaps": "For 15.3, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Classify providers and update changes. Use Findings and Actions for follow-up and validation."
     },
     "15.4": {
-      "plain": "Align provider contracts with security policy. Maintain contractual security commitments. Review contracts at least annually. The assessment should explain how this works for the client’s actual scope.",
+      "plain": "Include security requirements in provider contracts consistent with the enterprise service provider management policy. Review contracts annually for missing requirements.",
       "start": "Identify required security terms and gaps. Start with the responsible client role: Procurement/business owner. Agree the covered systems or people and use existing procedures before creating new records.",
       "evidence": "Contract review, relevant clauses and Actions. These are examples of useful support, not separate mandatory files. Link existing records and explain their coverage, date and any limitations.",
-      "ask": "For 15.4, ask the Procurement/business owner: who runs the work, which systems or people are covered, how do you check results, and what happens when coverage or execution fails?",
+      "ask": "Which policy requirements are missing from provider contracts? Were contracts reviewed within the annual interval, including relevant notification, encryption and disposal commitments?",
       "gaps": "For 15.4, investigate missing coverage, unclear responsibilities, outdated support or unresolved failures. Compare the stated method with actual execution: Maintain contractual security commitments. Use Findings and Actions for follow-up and validation."
     },
     "15.5": {

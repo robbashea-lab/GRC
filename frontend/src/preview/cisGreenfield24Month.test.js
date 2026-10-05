@@ -25,7 +25,7 @@ test('greenfield CIS-only intake retains 24 months of authoritative operations',
  const client=await post('/clients',{name:'CIS Lifecycle QA — 24 Month Automation',industry:'Synthetic business services'}),cid=client.client_id;
  const state={version:3,step:3,requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,f.key==='cis-ig1'?'applies':'does_not_apply'])),
   policies:Object.fromEntries(baseline.policies.map((p,i)=>[p.key,['yes','no','unsure'][i%3]])),reviews:[],
-  framework_reviews:Object.fromEntries(catalog.review_plans.map(p=>[p.key,{enabled:true,recurrence:p.default_cadence,due_date:'2026-10-31'}]))};
+  framework_reviews:Object.fromEntries(catalog.review_plans.filter(p=>p.default_enabled!==false&&p.safeguards.some(id=>catalog.requirements.find(r=>r.id===id)?.implementation_group===1)).map(p=>[p.key,{enabled:true,recurrence:p.default_cadence,due_date:'2026-10-31'}]))};
  await post('/onboarding/baseline',{client_id:cid,state,finalize:true});
  let ws=await get('/frameworks/cis-ig1',cid),reviews=await get('/reviews',cid),policies=await get('/policies',cid);
  expect(ws.assessments).toHaveLength(56);expect(new Set(activeDefinitions('cis-ig1').map(r=>r.control)).size).toBe(15);

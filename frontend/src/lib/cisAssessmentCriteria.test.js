@@ -1,9 +1,9 @@
 import data from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import catalog from '@catalogs/cisIG1.json';
 
-test('all 130 safeguards have distinct, source-traceable criteria without legacy tier ids',()=>{
+test('all 153 safeguards have distinct, source-traceable criteria without legacy tier ids',()=>{
   expect(Object.keys(data.requirements)).toEqual(catalog.requirements.map(r=>r.id));
-  expect(catalog.requirements).toHaveLength(130);
+  expect(catalog.requirements).toHaveLength(153);
   let count=0;
   for(const r of catalog.requirements){
     const entry=data.requirements[r.id],url=new URL(entry.source);
@@ -18,5 +18,5 @@ test('all 130 safeguards have distinct, source-traceable criteria without legacy
       count++;
     }
   }
-  expect(count).toBe(292);
+  expect(count).toBe(361);
 });

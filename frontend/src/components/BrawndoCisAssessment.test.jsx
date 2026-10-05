@@ -82,7 +82,7 @@ test('four sections in order; verification remains editable near the top',async(
 });
 test('What CIS Requires labels the summary and links the official reference; official_text renders verbatim when supplied',async()=>{
  await render();expect(container.textContent).toContain('Requirement summary');expect(container.textContent).not.toContain('Omnisciente summary — not official CIS text');
- expect(container.querySelector('[data-testid="cis-official-text"]')).toBeNull();
+ expect(container.querySelector('[data-testid="cis-official-text"]').textContent).toBe(catalog.requirements.find(d=>d.id===record.definition_id).official_text);
  const ref=[...container.querySelectorAll('a')].find(a=>a.textContent==='Official CIS reference ↗');expect(ref.href).toMatch(/^https:\/\/cas\.docs\.cisecurity\.org\//);
  for(const gone of ['Source cadence','IG1 ·'])expect(container.textContent).not.toContain(gone);
  mockOfficial='Authorized verbatim text.';
@@ -140,6 +140,8 @@ test.each(catalog.requirements)('approved layout applies to safeguard $id for a 
   record={...record,client_id:'new-cis-client',definition_id:definition.id,framework_assessment_id:'new-'+definition.id};
   await render('new-cis-client');
   expect(container.querySelector('.cis-assessment-layout')).toBeTruthy();
+  expect(container.querySelector('[data-testid="cis-official-text"]').textContent).toBe(definition.official_text);
+  expect(container.querySelector('[data-testid="cis-authored-summary"]').textContent).toBe(definition.guidance);
   expect(container.querySelector('.cis-guide-disclosure').open).toBe(false);
   expect(container.querySelector('.cis-guide-answer p').textContent).toBe(guide.requirements[definition.id].plain);
   expect(container.querySelector('.cis-assessment-guidance').children).toHaveLength(3);

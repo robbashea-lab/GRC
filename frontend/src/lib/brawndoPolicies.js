@@ -16,7 +16,7 @@ export const nextPolicyReview=(day,cadence='annual',days)=>reviewSchedule({due_d
 // A required documented process is not a mandate for a separately titled policy.
 // Only retain catalog-owned mappings; never infer alignment from a document title.
 export function policyAlignment(row, programs=[], assessments=[], cisGroup) {
-  const group=cisGroup||(assessments.some(a=>a.client_id===row.client_id&&a.framework_key==='cis-ig1'&&CATALOGS['cis-ig1'].requirements.find(d=>d.id===a.definition_id)?.implementation_group===2)?2:1);
+  const group=cisGroup||Math.max(1,...assessments.filter(a=>a.client_id===row.client_id&&a.framework_key==='cis-ig1').map(a=>CATALOGS['cis-ig1'].requirements.find(d=>d.id===a.definition_id)?.implementation_group||1));
   return programs.flatMap(key=>{
     const catalog=CATALOGS[key];
     if(!catalog)return [];
@@ -25,7 +25,7 @@ export function policyAlignment(row, programs=[], assessments=[], cisGroup) {
     assessments.filter(a=>a.client_id===row.client_id&&a.framework_key===key&&a.related_links?.some(l=>l.kind==='policies'&&l.id===row.policy_id)).forEach(a=>ids.add(a.definition_id));
     return [...ids].flatMap(id=>{
       const definition=catalog.requirements.find(d=>d.id===id);
-      if(!definition||key==='cis-ig1'&&definition.implementation_group>1&&!assessments.some(a=>a.client_id===row.client_id&&a.framework_key===key&&a.definition_id===id))return [];
+      if(!definition||key==='cis-ig1'&&(definition.implementation_group>group||definition.implementation_group>1&&!assessments.some(a=>a.client_id===row.client_id&&a.framework_key===key&&a.definition_id===id)))return [];
       const mapping=mapped.find(m=>m.safeguards.includes(id));
       return [{key,id,title:definition.title,version:catalog.version,label:key==='cis-ig1'?`CIS IG${group}`:FRAMEWORKS.find(f=>f.key===key)?.label||key,
         relation:'Supports',purpose:mapping?.rationale||mapping?.reason,source:definition.source,sourceCadence:definition.source_cadence,
@@ -34,10 +34,10 @@ export function policyAlignment(row, programs=[], assessments=[], cisGroup) {
   });
 }
 export const alignmentFallback=row=>row.governance_context?.category==='organizational'?'Organization-defined':'Alignment not documented';
-export function policyColumns(columns,rows,programs,assessments=[]) {
+export function policyColumns(columns,rows,programs,assessments=[],cisGroup) {
   return columns.map(c=>{
     if(c.key==='title')return {...c,label:'Policy'};
-    if(c.key==='presence')return {key:'alignment',label:'Framework Alignment',sortable:false,filterOnly:true,filter:true,value:r=>[...new Set(policyAlignment(r,programs,assessments).map(a=>`${a.relation} ${a.label}`))].join(' · ')||alignmentFallback(r),labelValue:v=>v};
+    if(c.key==='presence')return {key:'alignment',label:'Framework Alignment',sortable:false,filterOnly:true,filter:true,value:r=>[...new Set(policyAlignment(r,programs,assessments,cisGroup).map(a=>`${a.relation} ${a.label}`))].join(' · ')||alignmentFallback(r),labelValue:v=>v};
     if(c.key==='status')return {...c,label:'Policy Status',sortable:false,filterOnly:true,value:policyStatus,labelValue:policyStatusLabel,options:[...new Set(rows.map(policyStatus))].map(value=>({value,label:policyStatusLabel(value)}))};
     if(c.key==='owner_id')return {...c,sortable:false,filterOnly:true};
     if(c.dateKind)return {...c,label:c.key==='last_reviewed_at'?'Last Reviewed':'Next Review',sortLabels:['Earliest First','Latest First']};
@@ -57,11 +57,11 @@ export function policyViewMatches(row,view,now=new Date()){
   return true;
 }
 const short=iso=>new Date(String(iso).slice(0,10)+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
-export function policyTiles(rows,programs=[],assessments=[],now=new Date()){
+export function policyTiles(rows,programs=[],assessments=[],now=new Date(),cisGroup){
   const approved=rows.filter(r=>policyViewMatches(r,'approved',now)),awaiting=rows.filter(r=>policyViewMatches(r,'awaiting',now));
   const upcoming=rows.filter(r=>live(r)&&reviewDays(r,now)!==null&&reviewDays(r,now)>=0).sort((a,b)=>String(a.next_review_date).localeCompare(String(b.next_review_date)));
   const due=upcoming.filter(r=>reviewDays(r,now)<=30);
-  const aligned=rows.map(r=>policyAlignment(r,programs,assessments));
+  const aligned=rows.map(r=>policyAlignment(r,programs,assessments,cisGroup));
   const mapped=aligned.filter(a=>a.length).length,labels=[...new Set(aligned.flat().map(a=>a.label))];
   const orgDefined=rows.filter((r,i)=>!aligned[i].length&&alignmentFallback(r)==='Organization-defined').length;
   const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;

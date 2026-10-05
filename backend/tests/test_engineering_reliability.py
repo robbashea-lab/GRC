@@ -110,7 +110,7 @@ class EngineeringReliabilityTests(unittest.IsolatedAsyncioTestCase):
         for count in (5,10,50):
             fid=f'validate-{count}'
             await server.db.findings.insert_one({'finding_id':fid,'client_id':'a','title':'Ready','status':'remediated'})
-            results=await asyncio.gather(*(self.client.post(f'/api/findings/{fid}/validate',json={'rationale':'Synthetic validation'}) for _ in range(count)))
+            results=await asyncio.gather(*(self.client.post(f'/api/findings/{fid}/validate',json={'rationale':'Synthetic validation','request_id':f'{fid}-{intent}'}) for intent in range(count)))
             self.assertEqual(sum(r.status_code==200 for r in results),1)
             self.assertTrue(all(r.status_code in (200,409) for r in results))
             row=await server.db.findings.find_one({'finding_id':fid})

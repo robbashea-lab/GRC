@@ -5,7 +5,7 @@ import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
-import {CATALOGS, FRAMEWORKS} from '../lib/frameworks';
+import {CATALOGS, FRAMEWORKS, activePlans} from '../lib/frameworks';
 import {auditPackage,blankAuditItem} from '../lib/isoAudit';
 import timeline from '@contracts/program-lifecycle.json';
 
@@ -46,7 +46,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
     policies: Object.fromEntries(baseline.policies.map(p => [p.key, 'unsure'])),
     requirements: Object.fromEntries(FRAMEWORKS.map(f => [f.key, f.key === framework ? 'applies' : 'does_not_apply'])),
     reviews: [],
-    framework_reviews: Object.fromEntries(CATALOGS[framework].review_plans.map(p => [p.key, {
+    framework_reviews: Object.fromEntries(activePlans(framework).map(p => [p.key, {
       enabled: true, recurrence: p.default_cadence, due_date: '2027-03-31'
     }]))
   };

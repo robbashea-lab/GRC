@@ -1,4 +1,5 @@
 """Version-specific content and optional scheduling contracts, without client data."""
+import copy
 import unittest
 from framework_catalog import CIS, active_definitions, active_plans
 from framework_governance import CIS_CRITERIA
@@ -35,7 +36,20 @@ class CisIG3ContentTests(unittest.TestCase):
         self.assertEqual(title(3),'Penetration Testing Program Review')
         self.assertNotEqual(title(2),title(3))
 
-    def test_content_is_complete_but_release_is_still_closed(self):
-        self.assertEqual(CIS['available_implementation_groups'],[1,2])
+    def test_content_and_normal_ig3_availability_are_complete(self):
+        self.assertEqual(CIS['available_implementation_groups'],[1,2,3])
         mapped={i for p in CIS['review_plans'] if p.get('default_enabled',True) for i in p['safeguards']}
         self.assertEqual(mapped,{d['id'] for d in CIS['requirements']})
+
+    def test_cadence_references_stay_inside_each_active_plan(self):
+        original = copy.deepcopy(CIS['review_plans'])
+        for group in [1, 2, 3]:
+            plans = active_plans('cis-ig1', {'implementation_group': group})
+            for plan in plans:
+                source = next(p for p in original if p['key'] == plan['key'])
+                expected = [r for r in source['cadence_references'] if r['definition_id'] in plan['safeguards']]
+                self.assertEqual(plan['cadence_references'], expected)
+            refs = {r['definition_id'] for p in plans for r in p['cadence_references']}
+            for ident in ['6.8', '17.9']:
+                self.assertEqual(ident in refs, group == 3)
+        self.assertEqual(CIS['review_plans'], original)

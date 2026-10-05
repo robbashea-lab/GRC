@@ -119,15 +119,16 @@ function EntityListPage({ kind }) {
   const signals = useMemo(() => registerSignals(kind), [kind]);
   const [programs, setPrograms] = useState([]);
   const [policyAssessments,setPolicyAssessments]=useState([]);
+  const [cisGroup,setCisGroup]=useState(1);
   const [alignmentError,setAlignmentError]=useState('');
   useEffect(() => {
     if (kind !== 'policies' || !currentClientId) { setPrograms([]); return undefined; }
     const controller = new AbortController();
-    setPolicyAssessments([]);setAlignmentError('');
+    setPolicyAssessments([]);setCisGroup(1);setAlignmentError('');
     api.get('/frameworks/summary', { params: { client_id: currentClientId }, signal: controller.signal })
       .then(async({ data }) => {
         if(controller.signal.aborted||data.client_id!==currentClientId)return;
-        const enabled=(data.items||[]).filter(p=>p.tracking_available).map(p=>p.key);setPrograms(enabled);
+        const enabled=(data.items||[]).filter(p=>p.tracking_available).map(p=>p.key);setPrograms(enabled);setCisGroup(data.items.find(p=>p.key==='cis-ig1')?.implementation_group||1);
         if(policiesPilot){const results=await Promise.all(enabled.map(key=>api.get('/frameworks/'+key,{params:{client_id:currentClientId},signal:controller.signal})));if(!controller.signal.aborted)setPolicyAssessments(results.flatMap(r=>(r.data.assessments||[]).filter(a=>!r.data.active_definition_ids||r.data.active_definition_ids.includes(a.definition_id))).filter(a=>a.client_id===currentClientId));}
       })
       .catch(() => { if (!controller.signal.aborted) {setPrograms([]);if(policiesPilot)setAlignmentError('Alignment unavailable');} });
@@ -275,7 +276,7 @@ function EntityListPage({ kind }) {
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const columnCount = displayColumns.length + 2;
   const baseColumns = tableColumns(kind, { rows: tableSource, users });
-  const columns = policiesPilot ? policyColumns(baseColumns,tableSource,programs,policyAssessments) : baseColumns;
+  const columns = policiesPilot ? policyColumns(baseColumns,tableSource,programs,policyAssessments,cisGroup) : baseColumns;
   const table = useTableControls({ columns, rows: tableSource, module: kind, scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key, values) => {
     if (key !== 'status' || !values.length) return;
     const next = new URLSearchParams(params);
@@ -438,7 +439,7 @@ function EntityListPage({ kind }) {
           </HeaderActions>
         }
       />}
-      {policiesPilot&&<BrawndoTiles label="Policy summary" loading={loading&&!tableSource.length} tiles={policyTiles(tableSource,programs,policyAssessments).map(t=>t.id==='mapped'?t:{...t,pressed:policyView===t.id,onClick:()=>setParam('policyView',policyView===t.id?'':t.id)})}/>}
+      {policiesPilot&&<BrawndoTiles label="Policy summary" loading={loading&&!tableSource.length} tiles={policyTiles(tableSource,programs,policyAssessments,new Date(),cisGroup).map(t=>t.id==='mapped'?t:{...t,pressed:policyView===t.id,onClick:()=>setParam('policyView',policyView===t.id?'':t.id)})}/>}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       {!policiesPilot && signals.length > 0 && <RegisterSignalBar signals={signals} rows={tableSource} active={signal?.id} onPick={setSignal} />}
       <div className="register-toolbar">
@@ -595,7 +596,7 @@ function EntityListPage({ kind }) {
                     const closed = row.status === "completed" || row.status === "cancelled" || row.status === "closed";
                     return (
                     <td key={`${row[idField] || i}-${c.key}`} data-column={isReviews ? c.key : undefined} className={`tbl-cell ${c.primary ? "font-medium text-ink-primary" : ""}`}>
-                      {policiesPilot&&c.key==='alignment'?(alignmentError?<span className="text-xs text-ink-secondary">{alignmentError}</span>:<PolicyAlignment record={row} programs={programs} assessments={policyAssessments} onOpen={setAlignmentTarget}/>) : policiesPilot&&c.key==='status'?<StatusBadge value={policyStatus(row)} label={policyStatusLabel(policyStatus(row))}/> : c.badge ? (
+                      {policiesPilot&&c.key==='alignment'?(alignmentError?<span className="text-xs text-ink-secondary">{alignmentError}</span>:<PolicyAlignment record={row} programs={programs} assessments={policyAssessments} cisGroup={cisGroup} onOpen={setAlignmentTarget}/>) : policiesPilot&&c.key==='status'?<StatusBadge value={policyStatus(row)} label={policyStatusLabel(policyStatus(row))}/> : c.badge ? (
                         overdueReview && c.key === "status"
                           ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
                           : row[c.key] ? <StatusBadge value={row[c.key]} tone={isReviews && row[c.key] === 'needs_scheduling' ? 'duesoon' : undefined} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>

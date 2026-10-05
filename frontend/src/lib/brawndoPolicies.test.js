@@ -1,4 +1,5 @@
-import {policyStatus,policyAlignment,policyStatusLabel,nextPolicyReview,policyColumns} from './brawndoPolicies';
+import {policyStatus,policyAlignment,policyStatusLabel,nextPolicyReview,policyColumns,policyTiles} from './brawndoPolicies';
+import {cis} from './frameworks';
 import {tableColumns} from './tableColumns';
 import {applyTableFilters} from './tableFilters';
 test('legacy states remain distinct and approval is never inferred',()=>{
@@ -34,4 +35,23 @@ test('status filters use presented state and undated values sort last in either 
   expect(applyTableFilters(rows,columns,{filters:{status:['pending_approval']}}).map(r=>r.policy_id)).toEqual(['a']);
   for(const dir of ['asc','desc'])expect(applyTableFilters(rows,columns,{filters:{},sort:{key:'next_review_date',dir}}).at(-1).policy_id).toBe('b');
   expect(columns.find(c=>c.key==='status').sortable).toBe(false);
+});
+
+
+test.each([1,2,3])('policy labels, filters and tiles follow configured IG%i',group=>{
+  const row={client_id:'c',policy_id:'p',baseline_key:'policy-information-security-policy'};
+  // Retained higher-group records must not override a lower configured scope.
+  const assessments=cis.requirements.map(d=>({client_id:'c',framework_key:'cis-ig1',definition_id:d.id,related_links:[]}));
+  expect(policyAlignment(row,['cis-ig1'],assessments,group).every(a=>a.label===`CIS IG${group}`)).toBe(true);
+  const columns=policyColumns(tableColumns('policies',{rows:[row]}),[row],['cis-ig1'],assessments,group);
+  expect(columns.find(c=>c.key==='alignment').value(row)).toBe(`Supports CIS IG${group}`);
+  expect(applyTableFilters([row],columns,{filters:{alignment:[`Supports CIS IG${group}`]}})).toEqual([row]);
+  expect(applyTableFilters([row],columns,{filters:{alignment:[`Supports CIS IG${group===3?2:3}`]}})).toEqual([]);
+  expect(policyTiles([row],['cis-ig1'],assessments,new Date(),group).find(t=>t.id==='mapped')).toMatchObject({label:`Mapped to CIS IG${group}`,count:1});
+  const active=assessments.filter(a=>cis.requirements.find(d=>d.id===a.definition_id).implementation_group<=group);
+  expect(policyAlignment(row,['cis-ig1'],active).every(a=>a.label===`CIS IG${group}`)).toBe(true);
+  const linked={...row,baseline_key:undefined};
+  const ig3={client_id:'c',framework_key:'cis-ig1',definition_id:'17.9',related_links:[{kind:'policies',id:'p'}]};
+  expect(policyAlignment(linked,['cis-ig1'],[ig3],group).map(a=>a.id)).toEqual(group===3?['17.9']:[]);
+  expect(policyAlignment(row,['cis-ig1'],[{...ig3,client_id:'foreign'}]).every(a=>a.label==='CIS IG1')).toBe(true);
 });

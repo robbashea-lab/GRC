@@ -98,9 +98,9 @@ class CisIG2Tests(unittest.IsolatedAsyncioTestCase):
     async def test_new_and_later_enabled_ig2_and_invalid_scope(self):
         body=self.body();body['state']['framework_settings']={'cis-ig1':{'implementation_group':2}}
         workspace=await self.configure(body);self.assertEqual(len(workspace['assessments']),130)
-        for bad in [True,'2',3,0,None]:
+        for bad in [True,'2',4,0,None]:
             response=await self.scope(bad);self.assertEqual(response.status_code,422,response.text)
-        for setting in [{'cis-ig1':{'implementation_group':True}},{'cis-ig1':{'implementation_group':3}},{'cis-ig1':{'other':2}}]:
+        for setting in [{'cis-ig1':{'implementation_group':True}},{'cis-ig1':{'implementation_group':4}},{'cis-ig1':{'other':2}}]:
             body=self.body(cid='b');body['state']['framework_settings']=setting
             response=await self.client.post('/api/onboarding/baseline',json=body);self.assertEqual(response.status_code,422,response.text)
         await self.configure(self.body(programs=(),cid='b'))

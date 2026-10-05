@@ -59,7 +59,7 @@
       "criteria": [
         {
           "id": "1.4-c1",
-          "text": "Feed address-allocation observations into inventory."
+          "text": "Use logs from all DHCP servers or IP address management tools to keep the asset inventory current. Review and use those logs at least weekly."
         },
         {
           "id": "1.4-c2",
@@ -283,7 +283,7 @@
       "criteria": [
         {
           "id": "3.8-c1",
-          "text": "Make internal and provider data movements traceable."
+          "text": "Document internal and service-provider data flows using the enterprise data management process. Review and update the documentation annually and after significant relevant changes."
         },
         {
           "id": "3.8-c2",
@@ -1141,7 +1141,7 @@
       "criteria": [
         {
           "id": "11.1-c1",
-          "text": "A documented recovery process details backup procedures, scope, priorities and backup security."
+          "text": "A documented data recovery process addresses recovery scope, prioritization and the security of backup data."
         },
         {
           "id": "11.1-c2",
@@ -1211,7 +1211,7 @@
       "criteria": [
         {
           "id": "12.2-c1",
-          "text": "Design segmented, least-privilege, available networks."
+          "text": "Design and maintain secure network architecture addressing segmentation, least privilege and availability. Documentation supports the architecture but does not replace policy and design components."
         },
         {
           "id": "12.2-c2",
@@ -1280,7 +1280,7 @@
       "criteria": [
         {
           "id": "12.7-c1",
-          "text": "Authenticate remote devices through enterprise VPN/AAA."
+          "text": "Require users to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices."
         },
         {
           "id": "12.7-c2",
@@ -1625,7 +1625,7 @@
       "criteria": [
         {
           "id": "15.4-c1",
-          "text": "Align provider contracts with security policy."
+          "text": "Include security requirements in provider contracts consistent with the enterprise service provider management policy. Review contracts annually for missing requirements."
         },
         {
           "id": "15.4-c2",

@@ -1,4 +1,11 @@
-# CIS IG3 implementation checklist — draft, release blocked
+# CIS IG3 implementation checklist — authorized branch availability under review
+
+## Current disposition — PR33, October 4, 2026
+
+The user directly superseded the earlier unavailability instruction for `codex/cis-six-year-verification`. The IG3 owner delegated the single combined availability patch to PR33. Its actual shared declaration is `[1,2,3]`; all 153 official workbook descriptions and corrected content are included, clearly separate from Omnisciente guidance. Normal-auth fresh IG3 and IG2 → IG3 browser verification, CSV/Evidence downloads, 86 real-Mongo tests, 366 frontend tests and independent focused review passed without positive availability overrides. See `cis-six-year-verification.md` and `cis-ig3-browser-verification.json`. No merge, hosting publication, deployment or permanent client.
+
+The remainder records historical PR30 implementation/checks and the earlier gate, not the current PR33 availability disposition.
+
 
 Original baseline: `95b574b0efef1bf1cf22297d6a54ea7266e818c2`. Current main after PR #31: `9f702444d3203f98d528cd4dfeabf8585139da6b` (October 4, 2026). Branch: `codex/cis-ig3-extension`. No merge, preview publication, deployment or production-data changes are authorized.
 

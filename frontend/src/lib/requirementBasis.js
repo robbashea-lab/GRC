@@ -55,6 +55,6 @@ export function cadenceBasis(row,groups=[]) {
   return {current:row.recurrence==='custom'?`Every ${row.custom_recurrence_days} days`:row.recurrence||'Not recorded',
     classification:CADENCE_BASIS[context.cadence_source]||'Client configuration · rationale not recorded',rationale:context.cadence_rationale,
     proposed:explicit[0]||null,belowSource:!!explicit[0]&&cadenceDays(row.recurrence,row.custom_recurrence_days)>cadenceDays(explicit[0]),
-    sources:row.framework_drivers?drivers.map(d=>({framework:operatorProgram(d.framework_key),key:d.framework_plan_key,basis:d.framework_basis,source:d.framework_source_cadence,minimum:d.framework_source_minimum,recommended:d.framework_default_cadence,refs:d.framework_cadence_references||[],active:d.framework_driver_active})):
-      groups.flatMap(g=>g.plans.map(p=>({framework:g.label,key:p.key,basis:p.basis,source:p.source_cadence,minimum:p.source_minimum,recommended:p.default_cadence,reason:p.reason,refs:p.cadence_references||[]})))};
+    sources:row.framework_drivers?drivers.map(d=>({framework:operatorProgram(d.framework_key),key:d.framework_plan_key,basis:d.framework_basis,source:d.framework_source_cadence,minimum:d.framework_source_minimum,recommended:d.framework_default_cadence,refs:(d.framework_cadence_references||[]).filter(ref=>(d.framework_safeguards||[]).includes(ref.definition_id)),active:d.framework_driver_active})):
+      groups.flatMap(g=>g.plans.map(p=>({framework:g.label,key:p.key,basis:p.basis,source:p.source_cadence,minimum:p.source_minimum,recommended:p.default_cadence,reason:p.reason,refs:(p.cadence_references||[]).filter(ref=>p.safeguards.includes(ref.definition_id)&&g.requirements.some(r=>r.definition.id===ref.definition_id))})))};
 }

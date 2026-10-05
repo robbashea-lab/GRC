@@ -59,3 +59,19 @@ test('finding/review legacy ambiguity resolves IDs correctly and unavailable sou
  expect(groups[0].requirements[0].classification).toBe('IG3 Safeguard');
  expect(basisSummary(row)).toBe('CIS Controls v8.1');
 });
+
+
+test.each([1,2,3])('IG%i Review cadence display excludes higher-group references without changing stored work',group=>{
+  for(const id of ['6.8','17.9']){
+    const plan=CATALOGS['cis-ig1'].review_plans.find(p=>p.cadence_references.some(r=>r.definition_id===id));
+    const safeguards=plan.safeguards.filter(id=>CATALOGS['cis-ig1'].requirements.find(d=>d.id===id).implementation_group<=group);
+    const row={framework_key:'cis-ig1',framework_plan_key:plan.key,framework_safeguards:safeguards,recurrence:'custom',custom_recurrence_days:42,occurrences:[{occurrence_id:'historical',scheduled_due_date:'2026-09-01'}]};
+    const original=JSON.stringify(row);
+    expect(cadenceBasis(row,requirementBasis('reviews',row)).sources.flatMap(s=>s.refs).some(r=>r.definition_id===id)).toBe(group===3);
+    expect(JSON.stringify(row)).toBe(original);
+    const stored={...row,framework_drivers:[{framework_key:'cis-ig1',framework_plan_key:plan.key,framework_safeguards:safeguards,framework_cadence_references:plan.cadence_references}]};
+    const before=JSON.stringify(stored);
+    expect(cadenceBasis(stored).sources.flatMap(s=>s.refs).some(r=>r.definition_id===id)).toBe(group===3);
+    expect(JSON.stringify(stored)).toBe(before);
+  }
+});
