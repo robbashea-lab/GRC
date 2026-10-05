@@ -10,10 +10,10 @@ Checklist:
 - [x] Shared approved layout and read-only item summary.
 - [x] Normal server queue support with exact count/detail population.
 - [x] Framework status/attention links and donut accessible percentages.
-- [ ] Regression tests, normal/Demo builds and isolated browser acceptance.
+- [x] Regression tests, normal/Demo builds and isolated browser acceptance.
 - [x] Separate focused review against approved design and requirements.
-- [ ] Reconcile current main, rerun affected checks, merge protected PR.
-- [ ] Publish existing owner-private preview with exact source provenance.
+- [x] Reconcile current main, rerun affected checks, merge protected PR.
+- [x] Publish existing owner-private preview with exact source provenance.
 - [ ] Manually deploy exact merged source to existing Render Free staging and verify hosted workflows.
 
 References consulted proportionately: WAI-ARIA APG modal-dialog pattern (focus containment, Escape, focus return); Testing Library guiding principles (observable DOM outcomes). Existing Radix dialog is reused. Verification evidence and unresolved blockers are appended as work completes.
@@ -36,4 +36,18 @@ Implementation revision `31bef31d17188225cfd9f5ccc0d7f8d816990d2a`: focused fron
 
 Expanded frontend run reported105 passing suites and two failing suites before it was stopped after prolonged execution; no whole-suite pass is claimed. The five failures in RiskRecordPanels/RegisterDrawers reproduced identically on detached current-main e8f600d (2 suites,5 failed,3 passed). Missing Web Crypto in the unchanged fixture causes the stale-write expectation to see crypto undefined and prevents PATCH calls. These unrelated fixtures were preserved.
 
-Final independent visual review of the screenshot identified inherited mini-card styling on the two program metrics and an extra donut center subtitle. Corrected through dashboard-only CSS and percentage-only SVG center; metric calculations and operational workspace styles remain unchanged. Snapshot reviewed/updated for this approved presentation. Refreshed builds/browser verification for this correction are required before merge.
+Final independent visual review of the screenshot identified inherited mini-card styling on the two program metrics and an extra donut center subtitle. Corrected through dashboard-only CSS and percentage-only SVG center; metric calculations and operational workspace styles remain unchanged. Snapshot reviewed/updated for this approved presentation. Presentation revision `c8c25f0e5065d052048f9d4dbb725fdf785137c7`: FrameworkProgramCard 9 tests passed, both refreshed builds compiled, and independent desktop visual re-review found no remaining material discrepancies.
+
+## Merged source and hosted delivery — October 5, 2026
+
+PR38 merged through the normal GitHub merge operation, without bypassing protections. Exact merged source: `d2468ed13242ee4c6fbab047e7eb5fa2a38c8f4a`; its tree matches tested presentation revision c8c25f0. Both normal staging and Demo builds were run again from this merged revision and compiled successfully. A subsequent fetch confirmed remote main was still this revision. This evidence-only follow-up does not change the deployed application source.
+
+Existing owner-private ChatGPT preview: version **110**, source `d2468ed13242ee4c6fbab047e7eb5fa2a38c8f4a`, deployment `appgdep_6ac3e7549dfc8191a7ffa55196c205df`, status **succeeded**. URL preserved: https://iventure-grc-code-preview.mr-robbashea.chatgpt.site. The private deployment operation enforced the existing owner-only audience. Native Windows packaging was used after the bundled Bash packaging step failed; the archive contained dist/index.html and dist/.openai/hosting.json.
+
+Existing Render staging service `srv-db1s0cugekts73f72reg`: exact source `d2468ed13242ee4c6fbab047e7eb5fa2a38c8f4a`, manual specific-commit deployment `dep-db1uevei0phs73cils00`, visibly **Deploy succeeded | Live**, duration 1m21s. URL: https://omnisciente-staging.onrender.com. No provider settings, credentials, accounts, infrastructure, plan or database configuration were changed. Existing Free service was retained; no Atlas plan change. Backend DEMO_MODE configuration remains unchanged and false; this deployment did not modify environment settings.
+
+Actual hosted browser checks on version110: approved CIS light/dark dashboard, exact Past Due three-row population and browser Back, read-only Finding/origin summary, actual safeguard11.4 assessment navigation, exact Action operational drawer, browser-local Action edit reflected on dashboard, ISO dashboard count link returning94 implemented requirements across clauses and Annex A, and SOC2 program-card vocabulary/counts passed. The static private preview remains Demo-only; it does not verify authenticated database behavior.
+
+Actual Render browser checks: Demo entry from the normal sign-in page; approved shared dashboard; read-only Finding/origin summary; exact operational Action drawer; synthetic browser-local title edit/save reflected on dashboard. A newly opened separate tab still presented enabled normal email/password sign-in, and its independent Demo showed the original Action title, with zero matches for the other tab's synthetic edited title. This verifies hosted tab isolation; the byte-equivalent database proof is the separately documented local Mongo test, not an Atlas snapshot.
+
+**Remaining acceptance blocker:** after the deployment, reloading the earlier authorized Staging Administrator session returned to normal sign-in. No existing credential is available to this task, and the account-owning chat declined the requested verification handoff without direct user instruction. Hosted normal password login/logout, synthetic operational save/reload persistence, dashboard summary/navigation and backend-record isolation on this exact revision are therefore **not yet verified**. No extra persistent QA account was created and no authentication bypass was attempted. User can sign into the existing staging account for this task's browser verification, or directly authorize the account-owning chat to perform and report these checks. Deployment is complete; finished rollout acceptance remains open until those checks pass.
