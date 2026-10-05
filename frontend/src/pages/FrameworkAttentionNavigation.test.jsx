@@ -74,3 +74,17 @@ test.each(['demo_prestige','new-soc-client'])('SOC attention links open exactly 
   }
   expect(JSON.stringify(data)).toBe(before);
 });
+
+test('choosing another workspace status after dashboard arrival keeps the chosen population',async()=>{
+  const clientId='navigation-client',data=frameworkData(clientId);
+  mockParams=new URLSearchParams('view=addressed');
+  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:data}));
+  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));
+  const ids=()=>[...container.querySelectorAll('[data-testid^="requirement-"]')].map(row=>row.dataset.testid.replace('requirement-',''));
+  expect(ids()).toEqual(['CC1.4','CC1.5']);
+  const button=[...container.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not Assessed'));
+  await act(async()=>button.click());
+  expect(ids()).toEqual(['CC2.1']);
+  expect(button.getAttribute('aria-pressed')).toBe('true');
+  expect(api.patch).not.toHaveBeenCalled();
+});

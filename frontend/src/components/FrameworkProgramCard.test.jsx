@@ -31,21 +31,21 @@ test('SOC 2 uses the same card shell with SOC 2 vocabulary and workspace links',
   expect(card.querySelector('.bd-donut')).not.toBeNull();
   expect(card.textContent).toContain('Partially Implemented');
   expect(card.textContent).toContain('Implemented33%2 of 6');
-  expect(card.textContent).toContain('Internal readiness, not an auditor opinion.');
-  expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Not implemented');
+  expect(card.textContent).not.toContain('Internal readiness, not an auditor opinion.');
+  expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Not Implemented');
   // Same structure as the approved CIS card: class list of every element is identical.
   const shape=el=>[...el.querySelectorAll('*')].map(e=>e.tagName+'.'+(e.className.baseVal??e.className));
   const soc=shape(card);
   await render([{key:'cis-ig1',label:'CIS Controls v8.1 IG1',name:'CIS Controls v8.1 IG1',to:'/compliance/cis-ig1'}]);
   expect(soc).toEqual(shape(container.querySelector('.bd-aside .bd-card')));
 });
-test('ISO 27001 uses the same shell; tab-scoped views are counts, not misleading links',async()=>{
+test('ISO 27001 uses the same shell and whole-program filtered destinations',async()=>{
   await render([{key:'iso-27001',label:'ISO/IEC 27001:2022',to:'/compliance/iso-27001'}]);
   const card=container.querySelector('.bd-aside .bd-card');
   expect(container.querySelector('.bd-eyebrow').textContent).toBe('ISO 27001 program');
   expect(card.querySelector('h2').textContent).toBe('ISO 27001');
-  expect([...card.querySelectorAll('a')].map(a=>a.getAttribute('href'))).toEqual(['/compliance/iso-27001']);
-  expect(card.querySelectorAll('.bd-gaps .bd-static')).toHaveLength(4);
+  expect(card.querySelector('a[href="/compliance/iso-27001?dashboard=1&view=addressed"]')).not.toBeNull();
+  expect(card.querySelectorAll('.bd-gaps a')).toHaveLength(4);
   // Detailed ISMS modules stay in their workspace.
   expect(card.textContent).not.toMatch(/Management Review|Objectives|Statement of Applicability|Internal Audit/);
 });
@@ -57,7 +57,7 @@ test.each(['cis-ig1','iso-27001','soc-2'])('%s hides calculation explanations wi
   expect([...card.querySelectorAll('.assessment-metric strong')].map(n=>n.textContent)).toEqual(['33%','83%']);
   expect([...card.querySelectorAll('.assessment-metric dd > span')].map(n=>n.textContent)).toEqual(['2 of 6','5 of 6']);
   expect(card.querySelector('.bd-legend li:last-child strong').textContent).toBe('1');
-  expect(card.textContent).toContain(key==='soc-2'?'Internal readiness, not an auditor opinion.':'Assessment progress, not a compliance determination.');
+  expect(card.textContent).not.toMatch(/Internal readiness, not an auditor opinion|Assessment progress, not a compliance determination/);
 });
 test.each([['no records',[]],['all N/A',[{status:'not_applicable'},{status:'not_applicable'}]]])('%s: readiness is not calculated rather than shown as 0%%',async(_,rows)=>{
   await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[{key:'soc-2',label:'SOC 2',to:'/compliance/soc-2'}]} programRows={{'soc-2':rows}} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));
@@ -66,7 +66,7 @@ test.each([['no records',[]],['all N/A',[{status:'not_applicable'},{status:'not_
   expect(card.querySelector('[data-testid="readiness-empty"]').textContent).toBe('No applicable criteria yet: readiness not calculated.');
   expect(card.querySelector('.assessment-metrics')).toBeNull();
   expect(card.querySelector('details')).toBeNull();
-  expect(card.textContent).toContain('Internal readiness, not an auditor opinion.');
+  expect(card.textContent).not.toContain('Internal readiness, not an auditor opinion.');
 });
 test('ISO donut and legend use the same applicable population as the percentage',async()=>{
   const rows=[{specification:'isms_clause',status:'addressed'},

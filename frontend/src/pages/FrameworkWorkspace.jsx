@@ -93,7 +93,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   // The reference workspace (summary, derived views, result table) serves every assessed framework,
   // in that framework's own vocabulary. CMMC has no assessment tracking yet.
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
-  const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=viewLabels({...vocab,statuses:readinessLabels(frameworkKey)});
+  const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=useMemo(()=>viewLabels({...operatorVocabulary(frameworkKey),statuses:readinessLabels(frameworkKey)}),[frameworkKey]);
   // Framework metadata selects the appropriate assessment structure for every client.
   const workspace=frameworkWorkspace(frameworkKey),brawndoCis=workspace==='cis',prestigeSoc=workspace==='soc',referenceAssessment=brawndoCis||prestigeSoc,iso=workspace==='iso',[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
@@ -107,6 +107,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const [controlsOpen,setControlsOpen]=useState(false);
   // A dashboard deep link (?view=) opens the reference workspace on that derived view.
   const initialView=prototype?params.get('view'):null;
+  useEffect(()=>{setFilter(initialView&&VIEW_LABELS[initialView]?initialView:'all');},[initialView,VIEW_LABELS]);
   useEffect(()=>{const p=readPreference(preferenceKey);setPreference(p);setExpanded(p.section?[p.section]:[]);setData(null);setSearch('');setFilter(initialView&&VIEW_LABELS[initialView]?initialView:'all');setView('all');setShowRetained(false);setAdditionsGroup(0);},[preferenceKey]);// eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{const c=new AbortController();setError('');if(!clientId)return;api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}).then(r=>{if(!c.signal.aborted)setData(r.data);}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[frameworkKey,clientId,revision]);
   const remember=value=>{const p={...preference,...value};setPreference(p);try{sessionStorage.setItem(preferenceKey,JSON.stringify(p));}catch{/* UI preference only; assessment persistence is server-owned. */}};
@@ -118,16 +119,18 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const selectedSpecification=rows.find(r=>r.framework_assessment_id===params.get('assessment'))?.specification;
   const isoView=frameworkKey==='iso-27001'?(selectedSpecification==='annex_control'&&params.get('iso_view')==='soa'?'soa':selectedSpecification||
     (ISO_VIEWS[params.get('iso_view')]?params.get('iso_view'):'overview')):'all';
+  const dashboardIso=iso&&params.get('dashboard')==='1'&&!!initialView&&isoView==='overview';
   const scoped=rows.filter(r=>{
     if(!showRetained&&!workspaceScope(frameworkKey,data,r))return false;
     if(frameworkKey==='nist-csf-2'&&view!=='all')return r.csf_profile?.target_selected&&(view==='target'||r.csf_profile.gap_state==='gap');
-    if(frameworkKey==='iso-27001')return ISO_VIEWS[isoView].matches(r);
+    if(frameworkKey==='iso-27001')return dashboardIso||ISO_VIEWS[isoView].matches(r);
     return true;
   });
   const activeRows=brawndoCis?rows.filter(r=>workspaceScope(frameworkKey,data,r)):scoped;
   const readiness=cisSummary(brawndoCis?activeRows:iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped);
   const implementationFilter=iso&&isoView==='annex_control'&&['addressed','in_progress','needs_attention','not_assessed','assessed','gaps'].includes(filter);
-  const visible=scoped.filter(r=>(!additionsGroup||r.implementation_group===additionsGroup)&&(!implementationFilter||r.soa_applicability==='included')&&matchesAssessment(r,filter,search)),nodes=groupRequirements(frameworkKey,visible);
+  const dashboardApplicable=r=>filter==='not_applicable'?(r.specification==='annex_control'?r.soa_applicability==='excluded':r.status==='not_applicable'):r.specification==='annex_control'?r.soa_applicability!=='excluded':r.status!=='not_applicable';
+  const visible=scoped.filter(r=>(!dashboardIso||!['addressed','in_progress','needs_attention','not_assessed','not_applicable'].includes(filter)||dashboardApplicable(r))&&(!additionsGroup||r.implementation_group===additionsGroup)&&(!implementationFilter||r.soa_applicability==='included')&&(matchesAssessment(r,dashboardIso&&filter==='not_applicable'?'all':filter,search))),nodes=groupRequirements(frameworkKey,visible);
   const linkedViewKey=prototype&&data&&filter!=='all'&&filter===initialView?`${clientId}:${filter}`:null;
   useEffect(()=>{if(linkedViewKey)setExpanded(groupRequirements(frameworkKey,visible).map(n=>n.key));},[linkedViewKey]);// eslint-disable-line react-hooks/exhaustive-deps
   const selected=rows.find(r=>r.framework_assessment_id===params.get('assessment'))||null;
@@ -138,7 +141,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const toggle=key=>{setExpanded(old=>old.includes(key)?old.filter(k=>k!==key):[...old,key]);remember({section:key.split('/')[0]});};
   const allKeys=ns=>ns.flatMap(n=>[n.key,...allKeys(n.children)]);
   const dropLinkedView=()=>{if(params.get('view')){const n=new URLSearchParams(params);n.delete('view');setParams(n,{replace:true});}};
-  const chooseFilter=key=>{dropLinkedView();setFilter(key);if(prototype)setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,key,search)))));};
+  const chooseFilter=key=>{if(initialView){const n=new URLSearchParams(params);n.set('view',key);setParams(n);}setFilter(key);if(prototype)setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,key,search)))));};
   const changeSearch=value=>{setSearch(value);if(prototype&&value.trim())setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,filter,value)))));};
   if(error)return <RegisterLoadError error={error} onRetry={prototype?()=>setRevision(n=>n+1):undefined} name="workspace"/>;
   if(!data)return <p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>;
@@ -151,7 +154,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const socPath=preference['category:all']||[],chooseSocPath=path=>{remember({'category:all':path});if(selected)closeRecord();};
   const lastOpened=prototype&&!referenceAssessment&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
   const selectedPath=selected?hierarchyPath(frameworkKey,selected):[];
-  const chooseIsoView=(key,options={})=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('assessment');n.delete('package');n.delete('audit_occurrence');if(options.audit_year)n.set('audit_year',options.audit_year);setParams(n);setSearch('');setFilter('all');};
+  const chooseIsoView=(key,options={})=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('view');n.delete('dashboard');n.delete('assessment');n.delete('package');n.delete('audit_occurrence');if(options.audit_year)n.set('audit_year',options.audit_year);setParams(n);setSearch('');setFilter('all');};
   const isoCrumb=(view,path=[])=>{setSearch('');setFilter('all');remember({['category:'+view]:path});const n=new URLSearchParams(params);n.delete('assessment');n.set('iso_view',view);setParams(n,{replace:true});};
   const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:`CIS IG${data.configuration?.implementation_group||1}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}},{label:socCategoryCrumb(selected.category),onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([selectedPath[0].id]);}},{label:selected.control,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath(selectedPath.map(p=>p.id));}},{label:selected.definition_id}]:undefined;
   return <div className={iso?'bcis framework-presentation':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
@@ -162,8 +165,8 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     {iso&&<WorkspaceTabs label="ISO workspace sections" tabs={Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label])} selected={isoView} onSelect={chooseIsoView} idPrefix="iso-tab" panelId="iso-tabpanel"/>}
     <IsoPanel iso={iso} view={isoView}>
     {brawndoCis?<BrawndoCisOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&isoView==='soa'?<IsoSoaSummary rows={scoped}/>:iso&&isoView!=='audit'&&!ISO_VIEWS[isoView]?.custom?<><AssessmentOverview summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'necessary controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/>{isoView==='annex_control'&&<p className="iso-reference-count">{scoped.length} Annex A reference controls · {scoped.filter(r=>r.soa_applicability==='included').length} Necessary · {scoped.filter(r=>r.soa_applicability==='excluded').length} Not Necessary · {scoped.filter(r=>!r.soa_applicability).length} not yet determined</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
-    {frameworkKey==='iso-27001'&&(isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:ISO_VIEWS[isoView]?.custom?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows} onSelect={chooseIsoView}/>:null)}
-    {!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<>
+    {frameworkKey==='iso-27001'&&(isoView==='audit'?<IsoAuditWorkspace clientId={clientId}/>:ISO_VIEWS[isoView]?.custom&&!dashboardIso?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows} onSelect={chooseIsoView}/>:null)}
+    {(!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))||dashboardIso)&&<>
     {brawndoCis&&selected&&!workspaceScope(frameworkKey,data,selected)&&<p role="status">Retained out-of-scope safeguard · history and linked work remain available. It is excluded from active program totals.</p>}
     {lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}
     {!prototype&&<><section aria-label="Assessment progress" className="space-y-2"><h2 className="font-semibold">Assessment Progress</h2><p className="text-sm">{progress.assessed} / {progress.applicable} applicable {(catalog?.labels?.items||'requirements').toLowerCase()} assessed · {scoped.length-progress.assessed-progress.excluded} not assessed · {progress.excluded} N/A</p><p className="text-xs text-ink-secondary">Assessment coverage includes partial and unresolved results. It is not certification or a compliance percentage.</p></section>

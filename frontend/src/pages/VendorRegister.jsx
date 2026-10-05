@@ -86,7 +86,7 @@ export default function VendorRegister() {
   const generation=useRef(0);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
-  const [searchParams] = useSearchParams();
+  const [searchParams,setSearchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
   const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
@@ -94,6 +94,21 @@ export default function VendorRegister() {
   const [loadError, setLoadError] = useState('');
   const [drawer, setDrawer] = useState({ open: false, record: null });
   const [addOpen, setAddOpen] = useState(false);
+  function closeLinkedDrawer(value){setDrawer(p=>({...p,open:value}));if(!value){const next=new URLSearchParams(searchParams);next.delete('id');setSearchParams(next,{replace:true});}}
+  const linkedRecordId=searchParams.get('id'),linkedClientId=searchParams.get('client_id');
+  const [recordLinkError,setRecordLinkError]=useState('');
+  useEffect(()=>{
+    if(!linkedRecordId||!currentClientId||drawer.open)return;
+    const controller=new AbortController();setRecordLinkError('');
+    if(linkedClientId&&linkedClientId!==currentClientId){setRecordLinkError('This link belongs to another client. Select that client before opening it.');return;}
+    api.get('/vendors/'+encodeURIComponent(linkedRecordId),{signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted)return;
+      if(data.client_id!==currentClientId)throw new Error('Record belongs to another client.');
+      setDrawer({open:true,record:data});
+    }).catch(error=>{if(!controller.signal.aborted)setRecordLinkError(formatError(error));});
+    return()=>controller.abort();
+  },[linkedRecordId,linkedClientId,currentClientId,drawer.open]);
+
 
   const canWrite = ["super_admin", "platform_admin"].includes(user?.role);
   const userMap = useMemo(() => { const m = {}; users.forEach((u) => { m[u.user_id] = u.name || u.email; }); return m; }, [users]);
@@ -210,13 +225,15 @@ export default function VendorRegister() {
             {!loading&&<p className="bpage-foot" data-testid="vendor-foot">Showing {filtered.length} of {counts.all_active} active vendors</p>}
           </div>
         </div>
-        {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(x) => setDrawer((p) => ({ ...p, open: x }))} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
+        {recordLinkError&&<p role="alert">{recordLinkError}</p>}
+      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
         {addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>}
       </BrawndoSurface>
     );
   }
   return (
     <div>
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
       <PageHeader
         title="Vendors"
         subtitle="Third-party services, criticality, assurance and review status."
@@ -283,7 +300,7 @@ export default function VendorRegister() {
           </table>
         </div>
       </div>
-      {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(x) => setDrawer((p) => ({ ...p, open: x }))} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
+      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
       {pilot?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} />}
     </div>
   );

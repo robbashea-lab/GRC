@@ -3,9 +3,8 @@ import {actionTitle, taskSource} from './actionItems';
 import definitions from '@catalogs/frameworkDefinitions.json';
 import {BUSINESS_BASIS} from './requirementBasis';
 
-// Presentation gate only. The population builder below has no client-specific rules.
-// The Demo adapter supports this contract for every client; the live backend does not yet.
-export const dashboardPilot = (demo, clientId) => !!(demo && clientId);
+// Same client dashboard in authenticated and Demo mode; no identity-specific presentation.
+export const dashboardPilot = (demo, clientId) => !!clientId;
 export const WORK_FILTERS = [
   {key:'pastDue', label:'Past Due', empty:'No past-due items.'},
   {key:'due30', label:'Due in 30 Days', empty:'No items due in the next 30 days.'},
@@ -13,7 +12,7 @@ export const WORK_FILTERS = [
   {key:'unassigned', label:'Unassigned', empty:'All current work is assigned.'},
 ];
 const levels={critical:0,immediate:0,high:1,medium:2,moderate:2,low:3};
-const frameworkNames=new Map(definitions.frameworks.map(f=>[f.key,f.label]));
+const frameworkNames=new Map(definitions.frameworks.map(f=>[f.key,f.key==='cis-ig1'?'CIS Controls v8.1':f.label]));
 function sourceLabel(row, records) {
   if(row.kind==='tasks') return taskSource(row.record,records).label;
   const r=row.record;

@@ -99,6 +99,21 @@ export default function RiskRegister() {
   const [loadError, setLoadError] = useState('');
   const [drawer, setDrawer] = useState({ open: false, record: null });
   const [addOpen, setAddOpen] = useState(false);
+  function closeLinkedDrawer(value){setDrawer(p=>({...p,open:value}));if(!value){const next=new URLSearchParams(searchParams);next.delete('id');setSearchParams(next,{replace:true});}}
+  const linkedRecordId=searchParams.get('id'),linkedClientId=searchParams.get('client_id');
+  const [recordLinkError,setRecordLinkError]=useState('');
+  useEffect(()=>{
+    if(!linkedRecordId||!currentClientId||drawer.open)return;
+    const controller=new AbortController();setRecordLinkError('');
+    if(linkedClientId&&linkedClientId!==currentClientId){setRecordLinkError('This link belongs to another client. Select that client before opening it.');return;}
+    api.get('/risks/'+encodeURIComponent(linkedRecordId),{signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted)return;
+      if(data.client_id!==currentClientId)throw new Error('Record belongs to another client.');
+      setDrawer({open:true,record:data});
+    }).catch(error=>{if(!controller.signal.aborted)setRecordLinkError(formatError(error));});
+    return()=>controller.abort();
+  },[linkedRecordId,linkedClientId,currentClientId,drawer.open]);
+
   const [matrixOpen, setMatrixOpen] = useState(false);
 
   const canWrite = ["super_admin", "platform_admin"].includes(user?.role);
@@ -225,13 +240,15 @@ export default function RiskRegister() {
           {!loading&&<p className="bpage-foot" data-testid="risk-count">Showing {filtered.length} of {plural(tableSource.length,'risk')}</p>}
         </div>
       </div>
-      {drawer.open&&<RecordDrawer open={drawer.open} onOpenChange={v=>setDrawer(p=>({...p,open:v}))} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load}/>}
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
+      {drawer.open&&<RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load}/>}
       <RiskMatrixModal open={matrixOpen} onOpenChange={setMatrixOpen}/>
       {addOpen&&<NewRiskDialog pilot open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}} onOpenMatrix={()=>setMatrixOpen(true)}/>}
     </BrawndoSurface>;
   }
   return (
     <div>
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
       <PageHeader
         title="Risks"
         subtitle="Identified client risks and treatment status."
@@ -294,7 +311,7 @@ export default function RiskRegister() {
         </div>
       </div>
 
-      {drawer.open && <RecordDrawer open={drawer.open} onOpenChange={(v) => setDrawer((p) => ({ ...p, open: v }))} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load} />}
+      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load} />}
       <RiskMatrixModal open={matrixOpen} onOpenChange={setMatrixOpen} />
       {addOpen&&<NewRiskDialog pilot={pilot} open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} onOpenMatrix={() => setMatrixOpen(true)} />}
     </div>
