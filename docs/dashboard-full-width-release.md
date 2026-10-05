@@ -27,8 +27,14 @@ The fixed existing sidebar leaves very little workspace width at320px. Cards do 
 
 Before merge: reconcile current main including PR #41 release gating and PR #39 CIS subtitle fix; rerun affected checks and normal GitHub gates. The starting-main backend registry rejects the unclassified `test_dashboard_work_queue.py`; preserve the registry correction from PR #41 instead of bypassing it.
 
-Coordinate the authenticated staging-session handoff and final release order with the release agent. Exactly one real staging login remains enabled; no staging logout,account creation or redeployment has been performed by this change.
+Coordinate the authenticated staging-session handoff and final release order with the release agent. Exactly one real staging login must remain enabled; no staging logout,account creation or redeployment has been performed by this change.
 
 After authorized merge: use the established Render pipeline,update the existing owner-private ChatGPT preview preserving URL/access,and record exact merged/deployed SHAs,preview version and actual hosted results here. No provider,credential,plan or deployment-trigger modification belongs to this PR.
 
 The111 source-pending ISO units and outstanding official-text permissions remain documented in `assessment-layout-inputs.md`; this dashboard release does not perform normative content verification.
+
+## Release-gate handoff
+
+Last inspected pipeline candidate: PR #41 at `e11ededed8a95daeee6a18e670ec66193f9c6a5f`; replacement backend/frontend checks are queued. Its previous frontend run failed three stale contracts in FrameworkOperator, BrawndoCisFindings and reference tests. Assessment and release owners are coordinating those shared test corrections through GitHub. This PR does not bypass the gate or absorb unrelated application fixes.
+
+The existing private preview is currently version 111 at https://iventure-grc-code-preview.mr-robbashea.chatgpt.site with the existing owner-only custom access policy, revision 1, and zero external visitors. No PR #42 source is published there or on Render yet. Authenticated hosted acceptance and the single-enabled-account check await the release agent's staging-session handoff; local Mongo and Demo evidence must not be presented as hosted acceptance. No further owner content input is needed for this layout change.
