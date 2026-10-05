@@ -1,6 +1,15 @@
 # Omnisciente publishing workflow
 
-Effective 2026-09-27, the authoritative workflow is:
+Current delivery uses **GitHub main → CI → Render staging** as the primary hosted
+target, with a separate owner-private ChatGPT Demo publication of the exact merged
+source. Follow [current release operations](render-release-operations.md) for the
+required gate, connected Git provider, acceptance and rollback. Render automation
+does not publish the private preview. Preserve its existing URL and owner access.
+
+The following 2026-09-27 transition and observations are historical. They do not
+override the current Render procedure or authorize changes to Railway.
+
+At that transition the workflow was:
 
 **GitHub main → ChatGPT preview**
 

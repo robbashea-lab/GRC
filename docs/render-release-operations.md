@@ -22,6 +22,19 @@ needed. Render treats neutral/skipped GitHub checks as passing, making the expli
 aggregate check necessary. See [Render CI integration](https://render.com/docs/deploys#integrating-with-ci)
 and [GitHub job dependencies](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds).
 
+The service must also use the connected **Git Provider** repository. A public Git
+URL or a saved CI policy alone does not establish automatic delivery. Verify that
+`robbashea-lab/GRC` appears in the repository picker and in the existing Render
+GitHub app's selected repository access. Preserve its scope; do not grant access
+to unrelated repositories. When updating Source, retain Docker, branch main,
+`deploy/RenderStaging.Dockerfile`, context `.`, the Free plan, health path `/api/`
+and existing environment values. The source editor initially proposes Node;
+select Docker before saving. See [Render Git-provider setup](https://render.com/docs/git-provider).
+
+A source-configuration save is not proof of merge-triggered deployment. Verify a
+subsequent reviewed merge, its completed main-push gate and a Render automatic
+deployment of that same SHA. Do not substitute a manual deploy for that proof.
+
 Before release, fetch main, reconcile intervening changes, rerun affected checks,
 and obtain independent review. After merge, inspect the **push** run for the exact
 main SHA; a PR run checks a different revision. Confirm Render's successful deploy
@@ -73,5 +86,31 @@ unmerged branches are preserved; no unrelated branch is included in this release
 All five pre-existing local worktrees were clean at inspection. The dashboard
 delivery branch contains additional documentation; it is preserved separately.
 
-Delivery/hosted results are pending until the exact reviewed merge, successful main
-CI run, automatic deployment and final browser acceptance are observed.
+## Verified integration and acceptance ledger
+
+PR41 merged through the applied protections as
+`2d13a3e6286e457fed70bd14ba1825fc18e4b8b9`. Its actual main-push
+[run 37373098036](https://github.com/robbashea-lab/GRC/actions/runs/37373098036)
+passed after GitHub runner-assignment failures were retried: 215 frontend suites,
+1,550 tests, one snapshot, both builds, 631 backend tests plus 690 subtests and
+99 disposable Mongo checks. Cancelled prerequisites did not satisfy the gate.
+
+PR39 then merged as `1b9691d7dc51bc7b5577fc49304d6422135f3889`; its actual main-push
+[run 37380150170](https://github.com/robbashea-lab/GRC/actions/runs/37380150170)
+passed 215 frontend suites, 1,552 tests, one snapshot, both builds, 631 backend tests
+plus 690 subtests and 99 disposable Mongo checks. Its correction changes only the
+recorded CIS-group subtitle; this operating-document update changes no application
+code or build inputs.
+
+Main protection requires a PR, an up-to-date `Release gate` from GitHub Actions
+and no administrator bypass. The existing Free Docker service's saved policy is
+main / **After CI Checks Pass**. The missing Git-provider repository connection was
+identified separately from successful CI and corrected using the existing Render
+installation scoped to GRC.
+
+The PR introducing this ledger carries the final acceptance handoff: tested and
+merged SHAs, actual main-push CI, Render trigger/deploy/served-asset evidence,
+hosted workflow observations, private preview version/source/access and remaining
+limitations. Read that handoff for the final delivery state; successful CI alone
+does not establish hosted acceptance. Preserve the sequential release/session
+handoffs recorded on PR42, PR43 and PR44.
