@@ -12,3 +12,5 @@ Current direct human instruction keeps PR36 draft until design and applicable co
 
 ## Main reconciliation 2026-10-05
 Fetched origin/main at bb9bcbfe5b7a36b4fb16ff98226adb3913a5ce41 and merged it into this isolated branch without conflicts. Restored all assessment work. PR34 portable staging, normal sign-in and isolated Demo remain intact. PR36 stays draft pending applicable content and full visual acceptance; do not publish it as finished. Release authorization now covers only the existing owner-private preview and existing Render staging after gates and acceptance. DEMO_MODE remains false; no provider or database changes are authorized.
+
+Final handoff: newer main e8f600da3996f6a7f757152e7e176bb7de6b645e reconciled without conflict. Tested assessment commit1b4b0a5692af2f0f5b4cfda66e95381bd776c4b3. Affected account/auth checks and normal authenticated assessment browser rerun passed. Draft/content gates remain; dashboard/account releases must not describe PR36 as finished or include it in a completed rollout.
