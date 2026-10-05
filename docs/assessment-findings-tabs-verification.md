@@ -23,6 +23,6 @@ Four disposable local identities verified server permissions: read-only and unas
 ## Remaining release verification
 
 - Configured `python -m pytest -c backend/pytest.ini -q backend/tests/test_remediation_tickets.py backend/tests/test_framework_governance.py backend/tests/test_iso_audit_program.py` failed before collection because `test_dashboard_work_queue.py` is unclassified. PR #41 owns the suite-classification/release-gate reconciliation; this change does not bypass it.
-- Browser automation could not populate the unchanged native Finding target-date input: the value remained empty immediately after fill, before switching tabs. Date-field retention is covered by frontend tests; an actual dated browser submission remains unavailable. No application defect was demonstrated and no workaround was added.
+- DOM automation initially failed to populate the unchanged native Finding target-date input. Native accessibility setValue succeeded: 2026-12-20 survived a tab round trip and the created Demo ticket displayed that due date and the supplied description. No application change was necessary.
 - Final main reconciliation, required GitHub gates, merge, Render deployment, and private-preview publication are pending release coordination. Local browser results are not hosted verification. Hosted source, preview version, access settings, and representative workflows must be confirmed after publication.
 - No recording was available in the accessible task attachments; the explicit requested structure was used as the reference.
