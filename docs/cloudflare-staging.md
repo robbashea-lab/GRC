@@ -38,18 +38,30 @@ variables and is required by current staging startup validation. Bootstrap
 `ADMIN_*` variable names remain present. An old staged environment patch has
 zero changes; it was not applied. Neither existing service was modified.
 
+Further read-only inventory found a second project, **iVenture GRC Test**, with
+an online Mongo service and its own 500 MB volume; its API has no deployment.
+The sampled recent API HTTP logs contained only our health probe. That does
+not establish the absence of other consumers or classify stored data. Connector
+variable values are redacted, and Railway billing requires a separate account
+sign-in. Safe reuse or deletion of either database is **not established**.
+The existing API depends on its configured Mongo connection; the delivered
+static Demo does not use this API. Other externally configured consumers remain
+unknown. Leave both projects untouched. Before retirement, inventory consumers,
+back up retained databases, verify restore and agree on retention/deletion.
+Removing Railway from the new architecture does not cancel existing charges.
+
 The private ChatGPT Demo version 108 and saved work remain unchanged.
 
 ## Smallest compatible arrangement
 
 Use Cloudflare Workers Static Assets for the **normal** React build and a
 small same-origin `/api` transport proxy. Run the existing Python 3.12
-FastAPI/Uvicorn Dockerfile on a conventional container host, preferably the
-existing Railway account if its capacity and billing permit a separate
-staging service. Use a dedicated staging Mongo database and a credential
-limited to that database. A separate Mongo service/volume provides stronger
-isolation; provision it only after reviewing cost. Do not repoint the old API
-or reuse its database credentials by default.
+FastAPI/Uvicorn Dockerfile on **Render**, with a new **MongoDB Atlas Free**
+cluster in a dedicated staging project. This removes Railway from staging
+without changing the API framework or database. Use a dedicated database and
+credential limited to it. Do not repoint or copy the old services or records.
+Evidence bytes are stored in Mongo by the existing backend, so no Render disk
+or additional file-storage service is required for the current application.
 
 Native Python Workers support FastAPI, but are not a drop-in Linux runtime.
 The repository pins Motor 3.7.1, whose asyncio implementation executes Mongo
@@ -66,7 +78,52 @@ References inspected:
 - [Motor 3.7.1 executor implementation](https://github.com/mongodb/motor/blob/3.7.1/motor/frameworks/asyncio/__init__.py)
 - [Cloudflare Containers](https://developers.cloudflare.com/containers/)
 - [Static Assets configuration](https://developers.cloudflare.com/workers/static-assets/binding/)
-- [Railway config as code](https://docs.railway.com/config-as-code/reference)
+- [Render Docker/Blueprint configuration](https://render.com/docs/blueprint-spec)
+- [Render outbound IP ranges](https://render.com/docs/outbound-ip-addresses)
+
+## Proposed resources and cost decision
+
+Prices checked 2026-10-05, before tax. No Render or Atlas resources or paid
+upgrades have been created. Their account eligibility and remaining shared
+allowances are not yet verified. Cloudflare's dashboard confirms this account
+currently uses **Workers Free**; Access is configured, but its separate billing
+subscription has not been checked.
+
+| Resource | Suggested starting tier | Expected new monthly charge / allowance |
+| --- | --- | --- |
+| Existing Cloudflare staging Worker, normal frontend and API proxy | Workers Free | $0 within account-wide 100,000 dynamic requests/day and 10 ms CPU/request; static-asset requests free. No Workers upgrade required. |
+| New Render `omnisciente-staging-api` | Free | $0 compute; 750 free service-hours/month shared across the workspace. Hobby workspace includes 500 Starter pipeline minutes/month. Check remaining bandwidth/build allowances in Billing. |
+| New Atlas staging project/cluster and `staging_omnisciente_cf` | Free (formerly M0) | $0; one Free cluster/project, 0.5 GB documents plus indexes, 10 GB in and out per rolling seven days. No automated backups. |
+| Optional Render API upgrade, only if explicitly approved | Starter | $7/month service compute, plus any chargeable bandwidth/build overages; avoids Free idle shutdown. Atlas and Cloudflare remain Free. |
+| Existing Railway services/subscription | Retained, outside new staging | Already provisioned, not new charges authorized here. Actual account credit coverage and bill are unverified. Continue to accrue under the existing plan until separately retired. |
+
+Start with Free for a small fictional-data staging trial. Render sleeps after
+15 minutes idle and takes about a minute to wake; the proxy waits up to 90
+seconds for upstream headers. Render can return a warming page during startup:
+verify this behavior before acceptance and wait for healthy API startup before
+retrying sign-in. No automatic mutation retries or artificial keep-alive jobs
+are added. Free resources can be suspended by quotas or high outbound traffic
+(including Atlas queries). They are unsuitable for an uptime guarantee.
+Atlas can pause after 30 days with no connections; export data before extended
+inactivity. Keep evidence samples small and verify index initialization fits.
+
+Spending controls: select only Render Free and Atlas Free, no disks, paid
+workspace features, auto-scaling or automatic upgrades. With no Render payment
+method, bandwidth exhaustion suspends Free services instead of buying overage,
+and build exhaustion stops builds. If a payment method already exists, bandwidth
+can incur overage even on Free; inspect Billing before provisioning and set the
+build-pipeline spend limit to the lowest permitted amount. That limit covers
+pipeline minutes, **not all spending**. Do not change workspace-wide settings
+without considering other services. Monitor usage and alerts; do not claim a
+hard total cap or free trial credit unless the account actually shows it.
+Cloudflare Free and Atlas Free impose limits rather than providing a reason
+to silently upgrade. No time-limited paid trial is needed for this proposal.
+
+Sources: [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/),
+[Render Free limits](https://render.com/docs/free),
+[Render pipeline limits](https://render.com/docs/build-pipeline),
+[Render Starter price](https://render.com/articles/render-vs-railway),
+[Atlas Free limits](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/).
 
 ## Prepared files, not deployed application configuration
 
@@ -78,36 +135,46 @@ References inspected:
   authorization, original Origin, idempotency keys, cookie attributes, binary
   downloads and backend failure statuses. API responses are not cached. Missing
   configuration returns 503 rather than a Demo response or SPA HTML. Access
-  cookies and forwarded identity headers are removed before contacting Railway.
+  cookies and forwarded identity headers are removed before contacting Render.
   Backend redirects remain on the frontend origin; foreign redirects fail.
 - `frontend/scripts/staging.cjs`: builds normal sign-in with Demo disabled,
   same-origin API, no source maps, output separate from ChatGPT's `build`.
-- `deploy/railway.staging.json`: root-context existing Dockerfile, `/api/`
-  health check, bounded restart policy, watches backend and shared catalogs.
-  It is not auto-discovered at the repository root and does not change the
-  existing Railway service. Set the custom config path only on the selected
-  new staging service.
+- `deploy/render.staging.yaml`: new Free API service, root-context existing
+  Dockerfile, `/api/` health check, automatic deployments off, secret values
+  requested through the provider UI. Select this custom Blueprint path and
+  the reviewed preparation branch explicitly. Blueprint setup may perform its
+  initial deployment; do not submit until database, secrets and budget are ready.
+  No existing Railway deployment configuration is changed.
 
 ## Remaining setup steps
 
-1. In Railway, review existing subscription/usage and capacity. Decide whether
-   a new isolated staging API/database can run within the approved budget.
-   No service, volume, paid upgrade or deployment has been created by this
-   preparation. Keep the current services and records intact. If Railway is
-   unsuitable, the same Dockerfile works on another conventional container
-   host with an external dedicated MongoDB; no application rewrite is needed.
-2. Provision an empty database `staging_omnisciente_cf` using a separate
+1. Sign in to Render and MongoDB Atlas directly in their dashboards. If new
+   accounts are needed, the owner completes account terms and credential setup.
+   Check account usage and choose Free, or explicitly approve the optional $7
+   API service. No service, volume, upgrade or application deployment has been
+   created by this preparation. Existing Railway records remain untouched.
+2. In Atlas, create a dedicated staging project and Free cluster, preferably
+   AWS us-east-1 to match the prepared Render Virginia region. Provision an
+   empty database `staging_omnisciente_cf` using a separate
    credential restricted to that database (`readWrite`, including index
-   creation), with private networking or an explicit backend egress allowlist.
-   Do not expose Mongo publicly or allow all internet addresses. Validate
+   creation). Atlas Free uses public TLS endpoints, not private networking.
+   Allow only the Render service's outbound IP ranges from Connect > Outbound;
+   these are shared regional ranges, not an exclusive service identity. Do not
+   use `0.0.0.0/0`. Restrict a temporary maintenance IP if needed for manual
+   backups, and remove it afterward. Validate
    available disk/index capacity, credential scope, backup and restore first.
-   The existing 500 MB volume must not be assumed sufficient for a second
-   database. Do not copy real client records or seed legacy Demo data.
+   Atlas Free's 0.5 GB includes indexes and evidence bytes. Back up with trusted
+   MongoDB Database Tools and restore to a separate disposable database; Free
+   has no managed backup. Do not copy real records or seed legacy Demo data.
 3. Create/configure the selected isolated API service from a reviewed revision
-   of `robbashea-lab/GRC`, repo root `/`, Dockerfile `backend/Dockerfile`, custom
-   Railway config path `/deploy/railway.staging.json`. Disable automatic deploy
-   until the staging configuration is checked. The Docker build requires repo
-   root context because it copies existing frontend catalogs and shared rules.
+   of `robbashea-lab/GRC`. In Render New > Blueprint, choose the preparation
+   branch and custom path `deploy/render.staging.yaml`, review the new Free
+   service, and leave automatic deployments off. Alternatively enter the same
+   settings in New > Web Service: Docker runtime, root context, Dockerfile
+   `backend/Dockerfile`, health path `/api/`, Virginia, Free. The build requires
+   root context because it copies existing catalogs and shared rules. Render's
+   `PORT` is supported by the existing Docker CMD. Once the outbound ranges are
+   known, update Atlas's allowlist before requiring successful API startup.
 4. Enter these values directly in the backend host's environment/secret UI:
 
    | Name | Value / handling |
@@ -159,7 +226,7 @@ References inspected:
    Do not connect default-main automatic builds to a preview build command.
 
 Cloudflare Access is an outer staging access boundary, not Omnisciente account
-authorization. It does not automatically protect the Railway origin URL.
+authorization. It does not automatically protect the Render origin URL.
 Verify direct-origin authentication and tenant permissions separately; before
 claiming fully private staging, restrict origin ingress through the provider's
 supported controls or an approved Access-protected origin arrangement. Do not
@@ -172,8 +239,12 @@ merely because it appears in these instructions.
 ## Verification and acceptance
 
 Preparation checks completed: `node --test deploy/cloudflare/worker.test.mjs`
-passed 6 tests; `node --check frontend/scripts/staging.cjs` and
-`git diff --check` passed. Tests cover transport behavior and mocked upstream
+passed 7 tests; `node --check frontend/scripts/staging.cjs` and
+`git diff --check` passed. Render YAML was parsed using the already installed
+`js-yaml`, with assertions for Free tier, Docker root context, staging database,
+manual deployment and absent secret values. Wrangler JSON parsed successfully.
+Provider-side Blueprint validation and Wrangler schema/dry-run remain pending.
+Tests cover transport behavior and mocked upstream
 boundaries; they do not exercise server authorization, Mongo or a deployed
 Worker. The normal frontend build and Docker build have not been run in this
 new clean worktree (frontend dependencies and Docker CLI are absent). Wrangler

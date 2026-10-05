@@ -1,0 +1,34 @@
+# Select this custom Blueprint path explicitly; no existing service is replaced.
+services:
+  - type: web
+    name: omnisciente-staging-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    autoDeployTrigger: 'off'
+    healthCheckPath: /api/
+    envVars:
+      - key: APP_ENV
+        value: staging
+      - key: DB_NAME
+        value: staging_omnisciente_cf
+      - key: APP_BASE_URL
+        value: https://omnisciente-staging.mr-robbashea.workers.dev
+      - key: CORS_ORIGINS
+        value: https://omnisciente-staging.mr-robbashea.workers.dev
+      - key: DEMO_MODE
+        value: 'false'
+      - key: RUN_LEGACY_MIGRATIONS
+        value: 'false'
+      - key: MONGO_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_NAME
+        value: Staging Administrator
+      - key: ADMIN_PASSWORD_HASH
+        sync: false

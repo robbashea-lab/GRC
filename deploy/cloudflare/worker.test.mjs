@@ -83,3 +83,21 @@ test('reports upstream failures without exposing diagnostics or pretending succe
   assert.equal(response.status, 502);
   assert.deepEqual(await response.json(), { detail: 'Staging API is unavailable' });
 });
+
+test('allows an idle host to wake but aborts at the bounded header timeout', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let signal;
+  t.mock.method(globalThis, 'fetch', async (_request, options) => {
+    signal = options.signal;
+    return new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    });
+  });
+  const pending = worker.fetch(new Request(origin + '/api/'), env);
+  t.mock.timers.tick(60000);
+  assert.equal(signal.aborted, false);
+  t.mock.timers.tick(30000);
+  const response = await pending;
+  assert.equal(response.status, 504);
+  assert.deepEqual(await response.json(), { detail: 'Staging API is unavailable' });
+});

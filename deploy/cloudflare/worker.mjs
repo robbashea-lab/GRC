@@ -32,7 +32,8 @@ export default {
     outgoing.headers.delete('cookie');
     if (cookies.length) outgoing.headers.set('cookie', cookies.join('; '));
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30000);
+    // Free staging hosts can take about a minute to wake after idle.
+    const timer = setTimeout(() => controller.abort(), 90000);
     try {
       const response = await fetch(outgoing, {
         redirect: 'manual', signal: controller.signal,
