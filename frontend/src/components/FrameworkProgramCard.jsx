@@ -38,14 +38,16 @@ export default function FrameworkProgramCard({rows,program}) {
   const heading=key==='cis-ig1'?'bd-cis-heading':`bd-program-${key}-heading`;
   const Row=({view,className,children})=>LINKABLE.has(key)?<Link to={`${to}?${key==='iso-27001'?'dashboard=1&':''}view=${view}`} className={className}>{children}</Link>:<span className={`bd-static${className?` ${className}`:''}`}>{children}</span>;
   const gaps=[['unremediated','Gaps without a finding',summary.unremediated,'critical'],['needs_attention',labels.needs_attention,summary.gap,'critical'],['stale','Validation older than 12 months',summary.stale,'attention'],['unevidenced',`${done} without evidence`,summary.unevidenced,'attention']];
-  return <section className="bd-card" aria-labelledby={heading}>
+  return <section className="bd-card bd-program" aria-labelledby={heading}>
     <div className="bd-card-head"><h2 id={heading}>{name}</h2><Link to={to}>Open workspace</Link></div>
     <p className="bd-muted bd-small">{program.name||program.label}</p>
-    <div className="bd-cis-chart"><Donut counts={counts} summary={summary} name={name} labels={labels}/>
-      <ul className="bd-legend">{CIS_ORDER.filter(s=>s!=='not_applicable'||counts[s]).map(s=><li key={s}><Row view={s}><span className={`bd-swatch bd-seg-${s}`} aria-hidden="true"/><span>{labels[s]}</span><strong>{counts[s]}</strong></Row></li>)}</ul>
-    </div>
-    {summary.applicable?<AssessmentMetrics summary={summary} implementedLabel={done}/>
+    <div className="bd-program-body"><div className="bd-program-progress"><Donut counts={counts} summary={summary} name={name} labels={labels}/>
+      {summary.applicable?<AssessmentMetrics summary={summary} implementedLabel={done}/>
       :<p className="bd-muted bd-small" data-testid="readiness-empty">No applicable {operatorVocabulary(key).items} yet: readiness not calculated.</p>}
-    <ul className="bd-gaps" aria-label={`${name.split(" ")[0]} verification gaps`}>{gaps.map(([view,label,n,tone])=><li key={view}><Row view={view} className={n?`is-${tone}`:'is-clear'}><span>{label}</span><strong>{n}</strong></Row></li>)}</ul>
+    </div>
+      <ul className="bd-legend">{CIS_ORDER.filter(s=>s!=='not_applicable'||counts[s]).map(s=><li key={s}><Row view={s}><span className={`bd-swatch bd-seg-${s}`} aria-hidden="true"/><span>{labels[s]}</span><strong>{counts[s]}</strong></Row></li>)}</ul>
+      <ul className="bd-gaps" aria-label={`${name.split(" ")[0]} verification gaps`}>{gaps.map(([view,label,n,tone])=><li key={view}><Row view={view} className={n?`is-${tone}`:'is-clear'}><span>{label}</span><strong>{n}</strong></Row></li>)}</ul>
+    </div>
+    <p className="bd-muted bd-small bd-program-note">{key==='soc-2'?'Internal readiness, not an auditor opinion.':'Assessment progress, not a compliance determination.'}</p>
   </section>;
 }
