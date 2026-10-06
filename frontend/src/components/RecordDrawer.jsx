@@ -343,7 +343,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   async function save(taskStatus,keepOpen=false) {
     if (!canWrite || saving) return;
     if(policyPilot&&approvalDirty){toast.error('Save or discard unfinished approval details before saving the Policy.');return;}
-    if(pilot&&newComment.trim()){toast.error('Post or discard the unfinished comment before saving or completing this item.');return;}
+    if((pilot||actionLayout)&&newComment.trim()){toast.error('Post or discard the unfinished comment before saving or completing this item.');return;}
     const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
     if (missing) { toast.error(`${missing.label} is required`); return; }
     setSaving(true);
@@ -449,7 +449,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (updated) {
         // Refresh only authoritative readiness; retain unsaved descriptive edits.
         record.status = updated.status;
-        if(pilot)initialForm.current={...initialForm.current,status:updated.status};
+        if(pilot||actionLayout)initialForm.current={...initialForm.current,status:updated.status};
         setForm(previous => ({...previous,status:updated.status}));
       }
     } catch (e) { toast.error(formatError(e)); }
