@@ -421,6 +421,8 @@ export function finishDemoStore(db, clock, {
         const label = {'cis-ig1': 'CIS', 'iso-27001': 'ISO 27001', 'soc-2': 'SOC 2'}[a.framework_key] || a.framework_key;
         if (reference[4] != null) evidence(db, client, a.framework_key + '-' + a.definition_id, label + ' ' + a.definition_id + ' ' + d.title + ' - validation record', 'framework_assessment', a.framework_assessment_id, date(-reference[4]), row ? users[row.owner].user_id : owner);
       }
+      // Fictional imported history uses its historical date, not the seed command clock.
+      if(a.framework_key!=='soc-2')a.last_saved=a.last_assessed;
       for (const m of CATALOGS[a.framework_key].policy_mappings.filter(m => m.safeguards.includes(a.definition_id))) {
         const p = policies.find(p => p.baseline_key === m.policy_key);
         if (p) a.related_links.push({
