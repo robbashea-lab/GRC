@@ -264,6 +264,13 @@ test('Assigned to Me uses the current user assignment and excludes history',asyn
   expect(container.querySelector('[data-testid="reviews-tab-mine"]').textContent).toContain('Assigned to Me');
 });
 
+test.each([['normal-client',false,'in_progress','Overdue'],['normal-client',false,'open','Open'],['demo_brawndo',true,'in_progress','In Progress']])('%s summary preserves the existing status priority for %s',async(clientId,pilot,status,label)=>{
+  mockClient=clientId;saved={...saved,client_id:clientId,status,due_date:status==='open'?'2099-01-01':'2020-01-01'};
+  await act(async()=>root.render(<ReviewDrawer open reviewsPilot={pilot} record={saved} clientId={clientId} onOpenChange={()=>{}}/>));
+  const summary=[...document.querySelectorAll('[aria-label="Review details"] dl > div')].find(row=>row.querySelector('dt').textContent==='Status');
+  expect(summary.querySelector('dd').textContent.toLowerCase()).toBe(label.toLowerCase());
+});
+
 test('new pilot reviews do not wait for nonexistent requirement relationships',async()=>{
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   const dialog=document.querySelector('[data-testid="reviews-drawer"]');

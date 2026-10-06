@@ -91,7 +91,8 @@ function ReviewColumnHeader({table,column,width,onResize}) {
   const resize=(target,value)=>onResize(column.key,value,Object.fromEntries([...target.closest('tr').querySelectorAll('th[data-column]')].map(header=>[header.dataset.column,header.getBoundingClientRect().width])));
   return <th scope="col" className="tbl-head review-resizable-header" data-column={column.key} aria-sort={table.state.sort?.key===column.key?(table.state.sort.dir==='asc'?'ascending':'descending'):'none'}>
     <ColumnControl table={table} column={column}/>
-    <span role="separator" tabIndex={0} aria-orientation="vertical" aria-label={`Resize ${column.label} column`} aria-valuemin={min} aria-valuemax={800} aria-valuenow={Math.round(width||min)} className="review-column-resizer"
+    <span role="separator" tabIndex={0} aria-orientation="vertical" aria-label={`Resize ${column.label} column`} aria-valuemin={min} aria-valuemax={Math.max(800,width||0)} aria-valuenow={width?Math.round(width):undefined} className="review-column-resizer"
+      onFocus={e=>resize(e.currentTarget,e.currentTarget.parentElement.getBoundingClientRect().width)}
       onClick={e=>e.stopPropagation()}
       onPointerDown={e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();drag.current={x:e.clientX,width:e.currentTarget.parentElement.getBoundingClientRect().width};e.currentTarget.setPointerCapture(e.pointerId);e.currentTarget.focus();}}
       onPointerMove={e=>{if(drag.current)resize(e.currentTarget,Math.max(min,Math.min(800,drag.current.width+e.clientX-drag.current.x)));}}

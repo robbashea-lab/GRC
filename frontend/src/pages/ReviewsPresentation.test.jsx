@@ -59,6 +59,9 @@ test('Review column boundaries resize with keyboard and pointer without sorting 
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
   const header=container.querySelector('th[data-column="title"]'),handle=header.querySelector('[role="separator"]');
   header.getBoundingClientRect=()=>({width:240});
+  expect(handle.hasAttribute('aria-valuenow')).toBe(false);
+  await act(async()=>handle.focus());
+  expect(handle.getAttribute('aria-valuenow')).toBe('240');
   await act(async()=>handle.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));
   expect(handle.getAttribute('aria-valuenow')).toBe('250');
   expect(container.querySelector('.register-col-title').style.width).toBe('250px');

@@ -205,7 +205,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
-          <ReviewFacts record={shown} users={members} history={history}/>
+          <ReviewFacts record={shown} users={members} history={history} status={!pilot&&shown?reviewStatus(shown):undefined}/>
           {shown?.iso_audit&&<section className="border border-line rounded p-3 space-y-2 text-sm" aria-label="Audit workpapers">
             <h3 className="font-medium">{auditPackage(shown.iso_audit.package_key)?.title}</h3>
             <p>Cycle {shown.iso_audit.cycle} · {auditProgress(shown.iso_audit).complete} of {auditProgress(shown.iso_audit).total} workpapers complete</p>

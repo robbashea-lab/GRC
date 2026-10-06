@@ -5,9 +5,9 @@ import {GovernanceContextFields,SourceReference} from './RequirementBasis';
 import {DueDate,HistoryDate,OwnerCell} from './RegisterCells';
 import StatusBadge from './StatusBadge';
 
-export function ReviewFacts({record,users,history=[]}) {
+export function ReviewFacts({record,users,history=[],status:statusOverride}) {
   if (!record) return null;
-  const status=pilotReviewStatus(record),last=record.last_completed_at||record.last_completed||record.completion_date||history[0]?.completed_at;
+  const status=statusOverride??pilotReviewStatus(record),last=record.last_completed_at||record.last_completed||record.completion_date||history[0]?.completed_at;
   return <section aria-label="Review details" className="space-y-3">
     {pilotReviewMatches(record,'overdue')&&<p role="note" className="text-sm text-semantic-critical">This Review is overdue{status==='in_progress'?' and in progress':''}.</p>}
     {status==='needs_scheduling'&&<p role="note" className="text-sm text-ink-secondary">Set a due date to schedule this Review.</p>}
