@@ -5,7 +5,16 @@
   max-width: 990px;
   height: min(88dvh, 900px);
 }
+.approved-policy-requirements { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); gap: 26px; }
+.approved-policy-requirements > * { min-width: 0; }
+.approved-risk-summary { grid-template-columns: repeat(6,minmax(0,1fr)); }
+[data-testid="risks-drawer"] [data-testid="risk-mark-reviewed"],
+[data-testid="risks-drawer"] [data-testid="risk-accept"],
+[data-testid="risks-drawer"] [data-testid="risk-close"] { order: -1; }
+[data-testid="risks-drawer"] [data-testid="risk-close"] { margin-right: auto; }
 @media (max-width: 750px) {
+  .approved-policy-requirements { grid-template-columns: minmax(0,1fr); }
+  .approved-risk-summary { grid-template-columns: repeat(3,minmax(0,1fr)); }
   :root .ui-dialog.brawndo-cis-assessment[data-testid="risks-drawer"],
   :root .ui-dialog.brawndo-cis-assessment[data-testid="policies-drawer"] {
     width: calc(100vw - 28px);
