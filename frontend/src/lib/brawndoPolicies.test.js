@@ -32,9 +32,12 @@ test('annual calendar dates clamp leap day and preserve authorized cadence',()=>
 test('status filters use presented state and undated values sort last in either direction',()=>{
   const rows=[{policy_id:'a',status:'in_review',approval_request_id:'r',next_review_date:'2026-01-01'},{policy_id:'b',status:'draft',next_review_date:null},{policy_id:'c',status:'draft',next_review_date:'2027-01-01'}];
   const columns=policyColumns(tableColumns('policies',{rows}),rows,[]);
+  expect(columns.filter(c=>['title','alignment','status','owner_id','next_review_date','last_reviewed_at'].includes(c.key)).map(c=>c.key)).toEqual(['title','alignment','status','owner_id','next_review_date','last_reviewed_at']);
   expect(applyTableFilters(rows,columns,{filters:{status:['pending_approval']}}).map(r=>r.policy_id)).toEqual(['a']);
   for(const dir of ['asc','desc'])expect(applyTableFilters(rows,columns,{filters:{},sort:{key:'next_review_date',dir}}).at(-1).policy_id).toBe('b');
-  expect(columns.find(c=>c.key==='status').sortable).toBe(false);
+  expect(columns.find(c=>c.key==='status').sortable).toBe(true);
+  expect(columns.find(c=>c.key==='owner_id').sortable).toBe(true);
+  expect(applyTableFilters(rows,columns,{filters:{},sort:{key:'status',dir:'asc'}}).map(r=>r.policy_id)).toEqual(['b','c','a']);
 });
 
 

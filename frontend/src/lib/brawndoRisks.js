@@ -6,14 +6,14 @@ import {riskIsClosed} from './riskRegister';
 export const riskCategories={cybersecurity:'Technical & Cybersecurity',operational:'Operational',vendor:'Third-Party & Supply Chain',physical:'Physical & Environmental',privacy:'Data & Privacy',legal_regulatory:'Legal, Regulatory & Contractual',continuity:'Business Continuity & Recovery',personnel:'People & Personnel',governance:'Governance & Strategic',other:'Other'};
 export const riskTreatments={'':'Not Yet Decided',mitigate:'Mitigate',transfer:'Transfer/Share',avoid:'Avoid',accept:'Accept'};
 export const pilotRiskStatus=value=>({identified:'Open',assessed:'Open',open:'Open',in_progress:'In Treatment',treated:'In Treatment',monitoring:'Monitoring',accepted:'Accepted',closed:'Closed',retired:'Closed',escalated:'Escalated (legacy)'})[value]||value;
-export const riskViews=[['all_active','All Active'],['high','High'],['critical','Critical'],['review_due','Due for Review'],['accepted','Accepted'],['closed','Closed']].map(([id,label])=>({id,label}));
+export const riskViews=[['all_active','All Active'],['critical','Critical'],['high','High'],['review_due','Due for Review'],['accepted','Accepted'],['closed','Closed'],['upcoming','Review due in 30 days']].map(([id,label])=>({id,label}));
 export function riskMatches(r,view,now=new Date()){
   if(view==='all')return true;
   if(view==='closed')return riskIsClosed(r);
   if(riskIsClosed(r))return false;
   const date=calendarDay(r.next_review),today=managementDay(now);
   if(view==='overdue')return date!==null&&date<today;
-  if(view==='upcoming')return date!==null&&date>=today&&date<=today+30;
+  if(view==='upcoming')return date!==null&&date>today&&date<=today+30;
   if(view==='review_due')return date!==null&&date<=today;
   if(view==='unassigned')return !r.owner_id;
   if(view==='accepted')return r.status==='accepted'&&!!r.accepted_by&&!!r.acceptance_date&&!!r.acceptance_rationale?.trim()&&calendarDay(r.acceptance_expires_at)>today;

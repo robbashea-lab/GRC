@@ -8,7 +8,6 @@ jest.mock('@/context/OrgContext', () => ({useOrg:() => ({currentClientId:'a',cur
 jest.mock('@/context/AuthContext', () => ({useAuth:() => ({user:{user_id:'owner',name:'Owner',role:'super_admin'}})}));
 jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api'}));
 jest.mock('react-router-dom', () => ({useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
-jest.mock('@/components/ui/sheet', () => ({Sheet:({open,children})=>open?<div>{children}</div>:null,SheetContent:({children})=><section>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>}));
 let root, container;
 const requestOptions = {headers:{'Idempotency-Key':expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)}};
 beforeEach(() => {
@@ -25,7 +24,8 @@ test('default client dialog retains native Risk fields and save contract',async(
   const dialog=document.querySelector('[data-testid="risks-drawer"]');
   expect(dialog.className).toContain('brawndo-cis-assessment');
   expect(dialog.getAttribute('aria-modal')).toBe('true');
-  for(const name of ['title','category','status','owner_id','description'])expect(dialog.querySelector(`[data-testid="field-${name}"]`)).not.toBeNull();
+  for(const name of ['title','status','owner_id','description'])expect(dialog.querySelector(`[data-testid="field-${name}"]`)).not.toBeNull();
+  expect(dialog.querySelector('[aria-label="Risk category"]')).not.toBeNull();
   await act(async()=>{
     const title=dialog.querySelector('[data-testid="field-title"]');
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(title,'Updated Risk');
@@ -49,8 +49,8 @@ test('legacy Risk category is displayed without silently changing its stored val
   api.get.mockImplementation(async(path,...args)=>path==='/risks'?{data:[{risk_id:'r',client_id:'a',title:'Legacy Risk',category:'Cybersecurity',status:'assessed'}]}:original(path,...args));
   await act(async()=>root.render(<RiskRegister/>));
   await act(async()=>container.querySelector('[data-testid="risk-row-0"]').click());
-  expect(container.querySelector('[data-testid="field-category"]').textContent).toBe('Cybersecurity (recorded)');
-  await act(async()=>container.querySelector('[data-testid="drawer-save"]').click());
+  expect(document.querySelector('[aria-label="Risk category"]').textContent).toBe('Cybersecurity (recorded)');
+  await act(async()=>document.querySelector('[data-testid="drawer-save"]').click());
   expect(api.patch).toHaveBeenCalledWith('/risks/r',expect.not.objectContaining({category:expect.anything()}),requestOptions);
 });
 
@@ -59,7 +59,7 @@ test.each([[RiskRegister,'risk-row-0',['title','category','status','owner_id','d
   const row=container.querySelector(`[data-testid="${rowId}"]`);
   expect(row).not.toBeNull();
   await act(async()=>row.click());
-  for(const field of fields) expect(container.querySelector(`[data-testid="field-${field}"]`)).not.toBeNull();
-  await act(async()=>container.querySelector('[data-testid="drawer-save"]').click());
+  for(const field of fields) expect(document.querySelector(Component===RiskRegister&&field==='category'?'[aria-label="Risk category"]':`[data-testid="field-${field}"]`)).not.toBeNull();
+  await act(async()=>document.querySelector('[data-testid="drawer-save"]').click());
   expect(api.patch).toHaveBeenCalledWith(Component===RiskRegister?'/risks/r':'/vendors/v',expect.not.objectContaining({client_id:undefined}),requestOptions);
 });

@@ -26,6 +26,24 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
+test.each(['authenticated','demo'])('treatment acceptance respects the %s decision workflow',async mode=>{
+ const scrollIntoView=HTMLElement.prototype.scrollIntoView;
+ HTMLElement.prototype.scrollIntoView=jest.fn();
+ try {
+ mockUser.workspace_mode=mode;
+ await act(async()=>root.render(<RecordDrawer open kind="risks" clientId={risk.client_id} record={risk} onOpenChange={()=>{}}/>));
+ await click(document.querySelector('[data-testid="tab-treatment"]'));
+ await click(document.querySelector('[aria-label="Treatment decision"]'));
+ const accept=[...document.querySelectorAll('[role="option"]')].find(n=>n.textContent==='Accept');
+ expect(accept).toBeTruthy();
+ expect(accept.getAttribute('aria-disabled')==='true').toBe(mode==='authenticated');
+ expect(api.patch).not.toHaveBeenCalled();
+ } finally {
+  if(scrollIntoView) HTMLElement.prototype.scrollIntoView=scrollIntoView;
+  else delete HTMLElement.prototype.scrollIntoView;
+ }
+});
+
 test('assessment and treatment keep one draft across tabs, failed save and retry',async()=>{
   const close=jest.fn();
   await act(async()=>root.render(<RecordDrawer open kind="risks" clientId={risk.client_id} record={risk} onOpenChange={close}/>));
@@ -65,4 +83,14 @@ test('read-only access keeps assessment disabled and hides save',async()=>{
   await click(document.querySelector('[data-testid="tab-assessment"]'));
   expect(document.querySelector('[data-testid="field-impact_description"]').closest('fieldset').disabled).toBe(true);
   expect(document.querySelector('[data-testid="drawer-save"]').disabled).toBe(true);
+});
+
+test('shared Treatment retains existing Action Item linking for authorized users',async()=>{
+  delete mockUser.workspace_mode;risk.client_id='synthetic-new-client';
+  await act(async()=>root.render(<RecordDrawer open kind="risks" clientId={risk.client_id} record={risk} onOpenChange={()=>{}}/>));
+  await click(document.querySelector('[data-testid="tab-treatment"]'));
+  const link=[...document.querySelectorAll('button')].find(b=>b.textContent==='Link existing Action Item');
+  expect(link).toBeTruthy();
+  await click(link);
+  expect([...document.querySelectorAll('h2')].some(h=>h.textContent==='Link Action Item')).toBe(true);
 });
