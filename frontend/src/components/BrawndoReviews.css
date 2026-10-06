@@ -80,3 +80,9 @@
 .register-surface[data-layout="reviews"] .quick-filters button { font-size: 12px; padding: 6px 9px; border-radius: 5px; }
 .register-surface[data-layout="reviews"] .register-table-frame td { padding: 16px 10px; font-size: 12px; line-height: 1.5; vertical-align: top; }
 .register-surface[data-layout="reviews"] .register-record-link { font-weight: 500; }
+.review-facts-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--color-border); margin-bottom: 18px; }
+.review-facts-grid > div { min-width: 0; overflow-wrap: anywhere; }
+.review-facts-grid dt { font-size: 11px; margin-bottom: 4px; }
+.review-facts-grid dd { font-size: 12px; font-weight: 500; }
+@media (max-width: 750px) { .review-facts-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 470px) { .review-facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

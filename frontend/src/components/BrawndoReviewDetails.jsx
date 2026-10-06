@@ -4,6 +4,7 @@ import {reviewDisplayValue} from '@/lib/reviewPresentation';
 import {GovernanceContextFields,SourceReference} from './RequirementBasis';
 import {DueDate,HistoryDate,OwnerCell} from './RegisterCells';
 import StatusBadge from './StatusBadge';
+import './BrawndoReviews.css';
 
 export function ReviewFacts({record,users,history=[],status:statusOverride}) {
   if (!record) return null;
@@ -11,7 +12,7 @@ export function ReviewFacts({record,users,history=[],status:statusOverride}) {
   return <section aria-label="Review details" className="space-y-3">
     {pilotReviewMatches(record,'overdue')&&<p role="note" className="text-sm text-semantic-critical">This Review is overdue{status==='in_progress'?' and in progress':''}.</p>}
     {status==='needs_scheduling'&&<p role="note" className="text-sm text-ink-secondary">Set a due date to schedule this Review.</p>}
-    <dl className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+    <dl className="review-facts-grid">
       {[['Status',<StatusBadge value={status} label={REVIEW_STATUS[status]}/>],
         ['Assigned Reviewer',<OwnerCell people={users} id={record.owner_id} status={record.status}/>],
         ['Due Date',<DueDate iso={record.due_date} closed={['completed','cancelled'].includes(status)}/>],
