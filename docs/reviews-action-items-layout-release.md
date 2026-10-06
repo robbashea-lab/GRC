@@ -22,6 +22,11 @@ Two isolated implementation agents cross-reviewed each other. An independent thi
 
 ## Delivery boundary
 
+Final implementation candidate `a2dccf19dbca3a8bf96fce8a9715b05acf5cef00` resolves the independent desktop Requirements finding with scoped 1.4fr / 1fr columns, collapsing at 750px. Existing source content, editors and generic default rendering are preserved. GitHub review also identified normal Action comment loss on Save/Complete and an authoritative Finding refresh causing a false dirty warning; both existing guards now cover normal Action layouts. Reverting those two guard changes reproduces three regression failures. Independent final code review passed 8 suites / 77 tests; refreshed CIS and ISO screenshots passed independent visual comparison. Coordinator final focused run passed 11 suites / 122 tests.
+
+The browser-local Demo Review edit survived reload while before/after hashes of all 18 collections in the disposable authenticated database remained identical. Normal browser checks additionally inspected the SOC 2 and ISO synthetic Review Requirements and existing Action ticket dialogs, and the CIS IG1 shared Review. These checks are local, not hosted acceptance.
+
 PR48 owner explicitly released the exclusive staging/session/publication slot to this coordinator. Exactly one enabled staging login account must remain; disposable multi-user tests stay local. No credentials/cookies are transferred. Merge uses normal protections after current-main reconciliation and final-head checks. Render receives only the established automatic deployment after main CI; no duplicate/manual trigger. The existing owner-private Sites URL is updated from the same merged source, with access and Free plans preserved.
 
 Exact tested/merged/deployed SHAs, main-push gate, Render deployment revision, private preview version and actual hosted acceptance results are recorded in the final PR49 deployment handoff. Until that handoff is posted, hosted delivery is pending. Local/mocked results above do not establish hosted acceptance, production assurance or ISO normative completeness.
+
