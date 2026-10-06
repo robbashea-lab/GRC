@@ -197,11 +197,12 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
   if(method==='patch'&&!operation){
-    if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
+    if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_saved??row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
     body={...body};delete body.expected_last_assessed;
     const recordAssessment=body.record_assessment===true;
     if('record_assessment' in body&&(row.framework_key!=='soc-2'||typeof body.record_assessment!=='boolean'))fail('Explicit assessment recording applies only to SOC 2');
     delete body.record_assessment;
+    const ownershipOnly=Object.keys(body).length>0&&Object.keys(body).every(k=>['owner_id','process_owner_id'].includes(k))&&!recordAssessment;
     const supported=frameworkCapabilities(row.framework_key);
     const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k)),...(row.framework_key==='iso-27001'?['iso_assessment_checks']:[])];
     if('cis_operation' in body){
@@ -275,14 +276,17 @@ export function frameworkRequest(db,path,method,params,body){
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
     const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
     if(changed.length||recordAssessment){
-      const at=new Date(Math.max(Date.now(),(Date.parse(row.last_assessed)||0)+1)).toISOString();
-      if(row.framework_key==='soc-2'){
+      const at=new Date(Math.max(Date.now(),(Date.parse(row.last_saved??row.last_assessed)||0)+1)).toISOString();
+      if(row.framework_key==='soc-2'&&!ownershipOnly){
         const judgment=recordAssessment||(changed.includes('status')&&data.status!=='not_assessed');
         Object.assign(body,{last_saved:at,assessment_recorded_at:judgment?at:row.assessment_recorded_at??null,assessment_recorded_by:judgment?db.user.user_id:row.assessment_recorded_by??null});
         historyFields.push('last_saved','assessment_recorded_at','assessment_recorded_by');
       }
-      Object.assign(row,body,{last_assessed:at,assessed_by:db.user.user_id});
-      (row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at,by:row.assessed_by});
+      Object.assign(row,body,{last_saved:at});
+      if(!ownershipOnly){
+        Object.assign(row,{last_assessed:at,assessed_by:db.user.user_id});
+        (row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at,by:row.assessed_by});
+      }
       audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});
     }
     return row;

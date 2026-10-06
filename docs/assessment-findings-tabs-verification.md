@@ -1,0 +1,82 @@
+# Assessment Findings tabs verification
+
+PR #43 changes assessment presentation only. The shared tabs are Requirement & implementation (default), Assessment criteria, and Findings. Existing Findings components, creation commands, request identities, permissions, and completion/validation rules are reused. Removed footer panels do not remove stored ownership, evidence relationships, or history. ISO applicability, justification, and audit workpaper fields remain.
+
+## Verified locally, 2026-10-05
+
+- Application source: `1fdb7bb86f1c5dae2f1d79a22998042b8e485431`; final test corrections: `d1134f2a6973c14948a78a016a9c9a6bd9629f09`.
+- Frontend: CRACO/Jest with `CI=true`, `--watchAll=false --runInBand --runTestsByPath`: AssessmentLayout, BrawndoCisAssessment, PrestigeSocAssessment, IsoAssessment, IsoAuditWorkspace, AssessmentShell, FindingRemediationDrawer, RemediationUX, remediationTickets, assessmentVerification, isoAssessmentSave: **340 tests in 11 suites passed**. FrameworkOperator and BrawndoCisFindings: **9 tests in 2 suites passed**.
+- Backend: `python -m unittest test_remediation_tickets test_framework_governance test_iso_audit_program` with backend and backend/tests on PYTHONPATH: **40 tests passed**, using isolated mocked persistence and real route logic.
+- Builds: `node scripts/staging.cjs` and `node scripts/preview.cjs build` passed. Existing bundle-size advisories and test-mock React event warnings remain.
+- Independent review of both commits found no blocking defect. Requested SOC history assertions and ISO audit draft coverage were corrected and rereviewed.
+
+## Browser evidence
+
+Disposable loopback MongoDB 8.0.28 and the normal FastAPI/Render wrapper served the staging build. Fictional local clients exercised CIS IG1, IG2, IG3, SOC 2, ISO ISMS requirements, SoA, Annex A, and internal-audit workpapers. Every variant passed tab order/default selection, assessment/checklist/Finding draft round trips, and explicit save checks. SoA justification persisted into the Annex A assessment. Keyboard tab navigation, Escape draft protection, and source focus return were observed.
+
+Normal and browser-local Demo Finding creation appeared immediately in Action Items. Work completion required administrator validation; completed tickets remained retrievable from the source Findings tab. Action Item edits were visible through the linked authoritative ticket. Existing unit/route tests cover retry identity, repeated clicks, reopening, history, evidence, and validation constraints.
+
+Demo used the established fictional clients and ordinary implementation-group configuration. Both light and dark views were inspected; a 390 × 844 dark audit Findings form had no horizontal overflow. A digest comparison confirmed normal MongoDB clients, assessments, Findings, Tasks, and Reviews were unchanged by Demo edits.
+
+Four disposable local identities verified server permissions: read-only and unassigned contributor assessment/Finding writes returned 403; client manager and assigned service-provider administrator assessment writes succeeded; all four were denied access to an unassigned client; logout invalidated each session. No staging login account was created or enabled.
+
+## Remaining release verification
+
+- The earlier configured pytest collection blocker was corrected by merged PR #41. After reconciliation with main `382d10f03a6eda3139e484cdff9d7cf60b577120`, the same normal command passed **40 tests and 19 subtests** on `1226184d269a5ae5dc852f85f4799aa7384ddc88` (8 existing FastAPI startup/shutdown deprecation warnings).
+- DOM automation initially failed to populate the unchanged native Finding target-date input. Native accessibility setValue succeeded: 2026-12-20 survived a tab round trip and the created Demo ticket displayed that due date and the supplied description. No application change was necessary.
+- Final main reconciliation, required GitHub gates, merge, Render deployment, and private-preview publication are pending release coordination. Local browser results are not hosted verification. Hosted source, preview version, access settings, and representative workflows must be confirmed after publication.
+- No recording was available in the accessible task attachments; the explicit requested structure was used as the reference.
+
+## Reconciliation checkpoint, 2026-10-06
+
+Head `1226184d269a5ae5dc852f85f4799aa7384ddc88` preserves PR #46 Demo selection isolation and PR #47 Review Close/cancellation fixes. Independent final-head review found no blocking findings. The same 13 focused frontend suites passed **349 tests**; existing mock focus-event warnings remain. Both `node scripts/staging.cjs` (normal application plus isolated Demo) and `node scripts/preview.cjs build` passed on this source. Existing bundle-size and Node fs.F_OK deprecation advisories remain. Required CI is pending at this checkpoint. Merge, hosted session and publication await PR #42 completed acceptance and explicit GitHub handoff. The release owner's existing hosted limitations (completed evidence-download byte comparison, email, Atlas backup/restore and restricted-identity browser checks) remain unverified; local multi-user checks are distinct.
+## Bounded module relocation approved 2026-10-06
+
+The proposed mapping was recorded before implementation in PR #43 comment 6017272939. The user authorized minimum existing-module UI changes, with exactly three assessment tabs and no restored assessment footers.
+
+| Missing function | Former access | Destination |
+| --- | --- | --- |
+| Assessment owner assignment | Assessment responsibility footer | Contextual record-management action on existing Frameworks requirement rows; existing AssigneeSelect and guarded assessment PATCH. |
+| Complete assessment revisions/activity | Assessment View History footer | Same Frameworks contextual view, reusing AssessmentHistory and assessment activity. |
+| ISO assessment discussion | ISO discussion footer | Same Frameworks contextual view, existing assessment comment thread/command. |
+| New assessment-specific Risk/Policy/Vendor/Requirement links | Assessment relationship picker | Same contextual Frameworks view, existing relationship commands. Existing reverse module views remain the access path for linked records. |
+| Post-onboarding framework-aware Review create/link | Assessment FrameworkReviewSetup | Existing Reviews view reached with exact client/framework/assessment context; reuse FrameworkReviewSetup and existing server command. Assessment owners and Review owners remain separate. |
+| Evidence unlink | Supporting-record footer / Library | Existing Evidence Library only: correct its demonstrated pre-existing framework unlink command. Library already supplies discovery/download/upload/link, so no duplicate controls. |
+
+CIS operational confirmation invalidation remains the existing server/frontend invariant; operational responsibility footers stay removed. Existing onboarding plan initialization and ordinary Review schedule/ownership editing are reused, not replaced. No new tabs, dashboard, business rules or hosted accounts.
+
+## Reviewed relocation checkpoint, 2026-10-06
+
+App/test source `86fbc008437a26522438ddf52328757511f944e5` reconciles merged PR #42 main `9f5c256e2a3671e186655ad1715fc1d6b6c970ee`. Bounded module implementation `5ce7a766` passed 20 affected suites / 406 tests. Browser testing demonstrated the existing ISO stretched-row click target intercepted Manage; `474c03e` positions that shared action above the target. The corrected source passed 33 focused tests; reconciled source passed 5 affected suites / 64 tests and 1 snapshot. Both `node scripts/staging.cjs` and `node scripts/preview.cjs build` passed on `86fbc008`; existing bundle-size / fs.F_OK advisories and mocked focus-event warnings remain. Independent exact-head delta review found no blocker.
+
+Local authenticated browser on the final staging artifact (`main.cec8ab8b.js`) confirmed ordinary CIS/SOC/ISO row Manage discovery, owner save/reopen, ISO comment save/reopen, unsaved-comment Keep/Discard protection and focus return. Exact ISO 4.1 and CIS 1.1 context reached the existing Reviews view with linked source-aware Reviews/setup; first Close cleared the context. SOC remained without newly added comments/link editors. Light/dark module surfaces inspected. These checks used disposable local Mongo data; no staging account or shared data changed. Final hosted module acceptance and responsive/Demo-specific relocation checks remain pending, distinct from earlier all-framework assessment/Demo checks.
+
+Each of the nine GitHub findings received an individual evidence/disposition reply before resolution: owner/history/ISO comments and contextual Review setup corrected; evidence-only-access assertions unsupported (Library reused, demonstrated unlink command fixed); ISO new-record linking corrected; operational-editor restoration superseded by explicit footer removal while stored/readable values and baseline invalidation remain; SOC retained-control/context access preserved. Required exact-head CI and PR #42 release acceptance/handoff remain gates; no PR #43 merge or publication yet.
+
+## Final automated-review correction
+
+The final automated review of e208607 found three valid additional boundary gaps (4196236601, 4196236611, 4196236620): the workspace control projection omits name; Evidence context classifies assessment reverse links as module-owned; Prestige's scoped rows hid retained SOC management. Corrected with control_id label fallback, a framework-assessment-only module-origin Unlink condition (upload/other-module provenance still protected), and reuse of the existing retained-criteria toggle. The earlier no-toggle assertion changed to the explicitly authorized retention access contract; no stored scope or assessment tabs changed. Focused five suites passed 49 tests, including actual module-origin and supporting-origin unlink, negative upload/other-module cases, missing-name projection and retained SOC management. Independent narrow review found no blocker. Both-build and affected browser verification of this correction remain pending; prior source evidence is not represented as verifying the new changes.
+
+## Final boundary verification, 2026-10-06
+
+Source `6920991c16262c54e5d2fdcc43cfdb7777820d48` passed both builds and independent exact-head review. Local authenticated browser opened the real projected control by its visible identifier, then verified its saved name and supported requirement. Actual module-origin framework Evidence unlink persisted after reopening in a fresh tab, with the original 36-byte file retained. Browser download-event automation timed out; completed download bytes remain unverified.
+
+Source `4574e81ce321d740c538c3c58113fd87d1eccf68` corrects an additional valid review finding (4196513101): explicit retained SOC visibility must not change active progress or Continue selection. It reuses the CIS active-scope calculation; retained rows stay navigable. All 24 FrameworkWorkspace tests passed, focused independent review passed, and both normal/preview builds passed. Browser verified normal artifact `main.1761e94c.js`: ordinary Demo Client Profile Confidentiality removal, retained-category visibility, and identical active summary before/after toggle (27/36 implemented,36/36 assessed,75%/100%,Continue CC1.4). Prior local Demo C1.1 Manage reached exact owner/history/Reviews context. No backend accounts or records were created by Demo activity.
+
+PR #42 completed exact-source Render/private-preview acceptance and explicitly released the exclusive slot in GitHub comment 6018442733. Fresh main remains `9f5c256e2a3671e186655ad1715fc1d6b6c970ee`. PR #43 still awaits final-head required CI/native review and normal merge; hosted acceptance and same-source private publication remain pending. The existing limitations for hosted download-byte comparison, email, Atlas restore and restricted identities remain separate from local verification.
+## ISO process-owner preservation
+
+Final native review4196709923 identified one more genuine missing existing function: ISO assessment Process Owner contact assignment previously lived beside Assessment Owner in the removed ownership footer. The mapping was posted in4196729281 before implementation: exact-assessment Frameworks Manage reuses the existing scoped contact select and process_owner_id command, with separate platform/Review ownership unchanged. Source `008127b9649734857aa58add5dfcc9a567980595` adds ISO-only contact assignment/clear to the existing guarded ownership save. No new assessment tab, footer, accounts or permission rule.
+
+Two affected suites passed38tests; independent delta review passed. Initial invocation incorrectly named nonexistent FrameworkAssessmentWorkspace.test.jsx, causing suite-load failure; both actual suites passed and their clean rerun passed38. No skipped/deleted tests. Normal build passed. Local authenticated normal browser on main.9c3909b7.js created a fictional business Contact without an invitation, saved/reopened its ISO4.1 Process Owner, verified clear-draft close protection/Keep editing, then saved/reopened Unassigned. Assessment status stayed Not Assessed and Last assessed stayed Never. This used disposable local Mongo only, no hosted account/data change. Remaining final-head CI/native review/preview build and delivery gates are tracked in PR comments.
+
+### Owner-only assessment date correction (review 4196841766)
+
+The final native review identified a valid shared-route defect: ownership-only saves advanced the assessment date/assessor and appended an assessment snapshot. Earlier browser checks showing Not assessed/Never did not establish persisted-date preservation. The bounded correction preserves judgment dates, assessor and assessment history for submitted owner_id/process_owner_id-only saves (including derived CIS confirmation invalidation). Each write advances existing last_saved. The legacy expected_last_assessed request field now carries last_saved ?? last_assessed, as loaded by both editor save paths; atomic writes match both stored timestamps. Full assessment saves retain their current judgment behavior. This preserves stale-editor rejection without a new schema or endpoint. Fresh-editor synthetic helpers use the same token; deliberately stale payloads remain stale.
+
+Backend verification: framework governance 16 tests plus 14 subtests; assessment verification, capability contract, engineering reliability and ISO framework 64 tests plus 92 subtests pass. Independent reviewer added/passed 16 Demo framework tests, including assessed CIS/ISO ownership preservation and stale saves in both directions. Both normal and private-preview builds pass. Initial affected frontend execution exposed fresh-editor fixtures using old tokens; corrected fixtures are being rerun. No merge or publication has occurred for this correction.
+
+Affected frontend follow-up: corrected ISO assessment-save suite passes 6 tests; FrameworkWorkspace passes 24. Normal build main.003f3097, private-preview main.0d6a6361 and actual Render staging-wrapper main.9601f13b compile successfully. Isolated local normal browser saved Process Owner on an already assessed ISO 4.1; a fresh supported API read independently compared real Mongo metadata and confirmed last_assessed, assessed_by and assessment_history unchanged, last_saved advanced, and contact assignment persisted. This is local real-persistence evidence, not hosted acceptance.
+
+Required head4d54d8e CI37486179045: backend passes; frontend217 suites/1585 tests/1snapshot pass, including the ten-year simulation (791.439s). Three seed/reset tests fail because the new last_saved retained the seed command runtime while fictional last_assessed/history dates were normalized. The bounded seed-only correction sets non-SOC last_saved to the final fictional last_assessed; SOC legacy metadata deletion and existing saved stores remain unchanged. Equality assertions remain intact. The obsolete local TenYear process started before its fixture correction and was stopped, not counted as passing; the current-head CI simulation is the valid result. Independent delta review passes; failed suites and delivery builds are rerunning before a new exact head.
+Seed correction affected rerun: demoStorage, demoPortfolio, frameworks, assessmentVerification and isoAssessmentSave pass 5 suites / 62 tests without skipped or weakened assertions.

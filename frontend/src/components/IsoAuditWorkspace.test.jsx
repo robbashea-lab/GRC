@@ -10,7 +10,7 @@ jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('react-router-dom',()=>({useSearchParams:()=>require('react').useState(new URLSearchParams('package=governance-risk')),Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 let root,container,review;
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);
-async function fill(label,value){await act(async()=>{const el=document.querySelector('[aria-label="'+label+'"]');Object.getOwnPropertyDescriptor(el.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLTextAreaElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));});}
+async function fill(label,value){await act(async()=>{const el=document.querySelector('[aria-label="'+label+'"]');Object.getOwnPropertyDescriptor(el.tagName==='SELECT'?HTMLSelectElement.prototype:el.tagName==='INPUT'?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));});}
 beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;global.crypto=require('crypto').webcrypto;
   mockUser={user_id:'u',role:'super_admin'};
@@ -37,7 +37,7 @@ test('wide audit shell separates result and progress and preserves a failed-save
 });
 test('unfinished Finding and narrative drafts cannot silently navigate or close',async()=>{
   await fill('Auditor notes','Keep my audit draft');
-  await act(async()=>button('Raise Finding').click());
+  await act(async()=>button('Findings').click());await act(async()=>button('Raise Finding').click());
   expect(button('Save & next').disabled).toBe(true);
   await act(async()=>button('Close assessment').click());
   expect(document.body.textContent).toContain('Leave unsaved changes?');
@@ -120,4 +120,24 @@ test('switching clients clears the old audit while the next authorized programme
   expect(container.textContent).toContain('Loading audit program');
   expect(container.textContent).not.toContain('governance-risk');
   expect(api.patch).not.toHaveBeenCalled();
+});
+
+const selectTab=async name=>act(async()=>button(name).click());
+test('audit three-tab round trip retains workpaper, checklist, full Finding draft and evidence fields without saving',async()=>{
+ expect([...document.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
+ expect(button('Requirement & implementation').getAttribute('aria-selected')).toBe('true');
+ await fill('Auditor notes','Unsaved audit notes');await fill('Audit progress','in_progress');
+ await selectTab('Assessment criteria');await act(async()=>document.querySelector('.assessment-check input').click());
+ await selectTab('Findings');await act(async()=>button('Raise Finding').click());
+ await fill('Finding title','Unsaved audit gap');await fill('Finding description','Audit observation');await fill('Corrective action','Investigate audit gap');await fill('Finding target date','2030-12-30');
+ await selectTab('Requirement & implementation');
+ expect(document.querySelector('[aria-label="Auditor notes"]').value).toBe('Unsaved audit notes');
+ expect(document.querySelector('[aria-label="Audit progress"]').value).toBe('in_progress');
+ expect(document.querySelector('[aria-label="Audit result"]').value).toBe('');
+ expect(document.body.textContent).toContain('Evidence & validation');expect(document.body.textContent).toContain('Scope & objectivity');
+ await selectTab('Assessment criteria');expect(document.querySelector('.assessment-check input').checked).toBe(true);
+ await selectTab('Findings');expect(document.querySelector('[aria-label="Finding title"]').value).toBe('Unsaved audit gap');
+ expect(document.querySelector('[aria-label="Finding description"]').value).toBe('Audit observation');
+ expect(document.querySelector('[aria-label="Finding target date"]').value).toBe('2030-12-30');
+ expect(button('Save & next').disabled).toBe(true);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });

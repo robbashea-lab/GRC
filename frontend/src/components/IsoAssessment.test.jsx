@@ -26,15 +26,16 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.resetAllMocks();});
 
-test('ISO two-tab layout retains ownership, mandatory status and findings before evidence',async()=>{
- await render();expect(container.querySelector('[aria-label="Assessment Owner"]').value).toBe('u');
- expect([...container.querySelectorAll('[role="tab"]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria']);
+test('ISO three-tab layout preserves stored ownership and mandatory status while omitting supplemental footers',async()=>{
+ await render();expect(record.owner_id).toBe('u');expect(container.querySelector('[aria-label="Assessment Owner"]')).toBeNull();
+ expect([...container.querySelectorAll('[role="tab"]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
  expect(container.querySelectorAll('.assessment-summary')).toHaveLength(1);
  expect(container.querySelector('input[value="in_progress"]').checked).toBe(true);
  expect(container.querySelector('input[value="not_applicable"]')).toBeNull();
- expect(container.textContent.indexOf('Findings')).toBeLessThan(container.textContent.indexOf('Evidence & verification'));
- expect(container.textContent).toContain('Organizational Controls');
- expect(button('Create organizational Control')).toBeTruthy();
+ expect(container.querySelector('.bcsg-findings').closest('[role=tabpanel]').id).toMatch(/findings$/);
+ expect(container.textContent).not.toContain('Evidence & verification');
+ expect(container.textContent).not.toContain('Organizational Controls');
+ expect(button('Create organizational Control')).toBeUndefined();
 });
 
 test('legacy mandatory-clause N/A is reported without rewriting its saved value',async()=>{
@@ -69,7 +70,7 @@ test('failed ISO save keeps narrative and blocks next; retry keeps concurrency t
 test('read-only ISO assessment retains criteria and linked findings without write affordances',async()=>{
  mockUser.role='client_readonly';related.findings=[{finding_id:'f',client_id:record.client_id,title:'Context gap',status:'open'}];await render();
  expect(container.textContent).toContain('Context gap');expect(button('Raise Finding')).toBeUndefined();expect(button('Save assessment')).toBeUndefined();
- expect(container.querySelector('[aria-label="Assessment Owner"]').disabled).toBe(true);
+ expect(container.querySelector('[aria-label="Assessment Owner"]')).toBeNull();
  expect(container.querySelector('[aria-label="Current implementation"]').closest('fieldset').disabled).toBe(true);
  await tick(button('Assessment criteria'));expect(container.querySelector('.assessment-check input').closest('fieldset').disabled).toBe(true);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });

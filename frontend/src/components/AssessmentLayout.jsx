@@ -2,11 +2,12 @@ import {Tabs,TabsList,TabsTrigger,TabsContent} from './ui/tabs';
 import './AssessmentLayout.css';
 
 // Tabs only control presentation. Drafts and saved conclusions belong to the caller.
-export default function AssessmentLayout({summary,requirement,children,checklist,review,outcome,criteriaTitle,reference,criteriaSummary}) {
+export default function AssessmentLayout({summary,requirement,children,findings,checklist,review,outcome,criteriaTitle,reference,criteriaSummary}) {
   return <Tabs defaultValue="implementation" className="assessment-layout">
     <TabsList aria-label="Assessment sections">
       <TabsTrigger value="implementation">Requirement &amp; implementation</TabsTrigger>
       <TabsTrigger value="criteria">Assessment criteria</TabsTrigger>
+      <TabsTrigger value="findings">Findings</TabsTrigger>
     </TabsList>
     <TabsContent value="implementation" forceMount>
       <details className="assessment-summary"><summary>Requirement summary</summary><p>{summary}</p></details>
@@ -20,6 +21,7 @@ export default function AssessmentLayout({summary,requirement,children,checklist
         <section><h3>Expected outcome</h3>{outcome?.map(text=><p key={text}>{text}</p>)}</section>
       </div>
     </TabsContent>
+    <TabsContent value="findings" forceMount>{findings}</TabsContent>
   </Tabs>;
 }
 

@@ -35,6 +35,7 @@ const policySupports = (row, programs) => programs.map(key => {
 import PolicyPendingDecisions from '@/components/PolicyPendingDecisions';
 import StatusBadge from "@/components/StatusBadge";
 import RecordDrawer from "@/components/RecordDrawer";
+import FrameworkDrawer from '@/components/FrameworkDrawer';
 import { SCHEMAS } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -251,6 +252,23 @@ function EntityListPage({ kind }) {
     if(!value){setLinkedInitialValues({});const next=new URLSearchParams(params);next.delete('id');next.delete('occurrence');setParams(next,{replace:true});}
   }
 
+  const frameworkAssessment=kind==='reviews'?params.get('framework_assessment'):null,frameworkKey=params.get('framework_key');
+  const [frameworkRecord,setFrameworkRecord]=useState(null),[frameworkError,setFrameworkError]=useState('');
+  useEffect(()=>{
+    setFrameworkRecord(null);setFrameworkError('');
+    if(!frameworkAssessment||!currentClientId)return;
+    if(linkedClient!==currentClientId){setFrameworkError('This link belongs to another client. Select that client before opening it.');return;}
+    if(!frameworkCatalog(frameworkKey)){setFrameworkError('Framework is unavailable.');return;}
+    const controller=new AbortController();
+    api.get('/frameworks/'+frameworkKey,{params:{client_id:currentClientId},signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted)return;
+      const assessment=data.assessments.find(r=>r.framework_assessment_id===frameworkAssessment&&r.client_id===currentClientId&&r.framework_key===frameworkKey);
+      if(!assessment)throw new Error('This assessment is not available in the current client workspace.');
+      setFrameworkRecord(assessment);
+    }).catch(e=>{if(!controller.signal.aborted)setFrameworkError(formatError(e));});
+    return()=>controller.abort();
+  },[frameworkAssessment,frameworkKey,currentClientId,linkedClient]);
+
   const statusOptions = useMemo(() => policiesPilot ? [...new Set(rows.map(policyStatus))].map(value=>({value,label:policyStatusLabel(value)})) : schema.fields.find((x) => x.name === "status")?.options || [], [schema,policiesPilot,rows]);
   const filterClient = useRef(currentClientId);
   const carriedClientChanged = filterClient.current !== currentClientId;
@@ -465,6 +483,8 @@ function EntityListPage({ kind }) {
           </HeaderActions>
         }
       />}
+      {frameworkError&&<p role="alert">{frameworkError}</p>}
+      {frameworkRecord&&frameworkRecord.client_id===currentClientId&&<FrameworkDrawer key={currentClientId+':'+frameworkRecord.framework_assessment_id} open reviewManagement record={frameworkRecord} clientId={currentClientId} onSaved={load} onOpenChange={v=>{if(!v){const next=new URLSearchParams(params);next.delete('framework_assessment');setFrameworkRecord(null);setParams(next,{replace:true});}}}/>}
       {policiesPilot&&<BrawndoTiles label="Policy summary" loading={loading&&!tableSource.length} tiles={policyTiles(tableSource,programs,policyAssessments,new Date(),cisGroup).map(t=>t.id==='mapped'?t:{...t,pressed:policyView===t.id,onClick:()=>setParam('policyView',policyView===t.id?'':t.id)})}/>}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       {!policiesPilot && signals.length > 0 && <RegisterSignalBar signals={signals} rows={tableSource} active={signal?.id} onPick={setSignal} />}

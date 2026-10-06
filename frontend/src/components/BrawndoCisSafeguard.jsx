@@ -1,5 +1,4 @@
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
-import AssessmentHistory from './AssessmentHistory';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import AssessmentLayout,{AssessmentChecklist,AssessmentRequirement} from './AssessmentLayout';
@@ -14,8 +13,6 @@ import {sourcePresentation} from '@/lib/frameworkWorkspace';
 import {CIS_TONE,CisStatusPill} from './CisStatus';
 import {VERIFICATION_LABELS,verificationOf,CisBreadcrumb} from './BrawndoCisControls';
 import BrawndoCisFindings from './BrawndoCisFindings';
-import CisOperationPanel from './CisOperationPanel';
-import CisSupportingRecords from './CisSupportingRecords';
 import './BrawndoCisAssessment.css';
 import {cisLabel} from '@/lib/cisScope';
 import './BrawndoCisSafeguard.css';
@@ -30,7 +27,7 @@ export const GUIDANCE_NOTE='Omnisciente guidance for assessing this safeguard, n
 
 export default function BrawndoCisSafeguard({state,actions}){
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,breadcrumb,related,finding,otherDraft}=state;
-  const {put,save,saveAndNext,close,previous,next,retry,run,setFinding,setNested,setReviewDraft,reviewSaved,setFeedback}=actions;
+  const {put,save,saveAndNext,close,previous,next,retry,run,setFinding,setNested,setFeedback}=actions;
   const clientId=record.client_id,id=definition.id,disabled=!writable||busy||!ctx;
   const source=sourcePresentation(definition),criteria=criteriaData.requirements[id];
   const guidance=guidanceData.requirements[id];
@@ -47,6 +44,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     <AssessmentLayout criteriaSummary="Omnisciente guidance for assessing this safeguard. These are not additional CIS requirements." criteriaTitle="CIS assessment criteria" reference={`CIS v8.1 · Safeguard ${id}`} key={clientId+':'+id} summary={summaryData.requirements[id]?.plain}
       requirement={<AssessmentRequirement reference={`CIS v8.1 · Safeguard ${id}`} heading="What CIS requires" text={source.text} official trigger={presentation?.trigger} source={presentation?.source||criteria?.source||source.url} label="Official CIS source"/>}
       checklist={<AssessmentChecklist title={`Safeguard ${id} checklist`} items={criteria?.criteria} historicalItems={criteria?.legacy_criteria} value={form.cis_assessment_criteria||[]} disabled={disabled} onChange={value=>put('cis_assessment_criteria',value)}/>}
+      findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>}
       review={guidance.review} outcome={guidance.outcome}>
     <div className="assessment-implementation">
     <Step title="Implementation status">
@@ -62,12 +60,7 @@ export default function BrawndoCisSafeguard({state,actions}){
         <Textarea aria-label="Current implementation" rows={5} disabled={disabled} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)}/></label>
     </Step>
 </div></div>
-    <BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>
-    <CisOperationPanel {...{form,definition,put,disabled}} contacts={ctx?.contacts||[]}/>
-    <CisSupportingRecords {...{record,current,definition,ctx,related,writable,busy,run,setNested,setReviewDraft,reviewSaved}}/>
-    {otherDraft&&!finding&&<p role="status" className="text-xs text-ink-secondary">Save or cancel recurring Review setup before using Save & next.</p>}
     {form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><Textarea aria-label="Previously recorded notes" disabled={disabled} value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
-    <AssessmentHistory record={current} users={ctx?.users} activity={ctx?.activity}/>
     </AssessmentLayout>
   </AssessmentShell>;
 }
