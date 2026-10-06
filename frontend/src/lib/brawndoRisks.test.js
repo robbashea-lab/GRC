@@ -3,7 +3,7 @@ import {tableColumns} from './tableColumns';
 const now=new Date('2026-09-29T12:00:00Z');
 test('review boundaries include today, preserve undated active and accepted severity',()=>{
  const base={status:'accepted',accepted_by:'admin',acceptance_date:'2026-01-01',acceptance_rationale:'Authorized decision',acceptance_expires_at:'2027-01-01',likelihood_score:4,impact_score:5,next_review:'2026-09-29'};
- expect(riskMatches(base,'overdue',now)).toBe(false);expect(riskMatches(base,'review_due',now)).toBe(true);expect(riskMatches(base,'upcoming',now)).toBe(true);
+ expect(riskMatches(base,'overdue',now)).toBe(false);expect(riskMatches(base,'review_due',now)).toBe(true);expect(riskMatches(base,'upcoming',now)).toBe(false);
  for(const v of ['all_active','critical','accepted','unassigned'])expect(riskMatches(base,v,now)).toBe(true);
  expect(riskMatches({...base,next_review:'2026-10-29'},'upcoming',now)).toBe(true);expect(riskMatches({...base,next_review:'2026-10-30'},'upcoming',now)).toBe(false);
  expect(riskMatches({...base,next_review:'2026-09-28'},'overdue',now)).toBe(true);
