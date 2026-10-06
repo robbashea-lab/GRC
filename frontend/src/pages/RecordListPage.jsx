@@ -7,7 +7,7 @@ import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
 import {occurrenceId,relatedReviewInitialValues} from '@/lib/reviewOccurrences';
 import {isReferencePresentation} from '@/lib/reference';
-import {policyStatus,policyStatusLabel,policyColumns,policyViewMatches} from '@/lib/brawndoPolicies';
+import {policyStatus,policyStatusLabel,policyColumns,policyViewMatches,POLICY_COLUMN_ORDER} from '@/lib/brawndoPolicies';
 import {BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
 import {PolicyAlignment} from '@/components/BrawndoPolicyDetails';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
@@ -121,7 +121,7 @@ function EntityListPage({ kind }) {
   const guardedReviewDrawer = kind==='reviews' && isReferencePresentation(currentClientId,user);
   const policiesPilot = kind==='policies';
   const POLICY_HIDDEN=['version'];
-  const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c) : schema.columns;
+  const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c).sort((a,b)=>POLICY_COLUMN_ORDER.indexOf(a.key)-POLICY_COLUMN_ORDER.indexOf(b.key)) : schema.columns;
   const [theme]=useBrawndoTheme();useBrawndoPortalTheme(policiesPilot,theme);
   const [alignmentTarget,setAlignmentTarget]=useState(null);
   const location = useLocation();

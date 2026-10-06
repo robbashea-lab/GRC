@@ -25,9 +25,12 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test('approved register has six columns and no summary cards or title metadata across clients',async()=>{
+  rows[0].next_review_date='2027-05-20';rows[0].last_reviewed_at='2025-02-10';
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
   const headers=()=>[...container.querySelectorAll('th .column-control')].map(n=>n.textContent);
   expect(headers()).toEqual(['Policy','Framework alignment','Policy status','Owner','Next review','Last review']);
+  const cells=container.querySelector('tbody tr').querySelectorAll('td');
+  expect(cells[5].textContent).toContain('May 20');expect(cells[6].textContent).toContain('Feb 10');
   expect(container.querySelector('tbody .bpage-meta')).toBeNull();
   expect(container.querySelector('h1').textContent).toBe('Policies');
   expect(container.querySelector('[data-testid="tile-awaiting"]')).toBeNull();

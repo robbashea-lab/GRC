@@ -34,15 +34,15 @@ export function policyAlignment(row, programs=[], assessments=[], cisGroup) {
   });
 }
 export const alignmentFallback=row=>row.governance_context?.category==='organizational'?'Organization-defined':'Alignment not documented';
+export const POLICY_COLUMN_ORDER=['title','alignment','status','owner_id','next_review_date','last_reviewed_at'];
 export function policyColumns(columns,rows,programs,assessments=[],cisGroup) {
-  const order=['title','alignment','status','owner_id','next_review_date','last_reviewed_at'];
   return columns.map(c=>{
     if(c.key==='title')return {...c,label:'Policy'};
     if(c.key==='presence')return {key:'alignment',label:'Framework alignment',sortable:false,filterOnly:true,filter:true,value:r=>[...new Set(policyAlignment(r,programs,assessments,cisGroup).map(a=>`${a.relation} ${a.label}`))].join(' · ')||alignmentFallback(r),labelValue:v=>v};
     if(c.key==='status')return {...c,label:'Policy status',value:policyStatus,labelValue:policyStatusLabel,options:[...new Set(rows.map(policyStatus))].map(value=>({value,label:policyStatusLabel(value)}))};
     if(c.dateKind)return {...c,label:c.key==='last_reviewed_at'?'Last review':'Next review',sortLabels:['Earliest First','Latest First']};
     return c;
-  }).sort((a,b)=>order.indexOf(a.key)-order.indexOf(b.key));
+  }).sort((a,b)=>POLICY_COLUMN_ORDER.indexOf(a.key)-POLICY_COLUMN_ORDER.indexOf(b.key));
 }
 
 // Reference-page views and summary tiles. Derived from the same status and alignment rules as the register.
