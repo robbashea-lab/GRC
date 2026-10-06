@@ -31,7 +31,7 @@ test('Frameworks owner save uses only exact assessment owner and version guard; 
   expect(node.textContent).toContain('Historical scope');expect(node.textContent).toContain('Historical discussion');expect(node.textContent).toContain('assessment saved');
   await change(node.querySelector('[aria-label="Assessment Owner"]'),'contributor');
   await act(async()=>button('Save owner').click());
-  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/assessment-4.1',{owner_id:'contributor',expected_last_assessed:'2026-10-01'});
+  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/assessment-4.1',{owner_id:'contributor',process_owner_id:null,expected_last_assessed:'2026-10-01'});
   expect(api.post).not.toHaveBeenCalled();expect(record.implementation).toBe('Saved scope');
 });
 
@@ -90,4 +90,24 @@ test('backend projected retained control has a visible identifier when its name 
  const original=api.get.getMockImplementation();
  api.get.mockImplementation(async(path,...args)=>{const result=await original(path,...args);if(path.startsWith('/frameworks/'))result.data.organizational_controls=[{control_id:'control-retained',assessment_ids:[record.framework_assessment_id]}];return result;});
  await render();expect(button('control-retained')).toBeDefined();
+});
+
+test('ISO process owner remains a contact draft with guarded save and clear; readonly cannot change it',async()=>{
+ const original=api.get.getMockImplementation();
+ api.get.mockImplementation(async(path,...args)=>path==='/contacts'?{data:[{contact_id:'contact-business',name:'Business owner'}]}:original(path,...args));
+ const close=jest.fn();await render({onOpenChange:close});
+ await change(node.querySelector('[aria-label="Process Owner"]'),'contact-business');
+ await act(async()=>button('Close').click());expect(close).not.toHaveBeenCalled();expect(node.textContent).toContain('Leave unsaved changes?');
+ await act(async()=>button('Save owner').click());
+ expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-4.1',{owner_id:'manager',process_owner_id:'contact-business',expected_last_assessed:'2026-10-01'});
+ await change(node.querySelector('[aria-label="Process Owner"]'),'');await act(async()=>button('Save owner').click());
+ expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-4.1',{owner_id:'manager',process_owner_id:null,expected_last_assessed:'2026-10-01'});
+ mockUser.role='client_viewer';await render();expect(node.querySelector('[aria-label="Process Owner"]').closest('fieldset').disabled).toBe(true);
+});
+
+test.each(['cis-ig1','soc-2'])('%s management does not add an ISO process owner control',async frameworkKey=>{
+ record={...record,framework_key:frameworkKey,definition_id:frameworkKey==='cis-ig1'?'6.1':'CC1.1'};
+ await render();expect(node.querySelector('[aria-label="Process Owner"]')).toBeNull();
+ await change(node.querySelector('[aria-label="Assessment Owner"]'),'contributor');await act(async()=>button('Save owner').click());
+ expect(api.patch.mock.calls[0][1]).not.toHaveProperty('process_owner_id');
 });
