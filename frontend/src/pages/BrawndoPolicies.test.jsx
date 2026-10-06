@@ -38,6 +38,16 @@ test('switching normal clients clears the previous Policy view and exposes the n
  expect(container.querySelector('tbody').textContent).toContain('Past policy');
 });
 
+test.each(['demo','authenticated'])('empty Policy view clears through the empty-state action in %s mode',async mode=>{
+ mockUser.workspace_mode=mode;
+ await act(async()=>root.render(<RecordListPage kind="policies"/>));
+ await click(container.querySelector('[data-testid="policy-view-overdue"]'));
+ expect(container.querySelector('tbody').textContent).not.toContain('Access Policy');
+ await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Clear filters'));
+ expect(container.querySelector('[data-testid="policy-view-all"]').getAttribute('aria-pressed')).toBe('true');
+ expect(container.querySelector('tbody').textContent).toContain('Access Policy');
+});
+
 test('pending Policy approval leaves Requirements context read-only',async()=>{
  mockUser.workspace_mode='authenticated';
  await act(async()=>root.render(<RecordDrawer open kind="policies" record={{...rows[0],status:'in_review'}} schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
