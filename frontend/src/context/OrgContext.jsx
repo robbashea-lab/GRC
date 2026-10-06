@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import api from "@/lib/api";
+import {selectedClient, rememberClient} from '@/lib/clientSelection';
 
 const OrgContext = createContext(null);
-const selectedClient=()=>{try{return localStorage.getItem('grc_client_id')||'';}catch{return '';}};
-const rememberClient=id=>{try{localStorage.setItem('grc_client_id',id);}catch{/* Selection is a preference, never proof of authorization. */}};
 
 export function OrgProvider({ children }) {
   const [clients, setClients] = useState([]);
