@@ -42,7 +42,7 @@ test('new risk has annual/undecided defaults and protects an unfinished draft',a
  const dialog=document.querySelector('[role="dialog"]');
  expect(dialog.className).toContain('brawndo-cis-assessment');expect(dialog.textContent).toContain('Not Yet Decided');expect(dialog.textContent).toContain('Annual');
  await act(async()=>{const input=dialog.querySelector('input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Unsaved risk');input.dispatchEvent(new Event('input',{bubbles:true}));});
- await click(dialog.querySelector('[data-testid="drawer-cancel"]'));
+ await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
  expect(document.querySelector('[role="alertdialog"]')).not.toBeNull();expect(api.post).not.toHaveBeenCalled();
 });
 
