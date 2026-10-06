@@ -42,7 +42,7 @@ export function PolicyAlignment({record,programs=[],assessments=[],cisGroup,onOp
 
 export function PolicySummary({record,users=[]}) {
   if(!record?.policy_id)return null;
-  return <dl className="grid grid-cols-2 md:grid-cols-5 gap-3 rounded-md bg-surface-subtle p-3 text-sm">{[['Policy Status',policyStatusLabel(policyStatus(record))],['Version',record.version||'Not recorded'],['Owner',personLabel(users,record.owner_id)],['Last Reviewed',displayDay(record.last_reviewed_at)||'Not recorded'],['Next Review',displayDay(record.next_review_date)||'Not scheduled']].map(([label,value])=><div key={label}><dt className="text-xs text-ink-secondary">{label}</dt><dd className="mt-1 break-words">{value}</dd></div>)}</dl>;
+  return <dl className="approved-policy-summary grid grid-cols-2 md:grid-cols-5 gap-3 rounded-md bg-surface-subtle p-3 text-sm">{[['Policy Status',policyStatusLabel(policyStatus(record))],['Version',record.version||'Not recorded'],['Owner',personLabel(users,record.owner_id)],['Last Reviewed',displayDay(record.last_reviewed_at)||'Not recorded'],['Next Review',displayDay(record.next_review_date)||'Not scheduled']].map(([label,value])=><div key={label}><dt className="text-xs text-ink-secondary">{label}</dt><dd className="mt-1 break-words">{value}</dd></div>)}</dl>;
 }
 
 export function PolicyRetainedApproval({record}) {
