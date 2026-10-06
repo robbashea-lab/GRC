@@ -20,3 +20,7 @@
     height: calc(100dvh - 36px);
   }
 }
+@media (max-width: 470px) {
+  .approved-risk-summary,
+  .approved-policy-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}

@@ -51,14 +51,25 @@ headers. Header/body order now shares one rule, with a cell-position regression.
   buttons now follow the approved order in the DOM, retaining their handlers.
 - Approved desktop field/summary columns and readable two-column Policy alignment
   sections are scoped to these dialogs. Temporary 390x844 viewport override was
-  accepted by the browser tool but existing tabs retained their default dimensions;
-  that attempt is not responsive browser verification. Final browser checks remain
-  pending rather than assumed from CSS or builds.
+  initially accepted by the browser tool but existing tabs retained their default
+  dimensions; that attempt was not responsive verification. In the fresh browser
+  session, actual DOM measurements confirmed 600 and 390 CSS pixels. Normal Risk
+  and Policy dialogs fit without horizontal overflow; Policy alignment becomes one
+  column, forms stack, and keyboard focus reveals horizontally scrolling tabs.
+  Summaries follow the mockup's two-column rule below 470 pixels.
+- Candidate `48b2183`: 5 affected suites / 30 tests and both builds passed. Native
+  review found no major issues. Four earlier review findings were corrected and
+  checked in the actual isolated authenticated browser. Policy basis save, submit
+  and approval retained the captured subject and history; pending context edits
+  were disabled. Final CI correctly failed six obsolete layout assertions across
+  three suites (219 other suites / 1,617 tests passed); corrected tests retain
+  exact save payloads, legacy categories, filters/counts, draft guards and themes.
+  Required final-candidate CI and hosted acceptance remain pending.
 
 ## Coordinated delivery
 
-PR #49 owns staging administrator-session, Render and private-preview publication
-until its acceptance handoff. This release must follow that handoff and required
+PR #49 completed its acceptance handoff and released the exclusive staging and
+publication slot to this coordinator. This release must follow required
 review/Release gate. Reconcile intervening main before merge; verify actual main
 CI and automatic Render deployment, then separately publish the same source to
 the existing owner-private preview. Deployment and final hosted results remain
