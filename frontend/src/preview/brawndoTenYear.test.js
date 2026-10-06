@@ -291,7 +291,7 @@ async function assess(id, patch, {evidence = false, label} = {}) {
   const row = await get(`/framework_assessments/${AID(id)}`);
   if (!row) return null;
   if (evidence) await upload('framework_assessment', AID(id), `CIS ${id} validation record`);
-  const saved = await call('patch', `/framework_assessments/${AID(id)}`, {...patch, expected_last_assessed: row.last_assessed ?? null}, null, {label: label || 'assess ' + id});
+  const saved = await call('patch', `/framework_assessments/${AID(id)}`, {...patch, expected_last_assessed: row.last_saved ?? row.last_assessed ?? null}, null, {label: label || 'assess ' + id});
   if (saved) {
     ledgerAssessment(saved);
     (report.cis.timeline[id] ||= []).push({today, status: saved.status, evidence});
@@ -367,7 +367,7 @@ async function reassignFrom(user, to, share = 1) {
     if (!field) continue;
     if (item.kind === 'framework_assessments') {
       const row = await get(`/framework_assessments/${item.id}`);
-      const saved = await call('patch', `/framework_assessments/${item.id}`, {owner_id: to, expected_last_assessed: row.last_assessed ?? null}, null, {label: 'reassign safeguard'});
+      const saved = await call('patch', `/framework_assessments/${item.id}`, {owner_id: to, expected_last_assessed: row.last_saved ?? row.last_assessed ?? null}, null, {label: 'reassign safeguard'});
       if (saved) { ledgerAssessment(saved); moved++; }
       continue;
     }

@@ -440,9 +440,11 @@ def router_for(s):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)
         if 'cis_operation' in changes:
             changes['cis_operation']=body.cis_operation.model_dump()
-        s._require_snapshot(changes,old,'last_assessed')
+        # The legacy expected_last_assessed field carries the latest write token.
+        s._require_snapshot(changes,{'last_assessed':old.get('last_saved') or old.get('last_assessed')},'last_assessed')
         changes.pop('expected_last_assessed')
         record_assessment=changes.pop('record_assessment',False)
+        ownership_only=bool(changes) and set(changes)<= {'owner_id','process_owner_id'} and not record_assessment
         if 'record_assessment' in body.model_fields_set and old['framework_key']!='soc-2':
             raise HTTPException(422,'Explicit assessment recording applies only to SOC 2')
         data={**old,**changes}
@@ -523,8 +525,8 @@ def router_for(s):
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed or record_assessment:
             history_verification=set(VERIFICATION_FIELDS)&set(supported)
-            at=s._next_write_time(old.get('last_assessed'))
-            if old['framework_key']=='soc-2':
+            at=s._next_write_time(old.get('last_saved') or old.get('last_assessed'))
+            if old['framework_key']=='soc-2' and not ownership_only:
                 # Keep last_assessed as the legacy write token; never infer a
                 # judgment date from old narrative saves or rewrite old history.
                 judgment=record_assessment or ('status' in changed and data['status']!='not_assessed')
@@ -534,9 +536,13 @@ def router_for(s):
             snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             if old['framework_key']=='soc-2':
                 snapshot.update({k:data.get(k) for k in ('last_saved','assessment_recorded_at','assessment_recorded_by')})
-            predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed')}
+            predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed'),'last_saved':old.get('last_saved')}
             if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
-            result=await s.db.framework_assessments.update_one(predicate,{'$set':{**changes,'last_assessed':at,'assessed_by':user['user_id']},'$push':{'assessment_history':snapshot}})
+            write={'$set':{**changes,'last_saved':at}}
+            if not ownership_only:
+                write['$set'].update(last_assessed=at,assessed_by=user['user_id'])
+                write['$push']={'assessment_history':snapshot}
+            result=await s.db.framework_assessments.update_one(predicate,write)
             if not result.matched_count:raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status']})
         return await parent(aid,user)

@@ -64,7 +64,7 @@ class ClientDashboardSourcesTests(unittest.IsolatedAsyncioTestCase):
                 row=await server.db[kind].find_one({id_field:identity}) or {}
                 field='last_assessed' if kind=='framework_assessments' else 'updated_at'
                 data=json.loads(request.content or b'{}')
-                data.setdefault('expected_'+field,row.get(field))
+                data.setdefault('expected_'+field,(row.get('last_saved') or row.get('last_assessed')) if kind=='framework_assessments' else row.get(field))
                 request._content=json.dumps(data).encode()
                 request.stream=httpx.ByteStream(request._content)
                 request.headers['Content-Length']=str(len(request._content))
