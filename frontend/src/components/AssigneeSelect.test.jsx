@@ -41,6 +41,15 @@ test('assessment presentation can omit guidance without changing eligible assign
   expect(host.querySelector('a[href="/contacts"]')).not.toBeNull();
 });
 
+test('record forms omit the people link while retaining assignment guidance and eligible choices',async()=>{
+  await render({showManagePeople:false});
+  expect(host.textContent).toContain('Only active platform users');
+  expect(host.querySelector('a[href="/contacts"]')).toBeNull();
+  await open();await finish(requests[0],[{user_id:'eligible',name:'Eligible Owner'}]);
+  await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent.includes('Eligible Owner')).click());
+  expect(onChange).toHaveBeenCalledWith('eligible');
+});
+
 test.each([null,undefined,'former'])('empty or historical value %s stays readable without changing data',async value=>{
   await render({value,users:[{user_id:'former',name:'Former Owner',status:'disabled'}]});
   expect(host.textContent).toContain(value?'Former Owner':'Unassigned');expect(onChange).not.toHaveBeenCalled();
