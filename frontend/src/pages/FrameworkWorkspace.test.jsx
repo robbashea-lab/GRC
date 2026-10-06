@@ -233,8 +233,12 @@ test.each(['cis-ig1','hipaa'])('%s with all records N/A keeps undefined progress
 test('retained SOC criteria keep contextual management reachable after scope reduction',async()=>{
  const response=await prestige();
  const retained=response.definitions.find(d=>d.category==='privacy');
+ const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
+ const continueLabel=[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).textContent;
  const toggle=[...container.querySelectorAll('label')].find(l=>l.textContent==='Include retained out-of-scope criteria').querySelector('input');
  await act(async()=>toggle.click());
+ expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toBe(summary);
+ expect([...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).textContent).toBe(continueLabel);
  const search=container.querySelector('input[aria-label="Search criteria"]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,retained.id);search.dispatchEvent(new Event('input',{bubbles:true}));});
  const manage=container.querySelector(`button[aria-label="Manage ${retained.id} ${retained.title}"]`);

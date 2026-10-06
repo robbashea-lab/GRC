@@ -127,8 +127,8 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     if(frameworkKey==='iso-27001')return dashboardIso||ISO_VIEWS[isoView].matches(r);
     return true;
   });
-  const activeRows=brawndoCis?rows.filter(r=>workspaceScope(frameworkKey,data,r)):scoped;
-  const readiness=cisSummary(brawndoCis?activeRows:iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped);
+  const activeRows=brawndoCis||prestigeSoc?rows.filter(r=>workspaceScope(frameworkKey,data,r)):scoped;
+  const readiness=cisSummary(brawndoCis||prestigeSoc?activeRows:iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped);
   const implementationFilter=iso&&isoView==='annex_control'&&['addressed','in_progress','needs_attention','not_assessed','assessed','gaps'].includes(filter);
   const dashboardApplicable=r=>filter==='not_applicable'?(r.specification==='annex_control'?r.soa_applicability==='excluded':r.status==='not_applicable'):r.specification==='annex_control'?r.soa_applicability!=='excluded':r.status!=='not_applicable';
   const visible=scoped.filter(r=>(!dashboardIso||!['addressed','in_progress','needs_attention','not_assessed','not_applicable'].includes(filter)||dashboardApplicable(r))&&(!additionsGroup||r.implementation_group===additionsGroup)&&(!implementationFilter||r.soa_applicability==='included')&&(matchesAssessment(r,dashboardIso&&filter==='not_applicable'?'all':filter,search))),nodes=groupRequirements(frameworkKey,visible);
