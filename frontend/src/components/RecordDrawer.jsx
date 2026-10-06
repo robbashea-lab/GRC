@@ -153,12 +153,13 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const riskPilot=pilot&&kind==='risks';
   const policyPilot=pilot&&kind==='policies';
   const [approvalDirty,setApprovalDirty]=useState(false);
-  const clientPresentation=useContext(ClientPresentationContext),dialogLayout=pilot||!!clientPresentation;
+  const actionLayout=['tasks','findings'].includes(kind);
+  const clientPresentation=useContext(ClientPresentationContext),dialogLayout=pilot||!!clientPresentation||actionLayout;
   const Root=dialogLayout?Dialog:Sheet,Content=dialogLayout?DialogContent:SheetContent;
   const initialForm=useRef({}),opener=useRef(null),heading=useRef(null);
   const [discardOpen,setDiscardOpen]=useState(false);
   const formDirty=JSON.stringify(form)!==JSON.stringify(initialForm.current);
-  const dirty=pilot&&!taskCompletion&&(formDirty||!!newComment.trim()||approvalDirty);
+  const dirty=(pilot||actionLayout)&&!taskCompletion&&(formDirty||!!newComment.trim()||approvalDirty);
   const close=value=>{if(value)onOpenChange(true);else if(!saving){if(dirty)setDiscardOpen(true);else onOpenChange(false);}};
   useEffect(()=>{if(!open||!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[open,dirty]);
   const isEdit = !!record;
@@ -343,7 +344,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   async function save(taskStatus,keepOpen=false) {
     if (!canWrite || saving) return;
     if(policyPilot&&approvalDirty){toast.error('Save or discard unfinished approval details before saving the Policy.');return;}
-    if(pilot&&newComment.trim()){toast.error('Post or discard the unfinished comment before saving or completing this item.');return;}
+    if((pilot||actionLayout)&&newComment.trim()){toast.error('Post or discard the unfinished comment before saving or completing this item.');return;}
     const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
     if (missing) { toast.error(`${missing.label} is required`); return; }
     setSaving(true);
@@ -449,7 +450,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (updated) {
         // Refresh only authoritative readiness; retain unsaved descriptive edits.
         record.status = updated.status;
-        if(pilot)initialForm.current={...initialForm.current,status:updated.status};
+        if(pilot||actionLayout)initialForm.current={...initialForm.current,status:updated.status};
         setForm(previous => ({...previous,status:updated.status}));
       }
     } catch (e) { toast.error(formatError(e)); }
@@ -605,7 +606,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
             </SelectContent>
           </Select>
         ) : f.type === "user" && !["linked_user_id", "approver_id"].includes(f.name) ? (
-          <AssigneeSelect showManagePeople={!riskPilot&&!policyPilot} clientId={record?.client_id || clientId} label={f.label} value={form[f.name]} onChange={v=>setForm({...form,[f.name]:v})} users={users} testId={`field-${f.name}`} required={f.required}/>
+          <AssigneeSelect clientId={record?.client_id || clientId} label={f.label} value={form[f.name]} onChange={v=>setForm({...form,[f.name]:v})} users={users} testId={`field-${f.name}`} required={f.required} showManagePeople={!actionLayout&&!riskPilot&&!policyPilot}/>
         ) : f.type === "user" ? (
           <Select value={form[f.name] || "__none__"} onValueChange={(v) => setForm({ ...form, [f.name]: v })}>
             <SelectTrigger aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm"><SelectValue placeholder="Assign…" /></SelectTrigger>
@@ -911,8 +912,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   );
 
   return (
-    <Root open={open} onOpenChange={pilot?close:onOpenChange}>
-      <Content aria-modal={clientPresentation?'true':undefined} {...(dialogLayout?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected&&(!clientPresentation||opener.current!==document.body)?opener.current:document.querySelector(vendorPilot||clientPresentation&&kind==='vendors'?'[data-testid="vendor-search"]':policyPilot||clientPresentation&&kind==='policies'?'[data-testid="policies-search"]':riskPilot||clientPresentation&&kind==='risks'?'[data-testid="risk-search"]':'[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={dialogLayout?'brawndo-cis-assessment bg-surface-card':'record-drawer w-full sm:max-w-2xl p-0 flex flex-col'} data-testid={`${kind}-drawer`}>
+    <Root open={open} onOpenChange={pilot||actionLayout?close:onOpenChange}>
+      <Content aria-modal={clientPresentation?'true':undefined} {...(dialogLayout?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected&&(!clientPresentation||opener.current!==document.body)?opener.current:document.querySelector(vendorPilot||clientPresentation&&kind==='vendors'?'[data-testid="vendor-search"]':policyPilot||clientPresentation&&kind==='policies'?'[data-testid="policies-search"]':riskPilot||clientPresentation&&kind==='risks'?'[data-testid="risk-search"]':'[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={dialogLayout?('brawndo-cis-assessment bg-surface-card'+(actionLayout?' action-record-dialog':'')):'record-drawer w-full sm:max-w-2xl p-0 flex flex-col'} data-testid={`${kind}-drawer`}>
         {dialogLayout&&<DialogDescription className="sr-only">{!pilot?`Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.`:vendorPilot?'Manage the vendor relationship, assurance documents and independent review and contract schedules.':policyPilot?'Manage this Policy, its document versions, framework alignment, review schedule and recorded approvals.':riskPilot?"Assess the risk, document treatment and review history, and record authorized acceptance or closure separately.":"Document assigned work and its original source, retain evidence, and complete work separately from Finding validation."}</DialogDescription>}
         <SheetHeader className={dialogLayout?'px-6 py-4 pr-12 border-b border-line shrink-0':'px-6 py-4 border-b border-line'}>
           <div className="flex items-start justify-between">
@@ -933,7 +934,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${dialogLayout?' flex-wrap shrink-0':''}`}>
           {saveError&&<p role="alert" className="text-sm">{saveError}{updateRecord.unconfirmed()?' Save is unconfirmed; retry the original save before making another edit.':''}</p>}
           {isEdit&&updateRecord.unconfirmed()&&<Button size="sm" disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setSaveError('');try{const {data}=await updateRecord.retry();Object.assign(record,data);onSaved?.(data);toast.success('Saved');onOpenChange(false);}catch(e){setSaveError(formatError(e));toast.error(formatError(e));}finally{setSaving(false);}}}>Retry unconfirmed save</Button>}
-          <Button variant="outline" size="sm" onClick={() => pilot?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
+          <Button variant="outline" size="sm" onClick={() => (pilot||actionLayout)?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
           {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : vendorPilot?'Add to Register':"Create"}</Button>
           )}
@@ -941,7 +942,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           {pilot&&kind==='tasks'&&isEdit&&canWrite&&!taskCompletion&&!['done','cancelled'].includes(record.status)&&<Button size="sm" disabled={saving} onClick={()=>save('done')} data-testid="complete-action">Complete Action Item</Button>}
         </div>
       </Content>
-      {pilot&&<AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}><AlertDialogContent><AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved records remain unchanged. Keep editing to retain this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{setDiscardOpen(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
+      {(pilot||actionLayout)&&<AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}><AlertDialogContent><AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved records remain unchanged. Keep editing to retain this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{setDiscardOpen(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
 
       {relatedDrawer && <RecordDrawer open={true} onOpenChange={v => { if (!v) { setRelatedDrawer(null); loadRelated(); setEvidenceVersion(v=>v+1); } }} reviewsPilot={riskPilot||policyPilot||vendorPilot} kind={relatedDrawer.kind} record={relatedDrawer.record} initialValues={relatedDrawer.initialValues} schema={SCHEMAS[relatedDrawer.kind]?.fields} clientId={clientId} users={users} onSaved={() => { loadRelated(); setEvidenceVersion(v=>v+1); refreshFindingReadiness(); refreshRisk(); if(policyPilot&&relatedDrawer.kind==='reviews')refreshPolicyDates();if(kind==="vendors"){loadLinkedReviews();loadLinkedRisks();if(relatedDrawer.kind==='reviews')refreshVendorDates();} onSaved?.(); }} />}
 
