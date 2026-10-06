@@ -17,6 +17,7 @@ import {readEvidenceFile} from '@/lib/evidenceFile';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import {SCHEMAS} from '@/lib/schemas';
 import api,{formatError} from '@/lib/api';
+import './RemediationTicketDrawer.css';
 
 const labels={open:'Open',in_progress:'In progress',blocked:'Blocked',pending_validation:'Pending validation',completed:'Completed',accepted:'Accepted',cancelled:'Cancelled'};
 const priorities=SCHEMAS.tasks.fields.find(f=>f.name==='priority').options;
@@ -40,18 +41,19 @@ function Work({task,users,user,onSaved,onDirty}) {
     catch(e){setError(formatError(e));}finally{setBusy(false);}
   }
   return <section className="space-y-3 border border-line rounded-lg p-4" aria-label={task.title} data-ticket-task={task.task_id}>
-    <fieldset disabled={busy} className="space-y-3">
-      <label className="block">Action title<Input aria-label="Action title" value={form.title} disabled={!enabled('title')} onChange={e=>put('title',e.target.value)}/></label>
-      <div className="grid sm:grid-cols-2 gap-3"><div>Responsible owner<AssigneeSelect label="Responsible owner" clientId={task.client_id} users={users} value={form.assignee_id||null} disabled={!enabled('assignee_id')} onChange={v=>put('assignee_id',v||'')}/></div>
+    <fieldset disabled={busy} className="ticket-work-fields">
+      <label className="block ticket-field-wide">Action title<Input aria-label="Action title" value={form.title} disabled={!enabled('title')} onChange={e=>put('title',e.target.value)}/></label>
+      <div className="ticket-field-wide grid sm:grid-cols-2 gap-3"><div>Responsible owner<AssigneeSelect showManagePeople={false} label="Responsible owner" clientId={task.client_id} users={users} value={form.assignee_id||null} disabled={!enabled('assignee_id')} onChange={v=>put('assignee_id',v||'')}/></div>
         <label>Due date (optional)<Input aria-label="Due date" type="date" value={form.due_date.slice(0,10)} disabled={!enabled('due_date')} onChange={e=>put('due_date',e.target.value)}/></label></div>
-      {!form.assignee_id&&<p className="text-sm">Unassigned</p>}
+      {!form.assignee_id&&<p className="text-sm ticket-field-wide">Unassigned</p>}
       <label className="block">Priority<select aria-label="Priority" value={form.priority} disabled={!enabled('priority')} onChange={e=>put('priority',e.target.value)}><option value="">Classification needed</option>{!priorities.some(o=>o.value===form.priority)&&form.priority&&<option value={form.priority}>{form.priority}</option>}{priorities.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>
-      <label className="block">Planned action<Textarea aria-label="Planned action" value={form.description} disabled={!enabled('description')} onChange={e=>put('description',e.target.value)}/></label>
-      <label className="block">Actual resolution (optional)<Textarea aria-label="Actual resolution" maxLength={20000} value={form.resolution} disabled={!enabled('resolution')} onChange={e=>put('resolution',e.target.value)}/></label>
       <label className="block">Work status<select className="block bg-surface-card border border-line rounded p-2" aria-label="Work status" value={form.status} disabled={!enabled('status')||task.status==='done'} onChange={e=>put('status',e.target.value)}>
         {['open','in_progress','blocked','cancelled',...(task.status==='done'?['done']:[])].map(s=><option key={s} value={s}>{s==='done'?'Work completed':labels[s]}</option>)}
       </select></label>
-      {writable&&<div className="flex flex-wrap gap-2"><Button disabled={!dirty||!form.title.trim()} onClick={()=>save()}>Save changes</Button>{!['done','cancelled'].includes(task.status)&&<Button disabled={!form.title.trim()} onClick={()=>save('done')}>Complete work</Button>}</div>}
+      <label className="block ticket-field-wide">Planned action<Textarea aria-label="Planned action" value={form.description} disabled={!enabled('description')} onChange={e=>put('description',e.target.value)}/></label>
+      <label className="block ticket-field-wide">Actual resolution (optional)<Textarea aria-label="Actual resolution" maxLength={20000} value={form.resolution} disabled={!enabled('resolution')} onChange={e=>put('resolution',e.target.value)}/></label>
+
+      {writable&&<div className="ticket-field-wide flex flex-wrap gap-2"><Button disabled={!dirty||!form.title.trim()} onClick={()=>save()}>Save changes</Button>{!['done','cancelled'].includes(task.status)&&<Button disabled={!form.title.trim()} onClick={()=>save('done')}>Complete work</Button>}</div>}
     </fieldset>
     {error&&<p role="alert">{error}</p>}{feedback&&<p role="status">{feedback}</p>}
     {update.unconfirmed()&&<Button disabled={busy} onClick={async()=>{setBusy(true);setError('');try{await update.retry();await onSaved();}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Retry unconfirmed save</Button>}
@@ -97,7 +99,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
     try{await decision('/findings/'+ticket.finding.finding_id+'/'+action,body);setRationale('');await saved();setFeedback(action==='validate'?'Ticket completed. Validation saved.':'Ticket accepted, not remediated.');}
     catch(e){setCommandError(formatError(e));}finally{setBusy(false);}
   }
-  return <><Dialog open={open} onOpenChange={close}><DialogContent ref={surface} onOpenAutoFocus={()=>{opener.current=document.activeElement;openerSurface.current=opener.current?.closest('[role="dialog"]');}} onCloseAutoFocus={e=>{e.preventDefault();restoreFocus();}} className="max-w-3xl max-h-[90vh] overflow-y-auto min-w-0 break-words" data-testid="remediation-ticket-drawer">
+  return <><Dialog open={open} onOpenChange={close}><DialogContent ref={surface} onOpenAutoFocus={()=>{opener.current=document.activeElement;openerSurface.current=opener.current?.closest('[role="dialog"]');}} onCloseAutoFocus={e=>{e.preventDefault();restoreFocus();}} className="remediation-ticket-dialog max-h-[90vh] overflow-y-auto min-w-0 break-words" data-testid="remediation-ticket-drawer">
     <DialogTitle>{ticket?.title||'Remediation ticket'}</DialogTitle><DialogDescription>{ticket?ticket.ticketId:'Loading ticket…'}</DialogDescription>
     {error&&<p role="alert">{error}<Button onClick={load}>Retry</Button></p>}
     {!loading&&!error&&!ticket&&<p role="alert">This ticket is unavailable for this client.</p>}

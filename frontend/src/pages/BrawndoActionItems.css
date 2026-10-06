@@ -1,5 +1,21 @@
 /* Brawndo Action Items: page-specific layout on top of the shared BrawndoPage kit. */
-.brawndo-ai .register-toolbar { display: flex; align-items: center; }
+.brawndo-ai .bpage-head { padding-bottom: 25px; }
+.brawndo-ai .bpage-head h1 { font-size: 25px; font-weight: 500; }
+.brawndo-ai .bpage-eyebrow { font-size: 10px; font-weight: 400; color: var(--bp-muted); }
+.brawndo-ai .register-toolbar { display: flex; align-items: center; padding: 13px 13px 12px; }
+.brawndo-ai .register-search { max-width: 245px; }
+.brawndo-ai [data-testid="ai-views"] { order: 1; flex-basis: 100%; }
+.brawndo-ai .bpage-chips { gap: 4px; }
+.brawndo-ai .bpage-chip { border: 0; border-radius: 5px; background: transparent; color: var(--bp-muted); padding: 6px 9px; font-size: 12px; }
+.brawndo-ai .bpage-chip[aria-pressed="true"] { background: var(--bp-subtle); color: var(--bp-text); font-weight: 500; }
+.brawndo-ai .brawndo-ai-table { table-layout: fixed; min-width: 610px; font-size: 12px; }
+.brawndo-ai .brawndo-ai-table .tbl-cell { padding: 18px 10px; vertical-align: top; overflow-wrap: anywhere; }
+.brawndo-ai .brawndo-ai-table th { padding: 11px 10px; background: var(--bp-bg); }
+.brawndo-ai .brawndo-ai-table :is(th, th .column-control) { font-size: 10px; font-weight: 400; letter-spacing: .07em; }
+.brawndo-ai .register-record-link { display: block; width: 100%; font-weight: 500; line-height: 1.5; }
+.brawndo-ai .brawndo-ai-finding { margin-top: 7px; font-size: 12px; line-height: 1.55; }
+.brawndo-ai .brawndo-ai-finding strong { color: var(--bp-text); font-weight: 500; }
+.brawndo-ai .brawndo-ai-origin { margin-top: 7px; font-size: 11px; }
 .brawndo-ai .brawndo-ai-source-filter { margin-left: auto; font-size: 13px; color: var(--bp-muted); }
 .brawndo-ai .bpage-notice summary { color: var(--bp-text); }
 .brawndo-ai .bpage-meta .text-link { font-size: inherit; }

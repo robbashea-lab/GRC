@@ -1,8 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ActionItems from './ActionItems';
-import {FindingsRoute,actionTiles} from './BrawndoActionItems';
-import {ticketRecords} from '@/lib/remediationTickets';
+import {FindingsRoute} from './BrawndoActionItems';
 import RecordDrawer from '@/components/RecordDrawer';
 import api from '@/lib/api';
 let mockClient='demo_brawndo',mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'},mockQuery='';
@@ -28,24 +27,24 @@ beforeEach(()=>{
   api.patch.mockImplementation(async(path,patch)=>{saved={...saved,...patch,updated_at:'saved'};rows=rows.map(t=>t.task_id===saved.task_id?saved:t);if(saved.status==='done')findings[0].status='remediated';return {data:saved};});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-test('stable summaries, orphan visibility, search, synchronized quick filters and client isolation',async()=>{
+test('clean register, orphan visibility, search, synchronized quick filters and client isolation',async()=>{
   await act(async()=>root.render(<ActionItems/>));
-  const summary=label=>[...container.querySelectorAll('[aria-label="Action summaries"] button')].find(b=>b.textContent.startsWith(label));
-  expect(summary('All active').textContent).toContain('3');expect(summary('Overdue').textContent).toContain('Expand inventory');
+  expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();
+  expect(container.querySelector('.register-toolbar').previousElementSibling.querySelector('h1').textContent).toBe('Action Items');
   expect(container.querySelector('[data-testid="ai-view-active"]').textContent).toBe('Active · 3');
   expect(container.querySelector('[data-testid="ai-row-0"]').className).toContain('bpage-late');
   expect(container.querySelector('[data-testid="ai-foot"]').textContent).toBe('Showing 3 of 3 active action items · soonest due first');
-  expect(container.querySelector('[data-testid="ai-pending-notice"]')).toBeNull();expect(summary('Overdue').textContent).toContain('1');
+  expect(container.querySelector('[data-testid="ai-pending-notice"]')).toBeNull();expect(container.querySelector('[data-testid="ai-view-overdue"]').textContent).toContain('1');
   expect(container.querySelectorAll('[data-testid^="ai-row-"]')).toHaveLength(3);
   expect(container.textContent).toContain('Finding without an Action');
-  await click(summary('Overdue'));expect(container.querySelector('[data-testid="ai-view-overdue"]').getAttribute('aria-pressed')).toBe('true');
+  await click(container.querySelector('[data-testid="ai-view-overdue"]'));expect(container.querySelector('[data-testid="ai-view-overdue"]').getAttribute('aria-pressed')).toBe('true');
   await input(container.querySelector('[data-testid="ai-search"]'),'Plant devices');
-  expect(container.querySelectorAll('[data-testid^="ai-row-"]')).toHaveLength(1);expect(summary('All active').textContent).toContain('3');
+  expect(container.querySelectorAll('[data-testid^="ai-row-"]')).toHaveLength(1);expect(container.querySelector('[data-testid="ai-view-active"]').textContent).toContain('3');
   await input(container.querySelector('[data-testid="ai-search"]'),'');await click(container.querySelector('[data-testid="ai-view-completed"]'));
   expect(container.querySelector('[data-testid="ai-row-0"]').textContent).toContain('Finished work');
   mockClient='demo_dunder';rows=rows.map(r=>({...r,client_id:mockClient}));
   await act(async()=>root.render(<ActionItems/>));
-  expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
+  expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();
   expect(container.textContent).not.toContain('Finding without an Action');
 });
 test('legacy Findings route redirects every Demo client and preserves the query',async()=>{
@@ -56,6 +55,21 @@ test('legacy Findings route redirects every Demo client and preserves the query'
   mockQuery='?signal=material';await act(async()=>root.render(<FindingsRoute/>));
   expect(container.querySelector('[data-testid="redirect"]').textContent).toBe('/action-items?signal=material');
   mockUser={...mockUser,workspace_mode:'live'};await act(async()=>root.render(<FindingsRoute/>));expect(container.querySelector('[data-testid="redirect"]').textContent).toBe('/action-items?signal=material');
+});
+
+test('row separates action, full stored Finding and originating record without inventing a manual Finding',async()=>{
+  const issue='Plant devices are missing. '+ 'Historical detail retained. '.repeat(30);
+  findings[0].description=issue;
+  await act(async()=>root.render(<ActionItems/>));
+  const linked=container.querySelector('[data-testid="ai-row-0"]');
+  expect(linked.querySelector('.register-record-link').textContent).toBe('Expand inventory');
+  expect(linked.querySelector('.brawndo-ai-finding').textContent).toBe('Finding: '+issue);
+  const manual=[...container.querySelectorAll('[data-testid^="ai-row-"]')].find(r=>r.textContent.includes('Ordinary task'));
+  expect(manual.querySelector('.brawndo-ai-finding')).toBeNull();
+  expect(manual.querySelector('.brawndo-ai-origin').textContent).toContain('Manual Entry');
+  await click(linked.querySelector('.register-record-link'));
+  expect(document.querySelector('[data-testid="remediation-ticket-drawer"]').textContent).toContain(issue);
+  expect(findings[0].description).toBe(issue);
 });
 test.each(['dependency failure','missing finding'])('Finding deep link recovers after %s and retry',async failure=>{
   mockQuery='?finding_id=f';
@@ -74,7 +88,7 @@ test.each(['dependency failure','missing finding'])('Finding deep link recovers 
 });
 test('centered ticket protects drafts and submits edited completion in one recoverable write',async()=>{
   const close=jest.fn();await act(async()=>root.render(<RecordDrawer open kind="tasks" record={saved} clientId={mockClient} onOpenChange={close}/>));
-  const dialog=document.querySelector('[data-testid="remediation-ticket-drawer"]');expect(dialog.className).toContain('max-w-3xl');
+  const dialog=document.querySelector('[data-testid="remediation-ticket-drawer"]');expect(dialog.className).toContain('remediation-ticket-dialog');
   await input(dialog.querySelector('[aria-label="Actual resolution"]'),'Inventory expanded and verified');
   await click(dialog.querySelector('button .sr-only').parentElement);expect(document.querySelector('[role="alertdialog"]')).toBeTruthy();expect(close).not.toHaveBeenCalled();
   await click(named('Keep editing'));
@@ -122,15 +136,4 @@ test('server readiness refresh is not a new unsaved edit in the ticket',async()=
   expect(dialog.textContent).toContain('Pending validation');
   await click(dialog.querySelector('button .sr-only').parentElement);
   expect(document.querySelector('[role="alertdialog"]')).toBeNull();expect(close).toHaveBeenCalledWith(false);
-});
-
-test('tile context names the oldest overdue and next due items from real rows',()=>{
-  const now=new Date(2026,8,30),row=(id,due_date,extra={})=>ticketRecords({tasks:[{client_id:'a',task_id:id,title:id,due_date,assignee_id:'u',status:'open',...(extra.owner_id===null?{assignee_id:null}:{}),...extra.raw}]},'a')[0];
-  const tiles=Object.fromEntries(actionTiles([row('late2','2026-09-20'),row('late1','2026-08-31'),row('soon','2026-10-12'),row('later','2026-10-20'),row('far','2026-12-14',{owner_id:null}),row('done','2026-01-01',{raw:{status:'done'}})],now).map(t=>[t.id,t]));
-  expect(tiles.overdue).toMatchObject({count:2,context:'30 days late · late1'});
-  expect(tiles.upcoming.count).toBe(2);expect(tiles.upcoming.context).toMatch(/^Next: soon, /);
-  expect(tiles.active).toMatchObject({count:5,context:'3 on schedule'});
-  expect(tiles.unassigned).toMatchObject({count:1,context:'1 item without an owner'});
-  const clear=Object.fromEntries(actionTiles([row('ok','2027-01-01')],now).map(t=>[t.id,t]));
-  expect(clear.unassigned.context).toBe('Every action item has an owner');expect(clear.overdue.context).toBe('Nothing past due');
 });
