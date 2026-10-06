@@ -10,7 +10,7 @@ import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
 import {isReferencePresentation,isPrestigeReference} from '@/lib/reference';
 import ReviewExpectations,{ReviewFacts} from './BrawndoReviewDetails';
-import IsoManagementReviewGuide,{isIsoManagementReview} from './IsoManagementReviewGuide';
+import IsoManagementReviewGuide from './IsoManagementReviewGuide';
 import './BrawndoCisAssessment.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +34,6 @@ import EvidencePanel from './EvidencePanel';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import {auditPackage,auditProgress} from '@/lib/isoAudit';
 import CisReviewBrief from './CisReviewBrief';
-import {cisReviewBriefs} from '@/lib/cisOperations';
 
 const tabs = ['Overview','Requirements','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
@@ -133,7 +132,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return Object.fromEntries(fields.map(k => [k,k === 'custom_recurrence_days' ? (form[k] ? Number(form[k]) : null) : form[k] || null])
       .filter(([k,v]) => !current || (k === 'due_date' ? (current[k]?.slice(0,10) || null) !== v : JSON.stringify(current[k] || null) !== JSON.stringify(v))));
   }
-  const draftProtected=pilot||cisReviewBriefs(current||record||{}).length>0||isIsoManagementReview(shown,related);
+  const draftProtected=true;
   const dirty=!frozen&&Object.values(evaluation).some(Boolean) || draftProtected && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
     draftProtected && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&(riskOutcome!=="Reviewed — No Change"||!!riskNext));
   function leave(action,hasDraft=dirty) {

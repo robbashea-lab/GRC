@@ -271,6 +271,23 @@ test.each([['normal-client',false,'in_progress','Overdue'],['normal-client',fals
   expect(summary.querySelector('dd').textContent.toLowerCase()).toBe(label.toLowerCase());
 });
 
+test.each([false,true])('normal-client %s existing Review retains drafts and requires explicit discard on close',async existing=>{
+  mockClient='normal-client';saved={...saved,client_id:mockClient,framework_key:undefined,framework_drivers:undefined};const close=jest.fn();
+  await act(async()=>root.render(<ReviewDrawer open record={existing?saved:null} clientId={mockClient} onOpenChange={close}/>));
+  await input(document.querySelector('[data-testid="field-notes"]'),'Normal Review draft');
+  await click(document.querySelector('[data-testid="tab-requirements"]'));
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  const closeButton=()=>[...document.querySelectorAll('[data-testid="reviews-drawer"] button')].find(b=>b.textContent==='Close');
+  await click(closeButton());
+  expect(document.querySelector('[role="alertdialog"]')).toBeTruthy();expect(close).not.toHaveBeenCalled();
+  await click([...document.querySelectorAll('[role="alertdialog"] button')].find(b=>b.textContent==='Keep editing'));
+  expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Normal Review draft');
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();expect(close).not.toHaveBeenCalled();
+  await click(closeButton());
+  await click([...document.querySelectorAll('[role="alertdialog"] button')].find(b=>b.textContent==='Discard changes'));
+  expect(close).toHaveBeenCalledWith(false);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
 test('new pilot reviews do not wait for nonexistent requirement relationships',async()=>{
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   const dialog=document.querySelector('[data-testid="reviews-drawer"]');
