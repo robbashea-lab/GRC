@@ -26,7 +26,7 @@ const KEY='grc_interactive_demo_v3';
         occurrences:[{...common,review_id:'calendar-review',occurrence_id:'calendar-history',title:'Synthetic completed occurrence',status:'completed',due_date:today,recurrence:'monthly',completed_at:now.toISOString(),completed_by:db.user.user_id,evidence:[]}]});
       db.vendors.push({...common,vendor_id:'calendar-vendor',name:'Synthetic Calendar Vendor',service:'Synthetic service',status:'active',criticality:'low',review_frequency:'as_needed',
         contract_notice_deadline:today,contract_renewal:tomorrow,assurance_records:[{assurance_id:'calendar-assurance',type:'SOC 2',next_follow_up:today}]});
-      sessionStorage.setItem(key,JSON.stringify(db));localStorage.setItem('grc_client_id',cid);
+      sessionStorage.setItem(key,JSON.stringify(db));sessionStorage.setItem('grc_client_id',cid);
       return {cid,today,tomorrow};
     },KEY);
     await page.goto(base+'/calendar');await expect(page.getByRole('heading',{name:'Calendar',exact:true})).toBeVisible();
@@ -97,7 +97,7 @@ const KEY='grc_interactive_demo_v3';
       await page.screenshot({path:path.join(out,`calendar-${theme}-${width}.png`),fullPage:true});
     }
     results.push({scenario:'light dark responsive widths, no page overflow and all Month columns reachable',passed:true});
-    await page.evaluate(()=>localStorage.setItem('grc_client_id','demo_prestige'));await page.reload();
+    await page.evaluate(()=>sessionStorage.setItem('grc_client_id','demo_prestige'));await page.reload();
     await expect(page.getByText('Synthetic date task',{exact:true})).toHaveCount(0);
     results.push({scenario:'client isolation',passed:true});assert.deepEqual(errors,[]);
     const report={mode:'isolated browser Demo',base,results,pageErrors:errors};fs.writeFileSync(path.join(out,'calendar-browser-results.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
