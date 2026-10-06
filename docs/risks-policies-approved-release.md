@@ -36,8 +36,24 @@ headers. Header/body order now shares one rule, with a cell-position regression.
   Risk future filter excluded today/overdue/day31 and included day10/day30.
   Policy draft-close protection retained edits; Evidence disabled approval while
   ordinary edits were unsaved. These are local results, not hosted acceptance.
-- Two implementation agents independently reviewed the integrated opposite
-  feature/shared dialog changes. Final correction and broader checks are pending.
+- 18 existing Risk lifecycle and Policy approval/provenance cases also passed
+  against separate real Mongo databases, including cross-client denials, restricted
+  roles, stale/concurrent decisions, retained document snapshots and recovery.
+- Browser Risk Review completion advanced the annual anchor, retained its completed
+  occurrence, acceptance rejected missing data, and authorized closure persisted
+  as read-only after reload. Mongo assertions confirmed the exact stored decision
+  history, cancelled future Review and unchanged Policy draft/version.
+- Existing and newly UI-created browser-local Demo clients exercised both layouts,
+  Policy creation and Risk scoring/save/reload. Same-origin Demo edits remained
+  absent from real Mongo; normal administrator/session/client survived reload.
+- Two implementation agents independently reviewed opposite feature/shared dialog
+  changes. Review caught footer CSS visual ordering differing from keyboard order;
+  buttons now follow the approved order in the DOM, retaining their handlers.
+- Approved desktop field/summary columns and readable two-column Policy alignment
+  sections are scoped to these dialogs. Temporary 390x844 viewport override was
+  accepted by the browser tool but existing tabs retained their default dimensions;
+  that attempt is not responsive browser verification. Final browser checks remain
+  pending rather than assumed from CSS or builds.
 
 ## Coordinated delivery
 
@@ -46,7 +62,9 @@ until its acceptance handoff. This release must follow that handoff and required
 review/Release gate. Reconcile intervening main before merge; verify actual main
 CI and automatic Render deployment, then separately publish the same source to
 the existing owner-private preview. Deployment and final hosted results remain
-pending; this document does not claim rollout completion.
+pending; this document does not claim rollout completion. The exact merge,
+automatic Render deployment, private-preview version and final hosted acceptance
+will be recorded in the repository's [PR #50 acceptance handoff](https://github.com/robbashea-lab/GRC/pull/50).
 
 Follow [Render release operations](render-release-operations.md). Application
 rollback must preserve Mongo/Atlas data and does not roll back the database.
