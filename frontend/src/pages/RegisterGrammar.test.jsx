@@ -5,8 +5,8 @@ import RiskRegister from './RiskRegister';
 import VendorRegister from './VendorRegister';
 import api from '@/lib/api';
 
-// One register grammar: title and one-line purpose (no client name), secondary actions then the
-// primary "New <Record>", search first in the toolbar, counts that filter, and labelled table headers.
+// Approved Risks use their client-context header and seven presets; other registers retain their grammar.
+// All retain primary/secondary actions, search, accurate counts, and labelled table controls.
 let mockParams;
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: { user_id: 'admin', name: 'Admin', role: 'super_admin' } }) }));
 jest.mock('@/context/OrgContext', () => ({ useOrg: () => ({ currentClientId: 'c', currentClient: { name: 'Test client' } }) }));
@@ -43,22 +43,32 @@ test.each([
   ['Vendors', () => <VendorRegister />, 'New Vendor', 'Search vendors'],
 ])('%s header, primary action, toolbar and table follow the register grammar', async (title, page, primary, search) => {
   await render(page());
-  const header = container.querySelector('.page-header');
+  const approvedRisk=title==='Risks';
+  const header = container.querySelector(approvedRisk?'.bpage-head':'.page-header');
   expect(header.querySelector('h1').textContent).toBe(title);
-  expect(header.querySelector('.page-eyebrow')).toBeNull();
-  // The sidebar names the client; the header never repeats it.
-  expect(header.textContent).not.toContain('Test client');
-  expect(header.querySelector('.page-subtitle').textContent.length).toBeGreaterThan(10);
-  const actions = [...header.querySelectorAll('.header-actions > button')];
+  if(approvedRisk){
+    expect(header.querySelector('.bpage-eyebrow').textContent).toBe('Test client · Risk register');
+    expect(header.querySelector('.bpage-subtitle')).toBeNull();
+    expect(container.querySelector('[aria-label="Risk summaries"]')).toBeNull();
+  }else{
+    expect(header.querySelector('.page-eyebrow')).toBeNull();
+    expect(header.textContent).not.toContain('Test client');
+    expect(header.querySelector('.page-subtitle').textContent.length).toBeGreaterThan(10);
+  }
+  const actions = [...header.querySelectorAll(approvedRisk?'.bpage-actions > button':'.header-actions > button')];
   expect(actions.at(-1).textContent).toBe(primary);
   expect(actions.at(-1).className).toContain('bg-primary');
-  expect(actions.slice(0, -1).every(button => button.className.includes('border'))).toBe(true);
+  if(approvedRisk){
+    expect(actions.some(button=>button.textContent==='Risk Scale & Matrix')).toBe(true);
+    expect(actions.filter(button=>['Risk Scale & Matrix','Export CSV'].includes(button.textContent)).every(button=>button.classList.contains('bpage-btn'))).toBe(true);
+  }else expect(actions.slice(0,-1).every(button=>button.className.includes('border'))).toBe(true);
   expect(actions.some(button => button.textContent === 'Export CSV')).toBe(true);
   // Search is the first control in the toolbar; the shown / total count closes it.
   const toolbar = container.querySelector('.register-toolbar');
   expect(toolbar.querySelector('input').getAttribute('aria-label').toLowerCase()).toBe(search.toLowerCase());
   expect(toolbar.firstElementChild.classList.contains('register-search')).toBe(true);
-  expect(toolbar.querySelector('.register-count').textContent).toMatch(/^\d+ \/ \d+$/);
+  if(approvedRisk) expect(container.querySelector('[data-testid="risk-count"]').textContent).toBe('Showing 3 of 4 risks');
+  else expect(toolbar.querySelector('.register-count').textContent).toMatch(/^\d+ \/ \d+$/);
   // Column headers are real column headers with a named sort-and-filter control.
   const heads = [...container.querySelectorAll('thead th')];
   expect(heads.length).toBeGreaterThan(4);
@@ -89,7 +99,8 @@ test('zero counts stay quiet and cannot be pressed', async () => {
 });
 
 test.each([
-  ['risks', () => <RiskRegister />, 'risk-view-', 'significant', ['risk-critical', 'risk-high']],
+  ['risks critical', () => <RiskRegister />, 'risk-view-', 'critical', ['risk-critical']],
+  ['risks high', () => <RiskRegister />, 'risk-view-', 'high', ['risk-high']],
   ['vendors', () => <VendorRegister />, 'vendor-view-', 'critical_high', ['vendor-critical', 'vendor-high']],
 ])('%s view tabs carry the counts and each count equals the rows its view shows', async (_, page, prefix, view, expected) => {
   await render(page());
@@ -97,11 +108,11 @@ test.each([
   expect(tab('all_active').getAttribute('aria-pressed')).toBe('true');
   expect(tab('all_active').textContent).toMatch(/3$/);
   expect(bodyRows()).toHaveLength(3);
-  expect(tab(view).textContent).toMatch(/2$/);
+  expect(tab(view).textContent.endsWith(String(expected.length))).toBe(true);
   await click(tab(view));
   expect(tab(view).getAttribute('aria-pressed')).toBe('true');
-  expect(bodyRows().map(tr => tr.textContent).filter(text => expected.some(name => text.includes(name)))).toHaveLength(2);
-  expect(bodyRows()).toHaveLength(2);
+  expect(bodyRows().map(tr => tr.textContent).filter(text => expected.some(name => text.includes(name)))).toHaveLength(expected.length);
+  expect(bodyRows()).toHaveLength(expected.length);
 });
 
 test('a filter that excludes every row offers a reset instead of an empty table', async () => {
