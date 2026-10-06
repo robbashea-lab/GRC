@@ -309,7 +309,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
           <Label className="block">Description<Textarea value={finding.description} onChange={e => setFinding(p => ({...p,description:e.target.value}))} /></Label>
           {picker('Severity',finding.severity,v => setFinding(p => ({...p,severity:v})),SCHEMAS.findings.fields.find(f => f.name === 'severity').options)}
-          <div><Label>Owner</Label><AssigneeSelect clientId={cid} value={finding.owner_id} onChange={v=>setFinding(p=>({...p,owner_id:v}))} users={members}/></div>
+          <div><Label>Owner</Label><AssigneeSelect showManagePeople={false} clientId={cid} value={finding.owner_id} onChange={v=>setFinding(p=>({...p,owner_id:v}))} users={members}/></div>
           <Label className="block">Due date<Input type="date" value={finding.due_date} onChange={e => setFinding(p => ({...p,due_date:e.target.value}))} /></Label>
           <Label className="block">Corrective action *<Input required data-testid="finding-remediation-title" value={finding.remediation_title} onChange={e => setFinding(p => ({...p,remediation_title:e.target.value}))} /></Label>
           <Label className="block">Remediation notes<Textarea value={finding.remediation_plan} onChange={e => setFinding(p => ({...p,remediation_plan:e.target.value}))} /></Label>
