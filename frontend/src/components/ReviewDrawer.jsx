@@ -194,10 +194,10 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},
       onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="reviews-search"]');target?.focus({preventScroll:true});}
     }}
-      className="brawndo-cis-assessment bg-surface-card" data-testid="reviews-drawer">
+      className="brawndo-cis-assessment approved-review-dialog bg-surface-card" data-testid="reviews-drawer">
       <DialogDescription className="sr-only">Conduct this Review, edit its schedule and assigned reviewer, and access evidence, related work and completion history.</DialogDescription>
       <SheetHeader className="px-6 py-4 pr-12 border-b border-line shrink-0">
-        <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={-1} className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
+        <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={-1} data-review-title className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
           {!pilot&&shown && <div className="mt-2"><StatusBadge value={selected ? shown.status : reviewStatus(shown)} /></div>}</div>
           </div>
         <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto">{(current?tabs:['Overview','Requirements']).map(t => <button key={t} data-testid={`tab-${t.toLowerCase()}`} className={`drawer-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); if (t === 'Related' || t === 'Activity') reload(); }}>{t}</button>)}</div>

@@ -529,7 +529,10 @@ function EntityListPage({ kind }) {
           </div>
         )}
         {isReviews ? (
+          <div className="review-view-row">
           <ViewTabs views={REVIEW_TABS} active={columnStatusActive || signal ? null : reviewTab} onPick={setReviewTab} counts={reviewTabCounts} label="Review views" testid="reviews-tabs" testIdPrefix="reviews-tab-" />
+          <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review History'}</Button>
+          </div>
         ) : policiesPilot ? (
           <BrawndoChips label="Policy views" chips={[['','All'],['approved','Approved'],['awaiting','Awaiting approval'],['due30','Review due in 30 days']].map(([id,label])=>({id:id||'all',label,count:loading?null:tableSource.filter(r=>policyViewMatches(r,id)).length,pressed:policyView===id,onClick:()=>setParam('policyView',id&&policyView!==id?id:''),testid:`policy-view-${id||'all'}`}))}/>
         ) : (
@@ -544,7 +547,6 @@ function EntityListPage({ kind }) {
             </Select>
           )
         )}
-        {isReviews && <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review History'}</Button>}
         {!policiesPilot && <RegisterCount shown={filtered.length} total={isReviews && !columnStatusActive && signal?.id!=='recent' ? tableSource.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : tableSource.length} />}
       </div>
 
