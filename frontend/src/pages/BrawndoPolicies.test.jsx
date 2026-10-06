@@ -24,6 +24,26 @@ beforeEach(()=>{
   api.patch.mockImplementation(async(path,patch)=>({data:{...rows[0],...patch}}));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+
+test('switching normal clients clears the previous Policy view and exposes the new client records',async()=>{
+ mockUser.workspace_mode='authenticated';
+ rows=[{...rows[0],title:'Past policy',next_review_date:'2020-01-01'},{...rows[0],policy_id:'future',title:'Future policy',next_review_date:'2099-01-01'}];
+ await act(async()=>root.render(<RecordListPage kind="policies"/>));
+ await click(container.querySelector('[data-testid="policy-view-overdue"]'));
+ expect(container.querySelector('tbody').textContent).not.toContain('Future policy');
+ mockClient='new-normal-client';rows=rows.map(r=>({...r,client_id:mockClient}));
+ await act(async()=>root.render(<RecordListPage kind="policies"/>));
+ expect(container.querySelector('[data-testid="policy-view-all"]').getAttribute('aria-pressed')).toBe('true');
+ expect(container.querySelector('tbody').textContent).toContain('Future policy');
+ expect(container.querySelector('tbody').textContent).toContain('Past policy');
+});
+
+test('pending Policy approval leaves Requirements context read-only',async()=>{
+ mockUser.workspace_mode='authenticated';
+ await act(async()=>root.render(<RecordDrawer open kind="policies" record={{...rows[0],status:'in_review'}} schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
+ await click(document.querySelector('[data-testid="tab-requirements"]'));
+ expect(document.querySelector('[aria-label="Reason / context"]').closest('fieldset').disabled).toBe(true);
+});
 test('approved register has six columns and no summary cards or title metadata across clients',async()=>{
   rows[0].next_review_date='2027-05-20';rows[0].last_reviewed_at='2025-02-10';
   await act(async()=>root.render(<RecordListPage kind="policies"/>));

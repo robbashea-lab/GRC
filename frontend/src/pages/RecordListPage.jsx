@@ -297,7 +297,7 @@ function EntityListPage({ kind }) {
     filterClient.current = currentClientId;
     const next = new URLSearchParams(params);
     next.delete('owner'); next.delete('unassigned'); next.delete('reviewView');
-    if(['reviews','policies'].includes(kind)&&resetView) ['q','tab','status','signal','sortBy','sortDir','setup'].forEach(key=>next.delete(key));
+    if(['reviews','policies'].includes(kind)&&resetView) ['q','tab','status','signal','sortBy','sortDir','setup','policyView'].forEach(key=>next.delete(key));
     setAlignmentTarget(null);
     setParams(next, { replace: true });
   }, [currentClientId, params, setParams, kind, policiesPilot, user]);

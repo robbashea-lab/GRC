@@ -60,7 +60,7 @@ export function RiskAssessmentPanel({form,setForm,riskPilot,canWrite,isPlatformA
   );
 }
 
-export function RiskTreatmentPanel({form,setForm,record,users,tasks=[],riskPilot,canWrite,isPlatformAdmin,clientFields,onOpen,onLinkAction}) {
+export function RiskTreatmentPanel({form,setForm,record,users,tasks=[],riskPilot,demoMode=false,canWrite,isPlatformAdmin,clientFields,onOpen,onLinkAction}) {
   return (
     <div className="space-y-4">
       <div>
@@ -69,7 +69,7 @@ export function RiskTreatmentPanel({form,setForm,record,users,tasks=[],riskPilot
         {!tasks.length&&<p className="text-sm text-ink-secondary mb-2">No linked remediation work yet.</p>}
         {canWrite&&<Button size="sm" variant="outline" className="mb-4" onClick={()=>onOpen({kind:"tasks",record:null,initialValues:{source_type:"risk",source_id:record.risk_id,assignee_id:record.owner_id||null}})}>Create Action Item</Button>}
         {canWrite&&<Button size="sm" variant="outline" className="mb-4 ml-2" onClick={onLinkAction}>Link existing Action Item</Button>}
-        {riskPilot?<RiskTreatmentField form={form} setForm={setForm} disabled={!canWrite||!!clientFields&&!clientFields.has("treatment")}/>:<><Label className="text-xs text-ink-secondary">Treatment strategy</Label>
+        {riskPilot?<RiskTreatmentField form={form} setForm={setForm} allowAcceptance={demoMode||record?.treatment==='accept'} disabled={!canWrite||!!clientFields&&!clientFields.has("treatment")}/>:<><Label className="text-xs text-ink-secondary">Treatment strategy</Label>
         <Select value={form.treatment || ""} onValueChange={(v) => setForm({ ...form, treatment: v })}>
           <SelectTrigger data-testid="field-treatment" className="text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
           <SelectContent>
