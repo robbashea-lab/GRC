@@ -84,3 +84,10 @@ test('retained out-of-scope CIS safeguard is readable but cannot initialize a ne
   mockUser.role='platform_admin';record={...record,framework_key:'cis-ig1',definition_id:'6.8'};
   await render({recordManagement:false,reviewManagement:true});expect(button('Create or link recurring Review')).toBeUndefined();
 });
+
+test('backend projected retained control has a visible identifier when its name is omitted',async()=>{
+ record={...record,framework_key:'soc-2',definition_id:'CC1.1'};
+ const original=api.get.getMockImplementation();
+ api.get.mockImplementation(async(path,...args)=>{const result=await original(path,...args);if(path.startsWith('/frameworks/'))result.data.organizational_controls=[{control_id:'control-retained',assessment_ids:[record.framework_assessment_id]}];return result;});
+ await render();expect(button('control-retained')).toBeDefined();
+});

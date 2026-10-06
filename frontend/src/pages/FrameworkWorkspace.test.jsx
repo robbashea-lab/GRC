@@ -108,7 +108,7 @@ test('Brawndo filters are separate from navigation and clear back to controls',a
 });
 test('Prestige SOC 2 uses scoped progress and category-first hierarchy without program settings',async()=>{
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
- expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toContain('Client organizational Controls');expect(workspace.textContent).not.toContain('Include retained out-of-scope criteria');expect(socSettings()).toBeUndefined();
+ expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toContain('Client organizational Controls');expect(workspace.textContent).toContain('Include retained out-of-scope criteria');expect(socSettings()).toBeUndefined();
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
  expect(summary).toContain('Implemented74%28 of 38');expect(summary).toContain('Assessed92%');expect(summary).toContain('3 still to assess');
  const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Implemented: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Implemented5 of 38 criteria13%');
@@ -228,4 +228,16 @@ test.each(['cis-ig1','hipaa'])('%s with all records N/A keeps undefined progress
  expect(figures.map(n=>n.textContent)).toEqual(['—','—']);
  expect(container.textContent).not.toMatch(/How is this calculated|excluded from progress denominators/);
  expect(container.querySelector('.bcis-explain')).toBeNull();
+});
+
+test('retained SOC criteria keep contextual management reachable after scope reduction',async()=>{
+ const response=await prestige();
+ const retained=response.definitions.find(d=>d.category==='privacy');
+ const toggle=[...container.querySelectorAll('label')].find(l=>l.textContent==='Include retained out-of-scope criteria').querySelector('input');
+ await act(async()=>toggle.click());
+ const search=container.querySelector('input[aria-label="Search criteria"]');
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,retained.id);search.dispatchEvent(new Event('input',{bubbles:true}));});
+ const manage=container.querySelector(`button[aria-label="Manage ${retained.id} ${retained.title}"]`);
+ expect(manage).not.toBeNull();await act(async()=>manage.click());
+ expect(container.querySelector('[data-management="true"]').textContent).toContain(retained.id);
 });
