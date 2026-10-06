@@ -34,14 +34,21 @@ test('standard mode uses HTTP; demo has no bearer token or HTTP writes',async()=
   expect(http).toHaveBeenCalledTimes(2);
   expect(http.mock.calls[1][0].headers.Authorization).toBeUndefined();
 });
-test('mode transitions clear client selection and demo entry; refresh preserves explicit mode',async()=>{
+test('Demo entry and exit preserve normal client selection; refresh preserves explicit mode',async()=>{
+  localStorage.setItem('grc_client_id','normal-synthetic-client');
   setWorkspaceMode('demo');await api.post('/demo/enter');
-  localStorage.setItem('grc_client_id','demo_brawndo');
+  sessionStorage.setItem('grc_client_id','demo_brawndo');
   jest.resetModules();expect(require('./api').PREVIEW_MODE).toBe(true);
   require('./api').setWorkspaceMode('standard');
   expect(sessionStorage.getItem('grc_demo_entered')).toBeNull();
-  expect(localStorage.getItem('grc_client_id')).toBeNull();
+  expect(sessionStorage.getItem('grc_client_id')).toBeNull();
+  expect(localStorage.getItem('grc_client_id')).toBe('normal-synthetic-client');
   jest.resetModules();expect(require('./api').PREVIEW_MODE).toBe(false);
+});
+test('normal authentication transitions still clear previous normal selection',()=>{
+  localStorage.setItem('grc_client_id','previous-user-client');
+  setWorkspaceMode('standard');
+  expect(localStorage.getItem('grc_client_id')).toBeNull();
 });
 test('demo adapter cannot authenticate an email/password request',async()=>{
   setWorkspaceMode('demo');

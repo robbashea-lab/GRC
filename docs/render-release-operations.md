@@ -114,3 +114,8 @@ hosted workflow observations, private preview version/source/access and remainin
 limitations. Read that handoff for the final delivery state; successful CI alone
 does not establish hosted acceptance. Preserve the sequential release/session
 handoffs recorded on PR42, PR43 and PR44.
+
+The subsequent [hosted acceptance record](release-hosted-acceptance.md) records
+authenticated observations, synthetic persistence checks, remaining limitations
+and the demonstrated Demo selection-cache correction. Read its correcting PR's
+final handoff for the final deployed revision and logout/isolation results.
