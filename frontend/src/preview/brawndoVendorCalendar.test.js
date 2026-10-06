@@ -17,7 +17,10 @@ test('Brawndo Calendar projects vendor dates from the Vendor record and follows 
   const all=vendorEvents(await cal());expect(new Set(all.map(e=>e.key)).size).toBe(all.length);
   expect(readStore().reviews.filter(r=>r.vendor_id===vendor.vendor_id&&r.vendor_purpose==='contract')).toHaveLength(0);
 });
-test('other clients get no vendor-date bucket',async()=>{
+test('the same derived Vendor dates work for every client without leaking another client',async()=>{
   const other=readStore().clients.find(c=>c.client_id!==cid).client_id;
-  expect((await cal(other)).vendor_dates).toBeUndefined();
+  const entries=vendorEvents(await cal(other));
+  expect(entries.length).toBeGreaterThan(0);
+  expect(entries.every(e=>e.client_id===other&&!e.can_reschedule)).toBe(true);
+  expect(entries.some(e=>e.client_id===cid)).toBe(false);
 });

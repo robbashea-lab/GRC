@@ -1,10 +1,28 @@
-import {calendarBuckets,calendarItem,calendarSelection,calendarStatus,canMoveCalendar,rescheduledDate} from './calendarView';
+import {calendarBuckets,calendarItem,calendarSelection,calendarStatus,canMoveCalendar,rescheduledDate,calendarPeriod,stepCalendarDate,localCalendarDate} from './calendarView';
 const admin={role:'super_admin'},member={role:'client_contributor',user_id:'member'};
 const review={review_id:'r',client_id:'a',title:'Access review',status:'upcoming',due_date:'2026-12-31',recurrence:'quarterly',current_occurrence_id:'next'};
 const prior={...review,occurrence_id:'prior',due_date:'2026-09-30',status:'completed',completed_at:'2026-10-04'};
 const records={reviews:[{...review,occurrences:[prior]}],findings:[{finding_id:'f',client_id:'a',title:'Gap',status:'remediated',due_date:'2026-10-02'}],tasks:[{task_id:'t',client_id:'a',title:'Action',status:'done',due_date:'2026-10-02'}]};
 const options={start:'2026-09-01',end:'2026-12-31',scope:'all'};
 const flatten=data=>Object.values(data).flatMap(bucket=>Object.values(bucket).flat());
+test('local periods use Monday, clamp month steps, and cross leap/year/DST boundaries by calendar day',()=>{
+  const anchor=new Date(2024,0,31,23,45);
+  expect(localCalendarDate(stepCalendarDate(anchor,'month',1))).toBe('2024-02-29');
+  expect(localCalendarDate(stepCalendarDate(new Date(2025,0,31),'month',1))).toBe('2025-02-28');
+  expect(localCalendarDate(stepCalendarDate(new Date(2026,11,31),'day',1))).toBe('2027-01-01');
+  expect(localCalendarDate(stepCalendarDate(new Date(2026,2,7),'day',1))).toBe('2026-03-08');
+  const week=calendarPeriod(new Date(2026,0,1),'week');
+  expect([week.start,week.end,week.days.length]).toEqual(['2025-12-29','2026-01-04',7]);
+  const month=calendarPeriod(new Date(2024,1,29),'month');
+  expect([month.start,month.end,month.days.length,month.days[0].getDay()]).toEqual(['2024-02-01','2024-02-29',42,1]);
+  expect(calendarPeriod(anchor,'day').days).toHaveLength(1);
+});
+test('outstanding old items join the period, without old completion or duplicate keys',()=>{
+  const task=(id,status,due)=>({task_id:id,client_id:'a',title:id,status,due_date:due});
+  const result=flatten(calendarBuckets({tasks:[task('old','open','2020-01-01'),task('old-done','done','2020-01-01'),task('month','done','2026-10-01'),task('late','open','2026-10-01')]},admin,{start:'2026-10-01',end:'2026-10-31',scope:'all',overdue_before:'2026-10-05'}));
+  expect(result.map(r=>r.id)).toEqual(['old','late','month']);
+  expect(new Set(result.map(r=>r.key)).size).toBe(3);
+});
 test('active and historical records retain source status, distinct occurrences and scheduled dates',()=>{
   const all=flatten(calendarBuckets(records,admin,options));
   expect(all).toHaveLength(4);expect(new Set(all.map(r=>r.key)).size).toBe(4);

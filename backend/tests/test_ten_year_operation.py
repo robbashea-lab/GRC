@@ -487,12 +487,33 @@ class TenYearOperationTests(unittest.IsolatedAsyncioTestCase):
         start = today.replace(day=1)
         end = (start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         calendar = await self.call('GET', '/calendar', params={'client_id': A, 'start': start.isoformat(), 'end': end.isoformat(), 'scope': 'active'})
-        entries = [e for group in calendar.values() for rows in group.values() for e in rows]
+        entries = [e for kind in ('reviews', 'findings', 'tasks') for rows in calendar[kind].values() for e in rows]
         expected = [r for r in registers['reviews'] if r['status'] in OPEN_REVIEW and day(r.get('due_date')) and start.isoformat() <= day(r['due_date']) <= end.isoformat()]
         expected += [f for f in registers['findings'] if f['status'] in OPEN_FINDING and day(f.get('due_date')) and start.isoformat() <= day(f['due_date']) <= end.isoformat()]
         expected += [t for t in registers['tasks'] if t['status'] not in TASK_DONE and day(t.get('due_date')) and start.isoformat() <= day(t['due_date']) <= end.isoformat()]
         if len(entries) != len(expected) or any(e.get('historical') for e in entries):
             self.discrepancy('calendar', issue='Calendar month != open dated records', calendar=len(entries), expected=len(expected))
+        expected_vendor = set()
+        for vendor in registers['vendors']:
+            if vendor['status'] in ('inactive', 'terminated'):
+                continue
+            vid = vendor['vendor_id']
+            linked = [r for r in registers['reviews'] if r.get('vendor_id') == vid and r['status'] in OPEN_REVIEW]
+            for index, assurance in enumerate(vendor.get('assurance_records') or []):
+                due = day(assurance.get('next_follow_up') or assurance.get('refresh_due'))
+                covered = any((r.get('vendor_purpose') or 'vendor') in ('vendor', 'assurance') and day(r.get('due_date')) == due for r in linked)
+                if due and start.isoformat() <= due <= end.isoformat() and not assurance.get('superseded_by') and not covered:
+                    expected_vendor.add((f"vendor_assurance:{vid}:{assurance.get('assurance_id') or f'legacy:{index}'}", due))
+            notice, renewal = day(vendor.get('contract_notice_deadline')), day(vendor.get('contract_renewal'))
+            for kind, due in (('notice', notice), ('renewal', renewal)):
+                if kind == 'renewal' and (renewal == notice or any(r.get('vendor_purpose') == 'contract' for r in linked)):
+                    continue
+                if due and max(start.isoformat(), self.today) <= due <= end.isoformat():
+                    expected_vendor.add((f'vendor_contract_{kind}:{vid}:{kind}', due))
+        vendor_entries = [e for rows in calendar['vendor_dates'].values() for e in rows]
+        actual_vendor = {(e['key'], day(e['due_date_iso'])) for e in vendor_entries}
+        if actual_vendor != expected_vendor or len(actual_vendor) != len(vendor_entries) or any(e['can_reschedule'] or e['historical'] or e['client_id'] != A for e in vendor_entries):
+            self.discrepancy('calendar', issue='Vendor dates != authoritative Vendor obligations', actual=sorted(actual_vendor), expected=sorted(expected_vendor))
 
     def volume(self, label):
         self.report['volume'].append({'today': self.today, 'label': label})

@@ -23,7 +23,7 @@ def worker():
     if os.environ.get('RECOVERY_INJECT') == 'yes':
         original_audit=server.audit
         async def failed_audit(*args,**kwargs):
-            if len(args)>2 and args[1]=='update' and args[2]=='asset':
+            if len(args)>2 and args[1]=='update' and args[2] in ('asset','review'):
                 raise RuntimeError('synthetic audit outage')
             return await original_audit(*args,**kwargs)
         server.audit = failed_audit
@@ -51,6 +51,8 @@ def main():
     database.clients.insert_one({'client_id':'synthetic','name':'Synthetic','status':'active'})
     database.assets.insert_one({'asset_id':'asset','client_id':'synthetic','name':'Before','updated_at':None})
     database.vendors.insert_one({'vendor_id':'vendor','client_id':'synthetic','name':'Synthetic vendor','service':'Test service','criticality':'low','status':'onboarding','review_frequency':'annual','updated_at':None})
+    database.reviews.insert_one({'review_id':'calendar','client_id':'synthetic','title':'Synthetic Calendar cycle',
+        'review_type':'access','status':'upcoming','recurrence':'monthly','due_date':'2026-01-31','current_occurrence_id':'calendar-first','updated_at':None})
     env={k:v for k,v in os.environ.items() if k.upper() in ('PATH','SYSTEMROOT','TEMP','TMP','WINDIR')}
     env.update(APP_ENV='test',MONGO_URL=args.mongo_url,DB_NAME=name,JWT_SECRET=secrets.token_urlsafe(48),APP_BASE_URL='http://127.0.0.1:4386',CORS_ORIGINS='http://127.0.0.1:4386')
     process=None
@@ -73,7 +75,8 @@ def main():
             login=api.post('/auth/login',json={'email':'restart@example.com','password':password},headers={'Origin':env['APP_BASE_URL']})
             assert login.status_code==200,login.text
             api.cookies.clear();api.headers['Authorization']='Bearer '+login.json()['access_token']
-            commands=[('assets/asset',{'name':'After','expected_updated_at':None},'restart-asset-command-01'),('vendors/vendor',{'next_review':'2027-01-15','expected_updated_at':None},'restart-vendor-command-02')]
+            commands=[('assets/asset',{'name':'After','expected_updated_at':None},'restart-asset-command-01'),('vendors/vendor',{'next_review':'2027-01-15','expected_updated_at':None},'restart-vendor-command-02'),
+                      ('reviews/calendar',{'due_date':'2026-03-05','calendar_move':True,'expected_updated_at':None,'expected_occurrence_id':'calendar-first'},'restart-calendar-command-03')]
             for path,body,key in commands:
                 failed=api.patch('/'+path,json=body,headers={'Idempotency-Key':key})
                 assert failed.status_code==503,failed.text
@@ -85,7 +88,21 @@ def main():
             assert database.audit_logs.count_documents({'entity_type':'asset','entity_id':'asset','action':'update'})==1
             assert database.reviews.count_documents({'vendor_id':'vendor'})==1
             assert database.reviews.find_one({'vendor_id':'vendor'})['due_date'][:10]=='2027-01-15'
-            print(json.dumps({'normal_password_login':True,'asset_audit_recovered_after_process_restart':True,'vendor_review_recovered_after_process_restart':True,'lost_success_response_replay':True,'mongo_database':name,'cleanup':'database dropped in finally'}))
+            calendar=api.get('/reviews/calendar').json()
+            assert calendar['due_date']=='2026-03-05' and calendar['recurrence_due_date']=='2026-01-31'
+            assert calendar['next_review_date'][:10]=='2026-02-28'
+            projection=api.get('/calendar',params={'client_id':'synthetic','start':'2026-03-01','end':'2026-03-31','scope':'all'}).json()
+            assert projection['reviews']['2026-03-05'][0]['id']=='calendar'
+            completed=api.post('/reviews/calendar/complete',json={'occurrence_id':'calendar-first'})
+            assert completed.status_code==200,completed.text
+            assert completed.json()['occurrence']['recurrence_due_date']=='2026-01-31'
+            assert completed.json()['review']['next_review_date'][:10]=='2026-03-31'
+            assert api.post('/reviews/calendar/complete',json={'occurrence_id':'calendar-first'}).json()['occurrence']==completed.json()['occurrence']
+            assert database.reviews.find_one({'review_id':'calendar'})['occurrences'][0]['due_date']=='2026-03-05'
+            assert database.audit_logs.count_documents({'entity_type':'review','entity_id':'calendar','action':'update'})==1
+            print(json.dumps({'normal_password_login':True,'asset_audit_recovered_after_process_restart':True,'vendor_review_recovered_after_process_restart':True,
+                'calendar_occurrence_recovered_after_process_restart':True,'calendar_projection_source_match':True,'calendar_cycle_and_completed_history_preserved':True,
+                'lost_success_response_replay':True,'mongo_database':name,'cleanup':'database dropped in finally'}))
     finally:
         stop();mongo.drop_database(name);mongo.close()
 

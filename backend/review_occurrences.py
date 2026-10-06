@@ -17,7 +17,9 @@ def occurrence_id(review):
 
 
 def schedule(review, reset_anchor=False):
-    date = scheduled_date(review.get("due_date"))
+    # A Calendar move changes this execution's date, not the recurring definition.
+    original = None if reset_anchor else review.get("recurrence_due_date")
+    date = scheduled_date(original or review.get("due_date"))
     recurrence = review.get("recurrence") or "none"
     anchor = None if reset_anchor else review.get("schedule_anchor")
     anchor = anchor or ({"day": date.day, "month_end": date.day == monthrange(date.year, date.month)[1]} if date else None)
@@ -40,7 +42,8 @@ def schedule(review, reset_anchor=False):
             days = review["custom_recurrence_days"]
             if days <= (datetime.max.replace(tzinfo=date.tzinfo) - date).days:
                 next_date = (date + timedelta(days=days)).isoformat()
-    return {"period": label, "next_review_date": next_date, "schedule_anchor": anchor}
+    return {"period": label, "next_review_date": next_date, "schedule_anchor": anchor,
+            "recurrence_due_date": original}
 
 
 def view(review):

@@ -77,7 +77,7 @@ async def ensure_review(db, risk, user, now):
     elif review.get('status') in ('completed','cancelled') and date:
         new.update({'status':'upcoming','current_occurrence_id':'occ_'+uuid.uuid4().hex,'notes':None,
                     'started_at':None,'started_by':None,'completion_date':None})
-    new.update(review_occurrences.schedule(new, reset_anchor=not review or review.get('due_date') != date))
+    new.update(review_occurrences.schedule(new, reset_anchor=not review or any(review.get(k)!=fields[k] for k in ('due_date','recurrence','custom_recurrence_days'))))
     new = review_occurrences.view(new)
     if review:
         await db.reviews.update_one({'review_id':rid}, {'$set':new})

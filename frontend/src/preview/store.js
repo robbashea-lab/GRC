@@ -185,6 +185,8 @@ export function validate(db, kind, body, existing) {
 }
 export function write(db, kind, body, id) {
   const existing = id ? record(db, kind, id) : null;
+  const calendarMove=body.calendar_move===true;
+  body={...body};delete body.calendar_move;
   body=normalizeRecordWrite(kind,body,existing);
   const profileChanges=kind==='clients'&&existing?Object.fromEntries(Object.entries(body).filter(([k,v])=>!['expected_updated_at','updated_at'].includes(k)&&JSON.stringify(existing[k])!==JSON.stringify(v)).map(([k,v])=>[k,{before:clone(existing[k]??null),after:clone(v)}])):null;
   const contextChange=existing&&'governance_context' in body?{governance_context_before:clone(existing.governance_context??null),governance_context_after:clone(body.governance_context)}:{};
@@ -269,7 +271,11 @@ export function write(db, kind, body, id) {
     delete row.grc_lead;
     delete row.grc_lead_id;
   }
-  if (kind === 'reviews') Object.assign(row, reviewView({...row, ...reviewSchedule(row, !!existing && !body.schedule_anchor && body.due_date !== undefined && body.due_date !== existing.due_date)}));
+  if (kind === 'reviews') {
+    if(calendarMove)row.recurrence_due_date=existing.recurrence_due_date||existing.due_date;
+    const definitionChanged=!!existing&&!body.schedule_anchor&&['due_date','recurrence','custom_recurrence_days'].some(k=>k in body&&(k==='due_date'?String(body[k]||'').slice(0,10)!==String(existing[k]||'').slice(0,10):body[k]!==existing[k]));
+    Object.assign(row,reviewView({...row,...reviewSchedule(row,definitionChanged&&!calendarMove)}));
+  }
   if (kind === 'tasks' && existing && row.status !== existing.status) {
     if (row.status === 'in_progress' && !row.started_at) {row.started_at=now();row.started_by=db.user.user_id;}
     row.completed_by = row.status === 'done' ? db.user.user_id : null;

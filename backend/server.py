@@ -2528,7 +2528,7 @@ def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user
     protected = {"created_at", "created_by", "updated_at", "completion_date", "parent_review_id", "completion_snapshot",
                  "next_occurrence_id", "rating_history", "approval_history", "decision_history", "validated_by", "validated_at",
                  "verified_at", "verified_by", "approved_at", "accepted", "accepted_by", "acceptance_date", "acceptance_rationale", "acceptance_expires_at"}
-    protected |= {"current_occurrence_id", "occurrence_id", "occurrences", "schedule_anchor", "started_at", "started_by", "completed_at", "completed_by", "closed_at", "closed_by"}
+    protected |= {"current_occurrence_id", "occurrence_id", "occurrences", "schedule_anchor", "recurrence_due_date", "started_at", "started_by", "completed_at", "completed_by", "closed_at", "closed_by"}
     if protected.intersection(changes):
         raise HTTPException(422, "Decision and history fields cannot be edited directly")
     targets = {"policies": {"approved"}, "risks": {"accepted", "closed", "retired"}, "findings": {"closed", "accepted", "remediated"}, "reviews": {"completed"}, "exceptions": {"approved"}}
@@ -2758,6 +2758,11 @@ async def _update_entity(kind, item_id, body, user, command=None):
     incoming = dict(body or {})
     _require_snapshot(incoming, existing)
     incoming.pop("expected_updated_at")
+    has_calendar_move = 'calendar_move' in incoming
+    calendar_move = incoming.pop("calendar_move", None)
+    if has_calendar_move:
+        if calendar_move is not True or kind != 'reviews' or set(incoming) != {'due_date', 'expected_occurrence_id'} or not expected_occurrence or not review_occurrences.scheduled_date(incoming.get('due_date')):
+            raise HTTPException(422, 'A Calendar move requires only a due date and current occurrence')
     if kind == "reviews":
         incoming.pop("expected_occurrence_id", None)
         if expected_occurrence:
@@ -2824,7 +2829,10 @@ async def _update_entity(kind, item_id, body, user, command=None):
     if kind == "reviews" and set(body) & {"due_date", "recurrence", "custom_recurrence_days"}:
         # Only a different calendar day re-anchors recurrence; resending the same date keeps the cycle.
         moved = "due_date" in body and str(body.get("due_date") or "")[:10] != str(existing.get("due_date") or "")[:10]
-        body.update(review_occurrences.schedule({**existing, **body}, reset_anchor=moved))
+        definition_changed = moved or any(k in body and body[k] != existing.get(k) for k in ('recurrence', 'custom_recurrence_days'))
+        if calendar_move:
+            body['recurrence_due_date'] = existing.get('recurrence_due_date') or existing.get('due_date')
+        body.update(review_occurrences.schedule({**existing, **body}, reset_anchor=definition_changed and not calendar_move))
         body["status"] = review_occurrences.view({**existing, **body})["status"]
     if kind == "tasks" and "assignee_id" in body and "owner_id" in existing:
         body["owner_id"] = None  # assignee is authoritative after an explicit assignment
@@ -3754,7 +3762,7 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
             raise HTTPException(422, 'Choose a next review after the completed review date')
         next_due = body.risk_next_review
         completed.update(next_review_override=next_due, next_review_date=next_due)
-    updates = {"updated_at": completed["completed_at"], "schedule_anchor": current["schedule_anchor"]}
+    updates = {"updated_at": completed["completed_at"], "schedule_anchor": current["schedule_anchor"], "recurrence_due_date": None}
     if body.risk_next_review:
         updates['schedule_anchor'] = None
     if next_due:
@@ -4495,10 +4503,11 @@ async def calendar_view(client_id: Optional[str] = Query(None),
                         start: Optional[str] = Query(None),
                         end: Optional[str] = Query(None),
                         scope: str = Query('active', pattern='^(active|history|all)$'),
+                        overdue_before: Optional[str] = Query(None),
                         user: Dict = Depends(get_current_user)):
     import sys
     import calendar_view as calendar_projection
-    return await calendar_projection.read(sys.modules[__name__], _scope_filter(user, client_id), user, start, end, scope)
+    return await calendar_projection.read(sys.modules[__name__], _scope_filter(user, client_id), user, start, end, scope, overdue_before)
 
 
 # ---------------- Board Report (PDF) ----------------

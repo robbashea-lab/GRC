@@ -55,7 +55,7 @@ export function reviewAction(db, id, name, body) {
   // Recurrence stays anchored to the scheduled cycle; completion date is recorded, never used as the next anchor.
   const next = review.risk_id?completeRiskReview(db,review,completed,body):current.next_review_date;
   write(db, 'reviews', {
-    occurrences:[...(occurrences || []), completed], schedule_anchor:completed.next_review_override?null:current.schedule_anchor,
+    occurrences:[...(occurrences || []), completed], schedule_anchor:completed.next_review_override?null:current.schedule_anchor, recurrence_due_date:null,
     ...(next ? {status:'upcoming',due_date:next,current_occurrence_id:uid('occ'),notes:null,started_by:null,started_at:null,
       completion_date:null,completion_snapshot:null,risk_baseline:null,...(review.iso_audit?{iso_audit:initialAuditState(review.iso_audit.package_key,review.iso_audit.cycle+1)}:{})}
       : {status:'completed',current_occurrence_id:occurrenceId(review),completion_date:completed.completed_at})
