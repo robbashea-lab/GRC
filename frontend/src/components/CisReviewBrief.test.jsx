@@ -51,7 +51,7 @@ test.each(cis.review_plans)('$key exposes every prompt, consolidates timing, and
     }else expect(item.textContent).toContain(question);
    }
    const more=item.querySelector(`[data-testid="cis-review-questions-${id}"]`);
-   if(more){expect(more.open).toBe(false);expect(more.querySelector('summary').textContent).toContain(id);}
+   if(more){expect(more.tagName).toBe('SECTION');expect(more.querySelector('h4').textContent).toContain(id);}
   }
   expect(container.textContent).not.toContain('Arrangement confirmation');
   expect(container.textContent).not.toContain('Responsibility details missing');

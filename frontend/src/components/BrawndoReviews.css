@@ -64,3 +64,19 @@
 .brawndo-reviews .register-col-recurrence { width: 150px; }
 .brawndo-reviews .register-col-status { width: 130px; }
 .brawndo-reviews .register-col-actions { width: 44px; }
+
+/* Shared Reviews register: resize boundaries are separate from sort/filter controls. */
+.register-surface[data-layout="reviews"] .review-resizable-header { position: relative; padding-right: 16px; }
+.review-column-resizer { position: absolute; right: -4px; top: 0; bottom: 0; width: 9px; cursor: col-resize; touch-action: none; z-index: 1; }
+.review-column-resizer::after { content: ''; position: absolute; top: 9px; bottom: 9px; left: 4px; width: 1px; background: var(--color-border); }
+.review-column-resizer:is(:hover,:focus-visible)::after { width: 2px; background: var(--color-link); }
+.review-column-resizer:focus-visible { outline: 2px solid var(--color-link); outline-offset: -2px; }
+.register-surface[data-layout="reviews"] :is(.page-title,.bpage-head h1) { font-size: 25px; font-weight: 500; line-height: 1.2; }
+.register-surface[data-layout="reviews"] :is(.page-eyebrow,.bpage-eyebrow) { font-size: 10px; font-weight: 400; letter-spacing: 1.3px; color: var(--color-text-secondary); }
+.register-surface[data-layout="reviews"] .bpage-head { padding-bottom: 25px; }
+.register-surface[data-layout="reviews"] .register-toolbar { padding: 13px 13px 12px; gap: 11px; }
+.register-surface[data-layout="reviews"] .register-search { flex: 1 0 160px; max-width: 245px; }
+.register-surface[data-layout="reviews"] .quick-filters { flex-basis: 100%; flex-wrap: wrap; gap: 4px; }
+.register-surface[data-layout="reviews"] .quick-filters button { font-size: 12px; padding: 6px 9px; border-radius: 5px; }
+.register-surface[data-layout="reviews"] .register-table-frame td { padding: 16px 10px; font-size: 12px; line-height: 1.5; vertical-align: top; }
+.register-surface[data-layout="reviews"] .register-record-link { font-weight: 500; }

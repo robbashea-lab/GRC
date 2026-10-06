@@ -3,8 +3,7 @@ import RemediationTickets from './RemediationTickets';
 import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
 import { personLabel } from '@/lib/people';
 
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import {ClientPresentationContext} from './ClientSurface';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
@@ -18,7 +17,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { formatError } from '@/lib/api';
 import { SCHEMAS } from '@/lib/schemas';
@@ -31,14 +29,14 @@ import {recordUuid} from '@/lib/recordUuid';
 import StatusBadge from './StatusBadge';
 import RecordDrawer from './RecordDrawer';
 import { historicalRemediation, reviewRemediation } from '@/lib/remediation';
-import RecordSummary, {reviewStatus} from './RecordSummary';
+import {reviewStatus} from './RecordSummary';
 import EvidencePanel from './EvidencePanel';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import {auditPackage,auditProgress} from '@/lib/isoAudit';
 import CisReviewBrief from './CisReviewBrief';
 import {cisReviewBriefs} from '@/lib/cisOperations';
 
-const tabs = ['Overview','Related','Evidence','Comments','Activity'];
+const tabs = ['Overview','Requirements','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
 const date = value => value ? new Date(String(value).slice(0,10) + 'T00:00:00').toLocaleDateString() : '—';
 const outcome = o => o.outcome === 'no_findings' ? 'No findings recorded' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
@@ -47,8 +45,6 @@ const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scop
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user} = useAuth();
   const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferencePresentation(clientId,user) && (!record || record.client_id===clientId);
-  const clientPresentation=useContext(ClientPresentationContext),dialogLayout=pilot||!!clientPresentation;
-  const Root=dialogLayout?Dialog:Sheet, Content=dialogLayout?DialogContent:SheetContent;
   const opener=useRef(null),heading=useRef(null),cisBriefOpener=useRef(null);
   const [pending,setPending]=useState(null);
   const admin = ['super_admin','platform_admin'].includes(user?.role);
@@ -192,28 +188,24 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const allRelatedRows = Object.entries({...related,tasks:remediation.standaloneTasks}).flatMap(([kind,items]) => ['tasks','policies','vendors','risks','framework_assessments'].includes(kind) ? items.map(item => ({kind,item})) : []);
   const historicalCount = remediation.groups.filter(({finding})=>finding.status==='closed').length + allRelatedRows.filter(({kind,item})=>historicalRemediation(kind,item)).length;
   const relatedRows = allRelatedRows.filter(({kind,item})=>showHistorical || !historicalRemediation(kind,item));
-  return <Root open={open} onOpenChange={close}>
-    <Content aria-modal={clientPresentation?'true':undefined} {...(dialogLayout?{
+  return <Dialog open={open} onOpenChange={close}>
+    <DialogContent aria-modal="true" {...{
       onPointerDownOutside:e=>e.preventDefault(),
       onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},
       onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="reviews-search"]');target?.focus({preventScroll:true});}
-    }:{description:"Inspect this Review's schedule, supporting evidence, related work and completion history. Save configuration changes separately from completing the Review."})}
-      className={dialogLayout?"brawndo-cis-assessment bg-surface-card":"record-drawer w-full sm:max-w-2xl p-0 flex flex-col"} data-testid="reviews-drawer">
-      {dialogLayout&&<DialogDescription className="sr-only">Conduct this Review, edit its schedule and assigned reviewer, and access evidence, related work and completion history.</DialogDescription>}
-      <SheetHeader className={dialogLayout?"px-6 py-4 pr-12 border-b border-line shrink-0":"px-6 py-4 border-b border-line"}>
-        <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={dialogLayout?-1:undefined} className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
+    }}
+      className="brawndo-cis-assessment bg-surface-card" data-testid="reviews-drawer">
+      <DialogDescription className="sr-only">Conduct this Review, edit its schedule and assigned reviewer, and access evidence, related work and completion history.</DialogDescription>
+      <SheetHeader className="px-6 py-4 pr-12 border-b border-line shrink-0">
+        <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={-1} className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
           {!pilot&&shown && <div className="mt-2"><StatusBadge value={selected ? shown.status : reviewStatus(shown)} /></div>}</div>
-          {!dialogLayout&&<button aria-label="Close record" data-testid="drawer-close" onClick={() => close(false)}><X className="h-4 w-4" /></button>}</div>
-        {current && <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto">{tabs.map(t => <button key={t} data-testid={`tab-${t.toLowerCase()}`} className={`drawer-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); if (t === 'Related' || t === 'Activity') reload(); }}>{t}</button>)}</div>}
+          </div>
+        <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto">{(current?tabs:['Overview','Requirements']).map(t => <button key={t} data-testid={`tab-${t.toLowerCase()}`} className={`drawer-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); if (t === 'Related' || t === 'Activity') reload(); }}>{t}</button>)}</div>
       </SheetHeader>
-      <div className={dialogLayout?"flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5":"flex-1 overflow-y-auto px-6 py-5 space-y-4"}>
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
-          <CisReviewBrief record={{...current,...shown,client_id:cid}} historical={!!selected} onOpen={(r,target)=>{cisBriefOpener.current=target;setLinked({kind:'framework_assessments',record:r});}}/>
-          {pilot?<ReviewFacts record={shown} users={members} history={history}/>:!selected&&<RecordSummary kind="reviews" record={current} clientId={clientId} related={related} users={members}/>}
-          {pilot?<ReviewExpectations record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
-            policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.filter(p=>!(p.schedule_from_reviews&&p.next_review_date)).map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
-          <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members}/>}
+          <ReviewFacts record={shown} users={members} history={history}/>
           {shown?.iso_audit&&<section className="border border-line rounded p-3 space-y-2 text-sm" aria-label="Audit workpapers">
             <h3 className="font-medium">{auditPackage(shown.iso_audit.package_key)?.title}</h3>
             <p>Cycle {shown.iso_audit.cycle} · {auditProgress(shown.iso_audit).complete} of {auditProgress(shown.iso_audit).total} workpapers complete</p>
@@ -233,18 +225,16 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           </section>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {configFields.filter(f => (f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom') && (f.name !== 'policy_id' || !pilot && (configuration.review_type === 'policy' || configuration.policy_id))).map(field => {
-              const f=pilot&&field.name==='owner_id'?{...field,label:'Assigned Reviewer'}:field;
+              const f=field.name==='owner_id'?{...field,label:'Assigned Reviewer'}:field;
               const disabled = frozen || !admin, value = configuration[f.name] || '';
               if (f.type === 'policy') return <div key={f.name}>{picker(f.label,value,v=>setForm(p=>({...p,[f.name]:v})),policies.map(p=>({value:p.policy_id,label:p.title})),disabled || !!current,`field-${f.name}`)}</div>;
-              if (f.type === 'user') return <div key={f.name}><Label>{f.label}</Label><AssigneeSelect clientId={cid} label={f.label} value={value} onChange={v=>setForm(p=>({...p,[f.name]:v}))} disabled={disabled} users={members} testId={`field-${f.name}`}/></div>;
+              if (f.type === 'user') return <div key={f.name}><Label>{f.label}</Label><AssigneeSelect showManagePeople={false} clientId={cid} label={f.label} value={value} onChange={v=>setForm(p=>({...p,[f.name]:v}))} disabled={disabled} users={members} testId={`field-${f.name}`}/></div>;
               if (f.type === 'select') return <div key={f.name}>{picker(f.label,value,v => setForm(p => ({...p,[f.name]:v})), [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}</div>;
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
             <div><Label>Occurrence</Label><p className="text-sm py-2" data-testid="review-period">{selected?.period || derived.period}</p></div>
             <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{date(selected?.next_review_date || derived.next_review_date)}</p></div>
           </div>
-          {!pilot&&<GovernanceContextFields value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
-          <IsoManagementReviewGuide record={shown} related={related} historical={!!selected}/>
           <div><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>
           {current&&<details className="border border-line rounded p-3 text-sm"><summary className="cursor-pointer font-medium">Review evaluation</summary>
             <p className="my-2 text-ink-secondary">Completion records the activity; Finding counts and effectiveness are separate. Notes, existing records or external references may support your judgment. A separate uploaded file is not required. Evaluation below is recorded when you complete this occurrence.</p>
@@ -264,6 +254,14 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {current && !selected && <section className="border-t border-line pt-4" data-testid="review-history"><h3 className="font-medium text-sm mb-3">Review History</h3>
             {!history.length ? <p className="text-sm text-ink-help">No completed occurrences yet.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Occurrence','Due','Completed','Completed By','Outcome'].map(t => <th className="text-left font-medium py-2 pr-3" key={t}>{t}</th>)}</tr></thead><tbody>{history.map(o => <tr key={o.occurrence_id} className="border-t border-line"><td className="py-2 pr-3"><button className="underline text-left" onClick={() => chooseHistory(o)}>{o.period}</button></td><td className="pr-3">{date(o.due_date)}</td><td className="pr-3">{date(o.completed_at)}</td><td className="pr-3">{o.completed_by_name || person(o.completed_by)}</td><td>{outcome(o)}</td></tr>)}</tbody></table></div>}
           </section>}
+        </>}
+        {tab === 'Requirements' && <>
+          {pilot?<ReviewExpectations record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
+            policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.filter(p=>!(p.schedule_from_reviews&&p.next_review_date)).map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
+          <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members} readable/>}
+          {!pilot&&<GovernanceContextFields expanded value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
+          <CisReviewBrief record={{...current,...shown,client_id:cid}} historical={!!selected} onOpen={(r,target)=>{cisBriefOpener.current=target;setLinked({kind:'framework_assessments',record:r});}}/>
+          <IsoManagementReviewGuide record={shown} related={related} historical={!!selected}/>
         </>}
         {tab === 'Related' && <>
           <p className="text-sm text-ink-secondary">{selected?'Linked records from this occurrence.':'Linked records across this Review’s occurrences.'} Statuses below are current; use Activity for the transition history.</p>
@@ -290,8 +288,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {activity.map(a => <div key={a.log_id || a.audit_id} className="border-b border-line py-2 text-sm"><div className="text-xs text-ink-help">{new Date(a.at).toLocaleString()} · {a.meta?.by_name || a.user_name || a.user_email}</div><p>{a.action}{a.meta?.task_id ? ` · ${a.meta.task_id}` : a.meta?.finding_id ? ` · ${a.meta.finding_id}` : ''}{a.meta?.filename ? ` · ${a.meta.filename}` : ''}{a.meta?.due_date ? ` · ${date(a.meta.due_date)}` : ''}</p></div>)}
         </>}
       </div>
-      <div className="px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(async()=>{const {data}=await updateRecord.retry();setCurrent(data);await reload();onSaved?.();toast.success('Saved');})}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && tab === 'Overview' && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
-    </Content>
+      <div className="px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(async()=>{const {data}=await updateRecord.retry();setCurrent(data);await reload();onSaved?.();toast.success('Saved');})}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && ['Overview','Requirements'].includes(tab) && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
+    </DialogContent>
     {<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
       <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>
         <AlertDialogDescription>Saved records are unchanged. Keep editing, or discard the unfinished draft for this action.</AlertDialogDescription>
@@ -319,5 +317,5 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         </form>}
       </SheetContent>
     </Sheet>
-  </Root>;
+  </Dialog>;
 }
