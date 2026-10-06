@@ -594,7 +594,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     // Client roles see every field but may change only what the server accepts from them.
     const locked = !!clientFields && !clientFields.has(f.name);
     return (
-      <fieldset key={f.name} disabled={locked||(riskPilot||policyPilot)&&!canWrite} className={`space-y-1.5 min-w-0 ${f.type === "textarea" || !riskPilot&&!policyPilot&&["title", "name", "policy_id"].includes(f.name) ? "record-field-wide" : ""}`}>
+      <fieldset key={f.name} disabled={locked||(riskPilot||policyPilot)&&!canWrite} className={`space-y-1.5 min-w-0 ${f.type === "textarea" || ["title", "name", "policy_id"].includes(f.name) ? "record-field-wide" : ""}`}>
         <Label className="text-xs text-ink-secondary">{f.label}{f.required && <span className="text-semantic-critical ml-0.5">*</span>}</Label>
         {f.type === "textarea" ? (
           <Textarea value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} aria-label={f.label} data-testid={`field-${f.name}`} className="text-sm" />
@@ -935,11 +935,11 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${dialogLayout?' flex-wrap shrink-0':''}`}>
           {saveError&&<p role="alert" className="text-sm">{saveError}{updateRecord.unconfirmed()?' Save is unconfirmed; retry the original save before making another edit.':''}</p>}
           {isEdit&&updateRecord.unconfirmed()&&<Button size="sm" disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setSaveError('');try{const {data}=await updateRecord.retry();Object.assign(record,data);onSaved?.(data);toast.success('Saved');onOpenChange(false);}catch(e){setSaveError(formatError(e));toast.error(formatError(e));}finally{setSaving(false);}}}>Retry unconfirmed save</Button>}
+          {riskPilot&&isEdit&&canWrite&&!['closed','retired'].includes(record.status)&&<><Button size="sm" variant="outline" disabled={saving} onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Review Risk</Button>{isPlatformAdmin&&<><Button size="sm" variant="outline" disabled={saving} onClick={acceptRisk} data-testid="risk-accept">{record.status==='accepted'?'Renew Acceptance':'Accept Risk'}</Button><Button size="sm" variant="outline" disabled={saving} data-testid="risk-close" onClick={async()=>{if(dirty&&!await save(undefined,true))return;setClosure({reason:'remediated',note:''});}}>Close Risk</Button></>}</>}
           <Button variant="outline" size="sm" onClick={() => (pilot||actionLayout)?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion||riskPilot||policyPilot?'Close':'Cancel'}</Button>
           {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : vendorPilot?'Add to Register':"Create"}</Button>
           )}
-          {riskPilot&&isEdit&&canWrite&&!['closed','retired'].includes(record.status)&&<><Button size="sm" variant="outline" disabled={saving} onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Review Risk</Button>{isPlatformAdmin&&<><Button size="sm" variant="outline" disabled={saving} onClick={acceptRisk} data-testid="risk-accept">{record.status==='accepted'?'Renew Acceptance':'Accept Risk'}</Button><Button size="sm" variant="outline" disabled={saving} data-testid="risk-close" onClick={async()=>{if(dirty&&!await save(undefined,true))return;setClosure({reason:'remediated',note:''});}}>Close Risk</Button></>}</>}
           {pilot&&kind==='tasks'&&isEdit&&canWrite&&!taskCompletion&&!['done','cancelled'].includes(record.status)&&<Button size="sm" disabled={saving} onClick={()=>save('done')} data-testid="complete-action">Complete Action Item</Button>}
         </div>
       </Content>

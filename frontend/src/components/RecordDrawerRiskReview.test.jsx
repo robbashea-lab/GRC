@@ -33,6 +33,8 @@ test('normal Risk summary and status control preserve the assessed lifecycle lab
  const summary=[...document.querySelectorAll('dl div')].find(n=>n.querySelector('dt')?.textContent==='Status');
  expect(summary.querySelector('dd').textContent).toBe('Assessed');
  expect(document.querySelector('[data-testid="field-status"]').textContent).toBe('Assessed');
+ const footer=document.querySelector('[data-testid="drawer-cancel"]').parentElement;
+ expect([...footer.querySelectorAll('button')].map(b=>b.textContent)).toEqual(['Review Risk','Accept Risk','Close Risk','Close','Save changes']);
 });
 
 test('Review Risk after acceptance saves the draft and opens the real central Review without rewriting managed decisions',async()=>{
