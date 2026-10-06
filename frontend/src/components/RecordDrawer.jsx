@@ -166,7 +166,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
   const clientMayWork = user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
     (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id) || isBrawndoReference(clientId,user)&&kind==='tasks'&&!record?.assignee_id&&!record?.owner_id&&record?.created_by===user?.user_id);
-  const canWrite = (isPlatformAdmin || clientMayWork && (isEdit || kind === 'tasks')) && !(kind==="risks" && ["closed","retired"].includes(record?.status)) && !(policyPilot&&['retired','not_applicable'].includes(policyStatus(record||{})));
+  const canWrite = (isPlatformAdmin || clientMayWork && (isEdit || kind === 'tasks')) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
   const clientFields = editableFields(kind, user, record);
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
   const evidenceKind = kind === "tasks" ? "task" : singular;
@@ -834,7 +834,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Tab content dispatch --------
   function renderTabContent() {
-    if (policyPilot&&tab==='requirements') return <div className="space-y-5"><BrawndoPolicyDetails record={record} related={related} users={users} onOpen={openLinkedRecord}/><RequirementBasis readable kind="policies" record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/><GovernanceContextFields value={form.governance_context} cadence disabled={!canWrite} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{[record.onboarding_note,record.applicability_rationale,record.governance_context?.cadence_rationale].filter(Boolean).map((text,i)=><p className="text-sm whitespace-pre-wrap" key={i}>{text}</p>)}{relatedError?<p role="alert">{relatedError}</p>:renderRelated()}</div>;
+    if (policyPilot&&tab==='requirements') return <div className="space-y-5"><BrawndoPolicyDetails record={record} related={related} users={users} onOpen={openLinkedRecord}/><RequirementBasis readable kind="policies" record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/><GovernanceContextFields expanded value={form.governance_context} cadence disabled={!canWrite} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{[record.onboarding_note,record.applicability_rationale,record.governance_context?.cadence_rationale].filter(Boolean).map((text,i)=><p className="text-sm whitespace-pre-wrap" key={i}>{text}</p>)}{relatedError?<p role="alert">{relatedError}</p>:renderRelated()}</div>;
     if (policyPilot&&tab==='evidence') return <div className="space-y-5">{renderPolicyPanel()}<PolicyRetainedApproval record={record}/>{renderEvidence()}</div>;
     if (tab === "overview") return <>{record && !pilot && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{pilot&&kind==='findings'&&record&&<p className="mb-4 text-sm">Finding status: <StatusBadge value={record.status}/></p>}{riskPilot&&record&&<RiskSummary risk={form} users={users}/>} {renderOverview()}</>;
     if (tab === "activity") return renderActivity();

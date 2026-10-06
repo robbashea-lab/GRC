@@ -66,3 +66,13 @@ test('read-only access keeps assessment disabled and hides save',async()=>{
   expect(document.querySelector('[data-testid="field-impact_description"]').closest('fieldset').disabled).toBe(true);
   expect(document.querySelector('[data-testid="drawer-save"]').disabled).toBe(true);
 });
+
+test('shared Treatment retains existing Action Item linking for authorized users',async()=>{
+  delete mockUser.workspace_mode;risk.client_id='synthetic-new-client';
+  await act(async()=>root.render(<RecordDrawer open kind="risks" clientId={risk.client_id} record={risk} onOpenChange={()=>{}}/>));
+  await click(document.querySelector('[data-testid="tab-treatment"]'));
+  const link=[...document.querySelectorAll('button')].find(b=>b.textContent==='Link existing Action Item');
+  expect(link).toBeTruthy();
+  await click(link);
+  expect([...document.querySelectorAll('h2')].some(h=>h.textContent==='Link Action Item')).toBe(true);
+});

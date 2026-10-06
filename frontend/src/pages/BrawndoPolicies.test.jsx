@@ -17,7 +17,7 @@ beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:req
 const click=node=>act(async()=>node.click());
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();sessionStorage.clear();
+  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockUser.workspace_mode='demo';localStorage.clear();sessionStorage.clear();
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   rows=[{policy_id:'p',client_id:mockClient,title:'Access Policy',status:'draft',presence:'reported_missing',version:'1',onboarding_note:'Preserved historical note'}];
   api.get.mockImplementation(async path=>({data:path==='/policies'?rows:path==='/frameworks/summary'?{client_id:mockClient,items:[]}:path==='/related'?{}:path.endsWith('/approval-context')?{status:'draft',history:[],subject:null,can_configure:false,can_submit:false}:[]}));
@@ -98,6 +98,17 @@ test('approval draft cannot be silently lost through tabs or mixed with ordinary
   expect(dialog.querySelector('[aria-label="External document reference"]').value).toBe('DEMO synthetic document');
   expect(dialog.querySelector('[data-testid="field-title"]')).toBeNull();
   await click(dialog.querySelector('[data-testid="drawer-save"]'));expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each(['retired','not_applicable'])('normal administrator retains metadata editing for %s Policy',async status=>{
+  delete mockUser.workspace_mode;mockClient='synthetic-new-client';rows[0]={...rows[0],client_id:mockClient,status};
+  await act(async()=>root.render(<RecordDrawer open kind="policies" record={rows[0]} schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
+  const dialog=document.querySelector('[data-testid="policies-drawer"]');
+  expect(dialog.querySelector('[data-testid="field-title"]').disabled).toBe(false);
+  expect(dialog.querySelector('[data-testid="drawer-save"]').disabled).toBe(false);
+  await input(dialog.querySelector('[data-testid="field-title"]'),'Retained metadata edit');
+  await click(dialog.querySelector('[data-testid="drawer-save"]'));
+  expect(api.patch.mock.calls[0][1]).toEqual({title:'Retained metadata edit',expected_updated_at:null});
 });
 
 test('linked Brawndo Policy Review shows its next date from the scheduled cycle',async()=>{
