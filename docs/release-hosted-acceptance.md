@@ -85,6 +85,36 @@ The correcting PR's final acceptance handoff records those SHAs/results and
 supersedes the pending items here. PR42, PR43 and PR44 remain sequentially queued
 until that explicit handoff; no concurrent administrator logout is permitted.
 
+## Subsequent verified delivery and narrow close correction
+
+PR46 tested head `c5ca5cf96e95e1e7131c3085c06fd708865887d0` merged as
+`36c54e61d0f5966b0ad65499e83141a3b1c08754`. Its actual main-push
+[run 37442011627](https://github.com/robbashea-lab/GRC/actions/runs/37442011627)
+passed 217 suites / 1,557 tests / one snapshot, both builds, 631 backend tests
+plus 690 subtests and 99 disposable Mongo checks. Render automatically deployed
+that exact SHA as `dep-db2c48jncjis73cfjej0` in 1m50s; served normal bundle
+`main.35a614bc.js` matches its CI build. Private preview version 113 separately
+published the same source, retaining its URL and owner-only access.
+
+On 36c54e6, normal client selection and administrator authentication survived
+Demo entry, reset, guarded Contacts navigation/reload and sign-out. All four
+dashboard filters and 21 distinct framework destinations matched their counts.
+Labelled Action and assessment saves persisted, and the unified ticket retained
+both directions of source synchronization. These are actual hosted observations.
+
+Demo deep-linked Reviews exposed another narrow defect: the first Close removed
+the URL's id/occurrence but left the drawer open; a second Close worked. The
+linked-record effect reran on closing while BrowserRouter deferred parameter
+removal, allowing a fast Demo response to reopen it. The correction remembers
+the dismissed link until its parameters clear, preserving authorization and
+cancellation when another drawer is opened during a pending link request.
+The existing regression fixture now controls that navigation boundary without
+sleeps; the original effect fails its observable closed-drawer assertion.
+Normal backend Review closed on its first Close in the observed sequence.
+The subsequent correction's final PR handoff records exact tested/merged/deployed
+SHAs, preview version and final hosted acceptance; its deployment, final logout
+and verification remain pending until that handoff. PR42/43/44 are still queued.
+
 ## Limits retained
 
 Administrator browsing is not tenant-isolation proof. Hosted anonymous reads
