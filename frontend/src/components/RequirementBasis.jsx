@@ -20,23 +20,24 @@ export function GovernanceContextFields({value={},onChange,disabled=false,cadenc
     <label className="block text-sm">Reference URL (optional HTTPS)<Input aria-label="Reference URL" maxLength={2000} value={context.reference_url||''} onChange={e=>put('reference_url',e.target.value)}/></label>
   </fieldset></Container>;
 }
-export default function RequirementBasis({kind,record,related={},onOpen,loading=false,error='',historical=false,users=[],readable=false}) {
+export default function RequirementBasis({kind,record,related={},onOpen,loading=false,error='',historical=false,users=[],readable=false,reviewLayout=false}) {
   if(!record)return null;
   const Container=readable?'section':'details',Heading=readable?'h4':'summary';
   const groups=requirementBasis(kind,record,related),context=record.governance_context||{},cadence=cadenceBasis(record,groups);
-  return <section aria-label="Requirement basis" className="border border-line rounded-md p-3 space-y-3 text-sm break-words">
-    <h3 className="font-semibold">{kind==='policies'?'Governance basis':'Requirement basis'}</h3>
-    {loading&&<p role="status">Loading linked requirements…</p>}{error&&<p role="alert">Requirement relationships could not be loaded. {error}</p>}
-    {historical&&<p className="text-xs text-ink-secondary">Occurrence context is preserved; linked assessments and catalog references show their current state.</p>}
-    {record.created_at&&<p className="text-xs text-ink-secondary">Created {String(record.created_at).slice(0,10)}{record.created_by? ` · ${personLabel(users,record.created_by)}`:''}</p>}
-    {(record.framework_plan_key||record.baseline_key)&&<p className="text-xs text-ink-secondary">{record.framework_plan_key?'Linked framework plan':'Program baseline relationship'} · association does not establish the original creation method.</p>}
+  const sourceLinks=<>
     {kind!=='tasks'&&['review','finding','risk','policy','vendor'].filter(type=>record[type+'_id']&&type+'s'!==kind&&!(type==='policy'&&kind==='policies')).map(type=>{
       const sourceKind=type==='policy'?'policies':type+'s',key=type+'_id',target=(related[sourceKind]||[]).find(r=>r[key]===record[key]&&r.client_id===record.client_id);
       return <p key={type} className="text-xs">Source {type}: {target?<button className="text-link underline text-left" onClick={()=>onOpen?.({kind:sourceKind,record:target})}>{target.title||target.name}</button>:loading?'Loading…':'Linked record unavailable'}</p>;
     })}
-    {context.category&&<p className="font-medium">{BUSINESS_BASIS[context.category]}</p>}
-    {(context.rationale||record.framework_purpose||kind==='policies'&&record.summary)&&<div><h4 className="text-xs text-ink-secondary">Why this exists</h4><p className="whitespace-pre-wrap">{context.rationale||record.framework_purpose||record.summary}</p></div>}
+
+  </>;
+  const sourceContent=<>{!reviewLayout&&sourceLinks}{context.category&&<p className="font-medium">{BUSINESS_BASIS[context.category]}</p>}</>;
+  const CadenceHeading=reviewLayout?'p':'h4';
+  const expectationsContent=<>
+    {(context.rationale||record.framework_purpose||kind==='policies'&&record.summary)&&<div>{!reviewLayout&&<h4 className="text-xs text-ink-secondary">Why this exists</h4>}<p className="whitespace-pre-wrap">{context.rationale||record.framework_purpose||record.summary}</p></div>}
     {(record.framework_evidence_expectations||record.framework_completion_criteria)&&<Container><Heading className="cursor-pointer text-xs font-medium">Evidence &amp; completion guidance</Heading><div className="text-xs space-y-2 mt-2">{record.framework_evidence_expectations&&<p>{record.framework_evidence_expectations}</p>}{record.framework_completion_criteria&&<p>{record.framework_completion_criteria}</p>}</div></Container>}
+  </>;
+  const frameworkContent=<>
     {!groups.length&&!loading&&!error&&<p className="text-ink-secondary">No external requirement basis recorded. Organizational work does not require a framework association.</p>}
     {groups.map(group=><Container key={group.key} {...(!readable?{open:groups.length===1&&group.requirements.length<=5}:{})} className="border-t border-line pt-2">
       <Heading className="cursor-pointer font-medium">{group.label} <span className="font-normal text-xs text-ink-secondary">· {group.requirements.length} references · Supports requirements</span></Heading>
@@ -49,13 +50,33 @@ export default function RequirementBasis({kind,record,related={},onOpen,loading=
         <p className="text-xs"><SourceReference url={d.source}>{d.source_organization||group.label} · {d.id}</SourceReference>{d.verified_on&&` · Catalog researched ${d.verified_on}`}</p>
       </li>)}</ul>
     </Container>)}
-    {kind==='reviews'&&<div className="border-t border-line pt-3 space-y-2"><h4 className="font-medium">Cadence · {cadence.current}</h4><p className="text-xs text-ink-secondary">{cadence.classification}</p>{cadence.rationale&&<p>{cadence.rationale}</p>}
+  </>;
+  const frequencyContent=<>
+    {kind==='reviews'&&<div className="border-t border-line pt-3 space-y-2"><CadenceHeading className="font-medium">Cadence · {cadence.current}</CadenceHeading><p className="text-xs text-ink-secondary">{cadence.classification}</p>{cadence.rationale&&<p>{cadence.rationale}</p>}
       {cadence.proposed&&<p className="text-xs">Most frequent active explicit source interval: {cadence.proposed}. The configured client schedule is shown separately.</p>}
       {cadence.belowSource&&<p role="status" className="text-xs text-semantic-duesoon-text">Client schedule is less frequent than an active source interval. Review the source and adjust the central Review if appropriate.</p>}
       {cadence.sources.map(s=><Container key={s.key}><Heading className="cursor-pointer text-xs font-medium">{s.framework} · Source vs configured cadence{s.active===false?' · Historical driver (inactive)':''}</Heading><div className="mt-2 space-y-2 text-xs"><p>{s.source}</p>{s.minimum&&<p>Explicit source interval: {s.minimum}. Applies to the cited activity, not necessarily every operational safeguard in this Review.</p>}<p>Omnisciente setup default: {s.recommended}. A matching client schedule does not establish approval or an external mandate.</p>{s.reason&&<p>{s.reason}</p>}{s.refs.map((r,i)=><p key={i}><SourceReference url={r.source}>{r.definition_id} · {r.interval}</SourceReference></p>)}</div></Container>)}
     </div>}
+  </>;
+  return <section aria-label="Requirement basis" className={reviewLayout?"space-y-3 text-sm break-words":"border border-line rounded-md p-3 space-y-3 text-sm break-words"}>
+    {!reviewLayout&&<h3 className="font-semibold">{kind==='policies'?'Governance basis':'Requirement basis'}</h3>}
+    {loading&&<p role="status">Loading linked requirements…</p>}{error&&<p role="alert">Requirement relationships could not be loaded. {error}</p>}
+    {historical&&<p className="text-xs text-ink-secondary">Occurrence context is preserved; linked assessments and catalog references show their current state.</p>}
+    {record.created_at&&<p className="text-xs text-ink-secondary">Created {String(record.created_at).slice(0,10)}{record.created_by? ` · ${personLabel(users,record.created_by)}`:''}</p>}
+    {(record.framework_plan_key||record.baseline_key)&&<p className="text-xs text-ink-secondary">{record.framework_plan_key?'Linked framework plan':'Program baseline relationship'} · association does not establish the original creation method.</p>}
+    {reviewLayout?<div className="review-requirements-grid">
+      <div className="review-requirements-column">
+        <section className="review-requirements-section"><h4 className="font-medium">Requirement Source</h4>{groups.map(g=><p key={g.key}>{g.label} · {g.version}</p>)}{sourceContent}{(context.citation||context.reference_url)&&<p className="text-xs">Organization-entered reference: <SourceReference url={context.reference_url}>{context.citation||context.reference_url}</SourceReference></p>}</section>
+        <section className="review-requirements-section"><h4 className="font-medium">Review Expectation</h4>{expectationsContent}</section>
+      </div>
+      <div className="review-requirements-column">
+        <section className="review-requirements-section"><h4 className="font-medium">Review Frequency</h4>{frequencyContent}</section>
+        <section className="review-requirements-section"><h4 className="font-medium">Related framework items</h4>{frameworkContent}</section>
+        {['review','finding','risk','policy','vendor'].some(type=>record[type+'_id']&&type+'s'!==kind)&&<section className="review-requirements-section"><h4 className="font-medium">Originating record</h4>{sourceLinks}</section>}
+      </div>
+    </div>:<>{sourceContent}{expectationsContent}{frameworkContent}{frequencyContent}</>}
     {kind==='policies'&&<div className="border-t border-line pt-2"><h4 className="font-medium">Review cadence</h4><p className="text-xs text-ink-secondary">Linked Reviews own the schedule; no annual frequency is inferred from a review date.</p>{(related.reviews||[]).filter(r=>r.client_id===record.client_id&&(r.policy_id===record.policy_id||r.policy_ids?.includes(record.policy_id))).map(r=><button key={r.review_id} className="block text-link underline text-left mt-1" onClick={()=>onOpen?.({kind:'reviews',record:r})}>{r.title} · {r.recurrence||'Not scheduled'}</button>)}{context.cadence_rationale&&<p className="mt-2">{CADENCE_BASIS[context.cadence_source]||'Organization-entered'} · {context.cadence_rationale}</p>}</div>}
-    {(context.citation||context.reference_url)&&<p className="text-xs">Organization-entered reference: <SourceReference url={context.reference_url}>{context.citation||context.reference_url}</SourceReference></p>}
+    {!reviewLayout&&(context.citation||context.reference_url)&&<p className="text-xs">Organization-entered reference: <SourceReference url={context.reference_url}>{context.citation||context.reference_url}</SourceReference></p>}
     {record.framework_driver_active===false&&<p className="text-xs text-ink-secondary">Historical framework association retained. Existing Review recurrence remains until explicitly retired.</p>}
   </section>;
 }

@@ -255,9 +255,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           </section>}
         </>}
         {tab === 'Requirements' && <>
-          {pilot?<ReviewExpectations record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
+          {pilot?<ReviewExpectations reviewLayout record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
             policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.filter(p=>!(p.schedule_from_reviews&&p.next_review_date)).map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
-          <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members} readable/>}
+          <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members} readable reviewLayout/>}
           {!pilot&&<GovernanceContextFields expanded value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>}
           <CisReviewBrief record={{...current,...shown,client_id:cid}} historical={!!selected} onOpen={(r,target)=>{cisBriefOpener.current=target;setLinked({kind:'framework_assessments',record:r});}}/>
           <IsoManagementReviewGuide record={shown} related={related} historical={!!selected}/>
