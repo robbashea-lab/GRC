@@ -20,12 +20,14 @@ function storedMode(){try{return sessionStorage.getItem(MODE_KEY);}catch{return 
 export let PREVIEW_MODE = storedMode() === "demo" && DEMO_AVAILABLE;
 export function setWorkspaceMode(mode) {
   if (!["standard", "demo"].includes(mode) || (mode === "demo" && !DEMO_AVAILABLE)) throw new Error("Workspace unavailable.");
+  const wasDemo = PREVIEW_MODE;
   PREVIEW_MODE = mode === "demo";
   accessToken = null;
   try {
   sessionStorage.setItem(MODE_KEY, mode);
   localStorage.removeItem("grc_token");
-  localStorage.removeItem("grc_client_id");
+  sessionStorage.removeItem("grc_client_id");
+  if (!wasDemo && mode === "standard") localStorage.removeItem("grc_client_id");
   localStorage.removeItem("grc_demo_entered");
   sessionStorage.removeItem("grc_demo_entered");
   }catch(error){PREVIEW_MODE=false;throw demoStorageError(error,'write');}
