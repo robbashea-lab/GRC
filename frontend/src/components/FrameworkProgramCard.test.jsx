@@ -31,7 +31,7 @@ test('SOC 2 uses the same card shell with SOC 2 vocabulary and workspace links',
   expect(card.querySelector('.bd-donut')).not.toBeNull();
   expect(card.textContent).toContain('Partially Implemented');
   expect(card.textContent).toContain('Implemented33%2 of 6');
-  expect(card.textContent).not.toContain('Internal readiness, not an auditor opinion.');
+  expect(card.querySelector('.bd-program-note').textContent).toBe('Internal readiness, not an auditor opinion.');
   expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Not Implemented');
   // Same structure as the approved CIS card: class list of every element is identical.
   const shape=el=>[...el.querySelectorAll('*')].map(e=>e.tagName+'.'+(e.className.baseVal??e.className));
@@ -57,7 +57,7 @@ test.each(['cis-ig1','iso-27001','soc-2'])('%s hides calculation explanations wi
   expect([...card.querySelectorAll('.assessment-metric strong')].map(n=>n.textContent)).toEqual(['33%','83%']);
   expect([...card.querySelectorAll('.assessment-metric dd > span')].map(n=>n.textContent)).toEqual(['2 of 6','5 of 6']);
   expect(card.querySelector('.bd-legend li:last-child strong').textContent).toBe('1');
-  expect(card.textContent).not.toMatch(/Internal readiness, not an auditor opinion|Assessment progress, not a compliance determination/);
+  expect(card.querySelector('.bd-program-note').textContent).toBe(key==='soc-2'?'Internal readiness, not an auditor opinion.':'Assessment progress, not a compliance determination.');
 });
 test.each([['no records',[]],['all N/A',[{status:'not_applicable'},{status:'not_applicable'}]]])('%s: readiness is not calculated rather than shown as 0%%',async(_,rows)=>{
   await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[{key:'soc-2',label:'SOC 2',to:'/compliance/soc-2'}]} programRows={{'soc-2':rows}} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));
@@ -66,7 +66,7 @@ test.each([['no records',[]],['all N/A',[{status:'not_applicable'},{status:'not_
   expect(card.querySelector('[data-testid="readiness-empty"]').textContent).toBe('No applicable criteria yet: readiness not calculated.');
   expect(card.querySelector('.assessment-metrics')).toBeNull();
   expect(card.querySelector('details')).toBeNull();
-  expect(card.textContent).not.toContain('Internal readiness, not an auditor opinion.');
+  expect(card.querySelector('.bd-program-note').textContent).toBe('Internal readiness, not an auditor opinion.');
 });
 test('ISO donut and legend use the same applicable population as the percentage',async()=>{
   const rows=[{specification:'isms_clause',status:'addressed'},
@@ -80,4 +80,22 @@ test('ISO donut and legend use the same applicable population as the percentage'
   expect([...card.querySelectorAll('.bd-legend strong')].map(n=>n.textContent)).toEqual(['1','0','0','1','1']);
   expect(card.querySelector('.assessment-metrics').textContent).toContain('Implemented50%1 of 2');
   expect(rows[2].status).toBe('addressed');
+});
+
+test('programs precede Priority overview and retain every configured framework',async()=>{
+  await render([{key:'cis-ig1',implementation_group:3,label:'CIS Controls v8.1 IG3'},{key:'soc-2',label:'SOC 2'},{key:'iso-27001',label:'ISO 27001'}]);
+  const layout=container.querySelector('.bd-grid');
+  expect(layout.firstElementChild.getAttribute('aria-label')).toBe('Program condition');
+  expect(layout.lastElementChild.id).toBe('client-priority-queue');
+  expect([...layout.querySelectorAll('.bd-program h2')].map(n=>n.textContent)).toEqual(['CIS IG3','SOC 2','ISO 27001']);
+  expect(layout.querySelectorAll('.bd-program-progress .assessment-metrics')).toHaveLength(3);
+});
+
+test.each(['hipaa','nist-csf-2'])('%s retains static status and attention rows in the shared card',async key=>{
+  await render([{key,label:key}]);
+  const card=container.querySelector('.bd-program');
+  expect(card.querySelectorAll('.bd-legend .bd-static')).toHaveLength(5);
+  expect(card.querySelectorAll('.bd-gaps .bd-static')).toHaveLength(4);
+  expect(card.querySelectorAll('.bd-legend a,.bd-gaps a')).toHaveLength(0);
+  expect([...card.querySelectorAll('.bd-legend strong')].map(n=>n.textContent)).toEqual(['2','1','2','1','1']);
 });

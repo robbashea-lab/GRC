@@ -64,6 +64,11 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
         <span className="bd-tile-head"><span className="bd-tile-label">{label}</span><span className="bd-tile-icon"><Icon size={16} aria-hidden="true"/></span></span><span className="bd-tile-value">{g.total}</span>
       </button>;})}</div>
     <div className="bd-grid">
+      <aside className="bd-aside" aria-label="Program condition">
+        {carded.map(p=><FrameworkProgramCard key={p.key} program={p} rows={rowsFor[p.key]}/>)}
+        {programs.filter(p=>!rowsFor[p.key]).map(p=><section key={p.key} className="bd-card"><h2>{p.label}</h2><p className="bd-muted bd-small">{p.explanation}</p><Link to={p.to}>Open workspace</Link></section>)}
+        {!programs.length&&<section className="bd-card"><p className="bd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
+      </aside>
       <section className="bd-card bd-queue" aria-labelledby="client-priority-heading" id="client-priority-queue">
         <div className="bd-card-head"><div><h2 id="client-priority-heading">Priority overview</h2></div>
           {group.total>9&&!expanded&&<button type="button" className="bd-button" disabled={loading} onClick={()=>fetchPage(0)}>View all {group.total} items <ArrowRight size={14} aria-hidden="true"/></button>}
@@ -73,11 +78,7 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
         {items.length?<WorkTable items={items} onOpen={onOpen} asOf={queue.as_of}/>:<p className="bd-empty">{spec.empty}</p>}
         {expanded&&page&&<nav className="bd-pagination" aria-label="Work queue pages"><button type="button" className="bd-button" disabled={loading||page.offset===0} onClick={()=>fetchPage(Math.max(0,page.offset-page.limit))}>Previous page</button><span>Page {Math.floor(page.offset/page.limit)+1} of {Math.max(1,Math.ceil(page.total/page.limit))}</span><button type="button" className="bd-button" disabled={loading||!page.has_more} onClick={()=>fetchPage(page.offset+page.limit)}>Next page</button></nav>}
       </section>
-      <aside className="bd-aside" aria-label="Program condition">
-        {carded.map(p=><FrameworkProgramCard key={p.key} program={p} rows={rowsFor[p.key]}/>)}
-        {programs.filter(p=>!rowsFor[p.key]).map(p=><section key={p.key} className="bd-card"><h2>{p.label}</h2><p className="bd-muted bd-small">{p.explanation}</p><Link to={p.to}>Open workspace</Link></section>)}
-        {!programs.length&&<section className="bd-card"><p className="bd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
-      </aside>
+
     </div>
   </div>;
 }
