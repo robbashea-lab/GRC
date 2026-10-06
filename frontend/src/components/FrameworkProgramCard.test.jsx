@@ -90,3 +90,12 @@ test('programs precede Priority overview and retain every configured framework',
   expect([...layout.querySelectorAll('.bd-program h2')].map(n=>n.textContent)).toEqual(['CIS IG3','SOC 2','ISO 27001']);
   expect(layout.querySelectorAll('.bd-program-progress .assessment-metrics')).toHaveLength(3);
 });
+
+test.each(['hipaa','nist-csf-2'])('%s retains static status and attention rows in the shared card',async key=>{
+  await render([{key,label:key}]);
+  const card=container.querySelector('.bd-program');
+  expect(card.querySelectorAll('.bd-legend .bd-static')).toHaveLength(5);
+  expect(card.querySelectorAll('.bd-gaps .bd-static')).toHaveLength(4);
+  expect(card.querySelectorAll('.bd-legend a,.bd-gaps a')).toHaveLength(0);
+  expect([...card.querySelectorAll('.bd-legend strong')].map(n=>n.textContent)).toEqual(['2','1','2','1','1']);
+});
