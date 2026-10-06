@@ -7,9 +7,8 @@ import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
 import {occurrenceId,relatedReviewInitialValues} from '@/lib/reviewOccurrences';
 import {isReferencePresentation} from '@/lib/reference';
-import {policyStatus,policyStatusLabel,policyColumns,policyTiles,policyViewMatches} from '@/lib/brawndoPolicies';
-import {BrawndoPageHeader,BrawndoTiles,BrawndoChips} from '@/components/BrawndoPage';
-import {formatHistory} from '@/components/RegisterCells';
+import {policyStatus,policyStatusLabel,policyColumns,policyViewMatches} from '@/lib/brawndoPolicies';
+import {BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
 import {PolicyAlignment} from '@/components/BrawndoPolicyDetails';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -101,9 +100,8 @@ function EntityListPage({ kind }) {
   const { user } = useAuth();
   // Preserve the existing drawer's guarded completion workflow independently of list presentation.
   const guardedReviewDrawer = kind==='reviews' && isReferencePresentation(currentClientId,user);
-  const policiesPilot = kind==='policies' && isReferencePresentation(currentClientId,user);
-  // Policies pilot folds version and last review under the policy title.
-  const POLICY_HIDDEN=['version','last_reviewed_at'];
+  const policiesPilot = kind==='policies';
+  const POLICY_HIDDEN=['version'];
   const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c) : schema.columns;
   const [theme]=useBrawndoTheme();useBrawndoPortalTheme(policiesPilot,theme);
   const [alignmentTarget,setAlignmentTarget]=useState(null);
@@ -141,7 +139,7 @@ function EntityListPage({ kind }) {
   const signal = useMemo(() => signals.find(x => x.id === (params.get("signal") || (legacyReviewView==='unassigned'?'unowned':''))), [signals, params, legacyReviewView]);
   const requestedReviewTab = params.get('tab') || ({open:'all',upcoming:'due30',unassigned:'all'}[legacyReviewView] || legacyReviewView) || 'all';
   const reviewTab = requestedReviewTab==='completed'?'history':requestedReviewTab==='active'?'all':requestedReviewTab;
-  const policyView = ['approved','awaiting','due30'].includes(params.get('policyView')) ? params.get('policyView') : '';
+  const policyView = ['approved','awaiting','due30','overdue'].includes(params.get('policyView')) ? params.get('policyView') : '';
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
   const sortDir = params.get("sortDir") || defaultSort.dir;
@@ -485,7 +483,6 @@ function EntityListPage({ kind }) {
       />}
       {frameworkError&&<p role="alert">{frameworkError}</p>}
       {frameworkRecord&&frameworkRecord.client_id===currentClientId&&<FrameworkDrawer key={currentClientId+':'+frameworkRecord.framework_assessment_id} open reviewManagement record={frameworkRecord} clientId={currentClientId} onSaved={load} onOpenChange={v=>{if(!v){const next=new URLSearchParams(params);next.delete('framework_assessment');setFrameworkRecord(null);setParams(next,{replace:true});}}}/>}
-      {policiesPilot&&<BrawndoTiles label="Policy summary" loading={loading&&!tableSource.length} tiles={policyTiles(tableSource,programs,policyAssessments,new Date(),cisGroup).map(t=>t.id==='mapped'?t:{...t,pressed:policyView===t.id,onClick:()=>setParam('policyView',policyView===t.id?'':t.id)})}/>}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       {!policiesPilot && signals.length > 0 && <RegisterSignalBar signals={signals} rows={tableSource} active={signal?.id} onPick={setSignal} />}
       <div className="register-toolbar">
@@ -510,7 +507,7 @@ function EntityListPage({ kind }) {
         {isReviews ? (
           <ViewTabs views={REVIEW_TABS} active={columnStatusActive || signal ? null : reviewTab} onPick={setReviewTab} counts={reviewTabCounts} label="Review views" testid="reviews-tabs" testIdPrefix="reviews-tab-" />
         ) : policiesPilot ? (
-          <BrawndoChips label="Policy views" chips={[['','All'],['approved','Approved'],['awaiting','Awaiting approval'],['due30','Review due in 30 days']].map(([id,label])=>({id:id||'all',label,count:loading?null:tableSource.filter(r=>policyViewMatches(r,id)).length,pressed:policyView===id,onClick:()=>setParam('policyView',id&&policyView!==id?id:''),testid:`policy-view-${id||'all'}`}))}/>
+          <BrawndoChips label="Policy views" chips={[['','All'],['approved','Approved'],['awaiting','Awaiting approval'],['due30','Review due in 30 days'],['overdue','Overdue reviews']].map(([id,label])=>({id:id||'all',label,count:loading?null:tableSource.filter(r=>policyViewMatches(r,id)).length,pressed:policyView===id,onClick:()=>setParam('policyView',id&&policyView!==id?id:''),testid:`policy-view-${id||'all'}`}))}/>
         ) : (
           statusOptions.length > 0 && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -655,7 +652,7 @@ function EntityListPage({ kind }) {
                        c.date ? <HistoryDate value={row[c.key]} /> :
                        (
                          <span className="inline-flex items-center gap-2">
-                           {policiesPilot && c.primary ? <span className="brev-title"><button type="button" className="register-record-link">{row[c.key]}</button><span className={`bpage-meta${['draft','in_review','pending_approval'].includes(policyStatus(row))?' is-attention':''}`}>{[row.version&&`Version ${row.version}`,['draft','in_review','pending_approval'].includes(policyStatus(row))?'awaiting approval':formatHistory(row.last_reviewed_at)&&`last reviewed ${formatHistory(row.last_reviewed_at)}`].filter(Boolean).join(' · ')||'No version recorded'}</span></span>
+                           {policiesPilot && c.primary ? <span className="brev-title"><button type="button" className="register-record-link">{row[c.key]}</button></span>
                              : (isReviews||policiesPilot) && c.primary ? <button type="button" className="register-record-link">{row[c.key]}</button>
                              : isReviews && ['review_type','recurrence'].includes(c.key) ? <span className="register-value">{reviewDisplayValue(c.key,row[c.key])}</span>
                              : c.primary && kind === "policies" && policySupports(row, programs) ? <span className="inline-flex flex-col"><span>{row[c.key]}</span><span className="text-xs text-ink-secondary">Supports {policySupports(row, programs)}</span></span>

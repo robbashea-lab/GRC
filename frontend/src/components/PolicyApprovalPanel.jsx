@@ -56,7 +56,7 @@ export default function PolicyApprovalPanel({record, onChanged, compact=false, o
               <option value="">Not designated</option>{contacts.map(c=><option key={c.contact_id} value={c.contact_id}>{c.name}</option>)}
             </select>
           </label>
-          <AssigneeSelect clientId={cid} label="Authorized approver account" value={accountId} onChange={setAccountId} users={account?[account]:[]} emptyLabel="No delegated account" disabled={busy}/>
+          <AssigneeSelect showManagePeople={false} clientId={cid} label="Authorized approver account" value={accountId} onChange={setAccountId} users={account?[account]:[]} emptyLabel="No delegated account" disabled={busy}/>
           <p className="text-xs text-ink-secondary">This grants decision authority for this Policy only. It does not change client access or editing permissions.</p>
           <Button type="button" size="sm" disabled={busy} onClick={()=>act('approval-authority',{approver_contact_id:contactId||null,approval_account_id:accountId})}>Save approval authority</Button>
         </div>

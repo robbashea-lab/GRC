@@ -24,14 +24,14 @@ beforeEach(()=>{
   api.patch.mockImplementation(async(path,patch)=>({data:{...rows[0],...patch}}));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-test('Brawndo register removes summary cards and presence; client switching restores original experience',async()=>{
+test('approved register has six columns and no summary cards or title metadata across clients',async()=>{
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
   const headers=()=>[...container.querySelectorAll('th .column-control')].map(n=>n.textContent);
-  expect(headers()).toEqual(['Policy','Framework Alignment','Policy Status','Owner','Next Review']);
-  // Version and last review now sit under the title; drafts read as awaiting approval.
-  expect(container.querySelector('tbody .bpage-meta').textContent).toBe('Version 1'); // reported missing: Needs Creation, not awaiting approval
+  expect(headers()).toEqual(['Policy','Framework alignment','Policy status','Owner','Next review','Last review']);
+  expect(container.querySelector('tbody .bpage-meta')).toBeNull();
   expect(container.querySelector('h1').textContent).toBe('Policies');
-  expect(container.querySelector('[data-testid="tile-awaiting"]').textContent).toContain('Nothing awaiting approval');
+  expect(container.querySelector('[data-testid="tile-awaiting"]')).toBeNull();
+  expect(container.querySelector('[data-testid="policy-view-overdue"]')).toBeTruthy();
   expect(container.querySelector('[data-testid="policies-count"]').textContent).toBe('Showing 1 of 1 policy · next review first');
   await click(container.querySelector('[data-testid="policy-view-approved"]'));
   expect(container.querySelector('tbody').textContent).not.toContain('Access Policy');
@@ -43,8 +43,8 @@ test('Brawndo register removes summary cards and presence; client switching rest
   expect(container.querySelector('tbody').textContent).not.toContain('Access Policy');
   mockClient='demo_dunder';rows=rows.map(r=>({...r,client_id:mockClient}));
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
-  expect(headers()).toContain('Presence');expect(headers()).not.toContain('Framework Alignment');
-  expect(container.textContent).toContain('Review overdue');
+  expect(headers()).toEqual(['Policy','Framework alignment','Policy status','Owner','Next review','Last review']);
+  expect(container.querySelector('tbody .bpage-meta')).toBeNull();
 });
 test('centered policy retains legacy context and protects edits on close and failed save',async()=>{
   const close=jest.fn();
@@ -54,7 +54,11 @@ test('centered policy retains legacy context and protects edits on close and fai
   expect(dialog.querySelector('[data-testid="tab-related"]')).toBeNull();
   expect(dialog.querySelector('[data-testid="field-presence"]')).toBeNull();
   expect(dialog.querySelector('[data-testid="field-onboarding_note"]')).toBeNull();
+  expect(dialog.textContent).not.toContain('Preserved historical note');
+  expect(dialog.querySelector('[aria-label="Policy approval authority"]')).toBeNull();
+  await click(dialog.querySelector('[data-testid="tab-requirements"]'));
   expect(dialog.textContent).toContain('Preserved historical note');
+  await click(dialog.querySelector('[data-testid="tab-overview"]'));
   const title=dialog.querySelector('[data-testid="field-title"]');
   await input(title,'Updated Policy');
   await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
@@ -69,7 +73,7 @@ test('centered policy retains legacy context and protects edits on close and fai
   expect(api.patch.mock.calls[1][2]).toEqual(api.patch.mock.calls[0][2]);
   expect(close).toHaveBeenCalledWith(false);
 });
-test('new policy has one status control and no manufactured dates; non-pilot retains drawer',async()=>{
+test('new policy has one status control and no manufactured dates across clients',async()=>{
   await act(async()=>root.render(<RecordDrawer open kind="policies" schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
   const dialog=document.querySelector('[data-testid="policies-drawer"]');
   expect(dialog.querySelectorAll('#policy-status')).toHaveLength(1);
@@ -77,8 +81,8 @@ test('new policy has one status control and no manufactured dates; non-pilot ret
   expect(dialog.querySelector('[data-testid="field-approved_at"]')).toBeNull();
   mockClient='demo_dunder';
   await act(async()=>root.render(<RecordDrawer open kind="policies" schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
-  expect(document.querySelector('[data-testid="policies-drawer"]').className).toContain('record-drawer');
-  expect(document.querySelector('[data-testid="field-presence"]')).toBeTruthy();
+  expect(document.querySelector('[data-testid="policies-drawer"]').className).toContain('brawndo-cis-assessment');
+  expect(document.querySelector('[data-testid="field-presence"]')).toBeNull();
 });
 
 test('approval draft cannot be silently lost through tabs or mixed with ordinary edits',async()=>{
@@ -86,12 +90,13 @@ test('approval draft cannot be silently lost through tabs or mixed with ordinary
   api.get.mockImplementation(async(path,...args)=>path.endsWith('/approval-context')?{data:{status:'draft',history:[],can_submit:true}}:original(path,...args));
   await act(async()=>root.render(<RecordDrawer open kind="policies" record={rows[0]} schema={SCHEMAS.policies.fields} clientId={mockClient} users={[]} onOpenChange={()=>{}}/>));
   const dialog=document.querySelector('[data-testid="policies-drawer"]');
+  await click(dialog.querySelector('[data-testid="tab-evidence"]'));
   await click([...dialog.querySelectorAll('summary')].find(n=>n.textContent==='Approval document & version'));
   const reference=dialog.querySelector('[aria-label="External document reference"]');
   await input(reference,'DEMO synthetic document');
-  await click(dialog.querySelector('[data-testid="tab-evidence"]'));
+  await click(dialog.querySelector('[data-testid="tab-overview"]'));
   expect(dialog.querySelector('[aria-label="External document reference"]').value).toBe('DEMO synthetic document');
-  expect(dialog.querySelector('[data-testid="field-title"]').closest('fieldset.record-fields').disabled).toBe(true);
+  expect(dialog.querySelector('[data-testid="field-title"]')).toBeNull();
   await click(dialog.querySelector('[data-testid="drawer-save"]'));expect(api.patch).not.toHaveBeenCalled();
 });
 
@@ -109,5 +114,5 @@ test.each([1,2,3])('register uses configured IG%i even while assessment payload 
   api.get.mockImplementation(async(path,...args)=>path==='/frameworks/summary'?{data:{client_id:mockClient,items:[{key:'cis-ig1',tracking_available:true,implementation_group:group}]}}:original(path,...args));
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
   expect(container.querySelector('tbody').textContent).toContain(`Supports CIS IG${group}`);
-  expect(container.querySelector('[data-testid="tile-mapped"]').textContent).toContain(`Mapped to CIS IG${group}`);
+  expect(container.querySelector('[data-testid="tile-mapped"]')).toBeNull();
 });

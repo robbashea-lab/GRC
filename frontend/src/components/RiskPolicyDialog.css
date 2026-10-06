@@ -1,0 +1,14 @@
+/* Approved Risk/Policy proportions; other record dialogs retain their layout. */
+:root .ui-dialog.brawndo-cis-assessment[data-testid="risks-drawer"],
+:root .ui-dialog.brawndo-cis-assessment[data-testid="policies-drawer"] {
+  width: calc(100vw - 48px);
+  max-width: 990px;
+  height: min(88dvh, 900px);
+}
+@media (max-width: 750px) {
+  :root .ui-dialog.brawndo-cis-assessment[data-testid="risks-drawer"],
+  :root .ui-dialog.brawndo-cis-assessment[data-testid="policies-drawer"] {
+    width: calc(100vw - 28px);
+    height: calc(100dvh - 36px);
+  }
+}
