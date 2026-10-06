@@ -28,11 +28,17 @@ test.each(['reviews','policies'])('Prestige %s uses the reference register, them
   expect(container.querySelector('[data-theme="dark"]')).toBeTruthy();
   mockClient='unconverted-client';
   await act(async()=>root.render(page()));
-  // Reviews use the shared ClientSurface for every client, not a client-ID gate.
-  if(kind==='reviews'){
-    expect(container.querySelector('[data-theme="dark"]')).toBeTruthy();
-    expect(document.documentElement.dataset.brawndoPortal).toBe('dark');
-  }else expect(container.querySelector('[aria-label="Switch to light mode"]')).toBeNull();
+  // Approved Reviews and Policies layouts apply to every client, including new clients.
+  expect(container.querySelector('[data-theme="dark"]')).toBeTruthy();
+  expect(document.documentElement.dataset.brawndoPortal).toBe('dark');
+  if(kind==='policies'){
+    expect([...container.querySelectorAll('th .column-control')].map(n=>n.textContent)).toEqual(['Policy','Framework alignment','Policy status','Owner','Next review','Last review']);
+    expect(container.querySelector('[data-testid="policy-view-overdue"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="tile-awaiting"]')).toBeNull();
+  }
+  await act(async()=>container.querySelector('[aria-label="Switch to light mode"]').click());
+  expect(container.querySelector('[data-theme="light"]')).toBeTruthy();
+  expect(document.documentElement.dataset.brawndoPortal).toBe('light');
 });
 test('Prestige contacts retain the simplified directory',async()=>{
   await act(async()=>root.render(<Contacts/>));
