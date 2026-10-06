@@ -6,6 +6,7 @@ import {CisStatusPill} from './CisStatus';
 import {groupRequirements,sectionSummary} from '@/lib/frameworkWorkspace';
 import {cisScopeLabel} from '@/lib/cisScope';
 import {freshness} from '@/lib/cisVerification';
+import {FrameworkRecordButton} from './FrameworkRecordAccess';
 
 // Brawndo CIS IG1 controls: one breadcrumb (CIS IG1 › Control N › Safeguard N.M), whole-row navigation,
 // and a high-level safeguard list. Filters and search narrow the list; they are not navigation.
@@ -21,7 +22,7 @@ export function CisBreadcrumb({items,label='CIS IG1 location'}){
     return <li key={c.label}>{last||!c.onClick?<span ref={last?current:undefined} aria-current={last?'page':undefined}>{c.label}</span>:<button type="button" onClick={c.onClick}>{c.label}</button>}</li>;})}</ol></nav>;
 }
 
-export default function BrawndoCisControls({implementationGroup=1,scopeControls,clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,controlKey,onControl,onOpen,selected}){
+export default function BrawndoCisControls({implementationGroup=1,scopeControls,clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,controlKey,onControl,onOpen,onManage,selected}){
   const [members,setMembers]=useState([]);
   useEffect(()=>{const c=new AbortController();if(clientId)api.get(`/clients/${encodeURIComponent(clientId)}/members`,{signal:c.signal}).then(r=>{if(!c.signal.aborted)setMembers(Array.isArray(r.data)?r.data:[]);}).catch(()=>{});return()=>c.abort();},[clientId]);
   const groups=useMemo(()=>groupRequirements('cis-ig1',rows),[rows]);
@@ -39,7 +40,7 @@ export default function BrawndoCisControls({implementationGroup=1,scopeControls,
     </div>
     {scopeControls}
     {control&&<p className="bcis-control-name">{controlParts(control.label).name}</p>}
-    {list?<SafeguardList implementationGroup={implementationGroup} rows={list} owner={owner} onOpen={onOpen} label={filtered?filterLabel:control.label}/>:<ControlRows implementationGroup={implementationGroup} groups={groups} onControl={onControl} total={rows.length}/>}
+    {list?<SafeguardList implementationGroup={implementationGroup} rows={list} owner={owner} onOpen={onOpen} onManage={onManage} label={filtered?filterLabel:control.label}/>:<ControlRows implementationGroup={implementationGroup} groups={groups} onControl={onControl} total={rows.length}/>}
   </section>;
 }
 
@@ -53,7 +54,7 @@ function ControlRows({implementationGroup,groups,onControl,total}){
     <p className="bcis-foot">All {groups.length} IG{implementationGroup} controls · {total} safeguards.{implementationGroup===1&&absent.length&&!present.has(null)?` Control${absent.length===1?'':'s'} ${absent.join(', ').replace(/, (\d+)$/,' and $1')} ${absent.length===1?'has':'have'} no IG1 safeguards.`:''}</p></>;
 }
 
-function SafeguardList({implementationGroup,rows,owner,onOpen,label}){
+function SafeguardList({implementationGroup,rows,owner,onOpen,onManage,label}){
   if(!rows.length)return <p className="bcis-foot" role="status">No safeguards match this view.</p>;
   return <table className="bcis-table bcis-safeguards" aria-label={`${label}: ${rows.length} safeguards`}><thead><tr><th scope="col">Safeguard</th><th scope="col">Implementation status</th><th scope="col">Verification</th><th scope="col">Owner</th><th scope="col">Last assessed</th></tr></thead>
     <tbody>{rows.map(r=>{const v=verificationOf(r),fresh=freshness(r);
@@ -61,6 +62,6 @@ function SafeguardList({implementationGroup,rows,owner,onOpen,label}){
         <td><span className="bcis-sg"><span className="bcis-sg-id">{r.definition_id}</span><span className="bcis-name">{r.title}{implementationGroup>=2&&<span className="block text-xs text-ink-secondary">{cisScopeLabel(r)}</span>}</span></span></td>
         <td><CisStatusPill status={r.status} framework="cis-ig1"/></td>
         <td><span className={`cis-flag cis-tone-${VERIFICATION_TONE[v]}`}>{VERIFICATION_LABELS[v]}</span></td>
-        <td>{owner(r.owner_id)}</td>
+        <td>{owner(r.owner_id)}<FrameworkRecordButton record={r} onManage={onManage}/></td>
         <td className="bcis-muted">{fresh.state==='never'?'Never':new Date(String(r.last_assessed).slice(0,10)+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td></tr>;})}</tbody></table>;
 }

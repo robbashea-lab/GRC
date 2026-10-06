@@ -1,3 +1,4 @@
+import {FrameworkRecordButton} from './FrameworkRecordAccess';
 import {useEffect,useMemo,useState} from 'react';
 import api from '@/lib/api';
 import {SearchField} from './Register';
@@ -16,7 +17,7 @@ export const socCategoryLabel=key=>CATEGORY_LABELS[key]||key?.replaceAll('_',' '
 export const socCategoryCrumb=key=>CATEGORY_CRUMBS[key]||socCategoryLabel(key);
 export function SocStatusPill({status}){return <span className={`cis-pill cis-tone-${CIS_TONE[status]||'neutral'}`}><span className="cis-dot" aria-hidden="true"/>{SOC_STATUS_LABELS[status]||'Not Assessed'}</span>;}
 
-export default function PrestigeSocNavigator({clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,path,onPath,onOpen,selected}){
+export default function PrestigeSocNavigator({clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,path,onPath,onOpen,onManage,selected}){
   const [members,setMembers]=useState([]);
   useEffect(()=>{const c=new AbortController();if(clientId)api.get(`/clients/${encodeURIComponent(clientId)}/members`,{signal:c.signal}).then(r=>{if(!c.signal.aborted)setMembers(Array.isArray(r.data)?r.data:[]);}).catch(()=>{});return()=>c.abort();},[clientId]);
   const categories=useMemo(()=>groupRequirements('soc-2',rows||[]),[rows]);
@@ -31,7 +32,7 @@ export default function PrestigeSocNavigator({clientId,rows,visible,filtered,fil
   return <section className="bcis-card bcis-controls" aria-label="Trust Services Categories">
     <div className="bcis-controls-bar"><CisBreadcrumb items={crumbs} label="SOC 2 location"/><div className="bcis-controls-tools">{filtered&&<button type="button" className="bcis-chip-clear" onClick={onClear}>Clear filter</button>}<SearchField value={search} onChange={onSearch} label="Search criteria" placeholder="Search by number or title…"/></div></div>
     {group&&<p className="bcis-control-name">{group.label.replace(/^\S+\s*[—-]\s*/,'').trim()}</p>}
-    {list?<CriterionRows rows={list} owner={owner} onOpen={onOpen} label={filtered?filterLabel:group.label}/>:category?<GroupRows category={category} onPath={onPath}/>:<CategoryRows categories={categories} onPath={onPath} total={rows.length}/>}</section>;
+    {list?<CriterionRows rows={list} owner={owner} onOpen={onOpen} onManage={onManage} label={filtered?filterLabel:group.label}/>:category?<GroupRows category={category} onPath={onPath}/>:<CategoryRows categories={categories} onPath={onPath} total={rows.length}/>}</section>;
 }
 
 function attentionLabel(rows){const count=rows.filter(needsAttention).length;return count?`${count} need${count===1?'s':''} attention`:'None';}
@@ -45,9 +46,9 @@ function GroupRows({category,onPath}){
     return <tr key={g.id} className="bcis-row" tabIndex={0} role="link" aria-label={`Open ${g.label}`} data-testid={`soc-group-${g.id}`} onClick={()=>onPath([category.id,g.id])} onKeyDown={activate(()=>onPath([category.id,g.id]))}>
       <td className="bcis-num">{g.id}</td><td className="bcis-name">{g.label.replace(/^\S+\s*[—-]\s*/,'').trim()}</td><td>{s.assessed} of {applicable}</td><td className={s.attention?'bcis-att is-attention':'bcis-att is-good'}>{attentionLabel(g.rows)}</td></tr>;})}</tbody></table><p className="bcis-foot">{category.rows.length} criteria in {socCategoryLabel(category.id)}.</p></>;
 }
-function CriterionRows({rows,owner,onOpen,label}){
+function CriterionRows({rows,owner,onOpen,onManage,label}){
   if(!rows.length)return <p className="bcis-foot" role="status">No criteria match this view.</p>;
   return <table className="bcis-table bcis-safeguards" aria-label={`${label}: ${rows.length} criteria`}><thead><tr><th scope="col">Criterion</th><th scope="col">Implementation status</th><th scope="col">Verification</th><th scope="col">Owner</th><th scope="col">Last assessed</th></tr></thead><tbody>{rows.map(r=>{const v=verificationOf(r);
     return <tr key={r.framework_assessment_id} className="bcis-row" tabIndex={0} role="link" aria-label={`Open criterion ${r.definition_id} ${r.title}`} data-testid={`requirement-${r.definition_id}`} onClick={()=>onOpen(r)} onKeyDown={activate(()=>onOpen(r))}>
-      <td><span className="bcis-sg"><span className="bcis-sg-id">{r.definition_id}</span><span className="bcis-name">{r.title}</span></span></td><td><SocStatusPill status={r.status}/></td><td><span className={`cis-flag cis-tone-${VERIFICATION_TONE[v]}`}>{VERIFICATION_LABELS[v]}</span></td><td>{owner(r.owner_id)}</td><td className="bcis-muted">{socAssessmentDate(r)}</td></tr>;})}</tbody></table>;
+      <td><span className="bcis-sg"><span className="bcis-sg-id">{r.definition_id}</span><span className="bcis-name">{r.title}</span></span></td><td><SocStatusPill status={r.status}/></td><td><span className={`cis-flag cis-tone-${VERIFICATION_TONE[v]}`}>{VERIFICATION_LABELS[v]}</span></td><td>{owner(r.owner_id)}<FrameworkRecordButton record={r} onManage={onManage}/></td><td className="bcis-muted">{socAssessmentDate(r)}</td></tr>;})}</tbody></table>;
 }

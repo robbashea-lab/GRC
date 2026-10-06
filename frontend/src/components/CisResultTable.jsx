@@ -1,3 +1,4 @@
+import {FrameworkRecordButton} from './FrameworkRecordAccess';
 import {CisStatusPill} from './CisStatus';
 import {operatorVocabulary} from '@/lib/frameworkOperator';
 import {freshness,evidenceCurrent,directFindings,gapUntracked,verificationLadder} from '@/lib/cisVerification';
@@ -7,7 +8,7 @@ import {freshness,evidenceCurrent,directFindings,gapUntracked,verificationLadder
 const VERIFY={done:['success','Verified'],partial:['moderate','Not verified'],gap:['critical','Gap identified'],missing:['neutral','Not established']};
 function Tag({tone,children}){return <span className={`cis-flag cis-tone-${tone}`}>{children}</span>;}
 
-export default function CisResultTable({rows,onOpen,label,framework='cis-ig1'}){
+export default function CisResultTable({rows,onOpen,onManage,label,framework='cis-ig1'}){
   const today=new Date(),v=operatorVocabulary(framework);
   return <div className="cis-results" role="region" aria-label={`${label}: ${rows.length} ${v.items}`}>
     <table>
@@ -16,7 +17,7 @@ export default function CisResultTable({rows,onOpen,label,framework='cis-ig1'}){
         const w=r.work||{},fresh=freshness(r,today),verified=verificationLadder(r,{today}).find(s=>s.key==='validated');
         const [vt,vl]=r.status==='not_applicable'?['info','Not applicable']:VERIFY[verified.state];
         return <tr key={r.framework_assessment_id} data-testid={'requirement-'+r.definition_id}>
-          <td><button type="button" className="cis-results-open" onClick={()=>onOpen(r)}><span className="cis-safeguard-id">{r.definition_id}</span><span className="min-w-0"><span className="cis-safeguard-title block">{r.title}</span><span className="block text-xs text-ink-muted">{r.control_name}</span></span></button></td>
+          <td><button type="button" className="cis-results-open" onClick={()=>onOpen(r)}><span className="cis-safeguard-id">{r.definition_id}</span><span className="min-w-0"><span className="cis-safeguard-title block">{r.title}</span><span className="block text-xs text-ink-muted">{r.control_name}</span></span></button><FrameworkRecordButton record={r} onManage={onManage}/></td>
           <td data-label="Assessment"><CisStatusPill status={r.status} framework={framework}/></td>
           <td data-label="Verification"><Tag tone={vt}>{vl}</Tag></td>
           <td data-label="Evidence">{!w.evidence_count?<Tag tone={r.status==='addressed'?'moderate':'neutral'}>No evidence</Tag>:evidenceCurrent(r,today)?<span className="text-xs">{w.evidence_count} · {w.latest_evidence_at}</span>:<Tag tone="moderate">Over 12 months</Tag>}</td>

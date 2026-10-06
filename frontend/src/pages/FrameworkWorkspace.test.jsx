@@ -7,7 +7,7 @@ import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
-jest.mock('@/components/FrameworkDrawer',()=>({record,onNext,onOpenChange,breadcrumb})=><div data-testid="opened">{record.definition_id}<button onClick={onNext}>Next</button><button onClick={()=>onOpenChange(false)}>Close</button>{breadcrumb?.filter(c=>c.onClick).map(c=><button key={c.label} data-drawer-crumb onClick={c.onClick}>{c.label}</button>)}</div>);
+jest.mock('@/components/FrameworkDrawer',()=>({record,onNext,onOpenChange,breadcrumb,recordManagement})=><div data-testid="opened" data-management={recordManagement?'true':'false'}>{record.definition_id}<button onClick={onNext}>Next</button><button onClick={()=>onOpenChange(false)}>Close</button>{breadcrumb?.filter(c=>c.onClick).map(c=><button key={c.label} data-drawer-crumb onClick={c.onClick}>{c.label}</button>)}</div>);
 let mockNavigate,mockHistory,mockLocation;
 jest.mock('react-router-dom',()=>({useSearchParams:()=>{const [p,set]=require('react').useState(mockLocation.params);return [p,(next,options={})=>{mockHistory.push({search:String(next),...options});mockLocation.state=options.state??null;set(new URLSearchParams(next));}];},useLocation:()=>mockLocation,useNavigate:()=>mockNavigate,Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 let root,container;
@@ -31,6 +31,22 @@ const prestige=async({clientId='demo_prestige',selected=true}={})=>{mockUser.wor
  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[{user_id:'u1',name:'David Wallace'}]:response}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));return response;};
 const socSettings=()=>[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='Scope and observation period settings');
+
+test.each(['cis-ig1','soc-2','iso-27001'])('%s requirement rows expose exact contextual management separately from assessment',async frameworkKey=>{
+ const definition=frameworkCatalog(frameworkKey).requirements[0];
+ const row={framework_assessment_id:'exact-assessment',framework_key:frameworkKey,definition_id:definition.id,client_id:'a',status:'not_assessed'};
+ if(frameworkKey==='iso-27001')mockLocation.params=new URLSearchParams('iso_view=isms_clause');
+ api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:{configured:true,selected:true,definitions:[definition],assessments:[row],active_definition_ids:[definition.id],configuration:{implementation_group:1,categories:['security']},work:{}}}));
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="a"/>));
+ const search=container.querySelector('input[aria-label^="Search"]');
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,definition.id);search.dispatchEvent(new Event('input',{bubbles:true}));});
+ const manage=container.querySelector(`button[aria-label="Manage ${definition.id} ${definition.title}"]`);
+ expect(manage).toBeTruthy();await act(async()=>manage.click());
+ expect(container.querySelectorAll('[data-testid="opened"]')).toHaveLength(1);
+ expect(container.querySelector('[data-management="true"]').textContent).toContain(definition.id);
+ await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent==='Close').click());
+ expect(container.querySelector('[data-testid="opened"]')).toBeNull();
+});
 
 test.each(['demo_prestige','new-soc-client','later-enabled-soc'])('SOC workspace preserves criterion navigation without preparation or control panels for %s',async clientId=>{
  await prestige({clientId});

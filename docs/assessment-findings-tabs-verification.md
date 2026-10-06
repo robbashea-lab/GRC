@@ -30,3 +30,17 @@ Four disposable local identities verified server permissions: read-only and unas
 ## Reconciliation checkpoint, 2026-10-06
 
 Head `1226184d269a5ae5dc852f85f4799aa7384ddc88` preserves PR #46 Demo selection isolation and PR #47 Review Close/cancellation fixes. Independent final-head review found no blocking findings. The same 13 focused frontend suites passed **349 tests**; existing mock focus-event warnings remain. Both `node scripts/staging.cjs` (normal application plus isolated Demo) and `node scripts/preview.cjs build` passed on this source. Existing bundle-size and Node fs.F_OK deprecation advisories remain. Required CI is pending at this checkpoint. Merge, hosted session and publication await PR #42 completed acceptance and explicit GitHub handoff. The release owner's existing hosted limitations (completed evidence-download byte comparison, email, Atlas backup/restore and restricted-identity browser checks) remain unverified; local multi-user checks are distinct.
+## Bounded module relocation approved 2026-10-06
+
+The proposed mapping was recorded before implementation in PR #43 comment 6017272939. The user authorized minimum existing-module UI changes, with exactly three assessment tabs and no restored assessment footers.
+
+| Missing function | Former access | Destination |
+| --- | --- | --- |
+| Assessment owner assignment | Assessment responsibility footer | Contextual record-management action on existing Frameworks requirement rows; existing AssigneeSelect and guarded assessment PATCH. |
+| Complete assessment revisions/activity | Assessment View History footer | Same Frameworks contextual view, reusing AssessmentHistory and assessment activity. |
+| ISO assessment discussion | ISO discussion footer | Same Frameworks contextual view, existing assessment comment thread/command. |
+| New assessment-specific Risk/Policy/Vendor/Requirement links | Assessment relationship picker | Same contextual Frameworks view, existing relationship commands. Existing reverse module views remain the access path for linked records. |
+| Post-onboarding framework-aware Review create/link | Assessment FrameworkReviewSetup | Existing Reviews view reached with exact client/framework/assessment context; reuse FrameworkReviewSetup and existing server command. Assessment owners and Review owners remain separate. |
+| Evidence unlink | Supporting-record footer / Library | Existing Evidence Library only: correct its demonstrated pre-existing framework unlink command. Library already supplies discovery/download/upload/link, so no duplicate controls. |
+
+CIS operational confirmation invalidation remains the existing server/frontend invariant; operational responsibility footers stay removed. Existing onboarding plan initialization and ordinary Review schedule/ownership editing are reused, not replaced. No new tabs, dashboard, business rules or hosted accounts.
