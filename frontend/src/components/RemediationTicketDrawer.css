@@ -1,0 +1,11 @@
+:root .ui-dialog:is(.remediation-ticket-dialog, .action-record-dialog)[data-state] { width: calc(100vw - 60px); max-width: 1440px; }
+:root .ui-dialog.remediation-ticket-dialog[data-state] { padding: 24px; }
+.remediation-ticket-dialog .ticket-work-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 21px; min-width: 0; }
+.remediation-ticket-dialog .ticket-field-wide { grid-column: 1 / -1; }
+.remediation-ticket-dialog .ticket-work-fields label > :is(input, textarea, select) { margin-top: 5px; }
+.remediation-ticket-dialog .ticket-work-fields select { width: 100%; min-width: 0; }
+@media (max-width: 450px) {
+  :root .ui-dialog:is(.remediation-ticket-dialog, .action-record-dialog)[data-state] { width: calc(100vw - 24px); }
+  :root .ui-dialog.remediation-ticket-dialog[data-state] { padding: 18px 16px; }
+  .remediation-ticket-dialog .ticket-work-fields { grid-template-columns: minmax(0, 1fr); }
+}

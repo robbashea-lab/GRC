@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 
 // History is supplied for the selected label only, never used as candidate data.
 export default function AssigneeSelect({ clientId, value, onChange, label = 'Owner', disabled = false,
-  users = [], testId, required = false, emptyLabel = 'Unassigned', showGuidance = true }) {
+  users = [], testId, required = false, emptyLabel = 'Unassigned', showGuidance = true, showManagePeople = true }) {
   const { user } = useAuth();
   const helpId = useId();
   const [open, setOpen] = useState(false), [search, setSearch] = useState('');
@@ -70,7 +70,7 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
     </Popover>
     {showGuidance&&<p id={helpId} className="text-xs leading-relaxed text-ink-secondary">Only active platform users with access to this client can be assigned. Contacts alone are not eligible.</p>}
     {value && current?.status && current.status !== 'active' && <p className="text-xs text-ink-secondary">The recorded account is not active. Its assignment is retained until you choose a replacement.</p>}
-    {showGuidance&&<a href="/contacts" onClick={managePeople} className="inline-block text-xs text-link underline" aria-label="Manage people in a new tab">Manage people →</a>}
+    {showGuidance&&showManagePeople&&<a href="/contacts" onClick={managePeople} className="inline-block text-xs text-link underline" aria-label="Manage people in a new tab">Manage people →</a>}
     {peopleError && <p role="status" className="text-xs text-ink-secondary">{peopleError}</p>}
   </div>;
 }

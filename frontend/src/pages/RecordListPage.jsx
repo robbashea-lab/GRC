@@ -22,6 +22,8 @@ import PageHeader from "@/components/PageHeader";
 import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from '@/components/Register';
 import { DueDate, HistoryDate, OwnerCell } from '@/components/RegisterCells';
 import RegisterSignalBar from "@/components/RegisterSignalBar";
+import '@/components/BrawndoReviews.css';
+import { ColumnControl } from '@/components/TableControls';
 import Contacts from './Contacts';
 import { registerSignals } from "@/lib/registerSignals";
 import { frameworkCatalog } from "@/lib/frameworks";
@@ -74,14 +76,31 @@ const optionLabel = (schema, key, value) => schema.fields?.find((f) => f.name ==
 import {basisSummary} from '@/lib/requirementBasis';
 // Tab definitions for reviews — order matters (displayed as segmented control)
 const REVIEW_TABS = [
-  { id: "all", label: "All open" },
+  { id: "all", label: "All" },
   { id: "overdue", label: "Overdue" },
   { id: "due30", label: "Due in 30 days" },
   { id: "upcoming", label: "Due in 90 days" },
   { id: "needs_scheduling", label: "Needs Scheduling" },
   { id: "in_progress", label: "In Progress" },
-  { id: "mine", label: "Mine" },
+  { id: "mine", label: "Assigned to Me" },
 ];
+
+const REVIEW_COLUMN_MIN = {title:180,review_type:90,basis:100,status:100,owner_id:110,due_date:100,recurrence:90,next_review_date:110};
+function ReviewColumnHeader({table,column,width,onResize}) {
+  const drag=useRef(null),min=REVIEW_COLUMN_MIN[column.key]||90;
+  const resize=(target,value)=>onResize(column.key,value,Object.fromEntries([...target.closest('tr').querySelectorAll('th[data-column]')].map(header=>[header.dataset.column,header.getBoundingClientRect().width])));
+  return <th scope="col" className="tbl-head review-resizable-header" data-column={column.key} aria-sort={table.state.sort?.key===column.key?(table.state.sort.dir==='asc'?'ascending':'descending'):'none'}>
+    <ColumnControl table={table} column={column}/>
+    <span role="separator" tabIndex={0} aria-orientation="vertical" aria-label={`Resize ${column.label} column`} aria-valuemin={min} aria-valuemax={Math.max(800,width||0)} aria-valuenow={width?Math.round(width):undefined} className="review-column-resizer"
+      onFocus={e=>resize(e.currentTarget,e.currentTarget.parentElement.getBoundingClientRect().width)}
+      onClick={e=>e.stopPropagation()}
+      onPointerDown={e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();drag.current={x:e.clientX,width:e.currentTarget.parentElement.getBoundingClientRect().width};e.currentTarget.setPointerCapture(e.pointerId);e.currentTarget.focus();}}
+      onPointerMove={e=>{if(drag.current)resize(e.currentTarget,Math.max(min,Math.min(800,drag.current.width+e.clientX-drag.current.x)));}}
+      onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}
+      onPointerCancel={()=>{drag.current=null;}} onLostPointerCapture={()=>{drag.current=null;}}
+      onKeyDown={e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();e.stopPropagation();const current=width||e.currentTarget.parentElement.getBoundingClientRect().width;resize(e.currentTarget,e.key==='Home'?min:e.key==='End'?800:Math.max(min,Math.min(800,current+(e.key==='ArrowRight'?1:-1)*(e.shiftKey?40:10))));}}/>
+  </th>;
+}
 
 // Reviews are the historical record — delete is admin-only from the ... menu.
 function isReviewOverdue(row) {
@@ -204,6 +223,8 @@ function EntityListPage({ kind }) {
   const idField = ID_FIELD[kind];
   const ownerField = kind === "tasks" ? "assignee_id" : "owner_id";
   const isReviews = kind === "reviews";
+  const [reviewWidths,setReviewWidths]=useState({});
+  useEffect(()=>{setReviewWidths({});},[currentClientId,user?.user_id,kind]);
   const users = useClientPeople(currentClientId);
   const userMap = useMemo(() => peopleMap(users), [users]);
 
@@ -487,7 +508,7 @@ function EntityListPage({ kind }) {
       {frameworkRecord&&frameworkRecord.client_id===currentClientId&&<FrameworkDrawer key={currentClientId+':'+frameworkRecord.framework_assessment_id} open reviewManagement record={frameworkRecord} clientId={currentClientId} onSaved={load} onOpenChange={v=>{if(!v){const next=new URLSearchParams(params);next.delete('framework_assessment');setFrameworkRecord(null);setParams(next,{replace:true});}}}/>}
       {policiesPilot&&<BrawndoTiles label="Policy summary" loading={loading&&!tableSource.length} tiles={policyTiles(tableSource,programs,policyAssessments,new Date(),cisGroup).map(t=>t.id==='mapped'?t:{...t,pressed:policyView===t.id,onClick:()=>setParam('policyView',policyView===t.id?'':t.id)})}/>}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
-      {!policiesPilot && signals.length > 0 && <RegisterSignalBar signals={signals} rows={tableSource} active={signal?.id} onPick={setSignal} />}
+      {!policiesPilot && !isReviews && signals.length > 0 && <RegisterSignalBar signals={signals} rows={tableSource} active={signal?.id} onPick={setSignal} />}
       <div className="register-toolbar">
         <SearchField label={`Search ${schema.title.toLowerCase()}`} testid={`${kind}-search`} value={q} onChange={setQ} placeholder={`Search ${schema.title.toLowerCase()}…`} />
         {hasUrlFilters && (
@@ -508,7 +529,10 @@ function EntityListPage({ kind }) {
           </div>
         )}
         {isReviews ? (
+          <div className="review-view-row">
           <ViewTabs views={REVIEW_TABS} active={columnStatusActive || signal ? null : reviewTab} onPick={setReviewTab} counts={reviewTabCounts} label="Review views" testid="reviews-tabs" testIdPrefix="reviews-tab-" />
+          <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review History'}</Button>
+          </div>
         ) : policiesPilot ? (
           <BrawndoChips label="Policy views" chips={[['','All'],['approved','Approved'],['awaiting','Awaiting approval'],['due30','Review due in 30 days']].map(([id,label])=>({id:id||'all',label,count:loading?null:tableSource.filter(r=>policyViewMatches(r,id)).length,pressed:policyView===id,onClick:()=>setParam('policyView',id&&policyView!==id?id:''),testid:`policy-view-${id||'all'}`}))}/>
         ) : (
@@ -523,7 +547,6 @@ function EntityListPage({ kind }) {
             </Select>
           )
         )}
-        {isReviews && <Button variant="link" size="sm" onClick={() => setReviewTab(reviewTab === 'history' ? 'all' : 'history')} data-testid="reviews-history-link">{reviewTab === 'history' ? 'Back to active Reviews' : 'Review history'}</Button>}
         {!policiesPilot && <RegisterCount shown={filtered.length} total={isReviews && !columnStatusActive && signal?.id!=='recent' ? tableSource.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : tableSource.length} />}
       </div>
 
@@ -600,8 +623,8 @@ function EntityListPage({ kind }) {
         <TableFilterChips table={table} />
         <RegisterLoadError error={loadError} onRetry={load} name="records" />
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
-          <table className="w-full">
-            {isReviews && <colgroup><col className="register-col-check" />{displayColumns.map(c => <col key={c.key} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
+          <table className="w-full" style={isReviews&&Object.keys(reviewWidths).length?{width:72+displayColumns.reduce((sum,c)=>sum+(reviewWidths[c.key]||REVIEW_COLUMN_MIN[c.key]||90),0)}:undefined}>
+            {isReviews && <colgroup><col className="register-col-check" />{displayColumns.map(c => <col key={c.key} style={reviewWidths[c.key]?{width:reviewWidths[c.key]}:undefined} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
             <thead>
               <tr>
                 <th className="tbl-head w-8">
@@ -612,7 +635,7 @@ function EntityListPage({ kind }) {
                     aria-label={`Select all ${kind.replaceAll('_',' ')}`}
                   />
                 </th>
-                {columns.filter(c=>!policiesPilot||!POLICY_HIDDEN.includes(c.key)).map(c => <SortableHeader key={c.key} table={table} column={c} data-column={isReviews ? c.key : undefined} />)}
+                {columns.filter(c=>!policiesPilot||!POLICY_HIDDEN.includes(c.key)).map(c => isReviews?<ReviewColumnHeader key={c.key} table={table} column={c} width={reviewWidths[c.key]} onResize={(key,width,initial)=>setReviewWidths(p=>({...initial,...p,[key]:width}))}/>:<SortableHeader key={c.key} table={table} column={c} />)}
                 <th scope="col" className="tbl-head w-10"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>

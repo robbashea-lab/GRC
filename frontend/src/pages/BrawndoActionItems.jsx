@@ -6,7 +6,7 @@ import {useActionRegisterData} from '@/lib/useActionRegisterData';
 import {unifiedActions,pilotActionMatches,pilotActionStatus,pilotActionColumns,pilotPriority,finished} from '@/lib/brawndoActions';
 import {tableColumns} from '@/lib/tableColumns';
 import RecordDrawer from '@/components/RecordDrawer';
-import {BrawndoSurface,BrawndoPageHeader,BrawndoTiles,BrawndoChips,plural,shortDate,daysUntil} from '@/components/BrawndoPage';
+import {BrawndoSurface,BrawndoPageHeader,BrawndoChips,plural} from '@/components/BrawndoPage';
 import {PrimaryAction,SearchField,SortableHeader} from '@/components/Register';
 import {useTableControls,TableFilterChips,FilterEmpty,ColumnControl} from '@/components/TableControls';
 import {DueDate,OwnerCell} from '@/components/RegisterCells';
@@ -21,18 +21,6 @@ const views=[['active','Active'],['overdue','Overdue'],['in_progress','In Progre
 const nouns={active:'active',overdue:'overdue',in_progress:'in-progress',open:'open',completed:'completed',upcoming:'due-in-30-days',unassigned:'unassigned active',high_critical:'high / critical Finding'};
 const due=r=>r.due_date?String(r.due_date).slice(0,10):'9999-99-99';
 const soonest=(a,b)=>due(a)<due(b)?-1:due(a)>due(b)?1:0;
-// Summary tiles derived only from loaded rows.
-export function actionTiles(rows,now=new Date()){
-  const of=id=>rows.filter(r=>pilotActionMatches(r,id,now)).sort(soonest);
-  const overdue=of('overdue'),upcoming=of('upcoming'),active=of('active'),unassigned=of('unassigned');
-  const late=overdue[0]&&-daysUntil(overdue[0].due_date,now);
-  return [
-    {id:'overdue',label:'Overdue',tone:'critical',count:overdue.length,context:overdue.length?`${plural(late,"day")} late · ${overdue[0].title}`:'Nothing past due'},
-    {id:'upcoming',label:'Due in 30 days',tone:'attention',count:upcoming.length,context:upcoming.length?`Next: ${upcoming[0].title}, ${shortDate(upcoming[0].due_date)}`:'Nothing due in the next 30 days'},
-    {id:'active',label:'All active',tone:'neutral',count:active.length,context:`${active.length-overdue.length} on schedule`},
-    {id:'unassigned',label:'Unassigned',tone:'attention',count:unassigned.length,context:unassigned.length?`${plural(unassigned.length,'item')} without an owner`:'Every action item has an owner'},
-  ];
-}
 const labels={open:'Open',in_progress:'In Progress',overdue:'Overdue',completed:'Completed',pending_validation:'Pending Validation'};
 
 export function FindingsRoute(){
@@ -74,17 +62,16 @@ export default function BrawndoActionItems(){
   const canWrite=['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(user?.role);
   return <BrawndoSurface className="register-surface brawndo-ai">
     <BrawndoPageHeader eyebrow={`${clientName} · Corrective actions`} title="Action Items">{canWrite&&<>{['super_admin','platform_admin'].includes(user?.role)&&<Button variant="outline" onClick={()=>setDrawer({kind:'findings',record:null})}>New Finding</Button>}<PrimaryAction label="New Action Item" testid="new-action-item" onClick={()=>setDrawer({kind:'tasks',record:null})}/></>}</BrawndoPageHeader>
-    <BrawndoTiles label="Action summaries" loading={loading&&!rows.length} tiles={actionTiles(rows).map(t=>({...t,pressed:view===t.id,onClick:()=>selectView(view===t.id?'all':t.id)}))}/>
     <div className="register-toolbar"><SearchField label="Search action items" placeholder="Search action items…" testid="ai-search" value={q} onChange={changeSearch}/>
       <div data-testid="ai-views"><BrawndoChips label="Action Item views" chips={views.map(v=>({id:v.id,label:v.label,count:rows.filter(r=>pilotActionMatches(r,v.id)).length,pressed:view===v.id,testid:'ai-view-'+v.id,onClick:()=>selectView(view===v.id?'all':v.id)}))}/></div>
       <div className="brawndo-ai-source-filter"><ColumnControl table={table} columnKey="source_type"/></div>
     </div>
     <div className="register-body">{(params.get('owner')||params.get('unassigned')==='1')&&<div className="text-sm my-2">Assigned To: {params.get('unassigned')==='1'?'Unassigned':users.find(u=>u.user_id===(params.get('owner')==='__me__'?user.user_id:params.get('owner')))?.name||'Selected user'} <button className="underline" onClick={()=>{const next=new URLSearchParams(params);next.delete('owner');next.delete('unassigned');setParams(next,{replace:true});}}>Clear assignment filter</button></div>}<TableFilterChips table={table}/><RegisterLoadError error={error||deepLinkError} name="action items" onRetry={()=>{opened.current='';setDeepLinkError('');load();}}/>
-      <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto"><table className="w-full text-sm min-w-[860px]"><thead><tr>{['title','priority','owner_id','due_date','status'].map(key=><SortableHeader key={key} table={table} columnKey={key}/>)}</tr></thead><tbody className="divide-y divide-line">
+      <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto"><table className="w-full text-sm brawndo-ai-table"><colgroup>{[49,10,16,12,13].map((width,i)=><col key={i} style={{width:width+'%'}}/>)}</colgroup><thead><tr>{['title','priority','owner_id','due_date','status'].map(key=><SortableHeader key={key} table={table} columnKey={key}/>)}</tr></thead><tbody className="divide-y divide-line">
         {loading&&!rows.length&&<TableLoadingRow colSpan={5}/>}
         {!loading&&!error&&!filtered.length&&<tr><td colSpan={5} className="py-10"><FilterEmpty table={table} name="action items" onClear={()=>setParams(new URLSearchParams('view=all'),{replace:true})}/></td></tr>}
         {filtered.map((r,i)=><tr key={r.kind+':'+r.id} data-testid={`ai-row-${i}`} className={`row-hover row-open${pilotActionMatches(r,'overdue')?' bpage-late':''}`} onClick={()=>open(r)}>
-          <td className="tbl-cell max-w-sm"><button className="register-record-link text-left" onClick={e=>{e.stopPropagation();open(r);}}>{r.title}</button>{r.finding&&<span className="bpage-meta line-clamp-2">Finding: {r.issue||'Issue description not recorded'}</span>}<span className="bpage-meta">Originated from: {r.source.target?<button className="text-link underline text-left" onClick={e=>{e.stopPropagation();setDrawer({kind:r.source.kind,record:r.source.target,initialValues:r.source.initialValues});}}>{r.source.label}</button>:<span>{r.source.id?'Linked source unavailable · '+r.source.id:r.source.label}</span>}{r.source.detail&&` · ${r.source.detail}`}</span>{r.diagnostic&&<span className="bpage-meta">{r.diagnostic}</span>}</td>
+          <td className="tbl-cell"><button className="register-record-link text-left" onClick={e=>{e.stopPropagation();open(r);}}>{r.title}</button>{r.finding&&<span className="bpage-meta brawndo-ai-finding line-clamp-2"><strong>Finding:</strong> {r.issue||'Issue description not recorded'}</span>}<span className="bpage-meta brawndo-ai-origin">Originated from: {r.source.target?<button className="text-link underline text-left" onClick={e=>{e.stopPropagation();setDrawer({kind:r.source.kind,record:r.source.target,initialValues:r.source.initialValues});}}>{r.source.label}</button>:<span>{r.source.id?'Linked source unavailable · '+r.source.id:r.source.label}</span>}{r.source.detail&&` · ${r.source.detail}`}</span>{r.diagnostic&&<span className="bpage-meta">{r.diagnostic}</span>}</td>
           <td className="tbl-cell"><SeverityBadge value={r.priority||'unknown'} label={pilotPriority(r.priority)}/></td>
           <td className="tbl-cell"><OwnerCell people={users} id={r.owner_id} status={r.raw.status}/></td>
           <td className="tbl-cell">{r.due_date?<DueDate iso={r.due_date} closed={finished(r)}/>:<span className="text-ink-secondary">No due date</span>}</td>

@@ -54,3 +54,27 @@ test('visual treatment does not grant write actions to a viewer',async()=>{
   expect(container.querySelector('[data-testid="create-reviews-button"]')).toBeNull();
   expect(container.querySelector('[data-testid="reviews-delete-0"]')).toBeNull();
 });
+
+test('Review column boundaries resize with keyboard and pointer without sorting or opening a record',async()=>{
+  await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+  const header=container.querySelector('th[data-column="title"]'),handle=header.querySelector('[role="separator"]');
+  header.getBoundingClientRect=()=>({width:240});
+  expect(handle.hasAttribute('aria-valuenow')).toBe(false);
+  await act(async()=>handle.focus());
+  expect(handle.getAttribute('aria-valuenow')).toBe('240');
+  await act(async()=>handle.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));
+  expect(handle.getAttribute('aria-valuenow')).toBe('250');
+  expect(container.querySelector('.register-col-title').style.width).toBe('250px');
+  await act(async()=>handle.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true})));
+  expect(handle.getAttribute('aria-valuenow')).toBe('180');
+  handle.setPointerCapture=jest.fn();handle.hasPointerCapture=()=>true;handle.releasePointerCapture=jest.fn();
+  const pointer=(type,x)=>{const event=new MouseEvent(type,{bubbles:true,button:0,clientX:x});Object.defineProperty(event,'pointerId',{value:1});return event;};
+  await act(async()=>handle.dispatchEvent(pointer('pointerdown',100)));
+  await act(async()=>handle.dispatchEvent(pointer('pointermove',145)));
+  expect(handle.getAttribute('aria-valuenow')).toBe('285');
+  await act(async()=>handle.dispatchEvent(pointer('pointerup',145)));
+  await act(async()=>handle.click());
+  expect(header.getAttribute('aria-sort')).toBe('none');
+  expect(container.querySelector('[data-testid="opened-record"]')).toBeNull();
+  expect(document.querySelector('[role="menu"]')).toBeNull();
+});

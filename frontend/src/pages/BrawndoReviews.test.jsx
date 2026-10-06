@@ -90,40 +90,38 @@ test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s share
   expect(container.querySelectorAll('thead th')).toHaveLength(10);
   expect(container.querySelector('th[data-column="basis"]').textContent).toContain('Basis');
   expect(container.querySelector('th[data-column="owner_id"]').textContent).toContain('Owner');
-  const signal=label=>[...container.querySelectorAll('.register-signal')].find(b=>b.querySelector('.register-signal-label').textContent===label);
   const tab=id=>container.querySelector(`[data-testid="reviews-tab-${id}"]`);
   const count=()=>container.querySelectorAll('tr[data-testid^="reviews-row-"]').length;
-  expect(tab('all').textContent).toBe('All open3');
+  expect(tab('all').textContent).toBe('All3');
   expect(tab('overdue').textContent).toBe('Overdue1');
   expect(tab('due30').textContent).toBe('Due in 30 days1');
   expect(tab('upcoming').textContent).toBe('Due in 90 days1');
-  expect(signal('Due in 14 days').querySelector('.register-signal-value').textContent).toBe('1');
-  expect(signal('No owner').querySelector('.register-signal-value').textContent).toBe('2');
+  expect(container.querySelector('.register-signals')).toBeNull();
   // Open work is the default; closed reviews live behind history.
   expect(count()).toBe(3);
   expect(tab('all').getAttribute('aria-pressed')).toBe('true');
-  await click(signal('Due in 14 days'));
+  await click(tab('due30'));
   expect(count()).toBe(1);
   expect(container.querySelector('[data-testid="reviews-row-0"]').textContent).toContain('Due today');
   expect(tab('all').getAttribute('aria-pressed')).toBe('false');
   await click(tab('overdue'));
   expect(count()).toBe(1);
-  expect(signal('Due in 14 days').getAttribute('aria-pressed')).toBe('false');
+
   expect(tab('overdue').getAttribute('aria-pressed')).toBe('true');
   expect(container.querySelector('[data-testid="reviews-status-0"]').textContent).toBe('overdue');
   await input(container.querySelector('[data-testid="reviews-search"]'),'no match');
-  expect(tab('all').textContent).toBe('All open3');
+  expect(tab('all').textContent).toBe('All3');
   await click(button('Clear filters'));
   expect(count()).toBe(3);
   await click(tab('mine'));
   expect(count()).toBe(0);
-  await click(signal('No owner'));
-  expect(count()).toBe(2);
-  await click(button('Review history'));
+  await click(tab('all'));
+  expect(count()).toBe(3);
+  await click(button('Review History'));
   expect(count()).toBe(1);
   expect(container.querySelector('[data-testid="reviews-row-0"]').textContent).toContain('Completed review');
   await click(button('Back to active Reviews'));
-  await click(signal('No owner'));
+  await click(tab('all'));
   rows=rows.map(r=>({...r,client_id:'different-client'}));mockClient='different-client';
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
   expect(container.querySelector('.page-title').textContent).toBe('Reviews');
@@ -131,13 +129,12 @@ test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s share
   expect(container.querySelector('.register-signals [aria-pressed="true"]')).toBeNull();
 });
 
-test('recent-completion signal includes completed and recurring active reviews counted in its summary',async()=>{
+test('removed recent-completion indicator preserves its existing bookmarked filter',async()=>{
+  mockSearch='?signal=recent';
   const completed_at=new Date().toISOString();
   rows=rows.map(r=>['late','closed'].includes(r.review_id)?{...r,occurrences:[{completed_at}]}:r);
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
-  const signal=button('Completed in last 30 days');
-  expect(signal.querySelector('.register-signal-value').textContent).toBe('2');
-  await click(signal);
+  expect(container.querySelector('.register-signals')).toBeNull();
   const shown=[...container.querySelectorAll('tr[data-testid^="reviews-row-"]')].map(r=>r.textContent);
   expect(shown).toHaveLength(2);
   expect(shown.join(' ')).toContain('Late active review');
@@ -159,7 +156,7 @@ test('shared Review summaries and rows never count another client',async()=>{
   rows.push({...rows[0],client_id:'other-client',review_id:'foreign',title:'Another client review'});
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
   expect(container.querySelector('[data-testid="reviews-tab-overdue"]').textContent).toBe('Overdue1');
-  expect(container.querySelector('[data-testid="reviews-tab-all"]').textContent).toBe('All open3');
+  expect(container.querySelector('[data-testid="reviews-tab-all"]').textContent).toBe('All3');
   expect(container.textContent).not.toContain('Another client review');
 });
 
@@ -182,7 +179,11 @@ test('default client surface reuses the centered Review shell without enabling p
   await act(async()=>root.render(<ClientPresentationContext.Provider value="Future client"><ReviewDrawer open record={saved} clientId={mockClient} onOpenChange={()=>{}}/></ClientPresentationContext.Provider>));
   const dialog=document.querySelector('[data-testid="reviews-drawer"]');
   expect(dialog.className).toContain('brawndo-cis-assessment');
+  expect(dialog.querySelector('[aria-label="Requirement basis"]')).toBeNull();
+  await click(dialog.querySelector('[data-testid="tab-requirements"]'));
   expect(dialog.querySelector('[aria-label="Requirement basis"]')).not.toBeNull();
+  expect(dialog.querySelector('details')).toBeNull();
+  await click(dialog.querySelector('[data-testid="tab-overview"]'));
   expect(dialog.querySelector('[data-testid="field-policy_id"]')).not.toBeNull();
   expect(dialog.querySelector('h2').getAttribute('tabindex')).toBe('-1');
   expect(dialog.getAttribute('aria-modal')).toBe('true');
@@ -194,7 +195,11 @@ test('centered detail preserves policy/context and guards unsaved and failed sav
   const dialog=document.querySelector('[data-testid="reviews-drawer"]');
   expect(dialog.className).toContain('brawndo-cis-assessment');
   expect(dialog.textContent).toContain('Assigned Reviewer');
+  expect(dialog.textContent).not.toContain('Access Control Policy');
+  await click(dialog.querySelector('[data-testid="tab-requirements"]'));
   expect(dialog.textContent).toContain('Access Control Policy');
+  expect(dialog.querySelector('details')).toBeNull();
+  await click(dialog.querySelector('[data-testid="tab-overview"]'));
   expect(dialog.querySelector('[data-testid="field-policy_id"]')).toBeNull();
   expect(dialog.querySelector('[aria-label="Requirement basis"]')).toBeNull();
   const notes=dialog.querySelector('[data-testid="field-notes"]');
@@ -218,8 +223,10 @@ test('centered detail preserves policy/context and guards unsaved and failed sav
 test('a caller cannot enable the pilot for another client',async()=>{
   const record={...saved,client_id:'demo_dunder'};
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={record} clientId="demo_dunder" onOpenChange={()=>{}}/>));
-  expect(document.querySelector('[data-testid="reviews-drawer"]').className).toContain('record-drawer');
+  expect(document.querySelector('[data-testid="reviews-drawer"]').className).toContain('brawndo-cis-assessment');
+  await click(document.querySelector('[data-testid="tab-requirements"]'));
   expect(document.querySelector('[aria-label="Requirement basis"]')).toBeTruthy();
+  expect(document.querySelector('[aria-label="Requirement & Review Expectations"]')).toBeNull();
 });
 test('unfinished comments cannot be lost by completing an occurrence',async()=>{
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
@@ -232,10 +239,60 @@ test('unfinished comments cannot be lost by completing an occurrence',async()=>{
   expect(document.querySelector('[data-testid="comment-input"]').value).toBe('Unposted operator note');
 });
 
+test('Requirements edits retain the Overview draft and save without changing the configured cadence',async()=>{
+  await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+  await input(document.querySelector('[data-testid="field-notes"]'),'Retained Overview draft');
+  await click(document.querySelector('[data-testid="tab-requirements"]'));
+  expect(document.querySelector('[data-testid="tab-overview"]').nextElementSibling.textContent).toBe('Requirements');
+  expect(document.querySelector('[data-testid="reviews-drawer"] details')).toBeNull();
+  await input(document.querySelector('[aria-label="Review expectation"]'),'Organization-entered expectation draft');
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Retained Overview draft');
+  await click(document.querySelector('[data-testid="tab-requirements"]'));
+  expect(document.querySelector('[aria-label="Review expectation"]').value).toBe('Organization-entered expectation draft');
+  await click(document.querySelector('[data-testid="drawer-save"]'));
+  expect(api.patch.mock.calls[0][1]).toEqual(expect.objectContaining({notes:'Retained Overview draft',governance_context:{rationale:'Organization-entered expectation draft'},expected_occurrence_id:'occ_late'}));
+  expect(api.patch.mock.calls[0][1]).not.toHaveProperty('recurrence');
+});
+
+test('Assigned to Me uses the current user assignment and excludes history',async()=>{
+  rows=rows.map(r=>['late','closed'].includes(r.review_id)?{...r,owner_id:mockUser.user_id}:r);
+  await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+  await click(container.querySelector('[data-testid="reviews-tab-mine"]'));
+  const shown=[...container.querySelectorAll('tr[data-testid^="reviews-row-"]')].map(r=>r.textContent);
+  expect(shown).toHaveLength(1);expect(shown[0]).toContain('Late active review');
+  expect(container.querySelector('[data-testid="reviews-tab-mine"]').textContent).toContain('Assigned to Me');
+});
+
+test.each([['normal-client',false,'in_progress','Overdue'],['normal-client',false,'open','Open'],['demo_brawndo',true,'in_progress','In Progress']])('%s summary preserves the existing status priority for %s',async(clientId,pilot,status,label)=>{
+  mockClient=clientId;saved={...saved,client_id:clientId,status,due_date:status==='open'?'2099-01-01':'2020-01-01'};
+  await act(async()=>root.render(<ReviewDrawer open reviewsPilot={pilot} record={saved} clientId={clientId} onOpenChange={()=>{}}/>));
+  const summary=[...document.querySelectorAll('[aria-label="Review details"] dl > div')].find(row=>row.querySelector('dt').textContent==='Status');
+  expect(summary.querySelector('dd').textContent.toLowerCase()).toBe(label.toLowerCase());
+});
+
+test.each([false,true])('normal-client %s existing Review retains drafts and requires explicit discard on close',async existing=>{
+  mockClient='normal-client';saved={...saved,client_id:mockClient,framework_key:undefined,framework_drivers:undefined};const close=jest.fn();
+  await act(async()=>root.render(<ReviewDrawer open record={existing?saved:null} clientId={mockClient} onOpenChange={close}/>));
+  await input(document.querySelector('[data-testid="field-notes"]'),'Normal Review draft');
+  await click(document.querySelector('[data-testid="tab-requirements"]'));
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  const closeButton=()=>[...document.querySelectorAll('[data-testid="reviews-drawer"] button')].find(b=>b.textContent==='Close');
+  await click(closeButton());
+  expect(document.querySelector('[role="alertdialog"]')).toBeTruthy();expect(close).not.toHaveBeenCalled();
+  await click([...document.querySelectorAll('[role="alertdialog"] button')].find(b=>b.textContent==='Keep editing'));
+  expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Normal Review draft');
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();expect(close).not.toHaveBeenCalled();
+  await click(closeButton());
+  await click([...document.querySelectorAll('[role="alertdialog"] button')].find(b=>b.textContent==='Discard changes'));
+  expect(close).toHaveBeenCalledWith(false);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
 test('new pilot reviews do not wait for nonexistent requirement relationships',async()=>{
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   const dialog=document.querySelector('[data-testid="reviews-drawer"]');
   expect(dialog.textContent).not.toContain('Loading linked requirements');
+  await click(dialog.querySelector('[data-testid="tab-requirements"]'));
   expect(dialog.textContent).toContain('Requirement source not documented');
 });
 
@@ -257,9 +314,12 @@ test('optional Review evaluation is protected as a draft and sent only on comple
 test('normal ISO management Review shows guide beside existing fields and protects Notes drafts without widening shared behavior',async()=>{
  mockClient='normal-iso';saved={...saved,client_id:mockClient,framework_key:'iso-27001',framework_plan_key:'iso-management-review',review_type:'management',notes:'Leadership agenda v1'};const close=jest.fn();
  await act(async()=>root.render(<ReviewDrawer open record={saved} clientId={mockClient} onOpenChange={close}/>));
+ expect(document.querySelector('[data-testid="iso-management-review-guide"]')).toBeNull();
+ await click(document.querySelector('[data-testid="tab-requirements"]'));
  expect(document.querySelector('[data-testid="iso-management-review-guide"]')).toBeTruthy();
- const guide=document.querySelector('[data-testid="iso-management-review-guide"]'),notes=document.querySelector('[data-testid="field-notes"]');
- expect(guide.compareDocumentPosition(notes)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ expect(document.querySelector('details')).toBeNull();
+ await click(document.querySelector('[data-testid="tab-overview"]'));
+ const notes=document.querySelector('[data-testid="field-notes"]');
  await input(notes,'Unfinished leadership decisions');
  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close'));
  expect(document.body.textContent).toContain('Leave unsaved changes?');expect(close).not.toHaveBeenCalled();
@@ -274,7 +334,9 @@ test('ISO historical management results remain read-only with separately labelle
  await act(async()=>root.render(<ReviewDrawer open record={saved} clientId={mockClient} initialValues={{occurrence:historical}} onOpenChange={()=>{}}/>));
  expect(document.querySelector('[data-testid="field-notes"]').value).toBe('Retained leadership minutes v1');
  expect(document.querySelector('[data-testid="field-notes"]').disabled).toBe(true);
+ await click(document.querySelector('[data-testid="tab-requirements"]'));
  expect(document.body.textContent).toContain('does not replace the retained historical conclusions');
+ await click(document.querySelector('[data-testid="tab-overview"]'));
  expect(document.body.textContent).toContain('Retained decision v1');
  expect(document.body.textContent).toContain('Annex A SoA snapshot captured at completion');
  expect(document.body.textContent).toContain('outside this snapshot');
