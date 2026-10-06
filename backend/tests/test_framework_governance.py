@@ -88,6 +88,42 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200, response.text)
         return (await self.client.get('/api/frameworks/cis-ig1', params={'client_id': (body or self.body())['client_id']})).json()
 
+    async def test_ownership_preserves_assessment_and_rejects_stale_editors(self):
+        workspace=await self.configure()
+        source=workspace['assessments'][0]
+        for framework in ('cis-ig1','iso-27001'):
+            with self.subTest(framework=framework):
+                aid='ownership-'+framework
+                row={**source,'framework_assessment_id':aid,'framework_key':framework,
+                     'definition_id':'1.1' if framework=='cis-ig1' else '4.1',
+                     'status':'addressed','implementation':'Existing assessment',
+                     'owner_id':None,'last_assessed':'2026-01-01T00:00:00+00:00',
+                     'assessed_by':'admin','assessment_history':[{'at':'2026-01-01T00:00:00+00:00','status':'addressed'}]}
+                row.pop('last_saved',None)
+                await server.db.framework_assessments.insert_one(row)
+                path='/api/framework_assessments/'+aid
+                token=row['last_assessed']
+                owned=await self.client.patch(path,json={'owner_id':'admin','expected_last_assessed':token})
+                self.assertEqual(owned.status_code,200,owned.text)
+                current=owned.json()
+                for field in ('last_assessed','assessed_by','assessment_history'):
+                    self.assertEqual(current[field],row[field])
+                self.assertNotEqual(current['last_saved'],token)
+                for payload in ({'notes':'Stale assessment'},{'owner_id':None}):
+                    stale=await self.client.patch(path,json={**payload,'expected_last_assessed':token})
+                    self.assertEqual(stale.status_code,409,stale.text)
+                full=await self.client.patch(path,json={'notes':'New assessment','expected_last_assessed':current['last_saved']})
+                self.assertEqual(full.status_code,200,full.text)
+                saved=full.json()
+                self.assertEqual(saved['last_saved'],saved['last_assessed'])
+                self.assertEqual(len(saved['assessment_history']),2)
+                stale=await self.client.patch(path,json={'owner_id':None,'expected_last_assessed':current['last_saved']})
+                self.assertEqual(stale.status_code,409,stale.text)
+                self.sign_in('member')
+                denied=await self.client.patch(path,json={'owner_id':None,'expected_last_assessed':saved['last_saved']})
+                self.assertEqual(denied.status_code,403,denied.text)
+                self.sign_in('admin')
+
     def test_evidence_older_than_twelve_months_range(self):
         from datetime import date
         from evidence_context import date_match

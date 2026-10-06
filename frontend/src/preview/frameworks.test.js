@@ -62,6 +62,24 @@ test('stale assessment save preserves the newer conclusion and history',async()=
   expect(saved.assessment_history[0]).not.toHaveProperty('expected_last_assessed');
 });
 
+test.each(['cis-ig1','iso-27001'])('%s ownership saves preserve assessment evidence and reject stale writers',async framework=>{
+  await configure(state([framework]));
+  const workspace=await get('frameworks/'+framework),row=workspace.assessments[0];
+  const path='/framework_assessments/'+row.framework_assessment_id;
+  const assessed=(await api.patch(path,{notes:'Previously assessed narrative',expected_last_assessed:row.last_saved??row.last_assessed??null})).data;
+  const prior=JSON.parse(JSON.stringify(assessed));
+  const owned=(await api.patch(path,{owner_id:'demo_admin',expected_last_assessed:prior.last_saved})).data;
+  for(const field of ['last_assessed','assessed_by','assessment_history','notes'])expect(owned[field]).toEqual(prior[field]);
+  expect(owned.last_saved).not.toBe(prior.last_saved);
+  await expect(api.patch(path,{notes:'Stale narrative',expected_last_assessed:prior.last_saved})).rejects.toThrow('Assessment changed since it was opened');
+  await expect(api.patch(path,{owner_id:null,expected_last_assessed:prior.last_saved})).rejects.toThrow('Assessment changed since it was opened');
+  const ownershipToken=owned.last_saved;
+  const saved=(await api.patch(path,{notes:'Fresh assessment',expected_last_assessed:ownershipToken})).data;
+  expect(saved.last_saved).toBe(saved.last_assessed);
+  expect(saved.assessment_history).toHaveLength(prior.assessment_history.length+1);
+  await expect(api.patch(path,{owner_id:null,expected_last_assessed:ownershipToken})).rejects.toThrow('Assessment changed since it was opened');
+});
+
 test.each([[],['cis-ig1'],['hipaa'],['iso-27001','soc-2'],['cis-ig1','hipaa','nist-csf-2']])('selection %j creates only implemented requirements and reviews',async(...args)=>{
   const programs=args;
   expect((await get('frameworks/cis-ig1')).assessments).toHaveLength(0);

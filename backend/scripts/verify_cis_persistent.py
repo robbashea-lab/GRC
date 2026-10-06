@@ -129,7 +129,7 @@ def run(args):
         if method == 'PATCH' and path.startswith('/framework_assessments/') and 'expected_last_assessed' not in body:
             snapshot = client.get(path)
             if snapshot.status_code == 200:
-                body = {**body, 'expected_last_assessed': snapshot.json().get('last_assessed')}
+                body = {**body, 'expected_last_assessed': snapshot.json().get('last_saved') or snapshot.json().get('last_assessed')}
         headers = {'Idempotency-Key': str(uuid.uuid4())} if method == 'POST' else {}
         response = client.request(method, path, json=body, headers=headers) if body is not None else client.request(method, path, headers=headers)
         assert response.status_code == expected, f'{method} {path}: HTTP {response.status_code}, expected {expected}'
@@ -303,7 +303,7 @@ def run(args):
         check('Mongo process restart, same directory: fresh login / actual bytes / state / history', lambda: restarting(True))
         def outage_retry():
             before = request(writer, 'GET', base)
-            draft = {'notes': 'Synthetic API retry retained payload', 'expected_last_assessed': before.get('last_assessed')}
+            draft = {'notes': 'Synthetic API retry retained payload', 'expected_last_assessed': before.get('last_saved') or before.get('last_assessed')}
             stop_api()
             try:
                 writer.patch(base, json=draft)

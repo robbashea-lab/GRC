@@ -49,7 +49,8 @@ test.each(['client_grc_manager','client_contributor'])('%s can edit an assigned 
  expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(false);
  expect(button('Create or link recurring Review')).toBeUndefined();
  expect(button('Link Evidence')).toBeUndefined();expect(button('Unlink')).toBeUndefined();
- expect(container.textContent).toContain('Validation.txt');
+ expect(container.textContent).not.toContain('Validation.txt');
+ expect(related.evidence[0].filename).toBe('Validation.txt');
 });
 
 test('framework configuration selects distinct workspaces without tenant identities',()=>{
@@ -67,17 +68,17 @@ test('Brawndo overview no longer offers program configuration',async()=>{
 });
 async function tick(el){await act(async()=>el.click());}
 
-test('approved two-tab layout hides metadata rows and retains saved badges and supporting workflows',async()=>{
+test('approved three-tab layout hides metadata rows and retains saved badges and supporting workflows',async()=>{
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
- expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria']);
+ expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
  expect(container.querySelector('[role=tab][data-state=active]').textContent).toBe('Requirement & implementation');
  expect(container.querySelector('[aria-label="Verification result"]')).toBeNull();expect(container.querySelector('.bcsg-metadata')).toBeNull();
- expect(container.querySelector('[data-testid="cis-supporting-records"]').open).toBe(false);expect(container.querySelector('[data-testid="cis-operation"]').open).toBe(false);
+ expect(container.querySelector('[data-testid="cis-supporting-records"]')).toBeNull();expect(container.querySelector('[data-testid="cis-operation"]')).toBeNull();
  expect(container.querySelector('h2').textContent).toBe('Establish and Maintain Detailed Enterprise Asset Inventory');
  expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
  expect(container.querySelector('.assessment-summary').open).toBe(false);
  expect(container.querySelector('.assessment-implementation').children).toHaveLength(2);
- expect(container.querySelector('.bcsg-findings').parentElement.textContent).toContain('Current implementation');
+ expect(container.querySelector('.bcsg-findings').closest('[role=tabpanel]').id).toMatch(/findings$/);
 
 });
 test('What CIS Requires labels the summary and links the official reference; official_text renders verbatim when supplied',async()=>{
@@ -125,7 +126,7 @@ test.each(catalog.requirements)('approved layout applies to safeguard $id for a 
  expect(container.querySelector('.assessment-summary p').textContent).toBe(guide.requirements[definition.id].plain);expect(container.querySelector('.assessment-summary').open).toBe(false);
  await criteriaTab();expect(container.querySelector('.assessment-criteria-columns').children).toHaveLength(3);
  expect(container.querySelectorAll('.assessment-check')).toHaveLength(criteriaData.requirements[definition.id].criteria.length);
- expect(container.querySelector('.bcsg-findings').parentElement.textContent).toContain('Current implementation');expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+ expect(container.querySelector('.bcsg-findings').closest('[role=tabpanel]').id).toMatch(/findings$/);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 
 });
 
@@ -170,10 +171,10 @@ test('other clients retain their assessment content with explicit modal semantic
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
  expect(container.textContent).toContain('Implementation status');expect(container.textContent).toContain('Assessment criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
-test('ISO assessments expose the existing organizational controls section',async()=>{
+test('ISO assessments omit supplemental organizational controls without changing stored records',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} position="1 of 30"/>));
- expect(container.textContent).toContain('Organizational Controls');
+ expect(container.textContent).not.toContain('Organizational Controls');
   expect(container.querySelector('.assessment-summary').open).toBe(false);
   expect(container.querySelector('.assessment-summary p').textContent).toBeTruthy();
 });
@@ -206,36 +207,25 @@ test('a never-assessed safeguard does not name an assessor',async()=>{
 
 });
 
-test('optional operating details retain saved information without a confirmation checklist',async()=>{
- record.owner_id='u';record.cis_operation={provider:'Previously saved provider',confirmed:true};await render();
- expect(container.querySelector('[aria-label="Provider involvement"]').value).toBe('Previously saved provider');
- expect(container.textContent).toContain('Previously recorded arrangement confirmation retained');
- expect(container.querySelector('[aria-label="Operating arrangement recorded"]')).toBeNull();
- await input('Provider involvement','MSP weekly quarantine with internal oversight');
- await tick(button('Save assessment'));
- expect(record.cis_operation).toEqual({provider:'MSP weekly quarantine with internal oversight',confirmed:false});
- expect(record.status).toBe('addressed');expect(record.verification).toBe('not_verified');
- await input('Current implementation','Scope changed');
- expect(container.textContent).not.toContain('Previously recorded arrangement confirmation retained');
-});
-test('supporting records open without losing the assessment draft and history uses its precise occurrence',async()=>{
- related.reviews=[{review_id:'r',client_id:record.client_id,title:'Inventory review',framework_key:'cis-ig1',framework_safeguards:['1.1'],recurrence:'semiannual'}];
+test('removed operating/footer UI preserves saved ownership and evidence links on save',async()=>{
+ record.owner_id='u';record.cis_operation={provider:'Previously saved provider',confirmed:true};
  record.related_links=[{kind:'reviews',id:'r'}];
- related.evidence=[{evidence_id:'direct',linked_type:'framework_assessment',linked_id:'a',filename:'Inventory.txt'},{evidence_id:'inherited',linked_type:'reviews',linked_id:'r',occurrence_id:'old',filename:'Review sample.txt'}];
- const get=api.get.getMockImplementation();api.get.mockImplementation(async(path,opts)=>path==='/reviews/r/history'?{data:[{occurrence_id:'old',period:'2025 annual review',completed_at:'2025-10-01'}]}:get(path,opts));
- await render();await input('Current implementation','Retain linked-record draft');
- await tick(button('Inventory review'));expect(container.querySelector('[data-testid="nested"]').textContent).toContain('reviews Inventory review');
- await tick(button('Close linked record'));expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain linked-record draft');
- await tick(button('Completed occurrences'));expect(container.textContent).toContain('2025 annual review');
- await tick(button('2025 annual review · Completed 2025-10-01'));expect(container.querySelector('[data-testid="nested"]').textContent).toContain('old');
- await tick(button('Close linked record'));expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain linked-record draft');
- expect(container.textContent).toContain('Direct Evidence');expect(container.textContent).toContain('Evidence through linked Reviews');
- expect(container.querySelector('[data-testid="cis-supporting-records"]')).toBeTruthy();expect(api.patch).not.toHaveBeenCalled();
+ related.reviews=[{review_id:'r',client_id:record.client_id,title:'Inventory review'}];
+ related.evidence=[{evidence_id:'e',linked_type:'framework_assessment',linked_id:'a',filename:'Inventory.txt'}];
+ await render();
+ for(const label of ['Operational responsibility','Supporting records','View history','Inventory review','Inventory.txt'])expect(container.textContent).not.toContain(label);
+ expect(container.querySelector('[aria-label="Provider involvement"]')).toBeNull();
+ await input('Current implementation','Scope changed');await tick(button('Save assessment'));
+ expect(record.owner_id).toBe('u');expect(record.related_links).toEqual([{kind:'reviews',id:'r'}]);
+ expect(record.cis_operation).toEqual({provider:'Previously saved provider',confirmed:false});
+ expect(related.evidence[0].filename).toBe('Inventory.txt');expect(api.delete).not.toHaveBeenCalled();
 });
-test('unfinished recurring Review setup blocks Save & next until cancelled',async()=>{
- await render();await tick(button('Create or link recurring Review'));
- expect(button('Save & next').disabled).toBe(true);await tick(button('Save & next'));expect(next).not.toHaveBeenCalled();
- await tick(button('Cancel Review setup'));expect(button('Save & next').disabled).toBe(false);
+test('unfinished Finding blocks Save & next across all three tabs until cancelled',async()=>{
+ await render();await tick(button('Findings'));await tick(button('Raise Finding'));await input('Finding title','Keep this draft');
+ await implementationTab();expect(button('Save & next').disabled).toBe(true);
+ await criteriaTab();expect(container.querySelector('[aria-label="Finding title"]').value).toBe('Keep this draft');
+ expect(button('Save & next').disabled).toBe(true);expect(api.post).not.toHaveBeenCalled();
+ await tick(button('Findings'));await tick(button('Cancel'));expect(button('Save & next').disabled).toBe(false);
 });
 test.each(['addressed','in_progress','needs_attention','not_assessed','not_applicable'])('implementation %s stays separate across all verification states',async status=>{
  const labels={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed',not_applicable:'Not Applicable'};
@@ -262,7 +252,7 @@ describe('safeguard Findings',()=>{
  });
  test('Raise Finding records the safeguard origin, owner and target date, once per draft',async()=>{
   api.post.mockResolvedValue({data:{}});await render();
-  await act(async()=>button('Raise Finding').click());
+  await act(async()=>button('Findings').click());await act(async()=>button('Raise Finding').click());
   expect(container.querySelector('[data-testid="finding-origin"]').textContent).toBe('Origin: CIS IG1 · safeguard 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');
   await input('Finding title','Inventory excludes plant devices');await input('Corrective action','Add plant devices to inventory');await input('Finding target date','2026-12-15');
   const sev=container.querySelector('[aria-label="Finding severity"]');await act(async()=>{sev.value='high';sev.dispatchEvent(new Event('change',{bubbles:true}));});
@@ -276,7 +266,7 @@ describe('safeguard Findings',()=>{
  });
  test('a failed create keeps the draft and its request id for the retry',async()=>{
   api.post.mockRejectedValueOnce(new Error('Network unavailable'));await render();
-  await act(async()=>button('Raise Finding').click());await input('Finding title','Gap');await input('Corrective action','Fix gap');
+  await act(async()=>button('Findings').click());await act(async()=>button('Raise Finding').click());await input('Finding title','Gap');await input('Corrective action','Fix gap');
   await act(async()=>button('Create Finding & Action').click());
   expect(container.textContent).toContain('Network unavailable');expect(container.querySelector('.bcsg-finding-form')).toBeTruthy();
   api.post.mockResolvedValue({data:{}});await act(async()=>button('Create Finding & Action').click());

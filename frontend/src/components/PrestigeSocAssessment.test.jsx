@@ -27,14 +27,15 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 const render=async(clientId='demo_prestige')=>act(async()=>root.render(<FrameworkDrawer open record={{...record,client_id:clientId}} clientId={clientId} onOpenChange={close} position="33 of 38 in framework order" breadcrumb={[{label:'SOC 2',onClick:jest.fn()},{label:'Security',onClick:jest.fn()},{label:'CC9',onClick:jest.fn()},{label:'CC9.2'}]}/>));
 const criteriaTab=async()=>act(async()=>[...container.querySelectorAll('[role=tab]')].find(t=>t.textContent==='Assessment criteria').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
 
-test('removed control editor retains saved descriptions and mapped record access in linked work',async()=>{
+test('removed linked-work footer leaves stored control descriptions and mappings unchanged',async()=>{
  record.management_controls=[{control_id:'legacy',name:'Saved vendor monitoring',description:'Quarterly provider assurance',frequency:'quarterly',design:'adequate',operating:'effective'}];
  const get=api.get.getMockImplementation();
  api.get.mockImplementation(async(path,options)=>path==='/frameworks/soc-2'?{data:{assessments:[record],work:{},organizational_controls:[{control_id:'shared-saved',assessment_ids:['soc-a']},{control_id:'unrelated',assessment_ids:['other']}]}}:get(path,options));
  await render();
- expect(container.textContent).toContain('Saved vendor monitoring');
- expect(container.textContent).toContain('Quarterly provider assurance');
- expect(container.textContent).toContain('Open retained supporting record · shared-saved');
+ expect(container.textContent).not.toContain('Saved vendor monitoring');
+ expect(record.management_controls[0].name).toBe('Saved vendor monitoring');
+ expect(record.management_controls[0].description).toBe('Quarterly provider assurance');
+ expect(container.textContent).not.toContain('Open retained supporting record · shared-saved');
  expect(container.textContent).not.toContain('Open retained supporting record · unrelated');
  expect(container.textContent).not.toContain('Client organizational Controls');
  expect(api.patch).not.toHaveBeenCalled();
@@ -52,7 +53,7 @@ test('first narrative save does not claim an assessment when absent metadata bec
 test('Prestige SOC criterion workspace is focused, source-qualified and ordered',async()=>{
  await render();
  expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
- expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria']);
+ expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
  expect(container.querySelector('[role=tabpanel][data-state=active]').textContent).toContain('What SOC 2 requires');
  expect(container.querySelector('h2').textContent).toBe('Third-party risk oversight');
  expect(container.querySelector('.assessment-summary').open).toBe(false);
@@ -65,7 +66,7 @@ test('Prestige SOC criterion workspace is focused, source-qualified and ordered'
  expect(container.querySelector('.bcsg-metadata')).toBeNull();
  for(const removed of ['Examples of supporting evidence','What good looks like','Where should I start?','What should I ask IT or our provider?'])expect(container.textContent).not.toContain(removed);
  expect(container.querySelector('.assessment-implementation').children).toHaveLength(2);
- expect(container.querySelector('.bcsg-findings').parentElement.textContent).toContain('Current implementation');
+ expect(container.querySelector('.bcsg-findings').closest('[role=tabpanel]').id).toMatch(/findings$/);
 
 });
 
@@ -167,8 +168,7 @@ test('Save & Next advances only after saving the narrative and preserving previo
 test('Save & next retains an unfinished Finding draft',async()=>{
  const next=jest.fn();
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_prestige" onOpenChange={close} onNext={next}/>));
- await act(async()=>container.querySelector('.psoc-linked summary').click());
- await act(async()=>button('Raise Finding').click());
+ await act(async()=>button('Findings').click());await act(async()=>button('Raise Finding').click());
  await act(async()=>button('Save & next').click());
  expect(next).not.toHaveBeenCalled();
  expect(container.querySelector('[aria-label="Finding title"]')).toBeTruthy();
@@ -177,8 +177,9 @@ test('Save & next retains an unfinished Finding draft',async()=>{
 test('new SOC tenants retain historical management-Control observations',async()=>{
  record.assessment_history=[{status:'addressed',at:'2027-12-31',by:'former-owner',management_controls:[{control_id:'old-access',name:'Historical access review',description:'Prior control design',design:'adequate',operating:'gap',period_start:'2027-01-01',period_end:'2027-12-31',collected_instances:3,expected_instances:4,testing_notes:'One quarterly sample was missing'}]}];
  await render('new-soc-client');
- await act(async()=>[...container.querySelectorAll('summary')].find(s=>s.textContent==='View History').click());
- for(const text of ['Historical access review','Prior control design','adequate / gap','2027-01-01','2027-12-31','3 / 4 instances','One quarterly sample was missing'])expect(container.textContent).toContain(text);
+ expect(container.textContent).not.toContain('View History');
+ expect(record.assessment_history[0].management_controls[0]).toEqual(expect.objectContaining({name:'Historical access review',description:'Prior control design',testing_notes:'One quarterly sample was missing'}));
+ expect(api.patch).not.toHaveBeenCalled();
 });
 
 test('status, verification, owner and current implementation persist with the concurrency token',async()=>{
@@ -220,15 +221,15 @@ test.each(['PI1.1','P1.1'])('%s retains its existing reference and assessment wi
 
 });
 
-test('Prestige criterion exposes linked governance work and creates one sourced Finding and Action',async()=>{
+test('Prestige Findings tab retains tickets and creates one sourced Finding and Action',async()=>{
  related.reviews=[{review_id:'r1',title:'Vendor review',status:'upcoming'}];
  related.findings=[{finding_id:'f1',framework_assessment_id:record.framework_assessment_id,client_id:record.client_id,title:'Existing deficiency',description:'Existing deficiency',status:'in_remediation'}];
  related.tasks=[{task_id:'t1',finding_id:'f1',client_id:record.client_id,title:'Existing correction',status:'open'}];
  related.evidence=[{evidence_id:'e1',filename:'vendor-report.pdf'}];
- await render();await act(async()=>container.querySelector('.psoc-linked summary').click());
- expect(container.textContent).toContain('Vendor review');expect(container.textContent).toContain('Existing deficiency');
- expect(container.textContent).toContain('Existing correction');expect(container.textContent).toContain('vendor-report.pdf');
- await act(async()=>button('Raise Finding').click());
+ await render();await act(async()=>button('Findings').click());
+ expect(container.textContent).not.toContain('Vendor review');expect(container.textContent).toContain('Existing deficiency');
+ expect(container.textContent).toContain('Existing correction');expect(container.textContent).not.toContain('vendor-report.pdf');
+ await act(async()=>button('Findings').click());await act(async()=>button('Raise Finding').click());
  expect(button('Create Finding & Action').disabled).toBe(true);
  expect(container.querySelector('[data-testid="finding-origin"]').textContent).toContain('CC9.2');
  await setValue('Finding title','CC9.2 vendor gap');await setValue('Corrective action','Correct CC9.2 gap');
@@ -257,7 +258,7 @@ test('guide expansion and selected answer reset when navigating between criteria
 
 });
 test('Finding retry preserves request identity and linked record origin',async()=>{
- await render();await act(async()=>button('Raise Finding').click());await setValue('Finding title','Vendor gap');await setValue('Corrective action','Correct vendor gap');
+ await render();await act(async()=>button('Findings').click());await act(async()=>button('Raise Finding').click());await setValue('Finding title','Vendor gap');await setValue('Corrective action','Correct vendor gap');
  api.post.mockRejectedValueOnce(new Error('Temporary Finding failure'));
  await act(async()=>button('Create Finding & Action').click());
  expect(container.textContent).toContain('Temporary Finding failure');

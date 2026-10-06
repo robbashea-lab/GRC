@@ -1,3 +1,4 @@
+import {FrameworkRecordButton} from './FrameworkRecordAccess';
 import {useEffect,useMemo,useState} from 'react';
 import {Button} from './ui/button';
 import {CisStatusPill} from './CisStatus';
@@ -6,7 +7,7 @@ import {operatorVocabulary} from '@/lib/frameworkOperator';
 import CisResultTable from './CisResultTable';
 import {CisBreadcrumb} from './BrawndoCisControls';
 
-export function SoaTable({rows,onOpen}) {
+export function SoaTable({rows,onOpen,onManage}) {
   const [applicability,setApplicability]=useState('all');
   const visible=rows.filter(r=>applicability==='all'||(r.soa_applicability||'undetermined')===applicability);
   return <section className="space-y-3" aria-label="Statement of Applicability controls">
@@ -16,7 +17,7 @@ export function SoaTable({rows,onOpen}) {
     <p className="text-xs text-ink-secondary">{visible.length} of {rows.length} controls in this view. Applicability is separate from implementation.</p>
     <div className="cis-results"><table><thead><tr><th>Annex A control</th><th>Applicability</th><th>Implementation</th><th>Supporting work</th></tr></thead>
       <tbody>{visible.map(r=><tr key={r.framework_assessment_id} data-testid={'requirement-'+r.definition_id}>
-        <td><button className="cis-results-open" onClick={()=>onOpen(r)}><span className="cis-safeguard-id">{r.definition_id}</span><span>{r.title}</span></button></td>
+        <td><button className="cis-results-open" onClick={()=>onOpen(r)}><span className="cis-safeguard-id">{r.definition_id}</span><span>{r.title}</span></button><FrameworkRecordButton record={r} onManage={onManage}/></td>
         <td data-label="Applicability"><p className="text-sm">{r.soa_applicability==='excluded'?'Not Necessary':r.soa_applicability!=='included'?'Decision needed':r.status==='addressed'?'Necessary — Implemented':r.status==='not_assessed'?'Necessary — Not Implemented':'Necessary — Partially Implemented'}</p>{r.soa_applicability&&!r.soa_justification?.trim()&&<p className="text-xs text-semantic-critical">Justification needed</p>}</td>
         <td data-label="Implementation"><CisStatusPill status={r.status} framework="iso-27001"/></td>
         <td data-label="Supporting work"><span className="text-xs">{r.work?.evidence_count||0} Evidence · {r.work?.open_findings||0} open Findings</span></td>
@@ -40,7 +41,7 @@ function ControlTable({nodes,rows,choose,path}){
     <p className="bcis-foot">All {nodes.length} IG1 controls · {rows.length} safeguards.{absent.length&&present.size&&!present.has(null)?` Control${absent.length===1?'':'s'} ${absent.join(', ').replace(/, (\d+)$/,' and $1')} ${absent.length===1?'has':'have'} no IG1 safeguards.`:''}</p></>;
 }
 
-export default function FrameworkCategoryNavigator({framework,rows,onOpen,soa=false,preference,onSelect,layout}) {
+export default function FrameworkCategoryNavigator({framework,rows,onOpen,onManage,soa=false,preference,onSelect,layout}) {
   const roots=useMemo(()=>{
     const groups=groupRequirements(framework,rows);
     return framework==='iso-27001'&&groups.length===1?groups[0].children:groups;
@@ -61,7 +62,7 @@ export default function FrameworkCategoryNavigator({framework,rows,onOpen,soa=fa
       </>}
       <Button className="ml-auto" size="sm" variant={all?'default':'outline'} aria-pressed={all} onClick={()=>setAll(!all)}>{all?'Back to categories':allLabel}</Button>
     </div>
-    {layout==='table'&&!all&&!selected?<div className="bcis-card bcis-controls"><ControlTable nodes={nodes} rows={rows} choose={choose} path={path}/></div>:all||selected&&!nodes.length?(soa?<SoaTable rows={all?rows:currentRows} onOpen={onOpen}/>:<CisResultTable framework={framework} rows={all?rows:currentRows} onOpen={onOpen} label={all?allLabel:selected.label}/>):<div className={framework==='iso-27001'?'framework-category-list':'grid md:grid-cols-2 xl:grid-cols-3 gap-3'}>
+    {layout==='table'&&!all&&!selected?<div className="bcis-card bcis-controls"><ControlTable nodes={nodes} rows={rows} choose={choose} path={path}/></div>:all||selected&&!nodes.length?(soa?<SoaTable rows={all?rows:currentRows} onOpen={onOpen} onManage={onManage}/>:<CisResultTable framework={framework} rows={all?rows:currentRows} onOpen={onOpen} onManage={onManage} label={all?allLabel:selected.label}/>):<div className={framework==='iso-27001'?'framework-category-list':'grid md:grid-cols-2 xl:grid-cols-3 gap-3'}>
       {nodes.map(n=>{const summary=sectionSummary(n.rows),next=nextAssessment(n.rows),undetermined=n.rows.filter(r=>!r.soa_applicability).length;
         if(framework==='iso-27001')return <button type="button" key={n.key} className="framework-category-row" onClick={()=>choose([...path,n.key])}>
           <span>{n.label}</span><span>{summary.total} {itemNoun} · {summary.assessed} assessed{summary.excluded?` · ${summary.excluded} N/A`:''}</span>

@@ -9,7 +9,7 @@ test('Dunder ISO assessment without stored history saves and starts its history'
   const ws=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data;
   const row=ws.assessments.find(a=>a.status==='addressed'&&!a.assessment_history);
   expect(row).toBeTruthy();
-  const {data}=await api.patch('/framework_assessments/'+row.framework_assessment_id,{notes:'Re-confirmed in QA',expected_last_assessed:row.last_assessed??null});
+  const {data}=await api.patch('/framework_assessments/'+row.framework_assessment_id,{notes:'Re-confirmed in QA',expected_last_assessed: row.last_saved ?? row.last_assessed ?? null});
   expect(data).toMatchObject({client_id:'demo_dunder',notes:'Re-confirmed in QA',status:'addressed'});
   expect(data.assessment_history).toHaveLength(1);
   expect(data.assessment_history[0]).toMatchObject({notes:'Re-confirmed in QA'});
@@ -22,14 +22,14 @@ test('ISO checks validate the unit, deduplicate, retain legacy selections and su
   const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
   db.framework_assessments.find(a=>a.framework_assessment_id===row.framework_assessment_id).iso_assessment_checks=['retired:context'];
   sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
-  const saved=(await api.patch(path,{iso_assessment_checks:[selected,selected,'retired:context'],expected_last_assessed:row.last_assessed??null})).data;
+  const saved=(await api.patch(path,{iso_assessment_checks:[selected,selected,'retired:context'],expected_last_assessed: row.last_saved ?? row.last_assessed ?? null})).data;
   expect(saved.iso_assessment_checks).toEqual([selected,'retired:context']);
   expect(saved.assessment_history.at(-1).iso_assessment_checks).toEqual(saved.iso_assessment_checks);
   expect((await api.get(path)).data.iso_assessment_checks).toEqual(saved.iso_assessment_checks);
-  await expect(api.patch(path,{iso_assessment_checks:['4.2:parties'],expected_last_assessed:saved.last_assessed})).rejects.toBeTruthy();
-  await expect(api.patch(path,{iso_assessment_checks:[...Array(31)].map(()=>selected),expected_last_assessed:saved.last_assessed})).rejects.toBeTruthy();
+  await expect(api.patch(path,{iso_assessment_checks:['4.2:parties'],expected_last_assessed:saved.last_saved??saved.last_assessed})).rejects.toBeTruthy();
+  await expect(api.patch(path,{iso_assessment_checks:[...Array(31)].map(()=>selected),expected_last_assessed:saved.last_saved??saved.last_assessed})).rejects.toBeTruthy();
   const pending=rows.find(a=>a.definition_id==='A.5.1');
-  await expect(api.patch('/framework_assessments/'+pending.framework_assessment_id,{iso_assessment_checks:['A.5.1:invented'],expected_last_assessed:pending.last_assessed??null})).rejects.toBeTruthy();
+  await expect(api.patch('/framework_assessments/'+pending.framework_assessment_id,{iso_assessment_checks:['A.5.1:invented'],expected_last_assessed: pending.last_saved ?? pending.last_assessed ?? null})).rejects.toBeTruthy();
 });
 
 test('verified ISO criteria are distinct stable identities and pending units offer no checks',()=>{
