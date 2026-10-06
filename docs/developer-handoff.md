@@ -1,11 +1,19 @@
 # Developer handoff
 
-## Current publishing workflow — 2026-09-27
+## Current delivery workflow — 2026-10-05
 
-The authoritative development workflow is **GitHub `main` → ChatGPT preview**.
-See [publishing workflow](publishing-workflow.md). Railway is retired from the
-intended architecture, not a staging target or recurring release gate. The one-time
-source-disconnection transition is still pending; keep PR #6 unmerged meanwhile.
+The authoritative release workflow is **GitHub `main` → CI → Render staging**,
+with separate publication of the same merged source to the existing owner-private
+ChatGPT Demo preview. Start with [current release operations](render-release-operations.md)
+for required checks, connected Git-provider settings, hosted acceptance and rollback.
+Preserve the existing Free Render/Atlas services, data and sole enabled administrator.
+Do not repeat provisioning or bootstrap accounts. Railway is outside this workflow;
+historical PR #6 transition restrictions are not current release gates.
+
+The remaining checkpoint instructions and results below describe the earlier
+2026-09-26/27 state. Later CI, staging and recovery procedures in the current release
+operations guide take precedence. Historical failures or passes do not establish
+the current served revision or final hosted acceptance.
 
 ## 2026-09-26 framework validation checkpoint
 

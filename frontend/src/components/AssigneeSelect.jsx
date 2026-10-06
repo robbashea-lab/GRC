@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import api, { formatError, PREVIEW_MODE } from '@/lib/api';
+import {selectedClient} from '@/lib/clientSelection';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -37,7 +38,7 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
     event.preventDefault();
     // A same-origin blank tab inherits the isolated Demo session. Remove its
     // opener before navigation; preserve this form and never change assignment.
-    if (localStorage.getItem('grc_client_id') !== clientId) {
+    if (selectedClient() !== clientId) {
       setPeopleError('Open Contacts from this client after saving your changes.');
       return;
     }
