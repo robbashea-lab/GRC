@@ -12,7 +12,7 @@ import {useRef} from 'react';
 
 const IDS={risks:'risk_id',policies:'policy_id',vendors:'vendor_id',requirements:'requirement_id'};
 export function FrameworkRecordButton({record,onManage}){
-  return onManage?<button type="button" className="text-link text-sm" aria-label={`Manage ${record.definition_id} ${record.title}`} onClick={e=>{e.stopPropagation();onManage(record);}} onKeyDown={e=>e.stopPropagation()}>Manage</button>:null;
+  return onManage?<button type="button" className="relative z-10 text-link text-sm" aria-label={`Manage ${record.definition_id} ${record.title}`} onClick={e=>{e.stopPropagation();onManage(record);}} onKeyDown={e=>e.stopPropagation()}>Manage</button>:null;
 }
 
 // Existing FrameworkDrawer owns loading, authorization, version guards and draft protection.
