@@ -187,6 +187,7 @@ function EntityListPage({ kind }) {
   }
 
   const [open, setOpen] = useState(false);
+  const closedLinkedId=useRef(null);
   const [selected, setSelected] = useState(null);
   const [linkedInitialValues,setLinkedInitialValues]=useState({});
   const [linkError,setLinkError]=useState('');
@@ -230,7 +231,9 @@ function EntityListPage({ kind }) {
 
   const linkedId=params.get('id'),linkedClient=params.get('client_id'),linkedOccurrence=params.get('occurrence');
   useEffect(()=>{
-    if(!linkedId||!currentClientId||open)return;
+    if(!linkedId){closedLinkedId.current=null;return;}
+    // Closing must not refetch a stale link while router navigation is deferred.
+    if(!currentClientId||open||closedLinkedId.current===linkedId)return;
     const controller=new AbortController();setLinkError('');setLinkedInitialValues({});
     if(linkedClient&&linkedClient!==currentClientId){setLinkError('This link belongs to another client. Select that client before opening it.');return;}
     api.get(`/${kind}/${encodeURIComponent(linkedId)}`,{signal:controller.signal}).then(({data})=>{
@@ -243,6 +246,7 @@ function EntityListPage({ kind }) {
     return()=>controller.abort();
   },[kind,currentClientId,linkedId,linkedClient,linkedOccurrence,open]);
   function closeDrawer(value){
+    if(!value)closedLinkedId.current=linkedId;
     setOpen(value);
     if(!value){setLinkedInitialValues({});const next=new URLSearchParams(params);next.delete('id');next.delete('occurrence');setParams(next,{replace:true});}
   }
