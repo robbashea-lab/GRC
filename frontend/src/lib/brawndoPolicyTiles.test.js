@@ -14,3 +14,10 @@ test('when nothing is due soon the tile names the next review; approved without 
   expect(t.due30.count).toBe(0);expect(t.due30.context).toMatch(/^Next: A, /);
   expect(t.approved.count).toBe(1);
 });
+test('overdue and upcoming views use authoritative dates without changing lifecycle or counting retained exclusions',()=>{
+  const rows=[approved('Overdue','2026-09-29'),approved('Today','2026-09-30'),approved('Boundary','2026-10-30'),approved('Later','2026-10-31'),approved('Undated',null),{...approved('Retired','2026-09-29'),status:'retired'},{...approved('Excluded','2026-09-29'),presence:'not_applicable'}];
+  const original=JSON.stringify(rows);
+  expect(rows.filter(r=>policyViewMatches(r,'overdue',now)).map(r=>r.title)).toEqual(['Overdue']);
+  expect(rows.filter(r=>policyViewMatches(r,'due30',now)).map(r=>r.title)).toEqual(['Today','Boundary']);
+  expect(JSON.stringify(rows)).toBe(original);
+});
