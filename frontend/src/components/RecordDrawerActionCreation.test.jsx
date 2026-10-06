@@ -26,7 +26,7 @@ test.each(['tasks','findings'])('new non-reference client %s creation is wide an
   expect(dialog.querySelector('[aria-label="Manage people in a new tab"]')).toBeNull();
   const title=dialog.querySelector('[data-testid="field-title"]');
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(title,'Unsaved synthetic action draft');title.dispatchEvent(new Event('input',{bubbles:true}));});
-  await click(dialog.querySelector('button .sr-only').parentElement);
+  await click(dialog.querySelector('[data-testid="drawer-cancel"]'));
   expect(close).not.toHaveBeenCalled();
   expect(document.querySelector('[role="alertdialog"]')).toBeTruthy();
   await click(named('Keep editing'));
