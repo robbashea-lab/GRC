@@ -68,3 +68,13 @@ test('failed request shows retry and never supplies directory fallback',async()=
   await render();await open();await act(async()=>requests[0].reject(new Error('Denied')));
   expect(document.body.textContent).toContain('Eligible users could not be loaded.');expect(onChange).not.toHaveBeenCalled();
 });
+test('Demo Contacts uses its tab selection without changing the normal client',async()=>{
+  localStorage.setItem('grc_client_id','normal-client');sessionStorage.setItem('grc_client_id','a');
+  const tab={opener:{},location:{replace:jest.fn()}},openTab=jest.spyOn(window,'open').mockReturnValue(tab);
+  try {
+    await render();await act(async()=>host.querySelector('a[href="/contacts"]').click());
+    expect(openTab).toHaveBeenCalledWith('about:blank','_blank');
+    expect(tab.opener).toBeNull();expect(tab.location.replace).toHaveBeenCalledWith(new URL('/contacts',window.location.origin).href);
+    expect(localStorage.getItem('grc_client_id')).toBe('normal-client');expect(onChange).not.toHaveBeenCalled();
+  } finally {openTab.mockRestore();localStorage.clear();sessionStorage.clear();}
+});

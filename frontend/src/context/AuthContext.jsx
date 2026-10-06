@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import api, { formatError, PREVIEW_MODE, setWorkspaceMode, setAccessToken, STANDARD_AUTH_ENABLED, STANDARD_AUTH_NOTICE } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
+import {clearClientSelection} from '@/lib/clientSelection';
 
 const AuthContext = createContext(null);
 
@@ -42,6 +43,7 @@ export function AuthProvider({ children }) {
     sessionGeneration.current++;
     setUser(null);
     setWorkspaceMode("standard");
+    clearClientSelection();
     queryClient.clear();
     const { data } = await api.post("/auth/login", { email, password });
     if (data.access_token) setAccessToken(data.access_token);
@@ -54,6 +56,7 @@ export function AuthProvider({ children }) {
     sessionGeneration.current++;
     setUser(null);
     setWorkspaceMode("standard");
+    clearClientSelection();
     queryClient.clear();
     const { data } = await api.post("/auth/register", { email, password, name });
     if (data.access_token) setAccessToken(data.access_token);

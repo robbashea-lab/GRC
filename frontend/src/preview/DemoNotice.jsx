@@ -1,5 +1,6 @@
 import {useRef,useState} from 'react';
 import api,{PREVIEW_MODE,formatError} from '@/lib/api';
+import {clearClientSelection} from '@/lib/clientSelection';
 import {DEMO_FILE_NOTICE} from '@/lib/demoStorageErrors';
 import {Button} from '@/components/ui/button';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription,DialogFooter} from '@/components/ui/dialog';
@@ -9,7 +10,7 @@ export default function DemoNotice(){
   async function inspect(){setAction('storage');setError('');setStats(null);try{const {data}=await api.get('/demo/storage');setStats(data);}catch(e){setError(formatError(e));}}
   async function recover(){setBusy(true);setError('');try{
     await api.post(action==='clear'?'/demo/clear-evidence-files':'/demo/reset');
-    if(action==='reset'){try{localStorage.removeItem('grc_client_id');}catch{}window.location.assign('/clients');}
+    if(action==='reset'){clearClientSelection();window.location.assign('/clients');}
     else window.location.reload();
   }catch(e){setError(formatError(e));setBusy(false);}}
   return <><div className="demo-notice border-b border-line bg-surface-subtle text-ink-muted" data-testid="interactive-demo-notice">

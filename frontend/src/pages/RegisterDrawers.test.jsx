@@ -10,6 +10,7 @@ jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),patch:jes
 jest.mock('react-router-dom', () => ({useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
 jest.mock('@/components/ui/sheet', () => ({Sheet:({open,children})=>open?<div>{children}</div>:null,SheetContent:({children})=><section>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>}));
 let root, container;
+const requestOptions = {headers:{'Idempotency-Key':expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)}};
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   container=document.createElement('div'); document.body.appendChild(container); root=createRoot(container);
@@ -31,7 +32,7 @@ test('default client dialog retains native Risk fields and save contract',async(
     title.dispatchEvent(new Event('input',{bubbles:true}));
   });
   await act(async()=>dialog.querySelector('[data-testid="drawer-save"]').click());
-  expect(api.patch).toHaveBeenCalledWith('/risks/r',{title:'Updated Risk',expected_updated_at:null});
+  expect(api.patch).toHaveBeenCalledWith('/risks/r',{title:'Updated Risk',expected_updated_at:null},requestOptions);
 });
 
 test('new Risk requires intentional ratings instead of suggesting an assessment',async()=>{
@@ -50,7 +51,7 @@ test('legacy Risk category is displayed without silently changing its stored val
   await act(async()=>container.querySelector('[data-testid="risk-row-0"]').click());
   expect(container.querySelector('[data-testid="field-category"]').textContent).toBe('Cybersecurity (recorded)');
   await act(async()=>container.querySelector('[data-testid="drawer-save"]').click());
-  expect(api.patch).toHaveBeenCalledWith('/risks/r',expect.not.objectContaining({category:expect.anything()}));
+  expect(api.patch).toHaveBeenCalledWith('/risks/r',expect.not.objectContaining({category:expect.anything()}),requestOptions);
 });
 
 test.each([[RiskRegister,'risk-row-0',['title','category','status','owner_id','description']], [VendorRegister,'vendor-row-0',['name','criticality','status','contact_email']]])('register opens its complete real drawer', async(Component,rowId,fields)=>{
@@ -60,5 +61,5 @@ test.each([[RiskRegister,'risk-row-0',['title','category','status','owner_id','d
   await act(async()=>row.click());
   for(const field of fields) expect(container.querySelector(`[data-testid="field-${field}"]`)).not.toBeNull();
   await act(async()=>container.querySelector('[data-testid="drawer-save"]').click());
-  expect(api.patch).toHaveBeenCalledWith(Component===RiskRegister?'/risks/r':'/vendors/v',expect.not.objectContaining({client_id:undefined}));
+  expect(api.patch).toHaveBeenCalledWith(Component===RiskRegister?'/risks/r':'/vendors/v',expect.not.objectContaining({client_id:undefined}),requestOptions);
 });

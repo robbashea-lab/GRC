@@ -37,6 +37,7 @@ def main():
     from test_review_audit_recovery import ReviewAuditRecoveryTests
     from test_onboarding_recovery import OnboardingRecoveryTests
     from test_record_integrity import RecordIntegrityTests
+    from test_dashboard_work_queue import DashboardWorkQueueTests
     import routes.onboarding as onboarding
     from initialization import ensure_indexes
 
@@ -81,7 +82,7 @@ def main():
                 self.assertEqual(await harness.server.db.tasks.count_documents({}), 1)
 
     suite = unittest.TestSuite()
-    for base in (CreateRequestTests, ReviewRecoveryTests, ReviewAuditRecoveryTests, OnboardingRecoveryTests, RecordIntegrityTests):
+    for base in (CreateRequestTests, ReviewRecoveryTests, ReviewAuditRecoveryTests, OnboardingRecoveryTests, RecordIntegrityTests, DashboardWorkQueueTests):
         concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     suite.addTest(ReconnectReceiptTests('test_receipt_survives_a_new_database_connection'))

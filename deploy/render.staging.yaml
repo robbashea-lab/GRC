@@ -5,9 +5,10 @@ services:
     runtime: docker
     plan: free
     region: virginia
+    branch: main
     dockerfilePath: ./deploy/RenderStaging.Dockerfile
     dockerContext: .
-    autoDeployTrigger: 'off'
+    autoDeployTrigger: checksPass
     healthCheckPath: /api/
     envVars:
       - key: APP_ENV

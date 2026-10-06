@@ -24,6 +24,7 @@ const button=name=>[...container.querySelectorAll('button')].find(b=>b.textConte
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="client" onOpenChange={()=>{}}/>));}
 test('default assessment combines source context, narrative and status with progressive guidance',async()=>{
   await render();expect(container.textContent).toContain('What CIS requires');expect(container.textContent).toContain('CIS assessment criteria');
+  expect(container.querySelector('[role="tab"][aria-selected="true"]').textContent).toBe('Requirement & implementation');
   expect(container.querySelector('[aria-label="Current implementation"]')).toBeTruthy();expect(container.querySelector('input[value="in_progress"]')).toBeTruthy();
   expect(container.querySelector('[aria-label="Saved implementation status"]').textContent).toContain('Not Assessed');
   expect(container.textContent).toContain('Official CIS');
