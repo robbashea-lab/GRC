@@ -64,7 +64,7 @@ test('centered policy retains legacy context and protects edits on close and fai
   await click(dialog.querySelector('[data-testid="tab-overview"]'));
   const title=dialog.querySelector('[data-testid="field-title"]');
   await input(title,'Updated Policy');
-  await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
+  await click(dialog.querySelector('[data-testid="drawer-cancel"]'));
   expect(document.querySelector('[role="alertdialog"]')).toBeTruthy();expect(close).not.toHaveBeenCalled();
   await click([...document.querySelectorAll('[role="alertdialog"] button')].find(b=>b.textContent==='Keep editing'));
   api.patch.mockRejectedValueOnce(new Error('Write failed'));

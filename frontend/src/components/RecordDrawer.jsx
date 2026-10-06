@@ -2,6 +2,7 @@ import {readEvidenceFile as fileToBase64} from '@/lib/evidenceFile';
 import {RiskCategoryField,RiskSummary} from './BrawndoRiskFields';
 import {RiskAssessmentPanel,RiskTreatmentPanel,RiskHistoryPanel} from './RiskRecordPanels';
 import {DateReadonly} from './RegisterCells';
+import {riskStatus} from '@/lib/riskRegister';
 import {pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
 import {policyStatus,nextPolicyReview} from '@/lib/brawndoPolicies';
 import BrawndoPolicyDetails,{PolicyStatusField,PolicySummary,PolicyRetainedApproval} from './BrawndoPolicyDetails';
@@ -575,7 +576,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     if(policyPilot&&f.name==='status')return <PolicyStatusField key="status" record={{...record,...form}} disabled={!canWrite||record?.status==='in_review'||!!clientFields&&!clientFields.has('status')} onChange={value=>setForm(p=>({...p,status:value,...(p.presence==='reported_missing'&&value==='draft'?{presence:'needs_confirmation'}:{})}))}/>;
     if(riskPilot&&f.name==='category')return <RiskCategoryField key="category" form={form} setForm={setForm} disabled={!canWrite||!!clientFields&&!clientFields.has('category')}/>;
     if(riskPilot&&f.name==='owner_id')f={...f,label:'Assigned Owner'};
-    if(riskPilot&&f.name==='status')f={...f,options:[{value:record?.status&&['identified','assessed','open'].includes(record.status)?record.status:'open',label:'Open'},{value:'in_progress',label:'In Treatment'},{value:'monitoring',label:'Monitoring'},{value:'accepted',label:'Accepted'},{value:'closed',label:'Closed'},...(['treated','retired','escalated'].includes(record?.status)?[{value:record.status,label:pilotRiskStatus(record.status)+' (recorded)'}]:[])]};
+    if(riskPilot&&user?.workspace_mode==='demo'&&f.name==='status')f={...f,options:[{value:record?.status&&['identified','assessed','open'].includes(record.status)?record.status:'open',label:'Open'},{value:'in_progress',label:'In Treatment'},{value:'monitoring',label:'Monitoring'},{value:'accepted',label:'Accepted'},{value:'closed',label:'Closed'},...(['treated','retired','escalated'].includes(record?.status)?[{value:record.status,label:pilotRiskStatus(record.status)+' (recorded)'}]:[])]};
     if(pilot&&kind==='findings'&&f.name==='owner_id')f={...f,label:'Assigned To'};
     if(pilot&&kind==='findings'&&f.name==='severity')f={...f,options:f.options?.map(o=>o.value==='medium'?{...o,label:'Moderate'}:o)};
     if(kind==='findings'&&f.name==='status') f={...f,options:f.options?.map(o=>o.value==='remediated'?{...o,label:'Pending Validation'}:o)};
@@ -837,7 +838,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   function renderTabContent() {
     if (policyPilot&&tab==='requirements') return <div className="space-y-5"><BrawndoPolicyDetails record={record} related={related} users={users} onOpen={openLinkedRecord}/><RequirementBasis readable kind="policies" record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/><GovernanceContextFields expanded value={form.governance_context} cadence disabled={!canWrite} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{[record.onboarding_note,record.applicability_rationale,record.governance_context?.cadence_rationale].filter(Boolean).map((text,i)=><p className="text-sm whitespace-pre-wrap" key={i}>{text}</p>)}{relatedError?<p role="alert">{relatedError}</p>:renderRelated()}</div>;
     if (policyPilot&&tab==='evidence') return <div className="space-y-5">{renderPolicyPanel()}<PolicyRetainedApproval record={record}/>{renderEvidence()}</div>;
-    if (tab === "overview") return <>{record && !pilot && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{pilot&&kind==='findings'&&record&&<p className="mb-4 text-sm">Finding status: <StatusBadge value={record.status}/></p>}{riskPilot&&record&&<RiskSummary risk={form} users={users}/>} {renderOverview()}</>;
+    if (tab === "overview") return <>{record && !pilot && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{pilot&&kind==='findings'&&record&&<p className="mb-4 text-sm">Finding status: <StatusBadge value={record.status}/></p>}{riskPilot&&record&&<RiskSummary risk={form} users={users} statusLabel={user?.workspace_mode==='demo'?pilotRiskStatus(form.status):riskStatus(form.status)}/>} {renderOverview()}</>;
     if (tab === "activity") return renderActivity();
     // Kind-specific
     if (kind === "risks") {
@@ -934,7 +935,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${dialogLayout?' flex-wrap shrink-0':''}`}>
           {saveError&&<p role="alert" className="text-sm">{saveError}{updateRecord.unconfirmed()?' Save is unconfirmed; retry the original save before making another edit.':''}</p>}
           {isEdit&&updateRecord.unconfirmed()&&<Button size="sm" disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setSaveError('');try{const {data}=await updateRecord.retry();Object.assign(record,data);onSaved?.(data);toast.success('Saved');onOpenChange(false);}catch(e){setSaveError(formatError(e));toast.error(formatError(e));}finally{setSaving(false);}}}>Retry unconfirmed save</Button>}
-          <Button variant="outline" size="sm" onClick={() => (pilot||actionLayout)?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion?'Close':'Cancel'}</Button>
+          <Button variant="outline" size="sm" onClick={() => (pilot||actionLayout)?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion||riskPilot||policyPilot?'Close':'Cancel'}</Button>
           {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : vendorPilot?'Add to Register':"Create"}</Button>
           )}

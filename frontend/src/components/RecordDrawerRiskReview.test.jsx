@@ -27,6 +27,14 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
+test('normal Risk summary and status control preserve the assessed lifecycle label',async()=>{
+ mockUser={...mockUser,workspace_mode:'authenticated'};
+ await act(async()=>root.render(<RecordDrawer open kind="risks" clientId={risk.client_id} record={{...risk,status:'assessed'}} onOpenChange={()=>{}}/>));
+ const summary=[...document.querySelectorAll('dl div')].find(n=>n.querySelector('dt')?.textContent==='Status');
+ expect(summary.querySelector('dd').textContent).toBe('Assessed');
+ expect(document.querySelector('[data-testid="field-status"]').textContent).toBe('Assessed');
+});
+
 test('Review Risk after acceptance saves the draft and opens the real central Review without rewriting managed decisions',async()=>{
  await input('[data-testid="field-title"]','Updated accepted operational risk');
  await click('[data-testid="risk-accept"]');
