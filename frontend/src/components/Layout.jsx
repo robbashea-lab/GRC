@@ -280,7 +280,7 @@ function Sidebar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               data-testid="logout-button"
-              onClick={async () => { await logout(); nav("/login"); }}
+              onClick={async () => { if (await logout()) nav("/login"); }}
               className="text-sm text-semantic-critical focus:text-semantic-critical"
             >
               <LogOut className="h-3.5 w-3.5 mr-2" /> Sign out

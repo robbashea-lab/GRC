@@ -96,6 +96,41 @@ class SecurityCampaign(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.raw.post('/api/auth/logout',headers=headers)).status_code,200)
         self.assertEqual((await self.raw.get('/api/auth/me',headers=headers)).status_code,401)
 
+    async def test_failed_logout_delivery_preserves_session_until_successful_retry(self):
+        for failure in ['network', 'server']:
+            with self.subTest(failure=failure):
+                token = harness.server.create_access_token('member', 'member@example.test')
+                headers = {'Authorization': 'Bearer ' + token}
+                transport = httpx.ASGITransport(app=harness.server.app)
+                fail_logout = True
+
+                async def deliver(request):
+                    nonlocal fail_logout
+                    if request.url.path == '/api/auth/logout' and fail_logout:
+                        fail_logout = False
+                        if failure == 'network':
+                            raise httpx.ConnectError('Synthetic connection failure', request=request)
+                        return httpx.Response(503, json={'detail': 'Synthetic unavailable server'})
+                    return await transport.handle_async_request(request)
+
+                async with httpx.AsyncClient(transport=httpx.MockTransport(deliver),
+                        base_url='https://security.test', headers=headers) as client:
+                    client.cookies.set('access_token', token)
+                    self.assertEqual((await client.get('/api/auth/me')).status_code, 200)
+                    if failure == 'network':
+                        with self.assertRaises(httpx.ConnectError):
+                            await client.post('/api/auth/logout')
+                    else:
+                        self.assertEqual((await client.post('/api/auth/logout')).status_code, 503)
+                    self.assertEqual((await client.get('/api/auth/me')).status_code, 200)
+                    response = await client.post('/api/auth/logout')
+                    self.assertEqual(response.status_code, 200, response.text)
+                    self.assertEqual((await client.get('/api/auth/me')).status_code, 401)
+                    self.assertEqual((await self.raw.get('/api/auth/me', headers=headers)).status_code, 401)
+                    self.assertEqual((await self.raw.get('/api/auth/me',
+                        headers={'Cookie': 'access_token=' + token})).status_code, 401)
+                await transport.aclose()
+
     async def test_contributor_cannot_mutate_program_configuration(self):
         response=await self.raw.post('/api/onboarding/baseline',headers=self.token('member'),json={
             'client_id':'a','expected_updated_at':None,'state':{}})

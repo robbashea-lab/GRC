@@ -40,7 +40,7 @@ function ProfileMenu(){
         <DropdownMenuContent align="start" side="top" className="w-56">
           <DropdownMenuItem onClick={()=>nav('/account')} data-testid="profile-menu-account" className="text-sm"><UserCircle2 className="h-3.5 w-3.5 mr-2"/> My Account</DropdownMenuItem>
           <DropdownMenuSeparator/><div className="px-2 py-1"><NotificationBell/></div><DropdownMenuSeparator/>
-          <DropdownMenuItem data-testid="logout-button" onClick={async()=>{await logout();nav('/login');}} className="text-sm text-semantic-critical focus:text-semantic-critical"><LogOut className="h-3.5 w-3.5 mr-2"/> Sign out</DropdownMenuItem>
+          <DropdownMenuItem data-testid="logout-button" onClick={async()=>{if(await logout())nav('/login');}} className="text-sm text-semantic-critical focus:text-semantic-critical"><LogOut className="h-3.5 w-3.5 mr-2"/> Sign out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>;

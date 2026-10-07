@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import api, { formatError, PREVIEW_MODE, setWorkspaceMode, setAccessToken, STANDARD_AUTH_ENABLED, STANDARD_AUTH_NOTICE } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import {clearClientSelection} from '@/lib/clientSelection';
+import {toast} from 'sonner';
 
 const AuthContext = createContext(null);
 
@@ -66,10 +67,20 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     sessionGeneration.current++;
-    try { await api.post("/auth/logout"); } catch (e) { void e; }
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      toast.error("Sign-out incomplete. Your server session may still be active. Retry sign-out before leaving this device.", {
+        id: 'logout-incomplete', duration: Infinity,
+        action: {label: 'Retry sign-out', onClick: () => logout()},
+      });
+      return false;
+    }
+    toast.dismiss('logout-incomplete');
     setWorkspaceMode("standard");
     queryClient.clear();
     setUser(null);
+    return true;
   };
 
   const exploreDemo = async () => {
