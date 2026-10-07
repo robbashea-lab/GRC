@@ -1,6 +1,6 @@
 """Non-destructive standard-workspace initialization; no sample-data seeding."""
 import os
-import re
+from password_policy import valid_hash
 
 
 async def ensure_indexes(db):
@@ -37,8 +37,8 @@ async def initialize_standard(db, uid, now):
     password_hash = os.environ.get("ADMIN_PASSWORD_HASH", "")
     if not email or not password_hash:
         return
-    if not re.fullmatch(r"\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}", password_hash):
-        raise ValueError("ADMIN_PASSWORD_HASH must be a bcrypt hash")
+    if not valid_hash(password_hash):
+        raise ValueError("ADMIN_PASSWORD_HASH must be a valid scrypt or legacy bcrypt hash")
     # Existing users, names, credentials, permissions and client assignments
     # are never overwritten by bootstrap. Disabling/removing bootstrap needs
     # only a service-variable change, not a different authentication path.

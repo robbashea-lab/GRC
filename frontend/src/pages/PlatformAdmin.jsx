@@ -1,5 +1,6 @@
 import { StatusPill } from '@/components/StatusBadge';
 import UserAssignments from '@/components/UserAssignments';
+import TablePagination from '@/components/TablePagination';
 import { invitationFeedback } from '@/lib/invitationFeedback';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
@@ -34,6 +35,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
   const [assignmentAccount, setAssignmentAccount] = useState(null);
   const pendingAssignment = useRef(null);
@@ -69,6 +71,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   const columns = tableColumns('users', { rows: tableSource, users, clients, });
   const table = useTableControls({ columns, rows: tableSource, module: 'users', scope: `${viewer?.user_id}:${clientId || 'platform'}` });
   const filtered = table.apply(loadedScope === `${scope}:${clientId}` ? presetRows : []);
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(filtered.length / 25)));
 
   async function patchUser(u, changes, label) {
     try {
@@ -131,7 +134,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
           <tbody className="divide-y divide-line">
             {loading && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8">Loading users…</td></tr>}
             {!loading && filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8"><FilterEmpty table={table} name="users" onClear={() => { setQ('');  }} /></td></tr>}
-            {!loading && filtered.map((u, i) => {
+            {!loading && filtered.slice((currentPage - 1) * 25, currentPage * 25).map((u, i) => {
               const status = u.status || "active";
               const tone = STATUS_TONE[status] || STATUS_TONE.active;
               return (
@@ -208,7 +211,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
           </tbody>
         </table>
       </div>
-
+      <TablePagination page={currentPage} onPageChange={setPage} total={filtered.length} />
       <AddUserDialog
         open={addOpen}
         onOpenChange={setAddOpen}
@@ -259,7 +262,7 @@ function EditRoleItem({ u, allowedRoles, onSave }) {
           </Select>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => { onSave(role); setOpen(false); }}>Save</Button>
+            <Button onClick={async () => { if (await onSave(role)) setOpen(false); }}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -286,7 +289,7 @@ function EditClientsItem({ u, clients, onSave, canGrantAll, onEntitlement }) {
             <DialogTitle>Client access for {u.name || u.email}</DialogTitle>
             <DialogDescription>Select which clients this user can access.</DialogDescription>
           </DialogHeader>
-          {canGrantAll && u.role === "platform_admin" && <label className="flex gap-2 text-sm"><input type="checkbox" checked={!!u.all_clients} onChange={e => { onEntitlement(e.target.checked); setOpen(false); }} /> All-client entitlement</label>}
+          {canGrantAll && u.role === "platform_admin" && <label className="flex gap-2 text-sm"><input type="checkbox" checked={!!u.all_clients} onChange={async e => { if (await onEntitlement(e.target.checked)) setOpen(false); }} /> All-client entitlement</label>}
           <div className="max-h-64 overflow-y-auto space-y-1 py-2">
             {clients.map((c) => (
               <label key={c.client_id} className="flex items-center gap-2 text-sm p-2 rounded hover:bg-surface-subtle cursor-pointer">
@@ -297,7 +300,7 @@ function EditClientsItem({ u, clients, onSave, canGrantAll, onEntitlement }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => { onSave(Array.from(selected)); setOpen(false); }}>Save</Button>
+            <Button onClick={async () => { if (await onSave(Array.from(selected))) setOpen(false); }}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -308,19 +311,20 @@ function EditClientsItem({ u, clients, onSave, canGrantAll, onEntitlement }) {
 function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRoles, onCreated }) {
   const [form, setForm] = useState({ name: "", email: "", role: allowedRoles[allowedRoles.length - 1], client_ids: clientId ? [clientId] : [] });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) setForm({ name: "", email: "", role: allowedRoles[allowedRoles.length - 1], client_ids: clientId ? [clientId] : [] });
   }, [open, allowedRoles, clientId]);
 
   async function save() {
-    if (!form.name.trim() || !form.email.trim()) { toast.error("Name and email are required"); return; }
-    setSaving(true);
+    if (!form.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setError("Name and a valid email address are required"); return; }
+    setError(""); setSaving(true);
     try {
       const { data } = await api.post("/users", form);
       toast.info(invitationFeedback(data));
       onCreated?.();
-    } catch (e) { toast.error(formatError(e)); }
+    } catch (e) { setError(formatError(e)); }
     finally { setSaving(false); }
   }
 
@@ -345,6 +349,7 @@ function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRo
               <Label className="text-xs text-ink-secondary">Email</Label>
               <Input aria-label="Email" type="email" data-testid="new-user-email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="text-sm" />
             </div>
+            {error && <p role="alert" className="text-sm text-semantic-critical">{error}</p>}
             <div>
               <Label className="text-xs text-ink-secondary">Role</Label>
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>

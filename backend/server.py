@@ -685,7 +685,13 @@ async def audit(user: Dict, action: str, entity_type: str, entity_id: str, clien
     if client_id:
         client_row = await db.clients.find_one({"client_id": client_id}, {"name": 1})
         document["client_name"] = (client_row or {}).get("name")
-    document["entity_name"] = (meta or {}).get("name") or (meta or {}).get("title")
+    document["entity_name"] = (meta or {}).get("name") or (meta or {}).get("title") or (meta or {}).get("filename")
+    if not document["entity_name"] and entity_id:
+        collection = {'user': 'users', 'client': 'clients', 'evidence': 'evidence'}.get(entity_type, entity_type + 's')
+        key = {'users': 'user_id', 'clients': 'client_id', 'evidence': 'evidence_id'}.get(collection, ID_FIELD_MAP.get(collection))
+        if key:
+            target = await db[collection].find_one({key: entity_id}, {'name': 1, 'title': 1, 'display_name': 1, 'filename': 1})
+            document["entity_name"] = next((target.get(field) for field in ('name', 'title', 'display_name', 'filename') if target and target.get(field)), None)
     intent = create_requests.current.get()
     if intent:
         # A create event keeps its first metadata, even if the actor or record is
@@ -1049,7 +1055,7 @@ class UserCreateIn(BaseModel):
 class UserPatchIn(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     expected_updated_at: Optional[str] = Field(default=None, max_length=100)
-    name: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
     role: Optional[str] = None
     client_ids: Optional[List[str]] = None
     password_change_required: Optional[bool] = None
@@ -1377,6 +1383,9 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
             {"$set": {"used": True, "used_at": _now()}},
         )
     await audit(user, "update", "user", user_id, meta={"fields": list(updates.keys()), "previous": {k: target.get(k) for k in updates if k != "updated_at"}, "new": {k: v for k, v in updates.items() if k != "updated_at"}})
+    for field, action in {'role': 'role_change', 'all_clients': 'all-client-entitlement', 'password_change_required': 'password-reset-required'}.items():
+        if field in updates and target.get(field) != updates[field]:
+            await audit(user, action, 'user', user_id, meta={'field': field, 'previous': target.get(field), 'new': updates[field]})
     if "client_ids" in updates:
         old_ids, new_ids = set(target.get("client_ids") or []), set(updates["client_ids"])
         for cid in old_ids ^ new_ids:
@@ -1636,40 +1645,10 @@ async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depend
     if not changed.matched_count:
         raise HTTPException(409, "Record changed since it was opened; reload before saving")
     await audit(user, "update", "client", client_id, client_id, meta={**updates,'changes':{k:{'before':existing.get(k),'after':v} for k,v in updates.items() if k!='updated_at' and existing.get(k)!=v}})
+    if updates.get('status') != existing.get('status') and (updates.get('status') == 'archived' or existing.get('status') == 'archived'):
+        await audit(user, 'archive' if updates.get('status') == 'archived' else 'restore', 'client', client_id, client_id, meta={'previous': existing.get('status'), 'new': updates.get('status')})
     doc = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
     return (await client_relationships.project(db, [doc]))[0]
-
-
-class ClientDeleteIn(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-    confirmation: str = Field(max_length=200)
-    expected_updated_at: Optional[str] = None
-
-
-@api.delete('/clients/{client_id}')
-async def delete_empty_client(client_id: str, body: ClientDeleteIn, user: Dict = Depends(get_current_user)):
-    if user.get('role') != 'super_admin':
-        raise HTTPException(403, 'Super Admin required')
-    existing = await db.clients.find_one({'client_id': client_id})
-    if not existing:
-        raise HTTPException(404, 'Client not found')
-    _require_snapshot(body.model_dump(exclude_unset=True), existing)
-    if body.confirmation != existing['name']:
-        raise HTTPException(422, 'Type the exact client name to confirm permanent deletion')
-    dependencies = []
-    for collection in await db.list_collection_names():
-        if collection != 'clients' and await db[collection].find_one({'client_id': client_id}):
-            dependencies.append(collection)
-    if await db.users.find_one({'client_ids': client_id}):
-        dependencies.append('user memberships')
-    if dependencies:
-        raise HTTPException(409, {'message': 'Client history must be retained. Archive this client instead.', 'dependencies': sorted(dependencies)})
-    await audit(user, 'delete-requested', 'client', client_id, client_id, meta={'name': existing['name'], 'outcome': 'requested'})
-    deleted = await db.clients.delete_one({'client_id': client_id, 'updated_at': existing.get('updated_at')})
-    if not deleted.deleted_count:
-        raise HTTPException(409, 'Client changed; reload before deleting')
-    await audit(user, 'delete', 'client', client_id, client_id, meta={'name': existing['name']})
-    return {'ok': True}
 
 
 @api.get("/clients/{client_id}/assignees")
@@ -1901,7 +1880,7 @@ async def delete_evidence(ev_id: str, user: Dict = Depends(get_current_user)):
         raise HTTPException(409, "Completed Action Item evidence must be retained")
     # Retain bytes even if a completion races this removal. Only the inventory link is archived.
     await db.evidence.update_one({"evidence_id": ev_id}, {"$set": {"archived_at": _now()}})
-    await audit(user, "delete", "evidence", ev_id, doc.get("client_id"))
+    await audit(user, "delete", "evidence", ev_id, doc.get("client_id"), meta={"filename": doc.get("display_name") or doc.get("filename")})
     return {"ok": True}
 
 
@@ -1967,15 +1946,15 @@ async def create_comment(body: CommentIn, user: Dict = Depends(get_current_user)
 _AUDIT_ACTION_BUCKETS: Dict[str, List[str]] = {
     # user-facing category -> list of raw action codes it collapses to
     "create": ["create"],
-    "update": ["update"],
+    "update": ["update", "archive", "restore", "account-status-changed"],
     "delete": ["delete"],
     "assign": ["assign", "bulk-assign"],
     "approve": ["approve", "policy-approve"],
     "complete": ["complete", "review-complete", "onboarding-complete"],
     "upload": ["upload", "evidence-upload"],
     "invite": ["invite", "invite-contact", "resend_invite"],
-    "auth": ["login", "logout", "password_change", "password_reset"],
-    "permission": ["role_change", "client_access_change", "disable", "enable"],
+    "auth": ["login", "logout", "password_change", "password_reset", "login-failed", "authentication-throttled", "password-reset-required"],
+    "permission": ["role_change", "client_access_change", "disable", "enable", "all-client-entitlement", "membership-granted", "membership-removed", "account-disabled", "access-denied"],
     "onboarding": [
         "onboarding-response", "onboarding-contact", "onboarding-assessment",
         "onboarding-known-issue", "onboarding-review", "onboarding-complete", "baseline",
@@ -1995,6 +1974,8 @@ async def _audit_scope_for(user: Dict) -> Optional[List[str]]:
     if role == "super_admin":
         return None
     if role == "platform_admin":
+        if user.get('all_clients') is True:
+            return list({value for value in await db.clients.distinct('client_id') + await db.audit_logs.distinct('client_id') if value})
         return list(user.get("client_ids") or [])
     return []
 
@@ -4551,7 +4532,7 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
         for d in docs:
             await delete_entity(body.kind, d[id_field], user, {'expected_updated_at':body.expected_versions[d[id_field]]})
         for d in docs:
-            await audit(user, "bulk-delete", entity_type, d[id_field], d["client_id"])
+            await audit(user, "bulk-delete", entity_type, d[id_field], d["client_id"], meta={"name": d.get("name") or d.get("title")})
         return {"ok": True, "count": len(docs)}
 
     if not _writable(user):

@@ -4,6 +4,7 @@ WORKDIR /app/backend
 COPY backend/requirements-runtime.txt ./
 RUN pip install --no-cache-dir -r requirements-runtime.txt
 COPY backend/*.py ./
+COPY backend/common_passwords.txt ./
 COPY backend/routes ./routes
 COPY frontend/src/lib/grcRules.json /app/frontend/src/lib/grcRules.json
 COPY frontend/src/lib/managementRules.json /app/frontend/src/lib/managementRules.json

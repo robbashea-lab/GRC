@@ -25,3 +25,14 @@ test('client changes load once and delayed previous scope cannot replace the cur
   expect(container.textContent).not.toContain('Old member');
   expect(api.get.mock.calls.filter(([path])=>path.endsWith('/members')).map(([path])=>path)).toEqual(['/clients/old/members','/clients/new/members']);
 });
+
+test('large user lists page without omitting the final records',async()=>{
+  api.get.mockImplementation(path=>Promise.resolve({data:path==='/users'?Array.from({length:26},(_,i)=>({user_id:`user-${i}`,name:`Member ${i}`,email:`member${i}@example.test`,role:'client_readonly',status:'active'})):[]}));
+  await act(async()=>root.render(<UsersTable allowedRoles={['client_readonly']}/>));
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(25);
+  const next=Array.from(container.querySelectorAll('button')).find(button=>button.textContent==='Next');
+  await act(async()=>next.click());
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(1);
+  expect(container.querySelector('tbody').textContent).toContain('Member 25');
+  expect(next.disabled).toBe(true);
+});

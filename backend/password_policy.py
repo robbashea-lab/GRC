@@ -3,6 +3,7 @@ import base64
 import hashlib
 import hmac
 import secrets
+import re
 from pathlib import Path
 import bcrypt
 from fastapi import HTTPException
@@ -11,6 +12,16 @@ BLOCKED = {'passwordpassword', 'passwordpasswordpassword', '123456789012345',
            '1234567890123456', 'qwertyuiopasdfgh', 'letmeinletmeinletmein',
            'correct horse battery staple', 'omnisciente', 'welcome to omnisciente'}
 BLOCKED.update(word.casefold() for word in Path(__file__).with_name('common_passwords.txt').read_text(encoding='utf-8').splitlines())
+
+
+def valid_hash(encoded):
+    if re.fullmatch(r"\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}", encoded):
+        return True
+    try:
+        algorithm, salt, digest = encoded.split('$')
+        return algorithm == 'scrypt' and len(base64.b64decode(salt, validate=True)) == 16 and len(base64.b64decode(digest, validate=True)) == 32
+    except (ValueError, TypeError):
+        return False
 
 
 def validate(password):

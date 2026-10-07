@@ -450,6 +450,7 @@ function AuditDetailDrawer({ event, onClose }) {
         <div className="mt-4">
           <DetailRow label="Event" testid="audit-detail-event">{humanAction(event.action)}</DetailRow>
           <DetailRow label="Raw code" mono testid="audit-detail-raw">{event.action || "—"}</DetailRow>
+          <DetailRow label="Outcome">{event.outcome || 'Not recorded (legacy event)'}</DetailRow>
           <DetailRow label="Date / Time" mono testid="audit-detail-at">
             {event.at ? new Date(event.at).toLocaleString() : "—"}
           </DetailRow>
@@ -469,6 +470,7 @@ function AuditDetailDrawer({ event, onClose }) {
           </DetailRow>
           <DetailRow label="Entity" testid="audit-detail-entity">{humanEntity(event.entity_type)}</DetailRow>
           <DetailRow label="Entity ID" mono testid="audit-detail-entity-id">{event.entity_id || "—"}</DetailRow>
+          {event.entity_name && <DetailRow label="Entity name">{event.entity_name}</DetailRow>}
           {prevVal !== undefined && (
             <DetailRow label="Previous value" mono testid="audit-detail-prev">
               <pre className="whitespace-pre-wrap text-xs bg-surface-subtle border border-line rounded-md p-2">{JSON.stringify(prevVal, null, 2)}</pre>

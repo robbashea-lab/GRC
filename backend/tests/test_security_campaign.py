@@ -248,17 +248,27 @@ class AdministrationHardening(SecurityCampaign):
         for uid in ['member','manager','grace']:
             response = await self.raw.patch('/api/tasks/tasks-a', headers=self.token(uid), json={'notes':'blocked','expected_updated_at':None})
             self.assertEqual(response.status_code,403,response.text)
+        response = await self.raw.post('/api/bulk', headers=self.token('grace'), json={'kind':'tasks','action':'assign','ids':['tasks-a'],'payload':{'assignee_id':'member'},'expected_versions':{'tasks-a':None}})
+        self.assertEqual(response.status_code,403,response.text)
+        await harness.server.db.evidence.insert_one({'evidence_id':'archived-evidence','client_id':'a','filename':'Synthetic evidence','archived_at':None})
+        response = await self.raw.patch('/api/evidence-library/items/archived-evidence', headers=self.token('grace'), json={'display_name':'blocked','expected_updated_at':None})
+        self.assertEqual(response.status_code,403,response.text)
 
-    async def test_client_delete_dependencies_and_retained_snapshot(self):
+    async def test_client_hard_delete_is_unavailable(self):
         await harness.server.db.clients.insert_one({'client_id':'empty-client','name':'Disposable empty client','status':'onboarding'})
-        response = await self.raw.request('DELETE', '/api/clients/empty-client', headers=self.token('admin'), json={'confirmation':'Disposable empty client','expected_updated_at':None})
-        self.assertEqual(response.status_code,200,response.text)
-        events=(await self.raw.get('/api/audit-logs?client_id=empty-client',headers=self.token('admin'))).json()['items']
-        self.assertTrue(events)
-        self.assertTrue(all(event['entity_name']=='Disposable empty client' for event in events))
-        self.assertTrue(all(event['client_name']=='Disposable empty client' for event in events))
-        response = await self.raw.request('DELETE', '/api/clients/a',headers=self.token('admin'),json={'confirmation':'Populated','expected_updated_at':None})
-        self.assertEqual(response.status_code,409,response.text)
+        for cid in ['empty-client', 'a']:
+            response = await self.raw.request('DELETE', '/api/clients/' + cid, headers=self.token('admin'), json={'confirmation':'Disposable empty client','expected_updated_at':None})
+            self.assertNotEqual(response.status_code, 200, response.text)
+            self.assertIsNotNone(await harness.server.db.clients.find_one({'client_id': cid}))
+
+    async def test_audit_preserves_actor_and_object_snapshots(self):
+        await harness.server.audit({'user_id': 'admin', 'name': 'Original actor', 'email': 'actor@example.test'}, 'update', 'task', 'tasks-a', 'a')
+        await harness.server.db.tasks.delete_one({'task_id': 'tasks-a'})
+        event = await harness.server.db.audit_logs.find_one({'entity_id': 'tasks-a'})
+        self.assertEqual(event['user_name'], 'Original actor')
+        self.assertTrue(event['entity_name'])
+        self.assertTrue(event['client_name'])
+        self.assertEqual(event['outcome'], 'success')
 
     async def test_normalized_validation_and_mass_assignment(self):
         for body in [{'name':'   '},{'name':'x'*201},{'name':'valid','client_id':'forged'},{'name':'valid','status':'invalid'}]:

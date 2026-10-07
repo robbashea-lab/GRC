@@ -10,15 +10,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import ClientRelationshipValue from '@/components/ClientRelationshipValue';
 import {grcLead} from '@/lib/clientRelationships';
 
-export default function ClientDialog({ open, onOpenChange, onCreated, client = null }) {
+export default function ClientDialog({ open, onOpenChange, onCreated, client = null, onCloseAutoFocus }) {
   const [form, setForm] = useState({
     name: "", industry: "", status: "onboarding", primary_contact: "", environment: "Production",
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const createRecord = useMemo(() => createIntent((...args) => api.post(...args)), []);
   const [choices, setChoices] = useState(null), [choiceError, setChoiceError] = useState(''), [retry, setRetry] = useState(0);
   useEffect(() => {
     if (!open) return;
+    setError("");
     setForm({ name: client?.name || "", industry: client?.industry || "", status: client?.status || "onboarding", primary_contact_id: client?.primary_contact_id || "", environment: client?.environment || "Production", assigned_owner_id: client?.assigned_owner_id || "", logo_url: client?.logo_url || "", contact_name: '', contact_email: '', contact_title: '' });
   }, [open, client]);
   useEffect(() => {
@@ -36,9 +38,9 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
   }, [open, client, retry]);
   const ready = choices && choices.clientId === client?.client_id;
   async function save() {
-    if (!form.name.trim()) { toast.error("Organization name is required"); return; }
+    if (!form.name.trim()) { setError("Organization name is required"); return; }
     if (!client && (form.contact_email || form.contact_title) && !form.contact_name.trim()) {toast.error('Primary Contact name is required'); return;}
-    setSaving(true);
+    setError(""); setSaving(true);
     try {
       const {contact_name, contact_email, contact_title, ...payload} = form;
       if (!client) {
@@ -48,12 +50,12 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
       const { data } = await (client ? api.patch(`/clients/${client.client_id}`, {...payload,expected_updated_at:client.updated_at??null}) : createRecord("/clients", payload));
       onCreated?.(data);
       onOpenChange(false);
-    } catch (e) { toast.error(formatError(e)); }
+    } catch (e) { setError(formatError(e)); }
     finally { setSaving(false); }
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" data-testid="add-client-dialog">
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus} className="max-w-lg max-h-[90vh] overflow-y-auto" data-testid="add-client-dialog">
         <DialogHeader>
           <DialogTitle>{client ? "Edit client organization" : "Add client organization"}</DialogTitle>
           <DialogDescription>{client ? "Update the existing client organization." : "Create a new tenant. You can walk through GRC Program Onboarding right after creation."}</DialogDescription>
@@ -63,6 +65,7 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
             <Label className="text-xs text-ink-secondary">Organization name <span className="text-semantic-critical">*</span></Label>
             <Input aria-label="Organization name" maxLength={200} data-testid="new-client-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corp" className="text-sm" />
           </div>
+          {error && <p role="alert" className="text-sm text-semantic-critical">{error}</p>}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-ink-secondary">Industry</Label>
@@ -122,11 +125,11 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
           </div>
           <div>
             <Label className="text-xs text-ink-secondary">Environment</Label>
-            <Input value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })} />
+            <Input aria-label="Environment" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })} />
           </div>
           <div>
             <Label className="text-xs text-ink-secondary">Logo URL (optional)</Label>
-            <Input value={form.logo_url || ""} onChange={e => setForm({ ...form, logo_url: e.target.value })} />
+            <Input aria-label="Logo URL" value={form.logo_url || ""} onChange={e => setForm({ ...form, logo_url: e.target.value })} />
           </div>
         </div>
         <DialogFooter>
