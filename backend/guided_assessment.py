@@ -1,4 +1,4 @@
-"""Client-scoped versioned Control 1 interviews; assessment writes remain separate."""
+"""Client-scoped versioned CIS interviews; assessment writes remain separate."""
 import json
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
@@ -6,11 +6,31 @@ from fastapi import HTTPException
 from framework_catalog import ROOT, client_configuration
 
 LEGACY = json.loads((ROOT / 'guidedAssessmentPilot.json').read_text(encoding='utf-8'))
-CATALOG = json.loads((ROOT / 'guidedControl1.json').read_text(encoding='utf-8'))
-CATALOG['safeguards'] = {**LEGACY['safeguards'], **json.loads((ROOT / 'guidedControl1Additional.json').read_text(encoding='utf-8'))['safeguards']}
+CONTROL1 = json.loads((ROOT / 'guidedControl1.json').read_text(encoding='utf-8'))
+CONTROL1['safeguards'] = {**LEGACY['safeguards'], **json.loads((ROOT / 'guidedControl1Additional.json').read_text(encoding='utf-8'))['safeguards']}
 for safeguard in ('1.1', '1.2'):
-    CATALOG['safeguards'][safeguard] = [*CATALOG['safeguards'][safeguard], {'id': 'unknowns', 'type': 'text'}]
-VERSIONS = {LEGACY['version']: LEGACY, CATALOG['version']: CATALOG}
+    CONTROL1['safeguards'][safeguard] = [*CONTROL1['safeguards'][safeguard], {'id': 'unknowns', 'type': 'text'}]
+PROGRAM = json.loads((ROOT / 'guidedCisProgram.json').read_text(encoding='utf-8'))
+
+def program_questions(definition):
+    questions = [{'id': 'practice', 'type': 'select', 'choices': ['Yes', 'Partially', 'No', 'Not sure']}]
+    for conditional in (False, True):
+        elements = [e for e in definition['elements'] if e['conditional'] == conditional]
+        for offset in range(0, len(elements), 5):
+            questions.append({'id': ('conditional' if conditional else 'requirements') + '_' + str(offset),
+                'type': 'matrix', 'rows': [e['text'] for e in elements[offset:offset + 5]],
+                'choices': ['Yes', 'Partially', 'No', 'Not sure'] + (['Not applicable'] if conditional else [])})
+    questions.extend({'id': key, 'type': 'text'} for key in ('existing', 'scope_reason', 'system', 'owner', 'operation', 'evidence', 'gaps', 'unknowns'))
+    return questions
+
+CATALOG = {**PROGRAM, 'definitions': {
+    **{id: {**d, 'question_set_version': CONTROL1['version']} for id, d in CONTROL1['definitions'].items()},
+    **{id: {**d, 'question_set_version': PROGRAM['version']} for id, d in PROGRAM['definitions'].items()}},
+    'safeguards': {**CONTROL1['safeguards'], **{id: program_questions(d) for id, d in PROGRAM['definitions'].items()}}}
+VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM['version']: CATALOG}
+
+def current_version(id):
+    return CATALOG['definitions'][id]['question_set_version']
 
 class InterviewWrite(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
@@ -36,7 +56,7 @@ def check_scope(row, client):
         raise HTTPException(404, 'Guided pilot is not enabled for this assessment')
 
 def validate_answers(id, answers, version=None):
-    catalog = VERSIONS.get(version or CATALOG['version'])
+    catalog = VERSIONS.get(version or current_version(id))
     if not catalog or id not in catalog['safeguards']:
         raise HTTPException(409, 'Question set is not available')
     definitions = {q['id']: q for q in catalog['safeguards'][id]}
@@ -59,10 +79,10 @@ def validate_answers(id, answers, version=None):
 async def read_draft(s, row, user):
     return await s.db.guided_assessment_pilot.find_one(
         {'_id': row['framework_assessment_id'] + ':' + user['user_id'], 'client_id': row['client_id']}, {'_id': 0}) or {
-        'version': CATALOG['version'], 'answers': {}, 'step': 0, 'completed': False, 'revision': 0}
+        'version': current_version(row['definition_id']), 'answers': {}, 'step': 0, 'completed': False, 'revision': 0}
 
 async def save_draft(s, row, user, body):
-    if body.version != CATALOG['version']:
+    if body.version != current_version(row['definition_id']):
         raise HTTPException(409, 'Question set changed; reload the interview')
     validate_answers(row['definition_id'], body.answers)
     identity = row['framework_assessment_id'] + ':' + user['user_id']

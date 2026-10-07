@@ -1,5 +1,5 @@
 import {validateCsfProfile} from '../lib/csfProfile';
-import {pilotEnabled,guidedCatalog,validateAnswers} from '../lib/guidedAssessment';
+import {pilotEnabled,versionForSafeguard,validateAnswers} from '../lib/guidedAssessment';
 import cisCriteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
@@ -167,19 +167,20 @@ export function frameworkRequest(db,path,method,params,body){
     }
     return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
       definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,
+      guided_assessment_drafts:Object.fromEntries(assessments.filter(a=>pilotEnabled(params.client_id,id,configuration,a.definition_id)).flatMap(a=>{const draft=db.guided_assessment_pilot?.[a.framework_assessment_id+':'+db.user.user_id];return draft?[[a.definition_id,{revision:draft.revision,completed:draft.completed}]]:[];})),
       organizational_controls:id==='soc-2'?(db.organizational_controls||[]).filter(c=>c.client_id===params.client_id).map(c=>({control_id:c.control_id,legacy_id:c.legacy_id,assessment_ids:c.assessment_ids,design:c.design,conflicts:c.conflicts,observations:c.observations.map(o=>({operating:o.operating,expected_instances:o.expected_instances,collected_instances:o.collected_instances}))})):[],
       work:Object.fromEntries(assessments.map(a=>[a.framework_assessment_id,assessmentWork(a,db)])),active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
   }
   const row=record(db,'framework_assessments',id);frameworkScope(db,row.client_id);if(method!=='get')writable(db);
   const pilot=()=>{if(!pilotEnabled(row.client_id,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id))fail('Guided pilot is not enabled for this assessment',404);};
   const draftKey=id+':'+db.user.user_id;
-  const readDraft=()=>db.guided_assessment_pilot?.[draftKey]||{version:guidedCatalog.version,answers:{},step:0,completed:false,revision:0};
+  const readDraft=()=>db.guided_assessment_pilot?.[draftKey]||{version:versionForSafeguard(row.definition_id),answers:{},step:0,completed:false,revision:0};
   if(operation==='guided-assessment'){
     pilot();
     if(method==='get')return readDraft();
     if(method!=='put')fail('Method not allowed',405);
     if(db.user.role==='client_contributor'&&row.owner_id!==db.user.user_id)fail('Forbidden',403);
-    if(Object.keys(body).some(k=>!['version','answers','step','completed','narrative','expected_revision'].includes(k))||body.version!==guidedCatalog.version||!Number.isInteger(body.step)||body.step<0||body.step>30||typeof body.completed!=='boolean'||typeof (body.narrative??'')!=='string'||(body.narrative||'').length>20000)fail('Invalid interview');
+    if(Object.keys(body).some(k=>!['version','answers','step','completed','narrative','expected_revision'].includes(k))||body.version!==versionForSafeguard(row.definition_id)||!Number.isInteger(body.step)||body.step<0||body.step>30||typeof body.completed!=='boolean'||typeof (body.narrative??'')!=='string'||(body.narrative||'').length>20000)fail('Invalid interview');
     validateAnswers(row.definition_id,body.answers);
     const old=readDraft();if(old.revision!==body.expected_revision)fail('Interview changed; reload before saving',409);
     if(old.revision&&(old.version!==body.version||old.completed&&!body.completed&&!Object.keys(body.answers).length)){

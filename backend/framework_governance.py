@@ -337,9 +337,16 @@ def router_for(s):
         config=client_configuration(key,client)
         retained={a['definition_id'] for a in rows}
         controls = await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1,'legacy_id':1,'assessment_ids':1,'design':1,'conflicts':1,'observations.operating':1,'observations.expected_instances':1,'observations.collected_instances':1}).to_list(None) if key=='soc-2' else []
+        guided_drafts = {}
+        if key == 'cis-ig1' and config.get('guided_assessment_enabled') is not False:
+            identities = {a['framework_assessment_id'] + ':' + user['user_id']: a['definition_id'] for a in rows
+                if config['implementation_group'] in guided_assessment.CATALOG['definitions'].get(a['definition_id'], {}).get('groups', [])}
+            drafts = await s.db.guided_assessment_pilot.find({'client_id': client_id, '_id': {'$in': list(identities)}},
+                {'_id': 1, 'revision': 1, 'completed': 1}).to_list(153)
+            guided_drafts = {identities[d['_id']]: {'revision': d['revision'], 'completed': d['completed']} for d in drafts}
         return {'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
-                'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows),
+                'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows),'guided_assessment_drafts':guided_drafts,
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
     @router.patch('/frameworks/cis-ig1/configuration')
     @s.configuration_mutation

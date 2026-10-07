@@ -1,7 +1,8 @@
 """Pilot routes against the existing isolated authorization harness."""
 import unittest
 import test_framework_governance as harness
-from guided_assessment import CATALOG, LEGACY
+from guided_assessment import CATALOG, CONTROL1, LEGACY, PROGRAM, current_version, validate_answers
+from fastapi import HTTPException
 server=harness.server
 
 class GuidedTests(unittest.IsolatedAsyncioTestCase):
@@ -17,7 +18,7 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         await server.db.clients.insert_one({'client_id':'demo_brawndo','name':'Brawndo','status':'active'})
         await server.db.framework_assessments.insert_one({**self.row,'_id':self.aid,'framework_assessment_id':self.aid,'client_id':'demo_brawndo','owner_id':'member'})
         self.path='/api/framework_assessments/'+self.aid+'/guided-assessment'
-        self.pilot_body={'version':CATALOG['version'],'answers':{'inventory':'No','existing':'Manual records'},'step':1,'completed':False,'expected_revision':0}
+        self.pilot_body={'version':current_version('1.1'),'answers':{'inventory':'No','existing':'Manual records'},'step':1,'completed':False,'expected_revision':0}
 
     async def test_pilot_save_resume_is_separate_and_conflict_safe(self):
         before=await server.db.framework_assessments.find_one({'framework_assessment_id':self.aid})
@@ -60,7 +61,7 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         edited=await self.client.patch('/api/framework_assessments/'+self.aid,json={'implementation':'Manually revised'})
         self.assertEqual(edited.status_code,200,edited.text)
         self.assertIsNone(edited.json()['guided_assessment_source'])
-        self.assertEqual(edited.json()['assessment_history'][-2]['guided_assessment_source']['version'],CATALOG['version'])
+        self.assertEqual(edited.json()['assessment_history'][-2]['guided_assessment_source']['version'],CONTROL1['version'])
 
     async def test_version_transition_archives_exact_old_answers_and_narrative(self):
         identity=self.aid+':admin'
@@ -75,12 +76,58 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(archived['version'],LEGACY['version'])
         self.assertEqual(started.json()['revision'],5)
 
-    async def test_control_one_applicability_tracks_groups_without_copying_answers(self):
-        for group,allowed in [(1,{'1.1','1.2'}),(2,{'1.1','1.2','1.3','1.4'}),(3,set(CATALOG['definitions']))]:
+    async def test_program_applicability_tracks_groups_without_copying_answers(self):
+        for group in (1,2,3):
+            allowed={id for id,d in CATALOG['definitions'].items() if group in d['groups']}
+            self.assertEqual(len(allowed), {1:56,2:130,3:153}[group])
             await server.db.clients.update_one({'client_id':'demo_brawndo'},{'$set':{'framework_settings':{'cis-ig1':{'implementation_group':group}}}})
-            for definition in ['1.1','1.2','1.3','1.4','1.5','2.1']:
+            for definition in CATALOG['definitions']:
                 aid='scope-'+definition
                 await server.db.framework_assessments.update_one({'framework_assessment_id':aid},{'$set':{**self.row,'_id':aid,'framework_assessment_id':aid,'client_id':'demo_brawndo','definition_id':definition}},upsert=True)
                 response=await self.client.get('/api/framework_assessments/'+aid+'/guided-assessment')
                 self.assertEqual(response.status_code,200 if definition in allowed else 404,response.text)
                 if definition in allowed:self.assertEqual(response.json()['answers'],{})
+
+    async def test_expanded_interview_persistence_authorization_and_workspace_summary(self):
+        aid='expanded-2.1'
+        await server.db.framework_assessments.insert_one({**self.row,'_id':aid,'framework_assessment_id':aid,'client_id':'demo_brawndo','definition_id':'2.1'})
+        path='/api/framework_assessments/'+aid+'/guided-assessment'
+        body={**self.pilot_body,'version':current_version('2.1'),'answers':{'practice':'Partially','operation':'Synthetic software inventory process'},'narrative':'Original operator narrative'}
+        first=await self.client.put(path,json=body)
+        self.assertEqual(first.status_code,200,first.text)
+        self.assertEqual((await self.client.get(path)).json()['answers'],body['answers'])
+        workspace=await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'demo_brawndo'})
+        self.assertEqual(workspace.status_code,200,workspace.text)
+        self.assertEqual(workspace.json()['guided_assessment_drafts']['2.1'],{'revision':1,'completed':False})
+        self.sign_in('member')
+        self.assertEqual((await self.client.get(path)).status_code,403)
+        await server.db.users.update_one({'user_id':'member'},{'$addToSet':{'client_ids':'demo_brawndo'}})
+        self.assertEqual((await self.client.get(path)).json()['answers'],{})
+        workspace=await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'demo_brawndo'})
+        self.assertNotIn('2.1',workspace.json()['guided_assessment_drafts'])
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.assertEqual((await self.client.put(path,json=body)).status_code,403)
+        self.client.cookies.clear()
+        self.client.headers.pop('Authorization',None)
+        self.assertEqual((await self.client.get(path)).status_code,401)
+        self.assertEqual((await self.client.put(path,json=body)).status_code,401)
+
+    async def test_all_expanded_question_sets_validate_only_their_own_bounded_answers(self):
+        for definition in PROGRAM['definitions']:
+            questions=CATALOG['safeguards'][definition]
+            answers={q['id']:{row:'Yes' for row in q['rows']} if q['type']=='matrix' else '' if q['type']=='text' else 'Yes' for q in questions}
+            validate_answers(definition,answers,current_version(definition))
+            for choice in ('Partially','No','Not sure'):
+                validate_answers(definition,{**answers,'practice':choice},current_version(definition))
+            with self.assertRaises(HTTPException) as error:
+                validate_answers(definition,{**answers,'role':'super_admin'})
+            self.assertEqual(error.exception.status_code,422)
+            with self.assertRaises(HTTPException):
+                validate_answers(definition,{**answers,'operation':'x'*2001})
+            for matrix in (q for q in questions if q['type']=='matrix'):
+                excluded={**answers,matrix['id']:{matrix['rows'][0]:'Not applicable'}}
+                if 'Not applicable' in matrix['choices']:
+                    validate_answers(definition,excluded)
+                else:
+                    with self.assertRaises(HTTPException):
+                        validate_answers(definition,excluded)

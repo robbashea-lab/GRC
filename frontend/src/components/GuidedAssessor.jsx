@@ -1,7 +1,7 @@
 import {useEffect,useId,useRef,useState} from 'react';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError} from '@/lib/api';
-import {guidedCatalog,catalogForVersion,pilotEnabled,prioritizeGuidedRows,visibleQuestions,generateResult,validateAnswers} from '@/lib/guidedAssessment';
+import {guidedCatalog,versionForSafeguard,catalogForVersion,pilotEnabled,prioritizeGuidedRows,visibleQuestions,generateResult,validateAnswers} from '@/lib/guidedAssessment';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
@@ -16,12 +16,13 @@ export default function GuidedAssessor(props){
   if(!pilotEnabled(props.clientId,props.framework,props.configuration,props.record?.definition_id))return null;
   return <Pilot key={props.record?.framework_assessment_id||props.clientId} {...props}/>;
 }
-function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,onSelect,onViewAll,form,onApply,onDraftChange,disabled=false}){
+function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onDraftChange,disabled=false}){
   const {user}=useAuth(),key='guided-pilot-ui:'+user?.user_id+':'+clientId,initial=readPreference(key);
-  const [mode,setMode]=useState(record&&new URLSearchParams(window.location.search).get('guided')==='pilot'?'expanded':initial.mode||'collapsed'),[greeting,setGreeting]=useState(false),[draft,setDraft]=useState(null),[answers,setAnswers]=useState({}),[step,setStep]=useState(0),[result,setResult]=useState(null),[narrative,setNarrative]=useState(''),[statuses,setStatuses]=useState({}),[error,setError]=useState(''),[busy,setBusy]=useState(false),[restart,setRestart]=useState(false),[replace,setReplace]=useState(false);
+  const [mode,setMode]=useState(record&&new URLSearchParams(window.location.search).get('guided')==='pilot'?'expanded':initial.mode||'collapsed'),[greeting,setGreeting]=useState(false),[draft,setDraft]=useState(null),[answers,setAnswers]=useState({}),[step,setStep]=useState(0),[result,setResult]=useState(null),[narrative,setNarrative]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[restart,setRestart]=useState(false),[replace,setReplace]=useState(false);
   const launcher=useRef(null),heading=useRef(null),saved=useRef('{}');
   const [applied,setApplied]=useState(false),[contextPrompt,setContextPrompt]=useState(false);
-  const version=draft?.version||guidedCatalog.version,updated=version!==guidedCatalog.version;
+  const currentVersion=record?versionForSafeguard(record.definition_id):guidedCatalog.version;
+  const version=draft?.version||currentVersion,updated=version!==currentVersion;
   const dirty=JSON.stringify(answers)!==saved.current||!!result&&narrative!==(draft?.narrative||result.narrative);
   const id=record?.definition_id,questions=id?visibleQuestions(id,answers,version):[],question=questions[Math.min(step,Math.max(0,questions.length-1))];
   const base=record?'/framework_assessments/'+record.framework_assessment_id+'/guided-assessment':null;
@@ -44,7 +45,6 @@ function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,onSelect,onViewAll
       setDraft(data);setAnswers(data.answers);saved.current=JSON.stringify(data.answers);setStep(data.step);
       if(data.completed){const output=generateResult(id,data.answers,data.generated_at?new Date(data.generated_at):new Date(),data.version);setResult(output);setNarrative(data.narrative||output.narrative);}
     }).catch(e=>{if(!controller.signal.aborted)setError(formatError(e));});}
-    else Promise.all(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)).map(async r=>{const {data}=await api.get('/framework_assessments/'+r.framework_assessment_id+'/guided-assessment',{signal:controller.signal});return [r.definition_id,data];})).then(entries=>setStatuses(Object.fromEntries(entries))).catch(e=>{if(!controller.signal.aborted)setError(formatError(e));});
     return()=>controller.abort();
   },[base,id,rows,clientId,configuration]);
   const changeMode=value=>{setMode(value);setGreeting(false);setContextPrompt(false);try{sessionStorage.setItem(key+':'+id+':prompt','1');localStorage.setItem(key,JSON.stringify({...readPreference(key),mode:value==='expanded'?'collapsed':value,dismissGreeting:true}));}catch{/* Cosmetic preferences are optional. */}};
@@ -52,7 +52,7 @@ function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,onSelect,onViewAll
   async function save(nextStep=step,completed=false,newAnswers=answers){
     if(!draft||disabled||busy||updated&&Object.keys(newAnswers).length)return false;
     setBusy(true);setError('');
-    try{const generatedNarrative=completed?(result?narrative:generateResult(id,newAnswers,new Date()).narrative):'';const {data}=await api.put(base,{version:guidedCatalog.version,answers:newAnswers,narrative:generatedNarrative,step:nextStep,completed,expected_revision:draft.revision});setDraft(data);setAnswers(data.answers);saved.current=JSON.stringify(data.answers);setStep(nextStep);return data;}
+    try{const generatedNarrative=completed?(result?narrative:generateResult(id,newAnswers,new Date()).narrative):'';const {data}=await api.put(base,{version:currentVersion,answers:newAnswers,narrative:generatedNarrative,step:nextStep,completed,expected_revision:draft.revision});setDraft(data);setAnswers(data.answers);saved.current=JSON.stringify(data.answers);setStep(nextStep);return data;}
     catch(e){setError(formatError(e));return false;}finally{setBusy(false);}
   }
   async function proceed(){
@@ -74,11 +74,11 @@ function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,onSelect,onViewAll
     <Dialog open={mode==='expanded'} onOpenChange={open=>{if(!open)close();}}>
       {mode==='expanded'&&<DialogContent id={panelId} className="guided-panel bg-surface-card" onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus();}} onCloseAutoFocus={e=>{e.preventDefault();launcher.current?.focus();}} onPointerDownOutside={e=>e.preventDefault()}>
         <div className="omni-panel-header"><OmniCharacter state={characterState}/><div><DialogTitle ref={heading} tabIndex={-1}>{record?'Omni Guide · Safeguard '+id:'Guided Assessment with Omni'}</DialogTitle><p className="omni-state-text" role="status">{stateText}</p></div></div>
-        <DialogDescription>{record?record.title:`CIS IG${configuration?.implementation_group||1} · Control 1`} · Deterministic guidance, not an independent assessment or evidence review.</DialogDescription>
+        <DialogDescription>{record?record.title:`CIS IG${configuration?.implementation_group||1} · CIS Controls v8.1`} · Deterministic guidance, not an independent assessment or evidence review.</DialogDescription>
         <div className="guided-panel-body">
           {error&&<p role="alert">{error}</p>}
           {updated&&<section><p>Updated assessment guidance is available. Your saved answers and narrative remain associated with their original question set.</p><Button disabled={disabled||busy} onClick={()=>setRestart(true)}>Begin a new review</Button></section>}
-          {!record?<><p>Omni helps you see the full picture.</p>{prioritizeGuidedRows(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)),statuses).map((r,i)=><section key={r.definition_id}><h3>{i===0?'Recommended next step':'Also needs attention'} · {r.definition_id} · {r.title}</h3><p>{statuses[r.definition_id]?.completed?'Recommendation ready':statuses[r.definition_id]?.revision?'Resume assessment':r.work?.overdue_reviews?'Overdue scheduled review':r.status==='not_assessed'?'Not Assessed':r.status==='addressed'?'Verification required':'Unresolved gap'}</p><Button disabled={!statuses[r.definition_id]} onClick={()=>{close();onSelect(r);}}>{statuses[r.definition_id]?.revision?'Resume':'Start'} safeguard {r.definition_id}</Button></section>)}<Button variant="outline" onClick={()=>{close();onViewAll?.();}}>View all safeguards</Button></>:!draft?<p role="status">Loading saved interview…</p>:result?<>
+          {!record?<><p>Omni helps you see the full picture.</p>{prioritizeGuidedRows(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)),draftSummaries).map((r,i)=><section key={r.definition_id}><h3>{i===0?'Recommended next step':'Also needs attention'} · {r.definition_id} · {r.title}</h3><p>{draftSummaries[r.definition_id]?.completed?'Recommendation ready':draftSummaries[r.definition_id]?.revision?'Resume assessment':r.work?.overdue_reviews?'Overdue scheduled review':r.status==='not_assessed'?'Not Assessed':r.status==='addressed'?'Verification required':'Unresolved gap'}</p><Button onClick={()=>{close();onSelect(r);}}>{draftSummaries[r.definition_id]?.revision?'Resume':'Start'} safeguard {r.definition_id}</Button></section>)}<Button variant="outline" onClick={()=>{close();onViewAll?.();}}>View all safeguards</Button></>:!draft?<p role="status">Loading saved interview…</p>:result?<>
             <p>Review complete. Your recommendation is ready. Review the recommendation and generated implementation summary before applying them to the assessment.</p>
             <h3>Review before applying</h3>
             <p>Recommended Implementation Status: <strong>{STATUSES[result.status]}</strong></p>

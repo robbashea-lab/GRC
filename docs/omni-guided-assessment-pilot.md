@@ -1,5 +1,58 @@
 # Omni guided-assessment pilot
 
+## Full CIS v8.1 expansion checkpoint — 2026-10-07
+
+This checkpoint supersedes the Control 1-only implementation scope below, not its historical verification evidence. PR #52 stays draft and unmerged. This expansion is local/branch work only: no main merge, Render deployment, Sites publication or production change is authorized or performed. Previous hosted Control 1 results do not validate the expanded hosted program.
+
+### Coverage and version compatibility
+
+| Control | IG1 cumulative | IG2 cumulative | IG3 cumulative |
+| --- | ---: | ---: | ---: |
+| 1 | 2 | 4 | 5 |
+| 2 | 3 | 6 | 7 |
+| 3 | 6 | 12 | 14 |
+| 4 | 7 | 11 | 12 |
+| 5 | 4 | 6 | 6 |
+| 6 | 5 | 7 | 8 |
+| 7 | 4 | 7 | 7 |
+| 8 | 3 | 11 | 12 |
+| 9 | 2 | 6 | 7 |
+| 10 | 3 | 7 | 7 |
+| 11 | 4 | 5 | 5 |
+| 12 | 1 | 7 | 8 |
+| 13 | 0 | 6 | 11 |
+| 14 | 8 | 9 | 9 |
+| 15 | 1 | 4 | 7 |
+| 16 | 0 | 11 | 14 |
+| 17 | 3 | 8 | 9 |
+| 18 | 0 | 3 | 5 |
+| **Total Safeguards** | **56** | **130** | **153** |
+
+One definition per canonical Safeguard, not separate copies per group or client. `guidedCisProgram.json` contains 148 additional, safeguard-specific profiles for Controls 2–18. Runtime compiles their reviewed obligation rows into the existing select/matrix/text interview model; it does not generate framework content or call an AI. Matrices contain at most five rows. Actual thresholds, frequencies, alternatives and source conditions remain visible in those rows. Optional team/process/evidence context cannot create additional mandatory tools or artifacts. Conditional exclusions require an explanation before an unqualified recommendation; unconditional rows do not offer exclusion.
+
+Control 1 keeps `cis-v8.1-control1-2` and its original question structures/rules. The new profiles use `cis-v8.1-program-1`; legacy `brawndo-cis-pilot-1` remains readable. Default question-set selection is per Safeguard so expansion does not force a Control 1 draft transition. Existing archival, revision conflict checks, replacement protection, native Save/Save & next and history attribution are reused. No destructive schema migration, seeded answers, dependency or environment-variable change.
+
+The overview uses one authorized workspace query for the current user's draft revision/completion summaries, rather than fetching up to 153 complete interviews. Summaries contain no answers or narrative; both client and user identity are scoped server-side. Opening a Safeguard still loads its normal authoritative draft. Safeguard ordering compares the two numeric identifier components, avoiding decimal misordering of 13.10 and 13.9.
+
+### Source comparison and content traceability
+
+Reviewed inputs: canonical `cisIG1.json` (historical filename, all 153 Safeguards), operator criteria revision `2026-10-05`, and evidence guidance revision `2026-10-04`. `node scripts/build-guided-cis-program.cjs --check` verifies the committed static profiles match those reviewed inputs and explicit source corrections. The script prints content unless `--check` is requested; it never writes application data.
+
+Actual public-source comparison inspected all 18 [official CIS v8.1 CAS Control pages](https://cas.docs.cisecurity.org/en/latest/source/Controls1/) and all 153 identifiers/group mappings on 2026-10-07. CAS assessment metrics/procedures are not new Safeguard obligations. `node scripts/verify-cis-guided-sources.cjs` is a release-time network comparison, not a runtime service; its nonzero result intentionally reports exact wording/title differences for review, not a passing exact-text match.
+
+The comparison found 23 non-identical descriptions/titles: 4.4, 5.5, 6.8, 8.9, 11.1, 12.2, 12.5, 12.6, 13.1, 13.5, 13.7, 13.8, 14.5, 14.7, 15.1, 15.3, 15.7, 16.10, 16.11, 17.5, 17.9, 18.2 and 18.5. Most are articles, examples, grammar or presentation differences; the public CAS 12.5 heading is visibly malformed and 13.8 uses a plural title. Canonical IDs/titles and historical assessments were not overwritten to copy those defects. Two material guide details were added explicitly: [11.1 detailed backup procedures](https://cas.docs.cisecurity.org/en/latest/source/Controls11/#111-establish-and-maintain-a-data-recovery-process) and [17.5 relevant third parties](https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities). No exact byte-for-byte canonical text equivalence is claimed.
+
+### Executed verification and limits
+
+- Full isolated backend suite: 650 tests and 698 subtests passed before the final additional exhaustive schema test. Latest guided backend suite: seven tests passed, including all 148 expanded answer schemas, 153-definition applicability at all three groups, real FastAPI authentication/authorization routes with an isolated Mongo mock, per-user summary privacy, cross-client/read-only denial and unauthenticated GET/PUT rejection. These are not persistent hosted database tests.
+- Focused latest frontend engine/component suite: five suites, 205 tests passed. Every expanded Safeguard exercises fully addressed, partial, missing and unknown paths; additional checks cover source-conditioned exclusions, thresholds, distinct row-level gaps/unknowns, failed-save draft retention, replacement protection and no eager interview fan-out. Broader CIS/onboarding/Demo results are recorded in the final PR comment.
+- Demo provisioning tests cover fresh 56/130/153 clients, IG1→IG2→IG3 and direct IG1→IG3, stable assessment identities/history and unchanged native records, clean newly applicable interviews and no copied client answers. The existing scope regressions also cover IG2→IG3 and Review schedule/relationship preservation.
+- Actual local browser: Brawndo IG1 (56), Initech IG2 (130) upgraded to IG3 (153); correct interviews opened from all 18 Controls. Mixed partial/unknown 2.1 saved/exited/refreshed/resumed, required replacement approval, Apply and normal Save & next, Previous and refresh. Full 18.5 IG3-only result used a synthetic operator narrative, applied/saved/reopened, and survived Demo sign-out/re-entry. Verification remained unchanged. This is Demo session re-entry, not normal hosted credential authentication.
+- Light/dark appearance, 1440/1024/768 viewport screenshots and DOM bounds checks showed no document horizontal overflow; keyboard Tab stayed inside Omni and Escape restored focus to the launcher. No captured browser warnings/errors in these flows. Existing docking component tests passed; physical drag was not repeated for this content expansion.
+- Normal authenticated and isolated Demo optimized builds passed; final rebuild results are recorded in the PR comment. Existing Node/toolchain deprecations, FastAPI lifecycle deprecations and large-bundle advisory remain. Versioned static content adds about 24 kB gzip to the main bundle; no new runtime dependency.
+
+Not executed for this expansion: hosted deployment, normal hosted sign-out/sign-in, persistent Mongo restart/recovery tests, hosted restricted-account adversarial testing, screen-reader audit, OS reduced-motion emulation, or every possible answer combination in the browser. Automated coverage of every Safeguard is not a claim of exhaustive manual or independent content assurance. No production-readiness, evidence verification or CIS-compliance conclusion is made. Scope remains CIS v8.1 only.
+
 ## Control 1 checkpoint — 2026-10-07
 
 This section supersedes the original two-safeguard checkpoint below. PR #52 remains draft and unmerged. Only existing Render staging is authorized for this release; main, Sites and production are not release targets.

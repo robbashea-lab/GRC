@@ -1,15 +1,33 @@
 import legacy from '@catalogs/guidedAssessmentPilot.json';
 import pack from '@catalogs/guidedControl1.json';
 import additions from '@catalogs/guidedControl1Additional.json';
+import program from '@catalogs/guidedCisProgram.json';
 const contextOnly=new Set(['system','owner','sources','reconciled','inventory_dependency','disposition','confirmation','exceptions']);
 const inherited=Object.fromEntries(Object.entries(legacy.safeguards).map(([id,questions])=>[id,[...questions.map(q=>({...q,critical:q.critical&&!contextOnly.has(q.id),question_set_version:pack.version,...(q.id==='gaps'?{prompt:'Describe any confirmed missing or incomplete requirement elements.',help:'Record known deficiencies here. Put uncertainty in Items requiring verification.'}:{}),unknown_template:`Confirm: ${q.prompt}`,next_step_template:q.help})),{id:'unknowns',prompt:'Which requirement elements still need confirmation, and who can verify them?',help:'Uncertainty is not a confirmed gap.',type:'text',choices:[],critical:false,element:'unknowns',status_impact:'Reported uncertainty prevents an unqualified recommendation',safeguard_id:id,question_set_version:pack.version,question_id:id+':unknowns',narrative_template:'',gap_template:'',unknown_template:'Reviewer-reported uncertainty',next_step_template:'Confirm the reported uncertainty with the responsible team',evidence_guidance:'Use relevant records and responsible-owner confirmation.'}]]));
-export const guidedCatalog={...pack,safeguards:{...inherited,...additions.safeguards}};
-export const catalogForVersion=version=>version===legacy.version?legacy:version===guidedCatalog.version?guidedCatalog:null;
-export const pilotEnabled=(client,framework,configuration,id)=>!!client&&framework===pack.framework_id&&[1,2,3].includes(configuration?.implementation_group??1)&&configuration?.guided_assessment_enabled!==false&&(!id||!!pack.definitions[id]?.groups.includes(configuration?.implementation_group??1));
-export function visibleQuestions(id,answers,version=guidedCatalog.version){
-  return (catalogForVersion(version)?.safeguards[id]||[]).filter(q=>!q.when||Object.entries(q.when).every(([key,values])=>values.includes(answers[key]))).filter(q=>q.condition!=='not_applicable'||['coverage','attributes'].some(k=>Object.values(answers[k]||{}).includes('Not applicable')));
+export const control1Catalog={...pack,safeguards:{...inherited,...additions.safeguards}};
+function programQuestions(id,definition){
+  const evidence=definition.evidence.join(' '),when={practice:['Yes','Partially']};
+  const question=(key,prompt,type,critical,extra={})=>({id:key,prompt,type,critical,choices:type==='text'?[]:['Yes','Partially','No','Not sure'],help:definition.guidance,element:key,safeguard_id:id,question_id:id+':'+key,question_set_version:program.version,status_impact:critical?'Reported implementation only; unresolved gaps or unknowns prevent an unqualified recommendation':'Context only; not a mandatory artifact',evidence_guidance:evidence,...extra});
+  const questions=[question('practice',`Is the practice “${definition.title}” in place and operating?`,'select',true),question('existing','What relevant practice or information exists, and who can confirm it?','text',false,{when:{practice:['No','Not sure']}})];
+  // Every row is an authored, source-reviewed requirement element, not a tool checklist.
+  for(const conditional of [false,true]){
+    const elements=definition.elements.filter(e=>e.conditional===conditional);
+    for(let offset=0;offset<elements.length;offset+=5){
+      const chunk=elements.slice(offset,offset+5),key=(conditional?'conditional':'requirements')+'_'+offset;
+      questions.push(question(key,'How fully are these safeguard requirements met?','matrix',true,{when,rows:chunk.map(e=>e.text),criterion_ids:chunk.map(e=>e.id),choices:['Yes','Partially','No','Not sure',...(conditional?['Not applicable']:[])],help:conditional?'Use Not applicable only when the stated source condition does not apply; explain why. Uncertainty is Not sure, not an exclusion.':'Confirm each statement against current operation. Yes means it is fully addressed, not merely planned.'}));
+    }
+  }
+  questions.push(question('scope_reason','Explain any source-conditioned exclusions.','text',false,{when,condition:'not_applicable'}),question('system','Which systems or processes support this practice?','text',false,{when,help:'Optional context; name actual systems or processes, not proposed products.'}),question('owner','Who operates this practice?','text',false,{when,help:'Optional context; record the responsible business, IT, security or provider team.'}),question('operation','How is this safeguard implemented in day-to-day work?','text',false,{when,help:'Record the actual process and relevant timing. This is optional narrative context, not verification.'}),question('evidence','What records could substantiate the reported implementation?','text',false,{help:evidence}),question('gaps','Describe confirmed missing or incomplete requirement elements.','text',false,{help:'Confirmed gaps only. Record uncertainty separately.'}),question('unknowns','What still needs confirmation, and who can verify it?','text',false,{help:'Unknowns are not confirmed gaps.'}));
+  return questions;
 }
-export function validateAnswers(id,answers,version=guidedCatalog.version){
+export const guidedCatalog={...program,definitions:{...Object.fromEntries(Object.entries(pack.definitions).map(([id,d])=>[id,{...d,question_set_version:pack.version}])),...Object.fromEntries(Object.entries(program.definitions).map(([id,d])=>[id,{...d,question_set_version:program.version}]))},safeguards:{...control1Catalog.safeguards,...Object.fromEntries(Object.entries(program.definitions).map(([id,d])=>[id,programQuestions(id,d)]))}};
+export const versionForSafeguard=id=>guidedCatalog.definitions[id]?.question_set_version;
+export const catalogForVersion=version=>version===legacy.version?legacy:version===pack.version?control1Catalog:version===program.version?guidedCatalog:null;
+export const pilotEnabled=(client,framework,configuration,id)=>!!client&&framework===pack.framework_id&&[1,2,3].includes(configuration?.implementation_group??1)&&configuration?.guided_assessment_enabled!==false&&(!id||!!guidedCatalog.definitions[id]?.groups.includes(configuration?.implementation_group??1));
+export function visibleQuestions(id,answers,version=versionForSafeguard(id)){
+  return (catalogForVersion(version)?.safeguards[id]||[]).filter(q=>!q.when||Object.entries(q.when).every(([key,values])=>values.includes(answers[key]))).filter(q=>q.condition!=='not_applicable'||(catalogForVersion(version)?.safeguards[id]||[]).some(matrix=>matrix.type==='matrix'&&Object.values(answers[matrix.id]||{}).includes('Not applicable')));
+}
+export function validateAnswers(id,answers,version=versionForSafeguard(id)){
   if(!answers||typeof answers!=='object'||Array.isArray(answers))throw new Error('Invalid interview answers');
   const questions=catalogForVersion(version)?.safeguards[id];
   if(!questions)throw new Error('Unsupported pilot safeguard');
@@ -69,7 +87,7 @@ function generateLegacyResult(id,answers,today=new Date(),version=guidedCatalog.
 }
 
 // One canonical requirement definition is inherited by applicable implementation groups.
-export function generateResult(id,answers,today=new Date(),version=guidedCatalog.version){
+export function generateResult(id,answers,today=new Date(),version=versionForSafeguard(id)){
   if(version===legacy.version)return generateLegacyResult(id,answers,today,version);
   validateAnswers(id,answers,version);
   const definition=guidedCatalog.definitions[id],questions=visibleQuestions(id,answers,version);
@@ -84,8 +102,9 @@ export function generateResult(id,answers,today=new Date(),version=guidedCatalog
       const unknown=!values.length||values.some(v=>!v||v==='Not sure'||v==='Not applicable'&&!answers.scope_reason?.trim());
       const deficient=values.some(v=>(q.deficient_values||['No','Partially','None']).includes(v));
       const detail=answers[q.id+'_detail']?` — ${answers[q.id+'_detail']}`:'';
-      if(unknown){unknowns.push((q.unknown_template||`Confirm: ${q.prompt}`)+detail);signals.push({questionId:q.id,kind:'verification'});}
-      if(deficient){gaps.push((q.gap_template||`Address: ${q.prompt}`)+detail);signals.push({questionId:q.id,kind:'gap'});}
+      const matrixDetail=predicate=>definition.root==='practice'&&q.type==='matrix'?` — ${q.rows.filter(k=>predicate(value?.[k])).map(k=>`${k} ${value?.[k]||'Not recorded'}`).join('; ')}`:'';
+      if(unknown){unknowns.push((q.unknown_template||`Confirm: ${q.prompt}`)+matrixDetail(v=>!v||v==='Not sure'||v==='Not applicable'&&!answers.scope_reason?.trim())+detail);signals.push({questionId:q.id,kind:'verification'});}
+      if(deficient){gaps.push((q.gap_template||`Address: ${q.prompt}`)+matrixDetail(v=>(q.deficient_values||['No','Partially','None']).includes(v))+detail);signals.push({questionId:q.id,kind:'gap'});}
       if(unknown||deficient)nextSteps.push(q.next_step_template||q.help);
       else basis.push(`${q.prompt} ${label(value)}`);
     }
@@ -97,7 +116,9 @@ export function generateResult(id,answers,today=new Date(),version=guidedCatalog
   if(output.status==='addressed'&&(output.gaps.length||output.unknowns.length))output.status='in_progress';
   output.nextSteps=[...new Set([...(['1.1','1.2'].includes(id)?[]:output.nextSteps),...output.gaps.map(v=>`Address and reassess: ${v}`),...output.unknowns.map(v=>`Confirm with the responsible team: ${v}`)])];
   const root=answers[definition.root];
-  const facts=[root==='Yes'?`The organization reports ${id==='1.1'?'an enterprise asset inventory':id==='1.2'?'a process for addressing unauthorized assets':id==='1.4'?'DHCP logging or IP address management used for inventory updates':id==='1.3'?'an active asset discovery tool':'a passive asset discovery tool'}.`:root==='No'?`The organization reports that ${definition.title.toLowerCase()} is not currently in place.`:root==='Partially'?`The organization reports partial implementation of ${definition.title.toLowerCase()}.`:'Implementation has not yet been confirmed.'];
+  const facts=[root==='Yes'?(definition.root==='practice'?`The organization reports implementation of “${definition.title}”.`:`The organization reports ${id==='1.1'?'an enterprise asset inventory':id==='1.2'?'a process for addressing unauthorized assets':id==='1.4'?'DHCP logging or IP address management used for inventory updates':id==='1.3'?'an active asset discovery tool':'a passive asset discovery tool'}.`):root==='No'?`The organization reports that ${definition.title.toLowerCase()} is not currently in place.`:root==='Partially'?`The organization reports partial implementation of ${definition.title.toLowerCase()}.`:'Implementation has not yet been confirmed.'];
+  if(definition.root==='practice'&&answers.operation?.trim())facts.push(`Reported operation: ${answers.operation.trim()}`);
+  if(definition.root==='practice'&&answers.existing?.trim())facts.push(`Existing information: ${answers.existing.trim()}`);
   for(const [key,prefix] of [['system','Maintained using'],['owner','Responsible team'],['frequency','Reported operating frequency'],['last_review','Last reported inventory review']])if(answers[key]&&answers[key]!=='Not sure')facts.push(`${prefix}: ${answers[key]}.`);
   for(const key of ['coverage','attributes']){
     const confirmed=Object.entries(answers[key]||{}).filter(([,v])=>v==='Yes').map(([name])=>name.toLowerCase());
@@ -117,5 +138,5 @@ export function generateResult(id,answers,today=new Date(),version=guidedCatalog
 
 export function prioritizeGuidedRows(rows,drafts={}){
   const rank=r=>drafts[r.definition_id]?.revision&&!drafts[r.definition_id]?.completed?0:r.work?.overdue_reviews?1:r.status==='not_assessed'?2:r.status==='needs_attention'&&r.work?.open_actions?3:r.status==='in_progress'?4:r.status==='addressed'&&r.verification!=='verified'?5:r.work?.next_review_due?6:7;
-  return rows.filter(r=>guidedCatalog.definitions[r.definition_id]).slice().sort((a,b)=>rank(a)-rank(b)||(rank(a)===6?(a.work.next_review_due.localeCompare(b.work.next_review_due)):0)||Number(a.definition_id)-Number(b.definition_id)).slice(0,3);
+  return rows.filter(r=>guidedCatalog.definitions[r.definition_id]).slice().sort((a,b)=>rank(a)-rank(b)||(rank(a)===6?(a.work.next_review_due.localeCompare(b.work.next_review_due)):0)||Number(a.definition_id.split('.')[0])-Number(b.definition_id.split('.')[0])||Number(a.definition_id.split('.')[1])-Number(b.definition_id.split('.')[1])).slice(0,3);
 }
