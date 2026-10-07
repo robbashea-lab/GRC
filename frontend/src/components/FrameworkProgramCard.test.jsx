@@ -22,6 +22,14 @@ test('CIS IG1 programme card uses compact shared metrics',async()=>{
   expect(container.querySelector('.bd-eyebrow').textContent).toBe('CIS IG1 program');
   expect(aside()).toMatchSnapshot();
 });
+test('pilot distribution uses the same applicable counts without changing assessments',async()=>{
+  await act(async()=>root.render(<ClientWorkDashboard workspacePilot queue={queue} programs={[{key:'cis-ig1',label:'CIS IG1'}]} cisRows={cisRows} filter="all" onFilter={()=>{}} onOpen={()=>{}}/>));
+  const bar=container.querySelector('.bwp-program-bar');expect(bar.getAttribute('aria-label')).toContain('2 Implemented, 1 Partially Implemented, 2 Not Implemented, 1 Not Assessed');
+  expect([...bar.children].reduce((sum,n)=>sum+parseFloat(n.style.width),0)).toBeCloseTo(100);
+  expect(container.querySelectorAll('.bd-gaps a')).toHaveLength(4);expect(cisRows[6].status).toBe('not_applicable');
+  expect(container.querySelector('.bd-donut-value').textContent).toBe('33.3%');
+  expect(parseFloat(container.querySelector('circle.bd-seg-addressed').getAttribute('stroke-dasharray'))).toBeCloseTo(100/3-.9);
+});
 const render=async programs=>act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={programs} programRows={Object.fromEntries(programs.map(p=>[p.key,cisRows]))} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));
 test('donut segments expose calculated tooltips on focus without putting them on navigation labels',async()=>{
   await render([{key:'cis-ig1',label:'CIS Controls v8.1 IG1'}]);

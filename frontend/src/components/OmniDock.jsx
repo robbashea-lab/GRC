@@ -3,7 +3,27 @@ import {useLayoutEffect,useRef,useState} from 'react';
 export const OMNI_POSITIONS=['lower-right','middle-right','lower-left'];
 export function snapPosition(x,y,width,height){return x<width/2?'lower-left':y<height*.65?'middle-right':'lower-right';}
 const overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
-export default function OmniDock({preferenceKey,inAssessment,children}){
+export default function OmniDock(props){return props.freePosition?<FreeDock {...props}/>:<ClassicDock {...props}/>;}
+function FreeDock({preferenceKey,children}){
+  const root=useRef(null),drag=useRef(null),moved=useRef(false),key=preferenceKey+':free-position';
+  const [point,setPoint]=useState(()=>{try{const value=JSON.parse(localStorage.getItem(key));if(value&&Number.isFinite(value.x)&&Number.isFinite(value.y))return value;}catch{/* Cosmetic preference only. */}return {x:window.innerWidth-190,y:window.innerHeight-260};});
+  const pointRef=useRef(point);pointRef.current=point;
+  const move=(x,y)=>{const rect=root.current?.getBoundingClientRect();const next={x:Math.max(8,Math.min(window.innerWidth-(rect?.width||168)-8,x)),y:Math.max(82,Math.min(window.innerHeight-(rect?.height||190)-8,y))};setPoint(next);try{localStorage.setItem(key,JSON.stringify(next));}catch{/* Cosmetic preference only. */}};
+  useLayoutEffect(()=>{const clamp=()=>move(pointRef.current.x,pointRef.current.y);clamp();window.addEventListener('resize',clamp);return()=>window.removeEventListener('resize',clamp);},[]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <div ref={root} className="guided-launcher omni-free-dock" style={{left:point.x,top:point.y}}
+    onPointerDown={e=>{if(e.button!==0||!e.target.closest('.omni-launch-button'))return;drag.current={id:e.pointerId,x:e.clientX,y:e.clientY,point:pointRef.current};moved.current=false;}}
+    onPointerMove={e=>{const d=drag.current;if(!d||d.id!==e.pointerId)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;if(Math.hypot(dx,dy)>8||moved.current){moved.current=true;e.currentTarget.setPointerCapture(e.pointerId);move(d.point.x+dx,d.point.y+dy);}}}
+    onPointerUp={e=>{if(!drag.current)return;if(moved.current)e.preventDefault();drag.current=null;}}
+    onPointerCancel={()=>{drag.current=null;}}
+    onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false;}}}
+    onKeyDown={e=>{if(!e.target.closest('.omni-launch-button')||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const unit=e.shiftKey?30:10;move(point.x+(e.key==='ArrowRight'?unit:e.key==='ArrowLeft'?-unit:0),point.y+(e.key==='ArrowDown'?unit:e.key==='ArrowUp'?-unit:0));}}>
+    {children}<details className="omni-position-controls"><summary aria-label="Reposition Omni">•••</summary><div>
+      <button type="button" onClick={()=>move(8,window.innerHeight-260)}>Place on left</button><button type="button" onClick={()=>move(window.innerWidth-190,window.innerHeight-260)}>Place on right</button><button type="button" onClick={()=>move(window.innerWidth-190,window.innerHeight-260)}>Reset Omni position</button>
+      <p>Focus Omni and use arrow keys to reposition.</p>
+    </div></details>
+  </div>;
+}
+function ClassicDock({preferenceKey,inAssessment,children}){
   const root=useRef(null),drag=useRef(null),moved=useRef(false);
   const [position,setPosition]=useState(()=>{try{const value=localStorage.getItem(preferenceKey+':position');return OMNI_POSITIONS.includes(value)?value:'lower-right';}catch{return 'lower-right';}}),[flow,setFlow]=useState(!!inAssessment);
   const move=value=>{setPosition(value);try{localStorage.setItem(preferenceKey+':position',value);}catch{/* Optional cosmetic preference. */}};

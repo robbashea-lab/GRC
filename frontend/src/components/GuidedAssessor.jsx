@@ -7,6 +7,8 @@ import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import OmniCharacter from './OmniCharacter';
 import OmniDock from './OmniDock';
+import OmniWindow from './OmniWindow';
+import {brawndoWorkspacePilot} from '@/lib/brawndoWorkspacePilot';
 import './GuidedAssessor.css';
 
 const STATUSES={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed'};
@@ -18,6 +20,7 @@ export default function GuidedAssessor(props){
 }
 function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onDraftChange,disabled=false}){
   const {user}=useAuth(),key='guided-pilot-ui:'+user?.user_id+':'+clientId,initial=readPreference(key);
+  const workspacePilot=brawndoWorkspacePilot(clientId,user),GuideContent=workspacePilot?OmniWindow:DialogContent;
   const [mode,setMode]=useState(record&&new URLSearchParams(window.location.search).get('guided')==='pilot'?'expanded':initial.mode||'collapsed'),[greeting,setGreeting]=useState(false),[draft,setDraft]=useState(null),[answers,setAnswers]=useState({}),[step,setStep]=useState(0),[result,setResult]=useState(null),[narrative,setNarrative]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[restart,setRestart]=useState(false),[replace,setReplace]=useState(false);
   const launcher=useRef(null),heading=useRef(null),saved=useRef('{}');
   const [applied,setApplied]=useState(false),[contextPrompt,setContextPrompt]=useState(false);
@@ -63,18 +66,18 @@ function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,draftSummaries={},
   const put=(value)=>{setAnswers(p=>({...p,[question.id]:value}));setResult(null);setReplace(false);};
   const uncertain=question&&(question.id==='unresolved'?['Yes','Partially','Not sure']:['Partially','No','Not sure']).some(v=>Array.isArray(answers[question.id])?answers[question.id].includes(v):typeof answers[question.id]==='object'?Object.values(answers[question.id]||{}).includes(v):answers[question.id]===v);
   return <div className={'guided-pilot '+(record?'guided-in-assessment':'')} data-testid="guided-pilot">
-    <OmniDock preferenceKey={key} inAssessment={!!record}>
+    <OmniDock preferenceKey={key} inAssessment={!!record} freePosition={workspacePilot}>
       {greeting&&<div className="guided-greeting omni-entrance"><p>Hi, I’m Omni. How can I help you today?</p><p>I can help you review safeguards, identify missing requirements, and prepare your implementation summary.</p><button onClick={()=>changeMode('collapsed')} aria-label="Dismiss Omni greeting">Dismiss</button></div>}
       {mode==='dismissed'?<Button ref={launcher} size="sm" variant="outline" onClick={()=>changeMode('collapsed')}>Show Omni</Button>:<>
-      <button ref={launcher} className={'omni-launch-button '+(greeting?'omni-entrance ':'')+(mode==='minimized'?'is-minimized':'')} onClick={()=>changeMode('expanded')} aria-label="Open Omni guided assessment" aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId}><OmniCharacter state={characterState}/></button>
+      <button ref={launcher} className={'omni-launch-button '+(greeting?'omni-entrance ':'')+(mode==='minimized'?'is-minimized':'')} onClick={()=>changeMode('expanded')} aria-label="Open Omni guided assessment" aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId}><OmniCharacter state={characterState} approved={workspacePilot}/></button>
       {record&&contextPrompt&&mode==='collapsed'&&<div className="guided-context-prompt"><p>{draft?.completed?result?.unknowns.length?`${result.unknowns.length} items still need verification`:'Your recommendation is ready':draft?.revision?'Resume your review':'Ready to review this safeguard?'}</p><p>I’ll walk you through each required element, identify anything missing or uncertain, and prepare your implementation summary.</p><button onClick={()=>changeMode('expanded')}>Review with Omni</button><button onClick={()=>changeMode('collapsed')}>Not now</button></div>}
       </>}
       <span id={stateId} className="sr-only">{stateText}</span>
     </OmniDock>
-    <Dialog open={mode==='expanded'} onOpenChange={open=>{if(!open)close();}}>
-      {mode==='expanded'&&<DialogContent id={panelId} className="guided-panel bg-surface-card" onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus();}} onCloseAutoFocus={e=>{e.preventDefault();launcher.current?.focus();}} onPointerDownOutside={e=>e.preventDefault()}>
-        <div className="omni-panel-header"><OmniCharacter state={characterState}/><div><DialogTitle ref={heading} tabIndex={-1}>{record?'Omni Guide · Safeguard '+id:'Guided Assessment with Omni'}</DialogTitle><p className="omni-state-text" role="status">{stateText}</p></div></div>
-        <DialogDescription>{record?record.title:`CIS IG${configuration?.implementation_group||1} · CIS Controls v8.1`} · Deterministic guidance, not an independent assessment or evidence review.</DialogDescription>
+    <Dialog modal={!workspacePilot} open={mode==='expanded'} onOpenChange={open=>{if(!open)close();}}>
+      {mode==='expanded'&&<GuideContent id={panelId} className="guided-panel bg-surface-card" onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus();}} onCloseAutoFocus={e=>{e.preventDefault();launcher.current?.focus();}} onPointerDownOutside={e=>e.preventDefault()} {...(workspacePilot?{onMinimize:()=>changeMode('minimized'),onClose:close}:{})}>
+        <div className="omni-panel-header"><OmniCharacter state={characterState} approved={workspacePilot}/><div><DialogTitle {...(workspacePilot?{id:panelId+'-title'}:{})} ref={heading} tabIndex={-1}>{record?'Omni Guide · Safeguard '+id:'Guided Assessment with Omni'}</DialogTitle><p className="omni-state-text" role="status">{stateText}</p></div></div>
+        <DialogDescription {...(workspacePilot?{id:panelId+'-description'}:{})}>{record?record.title:`CIS IG${configuration?.implementation_group||1} · CIS Controls v8.1`} · Deterministic guidance, not an independent assessment or evidence review.</DialogDescription>
         <div className="guided-panel-body">
           {error&&<p role="alert">{error}</p>}
           {updated&&<section><p>Updated assessment guidance is available. Your saved answers and narrative remain associated with their original question set.</p><Button disabled={disabled||busy} onClick={()=>setRestart(true)}>Begin a new review</Button></section>}
@@ -104,8 +107,8 @@ function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,draftSummaries={},
           {restart&&<section role="group" aria-label="Confirm restart"><p>Restart replaces this saved interview only. The assessment and its history remain unchanged.</p><Button disabled={busy} onClick={async()=>{if(await save(0,false,{})){setResult(null);setNarrative('');setRestart(false);}}}>Confirm restart</Button><Button variant="outline" onClick={()=>setRestart(false)}>Cancel restart</Button></section>}
           <p>Question set: {version}. Answers are not evidence verification or a compliance opinion.</p>
         </div>
-        <div className="guided-actions"><Button variant="outline" onClick={()=>changeMode('minimized')}>Minimize</Button><Button variant="ghost" onClick={()=>changeMode('dismissed')}>Dismiss assistant</Button></div>
-      </DialogContent>}
+        {!workspacePilot&&<div className="guided-actions"><Button variant="outline" onClick={()=>changeMode('minimized')}>Minimize</Button><Button variant="ghost" onClick={()=>changeMode('dismissed')}>Dismiss assistant</Button></div>}
+      </GuideContent>}
     </Dialog>
   </div>;
 }

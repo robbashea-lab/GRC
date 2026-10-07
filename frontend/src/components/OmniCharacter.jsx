@@ -1,9 +1,18 @@
 import {useId,useRef} from 'react';
+import approvedShell from '@/assets/omni-approved-shell.png';
 // Original layered observation-lens artwork; pointer attention stays inside Omni.
-export default function OmniCharacter({state='idle'}) {
+export default function OmniCharacter({state='idle',approved=false}) {
   const uid=useId().replace(/:/g,''),eyes=useRef(null);
   const thoughtful=['thinking','verification'].includes(state);
   const track=e=>{if(e.pointerType==='touch'||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;const r=e.currentTarget.getBoundingClientRect();eyes.current.style.transform=`translate(${Math.max(-2,Math.min(2,(e.clientX-r.left-r.width/2)/12))}px,${Math.max(-2,Math.min(2,(e.clientY-r.top-r.height/2)/12))}px)`;};
+  if(approved)return <svg className={'omni-character omni-approved omni-'+state} viewBox="0 0 284 260" aria-hidden="true" focusable="false" onPointerMove={track} onPointerLeave={()=>{if(eyes.current)eyes.current.style.transform='translate(0,0)';}}>
+    <defs><clipPath id={uid+'clip'}><path d="M126 3 C177 -4 220 9 244 38 C261 57 268 76 275 104 C286 139 270 181 249 203 C217 235 163 252 123 243 C83 239 42 216 23 184 C4 155 0 118 10 93 C24 56 68 15 126 3Z"/></clipPath><filter id={uid+'glow'} x="-100%" y="-180%" width="300%" height="460%"><feGaussianBlur stdDeviation="5"/></filter></defs>
+    <image href={approvedShell} width="284" height="252" clipPath={'url(#'+uid+'clip)'}/>
+    <g ref={eyes} className="omni-eye-attention"><g className="omni-approved-eyes" fill="none" strokeLinecap="round">
+      {thoughtful||state==='gap'?<><ellipse cx="131" cy="127" rx="10" ry={thoughtful?'7':'14'} stroke={state==='gap'?'#ffd079':'#82efff'} strokeWidth="6"/><ellipse cx="213" cy="114" rx="9" ry="13" stroke={state==='gap'?'#ffd079':'#82efff'} strokeWidth="6"/></>:<><path d="M106 139 Q126 106 152 130 M192 125 Q207 94 230 115" stroke="#007bff" strokeWidth="18" filter={'url(#'+uid+'glow)'}/><path d="M106 139 Q126 106 152 130 M192 125 Q207 94 230 115" stroke="#39d8ff" strokeWidth="8"/><path d="M107 137 Q126 109 151 129 M193 124 Q207 97 229 114" stroke="#b0f5ff" strokeWidth="2.3"/></>}
+    </g></g>
+    {state==='verification'&&<text x="238" y="45" fill="#76baff" fontSize="30" fontWeight="700">?</text>}
+  </svg>;
   return <svg className={'omni-character omni-'+state} viewBox="0 0 80 80" aria-hidden="true" focusable="false" onPointerMove={track} onPointerLeave={()=>{if(eyes.current)eyes.current.style.transform='translate(0,0)';}}>
     <defs>
       <radialGradient id={uid+'shell'} cx="30%" cy="20%" r="85%"><stop stopColor="#fff"/><stop offset=".45" stopColor="#e9f3fa"/><stop offset=".72" stopColor="#a8bfd0"/><stop offset="1" stopColor="#4f6b85"/></radialGradient>

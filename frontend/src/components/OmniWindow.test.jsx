@@ -1,0 +1,22 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import OmniWindow,{fitOmniRect} from './OmniWindow';
+
+test('window bounds remain reachable at desktop, tablet and tiny viewport sizes',()=>{
+  for(const [width,height] of [[1440,900],[1024,768],[768,900],[320,240]]){
+    const r=fitOmniRect({x:1900,y:1400,w:700,h:744},width,height);
+    expect(r.x).toBeGreaterThanOrEqual(8);expect(r.y).toBeGreaterThanOrEqual(8);
+    expect(r.x+r.w).toBeLessThanOrEqual(width-8);expect(r.y+r.h).toBeLessThanOrEqual(height-8);
+  }
+});
+test('nonblocking guide has meaningful labels, preserves mounted answers and exposes native window controls',async()=>{
+  global.IS_REACT_ACT_ENVIRONMENT=true;const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host),minimize=jest.fn(),close=jest.fn(),focus=jest.fn(),restore=jest.fn();
+  try{
+    await act(async()=>root.render(<OmniWindow id="guide" onMinimize={minimize} onClose={close} onOpenAutoFocus={focus} onCloseAutoFocus={restore}><header className="omni-panel-header"><h2 id="guide-title">Omni Guide · Safeguard 1.1</h2></header><p id="guide-description">Asset inventory guided review</p><textarea defaultValue="Retained answer"/></OmniWindow>));
+    expect(host.querySelector('[role=dialog]').getAttribute('aria-modal')).toBe('false');expect(host.querySelectorAll('.omni-resize')).toHaveLength(8);expect(focus).toHaveBeenCalledTimes(1);
+    await act(async()=>host.querySelector('[aria-label="Expand Omni Guide"]').click());expect(host.querySelector('[aria-label="Restore Omni Guide size"]')).not.toBeNull();expect(host.querySelector('textarea').value).toBe('Retained answer');
+    await act(async()=>host.querySelector('[aria-label="Restore Omni Guide size"]').click());expect(host.querySelectorAll('.omni-resize')).toHaveLength(8);
+    await act(async()=>host.querySelector('[aria-label="Minimize Omni Guide"]').click());expect(minimize).toHaveBeenCalledTimes(1);
+    await act(async()=>host.querySelector('[role=dialog]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));expect(close).toHaveBeenCalledTimes(1);
+  }finally{await act(async()=>root.unmount());host.remove();}expect(restore).toHaveBeenCalledTimes(1);
+});

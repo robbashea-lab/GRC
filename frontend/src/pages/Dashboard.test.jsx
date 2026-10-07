@@ -5,7 +5,9 @@ import {useOrg} from '@/context/OrgContext';
 import {loadClientDashboard} from '@/lib/loadClientDashboard';
 import api from '@/lib/api';
 jest.mock('@/context/OrgContext',()=>({useOrg:jest.fn()}));
-jest.mock('@/context/AuthContext',()=>{const user={user_id:'u',role:'super_admin'};return {useAuth:()=>({user})};});
+let mockDashboardUser={user_id:'u',role:'super_admin'};
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockDashboardUser})}));
+jest.mock('@/components/RecordDrawer',()=>({kind,record,initialValues,onSaved,onOpenChange})=><div role="dialog" aria-label="Native record test boundary"><span>{kind}: {record.title}</span>{initialValues?.occurrence&&<span>Historical period: {initialValues.occurrence.period}</span>}<button onClick={onSaved}>Save native record</button><button onClick={()=>onOpenChange(false)}>Cancel native record</button></div>);
 jest.mock('@/lib/loadClientDashboard',()=>({loadClientDashboard:jest.fn()}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
 jest.mock('react-router-dom',()=>({Link:({to,children,...p})=><a href={to} {...p}>{children}</a>,useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
@@ -13,7 +15,7 @@ let root,container;
 const row=(id='t',kind='tasks')=>({key:kind+':'+id,id,kind,type:kind==='tasks'?'Action Item':'Review',title:'Synthetic work '+id,status:'open',owner:'Unassigned',unassigned:true,due_date:'2026-09-01'});
 const queue=items=>({as_of:'2026-10-05',groups:Object.fromEntries(['all','pastDue','due30','unassigned'].map(key=>[key,{total:items.length,items:items.slice(0,9)}]))});
 const snapshot=items=>({contract_version:2,members:[],programs:[],programRows:{},queue:queue(items)});
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);useOrg.mockReturnValue({currentClientId:'a',currentClient:{name:'Synthetic A'}});loadClientDashboard.mockReset();Object.values(api).forEach(fn=>fn.mockReset());});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockDashboardUser={user_id:'u',role:'super_admin'};container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);useOrg.mockReturnValue({currentClientId:'a',currentClient:{name:'Synthetic A'}});loadClientDashboard.mockReset();Object.values(api).forEach(fn=>fn.mockReset());});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();localStorage.clear();});
 const click=async text=>act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
 test('shared empty layout has compact filters instead of tiles',async()=>{loadClientDashboard.mockResolvedValue(snapshot([]));await act(async()=>root.render(<Dashboard/>));expect(container.textContent).toContain('Synthetic A Dashboard');expect(container.textContent).toContain('Priority overview');expect(container.querySelectorAll('.bd-tile')).toHaveLength(0);expect(container.querySelectorAll('.quick-filters button')).toHaveLength(4);expect(container.textContent).toContain('No items match these filters.');expect(container.textContent).not.toMatch(/Posture|Ranked by|Board Report|Work items:|Next:/);expect(loadClientDashboard.mock.calls[0][1].workQueue).toBe(true);});
@@ -28,3 +30,26 @@ test('filters page the complete mixed queue and record close preserves selection
 test('tenant switching aborts old data and ignores late summary response',async()=>{let finish;loadClientDashboard.mockImplementationOnce(()=>new Promise(r=>finish=r));await act(async()=>root.render(<Dashboard/>));const signal=loadClientDashboard.mock.calls[0][1].signal;useOrg.mockReturnValue({currentClientId:'b',currentClient:{name:'Synthetic B'}});loadClientDashboard.mockResolvedValue(snapshot([]));await act(async()=>root.render(<Dashboard/>));expect(signal.aborted).toBe(true);await act(async()=>finish(snapshot([row('secret')])));expect(container.textContent).not.toContain('secret');expect(container.textContent).toContain('Synthetic B Dashboard');});
 test('source failure is recoverable and cannot fabricate successful data',async()=>{loadClientDashboard.mockRejectedValue(new Error('Source unavailable'));await act(async()=>root.render(<Dashboard/>));expect(container.querySelector('[role=alert]').textContent).toContain('Source unavailable');loadClientDashboard.mockResolvedValue(snapshot([]));await act(async()=>container.querySelector('button').click());expect(container.querySelector('[role=alert]')).toBeNull();});
 test('foreign authorized-record response is rejected and rapid clicks keep one summary',async()=>{loadClientDashboard.mockResolvedValue(snapshot([row()]));api.get.mockResolvedValue({data:{client_id:'b',task_id:'t',description:'Foreign secret'}});await act(async()=>root.render(<Dashboard/>));await act(async()=>{const btn=container.querySelector('tbody button');btn.click();btn.click();});expect(document.querySelectorAll('[role=dialog]')).toHaveLength(1);expect(document.querySelector('[role=alert]').textContent).toContain('another client');expect(document.body.textContent).not.toContain('Foreign secret');expect(api.patch).not.toHaveBeenCalled();});
+test('Brawndo summary opens native record without navigating and save/cancel preserve queue context',async()=>{
+ mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{name:'Brawndo'}});
+ const item=row();loadClientDashboard.mockResolvedValue(snapshot([item]));
+ api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'demo_brawndo',items:[item],offset:options.params.offset,limit:9,total:1,has_more:false}:{client_id:'demo_brawndo',task_id:'t',title:item.title,description:'Actual purpose',source_type:'manual'}}));
+ await act(async()=>root.render(<Dashboard/>));await click('Overdue');await click(item.title);await click('Open Action Item');
+ expect(document.querySelectorAll('[role=dialog]')).toHaveLength(2);expect(document.querySelector('.dashboard-item-summary').textContent).toContain('Actual purpose');
+ await click('Save native record');await click('Cancel native record');expect(document.querySelectorAll('[role=dialog]')).toHaveLength(1);
+ expect(container.querySelector('.quick-filters [aria-pressed=true]').textContent).toContain('Overdue');expect(loadClientDashboard).toHaveBeenCalledTimes(2);
+ await click('Close');expect(document.querySelector('[role=dialog]')).toBeNull();expect(container.querySelector('.quick-filters [aria-pressed=true]').textContent).toContain('Overdue');
+});
+test('Brawndo originating Review drawer retains the stored historical occurrence',async()=>{
+ mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{name:'Brawndo'}});
+ loadClientDashboard.mockResolvedValue(snapshot([row()]));api.get.mockImplementation(async path=>({data:path==='/reviews/r'?{client_id:'demo_brawndo',review_id:'r',title:'Period review',current_occurrence_id:'current',occurrences:[{occurrence_id:'old',period:'2025',status:'completed'}]}:{client_id:'demo_brawndo',task_id:'t',title:'Synthetic work t',review_id:'r',occurrence_id:'old'}}));
+ await act(async()=>root.render(<Dashboard/>));await click('Synthetic work t');await click('View originating review');expect(document.body.textContent).toContain('Historical period: 2025');
+});
+test.each(['dismiss','replace'])('late dashboard refresh cannot %s the current summary',async action=>{
+ mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{name:'Brawndo'}});
+ const items=[row('one'),row('two')];let finish;loadClientDashboard.mockResolvedValueOnce(snapshot(items)).mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));
+ api.get.mockImplementation(async path=>{const id=path.split('/').pop();return {data:path==='/dashboard'?{client_id:'demo_brawndo',items,offset:0,limit:9,total:items.length,has_more:false}:{client_id:'demo_brawndo',task_id:id,title:'Synthetic work '+id,source_type:'manual'}};});
+ await act(async()=>root.render(<Dashboard/>));await click('Synthetic work one');await click('Open Action Item');await click('Save native record');await click('Cancel native record');await click('Close');
+ if(action==='replace')await click('Synthetic work two');await act(async()=>finish(snapshot(items)));
+ if(action==='dismiss')expect(document.querySelector('[role=dialog]')).toBeNull();else expect(document.querySelector('[role=dialog]').textContent).toContain('Synthetic work two');
+});

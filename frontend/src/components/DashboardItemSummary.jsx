@@ -5,7 +5,7 @@ import {dashboardStatus} from '@/lib/dashboardItemSummary';
 
 const destinations={tasks:'Action Item',findings:'Action Item',reviews:'Review',policies:'Policy',vendors:'Vendor',risks:'Risk',exceptions:'Acceptance',requirements:'Requirement'};
 const sources={framework_assessments:'safeguard/control',reviews:'review',policies:'policy',vendors:'vendor',risks:'risk',findings:'finding',assessments:'assessment'};
-export default function DashboardItemSummary({selection,onClose,opener}) {
+export default function DashboardItemSummary({selection,onClose,opener,onOpenRecord}) {
   const item=selection.item;
   return <Dialog open={!!selection} onOpenChange={open=>{if(!open)onClose();}}>
     <DialogContent className="dashboard-item-summary" onCloseAutoFocus={event=>{event.preventDefault();opener?.focus();}} aria-describedby={undefined}>
@@ -19,8 +19,8 @@ export default function DashboardItemSummary({selection,onClose,opener}) {
           {item.due_date&&<div><dt>Due / Target</dt><dd>{displayDay(item.due_date)}</dd></div>}
         </dl>
         <div className="dashboard-summary-footer">
-          {item.sourceHref&&<Link to={item.sourceHref} onClick={onClose}>View originating {item.sourceKind==='framework_assessments'?(item.sourceHref.includes('cis-ig1')?'safeguard':'control'):sources[item.sourceKind]||'record'} ↗</Link>}
-          {item.recordHref&&<Link className="dashboard-summary-primary" to={item.recordHref} onClick={onClose}>Open {destinations[item.kind]||'Record'} ↗</Link>}
+          {item.sourceHref&&(onOpenRecord&&item.sourceRecord?<button type="button" onClick={event=>onOpenRecord({kind:item.sourceKind,record:item.sourceRecord,initialValues:item.sourceInitialValues},event.currentTarget)}>View originating {sources[item.sourceKind]||'record'} ↗</button>:<Link to={item.sourceHref} onClick={onClose}>View originating {item.sourceKind==='framework_assessments'?(item.sourceHref.includes('cis-ig1')?'safeguard':'control'):sources[item.sourceKind]||'record'} ↗</Link>)}
+          {item.recordHref&&(onOpenRecord?<button type="button" className="dashboard-summary-primary" onClick={event=>onOpenRecord(item,event.currentTarget)}>Open {destinations[item.kind]||'Record'} ↗</button>:<Link className="dashboard-summary-primary" to={item.recordHref} onClick={onClose}>Open {destinations[item.kind]||'Record'} ↗</Link>)}
         </div>
       </>}
     </DialogContent>

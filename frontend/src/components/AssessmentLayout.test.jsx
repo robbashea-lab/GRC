@@ -6,9 +6,9 @@ let root,container;
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 const items=[{id:'1.1-c1',text:'Inventory covers the relevant assets.'}];
-function Example(){
+function Example({inlineCriteria=false}){
   const [draft,setDraft]=useState('saved narrative'),[checks,setChecks]=useState(['historical-id']),[finding,setFinding]=useState('');
-  return <AssessmentLayout summary="Maintain the relevant asset inventory." requirement={<AssessmentRequirement heading="What CIS requires" text="Official text" official source="https://www.cisecurity.org/controls" label="Official CIS source"/>}
+  return <AssessmentLayout inlineCriteria={inlineCriteria} summary="Maintain the relevant asset inventory." requirement={<AssessmentRequirement heading="What CIS requires" text="Official text" official source="https://www.cisecurity.org/controls" label="Official CIS source"/>}
     checklist={<AssessmentChecklist title="Safeguard 1.1 checklist" items={items} value={checks} onChange={setChecks}/>}
     findings={<input aria-label="Finding title" value={finding} onChange={e=>setFinding(e.target.value)}/>}
     review={['Compare the inventory with actual operation.']} outcome={['Assets are accounted for.']}>
@@ -33,6 +33,14 @@ test('three ordered tabs default to requirement and retain assessment, checklist
   expect(container.querySelector('[data-testid=checks]').textContent).toBe('["historical-id","1.1-c1"]');
   expect(container.querySelector('[data-testid=saved-status]').textContent).toBe('not_assessed');
   expect(container.querySelectorAll('[role=tabpanel]')).toHaveLength(3);
+});
+test('pilot removes only the criteria tab and retains inline checklist and drafts',async()=>{
+  await act(async()=>root.render(<Example inlineCriteria/>));
+  expect([...container.querySelectorAll('[role=tab]')].map(el=>el.textContent)).toEqual(['Requirement & implementation','Findings']);
+  await act(async()=>container.querySelector('.assessment-inline-criteria summary').click());
+  await act(async()=>container.querySelector('input[type=checkbox]').click());await fill('Current implementation','Keep this narrative');
+  await tab('Findings');await fill('Finding title','Keep this finding');await tab('Requirement & implementation');
+  expect(container.querySelector('[data-testid=checks]').textContent).toBe('["historical-id","1.1-c1"]');expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Keep this narrative');expect(container.querySelector('[aria-label="Finding title"]').value).toBe('Keep this finding');
 });
 test('absent explicit timing produces no trigger line and source link has no appended explanation',async()=>{
   await act(async()=>root.render(<AssessmentRequirement heading="What CIS requires" text="Requirement" source="https://www.cisecurity.org/controls" label="Official CIS source"/>));

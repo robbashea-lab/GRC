@@ -66,7 +66,7 @@ test('framework configuration selects distinct workspaces without tenant identit
  expect(frameworkWorkspace('iso-27001')).toBe('iso');
  expect(frameworkWorkspace('unknown')).toBe('generic');
 });
-const criteriaTab=async()=>act(async()=>[...container.querySelectorAll('[role=tab]')].find(t=>t.textContent==='Assessment criteria').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
+const criteriaTab=async()=>act(async()=>{const tab=[...container.querySelectorAll('[role=tab]')].find(t=>t.textContent==='Assessment criteria');if(tab)tab.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));else{const disclosure=container.querySelector('.assessment-inline-criteria');if(!disclosure.open)disclosure.querySelector('summary').click();}});
 const implementationTab=async()=>act(async()=>[...container.querySelectorAll('[role=tab]')].find(t=>t.textContent==='Requirement & implementation').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
 test('Brawndo overview no longer offers program configuration',async()=>{
  await act(async()=>root.render(<BrawndoCisHeader/>));
@@ -75,9 +75,10 @@ test('Brawndo overview no longer offers program configuration',async()=>{
 });
 async function tick(el){await act(async()=>el.click());}
 
-test('approved three-tab layout hides metadata rows and retains saved badges and supporting workflows',async()=>{
+test('Brawndo two-tab layout retains checklist disclosure, saved badges and supporting workflows',async()=>{
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
- expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
+ expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Findings']);
+ expect(container.querySelector('.assessment-inline-criteria')).not.toBeNull();
  expect(container.querySelector('[role=tab][data-state=active]').textContent).toBe('Requirement & implementation');
  expect(container.querySelector('[aria-label="Verification result"]')).toBeNull();expect(container.querySelector('.bcsg-metadata')).toBeNull();
  expect(container.querySelector('[data-testid="cis-supporting-records"]')).toBeNull();expect(container.querySelector('[data-testid="cis-operation"]')).toBeNull();

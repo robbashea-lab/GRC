@@ -7,6 +7,8 @@ import {groupRequirements,sectionSummary} from '@/lib/frameworkWorkspace';
 import {cisScopeLabel} from '@/lib/cisScope';
 import {freshness} from '@/lib/cisVerification';
 import {FrameworkRecordButton} from './FrameworkRecordAccess';
+import {cisSummary} from '@/lib/cisVerification';
+import {ChevronRight} from 'lucide-react';
 
 // Brawndo CIS IG1 controls: one breadcrumb (CIS IG1 › Control N › Safeguard N.M), whole-row navigation,
 // and a high-level safeguard list. Filters and search narrow the list; they are not navigation.
@@ -22,8 +24,10 @@ export function CisBreadcrumb({items,label='CIS IG1 location'}){
     return <li key={c.label}>{last||!c.onClick?<span ref={last?current:undefined} aria-current={last?'page':undefined}>{c.label}</span>:<button type="button" onClick={c.onClick}>{c.label}</button>}</li>;})}</ol></nav>;
 }
 
-export default function BrawndoCisControls({implementationGroup=1,scopeControls,clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,controlKey,onControl,onOpen,onManage,selected}){
+export default function BrawndoCisControls({workspacePilot=false,implementationGroup=1,scopeControls,clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,controlKey,onControl,onOpen,onManage,selected}){
   const [members,setMembers]=useState([]);
+  const [controlFilter,setControlFilter]=useState('all'),[controlSearch,setControlSearch]=useState('');
+  useEffect(()=>{setControlFilter('all');setControlSearch('');},[clientId]);
   useEffect(()=>{const c=new AbortController();if(clientId)api.get(`/clients/${encodeURIComponent(clientId)}/members`,{signal:c.signal}).then(r=>{if(!c.signal.aborted)setMembers(Array.isArray(r.data)?r.data:[]);}).catch(()=>{});return()=>c.abort();},[clientId]);
   const groups=useMemo(()=>groupRequirements('cis-ig1',rows),[rows]);
   const control=!filtered&&groups.find(g=>g.key===controlKey);
@@ -33,25 +37,37 @@ export default function BrawndoCisControls({implementationGroup=1,scopeControls,
   else if(control)crumbs.push({label:`Control ${controlParts(control.label).num??''}`.trim(),onClick:()=>onControl(control.key)});
   if(selected)crumbs.push({label:`Safeguard ${selected.definition_id}`});
   const list=filtered?visible:control?control.rows:null;
+  const controlOverview=workspacePilot&&!list;
+  const matchingGroups=groups.filter(g=>(controlFilter==='all'||(controlFilter==='attention'?sectionSummary(g.rows).attention>0:cisSummary(g.rows).notAssessed>0))&&g.label.toLowerCase().includes(controlSearch.trim().toLowerCase()));
   return <section className="bcis-card bcis-controls" aria-label="Controls">
+    {controlOverview?<>
+      <div className="bwp-controls-heading"><div><h2>Controls</h2><p>Explore your safeguards, implementation, and verification.</p></div><span>{groups.length} controls</span></div>
+      <div className="bcis-controls-bar"><div className="bwp-control-filters" role="group" aria-label="Control filters">{[['all','All controls',groups.length],['attention','Needs attention',groups.filter(g=>sectionSummary(g.rows).attention>0).length],['not_assessed','Not assessed',groups.filter(g=>cisSummary(g.rows).notAssessed>0).length]].map(([key,label,count])=><button type="button" key={key} aria-pressed={controlFilter===key} onClick={()=>setControlFilter(key)}>{label} <span>{count}</span></button>)}</div><SearchField value={controlSearch} onChange={setControlSearch} label="Search controls" placeholder="Search controls…"/></div>
+    </>:
     <div className="bcis-controls-bar">
       <CisBreadcrumb items={crumbs} label={`CIS IG${implementationGroup} location`}/>
       <div className="bcis-controls-tools">{filtered&&<button type="button" className="bcis-chip-clear" onClick={onClear}>Clear filter</button>}<SearchField value={search} onChange={onSearch} label="Search safeguards" placeholder="Search by number or title…"/></div>
-    </div>
+    </div>}
     {scopeControls}
     {control&&<p className="bcis-control-name">{controlParts(control.label).name}</p>}
-    {list?<SafeguardList implementationGroup={implementationGroup} rows={list} owner={owner} onOpen={onOpen} onManage={onManage} label={filtered?filterLabel:control.label}/>:<ControlRows implementationGroup={implementationGroup} groups={groups} onControl={onControl} total={rows.length}/>}
+    {list?<SafeguardList implementationGroup={implementationGroup} rows={list} owner={owner} onOpen={onOpen} onManage={onManage} label={filtered?filterLabel:control.label}/>:<ControlRows workspacePilot={workspacePilot} implementationGroup={implementationGroup} groups={controlOverview?matchingGroups:groups} allGroups={groups} onControl={onControl} total={rows.length}/>}
   </section>;
 }
 
-function ControlRows({implementationGroup,groups,onControl,total}){
-  const present=new Set(groups.map(g=>controlParts(g.label).num)),absent=[...Array(18)].map((_,i)=>i+1).filter(i=>!present.has(i));
-  return <><table className="bcis-table"><thead><tr><th scope="col">#</th><th scope="col">Control</th><th scope="col">Assessed</th><th scope="col">Needs attention</th></tr></thead>
+function ControlRows({workspacePilot,implementationGroup,groups,allGroups=groups,onControl,total}){
+  const present=new Set(allGroups.map(g=>controlParts(g.label).num)),absent=[...Array(18)].map((_,i)=>i+1).filter(i=>!present.has(i));
+  return <><div className="bwp-controls-table-scroll"><table className="bcis-table"><thead><tr>{!workspacePilot&&<th scope="col">#</th>}<th scope="col">Control</th>{workspacePilot?<><th scope="col">IG{implementationGroup} safeguards</th><th scope="col">Implementation</th><th scope="col">Assessment</th><th scope="col"><span className="sr-only">Open control</span></th></>:<><th scope="col">Assessed</th><th scope="col">Needs attention</th></>}</tr></thead>
     <tbody>{groups.map(g=>{const {num,name}=controlParts(g.label),s=sectionSummary(g.rows),applicable=s.total-(s.excluded||0),tone=!s.attention?'good':s.attention>=applicable?'critical':'attention';
       return <tr key={g.key} className="bcis-row" tabIndex={0} role="link" aria-label={`Open ${g.label}`} data-testid={'control-row-'+(num??g.key)} onClick={()=>onControl(g.key)} onKeyDown={activate(()=>onControl(g.key))}>
-        <td className="bcis-num">{num??'—'}</td><td className="bcis-name">{name}</td><td>{s.assessed} of {applicable}</td>
-        <td><span className={`bcis-att is-${tone}`}>{s.attention?`${s.attention} of ${applicable}`:'None'}</span></td></tr>;})}</tbody></table>
-    <p className="bcis-foot">All {groups.length} IG{implementationGroup} controls · {total} safeguards.{implementationGroup===1&&absent.length&&!present.has(null)?` Control${absent.length===1?'':'s'} ${absent.join(', ').replace(/, (\d+)$/,' and $1')} ${absent.length===1?'has':'have'} no IG1 safeguards.`:''}</p></>;
+        {!workspacePilot&&<td className="bcis-num">{num??'—'}</td>}<td className="bcis-name">{workspacePilot&&<span className="bwp-control-number">{num??'—'}</span>}{name}</td>
+        {workspacePilot?<><td>{g.rows.length}</td><td><ControlImplementation rows={g.rows}/></td><td>{s.assessed} of {applicable} assessed</td><td><ChevronRight size={16} aria-hidden="true"/></td></>:<><td>{s.assessed} of {applicable}</td><td><span className={`bcis-att is-${tone}`}>{s.attention?`${s.attention} of ${applicable}`:'None'}</span></td></>}</tr>;})}</tbody></table></div>
+    {!groups.length&&<p className="bcis-foot" role="status">No controls match this view.</p>}
+    <p className="bcis-foot">All {allGroups.length} IG{implementationGroup} controls · {total} safeguards.{implementationGroup===1&&absent.length&&!present.has(null)?` Control${absent.length===1?'':'s'} ${absent.join(', ').replace(/, (\d+)$/,' and $1')} ${absent.length===1?'has':'have'} no IG1 safeguards.`:''}</p></>;
+}
+
+function ControlImplementation({rows}){
+  const s=cisSummary(rows);
+  return <span className="bwp-control-implementation">{[['addressed','Implemented','good'],['partial','Partial','attention'],['gap','Not implemented','critical'],['notAssessed','Not assessed','neutral'],['na','N/A','neutral']].filter(([key])=>s[key]>0).map(([key,label,tone])=><span key={key} className={`is-${tone}`}>{s[key]} {label}</span>)}</span>;
 }
 
 function SafeguardList({implementationGroup,rows,owner,onOpen,onManage,label}){

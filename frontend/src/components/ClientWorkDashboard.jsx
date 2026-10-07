@@ -15,15 +15,17 @@ import './BrawndoDashboard.css';
 const FILTERS=[['all','All'],['pastDue','Overdue'],['due30','Due in 30 days'],['unassigned','Unassigned']];
 const STATUS_TONE={overdue:'critical',in_progress:'info',remediated:'attention',pending_validation:'attention',upcoming:'neutral',open:'neutral'};
 
-function WorkTable({items,onOpen,asOf}) {
+function WorkTable({items,onOpen,asOf,workspacePilot}) {
   return <div className="bd-table-scroll" role="region" aria-label="Work queue" tabIndex={0}>
     <table className="bd-table"><caption className="sr-only">Current actionable work, ordered by lateness and priority. Open an item to work in its authoritative record.</caption>
-      <thead><tr><th scope="col">Due</th><th scope="col">Item</th><th scope="col">Owner</th><th scope="col">Status</th></tr></thead>
+      <thead><tr>{!workspacePilot&&<th scope="col">Due</th>}<th scope="col">{workspacePilot?'Priority item':'Item'}</th>{workspacePilot&&<th scope="col">Type</th>}<th scope="col">Owner</th>{workspacePilot&&<th scope="col">Due date</th>}<th scope="col">Status</th></tr></thead>
       <tbody>{items.map(item=>{
         return <tr key={item.key} onClick={event=>onOpen(item,event.currentTarget.querySelector('button'))}>
-          <td><time className="bd-date" dateTime={item.due_date||undefined}>{displayDay(item.due_date)||'Not scheduled'}</time></td>
+          {!workspacePilot&&<td><time className="bd-date" dateTime={item.due_date||undefined}>{displayDay(item.due_date)||'Not scheduled'}</time></td>}
           <td><button type="button" className="bd-item" onClick={e=>{e.stopPropagation();onOpen(item,e.currentTarget);}}>{item.title}</button></td>
+          {workspacePilot&&<td>{item.type}</td>}
           <td className={item.unassigned?'is-attention bd-strong':''}>{item.unassigned?'Unassigned':item.owner}</td>
+          {workspacePilot&&<td><time className="bd-date" dateTime={item.due_date||undefined}>{displayDay(item.due_date)||'Not scheduled'}</time></td>}
           <td><span className={`bd-status is-${STATUS_TONE[item.status]||'neutral'}`}>{statusLabel(item.status)}</span></td>
         </tr>;
       })}</tbody>
@@ -31,7 +33,7 @@ function WorkTable({items,onOpen,asOf}) {
   </div>;
 }
 
-export default function ClientWorkDashboard({queue,programs,programRows,cisRows,clientName='Client',filter,onFilter,onOpen,loadDetail}) {
+export default function ClientWorkDashboard({queue,programs,programRows,cisRows,clientName='Client',filter,onFilter,onOpen,loadDetail,refreshVersion=0,workspacePilot=false}) {
   const rowsFor=programRows||(cisRows?{'cis-ig1':cisRows}:{});
   const [expanded,setExpanded]=useState(false),[page,setPage]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState('');
   const [framework,setFramework]=useState(''),[search,setSearch]=useState('');
@@ -54,6 +56,12 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
     finally{if(!controller.signal.aborted&&mounted.current)setLoading(false);}
   },[filter,framework,search]);
   const previousFilter=useRef(selectionKey);
+  const previousRefresh=useRef(refreshVersion);
+  useEffect(()=>{
+    if(previousRefresh.current===refreshVersion)return;
+    previousRefresh.current=refreshVersion;
+    fetchPage(current?.offset||0,filter,expanded);
+  },[refreshVersion,fetchPage,current?.offset,filter,expanded]);
   useEffect(()=>{
     if(previousFilter.current===selectionKey){setLoading(false);return;}
     request.current?.abort();setPage(null);setExpanded(false);setLoading(true);
@@ -71,12 +79,12 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
     </header>
     <div className="bd-grid">
       <aside className="bd-aside" aria-label="Program condition">
-        {carded.map(p=><FrameworkProgramCard key={p.key} program={p} rows={rowsFor[p.key]}/>)}
+        {carded.map(p=><FrameworkProgramCard key={p.key} program={p} rows={rowsFor[p.key]} workspacePilot={workspacePilot}/>)}
         {programs.filter(p=>!rowsFor[p.key]).map(p=><section key={p.key} className="bd-card"><h2>{p.label}</h2><p className="bd-muted bd-small">{p.explanation}</p><Link to={p.to}>Open workspace</Link></section>)}
         {!programs.length&&<section className="bd-card"><p className="bd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
       </aside>
       <section className="bd-card bd-queue" aria-labelledby="client-priority-heading" id="client-priority-queue">
-        <div className="bd-card-head"><div><h2 id="client-priority-heading">Priority overview</h2></div>
+        <div className="bd-card-head"><div><h2 id="client-priority-heading">Priority overview</h2>{workspacePilot&&<p className="bd-muted bd-small">Focus on work that needs a decision, an owner, or a next step.</p>}</div>
           {total>9&&!expanded&&<button type="button" className="bd-button" disabled={loading} onClick={()=>fetchPage(0,filter,true)}>View all {total} items <ArrowRight size={14} aria-hidden="true"/></button>}
           {expanded&&<button type="button" className="bd-button" onClick={()=>fetchPage(0)}>Show top 9</button>}</div>
         <div className="bd-filter-bar"><ViewTabs views={FILTERS.map(([id,label])=>({id,label}))} active={filter} onPick={select} counts={counts} label="Priority overview filters" testid="priority-filters"/>
@@ -86,7 +94,7 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
         </div>
         <div className="bd-results sr-only" role="status" aria-live="polite">{loading?'Loading…':`${total} matching items`}</div>
         {error&&<div className="bd-error" role="alert">{error} <button type="button" className="bd-link" onClick={()=>fetchPage(retry.current.offset,retry.current.key,retry.current.full)}>Retry</button></div>}
-        {items.length?<WorkTable items={items} onOpen={onOpen} asOf={queue.as_of}/>:<p className="bd-empty">{loading?'Loading priority work…':error?'Priority work could not be loaded.':'No items match these filters.'}</p>}
+        {items.length?<WorkTable items={items} onOpen={onOpen} asOf={queue.as_of} workspacePilot={workspacePilot}/>:<p className="bd-empty">{loading?'Loading priority work…':error?'Priority work could not be loaded.':'No items match these filters.'}</p>}
         {expanded&&current&&<nav className="bd-pagination" aria-label="Work queue pages"><button type="button" className="bd-button" disabled={loading||current.offset===0} onClick={()=>fetchPage(Math.max(0,current.offset-current.limit),filter,true)}>Previous page</button><span>Page {Math.floor(current.offset/current.limit)+1} of {Math.max(1,Math.ceil(current.total/current.limit))}</span><button type="button" className="bd-button" disabled={loading||!current.has_more} onClick={()=>fetchPage(current.offset+current.limit,filter,true)}>Next page</button></nav>}
       </section>
 
