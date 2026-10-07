@@ -1,6 +1,7 @@
 /* Default client surface; reuse approved reference tokens without changing module behavior. */
 .client-surface { position: relative; min-width: 0; transition: none; }
 .client-surface[data-theme="dark"] { --color-critical: var(--bp-critical); }
+.client-surface[data-theme="dark"]:has([data-layout="reviews"]) { --color-input-border: #3a4450; }
 .client-surface .page-title { font: 600 var(--page-title-size)/28px var(--font-heading); letter-spacing: -.03em; }
 .client-surface .page-header { background: transparent; border: 0; }
 .client-surface .page-subtitle { color: var(--bp-muted); }
@@ -13,7 +14,9 @@
 .client-surface .ui-button { border-radius: 8px; }
 .client-surface .ui-button.bg-primary { background: #a3db33; border-color: #a3db33; color: #10140c; }
 .client-surface .ui-button.bg-primary:hover { background: #b4e650; }
-.client-surface :is(input,select,textarea) { color: var(--bp-text); background-color: var(--bp-card); border-color: var(--color-input-border); }
+.client-surface :is(input,select,textarea) { color: var(--bp-text); background-color: var(--bp-card); border-color: var(--bp-border); }
+.client-surface:not(:has([data-layout="reviews"])) :is(input,select,textarea) { border-color: var(--color-input-border); }
+.client-surface .pill.text-ink-help { color: var(--bp-muted); }
 .client-surface .register-table-frame { overflow-x: auto; }
 @media(max-width:1100px) {
   .client-surface .bprof-grid { grid-template-columns: minmax(0,1fr); }

@@ -39,6 +39,7 @@ assert.equal(new URL(base).hostname,'127.0.0.1');
   await page.evaluate(()=>sessionStorage.setItem('grc_client_id','demo_brawndo'));await page.goto(base+'/compliance/cis-ig1');
   await page.getByRole('button',{name:'Open Omni guided assessment',exact:true}).press('Enter');await page.getByRole('dialog').waitFor();
   await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
+  await page.waitForFunction(()=>document.activeElement.getAttribute('aria-label')==='Open Omni guided assessment');
   assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Open Omni guided assessment');
   evidence.push({theme,check:'Omni keyboard open, Escape close, launcher focus restored',passed:true});
   await page.goto(base+'/admin/users');await page.getByRole('button',{name:'Add user',exact:true}).click();await page.getByRole('dialog').waitFor();await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
