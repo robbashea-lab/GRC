@@ -44,7 +44,7 @@ export default function NotificationBell() {
   return (
     <DropdownMenu open={open} onOpenChange={(v) => { setOpen(v); if (v) load(); }}>
       <DropdownMenuTrigger asChild>
-        <button data-testid="notification-bell" className="relative p-2 rounded-md hover:bg-brand-metallic-2 text-ink-onDarkMuted hover:text-primary-foreground">
+        <button aria-label="Your notifications" data-testid="notification-bell" className="relative p-2 rounded-md hover:bg-brand-metallic-2 text-ink-onDarkMuted hover:text-primary-foreground">
           <Bell className="h-4 w-4" />
           {unread > 0 && (
             <span data-testid="notification-unread-count" className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-semantic-critical text-primary-foreground text-xs font-bold flex items-center justify-center">{unread > 9 ? "9+" : unread}</span>

@@ -4,6 +4,7 @@ import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
 import {isReferenceRegister,isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
 import ClientSurface from './ClientSurface';
+import BrawndoWorkspace from './BrawndoWorkspace';
 import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
@@ -296,13 +297,13 @@ export default function Layout() {
   const {currentClientId}=useOrg();
   const {user}=useAuth();
   const {pathname}=useLocation();
-  return (
-    <ComplianceProvider><div className="app-shell min-h-screen flex bg-surface-app">
+  const pilot=!!user;
+  const content=<div className="app-shell min-h-screen flex bg-surface-app">
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
         {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
-        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
+        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
-    </div></ComplianceProvider>
-  );
+    </div>;
+  return <ComplianceProvider>{pilot?<BrawndoWorkspace>{content}</BrawndoWorkspace>:content}</ComplianceProvider>;
 }

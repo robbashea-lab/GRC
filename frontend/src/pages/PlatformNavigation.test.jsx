@@ -15,7 +15,7 @@ let mockClients;
 jest.mock("@/context/OrgContext", () => ({ useOrg: () => ({ clients: mockClients, switchClient: mockSwitch, refresh: mockRefresh }) }));
 jest.mock("@/components/NotificationBell", () => () => null);
 jest.mock("@/lib/api", () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn(), patch: jest.fn() }, PREVIEW_MODE: false, formatError: e => e.message }));
-jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate, useLocation: () => ({ pathname: "/clients" }), Outlet: () => null, NavLink: ({ children, to }) => <a href={to}>{typeof children === "function" ? children({ isActive: false }) : children}</a> }), { virtual: true });
+jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate, useLocation: () => ({ pathname: "/clients" }), Outlet: () => null, Link: ({children,to,...props})=><a href={to} {...props}>{children}</a>, NavLink: ({ children, to }) => <a href={to}>{typeof children === "function" ? children({ isActive: false }) : children}</a> }), { virtual: true });
 
 let root, container;
 beforeAll(() => {Object.defineProperty(global, 'crypto', {configurable:true,value:require('crypto').webcrypto});});
@@ -88,7 +88,7 @@ test("portfolio is a compact triage index: one heading, one view bar, the table,
 test("sidebar removes favorites and preserves ALL/MINE and navigation", async () => {
   await render(<Layout />);
   expect(container.textContent).not.toMatch(/Favorites|Fav/);
-  expect(container.querySelector('[data-testid="sidebar-filter-all"]').textContent).toBe("ALL");
+  expect(container.querySelector('[data-testid="sidebar-filter-all"]').textContent).toBe("All");
   await click(container.querySelector('[data-testid="sidebar-filter-assigned"]'));
   const mine = mockFixtures.responses["/clients"].filter(c => c.assigned_owner_id === mockUser.user_id && c.status !== "archived");
   expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(mine.length);

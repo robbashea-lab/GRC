@@ -15,7 +15,7 @@ import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
-import {isReferencePresentation,isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation,isBrawndoReference,isReferenceWorkflow} from '@/lib/reference';
 import './BrawndoCisAssessment.css';
 import './RiskPolicyDialog.css';
 import { Button } from "@/components/ui/button";
@@ -150,7 +150,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const { user } = useAuth();
   const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${record?.client_id||clientId}:${kind}:${record?.[ID_FIELD[kind]]}:update`, true);
   const pilot=(['risks','policies'].includes(kind)||['tasks','findings','vendors'].includes(kind)&&isReferencePresentation(clientId,user))&&(!record||record.client_id===clientId);
-  const vendorPilot=pilot&&kind==='vendors';
+  const vendorPilot=pilot&&kind==='vendors'&&isReferenceWorkflow(clientId,user);
   const riskPilot=pilot&&kind==='risks';
   const policyPilot=pilot&&kind==='policies';
   const [approvalDirty,setApprovalDirty]=useState(false);
@@ -652,7 +652,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   function vendorPanel(section) {
     const Panel=vendorPilot?BrawndoVendorDetails:VendorGovernancePanel;
-    return <Panel tab={section} record={record} form={form} setForm={setForm} canWrite={canWrite} isAdmin={isPlatformAdmin} users={users} reviews={linkedReviews} tasks={related.tasks||[]} risks={linkedRisks} evidence={evidenceItems} focusAssurance={initialValues?.assuranceId} openRecord={value=>{if(vendorPilot&&value.initialValues?.assurance_id&&formDirty){toast.error('Save assurance changes before creating an Action Item for this document.');return;}setRelatedDrawer(value);}} uploadFiles={uploadFiles} downloadEv={downloadEv} onSaved={()=>{loadLinkedReviews();loadLinkedRisks();loadRelated();onSaved?.();}}/>;
+    return <Panel tab={section} record={vendorPilot?record:record||form} form={form} setForm={setForm} canWrite={canWrite} isAdmin={isPlatformAdmin} users={users} reviews={linkedReviews} tasks={related.tasks||[]} risks={linkedRisks} evidence={evidenceItems} focusAssurance={initialValues?.assuranceId} openRecord={value=>{if(vendorPilot&&value.initialValues?.assurance_id&&formDirty){toast.error('Save assurance changes before creating an Action Item for this document.');return;}setRelatedDrawer(value);}} uploadFiles={uploadFiles} downloadEv={downloadEv} onSaved={()=>{loadLinkedReviews();loadLinkedRisks();loadRelated();onSaved?.();}}/>;
   }
 
   // -------- Overview renderers per kind --------

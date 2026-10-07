@@ -11,9 +11,12 @@ import AssigneeSelect from './AssigneeSelect';
 import RequirementBasis, {GovernanceContextFields} from './RequirementBasis';
 import BrawndoActionContext from './BrawndoActionContext';
 import {pilotPriority} from '@/lib/brawndoActions';
+import {isReferenceWorkflow} from '@/lib/reference';
+import {useAuth} from '@/context/AuthContext';
 
 // Task-specific fields; the existing drawer owns Evidence, Comments and Related.
 export default function ActionItemFields({form,setForm,record,clientId,canWrite,onTransition,saving,sourceLocked=false,related={},onOpen,pilot=false,canEditContext=canWrite}) {
+  const {user}=useAuth(),referenceWorkflow=isReferenceWorkflow(clientId,user);
   const [data,setData]=useState({users:[],records:{},error:'',loading:true});
   useEffect(()=>{
     let active=true; setData({users:[],records:{},error:'',loading:true});
@@ -39,7 +42,7 @@ export default function ActionItemFields({form,setForm,record,clientId,canWrite,
     <div><Label htmlFor="task-title">Title *</Label><Input id="task-title" data-testid="field-title" value={form.title||''} onChange={e=>change('title',e.target.value)} disabled={!canWrite} placeholder="What needs to be done?" /></div>
     <div><Label htmlFor="task-description">Description</Label><Textarea id="task-description" value={form.description||''} onChange={e=>change('description',e.target.value)} disabled={!canWrite}/></div>
     <div className={pilot?'grid grid-cols-1 sm:grid-cols-2 gap-4':'grid grid-cols-2 gap-4'}>
-      {select('priority','Priority *',pilot?form.priority:form.priority||'medium',(pilot?[...new Set(['high','medium','low','informational',...(form.priority&&!['high','medium','low','informational'].includes(form.priority)?[form.priority]:[]),...(record&&!record.priority?['__none__']:[])])]:['critical','high','medium','low']).map(v=>[v,pilot?pilotPriority(v):actionPriority(v)]))}
+      {select('priority','Priority *',pilot?form.priority:form.priority||'medium',(referenceWorkflow?[...new Set(['high','medium','low','informational',...(form.priority&&!['high','medium','low','informational'].includes(form.priority)?[form.priority]:[]),...(record&&!record.priority?['__none__']:[])])]:['critical','high','medium','low']).map(v=>[v,referenceWorkflow?pilotPriority(v):actionPriority(v)]))}
       <div><Label>{pilot?'Assigned To':'Assignee'}</Label><AssigneeSelect showManagePeople={false} clientId={clientId} label={pilot?'Assigned To':'Assignee'} value={form.assignee_id} onChange={v=>change('assignee_id',v)} users={data.users} disabled={!canWrite}/></div>
       <div><Label htmlFor="task-due">Due Date</Label><Input id="task-due" type="date" value={form.due_date||''} disabled={!canWrite} onChange={e=>change('due_date',e.target.value||null)}/></div>
       {record&&select('status',pilot?'Progress':'Status',form.status,(pilot?['open','in_progress','blocked','cancelled',...(record.status==='done'?['done']:[])]:['open','in_progress','blocked','done','cancelled']).map(v=>[v,actionStatus(v)]),record.status==='done')}

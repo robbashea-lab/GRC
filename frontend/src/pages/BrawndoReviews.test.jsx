@@ -220,7 +220,7 @@ test('centered detail preserves policy/context and guards unsaved and failed sav
   await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Close'));
   expect(window.confirm).not.toHaveBeenCalled();expect(close).toHaveBeenCalledWith(false);
 });
-test('a caller cannot enable the pilot for another client',async()=>{
+test('another client retains its original Review workflow inside the shared presentation',async()=>{
   const record={...saved,client_id:'demo_dunder'};
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={record} clientId="demo_dunder" onOpenChange={()=>{}}/>));
   expect(document.querySelector('[data-testid="reviews-drawer"]').className).toContain('brawndo-cis-assessment');

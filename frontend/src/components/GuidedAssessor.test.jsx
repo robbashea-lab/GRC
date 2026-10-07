@@ -3,8 +3,11 @@ import {createRoot} from 'react-dom/client';
 import GuidedAssessor from './GuidedAssessor';
 import {control1Catalog as guidedCatalog,versionForSafeguard} from '@/lib/guidedAssessment';
 import api from '@/lib/api';
+import {isWorkspacePresentation} from '@/lib/reference';
+import workspacePilotConfiguration from '@/lib/brawndoWorkspacePilot.json';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'pilot-test'}})}));
+let mockWorkspaceMode;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'pilot-test',workspace_mode:mockWorkspaceMode}})}));
 let root,container,draft;
 const row={framework_assessment_id:'pilot',definition_id:'1.1',title:'Establish and Maintain Detailed Enterprise Asset Inventory',status:'not_assessed'};
 const props={clientId:'demo_brawndo',framework:'cis-ig1',configuration:{implementation_group:1}};
@@ -14,11 +17,46 @@ async function click(name){await act(async()=>button(name).click());}
 async function open(){await act(async()=>document.querySelector('[aria-label="Open Omni guided assessment"]').click());}
 async function select(value){const el=document.querySelector('.guided-panel select');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('change',{bubbles:true}));});}
 beforeEach(()=>{
+  mockWorkspaceMode=undefined;
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   draft={version:guidedCatalog.version,answers:{},step:0,completed:false,revision:0};
   api.get.mockImplementation(async()=>({data:draft}));
   api.put.mockImplementation(async(_path,body)=>({data:draft={...body,revision:draft.revision+1,generated_at:'2026-10-07T12:00:00Z'}}));
+});
+test.each([['demo_brawndo','demo'],[workspacePilotConfiguration.stagingClientIds[0],'standard']])('approved Omni boundary %s uses the canonical interview and preserves unsaved answers across window minimize',async(clientId,mode)=>{
+  mockWorkspaceMode=mode;const onDraftChange=jest.fn();await render({clientId,record:row,onDraftChange});await open();
+  expect(document.querySelector('.omni-workspace-window').getAttribute('aria-modal')).toBe('false');
+  expect(document.querySelector('.omni-approved')).toBeTruthy();
+  expect(document.querySelector('.omni-free-dock')).toBeTruthy();
+  await select('Not sure');expect(onDraftChange).toHaveBeenLastCalledWith(true);
+  await act(async()=>document.querySelector('[aria-label="Minimize Omni Guide"]').click());await open();
+  expect(document.querySelector('.guided-panel select').value).toBe('Not sure');expect(api.put).not.toHaveBeenCalled();
+  await click('Save and exit');expect(draft.answers.inventory).toBe('Not sure');expect(draft.version).toBe(guidedCatalog.version);
+});
+
+test.each([['demo_dunder','demo'],['demo_prestige','demo'],['demo_initech','demo'],['existing-authenticated-client','standard'],['future-client','standard'],['newly-onboarded-synthetic-client','standard']])('shared presentation preserves legacy Omni and saved interview for %s',async(clientId,mode)=>{
+  mockWorkspaceMode=mode;
+  expect(isWorkspacePresentation(clientId,{workspace_mode:mode})).toBe(true);
+  document.documentElement.dataset.brawndoWorkspace='dark';
+  try {
+    draft={...draft,answers:{inventory:'Not sure'},revision:3};
+    await render({clientId,record:row});
+    expect(document.querySelector('[aria-label="Open Omni guided assessment"]')).toBeTruthy();
+    await open();
+    expect(document.querySelector('.guided-panel').getAttribute('role')).toBe('dialog');
+    expect(document.querySelector('.ui-overlay[data-state="open"]')).toBeTruthy();
+    expect(container.getAttribute('aria-hidden')).toBe('true');
+    expect(document.querySelector('.omni-approved')).toBeNull();
+    expect(document.querySelector('.omni-free-dock')).toBeNull();
+    expect(document.querySelector('.omni-workspace-window')).toBeNull();
+    expect(button('Minimize')).toBeTruthy();expect(button('Dismiss assistant')).toBeTruthy();
+    expect(document.querySelector('.guided-panel select').value).toBe('Not sure');
+    expect(api.get).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({signal:expect.any(AbortSignal)}));
+    expect(api.put).not.toHaveBeenCalled();
+    await click('Save and exit');
+    expect(api.put).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({answers:{inventory:'Not sure'},version:guidedCatalog.version,expected_revision:3}));
+  } finally {delete document.documentElement.dataset.brawndoWorkspace;}
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test('dashboard greeting, direct pilot options, dismiss and reopen',async()=>{
@@ -80,7 +118,9 @@ test('Omni SVG is local, decorative and motion and responsive styles are defined
   const fs=require('node:fs'),path=require('node:path');
   const asset=fs.readFileSync(path.join(__dirname,'OmniCharacter.jsx'),'utf8');
   const css=fs.readFileSync(path.join(__dirname,'GuidedAssessor.css'),'utf8');
-  expect(asset).toContain('aria-hidden="true"');expect(asset).not.toMatch(/https?:|<image|paperclip|clippy|microsoft/i);
+  expect(asset).toContain('aria-hidden="true"');expect(asset).not.toMatch(/https?:|paperclip|clippy|microsoft/i);
+  expect(asset).toContain("import approvedShell from '@/assets/omni-approved-shell.png'");
+  expect(asset).toContain('<image href={approvedShell}');
   expect(css).toContain('prefers-reduced-motion:reduce');expect(css).toContain('animation:none');
   expect(css).toContain('max-width:800px');expect(css).toContain('width:48px; height:48px');
 });

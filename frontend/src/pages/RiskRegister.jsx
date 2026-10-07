@@ -1,4 +1,5 @@
-import {isReferenceRegister} from '@/lib/reference';
+import {isReferenceRegister,isWorkspacePresentation} from '@/lib/reference';
+import BrawndoRiskMatrix,{riskCoordinates} from '@/components/BrawndoRiskMatrix';
 import {riskViews,riskMatches,riskColumns,pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
 import {RiskCategoryField,RiskTreatmentField} from '@/components/BrawndoRiskFields';
 import '@/components/ClientWorkDashboard.css';
@@ -66,6 +67,9 @@ export default function RiskRegister() {
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
   const pilot=isReferenceRegister(currentClientId,user);
+  const workspacePilot=isWorkspacePresentation(currentClientId,user);
+  const [matrixSelection,setMatrixSelection]=useState(null);
+  useEffect(()=>setMatrixSelection(null),[currentClientId]);
   const generation=useRef(0);
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
@@ -138,7 +142,8 @@ export default function RiskRegister() {
   const baseColumns = tableColumns('risk-register', { rows: tableSource, users });
   const columns=riskColumns(baseColumns).map(c=>({...(!pilot?baseColumns.find(base=>base.key===c.key):c),label:c.key==='risk_score'?'Score / Level':c.label}));
   const table = useTableControls({ columns, rows: tableSource, module: pilot?'brawndo-risks':'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key,values) => { if(pilot){if(key===null||['status','next_review','risk_level','owner_id'].includes(key)&&values.length)setView('all');return;} if (key === null || key === 'status' && !values.length) setView('all_active'); else if (key === 'status') setView('all'); } });
-  const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
+  const matrixRows = table.apply(presetRows.filter(r => r.client_id === currentClientId));
+  const filtered = workspacePilot&&matrixSelection?matrixRows.filter(r=>(riskCoordinates(r)||'unrated')===matrixSelection):matrixRows;
   useEffect(()=>{
     const key=portfolioSignificant?currentClientId:null;
     if(key&&portfolioEntry.current!==key){
@@ -177,6 +182,7 @@ export default function RiskRegister() {
       </BrawndoPageHeader>
       {portfolioSignificant&&<p className="bpage-notice" role="status" data-testid="portfolio-risk-filter">Active High / Critical Risks · includes accepted Risks <button className="register-link" onClick={()=>{const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}}>Clear portfolio filter</button></p>}
       {view==='significant'&&<p className="bpage-notice" role="status" data-testid="significant-risk-filter">High / Critical Risks <button className="register-link" onClick={()=>{selectView('all_active');const next=new URLSearchParams(searchParams);next.delete('view');setSearchParams(next,{replace:true});}}>Clear risk filter</button></p>}
+      {workspacePilot&&<BrawndoRiskMatrix rows={matrixRows} selected={matrixSelection} onSelect={setMatrixSelection} loading={loading}/>}
       <div className="register-toolbar">
           <SearchField label="Search risks" placeholder="Search risks…" value={q} onChange={setQ} testid="risk-search"/>
           <BrawndoChips label="Risk views" chips={riskViews.map(v=>({id:v.id,label:v.label[0]+v.label.slice(1).toLowerCase(),count:loading?null:tableSource.filter(r=>matches(r,v.id,new Date(now))).length,pressed:view===v.id,onClick:()=>selectView(v.id),testid:`risk-view-${v.id}`}))}/>

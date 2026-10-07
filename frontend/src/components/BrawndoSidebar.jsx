@@ -26,20 +26,20 @@ export function sidebarCounts(summary){
   return {reviews:[k.overdue_reviews||0,'critical'],actions:[(k.overdue_actions||0),'critical'],risks:[k.significant_risks||0,'critical'],vendors:[v?.total??v?.items?.length??0,'attention']};
 }
 
-function ProfileMenu(){
+export function ProfileMenu({compact=false}){
   const {user,logout}=useAuth(),nav=useNavigate();
-  return <div className="bsb-foot">
+  return <div className={compact?'bwp-profile':'bsb-foot'}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button type="button" data-testid="profile-menu-trigger" className="bsb-profile">
-            <span className="bsb-avatar" aria-hidden="true">{user?.name?.[0]||user?.email?.[0]?.toUpperCase()}</span>
-            <span className="min-w-0 flex-1 text-left"><span className="bsb-client-name">{user?.name||user?.email}</span><span className="bsb-group-label">{(user?.role||'').replace('_',' ')}</span></span>
+            <span className="bsb-avatar" aria-hidden="true">{user?.name?.trim().split(/\s+/).map(part=>part[0]).slice(0,2).join('').toUpperCase()||user?.email?.[0]?.toUpperCase()}</span>
+            <span className={compact?'sr-only':'min-w-0 flex-1 text-left'}><span className="bsb-client-name">{user?.name||user?.email}</span><span className="bsb-group-label">{(user?.role||'').replace('_',' ')}</span></span>
             <ChevronsUpDown size={14} aria-hidden="true"/>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="top" className="w-56">
+        <DropdownMenuContent align={compact?'end':'start'} side={compact?'bottom':'top'} className="w-56">
           <DropdownMenuItem onClick={()=>nav('/account')} data-testid="profile-menu-account" className="text-sm"><UserCircle2 className="h-3.5 w-3.5 mr-2"/> My Account</DropdownMenuItem>
-          <DropdownMenuSeparator/><div className="px-2 py-1"><NotificationBell/></div><DropdownMenuSeparator/>
+          {!compact&&<><DropdownMenuSeparator/><div className="px-2 py-1"><NotificationBell/></div></>}<DropdownMenuSeparator/>
           <DropdownMenuItem data-testid="logout-button" onClick={async()=>{if(await logout())nav('/login');}} className="text-sm text-semantic-critical focus:text-semantic-critical"><LogOut className="h-3.5 w-3.5 mr-2"/> Sign out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -92,14 +92,14 @@ export default function BrawndoSidebar({complianceItems=[],isInternal,showFindin
     return()=>{c.abort();window.removeEventListener('grc:ticket-saved',load);};
   },[currentClientId,location.key]);
   const link=([to,label,Icon,testid,badge])=>{const [n,tone]=counts[badge]||[];
-    return <NavLink key={to} to={to} data-testid={testid} className={({isActive})=>`bsb-link${isActive?' is-active':''}`}>
+    return <NavLink key={to} to={to} aria-label={`${label}${n>0?` ${n} ${BADGE_LABEL[badge]}`:''}`} title={label} data-testid={testid} className={({isActive})=>`bsb-link${isActive?' is-active':''}`}>
       <Icon size={17} aria-hidden="true"/><span>{label}</span>
       {n>0&&<span className={`bsb-badge is-${tone}`} aria-label={`${n} ${BADGE_LABEL[badge]}`}>{n}</span>}
     </NavLink>;};
   return <aside className="app-sidebar bsb w-64 shrink-0 hidden lg:flex flex-col h-screen sticky top-0" data-theme={theme}>
     <div className="bsb-head">
       <Brand/>
-      {isInternal&&<button type="button" className="bsb-back" onClick={()=>nav('/clients')} data-testid="return-to-portfolio"><ArrowLeft size={13} aria-hidden="true"/>Portfolio</button>}
+      {isInternal&&<button type="button" className="bsb-back" aria-label="Return to portfolio" title="Portfolio" onClick={()=>nav('/clients')} data-testid="return-to-portfolio"><ArrowLeft size={13} aria-hidden="true"/>Portfolio</button>}
       <div className="bsb-client" data-testid="context-header-client"><span className="bsb-client-mark" aria-hidden="true">{currentClient?.name?.[0]||'•'}</span><span className="min-w-0"><span className="bsb-group-label">Client</span><span className="bsb-client-name">{currentClient?.name||'Select a client…'}</span></span></div>
     </div>
     <nav className="bsb-nav" data-testid="sidebar-client" aria-label="Client workspace">

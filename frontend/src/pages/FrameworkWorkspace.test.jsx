@@ -67,7 +67,9 @@ test.each(['demo_prestige','new-soc-client'])('SOC workspace has no configuratio
 test('Brawndo summary, bar tooltips, and removed sections; Controls follow the summary',async()=>{
  await brawndo();
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('Implemented98%55 of 56');expect(summary).toContain('Assessed98%');expect(summary).not.toContain('still to assess');expect(summary).not.toContain('Continue with safeguard');
+ expect(container.querySelector('.bd-donut-value').textContent).toBe('98.2%');
+ expect(summary).toContain('Implemented55 of 56');expect(summary).toContain('Assessed55 of 56');expect(summary).not.toContain('still to assess');expect(summary).not.toContain('Continue with safeguard');
+ expect(container.querySelector('.bd-seg-addressed').getAttribute('aria-label')).toBe('Implemented · 98.2% · 55 of 56 safeguards');
  expect(summary).toContain('not a compliance percentage, certification or audit opinion');
  expect(container.querySelector('h1').textContent).toBe('CIS IG1');
  const seg=container.querySelector('[data-testid="bcis-seg-addressed"]');
@@ -82,7 +84,7 @@ test('Brawndo summary, bar tooltips, and removed sections; Controls follow the s
  expect(container.querySelector('.bcis-foot').textContent).toBe('All 15 IG1 controls · 56 safeguards. Controls 13, 16 and 18 have no IG1 safeguards.');
 });
 test('Brawndo rows are whole-row links; breadcrumb round-trips control and safeguard',async()=>{
- await brawndo();expect(crumbs()).toEqual(['CIS IG1']);
+ await brawndo();expect(crumbs()).toEqual([]);expect(container.querySelector('[aria-label="Control filters"]')).not.toBeNull();
  const row=container.querySelector('[data-testid="control-row-1"]');expect(row.getAttribute('role')).toBe('link');
  await act(async()=>row.click());expect(crumbs()).toEqual(['CIS IG1','Control 1']);
  expect([...container.querySelectorAll('.bcis-table thead th')].map(t=>t.textContent)).toEqual(['Safeguard','Implementation status','Verification','Owner','Last assessed']);
@@ -93,7 +95,7 @@ test('Brawndo rows are whole-row links; breadcrumb round-trips control and safeg
  expect(crumbs()).toEqual(['CIS IG1','Control 1','Safeguard 1.1']);
  mockLocation.state=null;// in-place close path; with workspace history the real router pops back instead
  await act(async()=>container.querySelector('[data-drawer-crumb]:last-of-type').click());expect(container.querySelector('[data-testid="opened"]')).toBeNull();expect(crumbs()).toEqual(['CIS IG1','Control 1']);
- await act(async()=>buttons('CIS IG1')[0].click());expect(crumbs()).toEqual(['CIS IG1']);
+ await act(async()=>buttons('CIS IG1')[0].click());expect(crumbs()).toEqual([]);expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
  await key(container.querySelector('[data-testid="control-row-2"]'),' ');expect(crumbs()).toEqual(['CIS IG1','Control 2']);
  expect(JSON.parse(sessionStorage.getItem('framework-workspace:u:demo_brawndo:cis-ig1'))['category:all']).toEqual([expect.stringContaining('2')]);
 });
@@ -101,7 +103,12 @@ test('Brawndo filters are separate from navigation and clear back to controls',a
  await brawndo();
  await act(async()=>[...container.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not assessed')).click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);expect(crumbs()[0]).toBe('CIS IG1');expect(crumbs()).toHaveLength(2);
- await act(async()=>buttons('Clear filter')[0].click());expect(buttons('Clear filter')).toHaveLength(0);expect(crumbs()).toEqual(['CIS IG1']);
+ await act(async()=>buttons('Clear filter')[0].click());expect(buttons('Clear filter')).toHaveLength(0);expect(crumbs()).toEqual([]);
+ const controlSearch=container.querySelector('[aria-label="Search controls"]');
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(controlSearch,'no-result');controlSearch.dispatchEvent(new Event('input',{bubbles:true}));});
+ expect(container.textContent).toContain('No controls match this view.');expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(controlSearch,'');controlSearch.dispatchEvent(new Event('input',{bubbles:true}));});
+ await act(async()=>container.querySelector('[data-testid="control-row-1"]').click());
  const search=container.querySelector('[aria-label="Search safeguards"]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'no-result');search.dispatchEvent(new Event('input',{bubbles:true}));});
  expect(container.textContent).toContain('No safeguards match this view.');expect(crumbs()).toEqual(['CIS IG1','Search results']);
@@ -110,7 +117,7 @@ test('Prestige SOC 2 uses scoped progress and category-first hierarchy without p
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
  expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toContain('Client organizational Controls');expect(workspace.textContent).toContain('Include retained out-of-scope criteria');expect(socSettings()).toBeUndefined();
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('Implemented74%28 of 38');expect(summary).toContain('Assessed92%');expect(summary).toContain('3 still to assess');
+ expect(summary).toContain('Implemented28 of 38');expect(summary).toContain('Assessed35 of 38');expect(workspace.querySelector('.bd-donut-value').textContent).toBe('73.7%');expect(summary).toContain('3 still to assess');
  const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Implemented: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Implemented5 of 38 criteria13%');
  expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');
  expect(workspace.querySelector('[aria-label="Trust Services Categories"]').textContent).not.toMatch(/Processing Integrity|Privacy/);
@@ -142,7 +149,7 @@ test('every client gets the reference workspace: categories start compact; open,
 });
 test('a mismatched client response cannot populate the workspace or resume selection',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="b"/>));
- expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);expect(container.querySelector('.assessment-metrics').textContent).toContain('0 of 0');
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);expect(container.querySelector('.bwp-program-counts').textContent).toContain('0 of 0');
  expect([...container.querySelectorAll('button')].some(b=>b.textContent.startsWith('Continue with'))).toBe(false);
 });
 
@@ -180,7 +187,7 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
  expect(container.textContent).not.toContain('Connected program records');
  await act(async()=>buttons('ISMS Requirements')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('30 of 30');
- expect(container.querySelector('.assessment-metrics').textContent).toContain('30 of 30');
+ expect(container.querySelector('.bwp-program-counts').textContent).toContain('30 of 30');
  expect(container.querySelector('.bcis-explain')).toBeNull();
  const panel=container.querySelector('[role="tabpanel"]');
  expect(panel.getAttribute('aria-labelledby')).toBe('iso-tab-isms_clause');
@@ -225,7 +232,10 @@ test.each(['cis-ig1','hipaa'])('%s with all records N/A keeps undefined progress
  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'na'+i,definition_id:d.id,client_id:'a',status:'not_applicable'})),work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="a"/>));
  const figures=[...container.querySelectorAll('.assessment-metric strong')].slice(0,2);
- expect(figures.map(n=>n.textContent)).toEqual(['—','—']);
+ if(frameworkKey==='cis-ig1'){
+   expect(container.querySelector('.bd-donut-value').textContent).toBe('—');
+   expect(container.querySelector('.bwp-program-counts').textContent).toContain('0 of 0');
+ }else expect(figures.map(n=>n.textContent)).toEqual(['—','—']);
  expect(container.textContent).not.toMatch(/How is this calculated|excluded from progress denominators/);
  expect(container.querySelector('.bcis-explain')).toBeNull();
 });

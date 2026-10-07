@@ -66,7 +66,7 @@ test('framework configuration selects distinct workspaces without tenant identit
  expect(frameworkWorkspace('iso-27001')).toBe('iso');
  expect(frameworkWorkspace('unknown')).toBe('generic');
 });
-const criteriaTab=async()=>act(async()=>[...container.querySelectorAll('[role=tab]')].find(t=>t.textContent==='Assessment criteria').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
+const criteriaTab=async()=>act(async()=>{const tab=[...container.querySelectorAll('[role=tab]')].find(t=>t.textContent==='Assessment criteria');if(tab)tab.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));else{const disclosure=container.querySelector('.assessment-inline-criteria');if(!disclosure.open)disclosure.querySelector('summary').click();}});
 const implementationTab=async()=>act(async()=>[...container.querySelectorAll('[role=tab]')].find(t=>t.textContent==='Requirement & implementation').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
 test('Brawndo overview no longer offers program configuration',async()=>{
  await act(async()=>root.render(<BrawndoCisHeader/>));
@@ -75,9 +75,10 @@ test('Brawndo overview no longer offers program configuration',async()=>{
 });
 async function tick(el){await act(async()=>el.click());}
 
-test('approved three-tab layout hides metadata rows and retains saved badges and supporting workflows',async()=>{
+test('Brawndo two-tab layout retains checklist disclosure, saved badges and supporting workflows',async()=>{
  await render();expect(container.querySelector('[data-testid="brawndo-cis-assessment"]')).toBeTruthy();
- expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
+ expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Findings']);
+ expect(container.querySelector('.assessment-inline-criteria')).not.toBeNull();
  expect(container.querySelector('[role=tab][data-state=active]').textContent).toBe('Requirement & implementation');
  expect(container.querySelector('[aria-label="Verification result"]')).toBeNull();expect(container.querySelector('.bcsg-metadata')).toBeNull();
  expect(container.querySelector('[data-testid="cis-supporting-records"]')).toBeNull();expect(container.querySelector('[data-testid="cis-operation"]')).toBeNull();
@@ -176,7 +177,7 @@ test('load failure disables writes and offers retry',async()=>{
 });
 test('other clients retain their assessment content with explicit modal semantics',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Implementation status');expect(container.textContent).toContain('Assessment criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
+ expect(container.textContent).toContain('Implementation status');expect(container.textContent).toContain('CIS assessment criteria');expect(container.querySelector('.assessment-inline-criteria summary')).toBeTruthy();expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
 test('ISO assessments omit supplemental organizational controls without changing stored records',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};

@@ -37,6 +37,7 @@ export async function loadDashboardItem(api,item,clientId,signal) {
   const purpose=finding?.description||record.purpose||record.description||record.governance_context?.purpose||record.objective;
   const sourceHref=source.target?dashboardRecordHref(source.kind,source.target,{occurrence:basis.occurrence_id||record.occurrence_id}):null;
   return {...item,record,purpose,origin:source.target?.title||source.target?.name||record.source||(source.id||basis.source_type==='manual'?source.label:null)||null,
-    sourceHref,sourceKind:source.kind,sourceId:source.id,
+    sourceHref,sourceKind:source.kind,sourceId:source.id,sourceRecord:source.target||null,
+    sourceInitialValues:source.initialValues,
     recordHref:dashboardRecordHref(item.kind,record,{occurrence:item.kind==='reviews'?record.current_occurrence_id:undefined})};
 }

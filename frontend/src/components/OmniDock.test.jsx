@@ -20,3 +20,10 @@ test('keyboard position controls persist and reset cosmetic preferences only',as
   expect(localStorage.getItem('qa:position')).toBe('lower-right');
   expect(Object.keys(localStorage)).toEqual(['qa:position']);
 });
+test('pilot launcher repositions by keyboard without opening the interview or storing answers',async()=>{
+  const launch=jest.fn();await act(async()=>root.render(<OmniDock preferenceKey="pilot" freePosition><button className="omni-launch-button" onClick={launch}>Open</button></OmniDock>));
+  const dock=container.querySelector('.omni-free-dock'),left=parseFloat(dock.style.left);
+  await act(async()=>container.querySelector('.omni-launch-button').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true})));
+  expect(parseFloat(dock.style.left)).toBe(left-10);expect(launch).not.toHaveBeenCalled();expect(Object.keys(localStorage)).toEqual(['pilot:free-position']);
+  expect(container.querySelector('summary').textContent).toBe('•••');
+});

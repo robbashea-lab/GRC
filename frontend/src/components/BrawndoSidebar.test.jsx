@@ -22,6 +22,11 @@ test('grouped navigation, labelled badges and the shared theme preference',async
   expect(container.querySelector('[aria-label="2 overdue action items"]').textContent).toBe('2');
   expect(container.querySelector('[data-testid="nav-vendors"] .bsb-badge')).toBeNull();
   expect(container.querySelector('[data-testid="nav-compliance-cis-ig1"]')).not.toBeNull();
+  // The pilot hides visible labels in its icon rail; accessible names must survive.
+  expect(container.querySelector('[data-testid="nav-dashboard"]').getAttribute('aria-label')).toBe('Dashboard');
+  expect(container.querySelector('[data-testid="nav-reviews"]').getAttribute('aria-label')).toBe('Reviews 1 overdue reviews');
+  expect(container.querySelector('[data-testid="nav-compliance-cis-ig1"]').getAttribute('aria-label')).toBe('CIS IG1');
+  expect(container.querySelector('[data-testid="return-to-portfolio"]').getAttribute('aria-label')).toBe('Return to portfolio');
   // Systems & Scope owns the system records Vendors and Evidence link to, so it stays in navigation.
   expect(container.querySelector('[data-testid="nav-systems"]').getAttribute('href')).toBe('/systems');
   expect(container.querySelector('[data-testid="nav-contacts"]')).not.toBeNull();

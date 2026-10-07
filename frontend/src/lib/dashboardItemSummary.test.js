@@ -15,7 +15,7 @@ test('Finding-backed Action uses actual Finding description and exact assessment
 });
 test('historical Review origin preserves exact stored occurrence rather than current period',async()=>{
   const api=apiFor({'/tasks/t':{client_id:'a',task_id:'t',review_id:'r',occurrence_id:'old'},'/reviews/r':{client_id:'a',review_id:'r',title:'Original review',current_occurrence_id:'now',occurrences:[{occurrence_id:'old',period:'2025',status:'completed'}]}});
-  const summary=await loadDashboardItem(api,item,'a');expect(summary.sourceHref).toBe('/reviews?id=r&client_id=a&occurrence=old');
+  const summary=await loadDashboardItem(api,item,'a');expect(summary.sourceHref).toBe('/reviews?id=r&client_id=a&occurrence=old');expect(summary.sourceInitialValues).toEqual({occurrence:{occurrence_id:'old',period:'2025',status:'completed'}});
 });
 test('missing/denied/foreign source never creates a navigable link or exposes source content',async()=>{
   for(const source of [undefined,{client_id:'b',review_id:'r',title:'Foreign secret'}]){const api=apiFor({'/tasks/t':{client_id:'a',task_id:'t',review_id:'r'},'/reviews/r':source});const summary=await loadDashboardItem(api,item,'a');expect(summary.sourceHref).toBeNull();expect(JSON.stringify(summary)).not.toContain('Foreign secret');}
