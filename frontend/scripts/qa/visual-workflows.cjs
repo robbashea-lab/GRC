@@ -12,7 +12,8 @@ assert.equal(new URL(base).hostname,'127.0.0.1');
   await page.goto(base+'/login');await page.getByTestId('explore-demo').click();await page.waitForURL('**/clients');
   await page.getByRole('textbox',{name:'Search clients',exact:true}).fill('Dunder');await page.waitForFunction(()=>document.querySelectorAll('main tbody tr').length===1);
   await page.getByRole('textbox',{name:'Search clients',exact:true}).fill('');await page.waitForFunction(()=>document.querySelectorAll('main tbody tr').length===4);
-  await page.getByRole('button',{name:'Brawndo: Past Due, 4 items',exact:true}).click();await page.waitForURL('**/dashboard**');
+  await page.getByRole('button',{name:'Brawndo: Past Due, 4 items',exact:true}).click();await page.getByTestId('drill-dialog').waitFor();
+  assert.equal(await page.locator('[data-testid^="drill-row-"]').count(),4);await page.keyboard.press('Escape');await page.getByTestId('drill-dialog').waitFor({state:'hidden'});
   evidence.push({theme,check:'Portfolio search and existing Past Due drill-down',passed:true});
   const clients=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')).clients);
   for(const client of clients){
