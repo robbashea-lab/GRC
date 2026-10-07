@@ -23,6 +23,7 @@
 .guided-greeting button { text-decoration:underline; margin-top:8px; min-height:32px; }
 :root .ui-dialog.guided-panel[data-state] { left:auto; top:50%; right:24px; transform:translateY(-50%); width:min(480px,calc(100vw - 32px)); max-height:calc(100dvh - 140px); display:flex; flex-direction:column; padding:22px; color:var(--color-text-primary); background:var(--color-bg-surface); border-color:var(--color-input-border); animation:none; }
 .guided-panel h2 { padding-right:22px; font-size:17px; line-height:1.45; }
+.guided-panel > button:last-child { width:44px; height:44px; display:grid; place-items:center; top:8px; right:8px; }
 .guided-panel-body { overflow-y:auto; min-height:0; overflow-wrap:anywhere; font-size:13px; line-height:1.65; }
 .guided-panel-body > * + * { margin-top:16px; }
 .guided-panel h3,.guided-panel legend { font-weight:600; }

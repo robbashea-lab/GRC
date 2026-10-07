@@ -116,7 +116,7 @@ Enter Demo and select Brawndo first; client context follows the existing authori
 - 1.1: `/compliance/cis-ig1?assessment=fw_demo_brawndo_assessment_1.1&guided=pilot`
 - 1.2: `/compliance/cis-ig1?assessment=fw_demo_brawndo_assessment_1.2&guided=pilot`
 
-Private publication uses this branch's exact source commit; main and Render are untouched. The PR/release handoff records the final SHA, saved preview version and deployment outcome.
+Private publication uses this branch's exact source commit; the Omni pilot is not merged to main or deployed to Render. The PR/release handoff records the final SHA, saved preview version and deployment outcome.
 
 ## Concurrent dashboard coordination
 
@@ -125,3 +125,9 @@ That agent confirmed PR #51 / `codex/client-dashboard-priority-filters` at `686c
 Its shared client dashboard, framework cards, priority filtering/counts/search/retry work does not edit Omni's FrameworkWorkspace or CIS assessment surfaces.
 Integration retains the dashboard commit without overwriting its files. This pilot is not merged to main or deployed to Render.
 The Dashboard agent has the shared Sites publication slot until its separately authorized main release is delivered; Omni publication must wait for explicit handoff and include the delivered dashboard source.
+
+Dashboard PR #51 subsequently merged as main `7b9455bd64b6f6494786396e0d1c9de67504882b`; this main revision was brought into the pilot without changing its product tree.
+Combined frontend verification: **23 suites / 436 tests / one snapshot passed**, including the Dashboard agent's priority filters, native framework cards and shared dashboard regressions.
+Both combined normal and Demo builds passed. Browser verification of the combined client dashboard confirmed native framework cards above Priority overview, the new filters/search, and unchanged workspace links; the CIS IG1 destination still exposes Omni.
+The combined classified offline backend run passed **647 tests and 698 subtests**. It used `python backend/tests/run_isolated.py` from the repository root.
+The pilot has draft PR #52 and remains unmerged. Any main/Render delivery described by the Dashboard agent is that separately authorized dashboard release, not deployment of Omni.
