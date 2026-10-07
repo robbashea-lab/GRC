@@ -42,7 +42,8 @@ class SecurityCampaign(unittest.IsolatedAsyncioTestCase):
     async def test_account_edit_rechecks_revoked_actor_scope(self):
         from fastapi import HTTPException
         for actor_fields, revoked_fields in [({'client_ids': ['a']}, {'client_ids': []}),
-                ({'client_ids': [], 'all_clients': True}, {'all_clients': False})]:
+                ({'client_ids': [], 'all_clients': True}, {'all_clients': False}),
+                ({'client_ids': ['a'], 'password_change_required': False}, {'password_change_required': True})]:
             await harness.server.db.users.update_one({'user_id': 'grace'}, {'$set': actor_fields})
             actor = await harness.server.db.users.find_one({'user_id': 'grace'})
             await harness.server.db.users.update_one({'user_id': 'grace'}, {'$set': revoked_fields})

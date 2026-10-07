@@ -1301,7 +1301,7 @@ def administrator_mutation(fn):
             values = inspect.signature(fn).bind(*args, **kwargs)
             user = values.arguments['user']
             actor = await db.users.find_one({'user_id': user['user_id'], 'status': 'active'}, {'_id': 0, 'password_hash': 0})
-            if not actor or actor.get('role') != user.get('role'):
+            if not actor or actor.get('role') != user.get('role') or actor.get('password_change_required'):
                 raise HTTPException(403, 'Administrative access changed; sign in again')
             values.arguments['user'] = actor
             return await asyncio.wait_for(fn(*values.args, **values.kwargs), timeout=45)
