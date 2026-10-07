@@ -144,7 +144,7 @@ export default function VendorRegister() {
       if (!s) return true;
       return (v.name || "").toLowerCase().includes(s) || (v.service || v.services || "").toLowerCase().includes(s) || (v.category || "").toLowerCase().includes(s) || (userMap[v.business_owner_id] || "").toLowerCase().includes(s);
     }).sort((a, b) => (b._attention - a._attention) || ({critical:0,high:1,medium:2,moderate:2,low:3}[a.criticality]??9) - ({critical:0,high:1,medium:2,moderate:2,low:3}[b.criticality]??9) || (a.name || "").localeCompare(b.name || ""));
-  }, [enriched, q, view, userMap,vendorWorkflow]);
+  }, [enriched, q, view, userMap,matches]);
 
   const tableSource = enriched.filter(r => r.client_id === currentClientId);
   const baseColumns = tableColumns('vendor-register', { rows: tableSource, users });
