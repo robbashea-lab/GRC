@@ -254,6 +254,16 @@ class AdministrationHardening(SecurityCampaign):
         response = await self.raw.patch('/api/evidence-library/items/archived-evidence', headers=self.token('grace'), json={'display_name':'blocked','expected_updated_at':None})
         self.assertEqual(response.status_code,403,response.text)
 
+    async def test_archived_related_and_bulk_resources_are_readonly(self):
+        await harness.server.db.clients.update_one({'client_id':'a'}, {'$set':{'status':'archived'}})
+        for kind, key in [('contacts','contact_id'), ('requirements','requirement_id'), ('evidence','evidence_id')]:
+            await harness.server.db[kind].insert_one({key:'archived-related','client_id':'a'})
+            for path, body in [('/api/comments', {'entity_type':kind,'entity_id':'archived-related','body':'blocked'}),
+                    ('/api/bulk', {'kind':kind,'action':'delete','ids':['archived-related'],'expected_versions':{'archived-related':None}})]:
+                with self.subTest(kind=kind,path=path):
+                    response = await self.raw.post(path, headers=self.token('grace'), json=body)
+                    self.assertEqual(response.status_code,403,response.text)
+
     async def test_client_hard_delete_is_unavailable(self):
         await harness.server.db.clients.insert_one({'client_id':'empty-client','name':'Disposable empty client','status':'onboarding'})
         for cid in ['empty-client', 'a']:

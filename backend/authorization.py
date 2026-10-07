@@ -53,6 +53,7 @@ OWNERS = {
     'vendors': ('business_owner_id',), 'assets': ('owner_id',),
     'framework_assessments': ('owner_id',), 'ai_systems': ('owner_id','technical_owner_id'),
 }
+TENANT_RESOURCES = {*OWNERS, 'evidence', 'exceptions', 'contacts', 'requirements'}
 
 
 def require_assigned(user, kind, record):
@@ -136,7 +137,7 @@ async def authorize_request(request, user, db):
             'policy_id': 'policies', 'contact_id': 'contacts', 'ev_id': 'evidence', 'eid': 'evidence', 'exception_id': 'exceptions'}.items():
         if params.get(parameter):
             kind, identity = collection, params[parameter]
-    if identity and kind in {*OWNERS, 'evidence', 'exceptions', 'contacts', 'requirements'}:
+    if identity and kind in TENANT_RESOURCES:
         key = {'framework_assessments':'framework_assessment_id', 'ai_systems':'ai_system_id', 'tasks':'task_id', 'policies':'policy_id'}.get(kind, kind[:-1]+'_id')
         if kind == 'evidence': key = 'evidence_id'
         row = await db[kind].find_one({key: identity})
@@ -147,14 +148,16 @@ async def authorize_request(request, user, db):
             client_id = body.get('client_id')
         if path == '/api/comments':
             collection = body.get('entity_type', '')
-            collection = collection if collection in OWNERS else collection + 's'
-            if collection in OWNERS:
+            collection = collection if collection in TENANT_RESOURCES else collection + 's'
+            if collection in TENANT_RESOURCES:
                 key = {'framework_assessments':'framework_assessment_id', 'ai_systems':'ai_system_id', 'policies':'policy_id'}.get(collection, collection[:-1] + '_id')
+                if collection == 'evidence': key = 'evidence_id'
                 parent = await db[collection].find_one({key: body.get('entity_id')})
                 client_id = (parent or {}).get('client_id')
-        if path == '/api/bulk' and body.get('kind') in OWNERS:
+        if path == '/api/bulk' and body.get('kind') in TENANT_RESOURCES:
             collection = body['kind']
             key = {'framework_assessments':'framework_assessment_id', 'ai_systems':'ai_system_id', 'policies':'policy_id'}.get(collection, collection[:-1] + '_id')
+            if collection == 'evidence': key = 'evidence_id'
             tenants = await db[collection].distinct('client_id', {key: {'$in': body.get('ids', [])}})
             if await db.clients.find_one({'client_id': {'$in': tenants}, 'status': 'archived'}):
                 raise HTTPException(403, 'Archived clients are read-only; ask a Super Admin to restore the client')
