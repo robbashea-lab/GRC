@@ -22,3 +22,10 @@ Audit API is paged, supports existing filters/export and limits providers to ass
 Existing offline suites cover identity lifecycle, client management, authentication boundaries, security campaign and record integrity. Browser/real-backend coverage and full requested identity matrix are not yet verified. Existing test harness behavior must be inspected before counting API checks.
 
 Shared Render staging, production, main, established demo clients and Omni private Site are outside deployment/mutation scope. Admin preview must use a new private Site. Static preview proves synthetic UI only.
+
+
+## Shared changes
+- `backend/authorization.py`: `global_scope`, `can_access`, `scope` recognize only the owner or an explicit boolean provider entitlement. `authorize_request` resolves trusted parent tenants and refuses ordinary archived program writes. Guided operation allowlist and assessment logic remain intact.
+- `frontend/src/preview/authorization.js`: `authorizeDemo` mirrors archived write denial without changing guided allowance/history logic.
+- `frontend/src/preview/frameworks.js`: `frameworkScope` delegates to existing `clientAccess`; removes the empty-provider-list global fallback. Required for the admin assignment contract, no catalog/provisioning/assessment mutation changes.
+All based on a fresh fetch/rebase of PR52 `5fd3fd3`. Tests must cover guided assessment, CIS, SOC and ISO after these changes.
