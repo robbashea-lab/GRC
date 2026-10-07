@@ -5,7 +5,6 @@ import {displayDay} from '@/lib/managementDates';
 import {dashboardStatus as statusLabel} from '@/lib/dashboardItemSummary';
 import FrameworkProgramCard,{shortName} from './FrameworkProgramCard';
 import {ViewTabs} from './Register';
-import {StatusPill,toneFor} from './StatusBadge';
 import {formatError} from '@/lib/api';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import './BrawndoDashboard.css';
@@ -14,6 +13,7 @@ import './BrawndoDashboard.css';
 // green = good (implemented), amber = attention (partial, due soon), red = critical
 // (not implemented, overdue, high severity), grey = not assessed. Text always carries it too.
 const FILTERS=[['all','All'],['pastDue','Overdue'],['due30','Due in 30 days'],['unassigned','Unassigned']];
+const STATUS_TONE={overdue:'critical',in_progress:'info',remediated:'attention',pending_validation:'attention',upcoming:'neutral',open:'neutral'};
 
 function WorkTable({items,onOpen,asOf}) {
   return <div className="bd-table-scroll" role="region" aria-label="Work queue" tabIndex={0}>
@@ -23,8 +23,8 @@ function WorkTable({items,onOpen,asOf}) {
         return <tr key={item.key} onClick={event=>onOpen(item,event.currentTarget.querySelector('button'))}>
           <td><time className="bd-date" dateTime={item.due_date||undefined}>{displayDay(item.due_date)||'Not scheduled'}</time></td>
           <td><button type="button" className="bd-item" onClick={e=>{e.stopPropagation();onOpen(item,e.currentTarget);}}>{item.title}</button></td>
-          <td className={item.unassigned?'bd-muted':''}>{item.unassigned?'Unassigned':item.owner}</td>
-          <td><StatusPill className={`bd-status pill-${toneFor(item.status)}`}>{statusLabel(item.status)}</StatusPill></td>
+          <td className={item.unassigned?'is-attention bd-strong':''}>{item.unassigned?'Unassigned':item.owner}</td>
+          <td><span className={`bd-status is-${STATUS_TONE[item.status]||'neutral'}`}>{statusLabel(item.status)}</span></td>
         </tr>;
       })}</tbody>
     </table>
