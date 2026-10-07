@@ -1,10 +1,10 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Link} from 'react-router-dom';
-import {Moon,Sun,ArrowRight,Building2,ClockAlert,CalendarDays,Layers,UserRound} from 'lucide-react';
-import {WORK_FILTERS} from '@/lib/dashboardWorkQueue';
+import {Moon,Sun,ArrowRight,Building2} from 'lucide-react';
 import {displayDay} from '@/lib/managementDates';
 import {dashboardStatus as statusLabel} from '@/lib/dashboardItemSummary';
 import FrameworkProgramCard,{shortName} from './FrameworkProgramCard';
+import {ViewTabs} from './Register';
 import {formatError} from '@/lib/api';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import './BrawndoDashboard.css';
@@ -12,9 +12,8 @@ import './BrawndoDashboard.css';
 // Brawndo reference dashboard. Color carries one meaning throughout, in both themes:
 // green = good (implemented), amber = attention (partial, due soon), red = critical
 // (not implemented, overdue, high severity), grey = not assessed. Text always carries it too.
-const TILE={pastDue:'critical',due30:'attention',all:'info',unassigned:'neutral'};
+const FILTERS=[['all','All'],['pastDue','Overdue'],['due30','Due in 30 days'],['unassigned','Unassigned']];
 const STATUS_TONE={overdue:'critical',in_progress:'info',remediated:'attention',pending_validation:'attention',upcoming:'neutral',open:'neutral'};
-const ICONS={pastDue:ClockAlert,due30:CalendarDays,all:Layers,unassigned:UserRound};
 
 function WorkTable({items,onOpen,asOf}) {
   return <div className="bd-table-scroll" role="region" aria-label="Work queue" tabIndex={0}>
@@ -35,22 +34,33 @@ function WorkTable({items,onOpen,asOf}) {
 export default function ClientWorkDashboard({queue,programs,programRows,cisRows,clientName='Client',filter,onFilter,onOpen,loadDetail}) {
   const rowsFor=programRows||(cisRows?{'cis-ig1':cisRows}:{});
   const [expanded,setExpanded]=useState(false),[page,setPage]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState('');
+  const [framework,setFramework]=useState(''),[search,setSearch]=useState('');
+  const selectionKey=JSON.stringify([filter,framework,search]);
   const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
-  const request=useRef(null),mounted=useRef(true),load=useRef(loadDetail);
+  const request=useRef(null),retry=useRef(null),mounted=useRef(true),load=useRef(loadDetail);
   load.current=loadDetail;
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;request.current?.abort();};},[]);
-  const group=queue.groups[filter],spec=WORK_FILTERS.find(f=>f.key===filter);
-  const items=expanded&&page?.key===filter?page.items:group.items;
+  const group=queue.groups[filter],current=page?.key===selectionKey?page:null;
+  const items=current?current.items:framework||search?[]:group.items;
+  const total=current?.total??(framework||search?0:group.total);
+  const counts=current?.counts||(framework||search?{}:Object.fromEntries(Object.entries(queue.groups).map(([key,g])=>[key,g.total])));
   const carded=programs.filter(p=>rowsFor[p.key]),primary=carded.length===1?carded[0]:null;
-  const fetchPage=useCallback(async(offset,key=filter)=>{
+  const fetchPage=useCallback(async(offset,key=filter,full=false)=>{
     request.current?.abort();const controller=new AbortController();request.current=controller;
+    retry.current={offset,key,full};
     setLoading(true);setError('');
-    try {const result=await load.current(key,offset,controller.signal);if(!controller.signal.aborted&&mounted.current){setPage({...result,key});setExpanded(true);}}
+    try {const result=await load.current(key,offset,controller.signal,{framework:framework||undefined,search,limit:full?25:9});if(!controller.signal.aborted&&mounted.current){setPage({...result,key:JSON.stringify([key,framework,search])});setExpanded(full);}}
     catch(e){if(!controller.signal.aborted&&mounted.current)setError(formatError(e));}
     finally{if(!controller.signal.aborted&&mounted.current)setLoading(false);}
-  },[filter]);
-  const previousFilter=useRef(filter);
-  useEffect(()=>{if(previousFilter.current!==filter){previousFilter.current=filter;setPage(null);setExpanded(false);fetchPage(0);}},[filter,fetchPage]);
+  },[filter,framework,search]);
+  const previousFilter=useRef(selectionKey);
+  useEffect(()=>{
+    if(previousFilter.current===selectionKey){setLoading(false);return;}
+    request.current?.abort();setPage(null);setExpanded(false);setLoading(true);
+    const run=()=>{previousFilter.current=selectionKey;fetchPage(0);};
+    if(!search){run();return;}
+    const timer=setTimeout(run,250);return()=>clearTimeout(timer);
+  },[selectionKey,fetchPage,search]);
   function select(key){onFilter(key);if(key===filter)fetchPage(0,key);}
   const toggleTheme=()=>setTheme(theme==='dark'?'light':'dark');
   return <div className="bdash" data-theme={theme}>
@@ -59,10 +69,6 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
       <div className="bd-header-side">{queue.as_of&&<span className="bd-muted bd-small">As of {displayDay(queue.as_of)}</span>}
         <button type="button" className="bd-theme" onClick={toggleTheme} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button></div>
     </header>
-    <div className="bd-tiles" role="group" aria-label="Filter current work">{WORK_FILTERS.map(({key,label})=>{const g=queue.groups[key],Icon=ICONS[key];
-      return <button type="button" key={key} className={`bd-tile is-${g.total?TILE[key]:'clear'}`} aria-pressed={filter===key} aria-controls="client-priority-queue" onClick={()=>select(key)}>
-        <span className="bd-tile-head"><span className="bd-tile-label">{label}</span><span className="bd-tile-icon"><Icon size={16} aria-hidden="true"/></span></span><span className="bd-tile-value">{g.total}</span>
-      </button>;})}</div>
     <div className="bd-grid">
       <aside className="bd-aside" aria-label="Program condition">
         {carded.map(p=><FrameworkProgramCard key={p.key} program={p} rows={rowsFor[p.key]}/>)}
@@ -71,12 +77,17 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
       </aside>
       <section className="bd-card bd-queue" aria-labelledby="client-priority-heading" id="client-priority-queue">
         <div className="bd-card-head"><div><h2 id="client-priority-heading">Priority overview</h2></div>
-          {group.total>9&&!expanded&&<button type="button" className="bd-button" disabled={loading} onClick={()=>fetchPage(0)}>View all {group.total} items <ArrowRight size={14} aria-hidden="true"/></button>}
-          {expanded&&<button type="button" className="bd-button" onClick={()=>{request.current?.abort();setLoading(false);setExpanded(false);setPage(null);setError('');}}>Show top 9</button>}</div>
-        <div className="bd-results sr-only" role="status" aria-live="polite">{spec.label} · {loading?'Loading…':group.total?`Showing ${expanded&&page?page.offset+1:1}–${(expanded&&page?page.offset:0)+items.length} of ${group.total} items`:'0 items'}</div>
-        {error&&<div className="bd-error" role="alert">{error} <button type="button" className="bd-link" onClick={()=>fetchPage(page?.offset||0)}>Retry</button></div>}
-        {items.length?<WorkTable items={items} onOpen={onOpen} asOf={queue.as_of}/>:<p className="bd-empty">{spec.empty}</p>}
-        {expanded&&page&&<nav className="bd-pagination" aria-label="Work queue pages"><button type="button" className="bd-button" disabled={loading||page.offset===0} onClick={()=>fetchPage(Math.max(0,page.offset-page.limit))}>Previous page</button><span>Page {Math.floor(page.offset/page.limit)+1} of {Math.max(1,Math.ceil(page.total/page.limit))}</span><button type="button" className="bd-button" disabled={loading||!page.has_more} onClick={()=>fetchPage(page.offset+page.limit)}>Next page</button></nav>}
+          {total>9&&!expanded&&<button type="button" className="bd-button" disabled={loading} onClick={()=>fetchPage(0,filter,true)}>View all {total} items <ArrowRight size={14} aria-hidden="true"/></button>}
+          {expanded&&<button type="button" className="bd-button" onClick={()=>fetchPage(0)}>Show top 9</button>}</div>
+        <div className="bd-filter-bar"><ViewTabs views={FILTERS.map(([id,label])=>({id,label}))} active={filter} onPick={select} counts={counts} label="Priority overview filters" testid="priority-filters"/>
+          <label className="bd-framework-filter">Framework <select aria-label="Framework" value={framework} onChange={e=>setFramework(e.target.value)}><option value="">All frameworks</option>{programs.map(p=><option key={p.key} value={p.key}>{shortName(p)}</option>)}</select></label>
+          <label className="sr-only" htmlFor="priority-search">Search priority work</label><input id="priority-search" className="bd-search" type="search" placeholder="Search priority work…" maxLength={200} value={search} onChange={e=>setSearch(e.target.value)}/>
+          {(filter!=='all'||framework||search)&&<button type="button" className="bd-button" onClick={()=>{setFramework('');setSearch('');onFilter('all');}}>Reset filters</button>}
+        </div>
+        <div className="bd-results sr-only" role="status" aria-live="polite">{loading?'Loading…':`${total} matching items`}</div>
+        {error&&<div className="bd-error" role="alert">{error} <button type="button" className="bd-link" onClick={()=>fetchPage(retry.current.offset,retry.current.key,retry.current.full)}>Retry</button></div>}
+        {items.length?<WorkTable items={items} onOpen={onOpen} asOf={queue.as_of}/>:<p className="bd-empty">{loading?'Loading priority work…':error?'Priority work could not be loaded.':'No items match these filters.'}</p>}
+        {expanded&&current&&<nav className="bd-pagination" aria-label="Work queue pages"><button type="button" className="bd-button" disabled={loading||current.offset===0} onClick={()=>fetchPage(Math.max(0,current.offset-current.limit),filter,true)}>Previous page</button><span>Page {Math.floor(current.offset/current.limit)+1} of {Math.max(1,Math.ceil(current.total/current.limit))}</span><button type="button" className="bd-button" disabled={loading||!current.has_more} onClick={()=>fetchPage(current.offset+current.limit,filter,true)}>Next page</button></nav>}
       </section>
 
     </div>

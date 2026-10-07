@@ -6,6 +6,7 @@ only when opened; detail pages use the same contributing populations as counts.
 from datetime import date
 from grc_rules import assessed_risk, represented_finding
 from management_obligations import KINDS, calendar_day
+from framework_catalog import FRAMEWORKS
 import vendor_governance
 
 PREVIEW_LIMIT = 25
@@ -24,6 +25,68 @@ PROJECTION.update({key: 1 for key in ('finding_id', 'review_id', 'risk_id', 'ven
                                      'framework_key', 'framework_drivers', 'source_type', 'source_id', 'source',
                                      'title_generated', 'governance_context')})
 PROJECTION['_id'] = 0
+PROJECTION.update(framework_assessment_id=1, related_links=1)
+FRAMEWORK_KEYS = {framework['key'] for framework in FRAMEWORKS}
+
+
+def framework_membership(records, assessments, controls):
+    """Explicit mappings and source ancestry within one authorized client.
+
+    Sources inform dependent work, not sibling tasks. Titles never imply membership.
+    """
+    nodes = {(kind, r[KINDS[kind]]): r for kind, rows in records.items()
+             if kind in KINDS for r in rows}
+    membership = {key: set(filter(None, [r.get('framework_key'), *[
+        v if isinstance(v, str) else v.get('framework_key') for v in r.get('framework_drivers') or []]]))
+        for key, r in nodes.items()}
+    by_assessment = {r['framework_assessment_id']: r.get('framework_key') for r in assessments}
+    for key, record in nodes.items():
+        if key[0] == 'requirements' and record.get('baseline_key') in FRAMEWORK_KEYS:
+            membership[key].add(record['baseline_key'])
+        for link in record.get('related_links') or []:
+            if link.get('kind') == 'framework_assessments' and by_assessment.get(link.get('id')):
+                membership[key].add(by_assessment[link['id']])
+    for assessment in assessments:
+        for link in assessment.get('related_links') or []:
+            key = (link.get('kind'), link.get('id'))
+            if key in membership and assessment.get('framework_key'):
+                membership[key].add(assessment['framework_key'])
+    for control in controls:
+        frameworks = {by_assessment[aid] for aid in control.get('assessment_ids') or []
+                      if by_assessment.get(aid)}
+        for link in control.get('related_links') or []:
+            key = (link.get('kind'), link.get('id'))
+            if key in membership:
+                membership[key].update(frameworks)
+    parents = {}
+    for key, record in nodes.items():
+        aid = record.get('framework_assessment_id')
+        if by_assessment.get(aid):
+            membership[key].add(by_assessment[aid])
+        links = [(kind, record.get(field)) for kind, field in KINDS.items()
+                 if kind != key[0] and record.get(field)]
+        source_kind = {'review':'reviews', 'finding':'findings', 'risk':'risks',
+                       'policy':'policies', 'vendor':'vendors'}.get(record.get('source_type'))
+        if source_kind and record.get('source_id'):
+            links.append((source_kind, record['source_id']))
+        parents[key] = [parent for parent in links if parent in membership]
+    changed = True
+    while changed:
+        changed = False
+        for key, links in parents.items():
+            before = len(membership[key])
+            for parent in links:
+                membership[key].update(membership[parent])
+            changed |= len(membership[key]) != before
+    return membership
+
+
+def filter_queue(groups, membership, framework=None, search=''):
+    query = (search or '').strip().lower()
+    def matches(row):
+        return (not framework or framework in membership.get((row['kind'], row['id']), set())) and (
+            not query or query in ' '.join(str(row.get(k) or '') for k in ('title', 'owner', 'type')).lower())
+    return {key: [row for row in rows if matches(row)] for key, rows in groups.items()}
 
 
 def work_queue(model, members):
