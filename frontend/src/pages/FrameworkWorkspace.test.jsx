@@ -67,7 +67,9 @@ test.each(['demo_prestige','new-soc-client'])('SOC workspace has no configuratio
 test('Brawndo summary, bar tooltips, and removed sections; Controls follow the summary',async()=>{
  await brawndo();
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('Implemented98%55 of 56');expect(summary).toContain('Assessed98%');expect(summary).not.toContain('still to assess');expect(summary).not.toContain('Continue with safeguard');
+ expect(container.querySelector('.bd-donut-value').textContent).toBe('98.2%');
+ expect(summary).toContain('Implemented55 of 56');expect(summary).toContain('Assessed55 of 56');expect(summary).not.toContain('still to assess');expect(summary).not.toContain('Continue with safeguard');
+ expect(container.querySelector('.bd-seg-addressed').getAttribute('aria-label')).toBe('Implemented · 98.2% · 55 of 56 safeguards');
  expect(summary).toContain('not a compliance percentage, certification or audit opinion');
  expect(container.querySelector('h1').textContent).toBe('CIS IG1');
  const seg=container.querySelector('[data-testid="bcis-seg-addressed"]');
@@ -82,7 +84,7 @@ test('Brawndo summary, bar tooltips, and removed sections; Controls follow the s
  expect(container.querySelector('.bcis-foot').textContent).toBe('All 15 IG1 controls · 56 safeguards. Controls 13, 16 and 18 have no IG1 safeguards.');
 });
 test('Brawndo rows are whole-row links; breadcrumb round-trips control and safeguard',async()=>{
- await brawndo();expect(crumbs()).toEqual(['CIS IG1']);
+ await brawndo();expect(crumbs()).toEqual([]);expect(container.querySelector('[aria-label="Control filters"]')).not.toBeNull();
  const row=container.querySelector('[data-testid="control-row-1"]');expect(row.getAttribute('role')).toBe('link');
  await act(async()=>row.click());expect(crumbs()).toEqual(['CIS IG1','Control 1']);
  expect([...container.querySelectorAll('.bcis-table thead th')].map(t=>t.textContent)).toEqual(['Safeguard','Implementation status','Verification','Owner','Last assessed']);
@@ -93,7 +95,7 @@ test('Brawndo rows are whole-row links; breadcrumb round-trips control and safeg
  expect(crumbs()).toEqual(['CIS IG1','Control 1','Safeguard 1.1']);
  mockLocation.state=null;// in-place close path; with workspace history the real router pops back instead
  await act(async()=>container.querySelector('[data-drawer-crumb]:last-of-type').click());expect(container.querySelector('[data-testid="opened"]')).toBeNull();expect(crumbs()).toEqual(['CIS IG1','Control 1']);
- await act(async()=>buttons('CIS IG1')[0].click());expect(crumbs()).toEqual(['CIS IG1']);
+ await act(async()=>buttons('CIS IG1')[0].click());expect(crumbs()).toEqual([]);expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
  await key(container.querySelector('[data-testid="control-row-2"]'),' ');expect(crumbs()).toEqual(['CIS IG1','Control 2']);
  expect(JSON.parse(sessionStorage.getItem('framework-workspace:u:demo_brawndo:cis-ig1'))['category:all']).toEqual([expect.stringContaining('2')]);
 });
@@ -101,7 +103,12 @@ test('Brawndo filters are separate from navigation and clear back to controls',a
  await brawndo();
  await act(async()=>[...container.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not assessed')).click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);expect(crumbs()[0]).toBe('CIS IG1');expect(crumbs()).toHaveLength(2);
- await act(async()=>buttons('Clear filter')[0].click());expect(buttons('Clear filter')).toHaveLength(0);expect(crumbs()).toEqual(['CIS IG1']);
+ await act(async()=>buttons('Clear filter')[0].click());expect(buttons('Clear filter')).toHaveLength(0);expect(crumbs()).toEqual([]);
+ const controlSearch=container.querySelector('[aria-label="Search controls"]');
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(controlSearch,'no-result');controlSearch.dispatchEvent(new Event('input',{bubbles:true}));});
+ expect(container.textContent).toContain('No controls match this view.');expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(controlSearch,'');controlSearch.dispatchEvent(new Event('input',{bubbles:true}));});
+ await act(async()=>container.querySelector('[data-testid="control-row-1"]').click());
  const search=container.querySelector('[aria-label="Search safeguards"]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'no-result');search.dispatchEvent(new Event('input',{bubbles:true}));});
  expect(container.textContent).toContain('No safeguards match this view.');expect(crumbs()).toEqual(['CIS IG1','Search results']);
