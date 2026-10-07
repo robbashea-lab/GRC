@@ -1,4 +1,5 @@
 import {Link} from 'react-router-dom';
+import {useId,useState} from 'react';
 import AssessmentMetrics from './AssessmentMetrics';
 import {cisSummary} from '@/lib/cisVerification';
 import {operatorStatuses,operatorVocabulary} from '@/lib/frameworkOperator';
@@ -20,14 +21,15 @@ const keyNoun=name=>name.startsWith('CIS')?'safeguards':name==='SOC 2'?'criteria
 const firstWord=s=>s.split(/[\s(]/)[0];
 
 function Donut({counts,summary,name,labels}) {
+  const [active,setActive]=useState(null),tipId=useId();
   const segments=CIS_ORDER.filter(s=>s!=='not_applicable');
   const total=summary.applicable||1;
   let offset=25;
-  return <svg className="bd-donut" viewBox="0 0 42 42" role="img" aria-label={`${name}: ${segments.map(s=>`${counts[s]} ${labels[s]} (${(counts[s]/total*100).toFixed(1)}%, ${counts[s]} of ${summary.applicable})`).join(', ')}`}>
+  return <span className="bd-donut-wrap" onMouseLeave={()=>setActive(null)}><svg className="bd-donut" viewBox="0 0 42 42" role="group" aria-label={`${name}: ${segments.map(s=>`${counts[s]} ${labels[s]} (${(counts[s]/total*100).toFixed(1)}%, ${counts[s]} of ${summary.applicable})`).join(', ')}`}>
     <circle cx="21" cy="21" r="15.9" className="bd-donut-track"/>
-    {segments.map(s=>{const len=counts[s]/total*100,el=len?<circle key={s} cx="21" cy="21" r="15.9" className={`bd-seg-${s}`} strokeDasharray={`${len} ${100-len}`} strokeDashoffset={offset}><title>{`${labels[s]} · ${len.toFixed(1)}% · ${counts[s]} of ${summary.applicable} ${keyNoun(name)}`}</title></circle>:null;offset-=len;return el;})}
+    {segments.map(s=>{const len=counts[s]/total*100,description=`${labels[s]} · ${len.toFixed(1)}% · ${counts[s]} of ${summary.applicable} ${keyNoun(name)}`,el=len?<circle key={s} cx="21" cy="21" r="15.9" tabIndex={0} role="img" aria-label={description} aria-describedby={active===s?tipId:undefined} onMouseEnter={()=>setActive(s)} onFocus={()=>setActive(s)} onBlur={()=>setActive(null)} onKeyDown={e=>{if(e.key==='Escape')setActive(null);}} className={`bd-seg-${s}`} strokeDasharray={`${len} ${100-len}`} strokeDashoffset={offset}/>:null;offset-=len;return el;})}
     <text x="21" y="23.7" className="bd-donut-value">{summary.applicable?`${summary.implemented}%`:'—'}</text>
-  </svg>;
+  </svg>{active&&<span id={tipId} role="tooltip" className="bd-donut-tooltip"><strong>{labels[active]}</strong><span>{(counts[active]/total*100).toFixed(1)}% · {counts[active]} of {summary.applicable} {keyNoun(name)}</span></span>}</span>;
 }
 
 export default function FrameworkProgramCard({rows,program}) {

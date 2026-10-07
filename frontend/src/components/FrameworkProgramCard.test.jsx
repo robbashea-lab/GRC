@@ -23,6 +23,16 @@ test('CIS IG1 programme card uses compact shared metrics',async()=>{
   expect(aside()).toMatchSnapshot();
 });
 const render=async programs=>act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={programs} programRows={Object.fromEntries(programs.map(p=>[p.key,cisRows]))} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));
+test('donut segments expose calculated tooltips on focus without putting them on navigation labels',async()=>{
+  await render([{key:'cis-ig1',label:'CIS Controls v8.1 IG1'}]);
+  const segment=container.querySelector('circle.bd-seg-addressed');
+  expect(segment.getAttribute('tabindex')).toBe('0');
+  await act(async()=>segment.dispatchEvent(new FocusEvent('focusin',{bubbles:true})));
+  expect(container.querySelector('[role=tooltip]').textContent).toBe('Implemented33.3% · 2 of 6 safeguards');
+  expect(container.querySelector('.bd-legend a').hasAttribute('title')).toBe(false);
+  await act(async()=>segment.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  expect(container.querySelector('[role=tooltip]')).toBeNull();
+});
 test('SOC 2 uses the same card shell with SOC 2 vocabulary and workspace links',async()=>{
   await render([{key:'soc-2',label:'SOC 2',to:'/compliance/soc-2'}]);
   const card=container.querySelector('.bd-aside .bd-card');

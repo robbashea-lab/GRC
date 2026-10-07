@@ -2143,6 +2143,8 @@ async def dashboard(
     scope: Optional[str] = Query("org"),  # org | mine | user | unassigned
     user_id: Optional[str] = Query(None),
     work_queue: bool = Query(False),
+    framework: Optional[str] = Query(None, max_length=80),
+    search: str = Query('', max_length=200),
     detail: Optional[str] = Query(None, max_length=40),
     offset: int = Query(0, ge=0),
     limit: int = Query(25, ge=1, le=100),
@@ -2196,12 +2198,20 @@ async def dashboard(
         members = await db.users.find({'$or': [{'role': 'super_admin'}, {'client_ids': client_id}]},
                                       {'_id': 0, 'user_id': 1, 'name': 1, 'email': 1, 'status': 1}).to_list(None)
         queue_groups = dashboard_contract.work_queue(management, [m for m in members if m.get('status') == 'active'])
+        if framework or search:
+            assessments = await db.framework_assessments.find({'client_id': client_id},
+                {'_id':0, 'framework_assessment_id':1, 'framework_key':1, 'related_links':1}).to_list(None)
+            controls = await db.organizational_controls.find({'client_id': client_id},
+                {'_id':0, 'assessment_ids':1, 'related_links':1}).to_list(None)
+            membership = dashboard_contract.framework_membership(records, assessments, controls)
+            queue_groups = dashboard_contract.filter_queue(queue_groups, membership, framework, search)
         if detail:
             if detail not in queue_groups:
                 raise HTTPException(422, 'Unknown dashboard detail')
             rows = queue_groups[detail]
             return {'client_id': client_id, 'as_of': management['as_of'],
                     'items': [dashboard_contract.brief(r) for r in rows[offset:offset+limit]],
+                    'counts': {key: len(values) for key, values in queue_groups.items()},
                     'total': len(rows), 'offset': offset, 'limit': limit, 'has_more': offset+limit < len(rows)}
         return {'client_id': client_id, 'as_of': management['as_of'], 'groups': {
             key: {'total': len(rows), 'items': [dashboard_contract.brief(r) for r in rows[:9]]}

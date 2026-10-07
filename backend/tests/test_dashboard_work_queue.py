@@ -80,3 +80,29 @@ class DashboardWorkQueueTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await self.get_queue(**params)).status_code, 422)
         await server.db.users.update_one({'user_id': 'member'}, {'$set': {'role': 'client_readonly'}})
         self.assertEqual((await self.get_queue(detail='all')).status_code, 200)
+
+    async def test_framework_control_source_filters_before_limit_with_independent_counts(self):
+        self.sign_in('admin')
+        await server.db.reviews.insert_one({'client_id':'a','review_id':'r','title':'Mapped Review','status':'open'})
+        await server.db.framework_assessments.insert_many([
+            {'client_id':'a','framework_assessment_id':'cis','framework_key':'cis-ig1'},
+            {'client_id':'a','framework_assessment_id':'soc','framework_key':'soc-2'},
+            {'client_id':'b','framework_assessment_id':'foreign','framework_key':'iso-27001','related_links':[{'kind':'tasks','id':'t00'}]}])
+        await server.db.organizational_controls.insert_one({'client_id':'a','control_id':'c',
+            'assessment_ids':['cis','soc'], 'related_links':[{'kind':'reviews','id':'r'}]})
+        await server.db.tasks.insert_many([{'client_id':'a','task_id':f't{i:02}','title':f'Mapped task {i}',
+            'review_id':'r','status':'open','due_date':'2026-10-04' if i<12 else None} for i in range(14)])
+        await server.db.tasks.insert_many([
+            {'client_id':'a','task_id':'general','title':'CIS title is not membership','status':'open'},
+            {'client_id':'a','task_id':'done','title':'Completed','review_id':'r','status':'done'},
+            {'client_id':'b','task_id':'other','title':'Other client','status':'open'}])
+        for framework in ['cis-ig1','soc-2']:
+            result=(await self.get_queue(detail='pastDue',framework=framework,limit=9)).json()
+            self.assertEqual(result['total'],12)
+            self.assertEqual(len(result['items']),9)
+            self.assertEqual(result['counts']['all'],15)  # Includes the mapped Review.
+            self.assertEqual(len({r['key'] for r in result['items']}),9)
+        found=(await self.get_queue(detail='all',framework='cis-ig1',search='task 13')).json()
+        self.assertEqual([r['id'] for r in found['items']],['t13'])
+        self.assertEqual(found['counts']['pastDue'],0)
+        self.assertEqual((await self.get_queue(detail='all',framework='iso-27001')).json()['total'],0)

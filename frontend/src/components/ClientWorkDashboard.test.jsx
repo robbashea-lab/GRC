@@ -13,16 +13,17 @@ test('compact preview, selected filters, paging, authoritative row open and CIS 
   const props={queue,programs:[{key:'cis-ig1',name:'CIS Controls v8.1 IG1'}],cisRows:[{status:'addressed'},{status:'not_applicable'},{status:'not_assessed'}],filter:'all',onFilter,onOpen,loadDetail};
   await act(async()=>root.render(<ClientWorkDashboard {...props}/>));
   expect(container.querySelectorAll('tbody tr')).toHaveLength(9);
-  expect(container.querySelector('[aria-pressed=true]').textContent).toContain('All Open');
+  expect(container.querySelector('.quick-filters button[aria-pressed=true]').textContent).toContain('All');
+  expect(container.querySelector('.bd-tiles')).toBeNull();
   expect(container.textContent).toContain('1 of 2');expect(container.textContent).toContain('50%');
   expect(container.textContent).not.toContain('Program health');
   const click=async text=>act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
   await click('View all 30');expect(container.querySelectorAll('tbody tr')).toHaveLength(25);
   await click('Next page');expect(container.querySelectorAll('tbody tr')).toHaveLength(5);
   await click('Action 25');expect(onOpen).toHaveBeenCalledWith(items[25],expect.any(HTMLButtonElement));
-  await click('Due in 30 Days');expect(onFilter).toHaveBeenCalledWith('due30');
+  await click('Due in 30 days');expect(onFilter).toHaveBeenCalledWith('due30');
   await act(async()=>root.render(<ClientWorkDashboard {...props} filter="due30"/>));
-  expect(container.textContent).toContain('No items due in the next 30 days.');
+  expect(container.textContent).toContain('No items match these filters.');
   expect(container.querySelectorAll('tbody tr')).toHaveLength(0);
   expect(container.querySelector('a[href="/compliance/cis-ig1"]')).not.toBeNull();
 });
@@ -31,6 +32,16 @@ test('failed detail request preserves preview and offers retry',async()=>{
   await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.includes('View all')).click());
   expect(container.querySelector('[role=alert]').textContent).toContain('Unavailable');
   expect(container.querySelectorAll('tbody tr')).toHaveLength(9);
+});
+test('retrying an expanded page retains its filters, offset and page size',async()=>{
+  const loadDetail=jest.fn().mockResolvedValueOnce({items:items.slice(0,25),offset:0,limit:25,total:30,has_more:true})
+    .mockRejectedValueOnce(new Error('Unavailable')).mockResolvedValueOnce({items:items.slice(0,25),offset:0,limit:25,total:30,has_more:true});
+  await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={loadDetail}/>));
+  const click=async text=>act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
+  await click('View all');await click('Next page');await click('Retry');
+  expect(loadDetail.mock.calls[2][3].limit).toBe(25);
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(25);
+  expect(container.querySelector('.bd-pagination')).not.toBeNull();
 });
 test('Back/Forward filter rerenders discard expanded pages and ignore superseded responses',async()=>{
   const makeRows=prefix=>Array.from({length:30},(_,i)=>({...items[i],key:`${prefix}:${i}`,id:`${prefix}-${i}`,title:`${prefix} work ${i}`}));
@@ -66,12 +77,12 @@ test('Back/Forward filter rerenders discard expanded pages and ignore superseded
   expect(requests[4].offset).toBe(0);
   await resolve(requests[4],all);
   expect(titles()).toEqual(all.slice(0,25).map(r=>r.title));
-  expect(container.querySelector('.bd-pagination').textContent).toContain('Page 1 of 2');
+  expect(container.querySelector('.bd-pagination')).toBeNull();
 });
 test.each([['pastDue','No past-due items.'],['due30','No items due in the next 30 days.'],['all','No open priority work.'],['unassigned','All current work is assigned.']])('%s has a compact meaningful empty state',async(filter,message)=>{
   const empty={...queue,groups:Object.fromEntries(Object.keys(queue.groups).map(key=>[key,{total:0,items:[]}]))};
   await act(async()=>root.render(<ClientWorkDashboard queue={empty} programs={[]} filter={filter} onFilter={()=>{}} onOpen={()=>{}} loadDetail={()=>{}}/>));
-  expect(container.textContent).toContain(message);
+  expect(container.textContent).toContain('No items match these filters.');
   expect(container.querySelectorAll('tbody tr')).toHaveLength(0);
 });
 test('tile context tolerates undated or untyped items and the theme choice persists',async()=>{
