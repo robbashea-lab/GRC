@@ -19,9 +19,10 @@ assert.equal(new URL(base).hostname,'127.0.0.1');
   for(const client of clients){
    await page.evaluate(id=>sessionStorage.setItem('grc_client_id',id),client.client_id);
    for(const route of ['/reviews','/action-items','/risks','/policies','/vendors','/evidence','/contacts','/systems','/ai-governance']){
+    console.log(theme,client.name,route);
     await page.goto(base+route);await page.waitForLoadState('networkidle');const search=page.locator('main input[type="search"],main input[placeholder*="Search"]').first();
     if(await search.count()){
-     await search.fill('NO MATCH VISUAL QA 94682');await page.waitForFunction(()=>!document.querySelector('main tbody tr button')&&!document.querySelector('main tbody tr [data-status]'));
+     await search.fill('NO MATCH VISUAL QA 94682');await page.waitForFunction(()=>!document.querySelector('main tbody tr [data-status]')&&!document.querySelector('main tbody tr td:not([colspan])'));
      await search.fill('');await page.waitForLoadState('networkidle');evidence.push({theme,client:client.name,route,check:'Search empty result and reset',passed:true});
     }
     await page.setViewportSize({width:720,height:1000});const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
