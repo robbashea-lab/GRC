@@ -46,7 +46,7 @@ export default function AIGovernance(){
   return <Shell className="register-surface brawndo-ai-page">{reference?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
       action={addAction?<HeaderActions>{addAction}</HeaderActions>:null}/>}
     {data?.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntake clientId={currentClientId} canWrite={writable} onSaved={()=>setRevision(n=>n+1)}/></div>}
-    {!reference&&data?.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
+    {!approvalPilot&&data?.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
     <div className="register-toolbar">
       <SearchField label="Search AI systems" placeholder="Search AI systems…" value={search} onChange={setSearch} testid="ai-system-search"/>
       {reference?<BrawndoChips label="AI system views" chips={AI_VIEWS.filter(([id])=>approvalPilot||id!=='pending').map(([id,label])=>({id,label,pressed:quick===id,onClick:()=>setQuick(id),testid:`ai-system-view-${id}`}))}/>:<ViewTabs views={presets.map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>}

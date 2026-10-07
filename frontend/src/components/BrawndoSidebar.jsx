@@ -32,7 +32,7 @@ export function ProfileMenu({compact=false}){
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button type="button" data-testid="profile-menu-trigger" className="bsb-profile">
-            <span className="bsb-avatar" aria-hidden="true">{user?.name?.[0]||user?.email?.[0]?.toUpperCase()}</span>
+            <span className="bsb-avatar" aria-hidden="true">{user?.name?.trim().split(/\s+/).map(part=>part[0]).slice(0,2).join('').toUpperCase()||user?.email?.[0]?.toUpperCase()}</span>
             <span className={compact?'sr-only':'min-w-0 flex-1 text-left'}><span className="bsb-client-name">{user?.name||user?.email}</span><span className="bsb-group-label">{(user?.role||'').replace('_',' ')}</span></span>
             <ChevronsUpDown size={14} aria-hidden="true"/>
           </button>

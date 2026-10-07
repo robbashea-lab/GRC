@@ -18,7 +18,7 @@ import {cisLabel} from '@/lib/cisScope';
 import './BrawndoCisSafeguard.css';
 import GuidedAssessor from './GuidedAssessor';
 import {useAuth} from '@/context/AuthContext';
-import {brawndoWorkspacePilot} from '@/lib/brawndoWorkspacePilot';
+import {isWorkspacePresentation} from '@/lib/reference';
 
 // Shared CIS IG1 workspace. The historical name is retained for existing callers.
 // Read-only guidance never writes assessment responses, status or verification.
@@ -45,7 +45,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.')}</span>{finding&&<p id="bcsg-finding-draft" className="text-xs text-ink-secondary">Create or cancel the open Finding before using Save & next.</p>}</div>
       <div className="flex flex-wrap gap-2">{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={finding?'bcsg-finding-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading assessment…</p>}
-    <AssessmentLayout inlineCriteria={brawndoWorkspacePilot(clientId,user)} criteriaSummary="Omnisciente guidance for assessing this safeguard. These are not additional CIS requirements." criteriaTitle="CIS assessment criteria" reference={`CIS v8.1 · Safeguard ${id}`} key={clientId+':'+id} summary={summaryData.requirements[id]?.plain}
+    <AssessmentLayout inlineCriteria={isWorkspacePresentation(clientId,user)} criteriaSummary="Omnisciente guidance for assessing this safeguard. These are not additional CIS requirements." criteriaTitle="CIS assessment criteria" reference={`CIS v8.1 · Safeguard ${id}`} key={clientId+':'+id} summary={summaryData.requirements[id]?.plain}
       requirement={<AssessmentRequirement reference={`CIS v8.1 · Safeguard ${id}`} heading="What CIS requires" text={source.text} official trigger={presentation?.trigger} source={presentation?.source||criteria?.source||source.url} label="Official CIS source"/>}
       checklist={<AssessmentChecklist title={`Safeguard ${id} checklist`} items={criteria?.criteria} historicalItems={criteria?.legacy_criteria} value={form.cis_assessment_criteria||[]} disabled={disabled} onChange={value=>put('cis_assessment_criteria',value)}/>}
       findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>}

@@ -15,11 +15,11 @@ const click=node=>act(async()=>node.click());
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/ai-intake'?{usage:'unsure'}:path==='/ai_systems'?[{ai_system_id:'a',client_id:mockClient,name:'AI QA',status:'active',provider:'Test',data_types:['Public']}]:[]}));});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-test('Brawndo cards do not infer approval or data permission; other clients retain table and intake notice',async()=>{
+test('shared AI cards do not expand approval or data permission and other clients retain intake notice',async()=>{
   await act(async()=>root.render(<AIGovernance/>));expect(container.querySelector('.brawndo-ai-grid')).not.toBeNull();expect(container.textContent).toContain('Approval not recorded');expect(container.textContent).toContain('Data permissions not established');expect(container.textContent).not.toContain('AI applicability is not yet confirmed');
   await click(container.querySelector('[data-testid="new-ai-system"]'));expect(document.querySelector('[data-testid="ai-drawer"]').className).toContain('brawndo-cis-assessment');expect(document.body.textContent).toContain('Pending Assessment');
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
-  mockClient='demo_dunder';await act(async()=>root.render(<AIGovernance/>));expect(container.querySelector('.brawndo-ai-grid')).toBeNull();expect(container.querySelector('table')).not.toBeNull();expect(container.textContent).toContain('AI applicability is not yet confirmed');
+  mockClient='demo_dunder';await act(async()=>root.render(<AIGovernance/>));expect(container.querySelector('.brawndo-ai-grid')).not.toBeNull();expect(container.querySelector('[data-testid="ai-system-view-pending"]')).toBeNull();expect(container.textContent).not.toMatch(/Approval not recorded|Data permissions not established/);expect(container.textContent).toContain('AI applicability is not yet confirmed');
 });
 test('draft remains across tabs, failed save and cancel; approval decision unavailable before creation',async()=>{
   const close=jest.fn();api.post.mockRejectedValue(new Error('Save unavailable'));
@@ -32,7 +32,7 @@ test('draft remains across tabs, failed save and cancel; approval decision unava
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));expect(document.body.textContent).toContain('Discard unsaved changes?');expect(close).not.toHaveBeenCalled();
   expect(document.querySelector('[aria-label="Decision"]')).toBeNull();
 });
-test('Brawndo AI Governance uses the shared page header, subtitle and view chips; other clients keep the standard header',async()=>{
+test('AI Governance uses the shared page header, subtitle and view chips across clients',async()=>{
   await act(async()=>root.render(<AIGovernance/>));
   expect(container.querySelector('.bpage[data-theme] h1').textContent).toBe('AI Governance');
   expect(container.querySelector('.bpage-subtitle').textContent).toContain('Not a legal classification');
@@ -40,5 +40,5 @@ test('Brawndo AI Governance uses the shared page header, subtitle and view chips
   await click(container.querySelector('[data-testid="ai-system-view-high"]'));
   expect(container.querySelector('[data-testid="ai-system-view-high"]').getAttribute('aria-pressed')).toBe('true');
   mockClient='demo_dunder';await act(async()=>root.render(<AIGovernance/>));
-  expect(container.querySelector('.bpage')).toBeNull();expect(container.querySelector('h1').textContent).toBe('AI Governance');
+  expect(container.querySelector('.bpage[data-theme] h1').textContent).toBe('AI Governance');expect(container.querySelector('.bpage-subtitle').textContent).toContain('Not a legal classification');
 });

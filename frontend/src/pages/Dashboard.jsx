@@ -10,7 +10,7 @@ import DashboardItemSummary from '@/components/DashboardItemSummary';
 import {loadClientDashboard} from '@/lib/loadClientDashboard';
 import {loadDashboardItem} from '@/lib/dashboardItemSummary';
 import {WORK_FILTERS} from '@/lib/dashboardWorkQueue';
-import {brawndoWorkspacePilot} from '@/lib/brawndoWorkspacePilot';
+import {isWorkspacePresentation} from '@/lib/reference';
 import RecordDrawer from '@/components/RecordDrawer';
 import {SCHEMAS} from '@/lib/schemas';
 
@@ -19,7 +19,7 @@ export default function Dashboard(){
   const {currentClient,currentClientId}=useOrg(),{user}=useAuth(),[params,setParams]=useSearchParams();
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(null),[revision,setRevision]=useState(0),[selection,setSelection]=useState(null);
   const [linked,setLinked]=useState(null),[refreshVersion,setRefreshVersion]=useState(0),[refreshError,setRefreshError]=useState('');
-  const pilot=brawndoWorkspacePilot(currentClientId,user),linkedOpener=useRef(null),refreshRequest=useRef(null);
+  const pilot=isWorkspacePresentation(currentClientId,user),linkedOpener=useRef(null),refreshRequest=useRef(null);
   const detailRequest=useRef(null),opener=useRef(null),selectionVersion=useRef(0),activeClient=useRef(currentClientId);activeClient.current=currentClientId;
   const requestKey=JSON.stringify([currentClientId,user?.user_id,revision]);
   const filter=WORK_FILTERS.some(f=>f.key===params.get('work'))?params.get('work'):'all';

@@ -5,7 +5,6 @@ import {dashboardPilot} from '@/lib/dashboardWorkQueue';
 import {isReferenceRegister,isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
 import ClientSurface from './ClientSurface';
 import BrawndoWorkspace from './BrawndoWorkspace';
-import {brawndoWorkspacePilot} from '@/lib/brawndoWorkspacePilot';
 import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
@@ -298,7 +297,7 @@ export default function Layout() {
   const {currentClientId}=useOrg();
   const {user}=useAuth();
   const {pathname}=useLocation();
-  const pilot=brawndoWorkspacePilot(currentClientId,user)&&!['/clients','/admin','/platform','/account'].some(path=>pathname.startsWith(path));
+  const pilot=!!user;
   const content=<div className="app-shell min-h-screen flex bg-surface-app">
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">

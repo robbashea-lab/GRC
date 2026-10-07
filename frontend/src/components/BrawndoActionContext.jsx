@@ -2,12 +2,13 @@ import {actionOrigin,pilotPriority,pilotActionStatus,pilotActionMatches} from '@
 import {DueDate,OwnerCell} from './RegisterCells';
 import StatusBadge,{SeverityBadge} from './StatusBadge';
 import {GovernanceContextFields} from './RequirementBasis';
+import {ticketRecords} from '@/lib/remediationTickets';
 
 export default function BrawndoActionContext({record,form,related,records,users,onOpen,canWrite,onContextChange}){
   const current=record||form,findingId=current.finding_id||(current.source_type==='finding'?current.source_id:null);
   const finding=related.findings?.find(f=>f.finding_id===findingId&&f.client_id===current.client_id)||records.findings?.find(f=>f.finding_id===findingId&&f.client_id===current.client_id);
   const source=actionOrigin(current,{...records,...related},finding);
-  const row={raw:current,kind:'tasks',due_date:current.due_date,owner_id:current.assignee_id??current.owner_id};
+  const row=ticketRecords({tasks:[current]},current.client_id)[0];
   return <>
     {record&&<section aria-label="Action details" className="space-y-3 text-sm">
       {pilotActionMatches(row,'overdue')&&<p className="text-semantic-critical">This Action Item is overdue{pilotActionStatus(row)==='in_progress'?' and in progress':''}.</p>}

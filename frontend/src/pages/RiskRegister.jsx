@@ -1,5 +1,4 @@
-import {isReferenceRegister} from '@/lib/reference';
-import {brawndoWorkspacePilot} from '@/lib/brawndoWorkspacePilot';
+import {isReferenceRegister,isWorkspacePresentation} from '@/lib/reference';
 import BrawndoRiskMatrix,{riskCoordinates} from '@/components/BrawndoRiskMatrix';
 import {riskViews,riskMatches,riskColumns,pilotRiskStatus,newRiskDefaults} from '@/lib/brawndoRisks';
 import {RiskCategoryField,RiskTreatmentField} from '@/components/BrawndoRiskFields';
@@ -68,7 +67,7 @@ export default function RiskRegister() {
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
   const pilot=isReferenceRegister(currentClientId,user);
-  const workspacePilot=brawndoWorkspacePilot(currentClientId,user);
+  const workspacePilot=isWorkspacePresentation(currentClientId,user);
   const [matrixSelection,setMatrixSelection]=useState(null);
   useEffect(()=>setMatrixSelection(null),[currentClientId]);
   const generation=useRef(0);

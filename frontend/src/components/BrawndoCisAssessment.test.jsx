@@ -177,7 +177,7 @@ test('load failure disables writes and offers retry',async()=>{
 });
 test('other clients retain their assessment content with explicit modal semantics',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Implementation status');expect(container.textContent).toContain('Assessment criteria');expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
+ expect(container.textContent).toContain('Implementation status');expect(container.textContent).toContain('CIS assessment criteria');expect(container.querySelector('.assessment-inline-criteria summary')).toBeTruthy();expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
 test('ISO assessments omit supplemental organizational controls without changing stored records',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};

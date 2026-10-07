@@ -3,6 +3,8 @@ import {createRoot} from 'react-dom/client';
 import GuidedAssessor from './GuidedAssessor';
 import {control1Catalog as guidedCatalog,versionForSafeguard} from '@/lib/guidedAssessment';
 import api from '@/lib/api';
+import {isWorkspacePresentation} from '@/lib/reference';
+import workspacePilotConfiguration from '@/lib/brawndoWorkspacePilot.json';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 let mockWorkspaceMode;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'pilot-test',workspace_mode:mockWorkspaceMode}})}));
@@ -22,14 +24,39 @@ beforeEach(()=>{
   api.get.mockImplementation(async()=>({data:draft}));
   api.put.mockImplementation(async(_path,body)=>({data:draft={...body,revision:draft.revision+1,generated_at:'2026-10-07T12:00:00Z'}}));
 });
-test('Brawndo presentation uses the canonical interview and preserves unsaved answers across window minimize',async()=>{
-  mockWorkspaceMode='demo';const onDraftChange=jest.fn();await render({record:row,onDraftChange});await open();
+test.each([['demo_brawndo','demo'],[workspacePilotConfiguration.stagingClientIds[0],'standard']])('approved Omni boundary %s uses the canonical interview and preserves unsaved answers across window minimize',async(clientId,mode)=>{
+  mockWorkspaceMode=mode;const onDraftChange=jest.fn();await render({clientId,record:row,onDraftChange});await open();
   expect(document.querySelector('.omni-workspace-window').getAttribute('aria-modal')).toBe('false');
   expect(document.querySelector('.omni-approved')).toBeTruthy();
+  expect(document.querySelector('.omni-free-dock')).toBeTruthy();
   await select('Not sure');expect(onDraftChange).toHaveBeenLastCalledWith(true);
   await act(async()=>document.querySelector('[aria-label="Minimize Omni Guide"]').click());await open();
   expect(document.querySelector('.guided-panel select').value).toBe('Not sure');expect(api.put).not.toHaveBeenCalled();
   await click('Save and exit');expect(draft.answers.inventory).toBe('Not sure');expect(draft.version).toBe(guidedCatalog.version);
+});
+
+test.each([['demo_dunder','demo'],['demo_prestige','demo'],['demo_initech','demo'],['existing-authenticated-client','standard'],['future-client','standard'],['newly-onboarded-synthetic-client','standard']])('shared presentation preserves legacy Omni and saved interview for %s',async(clientId,mode)=>{
+  mockWorkspaceMode=mode;
+  expect(isWorkspacePresentation(clientId,{workspace_mode:mode})).toBe(true);
+  document.documentElement.dataset.brawndoWorkspace='dark';
+  try {
+    draft={...draft,answers:{inventory:'Not sure'},revision:3};
+    await render({clientId,record:row});
+    expect(document.querySelector('[aria-label="Open Omni guided assessment"]')).toBeTruthy();
+    await open();
+    expect(document.querySelector('.guided-panel').getAttribute('role')).toBe('dialog');
+    expect(document.querySelector('.ui-overlay[data-state="open"]')).toBeTruthy();
+    expect(container.getAttribute('aria-hidden')).toBe('true');
+    expect(document.querySelector('.omni-approved')).toBeNull();
+    expect(document.querySelector('.omni-free-dock')).toBeNull();
+    expect(document.querySelector('.omni-workspace-window')).toBeNull();
+    expect(button('Minimize')).toBeTruthy();expect(button('Dismiss assistant')).toBeTruthy();
+    expect(document.querySelector('.guided-panel select').value).toBe('Not sure');
+    expect(api.get).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({signal:expect.any(AbortSignal)}));
+    expect(api.put).not.toHaveBeenCalled();
+    await click('Save and exit');
+    expect(api.put).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({answers:{inventory:'Not sure'},version:guidedCatalog.version,expected_revision:3}));
+  } finally {delete document.documentElement.dataset.brawndoWorkspace;}
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test('dashboard greeting, direct pilot options, dismiss and reopen',async()=>{

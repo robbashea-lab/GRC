@@ -84,7 +84,7 @@ test('Brawndo keeps its explicit pilot fields, pending view and administrator ap
 test('standard authenticated presentation sends only the unchanged canonical fields',async()=>{
  mockUser={...mockUser,workspace_mode:undefined};const close=jest.fn(),post=jest.spyOn(api,'post');
  await act(async()=>root.render(<AIDrawer open clientId={mockClient} onOpenChange={close}/>));
- await input('AI System / Use Case name','Standard contract test');await click(buttons('Create AI System')[0]);
+ await input('Product / System Name','Standard contract test');await click(buttons('Create AI System')[0]);
  expect(close).toHaveBeenCalledWith(false);
  expect(Object.keys(post.mock.calls.find(([path])=>path==='/ai_systems')[1]).sort()).toEqual(['client_id',...AI_KEYS].sort());
  expect(buttons('Record Decision')).toHaveLength(0);

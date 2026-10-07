@@ -1,6 +1,6 @@
 /* Dark theme for portaled surfaces (drawers, dialogs, menus, popovers, selects) while a themed Brawndo page
    is in dark mode. Tokens only: layout, spacing and structure of the drawers are untouched. */
-html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet, .ui-menu, .ui-popover, .ui-floating, [role="listbox"]) {
+html[data-brawndo-portal="dark"]:not([data-brawndo-workspace]) :is(.ui-dialog, .ui-sheet, .ui-menu, .ui-popover, .ui-floating, [role="listbox"]) {
   --background: 213 21% 13%; --foreground: 216 18% 92%; --card: 213 21% 13%; --card-foreground: 216 18% 92%;
   --popover: 213 21% 13%; --popover-foreground: 216 18% 92%; --secondary: 213 19% 17%; --secondary-foreground: 216 18% 92%;
   --muted: 213 19% 17%; --muted-foreground: 213 11% 65%; --accent: 213 19% 19%; --accent-foreground: 216 18% 92%;
@@ -20,6 +20,6 @@ html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet, .ui-menu, .ui-popove
   color-scheme: dark; background-color: var(--color-bg-surface); color: var(--color-text-primary); border-color: var(--color-border);
 }
 /* Override the light-theme charcoal applied by design-system.css to primary buttons. */
-html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled) { background: #a3db33; color: #10140c; }
-html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):hover { background: #b4e650; }
-html[data-brawndo-portal="dark"] :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):active { background: #8fc22a; }
+html[data-brawndo-portal="dark"]:not([data-brawndo-workspace]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled) { background: #a3db33; color: #10140c; }
+html[data-brawndo-portal="dark"]:not([data-brawndo-workspace]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):hover { background: #b4e650; }
+html[data-brawndo-portal="dark"]:not([data-brawndo-workspace]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):active { background: #8fc22a; }

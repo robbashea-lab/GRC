@@ -3,7 +3,7 @@ import {useRescueFocus} from '@/lib/focusRescue';
 import api from '@/lib/api';
 import {SearchField} from './Register';
 import {CisStatusPill} from './CisStatus';
-import {groupRequirements,sectionSummary} from '@/lib/frameworkWorkspace';
+import {groupRequirements,sectionSummary,matchesAssessment} from '@/lib/frameworkWorkspace';
 import {cisScopeLabel} from '@/lib/cisScope';
 import {freshness} from '@/lib/cisVerification';
 import {FrameworkRecordButton} from './FrameworkRecordAccess';
@@ -39,6 +39,7 @@ export default function BrawndoCisControls({workspacePilot=false,implementationG
   const list=filtered?visible:control?control.rows:null;
   const controlOverview=workspacePilot&&!list;
   const matchingGroups=groups.filter(g=>(controlFilter==='all'||(controlFilter==='attention'?sectionSummary(g.rows).attention>0:cisSummary(g.rows).notAssessed>0))&&g.label.toLowerCase().includes(controlSearch.trim().toLowerCase()));
+  const safeguardSearch=controlOverview&&controlSearch.trim()&&!matchingGroups.length?visible.filter(row=>matchesAssessment(row,'all',controlSearch)):null;
   return <section className="bcis-card bcis-controls" aria-label="Controls">
     {controlOverview?<>
       <div className="bwp-controls-heading"><div><h2>Controls</h2><p>Explore your safeguards, implementation, and verification.</p></div><span>{groups.length} controls</span></div>
@@ -50,7 +51,7 @@ export default function BrawndoCisControls({workspacePilot=false,implementationG
     </div>}
     {scopeControls}
     {control&&<p className="bcis-control-name">{controlParts(control.label).name}</p>}
-    {list?<SafeguardList implementationGroup={implementationGroup} rows={list} owner={owner} onOpen={onOpen} onManage={onManage} label={filtered?filterLabel:control.label}/>:<ControlRows workspacePilot={workspacePilot} implementationGroup={implementationGroup} groups={controlOverview?matchingGroups:groups} allGroups={groups} onControl={onControl} total={rows.length}/>}
+    {safeguardSearch?.length?<SafeguardList implementationGroup={implementationGroup} rows={safeguardSearch} owner={owner} onOpen={onOpen} onManage={onManage} label="Safeguard search results"/>:list?<SafeguardList implementationGroup={implementationGroup} rows={list} owner={owner} onOpen={onOpen} onManage={onManage} label={filtered?filterLabel:control.label}/>:<ControlRows workspacePilot={workspacePilot} implementationGroup={implementationGroup} groups={controlOverview?matchingGroups:groups} allGroups={groups} onControl={onControl} total={rows.length}/>}
   </section>;
 }
 
