@@ -30,7 +30,8 @@ export default function ClientManagement() {
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState(null);
   const dialogOpener = useRef(null);
-  const returnFocus = event => { event.preventDefault(); dialogOpener.current?.focus(); };
+  const addClientButton = useRef(null);
+  const returnFocus = event => { event.preventDefault(); (dialogOpener.current?.isConnected ? dialogOpener.current : addClientButton.current)?.focus(); };
   const [busy, setBusy] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const load = useCallback(async () => {
@@ -77,7 +78,7 @@ export default function ClientManagement() {
   if (!authorized) return <div role="alert" className="page-content">Client Management is available to platform administrators only.</div>;
   return <div>
     <PageHeader title="Client Management" subtitle="Manage client organizations, ownership, and lifecycle."
-      action={<Button size="sm" onClick={event => {dialogOpener.current=event.currentTarget; setDialog({ client: null });}} data-testid="add-client-button" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
+      action={<Button ref={addClientButton} size="sm" onClick={event => {dialogOpener.current=event.currentTarget; setDialog({ client: null });}} data-testid="add-client-button" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
     <div className="page-gutter py-4 space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search client, industry, GRC lead..." aria-label="Search client organizations" className="max-w-sm" />

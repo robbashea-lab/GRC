@@ -42,6 +42,13 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   const [clients, setClients] = useState([]);
   const [loadedScope, setLoadedScope] = useState(null);
   const loadSequence = useRef(0);
+  const actionButtons = useRef({}), addUserButton = useRef(null), focusAfterSave = useRef(null);
+  useEffect(() => {
+    if (!loading && focusAfterSave.current) {
+      (actionButtons.current[focusAfterSave.current] || addUserButton.current)?.focus();
+      focusAfterSave.current = null;
+    }
+  }, [loading]);
 
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
@@ -77,6 +84,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
     try {
       await api.patch(`/users/${u.user_id}${changes.client_ids ? '/client-memberships' : ''}`, {...changes,expected_updated_at:u.updated_at??null});
       toast.success(label || "User updated");
+      focusAfterSave.current = u.user_id;
       load();
       return true;
     } catch (e) { toast.error(formatError(e)); return false; }
@@ -112,7 +120,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
         </div>
         <div className="text-xs text-ink-help font-mono ml-auto">{filtered.length} / {users.length}</div>
         {canManage && (
-          <Button size="sm" onClick={() => setAddOpen(true)} data-testid={`add-user-${scope}`} className="bg-primary hover:bg-primary/90">
+          <Button ref={addUserButton} size="sm" onClick={() => setAddOpen(true)} data-testid={`add-user-${scope}`} className="bg-primary hover:bg-primary/90">
             <Plus className="h-3.5 w-3.5 mr-1" /> {scope === "client" ? "Add client user" : "Add user"}
           </Button>
         )}
@@ -161,7 +169,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
                     {canManage && u.user_id !== viewer?.user_id && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button aria-label={`Actions for ${u.name || u.email}`} className="p-2 rounded hover:bg-surface-subtle text-ink-help" data-testid={`user-menu-${i}`}>
+                          <button ref={element => { actionButtons.current[u.user_id] = element; }} aria-label={`Actions for ${u.name || u.email}`} className="p-2 rounded hover:bg-surface-subtle text-ink-help" data-testid={`user-menu-${i}`}>
                             <MoreVertical className="h-4 w-4" />
                           </button>
                         </DropdownMenuTrigger>
@@ -214,6 +222,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
       <TablePagination page={currentPage} onPageChange={setPage} total={filtered.length} />
       <AddUserDialog
         open={addOpen}
+        onCloseAutoFocus={event => { event.preventDefault(); addUserButton.current?.focus(); }}
         onOpenChange={setAddOpen}
         scope={scope}
         clientId={clientId}
@@ -255,7 +264,7 @@ function EditRoleItem({ u, allowedRoles, onSave }) {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Change role for {u.name || u.email}</DialogTitle></DialogHeader>
           <Select value={role} onValueChange={setRole}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label="Assigned role"><SelectValue /></SelectTrigger>
             <SelectContent>
               {allowedRoles.map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
             </SelectContent>
@@ -308,7 +317,7 @@ function EditClientsItem({ u, clients, onSave, canGrantAll, onEntitlement }) {
   );
 }
 
-function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRoles, onCreated }) {
+function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRoles, onCreated, onCloseAutoFocus }) {
   const [form, setForm] = useState({ name: "", email: "", role: allowedRoles[allowedRoles.length - 1], client_ids: clientId ? [clientId] : [] });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -330,7 +339,7 @@ function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md" data-testid="add-user-dialog">
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus} className="max-w-md" data-testid="add-user-dialog">
         <DialogHeader>
           <DialogTitle>{scope === "client" ? "Add client user" : "Add platform user"}</DialogTitle>
           <DialogDescription>

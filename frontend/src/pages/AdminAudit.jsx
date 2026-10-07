@@ -240,11 +240,11 @@ export default function AdminAudit() {
       <PageHeader
         eyebrow="Administration"
         title="Audit Log"
-        subtitle="Immutable record of platform and client activity across authorized organizations."
+        subtitle="Application audit records are append-only through the Omnisciente interface."
       />
       <div className="page-gutter pt-4 pb-2 flex items-center gap-3 flex-wrap" data-testid="audit-filters">
         <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="h-9 w-56 text-sm" data-testid="audit-filter-client">
+          <SelectTrigger className="h-9 w-56 text-sm" aria-label="Client filter" data-testid="audit-filter-client">
             <SelectValue placeholder="All clients" />
           </SelectTrigger>
           <SelectContent>
@@ -257,7 +257,7 @@ export default function AdminAudit() {
         </Select>
 
         <Select value={userFilter} onValueChange={setUserFilter}>
-          <SelectTrigger className="h-9 w-56 text-sm" data-testid="audit-filter-user">
+          <SelectTrigger className="h-9 w-56 text-sm" aria-label="User filter" data-testid="audit-filter-user">
             <SelectValue placeholder="All users" />
           </SelectTrigger>
           <SelectContent className="max-h-72">
@@ -269,7 +269,7 @@ export default function AdminAudit() {
         </Select>
 
         <Select value={actionFilter} onValueChange={setActionFilter}>
-          <SelectTrigger className="h-9 w-44 text-sm" data-testid="audit-filter-action">
+          <SelectTrigger className="h-9 w-44 text-sm" aria-label="Action filter" data-testid="audit-filter-action">
             <SelectValue placeholder="All actions" />
           </SelectTrigger>
           <SelectContent>
@@ -280,7 +280,7 @@ export default function AdminAudit() {
         </Select>
 
         <Select value={entityFilter} onValueChange={setEntityFilter}>
-          <SelectTrigger className="h-9 w-44 text-sm" data-testid="audit-filter-entity">
+          <SelectTrigger className="h-9 w-44 text-sm" aria-label="Object or event type filter" data-testid="audit-filter-entity">
             <SelectValue placeholder="All entities" />
           </SelectTrigger>
           <SelectContent className="max-h-72">
@@ -292,7 +292,7 @@ export default function AdminAudit() {
         </Select>
 
         <Select value={datePreset} onValueChange={setDatePreset}>
-          <SelectTrigger className="h-9 w-40 text-sm" data-testid="audit-filter-date">
+          <SelectTrigger className="h-9 w-40 text-sm" aria-label="Date range filter" data-testid="audit-filter-date">
             <SelectValue placeholder="Last 30 days" />
           </SelectTrigger>
           <SelectContent>
