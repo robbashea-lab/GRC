@@ -76,11 +76,11 @@ const platformRoutes=['/clients','/admin/clients','/admin/users','/admin/roles',
   await page.goto(base+'/dashboard');await page.waitForLoadState('networkidle');const addedRoutes=await page.locator('a[href^="/compliance/"]').evaluateAll(es=>[...new Set(es.map(e=>e.getAttribute('href').split('?')[0]))]);
   assert.equal(addedRoutes.length,labels.length,'Every enabled program has its existing workspace');for(const route of addedRoutes)await inspect('new-all-frameworks',route);
   await page.goto(base+'/action-items');const beforeAction=await page.evaluate(()=>sessionStorage.getItem('grc_interactive_demo_v3'));
-  await page.getByTestId('create-tasks-button').click();const action=page.getByTestId('tasks-drawer');await action.waitFor();
-  await action.getByRole('combobox',{name:'Priority',exact:true}).click();const priorities=await page.getByRole('option').allTextContents();
-  assert.ok(priorities.includes('Critical'),'New Action Item retains Critical priority');await page.keyboard.press('Escape');await action.waitFor();
+  await page.getByTestId('new-action-item').click();const action=page.getByTestId('tasks-drawer');await action.waitFor();
+  await action.getByRole('combobox',{name:/^Priority/}).click();const priorities=await page.getByRole('option').allTextContents();
+  assert.ok(priorities.includes('Immediate'),'New Action Item retains the existing Immediate label for critical priority');await page.keyboard.press('Escape');await action.waitFor();
   await action.getByTestId('drawer-cancel').click();await action.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>sessionStorage.getItem('grc_interactive_demo_v3')),beforeAction,'Inspecting New Action must not alter saved Demo records');
-  results.push({theme,client:'new-client',check:'New Action Item retains Critical priority without saving records',priorities,passed:true});
+  results.push({theme,client:'new-client',check:'New Action Item retains existing Immediate label for critical priority without saving records',priorities,passed:true});
   assert.deepEqual(errors,[]);await context.close();
  }}catch(e){failures.push({message:e.message,stack:e.stack});if(activePage&&!activePage.isClosed()){await activePage.screenshot({path:path.join(output,'failure.png'),fullPage:true});fs.writeFileSync(path.join(output,'failure-dom.txt'),await activePage.locator('body').ariaSnapshot())}throw e}finally{await browser.close();fs.writeFileSync(path.join(output,'acceptance.json'),JSON.stringify({base,workflowsOnly,results,failures},null,2))}
  console.log('PASS '+results.length+' route/theme and boundary checks');
