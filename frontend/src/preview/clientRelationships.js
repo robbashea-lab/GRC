@@ -14,6 +14,7 @@ export function clientProjection(db, client) {
 }
 export function leadCandidates(db, cid) {
   if (!internal(db.user) || cid && !clientAccess(db.user, cid)) throw new Error('Forbidden for this client');
+  if (!cid && !clientAccess(db.user, cid)) return [];
   const rows = db.users.filter(u => leadEligible(u, cid));
   if (rows.length > 200) throw new Error('Too many eligible leads; contact your administrator');
   return rows.sort((a,b) => (a.name || '').localeCompare(b.name || '')).map(({user_id,name,email}) => ({user_id,name,email}));

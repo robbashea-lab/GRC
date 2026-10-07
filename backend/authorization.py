@@ -125,7 +125,7 @@ async def authorize_request(request, user, db):
         return
     # Archived tenants retain history but accept no ordinary program changes.
     # Resolve the resource's trusted tenant, never the caller's claimed tenant.
-    client_id = request.path_params.get('client_id')
+    client_id = request.path_params.get('client_id') or request.path_params.get('cid')
     params = request.path_params
     kind = params.get('kind')
     identity = params.get('item_id')

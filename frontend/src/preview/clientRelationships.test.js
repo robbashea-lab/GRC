@@ -6,6 +6,14 @@ import {previewAdapter} from './adapter';
 const user = (user_id, role, client_ids, status='active') => ({user_id,name:'Same Name',email:user_id+'@example.test',role,client_ids,status,private_metadata:'never return'});
 const fixture = () => ({user:user('actor','super_admin',[]),users:[user('internal','platform_admin',['a']),user('global','platform_admin',[]),user('foreign','platform_admin',['b']),user('client','client_admin',['a']),user('disabled','platform_admin',['a'],'disabled')],contacts:[{contact_id:'maya',client_id:'a',name:'Maya',status:'active'}, {contact_id:'jordan',client_id:'b',name:'Maya',status:'active'}]});
 
+test('provider without explicit global scope cannot enumerate global lead candidates',()=>{
+  const db=fixture();db.users.push(user('owner','super_admin',[]));
+  db.user=user('scoped','platform_admin',['a']);
+  expect(leadCandidates(db)).toEqual([]);
+  db.user.all_clients=true;
+  expect(leadCandidates(db).map(u=>u.user_id)).toEqual(['owner']);
+});
+
 test('internal candidate scope is narrower than operational assignment and exposes minimal identity',()=>{
   const db=fixture();
   expect(leadCandidates(db,'a').map(u=>u.user_id).sort()).toEqual(['internal']);

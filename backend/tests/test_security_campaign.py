@@ -39,6 +39,47 @@ class SecurityCampaign(unittest.IsolatedAsyncioTestCase):
         response=await self.raw.get('/api/users',headers=self.token('empty'))
         self.assertEqual(response.json(),[])
 
+    async def test_account_edit_rechecks_revoked_actor_scope(self):
+        from fastapi import HTTPException
+        for actor_fields, revoked_fields in [({'client_ids': ['a']}, {'client_ids': []}),
+                ({'client_ids': [], 'all_clients': True}, {'all_clients': False})]:
+            await harness.server.db.users.update_one({'user_id': 'grace'}, {'$set': actor_fields})
+            actor = await harness.server.db.users.find_one({'user_id': 'grace'})
+            await harness.server.db.users.update_one({'user_id': 'grace'}, {'$set': revoked_fields})
+            before = await harness.server.db.users.find_one({'user_id': 'reader'})
+            for operation, body in [(harness.server.admin_update_user, harness.server.UserPatchIn(
+                    name='Revoked actor edit', expected_updated_at=None)),
+                    (harness.server.update_client_memberships, harness.server.ClientMembershipIn(
+                        client_ids=[], expected_updated_at=None))]:
+                with self.assertRaises(HTTPException) as rejected:
+                    await operation('reader', body, user=actor)
+                self.assertEqual(rejected.exception.status_code, 403)
+                self.assertEqual(await harness.server.db.users.find_one({'user_id': 'reader'}), before)
+
+    async def test_grc_leads_require_explicit_provider_scope(self):
+        await harness.server.db.users.insert_one({'user_id': 'global-provider', 'name': 'Global',
+            'role': 'platform_admin', 'all_clients': True, 'client_ids': [], 'status': 'active'})
+        self.assertEqual((await self.raw.get('/api/clients/grc-leads', headers=self.token('empty'))).json(), [])
+        scoped = await self.raw.get('/api/clients/grc-leads?client_id=a', headers=self.token('grace'))
+        self.assertEqual({row['user_id'] for row in scoped.json()}, {'admin', 'grace', 'global-provider'})
+        global_rows = await self.raw.get('/api/clients/grc-leads', headers=self.token('admin'))
+        self.assertEqual({row['user_id'] for row in global_rows.json()}, {'admin', 'global-provider'})
+
+    async def test_archived_client_profile_is_readonly(self):
+        await harness.server.db.clients.update_one({'client_id': 'a'}, {'$set': {'status': 'archived'}})
+        before = await harness.server.db.clients.find_one({'client_id': 'a'})
+        response = await self.raw.patch('/api/clients/a/profile', headers=self.token('grace'),
+            json={'section': 'organization', 'values': {'employees': 7}, 'expected_updated_at': None})
+        self.assertEqual(response.status_code, 403, response.text)
+        self.assertEqual(await harness.server.db.clients.find_one({'client_id': 'a'}), before)
+
+    async def test_explicit_global_provider_can_resend_client_invitation(self):
+        await harness.server.db.users.update_one({'user_id': 'empty'}, {'$set': {'all_clients': True}})
+        await harness.server.db.users.update_one({'user_id': 'reader'}, {'$set': {'status': 'invited'}})
+        response = await self.raw.post('/api/users/reader/resend-invite', headers=self.token('empty'))
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()['delivery'], 'unavailable')
+
     async def test_provider_cannot_create_internal_personnel(self):
         response=await self.raw.post('/api/users',headers=self.token('grace'),json={
             'name':'Escalation','email':'attack@example.com','role':'platform_admin','client_ids':['a']})

@@ -1298,7 +1298,13 @@ def administrator_mutation(fn):
         if not acquired.modified_count:
             raise HTTPException(409, 'Another account change is being saved; retry after reloading')
         try:
-            return await asyncio.wait_for(fn(*args, **kwargs), timeout=45)
+            values = inspect.signature(fn).bind(*args, **kwargs)
+            user = values.arguments['user']
+            actor = await db.users.find_one({'user_id': user['user_id'], 'status': 'active'}, {'_id': 0, 'password_hash': 0})
+            if not actor or actor.get('role') != user.get('role'):
+                raise HTTPException(403, 'Administrative access changed; sign in again')
+            values.arguments['user'] = actor
+            return await asyncio.wait_for(fn(*values.args, **values.kwargs), timeout=45)
         finally:
             await db.administration_locks.update_one({'_id': 'accounts', 'token': token}, {'$set': {'until': ''}})
     return wrapped
@@ -1307,9 +1313,6 @@ def administrator_mutation(fn):
 @api.patch("/users/{user_id}")
 @administrator_mutation
 async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depends(get_current_user)):
-    actor = await db.users.find_one({'user_id': user['user_id'], 'status': 'active'})
-    if not actor or actor.get('role') != user.get('role'):
-        raise HTTPException(403, 'Administrative access changed; sign in again')
     target = await db.users.find_one({"user_id": user_id})
     if not target:
         raise HTTPException(404, "User not found")
@@ -1429,6 +1432,7 @@ async def user_open_assignments(user_id: str, client_id: Optional[str] = Query(N
 
 
 @api.patch("/users/{user_id}/client-memberships")
+@administrator_mutation
 async def update_client_memberships(user_id: str, body: ClientMembershipIn, user: Dict = Depends(get_current_user)):
     target = await db.users.find_one({"user_id": user_id})
     if not target or not _admin_can_manage_user(user, target):
@@ -1466,7 +1470,7 @@ async def admin_resend_invite(user_id: str, user: Dict = Depends(get_current_use
         raise HTTPException(403, "Not authorized to manage this user")
     if target.get("status") != "invited":
         raise HTTPException(409, "Only pending invitations can be resent")
-    if user.get("role") == "platform_admin" and set(target.get("client_ids") or []) - set(user.get("client_ids") or []):
+    if user.get("role") == "platform_admin" and not authorization.global_scope(user) and set(target.get("client_ids") or []) - set(user.get("client_ids") or []):
         raise HTTPException(403, "Invitation administration requires authority over all client memberships")
     delivery = await _issue_invitation(target, user)
     await audit(user, "resend_invite", "user", user_id, meta={"delivery": delivery})
@@ -1564,9 +1568,11 @@ async def grc_lead_candidates(client_id: Optional[str] = Query(None),
         raise HTTPException(403, "Forbidden for this client")
     if client_id and not await db.clients.find_one({"client_id": client_id}):
         raise HTTPException(404, "Client not found")
+    if not client_id and not authorization.global_scope(user):
+        return []
     # A new client has no memberships yet. Only already-global staff qualify.
     scope = {"$or": [{"role": "super_admin"}, {"role": "platform_admin", "$or": [
-        {"client_ids": {"$size": 0}}, {"client_ids": None},
+        {"all_clients": True},
         *([{"client_ids": client_id}] if client_id else []),
     ]}]}
     rows = await db.users.find({"$and": [{"status": "active"}, scope]},
