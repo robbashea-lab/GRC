@@ -176,7 +176,7 @@ function Portfolio({
       <button type="button" className="bp-theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-pressed={theme === 'dark'} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>{theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}<span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button>
     </header> : <PageHeader title="Client Portfolio" />}
     {reference && !loading && !error && <div className="bp-tiles" role="group" aria-label="Portfolio totals" data-testid="portfolio-tiles">{TILES.map(([key, label, tone]) => {
-      const t = totals[key], signal = QUICK.some(([q]) => q === key), cls = `bp-tile is-${t.total ? tone : 'clear'}`;
+      const t = totals[key], signal = QUICK.some(([q]) => q === key), cls = `bp-tile is-${t.total ? TONE[key] || tone : 'clear'}`;
       const body = <><span className="bp-tile-label">{label}</span><span className="bp-tile-value">{t.total}</span><span className="bp-tile-context">{t.total ? `${t.clients} of ${rows.length} clients${t.top && t.clients > 1 ? ` · most at ${t.top}` : t.top ? ` · ${t.top}` : ''}` : 'None across the portfolio'}</span></>;
       return signal ? <button key={key} type="button" className={cls} aria-pressed={activeSignal === key} onClick={() => pickSignal(key)} data-testid={`portfolio-tile-${key}`}>{body}</button> : <div key={key} className={cls} data-testid={`portfolio-tile-${key}`}>{body}</div>;
     })}</div>}

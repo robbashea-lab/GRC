@@ -13,7 +13,7 @@
 .client-surface .ui-button { border-radius: 8px; }
 .client-surface .ui-button.bg-primary { background: #a3db33; border-color: #a3db33; color: #10140c; }
 .client-surface .ui-button.bg-primary:hover { background: #b4e650; }
-.client-surface :is(input,select,textarea) { color: var(--bp-text); background-color: var(--bp-card); border-color: var(--bp-border); }
+.client-surface :is(input,select,textarea) { color: var(--bp-text); background-color: var(--bp-card); border-color: var(--color-input-border); }
 .client-surface .register-table-frame { overflow-x: auto; }
 @media(max-width:1100px) {
   .client-surface .bprof-grid { grid-template-columns: minmax(0,1fr); }

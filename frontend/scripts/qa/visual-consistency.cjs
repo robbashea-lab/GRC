@@ -23,14 +23,16 @@ const normalize=s=>s.replace(/\s+/g,' ').trim();
       const clients=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('grc_interactive_demo_v3')).clients.map(c=>({id:c.client_id,name:c.name})));
       const cases=platform.map(route=>({route,client:'platform'}));
       for(const client of clients){
-        await page.evaluate(id=>localStorage.setItem('grc_client_id',id),client.id);await page.goto(base+'/dashboard');await page.locator('.bdash').waitFor();
+        await page.evaluate(id=>sessionStorage.setItem('grc_client_id',id),client.id);await page.goto(base+'/dashboard');await page.locator('.bdash').waitFor();
+        assert.equal(normalize(await page.locator('main h1').innerText()),client.name+' Dashboard','Client selection must match the case');
         const frameworkRoutes=await page.locator('a[href^="/compliance/"]').evaluateAll(es=>[...new Set(es.map(e=>e.getAttribute('href').split('?')[0]))]);
         cases.push(...[...routes,...frameworkRoutes].map(route=>({route,client:client.id,name:client.name})));
       }
       for(const item of cases){
-        await page.evaluate(id=>id==='platform'?localStorage.removeItem('grc_client_id'):localStorage.setItem('grc_client_id',id),item.client);
+        await page.evaluate(id=>id==='platform'?sessionStorage.removeItem('grc_client_id'):sessionStorage.setItem('grc_client_id',id),item.client);
         await page.setViewportSize({width:1440,height:1000});await page.goto(base+item.route);await page.waitForLoadState('networkidle');
         await page.locator('main').waitFor();
+        if(item.name)assert.equal(await page.evaluate(()=>sessionStorage.getItem('grc_client_id')),item.client);
         const key=theme+'-'+item.client+'-'+item.route.replace(/[^a-zA-Z0-9_-]/g,'_');
         const snapshot=await page.evaluate(()=>{
           const main=document.querySelector('main'), norm=s=>s.replace(/\s+/g,' ').trim(),visible=e=>!!(e.getClientRects().length)&&getComputedStyle(e).visibility!=='hidden';
