@@ -248,6 +248,7 @@ async def workspace_work(s,cid,rows):
         direct=[f for f in fs if linked('findings',f['finding_id']) or f.get('framework_assessment_id')==aid]
         result[aid]={'review_ids':sorted(rids),'finding_ids':sorted(fids),'open_findings':len(fs),'direct_findings':len(direct),
           'overdue_reviews':sum(overdue(r) for r in rs if r.get('status') not in ('completed','cancelled')),
+          'next_review_due':min((r['due_date'][:10] for r in rs if r.get('status') not in ('completed','cancelled') and r.get('due_date') and r['due_date'][:10]>=today),default=None),
           'overdue_actions':sum(overdue(t) for t in ts),'open_actions':len(ts),
           'evidence_count':len(es),'latest_evidence_at':dates[-1] if dates else None}
     return result

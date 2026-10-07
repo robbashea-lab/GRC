@@ -6,7 +6,7 @@ import api from '@/lib/api';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'pilot-test'}})}));
 let root,container,draft;
-const row={framework_assessment_id:'pilot',definition_id:'1.1',title:'Establish and Maintain Detailed Enterprise Asset Inventory'};
+const row={framework_assessment_id:'pilot',definition_id:'1.1',title:'Establish and Maintain Detailed Enterprise Asset Inventory',status:'not_assessed'};
 const props={clientId:'demo_brawndo',framework:'cis-ig1',configuration:{implementation_group:1}};
 const button=name=>[...document.querySelectorAll('button')].find(el=>el.textContent===name);
 async function render(p={}){await act(async()=>root.render(<GuidedAssessor {...props} {...p}/>));}
@@ -25,14 +25,14 @@ test('dashboard greeting, direct pilot options, dismiss and reopen',async()=>{
   const onSelect=jest.fn();await render({rows:[row,{...row,definition_id:'1.2'}],onSelect});
   expect(document.body.textContent).toContain('Hi, I’m Omni.');
   expect(document.querySelector('.omni-idle')).toBeTruthy();
-  await open();expect(document.body.textContent).toContain('Not started');
+  await open();expect(document.body.textContent).toContain('Not Assessed');
   await click('Start safeguard 1.1');expect(onSelect).toHaveBeenCalledWith(row);
   await open();expect(document.querySelector('.omni-helpful')).toBeTruthy();
   expect(document.querySelector('[aria-label="Open Omni guided assessment"]').getAttribute('aria-expanded')).toBe('true');
   await click('Dismiss assistant');expect(document.querySelector('[aria-label="Open Omni guided assessment"]')).toBeNull();
   await click('Show Omni');await open();expect(document.body.textContent).toContain('Guided Assessment with Omni');
 });
-test.each([['other','cis-ig1','1.1'],['demo_brawndo','soc-2','1.1'],['demo_brawndo','iso-27001','1.1'],['demo_brawndo','cis-ig1','1.3']])('scope exclusions %s %s %s',async(clientId,framework,id)=>{
+test.each([['other','cis-ig1','2.1'],['demo_brawndo','soc-2','1.1'],['demo_brawndo','iso-27001','1.1'],['demo_brawndo','cis-ig1','1.3']])('scope exclusions %s %s %s',async(clientId,framework,id)=>{
   await render({clientId,framework,record:{...row,definition_id:id}});expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();expect(api.get).not.toHaveBeenCalled();
 });
 test.each(['1.1','1.2'])('%s branches, persists, resumes, and requires explicit replacement approval',async id=>{
@@ -41,7 +41,7 @@ test.each(['1.1','1.2'])('%s branches, persists, resumes, and requires explicit 
   expect(document.querySelector('.omni-gap')).toBeTruthy();
   await click('Continue');expect(document.body.textContent).toContain('What');
   await click('Save and exit');expect(draft.answers[id==='1.1'?'inventory':'process']).toBe('No');
-  await open();await click('Continue');await click('Continue');await click('Generate review');
+  await open();for(let n=0;button('Continue')&&n<10;n++)await click('Continue');await click('Generate review');
   expect(document.body.textContent).toContain('Not Implemented');
   expect(button('Apply to Assessment').disabled).toBe(true);
   const check=document.querySelector('.guided-replacement input');await act(async()=>check.click());

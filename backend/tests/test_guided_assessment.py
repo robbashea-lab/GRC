@@ -1,7 +1,7 @@
 """Pilot routes against the existing isolated authorization harness."""
 import unittest
 import test_framework_governance as harness
-from guided_assessment import CATALOG
+from guided_assessment import CATALOG, LEGACY
 server=harness.server
 
 class GuidedTests(unittest.IsolatedAsyncioTestCase):
@@ -35,14 +35,17 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.get(self.path)).status_code,403)
         await server.db.users.update_one({'user_id':'member'},{'$addToSet':{'client_ids':'demo_brawndo'}})
         self.assertEqual((await self.client.put(self.path,json=self.pilot_body)).status_code,200)
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.assertEqual((await self.client.get(self.path)).status_code,200)
+        self.assertEqual((await self.client.put(self.path,json={**self.pilot_body,'expected_revision':1})).status_code,403)
         self.sign_in('admin')
         self.assertEqual((await self.client.get(self.path)).json()['answers'],{})
-        unsupported='/api/framework_assessments/'+self.foreign+'/guided-assessment'
-        self.assertEqual((await self.client.get(unsupported)).status_code,404)
+        inherited='/api/framework_assessments/'+self.foreign+'/guided-assessment'
+        self.assertEqual((await self.client.get(inherited)).status_code,200)
         for bad in [{'foreign':'secret'},{'coverage':{'Foreign':'Yes'}},{'owner':'x'*2001}]:
             self.assertEqual((await self.client.put(self.path,json={**self.pilot_body,'answers':bad})).status_code,422)
         await server.db.clients.update_one({'client_id':'demo_brawndo'},{'$set':{'framework_settings':{'cis-ig1':{'implementation_group':2}}}})
-        self.assertEqual((await self.client.get(self.path)).status_code,404)
+        self.assertEqual((await self.client.get(self.path)).status_code,200)
 
     async def test_apply_source_snapshot_native_save_and_manual_edit(self):
         draft=(await self.client.put(self.path,json={**self.pilot_body,'completed':True})).json()
@@ -58,3 +61,26 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(edited.status_code,200,edited.text)
         self.assertIsNone(edited.json()['guided_assessment_source'])
         self.assertEqual(edited.json()['assessment_history'][-2]['guided_assessment_source']['version'],CATALOG['version'])
+
+    async def test_version_transition_archives_exact_old_answers_and_narrative(self):
+        identity=self.aid+':admin'
+        old={'version':LEGACY['version'],'answers':{'inventory':'No'},'step':0,'completed':True,'revision':4,'narrative':'Original client-written summary','client_id':'demo_brawndo','generated_at':'2026-09-01T12:00:00Z'}
+        await server.db.guided_assessment_pilot.insert_one({'_id':identity,**old})
+        self.assertEqual((await self.client.get(self.path)).json(),old)
+        started=await self.client.put(self.path,json={**self.pilot_body,'answers':{},'step':0,'expected_revision':4})
+        self.assertEqual(started.status_code,200,started.text)
+        archived=await server.db.guided_assessment_history.find_one({'_id':identity+':4'})
+        self.assertEqual(archived['answers'],old['answers'])
+        self.assertEqual(archived['narrative'],old['narrative'])
+        self.assertEqual(archived['version'],LEGACY['version'])
+        self.assertEqual(started.json()['revision'],5)
+
+    async def test_control_one_applicability_tracks_groups_without_copying_answers(self):
+        for group,allowed in [(1,{'1.1','1.2'}),(2,{'1.1','1.2','1.3','1.4'}),(3,set(CATALOG['definitions']))]:
+            await server.db.clients.update_one({'client_id':'demo_brawndo'},{'$set':{'framework_settings':{'cis-ig1':{'implementation_group':group}}}})
+            for definition in ['1.1','1.2','1.3','1.4','1.5','2.1']:
+                aid='scope-'+definition
+                await server.db.framework_assessments.update_one({'framework_assessment_id':aid},{'$set':{**self.row,'_id':aid,'framework_assessment_id':aid,'client_id':'demo_brawndo','definition_id':definition}},upsert=True)
+                response=await self.client.get('/api/framework_assessments/'+aid+'/guided-assessment')
+                self.assertEqual(response.status_code,200 if definition in allowed else 404,response.text)
+                if definition in allowed:self.assertEqual(response.json()['answers'],{})

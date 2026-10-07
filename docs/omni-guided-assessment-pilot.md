@@ -1,5 +1,50 @@
 # Omni guided-assessment pilot
 
+## Control 1 checkpoint — 2026-10-07
+
+This section supersedes the original two-safeguard checkpoint below. PR #52 remains draft and unmerged. Only existing Render staging is authorized for this release; main, Sites and production are not release targets.
+
+The dashboard cleanup is separately committed as `6030ad0`. CIS no longer shows the unapproved next-work prose or Export program CSV. Other dashboard content and calculations are preserved; the new priority content appears only inside Omni.
+
+### Canonical content and scope
+
+| Safeguard | Requirement elements covered | Implementation groups |
+| --- | --- | --- |
+| 1.1 | Inventory, asset coverage, required attributes, six-month maintenance | 1, 2, 3 |
+| 1.2 | Unauthorized-asset process, weekly response, permitted disposition alternatives | 1, 2, 3 |
+| 1.3 | Active discovery, coverage, daily operation | 2, 3 |
+| 1.4 | DHCP logging OR IPAM, coverage, weekly inventory updates | 2, 3 |
+| 1.5 | Passive discovery, coverage, weekly inventory updates | 3 |
+
+Source: [official CIS v8.1 assessment specification, Control 1](https://cas.docs.cisecurity.org/en/latest/source/Controls1/). CAS assessment procedures and optional operational examples are not additional safeguard obligations. Related/prerequisite context does not create a new mandatory tool or automatically satisfy another safeguard.
+
+`shared/catalogs/guidedControl1.json` defines metadata/applicability; the unchanged legacy pack supplies inherited 1.1/1.2 question structures, with explicitly versioned current rules. `guidedControl1Additional.json` supplies independently reviewed 1.3–1.5 questions and requirement-specific rules. Current version: `cis-v8.1-control1-2`. No duplicated question sets per implementation group. No Control 2+, ISO or SOC activation.
+
+The feature gate uses authorized client context, CIS configuration and implementation-group applicability, not Brawndo's identity. Existing/new CIS clients receive applicable definitions on demand and clean state; no answers are seeded or copied. Assessment saves record the question-set version. Native IG upgrades retain inherited records and add newly applicable safeguards.
+
+### History and safety
+
+The original `brawndo-cis-pilot-1` definitions/rules remain available. Completed old drafts retain their saved narrative and answers; the UI offers a new review instead of silently rewriting them. Beginning a current-version review or restarting a completed interview archives the original record idempotently in `guided_assessment_history` before replacing its current draft. Demo implements the same archive behavior. This is an additive collection, not a destructive schema migration.
+
+Confirmed gaps and unknowns are separate. Optional tool/team context does not force a deficient implementation recommendation. Hidden branch answers cannot contribute to the current result. Apply changes only unsaved native assessment fields, with explicit existing-text replacement confirmation. Normal assessment save remains authoritative; verification, Findings, Actions and evidence-review state are not changed by the interview.
+
+### Interaction and verification evidence
+
+Inline SVG/CSS provides eight text-labelled states without external assets or new dependencies. Cosmetic session greetings, contextual dismissal and docking preferences contain no assessment answers. Pointer movement is constrained to three snap zones with keyboard alternatives/reset. Assessment launchers occupy a dedicated row away from form actions; dashboard docking checks visible critical controls on resize. Reduced motion removes nonessential motion. Omni shows at most three deterministic next items plus View all, using existing work metadata; the only shared metadata addition is the earliest linked upcoming Review due date.
+
+Local evidence at this checkpoint: 649 backend tests plus 698 subtests passed (eight existing FastAPI lifecycle deprecation warnings); 80 focused frontend tests passed before the additional priority assertion. Normal staging and Demo builds passed. The full frontend suite is still running its existing ten-year lifecycle fixture; it is not reported as passed here. Final exact-commit CI and hosted results belong in the PR release comment.
+
+Actual local browser checks include Brawndo IG1 and Initech IG2, save/exit and refresh resume, unknown-vs-gap results, replacement protection, successful Apply plus native Save & next, clean cross-client interviews, keyboard activation/Escape/focus return, docking/reset, dark/light appearance and 1440/1024/768 layouts without horizontal overflow. These are synthetic Demo checks, not real Mongo/authentication evidence. Independent content review found no remaining concrete blocker after the contextual-field and hidden-answer corrections. No screen-reader audit or interaction recording has been completed.
+
+### Files outside the guided feature
+
+- `BrawndoCisOverview.jsx` and `FrameworkWorkspace.jsx`/tests: specifically authorized CIS dashboard cleanup and Omni integration; existing ISO/SOC next-work behavior retained.
+- `frameworkWorkspace.js` and `backend/framework_governance.py`: additive upcoming linked Review date for Omni priority ordering; no new schedule/cadence or dashboard score.
+- `preview/frameworks.js`/tests: Demo persistence, applicability, archival, clean provisioning and upgrade regression coverage using the existing adapter.
+- This document: current boundary, content matrix and evidence classification. The remainder is retained as historical checkpoint documentation, not current scope.
+
+## Historical two-safeguard checkpoint
+
 ## Release boundaries
 
 Branch: `codex/brawndo-guided-assessor`. Base: `79fb270910b818afd179d593b07b3c87a57d37b7`.

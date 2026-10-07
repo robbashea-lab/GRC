@@ -1,0 +1,876 @@
+{
+  "safeguards": {
+    "1.3": [
+      {
+        "id": "tool",
+        "prompt": "Is an active discovery tool used to identify assets connected to the enterprise's network?",
+        "help": "Confirm operational active discovery, not just a purchased or installed product. Choose Not sure if use has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "tool",
+        "status_impact": "Root No => not_implemented; missing or Not sure => not_assessed; Partially => partial.",
+        "narrative_template": "Discovery tool use: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Is an active discovery tool used to identify assets connected to the enterprise's network?",
+        "unknown_template": "Confirm the current practice with the responsible team: Is an active discovery tool used to identify assets connected to the enterprise's network?",
+        "next_step_template": "Resolve this requirement and reassess: Is an active discovery tool used to identify assets connected to the enterprise's network?",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:tool",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Partially",
+          "No"
+        ]
+      },
+      {
+        "id": "existing",
+        "prompt": "What active discovery information or capability currently exists, and who can verify it?",
+        "help": "Describe current practice and the responsible client or provider team without assuming the requirement is met.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "existing",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Existing practice: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: What active discovery information or capability currently exists, and who can verify it?",
+        "unknown_template": "Confirm the current practice with the responsible team: What active discovery information or capability currently exists, and who can verify it?",
+        "next_step_template": "Resolve this requirement and reassess: What active discovery information or capability currently exists, and who can verify it?",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:existing",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "tool": [
+            "No",
+            "Not sure"
+          ]
+        }
+      },
+      {
+        "id": "system",
+        "prompt": "Which active discovery tool or tools are used?",
+        "help": "Optional context. Record the actual tool or log source; leave blank if unknown. No particular product is required.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "system",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported tool or log source: {recorded_answer}.",
+        "gap_template": "Clarify optional reported tool or log source only if needed.",
+        "unknown_template": "Unconfirmed reported tool or log source: {recorded_answer}.",
+        "next_step_template": "Verify reported tool or log source with the client or provider if needed.",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:system",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "owner",
+        "prompt": "Which client or provider team operates this practice?",
+        "help": "Optional context. Record known operational responsibilities; leave blank if unknown. This does not introduce a mandatory owner requirement.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "owner",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported responsible team: {recorded_answer}.",
+        "gap_template": "Clarify optional reported responsible team only if needed.",
+        "unknown_template": "Unconfirmed reported responsible team: {recorded_answer}.",
+        "next_step_template": "Verify reported responsible team with the client or provider if needed.",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:owner",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "coverage",
+        "prompt": "Does active discovery identify assets across the enterprise's connected networks?",
+        "help": "Consider all connected network segments, including remote or cloud networks where present. Identify blind spots; no particular product is required.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "coverage",
+        "status_impact": "Deficient, missing or Not sure => partial when the root is present; all required elements addressed => addressed.",
+        "narrative_template": "Network discovery coverage: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Does active discovery identify assets across the enterprise's connected networks?",
+        "unknown_template": "Confirm the current practice with the responsible team: Does active discovery identify assets across the enterprise's connected networks?",
+        "next_step_template": "Resolve this requirement and reassess: Does active discovery identify assets across the enterprise's connected networks?",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:coverage",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Partially",
+          "No"
+        ],
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "frequency",
+        "prompt": "How often is the active discovery tool configured to execute?",
+        "help": "Required cadence: daily or more frequently. This concerns configured active discovery execution.",
+        "type": "select",
+        "choices": [
+          "More frequently than daily",
+          "Daily",
+          "Less frequently than daily",
+          "Ad hoc",
+          "Never",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "frequency",
+        "status_impact": "Deficient, missing or Not sure => partial when the root is present; all required elements addressed => addressed.",
+        "narrative_template": "Operating frequency: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: How often is the active discovery tool configured to execute?",
+        "unknown_template": "Confirm the current practice with the responsible team: How often is the active discovery tool configured to execute?",
+        "next_step_template": "Resolve this requirement and reassess: How often is the active discovery tool configured to execute?",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:frequency",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Less frequently than daily",
+          "Ad hoc",
+          "Never"
+        ],
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "context",
+        "prompt": "Optionally describe inventory comparisons and automatic-update capability.",
+        "help": "CAS recommends comparing discoveries with inventory and validating integration configuration. Automatic updates are validation context, not an additional critical safeguard requirement.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "context",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Optional validation context: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Optionally describe inventory comparisons and automatic-update capability.",
+        "unknown_template": "Confirm the current practice with the responsible team: Optionally describe inventory comparisons and automatic-update capability.",
+        "next_step_template": "Resolve this requirement and reassess: Optionally describe inventory comparisons and automatic-update capability.",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:context",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "evidence",
+        "prompt": "What evidence is available, and which requirement does it demonstrate?",
+        "help": "Tool configuration, network scope, dated discovery results and execution history. Evidence is reported, not independently verified.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "evidence",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported evidence: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: What evidence is available, and which requirement does it demonstrate?",
+        "unknown_template": "Confirm the current practice with the responsible team: What evidence is available, and which requirement does it demonstrate?",
+        "next_step_template": "Resolve this requirement and reassess: What evidence is available, and which requirement does it demonstrate?",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:evidence",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known."
+      },
+      {
+        "id": "gaps",
+        "prompt": "What confirmed gaps exist in this practice?",
+        "help": "Record confirmed gaps only. Leave blank if none are confirmed; put uncertainty or verification needs in Unconfirmed context.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "gaps",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reviewer-reported confirmed gaps: {recorded_answer}.",
+        "gap_template": "Reviewer-reported confirmed gaps: {recorded_answer}.",
+        "unknown_template": "Verify whether the reported gap is confirmed before treating it as a finding.",
+        "next_step_template": "Resolve confirmed gaps and reassess.",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:gaps",
+        "conditional_follow_up": "Keep unconfirmed information in Unconfirmed context rather than recording it as a confirmed gap."
+      },
+      {
+        "id": "unknowns",
+        "prompt": "What remains unconfirmed, and who can verify it?",
+        "help": "Record uncertainty or verification needs only. These are unconfirmed context, not confirmed gaps. Leave blank when nothing remains unconfirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "unknowns",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Unconfirmed context: {recorded_answer}.",
+        "gap_template": "Do not treat unconfirmed context as a confirmed gap without verification.",
+        "unknown_template": "Unconfirmed unconfirmed context: {recorded_answer}.",
+        "next_step_template": "Verify unconfirmed context with the client or provider if needed.",
+        "evidence_guidance": "Tool configuration, network scope, dated discovery results and execution history. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.3",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.3:unknowns",
+        "conditional_follow_up": "Verify the reported uncertainty before recording any confirmed gap."
+      }
+    ],
+    "1.4": [
+      {
+        "id": "logging",
+        "prompt": "Is DHCP logging or an IPAM tool used for enterprise asset inventory updates?",
+        "help": "Either DHCP logging or IPAM is permitted; use the route actually operated. Choose Not sure if its use has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "logging",
+        "status_impact": "Root No => not_implemented; missing or Not sure => not_assessed; Partially => partial.",
+        "narrative_template": "DHCP logging or IPAM use: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Is DHCP logging or an IPAM tool used for enterprise asset inventory updates?",
+        "unknown_template": "Confirm the current practice with the responsible team: Is DHCP logging or an IPAM tool used for enterprise asset inventory updates?",
+        "next_step_template": "Resolve this requirement and reassess: Is DHCP logging or an IPAM tool used for enterprise asset inventory updates?",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:logging",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Partially",
+          "No"
+        ]
+      },
+      {
+        "id": "existing",
+        "prompt": "What DHCP logging or IP address management (IPAM) information or capability currently exists, and who can verify it?",
+        "help": "Describe current practice and the responsible client or provider team without assuming the requirement is met.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "existing",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Existing practice: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: What DHCP logging or IP address management (IPAM) information or capability currently exists, and who can verify it?",
+        "unknown_template": "Confirm the current practice with the responsible team: What DHCP logging or IP address management (IPAM) information or capability currently exists, and who can verify it?",
+        "next_step_template": "Resolve this requirement and reassess: What DHCP logging or IP address management (IPAM) information or capability currently exists, and who can verify it?",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:existing",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "logging": [
+            "No",
+            "Not sure"
+          ]
+        }
+      },
+      {
+        "id": "system",
+        "prompt": "Which DHCP log sources or IPAM tool are used?",
+        "help": "Optional context. Record the actual tool or log source; leave blank if unknown. No particular product is required.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "system",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported tool or log source: {recorded_answer}.",
+        "gap_template": "Clarify optional reported tool or log source only if needed.",
+        "unknown_template": "Unconfirmed reported tool or log source: {recorded_answer}.",
+        "next_step_template": "Verify reported tool or log source with the client or provider if needed.",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:system",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "logging": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "owner",
+        "prompt": "Which client or provider team operates this practice?",
+        "help": "Optional context. Record known operational responsibilities; leave blank if unknown. This does not introduce a mandatory owner requirement.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "owner",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported responsible team: {recorded_answer}.",
+        "gap_template": "Clarify optional reported responsible team only if needed.",
+        "unknown_template": "Unconfirmed reported responsible team: {recorded_answer}.",
+        "next_step_template": "Verify reported responsible team with the client or provider if needed.",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:owner",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "logging": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "coverage",
+        "prompt": "Does the chosen DHCP logging or IPAM approach cover the relevant address-management sources?",
+        "help": "For the DHCP logging route, logging must cover all DHCP servers. IPAM is a permitted alternative; assess its relevant source coverage rather than requiring a second DHCP-only implementation.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "coverage",
+        "status_impact": "Deficient, missing or Not sure => partial when the root is present; all required elements addressed => addressed.",
+        "narrative_template": "Address-management source coverage: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Does the chosen DHCP logging or IPAM approach cover the relevant address-management sources?",
+        "unknown_template": "Confirm the current practice with the responsible team: Does the chosen DHCP logging or IPAM approach cover the relevant address-management sources?",
+        "next_step_template": "Resolve this requirement and reassess: Does the chosen DHCP logging or IPAM approach cover the relevant address-management sources?",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:coverage",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Partially",
+          "No"
+        ],
+        "when": {
+          "logging": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "approach",
+        "prompt": "Which permitted approach supplies the inventory observations?",
+        "help": "Choose the approach actually used. Neither route requires a particular vendor.",
+        "type": "select",
+        "choices": [
+          "DHCP logging",
+          "IPAM",
+          "Both",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "approach",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Inventory observation approach: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Which permitted approach supplies the inventory observations?",
+        "unknown_template": "Confirm the current practice with the responsible team: Which permitted approach supplies the inventory observations?",
+        "next_step_template": "Resolve this requirement and reassess: Which permitted approach supplies the inventory observations?",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:approach",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "logging": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "inventory_update",
+        "prompt": "Are DHCP or IPAM logs reviewed and used to update the enterprise asset inventory?",
+        "help": "Confirm both review and actual use for inventory updates. Collection or review alone is insufficient. Manual or automated updates are acceptable.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "inventory_update",
+        "status_impact": "Deficient, missing or Not sure => partial when the root is present; all required elements addressed => addressed.",
+        "narrative_template": "Inventory updates: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Are DHCP or IPAM logs reviewed and used to update the enterprise asset inventory?",
+        "unknown_template": "Confirm the current practice with the responsible team: Are DHCP or IPAM logs reviewed and used to update the enterprise asset inventory?",
+        "next_step_template": "Resolve this requirement and reassess: Are DHCP or IPAM logs reviewed and used to update the enterprise asset inventory?",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:inventory_update",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Partially",
+          "No"
+        ],
+        "when": {
+          "logging": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "frequency",
+        "prompt": "How often are logs reviewed and used to update the enterprise asset inventory?",
+        "help": "Required cadence: weekly or more frequently. This concerns review and inventory updates, not a separate mandated scan schedule.",
+        "type": "select",
+        "choices": [
+          "More frequently than weekly",
+          "Weekly",
+          "Less frequently than weekly",
+          "Ad hoc",
+          "Never",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "frequency",
+        "status_impact": "Deficient, missing or Not sure => partial when the root is present; all required elements addressed => addressed.",
+        "narrative_template": "Operating frequency: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: How often are logs reviewed and used to update the enterprise asset inventory?",
+        "unknown_template": "Confirm the current practice with the responsible team: How often are logs reviewed and used to update the enterprise asset inventory?",
+        "next_step_template": "Resolve this requirement and reassess: How often are logs reviewed and used to update the enterprise asset inventory?",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:frequency",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Less frequently than weekly",
+          "Ad hoc",
+          "Never"
+        ],
+        "when": {
+          "logging": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "context",
+        "prompt": "Optionally describe how DHCP or IPAM observations are reconciled with inventory.",
+        "help": "CAS uses CMDB configuration and reconciliation checks as assessment methods. A CMDB product and automatic synchronization are not mandatory; manual or other inventory workflows can meet the requirement.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "context",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Optional validation context: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Optionally describe how DHCP or IPAM observations are reconciled with inventory.",
+        "unknown_template": "Confirm the current practice with the responsible team: Optionally describe how DHCP or IPAM observations are reconciled with inventory.",
+        "next_step_template": "Resolve this requirement and reassess: Optionally describe how DHCP or IPAM observations are reconciled with inventory.",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:context",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "logging": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "evidence",
+        "prompt": "What evidence is available, and which requirement does it demonstrate?",
+        "help": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Evidence is reported, not independently verified.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "evidence",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported evidence: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: What evidence is available, and which requirement does it demonstrate?",
+        "unknown_template": "Confirm the current practice with the responsible team: What evidence is available, and which requirement does it demonstrate?",
+        "next_step_template": "Resolve this requirement and reassess: What evidence is available, and which requirement does it demonstrate?",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:evidence",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known."
+      },
+      {
+        "id": "gaps",
+        "prompt": "What confirmed gaps exist in this practice?",
+        "help": "Record confirmed gaps only. Leave blank if none are confirmed; put uncertainty or verification needs in Unconfirmed context.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "gaps",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reviewer-reported confirmed gaps: {recorded_answer}.",
+        "gap_template": "Reviewer-reported confirmed gaps: {recorded_answer}.",
+        "unknown_template": "Verify whether the reported gap is confirmed before treating it as a finding.",
+        "next_step_template": "Resolve confirmed gaps and reassess.",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:gaps",
+        "conditional_follow_up": "Keep unconfirmed information in Unconfirmed context rather than recording it as a confirmed gap."
+      },
+      {
+        "id": "unknowns",
+        "prompt": "What remains unconfirmed, and who can verify it?",
+        "help": "Record uncertainty or verification needs only. These are unconfirmed context, not confirmed gaps. Leave blank when nothing remains unconfirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "unknowns",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Unconfirmed context: {recorded_answer}.",
+        "gap_template": "Do not treat unconfirmed context as a confirmed gap without verification.",
+        "unknown_template": "Unconfirmed unconfirmed context: {recorded_answer}.",
+        "next_step_template": "Verify unconfirmed context with the client or provider if needed.",
+        "evidence_guidance": "DHCP logging configuration or IPAM records, source coverage, dated log reviews and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.4",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.4:unknowns",
+        "conditional_follow_up": "Verify the reported uncertainty before recording any confirmed gap."
+      }
+    ],
+    "1.5": [
+      {
+        "id": "tool",
+        "prompt": "Is a passive discovery tool used to identify assets connected to the enterprise's network?",
+        "help": "Confirm operational passive discovery, not just a purchased or installed product. Choose Not sure if use has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "tool",
+        "status_impact": "Root No => not_implemented; missing or Not sure => not_assessed; Partially => partial.",
+        "narrative_template": "Discovery tool use: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Is a passive discovery tool used to identify assets connected to the enterprise's network?",
+        "unknown_template": "Confirm the current practice with the responsible team: Is a passive discovery tool used to identify assets connected to the enterprise's network?",
+        "next_step_template": "Resolve this requirement and reassess: Is a passive discovery tool used to identify assets connected to the enterprise's network?",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:tool",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Partially",
+          "No"
+        ]
+      },
+      {
+        "id": "existing",
+        "prompt": "What passive discovery information or capability currently exists, and who can verify it?",
+        "help": "Describe current practice and the responsible client or provider team without assuming the requirement is met.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "existing",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Existing practice: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: What passive discovery information or capability currently exists, and who can verify it?",
+        "unknown_template": "Confirm the current practice with the responsible team: What passive discovery information or capability currently exists, and who can verify it?",
+        "next_step_template": "Resolve this requirement and reassess: What passive discovery information or capability currently exists, and who can verify it?",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:existing",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "tool": [
+            "No",
+            "Not sure"
+          ]
+        }
+      },
+      {
+        "id": "system",
+        "prompt": "Which passive discovery tool or tools are used?",
+        "help": "Optional context. Record the actual tool or log source; leave blank if unknown. No particular product is required.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "system",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported tool or log source: {recorded_answer}.",
+        "gap_template": "Clarify optional reported tool or log source only if needed.",
+        "unknown_template": "Unconfirmed reported tool or log source: {recorded_answer}.",
+        "next_step_template": "Verify reported tool or log source with the client or provider if needed.",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:system",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "owner",
+        "prompt": "Which client or provider team operates this practice?",
+        "help": "Optional context. Record known operational responsibilities; leave blank if unknown. This does not introduce a mandatory owner requirement.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "owner",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported responsible team: {recorded_answer}.",
+        "gap_template": "Clarify optional reported responsible team only if needed.",
+        "unknown_template": "Unconfirmed reported responsible team: {recorded_answer}.",
+        "next_step_template": "Verify reported responsible team with the client or provider if needed.",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:owner",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "coverage",
+        "prompt": "Does passive discovery identify assets across the enterprise's connected networks?",
+        "help": "Identify monitored network segments and blind spots, including remote or cloud networks where present. Passive discovery observes network activity; an active scanner alone does not meet this requirement.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "coverage",
+        "status_impact": "Deficient, missing or Not sure => partial when the root is present; all required elements addressed => addressed.",
+        "narrative_template": "Network discovery coverage: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Does passive discovery identify assets across the enterprise's connected networks?",
+        "unknown_template": "Confirm the current practice with the responsible team: Does passive discovery identify assets across the enterprise's connected networks?",
+        "next_step_template": "Resolve this requirement and reassess: Does passive discovery identify assets across the enterprise's connected networks?",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:coverage",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Partially",
+          "No"
+        ],
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "inventory_update",
+        "prompt": "Are passive discovery results reviewed and used to update the enterprise asset inventory?",
+        "help": "Confirm both review and actual use for inventory updates. Collection or review alone is insufficient. Manual or automated updates are acceptable.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "inventory_update",
+        "status_impact": "Deficient, missing or Not sure => partial when the root is present; all required elements addressed => addressed.",
+        "narrative_template": "Inventory updates: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Are passive discovery results reviewed and used to update the enterprise asset inventory?",
+        "unknown_template": "Confirm the current practice with the responsible team: Are passive discovery results reviewed and used to update the enterprise asset inventory?",
+        "next_step_template": "Resolve this requirement and reassess: Are passive discovery results reviewed and used to update the enterprise asset inventory?",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:inventory_update",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Partially",
+          "No"
+        ],
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "frequency",
+        "prompt": "How often are passive discovery results reviewed and used to update the enterprise asset inventory?",
+        "help": "Required cadence: weekly or more frequently. This concerns review and inventory updates, not a separate mandated scan schedule.",
+        "type": "select",
+        "choices": [
+          "More frequently than weekly",
+          "Weekly",
+          "Less frequently than weekly",
+          "Ad hoc",
+          "Never",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "frequency",
+        "status_impact": "Deficient, missing or Not sure => partial when the root is present; all required elements addressed => addressed.",
+        "narrative_template": "Operating frequency: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: How often are passive discovery results reviewed and used to update the enterprise asset inventory?",
+        "unknown_template": "Confirm the current practice with the responsible team: How often are passive discovery results reviewed and used to update the enterprise asset inventory?",
+        "next_step_template": "Resolve this requirement and reassess: How often are passive discovery results reviewed and used to update the enterprise asset inventory?",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:frequency",
+        "conditional_follow_up": "For Partially, No or Not sure, record the gap or verification owner.",
+        "deficient_values": [
+          "Less frequently than weekly",
+          "Ad hoc",
+          "Never"
+        ],
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "context",
+        "prompt": "Optionally describe passive sensor placement and configuration validation.",
+        "help": "CAS recommends checking configuration and network coverage against architecture documentation. These are validation methods, not a requirement for a particular sensor product or an invented discovery schedule.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "context",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Optional validation context: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: Optionally describe passive sensor placement and configuration validation.",
+        "unknown_template": "Confirm the current practice with the responsible team: Optionally describe passive sensor placement and configuration validation.",
+        "next_step_template": "Resolve this requirement and reassess: Optionally describe passive sensor placement and configuration validation.",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:context",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known.",
+        "when": {
+          "tool": [
+            "Yes",
+            "Partially"
+          ]
+        }
+      },
+      {
+        "id": "evidence",
+        "prompt": "What evidence is available, and which requirement does it demonstrate?",
+        "help": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Evidence is reported, not independently verified.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "evidence",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reported evidence: {recorded_answer}.",
+        "gap_template": "Address the missing or incomplete practice: What evidence is available, and which requirement does it demonstrate?",
+        "unknown_template": "Confirm the current practice with the responsible team: What evidence is available, and which requirement does it demonstrate?",
+        "next_step_template": "Resolve this requirement and reassess: What evidence is available, and which requirement does it demonstrate?",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:evidence",
+        "conditional_follow_up": "Record relevant context when available; leave blank if not known."
+      },
+      {
+        "id": "gaps",
+        "prompt": "What confirmed gaps exist in this practice?",
+        "help": "Record confirmed gaps only. Leave blank if none are confirmed; put uncertainty or verification needs in Unconfirmed context.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "gaps",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Reviewer-reported confirmed gaps: {recorded_answer}.",
+        "gap_template": "Reviewer-reported confirmed gaps: {recorded_answer}.",
+        "unknown_template": "Verify whether the reported gap is confirmed before treating it as a finding.",
+        "next_step_template": "Resolve confirmed gaps and reassess.",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:gaps",
+        "conditional_follow_up": "Keep unconfirmed information in Unconfirmed context rather than recording it as a confirmed gap."
+      },
+      {
+        "id": "unknowns",
+        "prompt": "What remains unconfirmed, and who can verify it?",
+        "help": "Record uncertainty or verification needs only. These are unconfirmed context, not confirmed gaps. Leave blank when nothing remains unconfirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "unknowns",
+        "status_impact": "Context only; does not determine implementation status",
+        "narrative_template": "Unconfirmed context: {recorded_answer}.",
+        "gap_template": "Do not treat unconfirmed context as a confirmed gap without verification.",
+        "unknown_template": "Unconfirmed unconfirmed context: {recorded_answer}.",
+        "next_step_template": "Verify unconfirmed context with the client or provider if needed.",
+        "evidence_guidance": "Passive tool configuration, monitored network scope, dated discovery results, review records and corresponding inventory changes. Suggested alternatives; reported evidence remains unverified.",
+        "safeguard_id": "1.5",
+        "question_set_version": "cis-v8.1-control1-2",
+        "question_id": "1.5:unknowns",
+        "conditional_follow_up": "Verify the reported uncertainty before recording any confirmed gap."
+      }
+    ]
+  }
+}

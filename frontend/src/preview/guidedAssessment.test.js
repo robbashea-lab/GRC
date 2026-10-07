@@ -1,6 +1,8 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {guidedCatalog} from '../lib/guidedAssessment';
+import baseline from '@catalogs/onboardingCatalog.json';
+import {FRAMEWORKS} from '../lib/frameworks';
 const api=axios.create({adapter:previewAdapter});
 let row,path;
 beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');const w=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data;row=w.assessments.find(a=>a.definition_id==='1.1');path='/framework_assessments/'+row.framework_assessment_id+'/guided-assessment';});
@@ -20,9 +22,37 @@ test('Apply uses normal save and preserves verification and history attribution'
   const edited=(await api.patch('/framework_assessments/'+row.framework_assessment_id,{implementation:'Manual correction'})).data;
   expect(edited.guided_assessment_source).toBeNull();
 });
-test('other clients and frameworks reject interview access',async()=>{
-  for(const [framework,cid] of [['cis-ig1','demo_initech'],['soc-2','demo_prestige'],['iso-27001','demo_dunder']]){
+test('applicable CIS clients start clean and unrelated frameworks reject access',async()=>{
+  const cis=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data;
+  const interview=(await api.get('/framework_assessments/'+cis.assessments.find(a=>a.definition_id==='1.1').framework_assessment_id+'/guided-assessment')).data;
+  expect(interview.answers).toEqual({});expect(interview.revision).toBe(0);
+  for(const [framework,cid] of [['soc-2','demo_prestige'],['iso-27001','demo_dunder']]){
     const w=(await api.get('/frameworks/'+framework,{params:{client_id:cid}})).data;
     if(w.assessments?.length)await expect(api.get('/framework_assessments/'+w.assessments[0].framework_assessment_id+'/guided-assessment')).rejects.toMatchObject({response:{status:404}});
+  }
+});
+
+test.each([1,2,3])('new IG%i clients receive canonical clean interviews and preserve inherited work on upgrade',async group=>{
+  const cid=(await api.post('/clients',{name:'Temporary Omni provisioning QA'})).data.client_id;
+  const state={version:3,step:3,policies:Object.fromEntries(baseline.policies.map(p=>[p.key,'unsure'])),requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,f.key==='cis-ig1'?'applies':'does_not_apply'])),reviews:[],framework_reviews:{},framework_settings:{'cis-ig1':{implementation_group:group}}};
+  await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true});
+  const workspace=async()=>(await api.get('/frameworks/cis-ig1',{params:{client_id:cid}})).data;
+  const initial=await workspace(),first=initial.assessments.find(a=>a.definition_id==='1.1'),route='/framework_assessments/'+first.framework_assessment_id+'/guided-assessment';
+  for(const id of Object.keys(guidedCatalog.definitions).filter(id=>guidedCatalog.definitions[id].groups.includes(group))){
+    const record=initial.assessments.find(a=>a.definition_id===id);
+    expect((await api.get('/framework_assessments/'+record.framework_assessment_id+'/guided-assessment')).data).toMatchObject({version:guidedCatalog.version,answers:{},revision:0});
+  }
+  const interview=(await api.put(route,{...body,narrative:'Synthetic preserved narrative',completed:true})).data;
+  const original=(await api.patch('/framework_assessments/'+first.framework_assessment_id,{implementation:'Synthetic implementation',status:'needs_attention'})).data;
+  for(const next of [2,3].filter(g=>g>group)){
+    await api.patch('/frameworks/cis-ig1/configuration',{client_id:cid,implementation_group:next,expected_updated_at:(await workspace()).configuration.expected_updated_at},{headers:{'Idempotency-Key':'omni-upgrade-'+group+'-'+next}});
+    const updated=await workspace();expect(updated.active_definition_ids).toHaveLength(next===2?130:153);
+    expect(updated.assessments.filter(a=>a.definition_id==='1.1')).toHaveLength(1);
+    expect(updated.assessments.find(a=>a.framework_assessment_id===first.framework_assessment_id)).toEqual(original);
+    expect((await api.get(route)).data).toEqual(interview);
+    for(const id of Object.keys(guidedCatalog.definitions))if(guidedCatalog.definitions[id].groups.includes(next)&&id!=='1.1'){
+      const added=updated.assessments.find(a=>a.definition_id===id);
+      expect((await api.get('/framework_assessments/'+added.framework_assessment_id+'/guided-assessment')).data.answers).toEqual({});
+    }
   }
 });

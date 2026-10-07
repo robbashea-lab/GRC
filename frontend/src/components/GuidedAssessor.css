@@ -1,6 +1,23 @@
 .guided-launcher { position:fixed; right:24px; bottom:24px; z-index:40; display:flex; align-items:center; gap:12px; max-width:calc(100vw - 48px); }
-.guided-in-assessment .guided-launcher { position:absolute; bottom:84px; right:24px; z-index:1; }
-.guided-in-assessment { height:80px; }
+.guided-in-assessment .guided-launcher { position:relative; bottom:auto; right:auto; z-index:1; }
+.guided-in-assessment { min-height:100px; padding-top:12px; }
+.omni-dock-flow { position:relative!important; right:auto!important; left:auto!important; bottom:auto!important; top:auto!important; justify-content:flex-end; min-height:100px; margin:12px 0; transform:none!important; }
+.omni-dock-lower-right { right:24px; bottom:96px; }
+.omni-dock-middle-right { right:24px; bottom:45vh; }
+.omni-dock-lower-left { left:260px; right:auto; bottom:96px; }
+.omni-dock-lower-left.omni-dock-flow { justify-content:flex-start; }
+.omni-position-controls { font-size:12px; position:relative; flex:none; }
+.omni-position-controls summary { cursor:pointer; padding:10px 8px; min-height:44px; }
+.omni-position-controls > div { position:absolute; right:0; bottom:44px; z-index:2; width:180px; background:var(--color-bg-surface); border:1px solid var(--color-input-border); border-radius:8px; padding:6px; }
+.omni-position-controls button { display:block; padding:8px; min-height:44px; width:100%; text-align:left; }
+.omni-launch-button { touch-action:none; }
+.omni-eye-attention { transition:transform 160ms ease-out; }
+.omni-eyes { transform-origin:40px 40px; filter:drop-shadow(0 0 2px #6bcdf9); animation:omni-blink 7s ease-in-out infinite; }
+.omni-entrance { animation:omni-enter 240ms cubic-bezier(.23,1,.32,1) both; }
+.omni-applied { animation:omni-confirm 240ms ease-out; }
+@keyframes omni-blink { 0%,44%,48%,100% { transform:scaleY(1); } 46% { transform:scaleY(.12); } }
+@keyframes omni-enter { from { opacity:0; transform:translate(18px,18px); } to { opacity:1; transform:translate(0,0); } }
+@keyframes omni-confirm { from { transform:scale(.96); } to { transform:scale(1); } }
 .omni-launch-button { width:76px; height:76px; display:grid; place-items:center; flex:none; border:1px solid transparent; border-radius:50%; }
 .omni-character { display:block; width:100%; height:100%; filter:drop-shadow(0 4px 5px rgba(20,43,64,.2)); }
 .omni-launch-button.is-minimized { width:48px; height:48px; }
@@ -33,5 +50,5 @@
 .guided-panel input[type=checkbox] { margin-top:5px; accent-color:var(--color-link); flex:none; }
 .guided-panel ul { list-style:disc; padding-left:20px; }
 .guided-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
-@media(max-width:800px) { .omni-launch-button { width:60px; height:60px; } .omni-launch-button.is-minimized { width:48px; height:48px; } .guided-context-prompt { display:none; } .guided-launcher { right:16px; bottom:16px; } .guided-in-assessment .guided-launcher { right:16px; bottom:92px; } :root .ui-dialog.guided-panel[data-state] { right:16px; max-height:calc(100dvh - 96px); } }
-@media(prefers-reduced-motion:reduce) { .guided-pilot .omni-character,.guided-pilot .omni-character *,.guided-panel .omni-character,.guided-panel .omni-character * { animation:none; transform:none; } }
+@media(max-width:800px) { .omni-launch-button { width:60px; height:60px; } .omni-launch-button.is-minimized { width:48px; height:48px; } .guided-context-prompt { max-width:230px; } .guided-launcher { right:16px; bottom:96px; } .omni-dock-lower-left { left:16px; } :root .ui-dialog.guided-panel[data-state] { right:16px; max-height:calc(100dvh - 96px); } }
+@media(prefers-reduced-motion:reduce) { .guided-pilot .omni-character,.guided-pilot .omni-character *,.guided-panel .omni-character,.guided-panel .omni-character *,.omni-entrance { animation:none; transform:none; transition:none; } }

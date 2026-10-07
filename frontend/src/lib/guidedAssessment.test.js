@@ -1,22 +1,33 @@
-import {pilotEnabled,visibleQuestions,generateResult,validateAnswers,guidedCatalog} from './guidedAssessment';
+import {pilotEnabled,visibleQuestions,generateResult,validateAnswers,guidedCatalog,prioritizeGuidedRows} from './guidedAssessment';
 const today=new Date(2026,9,7);
+test('Omni priorities are bounded, deterministic and preserve input records',()=>{
+  const rows=[{definition_id:'1.4',status:'not_assessed'},{definition_id:'1.3',status:'not_assessed'},{definition_id:'1.2',status:'addressed',work:{overdue_reviews:1}},{definition_id:'1.1',status:'in_progress'},{definition_id:'2.1',status:'not_assessed'}];
+  const before=JSON.stringify(rows);
+  expect(prioritizeGuidedRows(rows,{'1.1':{revision:2,completed:false}}).map(r=>r.definition_id)).toEqual(['1.1','1.2','1.3']);
+  expect(JSON.stringify(rows)).toBe(before);
+  expect(prioritizeGuidedRows([{definition_id:'1.2',status:'not_assessed'},{definition_id:'1.1',status:'not_assessed'}]).map(r=>r.definition_id)).toEqual(['1.1','1.2']);
+  expect(prioritizeGuidedRows([{definition_id:'1.1',status:'addressed',verification:'verified',work:{next_review_due:'2026-12-01'}},{definition_id:'1.2',status:'addressed',verification:'verified',work:{next_review_due:'2026-11-01'}}]).map(r=>r.definition_id)).toEqual(['1.2','1.1']);
+});
 const complete=id=>Object.fromEntries(guidedCatalog.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(k=>[k,'Yes'])):q.type==='text'?'':q.type==='date'?'2026-09-01':q.type==='multi'?['Quarantine or isolate']:q.id==='sources'?'One source':q.id==='frequency'?id==='1.1'?'Every six months':'Weekly':q.id==='unresolved'?'No':'Yes']));
 test('strict client framework group and safeguard gate',()=>{
   expect(pilotEnabled('demo_brawndo','cis-ig1',{implementation_group:1},'1.1')).toBe(true);
-  for(const [client,framework,group,id] of [['demo_prestige','cis-ig1',1,'1.1'],['demo_brawndo','soc-2',1,'1.1'],['demo_brawndo','iso-27001',1,'1.1'],['demo_brawndo','cis-ig1',2,'1.1'],['demo_brawndo','cis-ig1',1,'1.3']])expect(pilotEnabled(client,framework,{implementation_group:group},id)).toBe(false);
+  for(const [client,framework,group,id] of [['demo_brawndo','soc-2',1,'1.1'],['demo_brawndo','iso-27001',1,'1.1'],['demo_brawndo','cis-ig1',1,'1.3'],['new-client','cis-ig1',2,'1.5'],['new-client','cis-ig1',3,'2.1']])expect(pilotEnabled(client,framework,{implementation_group:group},id)).toBe(false);
+  for(const group of [1,2,3])for(const id of ['1.1','1.2'])expect(pilotEnabled('new-client','cis-ig1',{implementation_group:group},id)).toBe(true);
+  for(const group of [2,3])for(const id of ['1.3','1.4'])expect(pilotEnabled('new-client','cis-ig1',{implementation_group:group},id)).toBe(true);
+  expect(pilotEnabled('new-client','cis-ig1',{implementation_group:3},'1.5')).toBe(true);
 });
 test.each(['1.1','1.2'])('%s foundational No branches without detailed questions',id=>{
   const key=id==='1.1'?'inventory':'process',answers={[key]:'No',existing:'Manual list'};
-  expect(visibleQuestions(id,answers).map(q=>q.id)).toEqual([key,'existing','evidence','gaps']);
+  expect(visibleQuestions(id,answers).map(q=>q.id)).toEqual([key,'existing','evidence','gaps','unknowns']);
   expect(generateResult(id,answers,today).status).toBe('needs_attention');
   expect(generateResult(id,{[key]:'Not sure'},today).status).toBe('not_assessed');
 });
 test.each(['1.1','1.2'])('%s complete reported requirements remain separate from verification',id=>{
   const answers={...complete(id),system:'Inventory system',owner:'IT Operations'};
   const output=generateResult(id,answers,today);
-  expect(output.status).toBe('addressed');expect(output.narrative).toContain('Brawndo');expect(output.narrative).toContain('IT Operations');
+  expect(output.status).toBe('addressed');expect(output.narrative).not.toContain('Brawndo');expect(output.narrative).toContain('IT Operations');
   expect(output.verification).toBeUndefined();expect(output.version).toBe(guidedCatalog.version);
-  answers.owner='';expect(generateResult(id,answers,today).status).toBe('in_progress');
+  answers.owner='';expect(generateResult(id,answers,today).status).toBe('addressed');
 });
 test('1.1 missing coverage, old review, uncertain attributes cannot recommend Implemented',()=>{
   const a={...complete('1.1'),system:'RMM',owner:'IT'};

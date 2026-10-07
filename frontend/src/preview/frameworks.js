@@ -182,6 +182,9 @@ export function frameworkRequest(db,path,method,params,body){
     if(Object.keys(body).some(k=>!['version','answers','step','completed','narrative','expected_revision'].includes(k))||body.version!==guidedCatalog.version||!Number.isInteger(body.step)||body.step<0||body.step>30||typeof body.completed!=='boolean'||typeof (body.narrative??'')!=='string'||(body.narrative||'').length>20000)fail('Invalid interview');
     validateAnswers(row.definition_id,body.answers);
     const old=readDraft();if(old.revision!==body.expected_revision)fail('Interview changed; reload before saving',409);
+    if(old.revision&&(old.version!==body.version||old.completed&&!body.completed&&!Object.keys(body.answers).length)){
+      (db.guided_assessment_history||={})[draftKey+':'+old.revision]=JSON.parse(JSON.stringify(old));
+    }
     const at=now(),data={version:body.version,answers:body.answers,narrative:body.narrative||'',step:body.step,completed:body.completed,revision:old.revision+1,updated_at:at,generated_at:body.completed?at:null};
     (db.guided_assessment_pilot||={})[draftKey]=data;return data;
   }

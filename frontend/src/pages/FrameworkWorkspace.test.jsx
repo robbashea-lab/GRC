@@ -67,7 +67,7 @@ test.each(['demo_prestige','new-soc-client'])('SOC workspace has no configuratio
 test('Brawndo summary, bar tooltips, and removed sections; Controls follow the summary',async()=>{
  await brawndo();
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('Implemented98%55 of 56');expect(summary).toContain('Assessed98%');expect(summary).toContain('1 still to assess · Continue with safeguard 1.2');
+ expect(summary).toContain('Implemented98%55 of 56');expect(summary).toContain('Assessed98%');expect(summary).not.toContain('still to assess');expect(summary).not.toContain('Continue with safeguard');
  expect(summary).toContain('not a compliance percentage, certification or audit opinion');
  expect(container.querySelector('h1').textContent).toBe('CIS IG1');
  const seg=container.querySelector('[data-testid="bcis-seg-addressed"]');
