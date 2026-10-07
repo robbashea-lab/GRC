@@ -65,7 +65,8 @@ api.interceptors.request.use((cfg) => {
     cfg.headers['Idempotency-Key'] ||= recordUuid();
   }
   const t = accessToken;
-  if (t) cfg.headers.Authorization = `Bearer ${t}`;
+  if (cfg.cookieAuthOnly) delete cfg.headers.Authorization;
+  else if (t) cfg.headers.Authorization = `Bearer ${t}`;
   return cfg;
 });
 

@@ -1,7 +1,7 @@
 import PageHeader from "@/components/PageHeader";
 import { ShieldCheck, Info } from "lucide-react";
 
-import { PLANNED_ROLES as ROLES, PLANNED_CAPABILITIES as CAPS, FUTURE_CLIENT_APPROVER } from "@/lib/plannedRoleModel";
+import { PLANNED_ROLES as ROLES, PLANNED_CAPABILITIES as CAPS } from "@/lib/plannedRoleModel";
 
 export default function AdminRoles() {
   return (
@@ -50,21 +50,16 @@ export default function AdminRoles() {
         </section>
         <section className="space-y-3 text-xs text-ink-secondary" data-testid="role-trust-boundaries">
           <h2 className="text-sm font-semibold text-ink-primary">Trust boundaries</h2>
-          <p>Only Platform Owners have global client scope. An empty service-provider assignment list grants no client access. Providers cannot create or manage internal administrator accounts.</p>
+          <p>Super Admins have global client scope. Service-provider administrators may access all clients only with an explicit all-client entitlement. An empty assignment list grants no access. Providers cannot create or manage internal administrator accounts.</p>
           <p>Client managers coordinate permitted operations and assign existing client users. Contributors work assigned records. Limited assignment never permits changing another user's role or client access.</p>
-          <p>Read-only users cannot approve, upload or modify business records, even when named as a business approver. External auditor access requires a future explicit content-grant model and is not active.</p>
+          <p>Read-only users cannot approve, upload or modify business records, even when named as a business approver.</p>
           <p>History locks, optimistic concurrency and separation-of-duties checks apply in addition to role permissions. No role grants arbitrary audit-history deletion or bypasses record integrity.</p>
-        </section>
-        <section className="rounded-md border border-line bg-surface-card p-4 space-y-2" data-testid="future-client-approver">
-          <h2 className="text-sm font-semibold text-ink-primary">{FUTURE_CLIENT_APPROVER.label} · Future</h2>
-          <p className="text-xs text-ink-secondary">{FUTURE_CLIENT_APPROVER.detail}</p>
-          <p className="text-xs text-ink-secondary">Reserved capabilities cover policy approval, risk acceptance, exception decisions, closure approval, and review sign-off. This role is not active or assignable.</p>
         </section>
         <section className="space-y-3 text-xs text-ink-secondary" data-testid="current-effective-permissions">
           <h2 className="text-sm font-semibold text-ink-primary">Current Effective Permissions</h2>
           <p>Persisted role IDs are retained. No accounts are automatically promoted or assigned additional clients. The backend checks role, tenant scope and record permissions independently of browser state.</p>
           <p><code>super_admin</code> maps to Platform Owner; <code>platform_admin</code> to Service Provider GRC Administrator; <code>client_grc_manager</code> to Client GRC Manager. Contributor and read-only IDs remain unchanged.</p>
-          <p>Demo simulation is synthetic and is not proof of real authentication or tenant isolation. Production-like staging validation and independent penetration testing remain required.</p>
+
         </section>
       </div>
     </div>

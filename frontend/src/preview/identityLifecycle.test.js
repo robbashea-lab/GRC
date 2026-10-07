@@ -18,6 +18,20 @@ beforeEach(() => {
     tasks: [], findings: [], risks: [], vendors: [], policies: [], assets: [], requirements: [], exceptions: [],
   };
 });
+
+test('explicit all-client entitlement persists and scopes provider account administration', () => {
+  db.user = {user_id:'owner', role:'super_admin', client_ids:[]};
+  const created = call('/users', 'post', {name:' Global provider ',email:'GLOBAL@example.com',role:'platform_admin',client_ids:[],all_clients:true}).user;
+  expect(created.all_clients).toBe(true);
+  expect(created.name).toBe('Global provider');
+  db.user = {...created,status:'active'};
+  expect(call('/users').map(u => u.user_id)).toContain('foreign');
+  expect(call('/users').map(u => u.user_id)).not.toContain('super');
+  call('/users/foreign','patch',{name:'Authorized edit'});
+  expect(() => call('/users/foreign','patch',{password_change_required:true})).toThrow('standard authentication');
+  db.user.all_clients = false;
+  expect(call('/users')).toEqual([]);
+});
 test('link is explicit, candidates scoped, no permissions or membership copied', () => {
   expect(call('/contacts/maya/account-candidates').items.map(u => u.user_id)).toEqual(['shared', 'alex', 'super']);
   const users = JSON.stringify(db.users);

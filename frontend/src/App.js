@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { OrgProvider } from "@/context/OrgContext";
+import { OrgProvider, useOrg } from "@/context/OrgContext";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import AuthCallback from "@/pages/AuthCallback";
@@ -28,9 +28,11 @@ import AIGovernance from '@/pages/AIGovernance';
 import "@/App.css";
 
 function Protected({ children }) {
+  const location = useLocation();
   const { user, loading } = useAuth();
   if (loading) return <div className="p-8 text-ink-muted text-sm">Loading…</div>;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.password_change_required && location.pathname !== "/account") return <Navigate to="/account" replace />;
   return children;
 }
 
@@ -39,7 +41,10 @@ function Protected({ children }) {
 function LandingRoute() {
   const { user } = useAuth();
   const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
-  return <Navigate to={isInternal ? "/clients" : "/dashboard"} replace />;
+  const {clients, loading} = useOrg();
+  if (loading) return <div className="p-8">Loading clients…</div>;
+  if (!clients.length && user?.role !== "super_admin") return <div role="status" className="page-content">No client access is assigned. Contact your administrator.</div>;
+  return <Navigate to={isInternal && (clients.length !== 1 || user?.role === "super_admin") ? "/clients" : "/dashboard"} replace />;
 }
 
 // Client Directory is restricted to internal admins.

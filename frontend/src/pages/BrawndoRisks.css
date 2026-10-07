@@ -2,21 +2,18 @@
 .bpage .brisk-score { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
 .bpage .brisk-num { min-width: 22px; font: 600 18px/1 'Space Grotesk', var(--font-heading); font-variant-numeric: tabular-nums; color: var(--bp-text); }
 .bpage .brisk-num.is-critical { color: var(--bp-critical); }
-.bpage .brisk-num.is-high { color: var(--bp-critical); }
+.bpage .brisk-num.is-high { color: var(--bp-attention); }
 .bpage .brisk-num.is-moderate { color: var(--bp-attention); }
 .bpage .brisk-date { display: block; font-weight: 600; color: var(--bp-text); }
 .bpage .brisk-filters { display: flex; gap: 8px; margin-left: auto; }
 .bpage .register-toolbar .bpage-chips { flex: 1 1 auto; }
 .bpage .brisk-filters button { font-size: 13px; font-weight: 500; color: var(--bp-muted); }
-/* Level and acceptance pills: the kit's dark remap lacks --color-high, so use the kit tones directly. */
-.bpage td .pill-high { color: var(--bp-critical); background: var(--bp-critical-bg); border-color: transparent; font-weight: 600; }
-.bpage td .pill-accepted { color: var(--bp-good); background: var(--bp-good-bg); border-color: transparent; font-weight: 600; }
-.bpage:not([data-theme="dark"]) td .pill-accepted { color: #166534; }
 
 /* Approved register keeps text alongside compact colored level indicators. */
 .bpage .brisk-level { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; text-transform: capitalize; }
 .bpage .brisk-level::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-.bpage .brisk-level.is-critical, .bpage .brisk-level.is-high { color: var(--bp-critical); }
+.bpage .brisk-level.is-critical { color: var(--bp-critical); }
+.bpage .brisk-level.is-high { color: var(--bp-attention); }
 .bpage .brisk-level.is-moderate { color: var(--bp-attention); }
 .bpage.approved-risk-register .register-toolbar { display: flex; flex-wrap: wrap; }
 .bpage.approved-risk-register .register-toolbar .bpage-chips { order: 3; flex-basis: 100%; }

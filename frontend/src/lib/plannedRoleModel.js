@@ -3,7 +3,7 @@
 export const ROLE_MODEL_STATUS = 'server-enforced';
 export const PLANNED_ROLES = [
   {key:'platform_owner',legacyKey:'super_admin',label:'Platform Owner',scope:'PLATFORM-WIDE',detail:'Trusted platform administrator. All client access, subject to workflow and historical integrity rules.'},
-  {key:'platform_administrator',legacyKey:'platform_admin',label:'Service Provider GRC Administrator',scope:'ASSIGNED CLIENTS',detail:'Administers explicitly assigned client programs and client users. No global access or internal-role delegation.'},
+  {key:'platform_administrator',legacyKey:'platform_admin',label:'Service Provider GRC Administrator',scope:'AUTHORIZED CLIENTS',detail:'Administers assigned client programs and client users. All-client access requires an explicit entitlement. Cannot delegate internal roles.'},
   {key:'client_grc_manager',legacyKey:'client_grc_manager',label:'Client GRC Manager',scope:'THEIR CLIENT',detail:'Coordinates operational work and existing client users. Cannot change programs, delete authoritative records, or manage access.'},
   {key:'client_contributor',legacyKey:'client_contributor',label:'Client Contributor',scope:'THEIR CLIENT',detail:'Works assigned activities, uploads evidence and contributes comments. Cannot administer or approve governance decisions.'},
   {key:'client_read_only',legacyKey:'client_readonly',label:'Client Read Only',scope:'THEIR CLIENT',detail:'Reads authorized client content. No business-record mutations or governance approvals.'},

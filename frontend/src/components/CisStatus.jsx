@@ -2,7 +2,7 @@ import {operatorStatuses} from '@/lib/frameworkOperator';
 
 // Assessment-conclusion presentation. Color always pairs with text, never alone.
 export const CIS_ORDER=['addressed','in_progress','needs_attention','not_assessed','not_applicable'];
-export const CIS_TONE={addressed:'success',in_progress:'moderate',needs_attention:'critical',not_assessed:'neutral',not_applicable:'info'};
+export const CIS_TONE={addressed:'success',in_progress:'moderate',needs_attention:'moderate',not_assessed:'neutral',not_applicable:'neutral'};
 export const cisLabel=status=>operatorStatuses('cis-ig1')[status]||'Not Assessed';
 
 export function CisStatusPill({status,framework='cis-ig1'}){

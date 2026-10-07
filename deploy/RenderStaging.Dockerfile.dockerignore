@@ -1,6 +1,7 @@
 **
 !backend
 !backend/*.py
+!backend/common_passwords.txt
 !backend/requirements-runtime.txt
 !backend/routes
 !backend/routes/*.py

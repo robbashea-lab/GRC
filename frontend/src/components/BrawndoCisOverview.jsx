@@ -21,12 +21,12 @@ export function FrameworkHeader({eyebrow,title,subtitle,resume,onContinue}){
 export const BrawndoCisHeader=({implementationGroup=1,...props})=><FrameworkHeader eyebrow={`CIS Controls v8.1 IG${implementationGroup}`} title={`CIS IG${implementationGroup}`} {...props}/>;
 // Share of applicable safeguards for a segment; assessment progress only, never a compliance score.
 export function segmentShare(n,applicable){return applicable?Math.round(n/applicable*100):0;}
-export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='safeguards',continueNoun='safeguard',testIdPrefix='bcis',segmentLabels={}}){
+export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='safeguards',continueNoun='safeguard',testIdPrefix='bcis',segmentLabels={},showNext=true}){
   const pick=key=>onFilter(filter===key?'all':key);
   return <section className="bcis-card bcis-summary" aria-labelledby="bcis-summary-heading">
       <h2 id="bcis-summary-heading" className="sr-only">Program condition</h2>
       <AssessmentMetrics summary={s}/>
-      <p className="bcis-assessment-next"><strong>{s.notAssessed}</strong> still to assess{resume?` · Continue with ${continueNoun} ${resume.definition_id}`:''}</p>
+      {showNext&&<p className="bcis-assessment-next"><strong>{s.notAssessed}</strong> still to assess{resume?` · Continue with ${continueNoun} ${resume.definition_id}`:''}</p>}
       <div className="bcis-bar" role="group" aria-label="Assessment progress by status">{SEGMENTS.map(([k,defaultLabel,tone])=>s[k]>0&&(()=>{const label=segmentLabels[k]||defaultLabel,pct=segmentShare(s[k],s.applicable),text=`${label}: ${s[k]} of ${s.applicable} ${itemNoun}, ${pct}%`;
         return <span key={k} className={`is-${tone}`} style={{width:`${s[k]/Math.max(1,s.applicable)*100}%`}} tabIndex={0} role="img" aria-label={text} data-testid={`${testIdPrefix}-seg-${k}`}>
           <span className="bcis-tip" aria-hidden="true"><strong>{label}</strong><span>{s[k]} of {s.applicable} {itemNoun}</span><span>{pct}%</span></span></span>;})())}</div>
@@ -37,4 +37,4 @@ export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='s
       <p className="bcis-note">These figures show assessment progress, not a compliance percentage, certification or audit opinion.</p>
     </section>;
 }
-export default function BrawndoCisOverview(props){return <AssessmentOverview {...props}/>;}
+export default function BrawndoCisOverview(props){return <AssessmentOverview {...props} showNext={false}/>;}

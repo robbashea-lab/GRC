@@ -66,7 +66,7 @@ class IdentityLifecycleTests(unittest.IsolatedAsyncioTestCase):
             result = await self.client.post('/api/auth/login', json={
                 'email': 'member@example.com', 'password': self.password,
             })
-            self.assertEqual(result.status_code, 403, result.text)
+            self.assertEqual(result.status_code, 401, result.text)
 
     async def test_disabled_reset_cannot_reactivate_or_change_password(self):
         token = await self.reset_token()

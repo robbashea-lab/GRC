@@ -13,6 +13,7 @@ export default function AssessmentHistory({record,users=[],activity=[]}){
       <p className="text-xs">{personLabel(users,entry.by,'Not recorded')}</p>
       {record.framework_key==='soc-2'&&<p className="text-xs">Last saved: {socSavedDate({...entry,last_assessed:entry.at})} · Last assessed: {socAssessmentDate({...entry,last_assessed:entry.at})}</p>}
       <p>{entry.implementation}</p>
+      {entry.guided_assessment_source&&<p className="text-xs">Source: guided-assessment pilot · {entry.guided_assessment_source.version} · generated {entry.guided_assessment_source.generated_at} · reviewer-approved draft</p>}
       {entry.notes&&<p>{entry.notes}</p>}
       {entry.technology&&<p>Technology: {entry.technology}</p>}
       {entry.verification&&<p>Verification: {VERIFICATION_LABELS[entry.verification]||entry.verification}</p>}

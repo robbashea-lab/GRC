@@ -31,7 +31,7 @@ const METRICS = [['past_due', 'Past Due'], ['due_30d', 'Due ≤30d'], ['due_31_9
 // Red only where the number means genuine urgency; other non-zero counts stay neutral and zeros recede.
 const URGENT = ['past_due', 'critical_high_issues'];
 // Reference portfolio: counts carry a severity tone; zero always recedes.
-const TONE = { past_due: 'critical', critical_high_issues: 'critical', significant_risks: 'attention', unassigned: 'attention' };
+const TONE = { past_due: 'critical', critical_high_issues: 'attention', significant_risks: 'attention', unassigned: 'neutral' };
 const fmtDate = value => value ? new Date(String(value).slice(0, 10) + 'T12:00:00').toLocaleDateString(undefined, {
   month: 'short',
   day: 'numeric'
@@ -176,7 +176,7 @@ function Portfolio({
       <button type="button" className="bp-theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-pressed={theme === 'dark'} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>{theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}<span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button>
     </header> : <PageHeader title="Client Portfolio" />}
     {reference && !loading && !error && <div className="bp-tiles" role="group" aria-label="Portfolio totals" data-testid="portfolio-tiles">{TILES.map(([key, label, tone]) => {
-      const t = totals[key], signal = QUICK.some(([q]) => q === key), cls = `bp-tile is-${t.total ? tone : 'clear'}`;
+      const t = totals[key], signal = QUICK.some(([q]) => q === key), cls = `bp-tile is-${t.total ? TONE[key] || tone : 'clear'}`;
       const body = <><span className="bp-tile-label">{label}</span><span className="bp-tile-value">{t.total}</span><span className="bp-tile-context">{t.total ? `${t.clients} of ${rows.length} clients${t.top && t.clients > 1 ? ` · most at ${t.top}` : t.top ? ` · ${t.top}` : ''}` : 'None across the portfolio'}</span></>;
       return signal ? <button key={key} type="button" className={cls} aria-pressed={activeSignal === key} onClick={() => pickSignal(key)} data-testid={`portfolio-tile-${key}`}>{body}</button> : <div key={key} className={cls} data-testid={`portfolio-tile-${key}`}>{body}</div>;
     })}</div>}

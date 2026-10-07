@@ -10,6 +10,21 @@ import unittest
 
 
 class RuntimePackagingTests(unittest.TestCase):
+    def test_render_password_policy_imports_from_packaged_files(self):
+        root = Path(__file__).resolve().parents[2]
+        docker = (root/'deploy/RenderStaging.Dockerfile').read_text()
+        context = (root/'deploy/RenderStaging.Dockerfile.dockerignore').read_text().splitlines()
+        with tempfile.TemporaryDirectory() as temporary:
+            image = Path(temporary)
+            shutil.copy2(root/'backend/password_policy.py', image/'password_policy.py')
+            if ('COPY backend/common_passwords.txt ./' in docker
+                    and '!backend/common_passwords.txt' in context):
+                shutil.copy2(root/'backend/common_passwords.txt', image/'common_passwords.txt')
+            result = subprocess.run([sys.executable, '-c',
+                "import password_policy; assert 'password' in password_policy.BLOCKED"],
+                cwd=image, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_backend_shared_catalogs_are_in_image_and_context(self):
         root=Path(__file__).resolve().parents[2]
         docker=(root/"backend/Dockerfile").read_text()
@@ -45,6 +60,9 @@ class RuntimePackagingTests(unittest.TestCase):
             backend=image/"backend";backend.mkdir()
             for source in (root/"backend").glob("*.py"):
                 shutil.copy2(source,backend/source.name)
+            self.assertIn('COPY backend/common_passwords.txt ./', (root/'backend/Dockerfile').read_text())
+            self.assertIn('!backend/common_passwords.txt', (root/'backend/Dockerfile.dockerignore').read_text())
+            shutil.copy2(root/'backend/common_passwords.txt', backend/'common_passwords.txt')
             shutil.copytree(root/"backend/routes",backend/"routes",ignore=shutil.ignore_patterns("__pycache__"))
             shutil.copytree(root/"shared/catalogs",image/"shared/catalogs")
             # Keep the remaining domain JSON dependencies exactly as Docker packages

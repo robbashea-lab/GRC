@@ -30,6 +30,7 @@ test("page clearly separates the five planned roles from current permissions", a
     expect(container.querySelectorAll("thead th")).toHaveLength(6);
     expect(container.querySelector('[data-testid="admin-roles-note"]').textContent).toContain("Server-enforced role contract");
     expect(container.querySelector('[data-testid="current-effective-permissions"]').textContent).toContain("No accounts are automatically promoted");
-    expect(container.querySelector('[data-testid="future-client-approver"]').textContent).toContain("not active or assignable");
+    expect(container.querySelector('[data-testid="future-client-approver"]')).toBeNull();
+    expect(container.textContent).not.toMatch(/future|coming soon|planned/i);
   } finally { await act(async () => root.unmount()); }
 });

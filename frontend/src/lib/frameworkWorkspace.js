@@ -86,6 +86,7 @@ export function assessmentWork(row,{reviews=[],findings=[],tasks=[],evidence=[],
   const dates=es.map(e=>(e.evidence_date||e.created_at||'').slice(0,10)).filter(Boolean).sort();
   const direct=fs.filter(f=>linked('findings',f.finding_id)||f.framework_assessment_id===row.framework_assessment_id);
   return {review_ids:[...rids],finding_ids:[...fids],open_findings:fs.length,direct_findings:direct.length,overdue_reviews:rs.filter(r=>overdue(r,['completed','cancelled'])).length,
+    next_review_due:rs.filter(r=>!['completed','cancelled'].includes(r.status)&&r.due_date?.slice(0,10)>=today).map(r=>r.due_date.slice(0,10)).sort()[0]||null,
     overdue_actions:ts.filter(t=>overdue(t,['done','cancelled'])).length,open_actions:ts.filter(t=>!['done','cancelled'].includes(t.status)).length,
     evidence_count:es.length,latest_evidence_at:dates.at(-1)||null};
 }

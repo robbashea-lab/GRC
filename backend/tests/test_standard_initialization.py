@@ -61,4 +61,4 @@ class StandardInitializationTests(SeedAccountSettingsTests):
         self.assertEqual(user["client_ids"], ["real-client"])
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="https://auth.test") as client:
             result = await client.post("/api/auth/login", json={"email": user["email"], "password": self.seed_password})
-            self.assertEqual(result.status_code, 403)
+            self.assertEqual(result.status_code, 401)

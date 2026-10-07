@@ -55,6 +55,7 @@ async def candidates(db, client_id, search="", offset=0, limit=50, caller=None):
     scope = {"$or": [
         {"client_ids": client_id},
         {"role": "super_admin"},
+        {"role": "platform_admin", "all_clients": True},
     ]}
     allowed_roles = list(CLIENT_ROLES) if role == MANAGER else list(ROLES)
     query = {"$and": [{"status": "active", "role": {"$in": allowed_roles}}, scope]}

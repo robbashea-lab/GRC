@@ -1,0 +1,54 @@
+.guided-launcher { position:fixed; right:24px; bottom:24px; z-index:40; display:flex; align-items:center; gap:12px; max-width:calc(100vw - 48px); }
+.guided-in-assessment .guided-launcher { position:relative; bottom:auto; right:auto; z-index:1; }
+.guided-in-assessment { min-height:100px; padding-top:12px; }
+.omni-dock-flow { position:relative!important; right:auto!important; left:auto!important; bottom:auto!important; top:auto!important; justify-content:flex-end; min-height:100px; margin:12px 0; transform:none!important; }
+.omni-dock-lower-right { right:24px; bottom:96px; }
+.omni-dock-middle-right { right:24px; bottom:45vh; }
+.omni-dock-lower-left { left:260px; right:auto; bottom:96px; }
+.omni-dock-lower-left.omni-dock-flow { justify-content:flex-start; }
+.omni-position-controls { font-size:12px; position:relative; flex:none; }
+.omni-position-controls summary { cursor:pointer; padding:10px 8px; min-height:44px; }
+.omni-position-controls > div { position:absolute; right:0; bottom:44px; z-index:2; width:180px; background:var(--color-bg-surface); border:1px solid var(--color-input-border); border-radius:8px; padding:6px; }
+.omni-position-controls button { display:block; padding:8px; min-height:44px; width:100%; text-align:left; }
+.omni-launch-button { touch-action:none; }
+.omni-eye-attention { transition:transform 160ms ease-out; }
+.omni-eyes { transform-origin:40px 40px; filter:drop-shadow(0 0 2px #6bcdf9); animation:omni-blink 7s ease-in-out infinite; }
+.omni-entrance { animation:omni-enter 240ms cubic-bezier(.23,1,.32,1) both; }
+.omni-applied { animation:omni-confirm 240ms ease-out; }
+@keyframes omni-blink { 0%,44%,48%,100% { transform:scaleY(1); } 46% { transform:scaleY(.12); } }
+@keyframes omni-enter { from { opacity:0; transform:translate(18px,18px); } to { opacity:1; transform:translate(0,0); } }
+@keyframes omni-confirm { from { transform:scale(.96); } to { transform:scale(1); } }
+.omni-launch-button { width:76px; height:76px; display:grid; place-items:center; flex:none; border:1px solid transparent; border-radius:50%; }
+.omni-character { display:block; width:100%; height:100%; filter:drop-shadow(0 4px 5px rgba(20,43,64,.2)); }
+.omni-launch-button.is-minimized { width:48px; height:48px; }
+.omni-launch-button:hover { border-color:var(--color-link); }
+.omni-launch-button:focus-visible,.guided-pilot button:focus-visible { outline:2px solid var(--color-link); outline-offset:3px; }
+.omni-panel-header { display:flex; gap:12px; align-items:center; padding-right:20px; }
+.omni-panel-header .omni-character { width:48px; height:48px; flex:none; }
+.omni-state-text { font-size:12px; color:var(--color-text-secondary); }
+.omni-idle { animation:omni-float 6s ease-in-out infinite; }
+.omni-helpful .omni-segments { opacity:1; filter:drop-shadow(0 0 2px #23b9aa); }
+.omni-thinking .omni-segments { animation:omni-process 1.4s ease-in-out infinite; transform-origin:40px 40px; }
+.omni-gap .omni-ring-base { stroke:#d6a136; }
+.omni-gap .omni-amber { animation:omni-pulse 1.4s ease-in-out 2; }
+.omni-verification .omni-ring-base { stroke:#3589ef; }
+.omni-complete .omni-ring-base { stroke:#23b9aa; }
+@keyframes omni-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
+@keyframes omni-process { 0%,100% { opacity:.65; transform:rotate(-3deg); } 50% { opacity:1; transform:rotate(3deg); } }
+@keyframes omni-pulse { 0%,100% { opacity:1; } 50% { opacity:.55; } }
+.guided-context-prompt,.guided-greeting { padding:10px 12px; border:1px solid var(--color-input-border); border-radius:6px; background:var(--color-bg-subtle); color:var(--color-text-primary); font-size:12px; max-width:270px; }
+.guided-greeting button { text-decoration:underline; margin-top:8px; min-height:32px; }
+:root .ui-dialog.guided-panel[data-state] { left:auto; top:50%; right:24px; transform:translateY(-50%); width:min(480px,calc(100vw - 32px)); max-height:calc(100dvh - 140px); display:flex; flex-direction:column; padding:22px; color:var(--color-text-primary); background:var(--color-bg-surface); border-color:var(--color-input-border); animation:none; }
+.guided-panel h2 { padding-right:22px; font-size:17px; line-height:1.45; }
+.guided-panel > button:last-child { width:44px; height:44px; display:grid; place-items:center; top:8px; right:8px; }
+.guided-panel-body { overflow-y:auto; min-height:0; overflow-wrap:anywhere; font-size:13px; line-height:1.65; }
+.guided-panel-body > * + * { margin-top:16px; }
+.guided-panel h3,.guided-panel legend { font-weight:600; }
+.guided-panel label { display:block; margin-top:12px; }
+.guided-panel input[type=date],.guided-panel select { display:block; width:100%; padding:8px; background:var(--color-bg-subtle); border:1px solid var(--color-input-border); border-radius:6px; color:inherit; }
+.guided-panel .guided-choice,.guided-panel .guided-replacement { display:flex; align-items:flex-start; gap:10px; }
+.guided-panel input[type=checkbox] { margin-top:5px; accent-color:var(--color-link); flex:none; }
+.guided-panel ul { list-style:disc; padding-left:20px; }
+.guided-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+@media(max-width:800px) { .omni-launch-button { width:60px; height:60px; } .omni-launch-button.is-minimized { width:48px; height:48px; } .guided-context-prompt { max-width:230px; } .guided-launcher { right:16px; bottom:96px; } .omni-dock-lower-left { left:16px; } :root .ui-dialog.guided-panel[data-state] { right:16px; max-height:calc(100dvh - 96px); } }
+@media(prefers-reduced-motion:reduce) { .guided-pilot .omni-character,.guided-pilot .omni-character *,.guided-panel .omni-character,.guided-panel .omni-character *,.omni-entrance { animation:none; transform:none; transition:none; } }

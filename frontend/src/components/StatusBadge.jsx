@@ -18,6 +18,10 @@ const TONE_BY_STATUS = {
   open: "neutral",
   in_remediation: "info",
   remediated: "moderate",
+  pending_validation: "moderate",
+  due_soon: "duesoon",
+  needs_attention: "moderate",
+  partial: "moderate",
   closed: "neutral",
   accepted: "accepted",
   done: "success",
@@ -40,6 +44,7 @@ const TONE_BY_STATUS = {
   // Contact/assessment status
   reported: "neutral",
   verified: "success",
+  validated: "success",
   // Policy lifecycle
   draft: "neutral",
   in_review: "info",

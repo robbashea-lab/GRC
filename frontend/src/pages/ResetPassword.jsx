@@ -19,7 +19,7 @@ export default function ResetPassword() {
 
   async function submit(e) {
     e.preventDefault();
-    if (pw.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (pw.length < 15) { toast.error("Password must be at least 15 characters"); return; }
     if (pw !== pw2) { toast.error("Passwords don't match"); return; }
     setLoading(true);
     try {
@@ -37,7 +37,7 @@ export default function ResetPassword() {
         <div className="mb-6">
           <div className="brand-on-light mb-5"><Brand /></div>
           <h2 className="text-xl font-heading font-semibold tracking-tight">Choose a new password</h2>
-          <p className="text-xs text-ink-muted mt-1">At least 8 characters. Mix letters, numbers and a symbol.</p>
+          <p className="text-xs text-ink-muted mt-1">15–128 characters. Mix letters, numbers and a symbol.</p>
         </div>
         {!token ? (
           <div className="rounded-md border border-semantic-moderate-border bg-semantic-moderate-bg text-semantic-moderate-text text-sm p-3" data-testid="reset-no-token">
@@ -47,11 +47,11 @@ export default function ResetPassword() {
           <form onSubmit={submit} className="space-y-3">
             <div>
               <Label className="text-xs">New password</Label>
-              <Input data-testid="reset-password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} required minLength={8} />
+              <Input data-testid="reset-password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} required minLength={15} maxLength={128} autoComplete="new-password" />
             </div>
             <div>
               <Label className="text-xs">Confirm new password</Label>
-              <Input data-testid="reset-password-confirm" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} required minLength={8} />
+              <Input data-testid="reset-password-confirm" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} required minLength={15} maxLength={128} autoComplete="new-password" />
             </div>
             <Button data-testid="reset-submit" type="submit" disabled={loading} className="w-full bg-brand-charcoal hover:bg-brand-charcoal-hover">
               {loading ? "…" : "Set new password"}

@@ -19,6 +19,8 @@ if __name__ == '__main__':
     os.environ.update(APP_ENV='test', MONGO_URL='mongodb://unused', DB_NAME='security_browser',
                       APP_BASE_URL='http://127.0.0.1:4190', CORS_ORIGINS='http://127.0.0.1:4190',
                       ADMIN_EMAIL='', ADMIN_PASSWORD_HASH='', RUN_LEGACY_MIGRATIONS='false', WEBHOOK_CRON_SECRET='')
+    port = int(os.environ.get('SECURITY_TEST_PORT', '4190'))
+    os.environ['APP_BASE_URL'] = os.environ['CORS_ORIGINS'] = f'http://127.0.0.1:{port}'
     password = os.environ['SECURITY_TEST_PASSWORD']
     os.environ['JWT_SECRET']  # caller must supply an ephemeral secret
     with patch('dotenv.load_dotenv', return_value=False), patch('motor.motor_asyncio.AsyncIOMotorClient', AsyncMongoMockClient):
@@ -29,12 +31,15 @@ if __name__ == '__main__':
 
     @server.app.on_event('startup')
     async def fixtures():
-        password_hash = server.bcrypt.hashpw(password.encode(), server.bcrypt.gensalt()).decode()
+        password_hash = server.hash_password(password)
         for uid, role, clients in [('owner','super_admin',['a','b']),('provider','platform_admin',['a']),
                 ('manager','client_grc_manager',['a']),('contributor','client_contributor',['a']),
-                ('reader','client_readonly',['a'])]:
+                ('reader','client_readonly',['a']), ('global','platform_admin',[]),
+                ('multi','platform_admin',['a','b']), ('single','platform_admin',['a']),
+                ('external-b','client_readonly',['b']), ('none','client_readonly',[]),
+                ('disabled','client_readonly',['a']), ('unknown','invalid_role',['a'])]:
             await server.db.users.insert_one(dict(user_id=uid, name=uid, email=uid+'@example.com',
-                role=role, client_ids=clients, status='active', password_hash=password_hash))
+                role=role, client_ids=clients, all_clients=uid=='global', status='disabled' if uid=='disabled' else 'active', password_hash=password_hash))
         await server.db.clients.insert_many([dict(client_id=cid,name='Synthetic '+cid,status='active') for cid in ['a','b']])
         for cid in ['a','b']:
             await server.db.tasks.insert_one(dict(task_id='task-'+cid,client_id=cid,title='Synthetic activity',
@@ -48,4 +53,4 @@ if __name__ == '__main__':
             return await static(scope, receive, send)
         return await FileResponse(build/'index.html')(scope, receive, send)
 
-    uvicorn.run(application, host='127.0.0.1', port=4190, log_level='info')
+    uvicorn.run(application, host='127.0.0.1', port=port, log_level='info')

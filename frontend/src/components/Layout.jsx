@@ -4,6 +4,7 @@ import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
 import {isReferenceRegister,isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
 import ClientSurface from './ClientSurface';
+import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
@@ -279,7 +280,7 @@ function Sidebar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               data-testid="logout-button"
-              onClick={async () => { await logout(); nav("/login"); }}
+              onClick={async () => { if (await logout()) nav("/login"); }}
               className="text-sm text-semantic-critical focus:text-semantic-critical"
             >
               <LogOut className="h-3.5 w-3.5 mr-2" /> Sign out
@@ -300,7 +301,7 @@ export default function Layout() {
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
         {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
-        {currentClientId&&(pathname==='/reviews'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
+        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
     </div></ComplianceProvider>
   );

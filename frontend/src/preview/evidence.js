@@ -36,7 +36,7 @@ export function evidenceReferences(db,e){
   refs.sort((a,b)=>priority[a.origin]-priority[b.origin]).forEach(r=>{const key=JSON.stringify([r.kind,r.id,r.occurrence_id]);if(!unique.has(key))unique.set(key,r);});return [...unique.values()];
 }
 
-export const evidenceAccess=(user,cid)=>user.role==='super_admin'||user.role==='platform_admin'&&!user.client_ids?.length||user.client_ids?.includes(cid);
+export const evidenceAccess=(user,cid)=>user.role==='super_admin'||user.role==='platform_admin'&&user.all_clients===true||user.client_ids?.includes(cid);
 export function evidencePage(db,params){
   const cid=params.client_id;
   if(!evidenceAccess(db.user,cid))throw new Error('Forbidden for this client');
