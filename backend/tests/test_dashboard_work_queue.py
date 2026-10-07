@@ -2,6 +2,7 @@
 import unittest
 from unittest.mock import patch
 import test_client_dashboard_sources as harness
+import dashboard_contract
 
 server = harness.server
 
@@ -80,3 +81,55 @@ class DashboardWorkQueueTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await self.get_queue(**params)).status_code, 422)
         await server.db.users.update_one({'user_id': 'member'}, {'$set': {'role': 'client_readonly'}})
         self.assertEqual((await self.get_queue(detail='all')).status_code, 200)
+
+    async def test_framework_control_source_filters_before_limit_with_independent_counts(self):
+        self.sign_in('admin')
+        await server.db.reviews.insert_one({'client_id':'a','review_id':'r','title':'Mapped Review','status':'open'})
+        await server.db.framework_assessments.insert_many([
+            {'client_id':'a','framework_assessment_id':'cis','framework_key':'cis-ig1'},
+            {'client_id':'a','framework_assessment_id':'soc','framework_key':'soc-2'},
+            {'client_id':'b','framework_assessment_id':'foreign','framework_key':'iso-27001','related_links':[{'kind':'tasks','id':'t00'}]}])
+        await server.db.organizational_controls.insert_one({'client_id':'a','control_id':'c',
+            'assessment_ids':['cis','soc'], 'related_links':[{'kind':'reviews','id':'r'}]})
+        await server.db.tasks.insert_many([{'client_id':'a','task_id':f't{i:02}','title':f'Mapped task {i}',
+            'review_id':'r','status':'open','due_date':'2026-10-04' if i<12 else None} for i in range(14)])
+        await server.db.tasks.insert_many([
+            {'client_id':'a','task_id':'general','title':'CIS title is not membership','status':'open'},
+            {'client_id':'a','task_id':'done','title':'Completed','review_id':'r','status':'done'},
+            {'client_id':'b','task_id':'other','title':'Other client','status':'open'}])
+        for framework in ['cis-ig1','soc-2']:
+            result=(await self.get_queue(detail='pastDue',framework=framework,limit=9)).json()
+            self.assertEqual(result['total'],12)
+            self.assertEqual(len(result['items']),9)
+            self.assertEqual(result['counts']['all'],15)  # Includes the mapped Review.
+            self.assertEqual(len({r['key'] for r in result['items']}),9)
+        found=(await self.get_queue(detail='all',framework='cis-ig1',search='task 13')).json()
+        self.assertEqual([r['id'] for r in found['items']],['t13'])
+        self.assertEqual(found['counts']['pastDue'],0)
+        self.assertEqual((await self.get_queue(detail='all',framework='iso-27001')).json()['total'],0)
+
+    async def test_record_side_assessment_links_and_framework_baselines(self):
+        self.sign_in('admin')
+        await server.db.framework_assessments.insert_one({'client_id':'a','framework_assessment_id':'iso','framework_key':'iso-27001'})
+        await server.db.risks.insert_one({'client_id':'a','risk_id':'risk','title':'Linked risk','status':'open',
+            'next_review':'2026-10-04','related_links':[{'kind':'framework_assessments','id':'iso'}]})
+        await server.db.reviews.insert_one({'client_id':'a','review_id':'review','risk_id':'risk','title':'Risk Review','status':'open'})
+        await server.db.requirements.insert_one({'client_id':'a','requirement_id':'req','title':'ISO applicability',
+            'baseline_key':'iso-27001','baseline_response':'applies','status':'open','next_review_date':'2026-10-04'})
+        rows=(await self.get_queue(detail='all',framework='iso-27001')).json()['items']
+        self.assertEqual({r['id'] for r in rows},{'risk','review','req'})
+
+    async def test_search_without_framework_does_not_load_membership_graph(self):
+        self.sign_in('admin')
+        await server.db.tasks.insert_one({'client_id':'a','task_id':'task','title':'Search target','status':'open'})
+        with patch.object(dashboard_contract,'framework_membership',side_effect=AssertionError('Unexpected graph load')):
+            with patch.object(server.db.framework_assessments,'find',side_effect=AssertionError('Unexpected assessment query')):
+                with patch.object(server.db.organizational_controls,'find',side_effect=AssertionError('Unexpected control query')):
+                    rows=(await self.get_queue(detail='all',search='target')).json()['items']
+        self.assertEqual([r['id'] for r in rows],['task'])
+
+    async def test_locale_independent_unicode_search_matches_demo_contract(self):
+        self.sign_in('admin')
+        await server.db.tasks.insert_one({'client_id':'a','task_id':'unicode','title':'Straße ÉQUIPE İpek','status':'open'})
+        for query, count in [('straße équipe',1),('STRASSE',0),('i\u0307pek',1)]:
+            self.assertEqual((await self.get_queue(detail='all',search=query)).json()['total'],count)

@@ -38,8 +38,8 @@ export default function Dashboard(){
     catch(e){if(!controller.signal.aborted&&activeClient.current===currentClientId)setSelection({item,error:formatError(e)});}
   }
   const close=()=>{detailRequest.current?.abort();setSelection(null);};
-  async function loadDetail(key,offset,signal){
-    const {data:result}=await api.get('/dashboard',{params:{client_id:currentClientId,scope:'org',work_queue:true,detail:key,offset,limit:25},signal});
+  async function loadDetail(key,offset,signal,options={}){
+    const {data:result}=await api.get('/dashboard',{params:{client_id:currentClientId,scope:'org',work_queue:true,detail:key,offset,limit:25,...options},signal});
     if(result.client_id!==currentClientId)throw new Error('Dashboard detail belongs to another client.');return result;
   }
   return <><ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
