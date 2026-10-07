@@ -14,7 +14,7 @@ const manageable = (db, target) => {
   admin(db);
   if (db.user.role === 'super_admin') return;
   if (!clientRoles.includes(target.role) ||
-      !target.client_ids?.some(cid => db.user.client_ids?.includes(cid))) throw new Error('Not authorized to manage this user');
+      !target.client_ids?.some(cid => clientAccess(db.user, cid))) throw new Error('Not authorized to manage this user');
 };
 const simulate = (db, user) => {
   if (user.status !== 'invited') throw new Error('Only pending invitations can be resent');
@@ -27,12 +27,13 @@ function createAccount(db, body) {
   admin(db);
   if (!roles.includes(body.role) || db.user.role !== 'super_admin' && !clientRoles.includes(body.role)) throw new Error('Not authorized for this role');
   const client_ids = [...new Set(body.client_ids || [])];
+  if (body.all_clients && (db.user.role !== 'super_admin' || body.role !== 'platform_admin')) throw new Error('Only a Super Admin can grant internal all-client access');
   if (body.role === 'platform_admin' && !client_ids.length && db.user.role !== 'super_admin') throw new Error('Only a Super Admin can authorize global internal scope');
   for (const cid of client_ids) { admin(db, cid); record(db, 'clients', cid); }
   const email = String(body.email || '').trim().toLowerCase();
   if (!email || !email.includes('@') || !body.name?.trim()) throw new Error('Name and email are required');
   if (db.users.some(u => u.email?.toLowerCase() === email)) throw new Error('Account already exists. Use explicit account linking and authorized client membership management.');
-  const user = write(db, 'users', { name: body.name, email, role: body.role, client_ids, status: 'invited' });
+  const user = write(db, 'users', { name: body.name.trim(), email, role: body.role, client_ids, all_clients: body.all_clients === true, status: 'invited' });
   return simulate(db, user);
 }
 
@@ -103,7 +104,7 @@ export function identityRequest(db, path, method, params, body) {
     return { ...counts, total, items, truncated: total > items.length };
   }
   admin(db);
-  if (!id && method === 'get') return db.users.filter(u => db.user.role === 'super_admin' || u.client_ids?.some(cid => db.user.client_ids?.includes(cid))).map(u => ({
+  if (!id && method === 'get') return db.users.filter(u => db.user.role === 'super_admin' || clientRoles.includes(u.role) && u.client_ids?.some(cid => clientAccess(db.user, cid))).map(u => ({
     user_id: u.user_id, name: u.name, email: u.email, role: u.role, status: u.status, last_login_at: u.last_login_at, updated_at:u.updated_at, all_clients:u.all_clients,
     client_ids: db.user.role === 'platform_admin' && db.user.client_ids?.length ? (u.client_ids || []).filter(cid => db.user.client_ids.includes(cid)) : u.client_ids,
   }));
@@ -111,7 +112,7 @@ export function identityRequest(db, path, method, params, body) {
   const target = record(db, 'users', id);
   manageable(db, target);
   if(method==='patch'&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(target.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
-  const foreign = (target.client_ids || []).filter(cid => !db.user.client_ids?.includes(cid));
+  const foreign = (target.client_ids || []).filter(cid => !clientAccess(db.user, cid));
   if (method === 'patch' && action === 'client-memberships') {
     for (const cid of body.client_ids || []) { admin(db, cid); record(db, 'clients', cid); }
     const preserved = (target.client_ids || []).filter(cid => !clientAccess(db.user, cid));
@@ -128,6 +129,7 @@ export function identityRequest(db, path, method, params, body) {
     return simulate(db, target);
   }
   if (method !== 'patch' || action) throw new Error('Unsupported identity operation');
+  if (body.password_change_required != null) throw new Error('Password changes require standard authentication');
   if (db.user.role !== 'super_admin' && foreign.length && ['name', 'role', 'status'].some(f => body[f] != null)) throw new Error('Account-wide changes require authority over all client memberships');
   if (body.role && (!roles.includes(body.role) || db.user.role !== 'super_admin' && !clientRoles.includes(body.role))) throw new Error('Not authorized for this role');
   if (body.status && !['active', 'disabled', 'invited'].includes(body.status)) throw new Error('Invalid account status');
@@ -140,6 +142,7 @@ export function identityRequest(db, path, method, params, body) {
   if (body.all_clients != null && (db.user.role !== 'super_admin' || body.all_clients && (body.role || target.role) !== 'platform_admin')) throw new Error('Only a Super Admin can grant internal all-client access');
   if (body.email && db.users.some(u => u.user_id !== id && u.email?.toLowerCase() === body.email.trim().toLowerCase())) throw new Error('Account already exists');
   const patch = Object.fromEntries(['name', 'email', 'role', 'status', 'client_ids', 'all_clients'].filter(f => body[f] != null).map(f => [f, body[f]]));
+  if (patch.email) patch.email = patch.email.trim().toLowerCase();
   const previous = { status: target.status, client_ids: target.client_ids };
   Object.assign(target, patch, { updated_at: new Date(Math.max(Date.now(),(Date.parse(target.updated_at)||0)+1)).toISOString() });
   audit(db, 'update-account', 'users', target, { previous, changes: patch });
