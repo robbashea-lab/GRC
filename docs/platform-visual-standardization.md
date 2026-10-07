@@ -41,6 +41,11 @@ Existing vendor creation/editing and priority choices retain their original
 Brawndo/Prestige workflow boundary through `isReferenceWorkflow`. Sharing the
 theme does not remove Category, required assurance records, contributor fields
 or Critical priority from other clients' existing native editors.
+Vendor projections retain existing active statuses and contract-date fallbacks.
+Extra native Vendor columns and the sortable AI table remain where needed to
+preserve existing filtering and sorting; their typography, palette and controls
+inherit the same theme. Review completion and configuration keep their original
+workflow gate. These are functional differences, not alternate design systems.
 
 Legacy guided CIS functionality was already available to other selected CIS
 clients across supported groups. That availability and saved interview versions,

@@ -64,11 +64,11 @@ function vendorMatchesView(v, view) {
 const PILOT_CHIPS=[['all_active','All active'],['review_due','Reviews due'],['review_overdue','Reviews past due'],['critical_high','Critical / High'],['contract_soon','Contracts expiring'],['renewal_soon','Renewals upcoming'],['assurance','Assurance follow-up due'],['inactive','Inactive']];
 const names=list=>list.length?list.slice(0,2).map(v=>v.name).join(', ')+(list.length>2?` +${list.length-2}`:''):'';
 const byDate=key=>(a,b)=>String(key(a)||'').localeCompare(String(key(b)||''));
-export function vendorTiles(rows,now=new Date()){
-  const m=view=>rows.filter(v=>vendorMatches(v,view,now));
+export function vendorTiles(rows,now=new Date(),matches=vendorMatches){
+  const m=view=>rows.filter(v=>matches(v,view,now));
   const crit=m('critical_high'),due=m('review_due').sort(byDate(v=>v.next_review)),assur=m('assurance'),exp=m('contract_soon');
   const today=now.toISOString().slice(0,10);
-  const nextRenewal=rows.filter(v=>vendorMatches(v,'all_active',now)&&v.contract_renewal&&String(v.contract_renewal).slice(0,10)>=today).sort(byDate(v=>v.contract_renewal))[0];
+  const nextRenewal=rows.filter(v=>matches(v,'all_active',now)&&v.contract_renewal&&String(v.contract_renewal).slice(0,10)>=today).sort(byDate(v=>v.contract_renewal))[0];
   return [
     {id:'critical_high',label:'Critical / High',count:crit.length,tone:'critical',context:names(crit)||'No critical or high vendors'},
     {id:'review_due',label:'Review due in 30 days',count:due.length,tone:'attention',context:due.length?`${due[0].name}, ${shortDate(due[0].next_review)}${due.length>1?` +${due.length-1}`:''}`:'No reviews due'},
@@ -82,6 +82,8 @@ export default function VendorRegister() {
   const { currentClient, currentClientId } = useOrg();
   const pilot=isReferencePresentation(currentClientId,user);
   const vendorWorkflow=isReferenceWorkflow(currentClientId,user);
+  const matches=vendorWorkflow?vendorMatches:vendorMatchesView;
+  const contractDate=v=>vendorWorkflow?v.contract_renewal:v.contract_renewal||v.contract_expiration||v.contract_end;
   const [rows, setRows] = useState([]);
   const [reviews,setReviews] = useState([]);
   const generation=useRef(0);
@@ -133,25 +135,25 @@ export default function VendorRegister() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClientId]);
 
-  const enriched = useMemo(() => rows.map(v=>{const value=vendorSignals(v,reviews);return {...value,_attention:pilot?['review_overdue','review_due','contract_soon','renewal_soon','assurance'].some(view=>vendorMatches(value,view)):value._reviewDue||value._contractSoon||value._assuranceIssue};}),[rows,reviews,pilot]);
+  const enriched = useMemo(() => rows.map(v=>{const value=vendorSignals(v,reviews);return {...value,_attention:vendorWorkflow?['review_overdue','review_due','contract_soon','renewal_soon','assurance'].some(view=>vendorMatches(value,view)):value._reviewDue||value._contractSoon||value._assuranceIssue};}),[rows,reviews,vendorWorkflow]);
 
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return enriched.filter((v) => {
-      if (!(pilot?vendorMatches:vendorMatchesView)(v, view)) return false;
+      if (!matches(v, view)) return false;
       if (!s) return true;
       return (v.name || "").toLowerCase().includes(s) || (v.service || v.services || "").toLowerCase().includes(s) || (v.category || "").toLowerCase().includes(s) || (userMap[v.business_owner_id] || "").toLowerCase().includes(s);
     }).sort((a, b) => (b._attention - a._attention) || ({critical:0,high:1,medium:2,moderate:2,low:3}[a.criticality]??9) - ({critical:0,high:1,medium:2,moderate:2,low:3}[b.criticality]??9) || (a.name || "").localeCompare(b.name || ""));
-  }, [enriched, q, view, userMap,pilot]);
+  }, [enriched, q, view, userMap,vendorWorkflow]);
 
   const tableSource = enriched.filter(r => r.client_id === currentClientId);
   const baseColumns = tableColumns('vendor-register', { rows: tableSource, users });
-  const columns=pilot?vendorColumns(baseColumns):baseColumns;
+  const columns=vendorWorkflow?vendorColumns(baseColumns):baseColumns;
   const table = useTableControls({ columns, rows: tableSource, module: 'vendor-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status' || key === 'criticality') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
   function selectView(id) { if(pilot){table.replaceState({...table.state,filters:{}});setView(id);return;}const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',critical_high:'criticality',review_due:'next_review',review_overdue:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
-  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'critical_high','unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, tableSource.filter(v => (pilot?vendorMatches:vendorMatchesView)(v, id)).length]));
+  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'critical_high','unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, tableSource.filter(v => matches(v, id)).length]));
   const tabs = pilot?vendorViews:LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: LINKED_VIEWS[view] }] : VIEWS;
 
   function exportCsv() {
@@ -179,7 +181,7 @@ export default function VendorRegister() {
           <button type="button" className="bpage-btn" onClick={exportCsv} data-testid="vendors-export"><Download size={16} aria-hidden="true"/>Export CSV</button>
           {canWrite&&<button type="button" className="bpage-btn bpage-btn-primary" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}
         </BrawndoPageHeader>
-        <BrawndoTiles label="Vendor summaries" loading={loading} tiles={vendorTiles(tableSource).map(t=>({...t,pressed:view===t.id,onClick:()=>pick(t.id)}))}/>
+        <BrawndoTiles label="Vendor summaries" loading={loading} tiles={vendorTiles(tableSource,new Date(),matches).map(t=>({...t,pressed:view===t.id,onClick:()=>pick(t.id)}))}/>
         <div className="register-toolbar">
           <SearchField label="Search vendors" placeholder="Search vendors…" value={q} onChange={setQ} testid="vendor-search" />
           <BrawndoChips label="Vendor views" chips={chipDefs.map(([id,label])=>({id,label,count:loading?null:counts[id],pressed:view===id,onClick:()=>selectView(id),testid:`vendor-view-${id}`}))}/>
@@ -192,18 +194,20 @@ export default function VendorRegister() {
             <table className="w-full text-sm">
               <thead><tr>
                 <SortableHeader table={table} columnKey="name" />
+                {!vendorWorkflow&&<SortableHeader table={table} columnKey="service" />}
                 <SortableHeader table={table} columnKey="criticality" />
                 <SortableHeader table={table} columnKey="data_types" />
                 <SortableHeader table={table} columnKey="business_owner_id" />
                 <SortableHeader table={table} columnKey="next_review" />
                 <SortableHeader table={table} columnKey="contract_renewal" />
                 <SortableHeader table={table} columnKey="last_review" />
+                {!vendorWorkflow&&<SortableHeader table={table} columnKey="status" />}
               </tr></thead>
               <tbody className="divide-y divide-line">
-                {loading && <TableLoadingRow colSpan={7} />}
-                {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={7} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
+                {loading && <TableLoadingRow colSpan={vendorWorkflow?7:9} />}
+                {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={vendorWorkflow?7:9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
                 {!loading && filtered.map((v, i) => {
-                  const dt=v.data_types||[],closed=['inactive','terminated'].includes(v.status),assur=vendorMatches(v,'assurance');
+                  const dt=v.data_types||[],closed=['inactive','terminated'].includes(v.status),assur=matches(v,'assurance'),renewal=contractDate(v);
                   const meta=[v.service||v.services,v.status&&v.status!=='active'?v.status[0].toUpperCase()+v.status.slice(1):null].filter(Boolean).join(' · ');
                   return (
                     <tr key={v.vendor_id} className={`row-hover row-open${vendorMatches(v,'review_overdue')?' bpage-late':''}`} onClick={() => setDrawer({ open: true, record: v })} data-testid={`vendor-row-${i}`}>
@@ -211,13 +215,15 @@ export default function VendorRegister() {
                         <button type="button" className="register-record-link hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v});}}>{v.name}</button>
                         {meta&&<span className="bpage-meta">{meta}</span>}
                       </td>
+                      {!vendorWorkflow&&<td className="tbl-cell text-ink-secondary">{v.service||v.services||'—'}</td>}
                       <td className="tbl-cell"><SeverityBadge value={v.criticality} label={CRIT_LABEL[v.criticality]} /></td>
                       <td className="tbl-cell">{dt.length?<span className="bvendors-tags">{dt.map(d=><span key={d} className="bvendors-tag">{d}</span>)}</span>:<span className="register-empty">—</span>}</td>
                       <td className="tbl-cell"><OwnerCell people={users} id={v.business_owner_id} status={v.status} /></td>
                       <td className="tbl-cell">{v.next_review ? <DueDate iso={v.next_review} closed={closed} /> : <span className="register-empty">Not scheduled</span>}
                         {assur&&<button type="button" className="bvendors-note" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v,tab:'assurance'});}}>Assurance follow-up due</button>}</td>
-                      <td className="tbl-cell">{v.contract_renewal ? <DueDate iso={v.contract_renewal} closed={closed} /> : <span className="register-empty">No renewal date</span>}{view==='renewal_soon'&&<span className="bpage-meta">{renewalAction(v).label}: {shortDate(renewalAction(v).date)}</span>}</td>
+                      <td className="tbl-cell">{renewal ? <DueDate iso={renewal} closed={closed} /> : <span className="register-empty">No renewal date</span>}{view==='renewal_soon'&&<span className="bpage-meta">{renewalAction(v).label}: {shortDate(renewalAction(v).date)}</span>}</td>
                       <td className="tbl-cell"><HistoryDate value={v.last_review} empty="Never reviewed" /></td>
+                      {!vendorWorkflow&&<td className="tbl-cell"><StatusBadge value={v.status||'active'} /></td>}
                     </tr>
                   );
                 })}

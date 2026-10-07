@@ -1,8 +1,11 @@
 import {aiApproval,aiApproved} from '@/lib/brawndoAI';
 import {catalog} from '@/lib/aiGovernance';
 import {DueDate} from './RegisterCells';
+import {useAuth} from '@/context/AuthContext';
+import {isReferenceWorkflow} from '@/lib/reference';
 
-export default function BrawndoAIFields({tab,form,current,input,person,boolean,put,Choices,vendors,admin,isNew,dirty,approvalPilot}){
+export default function BrawndoAIFields({tab,form,current,input,person,boolean,put,Choices,vendors,admin,isNew,dirty,approvalPilot,clientId}){
+  const {user}=useAuth(),referenceWorkflow=isReferenceWorkflow(clientId,user);
   if(tab==='Data & Access')return <>
     <Choices label="Known data processed (not permission to use)" values={catalog.data_types} selected={form.data_types} onChange={v=>put('data_types',v)}/>
     <Choices label="System access" values={catalog.access} selected={form.access} onChange={v=>put('access',v)}/>
@@ -23,7 +26,7 @@ export default function BrawndoAIFields({tab,form,current,input,person,boolean,p
       {input('restrictions','Prohibited uses / approval conditions',true)}</div></details></>}
       {form.human_review_required!==null&&<p className="text-sm">Human review: {form.human_review_required?'Required':'Not required in the recorded assessment'}</p>}
     </section>
-    <div className="grid sm:grid-cols-2 gap-4">{!isNew&&<>{input('name','Product / System Name')}{input('provider','Provider')}{person('owner_id','Business Owner')}</>}{input('product_model','Product / Model')}{!isNew&&person('technical_owner_id','Technical Owner')}
+    <div className="grid sm:grid-cols-2 gap-4">{!isNew&&<>{input('name','Product / System Name')}{input('provider','Provider')}{person('owner_id','Business Owner')}</>}{input('product_model','Product / Model')}{(!isNew||!referenceWorkflow)&&person('technical_owner_id','Technical Owner')}
       {boolean('Third-party product or service?',form.screening?.third_party,v=>put('screening',{...form.screening,third_party:v}))}
       {boolean('Customer-facing use?',form.screening?.customer_facing,v=>put('screening',{...form.screening,customer_facing:v}))}
       <label className="text-sm space-y-1"><span>Lifecycle Status (not approval)</span><select aria-label="Lifecycle Status" className="h-9 rounded-md border border-line px-2" value={form.status} onChange={e=>put('status',e.target.value)}>{catalog.statuses.filter(v=>admin||!['active','suspended','retired'].includes(v)||v===form.status).map(v=><option key={v} value={v}>{v.replaceAll('_',' ')}</option>)}</select></label>

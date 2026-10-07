@@ -6,7 +6,7 @@ import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
 import {occurrenceId,relatedReviewInitialValues} from '@/lib/reviewOccurrences';
-import {isReferencePresentation} from '@/lib/reference';
+import {isReferenceWorkflow} from '@/lib/reference';
 import {policyStatus,policyStatusLabel,policyColumns,policyViewMatches,POLICY_COLUMN_ORDER} from '@/lib/brawndoPolicies';
 import {BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
 import {PolicyAlignment} from '@/components/BrawndoPolicyDetails';
@@ -118,7 +118,7 @@ function EntityListPage({ kind }) {
   const { currentClient, currentClientId } = useOrg();
   const { user } = useAuth();
   // Preserve the existing drawer's guarded completion workflow independently of list presentation.
-  const guardedReviewDrawer = kind==='reviews' && isReferencePresentation(currentClientId,user);
+  const guardedReviewDrawer = kind==='reviews' && isReferenceWorkflow(currentClientId,user);
   const policiesPilot = kind==='policies';
   const POLICY_HIDDEN=['version'];
   const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c).sort((a,b)=>POLICY_COLUMN_ORDER.indexOf(a.key)-POLICY_COLUMN_ORDER.indexOf(b.key)) : schema.columns;
@@ -293,7 +293,7 @@ function EntityListPage({ kind }) {
   const carriedClientChanged = filterClient.current !== currentClientId;
   useEffect(() => {
     if (filterClient.current === currentClientId) return;
-    const resetView=kind==='reviews'||policiesPilot||isReferencePresentation(filterClient.current,user);
+    const resetView=kind==='reviews'||policiesPilot||isReferenceWorkflow(filterClient.current,user);
     filterClient.current = currentClientId;
     const next = new URLSearchParams(params);
     next.delete('owner'); next.delete('unassigned'); next.delete('reviewView');

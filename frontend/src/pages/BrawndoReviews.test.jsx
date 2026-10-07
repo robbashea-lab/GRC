@@ -220,13 +220,13 @@ test('centered detail preserves policy/context and guards unsaved and failed sav
   await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Close'));
   expect(window.confirm).not.toHaveBeenCalled();expect(close).toHaveBeenCalledWith(false);
 });
-test('another client uses shared Review presentation with its own requirement expectations',async()=>{
+test('another client retains its original Review workflow inside the shared presentation',async()=>{
   const record={...saved,client_id:'demo_dunder'};
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={record} clientId="demo_dunder" onOpenChange={()=>{}}/>));
   expect(document.querySelector('[data-testid="reviews-drawer"]').className).toContain('brawndo-cis-assessment');
   await click(document.querySelector('[data-testid="tab-requirements"]'));
-  expect(document.querySelector('[aria-label="Requirement & Review Expectations"]')).toBeTruthy();
-  expect(document.querySelector('[aria-label="Requirement basis"]')).toBeNull();
+  expect(document.querySelector('[aria-label="Requirement basis"]')).toBeTruthy();
+  expect(document.querySelector('[aria-label="Requirement & Review Expectations"]')).toBeNull();
 });
 test('unfinished comments cannot be lost by completing an occurrence',async()=>{
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));

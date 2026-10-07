@@ -8,7 +8,7 @@ import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
-import {isReferencePresentation,isPrestigeReference} from '@/lib/reference';
+import {isReferenceWorkflow,isPrestigeReference} from '@/lib/reference';
 import ReviewExpectations,{ReviewFacts} from './BrawndoReviewDetails';
 import IsoManagementReviewGuide from './IsoManagementReviewGuide';
 import './BrawndoCisAssessment.css';
@@ -43,7 +43,7 @@ const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scop
 
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user} = useAuth();
-  const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferencePresentation(clientId,user) && (!record || record.client_id===clientId);
+  const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferenceWorkflow(clientId,user) && (!record || record.client_id===clientId);
   const opener=useRef(null),heading=useRef(null),cisBriefOpener=useRef(null);
   const [pending,setPending]=useState(null);
   const admin = ['super_admin','platform_admin'].includes(user?.role);

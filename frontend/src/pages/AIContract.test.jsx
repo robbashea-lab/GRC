@@ -84,9 +84,15 @@ test('Brawndo keeps its explicit pilot fields, pending view and administrator ap
 test('standard authenticated presentation sends only the unchanged canonical fields',async()=>{
  mockUser={...mockUser,workspace_mode:undefined};const close=jest.fn(),post=jest.spyOn(api,'post');
  await act(async()=>root.render(<AIDrawer open clientId={mockClient} onOpenChange={close}/>));
- await input('Product / System Name','Standard contract test');await click(buttons('Create AI System')[0]);
+ await input('Product / System Name','Standard contract test');
+ const candidate=(await api.get(`/clients/${mockClient}/assignees`,{params:{limit:50,offset:0}})).data.items[0];
+ expect(candidate).toBeTruthy();
+ await click(document.querySelector('[aria-label="Technical Owner"]'));
+ await click([...document.querySelectorAll('[aria-label="Technical Owner candidates"] button')].find(button=>button.textContent.includes(candidate.name||candidate.email)));
+ await click(buttons('Create AI System')[0]);
  expect(close).toHaveBeenCalledWith(false);
  expect(Object.keys(post.mock.calls.find(([path])=>path==='/ai_systems')[1]).sort()).toEqual(['client_id',...AI_KEYS].sort());
+ expect(post.mock.calls.find(([path])=>path==='/ai_systems')[1].technical_owner_id).toBe(candidate.user_id);
  expect(buttons('Record Decision')).toHaveLength(0);
 });
 

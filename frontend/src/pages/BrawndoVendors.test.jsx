@@ -36,6 +36,18 @@ test('shared styling retains another client vendor Category and required assuran
   await click(dialog.querySelector('[data-testid="new-vendor-save"]'));
   expect(api.post).toHaveBeenCalledWith('/vendors',expect.objectContaining({client_id:'demo_dunder',name:'Dunder vendor',service:'Hosted service',category:'SaaS',assurance_required:true,assurance_records:[{type:'SOC 2',required:true,evidence_ids:[]}]}));
 });
+test('a future client shared register preserves under-review vendors and expiration-only contract dates',async()=>{
+  mockClient='future-client';const original=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...args)=>path==='/vendors'?{data:[{vendor_id:'legacy',client_id:mockClient,name:'Legacy review vendor',status:'under_review',criticality:'high',contract_expiration:'2027-04-01',assurance_records:[]}]}:original(path,...args));
+  await act(async()=>root.render(<VendorRegister/>));
+  expect(container.querySelector('[data-testid="vendor-row-0"]').textContent).toContain('Legacy review vendor');
+  expect(container.querySelector('[data-testid="vendor-row-0"] .register-date > span').textContent).toBe(new Date('2027-04-01T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}));
+  expect(container.querySelector('[data-testid="vendor-foot"]').textContent).toBe('Showing 1 of 1 active vendors');
+  expect(container.querySelector('button[aria-label="Service / Product: sort and filter"]')).toBeTruthy();
+  expect(container.querySelector('button[aria-label="Status: sort and filter"]')).toBeTruthy();
+  expect(container.querySelectorAll('thead th')).toHaveLength(9);
+  expect(container.querySelector('[data-testid="tile-critical_high"]').textContent).toContain('Legacy review vendor');
+});
 test('new vendor draft is protected and failed create remains open',async()=>{
   const close=jest.fn();api.post.mockRejectedValue(new Error('Save unavailable'));
   await act(async()=>root.render(<RecordDrawer open onOpenChange={close} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={mockClient}/>));
