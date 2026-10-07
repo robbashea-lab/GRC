@@ -34,7 +34,7 @@ from reportlab.lib import colors as rl_colors
 from reportlab.lib.units import inch
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field, EmailStr, ValidationError, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ValidationError, ConfigDict, field_validator
 from governance_context import GovernanceContext
 from pymongo.errors import DuplicateKeyError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
@@ -59,6 +59,7 @@ import json
 import create_requests
 import authorization
 import security_runtime
+import password_policy
 
 # ---------------- DB ----------------
 mongo_url = os.environ["MONGO_URL"]
@@ -277,19 +278,8 @@ async def _save_snapshot(collection, identity, existing, incoming, updates):
 
 
 # ---------------- Password ----------------
-def hash_password(p: str) -> str:
-    # Match the existing minimum used by password reset; bcrypt 5 rejects
-    # inputs above 72 bytes. Validate before hashing on every credential path.
-    if len(p) < 8 or len(p.encode("utf-8")) > 72:
-        raise HTTPException(422, "Password must contain at least 8 characters and no more than 72 UTF-8 bytes")
-    return bcrypt.hashpw(p.encode(), bcrypt.gensalt()).decode()
-
-
-def verify_password(p: str, h: str) -> bool:
-    try:
-        return bcrypt.checkpw(p.encode(), h.encode())
-    except Exception:
-        return False
+hash_password = password_policy.hash_password
+verify_password = password_policy.verify_password
 
 
 # ---------------- JWT ----------------
@@ -404,7 +394,8 @@ class PrimaryContactIn(BaseModel):
 
 
 class ClientIn(BaseModel):
-    name: str
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=200)
     industry: Optional[str] = None
     environment: Optional[str] = "Production"
     status: Optional[str] = "onboarding"  # onboarding, active, inactive, archived
@@ -415,8 +406,9 @@ class ClientIn(BaseModel):
 
 
 class ClientPatchIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     expected_updated_at: Optional[str] = Field(default=None, max_length=100)
-    name: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
     industry: Optional[str] = None
     environment: Optional[str] = None
     status: Optional[str] = None
@@ -682,12 +674,18 @@ async def audit(user: Dict, action: str, entity_type: str, entity_id: str, clien
         "at": _now(),
         "user_id": user.get("user_id"),
         "user_email": user.get("email"),
+        "user_name": user.get("name") or user.get("email"),
+        "outcome": (meta or {}).get("outcome", "success"),
         "action": action,
         "entity_type": entity_type,
         "entity_id": entity_id,
         "client_id": client_id,
         "meta": meta or {},
     }
+    if client_id:
+        client_row = await db.clients.find_one({"client_id": client_id}, {"name": 1})
+        document["client_name"] = (client_row or {}).get("name")
+    document["entity_name"] = (meta or {}).get("name") or (meta or {}).get("title")
     intent = create_requests.current.get()
     if intent:
         # A create event keeps its first metadata, even if the actor or record is
@@ -818,10 +816,9 @@ async def register(body: RegisterIn, response: Response):
 async def login(body: LoginIn, response: Response):
     email = body.email.strip().lower()
     u = await db.users.find_one({"email": email})
-    if not u or not u.get("password_hash") or not verify_password(body.password, u["password_hash"]):
+    if not u or not u.get("password_hash") or not verify_password(body.password, u["password_hash"]) or u.get("status") != "active" or authorization.role_of(u) not in authorization.ROLES:
+        await audit({"user_id": (u or {}).get("user_id")}, "login-failed", "auth", (u or {}).get("user_id"), meta={"outcome": "denied"})
         raise HTTPException(401, "Invalid credentials")
-    if u.get("status") != "active":
-        raise HTTPException(403, "This account is not active. Contact your administrator.")
     token = create_access_token(u["user_id"], email)
     await db.users.update_one({"user_id": u["user_id"]}, {"$set": {"last_login_at": _now()}})
     await audit(u, 'login', 'user', u['user_id'])
@@ -879,8 +876,6 @@ async def forgot_password(body: ForgotIn):
 
 @api.post("/auth/reset-password")
 async def reset_password_endpoint(body: ResetIn):
-    if len(body.new_password) < 8:
-        raise HTTPException(400, "Password must be at least 8 characters")
     token_hash = hashlib.sha256(body.token.encode()).hexdigest()
     rec = await db.password_resets.find_one({"token_hash": token_hash, "used": False}, {"_id": 0})
     if not rec:
@@ -916,6 +911,7 @@ async def reset_password_endpoint(body: ResetIn):
         raise HTTPException(400, "Account state changed. Request a new link.")
     # Kill all existing OAuth sessions for this user so any stolen cookie stops working.
     sessions_del = await db.sessions.delete_many({"user_id": rec["user_id"]})
+    await audit(account, "password_reset", "user", rec["user_id"])
     return {"ok": True, "sessions_revoked": sessions_del.deleted_count}
 
 
@@ -969,8 +965,6 @@ async def update_me_password(body: MePasswordIn, user: Dict = Depends(get_curren
         raise HTTPException(400, "No local password to change")
     if not verify_password(body.current_password, full["password_hash"]):
         raise HTTPException(400, "Current password is incorrect")
-    if len(body.new_password) < 8:
-        raise HTTPException(400, "New password must be at least 8 characters")
     changed = await db.users.update_one(
         {"user_id": user["user_id"], "password_hash": full["password_hash"]},
         {"$set": {"password_hash": hash_password(body.new_password), "password_changed_at": _now()}},
@@ -1036,14 +1030,23 @@ async def remove_favorite_client(client_id: str, user: Dict = Depends(get_curren
 
 # ---------------- User administration ----------------
 class UserCreateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     email: EmailStr
-    name: str
+    name: str = Field(min_length=1, max_length=200)
     role: str  # super_admin, platform_admin, client_contributor, client_readonly
     client_ids: List[str] = []
     password: Optional[str] = None  # if not provided, admin can trigger reset separately
 
+    @field_validator('name')
+    @classmethod
+    def normalized_name(cls, value):
+        if not value.strip():
+            raise ValueError('Name is required')
+        return value.strip()
+
 
 class UserPatchIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     expected_updated_at: Optional[str] = Field(default=None, max_length=100)
     name: Optional[str] = None
     role: Optional[str] = None
@@ -1064,6 +1067,7 @@ class ContactInviteIn(BaseModel):
 
 
 class ClientMembershipIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     client_ids: List[str]
     expected_updated_at: Optional[str] = Field(default=None, max_length=100)
 
@@ -1255,8 +1259,6 @@ async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current
         "created_at": _now(), "created_by": user["user_id"],
     }
     if body.password:
-        if len(body.password) < 8:
-            raise HTTPException(400, "Password must be at least 8 characters")
         doc["password_hash"] = hash_password(body.password)
     try:
         await db.users.insert_one(doc)
@@ -1323,7 +1325,7 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
             {"user_id": user_id, "used": False},
             {"$set": {"used": True, "used_at": _now()}},
         )
-    await audit(user, "update", "user", user_id, meta={"fields": list(updates.keys()), "new": {k: v for k, v in updates.items() if k != "updated_at"}})
+    await audit(user, "update", "user", user_id, meta={"fields": list(updates.keys()), "previous": {k: target.get(k) for k in updates if k != "updated_at"}, "new": {k: v for k, v in updates.items() if k != "updated_at"}})
     if "client_ids" in updates:
         old_ids, new_ids = set(target.get("client_ids") or []), set(updates["client_ids"])
         for cid in old_ids ^ new_ids:
@@ -1537,6 +1539,8 @@ async def _create_client(body, user, identity):
         "created_at": _now(),
         "updated_at": _now(),
     }
+    if body.status not in {"onboarding", "active", "inactive"}:
+        raise HTTPException(422, "Invalid initial client status")
     await client_relationships.validate(db, doc, None, _can_access_client)
     contact = None
     if body.primary_contact_details:
@@ -1573,6 +1577,8 @@ async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depend
     updates = {k: v for k, v in body.model_dump(exclude={'expected_updated_at'}).items() if v is not None}
     if not updates:
         return (await client_relationships.project(db, [existing]))[0]
+    if "status" in updates and updates["status"] not in {"onboarding", "active", "inactive", "archived"}:
+        raise HTTPException(422, "Invalid client status")
     await client_relationships.validate(db, {**existing, **updates}, existing, _can_access_client)
     updates["updated_at"] = _next_write_time(existing.get("updated_at"))
     changed = await db.clients.update_one({"client_id": client_id, "updated_at": existing.get("updated_at")}, {"$set": updates})
@@ -1990,7 +1996,7 @@ async def list_audit(
         u = users_map.get(d.get("user_id")) or {}
         c = clients_map.get(d.get("client_id")) or {}
         d["user_name"] = d.get("user_name") or u.get("name") or u.get("email") or d.get("user_email")
-        d["client_name"] = c.get("name") if c else None
+        d["client_name"] = d.get("client_name") or c.get("name")
     return {"items": docs, "total": total, "page": page, "page_size": page_size}
 
 
@@ -2949,10 +2955,11 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
     if kind == "policies":
         delete_query.update({"updated_at": existing.get("updated_at"), "status": existing.get("status"),
                              "approval_history": existing.get("approval_history"), "decision_history": existing.get("decision_history")})
+    await audit(user, "delete-requested", entity_type, item_id, existing.get("client_id"), meta={"name": existing.get("name") or existing.get("title"), "outcome": "requested"})
     deleted = await db[_coll_for(kind)].delete_one(delete_query)
     if not deleted.deleted_count:
         raise HTTPException(409, "Record changed; reload before deleting")
-    await audit(user, "delete", entity_type, item_id, existing.get("client_id"))
+    await audit(user, "delete", entity_type, item_id, existing.get("client_id"), meta={"name": existing.get("name") or existing.get("title")})
     if kind == "tasks":
         await remediation.after_delete(db, existing, user, _now, audit)
     return {"ok": True}

@@ -41,7 +41,7 @@ export default function MyAccount() {
 
   async function changePassword() {
     if (pw.new_password !== pw.confirm) { toast.error("New passwords don't match"); return; }
-    if (pw.new_password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (pw.new_password.length < 15) { toast.error("Password must be at least 15 characters"); return; }
     setSaving(true);
     try {
       await api.patch("/me/password", { current_password: pw.current_password, new_password: pw.new_password });
@@ -143,7 +143,7 @@ export default function MyAccount() {
                     <Label className="text-xs text-ink-secondary">Confirm new password</Label>
                     <Input data-testid="me-confirm-pw" type="password" value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} className="text-sm" />
                   </div>
-                  <div className="text-xs text-ink-help">At least 8 characters. Changing your password will sign out other active sessions.</div>
+                  <div className="text-xs text-ink-help">15–128 characters. Changing your password will sign out other active sessions.</div>
                   <div className="pt-2">
                     <Button onClick={changePassword} disabled={saving} data-testid="me-change-pw">Change password</Button>
                   </div>

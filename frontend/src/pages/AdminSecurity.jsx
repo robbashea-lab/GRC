@@ -1,13 +1,13 @@
 import PageHeader from "@/components/PageHeader";
-import { Lock, KeyRound, ShieldAlert, Clock, Info } from "lucide-react";
+import { Lock, KeyRound, ShieldAlert, Clock } from "lucide-react";
 
 const ROWS = [
-  { icon: KeyRound, label: "Authentication", value: "Email/password with bcrypt and environment-bound JWTs. External Google session exchange is disabled in staging/production pending identity-provider validation." },
-  { icon: Lock, label: "Password policy", value: "Minimum 8 characters. Bcrypt cost factor 12. Passwords stored hashed - never in plain text." },
+  { icon: KeyRound, label: "Authentication", value: "Email and password. Access requires an authorized account." },
+  { icon: Lock, label: "Password policy", value: "15–128 characters, including spaces. Common and repetitive passwords are blocked. No required character classes or periodic expiration." },
+  { icon: Lock, label: "Password storage", value: "Passwords are protected using adaptive, salted password hashing. New passwords use scrypt; existing bcrypt credentials remain supported." },
   { icon: Clock, label: "Session lifetime", value: "Seven-day JWT maximum. Logout revokes account sessions. Role, status and client assignments are checked per request. Reload uses HttpOnly cookies; bearer tokens are not persisted in localStorage." },
-  { icon: ShieldAlert, label: "MFA", value: "Not yet enabled at the platform level. Planned for the next security release." },
-  { icon: ShieldAlert, label: "Abuse protection", value: "Authentication endpoints allow 30 requests per source IP and endpoint per minute, per process. Distributed rate limiting and trusted proxies still require staging validation." },
-  { icon: Lock, label: "Transport security", value: "Cookies use Secure, HttpOnly and SameSite=Lax. Staging requires HTTPS origins. Live TLS and ingress behavior are not yet validated." },
+  { icon: ShieldAlert, label: "Abuse protection", value: "Authentication endpoints allow 30 requests per source IP and endpoint per minute, per process. " },
+  { icon: Lock, label: "Transport security", value: "Hosted server configuration requires HTTPS origins and Secure cookies." },
 ];
 
 export default function AdminSecurity() {
@@ -15,10 +15,6 @@ export default function AdminSecurity() {
     <div>
       <PageHeader eyebrow="Administration" title="Security & Authentication" subtitle="Platform-wide authentication and hardening posture." />
       <div className="page-gutter py-6 max-w-4xl space-y-4">
-        <div className="rounded-md border border-semantic-info-border bg-semantic-info-bg p-3 text-xs text-semantic-info flex items-start gap-2">
-          <Info className="h-4 w-4 shrink-0 mt-0.5" />
-          <div>Interactive security settings (MFA enrollment, session revocation, IP allow-lists) are on the roadmap. This page documents the current effective posture.</div>
-        </div>
         <div className="rounded-md border border-line bg-surface-card divide-y divide-line" data-testid="admin-security-list">
           {ROWS.map((r, i) => (
             <div key={i} className="flex items-start gap-3 p-4">
