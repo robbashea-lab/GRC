@@ -26,9 +26,8 @@ export default function Login() {
     if (!STANDARD_AUTH_ENABLED) return;
     setLoading(true);
     try {
-      const u = await login(email, password);
-      const isInternal = ["super_admin", "platform_admin"].includes(u?.role);
-      nav(isInternal ? "/clients" : "/dashboard");
+      await login(email, password);
+      nav("/");
     } catch (err) {
       toast.error(formatError(err));
     } finally { setLoading(false); }
