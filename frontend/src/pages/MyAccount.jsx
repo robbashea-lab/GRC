@@ -45,8 +45,9 @@ export default function MyAccount() {
     setSaving(true);
     try {
       await api.patch("/me/password", { current_password: pw.current_password, new_password: pw.new_password });
-      toast.success("Password changed. Other sessions signed out.");
+      toast.success("Password changed. Sign in again to continue.");
       setPw({ current_password: "", new_password: "", confirm: "" });
+      await refresh();
     } catch (e) { toast.error(formatError(e)); }
     finally { setSaving(false); }
   }
@@ -144,15 +145,12 @@ export default function MyAccount() {
                     <Label className="text-xs text-ink-secondary">Confirm new password</Label>
                     <Input aria-label="Confirm new password" autoComplete="new-password" minLength={15} maxLength={128} data-testid="me-confirm-pw" type="password" value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} className="text-sm" />
                   </div>
-                  <div className="text-xs text-ink-help">15–128 characters. Changing your password will sign out other active sessions.</div>
+                  <div className="text-xs text-ink-help">15–128 characters. Changing your password signs out all active sessions, including this one.</div>
                   <div className="pt-2">
                     <Button onClick={changePassword} disabled={saving} data-testid="me-change-pw">Change password</Button>
                   </div>
                 </>
               )}
-              <div className="mt-6 p-3 border border-line rounded-md bg-surface-subtle text-xs text-ink-help">
-                Multi-factor authentication (MFA) and active session management are coming next. Ask your admin for help in the meantime.
-              </div>
             </div>
           )}
 
