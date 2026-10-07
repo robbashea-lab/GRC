@@ -27,6 +27,7 @@ assert.equal(new URL(base).hostname,'127.0.0.1');
     }
     await page.setViewportSize({width:720,height:1000});const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
     evidence.push({theme,client:client.name,route,check:'720 CSS px reflow (1440 at 200% equivalent; not native zoom)',...layout});
+    if(output){fs.mkdirSync(output,{recursive:true});await page.screenshot({path:path.join(output,theme+'-'+client.client_id+'-'+route.slice(1)+'-720.png'),fullPage:true});}
     await page.keyboard.press('Tab');const focus=await page.evaluate(()=>{const e=document.activeElement,s=getComputedStyle(e);return {tag:e.tagName,name:e.getAttribute('aria-label')||e.textContent.slice(0,80),outline:s.outlineWidth,outlineStyle:s.outlineStyle,shadow:s.boxShadow}});
     assert.notEqual(focus.tag,'BODY');evidence.push({theme,client:client.name,route,check:'Keyboard reachable',...focus});await page.setViewportSize({width:1440,height:1000});
    }
