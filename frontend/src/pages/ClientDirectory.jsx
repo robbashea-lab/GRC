@@ -31,7 +31,7 @@ const METRICS = [['past_due', 'Past Due'], ['due_30d', 'Due ≤30d'], ['due_31_9
 // Red only where the number means genuine urgency; other non-zero counts stay neutral and zeros recede.
 const URGENT = ['past_due', 'critical_high_issues'];
 // Reference portfolio: counts carry a severity tone; zero always recedes.
-const TONE = { past_due: 'critical', critical_high_issues: 'critical', significant_risks: 'attention', unassigned: 'attention' };
+const TONE = { past_due: 'critical', critical_high_issues: 'attention', significant_risks: 'attention', unassigned: 'neutral' };
 const fmtDate = value => value ? new Date(String(value).slice(0, 10) + 'T12:00:00').toLocaleDateString(undefined, {
   month: 'short',
   day: 'numeric'

@@ -24,7 +24,7 @@
   color-scheme: dark;
 }
 .bpage-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 24px var(--register-gutter, 20px) 16px; }
-.bpage-head h1 { margin: 2px 0 0; font: 600 30px/1.2 'Space Grotesk', var(--font-heading); letter-spacing: -.01em; color: var(--bp-text); }
+.bpage-head h1 { margin: 2px 0 0; font: 600 var(--page-title-size)/28px 'Space Grotesk', var(--font-heading); letter-spacing: -.01em; color: var(--bp-text); }
 .bpage-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bp-accent); }
 /* One primary header action across Brawndo pages (same lime accent as CIS IG1, login and the approved concepts). */
 :root :is(.bpage-btn.bpage-btn-primary, .bpage-head .ui-button.bg-primary, .brev-head .ui-button.bg-primary, .bprof-head .ui-button.bg-primary) { background: #a3db33; border: 1px solid #a3db33; color: #10140c; font-weight: 600; height: 36px; border-radius: 8px; box-shadow: none; }
