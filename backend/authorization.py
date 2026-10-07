@@ -21,7 +21,11 @@ def role_of(user):
 
 def can_access(user, client_id):
     return role_of(user) in ROLES and bool(client_id) and (
-        role_of(user) == OWNER or client_id in (user.get('client_ids') or []))
+        global_scope(user) or client_id in (user.get('client_ids') or []))
+
+
+def global_scope(user):
+    return role_of(user) == OWNER or role_of(user) == PROVIDER and user.get('all_clients') is True
 
 
 def writable(user):
@@ -35,7 +39,7 @@ def scope(user, client_id=None):
         if not can_access(user, client_id):
             raise HTTPException(403, 'Forbidden for this client')
         return {'client_id': client_id}
-    return {} if user['role'] == OWNER else {'client_id': {'$in': user.get('client_ids') or []}}
+    return {} if global_scope(user) else {'client_id': {'$in': user.get('client_ids') or []}}
 
 
 def require_program_admin(user):
@@ -115,6 +119,29 @@ async def authorize_request(request, user, db):
         ('POST','/api/auth/logout'),
     }:
         return
+    # Archived tenants retain history but accept no ordinary program changes.
+    # Resolve the resource's trusted tenant, never the caller's claimed tenant.
+    client_id = request.path_params.get('client_id')
+    params = request.path_params
+    kind = params.get('kind')
+    identity = params.get('item_id')
+    if params.get('review_id'):
+        kind, identity = 'reviews', params['review_id']
+    if params.get('aid'):
+        kind, identity = 'framework_assessments', params['aid']
+    for parameter, collection in {'risk_id': 'risks', 'vendor_id': 'vendors', 'finding_id': 'findings',
+            'policy_id': 'policies', 'contact_id': 'contacts', 'ev_id': 'evidence', 'exception_id': 'exceptions'}.items():
+        if params.get(parameter):
+            kind, identity = collection, params[parameter]
+    if identity and kind in {*OWNERS, 'evidence', 'exceptions', 'contacts', 'requirements'}:
+        key = {'framework_assessments':'framework_assessment_id', 'tasks':'task_id', 'policies':'policy_id'}.get(kind, kind[:-1]+'_id')
+        if kind == 'evidence': key = 'evidence_id'
+        row = await db[kind].find_one({key: identity})
+        client_id = (row or {}).get('client_id')
+    if role != OWNER and not client_id and method in {'POST', 'PATCH', 'PUT'} and 'application/json' in request.headers.get('content-type', ''):
+        client_id = (await object_body(request)).get('client_id')
+    if role != OWNER and client_id and await db.clients.find_one({'client_id': client_id, 'status': 'archived'}):
+        raise HTTPException(403, 'Archived clients are read-only; ask a Super Admin to restore the client')
     if role in {OWNER, PROVIDER}:
         if role != OWNER and (path == '/api/clients' or path.startswith('/api/reminders/')):
             raise HTTPException(403, 'Platform Owner required')
