@@ -1,6 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ClientWorkDashboard from './ClientWorkDashboard';
+import {operatorStatuses} from '@/lib/frameworkOperator';
 jest.mock('react-router-dom',()=>({Link:({to,children,...rest})=><a href={to} {...rest}>{children}</a>}),{virtual:true});
 jest.mock('@/lib/api',()=>({formatError:e=>e.message}));
 let root,container;
@@ -30,6 +31,13 @@ test('pilot distribution uses the same applicable counts without changing assess
   expect(container.querySelector('.bd-donut-value').textContent).toBe('33.3%');
   expect(container.querySelector('circle.bd-seg-addressed').getAttribute('pathLength')).toBe('100');
   expect(parseFloat(container.querySelector('circle.bd-seg-addressed').getAttribute('stroke-dasharray'))).toBeCloseTo(100/3-.9);
+});
+test.each(['soc-2','hipaa','nist-csf-2'])('%s shared ring preserves its actual conclusion vocabulary',async key=>{
+  await act(async()=>root.render(<ClientWorkDashboard workspacePilot queue={queue} programs={[{key,label:key}]} programRows={{[key]:cisRows}} filter="all" onFilter={()=>{}} onOpen={()=>{}}/>));
+  const expected=key==='soc-2'?'IMPLEMENTED':operatorStatuses(key).addressed.split(/[\s(]/)[0].toUpperCase();
+  expect(container.querySelector('.bwp-donut-caption').textContent).toBe(expected);
+  expect(container.querySelector('.bd-donut-value').textContent).toBe('33.3%');
+  if(key==='soc-2')expect(container.querySelector('.bd-program-note').textContent).toBe('Internal readiness, not an auditor opinion.');
 });
 const render=async programs=>act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={programs} programRows={Object.fromEntries(programs.map(p=>[p.key,cisRows]))} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));
 test('donut segments expose calculated tooltips on focus without putting them on navigation labels',async()=>{

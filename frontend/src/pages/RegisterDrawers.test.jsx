@@ -2,11 +2,13 @@ import React, {act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RiskRegister from './RiskRegister';
 import VendorRegister from './VendorRegister';
+import RecordDrawer from '@/components/RecordDrawer';
+import {SCHEMAS} from '@/lib/schemas';
 import api from '@/lib/api';
 import {ClientPresentationContext} from '@/components/ClientSurface';
 jest.mock('@/context/OrgContext', () => ({useOrg:() => ({currentClientId:'a',currentClient:{name:'Client A'}})}));
 jest.mock('@/context/AuthContext', () => ({useAuth:() => ({user:{user_id:'owner',name:'Owner',role:'super_admin'}})}));
-jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api'}));
+jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),patch:jest.fn(),post:jest.fn()},formatError:e=>e.message,API:'/api'}));
 jest.mock('react-router-dom', () => ({useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
 let root, container;
 const requestOptions = {headers:{'Idempotency-Key':expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)}};
@@ -15,6 +17,7 @@ beforeEach(() => {
   container=document.createElement('div'); document.body.appendChild(container); root=createRoot(container);
   api.get.mockImplementation(async path => ({data:path==='/users'?[{user_id:'owner',name:'Owner'}]:path==='/risks'?[{risk_id:'r',client_id:'a',title:'Risk record',status:'open',owner_id:'owner'}]:path==='/vendors'?[{vendor_id:'v',client_id:'a',name:'Vendor record',service:'Hosted business application',status:'active',criticality:'high',contact_email:'contact@example.test'}]:path==='/related'?{}:[]}));
   api.patch.mockResolvedValue({data:{}});
+  api.post.mockResolvedValue({data:{}});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
@@ -41,7 +44,25 @@ test('new Risk requires intentional ratings instead of suggesting an assessment'
   expect(document.querySelector('[data-testid="new-risk-level"]').textContent).toBe('Needs assessment');
   expect(document.querySelector('[data-testid="new-risk-likelihood"]').textContent).toBe('Select likelihood…');
   expect(document.querySelector('[data-testid="new-risk-impact"]').textContent).toBe('Select impact…');
-  expect(document.querySelector('[aria-label="Risk category"]').textContent).toBe('Cybersecurity');
+  expect(document.querySelector('[aria-label="Risk category"]').textContent).toBe('Technical & Cybersecurity');
+});
+
+test('shared action presentation preserves Critical as a new standard-client priority',async()=>{
+  await act(async()=>root.render(<RecordDrawer open kind="tasks" clientId="a" schema={SCHEMAS.tasks.fields} onOpenChange={()=>{}}/>));
+  const priority=document.querySelector('[aria-label="Priority *"]');
+  expect(priority).toBeTruthy();
+  const originalScroll=HTMLElement.prototype.scrollIntoView;
+  HTMLElement.prototype.scrollIntoView=jest.fn();
+  try {
+    await act(async()=>priority.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true})));
+    const immediate=[...document.querySelectorAll('[role="option"]')].find(option=>option.textContent==='Immediate');
+    expect(immediate).toBeTruthy();
+    await act(async()=>immediate.click());
+    const title=document.querySelector('[data-testid="field-title"]');
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(title,'Standard critical task');title.dispatchEvent(new Event('input',{bubbles:true}));});
+    await act(async()=>document.querySelector('[data-testid="drawer-save"]').click());
+    expect(api.post).toHaveBeenCalledWith('/tasks',expect.objectContaining({priority:'critical',title:'Standard critical task',client_id:'a'}),requestOptions);
+  } finally {HTMLElement.prototype.scrollIntoView=originalScroll;}
 });
 
 test('legacy Risk category is displayed without silently changing its stored value',async()=>{
@@ -54,7 +75,7 @@ test('legacy Risk category is displayed without silently changing its stored val
   expect(api.patch).toHaveBeenCalledWith('/risks/r',expect.not.objectContaining({category:expect.anything()}),requestOptions);
 });
 
-test.each([[RiskRegister,'risk-row-0',['title','category','status','owner_id','description']], [VendorRegister,'vendor-row-0',['name','criticality','status','contact_email']]])('register opens its complete real drawer', async(Component,rowId,fields)=>{
+test.each([[RiskRegister,'risk-row-0',['title','category','status','owner_id','description']], [VendorRegister,'vendor-row-0',['name','category','criticality','status','contact_email']]])('register opens its complete real drawer', async(Component,rowId,fields)=>{
   await act(async()=>root.render(<Component/>));
   const row=container.querySelector(`[data-testid="${rowId}"]`);
   expect(row).not.toBeNull();

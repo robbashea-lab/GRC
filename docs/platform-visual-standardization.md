@@ -13,7 +13,7 @@ New clients do not need names, IDs, configuration or copied Brawndo records.
 
 The shared root owns the light/dark preference across routes and portalled UI.
 The historical local-storage preference key is retained to preserve user settings.
-Legacy portal colors apply only outside the shared workspace. The reference's
+The approved dark portal palette and primary-button treatments remain shared. The reference's
 Inter headings/header and Segoe UI table/body font stacks are retained.
 
 ## Frameworks
@@ -37,6 +37,11 @@ Omni artwork, free-drag and guide-window gate. Global presentation uses the sepa
 `isWorkspacePresentation` predicate. AI approval behavior and the existing task
 ownership exception still use the original identity gate.
 
+Existing vendor creation/editing and priority choices retain their original
+Brawndo/Prestige workflow boundary through `isReferenceWorkflow`. Sharing the
+theme does not remove Category, required assurance records, contributor fields
+or Critical priority from other clients' existing native editors.
+
 Legacy guided CIS functionality was already available to other selected CIS
 clients across supported groups. That availability and saved interview versions,
 answers and revision checks remain intact. This rollout does not upgrade those
@@ -47,10 +52,10 @@ clients to Brawndo's character/window or add Omni to other programs.
 | Surface | Client/data scope | Themes / widths | Evidence status |
 |---|---|---|---|
 | Approved baseline modules | Real staged Brawndo | Light / dark; observed browser size | Captures retained under outputs/platform-standardization/baseline |
-| Shared modules and configured programs | Fresh isolated Demo clients | Light / dark; 1440 / 1024 / 768 | Browser comparisons in progress |
-| Portfolio, account, Administration | Isolated Demo | Light / dark; 1440 / 1024 / 768 | Browser comparisons in progress |
-| New onboarding / multiple frameworks / CIS transition | Fresh synthetic client | Both themes | Browser workflow in progress |
-| Summary → native record → save/cancel → return | Actual native components | Both themes | Automated/browser verification in progress |
+| Shared modules and configured programs | Four existing Demo clients | Light / dark; 1440 / 1024 / 768 | Local browser matrix passed; final correction rerun required |
+| Portfolio, account, Administration | Isolated Demo | Light / dark; 1440 / 1024 / 768 | Local browser matrix passed; final correction rerun required |
+| New onboarding / multiple frameworks / CIS transition | Fresh synthetic client, all six supported framework routes | Both themes | Local browser lifecycle passed; final correction rerun required |
+| Summary → native record → save/cancel → return | Actual native components | Both themes | Local ticket save/discard/context verification passed |
 | Approved and legacy Omni | Both Brawndo identities; existing/future clients | Shared theme enabled | Focused regression passed |
 | Hosted authenticated save / onboarding | Authorized staging administrator | Representative clients | Pending staged candidate |
 

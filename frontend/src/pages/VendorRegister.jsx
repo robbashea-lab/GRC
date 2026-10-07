@@ -7,7 +7,7 @@ import AssigneeSelect from '@/components/AssigneeSelect';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGovernance';
-import {isReferencePresentation} from '@/lib/reference';
+import {isReferencePresentation,isReferenceWorkflow} from '@/lib/reference';
 import {vendorViews,vendorMatches,vendorColumns,assuranceSummary,renewalAction} from '@/lib/brawndoVendors';
 import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -81,6 +81,7 @@ export default function VendorRegister() {
   const { user } = useAuth();
   const { currentClient, currentClientId } = useOrg();
   const pilot=isReferencePresentation(currentClientId,user);
+  const vendorWorkflow=isReferenceWorkflow(currentClientId,user);
   const [rows, setRows] = useState([]);
   const [reviews,setReviews] = useState([]);
   const generation=useRef(0);
@@ -227,7 +228,7 @@ export default function VendorRegister() {
         </div>
         {recordLinkError&&<p role="alert">{recordLinkError}</p>}
       {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
-        {addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>}
+        {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}}/>}
       </BrawndoSurface>
     );
   }
@@ -301,7 +302,7 @@ export default function VendorRegister() {
         </div>
       </div>
       {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
-      {pilot?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} />}
+      {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} />}
     </div>
   );
 }

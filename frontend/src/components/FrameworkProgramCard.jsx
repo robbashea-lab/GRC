@@ -30,7 +30,7 @@ export default function FrameworkProgramCard({rows,program,workspacePilot=false}
   const gaps=[['unremediated','Gaps without a finding',summary.unremediated,'critical'],['needs_attention',labels.needs_attention,summary.gap,'critical'],['stale','Validation older than 12 months',summary.stale,'attention'],['unevidenced',`${done} without evidence`,summary.unevidenced,'attention']];
   const legend=<ul className="bd-legend">{CIS_ORDER.filter(s=>s!=='not_applicable'||counts[s]).map(s=><li key={s}><Row view={s}><span className={`bd-swatch bd-seg-${s}`} aria-hidden="true"/><span>{labels[s]}</span><strong>{counts[s]}</strong></Row></li>)}</ul>;
   if(workspacePilot)return <section className="bd-card bd-program bwp-program" aria-labelledby={heading}>
-    <Donut counts={counts} summary={summary} name={name} labels={labels} caption/>
+    <Donut counts={counts} summary={summary} name={name} labels={labels} caption={done}/>
     <div className="bwp-program-content">
       <div className="bwp-program-heading"><div><p className="bd-eyebrow">Your active program</p><h2 id={heading}>{name}</h2><p className="bd-muted bd-small">{key==='cis-ig1'?`${groupRequirements(key,rows).length} controls · ${rows.length} safeguards`:program.name||program.label}</p></div>
         <dl className="bwp-program-counts"><div><dt>{done}</dt><dd>{summary.addressed} <span>of {summary.applicable}</span></dd></div><div><dt>Assessed</dt><dd>{summary.assessed} <span>of {summary.applicable}</span></dd></div></dl></div>
@@ -38,7 +38,7 @@ export default function FrameworkProgramCard({rows,program,workspacePilot=false}
         {CIS_ORDER.filter(s=>s!=='not_applicable'&&counts[s]>0).map(s=><span key={s} className={`bd-seg-${s}`} style={{width:`${counts[s]/summary.applicable*100}%`}}/>)}
       </div>{legend}
       <details className="bwp-validation-details"><summary>Validation and remediation</summary><ul className="bd-gaps" aria-label={`${name.split(' ')[0]} verification gaps`}>{gaps.map(([view,label,n,tone])=><li key={view}><Row view={view} className={n?`is-${tone}`:'is-clear'}><span>{label}</span><strong>{n}</strong></Row></li>)}</ul></details>
-      <div className="bwp-program-footer"><p className="bd-muted bd-small bd-program-note">Assessment progress, not a compliance determination.</p><Link to={to}>View program →</Link></div>
+      <div className="bwp-program-footer"><p className="bd-muted bd-small bd-program-note">{key==='soc-2'?'Internal readiness, not an auditor opinion.':'Assessment progress, not a compliance determination.'}</p><Link to={to}>View program →</Link></div>
     </div>
   </section>;
   return <section className="bd-card bd-program" aria-labelledby={heading}>

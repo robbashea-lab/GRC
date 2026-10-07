@@ -43,31 +43,35 @@ test.each([
   ['Vendors', () => <VendorRegister />, 'New Vendor', 'Search vendors'],
 ])('%s header, primary action, toolbar and table follow the register grammar', async (title, page, primary, search) => {
   await render(page());
-  const approvedRisk=title==='Risks';
-  const header = container.querySelector(approvedRisk?'.bpage-head':'.page-header');
+  const approvedRisk=title==='Risks',approvedVendor=title==='Vendors',approvedHeader=approvedRisk||approvedVendor;
+  const header = container.querySelector(approvedHeader?'.bpage-head':'.page-header');
   expect(header.querySelector('h1').textContent).toBe(title);
   if(approvedRisk){
     expect(header.querySelector('.bpage-eyebrow').textContent).toBe('Test client · Risk register');
     expect(header.querySelector('.bpage-subtitle')).toBeNull();
     expect(container.querySelector('[aria-label="Risk summaries"]')).toBeNull();
+  }else if(approvedVendor){
+    expect(header.querySelector('.bpage-eyebrow').textContent).toBe('Test client · Third parties');
+    expect(container.querySelector('[aria-label="Vendor summaries"]')).toBeTruthy();
   }else{
     expect(header.querySelector('.page-eyebrow')).toBeNull();
     expect(header.textContent).not.toContain('Test client');
     expect(header.querySelector('.page-subtitle').textContent.length).toBeGreaterThan(10);
   }
-  const actions = [...header.querySelectorAll(approvedRisk?'.bpage-actions > button':'.header-actions > button')];
-  expect(actions.at(-1).textContent).toBe(primary);
-  expect(actions.at(-1).className).toContain('bg-primary');
+  const actions = [...header.querySelectorAll(approvedHeader?'.bpage-actions > button':'.header-actions > button')];
+  expect(actions.at(-1).textContent).toBe(approvedVendor?'+ New vendor':primary);
+  expect(actions.at(-1).className).toContain(approvedVendor?'bpage-btn-primary':'bg-primary');
   if(approvedRisk){
     expect(actions.some(button=>button.textContent==='Risk Scale & Matrix')).toBe(true);
     expect(actions.filter(button=>['Risk Scale & Matrix','Export CSV'].includes(button.textContent)).every(button=>button.classList.contains('bpage-btn'))).toBe(true);
-  }else expect(actions.slice(0,-1).every(button=>button.className.includes('border'))).toBe(true);
+  }else expect(actions.slice(0,-1).every(button=>button.className.includes(approvedVendor?'bpage-btn':'border'))).toBe(true);
   expect(actions.some(button => button.textContent === 'Export CSV')).toBe(true);
   // Search is the first control in the toolbar; the shown / total count closes it.
   const toolbar = container.querySelector('.register-toolbar');
   expect(toolbar.querySelector('input').getAttribute('aria-label').toLowerCase()).toBe(search.toLowerCase());
   expect(toolbar.firstElementChild.classList.contains('register-search')).toBe(true);
   if(approvedRisk) expect(container.querySelector('[data-testid="risk-count"]').textContent).toBe('Showing 3 of 4 risks');
+  else if(approvedVendor)expect(container.querySelector('[data-testid="vendor-foot"]').textContent).toBe('Showing 3 of 3 active vendors');
   else expect(toolbar.querySelector('.register-count').textContent).toMatch(/^\d+ \/ \d+$/);
   // Column headers are real column headers with a named sort-and-filter control.
   const heads = [...container.querySelectorAll('thead th')];

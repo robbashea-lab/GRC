@@ -92,5 +92,6 @@ html[data-brawndo-workspace=dark]{--color-bg-app:#102337;--color-bg-surface:#142
 .brawndo-workspace-pilot .ui-button.bg-primary{background:#086cec;border-color:#086cec;color:#fff}
 .brawndo-workspace-pilot .ui-button.bg-primary:hover{background:#075be2;border-color:#075be2}
 html[data-brawndo-workspace] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-floating,.ui-popover,.ui-select-content,[data-sonner-toaster]){font-family:var(--font-body)}
+html[data-brawndo-workspace] .ui-dialog{font-family:system-ui,sans-serif}
 @media(max-width:650px){.brawndo-workspace-pilot :is(.bport h1,.page-title){font-size:24px}}
 html[data-brawndo-workspace=dark]{--color-critical:#ff90a4;--color-critical-bg:#56313c;--color-critical-border:#784455;--color-high:#ffdcb1;--color-high-bg:#543c2b;--color-high-border:#795236;--color-moderate:#ffe9a2;--color-moderate-text:#ffe9a2;--color-moderate-bg:#484125;--color-duesoon:#ffcb70;--color-duesoon-text:#ffcb70;--color-duesoon-bg:#484125;--color-success:#71dba5;--color-success-bg:#204638;--color-info:#76baff;--color-info-bg:#1c3654;--color-neutral:#c3cad3;--color-neutral-bg:#233d58;--color-selected-bg:#1c3654}
