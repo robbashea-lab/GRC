@@ -12,6 +12,9 @@ test('shared presentation keeps urgent, attention, processing, confirmed and ord
   for(const value of ['completed','approved','verified','validated','treated'])expect(toneFor(value)).toBe('success');
   for(const value of ['upcoming','open','active','unassigned','not_assessed','not_applicable'])expect(toneFor(value)).toBe('neutral');
   expect(CIS_TONE.needs_attention).toBe('moderate');expect(CIS_TONE.not_applicable).toBe('neutral');
+  const css=read('components/BrawndoCisOverview.css');
+  expect(css).toContain('.bcis-bar > .is-critical, .bcis-legend .is-critical > span { background: var(--cs-attention); }');
+  expect(css).toContain('var(--page-title-size)/28px');
 });
 
 test('tone corrections never change supplied labels, values or accessible text',async()=>{
