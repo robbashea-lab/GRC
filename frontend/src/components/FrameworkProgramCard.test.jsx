@@ -28,6 +28,7 @@ test('pilot distribution uses the same applicable counts without changing assess
   expect([...bar.children].reduce((sum,n)=>sum+parseFloat(n.style.width),0)).toBeCloseTo(100);
   expect(container.querySelectorAll('.bd-gaps a')).toHaveLength(4);expect(cisRows[6].status).toBe('not_applicable');
   expect(container.querySelector('.bd-donut-value').textContent).toBe('33.3%');
+  expect(container.querySelector('circle.bd-seg-addressed').getAttribute('pathLength')).toBe('100');
   expect(parseFloat(container.querySelector('circle.bd-seg-addressed').getAttribute('stroke-dasharray'))).toBeCloseTo(100/3-.9);
 });
 const render=async programs=>act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={programs} programRows={Object.fromEntries(programs.map(p=>[p.key,cisRows]))} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={async()=>({})}/>));

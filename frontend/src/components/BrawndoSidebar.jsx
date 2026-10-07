@@ -92,14 +92,14 @@ export default function BrawndoSidebar({complianceItems=[],isInternal,showFindin
     return()=>{c.abort();window.removeEventListener('grc:ticket-saved',load);};
   },[currentClientId,location.key]);
   const link=([to,label,Icon,testid,badge])=>{const [n,tone]=counts[badge]||[];
-    return <NavLink key={to} to={to} data-testid={testid} className={({isActive})=>`bsb-link${isActive?' is-active':''}`}>
+    return <NavLink key={to} to={to} aria-label={`${label}${n>0?` ${n} ${BADGE_LABEL[badge]}`:''}`} title={label} data-testid={testid} className={({isActive})=>`bsb-link${isActive?' is-active':''}`}>
       <Icon size={17} aria-hidden="true"/><span>{label}</span>
       {n>0&&<span className={`bsb-badge is-${tone}`} aria-label={`${n} ${BADGE_LABEL[badge]}`}>{n}</span>}
     </NavLink>;};
   return <aside className="app-sidebar bsb w-64 shrink-0 hidden lg:flex flex-col h-screen sticky top-0" data-theme={theme}>
     <div className="bsb-head">
       <Brand/>
-      {isInternal&&<button type="button" className="bsb-back" onClick={()=>nav('/clients')} data-testid="return-to-portfolio"><ArrowLeft size={13} aria-hidden="true"/>Portfolio</button>}
+      {isInternal&&<button type="button" className="bsb-back" aria-label="Return to portfolio" title="Portfolio" onClick={()=>nav('/clients')} data-testid="return-to-portfolio"><ArrowLeft size={13} aria-hidden="true"/>Portfolio</button>}
       <div className="bsb-client" data-testid="context-header-client"><span className="bsb-client-mark" aria-hidden="true">{currentClient?.name?.[0]||'•'}</span><span className="min-w-0"><span className="bsb-group-label">Client</span><span className="bsb-client-name">{currentClient?.name||'Select a client…'}</span></span></div>
     </div>
     <nav className="bsb-nav" data-testid="sidebar-client" aria-label="Client workspace">
