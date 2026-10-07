@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import api from "@/lib/api";
 import {selectedClient, rememberClient} from '@/lib/clientSelection';
 
@@ -9,14 +9,17 @@ export function OrgProvider({ children }) {
   const [currentClientId, setCurrentClientId] = useState(selectedClient);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const loadSequence = useRef(0);
 
   const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
     setLoading(true);
     setError("");
     try {
       // Archived clients are included so an archived workspace opened from the Portfolio keeps its identity;
       // navigation lists and the default selection use active clients only.
       const { data } = await api.get("/clients", { params: { include_archived: true } });
+      if (sequence !== loadSequence.current) return;
       setClients(data);
       const active = data.filter((c) => (c.status || "active") !== "archived");
       const stored = selectedClient();
@@ -30,10 +33,11 @@ export function OrgProvider({ children }) {
         setCurrentClientId("");
       }
     } catch (e) {
+      if (sequence !== loadSequence.current) return;
       setClients([]); setCurrentClientId("");
       setError(e?.response?.data?.detail || e?.message || "Clients could not be loaded.");
     } finally {
-      setLoading(false);
+      if (sequence === loadSequence.current) setLoading(false);
     }
   }, []);
 
@@ -42,7 +46,7 @@ export function OrgProvider({ children }) {
     const refreshScope = () => { if (!document.hidden) load(); };
     window.addEventListener("focus", refreshScope);
     const interval = window.setInterval(refreshScope, 60000);
-    return () => { window.removeEventListener("focus", refreshScope); window.clearInterval(interval); };
+    return () => { loadSequence.current++; window.removeEventListener("focus", refreshScope); window.clearInterval(interval); };
   }, [load]);
 
   const switchClient = (id) => {
