@@ -61,9 +61,9 @@
   --color-critical: #B42318;
   --color-critical-bg: #FEF3F2;
   --color-critical-border: #FECDCA;
-  --color-high: #B42318;
-  --color-high-bg: #FEF3F2;
-  --color-high-border: #FECDCA;
+  --color-high: #93370D;
+  --color-high-bg: #FFFAEB;
+  --color-high-border: #FDDCAB;
   --color-moderate: #B45309;
   --color-moderate-text: #93370D;
   --color-moderate-bg: #FFFAEB;
@@ -106,6 +106,9 @@
   --register-detail: 12px;
   --register-radius: 5px;
   --control-height: 32px;
+  --page-title-size: 22px;
+  --metric-number-size: 25px;
+  --metric-number-weight: 600;
 }
 .page-header { background: var(--color-bg-app); }
 .page-header-copy { min-width: 0; }
@@ -137,8 +140,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-focus-ri
 .drawer-tab.active { background: var(--color-bg-row-hover); border-color: var(--color-text-secondary); }
 .pill { line-height: 1.25; }
 .pill-high { color: var(--color-high); background: var(--color-high-bg); border-color: var(--color-high-border); }
-.pill-accepted { color: var(--color-accepted); background: var(--color-accepted-bg); border-color: var(--color-accepted-border); }
-.metric-value { font-size: 25px; line-height: 1.2; }
+.pill-accepted { color: var(--color-neutral); background: var(--color-neutral-bg); border-color: var(--color-neutral-border); }
+.metric-value { font-size: var(--metric-number-size); font-weight: var(--metric-number-weight); line-height: 1.2; }
 .metric-card { padding: 12px 14px; gap: 4px; }
 .metric-card svg { color: var(--color-text-muted); }
 
@@ -266,7 +269,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-focus-ri
   border-bottom: 0;
 }
 .page-title {
-  font-size: 22px;
+  font-size: var(--page-title-size);
   line-height: 28px;
   letter-spacing: -.03em;
   font-weight: 600;
@@ -629,7 +632,7 @@ td:last-child > button[aria-label="Row actions"] {
 /* Rows that open a record look and behave the same on every register. */
 .row-open { cursor: pointer; }
 /* Severity: Critical is the solid badge; High is amber; Medium and Low stay gray. */
-:root .pill-high { color: var(--color-moderate); font-weight: 600; }
+:root .pill-high { color: var(--color-moderate-text); font-weight: 600; }
 :root .pill-moderate { color: var(--color-moderate-text); }
 /* A register notice: one compact line above the table for something waiting on the viewer. */
 .register-notice { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 6px var(--register-gutter) 0; padding: 7px 12px;

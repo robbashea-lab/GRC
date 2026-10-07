@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
-
 /* Reference portfolio (demo workspace), light and dark. Remaps the shared tokens inside .bport only,
    so the existing table, filters and drawers restyle without touching other pages. */
 .bport {
@@ -11,7 +9,7 @@
   --color-critical: var(--bp-critical); --color-link: #2446b8; --color-link-hover: #16307f; --color-selected-bg: #eef1ec;
   color-scheme: light;
   min-height: calc(100vh - 44px); box-sizing: border-box; padding: 24px 0 32px;
-  background: var(--bp-bg); color: var(--bp-text); font-family: 'IBM Plex Sans', var(--font-body);
+  background: var(--bp-bg); color: var(--bp-text); font-family: var(--font-body);
   transition: background-color var(--duration-drawer, 240ms) var(--ease-out, ease), color var(--duration-drawer, 240ms);
 }
 .bport[data-theme="dark"] {
@@ -23,7 +21,7 @@
   color-scheme: dark;
 }
 .bport .bp-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 0 var(--space-page, 20px) 18px; }
-.bport h1 { margin: 2px 0 0; font: 600 30px/1.2 'Space Grotesk', var(--font-heading); letter-spacing: -.01em; color: var(--bp-text); }
+.bport h1 { margin: 2px 0 0; font: 600 var(--page-title-size)/28px var(--font-heading); letter-spacing: -.03em; color: var(--bp-text); }
 .bp-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bp-accent); }
 .bp-theme { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--bp-border); background: var(--bp-card); color: var(--bp-text); font: 500 13px 'IBM Plex Sans', var(--font-body); }
 .bp-theme:hover { border-color: var(--bp-muted); }
@@ -35,7 +33,7 @@
 button.bp-tile:hover { border-color: var(--bp-muted); border-top-color: var(--rail); }
 button.bp-tile[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--rail); }
 .bp-tile-label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--bp-muted); }
-.bp-tile-value { font: 600 32px/1.15 'Space Grotesk', var(--font-heading); color: var(--tone); font-variant-numeric: tabular-nums; }
+.bp-tile-value { font: var(--metric-number-weight) var(--metric-number-size)/1.2 var(--font-heading); color: var(--bp-text); font-variant-numeric: tabular-nums; }
 .bp-tile-context { font-size: 13px; color: var(--bp-muted); }
 /* Table and toolbar on the themed surface. */
 .bport .register-toolbar { background: transparent; border-color: var(--bp-border); }
@@ -44,12 +42,12 @@ button.bp-tile[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--rail); }
 .bport .portfolio-table .tbl-cell { padding: 12px 12px; }
 .bport .row-hover:hover { background: var(--color-bg-subtle); }
 .bport .portfolio-view.is-active.bg-primary { background: var(--bp-text) !important; color: var(--bp-bg) !important; font-weight: 600; }
-.bport input:not([type="checkbox"]) { background: var(--bp-card); color: var(--bp-text); border-color: var(--bp-border); }
-.bp-count { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; padding: 0 8px; border-radius: 999px; font-family: 'IBM Plex Mono', var(--font-mono); }
-.bp-count.is-critical { background: var(--bp-critical-bg); color: var(--bp-critical) !important; font-weight: 600; }
-.bp-count.is-attention { background: var(--bp-attention-bg); color: var(--bp-attention) !important; font-weight: 600; }
+.bport input:not([type="checkbox"]) { background: var(--bp-card); color: var(--bp-text); border-color: var(--color-input-border); }
+.bp-count { display: inline-flex; align-items: center; justify-content: flex-end; min-width: 30px; padding: 0 8px; border-radius: var(--register-radius); border-inline-start: 2px solid transparent; background: transparent; font-family: var(--font-body); font-size: var(--register-type); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bp-count.is-critical { border-inline-start-color: var(--bp-critical); color: var(--bp-text) !important; }
+.bp-count.is-attention { border-inline-start-color: var(--bp-attention); color: var(--bp-text) !important; }
 .bp-count.is-neutral { color: var(--bp-text) !important; }
-.bp-count.is-zero { color: var(--color-text-help) !important; font-weight: 400; }
+.bp-count.is-zero { color: var(--bp-muted) !important; font-weight: 400; }
 .bport :is(a, button, [tabindex]):focus-visible { outline: 2px solid var(--bp-focus); outline-offset: 2px; }
 @media (max-width: 1180px) { .bp-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .bp-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .bport .bp-head { align-items: flex-start; flex-direction: column; } .bport .register-search, .bport .register-search input { width: 100%; } }

@@ -10,10 +10,10 @@ const render = element => act(async () => root.render(element));
 test('color is scarce: red for overdue and critical, amber for attention, green for done, gray for normal states', () => {
   expect(['overdue', 'critical', 'immediate'].map(toneFor)).toEqual(['critical', 'critical', 'critical']);
   expect(toneFor('high')).toBe('high');
-  expect(['remediated', 'blocked', 'expired', 'reported_missing'].map(toneFor)).toEqual(['moderate', 'moderate', 'moderate', 'moderate']);
+  expect(['remediated', 'pending_validation', 'needs_attention', 'partial', 'blocked', 'expired', 'reported_missing'].map(toneFor)).toEqual(Array(7).fill('moderate'));
   expect(toneFor('needs_scheduling')).toBe('duesoon');
   expect(['in_progress', 'under_review', 'requested'].map(toneFor)).toEqual(['info', 'info', 'info']);
-  expect(['completed', 'approved', 'verified'].map(toneFor)).toEqual(['success', 'success', 'success']);
+  expect(['completed', 'approved', 'verified', 'validated'].map(toneFor)).toEqual(Array(4).fill('success'));
   // Normal and inactive states stay quiet: an open item or an active vendor is not an alarm or a success.
   expect(['open', 'active', 'upcoming', 'medium', 'low', 'not_applicable', 'inactive', 'draft'].map(toneFor)).toEqual(Array(8).fill('neutral'));
   expect(toneFor('something_new')).toBe('neutral');

@@ -1,6 +1,5 @@
 /* Brawndo Action Items: page-specific layout on top of the shared BrawndoPage kit. */
 .brawndo-ai .bpage-head { padding-bottom: 25px; }
-.brawndo-ai .bpage-head h1 { font-size: 25px; font-weight: 500; }
 .brawndo-ai .bpage-eyebrow { font-size: 10px; font-weight: 400; color: var(--bp-muted); }
 .brawndo-ai .register-toolbar { display: flex; align-items: center; padding: 13px 13px 12px; }
 .brawndo-ai .register-search { max-width: 245px; }
