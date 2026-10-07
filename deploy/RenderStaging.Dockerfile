@@ -13,6 +13,7 @@ WORKDIR /app/backend
 COPY backend/requirements-runtime.txt ./
 RUN pip install --no-cache-dir -r requirements-runtime.txt
 COPY backend/*.py ./
+COPY backend/common_passwords.txt ./
 COPY backend/routes ./routes
 COPY frontend/src/lib/*.json /app/frontend/src/lib/
 COPY shared/catalogs /app/shared/catalogs

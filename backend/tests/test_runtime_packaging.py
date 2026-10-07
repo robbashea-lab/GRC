@@ -10,6 +10,21 @@ import unittest
 
 
 class RuntimePackagingTests(unittest.TestCase):
+    def test_render_password_policy_imports_from_packaged_files(self):
+        root = Path(__file__).resolve().parents[2]
+        docker = (root/'deploy/RenderStaging.Dockerfile').read_text()
+        context = (root/'deploy/RenderStaging.Dockerfile.dockerignore').read_text().splitlines()
+        with tempfile.TemporaryDirectory() as temporary:
+            image = Path(temporary)
+            shutil.copy2(root/'backend/password_policy.py', image/'password_policy.py')
+            if ('COPY backend/common_passwords.txt ./' in docker
+                    and '!backend/common_passwords.txt' in context):
+                shutil.copy2(root/'backend/common_passwords.txt', image/'common_passwords.txt')
+            result = subprocess.run([sys.executable, '-c',
+                "import password_policy; assert 'password' in password_policy.BLOCKED"],
+                cwd=image, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_backend_shared_catalogs_are_in_image_and_context(self):
         root=Path(__file__).resolve().parents[2]
         docker=(root/"backend/Dockerfile").read_text()
