@@ -4,7 +4,7 @@ import cisCriteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import {calendarDay} from '../lib/managementDates';
-import { validateAssignment, eligible } from './assignmentEligibility';
+import { validateAssignment, eligible, clientAccess } from './assignmentEligibility';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,frameworkCapabilities,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {cisConfiguration,validateCisSettings,validateCisConfiguration} from '../lib/cisScope';
 import {activePlans} from '../lib/frameworks';
@@ -31,7 +31,7 @@ const validateVerificationChecklist=(value,definitionId)=>{
 const writable=db=>{if(!['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(db.user.role))fail('Read-only role',403);};
 export function frameworkScope(db,cid){
   record(db,'clients',cid);
-  if(db.user.role!=='super_admin'&&!(db.user.role==='platform_admin'&&!db.user.client_ids?.length)&&!db.user.client_ids?.includes(cid))fail('Forbidden',403);
+  if(!clientAccess(db.user,cid))fail('Forbidden',403);
 }
 export function validateFrameworkConfig(state){
   validateCisSettings(state.framework_settings);

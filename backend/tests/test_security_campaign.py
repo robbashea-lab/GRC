@@ -34,6 +34,8 @@ class SecurityCampaign(unittest.IsolatedAsyncioTestCase):
         response=await self.raw.get('/api/clients',headers=self.token('empty'))
         self.assertEqual(response.status_code,200)
         self.assertEqual(response.json(),[])
+        directory=await self.raw.get('/api/clients/directory',headers=self.token('empty'))
+        self.assertEqual(directory.json()['clients'],[])
         response=await self.raw.get('/api/users',headers=self.token('empty'))
         self.assertEqual(response.json(),[])
 
@@ -215,3 +217,115 @@ class SecurityCampaign(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(account['role'],'client_grc_manager')
         self.assertEqual(account['status'],'invited')
         self.assertEqual(account['client_ids'],['a'])
+
+
+class AdministrationHardening(SecurityCampaign):
+    async def test_passphrase_storage_boundaries_and_legacy(self):
+        import password_policy
+        import bcrypt
+        for password in ['short', 'passwordpassword', '123456789012345', 'x' * 129]:
+            with self.assertRaises(harness.server.HTTPException):
+                password_policy.hash_password(password)
+        for password in ['  a long passphrase with spaces  ', '雪山河流' * 16, secrets.token_urlsafe(96)]:
+            stored = password_policy.hash_password(password)
+            self.assertTrue(password_policy.verify_password(password, stored))
+            self.assertFalse(password_policy.verify_password(password + '!', stored))
+            self.assertNotIn(password, stored)
+        password = secrets.token_urlsafe(24)
+        legacy = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
+        self.assertTrue(password_policy.verify_password(password, legacy))
+
+    async def test_explicit_all_client_entitlement_and_revocation(self):
+        await harness.server.db.users.update_one({'user_id': 'empty'}, {'$set': {'all_clients': True}})
+        self.assertEqual(len((await self.raw.get('/api/clients', headers=self.token('empty'))).json()), 2)
+        await harness.server.db.users.update_one({'user_id': 'empty'}, {'$set': {'all_clients': False}})
+        self.assertEqual((await self.raw.get('/api/clients', headers=self.token('empty'))).json(), [])
+        response = await self.raw.patch('/api/users/reader', headers=self.token('grace'), json={'all_clients': True, 'expected_updated_at': None})
+        self.assertEqual(response.status_code, 403)
+
+    async def test_archived_tenant_is_readonly(self):
+        await harness.server.db.clients.update_one({'client_id':'a'}, {'$set':{'status':'archived'}})
+        for uid in ['member','manager','grace']:
+            response = await self.raw.patch('/api/tasks/tasks-a', headers=self.token(uid), json={'notes':'blocked','expected_updated_at':None})
+            self.assertEqual(response.status_code,403,response.text)
+        response = await self.raw.post('/api/bulk', headers=self.token('grace'), json={'kind':'tasks','action':'assign','ids':['tasks-a'],'payload':{'assignee_id':'member'},'expected_versions':{'tasks-a':None}})
+        self.assertEqual(response.status_code,403,response.text)
+        await harness.server.db.evidence.insert_one({'evidence_id':'archived-evidence','client_id':'a','filename':'Synthetic evidence','archived_at':None})
+        response = await self.raw.patch('/api/evidence-library/items/archived-evidence', headers=self.token('grace'), json={'display_name':'blocked','expected_updated_at':None})
+        self.assertEqual(response.status_code,403,response.text)
+
+    async def test_archived_related_and_bulk_resources_are_readonly(self):
+        await harness.server.db.clients.update_one({'client_id':'a'}, {'$set':{'status':'archived'}})
+        for kind, key in [('contacts','contact_id'), ('requirements','requirement_id'), ('evidence','evidence_id')]:
+            await harness.server.db[kind].insert_one({key:'archived-related','client_id':'a'})
+            for path, body in [('/api/comments', {'entity_type':kind,'entity_id':'archived-related','body':'blocked'}),
+                    ('/api/bulk', {'kind':kind,'action':'delete','ids':['archived-related'],'expected_versions':{'archived-related':None}})]:
+                with self.subTest(kind=kind,path=path):
+                    response = await self.raw.post(path, headers=self.token('grace'), json=body)
+                    self.assertEqual(response.status_code,403,response.text)
+
+    async def test_client_hard_delete_is_unavailable(self):
+        await harness.server.db.clients.insert_one({'client_id':'empty-client','name':'Disposable empty client','status':'onboarding'})
+        for cid in ['empty-client', 'a']:
+            response = await self.raw.request('DELETE', '/api/clients/' + cid, headers=self.token('admin'), json={'confirmation':'Disposable empty client','expected_updated_at':None})
+            self.assertNotEqual(response.status_code, 200, response.text)
+            self.assertIsNotNone(await harness.server.db.clients.find_one({'client_id': cid}))
+
+    async def test_audit_preserves_actor_and_object_snapshots(self):
+        await harness.server.audit({'user_id': 'admin', 'name': 'Original actor', 'email': 'actor@example.test'}, 'update', 'task', 'tasks-a', 'a')
+        await harness.server.db.tasks.delete_one({'task_id': 'tasks-a'})
+        event = await harness.server.db.audit_logs.find_one({'entity_id': 'tasks-a'})
+        self.assertEqual(event['user_name'], 'Original actor')
+        self.assertTrue(event['entity_name'])
+        self.assertTrue(event['client_name'])
+        self.assertEqual(event['outcome'], 'success')
+
+    async def test_normalized_validation_and_mass_assignment(self):
+        for body in [{'name':'   '},{'name':'x'*201},{'name':'valid','client_id':'forged'},{'name':'valid','status':'invalid'}]:
+            response=await self.client.post('/api/clients',headers=self.token('admin'),json=body)
+            self.assertEqual(response.status_code,422,response.text)
+        response=await self.raw.post('/api/users',headers=self.token('admin'),json={'name':'Test','email':'test@example.com','role':'client_readonly','permissions':['all']})
+        self.assertEqual(response.status_code,422,response.text)
+
+    async def test_identity_assignment_matrix(self):
+        identities=[('global','platform_admin',[],True),('multi','platform_admin',['a','b'],False),
+            ('single','platform_admin',['a'],False),('external-a','client_readonly',['a'],False),
+            ('external-b','client_readonly',['b'],False),('none','client_readonly',[],False),
+            ('disabled','client_readonly',['a'],False)]
+        for uid,role,clients,all_clients in identities:
+            await harness.server.db.users.insert_one({'user_id':uid,'email':uid+'@example.test','status':'disabled' if uid=='disabled' else 'active','role':role,'client_ids':clients,'all_clients':all_clients})
+            response=await self.raw.get('/api/clients',headers=self.token(uid))
+            if uid=='disabled':
+                self.assertEqual(response.status_code,401)
+                continue
+            self.assertEqual(response.status_code,200,response.text)
+            self.assertEqual({r['client_id'] for r in response.json()}, {'a','b'} if all_clients else set(clients))
+            for kind in harness.server.ENTITY_MAP:
+                for cid in ['a','b']:
+                    response=await self.raw.get(f'/api/{kind}/{kind}-{cid}',headers=self.token(uid))
+                    self.assertEqual(response.status_code,200 if all_clients or cid in clients else 403,(uid,kind,cid,response.text))
+            if role=='client_readonly':
+                for endpoint in ['/api/users','/api/audit-logs','/api/clients/directory']:
+                    self.assertEqual((await self.raw.get(endpoint,headers=self.token(uid))).status_code,403)
+
+    async def test_required_password_change_blocks_client_data(self):
+        password=secrets.token_urlsafe(24)
+        await harness.server.db.users.update_one({'user_id':'member'},{'$set':{'password_hash':harness.server.hash_password(password),'password_change_required':True}})
+        headers=self.token('member')
+        self.assertEqual((await self.raw.get('/api/auth/me',headers=headers)).status_code,200)
+        self.assertEqual((await self.raw.get('/api/clients',headers=headers)).status_code,403)
+        response=await self.raw.patch('/api/me/password',headers=headers,json={'current_password':password,'new_password':secrets.token_urlsafe(24)})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertFalse((await harness.server.db.users.find_one({'user_id':'member'}))['password_change_required'])
+        self.assertEqual((await self.raw.get('/api/clients',headers=headers)).status_code,401)
+
+    async def test_owner_self_lockout_and_concurrent_demotions(self):
+        response=await self.raw.patch('/api/users/admin',headers=self.token('admin'),json={'status':'disabled','expected_updated_at':None})
+        self.assertEqual(response.status_code,400,response.text)
+        await harness.server.db.users.insert_one({'user_id':'second-owner','role':'super_admin','status':'active','email':'second@example.test'})
+        import asyncio
+        responses=await asyncio.gather(
+            self.raw.patch('/api/users/admin',headers=self.token('second-owner'),json={'status':'disabled','expected_updated_at':None}),
+            self.raw.patch('/api/users/second-owner',headers=self.token('admin'),json={'status':'disabled','expected_updated_at':None}))
+        self.assertEqual(sum(r.status_code==200 for r in responses),1)
+        self.assertEqual(await harness.server.db.users.count_documents({'role':'super_admin','status':'active'}),1)

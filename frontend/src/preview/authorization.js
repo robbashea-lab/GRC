@@ -43,6 +43,9 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   const route = `${method} /${parts.join('/')}`;
   if (SELF.some(pattern => pattern.test(route))) return;
   if (role === OWNER) return;
+  const target = (db[parts[0]] || []).find(r => r[ids[parts[0]]] === parts[1]);
+  const cid = target?.client_id || body.client_id;
+  if (cid && (db.clients || []).some(c => c.client_id === cid && c.status === 'archived')) deny('Archived clients are read-only; ask a Super Admin to restore the client');
   if (role === PROVIDER) {
     if ((method === 'post' && route === 'post /clients') || parts[0] === 'reminders') deny('Platform Owner required');
     return;

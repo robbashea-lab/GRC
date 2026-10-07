@@ -10,7 +10,7 @@ import { User, ShieldCheck, Bell } from "lucide-react";
 
 export default function MyAccount() {
   const { user, refresh } = useAuth();
-  const [tab, setTab] = useState("profile");
+  const [tab, setTab] = useState(user?.password_change_required ? "security" : "profile");
   const [profile, setProfile] = useState({ name: "", job_title: "", phone: "" });
   const [pw, setPw] = useState({ current_password: "", new_password: "", confirm: "" });
   const [prefs, setPrefs] = useState({ weekly_digest_optout: false });
@@ -41,12 +41,13 @@ export default function MyAccount() {
 
   async function changePassword() {
     if (pw.new_password !== pw.confirm) { toast.error("New passwords don't match"); return; }
-    if (pw.new_password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (pw.new_password.length < 15) { toast.error("Password must be at least 15 characters"); return; }
     setSaving(true);
     try {
       await api.patch("/me/password", { current_password: pw.current_password, new_password: pw.new_password });
-      toast.success("Password changed. Other sessions signed out.");
+      toast.success("Password changed. Sign in again to continue.");
       setPw({ current_password: "", new_password: "", confirm: "" });
+      await refresh();
     } catch (e) { toast.error(formatError(e)); }
     finally { setSaving(false); }
   }
@@ -123,6 +124,7 @@ export default function MyAccount() {
             </div>
           )}
 
+          {user?.password_change_required && <p role="alert" className="text-semantic-critical">Change your password before continuing to client data.</p>}
           {tab === "security" && (
             <div className="space-y-3" data-testid="account-security">
               {isGoogle ? (
@@ -133,25 +135,22 @@ export default function MyAccount() {
                 <>
                   <div>
                     <Label className="text-xs text-ink-secondary">Current password</Label>
-                    <Input data-testid="me-current-pw" type="password" value={pw.current_password} onChange={(e) => setPw({ ...pw, current_password: e.target.value })} className="text-sm" />
+                    <Input aria-label="Current password" autoComplete="current-password" data-testid="me-current-pw" type="password" value={pw.current_password} onChange={(e) => setPw({ ...pw, current_password: e.target.value })} className="text-sm" />
                   </div>
                   <div>
                     <Label className="text-xs text-ink-secondary">New password</Label>
-                    <Input data-testid="me-new-pw" type="password" value={pw.new_password} onChange={(e) => setPw({ ...pw, new_password: e.target.value })} className="text-sm" />
+                    <Input aria-label="New password" autoComplete="new-password" minLength={15} maxLength={128} data-testid="me-new-pw" type="password" value={pw.new_password} onChange={(e) => setPw({ ...pw, new_password: e.target.value })} className="text-sm" />
                   </div>
                   <div>
                     <Label className="text-xs text-ink-secondary">Confirm new password</Label>
-                    <Input data-testid="me-confirm-pw" type="password" value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} className="text-sm" />
+                    <Input aria-label="Confirm new password" autoComplete="new-password" minLength={15} maxLength={128} data-testid="me-confirm-pw" type="password" value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} className="text-sm" />
                   </div>
-                  <div className="text-xs text-ink-help">At least 8 characters. Changing your password will sign out other active sessions.</div>
+                  <div className="text-xs text-ink-help">15–128 characters. Changing your password signs out all active sessions, including this one.</div>
                   <div className="pt-2">
                     <Button onClick={changePassword} disabled={saving} data-testid="me-change-pw">Change password</Button>
                   </div>
                 </>
               )}
-              <div className="mt-6 p-3 border border-line rounded-md bg-surface-subtle text-xs text-ink-help">
-                Multi-factor authentication (MFA) and active session management are coming next. Ask your admin for help in the meantime.
-              </div>
             </div>
           )}
 

@@ -45,6 +45,7 @@ test("blank standard sign-in and credentialless demo are separate paths", async 
 });
 
 test("hosted staging exposes Demo alongside enabled standard sign-in", async () => {
+  mockNavigate.mockClear();
   require('@/lib/api').STANDARD_AUTH_ENABLED = true;
   mockLogin.mockClear(); mockExploreDemo.mockClear(); mockNavigate.mockClear();
   mockLogin.mockResolvedValue({ role: 'super_admin' });
@@ -60,6 +61,7 @@ test("hosted staging exposes Demo alongside enabled standard sign-in", async () 
     expect(container.querySelector('#standard-auth-notice')).toBeNull();
     await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})));
     expect(mockLogin).toHaveBeenCalledWith('', '');
+    expect(mockNavigate).toHaveBeenCalledWith('/');
     expect(mockExploreDemo).not.toHaveBeenCalled();
     await act(async () => container.querySelector('[data-testid="explore-demo"]').click());
     expect(mockExploreDemo).toHaveBeenCalledWith();

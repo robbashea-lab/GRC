@@ -45,6 +45,9 @@ class RuntimePackagingTests(unittest.TestCase):
             backend=image/"backend";backend.mkdir()
             for source in (root/"backend").glob("*.py"):
                 shutil.copy2(source,backend/source.name)
+            self.assertIn('COPY backend/common_passwords.txt ./', (root/'backend/Dockerfile').read_text())
+            self.assertIn('!backend/common_passwords.txt', (root/'backend/Dockerfile.dockerignore').read_text())
+            shutil.copy2(root/'backend/common_passwords.txt', backend/'common_passwords.txt')
             shutil.copytree(root/"backend/routes",backend/"routes",ignore=shutil.ignore_patterns("__pycache__"))
             shutil.copytree(root/"shared/catalogs",image/"shared/catalogs")
             # Keep the remaining domain JSON dependencies exactly as Docker packages

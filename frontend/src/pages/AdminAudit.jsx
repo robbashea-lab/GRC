@@ -240,11 +240,11 @@ export default function AdminAudit() {
       <PageHeader
         eyebrow="Administration"
         title="Audit Log"
-        subtitle="Immutable record of platform and client activity across authorized organizations."
+        subtitle="Application audit records are append-only through the Omnisciente interface."
       />
       <div className="page-gutter pt-4 pb-2 flex items-center gap-3 flex-wrap" data-testid="audit-filters">
         <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="h-9 w-56 text-sm" data-testid="audit-filter-client">
+          <SelectTrigger className="h-9 w-56 text-sm" aria-label="Client filter" data-testid="audit-filter-client">
             <SelectValue placeholder="All clients" />
           </SelectTrigger>
           <SelectContent>
@@ -257,7 +257,7 @@ export default function AdminAudit() {
         </Select>
 
         <Select value={userFilter} onValueChange={setUserFilter}>
-          <SelectTrigger className="h-9 w-56 text-sm" data-testid="audit-filter-user">
+          <SelectTrigger className="h-9 w-56 text-sm" aria-label="User filter" data-testid="audit-filter-user">
             <SelectValue placeholder="All users" />
           </SelectTrigger>
           <SelectContent className="max-h-72">
@@ -269,7 +269,7 @@ export default function AdminAudit() {
         </Select>
 
         <Select value={actionFilter} onValueChange={setActionFilter}>
-          <SelectTrigger className="h-9 w-44 text-sm" data-testid="audit-filter-action">
+          <SelectTrigger className="h-9 w-44 text-sm" aria-label="Action filter" data-testid="audit-filter-action">
             <SelectValue placeholder="All actions" />
           </SelectTrigger>
           <SelectContent>
@@ -280,7 +280,7 @@ export default function AdminAudit() {
         </Select>
 
         <Select value={entityFilter} onValueChange={setEntityFilter}>
-          <SelectTrigger className="h-9 w-44 text-sm" data-testid="audit-filter-entity">
+          <SelectTrigger className="h-9 w-44 text-sm" aria-label="Object or event type filter" data-testid="audit-filter-entity">
             <SelectValue placeholder="All entities" />
           </SelectTrigger>
           <SelectContent className="max-h-72">
@@ -292,7 +292,7 @@ export default function AdminAudit() {
         </Select>
 
         <Select value={datePreset} onValueChange={setDatePreset}>
-          <SelectTrigger className="h-9 w-40 text-sm" data-testid="audit-filter-date">
+          <SelectTrigger className="h-9 w-40 text-sm" aria-label="Date range filter" data-testid="audit-filter-date">
             <SelectValue placeholder="Last 30 days" />
           </SelectTrigger>
           <SelectContent>
@@ -317,7 +317,7 @@ export default function AdminAudit() {
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Search action, entity, user, record…"
-            className="pl-8 h-9 text-sm" data-testid="audit-search" />
+            aria-label="Search audit events" className="pl-8 h-9 text-sm" data-testid="audit-search" />
         </div>
 
         <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting}
@@ -381,11 +381,11 @@ export default function AdminAudit() {
                     <td className="tbl-cell text-xs text-ink-primary">{humanAction(r.action)}</td>
                     <td className="tbl-cell text-xs text-ink-secondary">{humanEntity(r.entity_type)}</td>
                     <td className="tbl-cell text-xs">
-                      <div className="text-ink-primary truncate max-w-[220px]">{r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
+                      <div className="text-ink-primary truncate max-w-[220px]">{r.entity_name || r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
                       <div className="text-xs text-ink-help font-mono truncate max-w-[220px]">{r.entity_id}</div>
                     </td>
                     <td className="tbl-cell text-right">
-                      <Button variant="ghost" size="sm" className="h-7 text-xs"
+                      <Button variant="ghost" size="sm" aria-label={`View ${humanAction(r.action)} event for ${r.entity_name || r.entity_id || "platform"}`} className="h-7 text-xs"
                         onClick={(e) => { e.stopPropagation(); setSelected(r); }}
                         data-testid={`audit-view-${i}`}>View</Button>
                     </td>
@@ -450,6 +450,7 @@ function AuditDetailDrawer({ event, onClose }) {
         <div className="mt-4">
           <DetailRow label="Event" testid="audit-detail-event">{humanAction(event.action)}</DetailRow>
           <DetailRow label="Raw code" mono testid="audit-detail-raw">{event.action || "—"}</DetailRow>
+          <DetailRow label="Outcome">{event.outcome || 'Not recorded (legacy event)'}</DetailRow>
           <DetailRow label="Date / Time" mono testid="audit-detail-at">
             {event.at ? new Date(event.at).toLocaleString() : "—"}
           </DetailRow>
@@ -469,6 +470,7 @@ function AuditDetailDrawer({ event, onClose }) {
           </DetailRow>
           <DetailRow label="Entity" testid="audit-detail-entity">{humanEntity(event.entity_type)}</DetailRow>
           <DetailRow label="Entity ID" mono testid="audit-detail-entity-id">{event.entity_id || "—"}</DetailRow>
+          {event.entity_name && <DetailRow label="Entity name">{event.entity_name}</DetailRow>}
           {prevVal !== undefined && (
             <DetailRow label="Previous value" mono testid="audit-detail-prev">
               <pre className="whitespace-pre-wrap text-xs bg-surface-subtle border border-line rounded-md p-2">{JSON.stringify(prevVal, null, 2)}</pre>

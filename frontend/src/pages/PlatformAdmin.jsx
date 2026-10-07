@@ -1,5 +1,6 @@
 import { StatusPill } from '@/components/StatusBadge';
 import UserAssignments from '@/components/UserAssignments';
+import TablePagination from '@/components/TablePagination';
 import { invitationFeedback } from '@/lib/invitationFeedback';
 import { useTableControls, ColumnControl, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import { tableColumns } from '@/lib/tableColumns';
@@ -34,12 +35,20 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
   const [assignmentAccount, setAssignmentAccount] = useState(null);
   const pendingAssignment = useRef(null);
   const [clients, setClients] = useState([]);
   const [loadedScope, setLoadedScope] = useState(null);
   const loadSequence = useRef(0);
+  const actionButtons = useRef({}), addUserButton = useRef(null), focusAfterSave = useRef(null);
+  useEffect(() => {
+    if (!loading && focusAfterSave.current) {
+      (actionButtons.current[focusAfterSave.current] || addUserButton.current)?.focus();
+      focusAfterSave.current = null;
+    }
+  }, [loading]);
 
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
@@ -69,13 +78,16 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   const columns = tableColumns('users', { rows: tableSource, users, clients, });
   const table = useTableControls({ columns, rows: tableSource, module: 'users', scope: `${viewer?.user_id}:${clientId || 'platform'}` });
   const filtered = table.apply(loadedScope === `${scope}:${clientId}` ? presetRows : []);
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(filtered.length / 25)));
 
   async function patchUser(u, changes, label) {
     try {
       await api.patch(`/users/${u.user_id}${changes.client_ids ? '/client-memberships' : ''}`, {...changes,expected_updated_at:u.updated_at??null});
       toast.success(label || "User updated");
+      focusAfterSave.current = u.user_id;
       load();
-    } catch (e) { toast.error(formatError(e)); }
+      return true;
+    } catch (e) { toast.error(formatError(e)); return false; }
   }
 
   async function disableUser(u) {
@@ -101,14 +113,14 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="register-search relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users…" className="pl-8 h-9 w-72 text-sm" data-testid="users-search" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users…" aria-label="Search users" className="pl-8 h-9 w-72 max-w-full text-sm" data-testid="users-search" />
         </div>
         <div className="text-xs text-ink-help font-mono ml-auto">{filtered.length} / {users.length}</div>
         {canManage && (
-          <Button size="sm" onClick={() => setAddOpen(true)} data-testid={`add-user-${scope}`} className="bg-primary hover:bg-primary/90">
+          <Button ref={addUserButton} size="sm" onClick={() => setAddOpen(true)} data-testid={`add-user-${scope}`} className="bg-primary hover:bg-primary/90">
             <Plus className="h-3.5 w-3.5 mr-1" /> {scope === "client" ? "Add client user" : "Add user"}
           </Button>
         )}
@@ -130,19 +142,19 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
           <tbody className="divide-y divide-line">
             {loading && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8">Loading users…</td></tr>}
             {!loading && filtered.length === 0 && <tr><td colSpan={6} className="tbl-cell text-center text-ink-help py-8"><FilterEmpty table={table} name="users" onClear={() => { setQ('');  }} /></td></tr>}
-            {!loading && filtered.map((u, i) => {
+            {!loading && filtered.slice((currentPage - 1) * 25, currentPage * 25).map((u, i) => {
               const status = u.status || "active";
               const tone = STATUS_TONE[status] || STATUS_TONE.active;
               return (
                 <tr key={u.user_id} className="row-hover" data-testid={`user-row-${i}`}>
                   <td className="tbl-cell">
                     <div className="font-medium text-ink-primary">{u.name || u.email}{u.orphaned && <span className="ml-2 text-xs font-mono text-semantic-duesoon-text">ORPHANED</span>}</div>
-                    <div className="text-xs text-ink-help">{u.email}</div>
+                    <div className="text-xs text-ink-help break-all">{u.email}</div>
                   </td>
                   <td className="tbl-cell text-ink-primary">{ROLE_LABEL[u.role] || u.role}</td>
                   {scope === "platform" && (
                     <td className="tbl-cell text-xs text-ink-secondary font-mono">
-                      {u.role === "super_admin" ? "All clients" : `${(u.client_ids || []).length} client(s)`}
+                      {u.role === "super_admin" || u.all_clients ? "All clients" : `${(u.client_ids || []).length} client(s)`}
                     </td>
                   )}
                   <td className="tbl-cell">
@@ -157,7 +169,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
                     {canManage && u.user_id !== viewer?.user_id && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1 rounded hover:bg-surface-subtle text-ink-help" data-testid={`user-menu-${i}`}>
+                          <button ref={element => { actionButtons.current[u.user_id] = element; }} aria-label={`Actions for ${u.name || u.email}`} className="p-2 rounded hover:bg-surface-subtle text-ink-help" data-testid={`user-menu-${i}`}>
                             <MoreVertical className="h-4 w-4" />
                           </button>
                         </DropdownMenuTrigger>
@@ -167,9 +179,11 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
                           if (account) queueMicrotask(() => setAssignmentAccount(account));
                         }}>
                           <DropdownMenuItem onSelect={() => { pendingAssignment.current = u; }}>View active assignments</DropdownMenuItem>
+                          <EditAccountItem u={u} onSave={changes => patchUser(u, changes)} />
+                          {viewer?.role === "super_admin" && <DropdownMenuItem onClick={() => patchUser(u, {password_change_required: true}, "Password change required; active sessions revoked")}>Require password change</DropdownMenuItem>}
                           <EditRoleItem u={u} allowedRoles={allowedRoles} onSave={(role) => patchUser(u, { role }, `Role changed to ${ROLE_LABEL[role]}`)} />
                           {scope === "platform" && (
-                            <EditClientsItem u={u} clients={clients} onSave={(ids) => patchUser(u, { client_ids: ids }, "Client access updated")} />
+                            <EditClientsItem u={u} clients={clients} canGrantAll={viewer?.role === "super_admin"} onEntitlement={(all_clients) => patchUser(u, { all_clients }, "All-client access updated")} onSave={(ids) => patchUser(u, { client_ids: ids }, "Client access updated")} />
                           )}
                           {scope === "client" && u.role !== "super_admin" && (
                             <DropdownMenuItem
@@ -205,9 +219,10 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
           </tbody>
         </table>
       </div>
-
+      <TablePagination page={currentPage} onPageChange={setPage} total={filtered.length} />
       <AddUserDialog
         open={addOpen}
+        onCloseAutoFocus={event => { event.preventDefault(); addUserButton.current?.focus(); }}
         onOpenChange={setAddOpen}
         scope={scope}
         clientId={clientId}
@@ -218,6 +233,23 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
       {assignmentAccount && <UserAssignments account={assignmentAccount} clientId={clientId} onClose={() => setAssignmentAccount(null)} />}
     </div>
   );
+}
+
+function EditAccountItem({u, onSave}) {
+  const [open, setOpen] = useState(false), [name, setName] = useState(u.name || ''), [email, setEmail] = useState(u.email || ''), [error, setError] = useState(''), [saving, setSaving] = useState(false);
+  async function save() {
+    if (!name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Enter a name and valid email address.'); return; }
+    setSaving(true);
+    const saved = await onSave({name: name.trim(), email: email.trim()});
+    setSaving(false);
+    if (saved) setOpen(false); else setError('Changes were not saved. Review the error and try again.');
+  }
+  return <><DropdownMenuItem onSelect={e => {e.preventDefault(); setOpen(true);}}>Edit account…</DropdownMenuItem>
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Edit {u.name || u.email}</DialogTitle><DialogDescription>Update this account's name and email address.</DialogDescription></DialogHeader>
+      <Label htmlFor="edit-account-name">Name</Label><Input id="edit-account-name" value={name} maxLength={200} onChange={e => setName(e.target.value)} />
+      <Label htmlFor="edit-account-email">Email</Label><Input id="edit-account-email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+      {error && <p role="alert" className="text-semantic-critical text-sm">{error}</p>}<DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button disabled={saving} onClick={save}>Save account</Button></DialogFooter>
+    </DialogContent></Dialog></>;
 }
 
 function EditRoleItem({ u, allowedRoles, onSave }) {
@@ -232,14 +264,14 @@ function EditRoleItem({ u, allowedRoles, onSave }) {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Change role for {u.name || u.email}</DialogTitle></DialogHeader>
           <Select value={role} onValueChange={setRole}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label="Assigned role"><SelectValue /></SelectTrigger>
             <SelectContent>
               {allowedRoles.map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
             </SelectContent>
           </Select>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => { onSave(role); setOpen(false); }}>Save</Button>
+            <Button onClick={async () => { if (await onSave(role)) setOpen(false); }}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -247,7 +279,7 @@ function EditRoleItem({ u, allowedRoles, onSave }) {
   );
 }
 
-function EditClientsItem({ u, clients, onSave }) {
+function EditClientsItem({ u, clients, onSave, canGrantAll, onEntitlement }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Set(u.client_ids || []));
   const toggle = (cid) => {
@@ -266,6 +298,7 @@ function EditClientsItem({ u, clients, onSave }) {
             <DialogTitle>Client access for {u.name || u.email}</DialogTitle>
             <DialogDescription>Select which clients this user can access.</DialogDescription>
           </DialogHeader>
+          {canGrantAll && u.role === "platform_admin" && <label className="flex gap-2 text-sm"><input type="checkbox" checked={!!u.all_clients} onChange={async e => { if (await onEntitlement(e.target.checked)) setOpen(false); }} /> All-client entitlement</label>}
           <div className="max-h-64 overflow-y-auto space-y-1 py-2">
             {clients.map((c) => (
               <label key={c.client_id} className="flex items-center gap-2 text-sm p-2 rounded hover:bg-surface-subtle cursor-pointer">
@@ -276,7 +309,7 @@ function EditClientsItem({ u, clients, onSave }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => { onSave(Array.from(selected)); setOpen(false); }}>Save</Button>
+            <Button onClick={async () => { if (await onSave(Array.from(selected))) setOpen(false); }}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -284,28 +317,29 @@ function EditClientsItem({ u, clients, onSave }) {
   );
 }
 
-function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRoles, onCreated }) {
+function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRoles, onCreated, onCloseAutoFocus }) {
   const [form, setForm] = useState({ name: "", email: "", role: allowedRoles[allowedRoles.length - 1], client_ids: clientId ? [clientId] : [] });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) setForm({ name: "", email: "", role: allowedRoles[allowedRoles.length - 1], client_ids: clientId ? [clientId] : [] });
   }, [open, allowedRoles, clientId]);
 
   async function save() {
-    if (!form.name.trim() || !form.email.trim()) { toast.error("Name and email are required"); return; }
-    setSaving(true);
+    if (!form.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setError("Name and a valid email address are required"); return; }
+    setError(""); setSaving(true);
     try {
       const { data } = await api.post("/users", form);
       toast.info(invitationFeedback(data));
       onCreated?.();
-    } catch (e) { toast.error(formatError(e)); }
+    } catch (e) { setError(formatError(e)); }
     finally { setSaving(false); }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md" data-testid="add-user-dialog">
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus} className="max-w-md" data-testid="add-user-dialog">
         <DialogHeader>
           <DialogTitle>{scope === "client" ? "Add client user" : "Add platform user"}</DialogTitle>
           <DialogDescription>
@@ -318,16 +352,17 @@ function AddUserDialog({ open, onOpenChange, scope, clientId, clients, allowedRo
           <div className="space-y-3 py-2">
             <div>
               <Label className="text-xs text-ink-secondary">Full name</Label>
-              <Input data-testid="new-user-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="text-sm" />
+              <Input aria-label="Full name" maxLength={200} data-testid="new-user-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="text-sm" />
             </div>
             <div>
               <Label className="text-xs text-ink-secondary">Email</Label>
-              <Input data-testid="new-user-email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="text-sm" />
+              <Input aria-label="Email" type="email" data-testid="new-user-email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="text-sm" />
             </div>
+            {error && <p role="alert" className="text-sm text-semantic-critical">{error}</p>}
             <div>
               <Label className="text-xs text-ink-secondary">Role</Label>
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
-                <SelectTrigger data-testid="new-user-role" className="text-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Role" data-testid="new-user-role" className="text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {allowedRoles.map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
                 </SelectContent>
