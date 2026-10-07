@@ -108,6 +108,9 @@ async def authorize_request(request, user, db):
     user['role'] = role
     if role not in ROLES:
         raise HTTPException(403, 'Unsupported role')
+    if user.get('password_change_required') and (request.method, request.scope['route'].path) not in {
+            ('GET', '/api/auth/me'), ('PATCH', '/api/me/password'), ('POST', '/api/auth/logout')}:
+        raise HTTPException(403, 'Change your password before continuing to client data')
     method = request.method
     if method in {'GET', 'HEAD', 'OPTIONS'}:
         return
