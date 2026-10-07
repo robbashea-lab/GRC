@@ -20,6 +20,6 @@
   color-scheme: dark; background-color: var(--color-bg-surface); color: var(--color-text-primary); border-color: var(--color-border);
 }
 /* Override the light-theme charcoal applied by design-system.css to primary buttons. */
-:is(html[data-brawndo-portal="dark"]:not([data-brawndo-workspace]),html[data-brawndo-workspace="dark"]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled) { background: #a3db33; color: #10140c; }
-:is(html[data-brawndo-portal="dark"]:not([data-brawndo-workspace]),html[data-brawndo-workspace="dark"]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):hover { background: #b4e650; }
-:is(html[data-brawndo-portal="dark"]:not([data-brawndo-workspace]),html[data-brawndo-workspace="dark"]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):active { background: #8fc22a; }
+:is(html[data-brawndo-portal="dark"],html[data-brawndo-workspace="dark"]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled) { background: #a3db33; color: #10140c; }
+:is(html[data-brawndo-portal="dark"],html[data-brawndo-workspace="dark"]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):hover { background: #b4e650; }
+:is(html[data-brawndo-portal="dark"],html[data-brawndo-workspace="dark"]) :is(.ui-dialog, .ui-sheet) .ui-button.bg-primary:not(:disabled):active { background: #8fc22a; }
