@@ -1,4 +1,5 @@
 import {FrameworkRecordButton} from '@/components/FrameworkRecordAccess';
+import GuidedAssessor from '@/components/GuidedAssessor';
 import FrameworkCategoryNavigator,{SoaTable} from '@/components/FrameworkCategoryNavigator';
 import IsoAuditWorkspace from '@/components/IsoAuditWorkspace';
 import IsoProgramWorkspace,{IsoSoaSummary} from '@/components/IsoProgramWorkspace';
@@ -140,7 +141,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const closeManagement=()=>{setManagedId(null);setRevision(n=>n+1);};
   // A requirement opened here is one history entry: Previous/Next replace it and closing steps back to the view it
   // was opened from. A deep-linked requirement has no such entry, so closing replaces the URL instead.
-  const openRecord=row=>{const path=hierarchyPath(frameworkKey,row).map(p=>p.id);remember({lastId:row.framework_assessment_id,section:path[0],...(prestigeSoc?{'category:all':path}:{})});const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);const within=params.has('assessment');setParams(next,{replace:within,state:{fromWorkspace:within?!!location.state?.fromWorkspace:true}});};
+  const openRecord=(row,guided=false)=>{const path=hierarchyPath(frameworkKey,row).map(p=>p.id);remember({lastId:row.framework_assessment_id,section:path[0],...(prestigeSoc?{'category:all':path}:{})});const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);if(guided)next.set('guided','pilot');else next.delete('guided');const within=params.has('assessment');setParams(next,{replace:within,state:{fromWorkspace:within?!!location.state?.fromWorkspace:true}});};
   const closeRecord=()=>{if(location.state?.fromWorkspace)navigate(-1);else{const next=new URLSearchParams(params);next.delete('assessment');setParams(next,{replace:true});}setRevision(n=>n+1);};
   const toggle=key=>{setExpanded(old=>old.includes(key)?old.filter(k=>k!==key):[...old,key]);remember({section:key.split('/')[0]});};
   const allKeys=ns=>ns.flatMap(n=>[n.key,...allKeys(n.children)]);
@@ -162,6 +163,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const isoCrumb=(view,path=[])=>{setSearch('');setFilter('all');remember({['category:'+view]:path});const n=new URLSearchParams(params);n.delete('assessment');n.set('iso_view',view);setParams(n,{replace:true});};
   const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:`CIS IG${data.configuration?.implementation_group||1}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}},{label:socCategoryCrumb(selected.category),onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([selectedPath[0].id]);}},{label:selected.control,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath(selectedPath.map(p=>p.id));}},{label:selected.definition_id}]:undefined;
   return <div className={iso?'bcis framework-presentation':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
+    {!selected&&!managed&&!controlKey&&<GuidedAssessor clientId={clientId} framework={frameworkKey} configuration={data.configuration} rows={rows} onSelect={row=>openRecord(row,true)}/>}
     {iso&&<FrameworkHeader eyebrow="ISO/IEC 27001:2022 · ISMS" title={ISO_VIEWS[isoView].label} subtitle={ISO_INTRODUCTIONS[isoView]} resume={resume} onContinue={()=>openRecord(resume)}/>}
     {brawndoCis&&<BrawndoCisHeader implementationGroup={data.configuration?.implementation_group||1} resume={resume} onContinue={()=>openRecord(resume)}/>}
     {prestigeSoc&&<PrestigeSocHeader resume={resume} onContinue={()=>openRecord(resume)}/>}

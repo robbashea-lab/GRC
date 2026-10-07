@@ -16,6 +16,7 @@ import assignment_eligibility
 import create_requests
 import authorization
 import shared_review_plans
+import guided_assessment
 from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
@@ -153,6 +154,7 @@ class AssessmentPatch(BaseModel):
     record_assessment: bool=False
     status: Optional[Literal['not_assessed','in_progress','addressed','needs_attention','not_applicable']]=None
     implementation: Optional[str]=Field(default=None,max_length=20000)
+    guided_assessment_source: Optional[guided_assessment.GuidedSource]=None
     technology: Optional[str]=Field(default=None,max_length=4000)
     notes: Optional[str]=Field(default=None,max_length=20000)
     na_rationale: Optional[str]=Field(default=None,max_length=4000)
@@ -299,6 +301,16 @@ def router_for(s):
         return client
     async def parent(aid,user,write=False):
         return await s._authorized_parent('framework_assessments',aid,user,write)
+    @router.get('/framework_assessments/{aid}/guided-assessment')
+    async def get_guided(aid:str,user=Depends(s.get_current_user)):
+        row=await parent(aid,user)
+        guided_assessment.check_scope(row,await scoped(row['client_id'],user))
+        return await guided_assessment.read_draft(s,row,user)
+    @router.put('/framework_assessments/{aid}/guided-assessment')
+    async def put_guided(aid:str,body:guided_assessment.InterviewWrite,user=Depends(s.get_current_user)):
+        row=await parent(aid,user,True)
+        guided_assessment.check_scope(row,await scoped(row['client_id'],user))
+        return await guided_assessment.save_draft(s,row,user,body)
     async def target_record(kind,record_id,user):
         if kind!='evidence':return await s._authorized_parent(kind,record_id,user)
         # Evidence has separate routes, not the operational parent-record registry.
@@ -438,6 +450,16 @@ def router_for(s):
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
         old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)
+        if 'guided_assessment_source' in changes:
+            guided_assessment.check_scope(old,await scoped(old['client_id'],user))
+            if changes['guided_assessment_source']:
+                draft=await guided_assessment.read_draft(s,old,user)
+                source=changes['guided_assessment_source']
+                if not draft['completed'] or source!={k:draft.get(k) for k in ('version','revision','generated_at')}:
+                    raise HTTPException(409,'Guided result changed; regenerate before applying')
+                changes['guided_assessment_source']={**source,'origin':'guided-assessment-pilot','answers':draft['answers'],'by':user['user_id']}
+        elif old.get('guided_assessment_source') and any(k in changes and changes[k]!=old.get(k) for k in ('implementation','status')):
+            changes['guided_assessment_source']=None
         if 'cis_operation' in changes:
             changes['cis_operation']=body.cis_operation.model_dump()
         # The legacy expected_last_assessed field carries the latest write token.
@@ -533,7 +555,7 @@ def router_for(s):
                 changes.update(last_saved=at,assessment_recorded_at=at if judgment else old.get('assessment_recorded_at'),
                                assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
                 data.update(changes)
-            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             if old['framework_key']=='soc-2':
                 snapshot.update({k:data.get(k) for k in ('last_saved','assessment_recorded_at','assessment_recorded_by')})
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed'),'last_saved':old.get('last_saved')}

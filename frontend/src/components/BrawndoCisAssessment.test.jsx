@@ -33,6 +33,13 @@ beforeEach(()=>{
 afterEach(async()=>{mockOfficial=null;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 async function render(clientId='demo_brawndo'){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
 
+test('normal saves do not reapply historical guided provenance after an interview changes',async()=>{
+ record={...record,guided_assessment_source:{version:'brawndo-cis-pilot-1',revision:1,generated_at:'2026-10-07',origin:'guided-assessment-pilot',answers:{inventory:'No'}}};
+ await render();await act(async()=>button('Save assessment').click());
+ expect(api.patch.mock.calls[0][1]).not.toHaveProperty('guided_assessment_source');
+ expect(record.guided_assessment_source.answers.inventory).toBe('No');
+});
+
 test('retained IG2 assessment keeps its safeguard identity and content inside the assessment dialog',async()=>{
  record={...record,definition_id:'18.2'};
  await render();

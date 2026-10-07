@@ -55,7 +55,8 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
     || (method === 'post' && kind === 'reviews' && ['start', 'complete', 'create-finding'].includes(action) && parts.length === 3)
     || (method === 'patch' && kind === 'reviews' && action === 'iso-audit' && [3,4].includes(parts.length))
     || (method === 'post' && kind === 'framework_assessments' && action === 'findings' && parts.length === 3);
-  if (!allowed) deny('This operation requires a service-provider administrator');
+  const guidedWrite=method==='put'&&kind==='framework_assessments'&&action==='guided-assessment'&&parts.length===3;
+  if (!allowed&&!guidedWrite) deny('This operation requires a service-provider administrator');
   if (method === 'post' && parts.length === 1 && generic) {
     if (kind !== 'tasks') deny('Creating this record requires a service-provider administrator');
     requireCreationAssignee(db,body.client_id,body.assignee_id);

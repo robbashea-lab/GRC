@@ -16,6 +16,7 @@ import BrawndoCisFindings from './BrawndoCisFindings';
 import './BrawndoCisAssessment.css';
 import {cisLabel} from '@/lib/cisScope';
 import './BrawndoCisSafeguard.css';
+import GuidedAssessor from './GuidedAssessor';
 
 // Shared CIS IG1 workspace. The historical name is retained for existing callers.
 // Read-only guidance never writes assessment responses, status or verification.
@@ -62,5 +63,6 @@ export default function BrawndoCisSafeguard({state,actions}){
 </div></div>
     {form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><Textarea aria-label="Previously recorded notes" disabled={disabled} value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
     </AssessmentLayout>
+    {ctx&&<GuidedAssessor clientId={clientId} framework={record.framework_key} configuration={ctx.configuration} record={{...record,title:definition.title}} form={form} disabled={disabled} onApply={actions.applyGuided} onDraftChange={actions.setGuidedDraft}/>}
   </AssessmentShell>;
 }

@@ -1,4 +1,5 @@
 import {validateCsfProfile} from '../lib/csfProfile';
+import {pilotEnabled,guidedCatalog,validateAnswers} from '../lib/guidedAssessment';
 import cisCriteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
@@ -170,6 +171,20 @@ export function frameworkRequest(db,path,method,params,body){
       work:Object.fromEntries(assessments.map(a=>[a.framework_assessment_id,assessmentWork(a,db)])),active_definition_ids:activeDefinitions(id,configuration).map(d=>d.id)};
   }
   const row=record(db,'framework_assessments',id);frameworkScope(db,row.client_id);if(method!=='get')writable(db);
+  const pilot=()=>{if(!pilotEnabled(row.client_id,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id))fail('Guided pilot is not enabled for this assessment',404);};
+  const draftKey=id+':'+db.user.user_id;
+  const readDraft=()=>db.guided_assessment_pilot?.[draftKey]||{version:guidedCatalog.version,answers:{},step:0,completed:false,revision:0};
+  if(operation==='guided-assessment'){
+    pilot();
+    if(method==='get')return readDraft();
+    if(method!=='put')fail('Method not allowed',405);
+    if(db.user.role==='client_contributor'&&row.owner_id!==db.user.user_id)fail('Forbidden',403);
+    if(Object.keys(body).some(k=>!['version','answers','step','completed','narrative','expected_revision'].includes(k))||body.version!==guidedCatalog.version||!Number.isInteger(body.step)||body.step<0||body.step>30||typeof body.completed!=='boolean'||typeof (body.narrative??'')!=='string'||(body.narrative||'').length>20000)fail('Invalid interview');
+    validateAnswers(row.definition_id,body.answers);
+    const old=readDraft();if(old.revision!==body.expected_revision)fail('Interview changed; reload before saving',409);
+    const at=now(),data={version:body.version,answers:body.answers,narrative:body.narrative||'',step:body.step,completed:body.completed,revision:old.revision+1,updated_at:at,generated_at:body.completed?at:null};
+    (db.guided_assessment_pilot||={})[draftKey]=data;return data;
+  }
   if(method==='post'&&operation==='reviews'){
     if(Object.keys(body).some(k=>!['plan_key','review_id','title','owner_id','recurrence','custom_recurrence_days','due_date'].includes(k)))throw new Error('Invalid Review setup fields');
     if(!db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key===row.framework_key&&r.baseline_response==='applies'))throw new Error('Activate the program before configuring Reviews');
@@ -199,12 +214,20 @@ export function frameworkRequest(db,path,method,params,body){
   if(method==='patch'&&!operation){
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_saved??row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
     body={...body};delete body.expected_last_assessed;
+    if('guided_assessment_source' in body){
+      pilot();
+      if(body.guided_assessment_source){
+        const draft=readDraft(),source=body.guided_assessment_source;
+        if(!draft.completed||Object.keys(source).length!==3||['version','revision','generated_at'].some(k=>source[k]!==draft[k]))fail('Guided result changed; regenerate before applying',409);
+        body.guided_assessment_source={...source,origin:'guided-assessment-pilot',answers:JSON.parse(JSON.stringify(draft.answers)),by:db.user.user_id};
+      }
+    }else if(row.guided_assessment_source&&['implementation','status'].some(k=>k in body&&body[k]!==row[k]))body.guided_assessment_source=null;
     const recordAssessment=body.record_assessment===true;
     if('record_assessment' in body&&(row.framework_key!=='soc-2'||typeof body.record_assessment!=='boolean'))fail('Explicit assessment recording applies only to SOC 2');
     delete body.record_assessment;
     const ownershipOnly=Object.keys(body).length>0&&Object.keys(body).every(k=>['owner_id','process_owner_id'].includes(k))&&!recordAssessment;
     const supported=frameworkCapabilities(row.framework_key);
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k)),...(row.framework_key==='iso-27001'?['iso_assessment_checks']:[])];
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k)),...(row.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...('guided_assessment_source' in body||'guided_assessment_source' in row?['guided_assessment_source']:[])];
     if('cis_operation' in body){
       if(!supported.includes('cis_operation'))fail('Operating arrangements apply only to CIS IG1');
       const op=body.cis_operation;
