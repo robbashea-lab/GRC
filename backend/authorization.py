@@ -131,18 +131,33 @@ async def authorize_request(request, user, db):
     if params.get('review_id'):
         kind, identity = 'reviews', params['review_id']
     if params.get('aid'):
-        kind, identity = 'framework_assessments', params['aid']
+        kind, identity = 'ai_systems' if path.startswith('/api/ai_systems/') else 'framework_assessments', params['aid']
     for parameter, collection in {'risk_id': 'risks', 'vendor_id': 'vendors', 'finding_id': 'findings',
-            'policy_id': 'policies', 'contact_id': 'contacts', 'ev_id': 'evidence', 'exception_id': 'exceptions'}.items():
+            'policy_id': 'policies', 'contact_id': 'contacts', 'ev_id': 'evidence', 'eid': 'evidence', 'exception_id': 'exceptions'}.items():
         if params.get(parameter):
             kind, identity = collection, params[parameter]
     if identity and kind in {*OWNERS, 'evidence', 'exceptions', 'contacts', 'requirements'}:
-        key = {'framework_assessments':'framework_assessment_id', 'tasks':'task_id', 'policies':'policy_id'}.get(kind, kind[:-1]+'_id')
+        key = {'framework_assessments':'framework_assessment_id', 'ai_systems':'ai_system_id', 'tasks':'task_id', 'policies':'policy_id'}.get(kind, kind[:-1]+'_id')
         if kind == 'evidence': key = 'evidence_id'
         row = await db[kind].find_one({key: identity})
         client_id = (row or {}).get('client_id')
-    if role != OWNER and not client_id and method in {'POST', 'PATCH', 'PUT'} and 'application/json' in request.headers.get('content-type', ''):
-        client_id = (await object_body(request)).get('client_id')
+    if role != OWNER and method in {'POST', 'PATCH', 'PUT'} and 'application/json' in request.headers.get('content-type', ''):
+        body = await object_body(request)
+        if not client_id:
+            client_id = body.get('client_id')
+        if path == '/api/comments':
+            collection = body.get('entity_type', '')
+            collection = collection if collection in OWNERS else collection + 's'
+            if collection in OWNERS:
+                key = {'framework_assessments':'framework_assessment_id', 'ai_systems':'ai_system_id', 'policies':'policy_id'}.get(collection, collection[:-1] + '_id')
+                parent = await db[collection].find_one({key: body.get('entity_id')})
+                client_id = (parent or {}).get('client_id')
+        if path == '/api/bulk' and body.get('kind') in OWNERS:
+            collection = body['kind']
+            key = {'framework_assessments':'framework_assessment_id', 'ai_systems':'ai_system_id', 'policies':'policy_id'}.get(collection, collection[:-1] + '_id')
+            tenants = await db[collection].distinct('client_id', {key: {'$in': body.get('ids', [])}})
+            if await db.clients.find_one({'client_id': {'$in': tenants}, 'status': 'archived'}):
+                raise HTTPException(403, 'Archived clients are read-only; ask a Super Admin to restore the client')
     if role != OWNER and client_id and await db.clients.find_one({'client_id': client_id, 'status': 'archived'}):
         raise HTTPException(403, 'Archived clients are read-only; ask a Super Admin to restore the client')
     if role in {OWNER, PROVIDER}:
