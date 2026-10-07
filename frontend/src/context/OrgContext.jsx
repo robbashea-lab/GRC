@@ -42,11 +42,12 @@ export function OrgProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    const generation = loadSequence;
     load();
     const refreshScope = () => { if (!document.hidden) load(); };
     window.addEventListener("focus", refreshScope);
     const interval = window.setInterval(refreshScope, 60000);
-    return () => { loadSequence.current++; window.removeEventListener("focus", refreshScope); window.clearInterval(interval); };
+    return () => { generation.current++; window.removeEventListener("focus", refreshScope); window.clearInterval(interval); };
   }, [load]);
 
   const switchClient = (id) => {
