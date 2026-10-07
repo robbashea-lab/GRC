@@ -905,7 +905,7 @@ async def reset_password_endpoint(body: ResetIn):
         {"user_id": rec["user_id"], "status": account.get("status"),
          "password_changed_at": account.get("password_changed_at")},
         {"$set": {"password_hash": password_hash, "password_changed_at": _now(),
-                  "status": "active"}},
+                  "status": "active", "password_change_required": False}},
     )
     if changed.matched_count != 1:
         raise HTTPException(400, "Account state changed. Request a new link.")
@@ -967,7 +967,7 @@ async def update_me_password(body: MePasswordIn, user: Dict = Depends(get_curren
         raise HTTPException(400, "Current password is incorrect")
     changed = await db.users.update_one(
         {"user_id": user["user_id"], "password_hash": full["password_hash"]},
-        {"$set": {"password_hash": hash_password(body.new_password), "password_changed_at": _now()}},
+        {"$set": {"password_hash": hash_password(body.new_password), "password_changed_at": _now(), "password_change_required": False}},
     )
     if changed.matched_count != 1:
         raise HTTPException(409, "Password changed during this request; sign in again before retrying")
@@ -1052,6 +1052,7 @@ class UserPatchIn(BaseModel):
     name: Optional[str] = None
     role: Optional[str] = None
     client_ids: Optional[List[str]] = None
+    password_change_required: Optional[bool] = None
     all_clients: Optional[bool] = None
     email: Optional[EmailStr] = None
     status: Optional[str] = None  # active | disabled | invited
@@ -1262,7 +1263,7 @@ async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current
         raise HTTPException(409, "Account already exists. Use explicit account linking and authorized client membership management.")
     doc = {
         "user_id": _uid("user"), "email": email, "name": body.name, "role": body.role,
-        "client_ids": client_ids, "all_clients": body.all_clients, "status": "active" if body.password else "invited",
+        "client_ids": client_ids, "all_clients": body.all_clients, "password_change_required": bool(body.password), "status": "active" if body.password else "invited",
         "created_at": _now(), "created_by": user["user_id"],
     }
     if body.password:
@@ -1314,6 +1315,11 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
         if foreign and any(getattr(body, field) is not None for field in ("name", "email", "role", "status")):
             raise HTTPException(403, "Account-wide changes require authority over all client memberships")
     updates: Dict = {}
+    if body.password_change_required is not None:
+        if user.get("role") != "super_admin" or body.password_change_required is not True:
+            raise HTTPException(403, "Only a Super Admin can require a password change")
+        updates["password_change_required"] = True
+        updates["sessions_revoked_at"] = _now()
     if body.all_clients is not None:
         if user.get("role") != "super_admin" or body.all_clients and (body.role or target.get("role")) != "platform_admin":
             raise HTTPException(403, "Only a Super Admin can grant internal all-client access")
@@ -1360,7 +1366,9 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
         "status": target.get("status"), "client_ids": target.get("client_ids")}, {"$set": updates})
     if changed.matched_count != 1:
         raise HTTPException(409, "Account state changed; reload before retrying")
-    # If disabling: revoke all sessions.
+    # Disabling or requiring a password change revokes every active session.
+    if updates.get("status") == "disabled" or updates.get("password_change_required"):
+        await db.sessions.delete_many({"user_id": user_id})
     if updates.get("status") == "disabled":
         await db.sessions.delete_many({"user_id": user_id})
         await db.users.update_one({"user_id": user_id}, {"$set": {"password_changed_at": _now()}})

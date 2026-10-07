@@ -3,7 +3,7 @@ import { Lock, KeyRound, ShieldAlert, Clock } from "lucide-react";
 
 const ROWS = [
   { icon: KeyRound, label: "Authentication", value: "Email and password. Access requires an authorized account." },
-  { icon: Lock, label: "Password policy", value: "15–128 characters, including spaces. Common and repetitive passwords are blocked. No required character classes or periodic expiration." },
+  { icon: Lock, label: "Password policy", value: "15â€“128 characters, including spaces. Common and repetitive passwords are blocked. No required character classes or periodic expiration." },
   { icon: Lock, label: "Password storage", value: "Passwords are protected using adaptive, salted password hashing. New passwords use scrypt; existing bcrypt credentials remain supported." },
   { icon: Clock, label: "Session lifetime", value: "Seven-day JWT maximum. Logout revokes account sessions. Role, status and client assignments are checked per request. Reload uses HttpOnly cookies; bearer tokens are not persisted in localStorage." },
   { icon: ShieldAlert, label: "Abuse protection", value: "Authentication endpoints allow 30 requests per source IP and endpoint per minute, per process. " },

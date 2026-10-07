@@ -30,13 +30,20 @@ export function OrgProvider({ children }) {
         setCurrentClientId("");
       }
     } catch (e) {
+      setClients([]); setCurrentClientId("");
       setError(e?.response?.data?.detail || e?.message || "Clients could not be loaded.");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    const refreshScope = () => { if (!document.hidden) load(); };
+    window.addEventListener("focus", refreshScope);
+    const interval = window.setInterval(refreshScope, 60000);
+    return () => { window.removeEventListener("focus", refreshScope); window.clearInterval(interval); };
+  }, [load]);
 
   const switchClient = (id) => {
     setCurrentClientId(id);

@@ -50,7 +50,7 @@ export default function AdminRoles() {
         </section>
         <section className="space-y-3 text-xs text-ink-secondary" data-testid="role-trust-boundaries">
           <h2 className="text-sm font-semibold text-ink-primary">Trust boundaries</h2>
-          <p>Only Platform Owners have global client scope. An empty service-provider assignment list grants no client access. Providers cannot create or manage internal administrator accounts.</p>
+          <p>Super Admins have global client scope. Service-provider administrators may access all clients only with an explicit all-client entitlement. An empty assignment list grants no access. Providers cannot create or manage internal administrator accounts.</p>
           <p>Client managers coordinate permitted operations and assign existing client users. Contributors work assigned records. Limited assignment never permits changing another user's role or client access.</p>
           <p>Read-only users cannot approve, upload or modify business records, even when named as a business approver.</p>
           <p>History locks, optimistic concurrency and separation-of-duties checks apply in addition to role permissions. No role grants arbitrary audit-history deletion or bypasses record integrity.</p>

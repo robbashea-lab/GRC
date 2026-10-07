@@ -75,7 +75,8 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
       await api.patch(`/users/${u.user_id}${changes.client_ids ? '/client-memberships' : ''}`, {...changes,expected_updated_at:u.updated_at??null});
       toast.success(label || "User updated");
       load();
-    } catch (e) { toast.error(formatError(e)); }
+      return true;
+    } catch (e) { toast.error(formatError(e)); return false; }
   }
 
   async function disableUser(u) {
@@ -167,6 +168,8 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
                           if (account) queueMicrotask(() => setAssignmentAccount(account));
                         }}>
                           <DropdownMenuItem onSelect={() => { pendingAssignment.current = u; }}>View active assignments</DropdownMenuItem>
+                          <EditAccountItem u={u} onSave={changes => patchUser(u, changes)} />
+                          {viewer?.role === "super_admin" && <DropdownMenuItem onClick={() => patchUser(u, {password_change_required: true}, "Password change required; active sessions revoked")}>Require password change</DropdownMenuItem>}
                           <EditRoleItem u={u} allowedRoles={allowedRoles} onSave={(role) => patchUser(u, { role }, `Role changed to ${ROLE_LABEL[role]}`)} />
                           {scope === "platform" && (
                             <EditClientsItem u={u} clients={clients} canGrantAll={viewer?.role === "super_admin"} onEntitlement={(all_clients) => patchUser(u, { all_clients }, "All-client access updated")} onSave={(ids) => patchUser(u, { client_ids: ids }, "Client access updated")} />
@@ -218,6 +221,23 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
       {assignmentAccount && <UserAssignments account={assignmentAccount} clientId={clientId} onClose={() => setAssignmentAccount(null)} />}
     </div>
   );
+}
+
+function EditAccountItem({u, onSave}) {
+  const [open, setOpen] = useState(false), [name, setName] = useState(u.name || ''), [email, setEmail] = useState(u.email || ''), [error, setError] = useState(''), [saving, setSaving] = useState(false);
+  async function save() {
+    if (!name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Enter a name and valid email address.'); return; }
+    setSaving(true);
+    const saved = await onSave({name: name.trim(), email: email.trim()});
+    setSaving(false);
+    if (saved) setOpen(false); else setError('Changes were not saved. Review the error and try again.');
+  }
+  return <><DropdownMenuItem onSelect={e => {e.preventDefault(); setOpen(true);}}>Edit account…</DropdownMenuItem>
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Edit {u.name || u.email}</DialogTitle><DialogDescription>Update this account's name and email address.</DialogDescription></DialogHeader>
+      <Label htmlFor="edit-account-name">Name</Label><Input id="edit-account-name" value={name} maxLength={200} onChange={e => setName(e.target.value)} />
+      <Label htmlFor="edit-account-email">Email</Label><Input id="edit-account-email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+      {error && <p role="alert" className="text-semantic-critical text-sm">{error}</p>}<DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button disabled={saving} onClick={save}>Save account</Button></DialogFooter>
+    </DialogContent></Dialog></>;
 }
 
 function EditRoleItem({ u, allowedRoles, onSave }) {

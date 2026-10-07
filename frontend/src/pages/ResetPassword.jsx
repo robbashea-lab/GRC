@@ -37,7 +37,7 @@ export default function ResetPassword() {
         <div className="mb-6">
           <div className="brand-on-light mb-5"><Brand /></div>
           <h2 className="text-xl font-heading font-semibold tracking-tight">Choose a new password</h2>
-          <p className="text-xs text-ink-muted mt-1">15–128 characters. Mix letters, numbers and a symbol.</p>
+          <p className="text-xs text-ink-muted mt-1">15â€“128 characters. Mix letters, numbers and a symbol.</p>
         </div>
         {!token ? (
           <div className="rounded-md border border-semantic-moderate-border bg-semantic-moderate-bg text-semantic-moderate-text text-sm p-3" data-testid="reset-no-token">

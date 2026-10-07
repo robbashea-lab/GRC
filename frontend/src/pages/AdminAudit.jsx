@@ -317,7 +317,7 @@ export default function AdminAudit() {
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
           <Input value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Search action, entity, user, record…"
-            className="pl-8 h-9 text-sm" data-testid="audit-search" />
+            aria-label="Search audit events" className="pl-8 h-9 text-sm" data-testid="audit-search" />
         </div>
 
         <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting}
@@ -381,11 +381,11 @@ export default function AdminAudit() {
                     <td className="tbl-cell text-xs text-ink-primary">{humanAction(r.action)}</td>
                     <td className="tbl-cell text-xs text-ink-secondary">{humanEntity(r.entity_type)}</td>
                     <td className="tbl-cell text-xs">
-                      <div className="text-ink-primary truncate max-w-[220px]">{r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
+                      <div className="text-ink-primary truncate max-w-[220px]">{r.entity_name || r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
                       <div className="text-xs text-ink-help font-mono truncate max-w-[220px]">{r.entity_id}</div>
                     </td>
                     <td className="tbl-cell text-right">
-                      <Button variant="ghost" size="sm" className="h-7 text-xs"
+                      <Button variant="ghost" size="sm" aria-label={`View ${humanAction(r.action)} event for ${r.entity_name || r.entity_id || "platform"}`} className="h-7 text-xs"
                         onClick={(e) => { e.stopPropagation(); setSelected(r); }}
                         data-testid={`audit-view-${i}`}>View</Button>
                     </td>

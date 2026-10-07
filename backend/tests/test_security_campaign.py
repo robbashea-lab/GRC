@@ -287,3 +287,25 @@ class AdministrationHardening(SecurityCampaign):
             if role=='client_readonly':
                 for endpoint in ['/api/users','/api/audit-logs','/api/clients/directory']:
                     self.assertEqual((await self.raw.get(endpoint,headers=self.token(uid))).status_code,403)
+
+    async def test_required_password_change_blocks_client_data(self):
+        password=secrets.token_urlsafe(24)
+        await harness.server.db.users.update_one({'user_id':'member'},{'$set':{'password_hash':harness.server.hash_password(password),'password_change_required':True}})
+        headers=self.token('member')
+        self.assertEqual((await self.raw.get('/api/auth/me',headers=headers)).status_code,200)
+        self.assertEqual((await self.raw.get('/api/clients',headers=headers)).status_code,403)
+        response=await self.raw.patch('/api/me/password',headers=headers,json={'current_password':password,'new_password':secrets.token_urlsafe(24)})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertFalse((await harness.server.db.users.find_one({'user_id':'member'}))['password_change_required'])
+        self.assertEqual((await self.raw.get('/api/clients',headers=headers)).status_code,401)
+
+    async def test_owner_self_lockout_and_concurrent_demotions(self):
+        response=await self.raw.patch('/api/users/admin',headers=self.token('admin'),json={'status':'disabled','expected_updated_at':None})
+        self.assertEqual(response.status_code,400,response.text)
+        await harness.server.db.users.insert_one({'user_id':'second-owner','role':'super_admin','status':'active','email':'second@example.test'})
+        import asyncio
+        responses=await asyncio.gather(
+            self.raw.patch('/api/users/admin',headers=self.token('second-owner'),json={'status':'disabled','expected_updated_at':None}),
+            self.raw.patch('/api/users/second-owner',headers=self.token('admin'),json={'status':'disabled','expected_updated_at':None}))
+        self.assertEqual(sum(r.status_code==200 for r in responses),1)
+        self.assertEqual(await harness.server.db.users.count_documents({'role':'super_admin','status':'active'}),1)
