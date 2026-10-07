@@ -131,6 +131,32 @@ class SecurityCampaign(unittest.IsolatedAsyncioTestCase):
                         headers={'Cookie': 'access_token=' + token})).status_code, 401)
                 await transport.aclose()
 
+    async def test_lost_logout_response_is_confirmed_by_cookie_only_denial(self):
+        token = harness.server.create_access_token('member', 'member@example.test')
+        transport = httpx.ASGITransport(app=harness.server.app)
+        lose_response = True
+
+        async def deliver(request):
+            nonlocal lose_response
+            response = await transport.handle_async_request(request)
+            if request.url.path == '/api/auth/logout' and lose_response:
+                lose_response = False
+                self.assertEqual(response.status_code, 200)
+                raise httpx.ReadError('Synthetic response loss after revocation', request=request)
+            return response
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(deliver),
+                base_url='https://security.test') as client:
+            client.cookies.set('access_token', token)
+            headers = {'Authorization': 'Bearer ' + token}
+            self.assertEqual((await client.get('/api/auth/me', headers=headers)).status_code, 200)
+            with self.assertRaises(httpx.ReadError):
+                await client.post('/api/auth/logout', headers=headers)
+            self.assertEqual((await client.post('/api/auth/logout', headers=headers)).status_code, 401)
+            self.assertEqual(client.cookies.get('access_token'), token)
+            self.assertEqual((await client.get('/api/auth/me')).status_code, 401)
+        await transport.aclose()
+
     async def test_contributor_cannot_mutate_program_configuration(self):
         response=await self.raw.post('/api/onboarding/baseline',headers=self.token('member'),json={
             'client_id':'a','expected_updated_at':None,'state':{}})

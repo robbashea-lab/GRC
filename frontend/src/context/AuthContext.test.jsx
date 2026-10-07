@@ -47,12 +47,27 @@ test.each([new Error('Network Error'),Object.assign(new Error('Service unavailab
     await act(async()=>auth.refresh());
     expect(auth.user).toEqual({name:'Demo Explorer'});
     const retry=toast.error.mock.calls[0][1].action.onClick;
-    await act(async()=>{expect(await retry()).toBe(true);});
+    const event={preventDefault:jest.fn()};
+    await act(async()=>{expect(await retry(event)).toBe(true);});
+    expect(event.preventDefault).toHaveBeenCalledTimes(1);
     expect(auth.user).toBeNull();
     expect(mockClear).toHaveBeenCalledTimes(1);
     expect(api.default.post).toHaveBeenCalledTimes(2);
   });
 afterEach(async()=>{await act(async()=>root.unmount());localStorage.clear();sessionStorage.clear();});
+test.each(['ended','active','network','server'])('a retry denied after possible response loss verifies the cookie session: %s',async status=>{
+  await act(async()=>root.render(<AuthProvider><Probe/></AuthProvider>));
+  const denied=Object.assign(new Error('Not authenticated'),{response:{status:401}});
+  api.default.post.mockRejectedValueOnce(denied);
+  if(status==='active')api.default.get.mockResolvedValueOnce({data:{name:'Still authenticated'}});
+  else api.default.get.mockRejectedValueOnce(status==='ended'?denied:
+    Object.assign(new Error('Verification unavailable'),status==='server'?{response:{status:503}}:{}));
+  await act(async()=>{expect(await auth.logout()).toBe(status==='ended');});
+  expect(api.default.get).toHaveBeenLastCalledWith('/auth/me',{cookieAuthOnly:true});
+  expect(auth.user).toEqual(status==='ended'?null:{name:'Demo Explorer'});
+  expect(mockClear).toHaveBeenCalledTimes(status==='ended'?1:0);
+  expect(toast.error).toHaveBeenCalledTimes(status==='ended'?0:1);
+});
 test.each(['login','register'])('%s directly from Demo clears previous real-user selection',async method=>{
   localStorage.setItem('grc_client_id','previous-real-user-client');
   sessionStorage.setItem('grc_client_id','demo_initech');

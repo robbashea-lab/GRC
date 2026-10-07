@@ -50,6 +50,14 @@ test('normal authentication transitions still clear previous normal selection',(
   setWorkspaceMode('standard');
   expect(localStorage.getItem('grc_client_id')).toBeNull();
 });
+test('cookie session verification omits a stale bearer without clearing it or disabling credentials',async()=>{
+  require('./api').setAccessToken('stale-test-token');
+  await api.get('/auth/me',{cookieAuthOnly:true});
+  expect(http.mock.calls[0][0].headers.Authorization).toBeUndefined();
+  expect(http.mock.calls[0][0].withCredentials).toBe(true);
+  await api.get('/clients');
+  expect(http.mock.calls[1][0].headers.Authorization).toBe('Bearer stale-test-token');
+});
 test('demo adapter cannot authenticate an email/password request',async()=>{
   setWorkspaceMode('demo');
   await expect(api.post('/auth/login',{email:'test@example.test',password:'test-only-invalid'})).rejects.toMatchObject({response:{status:401}});

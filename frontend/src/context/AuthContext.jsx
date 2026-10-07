@@ -69,12 +69,21 @@ export function AuthProvider({ children }) {
     sessionGeneration.current++;
     try {
       await api.post("/auth/logout");
-    } catch {
-      toast.error("Sign-out incomplete. Your server session may still be active. Retry sign-out before leaving this device.", {
-        id: 'logout-incomplete', duration: Infinity,
-        action: {label: 'Retry sign-out', onClick: () => logout()},
-      });
-      return false;
+    } catch (error) {
+      // A lost success response can leave a revoked bearer in this document.
+      // Only a server denial of cookie authentication confirms that session ended.
+      let sessionEnded = false;
+      if (error?.response?.status === 401) {
+        try { await api.get('/auth/me', {cookieAuthOnly: true}); }
+        catch (verificationError) { sessionEnded = verificationError?.response?.status === 401; }
+      }
+      if (!sessionEnded) {
+        toast.error("Sign-out incomplete. Your server session may still be active. Retry sign-out before leaving this device.", {
+          id: 'logout-incomplete', duration: Infinity,
+          action: {label: 'Retry sign-out', onClick: event => {event.preventDefault(); return logout();}},
+        });
+        return false;
+      }
     }
     toast.dismiss('logout-incomplete');
     setWorkspaceMode("standard");
