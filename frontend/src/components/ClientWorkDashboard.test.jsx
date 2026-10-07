@@ -35,11 +35,22 @@ test('failed detail request preserves preview and offers retry',async()=>{
 });
 test('retrying an expanded page retains its filters, offset and page size',async()=>{
   const loadDetail=jest.fn().mockResolvedValueOnce({items:items.slice(0,25),offset:0,limit:25,total:30,has_more:true})
-    .mockRejectedValueOnce(new Error('Unavailable')).mockResolvedValueOnce({items:items.slice(0,25),offset:0,limit:25,total:30,has_more:true});
+    .mockRejectedValueOnce(new Error('Unavailable')).mockResolvedValueOnce({items:items.slice(25),offset:25,limit:25,total:30,has_more:false});
   await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={loadDetail}/>));
   const click=async text=>act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
   await click('View all');await click('Next page');await click('Retry');
   expect(loadDetail.mock.calls[2][3].limit).toBe(25);
+  expect(loadDetail.mock.calls[2][1]).toBe(25);
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(5);
+  expect(container.querySelector('.bd-pagination')).not.toBeNull();
+});
+test('retrying an initial failed View all preserves expansion intent',async()=>{
+  const loadDetail=jest.fn().mockRejectedValueOnce(new Error('Unavailable'))
+    .mockResolvedValueOnce({items:items.slice(0,25),offset:0,limit:25,total:30,has_more:true});
+  await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={loadDetail}/>));
+  const click=async text=>act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
+  await click('View all');await click('Retry');
+  expect(loadDetail.mock.calls[1][3].limit).toBe(25);
   expect(container.querySelectorAll('tbody tr')).toHaveLength(25);
   expect(container.querySelector('.bd-pagination')).not.toBeNull();
 });

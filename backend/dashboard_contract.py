@@ -6,6 +6,7 @@ only when opened; detail pages use the same contributing populations as counts.
 from datetime import date
 from grc_rules import assessed_risk, represented_finding
 from management_obligations import KINDS, calendar_day
+from framework_catalog import FRAMEWORKS
 import vendor_governance
 
 PREVIEW_LIMIT = 25
@@ -24,7 +25,8 @@ PROJECTION.update({key: 1 for key in ('finding_id', 'review_id', 'risk_id', 'ven
                                      'framework_key', 'framework_drivers', 'source_type', 'source_id', 'source',
                                      'title_generated', 'governance_context')})
 PROJECTION['_id'] = 0
-PROJECTION['framework_assessment_id'] = 1
+PROJECTION.update(framework_assessment_id=1, related_links=1)
+FRAMEWORK_KEYS = {framework['key'] for framework in FRAMEWORKS}
 
 
 def framework_membership(records, assessments, controls):
@@ -38,6 +40,12 @@ def framework_membership(records, assessments, controls):
         v if isinstance(v, str) else v.get('framework_key') for v in r.get('framework_drivers') or []]]))
         for key, r in nodes.items()}
     by_assessment = {r['framework_assessment_id']: r.get('framework_key') for r in assessments}
+    for key, record in nodes.items():
+        if key[0] == 'requirements' and record.get('baseline_key') in FRAMEWORK_KEYS:
+            membership[key].add(record['baseline_key'])
+        for link in record.get('related_links') or []:
+            if link.get('kind') == 'framework_assessments' and by_assessment.get(link.get('id')):
+                membership[key].add(by_assessment[link['id']])
     for assessment in assessments:
         for link in assessment.get('related_links') or []:
             key = (link.get('kind'), link.get('id'))

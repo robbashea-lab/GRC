@@ -14,9 +14,12 @@ filter, but reflects the framework and search. Reset restores All / All framewor
 parameters. Detail pages additionally return `counts` for all four categories.
 Existing authentication and client scoping run before loading any source records.
 The Demo adapter implements the same read-only contract. Framework membership
-comes from direct framework fields, assessment links, shared-control mappings and
+comes from direct framework fields, framework baseline keys, either direction of
+assessment links, shared-control mappings and
 source ancestry; title text never establishes membership. A multi-framework record
 is retained once, and general work remains visible under All frameworks.
+Search-only requests skip framework graph loading. A failed page request retains
+its requested offset and expansion mode for retry, including the first View all.
 
 CIS donut segments expose their existing status, applicable denominator and a
 one-decimal percentage on hover and keyboard focus. Escape dismisses the tooltip;

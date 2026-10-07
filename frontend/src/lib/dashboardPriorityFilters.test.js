@@ -19,3 +19,13 @@ test('explicit many-framework controls, source ancestry, complete populations an
   expect(filterDashboardQueue(groups,records,assessments,controls,'cis-ig1','t13').all.map(r=>r.id)).toEqual(['t13']);
   expect(filterDashboardQueue(groups,records,assessments,controls,'iso-27001').all).toEqual([]);
 });
+test('record-side assessment links and framework baseline requirements retain membership',()=>{
+  const records={risks:[{risk_id:'risk',related_links:[{kind:'framework_assessments',id:'iso'}]},
+    {risk_id:'foreign',related_links:[{kind:'framework_assessments',id:'another-client'}]}],
+    reviews:[{review_id:'review',risk_id:'risk'}],requirements:[{requirement_id:'req',baseline_key:'iso-27001'},
+      {requirement_id:'general',baseline_key:'business-process'}]};
+  const all=Object.entries(records).flatMap(([kind,rows])=>rows.map(r=>({kind,id:r[`${kind==='requirements'?'requirement':kind==='reviews'?'review':'risk'}_id`],title:'Target'})));
+  const result=filterDashboardQueue({all},records,[{framework_assessment_id:'iso',framework_key:'iso-27001'}],[],'iso-27001');
+  expect(result.all.map(r=>r.id)).toEqual(['risk','review','req']);
+  expect(filterDashboardQueue({all},records,[],[],'','target').all).toHaveLength(5);
+});

@@ -37,7 +37,7 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
   const [framework,setFramework]=useState(''),[search,setSearch]=useState('');
   const selectionKey=JSON.stringify([filter,framework,search]);
   const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
-  const request=useRef(null),mounted=useRef(true),load=useRef(loadDetail);
+  const request=useRef(null),retry=useRef(null),mounted=useRef(true),load=useRef(loadDetail);
   load.current=loadDetail;
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;request.current?.abort();};},[]);
   const group=queue.groups[filter],current=page?.key===selectionKey?page:null;
@@ -47,6 +47,7 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
   const carded=programs.filter(p=>rowsFor[p.key]),primary=carded.length===1?carded[0]:null;
   const fetchPage=useCallback(async(offset,key=filter,full=false)=>{
     request.current?.abort();const controller=new AbortController();request.current=controller;
+    retry.current={offset,key,full};
     setLoading(true);setError('');
     try {const result=await load.current(key,offset,controller.signal,{framework:framework||undefined,search,limit:full?25:9});if(!controller.signal.aborted&&mounted.current){setPage({...result,key:JSON.stringify([key,framework,search])});setExpanded(full);}}
     catch(e){if(!controller.signal.aborted&&mounted.current)setError(formatError(e));}
@@ -78,7 +79,7 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
           {(filter!=='all'||framework||search)&&<button type="button" className="bd-button" onClick={()=>{setFramework('');setSearch('');onFilter('all');}}>Reset filters</button>}
         </div>
         <div className="bd-results sr-only" role="status" aria-live="polite">{loading?'Loading…':`${total} matching items`}</div>
-        {error&&<div className="bd-error" role="alert">{error} <button type="button" className="bd-link" onClick={()=>fetchPage(current?.offset||0,filter,expanded)}>Retry</button></div>}
+        {error&&<div className="bd-error" role="alert">{error} <button type="button" className="bd-link" onClick={()=>fetchPage(retry.current.offset,retry.current.key,retry.current.full)}>Retry</button></div>}
         {items.length?<WorkTable items={items} onOpen={onOpen} asOf={queue.as_of}/>:<p className="bd-empty">{loading?'Loading priority work…':error?'Priority work could not be loaded.':'No items match these filters.'}</p>}
         {expanded&&current&&<nav className="bd-pagination" aria-label="Work queue pages"><button type="button" className="bd-button" disabled={loading||current.offset===0} onClick={()=>fetchPage(Math.max(0,current.offset-current.limit),filter,true)}>Previous page</button><span>Page {Math.floor(current.offset/current.limit)+1} of {Math.max(1,Math.ceil(current.total/current.limit))}</span><button type="button" className="bd-button" disabled={loading||!current.has_more} onClick={()=>fetchPage(current.offset+current.limit,filter,true)}>Next page</button></nav>}
       </section>

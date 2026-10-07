@@ -14,10 +14,17 @@ export const WORK_FILTERS = [
 const levels={critical:0,immediate:0,high:1,medium:2,moderate:2,low:3};
 const frameworkNames=new Map(definitions.frameworks.map(f=>[f.key,f.key==='cis-ig1'?'CIS Controls v8.1':f.label]));
 export function filterDashboardQueue(groups,records,assessments=[],controls=[],framework='',search='') {
+  const query=search.trim().toLocaleLowerCase();
+  const matchesSearch=r=>!query||[r.title,r.owner,r.type].join(' ').toLocaleLowerCase().includes(query);
+  if(!framework)return Object.fromEntries(Object.entries(groups).map(([key,rows])=>[key,rows.filter(matchesSearch)]));
   const ids={reviews:'review_id',tasks:'task_id',findings:'finding_id',risks:'risk_id',policies:'policy_id',vendors:'vendor_id',exceptions:'exception_id',requirements:'requirement_id'};
   const nodes=new Map(Object.entries(ids).flatMap(([kind,id])=>(records[kind]||[]).map(r=>[`${kind}:${r[id]}`,r])));
   const keys=new Map([...nodes].map(([key,r])=>[key,new Set([r.framework_key,...(r.framework_drivers||[]).map(v=>typeof v==='string'?v:v.framework_key)].filter(Boolean))]));
   const byAssessment=new Map(assessments.map(a=>[a.framework_assessment_id,a.framework_key]));
+  for(const [key,r] of nodes){
+    if(key.startsWith('requirements:')&&frameworkNames.has(r.baseline_key))keys.get(key).add(r.baseline_key);
+    for(const link of r.related_links||[])if(link.kind==='framework_assessments'&&byAssessment.get(link.id))keys.get(key).add(byAssessment.get(link.id));
+  }
   const add=(links,frameworks)=>{for(const link of links||[])for(const f of frameworks)if(f)keys.get(`${link.kind}:${link.id}`)?.add(f);};
   for(const a of assessments)add(a.related_links,[a.framework_key]);
   for(const c of controls)add(c.related_links,(c.assessment_ids||[]).map(id=>byAssessment.get(id)));
@@ -31,8 +38,7 @@ export function filterDashboardQueue(groups,records,assessments=[],controls=[],f
   }
   let changed=true;
   while(changed){changed=false;for(const [key,links] of parents){const set=keys.get(key),before=set.size;for(const p of links)for(const f of keys.get(p))set.add(f);changed ||= before!==set.size;}}
-  const query=search.trim().toLocaleLowerCase();
-  return Object.fromEntries(Object.entries(groups).map(([key,rows])=>[key,rows.filter(r=>(!framework||keys.get(`${r.kind}:${r.id}`)?.has(framework))&&(!query||[r.title,r.owner,r.type].join(' ').toLocaleLowerCase().includes(query)))]));
+  return Object.fromEntries(Object.entries(groups).map(([key,rows])=>[key,rows.filter(r=>keys.get(`${r.kind}:${r.id}`)?.has(framework)&&matchesSearch(r))]));
 }
 function sourceLabel(row, records) {
   if(row.kind==='tasks') return taskSource(row.record,records).label;
