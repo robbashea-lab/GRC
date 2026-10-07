@@ -127,3 +127,9 @@ class DashboardWorkQueueTests(unittest.IsolatedAsyncioTestCase):
                 with patch.object(server.db.organizational_controls,'find',side_effect=AssertionError('Unexpected control query')):
                     rows=(await self.get_queue(detail='all',search='target')).json()['items']
         self.assertEqual([r['id'] for r in rows],['task'])
+
+    async def test_locale_independent_unicode_search_matches_demo_contract(self):
+        self.sign_in('admin')
+        await server.db.tasks.insert_one({'client_id':'a','task_id':'unicode','title':'Straße ÉQUIPE İpek','status':'open'})
+        for query, count in [('straße équipe',1),('STRASSE',0),('i\u0307pek',1)]:
+            self.assertEqual((await self.get_queue(detail='all',search=query)).json()['total'],count)

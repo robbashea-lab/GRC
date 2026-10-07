@@ -82,10 +82,10 @@ def framework_membership(records, assessments, controls):
 
 
 def filter_queue(groups, membership, framework=None, search=''):
-    query = (search or '').strip().casefold()
+    query = (search or '').strip().lower()
     def matches(row):
         return (not framework or framework in membership.get((row['kind'], row['id']), set())) and (
-            not query or query in ' '.join(str(row.get(k) or '') for k in ('title', 'owner', 'type')).casefold())
+            not query or query in ' '.join(str(row.get(k) or '') for k in ('title', 'owner', 'type')).lower())
     return {key: [row for row in rows if matches(row)] for key, rows in groups.items()}
 
 

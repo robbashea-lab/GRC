@@ -14,8 +14,8 @@ export const WORK_FILTERS = [
 const levels={critical:0,immediate:0,high:1,medium:2,moderate:2,low:3};
 const frameworkNames=new Map(definitions.frameworks.map(f=>[f.key,f.key==='cis-ig1'?'CIS Controls v8.1':f.label]));
 export function filterDashboardQueue(groups,records,assessments=[],controls=[],framework='',search='') {
-  const query=search.trim().toLocaleLowerCase();
-  const matchesSearch=r=>!query||[r.title,r.owner,r.type].join(' ').toLocaleLowerCase().includes(query);
+  const query=search.trim().toLowerCase();
+  const matchesSearch=r=>!query||[r.title,r.owner,r.type].join(' ').toLowerCase().includes(query);
   if(!framework)return Object.fromEntries(Object.entries(groups).map(([key,rows])=>[key,rows.filter(matchesSearch)]));
   const ids={reviews:'review_id',tasks:'task_id',findings:'finding_id',risks:'risk_id',policies:'policy_id',vendors:'vendor_id',exceptions:'exception_id',requirements:'requirement_id'};
   const nodes=new Map(Object.entries(ids).flatMap(([kind,id])=>(records[kind]||[]).map(r=>[`${kind}:${r[id]}`,r])));

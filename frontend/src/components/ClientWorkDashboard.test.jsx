@@ -8,6 +8,22 @@ beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createEl
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 const items=Array.from({length:30},(_,i)=>({key:`tasks:${i}`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',status:'open',owner:'Unassigned',unassigned:true,source_label:'Manual / Internal',due_date:'2026-09-01'}));
 const queue={as_of:'2026-09-27',groups:{all:{total:30,items:items.slice(0,9)},pastDue:{total:30,items:items.slice(0,9)},due30:{total:0,items:[]},unassigned:{total:30,items:items.slice(0,9)}}};
+test('rapid search changes dispatch one settled request and clearing cancels pending work',async()=>{
+  jest.useFakeTimers();
+  try {
+    const loadDetail=jest.fn(async()=>({items:[],total:0,counts:{},offset:0,limit:9}));
+    await act(async()=>root.render(<ClientWorkDashboard queue={queue} programs={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={loadDetail}/>));
+    const input=container.querySelector('#priority-search');
+    const type=async value=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));});
+    await type('a');await type('asset');
+    await act(async()=>jest.advanceTimersByTime(249));expect(loadDetail).not.toHaveBeenCalled();
+    await act(async()=>jest.advanceTimersByTime(1));expect(loadDetail).toHaveBeenCalledTimes(1);
+    expect(loadDetail.mock.calls[0][3].search).toBe('asset');
+    await type('assets');await type('');
+    expect(loadDetail).toHaveBeenCalledTimes(2);expect(loadDetail.mock.calls[1][3].search).toBe('');
+    await act(async()=>jest.advanceTimersByTime(250));expect(loadDetail).toHaveBeenCalledTimes(2);
+  } finally {jest.useRealTimers();}
+});
 test('compact preview, selected filters, paging, authoritative row open and CIS denominator',async()=>{
   const onOpen=jest.fn(),onFilter=jest.fn(),loadDetail=jest.fn(async(key,offset)=>({items:key==='due30'?[]:items.slice(offset,offset+25),offset,limit:25,total:30,has_more:offset===0}));
   const props={queue,programs:[{key:'cis-ig1',name:'CIS Controls v8.1 IG1'}],cisRows:[{status:'addressed'},{status:'not_applicable'},{status:'not_assessed'}],filter:'all',onFilter,onOpen,loadDetail};

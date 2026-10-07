@@ -54,7 +54,13 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
     finally{if(!controller.signal.aborted&&mounted.current)setLoading(false);}
   },[filter,framework,search]);
   const previousFilter=useRef(selectionKey);
-  useEffect(()=>{if(previousFilter.current!==selectionKey){previousFilter.current=selectionKey;setPage(null);setExpanded(false);fetchPage(0);}},[selectionKey,fetchPage]);
+  useEffect(()=>{
+    if(previousFilter.current===selectionKey){setLoading(false);return;}
+    request.current?.abort();setPage(null);setExpanded(false);setLoading(true);
+    const run=()=>{previousFilter.current=selectionKey;fetchPage(0);};
+    if(!search){run();return;}
+    const timer=setTimeout(run,250);return()=>clearTimeout(timer);
+  },[selectionKey,fetchPage,search]);
   function select(key){onFilter(key);if(key===filter)fetchPage(0,key);}
   const toggleTheme=()=>setTheme(theme==='dark'?'light':'dark');
   return <div className="bdash" data-theme={theme}>

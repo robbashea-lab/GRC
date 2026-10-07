@@ -1,4 +1,10 @@
 import {filterDashboardQueue} from './dashboardWorkQueue';
+test('search uses locale-independent lowercase, not accent or sharp-s expansion',()=>{
+  const groups={all:[{title:'Straße ÉQUIPE',owner:'İpek',type:'Review'}]};
+  expect(filterDashboardQueue(groups,{},[],[],'','straße équipe').all).toHaveLength(1);
+  expect(filterDashboardQueue(groups,{},[],[],'','STRASSE').all).toHaveLength(0);
+  expect(filterDashboardQueue(groups,{},[],[],'','i\u0307pek').all).toHaveLength(1);
+});
 
 test('explicit many-framework controls, source ancestry, complete populations and general work',()=>{
   const tasks=Array.from({length:14},(_,i)=>({task_id:`t${i}`,client_id:'a',review_id:'r'}));
