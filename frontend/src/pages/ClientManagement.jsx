@@ -9,6 +9,7 @@ import PageHeader from "@/components/PageHeader";
 import ClientDialog from "@/components/ClientDialog";
 import ClientRelationshipValue from '@/components/ClientRelationshipValue';
 import {primaryContact, grcLead} from '@/lib/clientRelationships';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
@@ -27,6 +28,7 @@ export default function ClientManagement() {
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState(null);
   const [busy, setBusy] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
   const load = useCallback(async () => {
     if (!authorized) return;
     setLoading(true); setError("");
@@ -58,7 +60,8 @@ export default function ClientManagement() {
   }
   async function archive(client) {
     const restoring = client.status === "archived";
-    if (!window.confirm(`${restoring ? "Restore" : "Archive"} ${client.name}?`)) return;
+
+    setConfirmation(null);
     setBusy(client.client_id);
     try {
       const { data } = await api.patch(`/clients/${client.client_id}`, { status: restoring ? "active" : "archived", expected_updated_at:client.updated_at??null });
@@ -92,7 +95,7 @@ export default function ClientManagement() {
               <td className="tbl-cell capitalize">{c.status || "active"}</td>
               <td className="tbl-cell"><div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => setDialog({ client: c })}>Edit</Button>
-                <Button size="sm" variant="outline" disabled={busy === c.client_id} onClick={() => archive(c)}>{c.status === "archived" ? "Restore" : "Archive"}</Button>
+                <Button size="sm" variant="outline" disabled={busy === c.client_id} onClick={() => setConfirmation(c)}>{c.status === "archived" ? "Restore" : "Archive"}</Button>
               </div></td>
             </tr>)}
             {!loading && !rows.length && <tr><td colSpan={6} className="tbl-cell text-ink-help"><FilterEmpty table={table} name="clients" onClear={() => { setQuery(''); setStatus('all'); }} /></td></tr>}
@@ -100,6 +103,12 @@ export default function ClientManagement() {
         </table>
       </div>
     </div>
+    <Dialog open={!!confirmation} onOpenChange={open => { if (!open) setConfirmation(null); }}>
+      <DialogContent><DialogHeader><DialogTitle>{confirmation?.status === 'archived' ? 'Restore' : 'Archive'} {confirmation?.name}</DialogTitle>
+        <DialogDescription>{confirmation?.status === 'archived' ? 'Restore this client to active views and permit authorized program work.' : 'Remove this client from active views. Assessments, evidence and history remain available; ordinary program changes are blocked until restored.'}</DialogDescription></DialogHeader>
+        <DialogFooter><Button variant="outline" onClick={() => setConfirmation(null)}>Cancel</Button><Button variant={confirmation?.status === 'archived' ? 'default' : 'destructive'} onClick={() => archive(confirmation)}>Confirm {confirmation?.status === 'archived' ? 'restore' : 'archive'}</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
     <ClientDialog open={!!dialog} client={dialog?.client || null} onOpenChange={open => { if (!open) setDialog(null); }} onCreated={saved} />
   </div>;
 }

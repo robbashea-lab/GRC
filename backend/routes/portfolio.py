@@ -6,6 +6,7 @@ from management_obligations import METRICS, calendar_day, load_records, manageme
 from grc_rules import represented_finding
 from client_relationships import project
 import portfolio_overview
+import authorization
 from server import db, get_current_user
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
@@ -16,8 +17,7 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
     if role not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Client directory is restricted to internal admins")
     query = {} if include_archived else {"status": {"$ne": "archived"}}
-    if role == "platform_admin" and user.get("client_ids"):
-        query["client_id"] = {"$in": user["client_ids"]}
+    query.update(authorization.scope(user))
     clients = await db.clients.find(query, {"_id": 0}).to_list(None)
     clients = await project(db, clients)
     client_ids = [c["client_id"] for c in clients]

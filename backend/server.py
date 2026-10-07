@@ -1035,6 +1035,7 @@ class UserCreateIn(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     role: str  # super_admin, platform_admin, client_contributor, client_readonly
     client_ids: List[str] = []
+    all_clients: bool = False
     password: Optional[str] = None  # if not provided, admin can trigger reset separately
 
     @field_validator('name')
@@ -1051,6 +1052,8 @@ class UserPatchIn(BaseModel):
     name: Optional[str] = None
     role: Optional[str] = None
     client_ids: Optional[List[str]] = None
+    all_clients: Optional[bool] = None
+    email: Optional[EmailStr] = None
     status: Optional[str] = None  # active | disabled | invited
 
 
@@ -1082,7 +1085,7 @@ async def _bounded(cursor, limit: int, what: str):
 
 
 def _account_summary(account, actor):
-    fields = ("user_id", "name", "email", "role", "status", "last_login_at", "orphaned", "updated_at")
+    fields = ("user_id", "name", "email", "role", "status", "last_login_at", "orphaned", "updated_at", "all_clients")
     row = {field: account[field] for field in fields if field in account}
     row["client_ids"] = [cid for cid in (account.get("client_ids") or []) if _can_access_client(actor, cid)]
     return row
@@ -1163,6 +1166,8 @@ def _admin_can_manage_user(actor: Dict, target: Dict, client_scope: Optional[str
     # platform_admin: must share at least one client with target OR be scoped to a client they can access
     if client_scope and not _can_access_client(actor, client_scope):
         return False
+    if authorization.global_scope(actor):
+        return True
     actor_clients = set(actor.get("client_ids") or [])
     target_clients = set(target.get("client_ids") or [])
     return bool(actor_clients & target_clients) or (client_scope in actor_clients if client_scope else False)
@@ -1242,6 +1247,8 @@ async def _issue_invitation(account, actor):
 async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current_user)):
     if not _admin_can_manage_role(user, body.role):
         raise HTTPException(403, "Not authorized to create an account with this role")
+    if body.all_clients and (user.get("role") != "super_admin" or body.role != "platform_admin"):
+        raise HTTPException(403, "Only a Super Admin can grant all-client access to an internal administrator")
     client_ids = list(dict.fromkeys(body.client_ids))
     if body.role == "platform_admin" and not client_ids and user.get("role") != "super_admin":
         raise HTTPException(403, "Only a Super Admin can authorize global internal scope")
@@ -1255,7 +1262,7 @@ async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current
         raise HTTPException(409, "Account already exists. Use explicit account linking and authorized client membership management.")
     doc = {
         "user_id": _uid("user"), "email": email, "name": body.name, "role": body.role,
-        "client_ids": client_ids, "status": "active" if body.password else "invited",
+        "client_ids": client_ids, "all_clients": body.all_clients, "status": "active" if body.password else "invited",
         "created_at": _now(), "created_by": user["user_id"],
     }
     if body.password:
@@ -1273,8 +1280,29 @@ async def admin_create_user(body: UserCreateIn, user: Dict = Depends(get_current
     return {"user": out, "delivery": delivery}
 
 
+def administrator_mutation(fn):
+    """Serialize administrator demotion/deactivation with a bounded database lease."""
+    @wraps(fn)
+    async def wrapped(*args, **kwargs):
+        token, now = uuid.uuid4().hex, datetime.now(timezone.utc)
+        await db.administration_locks.update_one({'_id': 'accounts'}, {'$setOnInsert': {'until': ''}}, upsert=True)
+        acquired = await db.administration_locks.update_one({'_id': 'accounts', 'until': {'$lt': now.isoformat()}},
+            {'$set': {'token': token, 'until': (now + timedelta(seconds=60)).isoformat()}})
+        if not acquired.modified_count:
+            raise HTTPException(409, 'Another account change is being saved; retry after reloading')
+        try:
+            return await asyncio.wait_for(fn(*args, **kwargs), timeout=45)
+        finally:
+            await db.administration_locks.update_one({'_id': 'accounts', 'token': token}, {'$set': {'until': ''}})
+    return wrapped
+
+
 @api.patch("/users/{user_id}")
+@administrator_mutation
 async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depends(get_current_user)):
+    actor = await db.users.find_one({'user_id': user['user_id'], 'status': 'active'})
+    if not actor or actor.get('role') != user.get('role'):
+        raise HTTPException(403, 'Administrative access changed; sign in again')
     target = await db.users.find_one({"user_id": user_id})
     if not target:
         raise HTTPException(404, "User not found")
@@ -1282,13 +1310,24 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
         raise HTTPException(403, "Not authorized to manage this user")
     _require_snapshot(body.model_dump(exclude_unset=True),target)
     if user.get("role") == "platform_admin":
-        foreign = set(target.get("client_ids") or []) - set(user.get("client_ids") or [])
-        if foreign and any(getattr(body, field) is not None for field in ("name", "role", "status")):
+        foreign = set() if authorization.global_scope(user) else set(target.get("client_ids") or []) - set(user.get("client_ids") or [])
+        if foreign and any(getattr(body, field) is not None for field in ("name", "email", "role", "status")):
             raise HTTPException(403, "Account-wide changes require authority over all client memberships")
     updates: Dict = {}
+    if body.all_clients is not None:
+        if user.get("role") != "super_admin" or body.all_clients and (body.role or target.get("role")) != "platform_admin":
+            raise HTTPException(403, "Only a Super Admin can grant internal all-client access")
+        updates["all_clients"] = body.all_clients
+    if body.email is not None:
+        email = body.email.strip().lower()
+        if await db.users.find_one({"email": email, "user_id": {"$ne": user_id}}):
+            raise HTTPException(409, "Account already exists")
+        updates["email"] = email
     if body.name is not None:
         updates["name"] = body.name
     if body.role is not None:
+        if body.role != "platform_admin":
+            updates["all_clients"] = False
         if not _admin_can_manage_role(user, body.role):
             raise HTTPException(403, f"You cannot assign role '{body.role}'")
         updates["role"] = body.role
@@ -1310,6 +1349,10 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
     # Guardrail: users cannot demote or disable themselves via this endpoint.
     if user_id == user["user_id"] and ("role" in updates or updates.get("status") == "disabled"):
         raise HTTPException(400, "You cannot change your own role or disable yourself")
+    if target.get('role') == 'super_admin' and target.get('status') == 'active' and (
+            updates.get('role', 'super_admin') != 'super_admin' or updates.get('status', 'active') != 'active'):
+        if await db.users.count_documents({'role': 'super_admin', 'status': 'active'}) <= 1:
+            raise HTTPException(409, 'The final active Super Admin must be retained')
     if not updates:
         return _account_summary(target, user)
     updates["updated_at"] = _next_write_time(target.get("updated_at"))
@@ -1587,6 +1630,38 @@ async def update_client(client_id: str, body: ClientPatchIn, user: Dict = Depend
     await audit(user, "update", "client", client_id, client_id, meta={**updates,'changes':{k:{'before':existing.get(k),'after':v} for k,v in updates.items() if k!='updated_at' and existing.get(k)!=v}})
     doc = await db.clients.find_one({"client_id": client_id}, {"_id": 0})
     return (await client_relationships.project(db, [doc]))[0]
+
+
+class ClientDeleteIn(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    confirmation: str = Field(max_length=200)
+    expected_updated_at: Optional[str] = None
+
+
+@api.delete('/clients/{client_id}')
+async def delete_empty_client(client_id: str, body: ClientDeleteIn, user: Dict = Depends(get_current_user)):
+    if user.get('role') != 'super_admin':
+        raise HTTPException(403, 'Super Admin required')
+    existing = await db.clients.find_one({'client_id': client_id})
+    if not existing:
+        raise HTTPException(404, 'Client not found')
+    _require_snapshot(body.model_dump(exclude_unset=True), existing)
+    if body.confirmation != existing['name']:
+        raise HTTPException(422, 'Type the exact client name to confirm permanent deletion')
+    dependencies = []
+    for collection in await db.list_collection_names():
+        if collection != 'clients' and await db[collection].find_one({'client_id': client_id}):
+            dependencies.append(collection)
+    if await db.users.find_one({'client_ids': client_id}):
+        dependencies.append('user memberships')
+    if dependencies:
+        raise HTTPException(409, {'message': 'Client history must be retained. Archive this client instead.', 'dependencies': sorted(dependencies)})
+    await audit(user, 'delete-requested', 'client', client_id, client_id, meta={'name': existing['name'], 'outcome': 'requested'})
+    deleted = await db.clients.delete_one({'client_id': client_id, 'updated_at': existing.get('updated_at')})
+    if not deleted.deleted_count:
+        raise HTTPException(409, 'Client changed; reload before deleting')
+    await audit(user, 'delete', 'client', client_id, client_id, meta={'name': existing['name']})
+    return {'ok': True}
 
 
 @api.get("/clients/{client_id}/assignees")
@@ -1996,7 +2071,7 @@ async def list_audit(
         u = users_map.get(d.get("user_id")) or {}
         c = clients_map.get(d.get("client_id")) or {}
         d["user_name"] = d.get("user_name") or u.get("name") or u.get("email") or d.get("user_email")
-        d["client_name"] = d.get("client_name") or c.get("name")
+        d["client_name"] = d.get("client_name") or c.get("name") or (d.get("meta") or {}).get("name") if d.get("entity_type") == "client" else d.get("client_name") or c.get("name")
     return {"items": docs, "total": total, "page": page, "page_size": page_size}
 
 
@@ -2009,7 +2084,7 @@ async def audit_facets(user: Dict = Depends(get_current_user)):
         raise HTTPException(403, "Audit Log is restricted to internal administrators")
 
     scope = await _audit_scope_for(user)
-    client_q: Dict[str, Any] = {"status": {"$ne": "archived"}}
+    client_q: Dict[str, Any] = {}
     if scope is not None:
         client_q["client_id"] = {"$in": scope}
     clients = await db.clients.find(client_q, {"_id": 0, "client_id": 1, "name": 1}).sort("name", 1).to_list(500)
@@ -2107,10 +2182,10 @@ async def export_audit_csv(
 async def list_users(user: Dict = Depends(get_current_user)):
     if user.get("role") not in ("super_admin", "platform_admin"):
         raise HTTPException(403, "Forbidden")
-    query = {} if user.get("role") == "super_admin" else {"client_ids": {"$in": user.get("client_ids") or []}}
+    query = {} if authorization.global_scope(user) else {"client_ids": {"$in": user.get("client_ids") or []}}
     docs = await _bounded(db.users.find(query, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1,
-                                      "status": 1, "client_ids": 1, "last_login_at": 1, "updated_at": 1}), 500, "users")
-    if user.get("role") == "platform_admin":
+                                      "status": 1, "client_ids": 1, "all_clients": 1, "created_at": 1, "last_login_at": 1, "updated_at": 1}), 500, "users")
+    if user.get("role") == "platform_admin" and not authorization.global_scope(user):
         for doc in docs:
             doc["client_ids"] = [cid for cid in (doc.get("client_ids") or []) if cid in user["client_ids"]]
     return docs
@@ -4705,7 +4780,14 @@ app.add_middleware(
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-app.add_middleware(security_runtime.SecurityBoundary)
+async def audit_denial(scope, status):
+    actor_id = scope.get('security_actor')
+    actor = await db.users.find_one({'user_id': actor_id}, {'user_id': 1, 'name': 1, 'email': 1}) if actor_id else {}
+    await audit(actor or {}, 'authentication-throttled' if status == 429 else 'access-denied', 'security', None,
+        meta={'outcome': 'denied', 'method': scope['method'], 'route': getattr(scope.get('route'), 'path', 'unmatched'), 'status': status})
+
+
+app.add_middleware(security_runtime.SecurityBoundary, audit_denial=audit_denial)
 
 
 @app.on_event("shutdown")

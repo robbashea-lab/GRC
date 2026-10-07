@@ -1,7 +1,7 @@
 import {AI_DEFAULTS,AI_KEYS,aiProjection,validateAI,catalog} from '../lib/aiGovernance';
 import {record,write,audit,uid,now,ids} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
-import { validateAssignment } from './assignmentEligibility';
+import { validateAssignment, clientAccess } from './assignmentEligibility';
 import {AI_PILOT_DEFAULTS,AI_PILOT_KEYS,aiScope} from '../lib/brawndoAI';
 
 export function aiRequest(db,path,method,params,body){
@@ -9,7 +9,7 @@ export function aiRequest(db,path,method,params,body){
   const view=row=>aiProjection(row,db.reviews,db.risks);
   const writable=()=>{if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');};
   const admin=()=>{if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Only platform administrators can make this decision');};
-  const checkClient=cid=>{record(db,'clients',cid);if(db.user.role!=='super_admin'&&!(db.user.role==='platform_admin'&&!db.user.client_ids?.length)&&!db.user.client_ids?.includes(cid))throw new Error('Forbidden');};
+  const checkClient=cid=>{record(db,'clients',cid);if(!clientAccess(db.user,cid))throw new Error('Forbidden');};
   if(method!=='get')writable();
   if(path==='/ai-intake'){
     const cid=params.client_id||body.client_id;checkClient(cid);

@@ -104,7 +104,7 @@ export function identityRequest(db, path, method, params, body) {
   }
   admin(db);
   if (!id && method === 'get') return db.users.filter(u => db.user.role === 'super_admin' || u.client_ids?.some(cid => db.user.client_ids?.includes(cid))).map(u => ({
-    user_id: u.user_id, name: u.name, email: u.email, role: u.role, status: u.status, last_login_at: u.last_login_at, updated_at:u.updated_at,
+    user_id: u.user_id, name: u.name, email: u.email, role: u.role, status: u.status, last_login_at: u.last_login_at, updated_at:u.updated_at, all_clients:u.all_clients,
     client_ids: db.user.role === 'platform_admin' && db.user.client_ids?.length ? (u.client_ids || []).filter(cid => db.user.client_ids.includes(cid)) : u.client_ids,
   }));
   if (!id && method === 'post') return createAccount(db, body);
@@ -137,7 +137,8 @@ export function identityRequest(db, path, method, params, body) {
     if ((target.client_ids || []).includes(cid) !== body.client_ids.includes(cid)) admin(db, cid);
   }
   if ((body.role || target.role) === 'platform_admin' && !(body.client_ids || target.client_ids)?.length && db.user.role !== 'super_admin') throw new Error('Only a Super Admin can authorize global internal scope');
-  const patch = Object.fromEntries(['name', 'role', 'status', 'client_ids'].filter(f => body[f] != null).map(f => [f, body[f]]));
+  if (body.all_clients != null && (db.user.role !== 'super_admin' || body.all_clients && (body.role || target.role) !== 'platform_admin')) throw new Error('Only a Super Admin can grant internal all-client access');
+  const patch = Object.fromEntries(['name', 'role', 'status', 'client_ids', 'all_clients'].filter(f => body[f] != null).map(f => [f, body[f]]));
   const previous = { status: target.status, client_ids: target.client_ids };
   Object.assign(target, patch, { updated_at: new Date(Math.max(Date.now(),(Date.parse(target.updated_at)||0)+1)).toISOString() });
   audit(db, 'update-account', 'users', target, { previous, changes: patch });

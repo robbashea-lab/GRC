@@ -4,6 +4,7 @@ import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
 import {isReferenceRegister,isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
 import ClientSurface from './ClientSurface';
+import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
@@ -300,7 +301,7 @@ export default function Layout() {
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
         {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
-        {currentClientId&&(pathname==='/reviews'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
+        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
     </div></ComplianceProvider>
   );

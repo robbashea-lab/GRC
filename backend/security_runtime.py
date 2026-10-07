@@ -40,8 +40,9 @@ def validate_environment():
 
 
 class SecurityBoundary:
-    def __init__(self, app):
+    def __init__(self, app, audit_denial=None):
         self.app = app
+        self.audit_denial = audit_denial
         self.attempts = OrderedDict()
 
     async def __call__(self, scope, receive, send):
@@ -62,6 +63,8 @@ class SecurityBoundary:
                     logging.warning('Authorization rejected actor=%s method=%s route=%s status=%s',
                         scope.get('security_actor','unauthenticated'), method,
                         getattr(scope.get('route'),'path','unmatched'), message['status'])
+                if message['status'] in (401, 403, 429) and self.audit_denial:
+                    await self.audit_denial(scope, message['status'])
             await send(message)
         async def reject(status, detail):
             await JSONResponse({'detail':detail},status_code=status)(scope,receive,secure_send)

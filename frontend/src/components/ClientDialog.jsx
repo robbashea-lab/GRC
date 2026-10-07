@@ -61,17 +61,17 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
         <div className="space-y-3.5 py-2">
           <div>
             <Label className="text-xs text-ink-secondary">Organization name <span className="text-semantic-critical">*</span></Label>
-            <Input data-testid="new-client-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corp" className="text-sm" />
+            <Input aria-label="Organization name" maxLength={200} data-testid="new-client-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corp" className="text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-ink-secondary">Industry</Label>
-              <Input data-testid="new-client-industry" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} placeholder="Manufacturing" className="text-sm" />
+              <Input aria-label="Industry" data-testid="new-client-industry" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} placeholder="Manufacturing" className="text-sm" />
             </div>
             <div>
               <Label className="text-xs text-ink-secondary">Client status</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger data-testid="new-client-status" className="text-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Client status" data-testid="new-client-status" className="text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="onboarding">Onboarding</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
