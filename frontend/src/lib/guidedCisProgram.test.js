@@ -1,6 +1,13 @@
 import cis from '@catalogs/cisIG1.json';
 import program from '@catalogs/guidedCisProgram.json';
-import {guidedCatalog,control1Catalog,versionForSafeguard,catalogForVersion,pilotEnabled,visibleQuestions,validateAnswers,generateResult,prioritizeGuidedRows} from './guidedAssessment';
+import programV1 from '@catalogs/guidedCisProgramV1.json';
+import {guidedCatalog,control1Catalog,versionForSafeguard,legacyVersionForSafeguard,catalogForPilot,catalogForVersion,pilotEnabled,visibleQuestions as visibleVersionQuestions,validateAnswers as validateVersionAnswers,generateResult as generateVersionResult,prioritizeGuidedRows} from './guidedAssessment';
+
+// These tests exercise the approved upgraded catalog explicitly. Default callers
+// retain the original versions until their trusted pilot selection opts in.
+const visibleQuestions=(id,answers,version=versionForSafeguard(id,true))=>visibleVersionQuestions(id,answers,version);
+const validateAnswers=(id,answers,version=versionForSafeguard(id,true))=>validateVersionAnswers(id,answers,version);
+const generateResult=(id,answers,today,version=versionForSafeguard(id,true))=>generateVersionResult(id,answers,today,version);
 
 const complete=id=>Object.fromEntries(guidedCatalog.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'': 'Yes']));
 test('all 18 Controls have exactly the canonical 56/130/153 cumulative Safeguards',()=>{
@@ -13,12 +20,103 @@ test('all 18 Controls have exactly the canonical 56/130/153 cumulative Safeguard
   expect(pilotEnabled('fresh','hipaa',{},'2.1')).toBe(false);
   expect(pilotEnabled('fresh','cis-ig1',{guided_assessment_enabled:false},'2.1')).toBe(false);
 });
-test('Control 1 keeps its exact version and questions, not a forced version migration',()=>{
+test('unchanged Control 1 questions keep their version and historical 1.1 remains available',()=>{
   for(const id of Object.keys(control1Catalog.definitions)){
-    expect(versionForSafeguard(id)).toBe(control1Catalog.version);
-    expect(guidedCatalog.safeguards[id]).toEqual(control1Catalog.safeguards[id]);
+    expect(catalogForVersion(control1Catalog.version).safeguards[id]).toEqual(control1Catalog.safeguards[id]);
+    if(id!=='1.1'){
+      expect(versionForSafeguard(id)).toBe(control1Catalog.version);
+      expect(guidedCatalog.safeguards[id]).toEqual(control1Catalog.safeguards[id]);
+    }
   }
+  expect(versionForSafeguard('1.1',true)).toBe('cis-v8.1-control1-3');
   expect(catalogForVersion('brawndo-cis-pilot-1')).toBeTruthy();
+});
+
+test('non-pilot default selection keeps original question versions across all safeguards',()=>{
+  expect(catalogForPilot()).toBe(catalogForVersion('cis-v8.1-program-1'));
+  expect(catalogForPilot(true)).toBe(guidedCatalog);
+  for(const id of Object.keys(guidedCatalog.definitions)){
+    const original=id.startsWith('1.')?control1Catalog.version:programV1.version;
+    expect(versionForSafeguard(id)).toBe(original);
+    expect(legacyVersionForSafeguard(id)).toBe(original);
+  }
+  const old=catalogForPilot(),id='13.2';
+  const answers=Object.fromEntries(old.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':'Yes']));
+  expect(generateVersionResult(id,answers).version).toBe(programV1.version);
+});
+
+test.each(['13.2','13.3','13.4','13.7','13.8'])('%s keeps original program-1 matrix keys while new scope applies to every material row',id=>{
+  const historical=catalogForVersion(programV1.version);
+  const oldQuestion=historical.safeguards[id].find(q=>q.id==='requirements_0');
+  expect(oldQuestion.rows).toEqual(programV1.definitions[id].elements.filter(e=>!e.conditional).map(e=>e.text));
+  expect(oldQuestion.question_set_version).toBe('cis-v8.1-program-1');
+  const oldAnswers={practice:'Yes',requirements_0:Object.fromEntries(oldQuestion.rows.map(row=>[row,'Yes']))};
+  expect(validateAnswers(id,oldAnswers,programV1.version)).toBe(oldAnswers);
+  expect(()=>validateAnswers(id,oldAnswers,program.version)).toThrow();
+  const current=guidedCatalog.safeguards[id].filter(q=>q.type==='matrix');
+  expect(current).toHaveLength(1);
+  expect(current[0].id).toBe('conditional_0');
+  expect(current[0].choices).toContain('Not applicable');
+  const answers=complete(id);
+  answers.conditional_0=Object.fromEntries(current[0].rows.map(row=>[row,'Not applicable']));
+  expect(generateResult(id,answers).unknowns).not.toHaveLength(0);
+  answers.scope_reason='Reviewer confirmed that the stated source condition excludes this identified population; remaining applicable assets were reviewed.';
+  expect(generateResult(id,answers).gaps).toEqual([]);
+  expect(generateResult(id,answers).status).toBe('not_assessed');
+  expect(generateResult(id,answers).unknowns).toContain('Applicability requires native assessment decision; excluded scope is not proof of implementation.');
+});
+
+test.each(Object.entries(program.definitions).filter(([,d])=>d.elements.length&&d.elements.every(e=>e.conditional)).map(([id])=>id))('%s cannot turn an entirely excluded population into implementation proof in program2',id=>{
+  const answers=complete(id);
+  for(const q of guidedCatalog.safeguards[id].filter(q=>q.type==='matrix'))answers[q.id]=Object.fromEntries(q.rows.map(row=>[row,'Not applicable']));
+  answers.scope_reason='The owner confirmed that the stated source conditions exclude the entire identified population.';
+  const before=JSON.stringify(answers),result=generateResult(id,answers);
+  expect(result.status).toBe('not_assessed');
+  expect(result.basis).toEqual([]);
+  expect(result.gaps).toEqual([]);
+  expect(result.unknowns).toEqual(['Applicability requires native assessment decision; excluded scope is not proof of implementation.']);
+  expect(result.narrative).toContain('exclusion of all source-conditioned requirements');
+  expect(result.narrative).not.toContain('reports implementation');
+  expect(result.narrative).toContain(answers.scope_reason);
+  expect(result.signals).toContainEqual({questionId:'scope_reason',kind:'verification'});
+  expect(JSON.stringify(answers)).toBe(before);
+  // The frozen version still reproduces its historical recommendation semantics.
+  const old=catalogForVersion(programV1.version);
+  if(old.definitions[id].elements.every(e=>e.conditional)){
+    const historical=Object.fromEntries(old.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Not applicable'])):q.type==='text'?'':'Yes']));
+    historical.scope_reason=answers.scope_reason;
+    expect(generateResult(id,historical,new Date('2026-10-07'),programV1.version).status).toBe('addressed');
+  }
+});
+
+test('historical recommendations use their requested definition and new 18.4 preserves necessity',()=>{
+  const historical=catalogForVersion(programV1.version),id='18.4';
+  const old=Object.fromEntries(historical.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':'Yes']));
+  expect(generateResult(id,old,new Date('2026-10-07'),programV1.version).version).toBe(programV1.version);
+  expect(generateResult(id,old,new Date('2026-10-07'),programV1.version).status).toBe('addressed');
+  const answers=complete(id),conditional=guidedCatalog.safeguards[id].find(q=>q.id==='conditional_0');
+  answers[conditional.id]={[conditional.rows[0]]:'Not applicable'};
+  expect(generateResult(id,answers).unknowns).not.toHaveLength(0);
+  answers.scope_reason='Post-test validation explicitly found no detection ruleset or capability change necessary.';
+  expect(generateResult(id,answers).gaps).toEqual([]);
+  expect(generateResult(id,answers).status).toBe('addressed');
+  answers[conditional.id][conditional.rows[0]]='No';
+  expect(generateResult(id,answers).status).toBe('in_progress');
+});
+
+test('new source considerations do not become publication, tool or extra-encryption mandates',()=>{
+  expect(program.definitions['16.2'].elements.find(e=>e.id==='16.2-guided-external-policy-consideration')).toMatchObject({conditional:true});
+  expect(program.definitions['16.2'].elements.find(e=>e.id==='16.2-guided-external-policy-consideration').text).toContain('considers');
+  expect(program.definitions['13.1'].elements.find(e=>e.id==='13.1-guided-correlation-alerts').text).toContain('configured and operating');
+  expect(program.definitions['3.11'].guidance).toMatch(/Storage-layer encryption meets the minimum.*not mandatory/);
+  expect(program.definitions['16.9'].guidance).toContain('build a culture of security');
+  expect(program.definitions['4.10'].elements.find(e=>e.id==='4.10-c4')).toMatchObject({conditional:true});
+  expect(program.definitions['4.10'].elements.find(e=>e.id==='4.10-c4').text).toContain('20 local failed');
+  const answers=complete('16.2'),consideration=guidedCatalog.safeguards['16.2'].find(q=>q.id==='conditional_0');
+  answers[consideration.id]={[consideration.rows[0]]:'Not applicable'};
+  answers.scope_reason='The enterprise does not develop applications for third parties.';
+  expect(generateResult('16.2',answers).status).toBe('addressed');
+  expect(generateResult('16.2',answers).unknowns).toEqual([]);
 });
 test.each(Object.keys(program.definitions))('%s implements full, partial, missing, and unknown paths without changing verification',id=>{
   const full=complete(id),output=generateResult(id,full);

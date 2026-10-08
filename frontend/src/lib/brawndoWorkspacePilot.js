@@ -1,4 +1,4 @@
-import configuration from './brawndoWorkspacePilot.json';
+import configuration from '@catalogs/omniWorkspacePilot.json';
 
 // Approved Omni artwork/window/free-drag boundary. Shared workspace presentation
 // uses reference.js instead; neither predicate grants API authorization.

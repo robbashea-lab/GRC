@@ -1,0 +1,733 @@
+{
+  "version": "cis-v8.1-change-review-1",
+  "framework_id": "cis-ig1",
+  "framework_version": "8.1",
+  "reviewed_on": "2026-10-07",
+  "choices": [
+    "No changes reported",
+    "Changes to review",
+    "Not sure"
+  ],
+  "help": "Previous answers provide historical context. Review current facts. No changes reported does not automatically save an assessment, update Last Assessed, verify evidence, close findings or actions, complete a Review, or renew approvals.",
+  "safeguards": {
+    "1.1": {
+      "question_id": "1.1:change_review",
+      "prompt": "Since the previous review, have asset categories, network or cloud connections, regularly connected third-party devices, inventory fields, or inventory maintenance changed?",
+      "followup_prompt": "Describe what changed for establish and maintain detailed enterprise asset inventory, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "1.2": {
+      "question_id": "1.2:change_review",
+      "prompt": "Have unauthorized-asset detection, the weekly response process, permitted response actions, or unresolved devices changed since the previous review?",
+      "followup_prompt": "Describe what changed for address unauthorized assets, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "1.3": {
+      "question_id": "1.3:change_review",
+      "prompt": "Have connected network segments, active discovery coverage, tool configuration, or the daily execution schedule changed?",
+      "followup_prompt": "Describe what changed for utilize an active discovery tool, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "1.4": {
+      "question_id": "1.4:change_review",
+      "prompt": "Have DHCP servers, IPAM coverage, log sources, inventory update steps, or weekly review-and-update timing changed?",
+      "followup_prompt": "Describe what changed for use dynamic host configuration protocol (dhcp) logging to update enterprise asset inventory, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "1.5": {
+      "question_id": "1.5:change_review",
+      "prompt": "Have passive sensor coverage, connected networks, discovery results, or weekly inventory-update practice changed?",
+      "followup_prompt": "Describe what changed for use a passive asset discovery tool, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "2.1": {
+      "question_id": "2.1:change_review",
+      "prompt": "Have installed or retired software, inventory completeness, conditional inventory fields, or the six-month inventory review changed?",
+      "followup_prompt": "Describe what changed for establish and maintain a software inventory, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "2.2": {
+      "question_id": "2.2:change_review",
+      "prompt": "Have publisher support dates, unsupported-software exceptions, mitigations, residual-risk acceptance, or monthly support reviews changed?",
+      "followup_prompt": "Describe what changed for ensure authorized software is currently supported, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "2.3": {
+      "question_id": "2.3:change_review",
+      "prompt": "Has unauthorized software been discovered, removed, excepted, or left unresolved, and has the monthly handling review changed?",
+      "followup_prompt": "Describe what changed for address unauthorized software, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "2.4": {
+      "question_id": "2.4:change_review",
+      "prompt": "Have software-capable assets, inventory-tool reach, automation feasibility, discovery, or inventory documentation changed?",
+      "followup_prompt": "Describe what changed for utilize automated software inventory tools, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "2.5": {
+      "question_id": "2.5:change_review",
+      "prompt": "Have authorized applications, execution/access restrictions, allowlist exceptions, or the six-month technical-control reassessment changed?",
+      "followup_prompt": "Describe what changed for allowlist authorized software, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "2.6": {
+      "question_id": "2.6:change_review",
+      "prompt": "Have authorized libraries, library-loading rules, blocked-library exceptions, or the six-month control reassessment changed?",
+      "followup_prompt": "Describe what changed for allowlist authorized libraries, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "2.7": {
+      "question_id": "2.7:change_review",
+      "prompt": "Have authorized scripts, execution rules, script-signing or version-control practices, exceptions, or the six-month reassessment changed?",
+      "followup_prompt": "Describe what changed for allowlist authorized scripts, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.1": {
+      "question_id": "3.1:change_review",
+      "prompt": "Have data sensitivity, owners, handling, retention limits, disposal rules, or significant enterprise changes affected the documented data-management process?",
+      "followup_prompt": "Describe what changed for establish and maintain a data management process, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.2": {
+      "question_id": "3.2:change_review",
+      "prompt": "Have sensitive datasets, inventory locations, inventory ownership, or the annual sensitive-data inventory review changed?",
+      "followup_prompt": "Describe what changed for establish and maintain a data inventory, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.3": {
+      "question_id": "3.3:change_review",
+      "prompt": "Have users' needs, access lists, file shares, databases, or application data permissions changed?",
+      "followup_prompt": "Describe what changed for configure data access control lists, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.4": {
+      "question_id": "3.4:change_review",
+      "prompt": "Have data classes, minimum or maximum retention periods, storage behavior, or retention exceptions changed?",
+      "followup_prompt": "Describe what changed for enforce data retention, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.5": {
+      "question_id": "3.5:change_review",
+      "prompt": "Have disposal methods, sensitive data types, disposal providers, or the way disposal follows the data-management process changed?",
+      "followup_prompt": "Describe what changed for securely dispose of data, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.6": {
+      "question_id": "3.6:change_review",
+      "prompt": "Have end-user devices containing sensitive data, encryption coverage, or encryption configuration changed?",
+      "followup_prompt": "Describe what changed for encrypt data on end-user devices, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.7": {
+      "question_id": "3.7:change_review",
+      "prompt": "Have sensitivity categories, classification rules, enterprise data use, or the annual/change-triggered classification review changed?",
+      "followup_prompt": "Describe what changed for establish and maintain a data classification scheme, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.8": {
+      "question_id": "3.8:change_review",
+      "prompt": "Have applications, data destinations, transfers, or service-provider flows changed, and has flow documentation been updated?",
+      "followup_prompt": "Describe what changed for document data flows, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.9": {
+      "question_id": "3.9:change_review",
+      "prompt": "Have removable media, the data copied to them, or encryption enforcement changed?",
+      "followup_prompt": "Describe what changed for encrypt data on removable media, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.10": {
+      "question_id": "3.10:change_review",
+      "prompt": "Have sensitive-data transfer paths, endpoints, providers, or encryption-in-transit settings changed?",
+      "followup_prompt": "Describe what changed for encrypt sensitive data in transit, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.11": {
+      "question_id": "3.11:change_review",
+      "prompt": "Have sensitive-data storage locations, server/application/database encryption, or storage-layer protections changed?",
+      "followup_prompt": "Describe what changed for encrypt sensitive data at rest, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.12": {
+      "question_id": "3.12:change_review",
+      "prompt": "Have sensitivity classifications, storage placement, processing locations, or separation controls changed?",
+      "followup_prompt": "Describe what changed for segment data processing and storage based on sensitivity, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.13": {
+      "question_id": "3.13:change_review",
+      "prompt": "Have sensitive-data locations, processing/transmission paths, provider coverage, discovery tooling, or resulting inventory updates changed?",
+      "followup_prompt": "Describe what changed for deploy a data loss prevention solution, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "3.14": {
+      "question_id": "3.14:change_review",
+      "prompt": "Have sensitive-data stores, access paths, modification/disposal workflows, or their logging changed?",
+      "followup_prompt": "Describe what changed for log sensitive data access, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.1": {
+      "question_id": "4.1:change_review",
+      "prompt": "Have asset types, operating systems, applications, secure baselines, or significant enterprise changes affected the secure-configuration process?",
+      "followup_prompt": "Describe what changed for establish and maintain a secure configuration process, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.2": {
+      "question_id": "4.2:change_review",
+      "prompt": "Have network devices, approved configurations, management methods, or significant network changes affected the documented configuration process?",
+      "followup_prompt": "Describe what changed for establish and maintain a secure configuration process for network infrastructure, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.3": {
+      "question_id": "4.3:change_review",
+      "prompt": "Have device classes, inactivity timers, session-lock policies, or exceptions changed?",
+      "followup_prompt": "Describe what changed for configure automatic session locking on enterprise assets, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.4": {
+      "question_id": "4.4:change_review",
+      "prompt": "Have server inventory, firewall support, firewall deployment, management, or permitted traffic rules changed?",
+      "followup_prompt": "Describe what changed for implement and manage a firewall on servers, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.5": {
+      "question_id": "4.5:change_review",
+      "prompt": "Have end-user devices, firewall or port-filtering coverage, default-deny rules, or permitted services and ports changed?",
+      "followup_prompt": "Describe what changed for implement and manage a firewall on end-user devices, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.6": {
+      "question_id": "4.6:change_review",
+      "prompt": "Have administrative interfaces, management protocols, secure management practices, or operationally essential insecure-protocol uses changed?",
+      "followup_prompt": "Describe what changed for securely manage enterprise assets and software, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.7": {
+      "question_id": "4.7:change_review",
+      "prompt": "Have assets, software, vendor default accounts, or controls that secure those accounts changed?",
+      "followup_prompt": "Describe what changed for manage default accounts on enterprise assets and software, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.8": {
+      "question_id": "4.8:change_review",
+      "prompt": "Have installed services, business needs, software modules, or disabled/uninstalled service decisions changed?",
+      "followup_prompt": "Describe what changed for uninstall or disable unnecessary services on enterprise assets and software, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.9": {
+      "question_id": "4.9:change_review",
+      "prompt": "Have network infrastructure, configured DNS resolvers, or the basis for trusting those resolvers changed?",
+      "followup_prompt": "Describe what changed for configure trusted dns servers on enterprise assets, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.10": {
+      "question_id": "4.10:change_review",
+      "prompt": "Have portable devices, local lockout support, or failed-attempt thresholds changed?",
+      "followup_prompt": "Describe what changed for enforce automatic device lockout on portable end-user devices, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.11": {
+      "question_id": "4.11:change_review",
+      "prompt": "Have enterprise-owned portable devices, remote-wipe capability, or cases requiring an enterprise-data wipe changed?",
+      "followup_prompt": "Describe what changed for enforce remote wipe capability on portable end-user devices, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "4.12": {
+      "question_id": "4.12:change_review",
+      "prompt": "Have mobile devices, workspace support, or separation between enterprise and personal applications/data changed?",
+      "followup_prompt": "Describe what changed for separate enterprise workspaces on mobile end-user devices, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "5.1": {
+      "question_id": "5.1:change_review",
+      "prompt": "Have user, administrator or service accounts, inventory fields, or the quarterly active-account authorization review changed?",
+      "followup_prompt": "Describe what changed for establish and maintain an inventory of accounts, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "5.2": {
+      "question_id": "5.2:change_review",
+      "prompt": "Have password reuse, password-management controls, or enterprise asset/account coverage changed?",
+      "followup_prompt": "Describe what changed for use unique passwords, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "5.3": {
+      "question_id": "5.3:change_review",
+      "prompt": "Have account activity sources, dormant accounts, platform support, or the forty-five-day disable/delete process changed?",
+      "followup_prompt": "Describe what changed for disable dormant accounts, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "5.4": {
+      "question_id": "5.4:change_review",
+      "prompt": "Have administrator entitlements, dedicated admin accounts, or use of privileged accounts for routine work changed?",
+      "followup_prompt": "Describe what changed for restrict administrator privileges to dedicated administrator accounts, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "5.5": {
+      "question_id": "5.5:change_review",
+      "prompt": "Have service accounts, department owners, purposes, review dates, or quarterly authorization checks changed?",
+      "followup_prompt": "Describe what changed for establish and maintain an inventory of service accounts, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "5.6": {
+      "question_id": "5.6:change_review",
+      "prompt": "Have account stores, directory coverage, identity providers, or centralized account-management processes changed?",
+      "followup_prompt": "Describe what changed for centralize account management, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "6.1": {
+      "question_id": "6.1:change_review",
+      "prompt": "Have hiring, role-change events, access approvals, or the documented granting process changed?",
+      "followup_prompt": "Describe what changed for establish an access granting process, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "6.2": {
+      "question_id": "6.2:change_review",
+      "prompt": "Have departures, revoked rights, role changes, or immediate account-disabling procedures changed?",
+      "followup_prompt": "Describe what changed for establish an access revoking process, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "6.3": {
+      "question_id": "6.3:change_review",
+      "prompt": "Have externally exposed applications, third-party applications, MFA support, or enforcement through application/SSO changed?",
+      "followup_prompt": "Describe what changed for require mfa for externally-exposed applications, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "6.4": {
+      "question_id": "6.4:change_review",
+      "prompt": "Have remote access routes, gateway configurations, or MFA requirements for network connections changed?",
+      "followup_prompt": "Describe what changed for require mfa for remote network access, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "6.5": {
+      "question_id": "6.5:change_review",
+      "prompt": "Have administrative accounts, onsite or provider-managed assets, MFA support, or administrative MFA enforcement changed?",
+      "followup_prompt": "Describe what changed for require mfa for administrative access, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "6.6": {
+      "question_id": "6.6:change_review",
+      "prompt": "Have authentication systems, authorization systems, hosting locations, or the annual system inventory review changed?",
+      "followup_prompt": "Describe what changed for establish and maintain an inventory of authentication and authorization systems, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "6.7": {
+      "question_id": "6.7:change_review",
+      "prompt": "Have enterprise assets, directory/SSO integrations, support for centralized access, or access-control coverage changed?",
+      "followup_prompt": "Describe what changed for centralize access control, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "6.8": {
+      "question_id": "6.8:change_review",
+      "prompt": "Have job roles, documented rights, business duties, or the annual privilege-authorization review changed?",
+      "followup_prompt": "Describe what changed for define and maintain role-based access control, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "7.1": {
+      "question_id": "7.1:change_review",
+      "prompt": "Have enterprise assets, vulnerability management methods, or significant environment changes affected the documented process?",
+      "followup_prompt": "Describe what changed for establish and maintain a vulnerability management process, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "7.2": {
+      "question_id": "7.2:change_review",
+      "prompt": "Have vulnerability risk criteria, remediation strategy, risk exceptions, or monthly process reviews changed?",
+      "followup_prompt": "Describe what changed for establish and maintain a remediation process, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "7.3": {
+      "question_id": "7.3:change_review",
+      "prompt": "Have operating systems, automated patch coverage, deployment failures, or monthly OS update execution changed?",
+      "followup_prompt": "Describe what changed for perform automated operating system patch management, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "7.4": {
+      "question_id": "7.4:change_review",
+      "prompt": "Have applications, automated update coverage, failed deployments, or monthly application update execution changed?",
+      "followup_prompt": "Describe what changed for perform automated application patch management, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "7.5": {
+      "question_id": "7.5:change_review",
+      "prompt": "Have internal assets, scan scope, scan credentials, authenticated/unauthenticated coverage, or quarterly execution changed?",
+      "followup_prompt": "Describe what changed for perform automated vulnerability scans of internal enterprise assets, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "7.6": {
+      "question_id": "7.6:change_review",
+      "prompt": "Have externally exposed assets, external scan coverage, or monthly scan execution changed?",
+      "followup_prompt": "Describe what changed for perform automated vulnerability scans of externally-exposed enterprise assets, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "7.7": {
+      "question_id": "7.7:change_review",
+      "prompt": "Have detected vulnerabilities, remediation tooling, risk-based treatment, or monthly remediation results changed?",
+      "followup_prompt": "Describe what changed for remediate detected vulnerabilities, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.1": {
+      "question_id": "8.1:change_review",
+      "prompt": "Have enterprise assets, logging requirements, collection/review/retention rules, or significant changes affected the logging process?",
+      "followup_prompt": "Describe what changed for establish and maintain an audit log management process, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.2": {
+      "question_id": "8.2:change_review",
+      "prompt": "Have enterprise assets, required log sources, logging enablement, or log collection failures changed?",
+      "followup_prompt": "Describe what changed for collect audit logs, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.3": {
+      "question_id": "8.3:change_review",
+      "prompt": "Have log volume, retention requirements, storage destinations, capacity, or ingestion/storage failures changed?",
+      "followup_prompt": "Describe what changed for ensure adequate audit log storage, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.4": {
+      "question_id": "8.4:change_review",
+      "prompt": "Have enterprise assets, time-synchronization support, or the two synchronized time sources changed?",
+      "followup_prompt": "Describe what changed for standardize time synchronization, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.5": {
+      "question_id": "8.5:change_review",
+      "prompt": "Have sensitive-data assets, event sources, user/time/address fields, or useful forensic log content changed?",
+      "followup_prompt": "Describe what changed for collect detailed audit logs, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.6": {
+      "question_id": "8.6:change_review",
+      "prompt": "Have enterprise assets, DNS-query logging suitability, platform support, or collected DNS events changed?",
+      "followup_prompt": "Describe what changed for collect dns query audit logs, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.7": {
+      "question_id": "8.7:change_review",
+      "prompt": "Have enterprise assets, URL-request logging suitability, platform support, or collected URL events changed?",
+      "followup_prompt": "Describe what changed for collect url request audit logs, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.8": {
+      "question_id": "8.8:change_review",
+      "prompt": "Have command-line tools, remote administrative terminals, execution paths, or command-line log collection changed?",
+      "followup_prompt": "Describe what changed for collect command-line audit logs, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.9": {
+      "question_id": "8.9:change_review",
+      "prompt": "Have enterprise assets, log destinations, collection/retention centralization, or feasibility limits changed?",
+      "followup_prompt": "Describe what changed for centralize audit logs, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.10": {
+      "question_id": "8.10:change_review",
+      "prompt": "Have asset log sources, retention settings, actual retained history, or data-loss gaps changed?",
+      "followup_prompt": "Describe what changed for retain audit logs, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.11": {
+      "question_id": "8.11:change_review",
+      "prompt": "Have log review scope, anomaly/abnormal-event checks, reviewer responsibilities, or weekly review execution changed?",
+      "followup_prompt": "Describe what changed for conduct audit log reviews, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "8.12": {
+      "question_id": "8.12:change_review",
+      "prompt": "Have service providers, available log support, permissions, or provider-log collection changed?",
+      "followup_prompt": "Describe what changed for collect service provider logs, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "9.1": {
+      "question_id": "9.1:change_review",
+      "prompt": "Have browser/email-client inventory, vendor support, latest release adoption, or permitted execution rules changed?",
+      "followup_prompt": "Describe what changed for ensure use of only fully supported browsers and email clients, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "9.2": {
+      "question_id": "9.2:change_review",
+      "prompt": "Have end-user devices, remote work coverage, DNS filtering, or malicious-domain blocking changed?",
+      "followup_prompt": "Describe what changed for use dns filtering services, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "9.3": {
+      "question_id": "9.3:change_review",
+      "prompt": "Have enterprise assets, URL filter coverage, blocked destination policy, or filter updates changed?",
+      "followup_prompt": "Describe what changed for maintain and enforce network-based url filters, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "9.4": {
+      "question_id": "9.4:change_review",
+      "prompt": "Have browsers, email clients, installed extensions/plugins, authorization decisions, or restrictions changed?",
+      "followup_prompt": "Describe what changed for restrict unnecessary or unauthorized browser and email client extensions, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "9.5": {
+      "question_id": "9.5:change_review",
+      "prompt": "Have sending domains, senders, SPF/DKIM configuration, or DMARC policy and verification changed?",
+      "followup_prompt": "Describe what changed for implement dmarc, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "9.6": {
+      "question_id": "9.6:change_review",
+      "prompt": "Have enterprise email gateways, required attachment formats, or unnecessary-file-type blocking changed?",
+      "followup_prompt": "Describe what changed for block unnecessary file types, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "9.7": {
+      "question_id": "9.7:change_review",
+      "prompt": "Have enterprise email servers, anti-malware deployment, maintenance, attachment scanning, or sandboxing coverage changed?",
+      "followup_prompt": "Describe what changed for deploy and maintain email server anti-malware protections, the affected scope or requirement elements, and who can confirm the current position."
+    },
+    "10.1": {
+      "question_id": "10.1:change_review",
+      "prompt": "Since the last assessment, have new assets, agent removals, disabled protection, or maintenance failures changed anti-malware coverage?"
+    },
+    "10.2": {
+      "question_id": "10.2:change_review",
+      "prompt": "Have any asset groups stopped receiving automatic anti-malware signature updates, or have update policies or connectivity changed?"
+    },
+    "10.3": {
+      "question_id": "10.3:change_review",
+      "prompt": "Have operating-system baselines, device policies, or exceptions changed whether removable media can automatically execute content?"
+    },
+    "10.4": {
+      "question_id": "10.4:change_review",
+      "prompt": "Have removable-media use, endpoint protection settings, or device coverage changed whether media is scanned automatically?"
+    },
+    "10.5": {
+      "question_id": "10.5:change_review",
+      "prompt": "Have new assets or software, changed compatibility, or disabled protections changed which anti-exploitation features can be enabled?"
+    },
+    "10.6": {
+      "question_id": "10.6:change_review",
+      "prompt": "Have protection products, tenants, unmanaged agents, or delegation changed whether anti-malware remains centrally managed?"
+    },
+    "10.7": {
+      "question_id": "10.7:change_review",
+      "prompt": "Have protection products, enabled detection modes, or asset coverage changed whether behavior-based anti-malware is actually used?"
+    },
+    "11.1": {
+      "question_id": "11.1:change_review",
+      "prompt": "Have recovery scope, priorities, backup procedures, data protection needs, or enterprise changes made the documented recovery process outdated?",
+      "followup_prompt": "When was the data-recovery process last reviewed or updated, and have relevant significant changes occurred since then?"
+    },
+    "11.2": {
+      "question_id": "11.2:change_review",
+      "prompt": "Have in-scope assets, data sensitivity, backup schedules, or failed backup jobs changed whether automated backups run often enough?",
+      "followup_prompt": "What are the most recent successful backup dates for the in-scope assets, and which sensitivity-based backup schedules apply?"
+    },
+    "11.3": {
+      "question_id": "11.3:change_review",
+      "prompt": "Have original-data protections, recovery locations, access permissions, encryption, or separation needs changed the protection required for recovery data?"
+    },
+    "11.4": {
+      "question_id": "11.4:change_review",
+      "prompt": "Have backup destinations, shared credentials, connectivity, or storage changes weakened the isolated recovery-data copy?"
+    },
+    "11.5": {
+      "question_id": "11.5:change_review",
+      "prompt": "Have restore-test results, the sampled asset population, or the time since the last recovery test changed recovery readiness?",
+      "followup_prompt": "When was the latest sampled recovery test performed, which in-scope assets were sampled, and what was the result?"
+    },
+    "12.1": {
+      "question_id": "12.1:change_review",
+      "prompt": "Have network devices, managed-network services, software support status, or version-review dates changed since the last assessment?",
+      "followup_prompt": "When were software versions and support last checked across network infrastructure, and which items remain unchecked or unsupported?"
+    },
+    "12.2": {
+      "question_id": "12.2:change_review",
+      "prompt": "Have network boundaries, trust relationships, access privileges, or availability dependencies changed the secure network architecture?"
+    },
+    "12.3": {
+      "question_id": "12.3:change_review",
+      "prompt": "Have network administration paths, management access, configuration deployment, or insecure management exceptions changed?"
+    },
+    "12.4": {
+      "question_id": "12.4:change_review",
+      "prompt": "Have network changes or significant enterprise changes made the architecture diagrams or other network documentation inaccurate?",
+      "followup_prompt": "When was network architecture documentation last reviewed or updated, and which subsequent network changes remain undocumented?"
+    },
+    "12.5": {
+      "question_id": "12.5:change_review",
+      "prompt": "Have network devices, identity integrations, access policies, or audit forwarding changed centralized network AAA coverage?"
+    },
+    "12.6": {
+      "question_id": "12.6:change_review",
+      "prompt": "Have management or communication protocols, wireless security modes, or compatibility exceptions changed protocol security?"
+    },
+    "12.7": {
+      "question_id": "12.7:change_review",
+      "prompt": "Have end-user access paths, VPN enforcement, authentication services, or bypasses changed whether authentication precedes enterprise-resource access?"
+    },
+    "12.8": {
+      "question_id": "12.8:change_review",
+      "prompt": "Have administrative tasks, privileged access paths, dedicated computing resources, segmentation, or internet connectivity changed?"
+    },
+    "13.1": {
+      "question_id": "13.1:change_review",
+      "prompt": "Have log sources, correlation alerts, alert routing, or platform changes reduced central security-event alerting?"
+    },
+    "13.2": {
+      "question_id": "13.2:change_review",
+      "prompt": "Have new hosts, platform support, sensor coverage, or suitability decisions changed where host-based intrusion detection is required and operating?"
+    },
+    "13.3": {
+      "question_id": "13.3:change_review",
+      "prompt": "Have network boundaries, cloud services, detection coverage, or suitability decisions changed network intrusion detection needs?"
+    },
+    "13.4": {
+      "question_id": "13.4:change_review",
+      "prompt": "Have network segments, allowed flows, filtering rules, or suitability decisions changed intersegment traffic filtering?"
+    },
+    "13.5": {
+      "question_id": "13.5:change_review",
+      "prompt": "Have remote assets, posture checks, anti-malware, secure configuration, OS versions, or application versions changed the access granted?"
+    },
+    "13.6": {
+      "question_id": "13.6:change_review",
+      "prompt": "Have network devices, traffic visibility, collection gaps, or review and alerting uses changed?"
+    },
+    "13.7": {
+      "question_id": "13.7:change_review",
+      "prompt": "Have supported hosts, prevention policies, disabled blocking, or suitability decisions changed host intrusion prevention coverage?"
+    },
+    "13.8": {
+      "question_id": "13.8:change_review",
+      "prompt": "Have network boundaries, prevention modes, cloud prevention services, or suitability decisions changed network intrusion prevention coverage?"
+    },
+    "13.9": {
+      "question_id": "13.9:change_review",
+      "prompt": "Have network ports, authentication protocols, certificate trust, or exception paths changed port-level access control?"
+    },
+    "13.10": {
+      "question_id": "13.10:change_review",
+      "prompt": "Have application traffic, gateways, filtering policies, or bypass paths changed application-layer filtering?"
+    },
+    "13.11": {
+      "question_id": "13.11:change_review",
+      "prompt": "Have alert volumes, false positives, detection needs, or the last threshold-tuning date changed security-event alert tuning?",
+      "followup_prompt": "When were security-event alerting thresholds last tuned, and which alert sets were included or left outstanding?"
+    },
+    "14.1": {
+      "question_id": "14.1:change_review",
+      "prompt": "Have workforce onboarding, annual training coverage, program content, or significant enterprise changes altered security-awareness needs?",
+      "followup_prompt": "Which workforce members remain due for hire or annual training, and when was program content last reviewed against relevant changes?"
+    },
+    "14.2": {
+      "question_id": "14.2:change_review",
+      "prompt": "Have social-engineering threats, workforce roles, or training content changed what staff need to recognize?"
+    },
+    "14.3": {
+      "question_id": "14.3:change_review",
+      "prompt": "Have authentication methods, credential handling, or workforce training content changed authentication best practices?"
+    },
+    "14.4": {
+      "question_id": "14.4:change_review",
+      "prompt": "Have sensitive-data types, handling workflows, collaboration tools, or clear-screen and desk practices changed the training needed?"
+    },
+    "14.5": {
+      "question_id": "14.5:change_review",
+      "prompt": "Have accidental disclosure events, data-sharing paths, portable devices, or training content changed exposure-awareness needs?"
+    },
+    "14.6": {
+      "question_id": "14.6:change_review",
+      "prompt": "Have potential incident signs, reporting routes, or workforce training changed whether staff can recognize and report incidents?"
+    },
+    "14.7": {
+      "question_id": "14.7:change_review",
+      "prompt": "Have update methods, automated tools, failure indicators, or IT reporting contacts changed workforce guidance?"
+    },
+    "14.8": {
+      "question_id": "14.8:change_review",
+      "prompt": "Have remote-working arrangements, home networks, enterprise network access, or training content changed insecure-network risks?"
+    },
+    "14.9": {
+      "question_id": "14.9:change_review",
+      "prompt": "Have job responsibilities, privileged roles, developers, or high-profile personnel changed role-specific awareness and skills needs?"
+    },
+    "15.1": {
+      "question_id": "15.1:change_review",
+      "prompt": "Have providers, services, classifications, enterprise contacts, or significant enterprise changes altered the provider inventory?",
+      "followup_prompt": "When was the provider inventory last reviewed or updated, and which changed or new providers remain unreconciled?"
+    },
+    "15.2": {
+      "question_id": "15.2:change_review",
+      "prompt": "Have provider classifications, inventory, assessments, monitoring, decommissioning, or enterprise changes made the management policy outdated?",
+      "followup_prompt": "When was the service-provider management policy last reviewed or updated, and which enterprise changes still need review?"
+    },
+    "15.3": {
+      "question_id": "15.3:change_review",
+      "prompt": "Have provider services, data exposure, criticality, or enterprise changes altered provider classifications?",
+      "followup_prompt": "When were provider classifications last reviewed or updated, and which service or enterprise changes remain unreviewed?"
+    },
+    "15.4": {
+      "question_id": "15.4:change_review",
+      "prompt": "Have contracts, service responsibilities, required security terms, or the last contract review changed contractual protection?",
+      "followup_prompt": "When were provider contracts last checked for missing security requirements, and which contracts are still outstanding?"
+    },
+    "15.5": {
+      "question_id": "15.5:change_review",
+      "prompt": "Have provider classifications, assessments, new or renewed contracts, or policy requirements changed reassessment needs?",
+      "followup_prompt": "When was each in-scope provider last reassessed, and which new or renewed contracts require an assessment under the recorded policy?"
+    },
+    "15.6": {
+      "question_id": "15.6:change_review",
+      "prompt": "Have provider services, released changes, incidents, or policy-defined monitoring activities changed ongoing provider oversight?"
+    },
+    "15.7": {
+      "question_id": "15.7:change_review",
+      "prompt": "Have any provider relationships ended or entered decommissioning, and what applicable access, data-flow, or data-disposition steps remain?"
+    },
+    "16.1": {
+      "question_id": "16.1:change_review",
+      "prompt": "Have development processes, design or coding standards, training, vulnerability handling, third-party code, or testing changed?",
+      "followup_prompt": "When was the secure-development process last reviewed or updated, and what relevant development changes have occurred since then?"
+    },
+    "16.2": {
+      "question_id": "16.2:change_review",
+      "prompt": "Have vulnerability intake routes, responsible teams, remediation testing, severity tracking, timing measures, or stakeholder-facing expectations changed?",
+      "followup_prompt": "When was vulnerability-handling documentation last reviewed or updated, and which changed handling or reporting responsibilities remain unreviewed?"
+    },
+    "16.3": {
+      "question_id": "16.3:change_review",
+      "prompt": "Have new or recurring vulnerabilities exposed underlying causes that were missed or not addressed through root-cause analysis?"
+    },
+    "16.4": {
+      "question_id": "16.4:change_review",
+      "prompt": "Have used or planned third-party components, recorded risks, component updates, or support status changed since the last monthly evaluation?",
+      "followup_prompt": "When was the component inventory last evaluated for changes, updates, risks and continued support, and which components remain unchecked?"
+    },
+    "16.5": {
+      "question_id": "16.5:change_review",
+      "prompt": "Have dependencies, source provenance, vulnerability evaluations, or framework choices changed component currency or trust?"
+    },
+    "16.6": {
+      "question_id": "16.6:change_review",
+      "prompt": "Have severity definitions, fix priorities, release acceptance thresholds, or the annual rating-process review changed?",
+      "followup_prompt": "When was the vulnerability severity-rating system and process last reviewed or updated, including the release-acceptability level?"
+    },
+    "16.7": {
+      "question_id": "16.7:change_review",
+      "prompt": "Have application infrastructure, cloud or SaaS components, hardening templates, or application changes weakened the adopted baseline?"
+    },
+    "16.8": {
+      "question_id": "16.8:change_review",
+      "prompt": "Have new systems, shared services, accounts, data flows, or environment changes affected production and non-production separation?"
+    },
+    "16.9": {
+      "question_id": "16.9:change_review",
+      "prompt": "Have development personnel, languages, environments, duties, or annual training coverage changed secure-coding training needs?",
+      "followup_prompt": "Which development personnel have current environment- and responsibility-specific secure-coding training, and which completion dates are outstanding?"
+    },
+    "16.10": {
+      "question_id": "16.10:change_review",
+      "prompt": "Have architectures, permission paths, user inputs, or infrastructure attack surfaces changed secure-design assumptions?"
+    },
+    "16.11": {
+      "question_id": "16.11:change_review",
+      "prompt": "Have identity, cryptography, logging, or other security components changed from vetted services to custom implementations or outdated algorithms?"
+    },
+    "16.12": {
+      "question_id": "16.12:change_review",
+      "prompt": "Have applications, release pipelines, or analysis tools changed whether both static and dynamic security checks are performed?"
+    },
+    "16.13": {
+      "question_id": "16.13:change_review",
+      "prompt": "Have applications, business-logic paths, access roles, or tester coverage changed application penetration-testing needs?"
+    },
+    "16.14": {
+      "question_id": "16.14:change_review",
+      "prompt": "Have planned features, entry points, access levels, or architecture changes introduced design risks needing threat-model review before coding?"
+    },
+    "17.1": {
+      "question_id": "17.1:change_review",
+      "prompt": "Have incident leads, backups, provider arrangements, internal oversight, or significant enterprise changes altered incident handling responsibilities?",
+      "followup_prompt": "When were incident-handling designations last reviewed, and which personnel or provider changes have occurred since then?"
+    },
+    "17.2": {
+      "question_id": "17.2:change_review",
+      "prompt": "Have notification parties or contact details changed, and when were the incident contacts last verified?",
+      "followup_prompt": "When were incident notification contacts last actually verified, and which contact details remain unconfirmed?"
+    },
+    "17.3": {
+      "question_id": "17.3:change_review",
+      "prompt": "Have incident-reporting timeframes, recipients, mechanisms, minimum information, or workforce access changed?",
+      "followup_prompt": "When was the workforce incident-reporting process last reviewed, and what relevant reporting changes remain unreviewed?"
+    },
+    "17.4": {
+      "question_id": "17.4:change_review",
+      "prompt": "Have incident-response roles, compliance obligations, communication plans, or enterprise changes made the response process outdated?",
+      "followup_prompt": "When was the incident-response process last reviewed, and which relevant compliance, role or communication changes remain unreviewed?"
+    },
+    "17.5": {
+      "question_id": "17.5:change_review",
+      "prompt": "Have legal, IT, security, facilities, communications, HR, responders, analysts, or relevant third-party responsibilities changed?",
+      "followup_prompt": "When were incident-response role assignments last reviewed, and which internal or third-party responsibility changes remain unreviewed?"
+    },
+    "17.6": {
+      "question_id": "17.6:change_review",
+      "prompt": "Have primary or backup incident communication channels, availability assumptions, or significant enterprise changes altered response communications?",
+      "followup_prompt": "When were primary and secondary incident communications last reviewed, including whether an incident could disrupt a selected channel?"
+    },
+    "17.7": {
+      "question_id": "17.7:change_review",
+      "prompt": "Have exercise participation, communications, decision making, response workflows, or the last exercise date changed incident readiness?",
+      "followup_prompt": "When was the most recent incident-response exercise, who participated, and which channels, decisions and workflows were tested?"
+    },
+    "17.8": {
+      "question_id": "17.8:change_review",
+      "prompt": "Have any security incidents occurred since the prior assessment, and were lessons and follow-up actions captured for each relevant incident?",
+      "followup_prompt": "Which incidents have occurred since the last assessment, and which still lack a post-incident review, recorded lessons or follow-up action?"
+    },
+    "17.9": {
+      "question_id": "17.9:change_review",
+      "prompt": "Have incident thresholds, event classifications, emerging risks, or significant enterprise changes altered incident-versus-event decisions?",
+      "followup_prompt": "When were incident thresholds last reviewed, and which relevant enterprise changes still need threshold review?"
+    },
+    "18.1": {
+      "question_id": "18.1:change_review",
+      "prompt": "Have enterprise size, complexity, industry, maturity, scope, permitted testing, contacts, remediation routing, or retrospective requirements changed the penetration-testing program?"
+    },
+    "18.2": {
+      "question_id": "18.2:change_review",
+      "prompt": "Have external exposure, reconnaissance scope, tester qualifications, program requirements, or the last external test date changed?",
+      "followup_prompt": "When was the most recent qualified external penetration test, and did it cover the current program scope and reconnaissance requirements?"
+    },
+    "18.3": {
+      "question_id": "18.3:change_review",
+      "prompt": "Have penetration-test findings, impact, priorities, remediation deadlines, or effort decisions changed unresolved remediation?"
+    },
+    "18.4": {
+      "question_id": "18.4:change_review",
+      "prompt": "Have new penetration tests, validation results, or decisions about necessary detection changes created outstanding validation or ruleset work?",
+      "followup_prompt": "Which penetration tests have occurred since the prior assessment, and which still need security-measure validation or an explicit decision on detection changes?"
+    },
+    "18.5": {
+      "question_id": "18.5:change_review",
+      "prompt": "Have internal networks, trust boundaries, program requirements, or the last internal test date changed internal penetration-testing coverage?",
+      "followup_prompt": "When was the most recent internal penetration test, and which applicable program scope or requirements were omitted?"
+    }
+  }
+}

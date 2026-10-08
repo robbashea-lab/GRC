@@ -1,0 +1,503 @@
+{
+  "version": "cis-v8.1-control1-3",
+  "framework_id": "cis-ig1",
+  "framework_version": "8.1",
+  "reviewed_on": "2026-10-07",
+  "basis": "Narrow source-conditioned attribute correction for Safeguard 1.1. Earlier question packs remain immutable; no CIS source obligation, implementation group, cadence or evidence-verification rule is changed.",
+  "definitions": {
+    "1.1": {
+      "title": "Establish and Maintain Detailed Enterprise Asset Inventory",
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "inventory",
+      "related": [
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.5"
+      ],
+      "prerequisites": [],
+      "requirement_elements": [
+        "inventory",
+        "coverage",
+        "attributes",
+        "frequency"
+      ],
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#11-establish-and-maintain-detailed-enterprise-asset-inventory"
+    }
+  },
+  "safeguards": {
+    "1.1": [
+      {
+        "id": "inventory",
+        "prompt": "Does an enterprise asset inventory exist?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "inventory",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "inventory: {recorded_answer}",
+        "gap_template": "Confirm or address: Does an enterprise asset inventory exist?",
+        "evidence_guidance": "Evidence should demonstrate inventory; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:inventory",
+        "unknown_template": "Confirm: Does an enterprise asset inventory exist?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "existing",
+        "prompt": "What asset information currently exists, and who can verify it?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "existing",
+        "status_impact": "Context only",
+        "narrative_template": "existing: {recorded_answer}",
+        "gap_template": "Confirm or address: What asset information currently exists, and who can verify it?",
+        "evidence_guidance": "Evidence should demonstrate existing; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "No",
+            "Not sure"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:existing",
+        "unknown_template": "Confirm: What asset information currently exists, and who can verify it?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "system",
+        "prompt": "Where is the authoritative inventory maintained?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "system",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "system: {recorded_answer}",
+        "gap_template": "Confirm or address: Where is the authoritative inventory maintained?",
+        "evidence_guidance": "Evidence should demonstrate system; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:system",
+        "unknown_template": "Confirm: Where is the authoritative inventory maintained?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "sources",
+        "prompt": "Is this one authoritative source or reconciled from multiple sources?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "One source",
+          "Multiple reconciled sources",
+          "Multiple unreconciled sources",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "sources",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "sources: {recorded_answer}",
+        "gap_template": "Confirm or address: Is this one authoritative source or reconciled from multiple sources?",
+        "evidence_guidance": "Evidence should demonstrate sources; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:sources",
+        "unknown_template": "Confirm: Is this one authoritative source or reconciled from multiple sources?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "owner",
+        "prompt": "Who owns and maintains the inventory? Include client and provider responsibilities.",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "owner",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "owner: {recorded_answer}",
+        "gap_template": "Confirm or address: Who owns and maintains the inventory? Include client and provider responsibilities.",
+        "evidence_guidance": "Evidence should demonstrate owner; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:owner",
+        "unknown_template": "Confirm: Who owns and maintains the inventory? Include client and provider responsibilities.",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "coverage",
+        "prompt": "Confirm inventory coverage of all data-capable assets in each listed category and connection model.",
+        "help": "Include physical connections as well as virtual, remote and cloud connections, and regularly connected assets outside enterprise control. An absent category needs confirmed scope and a reason; a category that exists but is not inventoried is No or Partially.",
+        "type": "matrix",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure",
+          "Not applicable"
+        ],
+        "critical": true,
+        "element": "coverage",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "coverage: {recorded_answer}",
+        "gap_template": "Confirm or address: Confirm coverage of each applicable asset category and connection model.",
+        "evidence_guidance": "Evidence should demonstrate coverage; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "rows": [
+          "End-user devices",
+          "Portable and mobile devices",
+          "Servers",
+          "Network devices",
+          "Non-computing and IoT devices",
+          "Virtual assets",
+          "Remote assets",
+          "Cloud-hosted assets",
+          "Regularly connected assets outside enterprise control"
+        ],
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:coverage",
+        "unknown_template": "Confirm: Confirm coverage of each applicable asset category and connection model.",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "attributes",
+        "prompt": "Confirm the inventory records these required details for every scoped asset. Use a static-address exclusion only for assets without static addressing.",
+        "help": "Hardware address, machine name, asset owner, department and connection approval remain required for scoped assets. Record confirmed absent categories as scope facts; do not use uncertainty as an exclusion.",
+        "type": "matrix",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure",
+          "Not applicable"
+        ],
+        "critical": true,
+        "element": "attributes",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "attributes: {recorded_answer}",
+        "gap_template": "Confirm or address: Confirm the inventory records these details for applicable assets.",
+        "evidence_guidance": "Evidence should demonstrate attributes; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "rows": [
+          "Static network address where applicable",
+          "Hardware address",
+          "Machine name",
+          "Asset owner",
+          "Department",
+          "Approved to connect"
+        ],
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:attributes",
+        "unknown_template": "Confirm: Confirm the inventory records these details for applicable assets.",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "row_choices": {
+          "Static network address where applicable": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure",
+            "Not applicable"
+          ],
+          "Hardware address": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "Machine name": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "Asset owner": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "Department": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "Approved to connect": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ]
+        }
+      },
+      {
+        "id": "scope_reason",
+        "prompt": "Explain any non-applicable categories or attributes and how applicability was confirmed.",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "scope_reason",
+        "status_impact": "Context only",
+        "narrative_template": "scope reason: {recorded_answer}",
+        "gap_template": "Confirm or address: Explain any non-applicable categories or attributes and how applicability was confirmed.",
+        "evidence_guidance": "Evidence should demonstrate scope reason; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "condition": "not_applicable",
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:scope_reason",
+        "unknown_template": "Confirm: Explain any non-applicable categories or attributes and how applicability was confirmed.",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "maintenance",
+        "prompt": "Are newly acquired/discovered assets added and retired/removed assets updated consistently?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "maintenance",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "maintenance: {recorded_answer}",
+        "gap_template": "Confirm or address: Are newly acquired/discovered assets added and retired/removed assets updated consistently?",
+        "evidence_guidance": "Evidence should demonstrate maintenance; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:maintenance",
+        "unknown_template": "Confirm: Are newly acquired/discovered assets added and retired/removed assets updated consistently?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "maintenance_detail",
+        "prompt": "Describe how assets are added, retired, removed, and reconciled; identify missing steps.",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "maintenance_detail",
+        "status_impact": "Context only",
+        "narrative_template": "maintenance detail: {recorded_answer}",
+        "gap_template": "Confirm or address: Describe how assets are added, retired, removed, and reconciled; identify missing steps.",
+        "evidence_guidance": "Evidence should demonstrate maintenance detail; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:maintenance_detail",
+        "unknown_template": "Confirm: Describe how assets are added, retired, removed, and reconciled; identify missing steps.",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "frequency",
+        "prompt": "How frequently is the complete inventory reviewed and updated?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Monthly",
+          "Quarterly",
+          "Every six months",
+          "Annually",
+          "Ad hoc",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "frequency",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "frequency: {recorded_answer}",
+        "gap_template": "Confirm or address: How frequently is the complete inventory reviewed and updated?",
+        "evidence_guidance": "Evidence should demonstrate frequency; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:frequency",
+        "unknown_template": "Confirm: How frequently is the complete inventory reviewed and updated?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "last_review",
+        "prompt": "When was the last complete inventory review/update? Leave blank if unknown.",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "date",
+        "choices": [],
+        "critical": true,
+        "element": "last_review",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "last review: {recorded_answer}",
+        "gap_template": "Confirm or address: When was the last complete inventory review/update? Leave blank if unknown.",
+        "evidence_guidance": "Evidence should demonstrate last review; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:last_review",
+        "unknown_template": "Confirm: When was the last complete inventory review/update? Leave blank if unknown.",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "reconciled",
+        "prompt": "Has completeness been reconciled against relevant discovery or management sources?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "reconciled",
+        "status_impact": "Blocks Implemented when missing or unknown",
+        "narrative_template": "reconciled: {recorded_answer}",
+        "gap_template": "Confirm or address: Has completeness been reconciled against relevant discovery or management sources?",
+        "evidence_guidance": "Evidence should demonstrate reconciled; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "inventory": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:reconciled",
+        "unknown_template": "Confirm: Has completeness been reconciled against relevant discovery or management sources?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "evidence",
+        "prompt": "What evidence is available, and what would it demonstrate?",
+        "help": "Examples: inventory export, MDM/RMM or cloud inventory, dated reconciliation/review record, asset change tickets. No particular product or document format is required.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "evidence",
+        "status_impact": "Context only",
+        "narrative_template": "evidence: {recorded_answer}",
+        "gap_template": "Confirm or address: What evidence is available, and what would it demonstrate?",
+        "evidence_guidance": "Examples: inventory export, MDM/RMM or cloud inventory, dated reconciliation/review record, asset change tickets. No particular product or document format is required.",
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:evidence",
+        "unknown_template": "Confirm: What evidence is available, and what would it demonstrate?",
+        "next_step_template": "Examples: inventory export, MDM/RMM or cloud inventory, dated reconciliation/review record, asset change tickets. No particular product or document format is required."
+      },
+      {
+        "id": "gaps",
+        "prompt": "Describe any confirmed missing or incomplete requirement elements.",
+        "help": "Record known deficiencies here. Put uncertainty in Items requiring verification.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "gaps",
+        "status_impact": "Context only",
+        "narrative_template": "gaps: {recorded_answer}",
+        "gap_template": "Confirm or address: Describe confirmed missing or excluded elements, unknowns, and who can resolve them.",
+        "evidence_guidance": "Evidence should demonstrate gaps; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.1:gaps",
+        "unknown_template": "Confirm: Describe confirmed missing or excluded elements, unknowns, and who can resolve them.",
+        "next_step_template": "Leave blank when there are no additional confirmed gaps. Record only actual missing elements or unresolved questions."
+      },
+      {
+        "id": "unknowns",
+        "prompt": "Which requirement elements still need confirmation, and who can verify them?",
+        "help": "Uncertainty is not a confirmed gap.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "unknowns",
+        "status_impact": "Reported uncertainty prevents an unqualified recommendation",
+        "safeguard_id": "1.1",
+        "question_set_version": "cis-v8.1-control1-3",
+        "question_id": "1.1:unknowns",
+        "narrative_template": "",
+        "gap_template": "",
+        "unknown_template": "Reviewer-reported uncertainty",
+        "next_step_template": "Confirm the reported uncertainty with the responsible team",
+        "evidence_guidance": "Use relevant records and responsible-owner confirmation."
+      }
+    ]
+  }
+}

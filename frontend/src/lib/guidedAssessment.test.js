@@ -53,7 +53,14 @@ test('bounded known question schemas and per-question metadata',()=>{
   expect(()=>validateAnswers('1.1',{owner:'x'.repeat(2001)})).toThrow();
   expect(()=>validateAnswers('1.1',{foreign:'secret'})).toThrow();
   expect(()=>validateAnswers('1.1',{coverage:{'Foreign asset':'Yes'}})).toThrow();
-  for(const [id,questions] of Object.entries(guidedCatalog.safeguards))for(const q of questions){expect(q.safeguard_id).toBe(id);expect(q.question_set_version).toBe(versionForSafeguard(id));expect(q.status_impact).toBeTruthy();expect(q.evidence_guidance).toBeTruthy();}
+  for(const [id,questions] of Object.entries(guidedCatalog.safeguards))for(const q of questions){expect(q.safeguard_id).toBe(id);expect(q.question_set_version).toBe(versionForSafeguard(id,true));expect(q.status_impact).toBeTruthy();expect(q.evidence_guidance).toBeTruthy();}
+});
+test('legacy consumers keep the original default question versions while upgraded selection is explicit',()=>{
+  expect(versionForSafeguard('1.1')).toBe('cis-v8.1-control1-2');
+  expect(versionForSafeguard('1.1',true)).toBe('cis-v8.1-control1-3');
+  expect(generateResult('1.1',{inventory:'Not sure'},today).version).toBe('cis-v8.1-control1-2');
+  expect(versionForSafeguard('2.1')).toBe('cis-v8.1-program-1');
+  expect(versionForSafeguard('2.1',true)).toBe('cis-v8.1-program-2');
 });
 test('confirmed matrix gaps remain distinct from unknown coverage and response alternatives are readable',()=>{
   const a={...complete('1.1'),system:'RMM',owner:'IT'};

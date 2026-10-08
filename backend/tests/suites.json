@@ -67,7 +67,8 @@
     "test_suite_registry.py",
     "test_ten_year_operation.py",
     "test_vendor_governance.py",
-    "test_workflow_integrity.py"
+    "test_workflow_integrity.py",
+    "test_workspace_work_context.py"
   ],
   "environment": [
     "backend_test.py",
