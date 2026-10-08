@@ -44,17 +44,19 @@ These are changed-interface checks, not whole-application conformance claims.
 
 ## Verification recorded before release
 
-Executed focused tests: 5 suites / 21 tests passed, covering every lesson,
+Executed focused tests: 8 suites / 36 tests passed, covering every lesson,
 examples, main-menu return, selected questions, official links, local greeting,
 reduced-motion updates, focus dismissal/Escape restoration, disabled Demo
 authentication, standard authentication routing, failed sign-in draft retention,
-Demo entry, existing AuthContext/logout and shared theme behavior.
+Demo entry, existing AuthContext/logout, shared theme and Omni behavior, dedicated
+lesson/menu focus, and selected light/dark text, action and focus-color contracts.
+The color tests do not establish rendered or whole-interface conformance.
 
 Command from frontend:
 
 ```powershell
 $env:CI='true'
-node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand src/pages/Login.test.jsx src/components/login/LoginWelcome.test.jsx src/context/AuthContext.test.jsx src/context/AuthContext.logout.test.jsx src/lib/brawndoPortalTheme.test.jsx
+node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand src/pages/Login.test.jsx src/pages/Login.css.test.js src/components/login/LoginWelcome.test.jsx src/context/AuthContext.test.jsx src/context/AuthContext.logout.test.jsx src/lib/brawndoPortalTheme.test.jsx src/components/OmniDock.test.jsx src/components/OmniWindow.test.jsx
 ```
 
 Actual candidate-browser checks passed: all 18 topic/question selections, examples

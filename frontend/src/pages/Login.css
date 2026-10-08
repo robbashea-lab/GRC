@@ -938,7 +938,7 @@ to {
   text-decoration: none;
 }
 #omni-login .login input:focus-visible {
-  outline: 3px solid #5acbff;
+  outline: 3px solid #2f91ff;
   outline-offset: 2px;
 }
 #omni-login button:disabled {
