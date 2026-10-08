@@ -17,6 +17,16 @@ test('window bounds remain reachable at desktop, tablet and tiny viewport sizes'
     expect(r.x+r.w).toBeLessThanOrEqual(width-8);expect(r.y+r.h).toBeLessThanOrEqual(height-8);
   }
 });
+test('reopening measures the expanded launcher after mount rather than its minimized bounds',async()=>{
+  global.IS_REACT_ACT_ENVIRONMENT=true;
+  const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
+  const anchor=jest.fn().mockReturnValueOnce({left:900,right:980,top:200}).mockReturnValue({left:850,right:1018,top:200});
+  try{
+    await act(async()=>root.render(<OmniWindow id="anchored" anchor={anchor}/>));
+    expect(host.querySelector('[role=dialog]').style.left).toBe(besideOmniRect({left:850,right:1018,top:200}).x+'px');
+    expect(anchor).toHaveBeenCalledTimes(2);
+  }finally{await act(async()=>root.unmount());host.remove();}
+});
 test('nonblocking guide has meaningful labels, preserves mounted answers and exposes native window controls',async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host),minimize=jest.fn(),close=jest.fn(),focus=jest.fn(),restore=jest.fn();
   try{

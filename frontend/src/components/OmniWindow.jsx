@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Maximize2,Minimize2,Minus,X,MoreHorizontal} from 'lucide-react';
 
 export function fitOmniRect(rect,width=window.innerWidth,height=window.innerHeight){
@@ -19,6 +19,8 @@ const EDGES=['n','ne','e','se','s','sw','w','nw'];
 export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose,anchor}){
   const [rect,setRect]=useState(()=>anchor?besideOmniRect(anchor()):defaultRect()),[maximized,setMaximized]=useState(false);
   const rectRef=useRef(rect),restore=useRef(null),drag=useRef(null),focusHandlers=useRef({onOpenAutoFocus,onCloseAutoFocus});rectRef.current=rect;
+  // Measure after the launcher has expanded from its minimized size, before paint.
+  useLayoutEffect(()=>{if(anchor)setRect(besideOmniRect(anchor()));},[]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{const handlers=focusHandlers.current;handlers.onOpenAutoFocus?.({preventDefault(){}});return()=>handlers.onCloseAutoFocus?.({preventDefault(){}});},[]);
   useEffect(()=>{const resize=()=>setRect(r=>fitOmniRect(maximized?{x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}:r));window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[maximized]);
   function expand(){if(maximized){setRect(fitOmniRect(restore.current||defaultRect()));}else{restore.current=rectRef.current;setRect(fitOmniRect({x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}));}setMaximized(!maximized);}
