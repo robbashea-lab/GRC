@@ -1,5 +1,5 @@
 {
-  "version": "cis-v8.1-program-2",
+  "version": "cis-v8.1-program-1",
   "framework_id": "cis-ig1",
   "framework_version": "8.1",
   "reviewed_on": "2026-10-07",
@@ -109,12 +109,12 @@
         {
           "id": "2.2-c5",
           "text": "Necessary unsupported-software exceptions document mitigating controls.",
-          "conditional": true
+          "conditional": false
         },
         {
           "id": "2.2-c6",
           "text": "Exceptions document residual-risk acceptance.",
-          "conditional": true
+          "conditional": false
         },
         {
           "id": "2.2-c7",
@@ -598,7 +598,7 @@
       ],
       "root": "practice",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#311-encrypt-sensitive-data-at-rest",
-      "guidance": "Encrypt sensitive data at rest. Storage-layer encryption meets the minimum; application-layer or client-side encryption may provide additional protection but is not mandatory.",
+      "guidance": "Protect stored sensitive server/application/database information. Maintain encryption coverage.",
       "evidence": [
         "Storage encryption settings and scoped assurance. Use representative records covering the stated population.",
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
@@ -748,7 +748,7 @@
       "elements": [
         {
           "id": "4.1-c3",
-          "text": "A documented secure-configuration process is established and maintained for enterprise assets and software.",
+          "text": "A documented secure-configuration process is established and maintained for enterprise assets.",
           "conditional": false
         },
         {
@@ -1033,12 +1033,12 @@
         {
           "id": "4.10-c1",
           "text": "Supported portable devices automatically lock out after predetermined local authentication failures.",
-          "conditional": true
+          "conditional": false
         },
         {
           "id": "4.10-c4",
-          "text": "Supported laptops allow no more than 20 local failed authentication attempts before device lockout.",
-          "conditional": true
+          "text": "Laptop thresholds permit no more than 20 failed attempts.",
+          "conditional": false
         },
         {
           "id": "4.10-c6",
@@ -1101,7 +1101,7 @@
         {
           "id": "4.12-c1",
           "text": "Supported mobile end-user devices use separate enterprise workspaces.",
-          "conditional": true
+          "conditional": false
         }
       ]
     },
@@ -1520,8 +1520,8 @@
         },
         {
           "id": "6.7-c3",
-          "text": "Where supported, centralized access control for enterprise assets uses a directory service or SSO provider.",
-          "conditional": true
+          "text": "Centralized access control uses a directory service or SSO provider.",
+          "conditional": false
         }
       ]
     },
@@ -1959,8 +1959,13 @@
       "elements": [
         {
           "id": "8.6-c3",
-          "text": "DNS query audit logs are collected on enterprise assets where appropriate and supported.",
+          "text": "DNS query audit logs are collected on enterprise assets where appropriate.",
           "conditional": true
+        },
+        {
+          "id": "8.6-c4",
+          "text": "Collection applies where DNS query logging is supported.",
+          "conditional": false
         }
       ]
     },
@@ -1981,8 +1986,13 @@
       "elements": [
         {
           "id": "8.7-c3",
-          "text": "URL request audit logs are collected on enterprise assets where appropriate and supported.",
+          "text": "URL request audit logs are collected on enterprise assets where appropriate.",
           "conditional": true
+        },
+        {
+          "id": "8.7-c4",
+          "text": "Collection applies where URL request logging is supported.",
+          "conditional": false
         }
       ]
     },
@@ -2035,8 +2045,8 @@
         },
         {
           "id": "8.9-c4",
-          "text": "Where centralization is possible, centralized audit-log collection and retention follow the documented audit-log management process.",
-          "conditional": true
+          "text": "Centralized collection and retention follow the documented audit-log management process.",
+          "conditional": false
         }
       ]
     },
@@ -2381,7 +2391,7 @@
       ],
       "root": "practice",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#103-disable-autorun-and-autoplay-for-removable-media",
-      "guidance": "Assess removable-media autorun and autoplay auto-execute behavior, rather than requiring every media browsing or playback interface to be disabled.",
+      "guidance": "Prevent removable media from executing automatically.",
       "evidence": [
         "Effective autorun/autoplay settings or applied-policy reports.",
         "A safe configuration observation from representative devices or their responsible provider."
@@ -2916,11 +2926,6 @@
           "id": "13.1-c4",
           "text": "Centralized alerting supports log correlation and analysis.",
           "conditional": false
-        },
-        {
-          "id": "13.1-guided-correlation-alerts",
-          "text": "The centralized security-event platform has security-relevant correlation alerts configured and operating.",
-          "conditional": false
         }
       ]
     },
@@ -2941,7 +2946,12 @@
       "elements": [
         {
           "id": "13.2-c3",
-          "text": "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.",
+          "text": "Host-based intrusion detection is deployed on enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "13.2-c4",
+          "text": "Deployment applies where appropriate and/or supported.",
           "conditional": true
         }
       ]
@@ -2963,7 +2973,12 @@
       "elements": [
         {
           "id": "13.3-c3",
-          "text": "Network intrusion detection is deployed on enterprise assets where appropriate.",
+          "text": "Network intrusion detection is deployed on enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "13.3-c4",
+          "text": "Deployment applies where appropriate.",
           "conditional": true
         }
       ]
@@ -2985,7 +3000,12 @@
       "elements": [
         {
           "id": "13.4-c3",
-          "text": "Traffic is filtered between network segments where appropriate.",
+          "text": "Traffic is filtered between network segments.",
+          "conditional": false
+        },
+        {
+          "id": "13.4-c4",
+          "text": "Filtering applies where appropriate.",
           "conditional": true
         }
       ]
@@ -3075,13 +3095,18 @@
       "elements": [
         {
           "id": "13.7-c4",
-          "text": "Host-based intrusion prevention is deployed on enterprise assets where appropriate and/or supported.",
+          "text": "Host-based intrusion prevention is deployed on enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "13.7-c5",
+          "text": "Deployment applies where appropriate and/or supported.",
           "conditional": true
         },
         {
           "id": "13.7-c6",
-          "text": "For enterprise assets where host-based intrusion prevention is appropriate and/or supported, the solution provides prevention rather than detection alone.",
-          "conditional": true
+          "text": "The solution provides intrusion prevention, rather than detection alone.",
+          "conditional": false
         }
       ]
     },
@@ -3101,8 +3126,18 @@
       "elements": [
         {
           "id": "13.8-c4",
-          "text": "A network intrusion prevention solution is deployed where appropriate.",
+          "text": "Network intrusion prevention is deployed.",
+          "conditional": false
+        },
+        {
+          "id": "13.8-c5",
+          "text": "Deployment applies where appropriate.",
           "conditional": true
+        },
+        {
+          "id": "13.8-c6",
+          "text": "The solution provides network intrusion prevention.",
+          "conditional": false
         }
       ]
     },
@@ -3803,11 +3838,6 @@
           "id": "16.2-c7",
           "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
           "conditional": false
-        },
-        {
-          "id": "16.2-guided-external-policy-consideration",
-          "text": "Where the enterprise develops applications for third parties, it considers an externally facing vulnerability-handling policy to set expectations for outside stakeholders.",
-          "conditional": true
         }
       ]
     },
@@ -4027,7 +4057,7 @@
       ],
       "root": "practice",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#169-train-developers-in-application-security-concepts-and-secure-coding",
-      "guidance": "Train all software-development personnel at least annually for their development environments and responsibilities. Design training to promote security within the development team and build a culture of security among developers; example general-security topics are not a prescribed syllabus.",
+      "guidance": "Equip developers to write secure code. Deliver environment-specific developer training.",
       "evidence": [
         "Curriculum and participation records. Use representative records covering the stated population.",
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
@@ -4402,7 +4432,7 @@
       ],
       "root": "practice",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities",
-      "guidance": "Record who fulfils each relevant incident-response function, including providers where applicable. One person or team may fulfil multiple functions; separate departments are not required.",
+      "guidance": "Make incident roles and handoffs explicit. Activate assigned roles during incidents.",
       "evidence": [
         "Role roster and contact/escalation record. Use representative records covering the stated population.",
         "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
@@ -4760,7 +4790,7 @@
         {
           "id": "18.4-c5",
           "text": "Rulesets and capabilities are modified to detect tested techniques if deemed necessary.",
-          "conditional": true
+          "conditional": false
         }
       ]
     },

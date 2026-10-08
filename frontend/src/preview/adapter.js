@@ -12,7 +12,7 @@ import { identityRequest } from './identityLifecycle';
 import { assignmentCandidates } from './assignmentEligibility';
 import { clientProjection, leadCandidates } from './clientRelationships';
 import {aiRequest,aiRelated} from './aiGovernance';
-import {frameworkRequest,frameworkReverse,frameworkScope} from './frameworks';
+import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext} from './frameworks';
 import { baselineState, baselineRecordVersions, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './demoConfiguration.json';
@@ -132,7 +132,21 @@ export async function previewAdapter(config) {
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
     if(kind==='framework_assessments'&&method==='post'&&name==='findings')return save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
     if(path==='/frameworks/cis-ig1/configuration'&&method==='patch')return save(commandRequest(db,path,body.client_id,config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
-    if(kind==='frameworks'||kind==='framework_assessments')return save(frameworkRequest(db,path,method,params,body));
+    if(kind==='frameworks'||kind==='framework_assessments'){
+      const pendingContext=prepareGuidedContext(db,path,method,body);
+      let context=null;
+      if(pendingContext){
+        context=await pendingContext;
+        if(sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo to enter the sample workspace.');
+        // Web Crypto yields. Re-read before authorization, native-token and
+        // interview revision checks so this snapshot cannot erase newer writes.
+        const latest=readStore();
+        for(const key of Object.keys(db))delete db[key];
+        Object.assign(db,latest);
+        authorizeDemo(db,method,parts,body,config.headers?.['Idempotency-Key']);
+      }
+      return save(frameworkRequest(db,path,method,params,body,context));
+    }
     if (path === '/demo/onboarding-draft') {
       record(db, 'clients', params.client_id || body.client_id);
       if (method === 'get') return respond(db.drafts[params.client_id] || null);

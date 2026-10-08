@@ -217,17 +217,29 @@ def finding_applies(row,f,rids,scopes):
     if f.get('framework_assessment_id'):explicit.add(f['framework_assessment_id'])
     return row['framework_assessment_id'] in explicit if explicit else f.get('review_id') in rids
 
-async def workspace_work(s,cid,rows):
-    """Bounded-field reads, no occurrence/evidence/history payloads or per-row queries."""
+async def workspace_work(s,cid,rows,*,upgraded=False):
+    """Tenant-scoped scalar reads, no occurrence/evidence/history payloads or per-row queries."""
     if not rows:return {}
     projection={'_id':0,'client_id':1,'review_id':1,'finding_id':1,'task_id':1,'framework_assessment_id':1,'framework_key':1,'framework_safeguards':1,'status':1,'due_date':1}
-    reviews=await s.db.reviews.find({'client_id':cid},projection).to_list(None)
-    findings=await s.db.findings.find({'client_id':cid},projection).to_list(None)
-    scopes=await explicit_finding_scopes(s,cid)
-    tasks=await s.db.tasks.find({'client_id':cid,'status':{'$nin':['done','cancelled']}},projection).to_list(None)
-    # Evidence dates only (no content): supports derived validation freshness.
+    if upgraded:
+        projection.update({field:1 for field in ('title','severity','priority','owner_id','assignee_id','reviewer_id')})
+    async def read(cursor,what):
+        # Existing bounded-list contract refuses overflow; partial counts must not look complete.
+        return await s._bounded(cursor,10000,what) if upgraded else await cursor.to_list(None)
+    reviews=await read(s.db.reviews.find({'client_id':cid},projection),'workspace reviews')
+    findings=await read(s.db.findings.find({'client_id':cid},projection),'workspace findings')
+    if upgraded:
+        scope_rows=await read(s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1}),'workspace finding scopes')
+        scopes={}
+        for assessment in scope_rows:
+            for link in assessment.get('related_links',[]):
+                if link['kind']=='findings':scopes.setdefault(link['id'],set()).add(assessment['framework_assessment_id'])
+    else:
+        scopes=await explicit_finding_scopes(s,cid)
+    tasks=await read(s.db.tasks.find({'client_id':cid,'status':{'$nin':['done','cancelled']}},projection),'workspace actions')
+    # Evidence dates indicate support age only; upload/update is not verification.
     # Deleted (archived) Evidence is not current support.
-    evidence=await s.db.evidence.find({'client_id':cid,'archived_at':None},{'_id':0,'evidence_id':1,'linked_type':1,'linked_id':1,'evidence_date':1,'created_at':1}).to_list(None)
+    evidence=await read(s.db.evidence.find({'client_id':cid,'archived_at':None},{'_id':0,'evidence_id':1,'linked_type':1,'linked_id':1,'evidence_date':1,'created_at':1}),'workspace evidence')
     today=datetime.now(timezone.utc).date().isoformat()
     result={}
     for row in rows:
@@ -251,6 +263,15 @@ async def workspace_work(s,cid,rows):
           'next_review_due':min((r['due_date'][:10] for r in rs if r.get('status') not in ('completed','cancelled') and r.get('due_date') and r['due_date'][:10]>=today),default=None),
           'overdue_actions':sum(overdue(t) for t in ts),'open_actions':len(ts),
           'evidence_count':len(es),'latest_evidence_at':dates[-1] if dates else None}
+        if upgraded:
+            def priority_record(kind,record,id_field,fields,open_gap=False):
+                return {'kind':kind,'id':record[id_field],id_field:record[id_field],
+                    **{field:record.get(field) for field in ('title','status','due_date',*fields)},'open_gap':open_gap}
+            result[aid].update({'task_ids':sorted({t['task_id'] for t in ts}),'context_complete':True,
+                'priority_records':[
+                    *[priority_record('reviews',r,'review_id',('owner_id','reviewer_id')) for r in rs if r.get('status') not in ('completed','cancelled')],
+                    *[priority_record('findings',f,'finding_id',('severity','owner_id'),True) for f in fs],
+                    *[priority_record('tasks',t,'task_id',('priority','assignee_id','owner_id'),t.get('finding_id') in fids) for t in ts]]})
     return result
 
 class FindingInput(BaseModel):
@@ -305,13 +326,22 @@ def router_for(s):
     @router.get('/framework_assessments/{aid}/guided-assessment')
     async def get_guided(aid:str,user=Depends(s.get_current_user)):
         row=await parent(aid,user)
+        client=await scoped(row['client_id'],user)
+        guided_assessment.check_scope(row,client)
+        return await guided_assessment.read_draft(s,row,user,client,upgraded=guided_assessment.upgraded_pilot(row,user))
+    @router.get('/framework_assessments/{aid}/guided-assessment/history')
+    async def get_guided_history(aid:str,limit:int=Query(25,ge=1,le=100),before_revision:Optional[int]=Query(None,ge=1),user=Depends(s.get_current_user)):
+        row=await parent(aid,user)
         guided_assessment.check_scope(row,await scoped(row['client_id'],user))
-        return await guided_assessment.read_draft(s,row,user)
+        if not guided_assessment.upgraded_pilot(row,user):
+            raise HTTPException(404,'Interview history is not available for this pilot')
+        return await guided_assessment.read_history(s,row,user,limit,before_revision)
     @router.put('/framework_assessments/{aid}/guided-assessment')
     async def put_guided(aid:str,body:guided_assessment.InterviewWrite,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)
-        guided_assessment.check_scope(row,await scoped(row['client_id'],user))
-        return await guided_assessment.save_draft(s,row,user,body)
+        client=await scoped(row['client_id'],user)
+        guided_assessment.check_scope(row,client)
+        return await guided_assessment.save_draft(s,row,user,body,client,upgraded=guided_assessment.upgraded_pilot(row,user))
     async def target_record(kind,record_id,user):
         if kind!='evidence':return await s._authorized_parent(kind,record_id,user)
         # Evidence has separate routes, not the operational parent-record registry.
@@ -337,16 +367,22 @@ def router_for(s):
         config=client_configuration(key,client)
         retained={a['definition_id'] for a in rows}
         controls = await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1,'legacy_id':1,'assessment_ids':1,'design':1,'conflicts':1,'observations.operating':1,'observations.expected_instances':1,'observations.collected_instances':1}).to_list(None) if key=='soc-2' else []
+        upgraded=key=='cis-ig1' and guided_assessment.upgraded_pilot({'client_id':client_id},user)
         guided_drafts = {}
         if key == 'cis-ig1' and config.get('guided_assessment_enabled') is not False:
             identities = {a['framework_assessment_id'] + ':' + user['user_id']: a['definition_id'] for a in rows
                 if config['implementation_group'] in guided_assessment.CATALOG['definitions'].get(a['definition_id'], {}).get('groups', [])}
-            drafts = await s.db.guided_assessment_pilot.find({'client_id': client_id, '_id': {'$in': list(identities)}},
-                {'_id': 1, 'revision': 1, 'completed': 1}).to_list(153)
+            projection={'_id': 1, 'revision': 1, 'completed': 1}
+            if upgraded:
+                projection.update(version=1,generated_at=1,user_id=1)
+            drafts = await s.db.guided_assessment_pilot.find({'client_id': client_id, '_id': {'$in': list(identities)}},projection).to_list(153)
             guided_drafts = {identities[d['_id']]: {'revision': d['revision'], 'completed': d['completed']} for d in drafts}
+            if upgraded:
+                for draft in drafts:
+                    guided_drafts[identities[draft['_id']]].update({field:draft.get(field) for field in ('version','generated_at','user_id')})
         return {'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
-                'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows),'guided_assessment_drafts':guided_drafts,
+                'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows,upgraded=upgraded),'guided_assessment_drafts':guided_drafts,
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
     @router.patch('/frameworks/cis-ig1/configuration')
     @s.configuration_mutation
@@ -461,11 +497,17 @@ def router_for(s):
         if 'guided_assessment_source' in changes:
             guided_assessment.check_scope(old,await scoped(old['client_id'],user))
             if changes['guided_assessment_source']:
-                draft=await guided_assessment.read_draft(s,old,user)
+                source_client=await scoped(old['client_id'],user)
+                upgraded=guided_assessment.upgraded_pilot(old,user)
+                draft=await guided_assessment.read_draft(s,old,user,source_client,upgraded=upgraded)
                 source=changes['guided_assessment_source']
                 if not draft['completed'] or source!={k:draft.get(k) for k in ('version','revision','generated_at')}:
                     raise HTTPException(409,'Guided result changed; regenerate before applying')
+                if upgraded:
+                    guided_assessment.require_current_lineage(draft,old,source_client)
                 changes['guided_assessment_source']={**source,'origin':'guided-assessment-pilot','answers':draft['answers'],'by':user['user_id']}
+                if upgraded:
+                    changes['guided_assessment_source'].update({key:draft[key] for key in ('base_assessment_token','base_scope_fingerprint')})
         elif old.get('guided_assessment_source') and any(k in changes and changes[k]!=old.get(k) for k in ('implementation','status')):
             changes['guided_assessment_source']=None
         if 'cis_operation' in changes:
@@ -554,6 +596,10 @@ def router_for(s):
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed or record_assessment:
+            if changes.get('guided_assessment_source') and guided_assessment.upgraded_pilot(old,user):
+                source_client=await scoped(old['client_id'],user)
+                guided_assessment.check_scope(old,source_client)
+                guided_assessment.require_current_lineage(draft,old,source_client)
             history_verification=set(VERIFICATION_FIELDS)&set(supported)
             at=s._next_write_time(old.get('last_saved') or old.get('last_assessed'))
             if old['framework_key']=='soc-2' and not ownership_only:

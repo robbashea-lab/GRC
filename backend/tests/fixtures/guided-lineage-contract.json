@@ -1,0 +1,28 @@
+{
+  "row": {
+    "client_id": "demo_brawndo",
+    "framework_assessment_id": "synthetic-hash-vector",
+    "framework_key": "cis-ig1",
+    "framework_version": "8.1",
+    "definition_id": "13.2",
+    "owner_id": "Jos\u00e9 \ud83d\ude80",
+    "process_owner_id": null,
+    "cis_operation": {
+      "provider": "Partner \u2014 A"
+    },
+    "last_assessed": "2026-09-01T12:00:00Z"
+  },
+  "client": {
+    "client_id": "demo_brawndo",
+    "framework_settings": {
+      "cis-ig1": {
+        "implementation_group": 2
+      }
+    },
+    "cis_configuration_updated_at": "2026-10-07T10:00:00Z"
+  },
+  "base": {
+    "base_assessment_token": "2026-09-01T12:00:00Z",
+    "base_scope_fingerprint": "e60935134d41a25d4cf99a502871bf6ba09094291c4a0d6123382f3961e5870d"
+  }
+}

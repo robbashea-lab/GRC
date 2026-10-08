@@ -1,0 +1,279 @@
+{
+  "source": "frontend/src/lib/guidedAssessment.js",
+  "generated_from_current_source": true,
+  "cases": [
+    {
+      "name": "full",
+      "id": "13.2",
+      "version": "cis-v8.1-program-2",
+      "answers": {
+        "practice": "Yes",
+        "conditional_0": {
+          "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.": "Yes"
+        }
+      },
+      "result": {
+        "status": "addressed",
+        "gaps": [],
+        "unknowns": [],
+        "basis": [
+          "Is the practice “Deploy a Host-Based Intrusion Detection Solution” in place and operating? Yes",
+          "How fully are these safeguard requirements met? Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.: Yes"
+        ],
+        "signals": [],
+        "nextSteps": [],
+        "evidence": [
+          "Sensor coverage and representative alert. Use representative records covering the stated population. Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+        ],
+        "answers": [
+          {
+            "prompt": "Is the practice “Deploy a Host-Based Intrusion Detection Solution” in place and operating?",
+            "answer": "Yes"
+          },
+          {
+            "prompt": "How fully are these safeguard requirements met?",
+            "answer": "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.: Yes"
+          },
+          {
+            "prompt": "Which systems or processes support this practice?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "Who operates this practice?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "How is this safeguard implemented in day-to-day work?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "What records could substantiate the reported implementation?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "Describe confirmed missing or incomplete requirement elements.",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "What still needs confirmation, and who can verify it?",
+            "answer": "Not recorded"
+          }
+        ],
+        "version": "cis-v8.1-program-2",
+        "narrative": "The organization reports implementation of “Deploy a Host-Based Intrusion Detection Solution”."
+      }
+    },
+    {
+      "name": "gap",
+      "id": "13.2",
+      "version": "cis-v8.1-program-2",
+      "answers": {
+        "practice": "Yes",
+        "conditional_0": {
+          "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.": "No"
+        }
+      },
+      "result": {
+        "status": "in_progress",
+        "gaps": [
+          "Address: How fully are these safeguard requirements met? — Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported. No"
+        ],
+        "unknowns": [],
+        "basis": [
+          "Is the practice “Deploy a Host-Based Intrusion Detection Solution” in place and operating? Yes"
+        ],
+        "signals": [
+          {
+            "questionId": "conditional_0",
+            "kind": "gap"
+          }
+        ],
+        "nextSteps": [
+          "Use Not applicable only when the stated source condition does not apply; explain why. Uncertainty is Not sure, not an exclusion.",
+          "Address and reassess: Address: How fully are these safeguard requirements met? — Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported. No"
+        ],
+        "evidence": [
+          "Sensor coverage and representative alert. Use representative records covering the stated population. Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+        ],
+        "answers": [
+          {
+            "prompt": "Is the practice “Deploy a Host-Based Intrusion Detection Solution” in place and operating?",
+            "answer": "Yes"
+          },
+          {
+            "prompt": "How fully are these safeguard requirements met?",
+            "answer": "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.: No"
+          },
+          {
+            "prompt": "Which systems or processes support this practice?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "Who operates this practice?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "How is this safeguard implemented in day-to-day work?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "What records could substantiate the reported implementation?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "Describe confirmed missing or incomplete requirement elements.",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "What still needs confirmation, and who can verify it?",
+            "answer": "Not recorded"
+          }
+        ],
+        "version": "cis-v8.1-program-2",
+        "narrative": "The organization reports implementation of “Deploy a Host-Based Intrusion Detection Solution”. Material limitations remain; review the confirmed gaps and items requiring verification."
+      }
+    },
+    {
+      "name": "unknown",
+      "id": "13.2",
+      "version": "cis-v8.1-program-2",
+      "answers": {
+        "practice": "Yes",
+        "conditional_0": {
+          "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.": "Not sure"
+        }
+      },
+      "result": {
+        "status": "in_progress",
+        "gaps": [],
+        "unknowns": [
+          "Confirm: How fully are these safeguard requirements met? — Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported. Not sure"
+        ],
+        "basis": [
+          "Is the practice “Deploy a Host-Based Intrusion Detection Solution” in place and operating? Yes"
+        ],
+        "signals": [
+          {
+            "questionId": "conditional_0",
+            "kind": "verification"
+          }
+        ],
+        "nextSteps": [
+          "Use Not applicable only when the stated source condition does not apply; explain why. Uncertainty is Not sure, not an exclusion.",
+          "Confirm with the responsible team: Confirm: How fully are these safeguard requirements met? — Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported. Not sure"
+        ],
+        "evidence": [
+          "Sensor coverage and representative alert. Use representative records covering the stated population. Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+        ],
+        "answers": [
+          {
+            "prompt": "Is the practice “Deploy a Host-Based Intrusion Detection Solution” in place and operating?",
+            "answer": "Yes"
+          },
+          {
+            "prompt": "How fully are these safeguard requirements met?",
+            "answer": "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.: Not sure"
+          },
+          {
+            "prompt": "Which systems or processes support this practice?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "Who operates this practice?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "How is this safeguard implemented in day-to-day work?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "What records could substantiate the reported implementation?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "Describe confirmed missing or incomplete requirement elements.",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "What still needs confirmation, and who can verify it?",
+            "answer": "Not recorded"
+          }
+        ],
+        "version": "cis-v8.1-program-2",
+        "narrative": "The organization reports implementation of “Deploy a Host-Based Intrusion Detection Solution”. Material limitations remain; review the confirmed gaps and items requiring verification."
+      }
+    },
+    {
+      "name": "excluded",
+      "id": "13.2",
+      "version": "cis-v8.1-program-2",
+      "answers": {
+        "practice": "Yes",
+        "conditional_0": {
+          "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.": "Not applicable"
+        },
+        "scope_reason": "The owner confirmed that the source condition excludes the entire identified population."
+      },
+      "result": {
+        "status": "not_assessed",
+        "gaps": [],
+        "unknowns": [
+          "Applicability requires native assessment decision; excluded scope is not proof of implementation."
+        ],
+        "basis": [],
+        "signals": [
+          {
+            "questionId": "scope_reason",
+            "kind": "verification"
+          }
+        ],
+        "nextSteps": [
+          "Confirm with the responsible team: Applicability requires native assessment decision; excluded scope is not proof of implementation."
+        ],
+        "evidence": [
+          "Sensor coverage and representative alert. Use representative records covering the stated population. Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+        ],
+        "answers": [
+          {
+            "prompt": "Is the practice “Deploy a Host-Based Intrusion Detection Solution” in place and operating?",
+            "answer": "Yes"
+          },
+          {
+            "prompt": "How fully are these safeguard requirements met?",
+            "answer": "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.: Not applicable"
+          },
+          {
+            "prompt": "Explain any source-conditioned exclusions.",
+            "answer": "The owner confirmed that the source condition excludes the entire identified population."
+          },
+          {
+            "prompt": "Which systems or processes support this practice?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "Who operates this practice?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "How is this safeguard implemented in day-to-day work?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "What records could substantiate the reported implementation?",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "Describe confirmed missing or incomplete requirement elements.",
+            "answer": "Not recorded"
+          },
+          {
+            "prompt": "What still needs confirmation, and who can verify it?",
+            "answer": "Not recorded"
+          }
+        ],
+        "version": "cis-v8.1-program-2",
+        "narrative": "The organization reports exclusion of all source-conditioned requirements for “Deploy a Host-Based Intrusion Detection Solution”; applicability requires a native assessment decision. Reported applicability rationale: The owner confirmed that the source condition excludes the entire identified population.. Material limitations remain; review the confirmed gaps and items requiring verification."
+      }
+    }
+  ]
+}

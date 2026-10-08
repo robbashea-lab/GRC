@@ -4,7 +4,7 @@ import GuidedAssessor from './GuidedAssessor';
 import {control1Catalog as guidedCatalog,versionForSafeguard} from '@/lib/guidedAssessment';
 import api from '@/lib/api';
 import {isWorkspacePresentation} from '@/lib/reference';
-import workspacePilotConfiguration from '@/lib/brawndoWorkspacePilot.json';
+import workspacePilotConfiguration from '@catalogs/omniWorkspacePilot.json';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 let mockWorkspaceMode;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'pilot-test',workspace_mode:mockWorkspaceMode}})}));
@@ -25,14 +25,19 @@ beforeEach(()=>{
   api.put.mockImplementation(async(_path,body)=>({data:draft={...body,revision:draft.revision+1,generated_at:'2026-10-07T12:00:00Z'}}));
 });
 test.each([['demo_brawndo','demo'],[workspacePilotConfiguration.stagingClientIds[0],'standard']])('approved Omni boundary %s uses the canonical interview and preserves unsaved answers across window minimize',async(clientId,mode)=>{
-  mockWorkspaceMode=mode;const onDraftChange=jest.fn();await render({clientId,record:row,onDraftChange});await open();
+  mockWorkspaceMode=mode;const onDraftChange=jest.fn();
+  draft={...draft,version:versionForSafeguard('1.1',true),current_assessment_token:null,current_scope_fingerprint:'a'.repeat(64),base_assessment_token:null,base_scope_fingerprint:'a'.repeat(64),lineage_known:true,lineage_stale:false};
+  const current={...row,client_id:clientId,assessment_history:[],work:{context_complete:true,finding_ids:[],task_ids:[],review_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0}};
+  await render({clientId,record:current,current,contextComplete:true,onDraftChange});await open();
   expect(document.querySelector('.omni-workspace-window').getAttribute('aria-modal')).toBe('false');
   expect(document.querySelector('.omni-approved')).toBeTruthy();
   expect(document.querySelector('.omni-free-dock')).toBeTruthy();
+  expect(document.body.textContent).toContain('Current saved position');expect(api.put).not.toHaveBeenCalled();
+  await click('Start');
   await select('Not sure');expect(onDraftChange).toHaveBeenLastCalledWith(true);
   await act(async()=>document.querySelector('[aria-label="Minimize Omni Guide"]').click());await open();
   expect(document.querySelector('.guided-panel select').value).toBe('Not sure');expect(api.put).not.toHaveBeenCalled();
-  await click('Save and exit');expect(draft.answers.inventory).toBe('Not sure');expect(draft.version).toBe(guidedCatalog.version);
+  await click('Save and exit');expect(draft.answers.inventory).toBe('Not sure');expect(draft.version).toBe(versionForSafeguard('1.1',true));
 });
 
 test.each([['demo_dunder','demo'],['demo_prestige','demo'],['demo_initech','demo'],['existing-authenticated-client','standard'],['future-client','standard'],['newly-onboarded-synthetic-client','standard']])('shared presentation preserves legacy Omni and saved interview for %s',async(clientId,mode)=>{
