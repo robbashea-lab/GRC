@@ -33,6 +33,8 @@ respected and motion cannot be forced on over that preference.
 | Legacy lime login, no public lessons | Approved blue/cyan layout and dimensional CSS shield | Match the approved reference rather than invent another design |
 | Reference dock overlaps replay controls | Safe dock with space for the character label and controls | Browser-reproduced overlap; preserve access to replay and motion controls |
 | Reference dark-blue secondary text on dark glass | Cyan secondary links/buttons in dark mode | Keep the approved palette while retaining readable contrast |
+| Small blue-on-white text and white-on-blue action below 4.5:1 | Slightly darker blue text/action gradient and clear blue focus outline | Measured contrast correction within the approved blue/cyan palette |
+| Opening a graphic leaves focus before the sign-in controls | Focus moves into its question menu; return restores main-menu focus | Independent review and a native keyboard reproduction showed sign-in focus dismissing the lesson before its questions were reachable |
 
 The motion control follows WCAG 2.2
 [SC 2.2.2, Pause, Stop, Hide](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html).

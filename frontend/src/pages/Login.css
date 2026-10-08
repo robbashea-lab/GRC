@@ -24,7 +24,7 @@
   cursor: pointer
 }
 #omni-login button:focus-visible,#omni-login a:focus-visible {
-  outline: 3px solid #5acbff;
+  outline: 3px solid #2f91ff;
   outline-offset: 4px
 }
 #omni-login button {
@@ -359,7 +359,7 @@ to {
 #omni-login .link {
   border: 0;
   background: transparent;
-  color: #0876ed;
+  color: #086bd8;
   font-size: 11px;
   padding: 0 0 8px
 }
@@ -384,7 +384,7 @@ to {
   height: 18px
 }
 #omni-login .primary {
-  background: linear-gradient(100deg,#0787ff,#0064ef);
+  background: linear-gradient(100deg,#0074dd,#005ee0);
   border: 1px solid #0780ff;
   color: white;
   width: 100%;
@@ -416,7 +416,7 @@ to {
   border: 1px solid #2586ff;
   border-radius: 7px;
   padding: 11px;
-  color: #0876ed;
+  color: #086bd8;
   background: transparent;
   font-size: 13px
 }

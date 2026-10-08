@@ -83,3 +83,15 @@ test('ready action focuses the available Demo entry when standard sign-in is dis
   expect(container.querySelector('.guide').hidden).toBe(true);
   expect(document.activeElement).toBe(container.querySelector('[data-testid="explore-demo"]'));
 });
+
+test.each(['Governance', 'Risk', 'Compliance'])('opening %s moves focus to its questions and returning restores menu focus', async name => {
+  await renderWelcome();
+  await click(name);
+  expect(document.activeElement).toBe(container.querySelector('.topic'));
+  expect(container.querySelector('.guide').hidden).toBe(false);
+  await click(name);
+  expect(document.activeElement).toBe(container.querySelector('.topic'));
+  await click('← Omni menu');
+  expect(document.activeElement.textContent).toBe('What is GRC?');
+  expect(container.querySelector('.guide').hidden).toBe(false);
+});

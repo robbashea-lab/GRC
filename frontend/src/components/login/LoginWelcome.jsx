@@ -7,6 +7,7 @@ import { loginGreeting, loginLessons, loginMenu, loginTopics } from './loginEduc
 export default function LoginWelcome({ theme, setTheme, children }) {
   const root = useRef(null), hero = useRef(null), bot = useRef(null), guide = useRef(null);
   const timers = useRef([]), drag = useRef(null), suppressClick = useRef(false);
+  const guideFocus = useRef(false);
   const [open, setOpen] = useState(false);
   const [selection, setSelection] = useState(null);
   const [greeting, setGreeting] = useState(loginGreeting);
@@ -61,7 +62,20 @@ export default function LoginWelcome({ theme, setTheme, children }) {
     return () => { observer?.disconnect(); window.removeEventListener('resize', fit); };
   }, [open, selection, dock]);
 
-  function choose(key) { clearTimers(); setSelection(key); setOpen(true); dock(); }
+  useLayoutEffect(() => {
+    if (open && guideFocus.current) {
+      guideFocus.current = false;
+      guide.current.querySelector('.topic')?.focus();
+    }
+  }, [open, selection]);
+  function choose(key, focusQuestions = false) {
+    clearTimers();
+    if (focusQuestions) {
+      if (open && selection === key) guide.current.querySelector('.topic')?.focus();
+      else guideFocus.current = true;
+    }
+    setSelection(key); setOpen(true); dock();
+  }
   function move(event) {
     if (drag.current && event.pointerId === drag.current.id) {
       const start = drag.current, dx = event.clientX - start.x, dy = event.clientY - start.y;
@@ -99,7 +113,7 @@ export default function LoginWelcome({ theme, setTheme, children }) {
     <div className="layout"><section ref={hero} className="hero" aria-label="Explore governance, risk and compliance">
       <div className="eyebrow">GOVERNANCE, RISK &amp; COMPLIANCE</div><h1>Clarity across your security program.</h1><p className="intro">A shared workspace for governance, risk, and compliance.</p>
       <div className="network"><div className="orbital" aria-hidden="true"/><div className="orbital two" aria-hidden="true"/>{['one','two','three'].map(value => <div key={value} className={`beam ${value}`} aria-hidden="true"/>)}
-        {[['governance','Governance','Direction & accountability',Landmark],['risk','Risk','Visibility & response',Radar],['compliance','Compliance','Evidence & assurance',FileCheck2]].map(([key,label,detail,Icon]) => <button type="button" className={`node ${key}`} key={key} aria-controls="login-omni-guide" aria-expanded={open && topic === key} onClick={() => choose(key)}><Icon aria-hidden="true"/><span><strong>{label}</strong><small>{detail}</small></span></button>)}
+        {[['governance','Governance','Direction & accountability',Landmark],['risk','Risk','Visibility & response',Radar],['compliance','Compliance','Evidence & assurance',FileCheck2]].map(([key,label,detail,Icon]) => <button type="button" className={`node ${key}`} key={key} aria-controls="login-omni-guide" aria-expanded={open && topic === key} onClick={() => choose(key, true)}><Icon aria-hidden="true"/><span><strong>{label}</strong><small>{detail}</small></span></button>)}
         <div className="shield-aura" aria-hidden="true"/><div className="shield" role="img" aria-label="Illuminated titanium security shield and locked padlock"><span className="shield-depth"/><span className="shield-metal"/><span className="shield-rim"/><span className="shield-glass"/><span className="lock-sculpture"><span className="lock-shackle"/><span className="lock-body"><span className="keyhole"/></span></span></div><div className="shield-base" aria-hidden="true"/>
       </div>
       <div className="hero-footer"><button className="text-button" type="button" onClick={replay}>↻ Replay welcome</button><button className="text-button" type="button" aria-pressed={motionOff} disabled={reduced} onClick={() => setPaused(value => !value)}>{reduced ? 'Reduced motion enabled' : paused ? 'Resume motion' : 'Pause motion'}</button></div>
@@ -118,7 +132,7 @@ export default function LoginWelcome({ theme, setTheme, children }) {
       <div className="guide-head"><strong>{lesson ? `OMNI EXPLAINS · ${lesson.name.toUpperCase()}` : 'OMNI · YOUR PROGRAM GUIDE'}</strong><button className="close" type="button" aria-label="Close Omni guide" onClick={() => { dismiss(); bot.current.focus(); }}>×</button></div>
       <div className="guide-content" aria-live="polite"><h3>{heading}</h3><p className="answer">{answer}</p>{lesson && <p className="lesson-example">For example: {current[3]}</p>}</div>
       <div className="topics">{items.map(([key,label]) => <button className="topic" type="button" key={key} aria-pressed={selection === key || (lesson && key === `${topic}:${question}`)} onClick={() => choose(key)}>{label}</button>)}</div>
-      <div className="guide-bottom"><button type="button" onClick={() => { welcome(); setOpen(true); }}>← Omni menu</button>{!lesson && current?.[2] && <a className="source" target="_blank" rel="noopener noreferrer" href={current[2]}>Official overview ↗</a>}<button type="button" onClick={() => {
+      <div className="guide-bottom"><button type="button" onClick={() => { welcome(); choose(null, true); }}>← Omni menu</button>{!lesson && current?.[2] && <a className="source" target="_blank" rel="noopener noreferrer" href={current[2]}>Official overview ↗</a>}<button type="button" onClick={() => {
         dismiss();
         const target = root.current.querySelector('#email:not(:disabled)') ?? root.current.querySelector('[data-testid="explore-demo"]:not(:disabled)');
         target?.focus();

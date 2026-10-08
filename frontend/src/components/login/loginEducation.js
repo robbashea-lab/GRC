@@ -33,4 +33,3 @@ export function loginGreeting(date = new Date()) {
   const hour = date.getHours();
   return `${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}—I’m Omni.`;
 }
-
