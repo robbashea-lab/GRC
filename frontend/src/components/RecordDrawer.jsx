@@ -173,11 +173,24 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
   const evidenceKind = kind === "tasks" ? "task" : singular;
   const tabList = vendorPilot?[...TABS_BY_KIND.vendors.map(t=>t.id==='assurance'?{...t,label:'Security Assurance Reviews'}:t),{id:'evidence',label:'Evidence'},{id:'comments',label:'Comments'}]:TABS_BY_KIND[kind];
+  const vendorSession = useRef(null);
+  const vendorEditVersion = useRef(null);
+  const vendorRecordId = record?.vendor_id;
+  useEffect(() => {
+    if(open&&kind==='vendors')setTab(tabList.some(t=>t.id===initialValues?.vendorTab)?initialValues.vendorTab:'overview');
+    // Navigation initializes on opening or switching records, not on refreshed data or draft changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[open,kind,clientId,vendorRecordId]);
 
   useEffect(() => {
     const generation = loadGeneration;
     generation.current++;
+    const previousVendor = vendorSession.current;
+    const retainVendorDraft = open&&kind==='vendors'&&previousVendor?.open&&previousVendor.kind===kind&&previousVendor.clientId===clientId&&previousVendor.id===vendorRecordId&&dirty;
+    vendorSession.current={open,kind,clientId,id:vendorRecordId};
     if (open) {
+      // Retained edits must still conflict with changes made since their loaded snapshot.
+      if(kind==='vendors'&&(!retainVendorDraft||!formDirty))vendorEditVersion.current=record?.updated_at??null;
       setRelatedDrawer(null);setTaskCompletion(null);setRelatedError('');
       setComments([]); setActivity([]); setRelated({}); setEvidenceItems([]);
       const base = {};
@@ -217,10 +230,17 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if(policyPilot&&!record)Object.assign(base,{status:'draft',presence:'needs_confirmation',next_review_date:'',last_reviewed_at:''});
       base.client_id = record?.client_id || clientId;
       if(!record&&initialValues) Object.assign(base,initialValues);
-      if(vendorPilot){delete base.vendorTab;delete base.assuranceId;}
-      setForm(base);
-      initialForm.current=base;setDiscardOpen(false);setApprovalDirty(false);if(pilot)setNewComment('');
-      setTab(vendorPilot&&['assurance','contract'].includes(initialValues?.vendorTab)?initialValues.vendorTab:'overview');
+      if(kind==='vendors'){delete base.vendorTab;delete base.assuranceId;}
+      if(!retainVendorDraft){
+        setForm(base);
+        initialForm.current=base;setDiscardOpen(false);setApprovalDirty(false);if(pilot)setNewComment('');
+      }else{
+        // Refresh untouched fields without replacing genuine edits or unfinished comments.
+        const retained={...base};
+        for(const [key,value] of Object.entries(form))if(JSON.stringify(value)!==JSON.stringify(initialForm.current[key]))retained[key]=value;
+        initialForm.current=base;setForm(retained);
+      }
+      if(kind!=='vendors')setTab('overview');
       if (isEdit) {
         loadComments();
         loadActivity();
@@ -293,8 +313,13 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     try{const {data}=await api.get('/vendors/'+record.vendor_id);if(generation!==loadGeneration.current||data.client_id!==clientId)return;
       Object.assign(record,{last_review:data.last_review,next_review:data.next_review,updated_at:data.updated_at});
       const dates={last_review:toDateInput(data.last_review),next_review:toDateInput(data.next_review)};
-      const nextUnchanged=form.next_review===initialForm.current.next_review;
-      initialForm.current={...initialForm.current,...dates};setForm(p=>({...p,last_review:dates.last_review,...(nextUnchanged?{next_review:dates.next_review}:{})}));
+      const baseline=initialForm.current;
+      initialForm.current={...baseline,...dates};
+      setForm(p=>{
+        if(JSON.stringify(p)===JSON.stringify(baseline))vendorEditVersion.current=data.updated_at??null;
+        const nextUnchanged=p.next_review===baseline.next_review;
+        return {...p,last_review:dates.last_review,...(nextUnchanged?{next_review:dates.next_review}:{})};
+      });
     }catch(e){toast.error('Vendor schedule could not be refreshed: '+formatError(e));}
   }
 
@@ -365,7 +390,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (kind === "policies" && (record?.schedule_from_reviews || related.reviews?.length)) { delete clean.next_review_date; delete clean.last_reviewed_at; }
       let savedRecord;
       if (isEdit) {
-        savedRecord=(await updateRecord(`/${kind}/${record[idField]}`, {...clean,expected_updated_at:record.updated_at??null})).data;
+        savedRecord=(await updateRecord(`/${kind}/${record[idField]}`, {...clean,expected_updated_at:kind==='vendors'?vendorEditVersion.current:record.updated_at??null})).data;
         if(kind!=="tasks"||savedRecord.status!=="done"||record.status==="done")toast.success("Saved");
       } else {
         savedRecord=(await createRecord(`/${kind}`, clean)).data;
@@ -535,7 +560,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       setScheduleOpen(false);
       setScheduleForm({ due_date: "", owner_id: "", recurrence: "" });
       if (record) record.next_review = data.review.due_date;
-      setForm((p) => ({ ...p, next_review: toDateInput(data.review.due_date) }));
+      setForm((p) => {
+        if(data.vendor&&JSON.stringify(p)===JSON.stringify(initialForm.current))vendorEditVersion.current=data.vendor.updated_at??null;
+        return { ...p, next_review: toDateInput(data.review.due_date) };
+      });
       loadLinkedReviews();
       onSaved?.();
     } catch (e) { toast.error(formatError(e)); }
