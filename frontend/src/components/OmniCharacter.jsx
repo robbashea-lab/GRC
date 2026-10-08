@@ -1,11 +1,11 @@
 import {useId,useRef} from 'react';
 import approvedShell from '@/assets/omni-approved-shell.png';
 // Original layered observation-lens artwork; pointer attention stays inside Omni.
-export default function OmniCharacter({state='idle',approved=false}) {
+export default function OmniCharacter({state='idle',approved=false,trackPointer=true}) {
   const uid=useId().replace(/:/g,''),eyes=useRef(null);
   const thoughtful=['thinking','verification'].includes(state);
   const track=e=>{if(e.pointerType==='touch'||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;const r=e.currentTarget.getBoundingClientRect();eyes.current.style.transform=`translate(${Math.max(-2,Math.min(2,(e.clientX-r.left-r.width/2)/12))}px,${Math.max(-2,Math.min(2,(e.clientY-r.top-r.height/2)/12))}px)`;};
-  if(approved)return <svg className={'omni-character omni-approved omni-'+state} viewBox="0 0 284 260" aria-hidden="true" focusable="false" onPointerMove={track} onPointerLeave={()=>{if(eyes.current)eyes.current.style.transform='translate(0,0)';}}>
+  if(approved)return <svg className={'omni-character omni-approved omni-'+state} viewBox="0 0 284 260" aria-hidden="true" focusable="false" onPointerMove={trackPointer?track:undefined} onPointerLeave={trackPointer?()=>{if(eyes.current)eyes.current.style.transform='translate(0,0)';}:undefined}>
     <defs><clipPath id={uid+'clip'}><path d="M126 3 C177 -4 220 9 244 38 C261 57 268 76 275 104 C286 139 270 181 249 203 C217 235 163 252 123 243 C83 239 42 216 23 184 C4 155 0 118 10 93 C24 56 68 15 126 3Z"/></clipPath><filter id={uid+'glow'} x="-100%" y="-180%" width="300%" height="460%"><feGaussianBlur stdDeviation="5"/></filter></defs>
     <image href={approvedShell} width="284" height="252" clipPath={'url(#'+uid+'clip)'}/>
     <g ref={eyes} className="omni-eye-attention"><g className="omni-approved-eyes" fill="none" strokeLinecap="round">
@@ -13,7 +13,7 @@ export default function OmniCharacter({state='idle',approved=false}) {
     </g></g>
     {state==='verification'&&<text x="238" y="45" fill="#76baff" fontSize="30" fontWeight="700">?</text>}
   </svg>;
-  return <svg className={'omni-character omni-'+state} viewBox="0 0 80 80" aria-hidden="true" focusable="false" onPointerMove={track} onPointerLeave={()=>{if(eyes.current)eyes.current.style.transform='translate(0,0)';}}>
+  return <svg className={'omni-character omni-'+state} viewBox="0 0 80 80" aria-hidden="true" focusable="false" onPointerMove={trackPointer?track:undefined} onPointerLeave={trackPointer?()=>{if(eyes.current)eyes.current.style.transform='translate(0,0)';}:undefined}>
     <defs>
       <radialGradient id={uid+'shell'} cx="30%" cy="20%" r="85%"><stop stopColor="#fff"/><stop offset=".45" stopColor="#e9f3fa"/><stop offset=".72" stopColor="#a8bfd0"/><stop offset="1" stopColor="#4f6b85"/></radialGradient>
       <radialGradient id={uid+'lens'} cx="65%" cy="20%" r="80%"><stop stopColor="#5787ab"/><stop offset=".3" stopColor="#183b5e"/><stop offset=".7" stopColor="#071f39"/><stop offset="1" stopColor="#020c1b"/></radialGradient>
