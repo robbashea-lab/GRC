@@ -156,6 +156,43 @@ test('a failed restart retains original completed result, question version, and 
   expect(api.put).toHaveBeenCalledWith(base, expect.objectContaining({version: guided.versionForSafeguard('1.1', true), restart: true, expected_revision: 3, answers: {}, completed: false, result: null}));
 });
 
+test('an explicit restart after native Save uses the visible current base and preserves interview CAS', async () => {
+  stored = completed();
+  await render(); await open();
+  const nativeToken = '2026-10-07T13:00:00Z';
+  await render({current: record({last_saved: nativeToken})});
+  api.get.mockResolvedValueOnce({data: {...stored, current_assessment_token: nativeToken}});
+  await click('Full reassessment'); await click('Confirm restart');
+  expect(api.put).toHaveBeenCalledWith(base, expect.objectContaining({restart: true, expected_revision: 3, answers: {}, completed: false, result: null, base_assessment_token: nativeToken, base_scope_fingerprint: fingerprint}));
+  expect(stored.revision).toBe(4);
+  expect(document.querySelector('.guided-panel select').value).toBe('');
+  expect(props.current.implementation).toBe('Previously saved native position.');
+});
+
+test('a first empty interview after manual native Save reads its current base without creating history', async () => {
+  stored = interview();
+  await render(); await open();
+  const nativeToken = '2026-10-07T13:00:00Z';
+  await render({current: record({last_saved: nativeToken})});
+  api.get.mockResolvedValueOnce({data: {...stored, current_assessment_token: nativeToken}});
+  await click('Full reassessment');
+  expect(api.put).not.toHaveBeenCalled();
+  await select('No'); await click('Save and exit');
+  expect(api.put).toHaveBeenCalledWith(base, expect.objectContaining({expected_revision: 0, base_assessment_token: nativeToken, base_scope_fingerprint: fingerprint}));
+  expect(api.put.mock.calls[0][1].restart).toBeUndefined();
+});
+
+test.each([{revision: 4}, {current_assessment_token: '2026-10-07T13:00:00Z'}, {current_scope_fingerprint: 'b'.repeat(64)}])('a changed restart context keeps the original interview and does not adopt a new token: %j', async change => {
+  stored = completed();
+  await render(); await open(); await click('Review recommendation');
+  api.get.mockResolvedValueOnce({data: {...stored, ...change}});
+  await click('Full reassessment'); await click('Confirm restart');
+  expect(api.put).not.toHaveBeenCalled();
+  expect(stored.revision).toBe(3);
+  expect(document.querySelector('[role="alert"]').textContent).toContain('Reopen the assessment');
+  expect(document.querySelector('[aria-label="Guided Current Implementation draft"]').value).toBe('Original persisted recommendation.');
+});
+
 test.each(['Not now', 'Quiet for this session', 'Turn off invitations'])('%s suppresses invitations while the intentional launcher remains available', async choice => {
   await render(); expect(document.querySelector('.guided-context-prompt')).toBeTruthy(); await click(choice); await remount();
   expect(document.querySelector('.guided-context-prompt')).toBeNull();

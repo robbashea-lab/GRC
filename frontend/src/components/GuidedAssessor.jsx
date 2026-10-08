@@ -65,13 +65,25 @@ function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,draftSummaries={},
   },[base,id,clientId,user?.user_id]);// eslint-disable-line react-hooks/exhaustive-deps
   const changeMode=value=>{setMode(value);setGreeting(false);setContextPrompt(false);try{sessionStorage.setItem(workspacePilot?promptKey:key+':'+id+':prompt','1');localStorage.setItem(key,JSON.stringify({...readPreference(key),mode:value==='expanded'?'collapsed':value,...(!workspacePilot?{dismissGreeting:true}:{})}));}catch{/* Cosmetic preferences are optional. */}};
   const close=()=>changeMode('collapsed');
+  async function readNewReviewBase(){
+    const {data}=await api.get(base);
+    if(data.revision!==draft.revision||data.current_assessment_token!==(current?.last_saved||current?.last_assessed||null)||data.current_scope_fingerprint!==draft.current_scope_fingerprint)throw new Error('The interview, assessment or scope changed. Reopen the assessment before starting a new review.');
+    return data;
+  }
   async function save(nextStep=step,completed=false,newAnswers=answers,fresh=false){
     if(!draft||disabled||busy||!workspacePilot&&updated&&Object.keys(newAnswers).length)return false;
     const savingIdentity=identity;
     setBusy(true);setError('');
-    try{const output=completed?(result||generateResult(id,newAnswers,new Date(),version)):null,generatedNarrative=completed?(result?narrative:output.narrative):'';
+    try{let startBase=draft;
+      if(workspacePilot&&fresh){
+        // A deliberate empty restart may follow native Save. Refresh only its
+        // new base; an existing proposal always retains its original lineage.
+        const data=await readNewReviewBase();if(activeIdentity.current!==savingIdentity)return false;
+        startBase=data;
+      }
+      const output=completed?(result||generateResult(id,newAnswers,new Date(),version)):null,generatedNarrative=completed?(result?narrative:output.narrative):'';
       const payload={version:workspacePilot&&!fresh?version:currentVersion,answers:newAnswers,narrative:generatedNarrative,step:nextStep,completed,expected_revision:draft.revision};
-      if(workspacePilot)Object.assign(payload,{result:output?.missingRecorded?null:output,...(fresh?{restart:true}:{}),...(fresh||draft.revision===0?{base_assessment_token:draft.current_assessment_token,base_scope_fingerprint:draft.current_scope_fingerprint}:{})});
+      if(workspacePilot)Object.assign(payload,{result:output?.missingRecorded?null:output,...(fresh?{restart:true}:{}),...(fresh||draft.revision===0?{base_assessment_token:startBase.current_assessment_token,base_scope_fingerprint:startBase.current_scope_fingerprint}:{})});
       const {data}=await api.put(base,payload);if(activeIdentity.current!==savingIdentity)return false;setDraft(data);setAnswers(data.answers);saved.current=JSON.stringify(data.answers);setStep(nextStep);return data;}
     catch(e){if(activeIdentity.current===savingIdentity)setError(formatError(e));return false;}finally{if(activeIdentity.current===savingIdentity)setBusy(false);}
   }
@@ -83,7 +95,15 @@ function Pilot({clientId,configuration,record,rows=EMPTY_ROWS,draftSummaries={},
   const put=(value)=>{setAnswers(p=>({...p,[question.id]:value}));setResult(null);setReplace(false);};
   const uncertain=question&&(question.id==='unresolved'?['Yes','Partially','Not sure']:['Partially','No','Not sure']).some(v=>Array.isArray(answers[question.id])?answers[question.id].includes(v):typeof answers[question.id]==='object'?Object.values(answers[question.id]||{}).includes(v):answers[question.id]===v);
   async function loadHistory(append=false){const readingIdentity=identity;setHistoryBusy(true);setHistoryError('');try{const {data}=await api.get(base+'/history',{params:{limit:25,...(append?{before_revision:history.next_before_revision}:{})}});if(activeIdentity.current===readingIdentity)setHistory({records:append?[...history.records,...data.items]:data.items,next_before_revision:data.next_before_revision});}catch(e){if(activeIdentity.current===readingIdentity)setHistoryError(formatError(e));}finally{if(activeIdentity.current===readingIdentity)setHistoryBusy(false);}}
-  const startReview=()=>{if(draft?.revision)setRestart(true);else setView('interview');};
+  const startReview=async()=>{
+    if(draft?.revision){setRestart(true);return;}
+    if(workspacePilot&&draft&&!Object.keys(answers).length){
+      const startingIdentity=identity;setBusy(true);setError('');
+      try{const data=await readNewReviewBase();if(activeIdentity.current!==startingIdentity)return;setDraft(data);setView('interview');}
+      catch(e){if(activeIdentity.current===startingIdentity)setError(formatError(e));}
+      finally{if(activeIdentity.current===startingIdentity)setBusy(false);}
+    }else setView('interview');
+  };
   const action=name=>{if(name==='start'||name==='reassess')startReview();else if(name==='resume')setView('interview');else if(name==='findings')setView('linked');else if(name==='changes')setView('changes');else if(name==='result')setView('result');else setView('position');heading.current?.focus();};
   return <div className={'guided-pilot '+(workspacePilot?'guided-lifecycle ':'')+(record?'guided-in-assessment':'')} data-testid="guided-pilot">
     <OmniDock preferenceKey={key} inAssessment={!!record} freePosition={workspacePilot}>
