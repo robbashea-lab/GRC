@@ -43,8 +43,9 @@ const VIEWS = [
   { id: "assurance", label: "Assurance Due" },
   { id: "inactive", label: "Inactive" },
 ];
-const LINKED_VIEWS = { critical: "Critical", high: "High" };
-function vendorMatchesView(v, view) {
+const LINKED_VIEWS = { critical: "Critical", high: "High", assurance_attention: "Assurance Needs Attention" };
+function vendorMatchesView(v, view, now = new Date()) {
+  if (view === 'renewal_soon' || view === 'assurance_attention') return vendorMatches(v, view, now);
   const status = v.status || "active";
   if (view !== "inactive" && view !== "all" && status === "inactive") return false;
   if (view === "critical") return v.criticality === "critical";
@@ -93,6 +94,7 @@ export default function VendorRegister() {
   // ?view= deep links (dashboard signals) open the register already filtered.
   const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
+  useEffect(() => setView(linkedView), [linkedView]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [drawer, setDrawer] = useState({ open: false, record: null });
@@ -173,7 +175,7 @@ export default function VendorRegister() {
   }
 
   if(pilot){
-    const chipDefs=[...PILOT_CHIPS,...(['critical','high'].includes(view)?[[view,view==='critical'?'Critical':'High']]:[])];
+    const chipDefs=[...PILOT_CHIPS,...(LINKED_VIEWS[view]?[[view,LINKED_VIEWS[view]]]:[])];
     const pick=id=>selectView(view===id?'all_active':id);
     return (
       <BrawndoSurface className="bvendors">
