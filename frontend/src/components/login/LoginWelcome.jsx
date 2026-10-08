@@ -118,7 +118,11 @@ export default function LoginWelcome({ theme, setTheme, children }) {
       <div className="guide-head"><strong>{lesson ? `OMNI EXPLAINS · ${lesson.name.toUpperCase()}` : 'OMNI · YOUR PROGRAM GUIDE'}</strong><button className="close" type="button" aria-label="Close Omni guide" onClick={() => { dismiss(); bot.current.focus(); }}>×</button></div>
       <div className="guide-content" aria-live="polite"><h3>{heading}</h3><p className="answer">{answer}</p>{lesson && <p className="lesson-example">For example: {current[3]}</p>}</div>
       <div className="topics">{items.map(([key,label]) => <button className="topic" type="button" key={key} aria-pressed={selection === key || (lesson && key === `${topic}:${question}`)} onClick={() => choose(key)}>{label}</button>)}</div>
-      <div className="guide-bottom"><button type="button" onClick={() => { welcome(); setOpen(true); }}>← Omni menu</button>{!lesson && current?.[2] && <a className="source" target="_blank" rel="noopener noreferrer" href={current[2]}>Official overview ↗</a>}<button type="button" onClick={() => { dismiss(); root.current.querySelector('#email')?.focus(); }}>Ready to sign in →</button></div>
+      <div className="guide-bottom"><button type="button" onClick={() => { welcome(); setOpen(true); }}>← Omni menu</button>{!lesson && current?.[2] && <a className="source" target="_blank" rel="noopener noreferrer" href={current[2]}>Official overview ↗</a>}<button type="button" onClick={() => {
+        dismiss();
+        const target = root.current.querySelector('#email:not(:disabled)') ?? root.current.querySelector('[data-testid="explore-demo"]:not(:disabled)');
+        target?.focus();
+      }}>Ready to sign in →</button></div>
     </section>
   </div>;
 }

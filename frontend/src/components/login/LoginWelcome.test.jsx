@@ -76,3 +76,10 @@ test('reduced motion begins with docked accessible welcome and tracks preference
 test.each([[8,'Good morning'],[14,'Good afternoon'],[22,'Good evening']])('greeting uses local hour %i', (hour,expected) => {
   expect(loginGreeting(new Date(2026,9,8,hour))).toBe(`${expected}—I’m Omni.`);
 });
+test('ready action focuses the available Demo entry when standard sign-in is disabled', async () => {
+  window.matchMedia = jest.fn(() => ({ matches:true, addEventListener:jest.fn(), removeEventListener:jest.fn() }));
+  await act(async () => root.render(<LoginWelcome theme="light" setTheme={jest.fn()}><input id="email" disabled/><button data-testid="explore-demo">Explore the demo</button></LoginWelcome>));
+  await click('Ready to sign in →');
+  expect(container.querySelector('.guide').hidden).toBe(true);
+  expect(document.activeElement).toBe(container.querySelector('[data-testid="explore-demo"]'));
+});
