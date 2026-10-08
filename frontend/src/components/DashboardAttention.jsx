@@ -15,7 +15,7 @@ export default function DashboardAttention({posture,programs=[],onShow}){
     {key:'due30',label:'Due in 30 days',sub:'Upcoming obligations',n:count('due30'),tone:'duesoon',Icon:CalendarClock},
     {key:'materialFindings',label:'High / critical findings',sub:'Open, not yet validated',n:count('materialFindings'),tone:'critical',Icon:FileWarning,to:'/findings?signal=material'},
     {key:'significantRisks',label:'Significant risks',sub:'High or critical exposure',n:count('significantRisks'),tone:'critical',Icon:ShieldAlert,to:'/risks?view=significant'},
-    {key:vendorKey,label:vendorKey==='assurance'?'Vendor assurance':'Vendor reviews past due',sub:vendorKey==='assurance'?'Expired, due or missing':'Third-party oversight',n:vendorGroup?.total??vendorGroup?.items?.length??0,tone:'duesoon',Icon:Building2,to:`/vendors?view=${vendorKey==='assurance'?'assurance':'review_overdue'}`},
+    {key:vendorKey,label:vendorKey==='assurance'?'Vendor assurance':'Vendor reviews past due',sub:vendorKey==='assurance'?'Expired, due or missing':'Third-party oversight',n:vendorGroup?.total??vendorGroup?.items?.length??0,tone:'duesoon',Icon:Building2,to:`/vendors?view=${vendorKey==='assurance'?'assurance_attention':'review_overdue'}`},
   ];
   // One gap tile per tracked program, in that program's vocabulary. Untracked programs (CMMC) have none.
   const gaps=programs.filter(p=>p.trackingAvailable&&p.assessment?.status_counts).map(p=>({p,v:operatorVocabulary(p.key),n:(p.assessment.status_counts.needs_attention||0)+(p.assessment.status_counts.in_progress||0)}));
