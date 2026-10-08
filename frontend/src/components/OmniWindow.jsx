@@ -7,11 +7,17 @@ export function fitOmniRect(rect,width=window.innerWidth,height=window.innerHeig
   return {x:Math.max(pad,Math.min(width-w-pad,rect.x)),y:Math.max(top,Math.min(height-h-pad,rect.y)),w,h};
 }
 const defaultRect=()=>fitOmniRect({x:window.innerWidth-720,y:94,w:700,h:744});
+export function besideOmniRect(anchor,width=window.innerWidth,height=window.innerHeight){
+  if(!anchor)return fitOmniRect({x:width-720,y:94,w:700,h:744},width,height);
+  const size=fitOmniRect({x:8,y:82,w:700,h:744},width,height),gap=12;
+  const right=width-anchor.right-gap-8,left=anchor.left-gap-8;
+  return fitOmniRect({...size,x:right>=size.w||right>=left?anchor.right+gap:anchor.left-gap-size.w,y:anchor.top},width,height);
+}
 const EDGES=['n','ne','e','se','s','sw','w','nw'];
 
 // Presentation only: interview answers, saves and replacement protection stay in GuidedAssessor.
-export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose}){
-  const [rect,setRect]=useState(defaultRect),[maximized,setMaximized]=useState(false);
+export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose,anchor}){
+  const [rect,setRect]=useState(()=>anchor?besideOmniRect(anchor()):defaultRect()),[maximized,setMaximized]=useState(false);
   const rectRef=useRef(rect),restore=useRef(null),drag=useRef(null),focusHandlers=useRef({onOpenAutoFocus,onCloseAutoFocus});rectRef.current=rect;
   useEffect(()=>{const handlers=focusHandlers.current;handlers.onOpenAutoFocus?.({preventDefault(){}});return()=>handlers.onCloseAutoFocus?.({preventDefault(){}});},[]);
   useEffect(()=>{const resize=()=>setRect(r=>fitOmniRect(maximized?{x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}:r));window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[maximized]);

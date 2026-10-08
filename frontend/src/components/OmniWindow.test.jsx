@@ -1,6 +1,14 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
-import OmniWindow,{fitOmniRect} from './OmniWindow';
+import OmniWindow,{fitOmniRect,besideOmniRect} from './OmniWindow';
+
+test('focused guide follows the current launcher rectangle on either side and clamps narrow edges',()=>{
+  const left=besideOmniRect({left:20,right:140,top:100},1440,900),right=besideOmniRect({left:1280,right:1400,top:120},1440,900);
+  expect(left.x).toBe(152);expect(right.x+right.w).toBe(1268);
+  expect(left.y).not.toBe(right.y);
+  const narrow=besideOmniRect({left:270,right:310,top:700},320,768);
+  expect(narrow.x+narrow.w).toBeLessThanOrEqual(312);expect(narrow.y+narrow.h).toBeLessThanOrEqual(760);
+});
 
 test('window bounds remain reachable at desktop, tablet and tiny viewport sizes',()=>{
   for(const [width,height] of [[1440,900],[1024,768],[768,900],[320,240]]){

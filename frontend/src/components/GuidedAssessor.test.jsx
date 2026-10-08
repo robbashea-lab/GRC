@@ -32,8 +32,7 @@ test.each([['demo_brawndo','demo'],[workspacePilotConfiguration.stagingClientIds
   expect(document.querySelector('.omni-workspace-window').getAttribute('aria-modal')).toBe('false');
   expect(document.querySelector('.omni-approved')).toBeTruthy();
   expect(document.querySelector('.omni-free-dock')).toBeTruthy();
-  expect(document.body.textContent).toContain('Current saved position');expect(api.put).not.toHaveBeenCalled();
-  await click('Start');
+  expect(document.querySelector('.guided-panel legend').textContent).toBe('Does an enterprise asset inventory exist?');expect(api.put).not.toHaveBeenCalled();
   await select('Not sure');expect(onDraftChange).toHaveBeenLastCalledWith(true);
   await act(async()=>document.querySelector('[aria-label="Minimize Omni Guide"]').click());await open();
   expect(document.querySelector('.guided-panel select').value).toBe('Not sure');expect(api.put).not.toHaveBeenCalled();
@@ -64,6 +63,76 @@ test.each([['demo_dunder','demo'],['demo_prestige','demo'],['demo_initech','demo
   } finally {delete document.documentElement.dataset.brawndoWorkspace;}
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+
+test('single focused answer saves interview and stages the real native narrative without status application',async()=>{
+  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true)};
+  const update=jest.fn(()=>true),apply=jest.fn();
+  await render({record:row,current:row,form:{...row,implementation:''},onUpdateImplementation:update,onApply:apply});await open();await select('Yes');
+  await click('Save answer & update implementation draft');
+  expect(api.put).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({completed:false,answers:{inventory:'Yes'},expected_revision:0}));
+  expect(update).toHaveBeenCalledWith(expect.stringContaining('enterprise asset inventory'),'');expect(apply).not.toHaveBeenCalled();
+  expect(document.body.textContent).toContain('unsaved native draft');expect(document.querySelector('.guided-panel legend').textContent).toContain('coverage');
+});
+
+test('manual native prose cannot be replaced before explicit reconciliation; failed save remains retryable',async()=>{
+  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true)};
+  const update=jest.fn(()=>true),native={...row,implementation:'Manual fact: hosted assets are managed by the provider.'};
+  await render({record:row,current:native,form:native,onUpdateImplementation:update});await open();await select('Yes');await click('Save answer & update implementation draft');
+  expect(api.put).not.toHaveBeenCalled();expect(update).not.toHaveBeenCalled();
+  const group=document.querySelector('[aria-label="Reconcile implementation narrative"]'),textarea=group.querySelector('textarea');
+  expect(textarea.value).toBe(native.implementation);expect(group.querySelector('button').disabled).toBe(true);
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(textarea,native.implementation+' Client reports an inventory; coverage needs confirmation.');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
+  await act(async()=>group.querySelector('input').click());
+  api.put.mockRejectedValueOnce(new Error('Interview changed: reopen to reconcile.'));
+  await act(async()=>group.querySelector('button').click());
+  expect(update).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Interview changed');expect(document.querySelector('.guided-panel select').value).toBe('Yes');
+  await act(async()=>group.querySelector('button').click());expect(update).toHaveBeenCalledWith(expect.stringContaining('Manual fact:'),native.implementation);
+});
+
+test('an explicit new-base restart can retain confirmed relevant answers without carrying a completion conclusion',async()=>{
+  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true),revision:3,answers:{inventory:'Yes',system:'Reported inventory tool'},current_assessment_token:'native-new',current_scope_fingerprint:'a'.repeat(64),base_assessment_token:'native-old',base_scope_fingerprint:'a'.repeat(64),lineage_stale:true,lineage_known:true};
+  await render({record:row,current:{...row,last_saved:'native-new'}});await open();await click('Start a new review');
+  const reuse=[...document.querySelectorAll('label')].find(el=>el.textContent.includes('I confirmed these answers remain current'));
+  await act(async()=>reuse.querySelector('input').click());await click('Confirm restart');
+  expect(api.put).toHaveBeenNthCalledWith(1,expect.any(String),expect.objectContaining({restart:true,answers:{},expected_revision:3,base_assessment_token:'native-new'}));
+  expect(api.put).toHaveBeenNthCalledWith(2,expect.any(String),expect.objectContaining({answers:{inventory:'Yes',system:'Reported inventory tool'},completed:false,result:null,expected_revision:4}));
+  expect(draft.completed).toBe(false);expect(document.querySelector('.guided-panel legend').textContent).toContain('coverage');
+});
+
+test('focused Partly stores the existing versioned value and read-only users cannot save or stage',async()=>{
+  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true)};
+  await render({record:row,disabled:true,onUpdateImplementation:jest.fn()});await open();
+  expect(document.querySelector('.guided-panel fieldset').disabled).toBe(true);expect(button('Save answer & update implementation draft').disabled).toBe(true);expect(button('Save and exit').disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
+  await render({record:row,disabled:false});await select('Partially');
+  expect(document.querySelector('.guided-panel select').selectedOptions[0].textContent).toBe('Partly');
+  await click('Save and exit');expect(draft.answers.inventory).toBe('Partially');
+});
+
+test('focused historical completion with contradictory answers cannot offer Implemented',async()=>{
+  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true),revision:3,completed:true,answers:{inventory:'No'},result:{status:'addressed',narrative:'Historical report',gaps:[],unknowns:[],basis:[],nextSteps:[],evidence:[],answers:[]}};
+  await render({record:{...row,status:'addressed'},current:{...row,status:'addressed'}});await open();
+  expect(document.body.textContent).toContain('prior completion recommendation is not supported');expect(button('Apply to Assessment')).toBeUndefined();
+  expect(document.querySelector('.guided-panel select').value).toBe('No');expect(api.put).not.toHaveBeenCalled();
+});
+
+test('focused dashboard invitation introduces Omnibot and restricts recommendations to 1.1 and 1.2',async()=>{
+  mockWorkspaceMode='demo';await render({rows:[row,{...row,definition_id:'1.2'},{...row,definition_id:'3.5'}]});
+  expect(document.querySelector('.guided-context-prompt').textContent).toContain('Hi, I’m Omnibot.');
+  await open();expect(button('Open safeguard 1.1')).toBeTruthy();expect(button('Open safeguard 1.2')).toBeTruthy();expect(button('Open safeguard 3.5')).toBeUndefined();
+  expect(document.body.textContent).not.toContain('Default work order');
+});
+
+test('a native edit during an interview request prevents a stale implementation replacement',async()=>{
+  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true)};
+  let finish;api.put.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));
+  const oldUpdate=jest.fn(()=>true),currentUpdate=jest.fn(()=>false);
+  await render({record:row,form:{...row,implementation:''},onUpdateImplementation:oldUpdate});await open();await select('Yes');
+  await act(async()=>button('Save answer & update implementation draft').click());
+  await render({record:row,form:{...row,implementation:'Concurrent native edit'},onUpdateImplementation:currentUpdate});
+  await act(async()=>finish({data:{...draft,answers:{inventory:'Yes'},revision:1}}));
+  expect(oldUpdate).not.toHaveBeenCalled();expect(currentUpdate).toHaveBeenCalledWith(expect.any(String),'');
+  expect(document.body.textContent).toContain('native implementation draft changed');expect(document.querySelector('.guided-panel select').value).toBe('Yes');
+});
 test('dashboard greeting, direct pilot options, dismiss and reopen',async()=>{
   const onSelect=jest.fn();await render({rows:[row,{...row,definition_id:'1.2'}],onSelect});
   expect(document.body.textContent).toContain('Hi, I’m Omni.');

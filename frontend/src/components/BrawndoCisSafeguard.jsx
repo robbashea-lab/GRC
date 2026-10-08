@@ -66,6 +66,6 @@ export default function BrawndoCisSafeguard({state,actions}){
 </div></div>
     {form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><Textarea aria-label="Previously recorded notes" disabled={disabled} value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
     </AssessmentLayout>
-    {ctx&&<GuidedAssessor clientId={clientId} framework={record.framework_key} configuration={ctx.configuration} record={{...record,title:definition.title}} current={current} related={related} people={ctx.users} contextComplete={current.work?.context_complete===true} assessmentDirty={dirty} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onDraftChange={actions.setGuidedDraft}/>}
+    {ctx&&<GuidedAssessor clientId={clientId} framework={record.framework_key} configuration={ctx.configuration} record={{...record,title:definition.title}} current={current} related={related} people={ctx.users} contextComplete={current.work?.context_complete===true} assessmentDirty={dirty&&!state.focusedImplementationOnly} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onDraftChange={actions.setGuidedDraft} onUpdateImplementation={disabled?undefined:actions.stageGuidedImplementation}/>}
   </AssessmentShell>;
 }

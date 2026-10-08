@@ -38,7 +38,9 @@ beforeEach(() => {
   mockUser = {user_id: 'actor-a', workspace_mode: 'demo'};
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
   stored = interview();
-  props = {clientId: 'demo_brawndo', framework: 'cis-ig1', configuration: {implementation_group: 1}, record: record(), contextComplete: true, related: {}, form: {implementation: ''}, onApply: jest.fn(), onOpenNative: jest.fn()};
+  // Preserve the released lifecycle's full regression coverage with the focused
+  // pilot disabled. Focused IG1 behavior is covered in GuidedAssessor.test.jsx.
+  props = {clientId: 'demo_brawndo', framework: 'cis-ig1', configuration: {implementation_group: 1, focused_omni_enabled: false}, record: record(), contextComplete: true, related: {}, form: {implementation: ''}, onApply: jest.fn(), onOpenNative: jest.fn()};
   api.get.mockImplementation(async path => ({data: path.endsWith('/history') ? {items: [], has_more: false, next_before_revision: null} : stored}));
   api.put.mockImplementation(async (_path, body) => ({data: stored = {...stored, ...body, revision: body.expected_revision + 1, generated_at: body.completed ? '2026-10-07T12:00:00Z' : null, updated_at: '2026-10-07T12:00:00Z'}}));
 });
