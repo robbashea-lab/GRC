@@ -55,15 +55,28 @@ test('missing same-client inventory remains unavailable rather than using anothe
 test.each([
   ['1.1', 'demo_brawndo', {implementation_group: 1}],
   ['3.3', 'demo_brawndo', {implementation_group: 1}],
-  ['1.2', 'demo_dunder', {implementation_group: 1}],
-  ['1.2', 'demo_brawndo', {implementation_group: 2}],
   ['1.2', 'demo_brawndo', {implementation_group: 1, guided_assessment_enabled: false}],
-  ['1.2', 'demo_brawndo', {implementation_group: 1, focused_omni_enabled: false}],
-])('does not pass inventory context outside focused 1.2: %s, %s, %j', async (definitionId, clientId, settings) => {
+])('does not pass inventory context outside eligible CIS 1.2: %s, %s, %j', async (definitionId, clientId, settings) => {
   record = {...record, definition_id: definitionId, client_id: clientId};
   inventory = {...inventory, client_id: clientId}; assessments = [inventory, record]; configuration = settings;
   await render();
   expect(mockGuideProps.inventoryContext).toBeUndefined();
+  expectNoWrites();
+});
+
+test.each([
+  ['demo_dunder', {implementation_group: 1}],
+  ['demo_brawndo', {implementation_group: 2}],
+  ['future-client', {implementation_group: 3}],
+  ['demo_brawndo', {implementation_group: 1, focused_omni_enabled: false}],
+])('configured CIS 1.2 receives only its own read-only inventory across clients and groups: %s, %j', async (clientId, settings) => {
+  record = {...record, client_id: clientId};
+  inventory = {...inventory, client_id: clientId};
+  assessments = [{...inventory, client_id: 'other-client'}, {...inventory, framework_key: 'other-framework'}, inventory, record];
+  configuration = settings;
+  await render();
+  expect(mockGuideProps.inventoryContext).toEqual(inventory);
+  expect(mockGuideProps.clientId).toBe(clientId);
   expectNoWrites();
 });
 
