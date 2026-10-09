@@ -18,7 +18,8 @@ function FreeDock({preferenceKey,children,name='Omni',focused=false}){
   const placePopovers=()=>{
     const dock=root.current;if(!focused||!dock)return;
     for(const popover of dock.querySelectorAll('.guided-context-prompt,.omni-position-controls[open] > div')){
-      const anchor=(popover.classList.contains('guided-context-prompt')?dock.querySelector('.omni-launch-button'):popover.parentElement.querySelector('summary'))?.getBoundingClientRect();
+      // Keep invitations clear of the settings and position controls below the artwork.
+      const anchor=(popover.classList.contains('guided-context-prompt')?dock:popover.parentElement.querySelector('summary'))?.getBoundingClientRect();
       const size=popover.getBoundingClientRect();if(!anchor||!size.width||!size.height)continue;
       const position=fitOmniPopover(anchor,size);popover.style.left=position.left+'px';popover.style.top=position.top+'px';
     }

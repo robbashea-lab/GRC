@@ -61,6 +61,42 @@ test.each(['1.1','1.2'])('%s recognizes its current-source completion after nati
   expect(api.put).not.toHaveBeenCalled();expect(props.onApply).not.toHaveBeenCalled();
 });
 
+test.each(['1.1','1.2'].flatMap(id=>['Save answer & update implementation draft','Save interview answer & continue','Save and exit','Review updated proposal'].map(action=>[id,action])))('%s compares its own applied gap source before direct %s',async(id,action)=>{
+  completedSaved(id);
+  if(id==='1.1')stored.answers.coverage['Cloud-hosted assets']='Partially';else stored.answers.frequency='Monthly';
+  stored.result=focusedResult(id,stored.answers,stored.version);stored.narrative=stored.result.narrative;
+  const current={...props.current,status:'in_progress',implementation:stored.narrative},original=copy(stored);props={...props,record:current,current,form:copy(current)};
+  await render();await open();
+  expect(document.body.textContent).not.toContain('saved assessment changed after this interview began');
+  const changedPrompt=document.querySelector('.guided-panel legend').textContent;
+  await value(id==='1.1'?'.guided-panel fieldset [aria-label="Cloud-hosted assets"]':'.guided-panel fieldset select',id==='1.1'?'Yes':'Weekly');
+  await value('[aria-label="Missing elements or verification owner"]','SYNTHETIC resolved gap: the current reported requirement is now met.');
+  await click(action);
+  expect(document.querySelector('[aria-label="Compare saved assessment"]')).toBeTruthy();
+  expect(stored).toEqual(original);expect(history).toEqual([]);expect(props.current).toEqual(current);
+  expect(api.put).not.toHaveBeenCalled();expect(props.onUpdateImplementation).not.toHaveBeenCalled();expect(props.onApply).not.toHaveBeenCalled();
+  await confirmComparison();
+  expect(document.querySelector('.guided-panel legend').textContent).toBe(changedPrompt);
+  expect(history[0]).toEqual(original);expect(stored.base_assessment_token).toBe(newToken);expect(stored.completed).toBe(false);
+  expect(id==='1.1'?stored.answers.coverage['Cloud-hosted assets']:stored.answers.frequency).toBe(id==='1.1'?'Yes':'Weekly');
+  expect(stored.answers[id==='1.1'?'coverage_detail':'frequency_detail']).toContain('resolved gap');
+  expect(props.current).toEqual(current);expect(props.current.guided_assessment_source.revision).toBe(original.revision);
+  if(action==='Save answer & update implementation draft'){
+    await click(action);const group=document.querySelector('[aria-label="Reconcile implementation narrative"]');expect(group).toBeTruthy();
+    const proposed=focusedResult(id,stored.answers,stored.version).narrative;await value('[aria-label="Reconciled native implementation draft"]',proposed);await act(async()=>group.querySelector('input').click());await click(action);
+    expect(props.onUpdateImplementation).toHaveBeenCalledWith(proposed,current.implementation);await render({form:{...current,implementation:proposed}});
+    expect(document.body.textContent).toContain('Current implementation is an unsaved native draft');
+    expect(document.body.textContent).not.toContain('saved assessment changed after this interview began');expect(props.current).toEqual(current);expect(history[0]).toEqual(original);
+    const checkpoint=copy(stored);await remount();await open();await click('Review interview history');
+    expect(document.body.textContent).not.toContain('saved assessment changed after this interview began');expect(document.body.textContent).toContain('Revision '+original.revision+' · '+original.version+' · Completed interview');expect(document.body.textContent).toContain(original.narrative);
+    expect(stored).toEqual(checkpoint);expect(history[0]).toEqual(original);expect(props.current).toEqual(current);
+    const writes=api.put.mock.calls.length,newer={...current,last_saved:'2026-10-03T12:00:00Z',implementation:'SYNTHETIC newer native edit',guided_assessment_source:null};
+    await render({current:newer,form:copy(newer)});
+    expect(document.body.textContent).toContain('saved assessment changed after this interview began');await click(action);
+    expect(document.querySelector('[aria-label="Compare saved assessment"]')).toBeTruthy();expect(api.put).toHaveBeenCalledTimes(writes);expect(props.current).toEqual(newer);
+  }
+});
+
 test('a later scope change still requires comparison even when the native record retains the current guided source',async()=>{
   completedSaved('1.1');scopeFingerprint='b'.repeat(64);await render();
   expect(document.querySelector('.guided-context-prompt').textContent).toContain('compare your saved answers');

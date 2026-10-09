@@ -116,7 +116,12 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
       const {data}=await api.put(base,payload);if(activeIdentity.current!==savingIdentity)return false;setDraft(data);setAnswers(data.answers);saved.current=JSON.stringify(data.answers);setStep(nextStep);return data;}
     catch(e){if(activeIdentity.current===savingIdentity)setError(formatError(e));return false;}finally{if(activeIdentity.current===savingIdentity)setBusy(false);}
   }
+  function requireFocusedComparison(){
+    if(!focused||!draft?.revision||context?.lineageStale===false)return false;
+    setCompareTarget(question?.id||'resume');setReuseAnswers(false);return true;
+  }
   async function proceed(){
+    if(requireFocusedComparison())return;
     const next=focused?questions.findIndex((q,index)=>index>step&&answers[q.id]===undefined):step+1;
     const final=step>=questions.length-1||next<0;
     if(focused&&final){await reviewFocusedProposal();return;}
@@ -136,11 +141,13 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     else setSaveNotice('Confirmed answers retained against the current saved assessment. Review only the facts that changed; any new recommendation still needs your review and native Save.');
   }
   async function reviewFocusedProposal(){
+    if(requireFocusedComparison())return;
     const output=focusedResult(id,answers,version),expected=form?.implementation||'';
     if(expected.trim()){setIncremental({proposed:output.narrative,expected,output,purpose:'proposal'});setReconciled(expected);setReconciliationConfirmed(false);return;}
     await saveFocusedProposal(output);
   }
   async function saveFocusedProposal(output){
+    if(requireFocusedComparison())return;
     const data=await save(step,true,answers,false,draft,output);if(!data)return;
     setResult(output);setNarrative(output.narrative);setReplace(false);setView('result');
     setIncremental(null);
@@ -159,6 +166,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   }
   const put=(value)=>{setAnswers(p=>focused?correctFocusedAnswer(id,p,question,value,version):({...p,[question.id]:value}));setResult(null);setReplace(false);setIncremental(null);setSaveNotice('');setStagedImplementation(null);};
   async function stageAnswer(text,expected){
+    if(requireFocusedComparison())return;
     const data=await save(step,false);
     if(!data)return;
     if(!nativeUpdate.current?.(text,expected)){setError('The answer was saved, but the native implementation draft changed. Reconcile it before updating; no implementation was overwritten.');return;}
@@ -166,6 +174,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     setStep(nextFocusedQuestion(id,data.answers,data.version));
   }
   async function saveFocusedAnswer(){
+    if(requireFocusedComparison())return;
     const proposed=focusedNarrative(id,answers,version),expected=form?.implementation||'';
     if(expected.trim()){
       setIncremental({proposed,expected});setReconciled(expected);setReconciliationConfirmed(false);
@@ -240,7 +249,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
             </fieldset>
             <div className="guided-actions">{focused&&<Button disabled={disabled||busy||!onUpdateImplementation||answers[question.id]===undefined} onClick={saveFocusedAnswer}>Save answer & update implementation draft</Button>}<Button variant="outline" disabled={busy||step===0||focused&&!!incremental} onClick={()=>{setStep(n=>n-1);heading.current?.focus();}}>Back</Button><Button disabled={disabled||busy||updated&&!workspacePilot||focused&&!!incremental} onClick={proceed}>{step>=questions.length-1?'Generate review':focused?'Save interview answer & continue':'Continue'}</Button></div>
           </>:null}
-          {record&&draft&&(!workspacePilot||['interview','result'].includes(view))&&<div className="guided-actions"><Button variant="outline" disabled={disabled||busy||updated&&!workspacePilot||focused&&!!incremental} onClick={async()=>{if(await save(step,!!result))close();}}>Save and exit</Button><Button variant="ghost" disabled={disabled||busy} onClick={()=>setRestart(true)}>{workspacePilot?'Start a new review':'Restart assessment'}</Button></div>}
+          {record&&draft&&(!workspacePilot||['interview','result'].includes(view))&&<div className="guided-actions"><Button variant="outline" disabled={disabled||busy||updated&&!workspacePilot||focused&&!!incremental} onClick={async()=>{if(!requireFocusedComparison()&&await save(step,!!result))close();}}>Save and exit</Button><Button variant="ghost" disabled={disabled||busy} onClick={()=>setRestart(true)}>{workspacePilot?'Start a new review':'Restart assessment'}</Button></div>}
           {restart&&<section role="group" aria-label="Confirm restart"><p>{workspacePilot?'A new interview begins from the current saved assessment. The previous saved interview is preserved in interview history. Unsaved interview edits will be discarded.':'Restart replaces this saved interview only. The assessment and its history remain unchanged.'}</p>{focused&&version===currentVersion&&Object.keys(answers).length>0&&<label><input type="checkbox" checked={reuseAnswers} onChange={e=>setReuseAnswers(e.target.checked)}/> I confirmed these answers remain current; reuse them in the new review. Prior conclusions will not be carried forward.</label>}<Button disabled={disabled||busy} onClick={confirmRestart}>Confirm restart</Button><Button variant="outline" onClick={()=>{setRestart(false);setReuseAnswers(false);}}>Cancel restart</Button></section>}
           {workspacePilot&&record&&<section><Button variant="outline" disabled={historyBusy} onClick={()=>loadHistory()}>Review interview history</Button>{historyError&&<p role="alert">{historyError}</p>}{history&&<><p>Saved interview snapshots for your account. Earlier records may lack lineage or structured output; no retention policy was changed.</p>{history.records.map(item=><details key={item.revision}><summary>Revision {item.revision} · {item.version} · {item.completed?'Completed interview':'Interview checkpoint'} · {item.updated_at||'Time not recorded'}</summary><p>Recorded by {personLabel([...people,user],item.user_id,'Attribution not recorded')}</p><p>{item.narrative||'No narrative recorded.'}</p><pre>{JSON.stringify(item.answers,null,2)}</pre>{item.result&&<p>Recorded recommendation: {STATUSES[item.result.status]}</p>}</details>)}{!history.records.length&&<p>No available archived interview snapshots. This does not establish that no older interview ever existed.</p>}{history.next_before_revision&&<Button variant="outline" disabled={historyBusy} onClick={()=>loadHistory(true)}>Load earlier interviews</Button>}</>}</section>}
           <p>Question set: {version}. Answers are not evidence verification or a compliance opinion.</p>

@@ -42,13 +42,14 @@ test('focused invitations and menus stay inside the viewport at dragged edges',(
 });
 test('popover fitting is scoped to the focused pilot and responds to opened invitation settings',async()=>{
   const original=HTMLElement.prototype.getBoundingClientRect;
-  HTMLElement.prototype.getBoundingClientRect=function(){return this.matches('.guided-context-prompt,.omni-position-controls>div')?{width:245,height:156}:this.matches('.omni-launch-button,summary')?{left:8,right:176,top:82,bottom:236,width:168,height:154}:{width:168,height:218};};
+  HTMLElement.prototype.getBoundingClientRect=function(){return this.matches('.guided-context-prompt,.omni-position-controls>div')?{width:245,height:156}:this.matches('.omni-launch-button,summary')?{left:8,right:176,top:82,bottom:236,width:168,height:154}:{left:8,right:176,top:82,bottom:300,width:168,height:218};};
   const children=<><button className="omni-launch-button">Open</button><div className="guided-context-prompt">Invitation</div><details className="omni-position-controls"><summary>Invitation settings</summary><div><button>Hide invitations for this session</button></div></details></>;
   try{
     await act(async()=>root.render(<OmniDock preferenceKey="pilot" freePosition>{children}</OmniDock>));
     expect(container.querySelector('.guided-context-prompt').style.left).toBe('');expect(container.querySelector('[data-focused-omni]')).toBeNull();
     await act(async()=>root.render(<OmniDock preferenceKey="pilot" freePosition focused>{children}</OmniDock>));
-    expect(container.querySelector('.guided-context-prompt').style.left).toBe('8px');expect(container.querySelector('.guided-context-prompt').style.top).toBe('244px');
+    const invitation=container.querySelector('.guided-context-prompt');
+    expect(invitation.style.left).toBe('8px');expect(parseFloat(invitation.style.top)).toBeGreaterThanOrEqual(container.querySelector('.omni-free-dock').getBoundingClientRect().bottom+8);
     for(const settings of container.querySelectorAll('details')){
       await act(async()=>{settings.open=true;settings.dispatchEvent(new Event('toggle'));});
       expect(settings.querySelector('div').style.left).toBe('8px');expect(settings.querySelector('div').style.top).toBe('244px');
