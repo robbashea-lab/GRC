@@ -1,15 +1,12 @@
-import {brawndoWorkspacePilot} from './brawndoWorkspacePilot';
-import {generateResult,visibleQuestions} from './guidedAssessment';
+import {generateResult,visibleQuestions,pilotEnabled,catalogForVersion} from './guidedAssessment';
 import {prioritizeGuidedLifecycle} from './guidedLifecycle';
-import pilot from '@catalogs/omniWorkspacePilot.json';
-const comparisonConflict=(id,answers)=>id==='1.2'&&answers.detection==='Yes'&&answers.inventory_dependency==='No';
+const comparisonConflict=(id,answers,version)=>id==='1.2'&&version!=='cis-v8.1-control1-4'&&answers.detection==='Yes'&&answers.inventory_dependency==='No';
 
 export const focusedOmniEnabled=(clientId,user,framework,configuration,id)=>
-  pilot.focusedControl1Enabled===true&&brawndoWorkspacePilot(clientId,user)&&framework==='cis-ig1'&&configuration?.implementation_group===1&&
-  configuration?.guided_assessment_enabled!==false&&configuration?.focused_omni_enabled!==false&&(!id||['1.1','1.2'].includes(id));
+  !!user&&pilotEnabled(clientId,framework,configuration,id);
 
 export function focusedRecommendations(rows,drafts,contextComplete){
-  const scoped=rows.filter(row=>['1.1','1.2'].includes(row.definition_id)&&row.in_active_scope!==false);
+  const scoped=rows.filter(row=>row.framework_key==='cis-ig1'&&row.in_active_scope!==false);
   const overview=prioritizeGuidedLifecycle(scoped,{drafts,contextComplete,limit:2});
   const resumable=new Set(overview.resume.map(row=>row.definition_id));
   const reasons={not_assessed:'The safeguard has no saved assessment position.',not_implemented:'The saved implementation identifies work still to address.',partial_or_unresolved:'Partial implementation or linked unresolved work is recorded.',verification_or_review:'The saved implementation needs verification or an existing scheduled review.',unfinished_interview:'Your saved interview has unresolved work to resume.'};
@@ -24,7 +21,7 @@ export function focusedRecommendations(rows,drafts,contextComplete){
 
 export function nextFocusedQuestion(id,answers,version){
   const questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version);
-  const root=id==='1.1'?'inventory':'process';
+  const root=catalogForVersion(version)?.definitions?.[id]?.root||(id==='1.1'?'inventory':'process');
   if(answers[root]!=='Yes'&&answers[root]!=='Partially')return Math.max(0,questions.findIndex(q=>q.id===root));
   const unresolved=new Set(result.signals.map(signal=>signal.questionId).filter(questionId=>questionId!==root));
   const critical=questions.findIndex(q=>unresolved.has(q.id));
@@ -38,17 +35,8 @@ export function nextFocusedQuestion(id,answers,version){
 }
 
 export function correctFocusedAnswer(id,answers,question,value,version){
-  const next={...answers,[question.id]:value};
-  delete next[question.id+'_detail'];
-  const root=id==='1.1'?'inventory':'process';
-  if(question.id===root&&answers[root]!==value&&!['Yes','Partially'].includes(value)){
-    // Earlier completed interviews remain in history, not current conclusions.
-    for(const q of visibleQuestions(id,{[root]:'Yes'},version)){
-      if(q.when?.[root]){delete next[q.id];delete next[q.id+'_detail'];}
-    }
-  }
-  const visible=new Set(visibleQuestions(id,next,version).flatMap(q=>[q.id,q.id+'_detail']));
-  return Object.fromEntries(Object.entries(next).filter(([key])=>visible.has(key)));
+  // Inactive facts stay in the versioned interview; evaluators and summaries only use visible answers.
+  return {...answers,[question.id]:value};
 }
 
 export function focusedNarrative(id,answers,version){
@@ -57,12 +45,12 @@ export function focusedNarrative(id,answers,version){
   const handlingLabels={inventory_dependency:'authorized inventory available for comparison',detection:'identification of unauthorized assets',disposition:'tracking of disposition decisions',confirmation:'confirmation that assets are no longer reachable or otherwise addressed',exceptions:'exception approval and tracking',reconciled:'reconciliation against authorized inventory',unresolved:'assets unresolved beyond the required response interval'};
   const handling=id==='1.2'?questions.filter(q=>handlingLabels[q.id]&&answers[q.id]).map(q=>`Reported ${handlingLabels[q.id]}: ${answers[q.id]==='Partially'?'Partly':answers[q.id]}.`):[];
   const explanations=questions.filter(q=>answers[q.id+'_detail']?.trim()).map(q=>`Reported ${labels[q.id]?.toLowerCase()||'supporting context'}: ${answers[q.id+'_detail'].trim()}`);
-  return [output.narrative,...handling,...explanations,output.gaps.length&&`Reported gaps: ${output.gaps.join('; ')}.`,output.unknowns.length&&`Items still requiring confirmation: ${output.unknowns.join('; ')}.`,comparisonConflict(id,answers)?'The comparison basis remains unresolved: consistent identification is reported without a usable authorized inventory.':''].filter(Boolean).join(' ');
+  return [output.narrative,...handling,...explanations,output.gaps.length&&`Reported gaps: ${output.gaps.join('; ')}.`,output.unknowns.length&&`Items still requiring confirmation: ${output.unknowns.join('; ')}.`,comparisonConflict(id,answers,version)?'The comparison basis remains unresolved: consistent identification is reported without a usable authorized inventory.':''].filter(Boolean).join(' ');
 }
 
 export function focusedResult(id,answers,version){
   const output=generateResult(id,answers,new Date(),version),questions=visibleQuestions(id,answers,version);
-  if(comparisonConflict(id,answers)){
+  if(comparisonConflict(id,answers,version)){
     output.unknowns.push('Consistent unauthorized-asset identification is reported, but no usable authorized inventory is reported. Clarify the comparison basis before proposing Implemented.');
     output.signals.push({questionId:'inventory_dependency',kind:'verification'});
     if(output.status==='addressed')output.status='in_progress';

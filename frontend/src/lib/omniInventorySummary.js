@@ -1,15 +1,14 @@
 import {visibleQuestions} from './guidedAssessment';
 import {focusedOmniEnabled,focusedResult} from './focusedOmni';
 
-// The correction belongs to this record only; the existing 1.2 pilot is independent.
 export const inventorySummaryEnabled=(clientId,user,framework,configuration,record)=>
-  record?.client_id===clientId&&record?.framework_key===framework&&record?.definition_id==='1.1'&&
-  focusedOmniEnabled(clientId,user,framework,configuration,'1.1');
+  record?.client_id===clientId&&record?.framework_key===framework&&
+  focusedOmniEnabled(clientId,user,framework,configuration,record?.definition_id);
 
-export function inventorySummary(answers,version){
+export function inventorySummary(answers,version,clientName='Brawndo'){
   const questions=visibleQuestions('1.1',answers,version),result=focusedResult('1.1',answers,version);
   const active=Object.fromEntries(Object.entries(answers).filter(([key])=>questions.some(q=>key===q.id||key===q.id+'_detail')));
-  const overview=[active.inventory==='Yes'?'Brawndo reports maintaining an enterprise asset inventory.':active.inventory==='Partially'?'Brawndo reports a partially established enterprise asset inventory.':active.inventory==='No'?'Brawndo reports that an enterprise asset inventory is not currently in place.':'Brawndo’s enterprise asset inventory position needs confirmation.'];
+  const overview=[active.inventory==='Yes'?`${clientName} reports maintaining an enterprise asset inventory.`:active.inventory==='Partially'?`${clientName} reports a partially established enterprise asset inventory.`:active.inventory==='No'?`${clientName} reports that an enterprise asset inventory is not currently in place.`:`${clientName}’s enterprise asset inventory position needs confirmation.`];
   if(active.system?.trim())overview.push(`The inventory uses ${active.system.trim()}.`);
   if(active.sources&&active.sources!=='Not sure')overview.push(`The reported source arrangement is ${active.sources.toLowerCase()}.`);
   const breakdown=[];
@@ -51,7 +50,10 @@ export function inventorySummary(answers,version){
   if(active.reconciled==='Yes')sections['In place'].push('The inventory is compared with other device records.');
   else if(['No','Partially'].includes(active.reconciled)){sections['Incomplete or missing'].push('Comparison with other device records is absent or incomplete.');actions.remediation.push('Address the reported gaps in comparison with other device records.');}
   else if(active.reconciled==='Not sure'){sections['Needs confirmation'].push('Comparison: Whether the inventory is compared with other device records.');actions.confirmation.push('Confirm the comparison process for other device records.');}
-  if(active.gaps?.trim()){sections['Incomplete or missing'].push(`Reviewer-reported deficiencies: ${active.gaps.trim()}`);actions.remediation.push(`Address the reported deficiencies: ${active.gaps.trim()}`);}
+  if(active.gaps?.trim()){
+    if(version==='brawndo-cis-pilot-1'){sections['Needs confirmation'].push(`Historical reported follow-up, not classified as a confirmed deficiency: ${active.gaps.trim()}`);actions.confirmation.push(`Review and classify the historical follow-up: ${active.gaps.trim()}`);}
+    else{sections['Incomplete or missing'].push(`Reviewer-reported deficiencies: ${active.gaps.trim()}`);actions.remediation.push(`Address the reported deficiencies: ${active.gaps.trim()}`);}
+  }
   if(active.unknowns?.trim()){sections['Needs confirmation'].push(`Reviewer-reported uncertainty: ${active.unknowns.trim()}`);actions.confirmation.push(`Confirm with the responsible team: ${active.unknowns.trim()}`);}
   const context=[];
   for(const [key,label] of [['existing','Current practice'],['owner','Responsibility'],['maintenance_detail','Update process'],['scope_reason','Scope explanation'],['evidence','Reported supporting records']])if(active[key]?.trim())context.push(`${label}: ${active[key].trim()}`);

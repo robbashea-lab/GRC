@@ -20,7 +20,13 @@ export const OMNI_GROUPS={
 };
 export function omniGroups(id,answers,version){
   const questions=visibleQuestions(id,answers,version);
-  return OMNI_GROUPS[id].map(group=>({...group,questions:questions.filter(q=>group.ids.includes(q.id))}));
+  const definition=catalogForVersion(version)?.definitions?.[id],root=definition?.root;
+  const groups=catalogForVersion(version)?.groups?.[id]||OMNI_GROUPS[id]||[
+    {name:'Current practice',ids:[root,'existing','system','owner'],note:root},
+    ...questions.filter(q=>q.critical&&q.id!==root).map((q,index)=>({name:q.topic||`Safeguard requirements${index?' · '+(index+1):''}`,ids:[q.id],note:q.id})),
+    {name:'Review and confirmation',ids:questions.filter(q=>!q.critical&&![root,'existing','system','owner'].includes(q.id)).map(q=>q.id),note:'evidence'}
+  ];
+  return groups.map(group=>({...group,questions:questions.filter(q=>group.ids.includes(q.id))}));
 }
 export const multipleOmniSources=answers=>['Multiple reconciled sources','Multiple unreconciled sources'].includes(answers.sources)&&['Yes','Partially'].includes(answers.inventory);
 
@@ -72,8 +78,8 @@ export function recordedOmniReasons(row,complete){
         if(q?.type==='matrix'){
           for(const name of q.rows){
             const response=value?.[name];
-            if(signal.kind==='gap'&&['No','Partially'].includes(response))reasons.push(`${name} ${q.id==='attributes'?'details are incomplete':'are not fully included in the inventory'}.`);
-            if(signal.kind==='verification'&&(!response||response==='Not sure'||response==='Not applicable'&&!source.answers.scope_reason?.trim()))reasons.push(`${name} ${q.id==='attributes'?'details need confirmation':'coverage needs confirmation'}.`);
+            if(signal.kind==='gap'&&['No','Partially'].includes(response))reasons.push(row.definition_id==='1.1'?`${name} ${q.id==='attributes'?'details are incomplete':'are not fully included in the inventory'}.`:`Reported requirement is incomplete: ${name}`);
+            if(signal.kind==='verification'&&(!response||response==='Not sure'||response==='Not applicable'&&!source.answers.scope_reason?.trim()))reasons.push(row.definition_id==='1.1'?`${name} ${q.id==='attributes'?'details need confirmation':'coverage needs confirmation'}.`:`Requirement needs confirmation: ${name}`);
           }
         }else if(q){
           const names={inventory:'The inventory position',process:'The unauthorized-asset process',frequency:'The recorded operating frequency',maintenance:'The asset-update process',detection:'Unauthorized-asset identification',inventory_dependency:'The authorized-inventory comparison basis',actions:'The response actions',unresolved:'The handling of unresolved assets'};

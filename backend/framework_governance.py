@@ -367,7 +367,7 @@ def router_for(s):
         config=client_configuration(key,client)
         retained={a['definition_id'] for a in rows}
         controls = await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1,'legacy_id':1,'assessment_ids':1,'design':1,'conflicts':1,'observations.operating':1,'observations.expected_instances':1,'observations.collected_instances':1}).to_list(None) if key=='soc-2' else []
-        upgraded=key=='cis-ig1' and guided_assessment.upgraded_pilot({'client_id':client_id},user)
+        upgraded=key=='cis-ig1' and guided_assessment.upgraded_pilot({'client_id':client_id,'framework_key':key},user)
         guided_drafts = {}
         if key == 'cis-ig1' and config.get('guided_assessment_enabled') is not False:
             identities = {a['framework_assessment_id'] + ':' + user['user_id']: a['definition_id'] for a in rows
@@ -504,6 +504,8 @@ def router_for(s):
                 if not draft['completed'] or source!={k:draft.get(k) for k in ('version','revision','generated_at')}:
                     raise HTTPException(409,'Guided result changed; regenerate before applying')
                 if upgraded:
+                    if draft['version'] != guided_assessment.current_version(old['definition_id'], upgraded=True):
+                        raise HTTPException(409, 'Current-source interview review is required before saving a new assessment')
                     guided_assessment.require_current_lineage(draft,old,source_client)
                 changes['guided_assessment_source']={**source,'origin':'guided-assessment-pilot','answers':draft['answers'],'by':user['user_id']}
                 if upgraded:
