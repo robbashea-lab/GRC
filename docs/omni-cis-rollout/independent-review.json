@@ -2,7 +2,7 @@
   "schema": "omni-cis-independent-review-1",
   "reviewer": "cis_independent_qa (actual separate agent, no implementation ownership)",
   "review_base": "e1763cf72eea9e250c26feae17c642cc6b044b48",
-  "final_review_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+  "final_review_sha": "79075e0f85bebdb9651d381762e945c01f79c108",
   "release_approval": false,
   "source_review": {
     "unique_definitions": 153,
@@ -179,6 +179,18 @@
         "passed": true,
         "log": "outputs/omni-cis-rollout/ci123-frontend-success.log"
       }
+    },
+    {
+      "id": "QA-CIS-006",
+      "priority": "P2-product-copy",
+      "state": "resolved_independent_local_replay_hosted_patch_retest_pending",
+      "detected_by": "Lead actual hosted 15.5 review; independently reviewed and retested by separate QA agent.",
+      "issue": "An optional matrix-group note in generated CIS summaries exposed the internal question key as Reported requirements 0 context.",
+      "fix_commit": "3026304de55cbe161d0e5b9195513d570e227eb9",
+      "integrated_commit": "79075e0f85bebdb9651d381762e945c01f79c108",
+      "correction": "For unnamed matrix fields, use the existing visible interview-group name. Preserve approved1.1 delegation, established named1.2 labels, exact existing note content, source criteria, status and native submission behavior.",
+      "compatibility": "No answer IDs, schema versions, source catalog, evaluator, persistence API or stored records change. Existing manual or saved narratives are preserved; revised labels appear only on authorized new generation or explicit refresh.",
+      "independent_evidence": "825 focused summary/rendered tests;4367 source/connected lifecycle tests;1404 old/new actual-module comparisons across seven supported version packs. Real Render persistence of this patch and its exact-candidate CI/build gates remain pending."
     }
   ],
   "boundaries": {
@@ -187,15 +199,15 @@
     "product_edits": false,
     "deployment": false,
     "shared_browser_session": false,
-    "server_guards_review": "Existing authenticated route policy/tenant membership/assigned ownership, canonical active group, interview CAS and native CAS/version/lineage inspected at9204445. Final exact-candidate CI and hosted denial/concurrency remain required.",
+    "server_guards_review": "Existing authenticated route policy/tenant membership/assigned ownership, canonical active group, interview CAS and native CAS/version/lineage inspected on prior corrected runtime and remain unchanged by79075. CI123 disposable Mongo authorization passed for b0f; actual hosted restricted-role denial remains unavailable. Audited b0f native concurrent-write rejection/winner preservation is separate from interview writer coverage.",
     "visual_diff_review": "Git-blob equality verified for approved artwork/window/CSS,1.1 V3, canonical CIS and representativeISO/SOC catalogs and dependencies. Actual visual comparison remains lead responsibility."
   },
   "remaining_required_evidence": [
-    "Lead-reported Live deployment is frozen b0f on dep-db4mgtvlk1mc73d5q2c0 with fresh main.3b13e84a.js. Preserve deployment/source proof and complete final hosted acceptance; this reviewer did not operate Render. Required CI123 combined gate passed, and report documentation head is not claimed CI-tested or deployed.",
-    "Remaining supported entry-point/conditional/lifecycle and exact visual/interaction comparisons after339/339 audited local browser placements; accessibility snapshots do not prove pixel equality.",
-    "Authenticated deployed OmniBot positive fixture lifecycles on each group: fresh/partial/save/update/Save&close/cancel/exact reload/manual/native edits/revised answers/failure-retry/duplicate/stale/concurrent writers. Existing SuperAdmin may be used only within authorized isolated QA fixtures.",
-    "Actual logout/login and restricted-identity denial/client-isolation proof. Current administrator all-client scope does not prove restricted authorization. Known limited fictional identities remain Disabled; no credential/account/access changes were made.",
-    "Future/mixed CIS defaults and supported group upgrades with inherited history, deployed showcase context, excluded-framework/full-record preservation and safe QA fixture archival remain required. Persistent InitechIG2/HooliIG3 provisioning is already separately evidenced."
+    "New79075 summary-label candidate requires its own applicable builds, final exact-candidate required CI, staging served-SHA evidence and real affected 15.5 note-generation/exact native save-reload retest. Old CI123/liveb0 evidence is preserved separately.",
+    "Remaining supported entry-point/conditional/lifecycle and exact visual/interaction comparisons after339 local browser placements; text accessibility snapshots and unchanged artwork/CSS blobs do not establish pixel equality.",
+    "Complete missing authenticated hosted failure/retry/duplicate, interview concurrent-writer and distinct evaluator/lifecycle branches with isolated authorized fixtures. The audited b0f native winner preservation, manual edits, cancellations, status/verification, exact reloads and upgrade history cover representative records only.",
+    "Actual logout/login and restricted-identity denial/client-isolation proof remain unavailable from the existing all-client SuperAdmin session. Known limited fictional users remain Disabled, and no credentials/account/role/membership changes were made. Do not fabricate or simulate these hosted results.",
+    "Final persistent showcase context/access and complete native record/date/history preservation, remaining excluded-framework/visual comparisons and safe labeled QA fixture disposition. Normal new-client onboarding for the three groups, mixed ISO plus CIS addition, and one supported IG1→IG2→IG3 inherited record/history upgrade are now separately evidenced, without proving every supported upgrade case."
   ],
   "rows": [
     {
@@ -4067,9 +4079,9 @@
       "authored_case_reference_location": "coverage-matrix.json: rows[id=18.5].testCaseReferences"
     }
   ],
-  "tested_runtime_sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
+  "tested_runtime_sha": "79075e0f85bebdb9651d381762e945c01f79c108",
   "code_content_review_accepted": true,
-  "final_decision": "Independent source/content/runtime/scope and339 local actual-browser placement review accepted. Required CI123 is successful on complete-tree-equivalent frozen b0f; lead reports that exact candidate now Live on existing Render staging. The first IG1 hosted isolated fixture confirms question progress/resume,1363-character exact native save/reload and1258-character revised Save&close/reload, with Partial status and NotVerified preserved. This is partial hosted coverage. Final release acceptance remains false for incomplete remaining groups/lifecycles/history/authorization and required visual/entry-point checks.",
+  "final_decision": "Independent153 source/content/runtime review and339 local browser placements remain accepted. The narrowly focused79075 note-label patch passes nine independently executed suites/5192 tests and1404 old/new supported-version comparisons. B0f hosted evidence independently confirms three-group representative native saves/reloads, manual/native edit and cancellation preservation, a fresh-document concurrent native winner, mixed ISO unchanged main/drawer, observed client record preservation and a supported cumulative upgrade retaining identity/text/status/history. Release acceptance remains false: new patch CI/build/deployment/hosted retest, required remaining lifecycle/visual/entry-point and usable restricted identity/logout-login evidence are not established.",
   "corrective_verification": {
     "actual_module_calls": {
       "sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
@@ -4625,7 +4637,7 @@
     "final_scope_review_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
     "final_scope_delta": "eb16427..b0f87ba contains only source/recovery/phase/defect/coverage/independent documentation and matrix generator updates. Product/runtime/backend/catalog/CSS/assets/dependencies/workflow unchanged. aa03..b0f87ba frontend changes are four test files only."
   },
-  "prior_final_review_sha": "eb16427021e646904883b890829d7308f4ee3c9d",
+  "prior_final_review_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
   "ci123_evidence": {
     "run_id": 37992644774,
     "workflow": ".github/workflows/release-verification.yml",
@@ -5053,7 +5065,8 @@
     "report_documentation_head": "01b8be3588c0ef7b8e734c9dda9834bb6da3e208",
     "product_delta_since_tested_candidate": "None in backend/frontend/shared/.github. Subsequent report/coverage/task evidence is separate from deployed frozen b0f.",
     "now_deployed_by_lead_as_reported": true,
-    "deployment_id": "dep-db4mgtvlk1mc73d5q2c0"
+    "deployment_id": "dep-db4mgtvlk1mc73d5q2c0",
+    "historical_scope": "This object records the accepted and deployed prior b0f candidate before the later note-label correction. The new79075 candidate disposition is in summary_note_label_followup; prior CI/live proof is not transferred to its changed frontend code."
   },
   "matrix_browser_join_review": {
     "source": "scripts/omni-cis-rollout-matrix.cjs",
@@ -5164,5 +5177,148 @@
     },
     "hosted_result": "Actual reviewed DOM remains Partially Implemented after correcting coverage because last_review is unanswered. The raw runner expectedStatusImplemented is an unfulfilled fixture expectation, not a demonstrated application defect or actual result.",
     "disposition": "No approved reference/runtime change justified. Exercise complete-date branch only using clearly synthetic authorized QA facts; do not invent dates for genuine assessments."
+  },
+  "previous_reviewed_runtime_sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
+  "summary_note_label_followup": {
+    "candidate": "79075e0f85bebdb9651d381762e945c01f79c108",
+    "prior_deployed_candidate": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "product_scope_diff": [
+      "frontend/src/lib/omniCisSummary.js (eight changed lines)",
+      "frontend/src/lib/omniCisSummary.test.js (new focused regression tests)",
+      "frontend/src/components/OmniCisRolloutRendered.test.jsx (one native-callback regression)"
+    ],
+    "read_only_root_execution": true,
+    "root_product_working_tree_clean": true,
+    "shared_runtime_dirty_catalogs_not_used_for_provenance": true,
+    "import_cycle_found": false,
+    "scope_diff_check_exit_code": 0,
+    "source_catalog_evaluator_backend_api_artwork_styles_dependencies_unchanged": true,
+    "connected_native_submission": "GuidedAssessor commitSummary still overrides generated output with the reviewed narrative and submits data.narrative unchanged to the native callback; it closes only after a true native success. User-edited historical wording is not automatically replaced by the note-label patch.",
+    "executions": [
+      {
+        "command": "CI=true; node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath src/lib/omniCisSummary.test.js src/lib/omniCisRollout.test.js src/lib/omniInventorySummary.test.js src/lib/refinedOmni.test.js src/components/OmniCisRolloutRendered.test.jsx",
+        "source_sha": "79075e0f85bebdb9651d381762e945c01f79c108",
+        "platform": "Windows PowerShell, existing Node24.19.0/Craco7.1/React19 runtime",
+        "suites": 5,
+        "tests": 825,
+        "seconds": 9.42,
+        "exit_code": 0,
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-independent-qa\\outputs\\qa-summary-label-79075.log",
+        "sha256": "c0e32acc274df655c559f32f297936aa4f03aa2ce3af72b2d5bb44d1ad05e4ee"
+      },
+      {
+        "command": "CI=true; node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath src/lib/cisRolloutContentReview.test.js src/lib/guidedLifecycle.test.js src/components/GuidedAssessor.test.jsx src/components/GuidedAssessorFocusedLifecycle.test.jsx",
+        "source_sha": "79075e0f85bebdb9651d381762e945c01f79c108",
+        "suites": 4,
+        "tests": 4367,
+        "seconds": 6.604,
+        "exit_code": 0,
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-independent-qa\\outputs\\qa-note-source-lifecycle-79075.log",
+        "sha256": "1338f9a3e4ae66aac441732d331903f117359740bc17f30f6ab20c8937db2752"
+      }
+    ],
+    "combined": {
+      "suites": 9,
+      "tests": 5192,
+      "exit_code": 0
+    },
+    "independent_actual_module_differential": {
+      "source_sha": "79075e0f85bebdb9651d381762e945c01f79c108",
+      "method": "Actual old/new module differential; literal expected prefix substitution only, all factual outputs/breakdowns/inputs unchanged; approved1.1 delegation and named1.2 labels unchanged; seven supported version packs, three aggregate/root states.",
+      "versions": [
+        "brawndo-cis-pilot-1",
+        "cis-v8.1-control1-2",
+        "cis-v8.1-control1-3",
+        "cis-v8.1-control1-4",
+        "cis-v8.1-program-1",
+        "cis-v8.1-program-2",
+        "cis-v8.1-program-3"
+      ],
+      "comparisons": 1404,
+      "activeMatrixNotes": 875,
+      "inactiveNotes": 5576,
+      "failed": 0,
+      "execution_log": {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-independent-qa\\outputs\\qa-note-label-differential-79075.log",
+        "sha256": "f5cc0f750e6a56b4eb604d0c940d1b449747d0888f9034f53260c8594bae88e8"
+      },
+      "expectation_basis": "The sole permitted narrative difference is replacement of each old unnamed-matrix note prefix with its existing visible topic. Every factual result/breakdown/input remains equal; inactive note content remains excluded. This differential does not claim exhaustive answer combinations or independent new status expectations."
+    },
+    "CI_and_builds": "CI123 and prior successful builds establish b0f content only. The new79075 label delta requires the lead current-candidate build/CI evidence and hosted affected-path retest. This reviewer does not relabel earlier CI as testing the patch.",
+    "review_accepted_for_controlled_validation": true,
+    "release_accepted": false
+  },
+  "hosted_layer_C_extended_audit": {
+    "source": "outputs/omni-cis-rollout/hosted-layer-C-actual-b0f.jsonl",
+    "cutoff": "2026-10-09T22:38:34.307Z",
+    "raw_records_audited": 48,
+    "bounded_lines_sha256": "ef2519abdb4a9ad80a5fa34d4b475b6a7f52c74385615ea50ddb2ff8527c71b0",
+    "exactReloads": [
+      {
+        "label": "IG1 exact-text full reload",
+        "characters": 1363,
+        "assessment": "fw_7682b639c2565159aea31369f6f41dcf"
+      },
+      {
+        "label": "IG1 revised complete write-up exact reload",
+        "characters": 1258,
+        "assessment": "fw_7682b639c2565159aea31369f6f41dcf"
+      },
+      {
+        "label": "IG2 full reload exact text and NotAssessed",
+        "characters": 988,
+        "assessment": "fw_d53f1e355c8f50f08b1d447df7e97576"
+      },
+      {
+        "label": "IG3 full reload exact native text and Implemented",
+        "characters": 906,
+        "assessment": "fw_de4fed836aff5184b126379c57901ee3"
+      },
+      {
+        "label": "IG3 post-rebase Save-close exact native edited text",
+        "characters": 987,
+        "assessment": "fw_de4fed836aff5184b126379c57901ee3"
+      },
+      {
+        "label": "IG3 fresh authenticated document confirms concurrent winner",
+        "characters": 1049,
+        "assessment": "fw_de4fed836aff5184b126379c57901ee3"
+      },
+      {
+        "label": "IG1 complete status and exact text reload",
+        "characters": 1382,
+        "assessment": "fw_7682b639c2565159aea31369f6f41dcf"
+      }
+    ],
+    "iso_main_and_native_drawer_exact": true,
+    "question_stage_native_unchanged": true,
+    "manual_native_edit_rebase_and_cancel": true,
+    "concurrent_native_winner_fresh_document": true,
+    "retained_intermediate_draft_observations": {
+      "characters": 1043,
+      "correction": "TabA reload did not advance: still Unsaved assessment changes and original rejection alert. Its1043char local draft is not backend data. Premature mismatch exception retained; server preservation will be checked through a fresh authenticated document."
+    },
+    "observed_client_record_isolation": true,
+    "ig_upgrade_exact_native_identity_text_status_and_history": true,
+    "history_revisions": 7,
+    "failed": 0,
+    "limitations": [
+      "Existing SuperAdmin only; no restricted identity denial or actual logout/login proof.",
+      "One native safeguard fixture per group; not 339 hosted native saves or every evaluator branch.",
+      "Evidence is from deployed b0f, not the new 79075 label patch.",
+      "Rendered accessibility text is not pixel regression proof.",
+      "Full failure/retry/duplicate and remaining entry-point/display/history acceptance are not established by this bounded audit."
+    ],
+    "execution_log": {
+      "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-independent-qa\\outputs\\qa-hosted-C-audit-b0f.log",
+      "sha256": "840d0edc88edce934133cf02498f07023b0473ad3bd42b365ad47bc971025afe"
+    },
+    "source_candidate": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "read_only_evidence_audit": true,
+    "browser_operator": "Lead only; reviewer did not operate the browser or make hosted writes.",
+    "authenticated_identity": "Existing active staging SuperAdmin; no limited-role denial claim.",
+    "fixture_treatment": "All writes are explicitly synthetic isolated OmniBot QA clients, rather than genuine showcase implementation. Normal histories are retained. Supported final fixture archival/disposition remains the lead owner responsibility.",
+    "independent_adjudication": "IG1 unknown last-review timing remains Partial despite otherwise complete facts; clearly synthetic current review date supports Implemented. IG2 all substantive unknowns remains NotAssessed. IG3 annual OR contract-trigger 15.5 source branch supports Implemented. Verification remains Not verified; no evidence approval or finding/review completion inferred.",
+    "release_accepted": false
   }
 }
