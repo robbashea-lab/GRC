@@ -1,4 +1,4 @@
-import {catalogForVersion,visibleQuestions} from './guidedAssessment';
+import {guidedCatalog,catalogForVersion,visibleQuestions} from './guidedAssessment';
 import {focusedResult} from './focusedOmni';
 import {inventorySummary} from './omniInventorySummary';
 
@@ -9,7 +9,7 @@ const contextLabels={existing:'Current practice',system:'Systems or processes',o
 
 export function omniCisSummary(id,answers,version,clientName='The organization'){
   if(id==='1.1')return inventorySummary(answers,version,clientName);
-  const definition=catalogForVersion(version)?.definitions?.[id],questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version);
+  const definition=catalogForVersion(version)?.definitions?.[id]||guidedCatalog.definitions[id],questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version);
   const active=Object.fromEntries(Object.entries(answers).filter(([key])=>questions.some(q=>key===q.id||key===q.id+'_detail')));
   const subject=definition.title.toLowerCase();
   const overview=[result.status==='addressed'?`${clientName} reports the practice to ${subject} is in place.`:result.status==='in_progress'?`${clientName} reports partial implementation of the practice to ${subject}.`:result.status==='needs_attention'?`${clientName} reports the practice to ${subject} is not currently in place.`:`${clientName}’s implementation of the practice to ${subject} needs confirmation.`];
@@ -37,7 +37,8 @@ export function omniCisSummary(id,answers,version,clientName='The organization')
       breakdown.push({questionId:q.id,area:topic,state,answer:reported||'Not recorded'});
     }
   }
-  if(active.gaps?.trim()){sections['Incomplete or missing'].push('Reviewer-reported deficiencies: '+active.gaps.trim());actions.remediation.push('Address the reported deficiencies: '+active.gaps.trim());}
+  if(version==='brawndo-cis-pilot-1'&&active.gaps?.trim()){sections['Needs confirmation'].push('Historical follow-up requiring confirmation: '+active.gaps.trim());actions.confirmation.push('Review the historical missing-or-uncertain context before identifying a confirmed deficiency: '+active.gaps.trim());}
+  else if(active.gaps?.trim()){sections['Incomplete or missing'].push('Reviewer-reported deficiencies: '+active.gaps.trim());actions.remediation.push('Address the reported deficiencies: '+active.gaps.trim());}
   if(active.unknowns?.trim()){sections['Needs confirmation'].push('Reviewer-reported uncertainty: '+active.unknowns.trim());actions.confirmation.push('Confirm with the responsible team: '+active.unknowns.trim());}
   for(const issue of result.unknowns.filter(value=>/^(Applicability requires|The overall practice answer)/.test(value))){sections['Needs confirmation'].push(issue);actions.confirmation.push(issue);}
   const context=[];

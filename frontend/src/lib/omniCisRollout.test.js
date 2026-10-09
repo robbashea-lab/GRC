@@ -93,3 +93,12 @@ test('summary overview and breakdown follow substantive requirements when aggreg
   const supported=omniCisSummary(id,{practice:'Not sure',...matrixAnswers(id,'Yes')},version,'Synthetic client').result;
   expect(supported.status).toBe('addressed');expect(supported.narrative.split('IMPLEMENTATION BREAKDOWN')[0]).toContain('is in place');
 });
+
+test.each(['1.1','1.2'])('%s historical version without definition metadata remains viewable without reinterpreting mixed follow-up text',id=>{
+  const version='brawndo-cis-pilot-1',answers={[id==='1.1'?'inventory':'process']:'Not sure',gaps:'May be missing or not yet confirmed'};
+  const text=omniCisSummary(id,answers,version,'Historical client').result.narrative;
+  expect(text).toContain('Historical client');expect(text).toContain('May be missing or not yet confirmed');
+  expect(text).toContain(id==='1.1'?'Historical reported follow-up, not classified as a confirmed deficiency':'Historical follow-up requiring confirmation');
+  expect(text).not.toContain('Reviewer-reported deficiencies: May be missing');
+  expect(compatibleInterviewAnswers(id,answers,version,versionForSafeguard(id)).gaps).toBeUndefined();
+});
