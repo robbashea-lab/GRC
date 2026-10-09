@@ -190,3 +190,9 @@ Old question versions/answers/manual narratives/history remain readable and immu
 No shared/runtime/catalog file, assessment record, client, deployment, provider setting or other agent branch was edited. This pass did not independently approve its own work, run browser placements, write staging records or execute logout/login. Final independent review and hosted QA remain release gates.
 
 Fixture inputs: program additions use explicit aggregate_answer (Yes for substantive cases unless specified; null for unanswered/context-only/manual-only), whileControl1root_answer derives from its substantive tool/logging criterion. The matrix records select encodings: accepted choices for semanticYes, listed deficient choices for semanticNo/Partially. Cadence selects never receive an invalid literalYes. Whole-recordN/A approval tests belong to the authorized native adapter; no generated result grantsN/A.
+
+## Effective integrated question mapping
+
+The matrix now records 55 actual mandatory answer mappings for the 23 additions against source commit `cb1fe5909b5f23da021bea09ca258f5010cd8c5c`, program `cis-v8.1-program-3`. Original source-review commit `b91eb91f94b74d81ad42a6c231a303a971bbd57c`, version2 mappings, and source provenance remain separately recorded. Control1 additions retain their unchanged dedicated version.
+
+The new 16.9 security-culture row is included in atomic_requirements with its real matrix field/row; 8.4 standardization uses its unqualified mandatory field while the two-source clause retains its support condition. This correction addresses the unmapped-fixture verification gap; it is not application-failure evidence or a passed runtime result. New/changed historical answers remain unanswered until explicitly reviewed.
