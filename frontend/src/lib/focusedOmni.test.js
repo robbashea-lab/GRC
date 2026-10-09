@@ -60,3 +60,51 @@ test('1.2 weekly handling, response, and comparison contradictions are assessed 
   expect(visibleQuestions('1.2',conflict,v)[nextFocusedQuestion('1.2',conflict,v)].id).toBe('inventory_dependency');
   expect(focusedNarrative('1.2',conflict,v)).toContain('comparison basis remains unresolved');
 });
+
+test.each(['1.1','1.2'])('%s narrative names material gaps and removes them when resolved',id=>{
+  const answers=complete(id),v=versionForSafeguard(id,true);
+  const deficient=id==='1.1'?{...answers,coverage:{...answers.coverage,Servers:'No'}}:{...answers,frequency:'Monthly',unresolved:'Yes'};
+  const result=focusedResult(id,deficient,v);
+  expect(result.status).toBe('in_progress');expect(result.gaps.length).toBeGreaterThan(0);
+  for(const gap of result.gaps)expect(result.narrative).toContain(gap);
+  const resolved=focusedResult(id,answers,v);
+  expect(resolved.status).toBe('addressed');expect(resolved.gaps).toEqual([]);
+  for(const gap of result.gaps)expect(resolved.narrative).not.toContain(gap);
+});
+
+test.each(['1.1','1.2'])('%s narrative names unknown requirements without claiming evidence verification',id=>{
+  const answers=complete(id),v=versionForSafeguard(id,true);
+  const uncertain=id==='1.1'?{...answers,attributes:{...answers.attributes,'Hardware address':'Not sure'}}:{...answers,detection:'Not sure'};
+  const result=focusedResult(id,uncertain,v);
+  expect(result.status).toBe('in_progress');expect(result.unknowns.length).toBeGreaterThan(0);
+  for(const unknown of result.unknowns)expect(result.narrative).toContain(unknown);
+  expect(result.verification).toBeUndefined();
+});
+
+test.each(['1.1','1.2'])('%s targeted tool correction replaces obsolete facts and retains unrelated reported details',id=>{
+  const v=versionForSafeguard(id,true),answers={...complete(id),system:'Legacy inventory product',owner:'Client IT and provider security team'};
+  const question=visibleQuestions(id,answers,v).find(q=>q.id==='system');
+  const updated=correctFocusedAnswer(id,answers,question,'NinjaOne',v),result=focusedResult(id,updated,v);
+  expect(result.narrative).toContain('Maintained using: NinjaOne.');
+  expect(result.narrative).not.toContain('Legacy inventory product');
+  expect(result.narrative).toContain('Client IT and provider security team');
+  expect(result.status).toBe('addressed');expect(result.verification).toBeUndefined();
+  expect(answers.system).toBe('Legacy inventory product');
+});
+
+test('1.2 narrative records comparison and operation as reported facts without new implementation criteria',()=>{
+  const v=versionForSafeguard('1.2',true),answers={...complete('1.2'),disposition:'Partially',confirmation:'Not sure',exceptions:'No exceptions used',reconciled:'No'};
+  const result=focusedResult('1.2',answers,v);
+  for(const fact of ['authorized inventory available for comparison: Yes','identification of unauthorized assets: Yes','tracking of disposition decisions: Partly','confirmation that assets are no longer reachable or otherwise addressed: Not sure','exception approval and tracking: No exceptions used','reconciliation against authorized inventory: No','assets unresolved beyond the required response interval: No'])expect(result.narrative).toContain('Reported '+fact+'.');
+  expect(result.status).toBe(generateResult('1.2',answers,new Date(),v).status);
+  expect(result.status).toBe('addressed');expect(result.verification).toBeUndefined();
+});
+
+test('a lost 1.2 prerequisite does not carry hidden affirmative process details into the narrative',()=>{
+  const v=versionForSafeguard('1.2',true),answers={...complete('1.2'),process:'No',system:'Obsolete detector'};
+  const result=focusedResult('1.2',answers,v);
+  expect(result.status).toBe('needs_attention');
+  expect(result.narrative).not.toContain('Obsolete detector');
+  expect(result.narrative).not.toContain('Reported identification of unauthorized assets: Yes');
+  expect(result.narrative).not.toContain('Reported authorized inventory available for comparison: Yes');
+});

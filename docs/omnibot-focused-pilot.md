@@ -71,3 +71,35 @@ pilot.
 The focused Brawndo CIS IG1 pilot uses OmniBot consistently in its invitation, guide and accessible controls. Program, Control 1 and safeguards 1.1/1.2 each start a fresh invitation visit. Dismissal affects that visit only; ordinary data refreshes do not invite again. Explicit session suppression and durable automatic-invitation suppression take precedence, with re-enabling available through Invitation settings. Legacy preferences are honored without changing nonpilot preferences.
 
 Invitations distinguish unsaved answers, saved current interviews and interviews needing comparison with a changed native assessment. Only the invitation opens automatically; the guide requires an explicit action. Native saves, history, concurrency and activation gates remain unchanged.
+# Focused lifecycle refinement (2026-10-09)
+
+The existing Brawndo CIS IG1 pilot remains limited to program guidance, Control 1,
+and safeguards 1.1/1.2. Existing artwork, native layouts, requirement catalogs,
+implementation criteria, verification, linked work and activation are unchanged.
+
+OmniBot now distinguishes an interview applied as the current saved source from
+an unrelated newer assessment or changed scope. Saved interview edits, staged
+native implementation and native Save have separate messages. Continue advances
+to later unanswered applicable questions; reopening or incrementally staging an
+answer resumes the next actual unresolved requirement.
+
+Review changes allows selection of an existing fact or requirement. When its
+assessment base has advanced, Compare & continue presents the current native
+position and explicitly asks whether retained answers remain relevant. This
+uses the existing empty restart and revision-checked retained-answer saves;
+the previous interview remains historical. Conclusions are recomputed and any
+native status or narrative change still requires explicit Apply and native Save.
+Nonempty native prose must be reconciled before saving an updated proposal,
+preserving unrelated valid details and replacing obsolete descriptions.
+
+Focused narratives include concrete gaps/unknowns and reported 1.2 operating
+facts. The existing authorized workspace response supplies saved 1.1 context
+beside relevant 1.2 questions; it never fills answers or changes either record.
+Focused invitations and settings are fitted within the viewport at dragged
+edges. Legacy Omni behavior is excluded from these changes.
+
+Local component/library regressions supplement authenticated UI acceptance;
+they do not establish logout/login or hosted backend persistence. Release
+evidence, baseline snapshots and the synthetic mutation ledger are retained in
+`outputs/omnibot-lifecycle-review/`. Use the existing manual specific-commit
+Render staging workflow with auto-deploy Off; do not merge main to deploy.

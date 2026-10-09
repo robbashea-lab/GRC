@@ -52,10 +52,12 @@ export function correctFocusedAnswer(id,answers,question,value,version){
 }
 
 export function focusedNarrative(id,answers,version){
-  const output=generateResult(id,answers,new Date(),version);
+  const output=generateResult(id,answers,new Date(),version),questions=visibleQuestions(id,answers,version);
   const labels={inventory:'Inventory scope and method',coverage:'Asset coverage',attributes:'Inventory fields',maintenance:'Inventory maintenance',frequency:'Operating interval',last_review:'Inventory review',process:'Unauthorized-asset handling',detection:'Identification',actions:'Response',unresolved:'Remaining unauthorized assets'};
-  const explanations=visibleQuestions(id,answers,version).filter(q=>answers[q.id+'_detail']?.trim()).map(q=>`Reported ${labels[q.id]?.toLowerCase()||'supporting context'}: ${answers[q.id+'_detail'].trim()}`);
-  return [output.narrative,...explanations,comparisonConflict(id,answers)?'The comparison basis remains unresolved: consistent identification is reported without a usable authorized inventory.':''].filter(Boolean).join(' ');
+  const handlingLabels={inventory_dependency:'authorized inventory available for comparison',detection:'identification of unauthorized assets',disposition:'tracking of disposition decisions',confirmation:'confirmation that assets are no longer reachable or otherwise addressed',exceptions:'exception approval and tracking',reconciled:'reconciliation against authorized inventory',unresolved:'assets unresolved beyond the required response interval'};
+  const handling=id==='1.2'?questions.filter(q=>handlingLabels[q.id]&&answers[q.id]).map(q=>`Reported ${handlingLabels[q.id]}: ${answers[q.id]==='Partially'?'Partly':answers[q.id]}.`):[];
+  const explanations=questions.filter(q=>answers[q.id+'_detail']?.trim()).map(q=>`Reported ${labels[q.id]?.toLowerCase()||'supporting context'}: ${answers[q.id+'_detail'].trim()}`);
+  return [output.narrative,...handling,...explanations,output.gaps.length&&`Reported gaps: ${output.gaps.join('; ')}.`,output.unknowns.length&&`Items still requiring confirmation: ${output.unknowns.join('; ')}.`,comparisonConflict(id,answers)?'The comparison basis remains unresolved: consistent identification is reported without a usable authorized inventory.':''].filter(Boolean).join(' ');
 }
 
 export function focusedResult(id,answers,version){

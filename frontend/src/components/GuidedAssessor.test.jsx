@@ -71,6 +71,7 @@ test('single focused answer saves interview and stages the real native narrative
   await click('Save answer & update implementation draft');
   expect(api.put).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({completed:false,answers:{inventory:'Yes'},expected_revision:0}));
   expect(update).toHaveBeenCalledWith(expect.stringContaining('enterprise asset inventory'),'');expect(apply).not.toHaveBeenCalled();
+  await render({record:row,current:row,form:{...row,implementation:update.mock.calls[0][0]},assessmentDirty:true,onUpdateImplementation:update,onApply:apply});
   expect(document.body.textContent).toContain('unsaved native draft');expect(document.querySelector('.guided-panel legend').textContent).toContain('coverage');
 });
 
@@ -266,9 +267,9 @@ test('safeguard invitation uses saved answers, never unsaved edits, and disclose
   expect(invitationText()).toContain('Let’s work through Safeguard 1.1 together');await open();await select('Yes');
   await act(async()=>document.querySelector('[aria-label="Close OmniBot Guide"]').click());expect(invitationText()).toBeUndefined();
   draft={...draft,client_id:'demo_brawndo',assessment_id:'pilot',user_id:'pilot-test',revision:2,answers:{inventory:'Not sure'}};await act(async()=>root.render(null));await render({record:row,current:{...row,client_id:'demo_brawndo',assessment_history:[],work:{context_complete:true,finding_ids:[],task_ids:[],review_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0}},contextComplete:true});
-  expect(invitationText()).toContain('continue your saved assessment of Safeguard 1.1');
+  expect(invitationText()).toContain('continue your saved interview for Safeguard 1.1');
   draft={...draft,lineage_stale:true};await act(async()=>root.render(null));await render({record:row,current:{...row,client_id:'demo_brawndo',assessment_history:[],work:{context_complete:true,finding_ids:[],task_ids:[],review_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0}},contextComplete:true});
-  expect(invitationText()).toContain('compared with the current assessment');expect(api.put).not.toHaveBeenCalled();
+  expect(invitationText()).toContain('compare your saved answers with the current assessment');expect(api.put).not.toHaveBeenCalled();
 });
 test('focused suppression never changes legacy invitations and prior disabled preference is honored',async()=>{
   mockWorkspaceMode='demo';localStorage.setItem('guided-pilot-ui:pilot-test:demo_brawndo',JSON.stringify({invitationsDisabled:true}));

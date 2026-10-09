@@ -3,14 +3,33 @@ import {useLayoutEffect,useRef,useState} from 'react';
 export const OMNI_POSITIONS=['lower-right','middle-right','lower-left'];
 export function snapPosition(x,y,width,height){return x<width/2?'lower-left':y<height*.65?'middle-right':'lower-right';}
 const overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+export function fitOmniPopover(anchor,size,width=window.innerWidth,height=window.innerHeight){
+  const pad=8,gap=8,w=Math.min(size.width,width-pad*2),h=Math.min(size.height,height-pad*2);
+  const above=anchor.top-gap-pad,below=height-anchor.bottom-gap-pad;
+  return {left:Math.max(pad,Math.min(width-w-pad,anchor.right-w)),top:Math.max(pad,Math.min(height-h-pad,above>=h||above>=below?anchor.top-gap-h:anchor.bottom+gap))};
+}
 export default function OmniDock(props){return props.freePosition?<FreeDock {...props}/>:<ClassicDock {...props}/>;}
-function FreeDock({preferenceKey,children,name='Omni'}){
+function FreeDock({preferenceKey,children,name='Omni',focused=false}){
   const root=useRef(null),drag=useRef(null),moved=useRef(false),key=preferenceKey+':free-position';
   const [point,setPoint]=useState(()=>{try{const value=JSON.parse(localStorage.getItem(key));if(value&&Number.isFinite(value.x)&&Number.isFinite(value.y))return value;}catch{/* Cosmetic preference only. */}return {x:window.innerWidth-190,y:window.innerHeight-260};});
   const pointRef=useRef(point);pointRef.current=point;
-  const move=(x,y)=>{const rect=root.current?.getBoundingClientRect();const next={x:Math.max(8,Math.min(window.innerWidth-(rect?.width||168)-8,x)),y:Math.max(82,Math.min(window.innerHeight-(rect?.height||190)-8,y))};setPoint(next);try{localStorage.setItem(key,JSON.stringify(next));}catch{/* Cosmetic preference only. */}};
-  useLayoutEffect(()=>{const clamp=()=>move(pointRef.current.x,pointRef.current.y);clamp();window.addEventListener('resize',clamp);return()=>window.removeEventListener('resize',clamp);},[]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <div ref={root} className="guided-launcher omni-free-dock" style={{left:point.x,top:point.y}}
+  const move=(x,y)=>{const rect=root.current?.getBoundingClientRect(),height=rect?.height||190,top=focused&&window.innerHeight<height+90?8:82;const next={x:Math.max(8,Math.min(window.innerWidth-(rect?.width||168)-8,x)),y:Math.max(top,Math.min(window.innerHeight-height-8,y))};setPoint(next);try{localStorage.setItem(key,JSON.stringify(next));}catch{/* Cosmetic preference only. */}};
+  useLayoutEffect(()=>{const clamp=()=>move(pointRef.current.x,pointRef.current.y);clamp();window.addEventListener('resize',clamp);return()=>window.removeEventListener('resize',clamp);},[focused]); // eslint-disable-line react-hooks/exhaustive-deps
+  const placePopovers=()=>{
+    const dock=root.current;if(!focused||!dock)return;
+    for(const popover of dock.querySelectorAll('.guided-context-prompt,.omni-position-controls[open] > div')){
+      const anchor=(popover.classList.contains('guided-context-prompt')?dock.querySelector('.omni-launch-button'):popover.parentElement.querySelector('summary'))?.getBoundingClientRect();
+      const size=popover.getBoundingClientRect();if(!anchor||!size.width||!size.height)continue;
+      const position=fitOmniPopover(anchor,size);popover.style.left=position.left+'px';popover.style.top=position.top+'px';
+    }
+  };
+  useLayoutEffect(placePopovers);
+  useLayoutEffect(()=>{
+    if(!focused)return;const dock=root.current;
+    dock.addEventListener('toggle',placePopovers,true);
+    return()=>dock.removeEventListener('toggle',placePopovers,true);
+  },[focused]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <div ref={root} className="guided-launcher omni-free-dock" data-focused-omni={focused||undefined} style={{left:point.x,top:point.y}}
     onPointerDown={e=>{if(e.button!==0||!e.target.closest('.omni-launch-button'))return;drag.current={id:e.pointerId,x:e.clientX,y:e.clientY,point:pointRef.current};moved.current=false;}}
     onPointerMove={e=>{const d=drag.current;if(!d||d.id!==e.pointerId)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;if(Math.hypot(dx,dy)>8||moved.current){moved.current=true;e.currentTarget.setPointerCapture(e.pointerId);move(d.point.x+dx,d.point.y+dy);}}}
     onPointerUp={e=>{if(!drag.current)return;if(moved.current)e.preventDefault();drag.current=null;}}
