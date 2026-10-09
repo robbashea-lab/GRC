@@ -2,7 +2,7 @@
   "schema": "omni-cis-independent-review-1",
   "reviewer": "cis_independent_qa (actual separate agent, no implementation ownership)",
   "review_base": "e1763cf72eea9e250c26feae17c642cc6b044b48",
-  "final_review_sha": "eb16427021e646904883b890829d7308f4ee3c9d",
+  "final_review_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
   "release_approval": false,
   "source_review": {
     "unique_definitions": 153,
@@ -138,7 +138,7 @@
     {
       "id": "QA-CIS-005",
       "priority": "P2-test-expectations",
-      "state": "corrected_independently_reviewed_full_rerun_pending",
+      "state": "resolved_independently_reviewed_focused_windows_and_full_frontend_ci",
       "application_defect": false,
       "issue": "Four full-suite assertions retained obsolete pilot-only eligibility/implicit historical defaults after the authorized CIS rollout.",
       "original_failure_log": "outputs/omni-cis-rollout/frontend-full-integrated.log",
@@ -157,6 +157,27 @@
         "exit_code": 0,
         "seconds": 9.019,
         "source": "cis_shared_workflow actual execution report; this reviewer independently audited test diffs and expectation authority."
+      },
+      "root_windows_execution": {
+        "source_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+        "suites": 2,
+        "tests": 17,
+        "seconds": 5.132,
+        "exit_code": 0,
+        "exit_code_source": "Lead actual execution report; reviewer read passing complete log.",
+        "log": "outputs/omni-cis-rollout/windows-corrected-contract-final.log"
+      },
+      "full_frontend_ci": {
+        "run_id": 37992644774,
+        "head_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+        "checkout_sha": "716c1951b836d57f93c9bced97dfdf5b17661c95",
+        "identical_tree": "3e5cc3931f0500880893e2cec72f4dc42874ec2c",
+        "suites": 255,
+        "tests": 7094,
+        "snapshots": 1,
+        "seconds": 1048.347,
+        "passed": true,
+        "log": "outputs/omni-cis-rollout/ci123-frontend-success.log"
       }
     }
   ],
@@ -170,11 +191,11 @@
     "visual_diff_review": "Git-blob equality verified for approved artwork/window/CSS,1.1 V3, canonical CIS and representativeISO/SOC catalogs and dependencies. Actual visual comparison remains lead responsibility."
   },
   "remaining_required_evidence": [
-    "Lead full tests/builds and final exact-candidate CI after report integration",
-    "Actual browser339 placements and all supported entry points, separate from JSDOM/local rule counts",
-    "Authenticated Render lifecycle: saves/updates/Save&close/cancel/exact reload/manual/native edits/actual logout-login/denial/isolation/failure-retry/duplicates/stale writers",
-    "Persistent Brawndo IG1/Initech IG2/new unique fictional IG3 showcase and supported future/mixed onboarding/group upgrades with test fixture treatment",
-    "Hosted comparison to approved1.1 and excluded frameworks, plus unchanged record values where no save was authorized"
+    "Required backend CI offline suites and disposable Mongo recovery/authorization verification; both CI123 attempts failed before checkout. Final composite required gate must succeed after report integration; existing workflow and provider settings stay unchanged.",
+    "Complete actual-browser339 placement and supported-entry-point acceptance; lead partial snapshot264/339 is local real browser, distinct from hosted persistence.",
+    "Authenticated Render lifecycle: saves/updates/Save&close/cancel/exact reload/manual/native edits/actual logout-login/denial/isolation/failure-retry/duplicates/stale writers.",
+    "Persistent BrawndoIG1/InitechIG2/new unique fictionalIG3 showcases and supported future/mixed onboarding/group upgrades with safe test fixture treatment.",
+    "Deployed candidate revision verification, approved1.1 and excluded-framework visual comparisons, and unchanged record values where no native save was authorized."
   ],
   "rows": [
     {
@@ -4048,7 +4069,7 @@
   ],
   "tested_runtime_sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
   "code_content_review_accepted": true,
-  "final_decision": "Independent source/content/runtime/scope review accepted. Required actual browser placements, hosted lifecycle, persistent showcases, exact-candidate full CI/builds and visual acceptance remain release gates; this is not release acceptance.",
+  "final_decision": "Independent source/content/runtime/scope review accepted, including the corrected matrix and test expectations. CI123 frontend and both builds passed on a synthetic PR merge with the complete Git tree identical to rollout head. Required backend CI remains blocked before checkout/tests by remote DockerHub timeouts/unauthenticated pull quota. Actual339 browser placements, authenticated hosted lifecycle, persistent showcases and final deployed visual/native acceptance remain required; this is not release acceptance.",
   "corrective_verification": {
     "actual_module_calls": {
       "sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
@@ -4351,8 +4372,8 @@
     "note": "Reference the shared canonical matrix rather than duplicate4267 authored IDs. Counts are not independent test success."
   },
   "test_and_build_evidence_audit": {
-    "reviewed_root_sha": "31cb670dc18e68ecf436a4e7f8db2f4c312e31e2",
-    "reviewed_at_utc": "2026-10-09 21:08:23 UTC",
+    "reviewed_root_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "reviewed_at_utc": "2026-10-09T21:49:10.668Z",
     "read_only": true,
     "log_manifests": [
       {
@@ -4407,15 +4428,29 @@
         "new_client_times": []
       },
       {
+        "name": "ci123-frontend-success.log",
+        "bytes": 72912,
+        "sha256": "7d403197a1ba561776d2fa95e5a7cf1096a88485a9a00b0f18166f33eca28536"
+      },
+      {
+        "name": "ci123-backend-provider-failure.log",
+        "bytes": 4873,
+        "sha256": "19acfdd26d9e845bd1e43292c607cd55af1e0bf218ba86f37d7ae8a872d604f0"
+      },
+      {
+        "name": "ci123-backend-provider-retry-failure.log",
+        "bytes": 5027,
+        "sha256": "f05ec25d4fa723071114fc161c5b95d2d6c5b398f71c2a2e4fd90f630e17abae"
+      },
+      {
         "name": "frontend-full-integrated.log",
-        "bytes": 33673,
-        "sha256": null,
-        "compiled_successfully": false,
-        "summary": [
-          "FAIL src/components/OmniInventoryContext.test.jsx",
-          "FAIL src/lib/guidedControl1V3.test.js"
-        ],
-        "new_client_times": []
+        "bytes": 49699,
+        "sha256": "8ff9b40c82e649e0ef267dfab9ba389146fdb1065123e3f828a97ea5a66b45bf"
+      },
+      {
+        "name": "windows-corrected-contract-final.log",
+        "bytes": 320,
+        "sha256": "144126fe06efe9193025fc9379689a57d5328e66feae3c7a6986abb6a32e595a"
       }
     ],
     "scope": "9204445..31cb670 changes only the two independent reports; product/runtime/catalog unchanged. Backend tree is unchanged from6d9e849.",
@@ -4477,18 +4512,18 @@
     ],
     "full_frontend": {
       "source_sha": "00b2fca4c172551ebf1c2c2647b6ef9df0c529c1",
-      "state": "running_with_four_failed_assertions_observed",
-      "completion_footer_seen": false,
+      "state": "completed_exit1_original_four_obsolete_expectations",
+      "completion_footer_seen": true,
       "suites_with_failures": [
         "src/components/OmniInventoryContext.test.jsx",
         "src/lib/guidedControl1V3.test.js"
       ],
       "failure_classification": "Connected-code/source-contract inspection establishes obsolete pilot-only eligibility and implicit historical-default expectations. Current behavior follows authorized all-configured-CIS rollout; test corrections/rerun required, no demonstrated application defect.",
-      "preservation": "Original full-suite failure log retained. Neither suite may be suppressed and whole-suite success is not claimed.",
+      "preservation": "Original Windows full run remains failed and its log is preserved byte-for-byte. Corrected focused Windows replay and complete Linux CI frontend success are separate results, never a Windows full pass.",
       "corrected_expectations": {
         "id": "QA-CIS-005",
         "priority": "P2-test-expectations",
-        "state": "corrected_independently_reviewed_full_rerun_pending",
+        "state": "resolved_independently_reviewed_focused_windows_and_full_frontend_ci",
         "application_defect": false,
         "issue": "Four full-suite assertions retained obsolete pilot-only eligibility/implicit historical defaults after the authorized CIS rollout.",
         "original_failure_log": "outputs/omni-cis-rollout/frontend-full-integrated.log",
@@ -4507,19 +4542,210 @@
           "exit_code": 0,
           "seconds": 9.019,
           "source": "cis_shared_workflow actual execution report; this reviewer independently audited test diffs and expectation authority."
+        },
+        "root_windows_execution": {
+          "source_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+          "suites": 2,
+          "tests": 17,
+          "seconds": 5.132,
+          "exit_code": 0,
+          "exit_code_source": "Lead actual execution report; reviewer read passing complete log.",
+          "log": "outputs/omni-cis-rollout/windows-corrected-contract-final.log"
+        },
+        "full_frontend_ci": {
+          "run_id": 37992644774,
+          "head_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+          "checkout_sha": "716c1951b836d57f93c9bced97dfdf5b17661c95",
+          "identical_tree": "3e5cc3931f0500880893e2cec72f4dc42874ec2c",
+          "suites": 255,
+          "tests": 7094,
+          "snapshots": 1,
+          "seconds": 1048.347,
+          "passed": true,
+          "log": "outputs/omni-cis-rollout/ci123-frontend-success.log"
         }
       },
-      "original_log_last_write_utc": "2026-10-09T20:51:47Z",
-      "last_write_limit": "No completion or process-hang conclusion inferred from unchanged log; lead owns execution status and final full rerun."
+      "original_log_last_write_utc": "2026-10-09T21:34:44.559Z",
+      "last_write_limit": "Completed footer now independently inspected. No timeout or process hang is asserted; all three long-running named suites passed.",
+      "exit_code": 1,
+      "exit_code_source": "Lead actual execution report; reviewer read Ran all test suites footer and complete totals.",
+      "suites": {
+        "passed": 253,
+        "failed": 2,
+        "total": 255
+      },
+      "tests": {
+        "passed": 7089,
+        "failed": 4,
+        "total": 7093
+      },
+      "snapshots": {
+        "passed": 1,
+        "total": 1
+      },
+      "seconds": 2802.12,
+      "long_suites": [
+        {
+          "name": "brawndoTenYear.test.js",
+          "passed": true,
+          "seconds": 1734.023
+        },
+        {
+          "name": "frameworkFiveYear.test.js",
+          "passed": true,
+          "seconds": 308.626
+        },
+        {
+          "name": "cisGreenfield24Month.test.js",
+          "passed": true,
+          "seconds": 60.685
+        }
+      ]
     },
     "matrix_script_review": {
       "file": "scripts/omni-cis-rollout-matrix.cjs",
-      "issue": "Hardcoded pending independent/content/runtime labels remain stale after independent acceptance.",
-      "disposition": "Lead advised to join all153 unique independent rows by canonical ID, carry review SHA, mark only accepted source/code rows, and keep actual browser/hosted/exactCI/release states separate. No code or matrix changed by reviewer.",
-      "state": "pending_lead_update"
+      "reviewed_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+      "state": "resolved_independently_validated",
+      "method": "Read-only inspection of generator and153 generated rows against canonical catalog, all153 independent rows, source atomic maps and4267 authored case references. Generator itself was not run by reviewer because it writes the shared matrix.",
+      "rows": 153,
+      "unique_ids": 153,
+      "cumulative_counts": [
+        56,
+        130,
+        153
+      ],
+      "authored_case_references": 4267,
+      "required_rendered_placements": 339,
+      "validation_errors": [],
+      "review_sha_in_matrix": "eb16427021e646904883b890829d7308f4ee3c9d",
+      "runtime_unchanged_since_matrix_review_sha": true,
+      "release_acceptance": false,
+      "disposition": "Safe canonical-ID join accepted. Content/code acceptance is conditional on the independent global acceptance and each exact reviewed row, while browser, hosted and release gates remain explicit and separate."
     },
-    "final_scope_review_sha": "eb16427021e646904883b890829d7308f4ee3c9d",
-    "final_scope_delta": "31cb670..eb16427 changes only independently reviewed expectations in the two named test suites. Runtime/catalog/backend/CSS/assets/dependencies unchanged."
+    "final_scope_review_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "final_scope_delta": "eb16427..b0f87ba contains only source/recovery/phase/defect/coverage/independent documentation and matrix generator updates. Product/runtime/backend/catalog/CSS/assets/dependencies/workflow unchanged. aa03..b0f87ba frontend changes are four test files only."
   },
-  "prior_final_review_sha": "9204445494f4518611d9add1069eb0d693270719"
+  "prior_final_review_sha": "eb16427021e646904883b890829d7308f4ee3c9d",
+  "ci123_evidence": {
+    "run_id": 37992644774,
+    "workflow": ".github/workflows/release-verification.yml",
+    "draft_pr": 63,
+    "head_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "actual_checkout_sha": "716c1951b836d57f93c9bced97dfdf5b17661c95",
+    "checkout_ref": "refs/pull/63/merge",
+    "head_tree": "3e5cc3931f0500880893e2cec72f4dc42874ec2c",
+    "checkout_tree": "3e5cc3931f0500880893e2cec72f4dc42874ec2c",
+    "tree_equality_independently_verified": true,
+    "tree_equality_method": "Read-only local git rev-parse both tree objects and empty Git diff; independent GitHub compare head-to-synthetic-merge shows one merge commit ahead and files[]. No checkout, main merge or reset performed.",
+    "main_sha": "911706cebc7a70c0443f500fcd4bc19260c1db60",
+    "main_ancestor_of_head": true,
+    "toolchain": {
+      "os": "Ubuntu24.04.5",
+      "node": "22.23.3",
+      "yarn": "1.22.22"
+    },
+    "frontend": {
+      "state": "passed",
+      "suites": 255,
+      "tests": 7094,
+      "snapshots": 1,
+      "seconds": 1048.347,
+      "command": "CI=true yarn test --watchAll=false --runInBand",
+      "builds": [
+        {
+          "command": "CI=true node scripts/staging.cjs",
+          "compiled_successfully": true
+        },
+        {
+          "command": "CI=true yarn build:preview",
+          "compiled_successfully": true
+        }
+      ],
+      "boundary": "Tests/builds run against complete-tree-equivalent candidate, not a direct head checkout and not deployed/hosted proof."
+    },
+    "backend": {
+      "state": "blocked_provider_container_initialization",
+      "attempts": 2,
+      "action": "/usr/bin/docker pull mongo:8.0",
+      "failed_before_checkout": true,
+      "offline_suites_executed": false,
+      "disposable_mongo_recovery_executed": false,
+      "errors": [
+        "DockerHub auth token endpoint Client.Timeout/context deadline exceeded while awaiting headers",
+        "toomanyrequests: You have reached your unauthenticated pull rate limit.",
+        "Docker pull failed with exit code1"
+      ],
+      "failure_classification": "Remote GitHub runner DockerHub registry/token network and unauthenticated pull-quota failures. No application assertion or Mongo persistence verification ran; logs do not establish invalid credentials.",
+      "logs": [
+        {
+          "name": "ci123-backend-provider-failure.log",
+          "bytes": 4873,
+          "sha256": "19acfdd26d9e845bd1e43292c607cd55af1e0bf218ba86f37d7ae8a872d604f0"
+        },
+        {
+          "name": "ci123-backend-provider-retry-failure.log",
+          "bytes": 5027,
+          "sha256": "f05ec25d4fa723071114fc161c5b95d2d6c5b398f71c2a2e4fd90f630e17abae"
+        }
+      ]
+    },
+    "release_gate": {
+      "passed": false,
+      "requirement": "Existing release-gate requires both frontend and backend success. Local backend passing tests cannot substitute for required backend CI.",
+      "deployment_performed": false,
+      "ci_or_provider_settings_changed": false
+    }
+  },
+  "effective_access_and_blocker_classification": {
+    "local_profile": {
+      "sandbox": "danger-full-access",
+      "filesystem": "unrestricted",
+      "network": "enabled",
+      "approval_policy": "never",
+      "verified_scope": "Own report reads/writes and independent GitHub read connector requests succeeded. No local sandbox restriction or connector approval failure observed."
+    },
+    "provider_restriction": {
+      "source": "Remote GitHub Actions runner service-container pull from DockerHub; exact provider diagnostics preserved in raw logs.",
+      "scope": "Backend CI Initialize containers, before checkout/Python/tests.",
+      "real_approval_request_issued": false,
+      "approval_request_prevented": false,
+      "reason": "This is an unavailable/rate-limited provider dependency in an existing permitted CI action, not a pending user authorization request.",
+      "smallest_supported_recovery": "Restore DockerHub network/token service and existing pull quota availability, then rerun the unchanged required job on the same candidate. No workspace setting change is indicated. New registry credentials, image mirror, workflow/provider settings changes are outside the current no-settings-change authority and were not attempted."
+    },
+    "render_provider_permissions": "No rollout deployment attempted while required CI gate is red; no Render permission failure inferred."
+  },
+  "browser_layer_B_partial_audit": {
+    "observed_at": "2026-10-09T21:49:10.668Z",
+    "source_sha": "9204445494f4518611d9add1069eb0d693270719",
+    "source_runtime_unchanged_at_reviewed_head": true,
+    "log": "outputs/omni-cis-rollout/browser-layer-B-actual-9204445.jsonl",
+    "snapshot_bytes": 3364651,
+    "snapshot_sha256": "484e21597009359a913c3823bcaf27c215eb19744764f524ffaeed7e2cb17d50",
+    "snapshot_records": 264,
+    "unique_placements": 264,
+    "groups": [
+      {
+        "client": "Brawndo",
+        "required": 56,
+        "recorded": 56
+      },
+      {
+        "client": "Initech",
+        "required": 130,
+        "recorded": 130
+      },
+      {
+        "client": "Hooli",
+        "required": 153,
+        "recorded": 78
+      }
+    ],
+    "last_recorded_at": "2026-10-09T21:48:48.943Z",
+    "validation_errors": [],
+    "checked": "Canonical titles/minimum group, client identity in summary, real local browser route, reachable grouped interview snapshots, full title summary and three plain-text headings, native-before/native-after equality.",
+    "all_native_unchanged": true,
+    "complete": false,
+    "executed_by": "Lead supported native accessibility browser controls; independent reviewer read recorded snapshots only.",
+    "boundary": "Local real browser at127.0.0.1:4357 with isolated Demo records. Synthetic root affirmative exposes relevant questions; all-unknown substantive summary remains NotAssessed. No native assessment save, authenticated hosted proof, persistent staging showcase creation, logout/login or denial/conflict coverage. Log is still growing; this is a time-bounded partial snapshot, not a final file hash."
+  }
 }
