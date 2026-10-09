@@ -191,11 +191,11 @@
     "visual_diff_review": "Git-blob equality verified for approved artwork/window/CSS,1.1 V3, canonical CIS and representativeISO/SOC catalogs and dependencies. Actual visual comparison remains lead responsibility."
   },
   "remaining_required_evidence": [
-    "Required backend CI offline suites and disposable Mongo recovery/authorization verification; both CI123 attempts failed before checkout. Final composite required gate must succeed after report integration; existing workflow and provider settings stay unchanged.",
-    "Complete actual-browser339 placement and supported-entry-point acceptance; lead partial snapshot264/339 is local real browser, distinct from hosted persistence.",
-    "Authenticated Render lifecycle: saves/updates/Save&close/cancel/exact reload/manual/native edits/actual logout-login/denial/isolation/failure-retry/duplicates/stale writers.",
-    "Persistent BrawndoIG1/InitechIG2/new unique fictionalIG3 showcases and supported future/mixed onboarding/group upgrades with safe test fixture treatment.",
-    "Deployed candidate revision verification, approved1.1 and excluded-framework visual comparisons, and unchanged record values where no native save was authorized."
+    "Required backend CI offline suites and disposable Mongo recovery/authorization verification; both CI123 attempts failed before checkout. Final composite required gate must succeed after report integration; existing workflow/provider settings stay unchanged.",
+    "Remaining supported-entry-point, conditional/lifecycle and visual comparison acceptance after339/339 independently audited local browser placements. No pixel equality inferred from accessibility snapshots.",
+    "Authenticated Render deployed OmniBot lifecycle: saves/updates/Save&close/cancel/exact reload/manual/native edits/actual logout-login/denial/isolation/failure-retry/duplicates/stale writers. All three known fictional limited test identities are Disabled, contributor has0 assigned clients and user reports test credentials unavailable; existing admin session is preserved. No account/role/membership/credential changes or simulated hosted denials substitute for these checks.",
+    "Deployed rollout defaults for all persistent showcase groups and supported future/mixed onboarding/group upgrades with inherited history and safe temporary fixture treatment. InitechIG2/HooliIG3 durable provisioning itself is now evidenced under existing live app.",
+    "Actual rollout deployment revision verification, approved1.1/excluded-framework rendered visual and interaction comparisons, and full unchanged native record values where no assessment save was authorized."
   ],
   "rows": [
     {
@@ -4069,7 +4069,7 @@
   ],
   "tested_runtime_sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
   "code_content_review_accepted": true,
-  "final_decision": "Independent source/content/runtime/scope review accepted, including the corrected matrix and test expectations. CI123 frontend and both builds passed on a synthetic PR merge with the complete Git tree identical to rollout head. Required backend CI remains blocked before checkout/tests by remote DockerHub timeouts/unauthenticated pull quota. Actual339 browser placements, authenticated hosted lifecycle, persistent showcases and final deployed visual/native acceptance remain required; this is not release acceptance.",
+  "final_decision": "Independent source/content/runtime/scope review accepted. Local actual-browser safeguard placement coverage is now339/339 with independent raw/compact evidence audit. Persistent staging InitechIG2/HooliIG3 provisioning is independently evidenced through authoritative audit IDs and fresh authenticated UI loads under existing live app. CI123 frontend and both builds passed on synthetic PR merge with identical complete Git tree to rollout head; backend CI remains blocked before checkout/tests by DockerHub timeouts/unauthenticated pull quota. Remaining entry-point/visual acceptance and authenticated deployed OmniBot lifecycle/permission/conflict checks remain required; this is not release acceptance.",
   "corrective_verification": {
     "actual_module_calls": {
       "sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
@@ -4747,5 +4747,247 @@
     "complete": false,
     "executed_by": "Lead supported native accessibility browser controls; independent reviewer read recorded snapshots only.",
     "boundary": "Local real browser at127.0.0.1:4357 with isolated Demo records. Synthetic root affirmative exposes relevant questions; all-unknown substantive summary remains NotAssessed. No native assessment save, authenticated hosted proof, persistent staging showcase creation, logout/login or denial/conflict coverage. Log is still growing; this is a time-bounded partial snapshot, not a final file hash."
+  },
+  "browser_layer_B_completed_audit": {
+    "observed_at": "2026-10-09T22:05:58.344Z",
+    "reviewed_root_documentation_sha": "7eb9713cfe4d879fa27cb1a6c7b45ce33b770d4a",
+    "product_candidate": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "reported_served_source": "9204445494f4518611d9add1069eb0d693270719",
+    "product_runtime_unchanged_since": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
+    "raw": {
+      "file": "outputs/omni-cis-rollout/browser-layer-B-actual-9204445.jsonl",
+      "bytes": 4324111,
+      "sha256": "825d1e33996540e8182430be84b88e5dc0efd581656dd0bb32d216559d9373f7"
+    },
+    "raw_records": 340,
+    "unique_placements": 339,
+    "counts": [
+      56,
+      130,
+      153
+    ],
+    "groups": [
+      {
+        "client": "Brawndo",
+        "implementation_group": 1,
+        "required": 56,
+        "verified": 56
+      },
+      {
+        "client": "Initech",
+        "implementation_group": 2,
+        "required": 130,
+        "verified": 130
+      },
+      {
+        "client": "Hooli",
+        "implementation_group": 3,
+        "required": 153,
+        "verified": 153
+      }
+    ],
+    "deduplication": {
+      "method": "Use the latest append-only record per actual client/safeguard pair; all raw records retained.",
+      "supplement": "Brawndo3.5 initial resumed group2 walk is retained, with the22:02:18.982Z complete three-group1..3 supplement used for acceptance.",
+      "duplicates": 1
+    },
+    "compact": {
+      "file": "docs/omni-cis-rollout/browser-placement-evidence.json",
+      "bytes": 178738,
+      "sha256": "21f920f33ba375a1cc34c434cd85850252408ac0083972957243075ef979ae80",
+      "rows": 339,
+      "unique": 339,
+      "root_uncommitted_when_reviewed": true
+    },
+    "independent_checks": {
+      "group_indices_exact": "1..n for each of339 complete latest walks, all displayed totals match runtime grouping.",
+      "substantive_prompt_or_matrix_row_placements": 1418,
+      "client_group_canonical_identity": true,
+      "full_title_summary_identity": true,
+      "single_editable_summary_three_headings_exactly_once_and_ordered": true,
+      "summary_client_isolation": true,
+      "native_text_before_after_equal": true,
+      "compact_matches_latest_raw": true,
+      "legacy_fallback_not_observed": true,
+      "validation_errors": []
+    },
+    "approved_1_1_wording": {
+      "source": "frontend/src/components/RefinedOmniInterview.jsx",
+      "approved_and_current_git_blob": "1c9c26e35e0ac3062c58b5e8f3c82084b8fc2bfc",
+      "initial_matcher_failures": 9,
+      "reason": "Three catalog prompts have intentional frozen approved display labels in1.1, repeated across the three groups. The initial matcher used catalog wording rather than the existing component wording.",
+      "correction": "Independently inspected unchanged display mapping and re-ran actual displayed-label expectations. All1418 prompt/row checks passed; no product change, omitted requirement or assertion suppression."
+    },
+    "program_native_evidence": [
+      {
+        "file": "outputs/omni-cis-rollout/local-brawndo-after-sweep-program.txt",
+        "bytes": 6986,
+        "sha256": "74dc92f42b739aa284c9978aa49552bc7a0b669965ce8d495d6756e162666dae"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/local-initech-after-sweep-program.txt",
+        "bytes": 9794,
+        "sha256": "07164078fabf5667427811abf063e9321faf6dca12978343d5dd37fe9648419b"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/local-hooli-after339-program.txt",
+        "bytes": 7010,
+        "sha256": "e010fe4a10718c282774f729b994bc8d5591eadef0afe2eea1f75855c4d2b091"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/local-hooli-recommendation-native-resume.txt",
+        "bytes": 9288,
+        "sha256": "3524cf936eb67eb77e0be0517bfeb28e5b88616fcf803e1e446f7998b750c1b7"
+      }
+    ],
+    "observed_local_native_status_totals": {
+      "Brawndo": {
+        "implemented": 32,
+        "partially_implemented": 12,
+        "not_implemented": 5,
+        "not_assessed": 7
+      },
+      "Initech": {
+        "implemented": 0,
+        "partially_implemented": 0,
+        "not_implemented": 0,
+        "not_assessed": 130
+      },
+      "Hooli": {
+        "implemented": 0,
+        "partially_implemented": 0,
+        "not_implemented": 0,
+        "not_assessed": 153
+      }
+    },
+    "observed_recommendation_resume": "Local Hooli recommendation opens native1.1; recorded guide resumes unresolved group2of5 rather than forcing restart.",
+    "native_assessment_saves": 0,
+    "hosted_assessment_saves": 0,
+    "accepted_scope": "All339 local actual rendered safeguard placements and reachable positive-root grouped question/summary content.",
+    "remaining_scope": "All supported entry points/conditional-answer branches and pixel/interaction comparisons are not exhaustively established by these snapshots; final deployed hosted lifecycle, persistence, actual logout/login, negative identities, failed/retry, duplicate and stale-writer checks remain open.",
+    "boundary": "Actual local browser accessibility snapshots through supported lead controls, with isolated Demo synthetic interview-only progress. Native implementation text equality and aggregate status displays are established; per-record dates, verification and full history are not independently serialized here. This is not hosted native-save or pixel-equality proof."
+  },
+  "staging_showcase_provisioning_audit": {
+    "environment": "https://omnisciente-staging.onrender.com",
+    "executor": "Lead via existing normal authenticated client/onboarding UI; independent reviewer audited recorded evidence read-only.",
+    "live_revision": "Existing approved83d reference reported by lead; rollout candidate not deployed while required CI remains red.",
+    "authoritative_identity_source": "Normal Administration/Audit Created detail drawers, clientId and name; fresh authenticated normal client directory and program views.",
+    "fresh_directory": {
+      "file": "outputs/omni-cis-rollout/staging-showcase-directory.txt",
+      "clients_in_view": 11,
+      "prior_clients": 9,
+      "prior_count_source": "Lead initial authoritative registry report.",
+      "existing_brawndo_ig1_present": true,
+      "no_other_clients_removed_reported": true,
+      "new_tab": 58
+    },
+    "clients": [
+      {
+        "name": "Initech",
+        "client_id": "cli_51d464c245be0ddb5550306837370453e2223f0b2cc0b304ac137ea3ef97a24b",
+        "implementation_group": 2,
+        "applicable_native_safeguards": 130,
+        "fresh_load_not_assessed": 130
+      },
+      {
+        "name": "Hooli",
+        "client_id": "cli_81736222eb3a256f590391bc21530141cde382ab133a8554ccd6323f3dba9965",
+        "implementation_group": 3,
+        "applicable_native_safeguards": 153,
+        "fresh_load_not_assessed": 153
+      }
+    ],
+    "evidence": [
+      {
+        "file": "outputs/omni-cis-rollout/staging-initech-onboarding-review.txt",
+        "bytes": 6894,
+        "sha256": "f9240b9a9932d64105b49ee21f78f60d12c3bae41c87d4458aee01b15fc2d6a8"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/staging-initech-onboarding-result.txt",
+        "bytes": 4554,
+        "sha256": "c0decae0cd1c88b263b761294e2f7c8c0b62f9ba4b4ab086c74d68f1450c81d6"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/staging-hooli-onboarding-review.txt",
+        "bytes": 6916,
+        "sha256": "f141ab8a8f3ca3b5ebbcb1d45e6559e22c7625aa47283e804a0a02257e12dad5"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/staging-hooli-onboarding-result.txt",
+        "bytes": 4824,
+        "sha256": "b4719dec4b25ab33a75ac936bbaff2875e1b8b7e8be356d881eb8f27b29e53c3"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/staging-initech-authoritative-audit.txt",
+        "bytes": 1157,
+        "sha256": "add1a8e31cc3bdec133a6e216af81d9b2dbd230bbaaff2d129b97e59a2e48eb5"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/staging-hooli-authoritative-audit.txt",
+        "bytes": 1151,
+        "sha256": "05eb9d67d3a4fe5a2c5a283f83bf502e38c2ad5fca5d928557b7c0dea9242ce3"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/staging-showcase-directory.txt",
+        "bytes": 18472,
+        "sha256": "b8f3bba7570a5be6d3741e5dd47a2634b648cd27d88fc0b6071134c136df37a0"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/staging-initech-program-persisted.txt",
+        "bytes": 10115,
+        "sha256": "4ada108fbc3a8cc559223ba0597efb1a08cf75f695afaa5cf87b3f64e697585c"
+      },
+      {
+        "file": "outputs/omni-cis-rollout/staging-hooli-program-persisted.txt",
+        "bytes": 10334,
+        "sha256": "34ff6857676e84adc4d41d641e9f76bb10ff89271cc449da929055501e2714be"
+      }
+    ],
+    "normal_onboarding_configuration": "Only CISIG2/IG3 selected; other displayed frameworks DoesNotApply. Policy answers need confirmation; no primary contact/GRC lead, contacts/platform users/accounts/assignments fabricated. Normal existing policy/review defaults were previewed and completed, not invented Omni assessment results.",
+    "persistence_proof": "Fresh normal authenticated browser tab58 shows both canonical Created client IDs in Audit, both accessible clients in directory and130/153 NotAssessed program totals. This establishes durable client/program onboarding independently of browser-local Demo.",
+    "observed_current_live_ui": "Fresh program views still show legacy Open Omni guided assessment, consistent with existing deployed app. New approved OmniBot rollout is not yet deployed; these views do not accept its guide/save implementation.",
+    "authentication_limit": "Fresh tab reuses existing authenticated administrator session; actual logout/login remains unverified. Three known fictional limited identities are Disabled, with contributor0 client assignments; user reports test credentials unavailable. No account/access configuration changed.",
+    "hosted_omnibot_native_save_verified": false,
+    "rollout_deployed": false
+  },
+  "hosted_identity_access_blocker": {
+    "evidence": {
+      "file": "outputs/omni-cis-rollout/staging-test-identities-availability.txt",
+      "bytes": 596,
+      "sha256": "7291d8e1390a9f32da47948f3ff3b3ee247aaec770a6a52e0a684e98186d4ef4"
+    },
+    "observed_existing_test_identities": [
+      {
+        "role": "Client Read Only",
+        "assigned_clients": 1,
+        "status": "Disabled",
+        "count": 2
+      },
+      {
+        "role": "Client Contributor",
+        "assigned_clients": 0,
+        "status": "Disabled",
+        "count": 1
+      }
+    ],
+    "current_identity": {
+      "role": "Super Admin",
+      "assigned_scope": "All clients",
+      "status": "Active",
+      "session": "Existing authenticated staging administrator preserved"
+    },
+    "credential_state": "Lead relays user reply: Test credentials are unavailable. No test credentials supplied; actual administrator logout/login also not verified.",
+    "blocked_actions": [
+      "Authenticate as an active isolated read-only/contributor identity for hosted denial/client-isolation scenarios",
+      "Actual logout/login and resumed deployed OmniBot interview/native assessment checks"
+    ],
+    "restrictions_source": "Authoritative normal Users&Access UI shows three fictional test identities disabled; contributor has no assigned client. Missing credentials are separately user-reported, not a local sandbox or connector approval error.",
+    "real_approval_request_issued": false,
+    "approval_request_prevented": false,
+    "attempted_logout": false,
+    "security_changes_performed": false,
+    "smallest_supported_resolution": "Owner must identify active authorized isolated test identities with correct client scope and provide login availability through the secure browser/normal account workflow. No account enabling, role/client membership, password, reset or credential change is authorized or performed by this review.",
+    "limitation": "Existing admin can prove current authenticated provisioning, but an all-client SuperAdmin session cannot establish limited-identity authorization denial or actual logout/login."
   }
 }
