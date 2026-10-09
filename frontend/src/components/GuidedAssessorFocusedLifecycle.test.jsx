@@ -42,8 +42,8 @@ beforeEach(()=>{
   api.get.mockImplementation(async path=>({data:path.endsWith('/history')?{items:copy(history),next_before_revision:null}:readStored()}));
   api.put.mockImplementation(async (_path,body)=>{
     if(body.expected_revision!==stored.revision)throw new Error('Interview changed in another window; reload before saving');
-    if(stored.revision&&(stored.completed||body.restart)&&!history.some(item=>item.revision===stored.revision))history.push(copy(stored));
-    const base=body.restart||!stored.revision?{base_assessment_token:body.base_assessment_token,base_scope_fingerprint:body.base_scope_fingerprint}:{base_assessment_token:stored.base_assessment_token,base_scope_fingerprint:stored.base_scope_fingerprint};
+    if(stored.revision&&(stored.completed||body.restart||body.rebase)&&!history.some(item=>item.revision===stored.revision))history.push(copy(stored));
+    const base=body.restart||body.rebase||!stored.revision?{base_assessment_token:body.base_assessment_token,base_scope_fingerprint:body.base_scope_fingerprint}:{base_assessment_token:stored.base_assessment_token,base_scope_fingerprint:stored.base_scope_fingerprint};
     stored={...stored,...copy(body),...base,revision:stored.revision+1,updated_at:generated,generated_at:body.completed?generated:null};
     return {data:readStored()};
   });
@@ -84,11 +84,11 @@ test('edited summary survives an incomplete checkpoint and requires fresh review
   await remount();await open();expect(stored.narrative).toBe('Operator reviewed synthetic wording');expect(props.onApply).not.toHaveBeenCalled();
 });
 
-test.each(['1.2'])('Use summary for %s stages native fields only after durable save',async id=>{
+test.each(['1.2'])('%s saves the exact reviewed summary through the authoritative native adapter',async id=>{
   const current=record(id);props={...props,record:current,current,form:copy(current)};const answers=completeAnswers(id),result=focusedResult(id,answers,versionForSafeguard(id,true));
   stored={...interview(id),revision:2,answers,completed:true,result,narrative:result.narrative,generated_at:generated};
-  await render();await open();await click('Use summary');
-  expect(props.onApply).toHaveBeenCalledTimes(1);const applied=props.onApply.mock.calls[0][0];expect(applied.guided_assessment_source.revision).toBe(stored.revision);expect(applied.implementation).toBe(stored.narrative);expect(props.current.status).toBe('not_assessed');expect(props.current.verification).toBe('not_verified');expect(props.current.last_saved).toBe(token);
+  await render();await open();await click('Save assessment');
+  expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);const applied=props.onSaveAssessment.mock.calls[0][0];expect(applied.guided_assessment_source.revision).toBe(stored.revision);expect(applied.implementation).toBe(stored.narrative);expect(props.current.status).toBe('not_assessed');expect(props.current.verification).toBe('not_verified');expect(props.current.last_saved).toBe(token);
 });
 
 test('failed completed-summary persistence does not apply native fields',async()=>{

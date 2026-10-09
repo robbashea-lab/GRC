@@ -11,12 +11,12 @@ export function omniCisSummary(id,answers,version,clientName='The organization')
   if(id==='1.1')return inventorySummary(answers,version,clientName);
   const definition=catalogForVersion(version)?.definitions?.[id],questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version);
   const active=Object.fromEntries(Object.entries(answers).filter(([key])=>questions.some(q=>key===q.id||key===q.id+'_detail')));
-  const root=active[definition.root],subject=definition.title.toLowerCase();
-  const overview=[root==='Yes'?`${clientName} reports the practice to ${subject} is in place.`:root==='Partially'?`${clientName} reports partial implementation of the practice to ${subject}.`:root==='No'?`${clientName} reports the practice to ${subject} is not currently in place.`:`${clientName}’s implementation of the practice to ${subject} needs confirmation.`];
+  const subject=definition.title.toLowerCase();
+  const overview=[result.status==='addressed'?`${clientName} reports the practice to ${subject} is in place.`:result.status==='in_progress'?`${clientName} reports partial implementation of the practice to ${subject}.`:result.status==='needs_attention'?`${clientName} reports the practice to ${subject} is not currently in place.`:`${clientName}’s implementation of the practice to ${subject} needs confirmation.`];
   if(active.operation?.trim())overview.push(`Reported operation: ${active.operation.trim()}`);
   else if(active.system?.trim())overview.push(`The reported system or process is ${active.system.trim()}.`);
   const sections={'In place':[],'Needs confirmation':[],'Incomplete or missing':[],'Reported outside scope':[]},actions={confirmation:[],remediation:[]},breakdown=[];
-  for(const q of questions.filter(q=>q.critical)){
+  for(const q of questions.filter(q=>q.critical&&!(definition.root==='practice'&&q.id===definition.root))){
     const value=active[q.id],signals=result.signals.filter(signal=>signal.questionId===q.id);
     if(q.type==='matrix'){
       for(const row of q.rows){

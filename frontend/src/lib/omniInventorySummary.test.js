@@ -3,10 +3,11 @@ import {versionForSafeguard,visibleQuestions} from './guidedAssessment';
 import {focusedResult} from './focusedOmni';
 const version=versionForSafeguard('1.1',true),user={workspace_mode:'demo'};
 const record={client_id:'demo_brawndo',framework_key:'cis-ig1',definition_id:'1.1'};
-test('exact identity, framework, group and safeguard gate',()=>{
+test('matching identity, configured CIS group and applicable safeguard gate',()=>{
   expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1},record)).toBe(true);
-  for(const other of [{...record,definition_id:'1.2'},{...record,definition_id:'2.1'},{...record,client_id:'other'},{...record,framework_key:'iso-27001'}])expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1},other)).toBe(false);
-  expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:2},record)).toBe(false);
+  for(const other of [{...record,client_id:'other'},{...record,framework_key:'iso-27001'}])expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1},other)).toBe(false);
+  for(const group of [1,2,3])expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:group},record)).toBe(true);
+  expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1},{...record,definition_id:'1.2'})).toBe(true);
 });
 test.each(['No','Not sure','Partially'])('summary keeps %s evaluator status and distinguishes uncertainty',inventory=>{
   const answers={inventory},summary=inventorySummary(answers,version);

@@ -1,12 +1,14 @@
 import {focusedOmniEnabled,focusedRecommendations,nextFocusedQuestion,correctFocusedAnswer,focusedNarrative,focusedResult} from './focusedOmni';
-import {versionForSafeguard,visibleQuestions,generateResult,catalogForVersion} from './guidedAssessment';
+import {versionForSafeguard as runtimeVersion,visibleQuestions,generateResult,catalogForVersion} from './guidedAssessment';
+const versionForSafeguard=id=>id==='1.2'?runtimeVersion(id,false):runtimeVersion(id,true);
 const version=versionForSafeguard('1.1',true);
 
-test('stable identity, framework, IG1, enablement and exact safeguard boundaries',()=>{
+test('configured CIS group and canonical safeguard boundaries apply to every client',()=>{
   const user={workspace_mode:'demo'};
   expect(focusedOmniEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1},'1.1')).toBe(true);
-  for(const [client,framework,group,id] of [['demo_initech','cis-ig1',1,'1.1'],['demo_brawndo','soc-2',1,'1.1'],['demo_brawndo','cis-ig1',2,'1.1'],['demo_brawndo','cis-ig1',3,'1.1'],['demo_brawndo','cis-ig1',1,'1.3'],['demo_brawndo','cis-ig1',1,'2.1']])expect(focusedOmniEnabled(client,user,framework,{implementation_group:group},id)).toBe(false);
-  expect(focusedOmniEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1,focused_omni_enabled:false})).toBe(false);
+  for(const [client,framework,group,id] of [['demo_brawndo','soc-2',1,'1.1'],['future-client','cis-ig1',1,'1.3'],['future-client','cis-ig1',2,'1.5']])expect(focusedOmniEnabled(client,user,framework,{implementation_group:group},id)).toBe(false);
+  for(const client of ['demo_initech','future-client'])for(const group of [1,2,3])expect(focusedOmniEnabled(client,user,'cis-ig1',{implementation_group:group},'1.1')).toBe(true);
+  expect(focusedOmniEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1,guided_assessment_enabled:false})).toBe(false);
 });
 
 test('resume distinguishes absent inventory from known partial coverage without inferring tools',()=>{
@@ -23,18 +25,18 @@ test('changed prerequisite invalidates dependent current conclusions; unrelated 
   const answers={inventory:'Yes',coverage:{Servers:'Yes'},system:'NinjaOne',evidence:'Inventory export'};
   const root=visibleQuestions('1.1',answers,version)[0];
   const corrected=correctFocusedAnswer('1.1',answers,root,'No',version);
-  expect(corrected).toEqual({inventory:'No',evidence:'Inventory export'});
+  expect(corrected).toEqual({...answers,inventory:'No'});
   expect(answers.coverage.Servers).toBe('Yes');
   expect(focusedNarrative('1.1',corrected,version)).not.toContain('NinjaOne');
   expect(generateResult('1.1',corrected,new Date(),version).status).toBe('needs_attention');
 });
 
 test('recommendations contain only justified 1.1/1.2 work, with recorded foundation rationale',()=>{
-  const rows=[{definition_id:'1.2',framework_assessment_id:'handling',status:'not_assessed'},{definition_id:'1.1',framework_assessment_id:'inventory',status:'needs_attention'},{definition_id:'3.5',status:'needs_attention'}];
+  const rows=[{definition_id:'1.2',framework_assessment_id:'handling',status:'not_assessed'},{definition_id:'1.1',framework_assessment_id:'inventory',status:'needs_attention'},{definition_id:'3.5',status:'needs_attention'}].map(row=>({...row,framework_key:'cis-ig1'}));
   const items=focusedRecommendations(rows,{},false);
   expect(items.map(r=>r.definition_id)).toEqual(['1.1','1.2']);expect(items[0].reason).toContain('supports unauthorized-asset comparison');
   expect(focusedRecommendations(rows,{'1.2':{revision:2,completed:false}},false)[0].definition_id).toBe('1.2');
-  expect(focusedRecommendations([{definition_id:'1.1',status:'addressed',verification:'verified',work:{context_complete:true,open_findings:0,open_actions:0}}],{},true)).toEqual([]);
+  expect(focusedRecommendations([{framework_key:'cis-ig1',definition_id:'1.1',status:'addressed',verification:'verified',work:{context_complete:true,open_findings:0,open_actions:0}}],{},true)).toEqual([]);
 });
 
 const complete=id=>{
