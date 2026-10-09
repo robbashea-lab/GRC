@@ -38,7 +38,7 @@ beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();window.history.replaceState({},'', '/');
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   const current=record('1.1');stored=interview('1.1');history=[];scopeFingerprint=fingerprint;
-  props={clientId:'demo_brawndo',framework:'cis-ig1',configuration:{implementation_group:1},record:current,current,form:copy(current),contextComplete:true,related:{},onApply:jest.fn(),onDraftChange:jest.fn(),onUpdateImplementation:jest.fn(()=>true)};
+  props={clientId:'demo_brawndo',framework:'cis-ig1',configuration:{implementation_group:1},record:current,current,form:copy(current),contextComplete:true,related:{},onApply:jest.fn(),onSaveAssessment:jest.fn(async()=>true),onDraftChange:jest.fn(),onUpdateImplementation:jest.fn(()=>true)};
   api.get.mockImplementation(async path=>({data:path.endsWith('/history')?{items:copy(history),next_before_revision:null}:readStored()}));
   api.put.mockImplementation(async (_path,body)=>{
     if(body.expected_revision!==stored.revision)throw new Error('Interview changed in another window; reload before saving');
@@ -78,13 +78,13 @@ test('concurrency rejection retains local input',async()=>{
 
 test('edited summary survives an incomplete checkpoint and requires fresh review',async()=>{
   stored={...interview('1.1'),revision:2,answers:completeAnswers('1.1'),completed:true,result:focusedResult('1.1',completeAnswers('1.1'),versionForSafeguard('1.1',true)),narrative:'Original reviewed summary',generated_at:generated};
-  await render();await open();await value('[aria-label="Current implementation summary"]','Operator reviewed synthetic wording');await click('Back');expect(document.body.textContent).toContain('Question group 5 of 5');for(let i=0;i<4;i++)await click('Back');
+  await render();await open();await value('[aria-label="Omnibot implementation summary"]','Operator reviewed synthetic wording');await click('Back to questions');expect(document.body.textContent).toContain('Question group 5 of 5');for(let i=0;i<4;i++)await click('Back');
   await value('[aria-label="Who keeps it up to date?"]','Changed synthetic owner');await click('Save & close');
   expect(stored.completed).toBe(false);expect(stored.narrative).toBe('Operator reviewed synthetic wording');expect(history[0].narrative).toBe('Original reviewed summary');
   await remount();await open();expect(stored.narrative).toBe('Operator reviewed synthetic wording');expect(props.onApply).not.toHaveBeenCalled();
 });
 
-test.each(['1.1','1.2'])('Use summary for %s stages native fields only after durable save',async id=>{
+test.each(['1.2'])('Use summary for %s stages native fields only after durable save',async id=>{
   const current=record(id);props={...props,record:current,current,form:copy(current)};const answers=completeAnswers(id),result=focusedResult(id,answers,versionForSafeguard(id,true));
   stored={...interview(id),revision:2,answers,completed:true,result,narrative:result.narrative,generated_at:generated};
   await render();await open();await click('Use summary');
@@ -93,19 +93,19 @@ test.each(['1.1','1.2'])('Use summary for %s stages native fields only after dur
 
 test('failed completed-summary persistence does not apply native fields',async()=>{
   const answers=completeAnswers('1.1'),result=focusedResult('1.1',answers,versionForSafeguard('1.1',true));stored={...interview('1.1'),revision:2,answers,completed:true,result,narrative:result.narrative,generated_at:generated};
-  await render();await open();api.put.mockRejectedValueOnce(new Error('Synthetic completed save failure'));await click('Use summary');expect(props.onApply).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Synthetic completed save failure');
+  await render();await open();api.put.mockRejectedValueOnce(new Error('Synthetic completed save failure'));await click('Save assessment');expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Synthetic completed save failure');
 });
 
 test('a native draft edit during summary persistence prevents stale application',async()=>{
   const answers=completeAnswers('1.1'),result=focusedResult('1.1',answers,versionForSafeguard('1.1',true));stored={...interview('1.1'),revision:2,answers,completed:true,result,narrative:result.narrative,generated_at:generated};
   await render();await open();let resolveWrite;const write=api.put.getMockImplementation();api.put.mockImplementationOnce((...args)=>new Promise(resolve=>{resolveWrite=()=>resolve(write(...args));}));
-  await click('Use summary');await render({form:{...props.form,implementation:'Concurrent synthetic native draft'},assessmentDirty:true});await act(async()=>resolveWrite());
+  await click('Save assessment');await render({form:{...props.form,implementation:'Concurrent synthetic native draft'},assessmentDirty:true});await act(async()=>resolveWrite());
   expect(props.onApply).not.toHaveBeenCalled();expect(document.body.textContent).toContain('native assessment changed while saving');expect(props.form.implementation).toBe('Concurrent synthetic native draft');
 });
 
 test('Back does not remove close protection for unsaved summary wording',async()=>{
   const answers=completeAnswers('1.1'),result=focusedResult('1.1',answers,versionForSafeguard('1.1',true));stored={...interview('1.1'),revision:2,answers,completed:true,result,narrative:result.narrative,generated_at:generated};
-  await render();await open();await value('[aria-label="Current implementation summary"]','Unsaved operator summary');await click('Back');
+  await render();await open();await value('[aria-label="Omnibot implementation summary"]','Unsaved operator summary');await click('Back to questions');
   await act(async()=>document.querySelector('[aria-label="Close Omnibot Guide"]').click());expect(document.body.textContent).toContain('Save your progress');expect(stored.narrative).toBe(result.narrative);expect(props.onApply).not.toHaveBeenCalled();
 });
 
@@ -140,20 +140,23 @@ test('maintenance context does not overwrite the recorded update process',async(
   expect(stored.answers.maintenance_detail).toBe('Synthetic update process');expect(stored.answers.maintenance_detail_detail).toBe('Synthetic contact needs confirmation');
 });
 
-test('explicitly reconciled wording remains protected after later answer changes',async()=>{
+test('existing native wording goes directly to summary and edited wording survives later answers',async()=>{
   const answers=completeAnswers('1.1');delete answers.frequency;stored={...interview('1.1'),revision:2,answers};const current={...record('1.1'),implementation:'Retained synthetic manual context'};props={...props,record:current,current,form:copy(current)};
   await render();await open();await value('[aria-label="How often is the complete inventory reviewed?"]','Every six months');await click('Save & next');
-  const group=document.querySelector('[aria-label="Reconcile implementation narrative"]');expect(group).toBeTruthy();await value('[aria-label="Reconciled native implementation draft"]','Reviewed synthetic wording retains the manual context.');await act(async()=>group.querySelector('input').click());await click('Save reconciled proposal');
-  await click('Back');for(let i=0;i<4;i++)await click('Back');await value('[aria-label="Who keeps it up to date?"]','Changed synthetic team');await click('Save & close');expect(stored.narrative).toBe('Reviewed synthetic wording retains the manual context.');expect(props.current.implementation).toBe('Retained synthetic manual context');expect(props.onApply).not.toHaveBeenCalled();
+  expect(document.querySelector('[aria-label="Reconcile implementation narrative"]')).toBeNull();expect(document.body.textContent).toContain('Review your assessment summary');
+  await value('[aria-label="Omnibot implementation summary"]','Reviewed synthetic wording retains the manual context.');
+  await click('Back to questions');for(let i=0;i<4;i++)await click('Back');await value('[aria-label="Who keeps it up to date?"]','Changed synthetic team');await click('Save & close');
+  expect(stored.narrative).toBe('Reviewed synthetic wording retains the manual context.');expect(props.current.implementation).toBe('Retained synthetic manual context');expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
 
-
-test('a compare CAS rejection preserves the previous completed interview and its history',async()=>{
+test('own applied interview continues without acknowledgment; a CAS rejection preserves history and answers',async()=>{
   completedSaved('1.1');const original=copy(stored);history=[{...original,revision:1,narrative:'Earlier preserved snapshot'}];const previousHistory=copy(history);
-  await render();await open();await value('[aria-label="Fact or requirement to update"]','system');await click('Update this fact');
-  api.put.mockRejectedValueOnce(new Error('Interview changed in another window; reload before saving'));await confirmComparison();
-  expect(stored).toEqual(original);expect(history).toEqual(previousHistory);expect(document.body.textContent).toContain('Interview changed in another window');
-  expect(document.querySelector('[aria-label="Compare saved assessment"]')).toBeTruthy();expect(props.onApply).not.toHaveBeenCalled();expect(props.onUpdateImplementation).not.toHaveBeenCalled();
+  await render();await open();await click('Back to questions');for(let i=0;i<4;i++)await click('Back');
+  await value('[aria-label="Where do you maintain your inventory?"]','ChangedTool');
+  api.put.mockRejectedValueOnce(new Error('Interview changed in another window; reload before saving'));await click('Save & next');
+  expect(stored).toEqual(original);expect(history).toEqual(previousHistory);expect(document.body.textContent).toContain('Interview changed in another window');expect(document.querySelector('[aria-label="Where do you maintain your inventory?"]').value).toBe('ChangedTool');
+  expect(document.querySelector('[aria-label="Compare saved assessment"]')).toBeNull();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await click('Save & next');expect(stored.answers.system).toBe('ChangedTool');expect(stored.answers.owner).toBe(original.answers.owner);expect(stored.base_assessment_token).toBe(newToken);expect(history.some(item=>item.revision===original.revision)).toBe(true);
 });
 
 test('a later scope change still requires comparison even when the native record retains the current guided source',async()=>{
@@ -162,4 +165,51 @@ test('a later scope change still requires comparison even when the native record
   expect(document.querySelector('.guided-context-prompt').textContent).not.toContain('Your implementation is saved');
   await open();expect(button('Compare & continue from saved assessment')).toBeTruthy();
   expect(api.put).not.toHaveBeenCalled();expect(props.onApply).not.toHaveBeenCalled();
+});
+
+function readySummary(){
+  const answers=completeAnswers('1.1'),result=focusedResult('1.1',answers,versionForSafeguard('1.1',true));
+  stored={...interview('1.1'),revision:2,answers,completed:true,result,narrative:'Reviewed Brawndo inventory narrative',generated_at:generated};
+}
+
+test('first-time summary save calls the native save once with durable interview linkage',async()=>{
+  readySummary();await render();await open();await click('Save assessment');
+  expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
+  expect(props.onSaveAssessment).toHaveBeenCalledWith({implementation:stored.narrative,status:'addressed',guided_assessment_source:{version:stored.version,revision:stored.revision,generated_at:generated}},JSON.stringify(props.form));
+  expect(document.body.textContent).toContain('Assessment saved.');expect(props.current.verification).toBe('not_verified');
+});
+
+test('replacement requires confirmation, cancel preserves native and interview work, confirm saves both',async()=>{
+  readySummary();const current={...props.current,implementation:'Existing manual inventory',status:'in_progress'};props={...props,current,record:current,form:copy(current)};
+  await render();await open();const original=copy(stored);await click('Update assessment');
+  expect(document.body.textContent).toContain('Update this assessment?');await click('Cancel');
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(stored).toEqual(original);expect(props.current.implementation).toBe('Existing manual inventory');
+  await click('Update assessment');await click('Yes, update assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(props.onSaveAssessment.mock.calls[0][0].status).toBe('addressed');
+});
+
+test('native failure retains the reviewed summary and safely retries without success claim',async()=>{
+  readySummary();props.onSaveAssessment.mockResolvedValueOnce(false);await render();await open();await click('Save assessment');
+  expect(document.body.textContent).toContain('The assessment was not saved.');expect(document.body.textContent).not.toContain('Assessment saved.');
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed Brawndo inventory narrative');
+  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(2);expect(document.body.textContent).toContain('Assessment saved.');
+});
+
+test('duplicate clicks cannot submit two authoritative writes',async()=>{
+  readySummary();let finish;props.onSaveAssessment.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));await render();await open();
+  const target=button('Save assessment');await act(async()=>{target.click();target.click();});expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
+  await act(async()=>finish(true));expect(document.body.textContent).toContain('Assessment saved.');
+});
+
+test('read-only and unsaved native edits disable summary saving',async()=>{
+  readySummary();await render({disabled:true});await open();expect(button('Save assessment').disabled).toBe(true);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').disabled).toBe(true);
+  await render({disabled:false,assessmentDirty:true});expect(button('Save assessment').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('changed answers refresh derived conclusions while explicitly preserving reviewed wording',async()=>{
+  readySummary();await render();await open();await click('Back to questions');for(let i=0;i<4;i++)await click('Back');await click('No');
+  while(button('Save & next'))await click('Save & next');
+  expect(document.body.textContent).toContain('Review your assessment summary');expect(document.body.textContent).toContain('Not Implemented');
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed Brawndo inventory narrative');expect(button('Save assessment').disabled).toBe(true);
+  await click('Refresh from answers');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toContain('not currently in place');expect(button('Save assessment').disabled).toBe(false);
+  expect(stored.answers.system).toBe('OriginalTool');expect(stored.result.narrative).not.toContain('OriginalTool');expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
