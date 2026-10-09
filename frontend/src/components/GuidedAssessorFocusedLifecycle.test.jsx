@@ -179,6 +179,25 @@ test('first-time summary save calls the native save once with durable interview 
   expect(document.body.textContent).toContain('Assessment saved.');expect(props.current.verification).toBe('not_verified');
 });
 
+test('one complete editable write-up and actual title are saved byte-for-byte',async()=>{
+  readySummary();props.record.title='Establish and Maintain Detailed Enterprise Asset Inventory';await render();await open();
+  expect(document.body.textContent).toContain('Safeguard 1.1 — Establish and Maintain Detailed Enterprise Asset Inventory');expect(document.body.textContent).not.toContain('Safeguard 1.1 · Brawndo — CIS IG1');
+  expect(document.querySelectorAll('[aria-label="Omnibot implementation summary"]')).toHaveLength(1);
+  expect([...document.querySelectorAll('h3')].some(e=>e.textContent==='IMPLEMENTATION BREAKDOWN'||e.textContent==='ITEMS TO ADDRESS')).toBe(false);
+  const reviewed='OVERVIEW\n\nReviewed organization prose.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Operator-edited coverage.\n\nITEMS TO ADDRESS\n\n- Operator-edited next step.\n';
+  await value('[aria-label="Omnibot implementation summary"]',reviewed);await click('Save assessment');expect(stored.narrative).toBe(reviewed);expect(props.onSaveAssessment.mock.calls[0][0].implementation).toBe(reviewed);
+});
+test('summary Save & close closes only after successful native save, and retains all text on failure',async()=>{
+  readySummary();props.onSaveAssessment.mockResolvedValueOnce(false);await render();await open();const reviewed='OVERVIEW\n\nSynthetic overview.\n\nIMPLEMENTATION BREAKDOWN\n\n- Synthetic coverage.\n\nITEMS TO ADDRESS\n\n- Synthetic next step.';
+  await value('[aria-label="Omnibot implementation summary"]',reviewed);await click('Save & close');expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(reviewed);expect(document.body.textContent).toContain('The assessment was not saved.');
+  await click('Save & close');expect(props.onSaveAssessment).toHaveBeenCalledTimes(2);expect(props.onSaveAssessment.mock.calls[1][0].implementation).toBe(reviewed);expect(document.querySelector('[aria-label="Omnibot implementation summary"]')).toBeNull();
+});
+test('summary Save & close confirms replacement, cancellation retains work and native success closes',async()=>{
+  readySummary();const current={...props.current,implementation:'Existing manual inventory',status:'in_progress'};props={...props,current,record:current,form:copy(current)};
+  await render();await open();await click('Save & close');await click('Cancel');expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed Brawndo inventory narrative');
+  await click('Save & close');await click('Yes, update assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(document.querySelector('[aria-label="Omnibot implementation summary"]')).toBeNull();
+});
+
 test('replacement requires confirmation, cancel preserves native and interview work, confirm saves both',async()=>{
   readySummary();const current={...props.current,implementation:'Existing manual inventory',status:'in_progress'};props={...props,current,record:current,form:copy(current)};
   await render();await open();const original=copy(stored);await click('Update assessment');

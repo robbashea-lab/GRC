@@ -60,7 +60,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   const refined=focused&&!updated;
   const directAssessment=refined&&inventorySummaryEnabled(clientId,user,framework,configuration,record);
   const assessmentSavePending=useRef(false);
-  const [confirmUpdate,setConfirmUpdate]=useState(false),[assessmentSaving,setAssessmentSaving]=useState(false),[assessmentSaved,setAssessmentSaved]=useState(false);
+  const [confirmUpdate,setConfirmUpdate]=useState(false),[assessmentSaving,setAssessmentSaving]=useState(false),[assessmentSaved,setAssessmentSaved]=useState(false),[closeAfterAssessment,setCloseAfterAssessment]=useState(false);
 
   const [confirmClose,setConfirmClose]=useState(false),[summaryEdited,setSummaryEdited]=useState(false),[summaryBasis,setSummaryBasis]=useState('');
 
@@ -122,6 +122,8 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   const close=()=>{if(refined&&dirty){setConfirmClose(true);return;}changeMode('collapsed');};
 
   async function saveAndClose(){
+
+    if(directAssessment&&view==='result'&&result){requestAssessmentSave(true);return;}
 
     if(requireFocusedComparison())return;
 
@@ -273,8 +275,13 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
   }
 
-  async function commitSummary(){
-    if(assessmentSavePending.current||disabled||busy||assessmentDirty||!onSaveAssessment||summaryEdited&&summaryBasis!==JSON.stringify(answers)||requireFocusedComparison())return;
+  function requestAssessmentSave(closeAfter=false){
+    setCloseAfterAssessment(closeAfter);
+    if(current?.implementation?.trim()||current?.status&&current.status!=='not_assessed')setConfirmUpdate(true);
+    else commitSummary(closeAfter);
+  }
+  async function commitSummary(closeAfter=false){
+    if(assessmentSavePending.current||disabled||busy||assessmentDirty||!onSaveAssessment||!narrative.trim()||narrative.length>20000||summaryEdited&&summaryBasis!==JSON.stringify(answers)||requireFocusedComparison())return;
     assessmentSavePending.current=true;setAssessmentSaving(true);setAssessmentSaved(false);setConfirmUpdate(false);
     const expected=JSON.stringify(form),savedToken=current?.last_saved;
     try{
@@ -285,6 +292,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
       const success=await latest.onSaveAssessment({implementation:data.narrative,status:data.result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,data[k]]))},expected);
       if(!success)throw new Error('The assessment was not saved. Your interview and summary are retained. Review the native error and retry.');
       setResult(data.result);setNarrative(data.narrative);setAssessmentSaved(true);setSummaryBasis(JSON.stringify(answers));setApplied(true);
+      if(closeAfter){setConfirmClose(false);changeMode('collapsed');}
     }catch(e){setError(formatError(e));}finally{assessmentSavePending.current=false;setAssessmentSaving(false);}
   }
   function backFromSummary(){
@@ -379,17 +387,14 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
           {!record?focused?<FocusedProgram rows={rows} drafts={draftSummaries} contextComplete={contextComplete} onSelect={row=>{changeMode('minimized');onSelect?.(row);}}/>:workspacePilot?<ProgramPosition overview={overview} rows={rows} onSelect={row=>{close();onSelect?.(row);}} onViewAll={()=>{close();onViewAll?.();}}/>:<><p>Omni helps you see the full picture.</p>{prioritizeGuidedRows(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)),draftSummaries).map((r,i)=><section key={r.definition_id}><h3>{i===0?'Recommended next step':'Also needs attention'} · {r.definition_id} · {r.title}</h3><p>{draftSummaries[r.definition_id]?.completed?'Recommendation ready':draftSummaries[r.definition_id]?.revision?'Resume assessment':r.work?.overdue_reviews?'Overdue scheduled review':r.status==='not_assessed'?'Not Assessed':r.status==='addressed'?'Verification required':'Unresolved gap'}</p><Button onClick={()=>{close();onSelect(r);}}>{draftSummaries[r.definition_id]?.revision?'Resume':'Start'} safeguard {r.definition_id}</Button></section>)}<Button variant="outline" onClick={()=>{close();onViewAll?.();}}>View all safeguards</Button></>:refined&&draft&&view==='interview'?<RefinedOmniInterview id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>{setStep(questions.findIndex(q=>q.id===questionId));heading.current?.focus({preventScroll:true});}} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} onNext={nextRefinedGroup} onSaveClose={saveAndClose} inventoryContext={inventoryContext}/> :directAssessment&&draft&&view==='result'&&result?<>
             <h3>Review your assessment summary</h3>
-            <p>Safeguard 1.1 · Brawndo — CIS IG1</p>
+            <p>Safeguard {id} — {record.title}</p>
             <p>Proposed Implementation Status: <strong>{STATUSES[summaryModel.result.status]}</strong></p>
-            {summaryEdited&&summaryBasis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited this summary. Your wording is preserved. Review it against the updated breakdown before saving.</p><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={async()=>{if(await saveFocusedProposal(inventorySummary(answers,version).result)){setSummaryEdited(false);setSummaryBasis(JSON.stringify(answers));}}}>Refresh from answers</Button><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={()=>setSummaryBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}
-            <label>CURRENT IMPLEMENTATION<Textarea aria-label="Omnibot implementation summary" rows={8} maxLength={20000} disabled={disabled||busy||assessmentSaving} value={narrative} onChange={e=>{setNarrative(e.target.value);setSummaryEdited(true);setSummaryBasis(JSON.stringify(answers));setAssessmentSaved(false);}}/></label>
-            <hr/>
-            <section><h3>IMPLEMENTATION BREAKDOWN</h3><ul>{summaryModel.breakdown.map(item=><li key={item.area}><strong>{item.state}</strong> — {item.area}: {item.answer}</li>)}</ul></section>
-            <section><h3>ITEMS TO ADDRESS</h3><h4>Confirmed deficiencies</h4>{summaryModel.deficiencies.length?<ul>{summaryModel.deficiencies.map(item=><li key={item}>{item}</li>)}</ul>:<p>No confirmed gaps identified based on the reported answers.</p>}<h4>Needs confirmation</h4>{summaryModel.confirmations.length?<ul>{summaryModel.confirmations.map(item=><li key={item}>{item}</li>)}</ul>:<p>No outstanding confirmation needs reported.</p>}</section>
+            {summaryEdited&&summaryBasis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited this summary. Your wording is preserved. Review the changed answers before saving or refresh the complete write-up.</p><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={async()=>{if(await saveFocusedProposal(inventorySummary(answers,version).result)){setSummaryEdited(false);setSummaryBasis(JSON.stringify(answers));}}}>Refresh from answers</Button><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={()=>setSummaryBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}
+            <label>Current Implementation<Textarea aria-label="Omnibot implementation summary" rows={14} maxLength={20000} disabled={disabled||busy||assessmentSaving} value={narrative} onChange={e=>{setNarrative(e.target.value);setSummaryEdited(true);setSummaryBasis(JSON.stringify(answers));setAssessmentSaved(false);}}/></label>
             <p>Saving updates the native implementation and status. Evidence verification remains separate.</p>
             {assessmentSaved&&<p role="status">Assessment saved.</p>}
-            <div className="guided-actions"><Button variant="outline" disabled={busy||assessmentSaving} onClick={backFromSummary}>Back to questions</Button><Button disabled={disabled||busy||assessmentSaving||assessmentDirty||!onSaveAssessment||!narrative.trim()||narrative.length>20000||needsComparison||summaryEdited&&summaryBasis!==JSON.stringify(answers)} onClick={()=>{if(current?.implementation?.trim()||current?.status&&current.status!=='not_assessed')setConfirmUpdate(true);else commitSummary();}}>{current?.implementation?.trim()||current?.status&&current.status!=='not_assessed'?'Update assessment':'Save assessment'}</Button><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={saveAndClose}>Save &amp; close</Button></div>
-            <Dialog open={confirmUpdate} onOpenChange={value=>{if(!assessmentSaving)setConfirmUpdate(value);}}><DialogContent className="omni-refined-close" onEscapeKeyDown={e=>e.stopPropagation()}><DialogTitle>Update this assessment?</DialogTitle><DialogDescription>This will replace the saved Current Implementation and Implementation Status for Brawndo — CIS IG1 Safeguard 1.1 with the assessment summary shown here. Do you want to continue?</DialogDescription><div className="guided-actions"><Button variant="outline" disabled={assessmentSaving} onClick={()=>setConfirmUpdate(false)}>Cancel</Button><Button disabled={disabled||busy||assessmentSaving} onClick={commitSummary}>Yes, update assessment</Button></div></DialogContent></Dialog>
+            <div className="guided-actions"><Button variant="outline" disabled={busy||assessmentSaving} onClick={backFromSummary}>Back to questions</Button><Button disabled={disabled||busy||assessmentSaving||assessmentDirty||!onSaveAssessment||!narrative.trim()||narrative.length>20000||needsComparison||summaryEdited&&summaryBasis!==JSON.stringify(answers)} onClick={()=>requestAssessmentSave()}>{current?.implementation?.trim()||current?.status&&current.status!=='not_assessed'?'Update assessment':'Save assessment'}</Button><Button variant="outline" disabled={disabled||busy||assessmentSaving||assessmentDirty||!onSaveAssessment||!narrative.trim()||narrative.length>20000||needsComparison||summaryEdited&&summaryBasis!==JSON.stringify(answers)} onClick={saveAndClose}>Save &amp; close</Button></div>
+            <Dialog open={confirmUpdate} onOpenChange={value=>{if(!assessmentSaving)setConfirmUpdate(value);}}><DialogContent className="omni-refined-close" onEscapeKeyDown={e=>e.stopPropagation()}><DialogTitle>Update this assessment?</DialogTitle><DialogDescription>This will replace the saved Current Implementation and Implementation Status for Brawndo — CIS IG1 Safeguard 1.1 with the assessment summary shown here. Do you want to continue?</DialogDescription><div className="guided-actions"><Button variant="outline" disabled={assessmentSaving} onClick={()=>setConfirmUpdate(false)}>Cancel</Button><Button disabled={disabled||busy||assessmentSaving} onClick={()=>commitSummary(closeAfterAssessment)}>Yes, update assessment</Button></div></DialogContent></Dialog>
           </>:refined&&draft&&view==='result'&&result?<>
 
             <p className="omni-intro-label">Ready for your review</p><h3>Your implementation summary</h3><p>Check the wording, then use it in the existing assessment.</p>
@@ -442,7 +447,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
           {workspacePilot&&!focused&&initial.invitationsDisabled&&<Button variant="ghost" onClick={()=>{try{localStorage.setItem(key,JSON.stringify({...readPreference(key),invitationsDisabled:false}));}catch{}setContextPrompt(false);}}>Enable contextual invitations</Button>}
 
-          {refined&&<Dialog open={confirmClose} onOpenChange={setConfirmClose}><DialogContent className="omni-refined-close" onEscapeKeyDown={e=>e.stopPropagation()}><DialogTitle>Save your progress?</DialogTitle><DialogDescription>Your interview edits have not been saved. The native assessment is unchanged by these actions.</DialogDescription><div className="guided-actions"><Button variant="outline" onClick={()=>setConfirmClose(false)}>Keep editing</Button><Button variant="outline" disabled={busy} onClick={discardAndClose}>Discard changes</Button><Button disabled={disabled||busy} onClick={saveAndClose}>Save &amp; close</Button></div></DialogContent></Dialog>}
+          {refined&&<Dialog open={confirmClose} onOpenChange={setConfirmClose}><DialogContent className="omni-refined-close" onEscapeKeyDown={e=>e.stopPropagation()}><DialogTitle>Save your progress?</DialogTitle><DialogDescription>{directAssessment&&view==='result'&&result?'Save & close saves the reviewed assessment and closes only after success. Replacing a saved assessment requires confirmation.':'Your interview edits have not been saved. The native assessment is unchanged by these actions.'}</DialogDescription><div className="guided-actions"><Button variant="outline" onClick={()=>setConfirmClose(false)}>Keep editing</Button><Button variant="outline" disabled={busy} onClick={discardAndClose}>Discard changes</Button><Button disabled={disabled||busy||directAssessment&&view==='result'&&(assessmentSaving||assessmentDirty||summaryEdited&&summaryBasis!==JSON.stringify(answers))} onClick={saveAndClose}>Save &amp; close</Button></div></DialogContent></Dialog>}
 
         </div>
         {!workspacePilot&&<div className="guided-actions"><Button variant="outline" onClick={()=>changeMode('minimized')}>Minimize</Button><Button variant="ghost" onClick={()=>changeMode('dismissed')}>Dismiss assistant</Button></div>}
