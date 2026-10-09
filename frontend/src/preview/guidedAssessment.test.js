@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {guidedCatalog,versionForSafeguard,generateResult} from '../lib/guidedAssessment';
-import {readStore,saveStore} from './store';
+import {readStore,saveStore,ids} from './store';
 import {prepareGuidedContext} from './frameworks';
 import lineageContract from '../../../backend/tests/fixtures/guided-lineage-contract.json';
 import baseline from '@catalogs/onboardingCatalog.json';
@@ -12,12 +12,26 @@ beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post(
 const body={version:versionForSafeguard('1.1'),answers:{inventory:'No',existing:'Manual list'},step:1,completed:false,expected_revision:0};
 const source=draft=>Object.fromEntries(['version','revision','generated_at'].map(key=>[key,draft[key]]));
 const continuation=(draft,changes={})=>({version:draft.version,answers:draft.answers,step:draft.step,completed:draft.completed,narrative:draft.narrative||'',expected_revision:draft.revision,...changes});
+async function firstWrite(route,changes={}){
+  const current=(await api.get(route)).data;
+  return {...body,version:current.version,base_assessment_token:current.base_assessment_token,base_scope_fingerprint:current.base_scope_fingerprint,...changes};
+}
+const persisted=draft=>Object.fromEntries(['version','revision','answers','step','completed','narrative','result','generated_at','updated_at','base_assessment_token','base_scope_fingerprint'].filter(key=>Object.hasOwn(draft,key)).map(key=>[key,draft[key]]));
 async function restart(route=path,id='1.1'){
   const draft=(await api.get(route)).data;
   return {version:versionForSafeguard(id,true),answers:{},step:0,completed:false,narrative:'',expected_revision:draft.revision,restart:true,
     base_assessment_token:draft.current_assessment_token,base_scope_fingerprint:draft.current_scope_fingerprint};
 }
 function editStore(edit){const db=readStore();edit(db);saveStore(db);}
+function isolateNewClientFixture(){
+  // Provisioning exercises the real adapter in an empty authorized portfolio.
+  // Existing-client and cross-client regressions below retain the full Demo.
+  const db=readStore();
+  for(const key of Object.keys(ids))if(key!=='users')db[key]=[];
+  for(const key of ['baselines','drafts','riskSequences','ai_intake','ai_counters','guided_assessment_pilot'])db[key]={};
+  db.logs=[];db.notifications=[];
+  saveStore(db);
+}
 test('save and resume leave native assessment evidence and history unchanged',async()=>{
   const first=(await api.put(path,pilotBody)).data;expect(first.revision).toBe(1);
   expect((await api.get(path)).data.answers).toEqual(body.answers);
@@ -46,28 +60,31 @@ test('applicable CIS clients start clean and unrelated frameworks reject access'
 });
 
 test.each([1,2,3])('new IG%i clients receive canonical clean interviews and preserve inherited work on upgrade',async group=>{
+  isolateNewClientFixture();
   const cid=(await api.post('/clients',{name:'Temporary Omni provisioning QA'})).data.client_id;
   const state={version:3,step:3,policies:Object.fromEntries(baseline.policies.map(p=>[p.key,'unsure'])),requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,f.key==='cis-ig1'?'applies':'does_not_apply'])),reviews:[],framework_reviews:{},framework_settings:{'cis-ig1':{implementation_group:group}}};
   await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true});
   const workspace=async()=>(await api.get('/frameworks/cis-ig1',{params:{client_id:cid}})).data;
   const initial=await workspace(),first=initial.assessments.find(a=>a.definition_id==='1.1'),route='/framework_assessments/'+first.framework_assessment_id+'/guided-assessment';
   expect(initial.active_definition_ids).toHaveLength({1:56,2:130,3:153}[group]);
-  for(const id of Object.keys(guidedCatalog.definitions).filter(id=>guidedCatalog.definitions[id].groups.includes(group))){
+  await Promise.all(Object.keys(guidedCatalog.definitions).filter(id=>guidedCatalog.definitions[id].groups.includes(group)).map(async id=>{
     const record=initial.assessments.find(a=>a.definition_id===id);
     expect((await api.get('/framework_assessments/'+record.framework_assessment_id+'/guided-assessment')).data).toMatchObject({version:versionForSafeguard(id),answers:{},revision:0});
-  }
-  const interview=(await api.put(route,{...body,narrative:'Synthetic preserved narrative',completed:true})).data;
+  }));
+  const interview=(await api.put(route,await firstWrite(route,{narrative:'Synthetic preserved narrative',completed:true}))).data;
   const original=(await api.patch('/framework_assessments/'+first.framework_assessment_id,{implementation:'Synthetic implementation',status:'needs_attention'})).data;
   for(const next of [2,3].filter(g=>g>group)){
     await api.patch('/frameworks/cis-ig1/configuration',{client_id:cid,implementation_group:next,expected_updated_at:(await workspace()).configuration.expected_updated_at},{headers:{'Idempotency-Key':'omni-upgrade-'+group+'-'+next}});
     const updated=await workspace();expect(updated.active_definition_ids).toHaveLength(next===2?130:153);
     expect(updated.assessments.filter(a=>a.definition_id==='1.1')).toHaveLength(1);
     expect(updated.assessments.find(a=>a.framework_assessment_id===first.framework_assessment_id)).toEqual(original);
-    expect((await api.get(route)).data).toEqual(interview);
-    for(const id of Object.keys(guidedCatalog.definitions))if(guidedCatalog.definitions[id].groups.includes(next)&&id!=='1.1'){
+    const resumed=(await api.get(route)).data;
+    expect(persisted(resumed)).toEqual(persisted(interview));
+    expect(resumed.lineage_stale).toBe(true);
+    await Promise.all(Object.keys(guidedCatalog.definitions).filter(id=>guidedCatalog.definitions[id].groups.includes(next)&&id!=='1.1').map(async id=>{
       const added=updated.assessments.find(a=>a.definition_id===id);
       expect((await api.get('/framework_assessments/'+added.framework_assessment_id+'/guided-assessment')).data.answers).toEqual({});
-    }
+    }));
   }
 });
 
@@ -78,15 +95,17 @@ test('direct IG1 to IG3 preserves expanded interview and native history without 
   const workspace=async()=>(await api.get('/frameworks/cis-ig1',{params:{client_id:cid}})).data;
   const initial=await workspace(),record=initial.assessments.find(a=>a.definition_id==='2.1');
   const route='/framework_assessments/'+record.framework_assessment_id+'/guided-assessment';
-  const interview=(await api.put(route,{...body,version:versionForSafeguard('2.1'),answers:{practice:'Partially',operation:'Synthetic preserved software process'},narrative:'Operator supplied summary'})).data;
+  const interview=(await api.put(route,await firstWrite(route,{answers:{practice:'Partially',operation:'Synthetic preserved software process'},narrative:'Operator supplied summary'}))).data;
   const saved=(await api.patch('/framework_assessments/'+record.framework_assessment_id,{implementation:'Preserved implementation',status:'in_progress'})).data;
   await api.patch('/frameworks/cis-ig1/configuration',{client_id:cid,implementation_group:3,expected_updated_at:initial.configuration.expected_updated_at},{headers:{'Idempotency-Key':'omni-direct-upgrade'}});
   const upgraded=await workspace();
   expect(upgraded.active_definition_ids).toHaveLength(153);
   expect(new Set(upgraded.active_definition_ids).size).toBe(153);
   expect(upgraded.assessments.find(a=>a.framework_assessment_id===record.framework_assessment_id)).toEqual(saved);
-  expect((await api.get(route)).data).toEqual(interview);
-  expect(upgraded.guided_assessment_drafts['2.1']).toEqual({revision:1,completed:false});
+  const resumed=(await api.get(route)).data;
+  expect(persisted(resumed)).toEqual(persisted(interview));
+  expect(resumed.lineage_stale).toBe(true);
+  expect(upgraded.guided_assessment_drafts['2.1']).toEqual({revision:1,completed:false,version:interview.version,generated_at:null,user_id:'demo_admin'});
   const added=upgraded.assessments.find(a=>a.definition_id==='18.5');
   expect((await api.get('/framework_assessments/'+added.framework_assessment_id+'/guided-assessment')).data).toMatchObject({answers:{},revision:0});
 });
@@ -146,7 +165,7 @@ test('an explicit empty restart archives an incomplete checkpoint and captures a
 
 test('legacy saved versions can continue only their actual own answers and unknown lineage stays unknown',async()=>{
   const db=readStore(),key=row.framework_assessment_id+':'+db.user.user_id;
-  const old={version:versionForSafeguard('1.1'),answers:body.answers,step:1,completed:true,revision:5,narrative:'Preserved historical narrative',generated_at:'2026-09-01T12:00:00Z'};
+  const old={version:versionForSafeguard('1.1',false),answers:body.answers,step:1,completed:true,revision:5,narrative:'Preserved historical narrative',generated_at:'2026-09-01T12:00:00Z'};
   editStore(store=>{(store.guided_assessment_pilot||={})[key]=old;});
   const historical=(await api.get(path)).data;
   expect(historical).toMatchObject({version:old.version,lineage_known:false,lineage_stale:null});
@@ -166,7 +185,7 @@ test('old program matrix answers survive continuation before an explicit new-ver
   await api.patch('/frameworks/cis-ig1/configuration',{client_id:'demo_brawndo',implementation_group:2,expected_updated_at:(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data.configuration.expected_updated_at},{headers:{'Idempotency-Key':'pilot-program-upgrade'}});
   const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data,record=workspace.assessments.find(a=>a.definition_id==='13.2');
   const route='/framework_assessments/'+record.framework_assessment_id+'/guided-assessment',db=readStore(),key=record.framework_assessment_id+':'+db.user.user_id;
-  const old={version:versionForSafeguard('13.2'),answers:{practice:'Partially',operation:'Historical operator report'},step:1,completed:false,revision:3,narrative:''};
+  const old={version:versionForSafeguard('13.2',false),answers:{practice:'Partially',operation:'Historical operator report'},step:1,completed:false,revision:3,narrative:''};
   editStore(store=>{(store.guided_assessment_pilot||={})[key]=old;});
   const continued=(await api.put(route,continuation(old))).data;
   expect(continued.version).toBe(old.version);expect(continued.answers).toEqual(old.answers);
@@ -205,25 +224,31 @@ test('interview history and new drafts remain scoped to the current account and 
   expect((await api.get(path+'/history')).data.items).toEqual([]);
   expect((await api.get(path)).data).toMatchObject({revision:0,answers:{}});
   const other=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data.assessments.find(a=>a.definition_id==='1.1'),route='/framework_assessments/'+other.framework_assessment_id+'/guided-assessment';
-  expect((await api.get(route)).data).toEqual({version:versionForSafeguard('1.1'),answers:{},step:0,completed:false,revision:0});
-  await expect(api.get(route+'/history')).rejects.toMatchObject({response:{status:404}});
+  const clean=(await api.get(route)).data;
+  expect(clean).toMatchObject({version:versionForSafeguard('1.1'),answers:{},step:0,completed:false,revision:0,lineage_known:true,lineage_stale:false});
+  expect(clean.current_scope_fingerprint).toBe(clean.base_scope_fingerprint);
+  expect((await api.get(route+'/history')).data.items).toEqual([]);
   editStore(db=>{db.user={...db.user,role:'client_contributor',client_ids:['demo_initech']};});
   await expect(api.get(path+'/history')).rejects.toMatchObject({response:{status:403}});
 });
 
-test('nonpilot versions and legacy request fields stay unchanged and cannot opt into upgrades',async()=>{
+test('configured CIS clients use trusted current defaults and reject forged bases and fresh historical versions',async()=>{
   const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data,record=workspace.assessments.find(a=>a.definition_id==='1.1');
   const route='/framework_assessments/'+record.framework_assessment_id+'/guided-assessment';
   expect((await api.get(route)).data.version).toBe(versionForSafeguard('1.1'));
-  const first=(await api.put(route,body)).data;expect(first).not.toHaveProperty('base_scope_fingerprint');
-  for(const [key,value] of [['base_assessment_token',null],['base_scope_fingerprint','0'.repeat(64)],['restart',false],['result',null],['upgraded',true]])
-    await expect(api.put(route,{...body,expected_revision:1,[key]:value})).rejects.toMatchObject({response:{status:422}});
-  await expect(api.put(route,{...body,expected_revision:1,version:versionForSafeguard('1.1',true)})).rejects.toMatchObject({response:{status:422}});
+  await expect(api.put(route,body)).rejects.toMatchObject({response:{status:409}});
+  const trusted=await firstWrite(route);
+  await expect(api.put(route,{...trusted,version:versionForSafeguard('1.1',false)})).rejects.toMatchObject({response:{status:409}});
+  await expect(api.put(route,{...trusted,base_scope_fingerprint:'0'.repeat(64)})).rejects.toMatchObject({response:{status:409}});
+  const first=(await api.put(route,trusted)).data;
+  expect(first.base_scope_fingerprint).toBe(trusted.base_scope_fingerprint);
+  await expect(api.put(route,continuation(first,{upgraded:true}))).rejects.toMatchObject({response:{status:422}});
+  await expect(api.put(route,continuation(first,{base_scope_fingerprint:'0'.repeat(64)}))).rejects.toMatchObject({response:{status:409}});
   expect((await api.get(route)).data).toEqual(first);
-  expect((await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data.guided_assessment_drafts['1.1']).toEqual({revision:1,completed:false});
+  expect((await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data.guided_assessment_drafts['1.1']).toEqual({revision:1,completed:false,version:first.version,generated_at:null,user_id:'demo_admin'});
 });
 
-test('pilot work context uses native relationships and non-CIS pilot work keeps its original shape',async()=>{
+test('CIS work context uses native relationships and non-CIS work keeps its original shape',async()=>{
   const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data;
   const work=workspace.work[row.framework_assessment_id];
   expect(work.context_complete).toBe(true);expect(work.task_ids).toEqual([...new Set(work.task_ids)].sort());
@@ -231,7 +256,7 @@ test('pilot work context uses native relationships and non-CIS pilot work keeps 
   expect(new Set(work.priority_records.map(item=>item.kind+':'+item.id)).size).toBe(work.priority_records.length);
   expect(work.priority_records.every(item=>!Object.keys(item).some(key=>['description','notes','content_base64','verification','occurrences'].includes(key)))).toBe(true);
   const legacy=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data;
-  expect(Object.values(legacy.work).every(value=>!Object.hasOwn(value,'context_complete'))).toBe(true);
+  expect(Object.values(legacy.work).every(value=>value.context_complete===true&&Array.isArray(value.priority_records))).toBe(true);
   for(const key of ['soc-2','iso-27001']){
     editStore(db=>{db.framework_assessments.push({...row,framework_assessment_id:'demo-other-'+key,framework_key:key,definition_id:key==='soc-2'?'CC1.1':'A.5.1'});});
     const other=(await api.get('/frameworks/'+key,{params:{client_id:'demo_brawndo'}})).data.work['demo-other-'+key];
@@ -239,7 +264,7 @@ test('pilot work context uses native relationships and non-CIS pilot work keeps 
   }
 });
 
-test('all 153 current pilot defaults are activated only within the approved identity',async()=>{
+test('all 153 current CIS defaults use configured program scope without a client-name exception',async()=>{
   const current=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data.configuration;
   await api.patch('/frameworks/cis-ig1/configuration',{client_id:'demo_brawndo',implementation_group:3,expected_updated_at:current.expected_updated_at},{headers:{'Idempotency-Key':'pilot-all-current-versions'}});
   const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data;
