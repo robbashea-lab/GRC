@@ -42,14 +42,18 @@ export function refinedSummary(id,answers,version){
     a.maintenance&&({Yes:'Assets are added, retired and removed consistently, as reported.',Partially:'Asset changes are only partly reflected in the inventory.',No:'Asset changes are not consistently reflected in the inventory.','Not sure':'The asset-update process needs confirmation.'}[a.maintenance]),
     a.maintenance_detail&&`Reported update process: ${a.maintenance_detail}`,
     a.frequency&&`Reported operating frequency: ${a.frequency}.`,a.last_review&&`Last reported complete review: ${a.last_review}.`,
-    a.actions?.length&&`Reported response actions: ${a.actions.join(', ')}.`
+    a.actions?.length&&`Reported response actions: ${a.actions.join(', ')}.`,
+    id==='1.1'&&a.reconciled&&({Yes:'The inventory is compared with other device records, as reported.',Partially:'The inventory is only partly compared with other device records.',No:'The inventory is not compared with other device records.','Not sure':'Comparison with other device records requires confirmation.'}[a.reconciled])
   ].filter(Boolean)]];
   const describe=(row,value,details=false)=>value==='Yes'?`${row} ${details?'is recorded':'are included'}, as reported.`:value==='Partially'?`${row} ${details?'is only partly recorded':'are only partially inventoried'}; confirm and address the missing ${details?'details':'assets in scope'}.`:value==='No'?`${row} ${details?'is not recorded':'are not included'}; address the missing ${details?'detail':'assets in scope'}.`:value==='Not applicable'?`${row} is reported outside the applicable scope; review the recorded explanation.`:`${row} ${details?'is not confirmed':'coverage is not confirmed'}; check the current ${details?'asset records':'inventory'}.`;
   if(a.coverage)sections.push(['Asset coverage',Object.entries(a.coverage).map(([row,value])=>describe(row,value))]);
   if(a.attributes)sections.push(['Required asset details',Object.entries(a.attributes).map(([row,value])=>describe(row,value,true))]);
-  if(id==='1.2')sections.push(['Handling and confirmation',active.filter(q=>['inventory_dependency','detection','disposition','confirmation','exceptions','reconciled','unresolved'].includes(q.id)&&a[q.id]).map(q=>`${q.prompt} Reported response: ${a[q.id]}.`)]);
+  if(id==='1.2'){
+    const labels={inventory_dependency:'Authorized-inventory comparison',detection:'Unauthorized-asset identification',disposition:'Asset disposition',confirmation:'Response confirmation',exceptions:'Approved exceptions',reconciled:'Comparison and reconciliation',unresolved:'Unresolved unauthorized assets'};
+    sections.push(['Handling and confirmation',active.filter(q=>labels[q.id]&&a[q.id]).map(q=>`${labels[q.id]}: ${a[q.id]}, as reported.`)]);
+  }
   if(a.scope_reason?.trim())sections.push(['Scope explanations',[`Client-reported explanation: ${a.scope_reason}`]]);
-  const notes=active.filter(q=>a[q.id+'_detail']?.trim()&&q.id!=='sources'&&!active.some(other=>other.id===q.id+'_detail')).map(q=>`Reported context for ${q.prompt} ${a[q.id+'_detail']}`);
+  const notes=active.filter(q=>a[q.id+'_detail']?.trim()&&q.id!=='sources'&&!active.some(other=>other.id===q.id+'_detail')).map(q=>`Reported context for ${OMNI_GROUPS[id].find(group=>group.note===q.id)?.name||q.prompt}: ${a[q.id+'_detail']}`);
   const items=[...result.gaps.map(v=>'Recorded deficiency: '+v),...result.unknowns.map(v=>'Requires confirmation: '+v),...notes,a.evidence&&`Reported supporting records: ${a.evidence}`].filter(Boolean);
   sections.push(['Items to address or confirm',items.length?items:['No unresolved criteria were identified in the recorded answers. Evidence verification remains separate.']]);
   return {...result,narrative:[opening.join(' '),...sections.map(([title,items])=>title+'\n'+(items.length?items.map(v=>'• '+v).join('\n'):'No additional details recorded.'))].join('\n\n')};

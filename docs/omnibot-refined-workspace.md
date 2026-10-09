@@ -25,6 +25,8 @@ Program cards use actual saved titles and implementation statuses. Unassessed re
 
 No catalog question, criterion, option, version or evaluator is changed. Presentation groups select the existing visible questions. The stored step remains the production question index, not a group number.
 
+The [question-by-question matrix](omnibot-refined-question-matrix.md) records each production ID, presented wording/group, retained value/condition, persistence field, summary section and regression coverage.
+
 ### Safeguard 1.1 — `cis-v8.1-control1-3`
 
 | Group | Production answer IDs | Optional contextual detail key |
@@ -52,6 +54,8 @@ The saved 1.1 inventory context remains read-only context for 1.2. No answer is 
 ## Save, summary and compatibility
 
 Save & next writes the interview before moving. Save & close closes only after a successful interview write. Failures and concurrency rejections retain local input and report the failure. Root answers are never defaulted to Yes; multiple-source explanations must be recorded before continuing that group.
+
+Summary Back returns to the last active interview group, matching the reference, without discarding answers or edited summary wording.
 
 The summary wraps the existing deterministic evaluator. It records reported facts in an opening and labeled breakdown, distinguishes deficiencies from confirmation needs, and includes attributed contextual notes without inventing a scoring rule. It does not verify evidence, complete a Review, set Last Assessed, or create linked work.
 

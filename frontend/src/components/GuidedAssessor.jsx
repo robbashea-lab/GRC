@@ -259,6 +259,11 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     setApplied(true);setConfirmClose(false);changeMode('collapsed');
 
   }
+
+  function backFromSummary(){
+    const last=omniGroups(id,answers,version).filter(group=>group.questions.length).at(-1);
+    setResult(null);setStep(questions.findIndex(q=>q.id===last.questions[0].id));setView('interview');
+  }
   async function confirmRestart(){
     const retained=focused&&reuseAnswers&&version===currentVersion?answers:null;
     const fresh=await save(0,false,{},workspacePilot);if(!fresh)return;
@@ -359,7 +364,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
             {!!form?.implementation&&<label className="guided-replacement"><input type="checkbox" disabled={disabled||busy} checked={replace} onChange={e=>setReplace(e.target.checked)}/> I understand the existing Current implementation narrative will be replaced.</label>}
 
-            <div className="omni-action-bar"><Button variant="outline" disabled={busy} onClick={()=>{setResult(null);setStep(0);setView('interview');}}>Back</Button><Button disabled={disabled||busy||result.missingRecorded||assessmentDirty||context.lineageStale!==false||context.applicationState==='previous'||!narrative.trim()||summaryEdited&&summaryBasis!==JSON.stringify(answers)||!!form?.implementation&&!replace||result.status==='addressed'&&focusedResult(id,answers,version).status!=='addressed'} onClick={useRefinedSummary}>Use summary</Button><Button variant="outline" disabled={disabled||busy} onClick={saveAndClose}>Save &amp; close</Button></div>
+            <div className="omni-action-bar"><Button variant="outline" disabled={busy} onClick={backFromSummary}>Back</Button><Button disabled={disabled||busy||result.missingRecorded||assessmentDirty||context.lineageStale!==false||context.applicationState==='previous'||!narrative.trim()||summaryEdited&&summaryBasis!==JSON.stringify(answers)||!!form?.implementation&&!replace||result.status==='addressed'&&focusedResult(id,answers,version).status!=='addressed'} onClick={useRefinedSummary}>Use summary</Button><Button variant="outline" disabled={disabled||busy} onClick={saveAndClose}>Save &amp; close</Button></div>
 
           </>:refined&&view==='changes'?<><Button variant="outline" disabled={busy||!!incremental} onClick={()=>{setResult(null);setStep(nextFocusedQuestion(id,answers,version));setView('interview');}}>Resume</Button><Button variant="ghost" disabled={disabled||busy} onClick={()=>setRestart(true)}>Begin a new review</Button></>:workspacePilot&&view==='position'?<RecordedPosition context={context} current={current} draft={draft} people={people}/>:workspacePilot&&view==='linked'?<LinkedPosition related={related} complete={contextComplete} onOpen={onOpenNative} people={people}/>:workspacePilot&&view==='changes'?<><h3>Review changes · Safeguard {id}</h3><p>{changeQuestions.safeguards[id]?.prompt}</p><p>{changeQuestions.help}</p><fieldset disabled={disabled||busy}><legend>Current change report</legend>{changeQuestions.choices.map(value=><label key={value}><input type="radio" name={panelId+'-changes'} checked={changeAnswer===value} onChange={()=>setChangeAnswer(value)}/> {value}</label>)}</fieldset>{changeAnswer==='No changes reported'&&<p>No changes reported here. The saved assessment, verification, evidence, findings, actions, review schedule and approvals remain unchanged.</p>}{changeAnswer&&changeAnswer!=='No changes reported'&&<><p>{changeQuestions.safeguards[id]?.followup_prompt}</p><p>Use the native assessment or linked record to record a confirmed change, or begin a full reassessment. Previous interview answers remain historical context.</p><Button variant="outline" disabled={busy||!!incremental} onClick={()=>setView('linked')}>Review linked records</Button></>}</>:!draft?<p role="status">{loaded?'Saved interview unavailable. Reopen the assessment to retry.':'Loading saved interview…'}</p>:result&&(!workspacePilot||view==='result')?<>
 

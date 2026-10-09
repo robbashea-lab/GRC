@@ -26,6 +26,11 @@ test('group context keys are valid versioned details and never alias a productio
     expect(validateAnswers(id,answers,version)).toBe(answers);expect(refinedSummary(id,answers,version).status).toBe(focusedResult(id,complete(id),version).status);
   }
 });
+
+test('positive reconciliation and 1.2 response facts remain visible in the summary',()=>{
+  expect(refinedSummary('1.1',complete('1.1'),versionForSafeguard('1.1',true)).narrative).toContain('inventory is compared with other device records');
+  const output=refinedSummary('1.2',complete('1.2'),versionForSafeguard('1.2',true));expect(output.narrative).toContain('Unauthorized-asset identification: Yes, as reported.');expect(output.narrative).toContain('Response confirmation: Yes, as reported.');expect(output.narrative).not.toContain('Asset coverage');
+});
 test.each(['1.1','1.2'])('%s optional group context is retained without inventing a deficiency or new scoring rule',id=>{
   const version=versionForSafeguard(id,true),a={...complete(id),evidence_detail:'Synthetic supporting context: ask the backup owner about the report format.'};
   const output=refinedSummary(id,a,version);expect(output.narrative).toContain(a.evidence_detail);expect(output.status).toBe(focusedResult(id,complete(id),version).status);expect(output.verification).toBeUndefined();expect(output.narrative).toContain('Recorded implementation');expect(output.narrative).toContain('Items to address or confirm');

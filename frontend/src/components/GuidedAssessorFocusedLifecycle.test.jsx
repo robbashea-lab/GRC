@@ -78,7 +78,7 @@ test('concurrency rejection retains local input',async()=>{
 
 test('edited summary survives an incomplete checkpoint and requires fresh review',async()=>{
   stored={...interview('1.1'),revision:2,answers:completeAnswers('1.1'),completed:true,result:focusedResult('1.1',completeAnswers('1.1'),versionForSafeguard('1.1',true)),narrative:'Original reviewed summary',generated_at:generated};
-  await render();await open();await value('[aria-label="Current implementation summary"]','Operator reviewed synthetic wording');await click('Back');
+  await render();await open();await value('[aria-label="Current implementation summary"]','Operator reviewed synthetic wording');await click('Back');expect(document.body.textContent).toContain('Question group 5 of 5');for(let i=0;i<4;i++)await click('Back');
   await value('[aria-label="Who keeps it up to date?"]','Changed synthetic owner');await click('Save & close');
   expect(stored.completed).toBe(false);expect(stored.narrative).toBe('Operator reviewed synthetic wording');expect(history[0].narrative).toBe('Original reviewed summary');
   await remount();await open();expect(stored.narrative).toBe('Operator reviewed synthetic wording');expect(props.onApply).not.toHaveBeenCalled();
@@ -144,7 +144,7 @@ test('explicitly reconciled wording remains protected after later answer changes
   const answers=completeAnswers('1.1');delete answers.frequency;stored={...interview('1.1'),revision:2,answers};const current={...record('1.1'),implementation:'Retained synthetic manual context'};props={...props,record:current,current,form:copy(current)};
   await render();await open();await value('[aria-label="How often is the complete inventory reviewed?"]','Every six months');await click('Save & next');
   const group=document.querySelector('[aria-label="Reconcile implementation narrative"]');expect(group).toBeTruthy();await value('[aria-label="Reconciled native implementation draft"]','Reviewed synthetic wording retains the manual context.');await act(async()=>group.querySelector('input').click());await click('Save reconciled proposal');
-  await click('Back');await value('[aria-label="Who keeps it up to date?"]','Changed synthetic team');await click('Save & close');expect(stored.narrative).toBe('Reviewed synthetic wording retains the manual context.');expect(props.current.implementation).toBe('Retained synthetic manual context');expect(props.onApply).not.toHaveBeenCalled();
+  await click('Back');for(let i=0;i<4;i++)await click('Back');await value('[aria-label="Who keeps it up to date?"]','Changed synthetic team');await click('Save & close');expect(stored.narrative).toBe('Reviewed synthetic wording retains the manual context.');expect(props.current.implementation).toBe('Retained synthetic manual context');expect(props.onApply).not.toHaveBeenCalled();
 });
 
 
