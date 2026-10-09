@@ -1,8 +1,8 @@
 {
-  "version": "cis-v8.1-program-3",
+  "version": "cis-v8.1-program-2",
   "framework_id": "cis-ig1",
   "framework_version": "8.1",
-  "reviewed_on": "2026-10-09",
+  "reviewed_on": "2026-10-07",
   "criteria_revision": "2026-10-05",
   "guidance_revision": "2026-10-04",
   "basis": "Authored safeguard assessment criteria; CIS v8.1 requirements, not CAS metrics. Evidence examples and optional context do not impose additional obligations.",
