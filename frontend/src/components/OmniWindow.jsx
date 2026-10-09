@@ -16,7 +16,7 @@ export function besideOmniRect(anchor,width=window.innerWidth,height=window.inne
 const EDGES=['n','ne','e','se','s','sw','w','nw'];
 
 // Presentation only: interview answers, saves and replacement protection stay in GuidedAssessor.
-export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose,anchor}){
+export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose,anchor,name='Omni'}){
   const [rect,setRect]=useState(()=>anchor?besideOmniRect(anchor()):defaultRect()),[maximized,setMaximized]=useState(false);
   const rectRef=useRef(rect),restore=useRef(null),drag=useRef(null),focusHandlers=useRef({onOpenAutoFocus,onCloseAutoFocus});rectRef.current=rect;
   // Measure after the launcher has expanded from its minimized size, before paint.
@@ -44,11 +44,11 @@ export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus
   }
   return <section id={id} role="dialog" aria-modal="false" aria-labelledby={id+'-title'} aria-describedby={id+'-description'} className="guided-panel omni-workspace-window" style={{left:rect.x,top:rect.y,width:rect.w,height:rect.h}}
     onPointerDown={e=>start(e)} onDoubleClick={e=>{if(e.target.closest('.omni-panel-header')&&!e.target.closest('button,details,input,select,textarea,a'))expand();}} onPointerMove={move} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();onClose();}}}>
-    <div className="omni-window-controls"><details><summary aria-label="Omni window position and size"><MoreHorizontal size={18}/></summary><div className="omni-window-menu">
+    <div className="omni-window-controls"><details><summary aria-label={name+" window position and size"}><MoreHorizontal size={18}/></summary><div className="omni-window-menu">
       <button type="button" onKeyDown={e=>nudge(e)}>Position: use arrow keys</button><button type="button" onKeyDown={e=>nudge(e,true)}>Size: use arrow keys</button>
       <button type="button" onClick={()=>{setMaximized(false);setRect(defaultRect());}}>Reset window</button>
       <button type="button" onClick={()=>{setMaximized(false);setRect(fitOmniRect({...rectRef.current,x:8}));}}>Place on left</button><button type="button" onClick={()=>{setMaximized(false);setRect(fitOmniRect({...rectRef.current,x:window.innerWidth-rectRef.current.w-8}));}}>Place on right</button>
-    </div></details><button type="button" aria-label="Minimize Omni Guide" onClick={onMinimize}><Minus size={18}/></button><button type="button" aria-label={maximized?'Restore Omni Guide size':'Expand Omni Guide'} onClick={expand}>{maximized?<Minimize2 size={18}/>:<Maximize2 size={18}/>}</button><button type="button" aria-label="Close Omni Guide" onClick={onClose}><X size={18}/></button></div>
+    </div></details><button type="button" aria-label={"Minimize "+name+" Guide"} onClick={onMinimize}><Minus size={18}/></button><button type="button" aria-label={maximized?'Restore '+name+' Guide size':'Expand '+name+' Guide'} onClick={expand}>{maximized?<Minimize2 size={18}/>:<Maximize2 size={18}/>}</button><button type="button" aria-label={"Close "+name+" Guide"} onClick={onClose}><X size={18}/></button></div>
     {children}
     {!maximized&&EDGES.map(edge=><div key={edge} className={'omni-resize omni-resize-'+edge} onPointerDown={e=>{e.stopPropagation();start(e,edge);}} onPointerMove={move} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}/>)}
   </section>;

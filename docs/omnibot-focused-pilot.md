@@ -65,3 +65,9 @@ Browser acceptance evidence and exact build/CI provenance belong in the pilot
 handoff. No production deployment, broad activation, main merge, database
 reset, credential change, or automatic lifecycle completion is part of this
 pilot.
+
+## Invitation refinement
+
+The focused Brawndo CIS IG1 pilot uses OmniBot consistently in its invitation, guide and accessible controls. Program, Control 1 and safeguards 1.1/1.2 each start a fresh invitation visit. Dismissal affects that visit only; ordinary data refreshes do not invite again. Explicit session suppression and durable automatic-invitation suppression take precedence, with re-enabling available through Invitation settings. Legacy preferences are honored without changing nonpilot preferences.
+
+Invitations distinguish unsaved answers, saved current interviews and interviews needing comparison with a changed native assessment. Only the invitation opens automatically; the guide requires an explicit action. Native saves, history, concurrency and activation gates remain unchanged.

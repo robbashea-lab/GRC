@@ -4,7 +4,7 @@ export const OMNI_POSITIONS=['lower-right','middle-right','lower-left'];
 export function snapPosition(x,y,width,height){return x<width/2?'lower-left':y<height*.65?'middle-right':'lower-right';}
 const overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
 export default function OmniDock(props){return props.freePosition?<FreeDock {...props}/>:<ClassicDock {...props}/>;}
-function FreeDock({preferenceKey,children}){
+function FreeDock({preferenceKey,children,name='Omni'}){
   const root=useRef(null),drag=useRef(null),moved=useRef(false),key=preferenceKey+':free-position';
   const [point,setPoint]=useState(()=>{try{const value=JSON.parse(localStorage.getItem(key));if(value&&Number.isFinite(value.x)&&Number.isFinite(value.y))return value;}catch{/* Cosmetic preference only. */}return {x:window.innerWidth-190,y:window.innerHeight-260};});
   const pointRef=useRef(point);pointRef.current=point;
@@ -17,9 +17,9 @@ function FreeDock({preferenceKey,children}){
     onPointerCancel={()=>{drag.current=null;}}
     onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false;}}}
     onKeyDown={e=>{if(!e.target.closest('.omni-launch-button')||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const unit=e.shiftKey?30:10;move(point.x+(e.key==='ArrowRight'?unit:e.key==='ArrowLeft'?-unit:0),point.y+(e.key==='ArrowDown'?unit:e.key==='ArrowUp'?-unit:0));}}>
-    {children}<details className="omni-position-controls"><summary aria-label="Reposition Omni">•••</summary><div>
-      <button type="button" onClick={()=>move(8,window.innerHeight-260)}>Place on left</button><button type="button" onClick={()=>move(window.innerWidth-190,window.innerHeight-260)}>Place on right</button><button type="button" onClick={()=>move(window.innerWidth-190,window.innerHeight-260)}>Reset Omni position</button>
-      <p>Focus Omni and use arrow keys to reposition.</p>
+    {children}<details className="omni-position-controls"><summary aria-label={"Reposition "+name}>•••</summary><div>
+      <button type="button" onClick={()=>move(8,window.innerHeight-260)}>Place on left</button><button type="button" onClick={()=>move(window.innerWidth-190,window.innerHeight-260)}>Place on right</button><button type="button" onClick={()=>move(window.innerWidth-190,window.innerHeight-260)}>Reset {name} position</button>
+      <p>Focus {name} and use arrow keys to reposition.</p>
     </div></details>
   </div>;
 }
