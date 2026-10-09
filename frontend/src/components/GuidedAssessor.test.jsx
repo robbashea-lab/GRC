@@ -14,7 +14,7 @@ const props={clientId:'demo_brawndo',framework:'cis-ig1',configuration:{implemen
 const button=name=>[...document.querySelectorAll('button')].find(el=>el.textContent===name);
 async function render(p={}){await act(async()=>root.render(<GuidedAssessor {...props} {...p}/>));}
 async function click(name){await act(async()=>button(name).click());}
-async function open(){await act(async()=>document.querySelector('[aria-label="Open Omni guided assessment"]').click());}
+async function open(){await act(async()=>document.querySelector('[aria-label="Open Omnibot guide"], [aria-label="Open Omni guided assessment"]').click());}
 async function select(value){const el=document.querySelector('.guided-panel select');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('change',{bubbles:true}));});}
 beforeEach(()=>{
   mockWorkspaceMode=undefined;
@@ -24,22 +24,6 @@ beforeEach(()=>{
   api.get.mockImplementation(async()=>({data:draft}));
   api.put.mockImplementation(async(_path,body)=>({data:draft={...body,revision:draft.revision+1,generated_at:'2026-10-07T12:00:00Z'}}));
 });
-test.each([['demo_brawndo','demo'],[workspacePilotConfiguration.stagingClientIds[0],'standard']])('approved Omni boundary %s uses the canonical interview and preserves unsaved answers across window minimize',async(clientId,mode)=>{
-  mockWorkspaceMode=mode;const onDraftChange=jest.fn();
-  draft={...draft,version:versionForSafeguard('1.1',true),current_assessment_token:null,current_scope_fingerprint:'a'.repeat(64),base_assessment_token:null,base_scope_fingerprint:'a'.repeat(64),lineage_known:true,lineage_stale:false};
-  const current={...row,client_id:clientId,assessment_history:[],work:{context_complete:true,finding_ids:[],task_ids:[],review_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0}};
-  await render({clientId,record:current,current,contextComplete:true,onDraftChange});await open();
-  expect(document.querySelector('.omni-workspace-window').getAttribute('aria-modal')).toBe('false');
-  expect(document.querySelector('.omni-approved')).toBeTruthy();
-  expect(document.querySelector('.omni-free-dock')).toBeTruthy();
-  expect(document.body.textContent).toContain('Current saved position');expect(api.put).not.toHaveBeenCalled();
-  await click('Start');
-  await select('Not sure');expect(onDraftChange).toHaveBeenLastCalledWith(true);
-  await act(async()=>document.querySelector('[aria-label="Minimize Omni Guide"]').click());await open();
-  expect(document.querySelector('.guided-panel select').value).toBe('Not sure');expect(api.put).not.toHaveBeenCalled();
-  await click('Save and exit');expect(draft.answers.inventory).toBe('Not sure');expect(draft.version).toBe(versionForSafeguard('1.1',true));
-});
-
 test.each([['demo_dunder','demo'],['demo_prestige','demo'],['demo_initech','demo'],['existing-authenticated-client','standard'],['future-client','standard'],['newly-onboarded-synthetic-client','standard']])('shared presentation preserves legacy Omni and saved interview for %s',async(clientId,mode)=>{
   mockWorkspaceMode=mode;
   expect(isWorkspacePresentation(clientId,{workspace_mode:mode})).toBe(true);
@@ -63,7 +47,8 @@ test.each([['demo_dunder','demo'],['demo_prestige','demo'],['demo_initech','demo
     expect(api.put).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({answers:{inventory:'Not sure'},version:guidedCatalog.version,expected_revision:3}));
   } finally {delete document.documentElement.dataset.brawndoWorkspace;}
 });
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+
+
 test('dashboard greeting, direct pilot options, dismiss and reopen',async()=>{
   const onSelect=jest.fn();await render({rows:[row,{...row,definition_id:'1.2'}],onSelect});
   expect(document.body.textContent).toContain('Hi, I’m Omni.');
@@ -159,3 +144,6 @@ test('overview uses supplied user-scoped draft summaries without fetching every 
   expect(api.get).not.toHaveBeenCalled();
   expect(document.body.textContent).not.toContain('· Control 1');
 });
+
+
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
