@@ -1,6 +1,6 @@
 import {validateCsfProfile} from '../lib/csfProfile';
 import {pilotEnabled,versionForSafeguard,validateAnswers} from '../lib/guidedAssessment';
-import {brawndoWorkspacePilot} from '../lib/brawndoWorkspacePilot';
+import {focusedOmniEnabled} from '../lib/focusedOmni';
 import cisCriteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
@@ -39,7 +39,7 @@ export function prepareGuidedContext(db,path,method,body){
   if(kind!=='framework_assessments'||!(operation==='guided-assessment'&&!detail||method==='patch'&&!operation&&body.guided_assessment_source))return null;
   const row=record(db,'framework_assessments',id);
   frameworkScope(db,row.client_id);
-  if(!brawndoWorkspacePilot(row.client_id,db.user))return null;
+  if(!focusedOmniEnabled(row.client_id,db.user,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id))return null;
   if(!pilotEnabled(row.client_id,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id))fail('Guided pilot is not enabled for this assessment',404);
   if(!globalThis.crypto?.subtle)fail('The recorded context could not be read; reopen this review to retry',503);
   const scope=guidedScope(db,row),userId=db.user.user_id,bytes=Uint8Array.from(scope.serialized,char=>char.charCodeAt(0));
@@ -229,7 +229,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     frameworkScope(db,params.client_id);const framework=FRAMEWORKS.find(f=>f.key===id);if(!framework)throw new Error('Framework not found');
     const assessments=framework.implemented?db.framework_assessments.filter(a=>a.client_id===params.client_id&&a.framework_key===id):[];
     const configuration=id==='cis-ig1'?cisConfiguration(record(db,'clients',params.client_id)):id==='soc-2'?socConfiguration(record(db,'clients',params.client_id)):{};
-    const upgraded=id==='cis-ig1'&&brawndoWorkspacePilot(params.client_id,db.user);
+    const upgraded=focusedOmniEnabled(params.client_id,db.user,id,configuration);
     if(upgraded&&['reviews','findings','tasks','evidence'].some(kind=>(db[kind]||[]).filter(item=>item.client_id===params.client_id).length>10000))fail('Authorized workspace context exceeds the supported limit',413);
     if(id==='cis-ig1'&&operation==='export'){
       const active=new Set(activeDefinitions(id,configuration).map(d=>d.id)),fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links'];
@@ -248,7 +248,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   }
   const row=record(db,'framework_assessments',id);frameworkScope(db,row.client_id);if(method!=='get')writable(db);
   const pilot=()=>{if(!pilotEnabled(row.client_id,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id))fail('Guided pilot is not enabled for this assessment',404);};
-  const upgraded=brawndoWorkspacePilot(row.client_id,db.user);
+  const upgraded=focusedOmniEnabled(row.client_id,db.user,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id);
   const draftKey=id+':'+db.user.user_id;
   const storedDraft=()=>{const draft=db.guided_assessment_pilot?.[draftKey];return draft&&(!draft.client_id||draft.client_id===row.client_id)?draft:null;};
   const readDraft=()=>{
@@ -271,19 +271,20 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     if(method==='get')return readDraft();
     if(method!=='put')fail('Method not allowed',405);
     if(db.user.role==='client_contributor'&&row.owner_id!==db.user.user_id)fail('Forbidden',403);
-    const fields=['version','answers','step','completed','narrative','expected_revision',...(upgraded?[...BASE_FIELDS,'restart','result']:[])];
-    if(Object.keys(body).some(k=>!fields.includes(k))||typeof body.version!=='string'||body.version.length>100||!Number.isInteger(body.step)||body.step<0||body.step>30||typeof body.completed!=='boolean'||typeof (body.narrative??'')!=='string'||upgraded&&Object.hasOwn(body,'narrative')&&typeof body.narrative!=='string'||(body.narrative||'').length>20000||!Number.isInteger(body.expected_revision)||body.expected_revision<0||'restart' in body&&typeof body.restart!=='boolean'||'base_assessment_token' in body&&body.base_assessment_token!==null&&(typeof body.base_assessment_token!=='string'||body.base_assessment_token.length>100)||'base_scope_fingerprint' in body&&body.base_scope_fingerprint!==null&&(typeof body.base_scope_fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(body.base_scope_fingerprint)))fail('Invalid interview');
+    const fields=['version','answers','step','completed','narrative','expected_revision',...(upgraded?[...BASE_FIELDS,'restart','rebase','result']:[])];
+    if(Object.keys(body).some(k=>!fields.includes(k))||typeof body.version!=='string'||body.version.length>100||!Number.isInteger(body.step)||body.step<0||body.step>30||typeof body.completed!=='boolean'||typeof (body.narrative??'')!=='string'||upgraded&&Object.hasOwn(body,'narrative')&&typeof body.narrative!=='string'||(body.narrative||'').length>20000||!Number.isInteger(body.expected_revision)||body.expected_revision<0||'restart' in body&&typeof body.restart!=='boolean'||'rebase' in body&&typeof body.rebase!=='boolean'||'base_assessment_token' in body&&body.base_assessment_token!==null&&(typeof body.base_assessment_token!=='string'||body.base_assessment_token.length>100)||'base_scope_fingerprint' in body&&body.base_scope_fingerprint!==null&&(typeof body.base_scope_fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(body.base_scope_fingerprint)))fail('Invalid interview');
     if(!upgraded&&body.version!==versionForSafeguard(row.definition_id))fail('Invalid interview');
     const old=storedDraft()||{revision:0};if(old.revision!==body.expected_revision)fail('Interview changed; reload before saving',409);
     let base={},result=null;
     if(upgraded){
       const current=versionForSafeguard(row.definition_id,true),empty=!body.answers||Object.keys(body.answers).length===0;
+      if(body.rebase&&(body.restart||!old.revision||body.version!==old.version||JSON.stringify(body.answers)!==JSON.stringify(old.answers)||body.narrative!==(old.narrative||'')||body.completed||body.result!=null))fail('Compare must retain the saved question version, answers and reviewed wording');
       if(body.restart&&(body.version!==current||!empty||body.completed||body.step!==0||body.narrative))fail('Restart must begin an empty current-version review');
       if(body.version!==current&&(!old.revision||body.version!==old.version||body.restart)||old.revision&&body.version!==old.version&&!body.restart)fail('Question set changed; continue the saved version or explicitly restart',409);
       if(body.result!=null&&!body.completed)fail('A recorded result belongs to a completed interview');
       result=validateReportedResult(body.result,body.version);
       const currentBase=trustedBase(db,row,context);
-      if(!old.revision||body.restart){
+      if(!old.revision||body.restart||body.rebase){
         if(BASE_FIELDS.some(key=>!Object.hasOwn(body,key)||body[key]!==currentBase[key]))fail('Assessment or scope changed before this review started; reload before starting',409);
         base=currentBase;
       }else{
@@ -292,7 +293,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       }
     }
     validateAnswers(row.definition_id,body.answers,body.version);
-    if(old.revision&&(upgraded?(old.completed||body.restart):(old.version!==body.version||old.completed&&!body.completed&&!Object.keys(body.answers).length))){
+    if(old.revision&&(upgraded?(old.completed||body.restart||body.rebase):(old.version!==body.version||old.completed&&!body.completed&&!Object.keys(body.answers).length))){
       const key=draftKey+':'+old.revision;
       if(!Object.hasOwn(db.guided_assessment_history||{},key))(db.guided_assessment_history||={})[key]={...copy(old),...(upgraded?{client_id:row.client_id,assessment_id:id,user_id:db.user.user_id}:{})};
     }
@@ -334,6 +335,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       if(body.guided_assessment_source){
         const draft=readDraft(),source=body.guided_assessment_source;
         if(!draft.completed||Object.keys(source).length!==3||['version','revision','generated_at'].some(k=>source[k]!==draft[k]))fail('Guided result changed; regenerate before applying',409);
+        if(upgraded&&draft.version!==versionForSafeguard(row.definition_id,true))fail('Current-source interview review is required before saving a new assessment',409);
         if(upgraded&&(!draft.lineage_known||draft.lineage_stale))fail('Assessment or scope changed after this review began; begin a new review before applying',409);
         body.guided_assessment_source={...source,origin:'guided-assessment-pilot',answers:JSON.parse(JSON.stringify(draft.answers)),by:db.user.user_id,...(upgraded?Object.fromEntries(BASE_FIELDS.map(key=>[key,draft[key]])): {})};
       }
