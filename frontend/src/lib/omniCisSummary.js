@@ -1,6 +1,7 @@
 import {guidedCatalog,catalogForVersion,visibleQuestions} from './guidedAssessment';
 import {focusedResult} from './focusedOmni';
 import {inventorySummary} from './omniInventorySummary';
+import {omniGroups} from './refinedOmni';
 
 const unique=items=>[...new Set(items.map(item=>item.trim()).filter(Boolean))];
 const bullets=items=>unique(items).map(item=>'- '+item).join('\n');
@@ -41,10 +42,13 @@ export function omniCisSummary(id,answers,version,clientName='The organization')
   else if(active.gaps?.trim()){sections['Incomplete or missing'].push('Reviewer-reported deficiencies: '+active.gaps.trim());actions.remediation.push('Address the reported deficiencies: '+active.gaps.trim());}
   if(active.unknowns?.trim()){sections['Needs confirmation'].push('Reviewer-reported uncertainty: '+active.unknowns.trim());actions.confirmation.push('Confirm with the responsible team: '+active.unknowns.trim());}
   for(const issue of result.unknowns.filter(value=>/^(Applicability requires|The overall practice answer)/.test(value))){sections['Needs confirmation'].push(issue);actions.confirmation.push(issue);}
-  const context=[];
+  const context=[],noteGroups=new Map(omniGroups(id,answers,version).map(group=>[group.note,group.name]));
   for(const q of questions){
     if(!q.critical&&!['gaps','unknowns'].includes(q.id)&&active[q.id]){const value=Array.isArray(active[q.id])?active[q.id].join(', '):active[q.id];context.push(`${contextLabels[q.id]||labels[q.id]||q.id.replaceAll('_',' ')}: ${value}`);}
-    if(active[q.id+'_detail']?.trim())context.push(`Reported ${labels[q.id]?.toLowerCase()||q.id.replaceAll('_',' ')} context: ${active[q.id+'_detail'].trim()}`);
+    if(active[q.id+'_detail']?.trim()){
+      const groupName=q.type==='matrix'&&!labels[q.id]?noteGroups.get(q.id):null;
+      context.push(groupName?`Reported context for ${groupName}: ${active[q.id+'_detail'].trim()}`:`Reported ${labels[q.id]?.toLowerCase()||q.id.replaceAll('_',' ')} context: ${active[q.id+'_detail'].trim()}`);
+    }
   }
   const grouped=Object.entries(sections).filter(([name,items])=>items.length||name==='Incomplete or missing').map(([name,items])=>name+'\n'+bullets(items.length?items:['No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.']));
   if(context.length)grouped.push('Reported operating context\n'+bullets(context));

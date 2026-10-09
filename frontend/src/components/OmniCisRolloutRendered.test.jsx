@@ -59,3 +59,18 @@ test.each([[1,'2.1'],[2,'12.2'],[3,'16.13']])('IG%s %s summary Save & close conf
 test('read-only CIS guides preserve answers and block native writes',async()=>{
   setup(3,'16.13');props.disabled=true;await render();await open();expect(button('Save assessment').disabled).toBe(true);expect(button('Save & close').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
+
+test('15.5 visible group-note label and exact entered content reach the native summary save unchanged',async()=>{
+  setup(3,'15.5');const note='SYNTHETIC QA: exact service-provider guidance note.\nKeep this second line.';
+  stored.answers.requirements_0_detail=note;
+  stored.result=omniCisSummary('15.5',stored.answers,stored.version,mockName).result;stored.narrative=stored.result.narrative;
+  const reviewed=stored.narrative,answers=copy(stored.answers);
+  await render();await open();
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(reviewed);
+  expect(reviewed).toContain('- Reported context for Safeguard requirements: '+note);
+  expect(reviewed).not.toContain('Reported requirements 0 context:');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await click('Save assessment');
+  expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
+  expect(props.onSaveAssessment).toHaveBeenLastCalledWith(expect.objectContaining({implementation:reviewed,status:'addressed'}),JSON.stringify(props.current));
+  expect(stored.narrative).toBe(reviewed);expect(stored.answers).toEqual(answers);
+});
