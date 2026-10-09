@@ -145,3 +145,16 @@ test('unexpected compatibility preparation failure leaves the saved interview in
   jest.spyOn(guided,'compatibleInterviewAnswers').mockImplementationOnce(()=>{throw new Error('Synthetic compatibility preparation failure');});await click('Confirm restart');
   expect(api.put).not.toHaveBeenCalled();expect(stored).toEqual(before);expect(document.querySelector('[role="alert"]').textContent).toContain('Your saved interview is unchanged');expect(document.querySelector('[role="alert"]').textContent).toContain('Cancel this new review and reopen it before retrying');expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
+
+test('stale interview comparison displays the actual native Not Applicable status without inventing an assessment outcome',async()=>{
+  const current=record({status:'not_applicable',na_rationale:'Existing authorized native applicability rationale.',last_saved:'2026-10-08T12:00:00Z'});stored=interview({revision:2,answers:{inventory:'Not sure'}});const before=JSON.stringify(current);
+  await render({record:current,current,form:copy(current)});await open();await click('Compare & continue from saved assessment');
+  expect(document.querySelector('[aria-label="Compare saved assessment"]').textContent).toContain('Saved status: Not Applicable.');
+  expect(JSON.stringify(props.current)).toBe(before);expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+test('saved unresolved proposal invitation names the existing native Not Applicable decision and preserves its rationale',async()=>{
+  const current=record({status:'not_applicable',na_rationale:'Existing authorized native applicability rationale.'});stored=completed({answers:{inventory:'No'},result:{status:'needs_attention',narrative:'Historical unresolved proposal',basis:[],gaps:['Inventory absent'],unknowns:[],nextSteps:[],evidence:[],answers:[],signals:[]}});const before=JSON.stringify(current);
+  await render({record:current,current,form:copy(current)});
+  expect(document.querySelector('.guided-context-prompt').textContent).toContain('The native assessment still records Not Applicable.');
+  expect(JSON.stringify(props.current)).toBe(before);expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});

@@ -25,7 +25,7 @@ import './GuidedAssessor.css';
 import './RefinedOmni.css';
 
 
-const STATUSES={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed'};
+const STATUSES={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed',not_applicable:'Not Applicable'};
 const EMPTY_ROWS=[];
 function readPreference(key){try{return JSON.parse(localStorage.getItem(key)||'{}');}catch{return {};}}
 export default function GuidedAssessor(props){
