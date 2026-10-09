@@ -86,3 +86,9 @@ The per-atom source, active question/field mapping, scored/context distinction, 
 - Structural assertions enforce 56 unique rows, nonempty source-to-question mappings and linked expected cases. Status fixtures contain 1,052 source-justified cases, not results copied from running the evaluator. Every atom has satisfied/unmet/unknown cases; explicit alternatives, exclusions, contradictions and selected cadence boundaries are included. This is not exhaustive answer-combination coverage.
 
 No application tests, rendered placement sweep, authenticated hosted writes or deployment were performed by this content agent. Runtime integration and independent source/decision review remain release gates.
+
+## Fixture correction pass
+
+Original artifacts remain in commit `d924c4217fad88c482e2651538a83327ac9e0568`; the lead retains the original failing runtime log. The v2 fixture artifact records per-case defects and corrections. Eighteen legitimate exclusion cases lost their input rationale through shared-object mutation; these inputs are restored. Single-substantive absence/unknown expectations now depend on source facts, not the aggregate proxy. Independent integrated QA adjudicated that aggregate `Not sure` is not a new source obligation when every applicable substantive atom is accepted Yes. Affirmative aggregate No/Partially contradictions remain protected. Clauses sharing a source condition are excluded consistently; all excluded conditional scope remains Not Assessed pending native applicability.
+
+All 1,052 fixture identities and source-to-case references are preserved. Structural checks passed; application execution remains the lead’s separate integration test result.

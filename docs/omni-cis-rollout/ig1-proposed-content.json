@@ -727,7 +727,7 @@
     {
       "id": "IG1-ENGINE-ROOT-PRECEDENCE",
       "scope": "New current generic version and new 1.2 version only; approved 1.1 and historical versions unchanged",
-      "request": "Keep substantive atomic questions reachable when root practice is No or Not sure. Use source-founded facts rather than interview completion. All unknown is Not Assessed; affirmed absent practice without meaningful contrary facts is Not Implemented; known mixed/incomplete/unknown requirements or contradictory reports are Partially Implemented; complete applicable substantive requirements plus consistent root is Implemented."
+      "request": "For new generic versions, keep substantive atomic questions reachable for any aggregate answer. All substantive unknown is Not Assessed; affirmed substantive absence is Not Implemented; meaningful mixed/incomplete/unknown substantive facts or affirmative aggregate No/Partially contradiction are Partially Implemented. Every applicable source atom Yes with no material gap/unknown is Implemented even if the duplicate aggregate practice answer is Not sure; do not add a hidden confidence clause. Approved 1.1 and current 1.2 source process questions retain their separately reviewed semantics."
     },
     {
       "id": "IG1-ENGINE-1.2-CONTEXT",
@@ -1274,5 +1274,12 @@
         "canonical_text_sha256": "f504474c4a01d31c397498a129bb0155a2e2d8c77c9c524aac744913116191c3"
       }
     ]
+  },
+  "independent_status_adjudication": {
+    "reviewed_on": "2026-10-09",
+    "reviewer_role": "Independent integrated QA reviewer",
+    "decision": "Generic aggregate uncertainty is not an additional source obligation when every applicable substantive atomic clause is accepted Yes. Single-atomic absence/unknown is evaluated from the substantive source fact, with aggregate contradiction retained for explanation.",
+    "fixture_revision": "omni-cis-ig1-source-status-cases-2",
+    "provenance": "Original authored expectations in d924c4217fad88c482e2651538a83327ac9e0568; correction uses source reasoning plus independent QA adjudication, not copied evaluator outputs."
   }
 }

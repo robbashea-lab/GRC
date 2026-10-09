@@ -1311,7 +1311,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -1349,7 +1349,9 @@
         "IG1-2.1-absent",
         "IG1-2.1-optional-omitted",
         "IG1-2.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "2.2",
@@ -1592,7 +1594,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -1630,7 +1632,9 @@
         "IG1-2.2-absent",
         "IG1-2.2-optional-omitted",
         "IG1-2.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "2.3",
@@ -1789,7 +1793,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -1827,7 +1831,9 @@
         "IG1-2.3-absent",
         "IG1-2.3-optional-omitted",
         "IG1-2.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "3.1",
@@ -2118,7 +2124,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -2156,7 +2162,9 @@
         "IG1-3.1-absent",
         "IG1-3.1-optional-omitted",
         "IG1-3.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "3.2",
@@ -2315,7 +2323,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -2353,7 +2361,9 @@
         "IG1-3.2-absent",
         "IG1-3.2-optional-omitted",
         "IG1-3.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "3.3",
@@ -2590,7 +2600,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -2628,7 +2638,9 @@
         "IG1-3.3-absent",
         "IG1-3.3-optional-omitted",
         "IG1-3.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "3.4",
@@ -2813,7 +2825,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -2851,7 +2863,9 @@
         "IG1-3.4-absent",
         "IG1-3.4-optional-omitted",
         "IG1-3.4-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "3.5",
@@ -3010,7 +3024,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -3048,7 +3062,9 @@
         "IG1-3.5-absent",
         "IG1-3.5-optional-omitted",
         "IG1-3.5-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "3.6",
@@ -3181,7 +3197,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -3219,7 +3235,9 @@
         "IG1-3.6-absent",
         "IG1-3.6-optional-omitted",
         "IG1-3.6-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "4.1",
@@ -3510,7 +3528,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -3548,7 +3566,9 @@
         "IG1-4.1-absent",
         "IG1-4.1-optional-omitted",
         "IG1-4.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "4.2",
@@ -3707,7 +3727,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -3745,7 +3765,9 @@
         "IG1-4.2-absent",
         "IG1-4.2-optional-omitted",
         "IG1-4.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "4.3",
@@ -3930,7 +3952,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -3968,7 +3990,9 @@
         "IG1-4.3-absent",
         "IG1-4.3-optional-omitted",
         "IG1-4.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "4.4",
@@ -4131,7 +4155,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -4169,7 +4193,9 @@
         "IG1-4.4-absent",
         "IG1-4.4-optional-omitted",
         "IG1-4.4-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "4.5",
@@ -4328,7 +4354,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -4366,7 +4392,9 @@
         "IG1-4.5-absent",
         "IG1-4.5-optional-omitted",
         "IG1-4.5-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "4.6",
@@ -4551,7 +4579,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -4589,7 +4617,9 @@
         "IG1-4.6-absent",
         "IG1-4.6-optional-omitted",
         "IG1-4.6-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "4.7",
@@ -4748,7 +4778,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -4786,7 +4816,9 @@
         "IG1-4.7-absent",
         "IG1-4.7-optional-omitted",
         "IG1-4.7-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "5.1",
@@ -5129,7 +5161,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -5167,7 +5199,9 @@
         "IG1-5.1-absent",
         "IG1-5.1-optional-omitted",
         "IG1-5.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "5.2",
@@ -5300,7 +5334,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -5338,7 +5372,9 @@
         "IG1-5.2-absent",
         "IG1-5.2-optional-omitted",
         "IG1-5.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "5.3",
@@ -5473,7 +5509,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -5511,7 +5547,9 @@
         "IG1-5.3-absent",
         "IG1-5.3-optional-omitted",
         "IG1-5.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "5.4",
@@ -5670,7 +5708,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -5708,7 +5746,9 @@
         "IG1-5.4-absent",
         "IG1-5.4-optional-omitted",
         "IG1-5.4-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "6.1",
@@ -5893,7 +5933,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -5931,7 +5971,9 @@
         "IG1-6.1-absent",
         "IG1-6.1-optional-omitted",
         "IG1-6.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "6.2",
@@ -6090,7 +6132,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -6128,7 +6170,9 @@
         "IG1-6.2-absent",
         "IG1-6.2-optional-omitted",
         "IG1-6.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "6.3",
@@ -6291,7 +6335,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -6329,7 +6373,9 @@
         "IG1-6.3-absent",
         "IG1-6.3-optional-omitted",
         "IG1-6.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "6.4",
@@ -6462,7 +6508,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -6500,7 +6546,9 @@
         "IG1-6.4-absent",
         "IG1-6.4-optional-omitted",
         "IG1-6.4-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "6.5",
@@ -6691,7 +6739,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -6729,7 +6777,9 @@
         "IG1-6.5-absent",
         "IG1-6.5-optional-omitted",
         "IG1-6.5-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "7.1",
@@ -6888,7 +6938,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -6926,7 +6976,9 @@
         "IG1-7.1-absent",
         "IG1-7.1-optional-omitted",
         "IG1-7.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "7.2",
@@ -7085,7 +7137,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -7123,7 +7175,9 @@
         "IG1-7.2-absent",
         "IG1-7.2-optional-omitted",
         "IG1-7.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "7.3",
@@ -7282,7 +7336,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -7320,7 +7374,9 @@
         "IG1-7.3-absent",
         "IG1-7.3-optional-omitted",
         "IG1-7.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "7.4",
@@ -7479,7 +7535,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -7517,7 +7573,9 @@
         "IG1-7.4-absent",
         "IG1-7.4-optional-omitted",
         "IG1-7.4-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "8.1",
@@ -7754,7 +7812,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -7792,7 +7850,9 @@
         "IG1-8.1-absent",
         "IG1-8.1-optional-omitted",
         "IG1-8.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "8.2",
@@ -7925,7 +7985,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -7963,7 +8023,9 @@
         "IG1-8.2-absent",
         "IG1-8.2-optional-omitted",
         "IG1-8.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "8.3",
@@ -8096,7 +8158,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -8134,7 +8196,9 @@
         "IG1-8.3-absent",
         "IG1-8.3-optional-omitted",
         "IG1-8.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "9.1",
@@ -8345,7 +8409,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -8383,7 +8447,9 @@
         "IG1-9.1-absent",
         "IG1-9.1-optional-omitted",
         "IG1-9.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "9.2",
@@ -8542,7 +8608,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -8580,7 +8646,9 @@
         "IG1-9.2-absent",
         "IG1-9.2-optional-omitted",
         "IG1-9.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "10.1",
@@ -8739,7 +8807,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -8777,7 +8845,9 @@
         "IG1-10.1-absent",
         "IG1-10.1-optional-omitted",
         "IG1-10.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "10.2",
@@ -8910,7 +8980,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -8948,7 +9018,9 @@
         "IG1-10.2-absent",
         "IG1-10.2-optional-omitted",
         "IG1-10.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "10.3",
@@ -9107,7 +9179,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -9145,7 +9217,9 @@
         "IG1-10.3-absent",
         "IG1-10.3-optional-omitted",
         "IG1-10.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "11.1",
@@ -9410,7 +9484,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -9448,7 +9522,9 @@
         "IG1-11.1-absent",
         "IG1-11.1-optional-omitted",
         "IG1-11.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "11.2",
@@ -9607,7 +9683,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -9645,7 +9721,9 @@
         "IG1-11.2-absent",
         "IG1-11.2-optional-omitted",
         "IG1-11.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "11.3",
@@ -9778,7 +9856,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -9816,7 +9894,9 @@
         "IG1-11.3-absent",
         "IG1-11.3-optional-omitted",
         "IG1-11.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "11.4",
@@ -9949,7 +10029,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -9987,7 +10067,9 @@
         "IG1-11.4-absent",
         "IG1-11.4-optional-omitted",
         "IG1-11.4-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "12.1",
@@ -10146,7 +10228,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -10184,7 +10266,9 @@
         "IG1-12.1-absent",
         "IG1-12.1-optional-omitted",
         "IG1-12.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "14.1",
@@ -10369,7 +10453,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -10407,7 +10491,9 @@
         "IG1-14.1-absent",
         "IG1-14.1-optional-omitted",
         "IG1-14.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "14.2",
@@ -10540,7 +10626,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -10578,7 +10664,9 @@
         "IG1-14.2-absent",
         "IG1-14.2-optional-omitted",
         "IG1-14.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "14.3",
@@ -10711,7 +10799,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -10749,7 +10837,9 @@
         "IG1-14.3-absent",
         "IG1-14.3-optional-omitted",
         "IG1-14.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "14.4",
@@ -11040,7 +11130,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -11078,7 +11168,9 @@
         "IG1-14.4-absent",
         "IG1-14.4-optional-omitted",
         "IG1-14.4-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "14.5",
@@ -11211,7 +11303,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -11249,7 +11341,9 @@
         "IG1-14.5-absent",
         "IG1-14.5-optional-omitted",
         "IG1-14.5-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "14.6",
@@ -11408,7 +11502,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -11446,7 +11540,9 @@
         "IG1-14.6-absent",
         "IG1-14.6-optional-omitted",
         "IG1-14.6-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "14.7",
@@ -11605,7 +11701,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -11643,7 +11739,9 @@
         "IG1-14.7-absent",
         "IG1-14.7-optional-omitted",
         "IG1-14.7-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "14.8",
@@ -11806,7 +11904,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -11844,7 +11942,9 @@
         "IG1-14.8-absent",
         "IG1-14.8-optional-omitted",
         "IG1-14.8-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "15.1",
@@ -12055,7 +12155,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -12093,7 +12193,9 @@
         "IG1-15.1-absent",
         "IG1-15.1-optional-omitted",
         "IG1-15.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "17.1",
@@ -12334,7 +12436,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -12372,7 +12474,9 @@
         "IG1-17.1-absent",
         "IG1-17.1-optional-omitted",
         "IG1-17.1-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "17.2",
@@ -12531,7 +12635,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -12569,7 +12673,9 @@
         "IG1-17.2-absent",
         "IG1-17.2-optional-omitted",
         "IG1-17.2-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     },
     {
       "id": "17.3",
@@ -12860,7 +12966,7 @@
         },
         {
           "precedence": 4,
-          "condition": "Consistent practice report and every applicable substantive requirement Yes; source-conditioned exclusions supported by reason",
+          "condition": "Every applicable substantive atomic source requirement Yes, source-conditioned exclusions supported by reason, and no material gap/unknown or affirmative aggregate No/Partially contradiction. Aggregate Not sure alone is not an extra source obligation.",
           "expected_status": "addressed"
         },
         {
@@ -12898,7 +13004,15 @@
         "IG1-17.3-absent",
         "IG1-17.3-optional-omitted",
         "IG1-17.3-invalid-whole-na"
-      ]
+      ],
+      "fixture_correction_revision": "omni-cis-ig1-source-status-cases-2",
+      "independent_status_contract_review": "Independent QA adjudicated atomic-fact precedence for aggregate uncertainty and single-substantive requirements; exhaustive integrated content review remains separate."
     }
-  ]
+  ],
+  "fixture_corrections": {
+    "revision": "omni-cis-ig1-source-status-cases-2",
+    "original_commit": "d924c4217fad88c482e2651538a83327ac9e0568",
+    "changed_case_count": 102,
+    "source": "See ig1-status-cases.json fixture_corrections for per-case rationale and independent adjudication."
+  }
 }
