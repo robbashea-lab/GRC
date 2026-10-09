@@ -2,7 +2,7 @@
   "schema": "omni-cis-independent-review-1",
   "reviewer": "cis_independent_qa (actual separate agent, no implementation ownership)",
   "review_base": "e1763cf72eea9e250c26feae17c642cc6b044b48",
-  "final_review_sha": "9204445494f4518611d9add1069eb0d693270719",
+  "final_review_sha": "eb16427021e646904883b890829d7308f4ee3c9d",
   "release_approval": false,
   "source_review": {
     "unique_definitions": 153,
@@ -128,11 +128,36 @@
     {
       "id": "QA-CIS-004",
       "priority": "P2-test-coverage",
-      "state": "resolved_static_review_rerun_owned_by_lead",
+      "state": "resolved_static_review_and_lead_rerun_audited",
       "issue": "Upgrade persistence comparison initially omitted stored tenant/actor/assessment identities from the previous whole-object assertion.",
       "fix_commit": "9204445494f4518611d9add1069eb0d693270719",
       "resolution": "Compare every stored field; exclude exactly four transient read-context fields and assert stale context separately.",
-      "application_defect": false
+      "application_defect": false,
+      "confirmed_rerun": "28 preview tests passed after complete persisted identity/field equality correction; reviewer read complete log."
+    },
+    {
+      "id": "QA-CIS-005",
+      "priority": "P2-test-expectations",
+      "state": "corrected_independently_reviewed_full_rerun_pending",
+      "application_defect": false,
+      "issue": "Four full-suite assertions retained obsolete pilot-only eligibility/implicit historical defaults after the authorized CIS rollout.",
+      "original_failure_log": "outputs/omni-cis-rollout/frontend-full-integrated.log",
+      "original_failure_count": 4,
+      "original_suites": [
+        "src/components/OmniInventoryContext.test.jsx",
+        "src/lib/guidedControl1V3.test.js"
+      ],
+      "source_contract": "All configured CIS clients/groups receive1.2 read-only same-client inventory context. Current new interviews use approved1.1 V3/reviewed1.2 V4, while explicit historical selection and original schemas remain readable.",
+      "source_correction_commit": "258bc4551bdce075320d18abb05881f4ef48fb58",
+      "integrated_correction_commit": "eb16427021e646904883b890829d7308f4ee3c9d",
+      "independent_diff_review": "Only the two named test files change. Other-client/framework contamination, missing inventory, non1.2, guided_assessment_enabled:false, actor/client switch, no writes and original historical choices/attributes remain. The three retired pilot negatives become explicit configured-CIS positives; future IG3 added. No test suppressed or application behavior changed.",
+      "owner_focused_execution": {
+        "suites": 2,
+        "tests": 17,
+        "exit_code": 0,
+        "seconds": 9.019,
+        "source": "cis_shared_workflow actual execution report; this reviewer independently audited test diffs and expectation authority."
+      }
     }
   ],
   "boundaries": {
@@ -4186,8 +4211,23 @@
       ],
       "log": "outputs/omni-cis-rollout/preview-isolated-provisioning.log"
     },
-    "strengthened_rerun": "Lead rerun pending at report preparation; exact-candidate CI required.",
-    "limitation": "Empty authorized portfolio verifies provisioning correctness, not large-portfolio performance. No product optimization or hosted onboarding proof."
+    "strengthened_rerun": "Confirmed complete log:28 tests passed,40.171s, groups2393/1866/1066ms under unchanged5000ms. All stored identities/fields compared; see evidence audit.",
+    "limitation": "Empty authorized portfolio verifies provisioning correctness, not large-portfolio performance. No product optimization or hosted onboarding proof.",
+    "strengthened_execution": {
+      "source_sha": "9204445494f4518611d9add1069eb0d693270719",
+      "tests": 28,
+      "suites": 1,
+      "exit_code": 0,
+      "exit_code_source": "Lead confirmed tool execution; reviewer independently read complete passing log.",
+      "seconds": 40.171,
+      "new_client_group_ms": [
+        2393,
+        1866,
+        1066
+      ],
+      "original_budget_ms": 5000,
+      "all_persisted_fields_compared": true
+    }
   },
   "immutable_repository_content": {
     "candidate": "00b2fca4c172551ebf1c2c2647b6ef9df0c529c1",
@@ -4293,7 +4333,8 @@
     "native_exact_save": "Existing FrameworkDrawer authoritative PATCH adapter sends exact reviewed multiline implementation and separate status, expected native snapshot, and guided source/version/revision. Summary submission does not regenerate text and Save&close waits for success.",
     "trust_boundaries": "UI eligibility is not authorization. Existing authenticated route policy checks client membership and assigned contributor, canonical active group; actor-scoped interview IDs/history, expected_revision, trusted base/scope, current-source and native expected_last_assessed checks remain.",
     "historical_compatibility": "Original packs remain readable, program-v2 preserved as identical Git blob; explicit upgrades archive previous checkpoint and reuse only unchanged compatible semantics. New/changed source answers remain unanswered. No bulk assessment regeneration, database migration, automatic evidence/findings/review changes.",
-    "excluded_scope": "No CSS/artwork/animation/window/dependency/lock/catalog change to approved1.1 or representativeISO/SOC catalogs; no global status/approval/retention policy changes. Snapshot/browser visual acceptance remains separate."
+    "excluded_scope": "No CSS/artwork/animation/window/dependency/lock/catalog change to approved1.1 or representativeISO/SOC catalogs; no global status/approval/retention policy changes. Snapshot/browser visual acceptance remains separate.",
+    "recovery_boundary": "Approved83d writer lacks program3/control1V4 packs. After current interviews are written, recovery requires a compatible tested corrective candidate retaining these readable packs and saved-data/history support. Do not reset, reinterpret or silently downgrade records. This reviewer has not executed recovery deployment."
   },
   "tool_failures": {
     "browser_layer_B_subagent": {
@@ -4308,5 +4349,177 @@
     "authored_status_case_ids": 4267,
     "source_question_status_summary_matrix": "docs/omni-cis-rollout/coverage-matrix.json",
     "note": "Reference the shared canonical matrix rather than duplicate4267 authored IDs. Counts are not independent test success."
-  }
+  },
+  "test_and_build_evidence_audit": {
+    "reviewed_root_sha": "31cb670dc18e68ecf436a4e7f8db2f4c312e31e2",
+    "reviewed_at_utc": "2026-10-09 21:08:23 UTC",
+    "read_only": true,
+    "log_manifests": [
+      {
+        "name": "preview-complete-identity-final.log",
+        "bytes": 3129,
+        "sha256": "35341615dc6ef4c3a956f37f126f46bd656bf67135f6ab4820835f04071566e2",
+        "compiled_successfully": false,
+        "summary": [
+          "Test Suites: 1 passed, 1 total",
+          "Tests:       28 passed, 28 total",
+          "Time:        40.171 s"
+        ],
+        "new_client_times": [
+          {
+            "group": 1,
+            "ms": 2393
+          },
+          {
+            "group": 2,
+            "ms": 1866
+          },
+          {
+            "group": 3,
+            "ms": 1066
+          }
+        ]
+      },
+      {
+        "name": "backend-full-integrated.log",
+        "bytes": 4214,
+        "sha256": "3bfe495ea740e2202fe5b4e17ab4b13c7882ccf5b7daf194c9708c1bb796226d",
+        "compiled_successfully": false,
+        "summary": [
+          "718 passed, 8 warnings, 1172 subtests passed in 546.39s (0:09:06)"
+        ],
+        "new_client_times": []
+      },
+      {
+        "name": "build-authenticated-final.log",
+        "bytes": 1026,
+        "sha256": "86a564c486d2d8264758b108e00a9cc7a5b08cc51c33b2eaf65740e91f9c80ec",
+        "compiled_successfully": true,
+        "summary": [],
+        "new_client_times": []
+      },
+      {
+        "name": "build-isolated-preview-final.log",
+        "bytes": 996,
+        "sha256": "0a296dfaba8df739385539725c0a7e50e6518fb3788577ecadcc1c33efc90bef",
+        "compiled_successfully": true,
+        "summary": [],
+        "new_client_times": []
+      },
+      {
+        "name": "frontend-full-integrated.log",
+        "bytes": 33673,
+        "sha256": null,
+        "compiled_successfully": false,
+        "summary": [
+          "FAIL src/components/OmniInventoryContext.test.jsx",
+          "FAIL src/lib/guidedControl1V3.test.js"
+        ],
+        "new_client_times": []
+      }
+    ],
+    "scope": "9204445..31cb670 changes only the two independent reports; product/runtime/catalog unchanged. Backend tree is unchanged from6d9e849.",
+    "strengthened_preview": {
+      "source_sha": "9204445494f4518611d9add1069eb0d693270719",
+      "tests": 28,
+      "suites": 1,
+      "exit_code": 0,
+      "exit_code_source": "Lead confirmed tool execution; reviewer independently read complete passing log.",
+      "seconds": 40.171,
+      "new_client_group_ms": [
+        2393,
+        1866,
+        1066
+      ],
+      "original_budget_ms": 5000,
+      "all_persisted_fields_compared": true
+    },
+    "backend": {
+      "tests": 718,
+      "subtests": 1172,
+      "warnings": 8,
+      "seconds": 546.39,
+      "exit_code": 0,
+      "exit_code_source": "Lead confirmed execution; reviewer read complete pytest summary.",
+      "boundary": "Isolated automated backend tests, not hosted Mongo/authentication/browser evidence."
+    },
+    "builds": [
+      {
+        "command": "CI=true; node scripts/staging.cjs",
+        "workdir": "frontend",
+        "source_sha": "9204445494f4518611d9add1069eb0d693270719",
+        "exit_code": 0,
+        "exit_code_source": "Lead tool session91457",
+        "log": "outputs/omni-cis-rollout/build-authenticated-final.log",
+        "log_compilation_confirmed": true,
+        "configuration": "Existing standard sign-in plus separate isolated browser Demo: REACT_APP_PREVIEW=true, REACT_APP_STANDARD_SIGN_IN=true, backendURL empty; existing deployment frontend output.",
+        "warnings": [
+          "Node fs.F_OK deprecation",
+          "Bundle-size advisory"
+        ],
+        "hosted_proof": false
+      },
+      {
+        "command": "CI=true; node scripts/preview.cjs build",
+        "workdir": "frontend",
+        "source_sha": "31cb670dc18e68ecf436a4e7f8db2f4c312e31e2",
+        "exit_code": 0,
+        "exit_code_source": "Lead tool session78290",
+        "log": "outputs/omni-cis-rollout/build-isolated-preview-final.log",
+        "log_compilation_confirmed": true,
+        "configuration": "Isolated local Demo build: preview=true, standard sign-in=false, backendURL empty; not authenticated hosted evidence.",
+        "warnings": [
+          "Node fs.F_OK deprecation",
+          "Bundle-size advisory"
+        ],
+        "hosted_proof": false
+      }
+    ],
+    "full_frontend": {
+      "source_sha": "00b2fca4c172551ebf1c2c2647b6ef9df0c529c1",
+      "state": "running_with_four_failed_assertions_observed",
+      "completion_footer_seen": false,
+      "suites_with_failures": [
+        "src/components/OmniInventoryContext.test.jsx",
+        "src/lib/guidedControl1V3.test.js"
+      ],
+      "failure_classification": "Connected-code/source-contract inspection establishes obsolete pilot-only eligibility and implicit historical-default expectations. Current behavior follows authorized all-configured-CIS rollout; test corrections/rerun required, no demonstrated application defect.",
+      "preservation": "Original full-suite failure log retained. Neither suite may be suppressed and whole-suite success is not claimed.",
+      "corrected_expectations": {
+        "id": "QA-CIS-005",
+        "priority": "P2-test-expectations",
+        "state": "corrected_independently_reviewed_full_rerun_pending",
+        "application_defect": false,
+        "issue": "Four full-suite assertions retained obsolete pilot-only eligibility/implicit historical defaults after the authorized CIS rollout.",
+        "original_failure_log": "outputs/omni-cis-rollout/frontend-full-integrated.log",
+        "original_failure_count": 4,
+        "original_suites": [
+          "src/components/OmniInventoryContext.test.jsx",
+          "src/lib/guidedControl1V3.test.js"
+        ],
+        "source_contract": "All configured CIS clients/groups receive1.2 read-only same-client inventory context. Current new interviews use approved1.1 V3/reviewed1.2 V4, while explicit historical selection and original schemas remain readable.",
+        "source_correction_commit": "258bc4551bdce075320d18abb05881f4ef48fb58",
+        "integrated_correction_commit": "eb16427021e646904883b890829d7308f4ee3c9d",
+        "independent_diff_review": "Only the two named test files change. Other-client/framework contamination, missing inventory, non1.2, guided_assessment_enabled:false, actor/client switch, no writes and original historical choices/attributes remain. The three retired pilot negatives become explicit configured-CIS positives; future IG3 added. No test suppressed or application behavior changed.",
+        "owner_focused_execution": {
+          "suites": 2,
+          "tests": 17,
+          "exit_code": 0,
+          "seconds": 9.019,
+          "source": "cis_shared_workflow actual execution report; this reviewer independently audited test diffs and expectation authority."
+        }
+      },
+      "original_log_last_write_utc": "2026-10-09T20:51:47Z",
+      "last_write_limit": "No completion or process-hang conclusion inferred from unchanged log; lead owns execution status and final full rerun."
+    },
+    "matrix_script_review": {
+      "file": "scripts/omni-cis-rollout-matrix.cjs",
+      "issue": "Hardcoded pending independent/content/runtime labels remain stale after independent acceptance.",
+      "disposition": "Lead advised to join all153 unique independent rows by canonical ID, carry review SHA, mark only accepted source/code rows, and keep actual browser/hosted/exactCI/release states separate. No code or matrix changed by reviewer.",
+      "state": "pending_lead_update"
+    },
+    "final_scope_review_sha": "eb16427021e646904883b890829d7308f4ee3c9d",
+    "final_scope_delta": "31cb670..eb16427 changes only independently reviewed expectations in the two named test suites. Runtime/catalog/backend/CSS/assets/dependencies unchanged."
+  },
+  "prior_final_review_sha": "9204445494f4518611d9add1069eb0d693270719"
 }
