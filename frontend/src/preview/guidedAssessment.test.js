@@ -16,7 +16,7 @@ async function firstWrite(route,changes={}){
   const current=(await api.get(route)).data;
   return {...body,version:current.version,base_assessment_token:current.base_assessment_token,base_scope_fingerprint:current.base_scope_fingerprint,...changes};
 }
-const persisted=draft=>Object.fromEntries(['version','revision','answers','step','completed','narrative','result','generated_at','updated_at','base_assessment_token','base_scope_fingerprint'].filter(key=>Object.hasOwn(draft,key)).map(key=>[key,draft[key]]));
+const persisted=draft=>Object.fromEntries(Object.entries(draft).filter(([key])=>!['current_assessment_token','current_scope_fingerprint','lineage_known','lineage_stale'].includes(key)));
 async function restart(route=path,id='1.1'){
   const draft=(await api.get(route)).data;
   return {version:versionForSafeguard(id,true),answers:{},step:0,completed:false,narrative:'',expected_revision:draft.revision,restart:true,
